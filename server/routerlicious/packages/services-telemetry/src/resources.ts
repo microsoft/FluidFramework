@@ -34,6 +34,7 @@ export enum QueuedMessageProperties {
 }
 
 export enum CommonProperties {
+<<<<<<< HEAD
     // Client properties
     clientId = "clientId",
     clientType = "clientType",
@@ -44,16 +45,25 @@ export enum CommonProperties {
     sessionEndReason = "sessionEndReason",
 
     // Post checkpoint properties
+=======
+    // Post checkpoint properties
+    clientCount = "clientCount",
+>>>>>>> eaf9c8b9e3a1a6ef365fc3281598abe2fc328f4a
     minSequenceNumber = "minSequenceNumber",
     sequenceNumber = "sequenceNumber",
     checkpointOffset = "checkpointOffset",
 
+<<<<<<< HEAD
     // Summary properties
+=======
+    // Summary related properties
+>>>>>>> eaf9c8b9e3a1a6ef365fc3281598abe2fc328f4a
     clientSummarySuccess = "clientSummarySuccess",
     serviceSummarySuccess = "serviceSummarySuccess",
     maxOpsSinceLastSummary = "maxOpsSinceLastSummary",
     lastSummarySequenceNumber = "lastSummarySequenceNumber",
 
+<<<<<<< HEAD
     // Logtail properties
     minLogtailSequenceNumber = "minLogtailSequenceNumber",
     maxLogtailSequenceNumber = "maxLogtailSequenceNumber",
@@ -61,6 +71,8 @@ export enum CommonProperties {
     // Request properties
     statusCode = "statusCode",
 
+=======
+>>>>>>> eaf9c8b9e3a1a6ef365fc3281598abe2fc328f4a
     // Miscellaneous properties
     restart = "restart",
     telemetryGroupName = "telemetryGroupName",

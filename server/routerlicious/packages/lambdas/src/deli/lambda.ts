@@ -249,8 +249,13 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         this.isNewDocument = this.sequenceNumber === 0;
 
-        if (serviceConfiguration.enableLumberMetrics) {
-            this.logSessionStartMetrics();
+        if (lumberJackMetric)
+        {
+            lumberJackMetric.setProperties({
+                [BaseTelemetryProperties.tenantId]: this.tenantId,
+                [BaseTelemetryProperties.documentId]: this.documentId,
+            });
+            setQueuedMessageProperties(rawMessage, lumberJackMetric);
         }
     }
 
@@ -263,6 +268,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 this.context.checkpoint(this.checkpointInfo.currentKafkaCheckpointMessage);
             }
 
+            lumberJackMetric?.success(`Already processed upto offset ${this.logOffset}.
+                Current message offset ${rawMessage.offset}`);
             return undefined;
         }
 
@@ -376,8 +383,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 });
         }
 
-        this.checkpointInfo.rawMessagesSinceCheckpoint++;
-        this.updateCheckpointMessages(rawMessage);
+        kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
+        const checkpoint = this.generateCheckpoint(rawMessage, kafkaCheckpointMessage);
 
         const checkpointReason = this.getCheckpointReason();
         if (checkpointReason !== undefined) {
@@ -385,6 +392,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             this.checkpoint(checkpointReason);
         } else {
             this.updateCheckpointIdleTimer();
+        }
+
+        if (lumberJackMetric)
+        {
+            this.setDeliStateMetrics(checkpoint, lumberJackMetric);
         }
 
         // Start a timer to check inactivity on the document. To trigger idle client leave message,
@@ -400,7 +412,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             if (maxOps !== undefined) {
                 this.opEvent.sequencedMessagesSinceLastOpEvent += sequencedMessageCount;
 
-                if (this.opEvent.sequencedMessagesSinceLastOpEvent > maxOps) {
+                if (this.sequencedMessagesSinceLastOpEvent > maxOps) {
+                    lumberJackMetric?.setProperties({[CommonProperties.maxOpsSinceLastSummary]: true});
                     this.emitOpEvent(OpEventType.MaxOps);
                 }
             }
@@ -423,38 +436,13 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         }
     }
 
-    private logSessionStartMetrics(failMetric: boolean = false) {
-        if (this.sessionStartMetric?.isCompleted()) {
-            this.sessionStartMetric = createSessionMetric(
-                this.tenantId,
-                this.documentId,
-                LumberEventName.StartSessionResult,
-                this.serviceConfiguration,
-            );
-        }
-
-        if (failMetric) {
-            this.sessionStartMetric?.setProperties({
-                [CommonProperties.sessionState]: SessionState.LambdaStartFailed,
-            });
-            this.sessionStartMetric?.error("Lambda start failed");
-            return;
-        }
-
-        if (this.verifyRequiredLambdaStarted()) {
-            if (this.isNewDocument) {
-                this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.started });
-                this.sessionStartMetric?.success("Session started successfully");
-            } else {
-                this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.resumed });
-                this.sessionStartMetric?.success("Session resumed successfully");
-            }
-        } else {
-            const lambdaStatusMsg = "Not all required lambdas started";
-            this.context.log?.info(lambdaStatusMsg);
-            Lumberjack.info(lambdaStatusMsg, getLumberBaseProperties(this.documentId, this.tenantId));
-        }
-    }
+    private setDeliStateMetrics(checkpoint: ICheckpointParams, lumberJackMetric?: Lumber<LumberEventName.DeliHandler>) {
+        const deliState = {
+            [CommonProperties.clientCount]: checkpoint.deliState.clients?.length,
+            [CommonProperties.checkpointOffset]: checkpoint.deliState.logOffset,
+            [CommonProperties.sequenceNumber]: checkpoint.deliState.sequenceNumber,
+            [CommonProperties.minSequenceNumber]: checkpoint.deliState.lastSentMSN,
+        };
 
     private verifyRequiredLambdaStarted() {
         return this.expectedSuccessfullyStartedLambdas.every((val) => this.successfullyStartedLambdas.includes(val));
