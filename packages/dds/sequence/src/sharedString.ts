@@ -32,7 +32,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
      * @param text - The text to insert
      * @param props - The properties of text
      */
-    insertText(pos: number, text: string, props?: PropertySet);
+    insertText(pos: number, text: string, props?: PropertySet): void;
 
     /**
      * Inserts a marker at the position.
@@ -40,12 +40,12 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
      * @param refType - The reference type of the marker
      * @param props - The properties of the marker
      */
-    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet);
+    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg;
 
     /**
      * {@inheritDoc SharedSegmentSequence.posFromRelativePos}
      */
-    posFromRelativePos(relativePos: IRelativePosition);
+    posFromRelativePos(relativePos: IRelativePosition): number;
 }
 
 export type SharedStringSegment = TextSegment | Marker;

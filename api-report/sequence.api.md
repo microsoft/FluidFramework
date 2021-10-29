@@ -241,9 +241,9 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 
 // @public
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
-    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): any;
-    insertText(pos: number, text: string, props?: PropertySet): any;
-    posFromRelativePos(relativePos: IRelativePosition): any;
+    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg;
+    insertText(pos: number, text: string, props?: PropertySet): void;
+    posFromRelativePos(relativePos: IRelativePosition): number;
 }
 
 // @public
@@ -618,9 +618,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     // (undocumented)
     getTextAndMarkers(label: string): {
         parallelText: string[];
-        parallelMarkers: Marker[]; /**
-         * {@inheritDoc SharedSegmentSequence.posFromRelativePos}
-         */
+        parallelMarkers: Marker[];
     };
     // (undocumented)
     getTextRangeWithMarkers(start: number, end: number): string;
