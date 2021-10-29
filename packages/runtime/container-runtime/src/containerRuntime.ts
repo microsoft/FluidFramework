@@ -156,7 +156,7 @@ export enum ContainerMessageType {
     BlobAttach = "blobAttach",
 
     // Sets the alias of a root data store
-    SetRootDataStoreAlias = "setRootDataStoreAlias",
+    AssignAlias = "assignAlias",
 }
 
 export interface IChunkedOp {
@@ -303,7 +303,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
         case ContainerMessageType.FluidDataStoreOp:
         case ContainerMessageType.ChunkedOp:
         case ContainerMessageType.Attach:
-        case ContainerMessageType.SetRootDataStoreAlias:
+        case ContainerMessageType.AssignAlias:
         case ContainerMessageType.BlobAttach:
         case MessageType.Operation:
             return true;
@@ -1356,8 +1356,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return this.dataStores.applyStashedOp(op);
             case ContainerMessageType.Attach:
                 return this.dataStores.applyStashedAttachOp(op as unknown as IAttachMessage);
-            // [TODO:andre4i]: Figure out if ContainerMessageType.SetRootDataStoreAlias is needed here
-            case ContainerMessageType.SetRootDataStoreAlias:
+            case ContainerMessageType.AssignAlias:
             case ContainerMessageType.BlobAttach:
                 return;
             case ContainerMessageType.ChunkedOp:
@@ -1453,7 +1452,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 case ContainerMessageType.Attach:
                     this.dataStores.processAttachMessage(message, local || localAck);
                     break;
-                case ContainerMessageType.SetRootDataStoreAlias:
+                case ContainerMessageType.AssignAlias:
                     aliasResult = this.dataStores.processAliasMessage(message);
                     if (local) {
                         resolve(aliasResult);
@@ -1603,10 +1602,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         };
 
         const aliasResult = await this.newAckBasedPromise<IDataStoreAliasMapping>((resolve) => {
-            this.submit(ContainerMessageType.SetRootDataStoreAlias, message, resolve);
+            this.submit(ContainerMessageType.AssignAlias, message, resolve);
         }).catch(() => undefined);
 
-        return aliasResult !== undefined && aliasResult.actualId === aliasResult.proposedId;
+        return aliasResult?.aliasedInternalId === aliasResult?.suppliedInternalId;
     }
 
     public createDetachedRootDataStore(
@@ -1683,7 +1682,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        // [TODO:andre4i]: Figure out if ContainerMessageType.SetRootDataStoreAlias is needed here
+        // [TODO:andre4i]: Figure out if ContainerMessageType.AssignAlias is needed here
         return true;
     }
 
@@ -2252,7 +2251,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.dataStores.resubmitDataStoreOp(content, localOpMetadata);
                 break;
             case ContainerMessageType.Attach:
-            case ContainerMessageType.SetRootDataStoreAlias:
+            case ContainerMessageType.AssignAlias:
                 this.submit(type, content, localOpMetadata);
                 break;
             case ContainerMessageType.ChunkedOp:

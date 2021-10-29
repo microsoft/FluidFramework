@@ -53,9 +53,9 @@ import {
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 
 export interface IDataStoreAliasMapping {
-    readonly proposedId: string;
+    readonly suppliedInternalId: string;
     readonly alias: string;
-    readonly actualId: string;
+    readonly aliasedInternalId: string;
 }
 
 export interface IDataStoreAliasMessage {
@@ -212,9 +212,9 @@ export class DataStores implements IDisposable {
         const existingContext = this.contexts.get(aliasMessage.alias);
         if (existingContext !== undefined) {
             return {
-                proposedId: aliasMessage.id,
+                suppliedInternalId: aliasMessage.id,
                 alias: aliasMessage.alias,
-                actualId: existingContext.id,
+                aliasedInternalId: existingContext.id,
             };
         }
 
@@ -226,9 +226,9 @@ export class DataStores implements IDisposable {
 
         this.contexts.aliasContext(aliasMessage.id, aliasMessage.alias);
         return {
-            proposedId: aliasMessage.id,
+            suppliedInternalId: aliasMessage.id,
             alias: aliasMessage.alias,
-            actualId: aliasMessage.id,
+            aliasedInternalId: aliasMessage.id,
         };
     }
 
