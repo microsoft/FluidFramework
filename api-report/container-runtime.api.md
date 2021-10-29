@@ -65,7 +65,9 @@ export enum ContainerMessageType {
     // (undocumented)
     ChunkedOp = "chunkedOp",
     // (undocumented)
-    FluidDataStoreOp = "component"
+    FluidDataStoreOp = "component",
+    // (undocumented)
+    Rejoin = "rejoin"
 }
 
 // @public
