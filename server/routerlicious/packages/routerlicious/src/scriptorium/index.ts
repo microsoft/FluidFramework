@@ -26,19 +26,18 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const db = await mongoManager.getDatabase();
     const documentsCollection: ICollection<IDocument> = db.collection(documentsCollectionName);
     const opCollection = db.collection(deltasCollectionName);
-    await opCollection.createIndex(
-        {
-            "documentId": 1,
-            "operation.term": 1,
-            "operation.sequenceNumber": 1,
-            "tenantId": 1,
-        },
-        true);
 
     if (createCosmosDBIndexes) {
         await opCollection.createIndex({
+            documentId: 1,
+        }, false);
+
+        await opCollection.createIndex({
+            tenantId: 1,
+        }, false);
+
+        await opCollection.createIndex({
             "operation.term": 1,
-            "operation.sequenceNumber": 1,
         }, false);
 
         await opCollection.createIndex({
@@ -52,6 +51,15 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
         await opCollection.createIndex({
             scheduledDeletionTime: 1,
         }, false);
+    } else {
+        await opCollection.createIndex(
+            {
+                "documentId": 1,
+                "operation.term": 1,
+                "operation.sequenceNumber": 1,
+                "tenantId": 1,
+            },
+            true);
     }
 
     if (mongoExpireAfterSeconds > 0) {
