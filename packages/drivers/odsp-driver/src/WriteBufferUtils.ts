@@ -107,28 +107,30 @@ const integerBytesToCodeMap = {
 /**
  * This contains mapping of boolean to Marker Codes representing the corresponding bool value.
 */
-const boolToCodeMap = {
-    0: 12, // false
-    1: 11, // true
-};
+const boolToCodeMap = [
+    12, // false
+    11, // true
+];
 
 /**
- * Calculate how many bytes are required to encode an integer. This is always multiple of 2.
- * So if 6 bytes are required to store an integer than it will return 8.
+ * Calculate how many bytes are required to encode an integer. This is always power of 2.
+ * So if 6 bytes are required to store an integer than it will return 8. 0 is a special case for which we
+ * return 0 as it is usually just represented by marker code and we don't store the actual data.
  * @param num - number to encode.
  */
  export function calcLength(numArg: number) {
+    if (numArg === 0) {
+        return 0;
+    }
     let num = numArg;
     let lengthLen = 0;
     while (num > 0) {
         num = Math.floor(num / 256);
         lengthLen++;
     }
-    let res = 0;
-    let index = 0;
+    let res = 1;
     while (res < lengthLen) {
-        res = Math.pow(2, index);
-        index++;
+        res *= 2;
     }
     return res;
 }
@@ -219,7 +221,7 @@ function serializeNodeCore(buffer: WriteBuffer, nodeCore: NodeCore, dictionary: 
                 buffer.write(child, len);
             }
         } else if (typeof child === "boolean") {
-            buffer.write(getValueSafely(boolToCodeMap, child ? 1 : 0));
+            buffer.write(boolToCodeMap[child ? 1 : 0]);
         } else {
             unreachableCase(child, "Unsupported node type");
         }
