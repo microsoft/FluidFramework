@@ -32,8 +32,8 @@ const passwordTokenConfig = (username, password): OdspTokenConfig => ({
     password,
 });
 
-export interface IOdspTestLoginInfo {
-    server: string;
+interface IOdspTestLoginInfo {
+    siteUrl: string;
     username: string;
     password: string;
     supportsBrowserAuth?: boolean
@@ -105,10 +105,10 @@ export class OdspTestDriver implements ITestDriver {
     private static readonly driveIdPCache = new Map<string, Promise<string>>();
     // Choose a single random user up front for legacy driver which doesn't support isolateSocketCache
     private static readonly legacyDriverUserRandomIndex = Math.random();
-    private static async getDriveIdFromConfig(server: string, tokenConfig: TokenConfig): Promise<string> {
-        const siteUrl = `https://${tokenConfig.server}`;
+    private static async getDriveIdFromConfig(tokenConfig: TokenConfig): Promise<string> {
+        const siteUrl = tokenConfig.siteUrl;
         try {
-            return await getDriveId(server, "", undefined,
+            return await getDriveId(siteUrl, "", undefined,
                 {
                     accessToken: await this.getStorageToken({ siteUrl, refresh: false }, tokenConfig),
                     refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: true }, tokenConfig),
@@ -119,7 +119,7 @@ export class OdspTestDriver implements ITestDriver {
             }
         }
         return getDriveId(
-            server, "", undefined,
+            siteUrl, "", undefined,
             {
                 accessToken: await this.getStorageToken({ siteUrl, refresh: false, useBrowserAuth: true }, tokenConfig),
                 refreshTokenFn:
@@ -147,8 +147,17 @@ export class OdspTestDriver implements ITestDriver {
         const username = users[userIndex];
 
         const emailServer = username.substr(username.indexOf("@") + 1);
-        const tenantName = emailServer.substr(0, emailServer.indexOf("."));
-        const server = `${tenantName}.sharepoint.com`;
+
+        let siteUrl: string;
+        let tenantName: string;
+        if (emailServer.startsWith("http://") || emailServer.startsWith("https://")) {
+            // it's already a site url
+            tenantName = new URL(emailServer).hostname;
+            siteUrl = emailServer;
+        } else {
+            tenantName = emailServer.substr(0, emailServer.indexOf("."));
+            siteUrl = `https://${tenantName}.sharepoint.com`;
+        }
 
         // force isolateSocketCache because we are using different users in a single context
         // and socket can't be shared between different users
@@ -159,7 +168,7 @@ export class OdspTestDriver implements ITestDriver {
             {
                 username,
                 password: creds[username],
-                server,
+                siteUrl,
                 supportsBrowserAuth: config?.supportsBrowserAuth,
             },
             config?.directory ?? "",
@@ -170,18 +179,18 @@ export class OdspTestDriver implements ITestDriver {
         );
     }
 
-    private static async getDriveId(server: string, tokenConfig: TokenConfig) {
-        let driveIdP = this.driveIdPCache.get(server);
+    private static async getDriveId(siteUrl: string, tokenConfig: TokenConfig) {
+        let driveIdP = this.driveIdPCache.get(siteUrl);
         if (driveIdP) {
             return driveIdP;
         }
 
-        driveIdP = this.getDriveIdFromConfig(server, tokenConfig);
-        this.driveIdPCache.set(server, driveIdP);
+        driveIdP = this.getDriveIdFromConfig(tokenConfig);
+        this.driveIdPCache.set(siteUrl, driveIdP);
         try {
             return await driveIdP;
         } catch (e) {
-            this.driveIdPCache.delete(server);
+            this.driveIdPCache.delete(siteUrl);
             throw e;
         }
     }
@@ -199,7 +208,7 @@ export class OdspTestDriver implements ITestDriver {
             ...getMicrosoftConfiguration(),
         };
 
-        const driveId = await this.getDriveId(loginConfig.server, tokenConfig);
+        const driveId = await this.getDriveId(loginConfig.siteUrl, tokenConfig);
         const directoryParts = [directory];
 
         // if we are in a azure dev ops build use the build id in the dir path
@@ -228,10 +237,11 @@ export class OdspTestDriver implements ITestDriver {
         options: OdspResourceTokenFetchOptions & { useBrowserAuth?: boolean },
         config: IOdspTestLoginInfo & IClientConfig,
     ) {
-        const hostname = new URL(options.siteUrl).hostname;
+        const host = new URL(options.siteUrl).host;
+
         if (options.useBrowserAuth === true) {
             const browserTokens = await this.odspTokenManager.getOdspTokens(
-                hostname,
+                host,
                 config,
                 {
                     type: "browserLogin",
@@ -250,7 +260,7 @@ export class OdspTestDriver implements ITestDriver {
         // This function can handle token request for any multiple sites.
         // Where the test driver is for a specific site.
         const tokens = await this.odspTokenManager.getOdspTokens(
-            new URL(options.siteUrl).hostname,
+            host,
             config,
             passwordTokenConfig(config.username, config.password),
             options.refresh,
@@ -270,18 +280,23 @@ export class OdspTestDriver implements ITestDriver {
 
     }
 
+    /**
+     * Returns the url to container which can be used to load the container through loader.
+     * @param testId - Filename of the Fluid file. Note: This is not the container id as for odsp
+     *  container id is the hashed id generated using driveId and itemId. Container id is not the filename.
+     */
     async createContainerUrl(testId: string): Promise<string> {
         if (!this.testIdToUrl.has(testId)) {
-            const siteUrl = `https://${this.config.server}`;
+            const siteUrl = this.config.siteUrl;
             const driveItem = await getDriveItemByRootFileName(
-                this.config.server,
+                this.config.siteUrl,
                 undefined,
                 `/${this.config.directory}/${testId}.fluid`,
                 {
                     accessToken: await this.getStorageToken({ siteUrl, refresh: false }),
                     refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: false }),
                 },
-                true,
+                false,
                 this.config.driveId);
 
             this.testIdToUrl.set(
@@ -311,7 +326,7 @@ export class OdspTestDriver implements ITestDriver {
 
     createCreateNewRequest(testId: string): IRequest {
         return this.api.createOdspCreateContainerRequest(
-            `https://${this.config.server}`,
+            this.config.siteUrl,
             this.config.driveId,
             this.config.directory,
             `${testId}.fluid`,
@@ -324,7 +339,7 @@ export class OdspTestDriver implements ITestDriver {
 
     private async getPushToken(options: OdspResourceTokenFetchOptions) {
         const tokens = await OdspTestDriver.odspTokenManager.getPushTokens(
-            new URL(options.siteUrl).hostname,
+            new URL(options.siteUrl).host,
             this.config,
             passwordTokenConfig(this.config.username, this.config.password),
             options.refresh,
@@ -335,7 +350,7 @@ export class OdspTestDriver implements ITestDriver {
 
     public getUrlFromItemId(itemId: string) {
         return this.api.createOdspUrl({
-            siteUrl: `https://${this.config.server}`,
+            siteUrl: this.config.siteUrl,
             driveId: this.config.driveId,
             itemId,
             dataStorePath: "/",

@@ -4,6 +4,7 @@
  */
 
 import { MessageType } from "@fluidframework/protocol-definitions";
+import { defaultHash, getNextHash } from "@fluidframework/server-services-client";
 import {
     DefaultServiceConfiguration,
     ICollection,
@@ -178,6 +179,20 @@ describe("Routerlicious", () => {
                         sequencedMessage.operation.clientSequenceNumber,
                         message.operation.clientSequenceNumber);
                     assert.equal(sequencedMessage.operation.sequenceNumber, 2);
+                });
+
+                it("Calcuation of rolling hash should match when caculated externally", async () => {
+                    const join = messageFactory.createJoin();
+                    const message = messageFactory.create();
+                    await lambda.handler(kafkaMessageFactory.sequenceMessage(join, testId));
+                    await lambda.handler(kafkaMessageFactory.sequenceMessage(message, testId));
+                    await quiesceWithClientsConnected();
+                    const sent = testKafka.getRawMessages();
+                    assert.equal(2, sent.length);
+                    const op1 = (sent[0].value as ISequencedOperationMessage).operation;
+                    const op2 = (sent[1].value as ISequencedOperationMessage).operation;
+                    assert.equal(op1.expHash1, getNextHash(op1, defaultHash));
+                    assert.equal(op2.expHash1, getNextHash(op2, op1.expHash1));
                 });
 
                 it("Should ticket new clients connecting above msn", async () => {

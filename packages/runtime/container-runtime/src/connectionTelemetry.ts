@@ -153,6 +153,7 @@ class OpPerfTelemetry {
             this.logger.sendPerformanceEvent({
                 eventName: "OpRoundtripTime",
                 sequenceNumber,
+                referenceSequenceNumber: message.referenceSequenceNumber,
                 duration,
                 category,
             });

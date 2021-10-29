@@ -99,7 +99,7 @@ class BlobCache {
         if (this.blobCacheTimeout !== undefined) {
             // If we already have an outstanding timer, just signal that we should defer the clear
             this.deferBlobCacheClear = true;
-        } else {
+        } else if (this.purgeEnabled) {
             // If we don't have an outstanding timer, set a timer
             // When the timer runs out, we'll decide whether to proceed with the cache clear or reset the timer
             const clearCacheOrDefer = () => {
@@ -114,10 +114,8 @@ class BlobCache {
                     // We want to optimize both - memory footprint and number of future requests to storage.
                     // Note that Container can realize data store or DDS on-demand at any point in time, so we do not
                     // control when blobs will be used.
-                    if (this.purgeEnabled) {
-                        this._blobCache.forEach((_, blobId) => this.blobsEvicted.add(blobId));
-                        this._blobCache.clear();
-                    }
+                    this._blobCache.forEach((_, blobId) => this.blobsEvicted.add(blobId));
+                    this._blobCache.clear();
                 }
             };
             this.blobCacheTimeout = setTimeout(clearCacheOrDefer, this.blobCacheTimeoutDuration);

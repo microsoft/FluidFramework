@@ -4,6 +4,7 @@
  */
 
 import * as fs from "fs";
+import child_process from "child_process";
 
 export type PackageDetails ={
     readonly name: string;
@@ -49,18 +50,42 @@ export function getPackageDetails(packageDir: string): PackageDetails {
 
     const pkgJson: PackageJson = JSON.parse(fs.readFileSync(packagePath).toString());
 
-    if(pkgJson.version !== pkgJson.typeValidation?.version){
-        if(pkgJson.typeValidation !== undefined){
-            pkgJson.devDependencies[`${pkgJson.name}-${pkgJson.typeValidation.version}`] =
-                `npm:${pkgJson.name}@${pkgJson.typeValidation.version}`;
+    // normalize the version to remove any pre-release version info,
+    // as we shouldn't change the type validation version for pre-release versions
+    const normalizedVersion =
+        pkgJson.version.includes("-") ?
+            pkgJson.version.substring(0, pkgJson.version.indexOf("-")) :
+            pkgJson.version;
 
-            pkgJson.devDependencies = createSortedObject(pkgJson.devDependencies);
-        }
+    // if the packages has no type validation data, then initialize it
+    if(pkgJson.typeValidation === undefined){
         pkgJson.typeValidation = {
-            version: pkgJson.version,
-            broken: pkgJson.typeValidation?.broken ?? {}
+            version: normalizedVersion,
+            broken: {}
         }
         fs.writeFileSync(packagePath, JSON.stringify(pkgJson, undefined, 2));
+    }else if(normalizedVersion !== pkgJson.typeValidation?.version){
+        // check that the version exists on npm before trying to add the
+        // dev dep and bumping the typeValidation version
+        // if the version does not exist, we will defer updating the package
+        const packageDef = `${pkgJson.name}@${pkgJson.typeValidation.version}`
+        const args = ["view", packageDef,"--json"];
+        const result = child_process.execSync(`npm ${args.join(" ")}`,{cwd:packageDir})
+        const remotePackage: PackageJson | undefined = result.length >0 ? JSON.parse(result.toString()) : undefined;
+
+        if(remotePackage?.name === pkgJson.name && remotePackage?.version === pkgJson.typeValidation.version){
+
+            pkgJson.devDependencies[`${pkgJson.name}-${pkgJson.typeValidation.version}`] =
+            `npm:${packageDef}`;
+
+            pkgJson.devDependencies = createSortedObject(pkgJson.devDependencies);
+
+            pkgJson.typeValidation = {
+                version: normalizedVersion,
+                broken: pkgJson.typeValidation?.broken ?? {}
+            }
+            fs.writeFileSync(packagePath, JSON.stringify(pkgJson, undefined, 2));
+        }
     }
 
     const oldVersions: string[] =
@@ -69,9 +94,9 @@ export function getPackageDetails(packageDir: string): PackageDetails {
     return {
         name: pkgJson.name,
         packageDir,
-        version: pkgJson.version,
+        version: normalizedVersion,
         oldVersions,
-        broken: pkgJson.typeValidation.broken
+        broken: pkgJson.typeValidation?.broken ?? {}
     }
 }
 
