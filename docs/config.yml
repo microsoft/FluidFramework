@@ -59,6 +59,7 @@ params:
   update:
     version: "0.48"
     showBanner: true
+    bannerClose: false
     urlRef: "docs/updates/v0.48.md"
 
 menu:
