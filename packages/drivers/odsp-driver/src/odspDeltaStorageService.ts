@@ -76,6 +76,7 @@ export class OdspDeltaStorageService {
                     signal: abort.signal,
                 },
                 "ops",
+                true,
             );
             clearTimeout(timer);
             const deltaStorageResponse = response.content;

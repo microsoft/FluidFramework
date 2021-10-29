@@ -228,7 +228,7 @@ export class SharedPropertyTree extends SharedObject {
 		if (this.transmissionsHaveBeenStopped) {
 			this.enqueuedMessages.push(cloneDeep(change));
 		} else {
-			this.submitLocalMessage(change);
+			this.submitLocalMessage(cloneDeep(change));
 		}
 	}
 
