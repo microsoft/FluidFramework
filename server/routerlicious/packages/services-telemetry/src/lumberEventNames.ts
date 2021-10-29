@@ -19,5 +19,17 @@ export enum LumberEventName {
     // Lambdas
     ClientSummary = "ClientSummary",
     DeliHandler = "DeliHandler",
+    KafkaRunner = "KafkaRunner",
     ScribeHandler = "ScribeHandler",
+    ServiceSummary = "ServiceSummary",
+    SummaryReader = "SummaryReader",
+
+    // Reliability
+    SessionResult = "SessionResult",
+    StartSessionResult = "StartSessionResult",
+    ScribeSessionResult = "ScribeSessionResult",
+
+    // Miscellaneous
+    ConnectDocument = "ConnectDocument",
+    HttpRequest = "HttpRequest",
 }
