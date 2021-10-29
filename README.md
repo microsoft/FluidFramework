@@ -95,7 +95,7 @@ Each operation would be performed in its own `Edit`, which is `SharedTree`'s tra
 If it is undesirable that one of the above operations could fail to apply while the other could succeed, you should instead leverage `Checkout`. A `Checkout`--whose name is inspired from source control--can be thought of as a local view of the `SharedTree` which provides [snapshot isolation](https://en.wikipedia.org/wiki/Snapshot_isolation#:~:text=In%20databases%2C%20and%20transaction%20processing,the%20transaction%20itself%20will%20successfully). Editing the `SharedTree` using a `Checkout` can be done by opening an edit, applying a number of changes, and closing the edit.
 
 ```typescript
-const checkout = new BasicCheckout(tree);
+const checkout = new EagerCheckout(tree);
 checkout.openEdit();
 checkout.applyChanges(Insert.create([fooNode], StablePlace.atStartOf({ parent: initialTree, label: 'foo' })));
 checkout.applyChanges(Insert.create([barNode], StablePlace.atStartOf({ parent: initialTree, label: 'bar' })));

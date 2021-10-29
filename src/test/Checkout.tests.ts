@@ -36,8 +36,9 @@ import {
  * Checkout test suite
  */
 export function checkoutTests(
-	suiteName: string,
-	checkoutFactory: (tree: SharedTree) => Promise<Checkout<Change, Transaction.Failure>>
+	checkoutName: string,
+	checkoutFactory: (tree: SharedTree) => Promise<Checkout<Change, Transaction.Failure>>,
+	additionalTests?: () => void
 ): Mocha.Suite {
 	async function setUpTestCheckout(
 		options: SharedTreeTestingOptions = { localMode: true, noFailOnError: true }
@@ -79,7 +80,7 @@ export function checkoutTests(
 		return data.changeCount;
 	}
 
-	return describe(suiteName, () => {
+	return describe(checkoutName, () => {
 		it('can only have one edit open at a time', async () => {
 			const { checkout } = await setUpTestCheckout();
 			checkout.openEdit();
@@ -360,6 +361,18 @@ export function checkoutTests(
 			expect(changeCount).equals(1);
 		});
 
+		it('automatically loads views from edits committed directly on it', async () => {
+			const { checkout } = await setUpTestCheckout({ initialTree: simpleTestTree });
+			const viewBefore = checkout.currentView;
+			let changeCount = 0;
+			checkout.on(CheckoutEvent.ViewChange, () => {
+				changeCount += 1;
+			});
+			checkout.applyEdit(Delete.create(StableRange.only(left)));
+			expect(changeCount).equals(1);
+			expect(viewBefore.equals(checkout.currentView)).to.be.false;
+		});
+
 		const treeOptions = { initialTree: simpleTestTree, localMode: false };
 		const secondTreeOptions = {
 			id: 'secondTestSharedTree',
@@ -389,6 +402,7 @@ export function checkoutTests(
 			// Wait for edit to be included in checkout.
 			await checkout.waitForPendingUpdates();
 			expect(changeCount).equals(1);
+			expect(secondTree.equals(tree));
 		});
 
 		it('connected state with a remote SharedTree equates correctly during edits', async () => {
@@ -422,9 +436,11 @@ export function checkoutTests(
 			expect(checkout.currentView.hasEqualForest(secondCheckout.currentView)).to.be.true;
 			expect(tree.equals(secondTree)).to.be.true;
 			checkout.closeEdit();
+			await checkout.waitForPendingUpdates();
 			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.false;
 			expect(checkout.currentView.hasEqualForest(secondCheckout.currentView)).to.be.true;
 			secondCheckout.closeEdit();
+			await secondCheckout.waitForPendingUpdates();
 			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.true;
 			expect(checkout.currentView.hasEqualForest(secondCheckout.currentView)).to.be.true;
 			await checkout.waitForPendingUpdates();
@@ -454,14 +470,14 @@ export function checkoutTests(
 			// Concurrently, the second client deletes the right node. This will not conflict with the operation performed
 			// on the left trait on the first client.
 			secondCheckout.applyEdit(Delete.create(StableRange.only(right)));
+
+			// This must be called in order to work with PrefetchingCheckout as it must be called in order to submit outgoing edits
+			// to the tree due to possible payload upload.
 			await secondCheckout.waitForPendingUpdates();
 
 			// Deliver the remote change. Since there will not be any conflicts, the result should merge locally and both trait
 			// modifications should be reflected in the current view.
 			containerRuntimeFactory.processAllMessages();
-
-			await checkout.waitForPendingUpdates();
-			await secondCheckout.waitForPendingUpdates();
 
 			let leftTrait = checkout.currentView.getTrait(leftTraitLocation);
 			let rightTrait = checkout.currentView.getTrait(rightTraitLocation);
@@ -475,6 +491,7 @@ export function checkoutTests(
 			expect(secondRightTrait.length).equals(0);
 
 			// Merge in the latest changes.
+			await checkout.waitForPendingUpdates();
 			const rebaseResult = checkout.rebaseCurrentEdit();
 			expect(rebaseResult).equals(EditValidationResult.Valid);
 			leftTrait = checkout.currentView.getTrait(leftTraitLocation);
@@ -483,9 +500,11 @@ export function checkoutTests(
 			expect(rightTrait.length).equals(0);
 
 			checkout.closeEdit();
+			// Again, call this prior to processing ops to accommodate PrefetchingCheckout
 			await checkout.waitForPendingUpdates();
 			containerRuntimeFactory.processAllMessages();
-
+			await secondCheckout.waitForPendingUpdates();
+			expect(checkout.currentView.equals(secondCheckout.currentView));
 			expect(tree.equals(secondTree)).to.be.true;
 		});
 
@@ -536,5 +555,7 @@ export function checkoutTests(
 			// Assert
 			expect(checkout.tree.listenerCount(SharedTreeEvent.EditCommitted)).to.equal(0);
 		});
+
+		additionalTests?.();
 	});
 }

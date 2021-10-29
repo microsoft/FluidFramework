@@ -8,13 +8,13 @@ import { Checkout } from './Checkout';
 import { EditCommittedEventArguments, GenericSharedTree } from './generic';
 
 /**
- * Basic Session that stays up to date with the SharedTree.
+ * Checkout that always stays up to date with the SharedTree.
+ * This means that {@link EagerCheckout.waitForPendingUpdates} is always a no-op since EagerCheckout is always up to date.
  *
- * waitForPendingUpdates is always a no-op since BasicCheckout is always up to date.
  * @public
  * @sealed
  */
-export class BasicCheckout<TChange, TFailure = unknown> extends Checkout<TChange, TFailure> {
+export class EagerCheckout<TChange, TFailure = unknown> extends Checkout<TChange, TFailure> {
 	/**
 	 * @param tree - the tree
 	 */

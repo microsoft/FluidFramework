@@ -36,7 +36,8 @@ export {
 } from './TreeView';
 export { LogViewer, Revision } from './LogViewer';
 export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout';
-export { BasicCheckout } from './BasicCheckout';
+export { LazyCheckout } from './LazyCheckout';
+export { EagerCheckout } from './EagerCheckout';
 export * from './ReconciliationPath';
 export * from './MergeHealth';
 export {
