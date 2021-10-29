@@ -123,8 +123,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public get clientDetails(): IClientDetails {
-        // back-compat 0.38 - clientDetails is added to IFluidDataStoreContext in 0.38.
-        return this.dataStoreContext.clientDetails ?? this.dataStoreContext.containerRuntime.clientDetails;
+        return this.dataStoreContext.clientDetails;
     }
 
     public get isAttached(): boolean {
@@ -140,9 +139,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public get routeContext(): IFluidHandleContext {
-        // back-compat 0.38 - IFluidHandleContext is added to IFluidDataStoreContext in 0.38.
-        return this.dataStoreContext.IFluidHandleContext ?? this.dataStoreContext.containerRuntime.IFluidHandleContext;
+        return this.dataStoreContext.IFluidHandleContext;
     }
+
+    public handleDecoded(handleUrl: string): void {}
 
     private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
     public get IFluidSerializer() { return this.serializer; }
@@ -191,8 +191,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         super();
 
         this.logger = ChildLogger.create(
-            // back-compat 0.38 - logger is added to IFluidDataStoreContext in 0.38.
-            dataStoreContext.logger ?? dataStoreContext.containerRuntime.logger,
+            dataStoreContext.logger,
             undefined,
             {all:{ dataStoreId: uuid() }},
         );
@@ -600,7 +599,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         builder.addRouteToAllNodes(this.absolutePath);
 
         // Get the outbound routes and add a GC node for this channel.
-        builder.addNode("/", this.getOutboundRoutes());
+        builder.addSingleNode("/", this.getOutboundRoutes());
     }
 
     /**
@@ -652,6 +651,24 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         // Update the used routes in each context. Used routes is empty for unused context.
         for (const [contextId, context] of this.contexts) {
             context.updateUsedRoutes(usedContextRoutes.get(contextId) ?? [], gcTimestamp);
+        }
+    }
+
+    /**
+     * After GC has run, called to notify this channel of routes whose unreferenced state needs to be reset. These
+     * are routes to nodes in the channel that have transitioned from `unreferenced -> referenced -> unreferenced`
+     * since the last GC run.
+     * @param routesToReset - The routes to reset in this channel.
+     */
+    public resetUnreferencedState(routesToReset: string[]) {
+        // Get a map of channel ids to routes used in it.
+        const contextRoutesToReset = getChildNodesUsedRoutes(routesToReset);
+
+        // Call individual contexts to reset their unreferenced state.
+        for (const [id, routes] of contextRoutesToReset) {
+            const channelContext = this.contexts.get(id);
+            assert(channelContext !== undefined, "Referenced route does not belong to any known context");
+            channelContext.resetUnreferencedState(routes);
         }
     }
 

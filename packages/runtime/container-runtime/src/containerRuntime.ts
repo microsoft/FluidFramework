@@ -47,7 +47,7 @@ import {
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
 import { DataCorruptionError, GenericError } from "@fluidframework/container-utils";
-import { runGarbageCollection } from "@fluidframework/garbage-collector";
+import { cloneGCData, IGCResult, runGarbageCollection } from "@fluidframework/garbage-collector";
 import {
     BlobTreeEntry,
     TreeTreeEntry,
@@ -792,6 +792,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly shouldRunGC: boolean;
     // This is the source of truth for whether GC sweep phase should run or not.
     private readonly shouldRunSweep: boolean;
+    // Stores the GC data from the last GC run.
+    private gcDataFromLastRun: IGarbageCollectionData | undefined;
+
     /**
      * True if generating summaries with isolated channels is
      * explicitly disabled. This only affects how summaries are written,
@@ -1674,6 +1677,60 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
+     * Find and reset nodes whose unreferenced state, such as unreferenced time, needs to be reset. These are nodes
+     * that transitioned from `unreferenced -> referenced -> unreferenced` since the last GC run.
+     * @param resultFromCurrentRun - The result of the current GC run.
+     */
+    private resetUnreferencedState(resultFromCurrentRun: IGCResult) {
+        assert(this.gcDataFromLastRun !== undefined, "GC data from last run should be available");
+
+        // Get the list of references that were added since the last GC run.
+        // TODO: The cast to any is done temporarily until the change to IFluidHandleContext in `core-interfaces` is
+        // merged and client is updated to the new `core-interfaces` version.
+        const outboundRoutesSinceLastGC: string[] = (this.IFluidHandleContext as any).decodedHandles;
+
+        /**
+         * Run GC on the data from the last run to get the reference graph starting from the above routes.
+         * Note that this has to be done on the reference graph from the last run because routes added since then may
+         * have had outbound references that have been removed now. We need to get a list of all those references.
+         * For example, consider the following scenario where A, B and C are data stores:
+         * 1. Last summary happened at t1. Reference graph: A    B (t1) -> C (t1). B and C have unreferenced time t1.
+         * 2. Op adds reference from A -> B. A client can add in-memory references to both B and C.
+         * 3. Op removes reference from B -> C.
+         * 4. Op removes reference from A -> B.
+         * 5. Current summary is at t2. Reference graph: A    B (t2)    C (t2). We need to find that C was referneced
+         *    and update it's unreferenced timestamp.
+         *
+         * Another note: We don't need to do this on the current reference graph. The reason being that we only care
+         * about objects that were present during the last GC run. If there are new objects added, we won't identify
+         * them and we don't need to. If these new objects add references to existing objects, then we will know about
+         * them and reset them.
+         */
+        const referencedNodesSinceLastGC = runGarbageCollection(
+            this.gcDataFromLastRun.gcNodes,
+            outboundRoutesSinceLastGC,
+            this.logger,
+        ).referencedNodeIds;
+
+        /**
+         * Now, we need to find nodes that satisfy the following:
+         * 1. They were unreferenced in the last GC run.
+         * 2. They are unreferenced in the current GC run.
+         * 3. They were referenced between the last run and current run.
+         * Their unreferenced timestamp (and maybe other state) has to be updated as per the current state of the sytem.
+         */
+        const resultFromLastRun: IGCResult = runGarbageCollection(
+            this.gcDataFromLastRun.gcNodes,
+            [ "/" ],
+            this.logger,
+        );
+
+        let nodesToReset = referencedNodesSinceLastGC.filter((id) => resultFromLastRun.deletedNodeIds.includes(id));
+        nodesToReset = nodesToReset.filter((id) => resultFromCurrentRun.deletedNodeIds.includes(id));
+        this.dataStores.resetUnreferencedState(nodesToReset);
+    }
+
+    /**
      * Runs garbage collection and udpates the reference / used state of the nodes in the container.
      * @returns the number of data stores that have been marked as unreferenced.
      */
@@ -1685,12 +1742,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 deletedDataStores?: number,
                 totalDataStores?: number,
             } = {};
+
+            // If we are running GC for the first time in this session, get the GC data from the last run from the
+            // initial GC data in base summary.
+            if (this.gcDataFromLastRun === undefined) {
+                this.gcDataFromLastRun = await this.dataStores.getInitialGCData();
+            }
+
             // Get the container's GC data and run GC on the reference graph in it.
             const gcData = await this.dataStores.getGCData(fullGC);
             const { referencedNodeIds, deletedNodeIds } = runGarbageCollection(
-                gcData.gcNodes, [ "/" ],
+                gcData.gcNodes,
+                [ "/" ],
                 this.logger,
             );
+
+            // Reset unreferenced state of nodes that transitioned from `unreferenced -> referenced -> unreferenced`
+            // since the last GC run.
+            this.resetUnreferencedState({ referencedNodeIds, deletedNodeIds });
 
             // Update our summarizer node's used routes. Updating used routes in summarizer node before
             // summarizing is required and asserted by the the summarizer node. We are the root and are
@@ -1718,6 +1787,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (this.gcTestMode) {
                 this.dataStores.deleteUnusedRoutes(deletedNodeIds);
             }
+
+            // Update the GC data as per this run.
+            this.gcDataFromLastRun = cloneGCData(gcData);
             event.end(gcStats);
             return gcStats as IGCStats;
         },
@@ -1767,6 +1839,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
         assert(summarizeResult.summary.type === SummaryType.Tree,
             0x12f /* "Container Runtime's summarize should always return a tree" */);
+
+        // Reset the decodeHandles. We need to keep track of handles decoded between two summaries.
+        // TODO: The cast to any is done temporarily until the change to IFluidHandleContext in `core-interfaces` is
+        // merged and client is updated to the new `core-interfaces` version.
+        (this.IFluidHandleContext as any).decodedHandles = [];
 
         return summarizeResult as ISummaryTreeWithStats;
     }

@@ -80,6 +80,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     getQuorum(): IQuorum;
     // (undocumented)
+    handleDecoded(handleUrl: string): void;
+    // (undocumented)
     readonly id: string;
     // (undocumented)
     get IFluidHandleContext(): this;
@@ -104,6 +106,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     raiseContainerWarning(warning: ContainerWarning): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
+    resetUnreferencedState(routesToReset: string[]): void;
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
     reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;

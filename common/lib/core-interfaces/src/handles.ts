@@ -39,6 +39,12 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
     attachGraph(): void;
 
     resolveHandle(request: IRequest): Promise<IResponse>;
+
+    /**
+     * Called when a handle belonging to this context is decoded.
+     * @param url - The url of the decoded handle.
+     */
+    handleDecoded(url: string): void;
 }
 
 export const IFluidHandle: keyof IProvideFluidHandle = "IFluidHandle";

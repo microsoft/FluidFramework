@@ -279,4 +279,12 @@ export class RemoteChannelContext implements IChannelContext {
          */
         this.summarizerNode.updateUsedRoutes([""]);
     }
+
+    public resetUnreferencedState(referencedRoutes: string[]) {
+        /**
+         * Currently, DDSs are always considered referenced and are not garbage collected.
+         * Once we have GC at DDS level, this channel context's state will need to be reset.
+         * See - https://github.com/microsoft/FluidFramework/issues/4611
+         */
+    }
 }

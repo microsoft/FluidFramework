@@ -16,6 +16,9 @@ export class ContainerFluidHandleContext implements IFluidHandleContext {
     public get IFluidRouter() { return this; }
     public get IFluidHandleContext() { return this; }
     public readonly absolutePath: string;
+    // Stores handles in this context that are decoded. Basically, handles that are parsed to get the underlying
+    // objects. It helps in keeping track of all remote objects that are received and loaded by this container.
+    public decodedHandles: string[] = [];
 
     /**
      * Creates a new ContainerFluidHandleContext.
@@ -41,5 +44,9 @@ export class ContainerFluidHandleContext implements IFluidHandleContext {
 
     public async resolveHandle(request: IRequest): Promise<IResponse> {
         return this.runtime.resolveHandle(request);
+    }
+
+    public handleDecoded(url: string): void {
+        this.decodedHandles.push(url);
     }
 }

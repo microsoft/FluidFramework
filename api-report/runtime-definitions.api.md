@@ -125,6 +125,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     readonly id: string;
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     processSignal(message: any, local: boolean): void;
+    resetUnreferencedState(routesToReset: string[]): void;
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
     setConnectionState(connected: boolean, clientId?: string): any;
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
@@ -313,6 +314,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
     isReferenced(): boolean;
+    resetUnreferencedState(): void;
     // (undocumented)
     summarize(fullTree: boolean, trackState?: boolean): Promise<ISummarizeResult>;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;

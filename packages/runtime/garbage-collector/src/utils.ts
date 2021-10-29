@@ -90,8 +90,14 @@ export function removeRouteFromAllNodes(gcNodes: { [ id: string ]: string[] }, o
 export class GCDataBuilder implements IGarbageCollectionData {
     public readonly gcNodes: { [ id: string ]: string[] } = {};
 
-    public addNode(id: string, outboundRoutes: string[]) {
-        this.gcNodes[id] = outboundRoutes;
+    public addSingleNode(id: string, outboundRoutes: string[]) {
+        this.gcNodes[id] = Array.from(outboundRoutes);
+    }
+
+    public addNodes(gcNodes: { [ id: string ]: string[] }) {
+        for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
+            this.gcNodes[id] = Array.from(outboundRoutes);
+        }
     }
 
     /**
@@ -117,7 +123,7 @@ export class GCDataBuilder implements IGarbageCollectionData {
             }
 
             // Add the outbound routes against the normalized and prefixed id.
-            this.gcNodes[normalizedId] = outboundRoutes;
+            this.gcNodes[normalizedId] = Array.from(outboundRoutes);
         }
     }
 

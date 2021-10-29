@@ -13,8 +13,12 @@ export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionD
 // @public (undocumented)
 export class GCDataBuilder implements IGarbageCollectionData {
     // (undocumented)
-    addNode(id: string, outboundRoutes: string[]): void;
+    addNodes(gcNodes: {
+        [id: string]: string[];
+    }): void;
     addRouteToAllNodes(outboundRoute: string): void;
+    // (undocumented)
+    addSingleNode(id: string, outboundRoutes: string[]): void;
     // (undocumented)
     readonly gcNodes: {
         [id: string]: string[];

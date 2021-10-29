@@ -203,9 +203,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private readonly thresholdOpsCounter: ThresholdCounter;
     private static readonly pendingOpsCountThreshold = 1000;
 
-    // The used state of this node as per the last GC run. This is used to update the used state of the channel
-    // if it realizes after GC is run.
-    private lastUsedState: { usedRoutes: string[], gcTimestamp?: number } | undefined;
+    // If the data store is not realized when GC runs, this stores the used state. It is used to update the used state
+    // of the channel when it realizes.
+    private pendingUsedState: { usedRoutes: string[], gcTimestamp?: number } | undefined;
+    // If the data store is not realized when GC runs, this stores the routes to reset. It is used to reset the routes
+    // of the channel when it realizes.
+    private pendingRoutesToReset: string[] | undefined;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
@@ -459,6 +462,28 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     /**
+     * After GC has run, called to notify this data stores of routes whose unreferenced state needs to be reset. These
+     * are routes to nodes in the data store that have transitioned from `unreferenced -> referenced -> unreferenced`
+     * since the last GC run.
+     * @param routesToReset - The routes to reset in this data store.
+     */
+    public resetUnreferencedState(routesToReset: string[]) {
+        this.summarizerNode.resetUnreferencedState();
+
+        /**
+         * If the data store is loaded, call the channel so it can reset the unreferened state of the child contexts.
+         * If the data store has not been loaded yet, store these routes to call the channel when it loads. It's safe
+         * to store only the last routes because this data will be realized as part of the summary that follows GC
+         * Basically, if the data store's unreferenced state is reset, it will be summarized.
+         */
+        if (this.loaded) {
+            this.resetChannelUnreferencedState(routesToReset);
+        } else {
+            this.pendingRoutesToReset = routesToReset;
+        }
+    }
+
+    /**
      * After GC has run, called to notify the data store of routes used in it. These are used for the following:
      * 1. To identify if this data store is being referenced in the document or not.
      * 2. To determine if it needs to re-summarize in case used routes changed since last summary.
@@ -475,41 +500,66 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.summarizerNode.updateUsedRoutes(usedRoutes, gcTimestamp);
 
         /**
-         * If the data store has not been realized yet, we need this used state to update the used state of the channel
-         * when it realizes. It's safe to keep only the last used state because if something changes because of this GC
-         * run, the data store will be immediately realized as part of the summary that follows GC. For example, if a
-         * child's reference state changes, the gcTimestamp has to be used to update its unreferencedTimestamp. Since
-         * it will result in a change in this data store's used routes, it will be realized to regenerate its summary.
+         * If the data store is loaded, call the channel so it can update the used routes of the child contexts.
+         * If the data store has not been loaded yet, store this used state to call the channel when it loads. It's safe
+         * safe to store only the last used state because if something changes because of this GC run, the data store
+         * will be immediately realized as part of the summary that follows GC. For example, if a child's reference
+         * state changes, the gcTimestamp has to be used to update its unreferencedTimestamp. Since it will result in a
+         * change in this data store's used routes, it will be realized to regenerate its summary.
          */
-        this.lastUsedState = { usedRoutes, gcTimestamp };
-
-        // If we are loaded, call the channel so it can update the used routes of the child contexts.
-        // If we are not loaded, we will update this when we are realized.
         if (this.loaded) {
-            this.updateChannelUsedRoutes();
+            this.updateChannelUsedRoutes(usedRoutes, gcTimestamp);
+        } else {
+            this.pendingUsedState = { usedRoutes, gcTimestamp };
         }
     }
 
     /**
-     * Updates the used routes of the channel and its child contexts. The channel must be loaded before calling this.
+     * Updates pending GC state of the channel, if any. There can be pending state when GC runs for this data store
+     * before it is loaded.
+     */
+    private updateChannelPendingGCState() {
+        if (this.pendingUsedState !== undefined) {
+            this.updateChannelUsedRoutes(this.pendingUsedState.usedRoutes, this.pendingUsedState.gcTimestamp);
+        }
+        if (this.pendingRoutesToReset !== undefined) {
+            this.resetChannelUnreferencedState(this.pendingRoutesToReset);
+        }
+    }
+
+    /**
+     * Updates the used routes of the channel's child contexts. The channel must be loaded before calling this.
      * It is called in these two scenarions:
      * 1. When the used routes of the data store is updated and the data store is loaded.
-     * 2. When the data store is realized. This updates the channel's used routes as per last GC run.
+     * 2. When the data store is realized and there was a GC run before that.
      */
-    private updateChannelUsedRoutes() {
+    private updateChannelUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         assert(this.loaded, 0x144 /* "Channel should be loaded when updating used routes" */);
         assert(this.channel !== undefined, 0x145 /* "Channel should be present when data store is loaded" */);
 
-        // If there is no lastUsedState, GC has not run up until this point.
-        if (this.lastUsedState === undefined) {
-            return;
-        }
-
         // Remove the route to this data store, if it exists.
-        const usedChannelRoutes = this.lastUsedState.usedRoutes.filter(
+        const usedChannelRoutes = usedRoutes.filter(
             (id: string) => { return id !== "/" && id !== ""; },
         );
-        this.channel.updateUsedRoutes(usedChannelRoutes, this.lastUsedState.gcTimestamp);
+        this.channel.updateUsedRoutes(usedChannelRoutes, gcTimestamp);
+    }
+
+    /**
+     * Reset unreferenced state of the channel's child contexts. The channel must be loaded before calling this.
+     * It is called in these two scenarions:
+     * 1. When the unreferenced state of the data store is reset and the data store is loaded.
+     * 2. When the data store is realized and there was a GC run before that.
+     */
+    private resetChannelUnreferencedState(routes: string[]) {
+        assert(this.loaded, "Channel should be loaded when resetting unreferenced state");
+        assert(this.channel !== undefined, "Channel should be present when data store is loaded");
+
+        // Remove the route to this data store, if it exists.
+        const channelResetRoutes = routes.filter(
+            (id: string) => { return id !== "/" && id !== ""; },
+        );
+        // back-compat: 0.51. resetUnreferencedState is added to IFluidDataStoreChannel in 0.51.
+        this.channel.resetUnreferencedState?.(channelResetRoutes);
     }
 
     /**
@@ -599,13 +649,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             Object.freeze(this.pkg);
 
             /**
-             * Update the used routes of the channel. If GC has run before this data store was realized, we will have
-             * the used routes saved. So, this will ensure that all the child contexts have up-to-date used routes as
-             * per the last time GC was run.
+             * Update the pending GC data of the channel. If GC has run before this data store was realized, we may
+             * have pending state.
              * Also, this data store may have been realized during summarize. In that case, the child contexts need to
-             * have their used routes updated to determine if its needs to summarize again and to add it to the summary.
+             * have their pending state updated to determine if it needs to summarize again.
              */
-            this.updateChannelUsedRoutes();
+            this.updateChannelPendingGCState();
 
             // And notify the pending promise it is now available
             this.channelDeferred.resolve(this.channel);

@@ -45,6 +45,14 @@ export interface IChannelContext {
      * 4. To update the timestamp when this context is marked as unreferenced.
      */
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+
+    /**
+     * After GC has run, called to notify this context of routes whose unreferenced state needs to be reset. These
+     * are routes to nodes in the context that have transitioned from `unreferenced -> referenced -> unreferenced`
+     * since the last GC run.
+     * @param routesToReset - The routes to reset in this context.
+     */
+    resetUnreferencedState(referencedRoutes: string[]): void;
 }
 
 export function createServiceEndpoints(

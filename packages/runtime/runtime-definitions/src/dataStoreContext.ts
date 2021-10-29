@@ -202,6 +202,14 @@ export interface IFluidDataStoreChannel extends
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 
     /**
+     * After GC has run, called to notify this channel of routes whose unreferenced state needs to be reset. These
+     * are routes to nodes in the channel that have transitioned from `unreferenced -> referenced -> unreferenced`
+     * since the last GC run.
+     * @param routesToReset - The routes to reset in this channel.
+     */
+    resetUnreferencedState(routesToReset: string[]): void;
+
+    /**
      * Notifies this object about changes in the connection state.
      * @param value - New connection state.
      * @param clientId - ID of the client. It's old ID when in disconnected state and

@@ -460,8 +460,47 @@ export class DataStores implements IDisposable {
             }));
 
         // Get the outbound routes and add a GC node for this channel.
-        builder.addNode("/", await this.getOutboundRoutes());
+        builder.addSingleNode("/", await this.getOutboundRoutes());
         return builder.getGCData();
+    }
+
+    /**
+     * Gets the GC data from the initial (base) summary this container loaded from.
+     */
+    public async getInitialGCData(): Promise<IGarbageCollectionData> {
+        const builder = new GCDataBuilder();
+        // Iterate over each store and get their initial GC data.
+        await Promise.all(Array.from(this.contexts)
+            .filter(([_, context]) => {
+                // Get GC data only for attached contexts. Detached contexts are not connected in the GC reference
+                // graph so any references they might have won't be connected as well.
+                return context.attachState === AttachState.Attached;
+            }).map(async ([contextId, context]) => {
+                const contextInitialGCData = (await context.getInitialGCSummaryDetails()).gcData;
+                if (contextInitialGCData !== undefined) {
+                    builder.addNodes(contextInitialGCData.gcNodes);
+                }
+            }));
+
+        return builder.getGCData();
+    }
+
+    /**
+     * After GC has run, called to notify this container's data stores of routes whose unreferenced state needs to be
+     * reset. These are routes to nodes that have transitioned from `unreferenced -> referenced -> unreferenced` since
+     * the last GC run.
+     * @param routesToReset - The routes to reset in all data stores in this container.
+     */
+    public resetUnreferencedState(routesToReset: string[]) {
+        // Get a map of data store ids to routes in it.
+        const dataStoreRoutesToReset = getChildNodesUsedRoutes(routesToReset);
+
+        // Call individual data stores to reset their unreferenced state.
+        for (const [id, routes] of dataStoreRoutesToReset) {
+            const dataStore = this.contexts.get(id);
+            assert(dataStore !== undefined, "Route does not belong to any known data store");
+            dataStore.resetUnreferencedState(routes);
+        }
     }
 
     /**

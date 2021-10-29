@@ -84,6 +84,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     // Tracks whether this node is inactive after being unreferenced for maxUnreferencedDurationMs.
     private inactive: boolean = false;
 
+    // Tracks if this node's unreferenced state was reset since the last GC run.
+    private stateResetSinceLastRun: boolean = false;
+
     // True if GC is disabled for this node. If so, do not track GC specific state for a summary.
     private readonly gcDisabled: boolean;
 
@@ -235,6 +238,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
                 const summaryNodeWithGC = new SummaryNodeWithGC(wipSerializedUsedRoutes!, summaryNode);
                 this.pendingSummaries.set(proposalHandle, summaryNodeWithGC);
             }
+
+            this.stateResetSinceLastRun = false;
         }
     }
 
@@ -366,6 +371,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         return this.usedRoutes.includes("") || this.usedRoutes.includes("/");
     }
 
+    public resetUnreferencedState(): void {
+        this.inactive = false;
+        this.unreferencedTimestampMs = undefined;
+        this.unreferencedTimer.clear();
+        this.stateResetSinceLastRun = true;
+    }
+
     public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         // Sort the given routes before updating. This will ensure that the routes compared in hasUsedStateChanged()
         // are in the same order.
@@ -383,9 +395,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             this.logErrorIfInactive("inactiveObjectRevived", gcTimestamp);
 
             // Clear unreferenced / inactive state, if any.
-            this.inactive = false;
-            this.unreferencedTimestampMs = undefined;
-            this.unreferencedTimer.clear();
+            this.resetUnreferencedState();
             return;
         }
 
@@ -460,9 +470,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     /**
-     * This tells whether the used state of this node has changed since last successful summary. If the used routes
-     * of this node changed, its used state is considered changed. Basically, if this node or any of its child nodes
-     * was previously used and became unused (or vice versa), its used state has changed.
+     * This tells whether the used state of this node has changed since last successful summary. Since the last GC run,
+     * if this node's used route changed or its unreferenced state was reset, its used state is considered changed.
      */
     private hasUsedStateChanged(): boolean {
         // If GC is disabled, we are not tracking used state, return false.
@@ -470,8 +479,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             return false;
         }
 
-        return this.referenceUsedRoutes === undefined ||
-            JSON.stringify(this.usedRoutes) !== JSON.stringify(this.referenceUsedRoutes);
+        return this.referenceUsedRoutes === undefined
+            || JSON.stringify(this.usedRoutes) !== JSON.stringify(this.referenceUsedRoutes)
+            || this.stateResetSinceLastRun;
     }
 }
 

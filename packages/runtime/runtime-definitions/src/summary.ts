@@ -156,6 +156,8 @@ export interface ISummarizerNode {
  * - deleteChild - Deletes a child node.
  * - isReferenced - This tells whether this node is referenced in the document or not.
  * - updateUsedRoutes - Used to notify this node of routes that are currently in use in it.
+ * - resetUnreferencedState - Used to notify this node to reset its unreferenced state.
+ * - getGCSummaryDetails - Returns GC details that may be added to this node's summary.
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
     summarize(fullTree: boolean, trackState?: boolean): Promise<ISummarizeResult>;
@@ -204,6 +206,12 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
      * as part of this GC run, this timestamp is used to update the time when it happens.
      */
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+
+    /**
+     * After GC has run, called to notify this node that its  unreferenced state needs to be reset. Basically, this
+     * node has transitioned from `unreferenced -> referenced -> unreferenced` since the last GC run.
+     */
+    resetUnreferencedState(): void;
 
     /** Returns the GC details that may be added to this node's summary. */
     getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
