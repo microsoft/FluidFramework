@@ -9,7 +9,7 @@ import { RevisionView, Side, TransactionView } from '../TreeView';
 import { BuildNode, TreeNode } from '../generic';
 import { Change, ChangeType, Detach, Insert, SetValue, StableRange, StablePlace } from './PersistedTypes';
 import { Transaction } from './Transaction';
-import { rangeFromStableRange } from './EditUtilities';
+import { isDetachedSequenceId, rangeFromStableRange } from './EditUtilities';
 
 /**
  * Given a sequence of changes, produces an inverse sequence of changes, i.e. the minimal changes required to revert the given changes
@@ -41,7 +41,16 @@ export function revert(changes: readonly Change[], before: RevisionView): Change
 				assert(!detachedNodes.has(destination), `Cannot revert Build: destination is already used by a Detach`);
 				builtNodes.set(
 					destination,
-					source.map((node) => (node as TreeNode<BuildNode>).identifier)
+					source.reduce((ids: NodeId[], curr: BuildNode) => {
+						if (isDetachedSequenceId(curr)) {
+							const nodesForDetachedSequence = builtNodes.get(curr);
+							assert(nodesForDetachedSequence, 'detached sequence must have associated built nodes');
+							ids.push(...nodesForDetachedSequence);
+						} else {
+							ids.push((curr as TreeNode<BuildNode>).identifier);
+						}
+						return ids;
+					}, [])
 				);
 				break;
 			}
