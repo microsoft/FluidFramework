@@ -7,26 +7,28 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { EditId } from '../Identifiers';
 import { RevisionView } from '../TreeView';
 import {
-	Edit,
 	BuildNode,
+	convertTreeNodes,
+	deepCloneStablePlace,
+	EditLogSummarizer,
 	GenericSharedTree,
 	NodeData,
 	SharedTreeSummaryBase,
 	SharedTreeSummaryWriteFormat,
 } from '../generic';
-import { OrderedEditSet } from '../EditLog';
-import { getSummaryByVersion, revert } from '../default-edits';
+import { ChangeType, ChangeTypeInternal, getSummaryByVersion, isDetachedSequenceId, revert } from '../default-edits';
+import { copyPropertyIfDefined, fail } from '../Common';
 import {
-	AnchoredChange,
-	AnchoredDelete,
-	AnchoredInsert,
-	AnchoredMove,
 	RangeAnchor,
 	PlaceAnchor,
 	NodeAnchor,
+	AnchoredChangeInternal,
+	AnchoredDetachInternal,
+	AnchoredConstraintInternal,
 } from './PersistedTypes';
 import { SharedTreeWithAnchorsFactory } from './Factory';
 import { TransactionWithAnchors } from './TransactionWithAnchors';
+import { AnchoredChange, AnchoredDelete, AnchoredInsert, AnchoredMove } from './EditUtilities';
 
 /**
  * Wrapper around a `SharedTreeWithAnchorsEditor` which provides ergonomic imperative editing functionality. All methods apply changes in
@@ -60,7 +62,7 @@ export class SharedTreeWithAnchorsEditor {
 	public insert(nodeOrNodes: BuildNode | BuildNode[], destination: PlaceAnchor): EditId {
 		return this.tree.applyEdit(
 			...AnchoredInsert.create(Array.isArray(nodeOrNodes) ? nodeOrNodes : [nodeOrNodes], destination)
-		);
+		).id;
 	}
 
 	/**
@@ -83,10 +85,10 @@ export class SharedTreeWithAnchorsEditor {
 	public move(source: RangeAnchor, destination: PlaceAnchor): EditId;
 	public move(source: NodeData | NodeAnchor | RangeAnchor, destination: PlaceAnchor): EditId {
 		if (!this.isRange(source)) {
-			return this.tree.applyEdit(...AnchoredMove.create(RangeAnchor.only(source), destination));
+			return this.tree.applyEdit(...AnchoredMove.create(RangeAnchor.only(source), destination)).id;
 		}
 
-		return this.tree.applyEdit(...AnchoredMove.create(source, destination));
+		return this.tree.applyEdit(...AnchoredMove.create(source, destination)).id;
 	}
 
 	/**
@@ -106,23 +108,14 @@ export class SharedTreeWithAnchorsEditor {
 	public delete(target: RangeAnchor): EditId;
 	public delete(target: NodeData | NodeAnchor | RangeAnchor): EditId {
 		if (!this.isRange(target)) {
-			return this.tree.applyEdit(AnchoredDelete.create(RangeAnchor.only(target)));
+			return this.tree.applyEdit(AnchoredDelete.create(RangeAnchor.only(target))).id;
 		}
 
-		return this.tree.applyEdit(AnchoredDelete.create(target));
-	}
-
-	/**
-	 * Reverts a previous edit.
-	 * @param edit - the edit to revert
-	 * @param view - the revision to which the edit is applied (not the output of applying edit: it's the one just before that)
-	 */
-	public revert(edit: Edit<AnchoredChange>, view: RevisionView): EditId {
-		return this.tree.applyEdit(...revert(edit.changes, view));
+		return this.tree.applyEdit(AnchoredDelete.create(target)).id;
 	}
 
 	public applyChanges(changes: readonly AnchoredChange[]): EditId {
-		return this.tree.applyEdit(...changes);
+		return this.tree.applyEdit(...changes).id;
 	}
 
 	private isRange(source: NodeData | NodeAnchor | RangeAnchor): source is RangeAnchor {
@@ -142,7 +135,11 @@ export class SharedTreeWithAnchorsEditor {
  * @public
  * @sealed
  */
-export class SharedTreeWithAnchors extends GenericSharedTree<AnchoredChange, TransactionWithAnchors.Failure> {
+export class SharedTreeWithAnchors extends GenericSharedTree<
+	AnchoredChange,
+	AnchoredChangeInternal,
+	TransactionWithAnchors.Failure
+> {
 	/**
 	 * Create a new SharedTreeWithAnchors. It will contain the default value (see initialTree).
 	 */
@@ -208,11 +205,20 @@ export class SharedTreeWithAnchors extends GenericSharedTree<AnchoredChange, Tra
 	}
 
 	/**
-	 * {@inheritDoc GenericSharedTree.generateSummary}
+	 * {@inheritDoc GenericSharedTree.revertChanges}
+	 * @internal
 	 */
-	protected generateSummary(editLog: OrderedEditSet<AnchoredChange>): SharedTreeSummaryBase {
+	public revertChanges(changes: readonly AnchoredChangeInternal[], before: RevisionView): AnchoredChangeInternal[] {
+		return revert(changes, before);
+	}
+
+	/**
+	 * {@inheritDoc GenericSharedTree.generateSummary}
+	 * @internal
+	 */
+	protected generateSummary(summarizeLog: EditLogSummarizer<AnchoredChangeInternal>): SharedTreeSummaryBase {
 		try {
-			return getSummaryByVersion(editLog, this.currentView, this.summarizeHistory, this.writeSummaryFormat);
+			return getSummaryByVersion(summarizeLog, this.currentView, this.summarizeHistory, this.writeSummaryFormat);
 		} catch (error) {
 			this.logger?.sendErrorEvent({
 				eventName: 'UnsupportedSummaryWriteFormat',
@@ -221,4 +227,67 @@ export class SharedTreeWithAnchors extends GenericSharedTree<AnchoredChange, Tra
 			throw error;
 		}
 	}
+
+	/**
+	 * {@inheritDoc GenericSharedTree.internalizeChange}
+	 * @internal
+	 */
+	public internalizeChange(change: AnchoredChange): AnchoredChangeInternal {
+		switch (change.type) {
+			case ChangeType.Insert:
+				return {
+					source: change.source,
+					destination: deepClonePlaceAnchor(change.destination),
+					type: ChangeTypeInternal.Insert,
+				};
+			case ChangeType.Detach: {
+				const detach: AnchoredDetachInternal = {
+					source: deepCloneRangeAnchor(change.source),
+					type: ChangeTypeInternal.Detach,
+				};
+				copyPropertyIfDefined(change, detach, 'destination');
+				return detach;
+			}
+			case ChangeType.Build: {
+				const source = change.source.map((buildNode) =>
+					convertTreeNodes(buildNode, (nodeData) => nodeData, isDetachedSequenceId)
+				);
+				return { source, destination: change.destination, type: ChangeTypeInternal.Build };
+			}
+			case ChangeType.SetValue:
+				return {
+					nodeToModify: change.nodeToModify,
+					payload: change.payload,
+					type: ChangeTypeInternal.SetValue,
+				};
+			case ChangeType.Constraint: {
+				const constraint: AnchoredConstraintInternal = {
+					effect: change.effect,
+					toConstrain: deepCloneRangeAnchor(change.toConstrain),
+					type: ChangeTypeInternal.Constraint,
+				};
+				copyPropertyIfDefined(change, constraint, 'contentHash');
+				copyPropertyIfDefined(change, constraint, 'identityHash');
+				copyPropertyIfDefined(change, constraint, 'label');
+				copyPropertyIfDefined(change, constraint, 'length');
+				copyPropertyIfDefined(change, constraint, 'parentNode');
+				return constraint;
+			}
+			default:
+				fail('unexpected change type');
+		}
+	}
+}
+
+function deepClonePlaceAnchor(place: PlaceAnchor): PlaceAnchor {
+	const clone: PlaceAnchor = deepCloneStablePlace(place);
+	copyPropertyIfDefined(place, clone, 'semantics');
+	return clone;
+}
+
+function deepCloneRangeAnchor(range: RangeAnchor): RangeAnchor {
+	return {
+		start: deepClonePlaceAnchor(range.start),
+		end: deepClonePlaceAnchor(range.end),
+	};
 }

@@ -77,7 +77,7 @@ export enum EditValidationResult {
  * `SharedTree` used at construction time.
  * @public
  */
-export abstract class Checkout<TChange, TFailure = unknown>
+export abstract class Checkout<TChange, TChangeInternal, TFailure = unknown>
 	extends EventEmitterWithErrorHandling<ICheckoutEvents>
 	implements IDisposable
 {
@@ -98,18 +98,18 @@ export abstract class Checkout<TChange, TFailure = unknown>
 	/**
 	 * A handler for 'committedEdit' SharedTreeEvent
 	 */
-	private readonly editCommittedHandler: EditCommittedHandler<GenericSharedTree<TChange, TFailure>>;
+	private readonly editCommittedHandler: EditCommittedHandler<GenericSharedTree<TChange, TChangeInternal, TFailure>>;
 
 	/**
 	 * The shared tree this checkout views/edits.
 	 */
-	public readonly tree: GenericSharedTree<TChange, TFailure>;
+	public readonly tree: GenericSharedTree<TChange, TChangeInternal, TFailure>;
 
 	/**
 	 * `tree`'s log viewer as a CachingLogViewer if it is one, otherwise undefined.
 	 * Used for optimizations if provided.
 	 */
-	private readonly cachingLogViewer?: CachingLogViewer<TChange, TFailure>;
+	private readonly cachingLogViewer?: CachingLogViewer<TChangeInternal, TFailure>;
 
 	/**
 	 * Holds the state required to manage the currently open edit.
@@ -118,14 +118,14 @@ export abstract class Checkout<TChange, TFailure = unknown>
 	 * Since `currentView` exposes the the intermediate state from this edit,
 	 * operations that modify `currentEdit.view` must call `emitChange` to handle invalidation.
 	 */
-	private currentEdit?: GenericTransaction<TChange>;
+	private currentEdit?: GenericTransaction<TChangeInternal>;
 
 	public disposed: boolean = false;
 
 	protected constructor(
-		tree: GenericSharedTree<TChange, TFailure>,
+		tree: GenericSharedTree<TChange, TChangeInternal, TFailure>,
 		currentView: RevisionView,
-		onEditCommitted: EditCommittedHandler<GenericSharedTree<TChange, TFailure>>
+		onEditCommitted: EditCommittedHandler<GenericSharedTree<TChange, TChangeInternal, TFailure>>
 	) {
 		super();
 		this.tree = tree;
@@ -192,7 +192,7 @@ export abstract class Checkout<TChange, TFailure = unknown>
 	 * Inform the Checkout that a particular edit is know to have a specific result when applied to a particular TreeView.
 	 * This may be used as a caching hint to avoid recomputation.
 	 */
-	protected hintKnownEditingResult(edit: Edit<TChange>, result: ValidEditingResult<TChange>): void {
+	protected hintKnownEditingResult(edit: Edit<TChangeInternal>, result: ValidEditingResult<TChangeInternal>): void {
 		// As an optimization, inform logViewer of this editing result so it can reuse it if applied to the same before revision.
 		this.cachingLogViewer?.setKnownEditingResult(edit, result);
 	}
@@ -203,15 +203,15 @@ export abstract class Checkout<TChange, TFailure = unknown>
 	 *
 	 * Override this to customize.
 	 */
-	protected handleNewEdit(id: EditId, result: ValidEditingResult<TChange>): void {
-		const edit: Edit<TChange> = { id, changes: result.changes };
+	protected handleNewEdit(id: EditId, result: ValidEditingResult<TChangeInternal>): void {
+		const edit: Edit<TChangeInternal> = { id, changes: result.changes };
 
 		this.hintKnownEditingResult(edit, result);
 
 		// Since external edits could have been applied while currentEdit was pending,
 		// do not use the produced view: just go to the newest revision
 		// (which processLocalEdit will do, including invalidation).
-		this.tree.processLocalEdit(edit);
+		this.tree.applyEditInternal(edit);
 	}
 
 	/**
@@ -221,9 +221,23 @@ export abstract class Checkout<TChange, TFailure = unknown>
 	 */
 	public applyChanges(...changes: TChange[]): void {
 		assert(this.currentEdit, 'Changes must be applied as part of an ongoing edit.');
-		const { status } = this.currentEdit.applyChanges(changes);
+		const { status } = this.currentEdit.applyChanges(changes.map((c) => this.tree.internalizeChange(c)));
 		assert(status === EditStatus.Applied, 'Locally constructed edits must be well-formed and valid.');
 		this.emitChange();
+	}
+
+	/**
+	 * Applies the supplied changes to the tree and emits a change event.
+	 * Must be called during an ongoing edit (see `openEdit()`/`closeEdit()`).
+	 * `changes` must be well-formed and valid: it is an error if they do not apply cleanly.
+	 */
+	protected tryApplyChangesInternal(...changes: TChangeInternal[]): EditStatus {
+		assert(this.currentEdit, 'Changes must be applied as part of an ongoing edit.');
+		const { status } = this.currentEdit.applyChanges(changes);
+		if (status === EditStatus.Applied) {
+			this.emitChange();
+		}
+		return status;
 	}
 
 	/**
@@ -245,7 +259,7 @@ export abstract class Checkout<TChange, TFailure = unknown>
 		this.openEdit();
 
 		assert(this.currentEdit, 'Changes must be applied as part of an ongoing edit.');
-		const { status } = this.currentEdit.applyChanges(changes);
+		const { status } = this.currentEdit.applyChanges(changes.map((c) => this.tree.internalizeChange(c)));
 		if (status === EditStatus.Applied) {
 			this.emitChange();
 			return this.closeEdit();
@@ -314,24 +328,16 @@ export abstract class Checkout<TChange, TFailure = unknown>
 	}
 
 	/**
-	 * @param id - an edit added during the current session.
-	 *
-	 * @returns the edit with the specified `id`, and a revision just before applying the edit.
-	 * The returned revision may be the exact version that the exit was made against, or it may have additional remote edits included.
-	 *
-	 * This requires that the edit was added during the current session as this guarantees its available synchronously.
-	 *
-	 * Override this in Checkouts that may have edits which are not included in tree.edits.
+	 * Reverts a collection of edits.
+	 * @param editIds - the edits to revert
 	 */
-	public getChangesAndRevisionBeforeInSession(id: EditId): {
-		changes: readonly TChange[];
-		before: RevisionView;
-	} {
-		const editIndex = this.tree.edits.getIndexOfId(id);
-		return {
-			changes: this.tree.edits.getEditInSessionAtIndex(editIndex).changes,
-			before: this.tree.logViewer.getRevisionViewInSession(editIndex),
-		};
+	public revert(editId: EditId): void {
+		assert(this.currentEdit !== undefined);
+		const index = this.tree.edits.getIndexOfId(editId);
+		const edit = this.tree.editsInternal.getEditInSessionAtIndex(index);
+		const before = this.tree.logViewer.getRevisionViewInSession(index);
+		const changes = this.tree.revertChanges(edit.changes, before);
+		this.tryApplyChangesInternal(...changes);
 	}
 
 	/**

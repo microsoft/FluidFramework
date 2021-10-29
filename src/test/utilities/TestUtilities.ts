@@ -31,20 +31,21 @@ import type { IFluidCodeDetails } from '@fluidframework/core-interfaces';
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../../Identifiers';
 import { assertNotUndefined, compareArrays, comparePayloads, fail } from '../../Common';
 import { initialTree } from '../../InitialTree';
-import { SharedTree, Change, setTrait, SharedTreeFactory, StablePlace } from '../../default-edits';
+import { SharedTree, Change, setTrait, SharedTreeFactory, StablePlace, ChangeInternal } from '../../default-edits';
 import {
 	ChangeNode,
 	Edit,
 	GenericSharedTree,
+	getUploadedEditChunkContents,
 	newEdit,
 	NodeData,
-	saveUploadedEditChunkContents,
 	SharedTreeDiagnosticEvent,
 	SharedTreeSummaryWriteFormat,
 	TraitLocation,
 } from '../../generic';
 import { SharedTreeWithAnchors, SharedTreeWithAnchorsFactory } from '../../anchored-edits';
 import { RevisionView } from '../../TreeView';
+import { EditLog } from '../../EditLog';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents<TSharedTree = SharedTree> {
@@ -396,14 +397,13 @@ async function setUpLocalServerTestSharedTreeGeneric<
 }
 
 /** Sets testTrait to contain `node`. */
-export function setTestTree<TExtraChangeTypes = never>(
-	tree: GenericSharedTree<TExtraChangeTypes | Change, any>,
-	node: ChangeNode,
-	overrideId?: EditId
-): EditId {
-	const edit = newEdit(setTrait(testTrait, [node]));
-	tree.processLocalEdit({ ...edit, id: overrideId || edit.id });
-	return overrideId || edit.id;
+function setTestTree(tree: SharedTree | SharedTreeWithAnchors, node: ChangeNode, overrideId?: EditId): EditId {
+	if (overrideId === undefined) {
+		return tree.applyEdit(...setTrait(testTrait, [node])).id;
+	} else {
+		const changes = setTrait(testTrait, [node]).map((c) => tree.internalizeChange(c));
+		return tree.applyEditInternal({ changes, id: overrideId }).id;
+	}
 }
 
 /** Creates an empty node for testing purposes. */
@@ -461,7 +461,7 @@ export function createStableEdits(numberOfEdits: number): Edit<Change>[] {
 }
 
 /** Asserts that changes to SharedTree in editor() function do not cause any observable state change */
-export function assertNoDelta(tree: GenericSharedTree<any, any>, editor: () => void) {
+export function assertNoDelta(tree: GenericSharedTree<any, any, any>, editor: () => void) {
 	const viewA = tree.currentView;
 	editor();
 	const viewB = tree.currentView;
@@ -576,7 +576,7 @@ export function getDocumentFiles(document: string): {
 	denormalizedSummaryByVersion: Map<string, Map<string, string>>;
 	denormalizedHistoryByType: Map<string, string>;
 	blobsByVersion: Map<string, string>;
-	history: Edit<Change>[];
+	history: Edit<ChangeInternal>[];
 	changeNode: ChangeNode;
 	sortedVersions: string[];
 } {
@@ -596,7 +596,7 @@ export function getDocumentFiles(document: string): {
 	// Files of uploaded edit blob contents for summaries that support blobs.
 	const blobsByVersion = new Map<string, string>();
 
-	let historyOrUndefined: Edit<Change>[] | undefined;
+	let historyOrUndefined: Edit<ChangeInternal>[] | undefined;
 	let changeNodeOrUndefined: ChangeNode | undefined;
 
 	const documentFiles = fs.readdirSync(join(testDocumentsPathBase, document));
@@ -661,7 +661,7 @@ export function getDocumentFiles(document: string): {
 }
 
 /** Helper utility used to generate test documents based on a given history. */
-export async function createDocumentFiles(document: string, history: Edit<Change>[]) {
+export async function createDocumentFiles(document: string, history: Edit<ChangeInternal>[]) {
 	const directory = join(testDocumentsPathBase, document);
 	try {
 		fs.accessSync(directory);
@@ -679,7 +679,7 @@ export async function createDocumentFiles(document: string, history: Edit<Change
 	});
 
 	for (const edit of history) {
-		tree.processLocalEdit(edit);
+		tree.applyEditInternal(edit);
 	}
 
 	await testObjectProvider.ensureSynchronized();
@@ -700,7 +700,8 @@ export async function createDocumentFiles(document: string, history: Edit<Change
 		fs.writeFileSync(join(directory, `summary-${format}.json`), tree2.saveSerializedSummary());
 
 		// Write blob file
-		const blobs = await saveUploadedEditChunkContents(tree2.edits);
+		assert(tree2.edits instanceof EditLog, 'EditLog must support summaries');
+		const blobs = await getUploadedEditChunkContents(tree2);
 		if (blobs.length > 0) {
 			fs.writeFileSync(join(directory, `blobs-${format}.json`), JSON.stringify(blobs));
 		}

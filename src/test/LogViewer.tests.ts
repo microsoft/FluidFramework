@@ -6,7 +6,14 @@
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 import { EditLog } from '../EditLog';
-import { Change, ConstraintEffect, Insert, StablePlace, StableRange, Transaction } from '../default-edits';
+import {
+	ChangeInternal,
+	ConstraintEffect,
+	InsertInternal,
+	StablePlace,
+	StableRange,
+	Transaction,
+} from '../default-edits';
 import {
 	CachingLogViewer,
 	EditStatusCallback,
@@ -34,14 +41,14 @@ import { MockTransaction } from './utilities/MockTransaction';
 const simpleTreeNoTraits = { ...simpleTestTree, traits: {} };
 const simpleRevisionViewNoTraits = RevisionView.fromTree(simpleTreeNoTraits);
 
-function getSimpleLog(numEdits: number = 2): EditLog<Change> {
-	const log = new EditLog<Change>();
+function getSimpleLog(numEdits: number = 2): EditLog<ChangeInternal> {
+	const log = new EditLog<ChangeInternal>();
 	for (let i = 0; i < numEdits; i++) {
 		log.addSequencedEdit(
 			newEdit(
 				i % 2 === 0
-					? Insert.create([left], StablePlace.atStartOf(leftTraitLocation))
-					: Insert.create([right], StablePlace.atStartOf(rightTraitLocation))
+					? InsertInternal.create([left], StablePlace.atStartOf(leftTraitLocation))
+					: InsertInternal.create([right], StablePlace.atStartOf(rightTraitLocation))
 			),
 			{ sequenceNumber: i + 1, referenceSequenceNumber: i }
 		);
@@ -49,15 +56,21 @@ function getSimpleLog(numEdits: number = 2): EditLog<Change> {
 	return log;
 }
 
-function getSimpleLogWithLocalEdits(numSequencedEdits: number = 2): EditLog<Change> {
+function getSimpleLogWithLocalEdits(numSequencedEdits: number = 2): EditLog<ChangeInternal> {
 	const logWithLocalEdits = getSimpleLog(numSequencedEdits);
-	logWithLocalEdits.addLocalEdit(newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(leftTraitLocation))));
-	logWithLocalEdits.addLocalEdit(newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))));
-	logWithLocalEdits.addLocalEdit(newEdit(Insert.create([makeEmptyNode()], StablePlace.atStartOf(leftTraitLocation))));
+	logWithLocalEdits.addLocalEdit(
+		newEdit(InsertInternal.create([makeEmptyNode()], StablePlace.atEndOf(leftTraitLocation)))
+	);
+	logWithLocalEdits.addLocalEdit(
+		newEdit(InsertInternal.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation)))
+	);
+	logWithLocalEdits.addLocalEdit(
+		newEdit(InsertInternal.create([makeEmptyNode()], StablePlace.atStartOf(leftTraitLocation)))
+	);
 	return logWithLocalEdits;
 }
 
-function getViewsForLog(log: EditLog<Change>, baseView: RevisionView): RevisionView[] {
+function getViewsForLog(log: EditLog<ChangeInternal>, baseView: RevisionView): RevisionView[] {
 	const views: RevisionView[] = [baseView];
 	for (let i = 0; i < log.length; i++) {
 		const edit = log.getEditInSessionAtIndex(i);
@@ -72,7 +85,7 @@ function getViewsForLog(log: EditLog<Change>, baseView: RevisionView): RevisionV
 }
 
 function runLogViewerCorrectnessTests(
-	viewerCreator: (log: EditLog<Change>, baseView?: RevisionView) => LogViewer
+	viewerCreator: (log: EditLog<ChangeInternal>, baseView?: RevisionView) => LogViewer
 ): Mocha.Suite {
 	return describe('LogViewer', () => {
 		const log = getSimpleLog();
@@ -103,7 +116,7 @@ function runLogViewerCorrectnessTests(
 
 		it('produces correct revision views when the log is mutated', () => {
 			const simpleLog = getSimpleLog();
-			const mutableLog = new EditLog<Change>();
+			const mutableLog = new EditLog<ChangeInternal>();
 			const viewer = viewerCreator(mutableLog, simpleRevisionViewNoTraits);
 			const viewsForLog = getViewsForLog(simpleLog, simpleRevisionViewNoTraits);
 			// This test takes an empty log (A) and a log with edits in it (B), and adds the edits from B to A.
@@ -131,7 +144,7 @@ function runLogViewerCorrectnessTests(
 				return views;
 			}
 
-			function expectViewsAreEqual(log: EditLog<Change>, viewer: LogViewer): void {
+			function expectViewsAreEqual(log: EditLog<ChangeInternal>, viewer: LogViewer): void {
 				const viewsForLog = getViewsForLog(log, simpleRevisionViewNoTraits);
 				const viewsForViewer = getViewsFromViewer(viewer, log.length);
 				expect(viewsForLog.length).to.equal(viewsForViewer.length);
@@ -149,7 +162,7 @@ function runLogViewerCorrectnessTests(
 			while (logWithLocalEdits.numberOfLocalEdits > 0) {
 				// Add a remote sequenced edit
 				logWithLocalEdits.addSequencedEdit(
-					newEdit(Insert.create([makeEmptyNode()], StablePlace.atStartOf(rightTraitLocation))),
+					newEdit(InsertInternal.create([makeEmptyNode()], StablePlace.atStartOf(rightTraitLocation))),
 					{ sequenceNumber: seqNumber, referenceSequenceNumber: seqNumber - 1 }
 				);
 				++seqNumber;
@@ -168,12 +181,12 @@ function runLogViewerCorrectnessTests(
 
 describe('CachingLogViewer', () => {
 	function getCachingLogViewerAssumeAppliedEdits(
-		log: EditLog<Change>,
+		log: EditLog<ChangeInternal>,
 		baseView?: RevisionView,
 		editStatusCallback?: EditStatusCallback,
-		sequencedEditResultCallback?: SequencedEditResultCallback<Change, Transaction.Failure>,
+		sequencedEditResultCallback?: SequencedEditResultCallback<ChangeInternal, Transaction.Failure>,
 		knownRevisions?: [number, RevisionView][]
-	): CachingLogViewer<Change, Transaction.Failure> {
+	): CachingLogViewer<ChangeInternal, Transaction.Failure> {
 		return new CachingLogViewer(
 			log,
 			baseView,
@@ -219,7 +232,10 @@ describe('CachingLogViewer', () => {
 		}
 	});
 
-	async function requestAllRevisionViews(viewer: CachingLogViewer<Change, any>, log: EditLog<Change>): Promise<void> {
+	async function requestAllRevisionViews(
+		viewer: CachingLogViewer<ChangeInternal, any>,
+		log: EditLog<ChangeInternal>
+	): Promise<void> {
 		for (let i = 0; i <= log.length; i++) {
 			await viewer.getRevisionView(i);
 		}
@@ -245,7 +261,9 @@ describe('CachingLogViewer', () => {
 		const log = getSimpleLog(2);
 		// Add an invalid edit
 		log.addSequencedEdit(
-			newEdit([Change.constraint(StableRange.only(left), ConstraintEffect.InvalidAndDiscard, undefined, 0)]),
+			newEdit([
+				ChangeInternal.constraint(StableRange.only(left), ConstraintEffect.InvalidAndDiscard, undefined, 0),
+			]),
 			{ sequenceNumber: 3, referenceSequenceNumber: 2, minimumSequenceNumber: 2 }
 		);
 		let editsProcessed = 0;
@@ -272,12 +290,15 @@ describe('CachingLogViewer', () => {
 		expect(viewer.highestRevisionCached()).to.be.false;
 		await requestAllRevisionViews(viewer, log);
 		expect(viewer.highestRevisionCached()).to.be.true;
-		log.addLocalEdit(newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))));
-		log.addSequencedEdit(newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))), {
-			sequenceNumber: 3,
-			referenceSequenceNumber: 2,
-			minimumSequenceNumber: 2,
-		});
+		log.addLocalEdit(newEdit(InsertInternal.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))));
+		log.addSequencedEdit(
+			newEdit(InsertInternal.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))),
+			{
+				sequenceNumber: 3,
+				referenceSequenceNumber: 2,
+				minimumSequenceNumber: 2,
+			}
+		);
 		expect(viewer.highestRevisionCached()).to.be.false;
 	});
 
@@ -346,7 +367,7 @@ describe('CachingLogViewer', () => {
 		// This should apply only a single edit, as the most recent HEAD should be cached.
 		editsProcessed = 0;
 		logWithLocalEdits.addLocalEdit(
-			newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation)))
+			newEdit(InsertInternal.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation)))
 		);
 		await requestAllRevisionViews(viewer, logWithLocalEdits);
 		expect(editsProcessed).to.equal(1);
@@ -382,7 +403,7 @@ describe('CachingLogViewer', () => {
 		// Remote edit arrives
 		editsProcessed = 0;
 		logWithLocalEdits.addSequencedEdit(
-			newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))),
+			newEdit(InsertInternal.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))),
 			{ sequenceNumber: 3, referenceSequenceNumber: 2, minimumSequenceNumber: 2 }
 		);
 		viewer.getRevisionViewInSession(Number.POSITIVE_INFINITY);
@@ -393,7 +414,7 @@ describe('CachingLogViewer', () => {
 	const arbitraryRevisionView = RevisionView.fromTree(makeEmptyNode());
 
 	it('uses known editing result', () => {
-		const log = new EditLog<Change>();
+		const log = new EditLog<ChangeInternal>();
 		const editsProcessed: boolean[] = [];
 		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleRevisionViewNoTraits, (_, _2, wasCached) =>
 			editsProcessed.push(wasCached)
@@ -414,7 +435,7 @@ describe('CachingLogViewer', () => {
 	});
 
 	it('ignores known editing if for wrong before revision view', () => {
-		const log = new EditLog<Change>();
+		const log = new EditLog<ChangeInternal>();
 		const editsProcessed: boolean[] = [];
 		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleRevisionViewNoTraits, (_, _2, wasCached) =>
 			editsProcessed.push(wasCached)
@@ -434,7 +455,7 @@ describe('CachingLogViewer', () => {
 	});
 
 	it('ignores known editing if for wrong edit', () => {
-		const log = new EditLog<Change>();
+		const log = new EditLog<ChangeInternal>();
 		const editsProcessed: boolean[] = [];
 		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleRevisionViewNoTraits, (_, _2, wasCached) =>
 			editsProcessed.push(wasCached)
@@ -455,7 +476,7 @@ describe('CachingLogViewer', () => {
 	});
 
 	it('uses known editing result with multiple edits', () => {
-		const log = new EditLog<Change>();
+		const log = new EditLog<ChangeInternal>();
 		const editsProcessed: boolean[] = [];
 		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleRevisionViewNoTraits, (_, _2, wasCached) =>
 			editsProcessed.push(wasCached)
@@ -485,28 +506,28 @@ describe('CachingLogViewer', () => {
 
 	describe('Callbacks', () => {
 		function getViewer(): {
-			log: EditLog<Change>;
-			viewer: CachingLogViewer<Change, Transaction.Failure>;
-			events: SequencedEditResult<Change, Transaction.Failure>[];
+			log: EditLog<ChangeInternal>;
+			viewer: CachingLogViewer<ChangeInternal, Transaction.Failure>;
+			events: SequencedEditResult<ChangeInternal, Transaction.Failure>[];
 		} {
 			const log = getSimpleLog();
-			const events: SequencedEditResult<Change, Transaction.Failure>[] = [];
+			const events: SequencedEditResult<ChangeInternal, Transaction.Failure>[] = [];
 			const viewer = new CachingLogViewer(
 				log,
 				simpleRevisionViewNoTraits,
 				[],
 				/* expensiveValidation */ true,
 				undefined,
-				(args: SequencedEditResult<Change, Transaction.Failure>) => events.push(args),
+				(args: SequencedEditResult<ChangeInternal, Transaction.Failure>) => events.push(args),
 				Transaction.factory
 			);
 			return { log, viewer, events };
 		}
 
-		function addInvalidEdit(log: EditLog<Change>): Edit<Change> {
+		function addInvalidEdit(log: EditLog<ChangeInternal>): Edit<ChangeInternal> {
 			// Add a local edit that will be invalid (inserts a node at a location that doesn't exist)
 			const edit = newEdit(
-				Insert.create(
+				InsertInternal.create(
 					[makeEmptyNode()],
 					StablePlace.atEndOf({
 						parent: initialRevisionView.root,
@@ -536,7 +557,9 @@ describe('CachingLogViewer', () => {
 			expect(events[0].result.status).equals(EditStatus.Invalid);
 			expect(events[0].reconciliationPath.length).equals(0);
 
-			const validEdit1 = newEdit(Insert.create([makeEmptyNode()], StablePlace.atStartOf(leftTraitLocation)));
+			const validEdit1 = newEdit(
+				InsertInternal.create([makeEmptyNode()], StablePlace.atStartOf(leftTraitLocation))
+			);
 			log.addSequencedEdit(validEdit1, { sequenceNumber: 3, referenceSequenceNumber: 2 });
 			await viewer.getRevisionView(Number.POSITIVE_INFINITY);
 			expect(events.length).equals(2);
@@ -545,7 +568,9 @@ describe('CachingLogViewer', () => {
 			expect(events[1].result.status).equals(EditStatus.Applied);
 			expect(events[1].reconciliationPath.length).equals(0);
 
-			const validEdit2 = newEdit(Insert.create([makeEmptyNode()], StablePlace.atStartOf(leftTraitLocation)));
+			const validEdit2 = newEdit(
+				InsertInternal.create([makeEmptyNode()], StablePlace.atStartOf(leftTraitLocation))
+			);
 			log.addSequencedEdit(validEdit2, { sequenceNumber: 4, referenceSequenceNumber: 2 });
 			await viewer.getRevisionView(Number.POSITIVE_INFINITY);
 			expect(events.length).equals(3);

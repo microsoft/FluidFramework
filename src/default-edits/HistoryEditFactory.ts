@@ -7,7 +7,15 @@ import { DetachedSequenceId, NodeId } from '../Identifiers';
 import { assert, fail } from '../Common';
 import { RevisionView, Side, TransactionView } from '../TreeView';
 import { BuildNode, TreeNode } from '../generic';
-import { Change, ChangeType, Detach, Insert, SetValue, StableRange, StablePlace } from './PersistedTypes';
+import {
+	StableRange,
+	StablePlace,
+	ChangeInternal,
+	ChangeTypeInternal,
+	DetachInternal,
+	SetValueInternal,
+	InsertInternal,
+} from './PersistedTypes';
 import { Transaction } from './Transaction';
 import { isDetachedSequenceId, rangeFromStableRange } from './EditUtilities';
 
@@ -20,10 +28,10 @@ import { isDetachedSequenceId, rangeFromStableRange } from './EditUtilities';
  * not be a true semantic inverse.
  *
  * TODO: what should this do if `changes` fails to apply to `before`?
- * @public
+ * @internal
  */
-export function revert(changes: readonly Change[], before: RevisionView): Change[] {
-	const result: Change[] = [];
+export function revert(changes: readonly ChangeInternal[], before: RevisionView): ChangeInternal[] {
+	const result: ChangeInternal[] = [];
 
 	const builtNodes = new Map<DetachedSequenceId, NodeId[]>();
 	const detachedNodes = new Map<DetachedSequenceId, NodeId[]>();
@@ -34,7 +42,7 @@ export function revert(changes: readonly Change[], before: RevisionView): Change
 	for (const change of changes) {
 		// Generate an inverse of each change
 		switch (change.type) {
-			case ChangeType.Build: {
+			case ChangeTypeInternal.Build: {
 				// Save nodes added to the detached state for use in future changes
 				const { destination, source } = change;
 				assert(!builtNodes.has(destination), `Cannot revert Build: destination is already used by a Build`);
@@ -43,8 +51,9 @@ export function revert(changes: readonly Change[], before: RevisionView): Change
 					destination,
 					source.reduce((ids: NodeId[], curr: BuildNode) => {
 						if (isDetachedSequenceId(curr)) {
-							const nodesForDetachedSequence = builtNodes.get(curr);
-							assert(nodesForDetachedSequence, 'detached sequence must have associated built nodes');
+							const nodesForDetachedSequence =
+								builtNodes.get(curr) ?? fail('detached sequence must have associated built nodes');
+
 							ids.push(...nodesForDetachedSequence);
 						} else {
 							ids.push((curr as TreeNode<BuildNode>).identifier);
@@ -54,7 +63,7 @@ export function revert(changes: readonly Change[], before: RevisionView): Change
 				);
 				break;
 			}
-			case ChangeType.Insert: {
+			case ChangeTypeInternal.Insert: {
 				const { source } = change;
 				const nodesBuilt = builtNodes.get(source);
 				const nodesDetached = detachedNodes.get(source);
@@ -71,7 +80,7 @@ export function revert(changes: readonly Change[], before: RevisionView): Change
 
 				break;
 			}
-			case ChangeType.Detach: {
+			case ChangeTypeInternal.Detach: {
 				const { destination } = change;
 				const { invertedDetach, detachedNodeIds } = createInvertedDetach(change, editor.view);
 
@@ -90,10 +99,10 @@ export function revert(changes: readonly Change[], before: RevisionView): Change
 				result.unshift(...invertedDetach);
 				break;
 			}
-			case ChangeType.SetValue:
+			case ChangeTypeInternal.SetValue:
 				result.unshift(...createInvertedSetValue(change, editor.view));
 				break;
-			case ChangeType.Constraint:
+			case ChangeTypeInternal.Constraint:
 				// TODO:#46759: Support Constraint in reverts
 				fail('Revert currently does not support Constraints');
 			default:
@@ -111,7 +120,11 @@ export function revert(changes: readonly Change[], before: RevisionView): Change
 /**
  * Inverse of an Insert is a Detach that starts before the leftmost node inserted and ends after the rightmost.
  */
-function createInvertedInsert(insert: Insert, nodesInserted: readonly NodeId[], saveDetached = false): Change {
+function createInvertedInsert(
+	insert: InsertInternal,
+	nodesInserted: readonly NodeId[],
+	saveDetached = false
+): ChangeInternal {
 	const leftmostNode = nodesInserted[0];
 	const rightmostNode = nodesInserted[nodesInserted.length - 1];
 
@@ -126,7 +139,7 @@ function createInvertedInsert(insert: Insert, nodesInserted: readonly NodeId[], 
 		},
 	};
 
-	return Change.detach(source, saveDetached ? insert.source : undefined);
+	return ChangeInternal.detach(source, saveDetached ? insert.source : undefined);
 }
 
 /**
@@ -158,9 +171,9 @@ function createInvertedInsert(insert: Insert, nodesInserted: readonly NodeId[], 
  *  anchor to the left of the originally detached nodes is chosen.
  */
 function createInvertedDetach(
-	detach: Detach,
+	detach: DetachInternal,
 	viewBeforeChange: TransactionView
-): { invertedDetach: Change[]; detachedNodeIds: NodeId[] } {
+): { invertedDetach: ChangeInternal[]; detachedNodeIds: NodeId[] } {
 	const { source } = detach;
 
 	const { start, end } = rangeFromStableRange(viewBeforeChange, source);
@@ -196,7 +209,7 @@ function createInvertedDetach(
 
 	if (detach.destination !== undefined) {
 		return {
-			invertedDetach: [Change.insert(detach.destination, insertDestination)],
+			invertedDetach: [ChangeInternal.insert(detach.destination, insertDestination)],
 			detachedNodeIds,
 		};
 	}
@@ -204,21 +217,21 @@ function createInvertedDetach(
 	const detachedSequenceId = 0 as DetachedSequenceId;
 	return {
 		invertedDetach: [
-			Change.build(viewBeforeChange.getChangeNodes(detachedNodeIds), detachedSequenceId),
-			Change.insert(detachedSequenceId, insertDestination),
+			ChangeInternal.build(viewBeforeChange.getChangeNodes(detachedNodeIds), detachedSequenceId),
+			ChangeInternal.insert(detachedSequenceId, insertDestination),
 		],
 		detachedNodeIds,
 	};
 }
 
-function createInvertedSetValue(setValue: SetValue, revisionBeforeChange: TransactionView): Change[] {
+function createInvertedSetValue(setValue: SetValueInternal, revisionBeforeChange: TransactionView): ChangeInternal[] {
 	const { nodeToModify } = setValue;
 	const oldPayload = revisionBeforeChange.getViewNode(nodeToModify).payload;
 
 	// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface)
 	// eslint-disable-next-line no-null/no-null
 	if (oldPayload !== null) {
-		return [Change.setPayload(nodeToModify, oldPayload)];
+		return [ChangeInternal.setPayload(nodeToModify, oldPayload)];
 	}
-	return [Change.clearPayload(nodeToModify)];
+	return [ChangeInternal.clearPayload(nodeToModify)];
 }

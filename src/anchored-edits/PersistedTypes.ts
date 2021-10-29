@@ -10,19 +10,19 @@
 // persisted types (as documented below) is followed.
 import { DetachedSequenceId, NodeId, TraitLabel, UuidString } from '../Identifiers';
 import { Side } from '../TreeView';
-import { EditBase, BuildNode, NodeData, Payload, TraitLocation, TreeNodeSequence } from '../generic';
+import { BuildNode, NodeData, Payload, TraitLocation, TreeNodeSequence } from '../generic';
 import {
-	Build,
-	Change,
+	SetValueInternal,
+	DetachInternal,
+	ConstraintInternal,
+	InsertInternal,
+	BuildInternal,
+	ChangeInternal,
 	ConstraintEffect,
-	Detach,
-	Insert,
-	Move,
-	SetValue,
 	StablePlace,
 	StableRange,
-	Constraint,
 	getNodeId,
+	MoveInternal,
 } from '../default-edits';
 
 /**
@@ -53,65 +53,49 @@ import {
  */
 
 /**
- * The information included in an anchored edit.
+ * {@inheritdoc (AnchoredChange:type)}
  * @public
  */
-export type AnchoredEditBase = EditBase<AnchoredChange>;
+export type AnchoredChangeInternal =
+	| AnchoredInsertInternal
+	| AnchoredDetachInternal
+	| BuildInternal
+	| AnchoredSetValueInternal
+	| AnchoredConstraintInternal;
 
 /**
- * A change that composes an Edit.
- *
- * `Change` objects can be conveniently constructed with the helper methods exported on a constant of the same name.
- * @example
- * Change.insert(sourceId, destination)
+ * {@inheritdoc (AnchoredInsert:interface)}
  * @public
  */
-export type AnchoredChange = AnchoredInsert | AnchoredDetach | Build | AnchoredSetValue | AnchoredConstraint;
-
-/**
- * Inserts a sequence of nodes at the specified destination.
- * The source can be constructed either by a Build (used to insert new nodes) or a Detach (amounts to a "move" operation).
- * @public
- */
-export interface AnchoredInsert extends Insert {
+export interface AnchoredInsertInternal extends InsertInternal {
+	/** {@inheritdoc AnchoredInsert.destination } */
 	readonly destination: PlaceAnchor;
 }
 
 /**
- * Removes a sequence of nodes from the tree.
- * If a destination is specified, the detached sequence is associated with that ID and held for possible reuse
- * by later changes in this same Edit (such as by an Insert).
- * A Detach without a destination is a deletion of the specified sequence, as is a Detach with a destination that is not used later.
+ * {@inheritdoc AnchoredDetach}
  * @public
  */
-export interface AnchoredDetach extends Detach {
+export interface AnchoredDetachInternal extends DetachInternal {
+	/** {@inheritdoc AnchoredDetach.source } */
 	readonly source: RangeAnchor;
 }
 
 /**
- * Modifies the payload of a node.
+ * {@inheritdoc SetValueInternal}
  * @public
  */
-export interface AnchoredSetValue extends SetValue {
+export interface AnchoredSetValueInternal extends SetValueInternal {
+	/** {@inheritdoc AnchoredInsert.nodeToModify } */
 	readonly nodeToModify: NodeAnchor;
 }
 
 /**
- * A set of constraints on the validity of an Edit.
- * A Constraint is used to detect when an Edit, due to other concurrent edits, may have unintended effects or merge in
- * non-semantic ways. It is processed in order like any other Change in an Edit. It can cause an edit to fail if the
- * various constraints are not met at the time of evaluation (ex: the parentNode has changed due to concurrent editing).
- * Does not modify the document.
+ * {@inheritdoc AnchoredConstraint}
  * @public
  */
-export interface AnchoredConstraint extends Constraint {
-	/**
-	 * Selects a sequence of nodes which will be checked against the constraints specified by the optional fields.
-	 * If `toConstrain` is invalid, it will be treated like a constraint being unmet.
-	 * Depending on `effect` this may or may not make the Edit invalid.
-	 *
-	 * When a constraint is not met, the effects is specified by `effect`.
-	 */
+export interface AnchoredConstraintInternal extends ConstraintInternal {
+	/** {@inheritdoc AnchoredConstraint.toConstrain } */
 	readonly toConstrain: RangeAnchor;
 }
 
@@ -119,13 +103,13 @@ export interface AnchoredConstraint extends Constraint {
 /**
  * @public
  */
-export const AnchoredChange = {
-	build: Change.build,
-	insert: Change.insert as (source: DetachedSequenceId, destination: PlaceAnchor) => AnchoredInsert,
-	detach: Change.detach as (source: RangeAnchor, destination?: DetachedSequenceId) => AnchoredDetach,
-	setPayload: Change.setPayload as (nodeToModify: NodeAnchor, payload: Payload) => AnchoredSetValue,
-	clearPayload: Change.clearPayload as (nodeToModify: NodeAnchor) => AnchoredSetValue,
-	constraint: Change.constraint as (
+export const AnchoredChangeInternal = {
+	build: ChangeInternal.build,
+	insert: ChangeInternal.insert as (source: DetachedSequenceId, destination: PlaceAnchor) => AnchoredInsertInternal,
+	detach: ChangeInternal.detach as (source: RangeAnchor, destination?: DetachedSequenceId) => AnchoredDetachInternal,
+	setPayload: ChangeInternal.setPayload as (nodeToModify: NodeAnchor, payload: Payload) => AnchoredSetValueInternal,
+	clearPayload: ChangeInternal.clearPayload as (nodeToModify: NodeAnchor) => AnchoredSetValueInternal,
+	constraint: ChangeInternal.constraint as (
 		toConstrain: RangeAnchor,
 		effect: ConstraintEffect,
 		identityHash?: UuidString,
@@ -133,40 +117,37 @@ export const AnchoredChange = {
 		contentHash?: UuidString,
 		parentNode?: NodeId,
 		label?: TraitLabel
-	) => AnchoredConstraint,
+	) => AnchoredConstraintInternal,
 };
 
 /**
- * Helper for creating a `Delete` edit.
+ * {@inheritdoc AnchoredDelete }
  * @public
  */
-export const AnchoredDelete = {
-	/**
-	 * @returns an AnchoredChange that deletes the supplied part of the tree.
-	 */
-	create: (rangeAnchor: RangeAnchor): AnchoredChange => AnchoredChange.detach(rangeAnchor),
+export const AnchoredDeleteInternal = {
+	/** {@inheritdoc AnchoredDelete.create } */
+	create: (rangeAnchor: RangeAnchor): AnchoredChangeInternal => AnchoredChangeInternal.detach(rangeAnchor),
 };
 
 /**
- * Helper for creating an `Insert` edit.
+ * {@inheritdoc (AnchoredInsert:variable) }
  * @public
  */
-export const AnchoredInsert = {
-	/**
-	 * @returns an AnchoredChange that inserts 'nodes' into the specified location in the tree.
-	 */
-	create: Insert.create as (nodes: TreeNodeSequence<BuildNode>, destination: PlaceAnchor) => AnchoredChange[],
+export const AnchoredInsertInternal = {
+	/** {@inheritdoc AnchoredInsert.create } */
+	create: InsertInternal.create as (
+		nodes: TreeNodeSequence<BuildNode>,
+		destination: PlaceAnchor
+	) => AnchoredChangeInternal[],
 };
 
 /**
- * Helper for creating a `Move` edit.
+ * {@inheritdoc AnchoredMove }
  * @public
  */
-export const AnchoredMove = {
-	/**
-	 * @returns an AnchoredChange that moves the specified content to a new location in the tree.
-	 */
-	create: Move.create as (source: RangeAnchor, destination: PlaceAnchor) => AnchoredChange[],
+export const AnchoredMoveInternal = {
+	/** {@inheritdoc AnchoredMove.create } */
+	create: MoveInternal.create as (source: RangeAnchor, destination: PlaceAnchor) => AnchoredChangeInternal[],
 };
 
 /**

@@ -6,11 +6,11 @@
 import { v5 as uuidv5 } from 'uuid';
 import { DetachedSequenceId, EditId, TraitLabel } from '../Identifiers';
 import { assert } from '../Common';
-import { OrderedEditSet } from '../EditLog';
 import { RevisionView } from '../TreeView';
 import { initialTree } from '../InitialTree';
 import { readFormatVersion, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import {
+	EditLogSummarizer,
 	formatVersion,
 	fullHistorySummarizer,
 	fullHistorySummarizer_0_1_1,
@@ -19,8 +19,8 @@ import {
 	SharedTreeSummaryBase,
 	SharedTreeSummaryWriteFormat,
 } from '../generic';
-import { Change, StablePlace } from './PersistedTypes';
-import { setTrait } from './EditUtilities';
+import { ChangeInternal, StablePlace } from './PersistedTypes';
+import { setTraitInternal } from './EditUtilities';
 
 const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
 
@@ -32,7 +32,7 @@ const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
  * @returns a summary of the supplied state.
  */
 export type SharedTreeNoHistorySummarizer = (
-	editLog: OrderedEditSet<Change>,
+	summarizeLog: EditLogSummarizer,
 	currentView: RevisionView,
 	stable: boolean
 ) => SharedTreeSummaryBase;
@@ -43,19 +43,19 @@ export type SharedTreeNoHistorySummarizer = (
  * @param stable - Generates the single edit with a stable edit ID. False by default, used for testing.
  */
 export function noHistorySummarizer(
-	_editLog: OrderedEditSet<Change>,
+	_summarizeLog: EditLogSummarizer,
 	currentView: RevisionView,
 	stable = false
-): SharedTreeSummary_0_0_2<Change> {
+): SharedTreeSummary_0_0_2<ChangeInternal> {
 	const currentTree = currentView.getChangeNodeTree();
 	const rootId = currentTree.identifier;
-	const changes: Change[] = [];
+	const changes: ChangeInternal[] = [];
 	// Generate a set of changes to set the root node's children to that of the root in the currentTree
 	Object.entries(currentTree.traits).forEach(([label, children]) => {
 		const id = 0 as DetachedSequenceId;
 		changes.push(
-			Change.build(children, id),
-			Change.insert(id, StablePlace.atStartOf({ parent: rootId, label: label as TraitLabel }))
+			ChangeInternal.build(children, id),
+			ChangeInternal.insert(id, StablePlace.atStartOf({ parent: rootId, label: label as TraitLabel }))
 		);
 	});
 	assert(currentTree.payload === undefined, 'setValue not yet supported.');
@@ -84,16 +84,16 @@ export function noHistorySummarizer(
  * @param stable - Generates the single edit with a stable edit ID. False by default, used for testing.
  */
 export function noHistorySummarizer_0_1_1(
-	_editLog: OrderedEditSet<Change>,
+	_summarizeLog: EditLogSummarizer,
 	currentView: RevisionView,
 	stable = false
-): SharedTreeSummary<Change> {
+): SharedTreeSummary<ChangeInternal> {
 	const currentTree = currentView.getChangeNodeTree();
 	const rootId = currentTree.identifier;
-	const changes: Change[] = [];
+	const changes: ChangeInternal[] = [];
 	// Generate a set of changes to set the root node's children to that of the root in the currentTree
 	Object.entries(currentTree.traits).forEach(([label, children]) => {
-		changes.push(...setTrait({ parent: rootId, label: label as TraitLabel }, children));
+		changes.push(...setTraitInternal({ parent: rootId, label: label as TraitLabel }, children));
 	});
 	assert(currentTree.payload === undefined, 'setValue not yet supported.');
 	assert(
@@ -115,7 +115,7 @@ export function noHistorySummarizer_0_1_1(
  * Generates a summary based on provided options.
  */
 export function getSummaryByVersion(
-	editLog: OrderedEditSet<Change>,
+	summarizeLog: EditLogSummarizer,
 	currentView: RevisionView,
 	summarizeHistory = true,
 	writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2
@@ -123,9 +123,9 @@ export function getSummaryByVersion(
 	if (summarizeHistory) {
 		switch (writeSummaryFormat) {
 			case SharedTreeSummaryWriteFormat.Format_0_0_2:
-				return fullHistorySummarizer(editLog, currentView);
+				return fullHistorySummarizer(summarizeLog, currentView);
 			case SharedTreeSummaryWriteFormat.Format_0_1_1:
-				return fullHistorySummarizer_0_1_1(editLog, currentView);
+				return fullHistorySummarizer_0_1_1(summarizeLog, currentView);
 			default:
 				throw new Error(`Summary format ${writeSummaryFormat} not supported.`);
 		}
@@ -133,9 +133,9 @@ export function getSummaryByVersion(
 
 	switch (writeSummaryFormat) {
 		case SharedTreeSummaryWriteFormat.Format_0_0_2:
-			return noHistorySummarizer(editLog, currentView);
+			return noHistorySummarizer(summarizeLog, currentView);
 		case SharedTreeSummaryWriteFormat.Format_0_1_1:
-			return noHistorySummarizer_0_1_1(editLog, currentView);
+			return noHistorySummarizer_0_1_1(summarizeLog, currentView);
 		default:
 			throw new Error(`Summary format ${writeSummaryFormat} not supported.`);
 	}

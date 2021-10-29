@@ -15,7 +15,7 @@ import {
 	SucceedingTransactionState,
 	TransactionFailure,
 } from '../generic';
-import { AnchoredChange } from './PersistedTypes';
+import { AnchoredChangeInternal } from './PersistedTypes';
 import { ResolutionFailure, resolveChangeAnchors } from './AnchorResolution';
 
 /**
@@ -35,23 +35,23 @@ export namespace TransactionWithAnchors {
 	/**
 	 * Makes a new {@link GenericTransaction} that follows the {@link TransactionWithAnchors.Policy} policy.
 	 */
-	export function factory(view: RevisionView): GenericTransaction<AnchoredChange, Failure> {
+	export function factory(view: RevisionView): GenericTransaction<AnchoredChangeInternal, Failure> {
 		return new GenericTransaction(view, new Policy());
 	}
 
-	type ValidState = SucceedingTransactionState<AnchoredChange>;
+	type ValidState = SucceedingTransactionState<AnchoredChangeInternal>;
 
 	/**
 	 * The policy followed by a {@link TransactionWithAnchors}.
 	 */
-	export class Policy implements GenericTransactionPolicy<AnchoredChange, Failure> {
+	export class Policy implements GenericTransactionPolicy<AnchoredChangeInternal, Failure> {
 		private readonly basePolicy = new Transaction.Policy();
 
 		public tryResolveChange(
 			state: ValidState,
-			change: AnchoredChange,
-			path: ReconciliationPath<AnchoredChange>
-		): Result<AnchoredChange, TransactionFailure<Failure>> {
+			change: AnchoredChangeInternal,
+			path: ReconciliationPath<AnchoredChangeInternal>
+		): Result<AnchoredChangeInternal, TransactionFailure<Failure>> {
 			const result = resolveChangeAnchors(change, state.view, path);
 			return Result.isOk(result)
 				? result
@@ -65,7 +65,7 @@ export namespace TransactionWithAnchors {
 			return Result.mapError(this.basePolicy.validateOnClose(state), wrapBasicError);
 		}
 
-		public dispatchChange(state: ValidState, change: AnchoredChange): ChangeResult<Failure> {
+		public dispatchChange(state: ValidState, change: AnchoredChangeInternal): ChangeResult<Failure> {
 			return Result.mapError(this.basePolicy.dispatchChange(state, change), wrapBasicError);
 		}
 	}
@@ -88,7 +88,7 @@ export namespace TransactionWithAnchors {
 		  }
 		| {
 				kind: FailureKind.ResolutionFailure;
-				change: AnchoredChange;
+				change: AnchoredChangeInternal;
 				resolutionFailure: ResolutionFailure;
 		  };
 }

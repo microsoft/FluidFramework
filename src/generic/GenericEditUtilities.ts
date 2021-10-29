@@ -4,8 +4,10 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { EditId } from '../Identifiers';
-import { Edit, TraitLocation } from './PersistedTypes';
+import { copyPropertyIfDefined, fail, Mutable } from '../Common';
+import { StablePlace, StableRange } from '../default-edits';
+import { EditId, TraitLabel } from '../Identifiers';
+import { Edit, NodeData, PlaceholderTree, TraitLocation, TraitMap, TreeNode } from './PersistedTypes';
 
 /**
  * Functions for constructing and comparing Edits.
@@ -43,4 +45,88 @@ export function newEdit<TEdit>(changes: readonly TEdit[]): Edit<TEdit> {
  */
 export function newEditId(): EditId {
 	return uuidv4() as EditId;
+}
+
+/**
+ * Deeply clone the given StablePlace
+ */
+export function deepCloneStablePlace(place: StablePlace): StablePlace {
+	const clone: StablePlace = { side: place.side };
+	copyPropertyIfDefined(place, clone, 'referenceSibling');
+	copyPropertyIfDefined(place, clone, 'referenceTrait');
+	return clone;
+}
+
+/**
+ * Deeply clone the given StableRange
+ */
+export function deepCloneStableRange(range: StableRange): StableRange {
+	return { start: deepCloneStablePlace(range.start), end: deepCloneStablePlace(range.end) };
+}
+
+/**
+ * Transform an input tree into an isomorphic output tree with new identifiers on each node
+ * @param tree - the input tree
+ * @param convert - a conversion function that will run on all nodes not of type TPlaceholder
+ * @param isPlaceholder - a predicate which determines if the given node is of type TPlaceholder
+ */
+export function convertTreeNodes<TPlaceholder>(
+	root: PlaceholderTree<TPlaceholder>,
+	convert: (node: NodeData) => NodeData,
+	isPlaceholder: (node: PlaceholderTree<TPlaceholder>) => node is TPlaceholder
+): PlaceholderTree<TPlaceholder> {
+	if (isPlaceholder(root)) {
+		return root;
+	}
+	const rootChildIterator = iterateChildren(Object.entries(root.traits))[Symbol.iterator]();
+	const convertedRoot = convert(root);
+	const newRoot = {
+		definition: convertedRoot.definition,
+		identifier: convertedRoot.identifier,
+		traits: {},
+	};
+	copyPropertyIfDefined(convertedRoot, newRoot, 'payload');
+	const pendingNodes: {
+		childIterator: Iterator<[TraitLabel, PlaceholderTree<TPlaceholder>]>;
+		newNode: Mutable<TreeNode<PlaceholderTree<TPlaceholder>>>;
+	}[] = [{ childIterator: rootChildIterator, newNode: newRoot }];
+
+	while (pendingNodes.length > 0) {
+		const { childIterator, newNode } = pendingNodes[pendingNodes.length - 1] ?? fail('Undefined node');
+		const { value, done } = childIterator.next();
+		if (done === true) {
+			pendingNodes.pop();
+		} else {
+			const [traitLabel, child] = value as [TraitLabel, PlaceholderTree<TPlaceholder>];
+			let newChild: Mutable<PlaceholderTree<TPlaceholder>> = child;
+			if (!isPlaceholder(newChild)) {
+				const childIterator = iterateChildren(Object.entries(newChild.traits))[Symbol.iterator]();
+				const convertedChild = convert(newChild);
+				newChild = {
+					definition: convertedChild.definition,
+					identifier: convertedChild.identifier,
+					traits: {},
+				};
+				copyPropertyIfDefined(convertedChild, newChild, 'payload');
+				pendingNodes.push({ childIterator, newNode: newChild });
+			}
+			const newTraits = newNode.traits as Mutable<TraitMap<PlaceholderTree<TPlaceholder>>>;
+			let newTrait = newTraits[traitLabel];
+			if (newTrait === undefined) {
+				newTrait = [];
+				newTraits[traitLabel] = newTrait;
+			}
+			(newTrait as PlaceholderTree<TPlaceholder>[]).push(newChild);
+		}
+	}
+
+	return newRoot;
+}
+
+function* iterateChildren<T>(traits: Iterable<[string, readonly T[]]>): Iterable<[TraitLabel, T]> {
+	for (const [label, trait] of traits) {
+		for (const child of trait) {
+			yield [label as TraitLabel, child];
+		}
+	}
 }

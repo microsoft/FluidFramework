@@ -4,7 +4,8 @@
  */
 
 import { expect } from 'chai';
-import { NodeId } from '../Identifiers';
+import { assert } from '@fluidframework/common-utils';
+import { Definition, NodeId } from '../Identifiers';
 import { Side } from '../TreeView';
 import {
 	PlaceValidationResult,
@@ -12,12 +13,16 @@ import {
 	validateStablePlace,
 	validateStableRange,
 } from '../default-edits';
+import { convertTreeNodes } from '../generic/GenericEditUtilities';
 import {
 	simpleRevisionViewWithValidation,
 	left,
 	right,
 	leftTraitLocation,
 	rootNodeId,
+	makeEmptyNode,
+	simpleTestTree,
+	deepCompareNodes,
 } from './utilities/TestUtilities';
 
 describe('EditUtilities', () => {
@@ -129,4 +134,125 @@ describe('EditUtilities', () => {
 			});
 		});
 	});
+
+	describe('Tree node conversion', () => {
+		it('can clone a tree', () => {
+			const clone = convertTreeNodes(simpleTestTree, identity, isNever);
+			expect(deepCompareNodes(simpleTestTree, clone)).to.be.true;
+		});
+
+		it('can clone a leaf', () => {
+			let converted = false;
+			expect(
+				convertTreeNodes(
+					42,
+					(n) => {
+						converted = true;
+						return n;
+					},
+					isNumber
+				)
+			).to.equal(42);
+			expect(converted).to.be.false;
+		});
+
+		it('can clone a tree with a leaf', () => {
+			const tree = { ...makeEmptyNode(), payload: 'payload', traits: { main: [42] } };
+			const clone = convertTreeNodes(tree, identity, isNumber);
+			assert(typeof clone !== 'number', '');
+			expect(clone.definition).to.equal(tree.definition);
+			expect(clone.identifier).to.equal(tree.identifier);
+			expect(clone.payload).to.equal(tree.payload);
+			expect(clone.traits).to.deep.equal({ main: [42] });
+		});
+
+		it('correctly invokes the convert function', () => {
+			const node = { ...makeEmptyNode(), payload: 'payload' };
+			let converted = false;
+			convertTreeNodes(
+				node,
+				(n) => {
+					converted = true;
+					expect(node.definition).to.equal(node.definition);
+					expect(node.identifier).to.equal(node.identifier);
+					expect(node.payload).to.equal(node.payload);
+					return n;
+				},
+				isNumber
+			);
+			expect(converted).to.be.true;
+		});
+
+		it('can convert a node', () => {
+			const node = { ...makeEmptyNode(), payload: 'payload' };
+			const converted = convertTreeNodes(
+				node,
+				(_) => ({ definition: '_def' as Definition, identifier: '_id' as NodeId, payload: 'payload2' }),
+				isNumber
+			);
+			expect(converted).to.deep.equal({ definition: '_def', identifier: '_id', payload: 'payload2', traits: {} });
+		});
+
+		it('can convert a tree with children', () => {
+			const childA = { ...makeEmptyNode(), payload: 'a' };
+			const childB = { ...makeEmptyNode(), payload: 'b' };
+			const node = { ...makeEmptyNode(), traits: { main: [childA, childB] } };
+			const converted = convertTreeNodes(
+				node,
+				(node) => {
+					if (node.identifier === childB.identifier) {
+						return { definition: node.definition, identifier: node.identifier, payload: 'c' };
+					}
+					return node;
+				},
+				isNumber
+			);
+			expect(converted).to.deep.equal({
+				definition: node.definition,
+				identifier: node.identifier,
+				traits: {
+					main: [
+						{ definition: childA.definition, identifier: childA.identifier, payload: 'a', traits: {} },
+						{ definition: childB.definition, identifier: childB.identifier, payload: 'c', traits: {} },
+					],
+				},
+			});
+		});
+
+		it('does not copy extraneous properties from input tree', () => {
+			const node = { ...makeEmptyNode(), extra: 'This is extra data that should not be copied' };
+			const converted = convertTreeNodes(node, identity, isNumber);
+			expect(converted).to.deep.equal({
+				definition: node.definition,
+				identifier: node.identifier,
+				traits: node.traits,
+			});
+		});
+
+		it('does not copy extraneous properties from converter', () => {
+			const node = makeEmptyNode();
+			const converted = convertTreeNodes(
+				node,
+				(n) => ({ ...n, extra: 'This is extra data that should not be copied' }),
+				isNumber
+			);
+			expect(converted).to.deep.equal({
+				definition: node.definition,
+				identifier: node.identifier,
+				traits: node.traits,
+			});
+		});
+	});
+
+	function identity<T>(x: T): T {
+		return x;
+	}
+
+	function isNever<T>(node: T | unknown): node is T {
+		return false;
+	}
+
+	function isNumber(node: number | unknown): node is number {
+		return typeof node === 'number';
+	}
 });

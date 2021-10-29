@@ -8,7 +8,7 @@ import { expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
 import { EditHandle, EditLog } from '../EditLog';
 import { Edit, EditWithoutId, newEdit, SharedTreeSummary } from '../generic';
-import { SharedTree, setTrait, Change } from '../default-edits';
+import { SharedTree, setTrait, Change, ChangeInternal } from '../default-edits';
 import { assertNotUndefined } from '../Common';
 import { SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import { initialTree } from '../InitialTree';
@@ -60,16 +60,11 @@ describe('SharedTree history virtualization', () => {
 
 	// Adds edits to sharedTree1 to make up the specified number of chunks.
 	const addNewEditChunks = async (numberOfChunks = 1, additionalEdits = 0) => {
-		const expectedEdits: Edit<Change>[] = [];
+		const expectedEdits: Edit<ChangeInternal>[] = [];
 
 		// Add some edits to create a chunk with.
-		while (
-			expectedEdits.length <
-			(sharedTree.edits as EditLog<Change>).editsPerChunk * numberOfChunks + additionalEdits
-		) {
-			const edit = newEdit(setTrait(testTrait, [makeTestNode()]));
-			expectedEdits.push(edit);
-			sharedTree.processLocalEdit(edit);
+		while (expectedEdits.length < (sharedTree.edits as EditLog).editsPerChunk * numberOfChunks + additionalEdits) {
+			expectedEdits.push(sharedTree.applyEdit(...setTrait(testTrait, [makeTestNode()])));
 		}
 
 		// `ensureSynchronized` does not guarantee blob upload
@@ -81,7 +76,7 @@ describe('SharedTree history virtualization', () => {
 	};
 
 	it('can upload edit chunks and load chunks from handles', async () => {
-		const expectedEdits: Edit<Change>[] = await addNewEditChunks();
+		const expectedEdits: Edit<ChangeInternal>[] = await addNewEditChunks();
 
 		const summary = sharedTree.saveSummary() as SharedTreeSummary<Change>;
 
@@ -181,7 +176,7 @@ describe('SharedTree history virtualization', () => {
 
 		// Make sure each starting revision is correct and each chunk in the summary is a handle
 		editChunks.forEach(({ startRevision, chunk }, index) => {
-			expect(startRevision).to.equal(index * (sharedTree.edits as EditLog<Change>).editsPerChunk);
+			expect(startRevision).to.equal(index * (sharedTree.edits as EditLog).editsPerChunk);
 			expect(typeof (chunk as EditHandle).get).to.equal('function');
 		});
 	});

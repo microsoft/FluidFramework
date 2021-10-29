@@ -7,6 +7,7 @@
 
 export { SharedTreeWithAnchors, SharedTreeWithAnchorsEditor } from './SharedTreeWithAnchors';
 export * from './PersistedTypes';
+export * from './EditUtilities';
 export * from './Factory';
 export { TransactionWithAnchors } from './TransactionWithAnchors';
 export {

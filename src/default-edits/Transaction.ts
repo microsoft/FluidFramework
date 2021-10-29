@@ -15,14 +15,13 @@ import {
 } from '../generic';
 import { RevisionView, TreeViewNode } from '../TreeView';
 import {
-	Build,
-	Change,
-	ChangeType,
-	Constraint,
-	ConstraintEffect,
-	Detach,
-	Insert,
-	SetValue,
+	BuildInternal,
+	ChangeInternal,
+	ChangeTypeInternal,
+	ConstraintInternal,
+	DetachInternal,
+	InsertInternal,
+	SetValueInternal,
 	StablePlace,
 	StableRange,
 } from './PersistedTypes';
@@ -37,6 +36,7 @@ import {
 	BadRangeValidationResult,
 	PlaceValidationResult,
 	RangeValidationResultKind,
+	ConstraintEffect,
 } from './EditUtilities';
 
 /**
@@ -51,24 +51,25 @@ import {
  *
  * No data outside the Transaction is modified by Transaction:
  * the results from `close` must be used to actually submit an `Edit`.
+ * @public
  */
 export namespace Transaction {
 	/**
 	 * Makes a new {@link GenericTransaction} that follows the {@link Transaction.Policy} policy.
 	 */
-	export function factory(view: RevisionView): GenericTransaction<Change, Failure> {
+	export function factory(view: RevisionView): GenericTransaction<ChangeInternal, Failure> {
 		return new GenericTransaction(view, new Policy());
 	}
 
-	type ValidState = SucceedingTransactionState<Change>;
+	type ValidState = SucceedingTransactionState<ChangeInternal>;
 
 	/**
 	 * The policy followed by a {@link Transaction}.
 	 */
-	export class Policy implements GenericTransactionPolicy<Change, Failure> {
+	export class Policy implements GenericTransactionPolicy<ChangeInternal, Failure> {
 		protected readonly detached: Map<DetachedSequenceId, readonly NodeId[]> = new Map();
 
-		public tryResolveChange(state: ValidState, change: Change): Result.Ok<Change> {
+		public tryResolveChange(state: ValidState, change: ChangeInternal): Result.Ok<ChangeInternal> {
 			return Result.ok(change);
 		}
 
@@ -85,24 +86,24 @@ export namespace Transaction {
 				: Result.ok(state.view);
 		}
 
-		public dispatchChange(state: ValidState, change: Change): ChangeResult<Failure> {
+		public dispatchChange(state: ValidState, change: ChangeInternal): ChangeResult<Failure> {
 			switch (change.type) {
-				case ChangeType.Build:
+				case ChangeTypeInternal.Build:
 					return this.applyBuild(state, change);
-				case ChangeType.Insert:
+				case ChangeTypeInternal.Insert:
 					return this.applyInsert(state, change);
-				case ChangeType.Detach:
+				case ChangeTypeInternal.Detach:
 					return this.applyDetach(state, change);
-				case ChangeType.Constraint:
+				case ChangeTypeInternal.Constraint:
 					return this.applyConstraint(state, change);
-				case ChangeType.SetValue:
+				case ChangeTypeInternal.SetValue:
 					return this.applySetValue(state, change);
 				default:
 					return fail('Attempted to apply unsupported change');
 			}
 		}
 
-		private applyBuild(state: ValidState, change: Build): ChangeResult<Failure> {
+		private applyBuild(state: ValidState, change: BuildInternal): ChangeResult<Failure> {
 			if (this.detached.has(change.destination)) {
 				return Result.error({
 					status: EditStatus.Malformed,
@@ -165,7 +166,7 @@ export namespace Transaction {
 			return Result.ok(view);
 		}
 
-		private applyInsert(state: ValidState, change: Insert): ChangeResult<Failure> {
+		private applyInsert(state: ValidState, change: InsertInternal): ChangeResult<Failure> {
 			const source = this.detached.get(change.source);
 			if (source === undefined) {
 				return Result.error({
@@ -199,7 +200,7 @@ export namespace Transaction {
 			return Result.ok(view);
 		}
 
-		private applyDetach(state: ValidState, change: Detach): ChangeResult<Failure> {
+		private applyDetach(state: ValidState, change: DetachInternal): ChangeResult<Failure> {
 			const sourceChangeResult = validateStableRange(state.view, change.source);
 			if (sourceChangeResult !== RangeValidationResultKind.Valid) {
 				return Result.error({
@@ -241,7 +242,7 @@ export namespace Transaction {
 			return Result.ok(modifiedView);
 		}
 
-		private applyConstraint(state: ValidState, change: Constraint): ChangeResult<Failure> {
+		private applyConstraint(state: ValidState, change: ConstraintInternal): ChangeResult<Failure> {
 			// TODO: Implement identityHash and contentHash
 			assert(change.identityHash === undefined, 'identityHash constraint is not implemented');
 			assert(change.contentHash === undefined, 'contentHash constraint is not implemented');
@@ -326,7 +327,7 @@ export namespace Transaction {
 			return Result.ok(state.view);
 		}
 
-		private applySetValue(state: ValidState, change: SetValue): ChangeResult<Failure> {
+		private applySetValue(state: ValidState, change: SetValueInternal): ChangeResult<Failure> {
 			if (!state.view.hasNode(change.nodeToModify)) {
 				return Result.error({
 					status: EditStatus.Invalid,
@@ -454,51 +455,51 @@ export namespace Transaction {
 
 	export interface DetachedSequenceIdAlreadyInUseFailure {
 		readonly kind: FailureKind.DetachedSequenceIdAlreadyInUse;
-		readonly change: Change;
+		readonly change: ChangeInternal;
 		readonly sequenceId: DetachedSequenceId;
 	}
 
 	export interface DetachedSequenceNotFoundFailure {
 		readonly kind: FailureKind.DetachedSequenceNotFound;
-		readonly change: Change;
+		readonly change: ChangeInternal;
 		readonly sequenceId: DetachedSequenceId;
 	}
 
 	export interface DuplicateIdInBuildFailure {
 		readonly kind: FailureKind.DuplicateIdInBuild;
-		readonly change: Change;
+		readonly change: ChangeInternal;
 		readonly id: NodeId;
 	}
 
 	export interface IdAlreadyInUseFailure {
 		readonly kind: FailureKind.IdAlreadyInUse;
-		readonly change: Change;
+		readonly change: ChangeInternal;
 		readonly id: NodeId;
 	}
 
 	export interface UnknownIdFailure {
 		readonly kind: FailureKind.UnknownId;
-		readonly change: Change;
+		readonly change: ChangeInternal;
 		readonly id: NodeId;
 	}
 
 	export interface BadPlaceFailure {
 		readonly kind: FailureKind.BadPlace;
-		readonly change: Change;
+		readonly change: ChangeInternal;
 		readonly place: StablePlace;
 		readonly placeFailure: BadPlaceValidationResult;
 	}
 
 	export interface BadRangeFailure {
 		readonly kind: FailureKind.BadRange;
-		readonly change: Change;
+		readonly change: ChangeInternal;
 		readonly range: StableRange;
 		readonly rangeFailure: BadRangeValidationResult;
 	}
 
 	export interface ConstraintViolationFailure {
 		readonly kind: FailureKind.ConstraintViolation;
-		readonly constraint: Constraint;
+		readonly constraint: ConstraintInternal;
 		readonly violation: ConstraintViolationResult;
 	}
 

@@ -20,7 +20,7 @@ import { compareFiniteNumbers } from './TreeViewUtilities';
  * @public
  * @sealed
  */
-export interface OrderedEditSet<TChange> {
+export interface OrderedEditSet<TChange = unknown> {
 	/**
 	 * The length of this `OrderedEditSet`.
 	 */
@@ -60,14 +60,6 @@ export interface OrderedEditSet<TChange> {
 	 * @returns the Edit associated with the EditId or undefined if there is no such edit in the set.
 	 */
 	tryGetEdit(editId: EditId): Promise<Edit<TChange> | undefined>;
-
-	/**
-	 * @param useHandles - By default, false. If true, returns handles instead of edit chunks where possible.
-	 * 					   TODO:#49901: This parameter is used for testing and should be removed once format version 0.1.0 is written.
-	 * @returns the summary of this `OrderedEditSet` that can be used to reconstruct the edit set.
-	 * @internal
-	 */
-	getEditLogSummary(useHandles?: boolean): EditLogSummary<TChange>;
 }
 
 /**
@@ -79,7 +71,10 @@ export interface EditLogSummary<TChange> {
 	 * A of list of serialized chunks and their corresponding keys.
 	 * Start revision is the index of the first edit in the chunk in relation to the edit log.
 	 */
-	readonly editChunks: readonly { readonly startRevision: number; readonly chunk: EditChunkOrHandle<TChange> }[];
+	readonly editChunks: readonly {
+		readonly startRevision: number;
+		readonly chunk: EditChunkOrHandle<TChange>;
+	}[];
 
 	/**
 	 * A list of edits IDs for all sequenced edits.
@@ -143,7 +138,10 @@ export interface LocalOrderedEditId {
 	readonly localSequence: number;
 }
 
-interface EditChunk<TChange> {
+/**
+ * A sequence of edits that may or may not to be downloaded into the EditLog from an external service
+ */
+export interface EditChunk<TChange> {
 	handle?: EditHandle;
 	edits?: EditWithoutId<TChange>[];
 }
@@ -162,7 +160,10 @@ export type OrderedEditId = SequencedOrderedEditId | LocalOrderedEditId;
 /**
  * Returns an object that separates an Edit into two fields, id and editWithoutId.
  */
-export function separateEditAndId<TChange>(edit: Edit<TChange>): { id: EditId; editWithoutId: EditWithoutId<TChange> } {
+export function separateEditAndId<TChange>(edit: Edit<TChange>): {
+	id: EditId;
+	editWithoutId: EditWithoutId<TChange>;
+} {
 	const editWithoutId = { ...edit, id: undefined };
 	delete editWithoutId.id;
 	return { id: edit.id, editWithoutId };
@@ -210,14 +211,13 @@ export type EditAddedHandler<TChange> = (edit: Edit<TChange>, isLocal: boolean, 
  * May not contain more than one edit with the same ID.
  * @sealed
  */
-export class EditLog<TChange> extends EventEmitterWithErrorHandling implements OrderedEditSet<TChange> {
+export class EditLog<TChange = unknown> extends EventEmitterWithErrorHandling implements OrderedEditSet<TChange> {
 	private localEditSequence = 0;
 	private _minSequenceNumber = 0;
 
 	private readonly sequencedEditIds: EditId[];
 	private readonly editChunks: BTree<number, EditChunk<TChange>>;
 	private readonly localEdits: Edit<TChange>[] = [];
-
 	private readonly loadedChunkCache: number[] = [];
 	private readonly indexOfFirstEditInSession: number;
 	private readonly maximumEvictableIndex: number;
@@ -312,7 +312,7 @@ export class EditLog<TChange> extends EventEmitterWithErrorHandling implements O
 	}
 
 	/**
-	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.length}
+	 * {@inheritDoc OrderedEditSet.length}
 	 */
 	public get length(): number {
 		return this.numberOfSequencedEdits + this.numberOfLocalEdits;
@@ -333,7 +333,7 @@ export class EditLog<TChange> extends EventEmitterWithErrorHandling implements O
 	}
 
 	/**
-	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.editIds}
+	 * {@inheritDoc OrderedEditSet.editIds}
 	 */
 	public get editIds(): EditId[] {
 		return this.sequencedEditIds.concat(this.localEdits.map(({ id }) => id));
@@ -355,7 +355,7 @@ export class EditLog<TChange> extends EventEmitterWithErrorHandling implements O
 	}
 
 	/**
-	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.tryGetIndexOfId}
+	 * {@inheritDoc OrderedEditSet.tryGetIndexOfId}
 	 */
 	public tryGetIndexOfId(editId: EditId): number | undefined {
 		const orderedEdit = this.allEditIds.get(editId);
@@ -379,14 +379,14 @@ export class EditLog<TChange> extends EventEmitterWithErrorHandling implements O
 	}
 
 	/**
-	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.getIndexOfId}
+	 * {@inheritDoc OrderedEditSet.getIndexOfId}
 	 */
 	public getIndexOfId(editId: EditId): number {
 		return this.tryGetIndexOfId(editId) ?? fail('edit not found');
 	}
 
 	/**
-	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.idOf}
+	 * {@inheritDoc OrderedEditSet.getIdAtIndex}
 	 */
 	public getIdAtIndex(index: number): EditId {
 		if (this.numberOfSequencedEdits <= index) {
@@ -397,7 +397,7 @@ export class EditLog<TChange> extends EventEmitterWithErrorHandling implements O
 	}
 
 	/**
-	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.getAtIndex}
+	 * {@inheritDoc OrderedEditSet.getEditAtIndex}
 	 */
 	public async getEditAtIndex(index: number): Promise<Edit<TChange>> {
 		if (index < this.numberOfSequencedEdits) {
@@ -430,7 +430,7 @@ export class EditLog<TChange> extends EventEmitterWithErrorHandling implements O
 	}
 
 	/**
-	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.getAtIndexSynchronous}
+	 * {@inheritDoc OrderedEditSet.getEditInSessionAtIndex}
 	 */
 	public getEditInSessionAtIndex(index: number): Edit<TChange> {
 		assert(
@@ -453,7 +453,7 @@ export class EditLog<TChange> extends EventEmitterWithErrorHandling implements O
 	}
 
 	/**
-	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.tryGetEdit}
+	 * {@inheritDoc OrderedEditSet.tryGetEdit}
 	 */
 	public async tryGetEdit(editId: EditId): Promise<Edit<TChange> | undefined> {
 		try {
@@ -626,14 +626,17 @@ export class EditLog<TChange> extends EventEmitterWithErrorHandling implements O
 	/**
 	 * @returns true iff this `EditLog` and `other` are equivalent, regardless of locality.
 	 */
-	public equals<TOtherChangeTypes>(other: EditLog<TOtherChangeTypes>): boolean {
+	public equals<TOtherChangeTypesInternal>(other: EditLog<TOtherChangeTypesInternal>): boolean {
 		// TODO #45414: We should also be deep comparing the list of changes in the edit. This is not straightforward.
 		// We can use our edit validation code when we write it since it will need to do deep walks of the changes.
 		return compareArrays(this.editIds, other.editIds);
 	}
 
 	/**
-	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.getEditLogSummary}
+	 * @param useHandles - By default, false. If true, returns handles instead of edit chunks where possible.
+	 * 					   TODO:#49901: This parameter is used for testing and should be removed once format version 0.1.0 is written.
+	 * @returns the summary of this `OrderedEditSet` that can be used to reconstruct the edit set.
+	 * @internal
 	 */
 	public getEditLogSummary(useHandles = false): EditLogSummary<TChange> {
 		if (useHandles) {

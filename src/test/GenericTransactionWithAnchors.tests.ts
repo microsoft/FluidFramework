@@ -6,12 +6,17 @@
 import { expect } from 'chai';
 import { EditStatus } from '../generic';
 import { ReconciliationEdit } from '../ReconciliationPath';
-import { AnchoredChange, PlaceAnchorSemanticsChoice, RangeAnchor, TransactionWithAnchors } from '../anchored-edits';
+import {
+	PlaceAnchorSemanticsChoice,
+	RangeAnchor,
+	TransactionWithAnchors,
+	AnchoredChangeInternal,
+} from '../anchored-edits';
 import { simpleRevisionViewWithValidation, left, right } from './utilities/TestUtilities';
 
 describe('TransactionWithAnchors', () => {
 	it('does not read the reconciliation path when change resolution does not require it', () => {
-		const trappedPath = new Proxy([] as ReconciliationEdit<AnchoredChange>[], {
+		const trappedPath = new Proxy([] as ReconciliationEdit<AnchoredChangeInternal>[], {
 			get: (target, prop): unknown => {
 				expect('the path was read').equals('the path should not be read');
 				return target[prop];
@@ -20,8 +25,8 @@ describe('TransactionWithAnchors', () => {
 		const transaction = TransactionWithAnchors.factory(simpleRevisionViewWithValidation);
 		transaction.applyChanges(
 			[
-				AnchoredChange.detach(RangeAnchor.only(left, PlaceAnchorSemanticsChoice.BoundToNode)),
-				AnchoredChange.detach(RangeAnchor.only(right, PlaceAnchorSemanticsChoice.BoundToNode)),
+				AnchoredChangeInternal.detach(RangeAnchor.only(left, PlaceAnchorSemanticsChoice.BoundToNode)),
+				AnchoredChangeInternal.detach(RangeAnchor.only(right, PlaceAnchorSemanticsChoice.BoundToNode)),
 			],
 			trappedPath
 		);

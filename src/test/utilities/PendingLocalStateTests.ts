@@ -8,7 +8,6 @@ import { IContainer } from '@fluidframework/container-definitions';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import { ITestFluidObject, ITestObjectProvider } from '@fluidframework/test-utils';
 import {
-	Change,
 	EditCommittedEventArguments,
 	Insert,
 	newEdit,
@@ -108,7 +107,7 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree | Share
 			await testObjectProvider.ensureSynchronized();
 
 			// Act
-			const { pendingLocalState, actionReturn: editId } = await withContainerOffline(
+			const { pendingLocalState, actionReturn: edit } = await withContainerOffline(
 				testObjectProvider,
 				container,
 				() => tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(left)))
@@ -138,8 +137,8 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree | Share
 				'Tree collaborating with a client that applies stashed pending edits should see them.'
 			);
 
-			expect(await tree2.edits.tryGetEdit(editId)).to.not.be.undefined;
-			expect(await tree3.edits.tryGetEdit(editId)).to.not.be.undefined;
+			expect(await tree2.edits.tryGetEdit(edit?.id)).to.not.be.undefined;
+			expect(await tree3.edits.tryGetEdit(edit?.id)).to.not.be.undefined;
 		});
 
 		it('Deals with stashed handle ops gracefully', async () => {
@@ -160,7 +159,7 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree | Share
 			await testObjectProvider.ensureSynchronized();
 			await testObjectProvider.opProcessingController.pauseProcessing();
 			// Generate enough edits to cause a chunk upload.
-			for (let i = 0; i < (tree.edits as EditLog<Change>).editsPerChunk; i++) {
+			for (let i = 0; i < (tree.edits as EditLog).editsPerChunk; i++) {
 				tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.atEndOf(leftTraitLocation)));
 			}
 			// Process all of those messages, sequencing them but without informing the container that they have been sequenced.
@@ -180,7 +179,7 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree | Share
 			const tree2 = await dataObject2.getSharedObject<SharedTree>(documentId);
 			await testObjectProvider.ensureSynchronized();
 
-			const editLog = tree2.edits as EditLog<Change>;
+			const editLog = tree2.edits as EditLog;
 			const unuploadedEditChunks = Array.from(editLog.getEditChunksReadyForUpload());
 			expect(unuploadedEditChunks.length).to.equal(0);
 			expect(editLog.getEditLogSummary().editChunks.length).to.equal(2);

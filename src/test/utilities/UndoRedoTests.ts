@@ -102,7 +102,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 
 		it('can detach and re-insert the same node', () => {
 			const detachedId = 0 as DetachedSequenceId;
-			const editId = tree.applyEdit(
+			const { id } = tree.applyEdit(
 				Change.detach(StableRange.only(left), detachedId),
 				Change.insert(detachedId, StablePlace.atStartOf(leftTrait))
 			);
@@ -113,7 +113,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 
 			expect(deepCompareNodes(getTreeHandle(), initialTree)).to.be.true;
 
-			const undoId: EditId = undo(tree, editId);
+			const undoId: EditId = undo(tree, id);
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
 			}
@@ -131,7 +131,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 		it('works for Insert', () => {
 			const newNode = makeEmptyNode();
 
-			const insertId = tree.applyEdit(...Insert.create([newNode], StablePlace.after(left)));
+			const { id } = tree.applyEdit(...Insert.create([newNode], StablePlace.after(left)));
 			afterEdit();
 			expect(tree.edits.length).to.equal(2);
 
@@ -140,7 +140,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 			}
 
 			// Undo testing
-			const undoId: EditId = undo(undoTree, insertId);
+			const undoId: EditId = undo(undoTree, id);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -199,7 +199,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 							end: leftTraitPlaces[endIndex].place,
 						};
 						const countDetached = leftTraitPlaces[endIndex].index - leftTraitPlaces[startIndex].index;
-						const deleteId = tree.applyEdit(Delete.create(range));
+						const { id } = tree.applyEdit(Delete.create(range));
 						afterEdit();
 
 						expect(tree.edits.length).to.equal(4);
@@ -210,7 +210,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 						}
 
 						// Undo testing
-						const undoId: EditId = undo(undoTree, deleteId);
+						const undoId: EditId = undo(undoTree, id);
 
 						if (!localMode) {
 							containerRuntimeFactory.processAllMessages();
@@ -239,7 +239,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 			tree.applyEdit(...Insert.create([newNode], StablePlace.after(left)));
 			afterEdit();
 			const testPayload = 5;
-			const setValueId = tree.applyEdit(Change.setPayload(newNode.identifier, testPayload));
+			const { id } = tree.applyEdit(Change.setPayload(newNode.identifier, testPayload));
 			afterEdit();
 			expect(tree.edits.length).to.equal(3);
 
@@ -248,7 +248,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 			}
 
 			// Undo testing
-			const undoId: EditId = undo(undoTree, setValueId);
+			const undoId: EditId = undo(undoTree, id);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -287,7 +287,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 				const firstNode = makeEmptyNode();
 				const secondNode = makeEmptyNode();
 
-				const firstInsertId = tree.applyEdit(...Insert.create([firstNode], StablePlace.after(left)));
+				const { id } = tree.applyEdit(...Insert.create([firstNode], StablePlace.after(left)));
 				afterEdit();
 				tree.applyEdit(...Insert.create([secondNode], StablePlace.after(left)));
 				afterEdit();
@@ -298,7 +298,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 				}
 
 				// Undo testing
-				const undoId: EditId = undo(undoTree, firstInsertId);
+				const undoId: EditId = undo(undoTree, id);
 
 				if (!localMode) {
 					containerRuntimeFactory.processAllMessages();
@@ -339,7 +339,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 
 				tree.applyEdit(...Insert.create([firstNode], StablePlace.after(left)));
 				afterEdit();
-				const deleteId = tree.applyEdit(Delete.create(StableRange.only(firstNode)));
+				const { id } = tree.applyEdit(Delete.create(StableRange.only(firstNode)));
 				afterEdit();
 				tree.applyEdit(...Insert.create([secondNode], StablePlace.after(left)));
 				afterEdit();
@@ -350,7 +350,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 				}
 
 				// Undo testing
-				const undoId: EditId = undo(undoTree, deleteId);
+				const undoId: EditId = undo(undoTree, id);
 
 				if (!localMode) {
 					containerRuntimeFactory.processAllMessages();
@@ -390,7 +390,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 				tree.applyEdit(...Insert.create([newNode], StablePlace.after(left)));
 				afterEdit();
 				const testPayload = 10;
-				const setValueId = tree.applyEdit(Change.setPayload(newNode.identifier, testPayload));
+				const { id } = tree.applyEdit(Change.setPayload(newNode.identifier, testPayload));
 				afterEdit();
 				tree.applyEdit(...Insert.create([newNode], StablePlace.after(left)));
 				afterEdit();
@@ -401,7 +401,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 				}
 
 				// Undo testing
-				const undoId: EditId = undo(undoTree, setValueId);
+				const undoId: EditId = undo(undoTree, id);
 
 				if (!localMode) {
 					containerRuntimeFactory.processAllMessages();

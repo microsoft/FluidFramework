@@ -12,10 +12,10 @@ import {
 	ConstraintEffect,
 	RangeValidationResultKind,
 	PlaceValidationResult,
-	ChangeType,
+	ChangeTypeInternal,
 } from '../default-edits';
 import {
-	AnchoredChange,
+	AnchoredChangeInternal,
 	PlaceAnchor,
 	PlaceAnchorSemanticsChoice,
 	RangeAnchor,
@@ -81,8 +81,8 @@ const mockPlace = 'mock-place' as unknown as StablePlace;
 const mockRange = 'mock-range' as unknown as StableRange;
 const mockPlaceAnchor = 'mock-place-anchor' as unknown as RelativePlaceAnchor;
 const mockView = 'mock-view' as unknown as TransactionView;
-const mockPath = 'mock-path' as unknown as ReconciliationPath<AnchoredChange>;
-const mockEvaluatedChange = 'mock-evaluated-change' as unknown as EvaluatedChange<AnchoredChange>;
+const mockPath = 'mock-path' as unknown as ReconciliationPath<AnchoredChangeInternal>;
+const mockEvaluatedChange = 'mock-evaluated-change' as unknown as EvaluatedChange<AnchoredChangeInternal>;
 
 const placeUpdateFailure = Result.error<PlaceUpdateFailure>({
 	kind: PlaceUpdateFailureKind.PlaceWasNeverValid,
@@ -100,28 +100,28 @@ describe('Anchor Glass Box Tests', () => {
 		const testCases = [
 			{
 				name: 'Insert',
-				input: AnchoredChange.insert(mockDetachedSequenceId, beforeAnchor),
-				expected: AnchoredChange.insert(mockDetachedSequenceId, mockPlace),
+				input: AnchoredChangeInternal.insert(mockDetachedSequenceId, beforeAnchor),
+				expected: AnchoredChangeInternal.insert(mockDetachedSequenceId, mockPlace),
 			},
 			{
 				name: 'Detach',
-				input: AnchoredChange.detach(RangeAnchor.only(right), mockDetachedSequenceId),
-				expected: AnchoredChange.detach(mockRange, mockDetachedSequenceId),
+				input: AnchoredChangeInternal.detach(RangeAnchor.only(right), mockDetachedSequenceId),
+				expected: AnchoredChangeInternal.detach(mockRange, mockDetachedSequenceId),
 			},
 			{
 				name: 'SetValue (set payload)',
-				input: AnchoredChange.setPayload(left.identifier, 42),
-				expected: AnchoredChange.setPayload(mockNodeId, 42),
+				input: AnchoredChangeInternal.setPayload(left.identifier, 42),
+				expected: AnchoredChangeInternal.setPayload(mockNodeId, 42),
 			},
 			{
 				name: 'SetValue (clear payload)',
-				input: AnchoredChange.clearPayload(left.identifier),
-				expected: AnchoredChange.clearPayload(mockNodeId),
+				input: AnchoredChangeInternal.clearPayload(left.identifier),
+				expected: AnchoredChangeInternal.clearPayload(mockNodeId),
 			},
 			{
 				name: 'Constraint',
-				input: AnchoredChange.constraint(RangeAnchor.only(right), ConstraintEffect.ValidRetry),
-				expected: AnchoredChange.constraint(mockRange, ConstraintEffect.ValidRetry),
+				input: AnchoredChangeInternal.constraint(RangeAnchor.only(right), ConstraintEffect.ValidRetry),
+				expected: AnchoredChangeInternal.constraint(mockRange, ConstraintEffect.ValidRetry),
 			},
 		];
 		for (const testCase of testCases) {
@@ -158,7 +158,7 @@ describe('Anchor Glass Box Tests', () => {
 
 		it('throws when given an unsupported change type', () => {
 			const fakeChange = { type: -42 };
-			expect(() => resolveChangeAnchors(fakeChange as AnchoredChange, mockView, [])).throws();
+			expect(() => resolveChangeAnchors(fakeChange as AnchoredChangeInternal, mockView, [])).throws();
 		});
 	});
 
@@ -303,7 +303,7 @@ describe('Anchor Glass Box Tests', () => {
 			const inputPlace = PlaceAnchor.after(mockNodeId);
 			const placeUpdatorForPath = (
 				place: RelativePlaceAnchor,
-				path: ReconciliationPath<AnchoredChange>
+				path: ReconciliationPath<AnchoredChangeInternal>
 			): Result<PlaceAnchor, PlaceUpdateFailure> => {
 				expect(place).equals(inputPlace);
 				expect(path).equals(mockPath);
@@ -329,7 +329,7 @@ describe('Anchor Glass Box Tests', () => {
 			const inputPlace = PlaceAnchor.after(mockNodeId);
 			const placeUpdatorForPath = (
 				place: RelativePlaceAnchor,
-				path: ReconciliationPath<AnchoredChange>
+				path: ReconciliationPath<AnchoredChangeInternal>
 			): Result<PlaceAnchor, PlaceUpdateFailure> => {
 				expect(place).equals(inputPlace);
 				expect(path).equals(mockPath);
@@ -414,7 +414,7 @@ describe('Anchor Glass Box Tests', () => {
 				detach: {
 					destination: mockDetachedSequenceId,
 					source: mockRange,
-					type: ChangeType.Detach,
+					type: ChangeTypeInternal.Detach,
 				},
 			});
 			expect(
@@ -431,44 +431,44 @@ describe('Anchor Glass Box Tests', () => {
 	});
 
 	describe(findLastOffendingChange.name, () => {
-		function makeEdit(changes: readonly AnchoredChange[]): ReconciliationEdit<AnchoredChange> {
+		function makeEdit(changes: readonly AnchoredChangeInternal[]): ReconciliationEdit<AnchoredChangeInternal> {
 			assert(changes.length > 0);
-			const steps: ReconciliationChange<AnchoredChange>[] = changes.map(makeChange);
+			const steps: ReconciliationChange<AnchoredChangeInternal>[] = changes.map(makeChange);
 			return Object.assign(steps, {
 				before: viewBeforeChange(changes[0]),
 				after: steps[steps.length - 1].after,
 			});
 		}
 
-		function makeChange(change: AnchoredChange): ReconciliationChange<AnchoredChange> {
+		function makeChange(change: AnchoredChangeInternal): ReconciliationChange<AnchoredChangeInternal> {
 			return {
 				resolvedChange: change,
 				after: viewAfterChange(change) as TransactionView,
 			};
 		}
 
-		function viewBeforeChange(change: AnchoredChange): TreeView {
+		function viewBeforeChange(change: AnchoredChangeInternal): TreeView {
 			return change === stayInvalidChange || change === mendingChange ? invalidView : validView;
 		}
 
-		function viewAfterChange(change: AnchoredChange): TreeView {
+		function viewAfterChange(change: AnchoredChangeInternal): TreeView {
 			return change === stayValidChange || change === mendingChange ? validView : invalidView;
 		}
 
 		const validView = 'valid-view' as unknown as TreeView;
 		const invalidView = 'invalid-view' as unknown as TreeView;
-		const priorOffendingChange = 'prior-offending-change' as unknown as AnchoredChange;
-		const lastOffendingChange = 'last-offending-change' as unknown as AnchoredChange;
-		const stayValidChange = 'stay-valid-change' as unknown as AnchoredChange;
-		const stayInvalidChange = 'stay-invalid-change' as unknown as AnchoredChange;
-		const mendingChange = 'mending-change' as unknown as AnchoredChange;
+		const priorOffendingChange = 'prior-offending-change' as unknown as AnchoredChangeInternal;
+		const lastOffendingChange = 'last-offending-change' as unknown as AnchoredChangeInternal;
+		const stayValidChange = 'stay-valid-change' as unknown as AnchoredChangeInternal;
+		const stayInvalidChange = 'stay-invalid-change' as unknown as AnchoredChangeInternal;
+		const mendingChange = 'mending-change' as unknown as AnchoredChangeInternal;
 		const priorOffendingEdit = makeEdit([priorOffendingChange]);
 		const lastOffendingEdit = makeEdit([lastOffendingChange]);
 		const mendingEdit = makeEdit([mendingChange]);
 		const stayValidEdit = makeEdit([stayValidChange]);
 		const stayInvalidEdit = makeEdit([stayInvalidChange]);
 
-		const testWithPath = (path: ReconciliationPath<AnchoredChange>) =>
+		const testWithPath = (path: ReconciliationPath<AnchoredChangeInternal>) =>
 			findLastOffendingChange(mockPlaceAnchor, path, {
 				placeValidator: (view) =>
 					view === invalidView
@@ -479,7 +479,7 @@ describe('Anchor Glass Box Tests', () => {
 			});
 
 		describe('returns undefined when the place is invalid throughout the path', () => {
-			const testCases: ReconciliationPath<AnchoredChange>[] = [
+			const testCases: ReconciliationPath<AnchoredChangeInternal>[] = [
 				[],
 				[stayInvalidEdit],
 				[stayInvalidEdit, stayInvalidEdit, stayInvalidEdit],
@@ -493,7 +493,7 @@ describe('Anchor Glass Box Tests', () => {
 		});
 
 		describe('returns the last offending change when there is one', () => {
-			const testCases: ReconciliationPath<AnchoredChange>[] = [
+			const testCases: ReconciliationPath<AnchoredChangeInternal>[] = [
 				[lastOffendingEdit],
 				[lastOffendingEdit, stayInvalidEdit],
 				[stayValidEdit, lastOffendingEdit],
@@ -581,8 +581,8 @@ describe('Anchor Glass Box Tests', () => {
 				...parent,
 				traits: filteredTrait.length ? { [leftTraitLabel]: filteredTrait } : {},
 			}).openForTransaction();
-			const evaluatedChange: EvaluatedChange<AnchoredChange> = {
-				change: AnchoredChange.detach(rangesInSitu[caseIndex].range),
+			const evaluatedChange: EvaluatedChange<AnchoredChangeInternal> = {
+				change: AnchoredChangeInternal.detach(rangesInSitu[caseIndex].range),
 				before,
 				after,
 			};
@@ -598,7 +598,7 @@ describe('Anchor Glass Box Tests', () => {
 
 		function evaluate(
 			anchor: RelativePlaceAnchor,
-			evaluatedChange: EvaluatedChange<AnchoredChange>
+			evaluatedChange: EvaluatedChange<AnchoredChangeInternal>
 		): Result<PlaceAnchor, PlaceUpdateDeletedParentFailure> {
 			return updateRelativePlaceAnchorForChange(anchor, evaluatedChange);
 		}
@@ -620,7 +620,7 @@ describe('Anchor Glass Box Tests', () => {
 		describe('does not update anchors for start and end of traits', () => {
 			for (let i = 0; i < rangesInSitu.length; ++i) {
 				it(`Test Case ${i}`, () => {
-					const evaluatedChange: EvaluatedChange<AnchoredChange> = evaluatedChangeForCase(i);
+					const evaluatedChange: EvaluatedChange<AnchoredChangeInternal> = evaluatedChangeForCase(i);
 					expect(evaluate(startAnchor, evaluatedChange)).deep.equals(
 						Result.error({
 							kind: PlaceUpdateFailureKind.DeletedParent,
@@ -647,8 +647,8 @@ describe('Anchor Glass Box Tests', () => {
 				...initialTree,
 				traits: {},
 			}).openForTransaction();
-			const change = AnchoredChange.detach(RangeAnchor.only(parent));
-			const evaluatedChange: EvaluatedChange<AnchoredChange> = {
+			const change = AnchoredChangeInternal.detach(RangeAnchor.only(parent));
+			const evaluatedChange: EvaluatedChange<AnchoredChangeInternal> = {
 				change,
 				before,
 				after,

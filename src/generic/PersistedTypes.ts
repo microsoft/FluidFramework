@@ -143,6 +143,11 @@ export interface TreeNode<TChild> extends NodeData {
 }
 
 /**
+ * A tree whose nodes are either TreeNodes or a placeholder
+ */
+export type PlaceholderTree<TPlaceholder = never> = TreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
+
+/**
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
  * @public
  */
@@ -152,10 +157,10 @@ export interface TraitLocation {
 }
 
 /**
- * JSON-compatible Node type. Objects of type `ChangeNode` will be persisted in `Changes` (under Edits) in the SharedTree history.
+ * JSON-compatible Node type. Objects of this type will be persisted in internal change objects (under Edits) in the SharedTree history.
  * @public
  */
-export type ChangeNode = TreeNode<ChangeNode>;
+export type ChangeNode = PlaceholderTree;
 
 /**
  * Node or sequence of Nodes for use in a Build change.
@@ -166,7 +171,7 @@ export type ChangeNode = TreeNode<ChangeNode>;
  * These optimized formats should also be used within tree views.
  * @public
  */
-export type BuildNode = TreeNode<BuildNode> | DetachedSequenceId;
+export type BuildNode = PlaceholderTree<DetachedSequenceId>;
 
 /**
  * The status code of an attempt to apply the changes in an Edit.

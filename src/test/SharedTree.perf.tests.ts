@@ -6,7 +6,7 @@
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
 import { assert } from '../Common';
-import { Change, SharedTree } from '../default-edits';
+import { SharedTree } from '../default-edits';
 import { EditLog } from '../EditLog';
 import { runSummaryLoadPerfTests } from './utilities/SummaryLoadPerfTests';
 import {
@@ -28,11 +28,11 @@ describe('SharedTree Perf', () => {
 
 				const edits = createStableEdits(count);
 				for (let i = 0; i < count - 1; i++) {
-					tree.processLocalEdit(edits[i]);
+					tree.applyEdit(...edits[i].changes);
 				}
 
 				containerRuntimeFactory.processAllMessages();
-				const editLog = tree.edits as EditLog<Change>;
+				const editLog = tree.edits as EditLog;
 				assert(editLog.numberOfSequencedEdits === count);
 				assert(editLog.numberOfLocalEdits === 0);
 			},

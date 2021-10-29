@@ -15,18 +15,26 @@ import { EditId } from './Identifiers';
  * @public
  * @sealed
  */
-export class LazyCheckout<TChange, TFailure = unknown> extends Checkout<TChange, TFailure> {
+export class LazyCheckout<TChange, TChangeInternal, TFailure = unknown> extends Checkout<
+	TChange,
+	TChangeInternal,
+	TFailure
+> {
 	private latestView: RevisionView;
 
 	/**
 	 * @param tree - the tree
 	 */
-	public constructor(tree: GenericSharedTree<TChange, TFailure>) {
-		super(tree, tree.currentView, (args: EditCommittedEventArguments<GenericSharedTree<TChange, TFailure>>) => {});
+	public constructor(tree: GenericSharedTree<TChange, TChangeInternal, TFailure>) {
+		super(
+			tree,
+			tree.currentView,
+			(args: EditCommittedEventArguments<GenericSharedTree<TChange, TChangeInternal, TFailure>>) => {}
+		);
 		this.latestView = tree.currentView;
 	}
 
-	protected handleNewEdit(id: EditId, result: ValidEditingResult<TChange>): void {
+	protected handleNewEdit(id: EditId, result: ValidEditingResult<TChangeInternal>): void {
 		super.handleNewEdit(id, result);
 		this.latestView = result.after;
 	}

@@ -6,7 +6,7 @@
 import { IFluidHandle, IFluidSerializer } from '@fluidframework/core-interfaces';
 import { serializeHandles } from '@fluidframework/shared-object-base';
 import { assertNotUndefined } from '../Common';
-import { EditLogSummary, OrderedEditSet } from '../EditLog';
+import { EditLogSummary } from '../EditLog';
 import { RevisionView } from '../TreeView';
 import { readFormatVersion, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import { ChangeNode, Edit } from './PersistedTypes';
@@ -25,10 +25,16 @@ export const formatVersion = '0.0.2';
  * @returns a summary of the supplied state.
  * @internal
  */
-export type SharedTreeSummarizer<TChange> = (
-	editLog: OrderedEditSet<TChange>,
+export type SharedTreeSummarizer = (
+	logSummarizer: EditLogSummarizer,
 	currentView: RevisionView
 ) => SharedTreeSummaryBase;
+
+/**
+ * A function which produces the summary of an edit log
+ * @internal
+ */
+export type EditLogSummarizer<TChange = any> = (useHandles?: boolean) => EditLogSummary<TChange>;
 
 /**
  * The minimal information on a SharedTree summary. Contains the summary format version.
@@ -70,10 +76,10 @@ export function serialize(summary: SharedTreeSummaryBase, serializer: IFluidSeri
  * @public
  */
 export function fullHistorySummarizer<TChange>(
-	editLog: OrderedEditSet<TChange>,
+	summarizeLog: EditLogSummarizer<unknown>,
 	currentView: RevisionView
 ): SharedTreeSummary_0_0_2<TChange> | SharedTreeSummary<TChange> {
-	const { editChunks, editIds } = editLog.getEditLogSummary();
+	const { editChunks, editIds } = summarizeLog();
 
 	const sequencedEdits: Edit<TChange>[] = [];
 	let idIndex = 0;
@@ -93,7 +99,7 @@ export function fullHistorySummarizer<TChange>(
 
 	// If the edit log includes handles without associated edits, we must write a summary version that supports handles.
 	if (includesHandles) {
-		return fullHistorySummarizer_0_1_1(editLog, currentView);
+		return fullHistorySummarizer_0_1_1(summarizeLog, currentView);
 	}
 
 	return {
@@ -107,12 +113,12 @@ export function fullHistorySummarizer<TChange>(
  * Generates a summary with format version 0.1.0. This will prefer handles over edits in edit chunks where possible.
  */
 export function fullHistorySummarizer_0_1_1<TChange>(
-	editLog: OrderedEditSet<TChange>,
+	summarizeLog: EditLogSummarizer,
 	currentView: RevisionView
 ): SharedTreeSummary<TChange> {
 	return {
 		currentTree: currentView.getChangeNodeTree(),
-		editHistory: editLog.getEditLogSummary(true),
+		editHistory: summarizeLog(true),
 		version: readFormatVersion,
 	};
 }

@@ -4,19 +4,30 @@
  */
 
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { GenericSharedTree, SharedTreeSummaryBase, SharedTreeSummaryWriteFormat } from '../generic';
-import { OrderedEditSet } from '../EditLog';
-import { Change } from './PersistedTypes';
+import {
+	convertTreeNodes,
+	deepCloneStablePlace,
+	deepCloneStableRange,
+	EditLogSummarizer,
+	GenericSharedTree,
+	SharedTreeSummaryBase,
+	SharedTreeSummaryWriteFormat,
+} from '../generic';
+import { RevisionView } from '../TreeView';
+import { copyPropertyIfDefined, fail } from '../Common';
+import { ChangeInternal, ChangeTypeInternal, ConstraintInternal, DetachInternal } from './PersistedTypes';
 import { SharedTreeFactory } from './Factory';
 import { Transaction } from './Transaction';
 import { getSummaryByVersion } from './Summary';
+import { Change, ChangeType, isDetachedSequenceId } from './EditUtilities';
+import { revert } from './HistoryEditFactory';
 
 /**
  * A distributed tree.
  * @public
  * @sealed
  */
-export class SharedTree extends GenericSharedTree<Change, Transaction.Failure> {
+export class SharedTree extends GenericSharedTree<Change, ChangeInternal, Transaction.Failure> {
 	/**
 	 * Create a new SharedTree. It will contain the default value (see initialTree).
 	 */
@@ -73,17 +84,76 @@ export class SharedTree extends GenericSharedTree<Change, Transaction.Failure> {
 	}
 
 	/**
-	 * {@inheritDoc GenericSharedTree.generateSummary}
+	 * {@inheritDoc GenericSharedTree.revertChanges}
+	 * @internal
 	 */
-	protected generateSummary(editLog: OrderedEditSet<Change>): SharedTreeSummaryBase {
+	public revertChanges(changes: readonly ChangeInternal[], before: RevisionView): ChangeInternal[] {
+		return revert(changes, before);
+	}
+
+	/**
+	 * {@inheritDoc GenericSharedTree.generateSummary}
+	 * @internal
+	 */
+	protected generateSummary(summarizeLog: EditLogSummarizer<ChangeInternal>): SharedTreeSummaryBase {
 		try {
-			return getSummaryByVersion(editLog, this.currentView, this.summarizeHistory, this.writeSummaryFormat);
+			return getSummaryByVersion(summarizeLog, this.currentView, this.summarizeHistory, this.writeSummaryFormat);
 		} catch (error) {
 			this.logger?.sendErrorEvent({
 				eventName: 'UnsupportedSummaryWriteFormat',
 				formatVersion: this.writeSummaryFormat,
 			});
 			throw error;
+		}
+	}
+
+	/**
+	 * {@inheritDoc GenericSharedTree.internalizeChange}
+	 * @internal
+	 */
+	public internalizeChange(change: Change): ChangeInternal {
+		switch (change.type) {
+			case ChangeType.Insert:
+				return {
+					source: change.source,
+					destination: deepCloneStablePlace(change.destination),
+					type: ChangeTypeInternal.Insert,
+				};
+			case ChangeType.Detach: {
+				const detach: DetachInternal = {
+					source: deepCloneStableRange(change.source),
+					type: ChangeTypeInternal.Detach,
+				};
+				copyPropertyIfDefined(change, detach, 'destination');
+				return detach;
+			}
+			case ChangeType.Build: {
+				const source = change.source.map((buildNode) =>
+					convertTreeNodes(buildNode, (nodeData) => nodeData, isDetachedSequenceId)
+				);
+				return { source, destination: change.destination, type: ChangeTypeInternal.Build };
+			}
+			case ChangeType.SetValue:
+				return {
+					nodeToModify: change.nodeToModify,
+					payload: change.payload,
+					type: ChangeTypeInternal.SetValue,
+				};
+			case ChangeType.Constraint: {
+				const constraint: ConstraintInternal = {
+					effect: change.effect,
+					toConstrain: deepCloneStableRange(change.toConstrain),
+					type: ChangeTypeInternal.Constraint,
+				};
+				copyPropertyIfDefined(change, constraint, 'contentHash');
+				copyPropertyIfDefined(change, constraint, 'identityHash');
+				copyPropertyIfDefined(change, constraint, 'label');
+				copyPropertyIfDefined(change, constraint, 'length');
+				copyPropertyIfDefined(change, constraint, 'parentNode');
+				return constraint;
+			}
+			default:
+				fail('unexpected change type');
 		}
 	}
 }

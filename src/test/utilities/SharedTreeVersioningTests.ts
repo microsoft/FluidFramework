@@ -4,9 +4,9 @@
  */
 
 import { expect } from 'chai';
-import { newEdit, SharedTreeDiagnosticEvent, SharedTreeSummaryWriteFormat } from '../..';
+import { SharedTreeDiagnosticEvent, SharedTreeSummaryWriteFormat } from '../..';
 import { SharedTreeWithAnchors } from '../../anchored-edits';
-import { Change, Insert, setTrait, SharedTree, StablePlace } from '../../default-edits';
+import { Insert, setTrait, SharedTree, StablePlace } from '../../default-edits';
 import { EditLog } from '../../EditLog';
 import { left, makeTestNode, SharedTreeTestingComponents, SharedTreeTestingOptions, testTrait } from './TestUtilities';
 
@@ -34,7 +34,7 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree | Sh
 			expect(newerTree.edits.length).to.equal(0);
 
 			// Process an edit
-			tree.processLocalEdit(newEdit(setTrait(testTrait, [makeTestNode()])));
+			tree.applyEdit(...setTrait(testTrait, [makeTestNode()]));
 			containerRuntimeFactory.processAllMessages();
 
 			// The newer tree should have ignored the first edit
@@ -57,7 +57,7 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree | Sh
 			expect(newerTree.edits.length).to.equal(0);
 
 			// Process an edit and expect it to throw
-			newerTree.processLocalEdit(newEdit(setTrait(testTrait, [makeTestNode()])));
+			newerTree.applyEdit(...setTrait(testTrait, [makeTestNode()]));
 			expect(() => containerRuntimeFactory.processAllMessages()).to.throw(
 				'Newer op version received by a client that has yet to be updated.'
 			);
@@ -73,7 +73,7 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree | Sh
 
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			// Process an edit
-			tree.processLocalEdit(newEdit(setTrait(testTrait, [makeTestNode()])));
+			tree.applyEdit(...setTrait(testTrait, [makeTestNode()]));
 			containerRuntimeFactory.processAllMessages();
 
 			const summary = tree.saveSummary();
@@ -139,7 +139,7 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree | Sh
 			newerTree.on(SharedTreeDiagnosticEvent.VersionUpdated, () => updateProcessed++);
 
 			newerTree.loadSummary(summary);
-			(newerTree.edits as EditLog<Change>).registerEditAddedHandler(() => editAdded++);
+			(newerTree.edits as EditLog).registerEditAddedHandler(() => editAdded++);
 
 			expect(updateProcessed).to.equal(0);
 			// Update occurs after the handler is added to the old edit log

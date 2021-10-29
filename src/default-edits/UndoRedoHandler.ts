@@ -8,7 +8,6 @@ import { assertNotUndefined } from '../Common';
 import { EditId } from '../Identifiers';
 import { EditCommittedEventArguments, SharedTreeEvent } from '../generic';
 import { SharedTree } from './SharedTree';
-import * as HistoryEditFactory from './HistoryEditFactory';
 
 /**
  * A shared tree undo redo handler that will add revertible local tree changes to the provided
@@ -49,22 +48,10 @@ export class SharedTreeRevertible implements IRevertible {
 
 	public revert() {
 		// Apply the revert edit and set it as the new revertible edit.
-		this.editId = revert(this.tree, this.editId);
+		this.editId = this.tree.revert(this.editId);
 	}
 
 	public discard() {
 		return;
 	}
-}
-
-/**
- * Reverts an edit from the session.
- * @param edit - the edit to revert.
- * @returns The id of the revert.
- */
-export function revert(tree: SharedTree, editId: EditId): EditId {
-	const editIndex = tree.edits.getIndexOfId(editId);
-	const edit = tree.edits.getEditInSessionAtIndex(editIndex);
-	const viewBefore = tree.logViewer.getRevisionViewInSession(editIndex);
-	return tree.applyEdit(...HistoryEditFactory.revert(edit.changes, viewBefore));
 }

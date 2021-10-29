@@ -29,7 +29,6 @@ import { deserialize, SharedTreeSummary_0_0_2 } from '../../SummaryBackCompatibi
 import { SharedTreeWithAnchors } from '../../anchored-edits';
 import { RevisionView } from '../../TreeView';
 import { useFailedSequencedEditTelemetry } from '../../MergeHealth';
-import { revert } from '../../default-edits/UndoRedoHandler';
 import {
 	makeEmptyNode,
 	testTrait,
@@ -50,11 +49,15 @@ import {
 import { runSharedTreeUndoRedoTestSuite } from './UndoRedoTests';
 import { TestFluidHandle, TestFluidSerializer } from './TestSerializer';
 
+function revertEditInTree(tree: SharedTree, edit: EditId): EditId {
+	return tree.revert(edit);
+}
+
 // Options for the undo/redo test suite. The undo and redo functions are the same.
 const undoRedoOptions = {
 	title: 'Revert',
-	undo: revert,
-	redo: revert,
+	undo: revertEditInTree,
+	redo: revertEditInTree,
 };
 
 /**
@@ -171,13 +174,13 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowInvalid: true });
 				const detachedNode = makeEmptyNode();
 				const detachedSequenceId = 0 as DetachedSequenceId;
-				const editId = tree.applyEdit(
+				const { id } = tree.applyEdit(
 					Change.build([detachedNode], detachedSequenceId),
 					Change.setPayload(detachedNode.identifier, 42),
 					Change.insert(detachedSequenceId, StablePlace.before(left))
 				);
 				const logViewer = tree.logViewer as CachingLogViewer<Change>;
-				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(editId)).status).equals(
+				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(id)).status).equals(
 					EditStatus.Invalid
 				);
 				tree.currentView.assertConsistent();
@@ -189,7 +192,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				const detachedNewNode = makeEmptyNode();
 				const detachedNewNodeSequenceId = 0 as DetachedSequenceId;
 				const detachedRightNodeSequenceId = 1 as DetachedSequenceId;
-				const editId = tree.applyEdit(
+				const { id } = tree.applyEdit(
 					Change.build([detachedNewNode], detachedNewNodeSequenceId),
 					Change.detach(StableRange.only(right), detachedRightNodeSequenceId),
 					// This change attempts to insert a node under a detached node
@@ -200,7 +203,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 					Change.insert(detachedRightNodeSequenceId, StablePlace.before(left))
 				);
 				const logViewer = tree.logViewer as CachingLogViewer<Change>;
-				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(editId)).status).equals(
+				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(id)).status).equals(
 					EditStatus.Invalid
 				);
 				tree.currentView.assertConsistent();
@@ -211,7 +214,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				expect(tree.currentView.hasNode(initialRevisionView.root));
 				assertNoDelta(tree, () => {
 					// Try to delete the root
-					tree.processLocalEdit(newEdit([Delete.create(StableRange.only(initialRevisionView.root))]));
+					tree.applyEdit(Delete.create(StableRange.only(initialRevisionView.root)));
 				});
 			});
 
@@ -259,7 +262,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				// Trying to insert next to the deleted node should drop, confirm that it doesn't
 				// change the view
 				assertNoDelta(tree, () => {
-					tree.processLocalEdit(newEdit(Insert.create([secondNode], StablePlace.after(firstNode))));
+					tree.applyEdit(...Insert.create([secondNode], StablePlace.after(firstNode)));
 				});
 
 				const leftTrait = tree.currentView.getTrait(leftTraitLocation);
@@ -278,21 +281,13 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 
 				assertNoDelta(tree, () => {
 					// Trying to delete from before firstNode to after secondNode should drop
-					tree.processLocalEdit(
-						newEdit([
-							Delete.create(
-								StableRange.from(StablePlace.before(firstNode)).to(StablePlace.after(secondNode))
-							),
-						])
+					tree.applyEdit(
+						Delete.create(StableRange.from(StablePlace.before(firstNode)).to(StablePlace.after(secondNode)))
 					);
 
 					// Trying to delete from after thirdNode to before firstNode should drop
-					tree.processLocalEdit(
-						newEdit([
-							Delete.create(
-								StableRange.from(StablePlace.after(thirdNode)).to(StablePlace.before(firstNode))
-							),
-						])
+					tree.applyEdit(
+						Delete.create(StableRange.from(StablePlace.after(thirdNode)).to(StablePlace.before(firstNode)))
 					);
 				});
 
@@ -305,7 +300,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowMalformed: true });
 
 				assertNoDelta(tree, () => {
-					tree.processLocalEdit(newEdit([Change.build([], 0 as DetachedSequenceId)]));
+					tree.applyEdit(Change.build([], 0 as DetachedSequenceId));
 				});
 			});
 
@@ -436,22 +431,22 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 
 				// Move the child under parent2
 				// This first edit should succeed locally and globally
-				const edit1Id = tree1.applyEdit(
+				const edit1 = tree1.applyEdit(
 					...Move.create(StableRange.only(childId), StablePlace.atStartOf(childTraitUnderParent2))
 				);
 
 				// Concurrently move parent2 under child
 				// This first edit should succeed locally but fail globally
-				const edit2Id = tree2.applyEdit(
+				const edit2 = tree2.applyEdit(
 					...Move.create(StableRange.only(parent2Id), StablePlace.atStartOf(badTraitUnderChild))
 				);
 
 				containerRuntimeFactory.processAllMessages();
 				const logViewer = tree1.logViewer as CachingLogViewer<Change>;
-				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(edit1Id)).status).equals(
+				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(edit1.id)).status).equals(
 					EditStatus.Applied
 				);
-				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(edit2Id)).status).equals(
+				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(edit2.id)).status).equals(
 					EditStatus.Invalid
 				);
 				tree1.currentView.assertConsistent();
@@ -468,18 +463,18 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				containerRuntimeFactory.processAllMessages();
 
 				const firstNode = makeEmptyNode();
-				const firstEditId = secondTree.applyEdit(...Insert.create([firstNode], StablePlace.after(left)));
+				const firstEdit = secondTree.applyEdit(...Insert.create([firstNode], StablePlace.after(left)));
 				containerRuntimeFactory.processAllMessages();
 
 				// Concurrently edit, creating invalid insert.
 				// Create delete. This will apply.
-				const secondEditId = tree.applyEdit(Delete.create(StableRange.only(firstNode)));
+				const secondEdit = tree.applyEdit(Delete.create(StableRange.only(firstNode)));
 
-				let thirdEditId;
+				let thirdEdit;
 				assertNoDelta(tree, () => {
 					// concurrently insert next to the deleted node: this will become invalid.
 					const secondNode = makeEmptyNode();
-					thirdEditId = secondTree.applyEdit(...Insert.create([secondNode], StablePlace.after(firstNode)));
+					thirdEdit = secondTree.applyEdit(...Insert.create([secondNode], StablePlace.after(firstNode)));
 					containerRuntimeFactory.processAllMessages();
 				});
 
@@ -489,9 +484,9 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				const editIds = tree.edits.editIds;
 
 				// Edit 0 creates initial tree
-				expect(editIds[1]).is.equal(firstEditId);
-				expect(editIds[2]).is.equal(secondEditId);
-				expect(editIds[3]).is.equal(thirdEditId);
+				expect(editIds[1]).is.equal(firstEdit.id);
+				expect(editIds[2]).is.equal(secondEdit.id);
+				expect(editIds[3]).is.equal(thirdEdit.id);
 			});
 
 			it('tolerates invalid detaches', () => {
@@ -506,19 +501,19 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				const firstNode = makeEmptyNode();
 				const secondNode = makeEmptyNode();
 				const thirdNode = makeEmptyNode();
-				const firstEditId = secondTree.applyEdit(
+				const firstEdit = secondTree.applyEdit(
 					...Insert.create([firstNode, secondNode, thirdNode], StablePlace.after(left))
 				);
 				containerRuntimeFactory.processAllMessages();
 
 				// Concurrently edit, creating invalid insert.
 				// Create delete. This will apply.
-				const secondEditId = tree.applyEdit(Delete.create(StableRange.only(secondNode)));
+				const secondEdit = tree.applyEdit(Delete.create(StableRange.only(secondNode)));
 
-				let thirdEditId;
+				let thirdEdit;
 				assertNoDelta(tree, () => {
 					// concurrently delete from before firstNode to after secondNode: this should become invalid
-					thirdEditId = secondTree.applyEdit(
+					thirdEdit = secondTree.applyEdit(
 						Delete.create(StableRange.from(StablePlace.before(firstNode)).to(StablePlace.after(secondNode)))
 					);
 				});
@@ -531,9 +526,9 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 
 				const editIds = tree.edits.editIds;
 				// Edit 0 creates initial tree
-				expect(editIds[1]).to.equal(firstEditId);
-				expect(editIds[2]).to.equal(secondEditId);
-				expect(editIds[3]).to.equal(thirdEditId);
+				expect(editIds[1]).to.equal(firstEdit.id);
+				expect(editIds[2]).to.equal(secondEdit.id);
+				expect(editIds[3]).to.equal(thirdEdit.id);
 			});
 
 			it('tolerates malformed inserts', () => {
@@ -545,16 +540,15 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 
 				containerRuntimeFactory.processAllMessages();
 
-				let edit;
+				let editId!: EditId;
 				assertNoDelta(tree, () => {
 					const build = Change.build([], 0 as DetachedSequenceId);
-					edit = newEdit([build]);
-					secondTree.processLocalEdit(edit);
+					editId = secondTree.applyEdit(build).id;
 					containerRuntimeFactory.processAllMessages();
 				});
 
 				// Edit 0 creates initial tree
-				expect(tree.edits.getIdAtIndex(1)).to.equal(edit.id);
+				expect(tree.edits.getIdAtIndex(1)).to.equal(editId);
 			});
 
 			runSharedTreeUndoRedoTestSuite({ localMode: false, ...undoRedoOptions });
@@ -688,7 +682,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 					summarizeHistory: false,
 				});
 
-				const editID = tree.applyEdit(...Insert.create([newNode], StablePlace.before(left)));
+				const { id } = tree.applyEdit(...Insert.create([newNode], StablePlace.before(left)));
 				const view = tree.currentView;
 				const summary = tree.saveSummary();
 
@@ -700,7 +694,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				// The history should have been dropped by the default handling behavior.
 				// It will contain a single entry setting the tree to equal the head revision.
 				expect(tree.edits.length).to.equal(1);
-				expect(await tree.edits.tryGetEdit(editID)).to.be.undefined;
+				expect(await tree.edits.tryGetEdit(id)).to.be.undefined;
 			});
 
 			// TODO:#49901: Enable these tests once we write edit chunk handles to summaries
@@ -718,7 +712,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				});
 
 				// Generate enough edits to cause a chunk upload.
-				for (let i = 0; i < (tree.edits as EditLog<Change>).editsPerChunk / 2 + 1; i++) {
+				for (let i = 0; i < (tree.edits as EditLog).editsPerChunk / 2 + 1; i++) {
 					const insertee = makeEmptyNode();
 					tree.applyEdit(...Insert.create([insertee], StablePlace.before(left)));
 					tree.applyEdit(Delete.create(StableRange.only(insertee)));
@@ -1057,15 +1051,15 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				});
 
 				// Invalid change
-				const invalidEditId = tree.applyEdit(
+				const invalidEdit = tree.applyEdit(
 					...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode()))
 				);
-				expect(editIdFromEvent).equals(invalidEditId);
+				expect(editIdFromEvent).equals(invalidEdit.id);
 				expect(eventCount).equals(1);
 
 				// Valid change
-				const validEditId = tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(left)));
-				expect(editIdFromEvent).equals(validEditId);
+				const { id } = tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(left)));
+				expect(editIdFromEvent).equals(id);
 				expect(eventCount).equals(2);
 			});
 
@@ -1091,31 +1085,31 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 
 				const change = Change.setPayload(makeEmptyNode().identifier, 42);
 				// Invalid change
-				const invalidEditId = tree.applyEdit(change);
+				const invalidEdit = tree.applyEdit(change);
 				containerRuntimeFactory.processAllMessages();
 				await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
 
 				expect(eventArgs.length).equals(1);
-				expect(eventArgs[0].edit.id).equals(invalidEditId);
+				expect(eventArgs[0].edit.id).equals(invalidEdit.id);
 				expect(eventArgs[0].wasLocal).equals(true);
 				expect(eventArgs[0].reconciliationPath.length).equals(0);
 				expect(eventArgs[0].outcome.status).equals(EditStatus.Invalid);
 
 				// Valid change
-				const validEdit1Id = secondTree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(left)));
+				const validEdit1 = secondTree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(left)));
 
 				// Valid change
-				const validEdit2Id = tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(left)));
+				const validEdit2 = tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(left)));
 				containerRuntimeFactory.processAllMessages();
 				await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
 
 				expect(eventArgs.length).equals(3);
-				expect(eventArgs[1].edit.id).equals(validEdit1Id);
+				expect(eventArgs[1].edit.id).equals(validEdit1.id);
 				expect(eventArgs[1].wasLocal).equals(false);
 				expect(eventArgs[1].reconciliationPath.length).equals(0);
 				expect(eventArgs[1].outcome.status).equals(EditStatus.Applied);
 
-				expect(eventArgs[2].edit.id).equals(validEdit2Id);
+				expect(eventArgs[2].edit.id).equals(validEdit2.id);
 				expect(eventArgs[2].wasLocal).equals(true);
 				expect(eventArgs[2].reconciliationPath.length).equals(1);
 				expect(eventArgs[2].outcome.status).equals(EditStatus.Applied);

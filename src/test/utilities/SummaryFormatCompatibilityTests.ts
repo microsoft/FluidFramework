@@ -9,6 +9,7 @@ import { expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
 import {
 	Change,
+	ChangeInternal,
 	noHistorySummarizer,
 	noHistorySummarizer_0_1_1,
 	SharedTree,
@@ -117,9 +118,13 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 ) {
 	// KLUDGE: Calling ensureSynchronized after too many edits are applied (about 450+) causes it to hang indefinitely,
 	//         bug filed at https://github.com/microsoft/FluidFramework/issues/7575
-	async function applyEdits(tree: TSharedTree, testObjectProvider: TestObjectProvider, history: Edit<Change>[]) {
+	async function applyEdits(
+		tree: TSharedTree,
+		testObjectProvider: TestObjectProvider,
+		history: Edit<ChangeInternal>[]
+	) {
 		for (const [index, edit] of history.entries()) {
-			tree.processLocalEdit(edit);
+			tree.applyEditInternal(edit);
 			if (index % 40 === 0) {
 				// Wait for the ops to to be submitted and processed across the containers.
 				await testObjectProvider.ensureSynchronized();
@@ -144,7 +149,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 				setupEditId: summaryCompatibilityTestSetupEditId,
 			});
 			expectedTree = testingComponents.tree;
-			editsPerChunk = (expectedTree.edits as EditLog<Change>).editsPerChunk;
+			editsPerChunk = (expectedTree.edits as EditLog).editsPerChunk;
 			testObjectProvider = testingComponents.testObjectProvider;
 		});
 
@@ -189,7 +194,12 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						await applyEdits(expectedTree, testObjectProvider, history);
 
 						// Save a new summary with the expected tree and use it to load a new SharedTree
-						const newSummary = summarizer(expectedTree.edits, expectedTree.currentView, true);
+						const editLog = expectedTree.edits as EditLog<ChangeInternal>;
+						const newSummary = summarizer(
+							(useHandles = false) => editLog.getEditLogSummary(useHandles),
+							expectedTree.currentView,
+							true
+						);
 						const { tree: tree2 } = setUpTestSharedTree();
 						tree2.loadSummary(newSummary);
 
@@ -255,7 +265,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 				// For each denormalized history type, load the edits into SharedTree and test that it produces a normalized change node tree.
 				denormalizedHistoryByType.forEach((file, type) => {
 					it(`load denormalized history type ${type} produces the correct change node`, async () => {
-						const denormalizedHistory: Edit<Change>[] = JSON.parse(file);
+						const denormalizedHistory: Edit<ChangeInternal>[] = JSON.parse(file);
 						await applyEdits(expectedTree, testObjectProvider, denormalizedHistory);
 
 						expect(changeNode).deep.equals(expectedTree.currentView.getChangeNodeTree());
@@ -415,29 +425,31 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 /**
  * Checks that a given summary contains the correct blob contents.
  */
-function expectBlobsByVersion(summary: SharedTreeSummaryBase, blobs: string, history: Edit<Change>[]): void {
+function expectBlobsByVersion(summary: SharedTreeSummaryBase, blobs: string, history: Edit<ChangeInternal>[]): void {
 	const { version } = summary;
-	const storedBlobs: UploadedEditChunkContents<Change>[] = JSON.parse(blobs);
+	const storedBlobs: UploadedEditChunkContents<ChangeInternal>[] = JSON.parse(blobs);
 
 	switch (version) {
 		case SharedTreeSummaryWriteFormat.Format_0_1_1: {
-			let loadedEdits: EditWithoutId<Change>[] = [];
+			let loadedEdits: EditWithoutId<ChangeInternal>[] = [];
 
 			// Obtain all edits from the summary, replacing handles with edits loaded from the stored blob file.
-			assertNotUndefined((summary as SharedTreeSummary<Change>).editHistory).editChunks.forEach(({ chunk }) => {
-				// A "chunk" in the edit history is a handle if it is not an array.
-				if (!Array.isArray(chunk)) {
-					const storedBlob = storedBlobs.shift();
-					expect(storedBlob).to.not.be.undefined;
-					const { absolutePath, chunkContents } = assertNotUndefined(storedBlob);
+			assertNotUndefined((summary as SharedTreeSummary<ChangeInternal>).editHistory).editChunks.forEach(
+				({ chunk }) => {
+					// A "chunk" in the edit history is a handle if it is not an array.
+					if (!Array.isArray(chunk)) {
+						const storedBlob = storedBlobs.shift();
+						expect(storedBlob).to.not.be.undefined;
+						const { absolutePath, chunkContents } = assertNotUndefined(storedBlob);
 
-					// TestSerializer doesn't replace serialized handles with actual handles so the absolutePath is found under 'url'.
-					expect(absolutePath).to.equal((chunk as any).url);
-					loadedEdits = loadedEdits.concat(chunkContents);
-				} else {
-					loadedEdits = loadedEdits.concat(chunk);
+						// TestSerializer doesn't replace serialized handles with actual handles so the absolutePath is found under 'url'.
+						expect(absolutePath).to.equal((chunk as any).url);
+						loadedEdits = loadedEdits.concat(chunkContents);
+					} else {
+						loadedEdits = loadedEdits.concat(chunk);
+					}
 				}
-			});
+			);
 
 			expect(loadedEdits.length).to.equal(history.length);
 

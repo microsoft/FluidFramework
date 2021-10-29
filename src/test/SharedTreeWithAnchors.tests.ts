@@ -12,13 +12,18 @@ import {
 	AnchoredChange,
 	AnchoredDelete,
 	AnchoredInsert,
-	AnchoredMove,
 	PlaceAnchor,
 	PlaceAnchorSemanticsChoice,
 	RangeAnchor,
 	SharedTreeWithAnchors,
 } from '../anchored-edits';
 import { fail } from '../Common';
+import {
+	AnchoredChangeInternal,
+	AnchoredDeleteInternal,
+	AnchoredInsertInternal,
+	AnchoredMoveInternal,
+} from '../anchored-edits/PersistedTypes';
 import {
 	makeEmptyNode,
 	setUpTestSharedTreeWithAnchors,
@@ -86,9 +91,9 @@ interface AnchorCase extends AnchorCaseOutcomes {
  * The changes to apply concurrently to the change whose anchor is being tested.
  */
 type ConcurrentChanges =
-	| AnchoredChange
-	| readonly AnchoredChange[]
-	| ((tree: SharedTreeWithAnchors, anchorCase: AnchorCase) => AnchoredChange[]);
+	| AnchoredChangeInternal
+	| readonly AnchoredChangeInternal[]
+	| ((tree: SharedTreeWithAnchors, anchorCase: AnchorCase) => AnchoredChangeInternal[]);
 
 /**
  * A scenario that an `AnchorCase` could be put through.
@@ -250,20 +255,20 @@ const insertScenarios: TestScenario[] = [
 	{
 		title: 'when target sibling is moved to a different trait',
 		outcomeKey: 'onMove',
-		concurrent: AnchoredMove.create(StableRange.only(left), StablePlace.before(right)),
+		concurrent: AnchoredMoveInternal.create(StableRange.only(left), StablePlace.before(right)),
 	},
 	{
 		title: 'when target sibling is deleted then re-inserted in a different trait',
 		outcomeKey: 'onTeleport',
 		concurrent: [
-			AnchoredDelete.create(StableRange.only(left)),
-			...AnchoredInsert.create([left], StablePlace.before(right)),
+			AnchoredDeleteInternal.create(StableRange.only(left)),
+			...AnchoredInsertInternal.create([left], StablePlace.before(right)),
 		],
 	},
 	{
 		title: 'when target sibling is deleted with (before, before) range',
 		outcomeKey: 'onDelete',
-		concurrent: AnchoredDelete.create({
+		concurrent: AnchoredDeleteInternal.create({
 			start: StablePlace.before(left),
 			end: StablePlace.atEndOf(leftTraitLocation),
 		}),
@@ -271,7 +276,7 @@ const insertScenarios: TestScenario[] = [
 	{
 		title: 'when target sibling is deleted with (before, after) range',
 		outcomeKey: 'onDelete',
-		concurrent: AnchoredDelete.create({
+		concurrent: AnchoredDeleteInternal.create({
 			start: StablePlace.before(left),
 			end: StablePlace.after(left),
 		}),
@@ -279,7 +284,7 @@ const insertScenarios: TestScenario[] = [
 	{
 		title: 'when target sibling is deleted with (after, before) range',
 		outcomeKey: 'onDelete',
-		concurrent: AnchoredDelete.create({
+		concurrent: AnchoredDeleteInternal.create({
 			start: StablePlace.atStartOf(leftTraitLocation),
 			end: StablePlace.atEndOf(leftTraitLocation),
 		}),
@@ -287,7 +292,7 @@ const insertScenarios: TestScenario[] = [
 	{
 		title: 'when target sibling is deleted with (after, after) range',
 		outcomeKey: 'onDelete',
-		concurrent: AnchoredDelete.create({
+		concurrent: AnchoredDeleteInternal.create({
 			start: StablePlace.atStartOf(leftTraitLocation),
 			end: StablePlace.after(left),
 		}),
@@ -299,7 +304,10 @@ const insertScenarios: TestScenario[] = [
 			const deletionEditId = tree.editor.delete(StableRange.only(left));
 			const deletionEditIndex = tree.edits.getIndexOfId(deletionEditId);
 			const deletionEdit = tree.edits.getEditInSessionAtIndex(deletionEditIndex);
-			return revert(deletionEdit.changes, tree.logViewer.getRevisionViewInSession(deletionEditIndex));
+			return revert(
+				deletionEdit.changes as AnchoredChangeInternal[],
+				tree.logViewer.getRevisionViewInSession(deletionEditIndex)
+			);
 		},
 	},
 	{
@@ -307,30 +315,28 @@ const insertScenarios: TestScenario[] = [
 		outcomeKey: 'onUndoRedoDelete',
 		concurrent: (tree: SharedTreeWithAnchors) => {
 			const deletionEditId = tree.editor.delete(StableRange.only(left));
-			const deletionEditIndex = tree.edits.getIndexOfId(deletionEditId);
-			const deletionEdit = tree.edits.getEditInSessionAtIndex(deletionEditIndex);
-			const undoEditId = tree.editor.revert(
-				deletionEdit,
-				tree.logViewer.getRevisionViewInSession(deletionEditIndex)
-			);
+			const undoEditId = tree.revert(deletionEditId);
 			const undoEditIndex = tree.edits.getIndexOfId(undoEditId);
 			const undoEdit = tree.edits.getEditInSessionAtIndex(undoEditIndex);
-			return revert(undoEdit.changes, tree.logViewer.getRevisionViewInSession(undoEditIndex));
+			return revert(
+				undoEdit.changes as AnchoredChangeInternal[],
+				tree.logViewer.getRevisionViewInSession(undoEditIndex)
+			);
 		},
 	},
 	{
 		title: 'when target sibling parent is deleted',
 		outcomeKey: 'onDeleteParent',
-		concurrent: AnchoredDelete.create(StableRange.only(parent)),
+		concurrent: AnchoredDeleteInternal.create(StableRange.only(parent)),
 	},
 	{
 		title: 'when target sibling is moved in an edit that is dropped',
 		outcomeKey: 'onDroppedEdit',
 		concurrent: [
 			// Valid move
-			...AnchoredMove.create(StableRange.only(left), StablePlace.before(right)),
+			...AnchoredMoveInternal.create(StableRange.only(left), StablePlace.before(right)),
 			// Invalid constraint
-			AnchoredChange.constraint(StableRange.only(left), ConstraintEffect.InvalidAndDiscard, undefined, 0),
+			AnchoredChangeInternal.constraint(StableRange.only(left), ConstraintEffect.InvalidAndDiscard, undefined, 0),
 		],
 	},
 	{
@@ -338,16 +344,16 @@ const insertScenarios: TestScenario[] = [
 		outcomeKey: 'onDroppedEdit',
 		concurrent: [
 			// Valid delete
-			AnchoredDelete.create(StableRange.only(left)),
+			AnchoredDeleteInternal.create(StableRange.only(left)),
 			// Invalid constraint
-			AnchoredChange.constraint(StableRange.only(left), ConstraintEffect.InvalidAndDiscard, undefined, 0),
+			AnchoredChangeInternal.constraint(StableRange.only(left), ConstraintEffect.InvalidAndDiscard, undefined, 0),
 		],
 	},
 	{
 		title: 'when target place is inserted at',
 		outcomeKey: 'onInsert',
 		concurrent: (_: unknown, anchorCase: AnchorCase) =>
-			AnchoredInsert.create([concurrentlyInserted], anchorCase.insertionPlace),
+			AnchoredInsertInternal.create([concurrentlyInserted], anchorCase.insertionPlace),
 	},
 ];
 
@@ -595,7 +601,7 @@ function insertTest(anchorCase: AnchorCase, expected: Outcome, concurrentSteps?:
 				? concurrentSteps(treeB, anchorCase)
 				: Array.isArray(concurrentSteps)
 				? concurrentSteps
-				: [concurrentSteps as AnchoredChange];
+				: [concurrentSteps as AnchoredChangeInternal];
 
 		// Perform the concurrent edit(s) to be sequenced first
 		if (concurrentSteps) {

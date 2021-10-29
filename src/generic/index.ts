@@ -35,8 +35,15 @@ export {
 	EditStatus,
 	TraitLocation,
 	SharedTreeOpType,
+	PlaceholderTree as RecursiveTreeNode,
 } from './PersistedTypes';
-export { newEdit, newEditId } from './GenericEditUtilities';
+export {
+	newEdit,
+	newEditId,
+	convertTreeNodes,
+	deepCloneStablePlace,
+	deepCloneStableRange,
+} from './GenericEditUtilities';
 export {
 	GenericTransaction,
 	GenericTransactionPolicy,
@@ -54,6 +61,7 @@ export {
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
 	SharedTreeSummarizer,
+	EditLogSummarizer,
 	fullHistorySummarizer,
 	fullHistorySummarizer_0_1_1,
 	formatVersion,
@@ -63,4 +71,8 @@ export {
 /**
  * TODO:#61413: Publish test utilities from a separate test package
  */
-export { saveUploadedEditChunkContents, UploadedEditChunkContents } from './SummaryTestUtilities';
+export {
+	getUploadedEditChunkContents,
+	saveUploadedEditChunkContents,
+	UploadedEditChunkContents,
+} from './SummaryTestUtilities';

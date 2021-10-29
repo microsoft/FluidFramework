@@ -9,8 +9,18 @@ import { IsoBuffer } from '@fluidframework/common-utils';
 import { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
 import { expect } from 'chai';
 import { SharedTreeWithAnchors } from '../../anchored-edits';
-import { Change, Delete, Insert, Move, revert, SharedTree, StablePlace, StableRange } from '../../default-edits';
-import { ChangeNode, Edit, newEdit, TraitMap } from '../../generic';
+import {
+	Change,
+	ChangeInternal,
+	Delete,
+	Insert,
+	Move,
+	revert,
+	SharedTree,
+	StablePlace,
+	StableRange,
+} from '../../default-edits';
+import { ChangeNode, Edit, TraitMap } from '../../generic';
 import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
 import {
 	leftTraitLocation,
@@ -26,7 +36,7 @@ import {
  */
 interface SummarySizeTestEntry {
 	/** Helper to obtain the list of edits to apply to the SharedTree. */
-	edits: () => Edit<Change>[];
+	edits: () => Change[][];
 	/** Expected size of the summary of the SharedTree after applying the `edits`. */
 	expectedSize: number;
 	/** Description for the test and the edits applied. */
@@ -40,15 +50,15 @@ interface SummarySizeTestEntry {
  */
 const summarySizeTests: SummarySizeTestEntry[] = [
 	{
-		edits: () => [newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation)))],
+		edits: () => [Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))],
 		expectedSize: 1707,
 		description: 'when inserting a node',
 	},
 	{
 		edits: () => {
-			const edits: Edit<Change>[] = [];
+			const edits: Change[][] = [];
 			for (let i = 0; i < 50; i++) {
-				edits.push(newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))));
+				edits.push(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation)));
 			}
 			return edits;
 		},
@@ -59,8 +69,8 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 		edits: () => {
 			const node = makeEmptyNode();
 			return [
-				newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))),
-				newEdit([Change.setPayload(node.identifier, 10)]),
+				Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation)),
+				[Change.setPayload(node.identifier, 10)],
 			];
 		},
 		expectedSize: 1843,
@@ -70,21 +80,21 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 		edits: () => {
 			const node = makeEmptyNode();
 			return [
-				newEdit(Insert.create([node], StablePlace.atEndOf(rightTraitLocation))),
-				newEdit([Delete.create(StableRange.only(node))]),
+				Insert.create([node], StablePlace.atEndOf(rightTraitLocation)),
+				[Delete.create(StableRange.only(node))],
 			];
 		},
 		expectedSize: 1853,
 		description: 'when inserting and deleting a node',
 	},
 	{
-		edits: () => [newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation)))],
+		edits: () => [Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))],
 		expectedSize: 1853,
 		description: 'when inserting and reverting a node',
 		revertEdits: true,
 	},
 	{
-		edits: () => [newEdit(Insert.create([makeLargeTestTree()], StablePlace.atStartOf(rightTraitLocation)))],
+		edits: () => [Insert.create([makeLargeTestTree()], StablePlace.atStartOf(rightTraitLocation))],
 		expectedSize: 2057093,
 		description: 'when inserting a large tree',
 	},
@@ -92,8 +102,8 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 		edits: () => {
 			const largeTree = makeLargeTestTree();
 			return [
-				newEdit(Insert.create([largeTree], StablePlace.atStartOf(rightTraitLocation))),
-				newEdit(Move.create(StableRange.only(largeTree), StablePlace.atEndOf(leftTraitLocation))),
+				Insert.create([largeTree], StablePlace.atStartOf(rightTraitLocation)),
+				Move.create(StableRange.only(largeTree), StablePlace.atEndOf(leftTraitLocation)),
 			];
 		},
 		expectedSize: 2057470,
@@ -128,19 +138,18 @@ export function runSummarySizeTests<TSharedTree extends SharedTree | SharedTreeW
 		});
 
 		async function checkSummarySize(
-			edits: Edit<Change>[],
+			changes: Change[][],
 			expectedSummarySize: number,
 			revertEdits = false
 		): Promise<void> {
-			edits.forEach((edit) => tree.processLocalEdit(edit));
+			const edits = changes.map((e) => tree.applyEdit(...e));
 
 			if (revertEdits) {
-				edits.forEach((edit) => {
-					const editIndex = tree.edits.getIndexOfId(edit.id);
-					tree.processLocalEdit(
-						newEdit(revert(edit.changes, tree.logViewer.getRevisionViewInSession(editIndex)))
-					);
-				});
+				for (let i = changes.length - 1; i >= 0; i--) {
+					const editIndex = tree.edits.getIndexOfId(edits[i].id);
+					const edit = tree.edits.getEditInSessionAtIndex(editIndex) as Edit<ChangeInternal>;
+					tree.applyEditInternal(revert(edit.changes, tree.logViewer.getRevisionViewInSession(editIndex)));
+				}
 			}
 
 			// Wait for the ops to to be submitted and processed across the containers.

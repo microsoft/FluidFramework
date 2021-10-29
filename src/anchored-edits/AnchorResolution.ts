@@ -6,9 +6,9 @@
 import { Side, TreeView } from '../TreeView';
 import {
 	BadRangeValidationResult,
-	Change,
-	ChangeType,
-	Detach,
+	ChangeInternal,
+	ChangeTypeInternal,
+	DetachInternal,
 	placeFromStablePlace,
 	PlaceValidationResult,
 	RangeValidationResult,
@@ -22,12 +22,12 @@ import { assert, assertNotUndefined, fail, Result } from '../Common';
 import { NodeId } from '../Identifiers';
 import { ReconciliationPath } from '../ReconciliationPath';
 import {
-	AnchoredChange,
 	NodeAnchor,
 	PlaceAnchor,
 	PlaceAnchorSemanticsChoice,
 	RangeAnchor,
 	RelativePlaceAnchor,
+	AnchoredChangeInternal,
 } from './PersistedTypes';
 
 export enum ResolutionFailureKind {
@@ -91,7 +91,7 @@ export interface PlaceUpdateDeletedParentFailure {
 	kind: PlaceUpdateFailureKind.DeletedParent;
 	place: StablePlace;
 	parent: NodeId;
-	detach: Detach;
+	detach: DetachInternal;
 }
 
 /**
@@ -116,7 +116,7 @@ export interface HasNodeResolver {
 	readonly nodeResolver: (
 		node: NodeAnchor,
 		before: TreeView,
-		path: ReconciliationPath<AnchoredChange>
+		path: ReconciliationPath<AnchoredChangeInternal>
 	) => Result<NodeId, NodeResolutionFailure>;
 }
 
@@ -127,7 +127,7 @@ export interface HasPlaceResolver {
 	readonly placeResolver: (
 		range: PlaceAnchor,
 		before: TreeView,
-		path: ReconciliationPath<AnchoredChange>
+		path: ReconciliationPath<AnchoredChangeInternal>
 	) => Result<StablePlace, PlaceResolutionFailure>;
 }
 
@@ -138,7 +138,7 @@ export interface HasRangeResolver {
 	readonly rangeResolver: (
 		range: RangeAnchor,
 		before: TreeView,
-		path: ReconciliationPath<AnchoredChange>
+		path: ReconciliationPath<AnchoredChangeInternal>
 	) => Result<StableRange, RangeResolutionFailure>;
 }
 
@@ -159,48 +159,48 @@ export interface HasPlaceValidator {
  * @internal
  */
 export function resolveChangeAnchors(
-	change: AnchoredChange,
+	change: AnchoredChangeInternal,
 	before: TreeView,
-	path: ReconciliationPath<AnchoredChange>
-): Result<Change, ResolutionFailure>;
+	path: ReconciliationPath<AnchoredChangeInternal>
+): Result<ChangeInternal, ResolutionFailure>;
 
 /**
  * For testing purposes only.
  * @internal
  */
 export function resolveChangeAnchors(
-	change: AnchoredChange,
+	change: AnchoredChangeInternal,
 	before: TreeView,
-	path: ReconciliationPath<AnchoredChange>,
+	path: ReconciliationPath<AnchoredChangeInternal>,
 	dependencies?: HasNodeResolver & HasPlaceResolver & HasRangeResolver
-): Result<Change, ResolutionFailure>;
+): Result<ChangeInternal, ResolutionFailure>;
 
 export function resolveChangeAnchors(
-	change: AnchoredChange,
+	change: AnchoredChangeInternal,
 	before: TreeView,
-	path: ReconciliationPath<AnchoredChange>,
+	path: ReconciliationPath<AnchoredChangeInternal>,
 	{ nodeResolver, placeResolver, rangeResolver }: HasNodeResolver & HasPlaceResolver & HasRangeResolver = {
 		nodeResolver: resolveNodeAnchor,
 		placeResolver: resolvePlaceAnchor,
 		rangeResolver: resolveRangeAnchor,
 	}
-): Result<Change, ResolutionFailure> {
+): Result<ChangeInternal, ResolutionFailure> {
 	switch (change.type) {
-		case ChangeType.Build:
+		case ChangeTypeInternal.Build:
 			return Result.ok(change);
-		case ChangeType.Insert: {
+		case ChangeTypeInternal.Insert: {
 			const placeResult = placeResolver(change.destination, before, path);
 			return Result.mapOk(placeResult, (destination) => ({ ...change, destination }));
 		}
-		case ChangeType.Detach: {
+		case ChangeTypeInternal.Detach: {
 			const rangeResult = rangeResolver(change.source, before, path);
 			return Result.mapOk(rangeResult, (source) => ({ ...change, source }));
 		}
-		case ChangeType.Constraint: {
+		case ChangeTypeInternal.Constraint: {
 			const rangeResult = rangeResolver(change.toConstrain, before, path);
 			return Result.mapOk(rangeResult, (toConstrain) => ({ ...change, toConstrain }));
 		}
-		case ChangeType.SetValue: {
+		case ChangeTypeInternal.SetValue: {
 			const nodeResult = nodeResolver(change.nodeToModify, before, path);
 			return Result.mapOk(nodeResult, (nodeToModify) => ({ ...change, nodeToModify }));
 		}
@@ -220,7 +220,7 @@ export function resolveChangeAnchors(
 export function resolveNodeAnchor(
 	node: NodeAnchor,
 	before: TreeView,
-	path: ReconciliationPath<AnchoredChange>
+	path: ReconciliationPath<AnchoredChangeInternal>
 ): Result<NodeId, NodeResolutionFailure> {
 	return before.hasNode(node)
 		? Result.ok(node)
@@ -241,7 +241,7 @@ export function resolveNodeAnchor(
 export function resolveRangeAnchor(
 	range: RangeAnchor,
 	before: TreeView,
-	path: ReconciliationPath<AnchoredChange>
+	path: ReconciliationPath<AnchoredChangeInternal>
 ): Result<StableRange, RangeResolutionFailure>;
 
 /**
@@ -251,7 +251,7 @@ export function resolveRangeAnchor(
 export function resolveRangeAnchor(
 	range: RangeAnchor,
 	before: TreeView,
-	path: ReconciliationPath<AnchoredChange>,
+	path: ReconciliationPath<AnchoredChangeInternal>,
 	dependencies?: HasPlaceResolver & {
 		rangeValidator: (view: TreeView, range: StableRange) => RangeValidationResult;
 	}
@@ -260,7 +260,7 @@ export function resolveRangeAnchor(
 export function resolveRangeAnchor(
 	originalRange: RangeAnchor,
 	before: TreeView,
-	path: ReconciliationPath<AnchoredChange>,
+	path: ReconciliationPath<AnchoredChangeInternal>,
 	{
 		placeResolver,
 		rangeValidator,
@@ -326,7 +326,7 @@ export function resolveRangeAnchor(
 export function resolvePlaceAnchor(
 	place: PlaceAnchor,
 	before: TreeView,
-	path: ReconciliationPath<AnchoredChange>
+	path: ReconciliationPath<AnchoredChangeInternal>
 ): Result<StablePlace, PlaceResolutionFailure>;
 
 /**
@@ -336,11 +336,11 @@ export function resolvePlaceAnchor(
 export function resolvePlaceAnchor(
 	place: PlaceAnchor,
 	before: TreeView,
-	path: ReconciliationPath<AnchoredChange>,
+	path: ReconciliationPath<AnchoredChangeInternal>,
 	dependencies?: HasPlaceValidator & {
 		placeUpdatorForPath: (
 			place: RelativePlaceAnchor,
-			path: ReconciliationPath<AnchoredChange>
+			path: ReconciliationPath<AnchoredChangeInternal>
 		) => Result<PlaceAnchor, PlaceUpdateFailure>;
 	}
 ): Result<StablePlace, ResolutionFailure>;
@@ -348,14 +348,14 @@ export function resolvePlaceAnchor(
 export function resolvePlaceAnchor(
 	originalPlace: PlaceAnchor,
 	before: TreeView,
-	path: ReconciliationPath<AnchoredChange>,
+	path: ReconciliationPath<AnchoredChangeInternal>,
 	{
 		placeValidator,
 		placeUpdatorForPath,
 	}: HasPlaceValidator & {
 		placeUpdatorForPath: (
 			place: RelativePlaceAnchor,
-			path: ReconciliationPath<AnchoredChange>
+			path: ReconciliationPath<AnchoredChangeInternal>
 		) => Result<PlaceAnchor, PlaceUpdateFailure>;
 	} = {
 		placeValidator: validateStablePlace,
@@ -404,7 +404,7 @@ export function resolvePlaceAnchor(
  */
 export function updateRelativePlaceAnchorForPath(
 	place: RelativePlaceAnchor,
-	path: ReconciliationPath<AnchoredChange>
+	path: ReconciliationPath<AnchoredChangeInternal>
 ): Result<PlaceAnchor, PlaceUpdateFailure>;
 
 /**
@@ -413,33 +413,33 @@ export function updateRelativePlaceAnchorForPath(
  */
 export function updateRelativePlaceAnchorForPath(
 	place: RelativePlaceAnchor,
-	path: ReconciliationPath<AnchoredChange>,
+	path: ReconciliationPath<AnchoredChangeInternal>,
 	dependencies?: {
 		lastOffendingChangeFinder: (
 			place: RelativePlaceAnchor,
-			path: ReconciliationPath<AnchoredChange>
-		) => EvaluatedChange<AnchoredChange> | undefined;
+			path: ReconciliationPath<AnchoredChangeInternal>
+		) => EvaluatedChange<AnchoredChangeInternal> | undefined;
 		placeUpdatorForChange: (
 			place: RelativePlaceAnchor,
-			change: EvaluatedChange<AnchoredChange>
+			change: EvaluatedChange<AnchoredChangeInternal>
 		) => Result<PlaceAnchor, PlaceUpdateFailure>;
 	}
 ): Result<PlaceAnchor, PlaceUpdateFailure> | undefined;
 
 export function updateRelativePlaceAnchorForPath(
 	place: RelativePlaceAnchor,
-	path: ReconciliationPath<AnchoredChange>,
+	path: ReconciliationPath<AnchoredChangeInternal>,
 	{
 		lastOffendingChangeFinder,
 		placeUpdatorForChange,
 	}: {
 		lastOffendingChangeFinder: (
 			place: RelativePlaceAnchor,
-			path: ReconciliationPath<AnchoredChange>
-		) => EvaluatedChange<AnchoredChange> | undefined;
+			path: ReconciliationPath<AnchoredChangeInternal>
+		) => EvaluatedChange<AnchoredChangeInternal> | undefined;
 		placeUpdatorForChange: (
 			place: RelativePlaceAnchor,
-			change: EvaluatedChange<AnchoredChange>
+			change: EvaluatedChange<AnchoredChangeInternal>
 		) => Result<PlaceAnchor, PlaceUpdateFailure>;
 	} = {
 		lastOffendingChangeFinder: findLastOffendingChange,
@@ -465,8 +465,8 @@ export function updateRelativePlaceAnchorForPath(
  */
 export function findLastOffendingChange(
 	place: RelativePlaceAnchor,
-	path: ReconciliationPath<AnchoredChange>
-): EvaluatedChange<AnchoredChange> | undefined;
+	path: ReconciliationPath<AnchoredChangeInternal>
+): EvaluatedChange<AnchoredChangeInternal> | undefined;
 
 /**
  * For testing purposes only.
@@ -474,18 +474,18 @@ export function findLastOffendingChange(
  */
 export function findLastOffendingChange(
 	place: RelativePlaceAnchor,
-	path: ReconciliationPath<AnchoredChange>,
+	path: ReconciliationPath<AnchoredChangeInternal>,
 	dependencies?: HasPlaceValidator
-): EvaluatedChange<AnchoredChange> | undefined;
+): EvaluatedChange<AnchoredChangeInternal> | undefined;
 
 export function findLastOffendingChange(
 	place: RelativePlaceAnchor,
-	path: ReconciliationPath<AnchoredChange>,
+	path: ReconciliationPath<AnchoredChangeInternal>,
 	{ placeValidator }: HasPlaceValidator = {
 		placeValidator: validateStablePlace,
 	}
-): EvaluatedChange<AnchoredChange> | undefined {
-	let followingChange: { change: AnchoredChange; after: TreeView } | undefined;
+): EvaluatedChange<AnchoredChangeInternal> | undefined {
+	let followingChange: { change: AnchoredChangeInternal; after: TreeView } | undefined;
 	for (let editIndex = path.length - 1; editIndex >= 0; --editIndex) {
 		const edit = path[editIndex];
 		for (let changeIndex = edit.length - 1; changeIndex >= 0; --changeIndex) {
@@ -522,14 +522,14 @@ export function findLastOffendingChange(
  */
 export function updateRelativePlaceAnchorForChange(
 	place: RelativePlaceAnchor,
-	change: EvaluatedChange<AnchoredChange>
+	change: EvaluatedChange<AnchoredChangeInternal>
 ): Result<PlaceAnchor, PlaceUpdateDeletedParentFailure>;
 
 export function updateRelativePlaceAnchorForChange(
 	place: RelativePlaceAnchor,
-	{ change, before }: EvaluatedChange<AnchoredChange>
+	{ change, before }: EvaluatedChange<AnchoredChangeInternal>
 ): Result<PlaceAnchor, PlaceUpdateDeletedParentFailure> {
-	assert(change.type === ChangeType.Detach, 'A PlaceAnchor can only be made invalid by a detach change');
+	assert(change.type === ChangeTypeInternal.Detach, 'A PlaceAnchor can only be made invalid by a detach change');
 	if (place.referenceSibling === undefined) {
 		const referenceTrait = assertNotUndefined(place.referenceTrait, 'Malformed places should be detected earlier');
 		// A start or end place cannot be further updated

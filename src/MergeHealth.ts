@@ -20,7 +20,7 @@ import { EditStatus, GenericSharedTree, SequencedEditAppliedEventArguments, Shar
  * Only failing edits that were originally made locally are logged.
  * @param tree - The tree for which to log the telemetry.
  */
-export function useFailedSequencedEditTelemetry<TSharedTree extends GenericSharedTree<any, any>>(
+export function useFailedSequencedEditTelemetry<TSharedTree extends GenericSharedTree<any, any, any>>(
 	tree: TSharedTree
 ): { disable: () => void } {
 	function onEdit({ wasLocal, logger, outcome }: SequencedEditAppliedEventArguments<TSharedTree>): void {

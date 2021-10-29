@@ -14,14 +14,22 @@ import { EditCommittedEventArguments, GenericSharedTree } from './generic';
  * @public
  * @sealed
  */
-export class EagerCheckout<TChange, TFailure = unknown> extends Checkout<TChange, TFailure> {
+export class EagerCheckout<TChange, TChangeInternal, TFailure = unknown> extends Checkout<
+	TChange,
+	TChangeInternal,
+	TFailure
+> {
 	/**
 	 * @param tree - the tree
 	 */
-	public constructor(tree: GenericSharedTree<TChange, TFailure>) {
-		super(tree, tree.currentView, (args: EditCommittedEventArguments<GenericSharedTree<TChange, TFailure>>) => {
-			this.emitChange();
-		});
+	public constructor(tree: GenericSharedTree<TChange, TChangeInternal, TFailure>) {
+		super(
+			tree,
+			tree.currentView,
+			(args: EditCommittedEventArguments<GenericSharedTree<TChange, TChangeInternal, TFailure>>) => {
+				this.emitChange();
+			}
+		);
 	}
 
 	protected get latestCommittedView(): RevisionView {

@@ -9,9 +9,10 @@
 // This does mean that the various UuidString types must remain strings, and must never change the format unless the process for changing
 // persisted types (as documented below) is followed.
 import { DetachedSequenceId, NodeId, TraitLabel, UuidString } from '../Identifiers';
-import { assertNotUndefined, assert } from '../Common';
+import { assert, assertNotUndefined } from '../Common';
 import { Side } from '../TreeView';
-import { EditBase, BuildNode, NodeData, Payload, TraitLocation, TreeNodeSequence } from '../generic';
+import { BuildNode, NodeData, Payload, TraitLocation, TreeNodeSequence } from '../generic';
+import { ConstraintEffect } from './EditUtilities';
 
 /**
  * Types for Edits in Fluid Ops and Fluid summaries.
@@ -41,16 +42,10 @@ import { EditBase, BuildNode, NodeData, Payload, TraitLocation, TreeNodeSequence
  */
 
 /**
- * The information included in an edit.
+ * {@inheritdoc ChangeType}
  * @public
  */
-export type DefaultEditBase = EditBase<Change>;
-
-/**
- * The type of a Change
- * @public
- */
-export enum ChangeType {
+export enum ChangeTypeInternal {
 	Insert,
 	Detach,
 	Build,
@@ -59,196 +54,121 @@ export enum ChangeType {
 }
 
 /**
- * A change that composes an Edit.
- *
- * `Change` objects can be conveniently constructed with the helper methods exported on a constant of the same name.
- * @example
- * Change.insert(sourceId, destination)
+ * {@inheritdoc (Change:type)}
  * @public
  */
-export type Change = Insert | Detach | Build | SetValue | Constraint;
+export type ChangeInternal = InsertInternal | DetachInternal | BuildInternal | SetValueInternal | ConstraintInternal;
 
 /**
- * Constructs a sequence of nodes, associates it with the supplied ID, and stores it for use in later changes.
- * Does not modify the document.
- *
- * Valid if (transitively) all DetachedSequenceId are used according to their rules (use here counts as a destination),
- * and all Nodes' identifiers are previously unused.
- *
- * TODO: Design Decision:
- * If allowing 'moving from nowhere' to restore nodes: all new Nodes must have never before used identifiers.
- * Otherwise could just forbid identifiers currently reachable?
- * Could also allow introducing a node with a particular identifier to mean replacing that node with the new one
- * (could include optional constraint to require/prevent this).
- *
+ * {@inheritdoc Build}
  * @public
  */
-export interface Build {
+export interface BuildInternal {
+	/** {@inheritdoc Build.destination } */
 	readonly destination: DetachedSequenceId;
+	/** {@inheritdoc Build.source } */
 	readonly source: TreeNodeSequence<BuildNode>;
-	readonly type: typeof ChangeType.Build;
+	/** {@inheritdoc Build."type" } */
+	readonly type: typeof ChangeTypeInternal.Build;
 }
 
 /**
- * Inserts a sequence of nodes at the specified destination.
- * The source can be constructed either by a Build (used to insert new nodes) or a Detach (amounts to a "move" operation).
+ * {@inheritdoc (Insert:interface)}
  * @public
  */
-export interface Insert {
+export interface InsertInternal {
+	/** {@inheritdoc (Insert:interface).destination } */
 	readonly destination: StablePlace;
+	/** {@inheritdoc (Insert:interface).source } */
 	readonly source: DetachedSequenceId;
-	readonly type: typeof ChangeType.Insert;
+	/** {@inheritdoc (Insert:interface)."type" } */
+	readonly type: typeof ChangeTypeInternal.Insert;
 }
 
 /**
- * Removes a sequence of nodes from the tree.
- * If a destination is specified, the detached sequence is associated with that ID and held for possible reuse
- * by later changes in this same Edit (such as by an Insert).
- * A Detach without a destination is a deletion of the specified sequence, as is a Detach with a destination that is not used later.
+ * {@inheritdoc Detach}
  * @public
  */
-export interface Detach {
+export interface DetachInternal {
+	/** {@inheritdoc Detach.destination } */
 	readonly destination?: DetachedSequenceId;
+	/** {@inheritdoc Detach.source } */
 	readonly source: StableRange;
-	readonly type: typeof ChangeType.Detach;
+	/** {@inheritdoc Detach."type" } */
+	readonly type: typeof ChangeTypeInternal.Detach;
 }
 
 /**
- * Modifies the payload of a node.
+ * {@inheritdoc SetValue}
  * @public
  */
-export interface SetValue {
+export interface SetValueInternal {
+	/** {@inheritdoc SetValue.nodeToModify } */
 	readonly nodeToModify: NodeId;
-	/**
-	 * Sets or clears the payload.
-	 * To improve ease of forwards compatibility, an explicit `null` value is used to represent the clearing of a payload.
-	 * SetValue may use `undefined` in future API versions to mean "don't change the payload" (which is useful if e.g. other
-	 * fields are added to SetValue that can be changed without altering the payload)
-	 */
+	/** {@inheritdoc SetValue.payload } */
 	readonly payload: Payload | null;
-	readonly type: typeof ChangeType.SetValue;
+	/** {@inheritdoc SetValue."type" } */
+	readonly type: typeof ChangeTypeInternal.SetValue;
 }
 
 /**
- * A set of constraints on the validity of an Edit.
- * A Constraint is used to detect when an Edit, due to other concurrent edits, may have unintended effects or merge in
- * non-semantic ways. It is processed in order like any other Change in an Edit. It can cause an edit to fail if the
- * various constraints are not met at the time of evaluation (ex: the parentNode has changed due to concurrent editing).
- * Does not modify the document.
+ * {@inheritdoc Constraint}
  * @public
  */
-export interface Constraint {
-	/**
-	 * Selects a sequence of nodes which will be checked against the constraints specified by the optional fields.
-	 * If `toConstrain` is invalid, it will be treated like a constraint being unmet.
-	 * Depending on `effect` this may or may not make the Edit invalid.
-	 *
-	 * When a constraint is not met, the effects is specified by `effect`.
-	 */
+export interface ConstraintInternal {
+	/** {@inheritdoc Constraint.toConstrain } */
 	readonly toConstrain: StableRange;
-
-	/**
-	 * Require that the identities of all the nodes in toConstrain hash to this value.
-	 * Hash is order dependent.
-	 * TODO: implement and specify exact hash function.
-	 *
-	 * This is an efficient (O(1) space) way to constrain a sequence of nodes to have specific identities.
-	 */
+	/** {@inheritdoc Constraint.identityHash } */
 	readonly identityHash?: UuidString;
-
-	/**
-	 * Require that the number of nodes in toConstrain is this value.
-	 */
+	/** {@inheritdoc Constraint.length } */
 	readonly length?: number;
-
-	/**
-	 * Require that the contents of all of the nodes in toConstrain hash to this value.
-	 * Hash is an order dependant deep hash, which includes all subtree content recursively.
-	 * TODO: implement and specify exact hash function.
-	 *
-	 * This is an efficient (O(1) space) way to constrain a sequence of nodes have exact values (transitively).
-	 */
+	/** {@inheritdoc Constraint.contentHash } */
 	readonly contentHash?: UuidString;
-
-	/**
-	 * Require that parent under which toConstrain is located has this identifier.
-	 */
+	/** {@inheritdoc Constraint.parentNode } */
 	readonly parentNode?: NodeId;
-
-	/**
-	 * Require that the trait under which toConstrain is located has this label.
-	 */
+	/** {@inheritdoc Constraint.label } */
 	readonly label?: TraitLabel;
-
-	/**
-	 * What to do if a constraint is not met.
-	 */
+	/** {@inheritdoc Constraint.effect } */
 	readonly effect: ConstraintEffect;
-
-	/**
-	 * Marker for which kind of Change this is.
-	 */
-	readonly type: typeof ChangeType.Constraint;
+	/** {@inheritdoc Constraint."type" } */
+	readonly type: typeof ChangeTypeInternal.Constraint;
 }
 
-/**
- * What to do when a Constraint is violated.
- * @public
- */
-export enum ConstraintEffect {
-	/**
-	 * Discard Edit.
-	 */
-	InvalidAndDiscard,
-
-	/**
-	 * Discard Edit, but record metadata that application may want to try and recover this change by recreating it.
-	 * Should this be the default policy for when another (non Constraint) change is invalid?
-	 */
-	InvalidRetry,
-
-	/**
-	 * Apply the change, but flag it for possible reconsideration by the app
-	 * (applying it is better than not, but perhaps the high level logic could produce something better).
-	 */
-	ValidRetry,
-}
-
-// Note: Documentation of this constant is merged with documentation of the `Change` interface.
+// Note: Documentation of this constant is merged with documentation of the `ChangeInternal` interface.
 /**
  * @public
  */
-export const Change = {
-	build: (source: TreeNodeSequence<BuildNode>, destination: DetachedSequenceId): Build => ({
+export const ChangeInternal = {
+	build: (source: TreeNodeSequence<BuildNode>, destination: DetachedSequenceId): BuildInternal => ({
 		destination,
 		source,
-		type: ChangeType.Build,
+		type: ChangeTypeInternal.Build,
 	}),
 
-	insert: (source: DetachedSequenceId, destination: StablePlace): Insert => ({
+	insert: (source: DetachedSequenceId, destination: StablePlace): InsertInternal => ({
 		destination,
 		source,
-		type: ChangeType.Insert,
+		type: ChangeTypeInternal.Insert,
 	}),
 
-	detach: (source: StableRange, destination?: DetachedSequenceId): Detach => ({
+	detach: (source: StableRange, destination?: DetachedSequenceId): DetachInternal => ({
 		destination,
 		source,
-		type: ChangeType.Detach,
+		type: ChangeTypeInternal.Detach,
 	}),
 
-	setPayload: (nodeToModify: NodeId, payload: Payload): SetValue => ({
+	setPayload: (nodeToModify: NodeId, payload: Payload): SetValueInternal => ({
 		nodeToModify,
 		payload,
-		type: ChangeType.SetValue,
+		type: ChangeTypeInternal.SetValue,
 	}),
 
-	clearPayload: (nodeToModify: NodeId): SetValue => ({
+	clearPayload: (nodeToModify: NodeId): SetValueInternal => ({
 		nodeToModify,
 		// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface above.)
 		// eslint-disable-next-line no-null/no-null
 		payload: null,
-		type: ChangeType.SetValue,
+		type: ChangeTypeInternal.SetValue,
 	}),
 
 	constraint: (
@@ -259,7 +179,7 @@ export const Change = {
 		contentHash?: UuidString,
 		parentNode?: NodeId,
 		label?: TraitLabel
-	): Constraint => ({
+	): ConstraintInternal => ({
 		toConstrain,
 		effect,
 		identityHash,
@@ -267,46 +187,40 @@ export const Change = {
 		contentHash,
 		parentNode,
 		label,
-		type: ChangeType.Constraint,
+		type: ChangeTypeInternal.Constraint,
 	}),
 };
 
 /**
- * Helper for creating a `Delete` edit.
+ * {@inheritdoc Delete }
  * @public
  */
-export const Delete = {
-	/**
-	 * @returns a Change that deletes the supplied part of the tree.
-	 */
-	create: (stableRange: StableRange): Change => Change.detach(stableRange),
+export const DeleteInternal = {
+	/** {@inheritdoc Delete.create } */
+	create: (stableRange: StableRange): ChangeInternal => ChangeInternal.detach(stableRange),
 };
 
 /**
- * Helper for creating an `Insert` edit.
+ * {@inheritdoc (Insert:variable) }
  * @public
  */
-export const Insert = {
-	/**
-	 * @returns a Change that inserts 'nodes' into the specified location in the tree.
-	 */
-	create: (nodes: TreeNodeSequence<BuildNode>, destination: StablePlace): Change[] => {
-		const build = Change.build(nodes, 0 as DetachedSequenceId);
-		return [build, Change.insert(build.destination, destination)];
+export const InsertInternal = {
+	/** {@inheritdoc (Insert:variable).create } */
+	create: (nodes: TreeNodeSequence<BuildNode>, destination: StablePlace): ChangeInternal[] => {
+		const build = ChangeInternal.build(nodes, 0 as DetachedSequenceId);
+		return [build, ChangeInternal.insert(build.destination, destination)];
 	},
 };
 
 /**
- * Helper for creating a `Move` edit.
+ * {@inheritdoc Move }
  * @public
  */
-export const Move = {
-	/**
-	 * @returns a Change that moves the specified content to a new location in the tree.
-	 */
-	create: (source: StableRange, destination: StablePlace): Change[] => {
-		const detach = Change.detach(source, 0 as DetachedSequenceId);
-		return [detach, Change.insert(assertNotUndefined(detach.destination), destination)];
+export const MoveInternal = {
+	/** {@inheritdoc Move.create } */
+	create: (source: StableRange, destination: StablePlace): ChangeInternal[] => {
+		const detach = ChangeInternal.detach(source, 0 as DetachedSequenceId);
+		return [detach, ChangeInternal.insert(assertNotUndefined(detach.destination), destination)];
 	},
 };
 
