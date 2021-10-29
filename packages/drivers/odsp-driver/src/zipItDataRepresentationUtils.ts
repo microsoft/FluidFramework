@@ -12,8 +12,11 @@ import { assert, IsoBuffer, Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "
 import { createOdspNetworkError, fetchIncorrectResponse } from "@fluidframework/odsp-doclib-utils";
 import { ReadBuffer } from "./ReadBufferUtils";
 
+// eslint-disable-next-line max-len
+// https://onedrive.visualstudio.com/SharePoint%20Online/_git/SPO?path=/cobalt/Base/Property/BinaryEncodedPropertyReader.cs&version=GBmaster&_a=contents
 /**
- * Control codes used by tree serialization / decentralization code. Same as on server.
+ * Control codes used by tree serialization / decentralization code. Same as on server. These can be found on
+ * filestore code on server too at above link.
  */
 export enum MarkerCodes {
     BoolTrue = 11,  // value = true
