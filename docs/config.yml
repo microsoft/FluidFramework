@@ -29,6 +29,8 @@ module:
     target: static/codicons/comment-discussion.svg
   - source: node_modules/@vscode/codicons/src/icons/edit.svg
     target: static/codicons/edit.svg
+  - source: node_modules/@vscode/codicons/src/icons/github.svg
+    target: static/codicons/github.svg
   - source: node_modules/@vscode/codicons/src/icons/rss.svg
     target: static/codicons/rss.svg
   - source: node_modules/@vscode/codicons/src/icons/twitter.svg

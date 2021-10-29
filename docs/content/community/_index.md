@@ -13,7 +13,7 @@ title: Welcome to the Fluid Community
   {{< cta
     linkClasses="github"
     linkURL="https://github.com/microsoft/FluidFramework"
-    iconClasses="octocat"
+    iconClasses="github"
     linkText="Contribute"
     subtext="We welcome code and documentation contributions from the community."
   >}}
@@ -30,7 +30,7 @@ title: Welcome to the Fluid Community
   {{< cta
     linkClasses="github"
     linkURL="https://www.github.com/Microsoft/fluidframework/issues"
-    iconClasses="github"
+    iconClasses="issue"
     linkText="Report Issues"
     subtext="Found something not working as expected? Please file a GitHub issue, so we can take a look together."
   >}}
