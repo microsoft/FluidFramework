@@ -24,6 +24,10 @@
                 <ul class="links">
                     <li><a id="footer-privacy-link" href="https://privacy.microsoft.com/privacystatement"
                             target="_blank">Privacy</a></li>
+                    {{- if .Site.Params.cookies -}}
+                    <li><a id="footer-cookie-link" style="cursor: pointer;" onclick="manageConsent()"
+                    target="_blank">Manage Cookies</a></li>
+                    {{- end -}}
                     <li><a id="footer-terms-link" href="https://www.microsoft.com/legal/terms-of-use"
                             target="_blank">Terms of Use</a></li>
                     <li><a id="footer-license-link"

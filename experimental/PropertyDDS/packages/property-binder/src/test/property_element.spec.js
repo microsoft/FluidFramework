@@ -16,7 +16,7 @@ import {
 
 import * as _ from 'underscore';
 
-import { PropertyElement } from '../../src/internal/property_element';
+import { PropertyElement } from '../../src/internal/propertyElement';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 import { RESOLVE_NEVER, RESOLVE_NO_LEAFS, RESOLVE_ALWAYS } from '../../src/internal/constants';
 import { MockSharedPropertyTree } from './mock_shared_property_tree';

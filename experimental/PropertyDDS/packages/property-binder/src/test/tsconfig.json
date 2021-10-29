@@ -8,9 +8,7 @@
             "jest"
         ],
         "rootDir": "./",
-        "outDir": "../../dist/test",
-        "declaration": false,
-        "declarationMap": false
+        "outDir": "../../dist/test"
     },
     "include": [
         "./**/*"
