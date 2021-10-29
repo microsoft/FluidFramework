@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
 import { IDisposable } from "@fluidframework/common-definitions";
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
@@ -162,10 +161,6 @@ export class PendingStateManager implements IDisposable {
             opMetadata,
         };
 
-        if (type === ContainerMessageType.Attach && opMetadata?.opId === undefined) {
-            pendingMessage.opMetadata = { ...opMetadata, opId: uuid() };
-        }
-
         this.pendingStates.push(pendingMessage);
 
         this.pendingMessagesCount++;
@@ -314,10 +309,7 @@ export class PendingStateManager implements IDisposable {
             "client sequence number doesn't match");
         switch(message.type) {
             case ContainerMessageType.Attach:
-                if (!isOriginalClientId) {
-                    assert(message.metadata?.opId, "no opId");
-                    assert(message.metadata.opId === state.opMetadata?.opId, "opId doesn't match");
-                }
+                assert(message.contents.id === state.content.id, "datastore ID doesn't match");
                 break;
             case ContainerMessageType.FluidDataStoreOp:
                 assert(message.contents.address === state.content.address, "address doesn't match");

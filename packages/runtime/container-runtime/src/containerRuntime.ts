@@ -148,8 +148,10 @@ export enum ContainerMessageType {
     // Chunked operation.
     ChunkedOp = "chunkedOp",
 
+    // Signifies that a blob has been attached and should not be garbage collected by storage
     BlobAttach = "blobAttach",
 
+    // Ties our new clientId to our old one on reconnect
     Rejoin = "rejoin",
 }
 
@@ -2188,7 +2190,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.dataStores.resubmitDataStoreOp(content, localOpMetadata);
                 break;
             case ContainerMessageType.Attach:
-                this.submit(type, content, localOpMetadata, opMetadata);
+                this.submit(type, content, localOpMetadata);
                 break;
             case ContainerMessageType.ChunkedOp:
                 throw new Error(`chunkedOp not expected here`);
