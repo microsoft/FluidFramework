@@ -372,10 +372,14 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     public resetUnreferencedState(): void {
+        this.resetUnreferencedStateCore();
+        this.stateResetSinceLastRun = true;
+    }
+
+    private resetUnreferencedStateCore(): void {
         this.inactive = false;
         this.unreferencedTimestampMs = undefined;
         this.unreferencedTimer.clear();
-        this.stateResetSinceLastRun = true;
     }
 
     public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
@@ -395,7 +399,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             this.logErrorIfInactive("inactiveObjectRevived", gcTimestamp);
 
             // Clear unreferenced / inactive state, if any.
-            this.resetUnreferencedState();
+            this.resetUnreferencedStateCore();
             return;
         }
 
