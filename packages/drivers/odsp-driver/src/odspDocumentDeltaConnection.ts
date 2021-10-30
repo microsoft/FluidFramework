@@ -457,14 +457,16 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             const data = this.getOpsMap.get(result.nonce);
             // Due to socket multiplexing, this client may not have asked for any data
             // If so, there it most likely does not need these ops (otherwise it already asked for them)
-            if (data !== undefined) {
+            // Also we may have deleted entry in this.getOpsMap due to too many requests and too slow response.
+            // But not processing such result may push us into infinite loop of fast requests and dropping all responses
+            if (data !== undefined || result.nonce.indexOf(this.requestOpsNoncePrefix) === 0) {
                 this.getOpsMap.delete(result.nonce);
                 const common = {
                     eventName: "GetOps",
                     code: result.code,
-                    from: data.from,
-                    to: data.to,
-                    duration: performance.now() - data.start,
+                    from: data?.from,
+                    to: data?.to,
+                    duration: data === undefined ? undefined : performance.now() - data.start,
                 };
                 if (messages !== undefined && messages.length > 0) {
                     this.logger.sendPerformanceEvent({
