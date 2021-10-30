@@ -589,8 +589,6 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 export interface ISummaryRuntimeOptions {
     // (undocumented)
     disableIsolatedChannels?: boolean;
-    generateSummaries?: boolean;
-    // (undocumented)
     initialSummarizerDelayMs?: number;
     // (undocumented)
     maxOpsSinceLastSummary?: number;

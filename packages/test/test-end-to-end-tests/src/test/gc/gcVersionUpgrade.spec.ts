@@ -59,7 +59,7 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
         []);
 
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { generateSummaries: false },
+        summaryOptions: { summaryConfigOverrides: { generateSummaries: false } },
         gcOptions: { gcAllowed: true },
     };
     const defaultRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(

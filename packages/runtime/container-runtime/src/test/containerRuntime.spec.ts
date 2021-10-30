@@ -33,7 +33,7 @@ describe("Runtime", () => {
                         undefined, // requestHandler
                         {
                             summaryOptions: {
-                                generateSummaries: false,
+                                summaryConfigOverrides: { generateSummaries: false },
                             },
                         },
                     );

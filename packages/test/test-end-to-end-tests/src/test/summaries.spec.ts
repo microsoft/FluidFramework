@@ -38,7 +38,10 @@ async function createContainer(
 
     // Force generateSummaries to false.
     const summaryOptions: ISummaryRuntimeOptions = { ...summaryOpt };
-    summaryOptions.generateSummaries = false;
+    if (!summaryOptions.summaryConfigOverrides) {
+        summaryOptions.summaryConfigOverrides = {};
+    }
+    summaryOptions.summaryConfigOverrides.generateSummaries = false;
 
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         factory,

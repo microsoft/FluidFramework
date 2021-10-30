@@ -84,10 +84,10 @@ describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider)
     const summaryConfigOverrides: Partial<ISummaryConfiguration> = {
         idleTime: IdleDetectionTime,
         maxTime: IdleDetectionTime * 12,
+        generateSummaries: true,
     };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
-            generateSummaries: true,
             initialSummarizerDelayMs: 10,
             summaryConfigOverrides,
         },

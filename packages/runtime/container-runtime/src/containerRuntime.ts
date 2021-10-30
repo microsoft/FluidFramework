@@ -222,12 +222,6 @@ export interface IGCRuntimeOptions {
 }
 
 export interface ISummaryRuntimeOptions {
-    /**
-     * Flag that will generate summaries if connected to a service that supports them.
-     * This defaults to true and must be explicitly set to false to disable.
-     */
-    generateSummaries?: boolean;
-
     /* Delay before first attempt to spawn summarizing container. */
     initialSummarizerDelayMs?: number;
 
@@ -531,7 +525,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         const {
-            summaryOptions = { generateSummaries: true },
+            summaryOptions = { summaryConfigOverrides: { generateSummaries: true } },
             gcOptions = {},
             loadSequenceNumberVerification = "close",
         } = runtimeOptions;
@@ -910,7 +904,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
         // Only create a SummaryManager if summaries are enabled and we are not the summarizer client
-        if (this.runtimeOptions.summaryOptions.generateSummaries === false) {
+        if (this.runtimeOptions.summaryOptions.summaryConfigOverrides?.generateSummaries === false) {
             this._logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
         } else {
             const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 7000;
@@ -2208,8 +2202,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // If we're not the summarizer, and we don't have a summaryManager, we expect that
             // generateSummaries is turned off. We are throwing instead of returning a failure here,
             // because it is a misuse of the API rather than an expected failure.
+            const generateSummaries = this.runtimeOptions.summaryOptions.summaryConfigOverrides?.generateSummaries;
             throw new Error(
-                `Can't summarize, generateSummaries: ${this.runtimeOptions.summaryOptions.generateSummaries}`,
+                `Can't summarize, generateSummaries: ${generateSummaries}`,
             );
         }
     };
@@ -2223,8 +2218,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // If we're not the summarizer, and we don't have a summaryManager, we expect that
             // generateSummaries is turned off. We are throwing instead of returning a failure here,
             // because it is a misuse of the API rather than an expected failure.
+            const generateSummaries = this.runtimeOptions.summaryOptions.summaryConfigOverrides?.generateSummaries;
             throw new Error(
-                `Can't summarize, generateSummaries: ${this.runtimeOptions.summaryOptions.generateSummaries}`,
+                `Can't summarize, generateSummaries: ${generateSummaries}`,
             );
         }
     };

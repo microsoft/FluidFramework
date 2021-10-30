@@ -34,7 +34,7 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
         []);
 
     const defaultRuntimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { generateSummaries: false },
+        summaryOptions: { summaryConfigOverrides: { generateSummaries: false } },
     };
 
     const logger = new TelemetryNullLogger();

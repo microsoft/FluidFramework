@@ -36,10 +36,10 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
     const summaryConfigOverrides: Partial<ISummaryConfiguration> = {
         idleTime: IdleDetectionTime,
         maxTime: IdleDetectionTime * 12,
+        generateSummaries: true,
     };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
-            generateSummaries: true,
             initialSummarizerDelayMs: 10,
             summaryConfigOverrides,
         },
@@ -202,7 +202,6 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         // dataStore2 will have it marked as unreferenced.
         const gcDisabledRuntimeOptions: IContainerRuntimeOptions = {
             summaryOptions: {
-                generateSummaries: true,
                 initialSummarizerDelayMs: 10,
                 summaryConfigOverrides,
             },
