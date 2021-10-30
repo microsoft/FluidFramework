@@ -112,10 +112,6 @@ footer {
     filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
 }
 
-.cta-icon.issues {
-    background-image: url("/images/Beaker.svg");
-}
-
 .omt {
     font-size: 16px;
     padding: 8em 4em;
