@@ -259,11 +259,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (this.channelDeferred) {
             this.channelDeferred.promise.then((runtime) => {
                 runtime.dispose();
-            }).catch((error) => {
-                this.logger.sendErrorEvent(
-                    { eventName: "ChannelDisposeError", fluidDataStoreId: this.id },
-                    error);
-            });
+            }).catch((error) => {});
         }
     }
 
@@ -278,7 +274,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.realizeCore(this.existing).catch((error) => {
                 this.channelDeferred?.reject(
                     CreateProcessingError(error, "realizeFluidDataStoreContext", undefined /* message */));
-            });
+                this.logger.sendErrorEvent(
+                    { eventName: "RealizeError", fluidDataStoreId: this.id },
+                    error);
+                });
         }
         return this.channelDeferred.promise;
     }
@@ -611,6 +610,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.channelDeferred.resolve(this.channel);
         } catch (error) {
             this.channelDeferred?.reject(error);
+            this.logger.sendErrorEvent(
+                { eventName: "bindRuntimeError", fluidDataStoreId: this.id },
+                error);
         }
     }
 
