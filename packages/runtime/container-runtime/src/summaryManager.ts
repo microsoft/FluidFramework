@@ -240,7 +240,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                 // If failure happened on container load, we may not yet realized that socket disconnected, so check
                 // offlineError.
                 const category = error?.errorType === DriverErrorType.offlineError ? "generic" : "error";
-                this.logger.sendErrorEvent(
+                this.logger.sendTelemetryEvent(
                     {
                         eventName: "SummarizerException",
                         category,
