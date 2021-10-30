@@ -23,6 +23,10 @@ module:
     target: static
 
   # SVG icons from the @vscode/codicons package
+  - source: node_modules/@vscode/codicons/src/icons/beaker.svg
+    target: static/codicons/beaker.svg
+  - source: node_modules/@vscode/codicons/src/icons/book.svg
+    target: static/codicons/book.svg
   - source: node_modules/@vscode/codicons/src/icons/bug.svg
     target: static/codicons/bug.svg
   - source: node_modules/@vscode/codicons/src/icons/comment-discussion.svg
@@ -31,6 +35,8 @@ module:
     target: static/codicons/edit.svg
   - source: node_modules/@vscode/codicons/src/icons/github.svg
     target: static/codicons/github.svg
+  - source: node_modules/@vscode/codicons/src/icons/play-circle.svg
+    target: static/codicons/play-circle.svg
   - source: node_modules/@vscode/codicons/src/icons/rss.svg
     target: static/codicons/rss.svg
   - source: node_modules/@vscode/codicons/src/icons/twitter.svg
