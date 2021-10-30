@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IEvent } from "@fluidframework/common-definitions";
+import { IEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { TypedEventEmitter, EventEmitterEventType } from "@fluidframework/common-utils";
 import { normalizeError } from "./errorLogging";
 import { IFluidErrorBase } from "./fluidErrorBase";
@@ -30,12 +30,13 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
         try {
             return super.emit(event, ...args);
         } catch (error) {
-            const normalizedError = normalizeError(error, {
-                errorSourceIfUnknown: this.defaultErrorSource,
-                props: typeof event === "string" ? { mishandledEvent: event } : undefined,
-            });
+            const props: ITelemetryProperties = {};
+            props.errorSource = this.defaultErrorSource;
+            if (typeof event === "string") {
+                props.mishandledEvent = event;
+            }
 
-            this.errorHandler(event, normalizedError);
+            this.errorHandler(event, normalizeError(error, { props }));
             return true;
         }
     }

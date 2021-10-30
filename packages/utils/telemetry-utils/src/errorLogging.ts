@@ -76,8 +76,6 @@ export interface IFluidErrorAnnotations {
     props?: ITelemetryProperties;
     /** fluidErrorCode to mention if error isn't already an IFluidErrorBase */
     errorCodeIfNone?: string;
-    /** errorSource to use on the normalized error if not already present */
-    errorSourceIfUnknown?: string;
 }
 
 /** Simplest possible implementation of IFluidErrorBase */
@@ -86,7 +84,6 @@ class SimpleFluidError implements IFluidErrorBase {
 
     readonly errorType: string;
     readonly fluidErrorCode: string;
-    readonly errorSource?: string;
     readonly message: string;
     readonly stack?: string;
     readonly name?: string;
@@ -100,7 +97,6 @@ class SimpleFluidError implements IFluidErrorBase {
     ) {
         this.errorType = errorProps.errorType;
         this.fluidErrorCode = errorProps.fluidErrorCode;
-        this.errorSource = errorProps.errorSource;
         this.message = errorProps.message;
         this.stack = errorProps.stack;
         this.name = errorProps.name;
@@ -118,17 +114,14 @@ class SimpleFluidError implements IFluidErrorBase {
     }
 }
 
-/** For backwards compatibility with pre-IFluidErrorBase valid errors */
-function patchLegacyError(
+/** For backwards compatibility with pre-fluidErrorCode valid errors */
+function patchWithErrorCode(
     legacyError: Omit<IFluidErrorBase, "fluidErrorCode">,
     errorCode: string = "<error predates fluidErrorCode>",
-    errorSource?: string,
 ): asserts legacyError is IFluidErrorBase {
-    const patchMe: { -readonly [P in "fluidErrorCode" | "errorSource"]: IFluidErrorBase[P] | undefined; } =
-        legacyError as any;
+    const patchMe: { fluidErrorCode?: string } = legacyError as any;
     if (patchMe.fluidErrorCode === undefined) {
         patchMe.fluidErrorCode = errorCode;
-        patchMe.errorSource = errorSource;
     }
 }
 
@@ -144,7 +137,7 @@ export function normalizeError(
 ): IFluidErrorBase {
     // Back-compat, while IFluidErrorBase is rolled out
     if (isValidLegacyError(error)) {
-        patchLegacyError(error, annotations.errorCodeIfNone, annotations.errorSourceIfUnknown);
+        patchWithErrorCode(error, annotations.errorCodeIfNone);
     }
 
     if (isFluidError(error)) {
@@ -157,7 +150,6 @@ export function normalizeError(
     const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
     const fluidError: IFluidErrorBase = new SimpleFluidError({
         errorType: "genericError", // Match Container/Driver generic error type
-        errorSource: annotations.errorSourceIfUnknown,
         fluidErrorCode: annotations.errorCodeIfNone ?? "none",
         message,
         stack: stack ?? generateStack(),

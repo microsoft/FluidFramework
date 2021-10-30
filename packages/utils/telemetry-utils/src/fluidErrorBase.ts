@@ -14,9 +14,6 @@ export interface IFluidErrorBase extends Readonly<Partial<Error>> {
     /** Coarse classification of what type of error this is. May indicate a certain shape of object as well */
     readonly errorType: string;
 
-    /** Best guess at which part of the system was at fault */
-    readonly errorSource?: string;
-
     /**
      * Indicates a point in code where this error either originated or was first handled/normalized.
      * Avoid crafting these via string format or otherwise including variable data, so they're easy to find the code.
