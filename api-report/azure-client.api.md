@@ -7,13 +7,17 @@
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidContainer } from '@fluidframework/fluid-static';
+import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IMember } from '@fluidframework/fluid-static';
+import { IRequest } from '@fluidframework/core-interfaces';
+import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
+import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 import { ServiceAudience } from '@fluidframework/fluid-static';
@@ -72,6 +76,18 @@ export interface AzureMember<T = any> extends IMember {
     // (undocumented)
     userName: string;
 }
+
+// @public (undocumented)
+export class AzureUrlResolver implements IUrlResolver {
+    constructor();
+    // (undocumented)
+    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string>;
+    // (undocumented)
+    resolve(request: IRequest): Promise<IFluidResolvedUrl>;
+}
+
+// @public (undocumented)
+export const createAzureCreateNewRequest: (ordererUrl: string, storageUrl: string, tenantId: string) => IRequest;
 
 // @public
 export type IAzureAudience = IServiceAudience<AzureMember>;

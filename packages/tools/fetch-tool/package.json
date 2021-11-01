@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@fluid-internal/fluidapp-odsp-urlresolver": "^0.51.0",
+    "@fluidframework/azure-client": "^0.51.0",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-runtime": "^0.51.0",
     "@fluidframework/datastore": "^0.51.0",
@@ -41,6 +42,7 @@
     "@fluidframework/routerlicious-urlresolver": "^0.51.0",
     "@fluidframework/runtime-definitions": "^0.51.0",
     "@fluidframework/telemetry-utils": "^0.51.0",
+    "@fluidframework/test-client-utils": "^0.51.0",
     "@fluidframework/tool-utils": "^0.51.0"
   },
   "devDependencies": {

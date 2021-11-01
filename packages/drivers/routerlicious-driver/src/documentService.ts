@@ -93,6 +93,9 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta storage service for routerlicious driver.
      */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
+        if (this.documentStorageService === undefined) {
+            await this.connectToStorage();
+        }
         assert(!!this.documentStorageService, 0x0b1 /* "Storage service not initialized" */);
 
         const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
