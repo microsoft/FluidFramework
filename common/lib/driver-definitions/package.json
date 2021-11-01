@@ -101,6 +101,28 @@
         "InterfaceDeclaration_IThrottlingWarning": {
           "backCompat": false
         }
+      },
+      "0.40.0": {
+        "InterfaceDeclaration_IDocumentService": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IDocumentServiceFactory": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IDocumentStorageService": {
+          "forwardCompat": false
+        }
+      },
+      "0.41.0": {
+        "InterfaceDeclaration_IDocumentService": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IDocumentServiceFactory": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IDocumentStorageService": {
+          "forwardCompat": false
+        }
       }
     }
   }
