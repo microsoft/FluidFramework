@@ -17,7 +17,6 @@ import { ILoadTest, IRunConfig } from "./loadTestDataStore";
 import { createCodeLoader, createTestDriver, getProfile, loggerP, safeExit } from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
 import { generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
-import { LeaderElection } from "./leaderElection";
 
 function printStatus(runConfig: IRunConfig, message: string) {
     if (runConfig.verbose) {
@@ -175,8 +174,6 @@ async function runnerProcess(
 
             const container = await loader.resolve({ url, headers });
             container.resume();
-            const leaderElection = new LeaderElection(container);
-            leaderElection.setupLeaderElection();
             const test = await requestFluidObject<ILoadTest>(container, "/");
 
             // Control fault injection period through config.
