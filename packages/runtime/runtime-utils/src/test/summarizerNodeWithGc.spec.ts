@@ -198,6 +198,44 @@ describe("SummarizerNodeWithGC Tests", () => {
                 "summarize should not have thrown an error since GC was run",
             );
         });
+
+        it("should not regenerate summary when nothing changed since last summary", async () => {
+            // Get the GC data so that initialGCSummaryDetails is read and saved.
+            await summarizerNode.getGCData();
+            // Update the used routes to the same as the one in initialGCSummaryDetails.
+            summarizerNode.updateUsedRoutes([]);
+            const summarizeResult = await summarizerNode.summarize(false /* fullTree */);
+            assert(
+                summarizeResult.summary.type === SummaryType.Handle,
+                "The summary should be a handle since nothing changed since last summary",
+            );
+        });
+
+        it("should regenerate summary when used state changed since last summary", async () => {
+            // Get the GC data so that initialGCSummaryDetails is read and saved.
+            await summarizerNode.getGCData();
+            // Update the used routes to a different value than the one in initialGCSummaryDetails.
+            summarizerNode.updateUsedRoutes([""]);
+            const summarizeResult = await summarizerNode.summarize(false /* fullTree */);
+            assert(
+                summarizeResult.summary.type === SummaryType.Tree,
+                "The summary should be a tree since used routes changed since last summary",
+            );
+        });
+
+        it("should regenerate summary when unreferenced state reset since last summary", async () => {
+            // Reset the unreferenced state of the node.
+            summarizerNode.resetUnreferencedState();
+            // Get the GC data so that initialGCSummaryDetails is read and saved.
+            await summarizerNode.getGCData();
+            // Update the used routes to the same as the one in initialGCSummaryDetails.
+            summarizerNode.updateUsedRoutes([]);
+            const summarizeResult = await summarizerNode.summarize(false /* fullTree */);
+            assert(
+                summarizeResult.summary.type === SummaryType.Tree,
+                "The summary should be a tree since unreferenced state was reset since last summary",
+            );
+        });
     });
 
     describe("Unreferenced timeout expiry", () => {

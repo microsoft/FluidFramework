@@ -646,6 +646,62 @@ describe("Data Store Context Tests", () => {
                     "summarize should return a tree since used state changed");
             });
 
+            it("should not reuse summary data when unreferenced state was reset since last summary", async () => {
+                dataStoreAttributes = {
+                    pkg: "TestDataStore1",
+                    summaryFormatVersion: undefined,
+                };
+                const gcDetails: IGarbageCollectionSummaryDetails = {
+                    usedRoutes: [""], // Set initial used routes to be same as the default used routes.
+                };
+                const attributesBuffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
+                const gcDetailsBuffer = stringToBuffer(JSON.stringify(gcDetails), "utf8");
+                const blobCache = new Map<string, ArrayBufferLike>([
+                    ["fluidDataStoreAttributes", attributesBuffer],
+                    ["gcDetails", gcDetailsBuffer],
+                ]);
+                const snapshotTree: ISnapshotTree = {
+                    id: "dummy",
+                    blobs: {
+                        [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
+                        [gcBlobKey]: "gcDetails",
+                    },
+                    commits: {},
+                    trees: {},
+                };
+
+                remotedDataStoreContext = new RemotedFluidDataStoreContext(
+                    dataStoreId,
+                    snapshotTree,
+                    mockContainerRuntime(),
+                    new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                    scope,
+                    createSummarizerNodeFn,
+                );
+
+                // Since GC is enabled, GC must run before summarize. Get the GC data and update used routes to
+                // emulate the GC process.
+                const gcData = await remotedDataStoreContext.getGCData();
+                assert.deepStrictEqual(gcData, emptyGCData, "GC data from getGCData should be empty.");
+                // Update used routes to the same as in initial GC details. This will ensure that the used state
+                // matches the initial used state.
+                remotedDataStoreContext.updateUsedRoutes([""]);
+
+                // The data in the store has not changed since last summary and the reference used routes (from initial
+                // used routes) and current used routes (default) are both empty. So, summarize should return a handle.
+                let summarizeResult = await remotedDataStoreContext.summarize(false /* fullTree */);
+                assert(summarizeResult.summary.type === SummaryType.Handle,
+                    "summarize should return a handle since nothing changed");
+
+                // Reset the unreferenced state for the data store.
+                remotedDataStoreContext.resetUnreferencedState(["/"]);
+
+                // Since the unreferenced state was reset, it should generate a full summary tree.
+                summarizeResult = await remotedDataStoreContext.summarize(false /* fullTree */);
+                assert(summarizeResult.summary.type === SummaryType.Tree,
+                    "summarize should return a tree since used state changed");
+            });
+
             function updateReferencedStateTest() {
                 const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
                 const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
