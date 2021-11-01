@@ -1,0 +1,3 @@
+http://localhost:8080
+https://twitter.com/intent/tweet*
+https://twitter.com/intent/follow*
