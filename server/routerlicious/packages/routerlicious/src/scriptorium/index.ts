@@ -28,29 +28,12 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const opCollection = db.collection(deltasCollectionName);
 
     if (createCosmosDBIndexes) {
-        await opCollection.createIndex({
-            documentId: 1,
-        }, false);
-
-        await opCollection.createIndex({
-            tenantId: 1,
-        }, false);
-
-        await opCollection.createIndex({
-            "operation.term": 1,
-        }, false);
-
-        await opCollection.createIndex({
-            "operation.sequenceNumber": 1,
-        }, false);
-
-        await opCollection.createIndex({
-            "operation.timestamp": 1,
-        }, false);
-
-        await opCollection.createIndex({
-            scheduledDeletionTime: 1,
-        }, false);
+        await opCollection.createIndex({ tenantId: 1 }, false);
+        await opCollection.createIndex({ documentId: 1 }, false);
+        await opCollection.createIndex({ "operation.term": 1 }, false);
+        await opCollection.createIndex({ "operation.timestamp": 1 }, false);
+        await opCollection.createIndex({ scheduledDeletionTime: 1 }, false);
+        await opCollection.createIndex({ "operation.sequenceNumber": 1 }, false);
     } else {
         await opCollection.createIndex(
             {
