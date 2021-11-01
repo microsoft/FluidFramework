@@ -144,6 +144,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     /**
      * Closes the container and returns serialized local state intended to be
      * given to a newly loaded container
+     * @deprecated use serialize()
      */
     closeAndGetPendingLocalState(): string;
 

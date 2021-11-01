@@ -60,22 +60,15 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
 
     await cb(container, dataStore, map);
 
-    let pendingState: string;
+    const pendingState = container.serialize();
     if (send) {
-        const pendingRuntimeState = (container as any).context.runtime.getPendingLocalState();
         await args.ensureSynchronized();
-        const p = container.closeAndGetPendingLocalState();
-        assert.strictEqual(JSON.parse(p).pendingRuntimeState, undefined);
+        assert.strictEqual(JSON.parse(container.serialize()).pendingRuntimeState, undefined);
         // if we sent the ops successfully the pending state should have a clientId. if not they will be resent anyway
-        assert(pendingRuntimeState.clientId !== undefined, "no clientId for successful ops");
+        assert(JSON.parse(pendingState).pendingRuntimeState.clientId !== undefined, "no clientId for successful ops");
         assert(container.resolvedUrl !== undefined && container.resolvedUrl.type === "fluid");
-        pendingState = JSON.stringify({
-            url: container.resolvedUrl.url,
-            pendingRuntimeState,
-        });
-    } else {
-        pendingState = container.closeAndGetPendingLocalState();
     }
+    container.close();
 
     args.opProcessingController.resumeProcessing();
 

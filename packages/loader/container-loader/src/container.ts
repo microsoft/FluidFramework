@@ -758,7 +758,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public serialize(): string {
-        assert(this.attachState === AttachState.Detached, 0x0d3 /* "Should only be called in detached container" */);
+        assert(this.attachState !== AttachState.Attaching, "Can't serialize while attaching");
+
+        if (this.attachState === AttachState.Attached) {
+            assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
+                "resolved url should be valid Fluid url");
+            const pendingState: IPendingLocalState = {
+                pendingRuntimeState: this.context.getPendingLocalState(),
+                url: this.resolvedUrl.url,
+            };
+
+            return JSON.stringify(pendingState);
+        }
 
         const appSummary: ISummaryTree = this.context.createSummary();
         const protocolSummary = this.captureProtocolSummary();
