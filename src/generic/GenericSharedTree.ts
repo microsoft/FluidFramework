@@ -15,9 +15,10 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { ISharedObjectEvents, serializeHandles, SharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
+import { v4 } from 'uuid';
 import { assert, assertNotUndefined, fail } from '../Common';
 import { EditLog, EditLogSummary, OrderedEditSet } from '../EditLog';
-import { EditId } from '../Identifiers';
+import { EditId, MinimalUuidString, NodeId } from '../Identifiers';
 import { RevisionView } from '../TreeView';
 import { initialTree } from '../InitialTree';
 import {
@@ -35,6 +36,7 @@ import {
 	readFormatVersion,
 } from '../SummaryBackCompatibility';
 import { ReconciliationPath } from '../ReconciliationPath';
+import { expandUuidString } from '../id-compressor';
 import {
 	Edit,
 	SharedTreeOpType,
@@ -445,7 +447,22 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	}
 
 	/**
+	 * Generate an identifier that may be used for a new node that will be inserted into this tree
+	 * @param explicitId - an optional UUID to associate with the new id for future lookup
+	 * @public
+	 */
+	public generateId(explicitId?: MinimalUuidString): NodeId {
+		// TODO:#62125: Re-implement this method to return compressed ids created by an IdCompressor
+		if (explicitId !== undefined) {
+			return expandUuidString(explicitId) as NodeId;
+		}
+
+		return v4() as NodeId;
+	}
+
+	/**
 	 * @returns the edit history of the tree.
+	 * @public
 	 */
 	public get edits(): OrderedEditSet {
 		return this.editLog;

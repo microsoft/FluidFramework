@@ -46,6 +46,7 @@ import {
 import { SharedTreeWithAnchors, SharedTreeWithAnchorsFactory } from '../../anchored-edits';
 import { RevisionView } from '../../TreeView';
 import { EditLog } from '../../EditLog';
+import { SimpleTestTree } from './TestNode';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents<TSharedTree = SharedTree> {
@@ -102,40 +103,76 @@ export interface SharedTreeTestingOptions {
 	logger?: ITelemetryBaseLogger;
 }
 
-/** Left node of 'simpleTestTree' */
+/**
+ * Left node of {@link simpleTestTree}
+ *
+ * @deprecated Use {@link SimpleTestTree.left} instead.
+ */
 export const left: ChangeNode = makeEmptyNode('a083857d-a8e1-447a-ba7c-92fd0be9db2b' as NodeId);
 
-/** Right node of 'simpleTestTree' */
+/**
+ * Right node of {@link simpleTestTree}
+ *
+ * @deprecated Use {@link SimpleTestTree.right} instead.
+ */
 export const right: ChangeNode = makeEmptyNode('78849e85-cb7f-4b93-9fdc-18439c60fe30' as NodeId);
 
-/** Label for the 'left' trait in 'simpleTestTree' */
+/**
+ * Label for the 'left' trait in {@link simpleTestTree}
+ *
+ * @deprecated Use {@link SimpleTestTree.left}'s {@link TestNode.traitLabel} instead.
+ */
 export const leftTraitLabel = 'left' as TraitLabel;
 
-/** Label for the 'right' trait in 'simpleTestTree' */
+/**
+ * Label for the 'right' trait in {@link simpleTestTree}
+ *
+ * @deprecated Use {@link SimpleTestTree.right}'s {@link TestNode.traitLabel} instead.
+ */
 export const rightTraitLabel = 'right' as TraitLabel;
 
-/** NodeId for the root node of `simpleTestTree` */
+/**
+ * NodeId for the root node of {@link simpleTestTree}
+ *
+ * @deprecated Use {@link SimpleTestTree} instead.
+ */
 export const rootNodeId = '25de3875-9537-47ec-8699-8a85e772a509' as NodeId;
 
-/** A simple, three node tree useful for testing. Contains one node under a 'left' trait and one under a 'right' trait. */
+/**
+ * A simple, three node tree useful for testing. Contains one node under a 'left' trait and one under a 'right' trait.
+ *
+ * @deprecated Use {@link SimpleTestTree} instead.
+ */
 export const simpleTestTree: ChangeNode = {
 	...makeEmptyNode(rootNodeId),
 	traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
 };
 
-/** Convenient pre-made TraitLocation for the left trait of 'simpleTestTree'. */
+/**
+ * Convenient pre-made TraitLocation for the left trait of 'simpleTestTree'.
+ *
+ * @deprecated Use {@link SimpleTestTree.left}'s {@link TestNode.traitLocation} instead.
+ */
 export const leftTraitLocation = {
 	parent: simpleTestTree.identifier,
 	label: leftTraitLabel,
 };
 
-/** Convenient pre-made TraitLocation for the right trait of 'simpleTestTree'. */
+/**
+ * Convenient pre-made TraitLocation for the right trait of 'simpleTestTree'.
+ *
+ * @deprecated Use {@link SimpleTestTree.right}'s {@link TestNode.traitLocation} instead.
+ */
 export const rightTraitLocation = {
 	parent: simpleTestTree.identifier,
 	label: rightTraitLabel,
 };
 
-/** Convenient pre-made RevisionView for 'simpleTestTree'. */
+/**
+ * Convenient pre-made RevisionView for 'simpleTestTree'.
+ *
+ * @deprecated Use {@link SimpleTestTree.view} instead.
+ */
 export const simpleRevisionView = RevisionView.fromTree(simpleTestTree);
 
 /** Convenient pre-made RevisionView for 'initialTree'. */
@@ -743,3 +780,13 @@ const versionComparator = (versionA: string, versionB: string): number => {
 
 	return 0;
 };
+
+/**
+ * Create a SimpleTestTree from the given shared tree
+ */
+export function testSimpleSharedTree(sharedTree: SharedTree | SharedTreeWithAnchors): SimpleTestTree {
+	assert(sharedTree.edits.length === 0, 'tree must be a new SharedTree');
+	const simpleTestTree = new SimpleTestTree(() => sharedTree.generateId());
+	setTestTree(sharedTree, simpleTestTree);
+	return simpleTestTree;
+}

@@ -22,16 +22,8 @@ import {
 	Transaction,
 	ChangeInternal,
 } from '../index';
-import {
-	left,
-	leftTraitLocation,
-	makeEmptyNode,
-	right,
-	rightTraitLocation,
-	setUpTestSharedTree,
-	SharedTreeTestingOptions,
-	simpleTestTree,
-} from './utilities/TestUtilities';
+import { SimpleTestTree } from './utilities/TestNode';
+import { setUpTestSharedTree, SharedTreeTestingOptions, testSimpleSharedTree } from './utilities/TestUtilities';
 
 /**
  * Checkout test suite
@@ -57,11 +49,14 @@ export function checkoutTests(
 	async function countViewChange(
 		action: (
 			checkout: Checkout<Change, ChangeInternal, Transaction.Failure>,
+			simpleTestTree: SimpleTestTree,
 			data: { changeCount: number }
 		) => void | Promise<void>,
 		options: SharedTreeTestingOptions = { localMode: true }
 	): Promise<number> {
-		const { checkout } = await setUpTestCheckout(options);
+		const { checkout, tree } = await setUpTestCheckout(options);
+		const simpleTestTree = testSimpleSharedTree(tree);
+		await checkout.waitForPendingUpdates();
 		let lastView = checkout.currentView;
 		const data = { changeCount: 0 };
 		checkout.on(CheckoutEvent.ViewChange, (before, after) => {
@@ -76,9 +71,20 @@ export function checkoutTests(
 			errors.push(error);
 		});
 
-		await action(checkout, data);
+		await action(checkout, simpleTestTree, data);
 		expect(errors).deep.equal([]);
 		return data.changeCount;
+	}
+
+	async function setUpTestTreeCheckout(): Promise<{
+		checkout: Checkout<Change, ChangeInternal, Transaction.Failure>;
+		sharedTree: SharedTree;
+		testTree: SimpleTestTree;
+	}> {
+		const { checkout, tree } = await setUpTestCheckout();
+		const testTree = testSimpleSharedTree(tree);
+		await checkout.waitForPendingUpdates();
+		return { checkout, sharedTree: tree, testTree };
 	}
 
 	return describe(checkoutName, () => {
@@ -94,8 +100,8 @@ export function checkoutTests(
 		});
 
 		it('can only apply changes if an edit is open', async () => {
-			const { checkout } = await setUpTestCheckout();
-			expect(() => checkout.applyChanges(Delete.create(StableRange.only(left)))).throws();
+			const { checkout, testTree } = await setUpTestTreeCheckout();
+			expect(() => checkout.applyChanges(Delete.create(StableRange.only(testTree.left)))).throws();
 		});
 
 		it('cannot abort an edit if no edit is open', async () => {
@@ -104,29 +110,27 @@ export function checkoutTests(
 		});
 
 		it('can abort valid edits', async () => {
-			const { checkout } = await setUpTestCheckout({ initialTree: simpleTestTree });
-
+			const { checkout, testTree } = await setUpTestTreeCheckout();
 			checkout.openEdit();
 			// Is still valid after a valid edit
-			checkout.applyChanges(Delete.create(StableRange.only(left)));
+			checkout.applyChanges(Delete.create(StableRange.only(testTree.left.identifier)));
 			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 			checkout.abortEdit();
 
 			// The left node should still be there
-			expect(checkout.currentView.getViewNode(left.identifier).identifier).not.undefined;
+			expect(checkout.currentView.getViewNode(testTree.left.identifier).identifier).not.undefined;
 		});
 
 		it('can abort invalid edits', async () => {
-			const { checkout } = await setUpTestCheckout({ initialTree: simpleTestTree });
-
+			const { checkout, testTree } = await setUpTestTreeCheckout();
 			checkout.openEdit();
 			// Starts as valid
 			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 
 			// Is invalid after an invalid edit
-			expect(() => checkout.applyChanges(...Insert.create([left], StablePlace.after(left)))).throws(
-				'Locally constructed edits must be well-formed and valid.'
-			);
+			expect(() =>
+				checkout.applyChanges(...Insert.create([testTree.left], StablePlace.after(testTree.left)))
+			).throws('Locally constructed edits must be well-formed and valid.');
 			expect(checkout.getEditStatus()).equals(EditStatus.Invalid);
 			checkout.abortEdit();
 
@@ -137,8 +141,7 @@ export function checkoutTests(
 		});
 
 		it('can abort malformed edits', async () => {
-			const { checkout } = await setUpTestCheckout({ initialTree: simpleTestTree });
-
+			const { checkout, testTree } = await setUpTestTreeCheckout();
 			checkout.openEdit();
 			// Starts as valid
 			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
@@ -157,7 +160,7 @@ export function checkoutTests(
 			expect(checkout.getEditStatus()).equals(EditStatus.Malformed);
 
 			// Is still malformed after a subsequent valid edit
-			expect(() => checkout.applyChanges(Delete.create(StableRange.only(left)))).throws(
+			expect(() => checkout.applyChanges(Delete.create(StableRange.only(testTree.left)))).throws(
 				'Cannot apply change to an edit unless all previous changes have applied'
 			);
 			expect(checkout.getEditStatus()).equals(EditStatus.Malformed);
@@ -171,10 +174,13 @@ export function checkoutTests(
 		});
 
 		it('can try to apply an invalid edit and abort without causing an error', async () => {
-			const { checkout } = await setUpTestCheckout({ initialTree: simpleTestTree });
+			const { checkout, tree } = await setUpTestCheckout();
+			const simpleTestTree = testSimpleSharedTree(tree);
 
 			// tryApplyEdit aborts when applying an invalid edit and returns undefined
-			expect(checkout.tryApplyEdit(...Insert.create([left], StablePlace.after(left)))).to.be.undefined;
+			expect(
+				checkout.tryApplyEdit(...Insert.create([simpleTestTree.left], StablePlace.after(simpleTestTree.left)))
+			).to.be.undefined;
 
 			// Next edit is unaffected
 			checkout.openEdit();
@@ -205,34 +211,32 @@ export function checkoutTests(
 		});
 
 		it('exposes the current edit status in the face of valid edits', async () => {
-			const { checkout } = await setUpTestCheckout({ initialTree: simpleTestTree });
-
+			const { checkout, testTree } = await setUpTestTreeCheckout();
 			checkout.openEdit();
 			// Starts as valid
 			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 
 			// Is still valid after a valid edit
-			checkout.applyChanges(Delete.create(StableRange.only(left)));
+			checkout.applyChanges(Delete.create(StableRange.only(testTree.left)));
 			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 
 			checkout.closeEdit();
 		});
 
 		it('exposes the current edit status in the face of invalid edits', async () => {
-			const { checkout } = await setUpTestCheckout({ initialTree: simpleTestTree });
-
+			const { checkout, testTree } = await setUpTestTreeCheckout();
 			checkout.openEdit();
 			// Starts as valid
 			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 
 			// Is invalid after an invalid edit
-			expect(() => checkout.applyChanges(...Insert.create([left], StablePlace.after(left)))).throws(
-				'Locally constructed edits must be well-formed and valid.'
-			);
+			expect(() =>
+				checkout.applyChanges(...Insert.create([testTree.left], StablePlace.after(testTree.left)))
+			).throws('Locally constructed edits must be well-formed and valid.');
 			expect(checkout.getEditStatus()).equals(EditStatus.Invalid);
 
 			// Is still invalid after a subsequent valid edit
-			expect(() => checkout.applyChanges(Delete.create(StableRange.only(left)))).throws(
+			expect(() => checkout.applyChanges(Delete.create(StableRange.only(testTree.left)))).throws(
 				'Cannot apply change to an edit unless all previous changes have applied'
 			);
 			expect(checkout.getEditStatus()).equals(EditStatus.Invalid);
@@ -246,8 +250,7 @@ export function checkoutTests(
 		});
 
 		it('exposes the current edit status in the face of malformed edits', async () => {
-			const { checkout } = await setUpTestCheckout({ initialTree: simpleTestTree });
-
+			const { checkout, testTree } = await setUpTestTreeCheckout();
 			checkout.openEdit();
 			// Starts as valid
 			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
@@ -266,7 +269,7 @@ export function checkoutTests(
 			expect(checkout.getEditStatus()).equals(EditStatus.Malformed);
 
 			// Is still malformed after a subsequent valid edit
-			expect(() => checkout.applyChanges(Delete.create(StableRange.only(left)))).throws(
+			expect(() => checkout.applyChanges(Delete.create(StableRange.only(testTree.left)))).throws(
 				'Cannot apply change to an edit unless all previous changes have applied'
 			);
 			expect(checkout.getEditStatus()).equals(EditStatus.Malformed);
@@ -297,52 +300,43 @@ export function checkoutTests(
 		});
 
 		it('will emit invalidation messages in response to changes', async () => {
-			const invalidations = await countViewChange(
-				(checkout) => {
-					checkout.applyEdit(Delete.create(StableRange.only(left)));
-				},
-				{ initialTree: simpleTestTree }
-			);
+			const invalidations = await countViewChange((checkout, simpleTestTree) => {
+				checkout.applyEdit(Delete.create(StableRange.only(simpleTestTree.left)));
+			});
 			expect(invalidations).equals(1);
 		});
 
 		it('will emit invalidation messages in response to payload change', async () => {
-			const invalidations = await countViewChange(
-				(checkout) => {
-					checkout.applyEdit(Change.setPayload(left.identifier, 5));
-				},
-				{ initialTree: simpleTestTree }
-			);
+			const invalidations = await countViewChange((checkout, simpleTestTree) => {
+				checkout.applyEdit(Change.setPayload(simpleTestTree.left.identifier, 5));
+			});
 			expect(invalidations).equals(1);
 		});
 
 		it('emits a change event for each batch of changes in a local edit', async () => {
-			const changes = await countViewChange(
-				async (checkout, data) => {
-					checkout.on(CheckoutEvent.ViewChange, () => {
-						const leftTrait = checkout.currentView.getTrait(leftTraitLocation);
-						const rightTrait = checkout.currentView.getTrait(rightTraitLocation);
+			const changes = await countViewChange(async (checkout, simpleTestTree, data) => {
+				checkout.on(CheckoutEvent.ViewChange, () => {
+					const leftTrait = checkout.currentView.getTrait(simpleTestTree.left.traitLocation);
+					const rightTrait = checkout.currentView.getTrait(simpleTestTree.right.traitLocation);
 
-						if (data.changeCount === 1) {
-							expect(leftTrait.length).to.equal(0); // "left" child is deleted...
-							expect(rightTrait.length).to.equal(1); // ...but "right" child is not
-						} else if (data.changeCount === 2) {
-							expect(leftTrait.length).to.equal(0); // "left" child is deleted...
-							expect(rightTrait.length).to.equal(0); // ...and so is "right" child
-						}
-					});
+					if (data.changeCount === 1) {
+						expect(leftTrait.length).to.equal(0); // "left" child is deleted...
+						expect(rightTrait.length).to.equal(1); // ...but "right" child is not
+					} else if (data.changeCount === 2) {
+						expect(leftTrait.length).to.equal(0); // "left" child is deleted...
+						expect(rightTrait.length).to.equal(0); // ...and so is "right" child
+					}
+				});
 
-					checkout.openEdit();
-					expect(data.changeCount).equals(0);
-					checkout.applyChanges(Delete.create(StableRange.only(left)));
-					expect(data.changeCount).equals(1);
-					checkout.applyChanges(Delete.create(StableRange.only(right)));
-					expect(data.changeCount).equals(2);
-					checkout.closeEdit();
-					await checkout.waitForPendingUpdates();
-				},
-				{ initialTree: simpleTestTree }
-			);
+				checkout.openEdit();
+				expect(data.changeCount).equals(0);
+				checkout.applyChanges(Delete.create(StableRange.only(simpleTestTree.left)));
+				expect(data.changeCount).equals(1);
+				checkout.applyChanges(Delete.create(StableRange.only(simpleTestTree.right)));
+				expect(data.changeCount).equals(2);
+				checkout.closeEdit();
+				await checkout.waitForPendingUpdates();
+			});
 
 			// Checkout's use of LogViewer.setKnownEditingResult should enable CachingLogViewer
 			// to return the exact same revision view object, allowing checkout to skip an extra change event from closeEdit.
@@ -350,31 +344,30 @@ export function checkoutTests(
 		});
 
 		it('emits ViewChange events for edits directly on tree', async () => {
-			const { checkout } = await setUpTestCheckout({ initialTree: simpleTestTree });
+			const { checkout, testTree } = await setUpTestTreeCheckout();
 			let changeCount = 0;
 			checkout.on(CheckoutEvent.ViewChange, () => {
 				changeCount += 1;
 			});
 			expect(changeCount).equals(0);
-			checkout.tree.applyEdit(Delete.create(StableRange.only(left)));
+			checkout.tree.applyEdit(Delete.create(StableRange.only(testTree.left)));
 			// Wait for edit to be included in checkout.
 			await checkout.waitForPendingUpdates();
 			expect(changeCount).equals(1);
 		});
 
 		it('automatically loads views from edits committed directly on it', async () => {
-			const { checkout } = await setUpTestCheckout({ initialTree: simpleTestTree });
+			const { checkout, testTree } = await setUpTestTreeCheckout();
 			const viewBefore = checkout.currentView;
 			let changeCount = 0;
 			checkout.on(CheckoutEvent.ViewChange, () => {
 				changeCount += 1;
 			});
-			checkout.applyEdit(Delete.create(StableRange.only(left)));
+			checkout.applyEdit(Delete.create(StableRange.only(testTree.left)));
 			expect(changeCount).equals(1);
 			expect(viewBefore.equals(checkout.currentView)).to.be.false;
 		});
 
-		const treeOptions = { initialTree: simpleTestTree, localMode: false };
 		const secondTreeOptions = {
 			id: 'secondTestSharedTree',
 			localMode: false,
@@ -382,7 +375,8 @@ export function checkoutTests(
 		};
 
 		it('emits ViewChange events for remote edits', async () => {
-			const { containerRuntimeFactory, tree } = setUpTestSharedTree({ ...treeOptions });
+			const { containerRuntimeFactory, tree } = setUpTestSharedTree({ localMode: false });
+			const simpleTestTree = testSimpleSharedTree(tree);
 
 			const { tree: secondTree } = setUpTestSharedTree({
 				containerRuntimeFactory,
@@ -397,7 +391,7 @@ export function checkoutTests(
 				changeCount += 1;
 			});
 
-			secondTree.applyEdit(Delete.create(StableRange.only(left)));
+			secondTree.applyEdit(Delete.create(StableRange.only(simpleTestTree.left)));
 			expect(changeCount).equals(0);
 			containerRuntimeFactory.processAllMessages();
 			// Wait for edit to be included in checkout.
@@ -409,7 +403,8 @@ export function checkoutTests(
 		it('connected state with a remote SharedTree equates correctly during edits', async () => {
 			// Invalid edits are allowed here because this test creates edits concurrently in two trees,
 			// which after syncing, end up with one being invalid.
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, allowInvalid: true });
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ localMode: false, allowInvalid: true });
+			const simpleTestTree = testSimpleSharedTree(tree);
 			const { tree: secondTree } = setUpTestSharedTree({
 				containerRuntimeFactory,
 				...secondTreeOptions,
@@ -429,10 +424,10 @@ export function checkoutTests(
 			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.true;
 			expect(checkout.currentView.hasEqualForest(secondCheckout.currentView)).to.be.true;
 			expect(tree.equals(secondTree)).to.be.true;
-			checkout.applyChanges(Delete.create(StableRange.only(left)));
+			checkout.applyChanges(Delete.create(StableRange.only(simpleTestTree.left)));
 			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.false;
 			expect(checkout.currentView.hasEqualForest(secondCheckout.currentView)).to.be.false;
-			secondCheckout.applyChanges(Delete.create(StableRange.only(left)));
+			secondCheckout.applyChanges(Delete.create(StableRange.only(simpleTestTree.left)));
 			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.true;
 			expect(checkout.currentView.hasEqualForest(secondCheckout.currentView)).to.be.true;
 			expect(tree.equals(secondTree)).to.be.true;
@@ -455,7 +450,8 @@ export function checkoutTests(
 		});
 
 		it('can successfully rebase an ongoing local edit', async () => {
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ localMode: false });
+			const simpleTestTree = testSimpleSharedTree(tree);
 			const { tree: secondTree } = setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions });
 
 			// Sync initial tree
@@ -464,39 +460,39 @@ export function checkoutTests(
 			const checkout = await checkoutFactory(tree);
 			const secondCheckout = await checkoutFactory(secondTree);
 
-			const newLeftNode = makeEmptyNode();
+			const newLeftNode = simpleTestTree.buildLeaf();
 			checkout.openEdit();
-			checkout.applyChanges(...setTrait(leftTraitLocation, [newLeftNode]));
+			checkout.applyChanges(...setTrait(simpleTestTree.left.traitLocation, [newLeftNode]));
 
 			// Concurrently, the second client deletes the right node. This will not conflict with the operation performed
 			// on the left trait on the first client.
-			secondCheckout.applyEdit(Delete.create(StableRange.only(right)));
-
-			// This must be called in order to work with PrefetchingCheckout as it must be called in order to submit outgoing edits
-			// to the tree due to possible payload upload.
+			secondCheckout.applyEdit(Delete.create(StableRange.only(simpleTestTree.right)));
 			await secondCheckout.waitForPendingUpdates();
 
 			// Deliver the remote change. Since there will not be any conflicts, the result should merge locally and both trait
 			// modifications should be reflected in the current view.
 			containerRuntimeFactory.processAllMessages();
 
-			let leftTrait = checkout.currentView.getTrait(leftTraitLocation);
-			let rightTrait = checkout.currentView.getTrait(rightTraitLocation);
+			await checkout.waitForPendingUpdates();
+			await secondCheckout.waitForPendingUpdates();
+
+			let leftTrait = checkout.currentView.getTrait(simpleTestTree.left.traitLocation);
+			let rightTrait = checkout.currentView.getTrait(simpleTestTree.right.traitLocation);
 			expect(leftTrait).deep.equals([newLeftNode.identifier]);
 			// The remote deletion of the right node, while delivered, will not be reflected in the view yet.
-			expect(rightTrait).deep.equals([right.identifier]);
+			expect(rightTrait).deep.equals([simpleTestTree.right.identifier]);
 
-			const secondLeftTrait = secondCheckout.currentView.getTrait(leftTraitLocation);
-			const secondRightTrait = secondCheckout.currentView.getTrait(rightTraitLocation);
-			expect(secondLeftTrait).deep.equals([left.identifier]);
+			const secondLeftTrait = secondCheckout.currentView.getTrait(simpleTestTree.left.traitLocation);
+			const secondRightTrait = secondCheckout.currentView.getTrait(simpleTestTree.right.traitLocation);
+			expect(secondLeftTrait).deep.equals([simpleTestTree.left.identifier]);
 			expect(secondRightTrait.length).equals(0);
 
 			// Merge in the latest changes.
 			await checkout.waitForPendingUpdates();
 			const rebaseResult = checkout.rebaseCurrentEdit();
 			expect(rebaseResult).equals(EditValidationResult.Valid);
-			leftTrait = checkout.currentView.getTrait(leftTraitLocation);
-			rightTrait = checkout.currentView.getTrait(rightTraitLocation);
+			leftTrait = checkout.currentView.getTrait(simpleTestTree.left.traitLocation);
+			rightTrait = checkout.currentView.getTrait(simpleTestTree.right.traitLocation);
 			expect(leftTrait).deep.equals([newLeftNode.identifier]);
 			expect(rightTrait.length).equals(0);
 
@@ -510,7 +506,8 @@ export function checkoutTests(
 		});
 
 		it('can handle a failed rebase of an ongoing local edit', async () => {
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ localMode: false });
+			const simpleTestTree = testSimpleSharedTree(tree);
 			const { tree: secondTree } = setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions });
 
 			// Sync initial tree
@@ -521,10 +518,12 @@ export function checkoutTests(
 
 			checkout.openEdit();
 			// Move the left node to after the right node
-			checkout.applyChanges(...Move.create(StableRange.only(left), StablePlace.after(right)));
+			checkout.applyChanges(
+				...Move.create(StableRange.only(simpleTestTree.left), StablePlace.after(simpleTestTree.right))
+			);
 
 			// Concurrently, the second client deletes the right node. This will conflict with the move operation by the first client.
-			secondCheckout.applyEdit(Delete.create(StableRange.only(right)));
+			secondCheckout.applyEdit(Delete.create(StableRange.only(simpleTestTree.right)));
 			await secondCheckout.waitForPendingUpdates();
 
 			containerRuntimeFactory.processAllMessages();
@@ -532,10 +531,10 @@ export function checkoutTests(
 			await secondCheckout.waitForPendingUpdates();
 
 			// Before rebasing, the first client should still see the right node and will have moved the left node after it.
-			const leftTrait = checkout.currentView.getTrait(leftTraitLocation);
-			const rightTrait = checkout.currentView.getTrait(rightTraitLocation);
+			const leftTrait = checkout.currentView.getTrait(simpleTestTree.left.traitLocation);
+			const rightTrait = checkout.currentView.getTrait(simpleTestTree.right.traitLocation);
 			expect(leftTrait).deep.equals([]);
-			expect(rightTrait).deep.equals([right.identifier, left.identifier]);
+			expect(rightTrait).deep.equals([simpleTestTree.right.identifier, simpleTestTree.left.identifier]);
 
 			// Merge in the latest changes.
 			const rebaseResult = checkout.rebaseCurrentEdit();
@@ -544,16 +543,9 @@ export function checkoutTests(
 		});
 
 		it('can dispose and remove listeners', async () => {
-			// Arrange
 			const { checkout } = await setUpTestCheckout();
-
-			// Assert
 			expect(checkout.tree.listenerCount(SharedTreeEvent.EditCommitted)).to.equal(1);
-
-			// Act
 			checkout.dispose();
-
-			// Assert
 			expect(checkout.tree.listenerCount(SharedTreeEvent.EditCommitted)).to.equal(0);
 		});
 

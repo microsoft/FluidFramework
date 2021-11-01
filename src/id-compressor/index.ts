@@ -8,4 +8,4 @@
  */
 
 export * from './IdCompressor';
-export { expandUuidString as stableIdToUuidString, minimizeUuidString as uuidStringToStableId } from './NumericUuid';
+export { expandUuidString, minimizeUuidString } from './NumericUuid';

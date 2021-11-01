@@ -19,7 +19,7 @@ export type UuidString = string & { readonly UuidString: '9d40d0ae-90d9-44b1-948
  * A 128-bit Universally Unique IDentifier. Represented here
  * with a string of the form xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx,
  * where x is a lowercase hex digit.
- * @internal
+ * @public
  */
 export type MinimalUuidString = string & { readonly MinimalUuidString: '1b423880d0bb474c9207966fb613c1e2' };
 

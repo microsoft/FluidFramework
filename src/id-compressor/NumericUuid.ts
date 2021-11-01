@@ -107,7 +107,7 @@ export function stableIdFromNumericUuid(uuid: NumericUuid, offset = 0): StableId
 /**
  * @returns the supplied uuid with added separators.
  */
-export function expandUuidString(uuid: StableId): UuidString {
+export function expandUuidString(uuid: MinimalUuidString): UuidString {
 	if (uuid.length !== 32) {
 		if (uuid.length !== 36) {
 			fail(`${uuid} is not a uuid.`);
