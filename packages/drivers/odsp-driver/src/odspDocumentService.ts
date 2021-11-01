@@ -32,7 +32,7 @@ import { IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
-import { getWithRetryForTokenRefresh, getOdspResolvedUrl } from "./odspUtils";
+import { getWithRetryForTokenRefresh, getOdspResolvedUrl, TokenFetchOptionsEx } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
@@ -231,34 +231,35 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document delta stream service for onedrive/sharepoint driver.
      */
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
-        // Presence of getWebsocketToken callback dictates whether callback is used for fetching
-        // websocket token or whether it is returned with joinSession response payload
-        const requestWebsocketTokenFromJoinSession = this.getWebsocketToken === undefined;
-        const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession).catch((e) => {
-            const likelyFacetCodes = e as IFacetCodes;
-            if (Array.isArray(likelyFacetCodes.facetCodes)) {
-                for (const code of likelyFacetCodes.facetCodes) {
-                    switch (code) {
-                        case "sessionForbiddenOnPreservedFiles":
-                        case "sessionForbiddenOnModerationEnabledLibrary":
-                        case "sessionForbiddenOnRequireCheckout":
-                            // This document can only be opened in storage-only mode.
-                            // DeltaManager will recognize this error
-                            // and load without a delta stream connection.
-                            this._policies = {...this._policies,storageOnly: true};
-                            throw new DeltaStreamConnectionForbiddenError(code);
-                        default:
-                            continue;
-                    }
-                }
-            }
-            throw e;
-        });
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (options) => {
+            // Presence of getWebsocketToken callback dictates whether callback is used for fetching
+            // websocket token or whether it is returned with joinSession response payload
+            const requestWebsocketTokenFromJoinSession = this.getWebsocketToken === undefined;
             const websocketTokenPromise = requestWebsocketTokenFromJoinSession
                 ? Promise.resolve(null)
                 : this.getWebsocketToken!(options);
+
+            const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession, options).catch((e) => {
+                const likelyFacetCodes = e as IFacetCodes;
+                if (Array.isArray(likelyFacetCodes.facetCodes)) {
+                    for (const code of likelyFacetCodes.facetCodes) {
+                        switch (code) {
+                            case "sessionForbiddenOnPreservedFiles":
+                            case "sessionForbiddenOnModerationEnabledLibrary":
+                            case "sessionForbiddenOnRequireCheckout":
+                                // This document can only be opened in storage-only mode.
+                                // DeltaManager will recognize this error
+                                // and load without a delta stream connection.
+                                this._policies = {...this._policies,storageOnly: true};
+                                throw new DeltaStreamConnectionForbiddenError(code);
+                            default:
+                                continue;
+                        }
+                    }
+                }
+                throw e;
+            });
 
             const [websocketEndpoint, websocketToken, io] =
                 await Promise.all([
@@ -294,7 +295,10 @@ export class OdspDocumentService implements IDocumentService {
         });
     }
 
-    private async joinSession(requestSocketToken: boolean): Promise<ISocketStorageDiscovery> {
+    private async joinSession(
+        requestSocketToken: boolean,
+        options: TokenFetchOptionsEx,
+    ): Promise<ISocketStorageDiscovery> {
         const executeFetch = async () =>
             fetchJoinSession(
                 this.odspResolvedUrl,
@@ -304,6 +308,7 @@ export class OdspDocumentService implements IDocumentService {
                 this.getStorageToken,
                 this.epochTracker,
                 requestSocketToken,
+                options,
                 this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
             );
 

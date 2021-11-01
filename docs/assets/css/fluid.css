@@ -76,34 +76,40 @@ footer {
 }
 
 .cta-icon.get-started {
-    background-image: url("/images/PlayCircle.svg");
+    background-image: url("/codicons/play-circle.svg");
+    background-size: 64px 64px;
+    filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
 }
 
 .cta-icon.learn-more {
-    background-image: url("/images/Lightbulb.svg");
+    background-image: url("/codicons/book.svg");
+    background-size: 64px 64px;
+    filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
 }
 
 .cta-icon.play {
-    background-image: url("/images/Beaker.svg");
+    background-image: url("/codicons/beaker.svg");
+    background-size: 64px 64px;
+    filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
 }
 
-.cta-icon.octocat {
-    background-image: url("/images/Octocat.png");
+.cta-icon.issue {
+    background-image: url("/codicons/bug.svg");
     background-size: 64px 64px;
+    filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
 }
 
 .cta-icon.github {
-    background-image: url("/images/GitHub-Mark.svg");
+    background-image: url("/codicons/github.svg");
     background-size: 64px 64px;
+    filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
 }
 
-.cta-icon.stack-overflow {
-    background-image: url("/images/so-icon.svg");
+.cta-icon.gh-discussions {
+    background-image: url("/codicons/comment-discussion.svg");
     background-size: 64px 64px;
-}
-
-.cta-icon.issues {
-    background-image: url("/images/Beaker.svg");
+    /* helpful codepen for recoloring SVGs: https://codepen.io/sosuke/pen/Pjoqqp */
+    filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
 }
 
 .omt {

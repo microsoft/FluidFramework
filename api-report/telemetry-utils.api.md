@@ -45,7 +45,7 @@ export const disconnectedEventName = "disconnected";
 
 // @public
 export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> extends TypedEventEmitter<TEvent> {
-    constructor(errorHandler?: (eventName: EventEmitterEventType, error: any) => void);
+    constructor(errorHandler: (eventName: EventEmitterEventType, error: any) => void);
     // (undocumented)
     emit(event: EventEmitterEventType, ...args: any[]): boolean;
     }

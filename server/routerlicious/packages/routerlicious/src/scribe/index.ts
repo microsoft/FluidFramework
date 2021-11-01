@@ -46,16 +46,18 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         client.collection<ISequencedOperationMessage>(messagesCollectionName),
     ]);
 
-    await scribeDeltas.createIndex(
-        {
-            "documentId": 1,
-            "operation.sequenceNumber": 1,
-            "tenantId": 1,
-        },
-        true);
-
     if (createCosmosDBIndexes) {
+        await scribeDeltas.createIndex({ documentId: 1 }, false);
+        await scribeDeltas.createIndex({ tenantId: 1 }, false);
         await scribeDeltas.createIndex({ "operation.sequenceNumber": 1 }, false);
+    } else {
+        await scribeDeltas.createIndex(
+            {
+                "documentId": 1,
+                "operation.sequenceNumber": 1,
+                "tenantId": 1,
+            },
+            true);
     }
 
     if (mongoExpireAfterSeconds > 0) {
