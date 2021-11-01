@@ -8,52 +8,61 @@ import { IDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ThresholdCounter } from "@fluidframework/telemetry-utils";
 
 export class MessageSizeValidator {
-    private readonly messageSizeCountersWithEvents = [
+    private readonly payloadSizeCountersWithEvents = [
         // The order here matters, in order to save telemetry quota.
         // The first counter to exceed its limit will short-circuit
         // event publishing.
         {
-            counter: new ThresholdCounter(this.maxMessageSizeInBytes, this.logger),
-            eventName: "MessageSizeLimitExceeded",
+            counter: new ThresholdCounter(this.maxPayloadSizeInBytes, this.logger),
+            eventName: "OpsPayloadSizeLimitExceeded",
         },
         {
-            counter: new ThresholdCounter(this.maxMessageSizeInBytes / 2, this.logger),
-            eventName: "MessageSize50PcOfMax",
+            counter: new ThresholdCounter(this.maxPayloadSizeInBytes / 2, this.logger),
+            eventName: "OpsPayloadSize50PcOfMax",
         },
         {
-            counter: new ThresholdCounter(this.maxMessageSizeInBytes / 4, this.logger),
-            eventName: "MessageSize25PcOfMax",
+            counter: new ThresholdCounter(this.maxPayloadSizeInBytes / 4, this.logger),
+            eventName: "OpsPayloadSize25PcOfMax",
         },
     ];
 
+    private readonly messageSizeCounter = new ThresholdCounter(this.maxMessageSizeInBytes, this.logger);
+    private readonly messageSizeEvent = "OpSizeLimitExceeded";
+
     constructor(
         private readonly maxMessageSizeInBytes: number,
+        private readonly maxPayloadSizeInBytes: number,
         private readonly logger: ITelemetryLogger,
     ) {
     }
 
-    private async track(sizeInBytes: number): Promise<void> {
-        return new Promise<void>((resolve) => {
-            for (const x of this.messageSizeCountersWithEvents) {
-                if (x.counter.send(x.eventName, sizeInBytes, { max: this.maxMessageSizeInBytes })) {
-                    break;
-                }
+    private trackPayload(payloadSizeInBytes: number) {
+        for (const x of this.payloadSizeCountersWithEvents) {
+            if (x.counter.send(x.eventName, payloadSizeInBytes, { max: this.maxPayloadSizeInBytes })) {
+                break;
             }
+        }
+    }
 
-            resolve();
-        });
+    private trackMessage(messageSizeInBytes: number) {
+        this.messageSizeCounter.send(this.messageSizeEvent, messageSizeInBytes, { max: this.maxMessageSizeInBytes });
     }
 
     public validate(messages: IDocumentMessage[][]): boolean {
-        let sizeInBytes = 0;
+        let payloadSizeInBytes = 0;
+        let allMessagesUnderLimit = true;
+
         for (const inner of messages) {
             for (const message of inner) {
-                sizeInBytes = sizeInBytes + MessageSizeValidator.sizeInBytes(message);
+                const messageSize = MessageSizeValidator.sizeInBytes(message);
+                allMessagesUnderLimit &&= messageSize < this.maxMessageSizeInBytes;
+                payloadSizeInBytes = payloadSizeInBytes + messageSize;
+                this.trackMessage(messageSize);
             }
         }
 
-        this.track(sizeInBytes).catch(() => { });
-        return sizeInBytes < this.maxMessageSizeInBytes;
+        this.trackPayload(payloadSizeInBytes);
+        return allMessagesUnderLimit && payloadSizeInBytes < this.maxPayloadSizeInBytes;
     }
 
     public static sizeInBytes(message: IDocumentMessage): number {

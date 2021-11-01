@@ -29,6 +29,9 @@ import { MessageSizeValidator } from "./messageSizeValidator";
 // Local storage key to disable the BatchManager
 const batchManagerDisabledKey = "FluidDisableBatchManager";
 
+// Local storage key to enable message size tracking
+const messageSizeTrackingEnabledKey = "FluidEnableMessageSizeTracking";
+
 /**
  * Represents a connection to a stream of delta updates
  */
@@ -86,6 +89,8 @@ export class DocumentDeltaConnection
     protected readonly logger: ITelemetryLogger;
     protected readonly isBatchManagerDisabled: boolean = false;
     private messageSizeValidator: MessageSizeValidator | undefined;
+    private readonly maxPayloadSizeInBytes = 900000;
+    protected readonly isMessageSizeTrackingEnabled: boolean = false;
 
     public get details(): IConnected {
         if (!this._details) {
@@ -138,7 +143,8 @@ export class DocumentDeltaConnection
             }
         });
 
-        this.isBatchManagerDisabled = DocumentDeltaConnection.disabledBatchManagerFeatureGate;
+        this.isBatchManagerDisabled = DocumentDeltaConnection.booleanFeature(batchManagerDisabledKey);
+        this.isMessageSizeTrackingEnabled =  DocumentDeltaConnection.booleanFeature(messageSizeTrackingEnabledKey);
     }
 
     /**
@@ -272,7 +278,7 @@ export class DocumentDeltaConnection
         }
     }
 
-    private static get disabledBatchManagerFeatureGate() {
+    private static booleanFeature(key: string): boolean {
         try {
             return localStorage !== undefined
                 && typeof localStorage === "object"
@@ -450,9 +456,12 @@ export class DocumentDeltaConnection
             }, timeout + 2000);
         });
 
-        this.messageSizeValidator = new MessageSizeValidator(
-            this.maxMessageSize,
-            ChildLogger.create(this.logger, "MessageSizeValidator"));
+        if (this.isMessageSizeTrackingEnabled) {
+            this.messageSizeValidator = new MessageSizeValidator(
+                this.maxMessageSize + 1,
+                this.maxPayloadSizeInBytes,
+                ChildLogger.create(this.logger, "MessageSizeValidator"));
+        }
         assert(!this.disposed, 0x246 /* "checking consistency of socket & _disposed flags" */);
     }
 
