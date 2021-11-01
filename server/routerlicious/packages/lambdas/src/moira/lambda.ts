@@ -136,7 +136,7 @@ export class MoiraLambda implements IPartitionLambda {
         changeSet:  ${JSON.stringify(opData.changeSet, undefined, 2)}`;
         this.context.log?.info(logMessage);
 
-        if (this.serviceConfiguration.enableLumberMetrics) {
+        if (this.serviceConfiguration.enableLumberjack) {
             Lumberjack.info(logMessage, getLumberBaseProperties(this.documentId, this.tenantId));
         }
 
@@ -166,13 +166,13 @@ export class MoiraLambda implements IPartitionLambda {
         if (branchCreationResponse.status === 200) {
             const logMessage = `Branch with guid: ${branchGuid} created`;
             this.context.log?.info(logMessage);
-            if (this.serviceConfiguration.enableLumberMetrics) {
+            if (this.serviceConfiguration.enableLumberjack) {
                 Lumberjack.info(logMessage, lumberProperties);
             }
         } else {
             const logMessage = `Branch with guid ${branchGuid} failed`;
             this.context.log?.error(logMessage);
-            if (this.serviceConfiguration.enableLumberMetrics) {
+            if (this.serviceConfiguration.enableLumberjack) {
                 Lumberjack.error(logMessage, lumberProperties);
             }
         }
@@ -213,20 +213,20 @@ export class MoiraLambda implements IPartitionLambda {
             if (commitCreationResponse.status === 200) {
                 const logMessage = `Commit created ${JSON.stringify(commitData)}`;
                 this.context.log?.info(logMessage);
-                if (this.serviceConfiguration.enableLumberMetrics) {
+                if (this.serviceConfiguration.enableLumberjack) {
                     Lumberjack.info(logMessage, lumberProperties);
                 }
             } else {
                 const logMessage = `Commit failed ${JSON.stringify(commitData)}`;
                 this.context.log?.error(logMessage);
-                if (this.serviceConfiguration.enableLumberMetrics) {
+                if (this.serviceConfiguration.enableLumberjack) {
                     Lumberjack.error(logMessage, lumberProperties);
                 }
             }
         } catch (e) {
             const logMessage = `Commit failed. ${e.message}`;
             this.context.log?.error(logMessage);
-            if (this.serviceConfiguration.enableLumberMetrics) {
+            if (this.serviceConfiguration.enableLumberjack) {
                 Lumberjack.error(logMessage, getLumberBaseProperties(this.documentId, this.tenantId), e);
             }
         }
