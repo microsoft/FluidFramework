@@ -1,7 +1,9 @@
 version: '3'
 services:
     gitrest:
-        image: gitrest
+        build:
+          context: .
+          target: runner
         ports:
             - "3000:3000"
         volumes:

@@ -64,7 +64,7 @@ async function getTree(repoManager: utils.RepositoryManager, owner: string, repo
     return getTreeInternal(repository, sha);
 }
 
-async function getTreeRecursive(
+export async function getTreeRecursive(
     repoManager: utils.RepositoryManager,
     owner: string,
     repo: string,

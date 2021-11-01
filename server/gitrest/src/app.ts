@@ -69,6 +69,7 @@ export function create(
     app.use(apiRoutes.git.commits);
     app.use(apiRoutes.repository.commits);
     app.use(apiRoutes.repository.contents);
+    app.use(apiRoutes.summaries);
 
     // catch 404 and forward to error handler
     app.use((req, res, next) => {

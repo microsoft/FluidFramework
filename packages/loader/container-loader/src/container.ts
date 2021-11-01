@@ -83,6 +83,7 @@ import {
     IPendingProposal,
     SummaryType,
     ISummaryContent,
+    IQuorumProposals,
 } from "@fluidframework/protocol-definitions";
 import {
     ChildLogger,
@@ -222,7 +223,7 @@ export async function waitContainerToCatchUp(container: Container) {
 
 const getCodeProposal =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    (quorum: IQuorum) => quorum.get("code") ?? quorum.get("code2");
+    (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
@@ -604,15 +605,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         duration: performance.now() - this.connectionTransitionTimes[ConnectionState.Connecting],
                     });
                 },
+                connectionStateChanged: () => {
+                    if (this.loaded) {
+                        this.propagateConnectionState();
+                    }
+                },
             },
             this.logger,
         );
-
-        this.connectionStateHandler.on("connectionStateChanged", () => {
-            if (this.loaded) {
-                this.propagateConnectionState();
-            }
-        });
 
         this._deltaManager = this.createDeltaManager();
         this._storage = new ContainerStorageAdapter(
@@ -1572,7 +1572,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.connectionStateHandler.receivedConnectEvent(
                 this._deltaManager.connectionMode,
                 details,
-                opsBehind,
             );
 
             // Back-compat for new client and old server.

@@ -5,7 +5,7 @@
 
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IQuorum } from "@fluidframework/protocol-definitions";
+import { IQuorumClients } from "@fluidframework/protocol-definitions";
 import { IOldestClientObservable, IOldestClientObserverEvents, IOldestClientObserver } from "./interfaces";
 
 /**
@@ -65,7 +65,7 @@ import { IOldestClientObservable, IOldestClientObserverEvents, IOldestClientObse
  */
 export class OldestClientObserver extends TypedEventEmitter<IOldestClientObserverEvents>
     implements IOldestClientObserver {
-    private readonly quorum: IQuorum;
+    private readonly quorum: IQuorumClients;
     private currentIsOldest: boolean = false;
     constructor(private readonly observable: IOldestClientObservable) {
         super();
