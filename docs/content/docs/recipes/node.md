@@ -89,6 +89,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     let containerId = await readInput();
     if (!containerId) {
         ({ container } = await client.createContainer(containerSchema));
+        container.initialObjects.sharedRandomNumber("random-Number-Key", 1);
         const id = await container.attach();
         containerId = id;
     } else {
@@ -104,17 +105,19 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 ### Keep the terminal synchronized with the Fluid data
 
+To ensure that both local and remote changes to the random number are relected in the terminal, we will use the `newRandomNumber()` function to store the local  value and `updateConsole()` function to ensure that the sharedmap is updated whenever any client changes the value.
+
    ```js
    function loadCli(map) {
        // Set a timer to update the random number every 1 second
        const newRandomNumber = () => {
-           map.set("randomNumberKey", Math.floor(Math.random() * 100) + 1);
+           map.set("random-Number-Key", Math.floor(Math.random() * 100) + 1);
        };
        setInterval(newRandomNumber, 1000);
 
        // Listen for updates and print changes to the random number
        const updateConsole = () => {
-           console.log("Value: ", map.get("randomNumberKey"));
+           console.log("Value: ", map.get("random-Number-Key"));
        }
        updateConsole();
        map.on("valueChanged", updateConsole);
