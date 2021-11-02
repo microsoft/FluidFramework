@@ -292,7 +292,11 @@ export interface IDocumentServiceFactory {
     /**
      * Returns an instance of IDocumentService
      */
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+        props?: ILoaderInfoProps,
+    ): Promise<IDocumentService>;
 
     /**
      * Creates a new document with the provided options. Returns the document service.
@@ -303,7 +307,15 @@ export interface IDocumentServiceFactory {
         createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        props?: ILoaderInfoProps,
     ): Promise<IDocumentService>;
+}
+
+export interface ILoaderInfoProps {
+    // Id of the loaded container
+    containerId?: string,
+    // Version of the loader which is using the driver factory.
+    loaderVersion?: string,
 }
 
 /**
