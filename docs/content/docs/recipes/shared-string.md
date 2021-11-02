@@ -75,7 +75,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 ### Get Fluid Data
 
-1. The Fluid runtime will bring changes made to the text from any client to the current client. But Fluid is agnostic about the UI framework. You can use a React hook to get the Fluid data, from the SharedString object, into the view layer (the React state). Add the following code below the `import` statements. This method is called when the application loads the first time, and the value that is returned form it is assigned to a React state property.
+1. The Fluid runtime will bring changes made to the text from any client to the current client, but Fluid is agnostic about the UI framework. You can use a React hook to get the Fluid data from the SharedString object into the view layer (the React state). Add the following code below the `import` statements. This method is called when the application loads the first time, and the returned value is assigned to a React state property.
 
     ```js
     const useSharedString = () => {
@@ -141,7 +141,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 Inside the `App()` function, add the following code. Note about this code:
 - The `sharedString` object returned from the code above is used to create a `SharedStringHelper` object, which is a class that provides simple APIs to interact with the `sharedString` object.
-- Next, the `SharedStringHelper` object is then passed into the `CollaborativeTextArea` React component, which integrates `SharedString` with the default `textarea` HTML element to allow co-editing through Fluid.
+- Next, the `SharedStringHelper` object is passed into the `CollaborativeTextArea` React component, which integrates `SharedString` with the default `textarea` HTML element to allow co-editing through Fluid.
 
 ```js
 const sharedString = useSharedString();
@@ -159,7 +159,7 @@ if (sharedString) {
 
 ### Setup the SharedStringHelper Class
 
-As previously mentioned, the `SharedStringHelper` class is used to create simple APIs to make interactions with the `SharedString` object easier by handling the merge logic. To implement this class, follow the below instructions.
+As previously mentioned, the `SharedStringHelper` class provides simple APIs to make interactions with the `SharedString` object easier by handling the merge logic. To implement this class, follow the below instructions.
 
 1. Create a new file `SharedStringHelper.js` inside of the `\src` directory.
 1. Add the following `import` statements and declare the `SharedStringHelper` class:
