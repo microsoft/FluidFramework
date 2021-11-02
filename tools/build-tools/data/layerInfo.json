@@ -249,6 +249,8 @@
                     "Framework",
                     "Routerlicious-Driver",
                     "Other-Utils",
+                    "ServiceClients",
+                    "Test",
                     "Tool-Utils"
                 ]
             },
