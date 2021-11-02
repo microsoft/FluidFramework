@@ -1,0 +1,10 @@
+-R spec
+--recursive
+--timeout 180s
+--exit
+--full-trace
+--require hfdm-test-extension
+--reporter cypress-multi-reporters
+--reporter-options configFile=test/mocha_reporter_config.json
+test/setup.js
+test/db/**/*.spec.js test/unit/**/*.spec.js test/endtoend/**/*.spec.js
