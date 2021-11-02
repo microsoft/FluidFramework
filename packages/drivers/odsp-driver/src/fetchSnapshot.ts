@@ -16,7 +16,7 @@ import {
     InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IOdspSnapshot, IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
+import { IOdspSnapshot, ISnapshotResponse, IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
@@ -48,7 +48,7 @@ export async function fetchSnapshot(
     fetchFullSnapshot: boolean,
     logger: ITelemetryLogger,
     snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<unknown>>,
-): Promise<ISnapshotContents> {
+): Promise<ISnapshotResponse> {
     const path = `/trees/${versionId}`;
     let queryParams: ISnapshotOptions = {};
 
@@ -70,7 +70,7 @@ export async function fetchSnapshot(
         },
         async () => snapshotDownloader(url, { headers }),
     ) as IOdspResponse<IOdspSnapshot>;
-    return convertOdspSnapshotToSnapsohtTreeAndBlobs(response.content);
+    return { snapshot: convertOdspSnapshotToSnapsohtTreeAndBlobs(response.content) };
 }
 
 export async function fetchSnapshotWithRedeem(
@@ -87,7 +87,7 @@ export async function fetchSnapshotWithRedeem(
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
     removeEntries: () => Promise<void>,
     enableRedeemFallback?: boolean,
-): Promise<ISnapshotContents> {
+): Promise<ISnapshotResponse> {
     return fetchLatestSnapshotCore(
         odspResolvedUrl,
         storageTokenFetcher,
@@ -170,7 +170,7 @@ async function fetchLatestSnapshotCore(
             controller?: AbortController,
         ) => Promise<ISnapshotRequestAndResponseOptions>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
-): Promise<ISnapshotContents> {
+): Promise<ISnapshotResponse> {
     return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
         const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest", true);
         assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
@@ -267,7 +267,7 @@ async function fetchLatestSnapshotCore(
                     const fluidEpoch = response.odspSnapshotResponse.headers.get("x-fluid-epoch");
                     assert(fluidEpoch !== undefined, 0x1e6 /* "Epoch  should be present in response" */);
                     const valueWithEpoch: IVersionedValueWithEpoch = {
-                        value: snapshot,
+                        value: { snapshot, entryTime: Date.now() },
                         fluidEpoch,
                         version: persistedCacheValueVersion,
                     };
@@ -299,7 +299,7 @@ async function fetchLatestSnapshotCore(
                     sltelemetry: response.odspSnapshotResponse.headers.get("x-fluid-sltelemetry"),
                     ...response.odspSnapshotResponse.commonSpoHeaders,
                 });
-                return snapshot;
+                return { snapshot };
             },
         ).catch((error) => {
             // We hit these errors in stress tests, under load

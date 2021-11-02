@@ -32,6 +32,7 @@ import {
     IDocumentStorageGetVersionsResponse,
     HostStoragePolicyInternal,
     IVersionedValueWithEpoch,
+    ISnapshotResponse,
 } from "./contracts";
 import { downloadSnapshot, fetchSnapshot, fetchSnapshotWithRedeem } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -413,8 +414,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.logger,
                 { eventName: "ObtainSnapshot" },
                 async (event: PerformanceEvent) => {
-                    let cachedSnapshot: ISnapshotContents | undefined;
-                    const cachedSnapshotP: Promise<ISnapshotContents | undefined> =
+                    let cachedSnapshot: ISnapshotResponse | undefined;
+                    const cachedSnapshotP: Promise<ISnapshotResponse | undefined> =
                         this.epochTracker.get(createCacheSnapshotKey(this.odspResolvedUrl));
 
                     let method: string;
@@ -456,8 +457,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                             cachedSnapshot = await this.fetchSnapshot(hostSnapshotOptions);
                         }
                     }
-                    event.end({ method });
-                    return cachedSnapshot;
+                   const props = { method };
+                   if (props.method === "cache") {
+                       assert(cachedSnapshot.cacheEntryTime !== undefined, "Cache entry time should be present");
+                       // eslint-disable-next-line @typescript-eslint/dot-notation
+                       props["cacheEntryAge"] = Date.now() - cachedSnapshot.cacheEntryTime;
+                   }
+                    event.end({ ...props });
+                    return cachedSnapshot.snapshot;
                 },
                 {end: true, cancel: "error"},
             );
@@ -703,7 +710,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         "snapshotTree",
                     );
                 };
-                const snapshot = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger, snapshotDownloader);
+                const snapshot = (await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger, snapshotDownloader)).snapshot;
                 let treeId = "";
                 if (snapshot.snapshotTree) {
                     assert(snapshot.snapshotTree.id !== undefined, 0x222 /* "Root tree should contain the id!!" */);

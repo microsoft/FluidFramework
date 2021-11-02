@@ -5,6 +5,7 @@
 
 import * as api from "@fluidframework/protocol-definitions";
 import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions";
+import { ISnapshotContents } from "./odspUtils";
 
 /**
  * Socket storage discovery api response
@@ -205,10 +206,10 @@ export interface IVersionedValueWithEpoch {
     value: any;
     fluidEpoch: string,
     // This is same as "persistedCacheValueVersion" below. This represents the version of data stored in cache.
-    version: 3,
+    version: 4,
 }
 
-export const persistedCacheValueVersion = 3;
+export const persistedCacheValueVersion = 4;
 
 export interface IGetOpsResponse {
     nonce: string;
@@ -224,4 +225,9 @@ export interface IFlushOpsResponse {
     /** Time in seconds */
     retryAfter?: number;
     lastPersistedSequenceNumber?: number;
+}
+
+export interface ISnapshotResponse {
+    snapshot: ISnapshotContents,
+    cacheEntryTime?: number,
 }
