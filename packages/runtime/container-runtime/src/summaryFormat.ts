@@ -83,9 +83,9 @@ export interface IContainerRuntimeMetadata {
     readonly disableIsolatedChannels?: true;
     /** 0 to disable GC, > 0 to enable GC, undefined defaults to disabled. */
     readonly gcFeature?: GCVersion;
-    readonly createDocRuntimeVersion?: string;
-    readonly createDocTimeStamp?: number;
-    readonly summaryCount?: number;
+    createDocRuntimeVersion?: string;
+    createDocTimeStamp?: number;
+    summaryCount?: number;
 }
 
 /** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
