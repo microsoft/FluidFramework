@@ -90,7 +90,7 @@ export class DocumentDeltaConnection
     protected readonly isBatchManagerDisabled: boolean = false;
     private messageSizeValidator: MessageSizeValidator | undefined;
     private readonly maxPayloadSizeInBytes = 900000;
-    protected readonly isMessageSizeTrackingEnabled: boolean = false;
+    private readonly isMessageSizeTrackingEnabled: boolean = false;
 
     public get details(): IConnected {
         if (!this._details) {
