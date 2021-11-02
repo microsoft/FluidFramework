@@ -412,8 +412,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
             config, reset, this.root, this.runtime, this.context.containerRuntime);
 
-        const leaderElection = new LeaderElection(
-            this.runtime, this.context.clientId, this.context.logger);
+        const leaderElection = new LeaderElection(this.runtime);
         leaderElection.setupLeaderElection();
 
          // At every moment, we want half the client to be concurrent writers, and start and stop

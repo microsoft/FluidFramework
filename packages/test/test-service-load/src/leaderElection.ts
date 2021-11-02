@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISignalMessage } from "@fluidframework/protocol-definitions";
 
@@ -12,43 +11,34 @@ export class LeaderElection {
     private readonly leaderWait: number = 5000; // 5 secs
     private lastPinged: Date | undefined;
 
-    constructor(private readonly dataStoreRuntime: IFluidDataStoreRuntime,
-        private readonly clientId: string | undefined,
-        private readonly logger: ITelemetryBaseLogger) {
-    }
+    constructor(private readonly dataStoreRuntime: IFluidDataStoreRuntime) { }
 
     public setupLeaderElection() {
         this.dataStoreRuntime.on("signal", (signal: ISignalMessage) => this.handleSignal(signal));
 
         const interval = setInterval(() => {
-            if (this.leaderId !== undefined && this.leaderId === this.clientId) {
+            if (this.leaderId !== undefined && this.leaderId === this.dataStoreRuntime.clientId) {
                 this.dataStoreRuntime.submitSignal("leaderMessage", "leaderMessage");
                 this.lastPinged = new Date();
-                this.logger.send(
-                    {
-                        category: "performance",
-                        eventName: "LeaderElection:PingSent",
-                        leaderId: this.leaderId,
-                    });
             }else if(this.leaderId === undefined) {
-                this.logger.send(
+                this.dataStoreRuntime.logger.send(
                     {
                         category: "performance",
-                        eventName: "LeaderElection:Warning",
+                        eventName: "LeaderElection:Error",
                         warning: "Leader is undefined.",
                         leaderId: this.leaderId,
-                        clientId: this.clientId,
+                        clientId: this.dataStoreRuntime.clientId,
                     });
             }else {
                 const current = new Date();
                 if(this.lastPinged === undefined || current.getTime() - this.lastPinged?.getTime() > this.leaderWait) {
-                    this.logger.send(
+                    this.dataStoreRuntime.logger.send(
                         {
                             category: "performance",
-                            eventName: "LeaderElection:Warning",
+                            eventName: "LeaderElection:Error",
                             warning: "Did not recieve leader message.",
                             leaderId: this.leaderId,
-                            clientId: this.clientId,
+                            clientId: this.dataStoreRuntime.clientId,
                         });
                 }
             }
@@ -57,28 +47,22 @@ export class LeaderElection {
         this.dataStoreRuntime.once("dispose", () => {
             clearInterval(interval);
         });
+
+        this.dataStoreRuntime.on("disconnected", () => {
+            clearInterval(interval);
+        });
     }
 
     private handleSignal(signal: ISignalMessage) {
         // eslint-disable-next-line no-null/no-null
         if(signal.clientId !== null && signal.content === "leaderMessage") {
-            if(this.leaderId === signal.clientId) {
-                this.logger.send(
+            if(this.leaderId !== signal.clientId) {
+                this.dataStoreRuntime.logger.send(
                     {
                         category: "performance",
-                        eventName: "LeaderElection:ElectNewLeader",
-                        reason: "Recieved expected leader id.",
-                        clientId: this.clientId,
-                        newLeaderId: signal.clientId,
-                        oldLeaderId: this.leaderId,
-                    });
-            }else{
-                this.logger.send(
-                    {
-                        category: "performance",
-                        eventName: "LeaderElection:ElectNewLeader",
+                        eventName: "LeaderElection:Error",
                         reason: "Recieved unexpected leader id.",
-                        clientId: this.clientId,
+                        clientId: this.dataStoreRuntime.clientId,
                         newLeaderId: signal.clientId,
                         oldLeaderId: this.leaderId,
                     });
