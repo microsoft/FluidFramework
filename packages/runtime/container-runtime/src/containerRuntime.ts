@@ -836,11 +836,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return metadata.createContainerTimeStamp ?? undefined;
     }
 
-    private getSummaryCount(metadata?: IContainerRuntimeMetadata): number {
+    private getSummaryCount(metadata?: IContainerRuntimeMetadata): number | undefined {
         if(!metadata) {
-            return 0;
+            return undefined;
         }
-        return metadata?.lastSummaryCount ?? 0;
+        return metadata?.lastSummaryCount ?? undefined;
     }
     private readonly metadata: IContainerRuntimeMetadata = {summaryFormatVersion: 1, message: undefined};
 
