@@ -842,7 +842,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
         return metadata?.lastSummaryCount ?? 0;
     }
-    private readonly metadata: IContainerRuntimeMetadata = this.formMetadata();
+    private readonly metadata: IContainerRuntimeMetadata = {summaryFormatVersion: 1, message: undefined};
 
     private constructor(
         private readonly context: IContainerContext,
@@ -859,7 +859,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private _storage?: IDocumentStorageService,
     ) {
         super();
-
+        this.metadata = metadata ?? this.formMetadata();
         this.baseSummaryMessage = metadata?.message;
         /**
           * gcFeature in metadata is introduced with v1 in the metadata blob. Forced to 0/disallowed before that.
