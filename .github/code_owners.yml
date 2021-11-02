@@ -50,10 +50,6 @@ packages/runtime/**:
 - vladsud
 - arinwt
 - curtisman
-packages/hosts/**:
-- anthony-murphy
-- ChumpChief
-- curtisman
 
 packages/test/**:
 - markfields

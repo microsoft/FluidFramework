@@ -67,7 +67,7 @@ const { container, services } = await client.getContainer(id, schema);
 const newMap = await container.create(SharedMap); // Create a new SharedMap
 ```
 
-Once the async call to `create` returns, you can treat it the same as you were using the `SharedMap` instances from your initial objects above. The only caveat here is that you will need to maintain a pointer to your newly created object. To store it in another `SharedMap`, please see the [Storing shared objects]({{< relref "#storing-shared-objects" >}}) section below and for general guidance on storing DDS references as handles, please see [here]({{< relref "dds.md#creating-and-storing-distributed-data-structures" >}})
+Once the async call to `create` returns, you can treat it the same as you were using the `SharedMap` instances from your initial objects above. The only caveat here is that you will need to maintain a pointer to your newly created object. To store it in another `SharedMap`, please see the [Storing shared objects]({{< relref "#storing-shared-objects" >}}) section below and for general guidance on storing DDS references as handles, please see [Using handles to store and retrieve shared objects]({{< relref "data-modeling.md#using-handles-to-store-and-retrieve-shared-objects" >}}).
 
 ## API
 
@@ -294,7 +294,7 @@ One way to think about this is that each value stored into the `SharedMap` is th
 
 One of the powerful features of DDSes is that they are nestable. A DDS can be stored in another DDS allowing you to dynamically set up your data hierarchy as best fits your application needs.
 
-When storing a DDS within another DDS, you must store its [handle]({{< relref "data-modeling.md#using-handles-to-store-and-retrieve-fluid-objects" >}}), not the DDS itself. Similarly, when retrieving DDSes nested within other DDSes, you need to first get the object's handle and then get the object from the handle. This reference based approach allows the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
+When storing a DDS within another DDS, you must store its [handle]({{< relref "data-modeling.md#using-handles-to-store-and-retrieve-shared-objects" >}}), not the DDS itself. Similarly, when retrieving DDSes nested within other DDSes, you need to first get the object's handle and then get the object from the handle. This reference based approach allows the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
 
 That's all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles, see [Fluid handles]({{< relref "handles.md" >}}).
 

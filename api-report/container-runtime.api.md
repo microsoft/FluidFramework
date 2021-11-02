@@ -65,7 +65,9 @@ export enum ContainerMessageType {
     // (undocumented)
     ChunkedOp = "chunkedOp",
     // (undocumented)
-    FluidDataStoreOp = "component"
+    FluidDataStoreOp = "component",
+    // (undocumented)
+    Rejoin = "rejoin"
 }
 
 // @public
@@ -166,11 +168,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     setFlushMode(mode: FlushMode): void;
     // @deprecated
     snapshot(): Promise<ITree>;
-    // @deprecated (undocumented)
-    stop(): Promise<{
-        snapshot?: never;
-        state?: never;
-    }>;
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)

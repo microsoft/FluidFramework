@@ -13,24 +13,24 @@ title: Welcome to the Fluid Community
   {{< cta
     linkClasses="github"
     linkURL="https://github.com/microsoft/FluidFramework"
-    iconClasses="octocat"
+    iconClasses="github"
     linkText="Contribute"
     subtext="We welcome code and documentation contributions from the community."
   >}}
 
   {{< cta
-    linkClasses="stack-overflow"
-    linkURL="https://stackoverflow.com/questions/tagged/fluid-framework"
-    iconClasses="stack-overflow"
+    linkClasses="gh-discussions"
+    linkURL="https://www.github.com/Microsoft/fluidframework/discussions"
+    iconClasses="gh-discussions"
     linkText="Ask Technical Questions"
-    subtext=`The team monitors questions tagged \"fluid-framework\" on Stack Overflow. Feel free to ask questions or,
+    subtext=`Our GitHub Discussions are a great way to participate. Feel free to ask questions or,
         if you can, give us a hand by answering some.`
   >}}
 
   {{< cta
     linkClasses="github"
     linkURL="https://www.github.com/Microsoft/fluidframework/issues"
-    iconClasses="github"
+    iconClasses="issue"
     linkText="Report Issues"
     subtext="Found something not working as expected? Please file a GitHub issue, so we can take a look together."
   >}}

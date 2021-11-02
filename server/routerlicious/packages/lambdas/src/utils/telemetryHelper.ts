@@ -24,7 +24,7 @@ export const createSessionMetric = (
     lumberEventName: LumberEventName,
     serviceConfiguration: IServiceConfiguration,
 ): Lumber<any> | undefined => {
-    if (!serviceConfiguration.enableLumberMetrics) {
+    if (!serviceConfiguration.enableLumberjack) {
         return;
     }
 
