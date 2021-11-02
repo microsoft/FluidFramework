@@ -89,6 +89,7 @@ export class DocumentDeltaConnection
     protected readonly logger: ITelemetryLogger;
     protected readonly isBatchManagerDisabled: boolean = false;
     private messageSizeValidator: MessageSizeValidator | undefined;
+    // Close to 1MB with a small buffer to allow for redundant string escaping during transfer
     private readonly maxPayloadSizeInBytes = 900000;
     private readonly isMessageSizeTrackingEnabled: boolean = false;
 
