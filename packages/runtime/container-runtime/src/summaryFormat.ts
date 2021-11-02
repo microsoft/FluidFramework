@@ -85,7 +85,7 @@ export interface IContainerRuntimeMetadata {
     readonly gcFeature?: GCVersion;
     createContainerRuntimeVersion?: string;
     createContainerTimeStamp?: number;
-    summaryCount?: number;
+    lastSummaryCount?: number;
 }
 
 /** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
