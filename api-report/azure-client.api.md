@@ -86,9 +86,6 @@ export class AzureUrlResolver implements IUrlResolver {
     resolve(request: IRequest): Promise<IFluidResolvedUrl>;
 }
 
-// @public (undocumented)
-export const createAzureCreateNewRequest: (ordererUrl: string, storageUrl: string, tenantId: string) => IRequest;
-
 // @public
 export type IAzureAudience = IServiceAudience<AzureMember>;
 

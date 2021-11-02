@@ -12,8 +12,8 @@
 export * from "./AzureAudience";
 export * from "./AzureClient";
 export * from "./AzureFunctionTokenProvider";
-export * from "./AzureUrlResolver";
 export * from "./interfaces";
+export { AzureUrlResolver } from "./AzureUrlResolver";
 
 export { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 export { ScopeType, ITokenClaims, IUser } from "@fluidframework/protocol-definitions";
