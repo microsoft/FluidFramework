@@ -142,7 +142,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this.dataStoreContext.IFluidHandleContext;
     }
 
-    public handleDecoded(handleUrl: string): void {}
+    public handleDecoded(handle: IFluidHandle): void {}
 
     private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
     public get IFluidSerializer() { return this.serializer; }

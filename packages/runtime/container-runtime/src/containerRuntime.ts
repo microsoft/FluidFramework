@@ -719,7 +719,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // Back compat: 0.28, can be removed in 0.29
     public readonly IFluidSerializer: IFluidSerializer;
 
-    public readonly IFluidHandleContext: IFluidHandleContext;
+    public get IFluidHandleContext(): IFluidHandleContext {
+        return this.handleContext;
+    }
+
+    private readonly handleContext: ContainerFluidHandleContext;
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly _logger: ITelemetryLogger;
@@ -870,8 +874,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
 
-        this.IFluidHandleContext = new ContainerFluidHandleContext("", this);
-        this.IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
+        this.handleContext = new ContainerFluidHandleContext("", this);
+        this.IFluidSerializer = new FluidSerializer(this.handleContext);
 
         this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
 
@@ -922,7 +926,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._logger);
 
         this.blobManager = new BlobManager(
-            this.IFluidHandleContext,
+            this.handleContext,
             blobManagerSnapshot,
             () => this.storage,
             (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
@@ -1003,7 +1007,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this /* ISummarizerRuntime */,
                     () => this.summaryConfiguration,
                     this /* ISummarizerInternalsProvider */,
-                    this.IFluidHandleContext,
+                    this.handleContext,
                     this.summaryCollection,
                     async (runtime: IConnectableRuntime) => RunWhileConnectedCoordinator.create(runtime),
                 );
@@ -1685,9 +1689,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(this.gcDataFromLastRun !== undefined, "GC data from last run should be available");
 
         // Get the list of references that were added since the last GC run.
-        // TODO: The cast to any is done temporarily until the change to IFluidHandleContext in `core-interfaces` is
-        // merged and client is updated to the new `core-interfaces` version.
-        const outboundRoutesSinceLastGC: string[] = (this.IFluidHandleContext as any).decodedHandles;
+        const outboundRoutesSinceLastGC: string[] = this.handleContext.decodedHandleUrls;
 
         /**
          * Run GC on the data from the last run to get the reference graph starting from the above routes.
@@ -1841,10 +1843,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             0x12f /* "Container Runtime's summarize should always return a tree" */);
 
         // Reset the decodeHandles. We need to keep track of handles decoded between two summaries.
-        // TODO: The cast to any is done temporarily until the change to IFluidHandleContext in `core-interfaces` is
-        // merged and client is updated to the new `core-interfaces` version.
-        (this.IFluidHandleContext as any).decodedHandles = [];
-
+        this.handleContext.decodedHandleUrls = [];
         return summarizeResult as ISummaryTreeWithStats;
     }
 

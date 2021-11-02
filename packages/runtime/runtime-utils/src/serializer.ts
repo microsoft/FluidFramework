@@ -101,11 +101,14 @@ export class FluidSerializer implements IFluidSerializer {
                 ? value.url
                 : generateHandleContextPath(value.url, this.context);
 
+            const decodedHandle = new RemoteFluidObjectHandle(absolutePath, this.root);
+
             // Update the root context of all handles that are decoded.
             // TODO: The cast to any is done temporarily until the change to IFluidHandleContext in `core-interfaces` is
             // merged and client is updated to the new `core-interfaces` version.
-            (this.root as any).handleDecoded?.(absolutePath);
-            return new RemoteFluidObjectHandle(absolutePath, this.root);
+            (this.root as any).handleDecoded?.(decodedHandle);
+
+            return decodedHandle;
         } else {
             return value;
         }
