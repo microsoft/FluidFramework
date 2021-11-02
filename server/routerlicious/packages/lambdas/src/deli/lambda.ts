@@ -249,7 +249,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         this.isNewDocument = this.sequenceNumber === 0;
 
-        if (serviceConfiguration.enableLumberMetrics) {
+        if (serviceConfiguration.enableLumberjack) {
             this.logSessionStartMetrics();
         }
     }
@@ -418,7 +418,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         this.removeAllListeners();
 
-        if (this.serviceConfiguration.enableLumberMetrics) {
+        if (this.serviceConfiguration.enableLumberjack) {
             this.logSessionEndMetrics(closeType);
         }
     }

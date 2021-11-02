@@ -5,6 +5,7 @@
 
 import * as core from "@fluidframework/server-services-core";
 import { AggregationCursor, Collection, MongoClient, MongoClientOptions } from "mongodb";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 const MaxFetchSize = 2000;
 
@@ -74,7 +75,12 @@ export class MongoCollection<T> implements core.ICollection<T> {
     }
 
     public async createIndex(index: any, unique: boolean): Promise<void> {
-        await this.collection.createIndex(index, { unique });
+        try {
+            const indexName = await this.collection.createIndex(index, { unique });
+            Lumberjack.info(`Created index ${indexName}`);
+        } catch (error) {
+            Lumberjack.error(`Index creation failed`, error);
+        }
     }
 
     public async createTTLIndex(index: any, expireAfterSeconds?: number): Promise<void> {

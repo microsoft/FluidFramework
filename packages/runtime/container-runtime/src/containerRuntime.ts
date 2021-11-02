@@ -148,7 +148,11 @@ export enum ContainerMessageType {
     // Chunked operation.
     ChunkedOp = "chunkedOp",
 
+    // Signifies that a blob has been attached and should not be garbage collected by storage
     BlobAttach = "blobAttach",
+
+    // Ties our new clientId to our old one on reconnect
+    Rejoin = "rejoin",
 }
 
 export interface IChunkedOp {
@@ -296,6 +300,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
         case ContainerMessageType.ChunkedOp:
         case ContainerMessageType.Attach:
         case ContainerMessageType.BlobAttach:
+        case ContainerMessageType.Rejoin:
         case MessageType.Operation:
             return true;
         default:
@@ -874,7 +879,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         this.summarizerNode = createRootSummarizerNodeWithGC(
-            this.logger,
+            ChildLogger.create(this.logger, "SummarizerNode"),
             // Summarize function to call when summarize is called. Summarizer node always tracks summary state.
             async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState),
             // Latest change sequence number, no changes since summary applied yet
@@ -1280,15 +1285,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    /**
-     * @deprecated in 0.14, use dispose() to stop the runtime.
-     * Remove after IRuntime definition no longer includes it.
-     */
-    public async stop(): Promise<{snapshot?: never, state?: never}> {
-        this.dispose(new Error("ContainerRuntimeStopped"));
-        throw new Error("Stop is no longer supported, use dispose to stop the runtime");
-    }
-
     private replayPendingStates() {
         // We need to be able to send ops to replay states
         if (!this.canSendOps()) { return; }
@@ -1321,7 +1317,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /**
      * Used to apply stashed ops at their reference sequence number.
-     * Normal op processing is synchronous, but rebasing is async since the
+     * Normal op processing is synchronous, but applying stashed ops is async since the
      * data store may not be loaded yet, so we pause DeltaManager between ops.
      * It's also important that we see each op so we know all stashed ops have
      * been applied by "connected" event, but process() doesn't see system ops,
@@ -1350,7 +1346,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             case ContainerMessageType.BlobAttach:
                 return;
             case ContainerMessageType.ChunkedOp:
-                throw new Error(`chunkedOp not expected here`);
+                throw new Error("chunkedOp not expected here");
+            case ContainerMessageType.Rejoin:
+                throw new Error("rejoin not expected here");
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
         }
@@ -2189,6 +2187,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 throw new Error(`chunkedOp not expected here`);
             case ContainerMessageType.BlobAttach:
                 this.submit(type, content, localOpMetadata, opMetadata);
+                break;
+            case ContainerMessageType.Rejoin:
+                this.submit(type, content);
                 break;
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);

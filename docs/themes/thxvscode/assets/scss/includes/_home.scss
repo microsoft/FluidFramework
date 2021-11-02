@@ -100,7 +100,7 @@
           position: absolute;
           right: 0;
           top: 0;
-          background-image: url(/assets/icons/chevronDown.svg);
+        //   background-image: url(/assets/icons/chevronDown.svg);
           background-size: 16px 16px;
           background-repeat: no-repeat;
           background-position: 50%;
@@ -109,7 +109,7 @@
 
         @media screen and (-ms-high-contrast: black-on-white) {
           .download-dropdown {
-            background-image: url(/assets/icons/chevronDown_black.svg);
+            // background-image: url(/assets/icons/chevronDown_black.svg);
           }
         }
 
@@ -323,7 +323,7 @@
     }
 
     .hero-img {
-      background-image: url('/assets/home/home-screenshot-mac.png');
+    //   background-image: url('/assets/home/home-screenshot-mac.png');
       width: 100%;
       margin-top: 30px;
       margin-bottom: 30px;
@@ -347,7 +347,7 @@
     font-family: $black;
     text-align: center;
     .value-prop-icon {
-      background-image: url('/assets/icons/valueprops-top-sprite.svg');
+    //   background-image: url('/assets/icons/valueprops-top-sprite.svg');
       background-repeat: no-repeat;
       width: 5rem;
       height: 5rem;
