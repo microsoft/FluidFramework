@@ -30,7 +30,7 @@ import { MessageSizeValidator } from "./messageSizeValidator";
 const batchManagerDisabledKey = "FluidDisableBatchManager";
 
 // Local storage key to enable message size tracking
-const messageSizeTrackingEnabledKey = "FluidEnableMessageSizeTracking";
+// const messageSizeTrackingEnabledKey = "FluidEnableMessageSizeTracking";
 
 /**
  * Represents a connection to a stream of delta updates
@@ -145,7 +145,7 @@ export class DocumentDeltaConnection
         });
 
         this.isBatchManagerDisabled = DocumentDeltaConnection.booleanFeature(batchManagerDisabledKey);
-        this.isMessageSizeTrackingEnabled = DocumentDeltaConnection.booleanFeature(messageSizeTrackingEnabledKey);
+        this.isMessageSizeTrackingEnabled = true;
     }
 
     /**
@@ -454,7 +454,7 @@ export class DocumentDeltaConnection
             // Give extra 2 seconds for handshake on top of socket connection timeout
             this.socketConnectionTimeout = setTimeout(() => {
                 fail(false, this.createErrorObject("orderingServiceHandshakeTimeout"));
-            }, timeout + 2000);
+            }, timeout + 10000);
         });
 
         if (this.isMessageSizeTrackingEnabled) {
