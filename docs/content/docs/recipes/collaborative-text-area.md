@@ -1,5 +1,5 @@
 ---
-title: Using SharedString with React
+title: Building a Collaborative Text Area
 menuPosition: 4
 author: scottn12
 ---
@@ -29,10 +29,10 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 1. Run the following command at the prompt. (Note that the CLI is np**x**, not npm. It was installed when you installed Node.js.)
 
     ```dotnetcli
-    npx create-react-app shared-string-tutorial --use-npm
+    npx create-react-app collaborative-text-area-tutorial --use-npm
     ```
 
-1. The project is created in a subfolder named `shared-string-tutorial`. Navigate to it with the command `cd fluid-react-tutorial`.
+1. The project is created in a subfolder named `collaborative-text-area-tutorial`. Navigate to it with the command `cd fluid-react-tutorial`.
 1. The project uses two Fluid libraries:
 
     |Library |Description |
@@ -302,7 +302,7 @@ As previously mentioned, the `SharedStringHelper` class provides simple APIs to 
     }
     ```
 
-1. Replace `TODO 1` with the following code.
+1. Replace `TODO 1` with the following code. To learn more about `useRef`, check out the [React documentation](https://reactjs.org/docs/hooks-reference.html#useref).
 
     ```js
     const sharedStringHelper = props.sharedStringHelper;  // Instance of SharedStringHelper class
@@ -311,10 +311,10 @@ As previously mentioned, the `SharedStringHelper` class provides simple APIs to 
     const selectionStartRef = React.useRef(0);  // Ref for start of selected text
     const selectionEndRef = React.useRef(0);  // Ref for end of selected text
 
-    const [text, setText] = React.useState(sharedStringHelper.getText());  // State variable for text inside the textarea element
+    const [text, setText] = React.useState(sharedStringHelper.getText());  // Store textarea text in React state
     ```
 
-1. Replace `TODO 2` with the following code. Note about this code:
+1. Replace `TODO 2` with the following code. This function will be called when a change is made to the `textarea` element.
 
     ```js
     const handleChange = (ev) => {
@@ -353,7 +353,7 @@ As previously mentioned, the `SharedStringHelper` class provides simple APIs to 
     };
     ```
 
-1. Replace `TODO 3` with the following code.
+1. Replace `TODO 3` with the following code. This function sets the selection directly in the `textarea` element.
 
     ```js
     const setTextareaSelection = (newStart, newEnd) => {
@@ -366,7 +366,7 @@ As previously mentioned, the `SharedStringHelper` class provides simple APIs to 
     };
     ```
 
-1. Replace `TODO 4` with the following code.
+1. Replace `TODO 4` with the following code. This function sets the selection from the `textarea` element and sets it in the React refs.
 
     ```js
     const storeSelectionInReact = () => {
@@ -431,7 +431,7 @@ In the Command Prompt, run the following command to start the Fluid service. Not
 npx tinylicious
 ```
 
-Open a new Command Prompt and navigate to the root of the project; for example, `C:/My Fluid Projects/shared-string-tutorial`. Start the application server with the following command. The application opens in your browser. This may take a few minutes.
+Open a new Command Prompt and navigate to the root of the project; for example, `C:/My Fluid Projects/collaborative-text-area-tutorial`. Start the application server with the following command. The application opens in your browser. This may take a few minutes.
 
 ```dotnetcli
 npm run start
