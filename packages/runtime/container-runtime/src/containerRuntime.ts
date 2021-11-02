@@ -793,7 +793,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly shouldRunGC: boolean;
     // This is the source of truth for whether GC sweep phase should run or not.
     private readonly shouldRunSweep: boolean;
-
     /**
      * True if generating summaries with isolated channels is
      * explicitly disabled. This only affects how summaries are written,
@@ -827,14 +826,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if(!metadata) {
             return undefined;
         }
-        return metadata.createDocRuntimeVersion ?? undefined;
+        return metadata.createContainerRuntimeVersion ?? undefined;
     }
 
     private getTimeStamp(metadata?: IContainerRuntimeMetadata): number | undefined {
         if(!metadata) {
             return undefined;
         }
-        return metadata.createDocTimeStamp ?? undefined;
+        return metadata.createContainerTimeStamp ?? undefined;
     }
 
     private getSummaryCount(metadata?: IContainerRuntimeMetadata): number {
@@ -869,8 +868,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
           */
         const prevSummaryGCVersion = existing ? getGCVersion(metadata) : undefined;
 
-        this.metadata.createDocRuntimeVersion = existing ? this.getCreateVersion(metadata) : pkgVersion;
-        this.metadata.createDocTimeStamp = existing ? this.getTimeStamp(metadata) : performance.now();
+        this.metadata.createContainerRuntimeVersion = existing ? this.getCreateVersion(metadata) : pkgVersion;
+        this.metadata.createContainerTimeStamp = existing ? this.getTimeStamp(metadata) : performance.now();
         this.metadata.summaryCount = existing ? this.getSummaryCount(metadata) : 0;
 
         // Default to false for now.
@@ -1098,8 +1097,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.logger.sendTelemetryEvent({
             eventName: "containerCreatedInfo",
-            createTimeStamp: this.metadata.createDocTimeStamp,
-            createVersion: this.metadata.createDocRuntimeVersion,
+            createTimeStamp: this.metadata.createContainerTimeStamp,
+            createVersion: this.metadata.createContainerRuntimeVersion,
             summaryCount: this.metadata.summaryCount,
         });
     }
@@ -1239,8 +1238,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // The last message processed at the time of summary. If there are no messages, nothing has changed from
             // the base summary we loaded from. So, use the message from its metadata blob.
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.baseSummaryMessage,
-            createDocRuntimeVersion: this.metadata.createDocRuntimeVersion,
-            createDocTimeStamp: this.metadata.createDocTimeStamp,
+            createDocRuntimeVersion: this.metadata.createContainerRuntimeVersion,
+            createDocTimeStamp: this.metadata.createContainerTimeStamp,
             summaryCount: this.metadata.summaryCount,
         };
     }
@@ -1801,7 +1800,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         /** True to run GC sweep phase after the mark phase; defaults to false */
         runSweep?: boolean,
     }): Promise<ISummaryTreeWithStats> {
-        this.metadata.summaryCount++;
+        if (this.metadata.summaryCount !== undefined) {
+            this.metadata.summaryCount++;
+        }
         const { summaryLogger, fullTree = false, trackState = true, runGC = true, fullGC = false } = options;
 
         if (runGC) {
@@ -1825,7 +1826,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
         const { fullTree, refreshLatestAck, summaryLogger } = options;
-        this.summaryCount = options.summaryCount ?? 0;
         if (refreshLatestAck) {
             const latestSummaryRefSeq = await this.refreshLatestSummaryAckFromServer(
                 ChildLogger.create(summaryLogger, undefined, { all: { safeSummary: true } }));
