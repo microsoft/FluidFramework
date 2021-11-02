@@ -52,28 +52,42 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
    import { TinyliciousClient } from "@fluidframework/tinylicious-client";
    import { SharedMap } from "fluid-framework";
    import readlineAsync from "readline-async";
-
-   async function start() {
-
-   }
-
-   start().catch(console.error());
    ```
 
 ### Move Fluid data to the terminal
 
-1. The Fluid runtime will bring changes made to the timestamp from any client to the current client. But Fluid is agnostic about the UI framework. You can use a helper method to get the Fluid data, from the SharedMap object, into the view layer (the React state). Add the following code below the import statements. This method is called when the application loads the first time, and the value that is returned form it is assigned to a React state property.
+1. The Fluid runtime will bring changes made to the value from any client to the current client. Add the following code below the import statements.
 
     ```js
-    const getFluidData = async () => {
 
-        // TODO 1: Configure the container.
-        // TODO 2: Get the container from the Fluid service.
-        // TODO 3: Return the Fluid random number object.
+    // TODO 1: Configure the container
+
+    async function readInput() {
+      // TODO 2: Read the input container id
     }
+
+    function loadCli(map) {
+       // TODO 3: Set the value that will appear on the terminal
+
+       // TODO 4: Register handlers
+   }
+
+    async function createContainer() {
+      // TODO 5: Create the container
+    }
+
+    async function loadContainer(id) {
+      // TODO 6: Get the container from the Fluid service
+    }
+
+    async function start() {
+        // TODO 7: Read container id from terminal and create/load container
+    }
+
+   start().catch(console.error());
     ```
 
-1. Replace `TODO 1` with the following code. Note that there is only one object in the container: a SharedMap holding the timestamp. Note also that `sharedRandomNumber` is the ID of the `SharedMap` object and it must be unique within the container.
+1. Replace `TODO 1` with the following code. Note that there is only one object in the container: a SharedMap holding the random number. Note also that `sharedRandomNumber` is the ID of the `SharedMap` object and it must be unique within the container.
 
     ```js
       const client = new TinyliciousClient();
@@ -82,45 +96,67 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
       };
     ```
 
-1. Replace `TODO 2` with the following code. Note that `containerId` is being stored on the URL hash, and if there is no `containerId` we create a new container instead.
+1. Replace `TODO 2` with the following code. Note that `containerId` is taken as an input, and if there is no `containerId` we create a new container instead.
 
     ```js
-    let container;
-    let containerId = await readInput();
-    if (!containerId) {
-        ({ container } = await client.createContainer(containerSchema));
-        container.initialObjects.sharedRandomNumber("random-Number-Key", 1);
-        const id = await container.attach();
-        containerId = id;
-    } else {
-        ({ container } = await client.getContainer(containerId, containerSchema));
-    }
+    let containerId = "";
+    console.log("Type a Container ID or press Enter to continue: ");
+    await readlineAsync().then( line => {
+        console.log("You entered: " + line);
+        containerId = line;
+    });
+    return containerId;
     ```
 
-1. Replace `TODO 3` with the following code.
+1. To ensure that both local and remote changes to the random number are reflected in the terminal, we will use the `newRandomNumber()` function to store the local value and `updateConsole()` function to ensure that the map is updated whenever any client changes the value. This helps in keeping the client terminals synchronized with the Fluid data.
 
-    ```js
-    return container.initialObjects.sharedRandomNumber;
-    ```
-
-### Keep the terminal synchronized with the Fluid data
-
-To ensure that both local and remote changes to the random number are relected in the terminal, we will use the `newRandomNumber()` function to store the local  value and `updateConsole()` function to ensure that the sharedmap is updated whenever any client changes the value.
+   Replace `TODO 3` with the following code. It will set a timer to update the random number every one second.
 
    ```js
-   function loadCli(map) {
-       // Set a timer to update the random number every 1 second
-       const newRandomNumber = () => {
-           map.set("random-Number-Key", Math.floor(Math.random() * 100) + 1);
-       };
-       setInterval(newRandomNumber, 1000);
+   const newRandomNumber = () => {
+     map.set("random-Number-Key", Math.floor(Math.random() * 100) + 1);
+   };
+   setInterval(newRandomNumber, 1000);
+   ```
 
-       // Listen for updates and print changes to the random number
-       const updateConsole = () => {
-           console.log("Value: ", map.get("random-Number-Key"));
-       }
-       updateConsole();
-       map.on("valueChanged", updateConsole);
+  Replace `TODO 4` with the following code. It will Llsten for updates and print changes to the random number.
+
+   ```js
+   const updateConsole = () => {
+     console.log("Value: ", map.get("random-Number-Key"));
+   }
+   updateConsole();
+   map.on("valueChanged", updateConsole);
+   ```
+
+1. Replace `TODO 5` with the following code.
+
+    ```js
+    const { container } = await client.createContainer(containerSchema);
+    container.initialObjects.map.set("random-Number-Key", 1);
+    const id = await container.attach();
+    console.log("Initializing Node Client----------", id);
+    loadCli(container.initialObjects.map);
+    return id;
+    ```
+
+2. Replace `TODO 6` with the following code.
+
+   ```js
+   const { container } = await client.getContainer(id, containerSchema);
+   console.log("Loading Existing Node Client----------", id);
+   loadCli(container.initialObjects.map);
+   ```
+
+3. Replace `TODO 7` with the following code.
+
+   ```js
+   const containerId = await readInput();
+
+   if(containerId.length === 0 || containerId === 'undefined' || containerId === 'null') {
+     await createContainer();
+   } else {
+     await loadContainer(containerId);
    }
    ```
 
