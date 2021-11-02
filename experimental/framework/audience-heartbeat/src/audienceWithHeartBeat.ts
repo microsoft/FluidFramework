@@ -10,9 +10,9 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IFluidAudienceWithHeartBeat } from "./interfaces";
 
 /**
- * TODO:Tracks the last edit details such as the last edited user details and the last edited timestamp. The last edited
- * details should be updated (via updateLastEditDetails) in response to a remote op since it uses shared summary block
- * as storage.
+ * This class wraps implements heart-beat over Audience and emits event
+ * in case we are not listening from any client for 5 continuous heart-beats
+ * or we started getting heart-beat from a client who is not present in Audience.
  */
 export class AudienceWithHeartBeat extends EventEmitter implements IFluidAudienceWithHeartBeat {
     private readonly frequency: number;
