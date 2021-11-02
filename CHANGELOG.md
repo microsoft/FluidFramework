@@ -1,5 +1,26 @@
 # Change Log
 
+## 14.0.2
+
+* chore: update dependencies
+  * Associated pull request: [35763](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/35763)
+  * Commit: [6ffbb274a381aedfc30cfa58f0fded436acc3d17](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/6ffbb274a381aedfc30cfa58f0fded436acc3d17)
+* build: update mocha and @types/mocha
+  * Associated pull request: [35730](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/35730)
+  * Commit: [a4c0bda6e6c3bd174bcf96add0d3909106e22907](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/a4c0bda6e6c3bd174bcf96add0d3909106e22907)
+* test: Add SimpleTestTree test utility class
+  * Associated pull request: [35748](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/35748)
+  * Commit: [575ae48b157a3742c2caf274032a24956bc2ed7d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/575ae48b157a3742c2caf274032a24956bc2ed7d)
+* refactor: BREAKING CHANGE: Separate public and internal change types
+  * Associated pull request: [35599](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/35599)
+  * Commit: [d59aa82c770875ff56923597fbaa87580b92f519](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d59aa82c770875ff56923597fbaa87580b92f519)
+* feat: BREAKING CHANGE: Add new concrete Checkout types
+  * Associated pull request: [35701](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/35701)
+  * Commit: [bb8ef77d40fb9ff0360586466e4a3f04da59b143](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/bb8ef77d40fb9ff0360586466e4a3f04da59b143)
+* fix: Makes reverting handle detached sequence IDs correctly
+  * Associated pull request: [35625](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/35625)
+  * Commit: [19fea1af771e2b0b153d01596bcbc0ff65bff5bc](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/19fea1af771e2b0b153d01596bcbc0ff65bff5bc)
+
 ## 12.7.1
 
 * refactor: Update build to fail on invalid API configurations and fixed existing inconsistencies
