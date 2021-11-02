@@ -3,14 +3,10 @@
  * Licensed under the MIT License.
  */
 import { EventEmitter } from "events";
-import { IAudience, IDeltaManager } from "@fluidframework/container-definitions";
-import {
-    IClient,
-    ISignalMessage,
-    MessageType,
-    ISequencedDocumentMessage,
-    IDocumentMessage,
- } from "@fluidframework/protocol-definitions";
+import { IAudience } from "@fluidframework/container-definitions";
+import { IClient, MessageType } from "@fluidframework/protocol-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IFluidAudienceWithHeartBeat } from "./interfaces";
 
 /**
@@ -21,28 +17,27 @@ import { IFluidAudienceWithHeartBeat } from "./interfaces";
 export class AudienceWithHeartBeat extends EventEmitter implements IFluidAudienceWithHeartBeat {
     private readonly frequency: number;
     private readonly audienceHeartBeat: Map<string, Date> = new Map();
-    private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private readonly audience: IAudience ;
+    private readonly runtime: IFluidDataStoreRuntime ;
     private timer: any = undefined;
 
     /**
      * Creates a AudienceWithHeartBeat object.
-     * @param deltaManager - Delta Manager.
      * @param audience - Audience.
      * @param frequency - heartbeat frequency in milliseconds.
      */
     constructor(
-        deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         audience: IAudience,
+        runtime: IFluidDataStoreRuntime,
         frequency: number = 30000) {
         super();
         audience.getMembers().forEach((client: IClient, clientId: string) => {
             this.audienceHeartBeat.set(clientId, new Date());
         });
 
-        this.frequency = frequency;
-        this.deltaManager = deltaManager;
         this.audience = audience;
+        this.runtime = runtime;
+        this.frequency = frequency;
     }
 
     public get IFluidAudienceWithHeartBeat() {
@@ -54,19 +49,19 @@ export class AudienceWithHeartBeat extends EventEmitter implements IFluidAudienc
      */
     public enableHeartBeat() {
         this.timer = setInterval(() => {
-            this.deltaManager.submitSignal("ping");
+            this.runtime.submitSignal("ping", {});
             this.validateAudienceHeartBeat();
         }, this.frequency);
 
         // Listen for heartbeats
-        this.deltaManager.on("signal", (msg: ISignalMessage) => {
+        this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-            if (this.timer !== undefined && msg.clientId && msg.content === "ping") {
-                this.audienceHeartBeat.set(msg.clientId, new Date());
+            if (this.timer !== undefined && message.clientId && message.type === "ping") {
+                this.audienceHeartBeat.set(message.clientId, new Date());
 
                 // client missed addMember event.
-                if (this.audience.getMember(msg.clientId) === undefined) {
-                    this.emit(MessageType.ClientJoin, this.audience.getMember(msg.clientId));
+                if (this.audience.getMember(message.clientId) === undefined) {
+                    this.emit(MessageType.ClientJoin, this.audience.getMember(message.clientId));
                 }
             }
         });
