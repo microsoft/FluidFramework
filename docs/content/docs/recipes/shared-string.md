@@ -4,12 +4,12 @@ menuPosition: 4
 author: scottn12
 ---
 
-In this tutorial, you'll learn how to use the `SharedString` distributed data structure (DDS) with [React](https://reactjs.org/). To learn more about `SharedString`, click [here](https://fluidframework.com/docs/data-structures/string/).
+In this tutorial, you'll learn how to use the `SharedString` distributed data structure (DDS) with [React](https://reactjs.org/) to create a collaborative text area. To learn more about `SharedString`, click [here](https://fluidframework.com/docs/data-structures/string/).
 
 
 To jump ahead into the finished demo, check out the [SharedString example in our FluidExamples repo](TODO_URL_HERE).
 
-The following image shows a textarea open in four browser. The same text is in all four. The cursor is in the bottom textarea in one browser.
+The following image shows a textarea open in four browsers. The same text is in all four. The cursor is in the bottom textarea in one browser.
 
 TODO: Add image
 
