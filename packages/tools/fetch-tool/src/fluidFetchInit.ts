@@ -5,7 +5,7 @@
 
 import { URL } from "url";
 import child_process from "child_process";
-import { AzureUrlResolver } from "@fluidframework/azure-client";
+import { AzureUrlResolver } from "@fluidframework/azure-client/dist/AzureUrlResolver";
 import {
     generateTestUser,
     InsecureTokenProvider,
