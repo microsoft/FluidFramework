@@ -6,10 +6,9 @@ author: scottn12
 
 In this tutorial, you'll learn how to use the `SharedString` distributed data structure (DDS) with [React](https://reactjs.org/) to create a collaborative text area. To learn more about `SharedString`, click [here](https://fluidframework.com/docs/data-structures/string/).
 
-
 To jump ahead into the finished demo, check out the [SharedString example in our FluidExamples repo](TODO_URL_HERE).
 
-The following image shows a textarea open in four browsers. The same text is in all four. The cursor is in the bottom textarea in one browser.
+The following image shows a textarea open in four browsers. The same text is in all four.
 
 TODO: Add image
 
@@ -422,7 +421,6 @@ As previously mentioned, the `SharedStringHelper` class provides simple APIs to 
     );
     ```
 
-
 ## Start the Fluid server and run the application
 
 In the Command Prompt, run the following command to start the Fluid service. Note that `tinylicious` is the name of the Fluid service that runs on localhost.
@@ -437,14 +435,12 @@ Open a new Command Prompt and navigate to the root of the project; for example, 
 npm run start
 ```
 
-
 Paste the URL of the application into the address bar of another tab or even another browser to have more than one client open at a time. Edit the text on any client and see the text change and synchronize on all the clients.
 
 ## Next steps
 
 - Try extending the demo with more Fluid DDSes and a more complex UI.
 - Consider using the [Fluent UI React controls](https://aka.ms/fluentui/) to give the application the look and feel of Microsoft 365. To install them in your project run the following in the command prompt: `npm install @fluentui/react`.
-- Try changing the container schema to use a different shared data object type or specify multiple objects in `initialObjects`.
 - For an example that will scale to larger applications and larger teams, check out the [React Starter Template in the FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/react-starter-template).
 
 {{< callout tip >}}
