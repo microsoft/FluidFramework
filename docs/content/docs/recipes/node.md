@@ -140,7 +140,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     return id;
     ```
 
-2. Replace `TODO 6` with the following code.
+1. Replace `TODO 6` with the following code.
 
    ```js
    const { container } = await client.getContainer(id, containerSchema);
@@ -148,7 +148,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
    loadCli(container.initialObjects.map);
    ```
 
-3. Replace `TODO 7` with the following code.
+1. Replace `TODO 7` with the following code. Note that, this code will first take the container id as the input. If a new Fluid container is created, press Enter or type `undefined`. A new container will be initialized and the container id will be printed in the terminal. You can copy the container id, launch a new terminal window, and type/paste the initial container id to have multiple collaborative NodeJS clients.
 
    ```js
    const containerId = await readInput();
