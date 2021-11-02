@@ -13,6 +13,9 @@ import { IProvideFluidHandle, IProvideFluidHandleContext } from "./handles";
 import { IProvideFluidSerializer } from "./serializer";
 
 /* eslint-disable @typescript-eslint/no-empty-interface */
+/**
+ * @deprecated Use Provider or the interface directly instead
+ */
 export interface IFluidObject extends
     Readonly<Partial<
         IProvideFluidLoadable
