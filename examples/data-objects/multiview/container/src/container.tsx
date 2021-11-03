@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
+import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluidframework/aqueduct";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { RequestParser, requestFluidObject } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { MountableView } from "@fluidframework/view-adapters";
 import { Constellation } from "@fluid-example/multiview-constellation-model";
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
@@ -51,7 +52,7 @@ async function requestObjectStoreFromId<T>(request: RequestParser, runtime: ICon
  * When someone requests the default view off our container ("/"), we'll respond with a DefaultView.  To do so,
  * we need to retrieve those data models we created in containerInitializingFirstTime.
  */
-export const defaultViewRequestHandler: RuntimeRequestHandler =
+const defaultViewRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length === 0) {
             const simpleCoordinate = await requestObjectStoreFromId<Coordinate>(
@@ -81,7 +82,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
     constructor() {
         // We'll use a MountableView so webpack-fluid-loader can display us,
         // and add our default view request handler.
-        super(registryEntries, []);
+        super(registryEntries, [], [mountableViewRequestHandler(MountableView, [defaultViewRequestHandler])]);
     }
 
     /**
