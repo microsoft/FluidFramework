@@ -380,6 +380,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             const payloadToDelete = this.getOpsMap.get(key!)!;
             this.logger.sendErrorEvent({
                 eventName: "GetOpsTooMany",
+                nonce,
                 from: payloadToDelete.from,
                 to: payloadToDelete.to,
                 length: payloadToDelete.to - payloadToDelete.from,
@@ -463,6 +464,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                 this.getOpsMap.delete(result.nonce);
                 const common = {
                     eventName: "GetOps",
+                    // We need nonce only to pair with GetOpsTooMany events, i.e. when record was deleted
+                    nonce: data === undefined ? result.nonce : undefined,
                     code: result.code,
                     from: data?.from,
                     to: data?.to,
