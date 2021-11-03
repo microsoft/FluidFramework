@@ -16,28 +16,28 @@ import { IFluidAudienceWithHeartBeat } from "./interfaces";
  */
 export class AudienceWithHeartBeat extends EventEmitter implements IFluidAudienceWithHeartBeat {
     private readonly frequency: number;
-    private readonly audienceHeartBeat: Map<string, Date> = new Map();
+    private readonly audienceHeartBeat: Map<string, number> = new Map();
     private readonly audience: IAudience ;
     private readonly runtime: IFluidDataStoreRuntime ;
     private timer: any = undefined;
 
     /**
      * Creates a AudienceWithHeartBeat object.
-     * @param audience - Audience.
+     * @param runtime - IFluidDataStoreRuntime.
      * @param frequency - heartbeat frequency in milliseconds.
      */
     constructor(
-        audience: IAudience,
         runtime: IFluidDataStoreRuntime,
         frequency: number = 30000) {
         super();
-        audience.getMembers().forEach((client: IClient, clientId: string) => {
-            this.audienceHeartBeat.set(clientId, new Date());
-        });
 
-        this.audience = audience;
+        this.audience = runtime.getAudience();
         this.runtime = runtime;
         this.frequency = frequency;
+
+        this.audience.getMembers().forEach((client: IClient, clientId: string) => {
+            this.audienceHeartBeat.set(clientId, Date.now());
+        });
     }
 
     public get IFluidAudienceWithHeartBeat() {
@@ -49,7 +49,7 @@ export class AudienceWithHeartBeat extends EventEmitter implements IFluidAudienc
      */
     public enableHeartBeat() {
         this.timer = setInterval(() => {
-            this.runtime.submitSignal("ping", {});
+            this.runtime.submitSignal("ping", this.audience.getMember(this.runtime.clientId as string));
             this.validateAudienceHeartBeat();
         }, this.frequency);
 
@@ -57,11 +57,11 @@ export class AudienceWithHeartBeat extends EventEmitter implements IFluidAudienc
         this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (this.timer !== undefined && message.clientId && message.type === "ping") {
-                this.audienceHeartBeat.set(message.clientId, new Date());
+                this.audienceHeartBeat.set(message.clientId, Date.now());
 
                 // client missed addMember event.
                 if (this.audience.getMember(message.clientId) === undefined) {
-                    this.emit(MessageType.ClientJoin, this.audience.getMember(message.clientId));
+                    this.emit(MessageType.ClientJoin, message.content);
                 }
             }
         });
@@ -69,7 +69,7 @@ export class AudienceWithHeartBeat extends EventEmitter implements IFluidAudienc
         // Listen for client join
         this.audience.on("addMember", (clientId: string, client: IClient) => {
             if (this.timer !== undefined && clientId) {
-                this.audienceHeartBeat.set(clientId, new Date());
+                this.audienceHeartBeat.set(clientId, Date.now());
             }
         });
 
@@ -90,11 +90,11 @@ export class AudienceWithHeartBeat extends EventEmitter implements IFluidAudienc
     }
 
     private validateAudienceHeartBeat() {
-        this.audienceHeartBeat.forEach((lastPingReceivedAt: Date, clientId: string) => {
-            const diff = new Date().valueOf() - lastPingReceivedAt.valueOf();
+        this.audienceHeartBeat.forEach((lastPingReceivedAt: number, clientId: string) => {
+            const diff = Date.now() - lastPingReceivedAt;
             if (diff > this.frequency * 5) {
                 // client Lost, missed removeMember event.
-                this.emit(MessageType.ClientLeave, this.audience.getMember(clientId));
+                this.emit(MessageType.ClientLeave, clientId);
                 this.audienceHeartBeat.delete(clientId);
             }
         });
