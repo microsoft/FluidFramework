@@ -496,14 +496,24 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
-     * @deprecated use codeDetails
+     * {@inheritDoc @fluidframework/container-definitions#IContainer.codeDetails}
      */
-    public get chaincodePackage(): IFluidCodeDetails | undefined {
-        return this.codeDetails;
-    }
-
     public get codeDetails(): IFluidCodeDetails | undefined {
         return this._context?.codeDetails ?? this.getCodeDetailsFromQuorum();
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/container-definitions#IContainer.getSpecifiedCodeDetails}
+     */
+    public getSpecifiedCodeDetails(): IFluidCodeDetails | undefined {
+        return this.getCodeDetailsFromQuorum();
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/container-definitions#IContainer.getUsedCodeDetails}
+     */
+    public getUsedCodeDetails(): IFluidCodeDetails | undefined {
+        return this._context?.codeDetails;
     }
 
     /**

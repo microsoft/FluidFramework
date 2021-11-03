@@ -91,8 +91,16 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         assert.strictEqual(container.getQuorum().getMembers().size, 0, "Quorum should not contain any members");
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
             "Container should be in disconnected state!!");
-        assert.strictEqual(container.chaincodePackage?.package, provider.defaultCodeDetails.package,
-            "Package should be same as provided");
+        assert.strictEqual(container.codeDetails?.package, provider.defaultCodeDetails.package,
+            "Used package should be same as provided");
+        if (container.getSpecifiedCodeDetails !== undefined) {
+            assert.strictEqual(container.getSpecifiedCodeDetails()?.package, provider.defaultCodeDetails.package,
+            "Specified package should be same as provided");
+        }
+        if (container.getUsedCodeDetails !== undefined) {
+            assert.strictEqual(container.getUsedCodeDetails()?.package, provider.defaultCodeDetails.package,
+            "Used package should be same as provided");
+        }
         assert.strictEqual(container.id, "", "Detached container's id should be empty string");
         assert.strictEqual(container.clientDetails.capabilities.interactive, true,
             "Client details should be set with interactive as true");

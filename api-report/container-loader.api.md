@@ -56,8 +56,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get attachState(): AttachState;
     get audience(): IAudience;
-    // @deprecated (undocumented)
-    get chaincodePackage(): IFluidCodeDetails | undefined;
     // (undocumented)
     get clientDetails(): IClientDetails;
     get clientId(): string | undefined;
@@ -80,6 +78,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getQuorum(): IQuorum;
+    // (undocumented)
+    getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
+    // (undocumented)
+    getUsedCodeDetails(): IFluidCodeDetails | undefined;
     // (undocumented)
     get id(): string;
     // (undocumented)
