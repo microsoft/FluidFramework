@@ -256,6 +256,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this._disposed = true;
 
         // Dispose any pending runtime after it gets fulfilled
+        // Errors are logged where this.channelDeferred is consumed/generated (realizeCore(), bindRuntime())
         if (this.channelDeferred) {
             this.channelDeferred.promise.then((runtime) => {
                 runtime.dispose();
@@ -275,7 +276,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
                 this.channelDeferred?.reject(
                     CreateProcessingError(error, "realizeFluidDataStoreContext", undefined /* message */));
                 this.logger.sendErrorEvent(
-                    { eventName: "RealizeError", fluidDataStoreId: this.id },
+                    { eventName: "RealizeError", fluidDataStoreId: { value: this.id, tag: "PackageData"} },
                     error);
                 });
         }
@@ -611,7 +612,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         } catch (error) {
             this.channelDeferred?.reject(error);
             this.logger.sendErrorEvent(
-                { eventName: "bindRuntimeError", fluidDataStoreId: this.id },
+                { eventName: "bindRuntimeError", fluidDataStoreId: { value: this.id, tag: "PackageData"} },
                 error);
         }
     }
