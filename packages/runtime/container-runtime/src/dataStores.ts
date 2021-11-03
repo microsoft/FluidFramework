@@ -128,10 +128,10 @@ export class DataStores implements IDisposable {
             eventName: "ContainerLoadStats",
             dataStoreCount: fluidDataStores.size,
             referencedDataStoreCount: fluidDataStores.size - unreferencedDataStoreCount,
-            createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
-            createContainerTimeStamp: metadata?.createContainerTimeStamp,
-            lastSummaryCount: metadata?.lastSummaryCount,
-            summaryFormatVersion: metadata?.summaryFormatVersion,
+            createContainerRuntimeVersion: metadata.createContainerRuntimeVersion,
+            createContainerTimeStamp: metadata.createContainerTimeStamp,
+            lastSummaryCount: metadata.lastSummaryCount,
+            summaryFormatVersion: metadata.summaryFormatVersion,
         });
     }
 
