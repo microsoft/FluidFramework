@@ -30,6 +30,7 @@ import {
     IMergeTreeGroupMsg,
     IMergeTreeOp,
     IMergeTreeRemoveMsg,
+    IRelativePosition,
     ISegment,
     ISegmentAction,
     LocalReference,
@@ -392,11 +393,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         }
     }
 
-    public addLocalReference(lref) {
+    public addLocalReference(lref: LocalReference) {
         return this.client.addLocalReference(lref);
     }
 
-    public removeLocalReference(lref) {
+    public removeLocalReference(lref: LocalReference) {
         return this.client.removeLocalReference(lref);
     }
 
@@ -405,7 +406,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
      * and convert the position to a character position.
      * @param relativePos - Id of marker (may be indirect) and whether position is before or after marker.
      */
-    public posFromRelativePos(relativePos) {
+    public posFromRelativePos(relativePos: IRelativePosition) {
         return this.client.posFromRelativePos(relativePos);
     }
 

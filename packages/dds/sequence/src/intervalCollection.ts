@@ -46,7 +46,7 @@ export interface ISerializedInterval {
 export interface ISerializableInterval extends IInterval {
     properties: PropertySet;
     propertyManager: PropertiesManager;
-    serialize(client: Client);
+    serialize(client: Client): ISerializedInterval;
     addProperties(props: PropertySet, collaborating?: boolean, seq?: number):
         PropertySet | undefined;
     getIntervalId(): string | undefined;

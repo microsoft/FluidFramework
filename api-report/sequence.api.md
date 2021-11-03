@@ -172,7 +172,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // (undocumented)
     removeIntervalById(id: string): TInterval;
     // (undocumented)
-    serializeInternal(): any[];
+    serializeInternal(): ISerializedInterval[];
 }
 
 // @public (undocumented)
@@ -206,7 +206,7 @@ export interface ISerializableInterval extends IInterval {
     // (undocumented)
     propertyManager: PropertiesManager;
     // (undocumented)
-    serialize(client: Client): any;
+    serialize(client: Client): ISerializedInterval;
 }
 
 // @public (undocumented)
@@ -509,7 +509,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedIntervalCollection<SequenceInterval> {
     constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
     // (undocumented)
-    addLocalReference(lref: any): void;
+    addLocalReference(lref: LocalReference): void;
     annotateRange(start: number, end: number, props: PropertySet, combiningOp?: ICombiningOp): void;
     // (undocumented)
     protected applyStashedOp(): void;
@@ -563,13 +563,13 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     protected onDisconnect(): void;
     paste(pos: number, register: string): number;
-    posFromRelativePos(relativePos: any): number;
+    posFromRelativePos(relativePos: IRelativePosition): number;
     // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
     protected registerCore(): void;
     // (undocumented)
-    removeLocalReference(lref: any): void;
+    removeLocalReference(lref: LocalReference): void;
     // (undocumented)
     removeRange(start: number, end: number): IMergeTreeRemoveMsg;
     protected replaceRange(start: number, end: number, segment: ISegment): void;
