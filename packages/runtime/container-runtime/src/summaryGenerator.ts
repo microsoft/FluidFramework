@@ -195,7 +195,7 @@ export class SummaryGenerator {
         resultsBuilder: SummarizeResultBuilder,
         cancellationToken: ISummaryCancellationToken,
     ): Promise<void> {
-        const { refreshLatestAck, fullTree, summaryCount } = options;
+        const { refreshLatestAck, fullTree } = options;
         const logger = ChildLogger.create(this.logger, undefined, { all: summarizeProps });
         const summarizeEvent = PerformanceEvent.start(logger, {
             eventName: "Summarize",
@@ -239,7 +239,6 @@ export class SummaryGenerator {
                 refreshLatestAck,
                 summaryLogger: logger,
                 cancellationToken,
-                summaryCount,
             });
 
             // Cumulatively add telemetry properties based on how far generateSummary went.

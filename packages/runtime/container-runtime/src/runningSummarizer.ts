@@ -146,14 +146,11 @@ export class RunningSummarizer implements IDisposable {
                 this.pendingAckTimer.clear();
             }
         });
-        const submitSummaryCB = async (options: ISubmitSummaryOptions) => {
-            const newOptions = {...options, summaryCount: this.summarizeCount};
-            return this.submitSummaryCallback(newOptions);
-        };
+
         this.generator = new SummaryGenerator(
             this.pendingAckTimer,
             this.heuristicData,
-            submitSummaryCB,
+            this.submitSummaryCallback,
             this.raiseSummarizingError,
             this.summaryWatcher,
             this.logger,

@@ -469,8 +469,6 @@ export interface ISummarizeHeuristicRunner {
 export interface ISummarizeOptions {
     readonly fullTree?: boolean;
     readonly refreshLatestAck?: boolean;
-    // (undocumented)
-    readonly summaryCount?: number;
 }
 
 // @public (undocumented)
