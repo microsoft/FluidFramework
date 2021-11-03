@@ -157,7 +157,7 @@ ecosystem. There will be ways for Fluid Framework developers to operate in M365 
 not available yet.
 
 Microsoft has also
-[announced](https://developer.microsoft.com/en-us/office/blogs/whats-new-in-microsoft-365-platform-at-build-2021/) Azure
+[announced](https://devblogs.microsoft.com/microsoft365dev/whats-new-in-microsoft-365-platform-at-build-2021/) Azure
 Fluid Relay, a fully managed Fluid service, at Build 2021.
 
 ### Besides SharePoint, where else can we store .fluid files?
