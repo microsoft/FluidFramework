@@ -15,25 +15,12 @@ export class LeaderElection {
 
     constructor(private readonly dataStoreRuntime: IFluidDataStoreRuntime) {
         this.logger = ChildLogger.create(this.dataStoreRuntime.logger, "SignalLeaderElection");
-     }
+    }
 
     public setupLeaderElection() {
         this.dataStoreRuntime.on("signal", (signal: ISignalMessage) => this.handleSignal(signal));
         this.lastPinged = Date.now();
-        const interval = setInterval(() => {
-            if (this.leaderId !== undefined && this.leaderId === this.dataStoreRuntime.clientId) {
-                this.dataStoreRuntime.submitSignal("leaderMessage", "leaderMessage");
-                this.lastPinged = Date.now();
-            }else if(this.leaderId === undefined) {
-                this.logger.sendErrorEvent({eventName: "LeaderUndefinedEventError"});
-            }else {
-                const current = Date.now();
-                if(this.lastPinged !== undefined && current - this.lastPinged > this.leaderWait) {
-                    this.logger.sendErrorEvent({eventName: "LeaderLostEventError"});
-                    this.lastPinged = undefined;
-                }
-            }
-        }, this.beatInEveryNSecs);
+        let interval = setInterval(() => this.runLeaderElection(), this.beatInEveryNSecs);
 
         this.dataStoreRuntime.once("dispose", () => {
             clearInterval(interval);
@@ -42,6 +29,25 @@ export class LeaderElection {
         this.dataStoreRuntime.on("disconnected", () => {
             clearInterval(interval);
         });
+
+        this.dataStoreRuntime.on("connected", () => {
+            interval = setInterval(() => this.runLeaderElection(), this.beatInEveryNSecs);
+        });
+    }
+
+    private runLeaderElection() {
+        if (this.leaderId !== undefined && this.leaderId === this.dataStoreRuntime.clientId) {
+            this.dataStoreRuntime.submitSignal("leaderMessage", "leaderMessage");
+            this.lastPinged = Date.now();
+        }else if(this.leaderId === undefined) {
+            this.logger.sendErrorEvent({eventName: "LeaderUndefinedEventError"});
+        }else {
+            const current = Date.now();
+            if(this.lastPinged !== undefined && current - this.lastPinged > this.leaderWait) {
+                this.logger.sendErrorEvent({eventName: "LeaderLostEventError"});
+                this.lastPinged = undefined;
+            }
+        }
     }
 
     private handleSignal(signal: ISignalMessage) {
