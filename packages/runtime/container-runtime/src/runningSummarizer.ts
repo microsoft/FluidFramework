@@ -356,15 +356,17 @@ export class RunningSummarizer implements IDisposable {
                 totalAttempts++;
                 attemptPerPhase++;
 
+                const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[attemptPhase];
+                const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
+
                 const summarizeProps: ITelemetryProperties = {
                     summarizeReason,
                     summarizeTotalAttempts: totalAttempts,
                     summarizeAttemptsPerPhase: attemptPerPhase,
                     summarizeAttemptPhase: attemptPhase + 1, // make everything 1-based
+                    ...options,
                 };
 
-                const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[attemptPhase];
-                const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
                 if (delaySeconds > 0) {
                     this.logger.sendPerformanceEvent({
                         eventName: "SummarizeAttemptDelay",
