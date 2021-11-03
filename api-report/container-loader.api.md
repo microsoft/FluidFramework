@@ -65,7 +65,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     closeAndGetPendingLocalState(): string;
     // (undocumented)
     get closed(): boolean;
-    // (undocumented)
+    // @deprecated
     get codeDetails(): IFluidCodeDetails | undefined;
     // (undocumented)
     get connected(): boolean;
@@ -78,9 +78,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getQuorum(): IQuorum;
-    // (undocumented)
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
-    // (undocumented)
     getUsedCodeDetails(): IFluidCodeDetails | undefined;
     // (undocumented)
     get id(): string;

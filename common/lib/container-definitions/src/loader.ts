@@ -120,8 +120,10 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly attachState: AttachState;
 
     /**
+     * The current code details for the container's runtime
      * @deprecated use getSpecifiedCodeDetails for the code details currently specified for this container, or
      * getUsedCodeDetails for the code details that the container's context was loaded with.
+     * To be removed after getSpecifiedCodeDetails and getUsedCodeDetails become ubiquitous.
      */
     readonly codeDetails: IFluidCodeDetails | undefined;
 
