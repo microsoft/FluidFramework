@@ -46,7 +46,7 @@ import {
 import { SharedTreeWithAnchors, SharedTreeWithAnchorsFactory } from '../../anchored-edits';
 import { RevisionView } from '../../TreeView';
 import { EditLog } from '../../EditLog';
-import { SimpleTestTree } from './TestNode';
+import { RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents<TSharedTree = SharedTree> {
@@ -443,7 +443,11 @@ function setTestTree(tree: SharedTree | SharedTreeWithAnchors, node: ChangeNode,
 	}
 }
 
-/** Creates an empty node for testing purposes. */
+/**
+ * Creates an empty node for testing purposes.
+ *
+ * @deprecated Use {@link SimpleTestTree.buildLeaf} instead.
+ */
 export function makeEmptyNode(identifier: NodeId = uuidv4() as NodeId): ChangeNode {
 	const definition = 'node' as Definition;
 	return { definition, identifier, traits: {} };
@@ -782,11 +786,29 @@ const versionComparator = (versionA: string, versionB: string): number => {
 };
 
 /**
- * Create a SimpleTestTree from the given shared tree
+ * Create a {@link SimpleTestTree} from the given {@link SharedTree}
  */
-export function testSimpleSharedTree(sharedTree: SharedTree | SharedTreeWithAnchors): SimpleTestTree {
+export function testSimpleSharedTree(sharedTree: SharedTree | SharedTreeWithAnchors): TestTree {
 	assert(sharedTree.edits.length === 0, 'tree must be a new SharedTree');
 	const simpleTestTree = new SimpleTestTree(() => sharedTree.generateId());
 	setTestTree(sharedTree, simpleTestTree);
 	return simpleTestTree;
+}
+
+/**
+ * Create a {@link SimpleTestTree} before each test
+ */
+export function refreshSimpleSharedTree(
+	sharedTreeFactory: () => SharedTree | SharedTreeWithAnchors,
+	fn?: (testTree: SimpleTestTree) => void
+): TestTree {
+	const testTree = new RefreshingTestTree(() => {
+		const sharedTree = sharedTreeFactory();
+		assert(sharedTree.edits.length === 0, 'tree must be a new SharedTree');
+		const simpleTestTree = new SimpleTestTree(() => sharedTree.generateId(), true);
+		setTestTree(sharedTree, simpleTestTree);
+		return simpleTestTree;
+	}, fn);
+
+	return testTree;
 }

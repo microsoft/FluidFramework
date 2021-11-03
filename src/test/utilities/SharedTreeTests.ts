@@ -4,11 +4,10 @@
  */
 
 import { assert, expect } from 'chai';
-import { v4 as uuidv4 } from 'uuid';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
-import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
+import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../../Common';
-import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../../Identifiers';
+import { Definition, DetachedSequenceId, EditId, TraitLabel } from '../../Identifiers';
 import {
 	BuildNode,
 	ChangeNode,
@@ -30,24 +29,19 @@ import { SharedTreeWithAnchors } from '../../anchored-edits';
 import { RevisionView } from '../../TreeView';
 import { useFailedSequencedEditTelemetry } from '../../MergeHealth';
 import {
-	makeEmptyNode,
 	testTrait,
-	left,
-	right,
-	leftTraitLabel,
-	leftTraitLocation,
-	rightTraitLocation,
-	simpleTestTree,
 	areNodesEquivalent,
-	rightTraitLabel,
 	assertNoDelta,
 	deepCompareNodes,
 	initialRevisionView,
 	SharedTreeTestingComponents,
 	SharedTreeTestingOptions,
+	testSimpleSharedTree,
+	refreshSimpleSharedTree,
 } from './TestUtilities';
 import { runSharedTreeUndoRedoTestSuite } from './UndoRedoTests';
 import { TestFluidHandle, TestFluidSerializer } from './TestSerializer';
+import { TestTree } from './TestNode';
 
 function revertEditInTree(tree: SharedTree, edit: EditId): EditId {
 	return tree.revert(edit);
@@ -68,6 +62,39 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 	title: string,
 	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents<TSharedTree>
 ) {
+	/**
+	 * Convenience bundling of test components.
+	 * Like {@link SharedTreeTestingComponents}, but contains both the {@link SimpleTestTree} and
+	 * its associated {@link TSharedTree}.
+	 */
+	interface SharedTreeTest {
+		/**
+		 * {@inheritDoc SharedTreeTestingComponents.tree}
+		 */
+		sharedTree: TSharedTree;
+
+		/**
+		 * {@link SimpleTestTree} corresponding to {@link SharedTreeTest.sharedTree}
+		 */
+		testTree: TestTree;
+
+		/**
+		 * {@inheritDoc SharedTreeTestingComponents.componentRuntime}
+		 */
+		componentRuntime: MockFluidDataStoreRuntime;
+
+		/**
+		 * {@inheritDoc SharedTreeTestingComponents.containerRuntimeFactory}
+		 */
+		containerRuntimeFactory: MockContainerRuntimeFactory;
+	}
+
+	function createSimpleTestTree(options?: SharedTreeTestingOptions): SharedTreeTest {
+		const { tree: sharedTree, componentRuntime, containerRuntimeFactory } = setUpTestSharedTree(options);
+		const testTree = testSimpleSharedTree(sharedTree);
+		return { sharedTree, testTree, componentRuntime, containerRuntimeFactory };
+	}
+
 	describe(title, () => {
 		const testSerializer = new TestFluidSerializer();
 
@@ -88,11 +115,12 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 
 		describe('SharedTree in local state', () => {
 			it('does not emit change events for each change in a batch of changes', () => {
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+				const { sharedTree, testTree } = createSimpleTestTree();
+
 				let changeCount = 0;
-				tree.on(SharedTreeEvent.EditCommitted, () => {
-					const leftTrait = tree.currentView.getTrait(leftTraitLocation);
-					const rightTrait = tree.currentView.getTrait(rightTraitLocation);
+				sharedTree.on(SharedTreeEvent.EditCommitted, () => {
+					const leftTrait = sharedTree.currentView.getTrait(testTree.left.traitLocation);
+					const rightTrait = sharedTree.currentView.getTrait(testTree.right.traitLocation);
 
 					expect(leftTrait.length).to.equal(0); // "left" child is deleted...
 					expect(rightTrait.length).to.equal(2); // ...and added to "right" trait
@@ -100,18 +128,20 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 					changeCount += 1;
 				});
 
-				tree.applyEdit(...Move.create(StableRange.only(left), StablePlace.after(right)));
+				sharedTree.applyEdit(
+					...Move.create(StableRange.only(testTree.left), StablePlace.after(testTree.right))
+				);
 				expect(changeCount).equals(1);
 			});
 
 			it('can insert a wrapped tree', () => {
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+				const { sharedTree, testTree } = createSimpleTestTree();
 
-				const childNode = makeEmptyNode();
+				const childNode = testTree.buildLeaf();
 				const childId = 0 as DetachedSequenceId;
 				const childrenTraitLabel = 'children' as TraitLabel;
 				const parentNode: BuildNode = {
-					identifier: uuidv4() as NodeId,
+					identifier: testTree.generateId(),
 					definition: 'node' as Definition,
 					traits: {
 						[childrenTraitLabel]: [childId],
@@ -121,14 +151,14 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 
 				const buildChild = Change.build([childNode], childId);
 				const buildParent = Change.build([parentNode], parentId);
-				const insertParent = Change.insert(parentId, StablePlace.before(left));
+				const insertParent = Change.insert(parentId, StablePlace.before(testTree.left));
 
-				tree.applyEdit(buildChild, buildParent, insertParent);
+				sharedTree.applyEdit(buildChild, buildParent, insertParent);
 
-				const leftTrait = tree.currentView.getTrait(leftTraitLocation);
+				const leftTrait = sharedTree.currentView.getTrait(testTree.left.traitLocation);
 				expect(leftTrait.length).to.equal(2);
 				expect(leftTrait[0]).to.equal(parentNode.identifier);
-				const childrenTrait = tree.currentView.getTrait({
+				const childrenTrait = sharedTree.currentView.getTrait({
 					parent: parentNode.identifier,
 					label: childrenTraitLabel,
 				});
@@ -136,14 +166,14 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				expect(childrenTrait[0]).to.equal(childNode.identifier);
 			});
 
-			it('prevents multiparenting detached trees', () => {
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowMalformed: true });
+			it('prevents multi-parenting detached trees', () => {
+				const { sharedTree, testTree } = createSimpleTestTree({ allowMalformed: true });
 
-				const childNode = makeEmptyNode();
+				const childNode = testTree.buildLeaf();
 				const childId = 0 as DetachedSequenceId;
 				const childrenTraitLabel = 'children' as TraitLabel;
 				const parentNode: BuildNode = {
-					identifier: uuidv4() as NodeId,
+					identifier: testTree.generateId(),
 					definition: 'node' as Definition,
 					traits: {
 						[childrenTraitLabel]: [childId],
@@ -151,7 +181,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				};
 				const parentId = 1 as DetachedSequenceId;
 				const parentNode2: BuildNode = {
-					identifier: uuidv4() as NodeId,
+					identifier: testTree.generateId(),
 					definition: 'node' as Definition,
 					traits: {
 						[childrenTraitLabel]: [childId],
@@ -163,144 +193,154 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				const buildParent = Change.build([parentNode], parentId);
 				const buildParent2 = Change.build([parentNode2], parentId2);
 
-				assertNoDelta(tree, () => {
+				assertNoDelta(sharedTree, () => {
 					// we don't expect this edit application to change anything
-					tree.applyEdit(buildChild, buildParent, buildParent2);
+					sharedTree.applyEdit(buildChild, buildParent, buildParent2);
 				});
 			});
 
 			// TODO:#58052: Make this test pass.
 			it.skip('prevents setting the value of a node in a detached subtree', () => {
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowInvalid: true });
-				const detachedNode = makeEmptyNode();
+				const { sharedTree, testTree } = createSimpleTestTree({ allowInvalid: true });
+
+				const detachedNode = testTree.buildLeaf();
 				const detachedSequenceId = 0 as DetachedSequenceId;
-				const { id } = tree.applyEdit(
+				const { id } = sharedTree.applyEdit(
 					Change.build([detachedNode], detachedSequenceId),
 					Change.setPayload(detachedNode.identifier, 42),
-					Change.insert(detachedSequenceId, StablePlace.before(left))
+					Change.insert(detachedSequenceId, StablePlace.before(testTree.left))
 				);
-				const logViewer = tree.logViewer as CachingLogViewer<Change>;
+				const logViewer = sharedTree.logViewer as CachingLogViewer<Change>;
 				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(id)).status).equals(
 					EditStatus.Invalid
 				);
-				tree.currentView.assertConsistent();
+				sharedTree.currentView.assertConsistent();
 			});
 
 			// TODO:#58052: Make this test pass.
 			it.skip('prevents inserting a node in a detached subtree through a local edit', () => {
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowInvalid: true });
-				const detachedNewNode = makeEmptyNode();
+				const { sharedTree, testTree } = createSimpleTestTree({ allowInvalid: true });
+
+				const detachedNewNode = testTree.buildLeaf();
 				const detachedNewNodeSequenceId = 0 as DetachedSequenceId;
 				const detachedRightNodeSequenceId = 1 as DetachedSequenceId;
-				const { id } = tree.applyEdit(
+				const { id } = sharedTree.applyEdit(
 					Change.build([detachedNewNode], detachedNewNodeSequenceId),
-					Change.detach(StableRange.only(right), detachedRightNodeSequenceId),
+					Change.detach(StableRange.only(testTree.right), detachedRightNodeSequenceId),
 					// This change attempts to insert a node under a detached node
 					Change.insert(
 						detachedNewNodeSequenceId,
-						StablePlace.atStartOf({ parent: right.identifier, label: 'foo' as TraitLabel })
+						StablePlace.atStartOf({ parent: testTree.right.identifier, label: 'foo' as TraitLabel })
 					),
-					Change.insert(detachedRightNodeSequenceId, StablePlace.before(left))
+					Change.insert(detachedRightNodeSequenceId, StablePlace.before(testTree.left))
 				);
-				const logViewer = tree.logViewer as CachingLogViewer<Change>;
+				const logViewer = sharedTree.logViewer as CachingLogViewer<Change>;
 				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(id)).status).equals(
 					EditStatus.Invalid
 				);
-				tree.currentView.assertConsistent();
+				sharedTree.currentView.assertConsistent();
 			});
 
 			it('prevents deletion of the root', () => {
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowInvalid: true });
-				expect(tree.currentView.hasNode(initialRevisionView.root));
-				assertNoDelta(tree, () => {
+				const { sharedTree } = createSimpleTestTree({ allowInvalid: true });
+				expect(sharedTree.currentView.hasNode(initialRevisionView.root));
+				assertNoDelta(sharedTree, () => {
 					// Try to delete the root
-					tree.applyEdit(Delete.create(StableRange.only(initialRevisionView.root)));
+					sharedTree.applyEdit(Delete.create(StableRange.only(initialRevisionView.root)));
 				});
 			});
 
 			it('can apply multiple local edits without ack from server', () => {
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+				const { sharedTree, testTree } = createSimpleTestTree();
 
-				const newNode = makeEmptyNode();
+				const newNode = testTree.buildLeaf();
 
-				tree.applyEdit(...Insert.create([newNode], StablePlace.after(left)));
-				tree.applyEdit(...Move.create(StableRange.only(newNode), StablePlace.before(left)));
+				sharedTree.applyEdit(...Insert.create([newNode], StablePlace.after(testTree.left)));
+				sharedTree.applyEdit(...Move.create(StableRange.only(newNode), StablePlace.before(testTree.left)));
 
-				const leftTrait = tree.currentView.getTrait(leftTraitLocation);
+				const leftTrait = sharedTree.currentView.getTrait(testTree.left.traitLocation);
 				expect(leftTrait.length).equals(2);
 				expect(leftTrait[0]).equals(newNode.identifier);
 			});
 
 			it('is not equal to a tree with different initial views', () => {
-				const secondSimpleTestTree: ChangeNode = {
-					...simpleTestTree,
-					identifier: uuidv4() as NodeId,
+				const { sharedTree: sharedTree1, testTree } = createSimpleTestTree();
+
+				const initialTree2: ChangeNode = {
+					...testTree.buildLeaf(),
+					traits: {
+						[testTree.left.traitLabel]: [testTree.left],
+						[testTree.right.traitLabel]: [testTree.right],
+					},
+					identifier: testTree.generateId(),
 				};
 
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
-				const { tree: secondTree } = setUpTestSharedTree({ initialTree: secondSimpleTestTree });
+				const { tree: sharedTree2 } = setUpTestSharedTree({ initialTree: initialTree2 });
 
-				expect(tree.equals(secondTree)).to.be.false;
+				expect(sharedTree1.equals(sharedTree2)).to.be.false;
 			});
 
 			it('is not equal to a tree with the same view but different edit lists', () => {
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
-				const { tree: secondTree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+				const { sharedTree: sharedTree1 } = createSimpleTestTree();
+				const { sharedTree: sharedTree2 } = createSimpleTestTree();
+
 				// The edits that create the initial tree have different identities.
-				expect(tree.equals(secondTree)).to.be.false;
+				expect(sharedTree1.equals(sharedTree2)).to.be.false;
 			});
 
 			it('tolerates invalid inserts', () => {
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowInvalid: true });
+				const { sharedTree, testTree } = createSimpleTestTree({ allowInvalid: true });
 
-				const firstNode = makeEmptyNode();
-				const secondNode = makeEmptyNode();
+				const firstNode = testTree.buildLeaf();
+				const secondNode = testTree.buildLeaf();
 
-				tree.applyEdit(...Insert.create([firstNode], StablePlace.after(left)));
-				tree.applyEdit(Delete.create(StableRange.only(firstNode)));
+				sharedTree.applyEdit(...Insert.create([firstNode], StablePlace.after(testTree.left)));
+				sharedTree.applyEdit(Delete.create(StableRange.only(firstNode)));
 
 				// Trying to insert next to the deleted node should drop, confirm that it doesn't
 				// change the view
-				assertNoDelta(tree, () => {
-					tree.applyEdit(...Insert.create([secondNode], StablePlace.after(firstNode)));
+				assertNoDelta(sharedTree, () => {
+					sharedTree.applyEdit(...Insert.create([secondNode], StablePlace.after(firstNode)));
 				});
 
-				const leftTrait = tree.currentView.getTrait(leftTraitLocation);
+				const leftTrait = sharedTree.currentView.getTrait(testTree.left.traitLocation);
 				expect(leftTrait.length).to.equal(1);
 			});
 
 			it('tolerates invalid detaches', () => {
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowInvalid: true });
+				const { sharedTree, testTree } = createSimpleTestTree({ allowInvalid: true });
 
-				const firstNode = makeEmptyNode();
-				const secondNode = makeEmptyNode();
-				const thirdNode = makeEmptyNode();
+				const firstNode = testTree.buildLeaf();
+				const secondNode = testTree.buildLeaf();
+				const thirdNode = testTree.buildLeaf();
 
-				tree.applyEdit(...Insert.create([firstNode, secondNode, thirdNode], StablePlace.after(left)));
-				tree.applyEdit(Delete.create(StableRange.only(secondNode)));
+				sharedTree.applyEdit(
+					...Insert.create([firstNode, secondNode, thirdNode], StablePlace.after(testTree.left))
+				);
+				sharedTree.applyEdit(Delete.create(StableRange.only(secondNode)));
 
-				assertNoDelta(tree, () => {
+				assertNoDelta(sharedTree, () => {
 					// Trying to delete from before firstNode to after secondNode should drop
-					tree.applyEdit(
+					sharedTree.applyEdit(
 						Delete.create(StableRange.from(StablePlace.before(firstNode)).to(StablePlace.after(secondNode)))
 					);
 
 					// Trying to delete from after thirdNode to before firstNode should drop
-					tree.applyEdit(
+					sharedTree.applyEdit(
 						Delete.create(StableRange.from(StablePlace.after(thirdNode)).to(StablePlace.before(firstNode)))
 					);
 				});
 
 				// Expect that firstNode did not get deleted
-				const leftTrait = tree.currentView.getTrait(leftTraitLocation);
+				const leftTrait = sharedTree.currentView.getTrait(testTree.left.traitLocation);
 				expect(leftTrait.length).to.equal(3);
 			});
 
 			it('tolerates malformed inserts', () => {
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowMalformed: true });
+				const { sharedTree } = createSimpleTestTree({ allowMalformed: true });
 
-				assertNoDelta(tree, () => {
-					tree.applyEdit(Change.build([], 0 as DetachedSequenceId));
+				assertNoDelta(sharedTree, () => {
+					sharedTree.applyEdit(Change.build([], 0 as DetachedSequenceId));
 				});
 			});
 
@@ -308,180 +348,226 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 		});
 
 		describe('SharedTree in connected state with a remote SharedTree', () => {
-			const treeOptions = { initialTree: simpleTestTree, localMode: false };
-			const secondTreeOptions = {
-				id: 'secondTestSharedTree',
-				localMode: false,
-			};
+			/**
+			 * Initial tree options for multi-tree tests below.
+			 * Intended to be passed to {@link createSimpleTestTree}.
+			 */
+			const tree1Options = { localMode: false };
+
+			/**
+			 * Secondary tree options derived from some initial tree.
+			 */
+			function createSecondTreeOptions(
+				containerRuntimeFactory: MockContainerRuntimeFactory
+			): SharedTreeTestingOptions {
+				return {
+					containerRuntimeFactory,
+					id: 'secondTestSharedTree',
+					localMode: false,
+				};
+			}
 
 			it('should apply remote changes and converge', () => {
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
-				const { tree: secondTree } = setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions });
+				const {
+					sharedTree: sharedTree1,
+					testTree,
+					containerRuntimeFactory,
+				} = createSimpleTestTree(tree1Options);
+				const { tree: sharedTree2 } = setUpTestSharedTree(createSecondTreeOptions(containerRuntimeFactory));
 
 				// Sync initial tree
 				containerRuntimeFactory.processAllMessages();
 
 				// Both trees should contain 'left'
-				expect(tree.currentView.getViewNode(left.identifier)).to.not.be.undefined;
-				expect(secondTree.currentView.getViewNode(left.identifier)).to.not.be.undefined;
+				expect(sharedTree1.currentView.getViewNode(testTree.left.identifier)).to.not.be.undefined;
+				expect(sharedTree2.currentView.getViewNode(testTree.left.identifier)).to.not.be.undefined;
 
-				secondTree.applyEdit(Delete.create(StableRange.only(left)));
+				sharedTree2.applyEdit(Delete.create(StableRange.only(testTree.left)));
 
 				containerRuntimeFactory.processAllMessages();
 
-				const rootA = tree.currentView.getViewNode(simpleTestTree.identifier);
-				expect(rootA.traits.get(leftTraitLabel)).to.be.undefined;
+				const rootA = sharedTree1.currentView.getViewNode(testTree.identifier);
+				expect(rootA.traits.get(testTree.left.traitLabel)).to.be.undefined;
 
-				const rootB = secondTree.currentView.getViewNode(simpleTestTree.identifier);
-				expect(rootB.traits.get(leftTraitLabel)).to.be.undefined;
+				const rootB = sharedTree2.currentView.getViewNode(testTree.identifier);
+				expect(rootB.traits.get(testTree.left.traitLabel)).to.be.undefined;
 			});
 
 			it('should apply local edits after all sequenced edits', () => {
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
-				const { tree: secondTree } = setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions });
+				const {
+					sharedTree: sharedTree1,
+					testTree,
+					containerRuntimeFactory,
+				} = createSimpleTestTree(tree1Options);
+				const { tree: sharedTree2 } = setUpTestSharedTree(createSecondTreeOptions(containerRuntimeFactory));
 
 				// Sync initial tree
 				containerRuntimeFactory.processAllMessages();
 
-				const newNode = makeEmptyNode();
+				const newNode = testTree.buildLeaf();
 
-				tree.applyEdit(...Insert.create([newNode], StablePlace.after(left)));
+				sharedTree1.applyEdit(...Insert.create([newNode], StablePlace.after(testTree.left)));
 
 				containerRuntimeFactory.processAllMessages();
 
 				// Concurrently perform edit that will be sequenced before the move below.
 				// If local edits are sorted incorrectly (before sequenced edits), this will cause evaluation of a state in which the local
 				// move is evaluated before all other edits. Since it is causally dependant on the initial insert edit, it would fail.
-				secondTree.applyEdit(Delete.create(StableRange.only(right)));
+				sharedTree2.applyEdit(Delete.create(StableRange.only(testTree.right)));
 
 				// Attempt to move the new node.
-				tree.applyEdit(...Move.create(StableRange.only(newNode), StablePlace.before(left)));
+				sharedTree1.applyEdit(...Move.create(StableRange.only(newNode), StablePlace.before(testTree.left)));
 
 				// Deliver the remote edit. The move should be applied after all sequenced edits and succeed.
 				containerRuntimeFactory.processAllMessages();
 			});
 
 			it('converges in the face of concurrent changes', () => {
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
-				const { tree: secondTree } = setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions });
+				const {
+					sharedTree: sharedTree1,
+					testTree,
+					containerRuntimeFactory,
+				} = createSimpleTestTree(tree1Options);
+				const { tree: sharedTree2 } = setUpTestSharedTree(createSecondTreeOptions(containerRuntimeFactory));
 
 				// Sync initial tree
 				containerRuntimeFactory.processAllMessages();
 
 				// First client deletes a trait containing a node in the initial tree
-				tree.applyEdit(Delete.create(StableRange.only(left)));
+				sharedTree1.applyEdit(Delete.create(StableRange.only(testTree.left)));
 
 				// Second client concurrently adds a new node to that trait
-				const newNode = makeEmptyNode();
-				secondTree.applyEdit(...Insert.create([newNode], StablePlace.atEndOf(leftTraitLocation)));
+				const newNode = testTree.buildLeaf();
+				sharedTree2.applyEdit(...Insert.create([newNode], StablePlace.atEndOf(testTree.left.traitLocation)));
 
 				containerRuntimeFactory.processAllMessages();
 
 				// Second client's change gets sequenced after the deletion, so the trait
 				// should exist and contain the new node on both clients after messages are delivered.
-				const leftTrait = tree.currentView.getTrait(leftTraitLocation);
-				const secondLeftTrait = secondTree.currentView.getTrait(leftTraitLocation);
+				const leftTrait = sharedTree1.currentView.getTrait(testTree.left.traitLocation);
+				const secondLeftTrait = sharedTree2.currentView.getTrait(testTree.left.traitLocation);
 				expect(leftTrait.length).equals(1);
 				expect(leftTrait[0]).equals(newNode.identifier);
 				expect(leftTrait).deep.equals(secondLeftTrait);
 			});
 
 			it('is equal to a tree with the same state', () => {
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
-				const { tree: secondTree } = setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions });
+				const {
+					sharedTree: sharedTree1,
+					testTree,
+					containerRuntimeFactory,
+				} = createSimpleTestTree(tree1Options);
+				const { tree: sharedTree2 } = setUpTestSharedTree(createSecondTreeOptions(containerRuntimeFactory));
 
 				containerRuntimeFactory.processAllMessages();
-				expect(tree.equals(secondTree)).to.be.true;
-				secondTree.applyEdit(Delete.create(StableRange.only(left)));
+				expect(sharedTree1.equals(sharedTree2)).to.be.true;
+				sharedTree2.applyEdit(Delete.create(StableRange.only(testTree.left)));
 				containerRuntimeFactory.processAllMessages();
-				expect(tree.equals(secondTree)).to.be.true;
+				expect(sharedTree1.equals(sharedTree2)).to.be.true;
 			});
 
 			// TODO:#58052: Make this test pass.
 			it.skip('prevents inserting a node in a detached subtree as the result of merged edits', () => {
-				const rootId = 'root' as NodeId;
-				const parent1Id = 'parent1' as NodeId;
-				const parent2Id = 'parent2' as NodeId;
-				const childId = 'child' as NodeId;
-				const childTraitUnderParent2 = { parent: parent2Id, label: 'child' as TraitLabel };
-				const badTraitUnderChild = { parent: childId, label: 'whatever' as TraitLabel };
+				const { testTree } = createSimpleTestTree();
+
+				const rootNode = testTree.buildLeaf();
+
+				const parent1Node = testTree.buildLeaf();
+
+				const parent2Node = testTree.buildLeaf();
+				const parent2Id = parent2Node.identifier;
+
+				const childNode = testTree.buildLeaf();
+				const childId = childNode.identifier;
+
 				const initialTree = {
-					...makeEmptyNode(rootId),
+					...rootNode,
 					traits: {
 						parents: [
 							{
-								...makeEmptyNode(parent1Id),
-								traits: { child: [makeEmptyNode(childId)] },
+								...parent1Node,
+								traits: { child: [childNode] },
 							},
-							makeEmptyNode(parent2Id),
+							parent2Node,
 						],
 					},
 				};
-				const { tree: tree1, containerRuntimeFactory } = setUpTestSharedTree({
-					...treeOptions,
+
+				const childTraitUnderParent2 = { parent: parent2Id, label: 'child' as TraitLabel };
+				const badTraitUnderChild = { parent: childId, label: 'whatever' as TraitLabel };
+
+				const { tree: sharedTree1, containerRuntimeFactory } = setUpTestSharedTree({
+					...tree1Options,
 					initialTree,
 					allowInvalid: true,
 				});
-				const { tree: tree2 } = setUpTestSharedTree({
-					containerRuntimeFactory,
-					...secondTreeOptions,
+				const { tree: sharedTree2 } = setUpTestSharedTree({
+					...createSecondTreeOptions(containerRuntimeFactory),
 					allowInvalid: true,
 				});
 				containerRuntimeFactory.processAllMessages();
 
 				// Move the child under parent2
 				// This first edit should succeed locally and globally
-				const edit1 = tree1.applyEdit(
+				const edit1 = sharedTree1.applyEdit(
 					...Move.create(StableRange.only(childId), StablePlace.atStartOf(childTraitUnderParent2))
 				);
 
 				// Concurrently move parent2 under child
 				// This first edit should succeed locally but fail globally
-				const edit2 = tree2.applyEdit(
+				const edit2 = sharedTree2.applyEdit(
 					...Move.create(StableRange.only(parent2Id), StablePlace.atStartOf(badTraitUnderChild))
 				);
 
 				containerRuntimeFactory.processAllMessages();
-				const logViewer = tree1.logViewer as CachingLogViewer<Change>;
+				const logViewer = sharedTree1.logViewer as CachingLogViewer<Change>;
 				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(edit1.id)).status).equals(
 					EditStatus.Applied
 				);
 				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(edit2.id)).status).equals(
 					EditStatus.Invalid
 				);
-				tree1.currentView.assertConsistent();
+				sharedTree1.currentView.assertConsistent();
 			});
 
 			it('tolerates invalid inserts', () => {
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, allowInvalid: true });
-				const { tree: secondTree } = setUpTestSharedTree({
+				const {
+					sharedTree: sharedTree1,
+					testTree,
 					containerRuntimeFactory,
-					...secondTreeOptions,
+				} = createSimpleTestTree({
+					...tree1Options,
+					allowInvalid: true,
+				});
+				const { tree: sharedTree2 } = setUpTestSharedTree({
+					...createSecondTreeOptions(containerRuntimeFactory),
 					allowInvalid: true,
 				});
 
 				containerRuntimeFactory.processAllMessages();
 
-				const firstNode = makeEmptyNode();
-				const firstEdit = secondTree.applyEdit(...Insert.create([firstNode], StablePlace.after(left)));
+				const firstNode = testTree.buildLeaf();
+				const firstEdit = sharedTree2.applyEdit(
+					...Insert.create([firstNode], StablePlace.after(testTree.left))
+				);
 				containerRuntimeFactory.processAllMessages();
 
 				// Concurrently edit, creating invalid insert.
 				// Create delete. This will apply.
-				const secondEdit = tree.applyEdit(Delete.create(StableRange.only(firstNode)));
+				const secondEdit = sharedTree1.applyEdit(Delete.create(StableRange.only(firstNode)));
 
 				let thirdEdit;
-				assertNoDelta(tree, () => {
+				assertNoDelta(sharedTree1, () => {
 					// concurrently insert next to the deleted node: this will become invalid.
-					const secondNode = makeEmptyNode();
-					thirdEdit = secondTree.applyEdit(...Insert.create([secondNode], StablePlace.after(firstNode)));
+					const secondNode = testTree.buildLeaf();
+					thirdEdit = sharedTree2.applyEdit(...Insert.create([secondNode], StablePlace.after(firstNode)));
 					containerRuntimeFactory.processAllMessages();
 				});
 
-				const leftTrait = secondTree.currentView.getTrait(leftTraitLocation);
+				const leftTrait = sharedTree2.currentView.getTrait(testTree.left.traitLocation);
 				expect(leftTrait.length).to.equal(1);
 
-				const editIds = tree.edits.editIds;
+				const editIds = sharedTree1.edits.editIds;
 
 				// Edit 0 creates initial tree
 				expect(editIds[1]).is.equal(firstEdit.id);
@@ -490,30 +576,31 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 			});
 
 			it('tolerates invalid detaches', () => {
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, allowInvalid: true });
-				const { tree: secondTree } = setUpTestSharedTree({
+				const {
+					sharedTree: sharedTree1,
+					testTree,
 					containerRuntimeFactory,
-					...secondTreeOptions,
-				});
+				} = createSimpleTestTree({ ...tree1Options, allowInvalid: true });
+				const { tree: sharedTree2 } = setUpTestSharedTree(createSecondTreeOptions(containerRuntimeFactory));
 
 				containerRuntimeFactory.processAllMessages();
 
-				const firstNode = makeEmptyNode();
-				const secondNode = makeEmptyNode();
-				const thirdNode = makeEmptyNode();
-				const firstEdit = secondTree.applyEdit(
-					...Insert.create([firstNode, secondNode, thirdNode], StablePlace.after(left))
+				const firstNode = testTree.buildLeaf();
+				const secondNode = testTree.buildLeaf();
+				const thirdNode = testTree.buildLeaf();
+				const firstEdit = sharedTree2.applyEdit(
+					...Insert.create([firstNode, secondNode, thirdNode], StablePlace.after(testTree.left))
 				);
 				containerRuntimeFactory.processAllMessages();
 
 				// Concurrently edit, creating invalid insert.
 				// Create delete. This will apply.
-				const secondEdit = tree.applyEdit(Delete.create(StableRange.only(secondNode)));
+				const secondEdit = sharedTree1.applyEdit(Delete.create(StableRange.only(secondNode)));
 
 				let thirdEdit;
-				assertNoDelta(tree, () => {
+				assertNoDelta(sharedTree1, () => {
 					// concurrently delete from before firstNode to after secondNode: this should become invalid
-					thirdEdit = secondTree.applyEdit(
+					thirdEdit = sharedTree2.applyEdit(
 						Delete.create(StableRange.from(StablePlace.before(firstNode)).to(StablePlace.after(secondNode)))
 					);
 				});
@@ -521,10 +608,10 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				containerRuntimeFactory.processAllMessages();
 
 				// Expect that firstNode did not get deleted
-				const leftTrait = tree.currentView.getTrait(leftTraitLocation);
+				const leftTrait = sharedTree1.currentView.getTrait(testTree.left.traitLocation);
 				expect(leftTrait.length).to.equal(3);
 
-				const editIds = tree.edits.editIds;
+				const editIds = sharedTree1.edits.editIds;
 				// Edit 0 creates initial tree
 				expect(editIds[1]).to.equal(firstEdit.id);
 				expect(editIds[2]).to.equal(secondEdit.id);
@@ -532,23 +619,23 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 			});
 
 			it('tolerates malformed inserts', () => {
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, allowMalformed: true });
-				const { tree: secondTree } = setUpTestSharedTree({
-					containerRuntimeFactory,
-					...secondTreeOptions,
+				const { sharedTree: sharedTree1, containerRuntimeFactory } = createSimpleTestTree({
+					...tree1Options,
+					allowMalformed: true,
 				});
+				const { tree: sharedTree2 } = setUpTestSharedTree(createSecondTreeOptions(containerRuntimeFactory));
 
 				containerRuntimeFactory.processAllMessages();
 
 				let editId!: EditId;
-				assertNoDelta(tree, () => {
+				assertNoDelta(sharedTree1, () => {
 					const build = Change.build([], 0 as DetachedSequenceId);
-					editId = secondTree.applyEdit(build).id;
+					editId = sharedTree2.applyEdit(build).id;
 					containerRuntimeFactory.processAllMessages();
 				});
 
 				// Edit 0 creates initial tree
-				expect(tree.edits.getIdAtIndex(1)).to.equal(editId);
+				expect(sharedTree1.edits.getIdAtIndex(1)).to.equal(editId);
 			});
 
 			runSharedTreeUndoRedoTestSuite({ localMode: false, ...undoRedoOptions });
@@ -556,21 +643,19 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 			// This is a regression test for documents corrupted by the following github issue:
 			// https://github.com/microsoft/FluidFramework/issues/4399
 			it('tolerates duplicate edits in trailing operations', () => {
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions });
+				const { sharedTree: sharedTree1, containerRuntimeFactory } = createSimpleTestTree(tree1Options);
 				const remoteRuntime = containerRuntimeFactory.createContainerRuntime(new MockFluidDataStoreRuntime());
-				const defaultEdits = tree.edits.length;
+				const defaultEdits = sharedTree1.edits.length;
 				const edit = newEdit([]);
 				for (let submissions = 0; submissions < 2; submissions++) {
 					remoteRuntime.submit({ type: SharedTreeOpType.Edit, edit }, /* localOpMetadata */ undefined);
 				}
 				containerRuntimeFactory.processAllMessages();
-				expect(tree.edits.length).to.equal(defaultEdits + 1);
+				expect(sharedTree1.edits.length).to.equal(defaultEdits + 1);
 			});
 		});
 
 		describe('SharedTree summarizing', () => {
-			const treeOptions = { initialTree: simpleTestTree, localMode: false };
-			const newNode = makeEmptyNode();
 			const testHandle = new TestFluidHandle();
 
 			it('throws error when given bad json input', () => {
@@ -592,17 +677,17 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 			[true, false].forEach((hasLocalEdits) => {
 				it(`produces correct snapshot for a tree with ${hasLocalEdits ? 'local' : 'acked'} edits`, () => {
 					// The initial tree results in an edit.
-					const { tree, containerRuntimeFactory } = setUpTestSharedTree({
-						initialTree: treeOptions.initialTree,
+					const { sharedTree, testTree, containerRuntimeFactory } = createSimpleTestTree({
 						localMode: hasLocalEdits,
 					});
 
-					tree.applyEdit(...Insert.create([newNode], StablePlace.before(left)));
+					const newNode = testTree.buildLeaf();
+					sharedTree.applyEdit(...Insert.create([newNode], StablePlace.before(testTree.left)));
 					if (!hasLocalEdits) {
 						containerRuntimeFactory.processAllMessages();
 					}
 
-					const serialized = serialize(tree.saveSummary(), testSerializer, testHandle);
+					const serialized = serialize(sharedTree.saveSummary(), testSerializer, testHandle);
 					const treeContent = JSON.parse(serialized);
 					const parsedTree = treeContent as SharedTreeSummary_0_0_2<Change>;
 
@@ -626,100 +711,114 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 			});
 
 			it('can be used to initialize a tree', () => {
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
-				const { tree: secondTree } = setUpTestSharedTree();
+				const {
+					sharedTree: sharedTree1,
+					testTree: testTree1,
+					containerRuntimeFactory,
+				} = createSimpleTestTree({ localMode: false });
+				const { sharedTree: sharedTree2 } = createSimpleTestTree();
 
-				tree.applyEdit(...Insert.create([newNode], StablePlace.before(left)));
+				const newNode = testTree1.buildLeaf();
+
+				sharedTree1.applyEdit(...Insert.create([newNode], StablePlace.before(testTree1.left)));
 				containerRuntimeFactory.processAllMessages();
 
-				secondTree.loadSummary(tree.saveSummary());
+				sharedTree2.loadSummary(sharedTree1.saveSummary());
 
 				// Trees should have equal state since we deserialized the first tree's state into the second tree
-				expect(tree.equals(secondTree)).to.be.true;
+				expect(sharedTree1.equals(sharedTree2)).to.be.true;
 			});
 
 			it('can be used to initialize a tree with an empty edit list', () => {
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
-				const { tree: secondTree } = setUpTestSharedTree();
+				const { sharedTree: sharedTree1, containerRuntimeFactory } = createSimpleTestTree({ localMode: false });
+				const { sharedTree: sharedTree2 } = createSimpleTestTree();
 
 				containerRuntimeFactory.processAllMessages();
 
 				// The second tree is not caught up to the first tree yet
-				expect(tree.equals(secondTree)).to.be.false;
+				expect(sharedTree1.equals(sharedTree2)).to.be.false;
 
-				secondTree.loadSummary(tree.saveSummary());
+				sharedTree2.loadSummary(sharedTree1.saveSummary());
 
 				// Trees should have equal state since we deserialized the first tree's state into the second tree
-				expect(tree.equals(secondTree)).to.be.true;
+				expect(sharedTree1.equals(sharedTree2)).to.be.true;
 			});
 
 			it('asserts when loading a summary with duplicated edits', () => {
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree({
-					...treeOptions,
+				const {
+					sharedTree: sharedTree1,
+					testTree: testTree1,
+					containerRuntimeFactory,
+				} = createSimpleTestTree({
+					localMode: false,
 					summarizeHistory: true,
 				});
-				const { tree: secondTree } = setUpTestSharedTree();
+				const { sharedTree: sharedTree2 } = createSimpleTestTree();
 
-				tree.applyEdit(...Insert.create([newNode], StablePlace.before(left)));
+				const newNode = testTree1.buildLeaf();
+
+				sharedTree1.applyEdit(...Insert.create([newNode], StablePlace.before(testTree1.left)));
 				containerRuntimeFactory.processAllMessages();
-				const summary = tree.saveSummary() as SharedTreeSummary_0_0_2<Change>;
+				const summary = sharedTree1.saveSummary() as SharedTreeSummary_0_0_2<Change>;
 				const sequencedEdits = assertNotUndefined(summary.sequencedEdits).slice();
 				sequencedEdits.push(sequencedEdits[0]);
 				const corruptedSummary = {
 					...summary,
 					sequencedEdits,
 				};
-				expect(() => secondTree.loadSummary(corruptedSummary))
+				expect(() => sharedTree2.loadSummary(corruptedSummary))
 					.to.throw(Error)
 					.that.has.property('message')
 					.which.matches(/Duplicate/);
 			});
 
 			it('can be used without history preservation', async () => {
-				const { tree } = setUpTestSharedTree({
-					initialTree: simpleTestTree,
+				const { sharedTree, testTree } = createSimpleTestTree({
 					localMode: true,
 					summarizeHistory: false,
 				});
 
-				const { id } = tree.applyEdit(...Insert.create([newNode], StablePlace.before(left)));
-				const view = tree.currentView;
-				const summary = tree.saveSummary();
+				const newNode = testTree.buildLeaf();
+				const { id } = sharedTree.applyEdit(...Insert.create([newNode], StablePlace.before(testTree.left)));
+				const view = sharedTree.currentView;
+				const summary = sharedTree.saveSummary();
 
-				tree.loadSummary(summary);
+				sharedTree.loadSummary(summary);
 
 				// The current state of the tree should be identical to the one contained in the old summary.
-				expect(tree.currentView.equals(view)).to.be.true;
+				expect(sharedTree.currentView.equals(view)).to.be.true;
 
 				// The history should have been dropped by the default handling behavior.
 				// It will contain a single entry setting the tree to equal the head revision.
-				expect(tree.edits.length).to.equal(1);
-				expect(await tree.edits.tryGetEdit(id)).to.be.undefined;
+				expect(sharedTree.edits.length).to.equal(1);
+				expect(await sharedTree.edits.tryGetEdit(id)).to.be.undefined;
 			});
 
 			// TODO:#49901: Enable these tests once we write edit chunk handles to summaries
 			it.skip('does not swallow errors in asynchronous blob uploading', async () => {
 				const errorMessage = 'Simulated exception in uploadBlob';
-				const { tree, componentRuntime, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
+				const { sharedTree, testTree, componentRuntime, containerRuntimeFactory } = createSimpleTestTree({
+					localMode: false,
+				});
 				componentRuntime.uploadBlob = async () => {
 					throw new Error(errorMessage);
 				};
 
 				let treeErrorEventWasInvoked = false;
-				tree.on('error', (error: unknown) => {
+				sharedTree.on('error', (error: unknown) => {
 					treeErrorEventWasInvoked = true;
 					expect(error).to.have.property('message').which.equals(errorMessage);
 				});
 
 				// Generate enough edits to cause a chunk upload.
-				for (let i = 0; i < (tree.edits as EditLog).editsPerChunk / 2 + 1; i++) {
-					const insertee = makeEmptyNode();
-					tree.applyEdit(...Insert.create([insertee], StablePlace.before(left)));
-					tree.applyEdit(Delete.create(StableRange.only(insertee)));
+				for (let i = 0; i < (sharedTree.edits as EditLog).editsPerChunk / 2 + 1; i++) {
+					const insertee = testTree.buildLeaf();
+					sharedTree.applyEdit(...Insert.create([insertee], StablePlace.before(testTree.left)));
+					sharedTree.applyEdit(Delete.create(StableRange.only(insertee)));
 				}
 
 				containerRuntimeFactory.processAllMessages();
-				tree.saveSummary();
+				sharedTree.saveSummary();
 
 				// Just waiting for the ChunksEmitted event here isn't sufficient, as the SharedTree error
 				// will propagate in a separate promise chain.
@@ -729,9 +828,10 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 		});
 
 		describe('correctly diffs revision views', () => {
+			const testTree = refreshSimpleSharedTree(() => setUpTestSharedTree().tree);
+
 			it('that are the same object', () => {
-				const id = uuidv4() as NodeId;
-				const view = RevisionView.fromTree(makeEmptyNode(id));
+				const view = RevisionView.fromTree(testTree.buildLeaf());
 				expect(view.delta(view)).deep.equals({
 					changed: [],
 					added: [],
@@ -740,7 +840,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 			});
 
 			it('that have the same tree', () => {
-				const node = makeEmptyNode();
+				const node = testTree.buildLeaf();
 				const viewA = RevisionView.fromTree(node);
 				const viewB = RevisionView.fromTree(node);
 				expect(viewA.delta(viewB)).deep.equals({
@@ -751,43 +851,42 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 			});
 
 			it('with different root ids', () => {
-				const viewA = RevisionView.fromTree(makeEmptyNode());
-				const viewB = RevisionView.fromTree(makeEmptyNode());
+				const viewA = RevisionView.fromTree(testTree.buildLeaf());
+				const viewB = RevisionView.fromTree(testTree.buildLeaf());
 				expect(() => viewA.delta(viewB)).to.throw(
 					'Delta can only be calculated between views that share a root'
 				);
 			});
 
 			it('with different subtrees', () => {
-				const rootId = uuidv4() as NodeId;
-				const subtreeA = uuidv4() as NodeId;
-				const subtreeB = uuidv4() as NodeId;
-				const leafA = makeEmptyNode();
-				const leafB = makeEmptyNode();
+				const rootId = testTree.generateId();
+
+				const leafA = testTree.buildLeaf();
+				const leafB = testTree.buildLeaf();
+
+				const subtreeA = {
+					identifier: testTree.generateId(),
+					definition: 'node' as Definition,
+					traits: { children: [leafA] },
+				};
+				const subtreeB = {
+					identifier: testTree.generateId(),
+					definition: 'node' as Definition,
+					traits: { children: [leafB] },
+				};
+
 				const rootA: ChangeNode = {
 					identifier: rootId,
 					definition: 'node' as Definition,
 					traits: {
-						children: [
-							{
-								identifier: subtreeA,
-								definition: 'node' as Definition,
-								traits: { children: [leafA] },
-							},
-						],
+						children: [subtreeA],
 					},
 				};
 				const rootB: ChangeNode = {
 					identifier: rootId,
 					definition: 'node' as Definition,
 					traits: {
-						children: [
-							{
-								identifier: subtreeB,
-								definition: 'node' as Definition,
-								traits: { children: [leafB] },
-							},
-						],
+						children: [subtreeB],
 					},
 				};
 
@@ -797,14 +896,14 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				expect(delta.changed).deep.equals([rootId]);
 				expect(delta.removed.length).equals(2);
 				expect(delta.added.length).equals(2);
-				expect(delta.removed).contains(subtreeA);
+				expect(delta.removed).contains(subtreeA.identifier);
 				expect(delta.removed).contains(leafA.identifier);
-				expect(delta.added).contains(subtreeB);
+				expect(delta.added).contains(subtreeB.identifier);
 				expect(delta.added).contains(leafB.identifier);
 			});
 
 			it('with different payloads', () => {
-				const rootId = uuidv4() as NodeId;
+				const rootId = testTree.generateId();
 				const nodeA: ChangeNode = {
 					identifier: rootId,
 					definition: 'node' as Definition,
@@ -827,41 +926,43 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 			});
 
 			it('after an insert', () => {
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+				const { sharedTree, testTree } = createSimpleTestTree();
 
-				const viewA = tree.currentView;
-				const insertedNode = makeEmptyNode();
-				tree.applyEdit(...Insert.create([insertedNode], StablePlace.before(left)));
-				const viewB = tree.currentView;
+				const viewA = sharedTree.currentView;
+				const insertedNode = testTree.buildLeaf();
+				sharedTree.applyEdit(...Insert.create([insertedNode], StablePlace.before(testTree.left)));
+				const viewB = sharedTree.currentView;
 				const delta = viewA.delta(viewB);
 				assert(delta);
-				expect(delta.changed).deep.equals([simpleTestTree.identifier]);
+				expect(delta.changed).deep.equals([testTree.identifier]);
 				expect(delta.removed).deep.equals([]);
 				expect(delta.added).deep.equals([insertedNode.identifier]);
 			});
 
 			it('after a delete', () => {
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+				const { sharedTree, testTree } = createSimpleTestTree();
 
-				const viewA = tree.currentView;
-				tree.applyEdit(Delete.create(StableRange.only(left)));
-				const viewB = tree.currentView;
+				const viewA = sharedTree.currentView;
+				sharedTree.applyEdit(Delete.create(StableRange.only(testTree.left)));
+				const viewB = sharedTree.currentView;
 				const delta = viewA.delta(viewB);
 				assert(delta);
-				expect(delta.changed).deep.equals([simpleTestTree.identifier]);
-				expect(delta.removed).deep.equals([left.identifier]);
+				expect(delta.changed).deep.equals([testTree.identifier]);
+				expect(delta.removed).deep.equals([testTree.left.identifier]);
 				expect(delta.added).deep.equals([]);
 			});
 
 			it('after a move', () => {
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+				const { sharedTree, testTree } = createSimpleTestTree();
 
-				const viewA = tree.currentView;
-				tree.applyEdit(...Move.create(StableRange.only(left), StablePlace.after(right)));
-				const viewB = tree.currentView;
+				const viewA = sharedTree.currentView;
+				sharedTree.applyEdit(
+					...Move.create(StableRange.only(testTree.left), StablePlace.after(testTree.right))
+				);
+				const viewB = sharedTree.currentView;
 				const delta = viewA.delta(viewB);
 				assert(delta);
-				expect(delta.changed).deep.equals([simpleTestTree.identifier]);
+				expect(delta.changed).deep.equals([testTree.identifier]);
 				expect(delta.removed).deep.equals([]);
 				expect(delta.added).deep.equals([]);
 			});
@@ -870,53 +971,53 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 		describe('handles', () => {
 			it('can reference a node', () => {
 				// Test that a handle can wrap a node and retrieve that node's properties
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
-				const leftHandle = new TreeNodeHandle(tree.currentView, left.identifier);
-				expect(areNodesEquivalent(left, leftHandle)).to.be.true;
-				expect(areNodesEquivalent(right, leftHandle)).to.be.false;
+				const { sharedTree, testTree } = createSimpleTestTree();
+				const leftHandle = new TreeNodeHandle(sharedTree.currentView, testTree.left.identifier);
+				expect(areNodesEquivalent(testTree.left, leftHandle)).to.be.true;
+				expect(areNodesEquivalent(testTree.right, leftHandle)).to.be.false;
 			});
 
 			it('can create handles from children', () => {
 				// Test that when retrieving children via the "traits" property of a handle, the
 				// children are also wrapped in handles
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
-				const rootHandle = new TreeNodeHandle(tree.currentView, simpleTestTree.identifier);
-				expect(areNodesEquivalent(simpleTestTree, rootHandle)).to.be.true;
+				const { sharedTree, testTree } = createSimpleTestTree();
+				const rootHandle = new TreeNodeHandle(sharedTree.currentView, testTree.identifier);
+				expect(areNodesEquivalent(testTree, rootHandle)).to.be.true;
 				const leftHandle = rootHandle.traits.left[0];
-				expect(areNodesEquivalent(left, leftHandle)).to.be.true;
+				expect(areNodesEquivalent(testTree.left, leftHandle)).to.be.true;
 				expect(leftHandle instanceof TreeNodeHandle).to.be.true;
 			});
 
 			it('do not update when the current view of the tree changes', () => {
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
-				const leftHandle = new TreeNodeHandle(tree.currentView, left.identifier);
+				const { sharedTree, testTree } = createSimpleTestTree();
+				const leftHandle = new TreeNodeHandle(sharedTree.currentView, testTree.left.identifier);
 				expect(leftHandle.traits.right).to.be.undefined;
 				// Move "right" under "left"
-				tree.applyEdit(
+				sharedTree.applyEdit(
 					...Move.create(
-						StableRange.only(right),
-						StablePlace.atStartOf({ parent: left.identifier, label: rightTraitLabel })
+						StableRange.only(testTree.right),
+						StablePlace.atStartOf({ parent: testTree.left.identifier, label: testTree.right.traitLabel })
 					)
 				);
 				expect(leftHandle.traits.right).to.be.undefined;
 			});
 
 			it('can be fully demanded', () => {
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
-				const rootHandle = new TreeNodeHandle(tree.currentView, simpleTestTree.identifier);
+				const { sharedTree, testTree } = createSimpleTestTree();
+				const rootHandle = new TreeNodeHandle(sharedTree.currentView, testTree.identifier);
 				const rootNode = rootHandle.demandTree();
-				expect(areNodesEquivalent(simpleTestTree, rootNode)).to.be.true;
+				expect(areNodesEquivalent(testTree, rootNode)).to.be.true;
 				const printBeforeDemand = JSON.stringify(rootNode);
 				// Demand the tree by walking into its traits. If they were lazy, this would change the `rootNode` object.
-				expect(areNodesEquivalent(left, rootNode.traits.left[0])).to.be.true;
-				expect(areNodesEquivalent(right, rootNode.traits.right[0])).to.be.true;
+				expect(areNodesEquivalent(testTree.left, rootNode.traits.left[0])).to.be.true;
+				expect(areNodesEquivalent(testTree.right, rootNode.traits.right[0])).to.be.true;
 				// Ensure that they were _not_ lazy by comparing with the initial print of the tree
 				expect(JSON.stringify(rootNode)).equals(printBeforeDemand);
 			});
 
 			it('implement toString', () => {
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
-				const rootHandle = new TreeNodeHandle(tree.currentView, simpleTestTree.identifier);
+				const { sharedTree, testTree } = createSimpleTestTree();
+				const rootHandle = new TreeNodeHandle(sharedTree.currentView, testTree.identifier);
 				const print = `${rootHandle}`;
 				// Shouldn't print the default toString for objects
 				expect(print.startsWith('[object')).to.be.false;
@@ -928,18 +1029,19 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				it('decorates events with the correct properties', async () => {
 					// Test that a handle can wrap a node and retrieve that node's properties
 					const events: ITelemetryBaseEvent[] = [];
-					const { tree, containerRuntimeFactory } = setUpTestSharedTree({
-						initialTree: simpleTestTree,
+					const { sharedTree, testTree, containerRuntimeFactory } = createSimpleTestTree({
 						logger: { send: (event) => events.push(event) },
 						allowInvalid: true,
 					});
-					useFailedSequencedEditTelemetry(tree);
+					useFailedSequencedEditTelemetry(sharedTree);
 
 					// Invalid edit
-					tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode())));
+					sharedTree.applyEdit(
+						...Insert.create([testTree.buildLeaf()], StablePlace.after(testTree.buildLeaf()))
+					);
 					containerRuntimeFactory.processAllMessages();
 					// Force demand, which will cause a telemetry event for the invalid edit to be emitted
-					await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
 					expect(events.length).is.greaterThan(0);
 					events.forEach((event) => {
 						expect(isSharedTreeEvent(event)).is.true;
@@ -948,19 +1050,20 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 
 				it('is logged for invalid locally generated edits when those edits are sequenced', async () => {
 					const events: ITelemetryBaseEvent[] = [];
-					const { tree, containerRuntimeFactory } = setUpTestSharedTree({
-						initialTree: simpleTestTree,
+					const { sharedTree, testTree, containerRuntimeFactory } = createSimpleTestTree({
 						logger: { send: (event) => events.push(event) },
 						allowInvalid: true,
 					});
-					useFailedSequencedEditTelemetry(tree);
+					useFailedSequencedEditTelemetry(sharedTree);
 
 					// Invalid edit
-					tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode())));
+					sharedTree.applyEdit(
+						...Insert.create([testTree.buildLeaf()], StablePlace.after(testTree.buildLeaf()))
+					);
 					expect(events.length).equals(0);
 					containerRuntimeFactory.processAllMessages();
 					// Force demand, which will cause a telemetry event for the invalid edit to be emitted
-					await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
 					expect(events.length).equals(1);
 					expect(events[0].category).equals('generic');
 					expect(events[0].eventName).equals('SharedTree:SequencedEditApplied:InvalidSharedTreeEdit');
@@ -968,68 +1071,73 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 
 				it('can be disabled and re-enabled', async () => {
 					const events: ITelemetryBaseEvent[] = [];
-					const { tree, containerRuntimeFactory } = setUpTestSharedTree({
-						initialTree: simpleTestTree,
+					const { sharedTree, testTree, containerRuntimeFactory } = createSimpleTestTree({
 						logger: { send: (event) => events.push(event) },
 						allowInvalid: true,
 					});
-					const { disable } = useFailedSequencedEditTelemetry(tree);
+					const { disable } = useFailedSequencedEditTelemetry(sharedTree);
 
-					tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode())));
+					sharedTree.applyEdit(
+						...Insert.create([testTree.buildLeaf()], StablePlace.after(testTree.buildLeaf()))
+					);
 					expect(events.length).equals(0);
 					containerRuntimeFactory.processAllMessages();
-					await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
 					expect(events.length).equals(1);
 					expect(events[0].eventName).equals('SharedTree:SequencedEditApplied:InvalidSharedTreeEdit');
 
 					disable();
 
-					tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode())));
+					sharedTree.applyEdit(
+						...Insert.create([testTree.buildLeaf()], StablePlace.after(testTree.buildLeaf()))
+					);
 					containerRuntimeFactory.processAllMessages();
-					await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
 					expect(events.length).equals(1);
 
-					useFailedSequencedEditTelemetry(tree);
+					useFailedSequencedEditTelemetry(sharedTree);
 
-					tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode())));
+					sharedTree.applyEdit(
+						...Insert.create([testTree.buildLeaf()], StablePlace.after(testTree.buildLeaf()))
+					);
 					containerRuntimeFactory.processAllMessages();
-					await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
 					expect(events.length).equals(2);
 					expect(events[1].eventName).equals('SharedTree:SequencedEditApplied:InvalidSharedTreeEdit');
 				});
 
 				it('is not logged for valid edits', async () => {
 					const events: ITelemetryBaseEvent[] = [];
-					const { tree, containerRuntimeFactory } = setUpTestSharedTree({
-						initialTree: simpleTestTree,
+					const { sharedTree, testTree, containerRuntimeFactory } = createSimpleTestTree({
 						logger: { send: (event) => events.push(event) },
 					});
-					useFailedSequencedEditTelemetry(tree);
+					useFailedSequencedEditTelemetry(sharedTree);
 
-					tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(left)));
+					sharedTree.applyEdit(...Insert.create([testTree.buildLeaf()], StablePlace.after(testTree.left)));
 					containerRuntimeFactory.processAllMessages();
-					await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
 					expect(events.length).equals(0);
 				});
 
 				it('is not logged for remote edits', async () => {
 					const events: ITelemetryBaseEvent[] = [];
-					const { tree, containerRuntimeFactory } = setUpTestSharedTree({
-						initialTree: simpleTestTree,
+					const { sharedTree: sharedTree1, containerRuntimeFactory } = createSimpleTestTree({
 						logger: { send: (event) => events.push(event) },
 						allowInvalid: true,
 						localMode: false,
 					});
-					const { tree: secondTree } = setUpTestSharedTree({
+					const { sharedTree: sharedTree2, testTree: testTree2 } = createSimpleTestTree({
 						containerRuntimeFactory,
 						id: 'secondTestSharedTree',
 						localMode: false,
 					});
-					useFailedSequencedEditTelemetry(tree);
+					useFailedSequencedEditTelemetry(sharedTree1);
 
-					secondTree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode())));
+					sharedTree2.applyEdit(
+						...Insert.create([testTree2.buildLeaf()], StablePlace.after(testTree2.buildLeaf()))
+					);
 					containerRuntimeFactory.processAllMessages();
-					await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					await sharedTree1.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
 					expect(events.length).equals(0);
 				});
 			});
@@ -1037,57 +1145,61 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 
 		describe('Events', () => {
 			it('fires an event when an edit is committed', () => {
-				const { tree } = setUpTestSharedTree({
-					initialTree: simpleTestTree,
-				});
+				const { sharedTree, testTree } = createSimpleTestTree();
 
 				let eventCount = 0;
 				let editIdFromEvent: EditId | undefined;
-				tree.on(SharedTreeEvent.EditCommitted, (args: EditCommittedEventArguments<TSharedTree>) => {
+				sharedTree.on(SharedTreeEvent.EditCommitted, (args: EditCommittedEventArguments<TSharedTree>) => {
 					expect(args.local).true;
-					expect(args.tree).equals(tree);
+					expect(args.tree).equals(sharedTree);
 					editIdFromEvent = args.editId;
 					eventCount += 1;
 				});
 
 				// Invalid change
-				const invalidEdit = tree.applyEdit(
-					...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode()))
+				const invalidEdit = sharedTree.applyEdit(
+					...Insert.create([testTree.buildLeaf()], StablePlace.after(testTree.buildLeaf()))
 				);
 				expect(editIdFromEvent).equals(invalidEdit.id);
 				expect(eventCount).equals(1);
 
 				// Valid change
-				const { id } = tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(left)));
+				const { id } = sharedTree.applyEdit(
+					...Insert.create([testTree.buildLeaf()], StablePlace.after(testTree.left))
+				);
 				expect(editIdFromEvent).equals(id);
 				expect(eventCount).equals(2);
 			});
 
 			it('fires an event when a sequenced edit is applied', async () => {
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree({
-					initialTree: simpleTestTree,
+				const {
+					sharedTree: sharedTree1,
+					testTree,
+					containerRuntimeFactory,
+				} = createSimpleTestTree({
 					allowInvalid: true,
 					localMode: false,
 				});
-				const { tree: secondTree } = setUpTestSharedTree({
+				const { tree: sharedTree2 } = setUpTestSharedTree({
 					containerRuntimeFactory,
 					id: 'secondTestSharedTree',
 					localMode: false,
 				});
 
 				containerRuntimeFactory.processAllMessages();
-				await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+				await sharedTree1.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
 
 				const eventArgs: SequencedEditAppliedEventArguments<TSharedTree>[] = [];
-				tree.on(SharedTreeEvent.SequencedEditApplied, (args: SequencedEditAppliedEventArguments<TSharedTree>) =>
-					eventArgs.push(args)
+				sharedTree1.on(
+					SharedTreeEvent.SequencedEditApplied,
+					(args: SequencedEditAppliedEventArguments<TSharedTree>) => eventArgs.push(args)
 				);
 
-				const change = Change.setPayload(makeEmptyNode().identifier, 42);
 				// Invalid change
-				const invalidEdit = tree.applyEdit(change);
+				const change = Change.setPayload(testTree.buildLeaf().identifier, 42);
+				const invalidEdit = sharedTree1.applyEdit(change);
 				containerRuntimeFactory.processAllMessages();
-				await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+				await sharedTree1.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
 
 				expect(eventArgs.length).equals(1);
 				expect(eventArgs[0].edit.id).equals(invalidEdit.id);
@@ -1096,12 +1208,16 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				expect(eventArgs[0].outcome.status).equals(EditStatus.Invalid);
 
 				// Valid change
-				const validEdit1 = secondTree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(left)));
+				const validEdit1 = sharedTree2.applyEdit(
+					...Insert.create([testTree.buildLeaf()], StablePlace.after(testTree.left))
+				);
 
 				// Valid change
-				const validEdit2 = tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(left)));
+				const validEdit2 = sharedTree1.applyEdit(
+					...Insert.create([testTree.buildLeaf()], StablePlace.after(testTree.left))
+				);
 				containerRuntimeFactory.processAllMessages();
-				await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+				await sharedTree1.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
 
 				expect(eventArgs.length).equals(3);
 				expect(eventArgs[1].edit.id).equals(validEdit1.id);

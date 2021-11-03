@@ -22,7 +22,7 @@ import {
 	Transaction,
 	ChangeInternal,
 } from '../index';
-import { SimpleTestTree } from './utilities/TestNode';
+import { TestTree } from './utilities/TestNode';
 import { setUpTestSharedTree, SharedTreeTestingOptions, testSimpleSharedTree } from './utilities/TestUtilities';
 
 /**
@@ -49,7 +49,7 @@ export function checkoutTests(
 	async function countViewChange(
 		action: (
 			checkout: Checkout<Change, ChangeInternal, Transaction.Failure>,
-			simpleTestTree: SimpleTestTree,
+			simpleTestTree: TestTree,
 			data: { changeCount: number }
 		) => void | Promise<void>,
 		options: SharedTreeTestingOptions = { localMode: true }
@@ -79,7 +79,7 @@ export function checkoutTests(
 	async function setUpTestTreeCheckout(): Promise<{
 		checkout: Checkout<Change, ChangeInternal, Transaction.Failure>;
 		sharedTree: SharedTree;
-		testTree: SimpleTestTree;
+		testTree: TestTree;
 	}> {
 		const { checkout, tree } = await setUpTestCheckout();
 		const testTree = testSimpleSharedTree(tree);

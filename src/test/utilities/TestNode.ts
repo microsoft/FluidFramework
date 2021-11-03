@@ -50,10 +50,6 @@ export class SimpleTestTree implements TestTree {
 	public readonly right: TestNode;
 	public readonly expensiveValidation;
 
-	public static beforeEach(generateId: () => NodeId, fn?: (testTree: SimpleTestTree) => void): TestTree {
-		return new BeforeEachTestTree(() => new SimpleTestTree(generateId), fn);
-	}
-
 	public constructor(public generateId: () => NodeId, expensiveValidation = true) {
 		const leftIdentifier = this.generateId();
 		const rightIdentifier = this.generateId();
@@ -133,12 +129,13 @@ export class SimpleTestTree implements TestTree {
 	}
 }
 
-class BeforeEachTestTree<T extends TestTree> implements TestTree {
+/** A TestTree which resets before each test */
+export class RefreshingTestTree<T extends TestTree> implements TestTree {
 	private _testTree?: T;
 
-	public constructor(createTree: () => T, fn?: (testTree: T) => void) {
+	public constructor(createTestTree: () => T, fn?: (testTree: T) => void) {
 		beforeEach(() => {
-			this._testTree = createTree();
+			this._testTree = createTestTree();
 			fn?.(this._testTree);
 		});
 	}
