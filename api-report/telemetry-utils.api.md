@@ -68,7 +68,6 @@ export const hasErrorInstanceId: (x: any) => x is {
 // @public
 export interface IFluidErrorAnnotations {
     errorCodeIfNone?: string;
-    errorSourceIfUnknown?: string;
     props?: ITelemetryProperties;
 }
 
@@ -76,7 +75,6 @@ export interface IFluidErrorAnnotations {
 export interface IFluidErrorBase extends Readonly<Partial<Error>> {
     addTelemetryProperties: (props: ITelemetryProperties) => void;
     readonly errorInstanceId: string;
-    readonly errorSource?: string;
     readonly errorType: string;
     readonly fluidErrorCode: string;
     getTelemetryProperties(): ITelemetryProperties;

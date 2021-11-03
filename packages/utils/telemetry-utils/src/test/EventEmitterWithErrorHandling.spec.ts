@@ -4,13 +4,15 @@
  */
 
 import { strict as assert } from "assert";
+import { normalizeError } from "../errorLogging";
 import { EventEmitterWithErrorHandling } from "../eventEmitterWithErrorHandling";
-import { isFluidError } from "../fluidErrorBase";
+import { IFluidErrorBase, isFluidError } from "../fluidErrorBase";
 
 describe("EventEmitterWithErrorHandling", () => {
     let errorHandlerCalled = false;
-    function defaultErrorHandler(event, error) {
+    function defaultErrorHandler(_event, error: IFluidErrorBase) {
         errorHandlerCalled = true;
+        // eslint-disable-next-line @typescript-eslint/no-throw-literal
         throw error;
     }
 
@@ -37,11 +39,12 @@ describe("EventEmitterWithErrorHandling", () => {
         assert.strictEqual(errorHandlerCalled, false);
     });
     it("error thrown from listener is handled, some other listeners succeed", ()=> {
-        const emitter = new EventEmitterWithErrorHandling((event, error: any) => {
+        const emitter = new EventEmitterWithErrorHandling((event, error: IFluidErrorBase) => {
             passedErrorMsg = error.message;
             passedEventName = event;
-            assert(isFluidError(error) && error.errorSource === "someErrorSource");
+            assert(isFluidError(error));
             assert(error.getTelemetryProperties().mishandledEvent === event);
+            assert(error.getTelemetryProperties().errorSource === "someErrorSource");
         }, "someErrorSource");
         let passedErrorMsg: string | undefined;
         let passedEventName: string | symbol | undefined;
@@ -76,11 +79,28 @@ describe("EventEmitterWithErrorHandling", () => {
         } catch (error) {
             assert(isFluidError(error));
             assert.strictEqual(error.message, "No one is listening");
-            assert.strictEqual(error.errorSource, "errorSource");
             assert.strictEqual(error.getTelemetryProperties().mishandledEvent, "error");
+            assert.strictEqual(error.getTelemetryProperties().errorSource, "errorSource");
             assert.strictEqual((error as any).prop, undefined,
                 "Normalized error will not retain props besides message/stack");
             assert.strictEqual(errorHandlerCalled, true);
         }
+    });
+    it("Fluid Error thrown from listener is handled as-is", () => {
+        let passedError: IFluidErrorBase | undefined;
+        const emitter = new EventEmitterWithErrorHandling(
+            (_event, error: IFluidErrorBase) => { passedError = error; },
+            "someErrorSource",
+        );
+        emitter.on("foo", (_arg) => {
+            const fluidError: IFluidErrorBase = normalizeError(new Error("someMessage"));
+            fluidError.addTelemetryProperties({ errorSource: "originalErrorSource" });
+            // eslint-disable-next-line @typescript-eslint/no-throw-literal
+            throw fluidError;
+        });
+        emitter.emit("foo");
+        assert(isFluidError(passedError));
+        assert(passedError.getTelemetryProperties().mishandledEvent === "foo");
+        assert(passedError.getTelemetryProperties().errorSource === "originalErrorSource");
     });
 });

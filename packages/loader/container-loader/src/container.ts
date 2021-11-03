@@ -532,9 +532,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         private readonly loader: Loader,
         config: IContainerConfig,
     ) {
-        super((_event, error) => {
+        super(
+            (_event, error) => {
                 this.logger.sendErrorEvent({ eventName: "ContainerEventHandlerException" }, error);
-            }, "containerUser" /* defaultErrorSource */);
+            },
+            "containerUser" /* defaultErrorSource */,
+        );
         this._audience = new Audience();
 
         this.clientDetailsOverride = config.clientDetailsOverride;
