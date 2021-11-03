@@ -253,13 +253,13 @@ use_old_InterfaceDeclaration_IDocumentDeltaStorageService(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.41.0:
 * "InterfaceDeclaration_IDocumentService": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IDocumentService():
     old.IDocumentService;
 declare function use_current_InterfaceDeclaration_IDocumentService(
     use: current.IDocumentService);
 use_current_InterfaceDeclaration_IDocumentService(
     get_old_InterfaceDeclaration_IDocumentService());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
@@ -277,13 +277,13 @@ use_old_InterfaceDeclaration_IDocumentService(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.41.0:
 * "InterfaceDeclaration_IDocumentServiceFactory": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IDocumentServiceFactory():
     old.IDocumentServiceFactory;
 declare function use_current_InterfaceDeclaration_IDocumentServiceFactory(
     use: current.IDocumentServiceFactory);
 use_current_InterfaceDeclaration_IDocumentServiceFactory(
     get_old_InterfaceDeclaration_IDocumentServiceFactory());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
@@ -325,13 +325,13 @@ use_old_InterfaceDeclaration_IDocumentServicePolicies(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.41.0:
 * "InterfaceDeclaration_IDocumentStorageService": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IDocumentStorageService():
     old.IDocumentStorageService;
 declare function use_current_InterfaceDeclaration_IDocumentStorageService(
     use: current.IDocumentStorageService);
 use_current_InterfaceDeclaration_IDocumentStorageService(
     get_old_InterfaceDeclaration_IDocumentStorageService());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
