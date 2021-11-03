@@ -28,11 +28,7 @@ import {
     IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
-import {
-    innerRequestHandler,
-    buildRuntimeRequestHandler,
-} from "@fluidframework/request-handler";
-import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
+import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import Axios from "axios";
 
@@ -141,7 +137,7 @@ function handleFiles(
 
     // Prep the file reader to process the selected file
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = () => {
         // After loading the file show the create button
         text = reader.result as string;
     };
@@ -469,10 +465,6 @@ class ScribeFactory extends RuntimeFactoryHelper implements IFluidDataStoreFacto
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             this.registry,
-            buildRuntimeRequestHandler(
-                defaultRouteRequestHandler(defaultComponentId),
-                innerRequestHandler,
-            ),
             undefined, // runtimeOptions
             undefined, // containerScope
             existing,

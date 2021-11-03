@@ -42,7 +42,6 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
         return ContainerRuntime.load(
             context,
             this.registries,
-            undefined,
             this.runtimeOptions,
             undefined, // containerScope
             existing,

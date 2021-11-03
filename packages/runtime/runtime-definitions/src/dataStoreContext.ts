@@ -9,8 +9,6 @@ import {
     IFluidRouter,
     IProvideFluidHandleContext,
     IFluidHandle,
-    IRequest,
-    IResponse,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -71,6 +69,8 @@ export interface IContainerRuntimeBase extends
     readonly logger: ITelemetryBaseLogger;
     readonly clientDetails: IClientDetails;
 
+    getEntryPoint(): Promise<IFluidObject>;
+
     /**
      * Invokes the given callback and guarantees that all operations generated within the callback will be ordered
      * sequentially. Total size of all messages must be less than maxOpSize.
@@ -81,11 +81,6 @@ export interface IContainerRuntimeBase extends
      * Sets the flush mode for operations on the document.
      */
     setFlushMode(mode: FlushMode): void;
-
-    /**
-     * Executes a request against the container runtime
-     */
-    request(request: IRequest): Promise<IResponse>;
 
     /**
      * Submits a container runtime level signal to be sent to other clients.
@@ -234,7 +229,6 @@ export type CreateChildSummarizerNodeFn = (
 ) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
-    // eslint-disable-next-line @typescript-eslint/unified-signatures
     (event: "attaching" | "attached", listener: () => void);
 }
 

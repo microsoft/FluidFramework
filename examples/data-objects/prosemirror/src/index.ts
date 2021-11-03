@@ -6,11 +6,6 @@
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import {
-    innerRequestHandler,
-    buildRuntimeRequestHandler,
-} from "@fluidframework/request-handler";
-import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { fluidExport as smde } from "./prosemirror";
 
@@ -32,13 +27,10 @@ class ProseMirrorFactory extends RuntimeFactoryHelper {
         const runtime = await ContainerRuntime.load(
             context,
             registry,
-            buildRuntimeRequestHandler(
-                defaultRouteRequestHandler(defaultComponentId),
-                innerRequestHandler,
-            ),
             undefined, // runtimeOptions
             undefined, // containerScope
             existing,
+            async (cr) => cr.getRootDataStore(defaultComponentId),
         );
 
         return runtime;

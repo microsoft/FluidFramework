@@ -17,6 +17,7 @@ import {
     IFluidRouter,
     IFluidCodeDetails,
     isFluidCodeDetails,
+    IFluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -882,6 +883,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
+    public async getRuntimeEntryPoint(): Promise<IFluidObject> {
+        return PerformanceEvent.timedExecAsync(
+            this.logger,
+            { eventName: "getRuntimeEntryPoint" },
+            async () => this.context.getRuntimeEntryPoint(),
+            { end: true, cancel: "error" },
+        );
+    }
+
+    /**
+     * @deprecated - use getRuntimeEntryPoint instead.
+     */
     public async request(path: IRequest): Promise<IResponse> {
         return PerformanceEvent.timedExecAsync(
             this.logger,

@@ -240,8 +240,16 @@ export class ContainerContext implements IContainerContext {
         this.runtime.processSignal(message, local);
     }
 
+    /**
+     * @deprecated - use getRuntimeEntryPoint instead
+     */
     public async request(path: IRequest): Promise<IResponse> {
         return this.runtime.request(path);
+    }
+
+    public async getRuntimeEntryPoint(): Promise<IFluidObject> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return (this.runtime as any).getEntryPoint?.();
     }
 
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {

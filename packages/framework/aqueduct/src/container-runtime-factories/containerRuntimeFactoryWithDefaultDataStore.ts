@@ -17,6 +17,7 @@ import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 const defaultDataStoreId = "default";
 
 /**
+ * @deprecated - use RuntimeFactoryHelper instead
  * A ContainerRuntimeFactory that initializes Containers with a single default data store, which can be requested from
  * the container with an empty URL.
  *

@@ -28,8 +28,10 @@ import {
     IProvideFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { IFluidRouter } from "@fluidframework/core-interfaces";
 
 /**
+ * @deprecated - use RuntimeFactoryHelper instead
  * BaseContainerRuntimeFactory produces container runtimes with a given data store and service registry, as well as
  * given request handlers.  It can be subclassed to implement a first-time initialization procedure for the containers
  * it creates.
@@ -77,15 +79,28 @@ export class BaseContainerRuntimeFactory
         }
         scope.IFluidDependencySynthesizer = dc;
 
+        let router: IFluidRouter | undefined;
+        const requestBuilder =
+            buildRuntimeRequestHandler(
+            ...this.requestHandlers,
+            innerRequestHandler);
+
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             this.registryEntries,
-            buildRuntimeRequestHandler(
-                ...this.requestHandlers,
-                innerRequestHandler),
             this.runtimeOptions,
             scope,
             existing,
+            async (cr) => {
+                if(router === undefined) {
+                    router = {
+                        get IFluidRouter() {return this;},
+                        request: async (req)=>requestBuilder(req, cr),
+                    };
+                }
+                return router;
+            },
+
         );
 
         // we register the runtime so developers of providers can use it in the factory pattern.

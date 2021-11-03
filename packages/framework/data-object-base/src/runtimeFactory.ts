@@ -8,11 +8,6 @@ import {
     ContainerRuntime,
 } from "@fluidframework/container-runtime";
 import {
-    buildRuntimeRequestHandler,
-    RuntimeRequestHandler,
-    innerRequestHandler,
-} from "@fluidframework/request-handler";
-import {
     NamedFluidDataStoreRegistryEntries,
     IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
@@ -20,13 +15,15 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 const defaultStoreId = "" as const;
 
+/**
+ *  * @deprecated - use RuntimeFactoryHelper instead
+ */
 export class RuntimeFactory extends RuntimeFactoryHelper {
     private readonly registry: NamedFluidDataStoreRegistryEntries;
 
     constructor(
         private readonly defaultStoreFactory: IFluidDataStoreFactory,
         storeFactories: IFluidDataStoreFactory[] = [defaultStoreFactory],
-        private readonly requestHandlers: RuntimeRequestHandler[] = [],
     ) {
         super();
         this.registry =
@@ -49,12 +46,10 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             this.registry,
-            buildRuntimeRequestHandler(
-                ...this.requestHandlers,
-                innerRequestHandler),
             undefined, // runtimeOptions
             undefined, // containerScope
             existing,
+            async (cr)=>cr.getRootDataStore(defaultStoreId),
         );
 
         return runtime;

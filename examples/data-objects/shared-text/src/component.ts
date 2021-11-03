@@ -160,8 +160,9 @@ export class SharedTextRunner
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performance.now()}`);
 
-        const agentSchedulerResponse = await this.context.containerRuntime.request({ url: "/_scheduler" });
-        if (agentSchedulerResponse.status === 404) {
+        const router = await this.context.containerRuntime.getEntryPoint();
+        const agentSchedulerResponse = await router.IFluidRouter?.request({ url: "/_scheduler" });
+        if (agentSchedulerResponse === undefined || agentSchedulerResponse.status === 404) {
             throw new Error("Agent scheduler not found");
         }
         const agentScheduler = agentSchedulerResponse.value as IAgentScheduler;

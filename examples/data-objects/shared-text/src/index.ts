@@ -20,6 +20,7 @@ import {
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { IFluidRouter } from "@fluidframework/core-interfaces";
 import * as sharedTextComponent from "./component";
 
 /* eslint-disable max-len */
@@ -61,19 +62,30 @@ class SharedTextFactoryComponent extends RuntimeFactoryHelper implements IFluidD
         context: IContainerContext,
         existing: boolean,
     ): Promise<ContainerRuntime> {
+        let router: IFluidRouter | undefined;
+        const handler =  buildRuntimeRequestHandler(
+            defaultRouteRequestHandler(DefaultComponentName),
+            innerRequestHandler,
+        );
+
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             [
                 [SharedTextFactoryComponent.type, Promise.resolve(this)],
                 AgentSchedulerFactory.registryEntry,
             ],
-            buildRuntimeRequestHandler(
-                defaultRouteRequestHandler(DefaultComponentName),
-                innerRequestHandler,
-            ),
             undefined, // runtimeOptions
             undefined, // containerScope
             existing,
+            async (cr)=>{
+                if(router === undefined) {
+                    router = {
+                        get IFluidRouter() {return this;},
+                        request: async (req)=>handler(req,cr),
+                    };
+                }
+                return router;
+            },
         );
 
         return runtime;

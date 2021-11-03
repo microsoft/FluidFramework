@@ -514,7 +514,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         ISummarizerInternalsProvider
 {
     public get IContainerRuntime() { return this; }
-    public get IFluidRouter() { return this; }
 
     // back-compat: Used by loader in <= 0.35
     /**
@@ -534,10 +533,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public static async load(
         context: IContainerContext,
         registryEntries: NamedFluidDataStoreRegistryEntries,
-        requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions: IContainerRuntimeOptions = {},
         containerScope: IFluidObject = context.scope,
         existing?: boolean,
+        entrypointHandler?: (runtime: IContainerRuntime) => Promise<IFluidObject>,
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         const passLogger = context.taggedLogger  ?? new TaggedLoggerAdapter(context.logger);
@@ -642,7 +641,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             logger,
             loadExisting,
             blobManagerSnapshot,
-            requestHandler,
+            entrypointHandler,
             storage,
         );
 
@@ -699,6 +698,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) => void {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.reSubmit;
+    }
+
+    public async getEntryPoint(): Promise<IFluidObject> {
+        if(this.entrypointHandler === undefined) {
+            throw new Error("no entrypoint");
+        }
+        return this.entrypointHandler(this);
     }
 
     public get closeFn(): (error?: ICriticalContainerError) => void {
@@ -837,7 +843,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         public readonly logger: ITelemetryLogger,
         existing: boolean,
         blobManagerSnapshot: IBlobManagerLoadInfo,
-        private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
+        private readonly entrypointHandler?: (runtime: IContainerRuntime) => Promise<IFluidObject>,
         private _storage?: IDocumentStorageService,
     ) {
         super();
@@ -1113,33 +1119,34 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * Notifies this object about the request made to the container.
-     * @param request - Request made to the handler.
+     * @deprecated - use getEntryPointInstead
      */
-    public async request(request: IRequest): Promise<IResponse> {
-        try {
-            const parser = RequestParser.create(request);
-            const id = parser.pathParts[0];
+         async request(request: IRequest): Promise<IResponse> {
+            if(this.entrypointHandler) {
+                const entryPoint = await this.getEntryPoint();
+                if(entryPoint.IFluidRouter) {
+                    return entryPoint.IFluidRouter.request(request);
+                }
+            }
+            try {
+                const parser = RequestParser.create(request);
+                const id = parser.pathParts[0];
 
-            if (id === "_summarizer" && parser.pathParts.length === 1) {
-                if (this._summarizer !== undefined) {
-                    return {
-                        status: 200,
-                        mimeType: "fluid/object",
-                        value: this.summarizer,
-                    };
+                if (id === "_summarizer" && parser.pathParts.length === 1) {
+                    if (this._summarizer !== undefined) {
+                        return {
+                            status: 200,
+                            mimeType: "fluid/object",
+                            value: this.summarizer,
+                        };
+                    }
+                    return create404Response(request);
                 }
                 return create404Response(request);
+            } catch (error) {
+                return exceptionToResponse(error);
             }
-            if (this.requestHandler !== undefined) {
-                return this.requestHandler(parser, this);
-            }
-
-            return create404Response(request);
-        } catch (error) {
-            return exceptionToResponse(error);
         }
-    }
 
     /**
      * Resolves URI representing handle

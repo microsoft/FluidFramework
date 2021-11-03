@@ -18,6 +18,7 @@ import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IContainerRuntime } from "../../test-utils/node_modules/@fluidframework/container-runtime-definitions/dist";
 import { ILoadTestConfig } from "./testConfigFile";
 
 export interface IRunConfig {
@@ -122,11 +123,12 @@ export class LoadTestDataStoreModel {
         // If we did not create the data store above, load it by getting its url.
         if (gcDataStore === undefined) {
             const gcDataStoreId = root.get(gcDataStoreIdKey);
-            const response = await containerRuntime.request({ url: `/${gcDataStoreId}` });
-            if (response.status !== 200 || response.mimeType !== "fluid/object") {
+            // this should really go through the entrypoint to get this
+            const response = await (containerRuntime as IContainerRuntime).getRootDataStore(gcDataStoreId);
+            if (response === undefined) {
                 throw new Error("GC data store not available");
             }
-            gcDataStore = response.value as LoadTestDataStore;
+            gcDataStore = response as LoadTestDataStore;
         }
         return gcDataStore;
     }
