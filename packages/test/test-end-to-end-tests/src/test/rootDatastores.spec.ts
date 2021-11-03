@@ -16,6 +16,7 @@ import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -140,6 +141,35 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const ds = await getRootDataStore(dataObject3, alias) as unknown as IFluidDataStoreChannel;
             assert.strictEqual(ds.id, ds1.id);
         });
+
+        it("Assign multiple data stores to the same alias, first write wins, " +
+            "different containers from snapshot", async () => {
+                const ds1 = await createRootDataStore(dataObject1, "1") as unknown as IFluidDataStoreChannel;
+                const ds2 = await createRootDataStore(dataObject2, "2") as unknown as IFluidDataStoreChannel;
+
+                const aliasResult1 = await aliasDataStore(dataObject1, ds1, "alias");
+                const aliasResult2 = await aliasDataStore(dataObject2, ds2, "alias");
+
+                assert(aliasResult1);
+                assert(!aliasResult2);
+
+                await provider.ensureSynchronized();
+                await (runtimeOf(dataObject1) as ContainerRuntime).summarize({
+                    runGC: false,
+                    fullTree: true,
+                    trackState: false,
+                    summaryLogger: new TelemetryNullLogger(),
+                });
+
+                const container3 = await provider.loadTestContainer(testContainerConfig);
+                const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
+                const ds3 = await createRootDataStore(dataObject3, "3") as unknown as IFluidDataStoreChannel;
+                const aliasResult3 = await aliasDataStore(dataObject3, ds3, "alias");
+
+                assert(!aliasResult3);
+                const ds = await getRootDataStore(dataObject3, alias) as unknown as IFluidDataStoreChannel;
+                assert.strictEqual(ds.id, ds1.id);
+            });
     });
 
     describe("Creating", () => {
