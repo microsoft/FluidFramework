@@ -16,7 +16,7 @@
  */
 
 import _ from 'underscore';
-import { DataBinder } from '../data_binder/data_binder';
+import { DataBinder } from '../data_binder/dataBinder';
 import { MockSharedPropertyTree } from './mock_shared_property_tree';
 import {
   registerTestTemplates, ParentTemplate, ReferenceParentTemplate,

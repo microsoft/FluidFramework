@@ -69,6 +69,11 @@ export type representationDestroyer =
  */
 export interface IDefineRepresentationOptions {
   /**
+   * Optional property, when set to true it creates a single and stateless representation instance instance.
+   */
+  stateless?: boolean;
+
+  /**
    * Optional callback called immediately after the generator result is added to the databinder.
    * This permits a runtime representation to be initialized in two stages in cases where it is
    * dependent on other runtime representations.

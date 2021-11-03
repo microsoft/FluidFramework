@@ -16,7 +16,7 @@
  *
  */
 import _ from 'underscore';
-import { DataBinder } from '../../src/data_binder/data_binder';
+import { DataBinder } from '../../src/data_binder/dataBinder';
 import { ModificationContext } from '../../src/data_binder/modification_context';
 import {
   registerTestTemplates, ParentTemplate, ChildTemplate,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 /* globals expect */
-import { DataBinder } from '../../src/data_binder/data_binder';
+import { DataBinder } from '../../src/data_binder/dataBinder';
 
 import { catchConsoleErrors } from './catch_console_errors';
 

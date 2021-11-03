@@ -91,12 +91,12 @@ export namespace TypeIdHelper {
  * @param in_typeid - The typeid to process
  * @returns  Returns the typeid without context, the context and if we have an enum type
  */
-    export function extractContext(in_typeid: string): ExtractedContext {
+    export function extractContext(in_typeid: string | undefined): ExtractedContext {
         const bracketIndex = in_typeid.indexOf("<");
         if (bracketIndex !== -1 &&
             in_typeid[in_typeid.length - 1] === ">") {
-            let typeid = in_typeid.substr(bracketIndex + 1, in_typeid.length - bracketIndex - 2);
-            let context = in_typeid.substr(0, bracketIndex);
+            let typeid = in_typeid.substring(bracketIndex + 1, in_typeid.length - bracketIndex - 2);
+            let context = in_typeid.substring(0, bracketIndex);
 
             // Special case to handle collections without a typeid (e.g. "map<>", which should
             // be able to support all property types
@@ -106,13 +106,13 @@ export namespace TypeIdHelper {
 
             // Special case to handle enums (e.g. array<enum<myType>>)
             let isEnum = false;
-            if (context === "enum" || typeid.substr(0, 5) === "enum<") {
+            if (context === "enum" || typeid.substring(0, 5) === "enum<") {
                 isEnum = true;
                 if (context === "enum") {
                     context = "single";
                 } else {
                     // remove the `enum<...>` tag to get the raw typeid
-                    typeid = typeid.substr(5, typeid.length - 6);
+                    typeid = typeid.substring(5, typeid.length - 6);
                 }
             }
             if (context === "Reference") {
@@ -168,9 +168,9 @@ export namespace TypeIdHelper {
      * @param in_typeid - The typeid to check
      * @returns Is this a reference property typeid?
      */
-    export function isReferenceTypeId(in_typeid: string): boolean { // in_enum
+    export function isReferenceTypeId(in_typeid: string | undefined ): boolean { // in_enum
         return in_typeid === "Reference" ||
-            (in_typeid.substr(0, 10) === "Reference<" && in_typeid.substr(-1) === ">");
+            (in_typeid.substr(0, 10) === "Reference<" && in_typeid.substring(-1) === ">");
     }
 
     /**
@@ -180,9 +180,9 @@ export namespace TypeIdHelper {
      * @return The type of the referenced property
      */
     export function extractReferenceTargetTypeIdFromReference(in_typeid: string): string { // in_enum
-        if (in_typeid.substr(0, 10) === "Reference<") {
+        if (in_typeid.substring(0, 10) === "Reference<") {
             // Extract the type from the TypeID
-            return in_typeid.substr(10, in_typeid.length - 11);
+            return in_typeid.substring(10, in_typeid.length - 11);
         } else {
             // This is a typeless reference, we allow all types
             return "BaseProperty";

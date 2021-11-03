@@ -5,7 +5,7 @@
 /* eslint-disable no-unused-expressions */
 /* eslint-disable require-jsdoc */
 /* globals expect */
-import { DataBinder } from '../../src/data_binder/data_binder';
+import { DataBinder } from '../../src/data_binder/dataBinder';
 import { MockSharedPropertyTree } from './mock_shared_property_tree';
 import {
   catchConsoleErrors

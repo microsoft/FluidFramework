@@ -11,7 +11,7 @@
 /* eslint max-nested-callbacks: ["warn", 5] */
 
 import _ from 'underscore';
-import { DataBinder } from '../../src/data_binder/data_binder';
+import { DataBinder } from '../../src/data_binder/dataBinder';
 import {
   DataBinding
 } from '../../src/data_binder/data_binding';

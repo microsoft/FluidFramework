@@ -13,7 +13,7 @@
  */
 import _ from 'underscore';
 import { DataBinding } from '../../src/data_binder/data_binding';
-import { DataBinder } from '../../src/data_binder/data_binder';
+import { DataBinder } from '../../src/data_binder/dataBinder';
 import { unregisterAllOnPathListeners } from '../../src/data_binder/internal_utils';
 import {
   registerTestTemplates, ParentTemplate, ChildTemplate,

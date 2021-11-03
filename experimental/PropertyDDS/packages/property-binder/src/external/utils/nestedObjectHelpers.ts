@@ -70,14 +70,14 @@
   * Returns an entry from a nested hierarchy of objects
   *
   * @param  in_object  - The object in which we search for the entry
-  * @param  path       - The path within the hierarchy
+  * @param  _path       - The path within the hierarchy
   *
   * @returns The entry at the given path in a hierarchy, or undefined if none
   * @alias getInNestedObjects
   * @package
   * @hidden
   */
- function getInNestedObjects(in_object: object, path: string): object | undefined {
+ function getInNestedObjects(in_object: any, _path?: any): any | undefined {
    let currentObject = in_object;
 
    // traverse all intermediate steps as needed
@@ -104,7 +104,7 @@
   * @package
   * @hidden
   */
-  function getOrInsertDefaultInNestedObjects(this: any, in_object: object, in_path?: string, in_default?: any): object | undefined {
+  function getOrInsertDefaultInNestedObjects<T=object>(this: any, in_object: T, _in_path?: string, _in_default?: T): T {
    let currentObject = in_object;
 
    // traverse all intermediate steps as needed

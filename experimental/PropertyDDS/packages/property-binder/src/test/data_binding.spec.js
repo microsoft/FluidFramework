@@ -14,7 +14,7 @@
  *
  */
 import _ from 'underscore';
-import { DataBinder } from '../../src/data_binder/data_binder';
+import { DataBinder } from '../../src/data_binder/dataBinder';
 import {
   onValuesChanged, onPropertyChanged, onPathChanged, DataBinding
 } from '../../src/data_binder/data_binding';

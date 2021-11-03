@@ -4,8 +4,9 @@
  */
 
 import { SemverMap } from '../internal/semvermap';
-import { getLocalOrRemoteSchema } from './internal_utils';
+import { getLocalOrRemoteSchema } from './internalUtils';
 import { TypeIdHelper } from '@fluid-experimental/property-changeset';
+import { DataBindingDefinition } from './dataBinder';
 
 /**
  * A DataBindingRegistry allows one to register and create representations.  The type of the representation is
@@ -36,7 +37,7 @@ class DataBindingRegistry {
    * @param {Object} dataBindingObject The Data Binding and its associated metadata.
    * @public
    */
-  public register(bindingType, typeid, upgradeType, dataBindingObject) {
+  public register(bindingType, typeid, upgradeType, dataBindingObject: DataBindingDefinition) {
     // Clear our cache
     this._applicableBindingCache = new Map<string, any>();
 
@@ -156,7 +157,7 @@ class DataBindingRegistry {
 
       // Push any parent templates on to the queue
       const newInheritedTemplates = TypeIdHelper.isReferenceTypeId(currentTypeid) ? undefined :
-        getLocalOrRemoteSchema(currentTypeid, in_workspace);
+        getLocalOrRemoteSchema(currentTypeid);
       if (newInheritedTemplates && newInheritedTemplates.inherits) {
         typeidQueue = typeidQueue.concat(newInheritedTemplates.inherits);
       }
