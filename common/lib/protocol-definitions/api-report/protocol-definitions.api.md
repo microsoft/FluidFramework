@@ -119,7 +119,7 @@ export type ICommittedProposal = {
 // @public
 export interface IConnect {
     client: IClient;
-    correlationProperties?: Record<string, unknown>;
+    correlationProperties?: string;
     epoch?: string;
     id: string;
     mode: ConnectionMode;
@@ -135,7 +135,7 @@ export interface IConnected {
     checkpointSequenceNumber?: number;
     claims: ITokenClaims;
     clientId: string;
-    correlationProperties?: Record<string, unknown>;
+    correlationProperties?: string;
     epoch?: string;
     existing: boolean;
     initialClients: ISignalClient[];
