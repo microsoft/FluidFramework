@@ -16,12 +16,12 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
     /**
      * Set up the error handling in case an event handler throws
      * @param errorHandler - Callback to pass the thrown error to (error will be normalized/annotated first)
-     * @param defaultErrorSource - Describes where an error thrown by an event handler originates,
+     * @param errorSource - Describes where an error thrown by an event handler originates,
      * for use as @see IFluidErrorBase.errorSource.
      */
     constructor(
         private readonly  errorHandler: (eventName: EventEmitterEventType, error: IFluidErrorBase) => void,
-        private readonly defaultErrorSource: string,
+        private readonly errorSource: string,
     ) {
         super();
     }
@@ -31,7 +31,7 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
             return super.emit(event, ...args);
         } catch (error) {
             const props: ITelemetryProperties = {};
-            props.errorSource = this.defaultErrorSource;
+            props.errorSource = this.errorSource;
             if (typeof event === "string") {
                 props.mishandledEvent = event;
             }

@@ -536,7 +536,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (_event, error) => {
                 this.logger.sendErrorEvent({ eventName: "ContainerEventHandlerException" }, error);
             },
-            "containerUser" /* defaultErrorSource */,
+            "containerUser" /* errorSource */,
         );
         this._audience = new Audience();
 
