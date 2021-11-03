@@ -12,7 +12,7 @@ import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
-import { IQuorum } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
@@ -29,7 +29,7 @@ export interface IOldestClientObservable extends IEventProvider<IOldestClientObs
     // (undocumented)
     connected: boolean;
     // (undocumented)
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
 }
 
 // @public (undocumented)

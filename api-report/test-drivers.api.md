@@ -13,9 +13,9 @@ import { ILocalDeltaConnectionServer } from '@fluidframework/server-local-server
 import { InsecureTinyliciousUrlResolver } from '@fluidframework/tinylicious-driver';
 import { InsecureUrlResolver } from '@fluidframework/driver-utils';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { IRouterliciousDriverPolicies } from '@fluidframework/routerlicious-driver';
 import { ITestDriver } from '@fluidframework/test-driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
+import { LocalDeltaConnectionServer } from '@fluidframework/server-local-server';
 import { LocalDocumentServiceFactory } from '@fluidframework/local-driver';
 import { LocalResolver } from '@fluidframework/local-driver';
 import { OdspDocumentServiceFactory } from '@fluidframework/odsp-driver';
@@ -54,31 +54,10 @@ export interface FluidTestDriverConfig {
 export const generateOdspHostStoragePolicy: (seed: number) => HostStoragePolicy[];
 
 // @public (undocumented)
-export interface IOdspTestLoginInfo {
-    // (undocumented)
-    password: string;
-    // (undocumented)
-    server: string;
-    // (undocumented)
-    supportsBrowserAuth?: boolean;
-    // (undocumented)
-    username: string;
-}
-
-// @public (undocumented)
-export interface IServiceEndpoint {
-    // (undocumented)
-    deltaStorageUrl: string;
-    // (undocumented)
-    hostUrl: string;
-    // (undocumented)
-    ordererUrl: string;
-}
-
-// @public (undocumented)
 export const LocalDriverApi: {
     version: string;
     LocalDocumentServiceFactory: typeof LocalDocumentServiceFactory;
+    LocalDeltaConnectionServer: typeof LocalDeltaConnectionServer;
     LocalResolver: typeof LocalResolver;
     createLocalResolverCreateNewRequest: typeof createLocalResolverCreateNewRequest;
 };
@@ -119,7 +98,6 @@ export type OdspDriverApiType = typeof OdspDriverApi;
 
 // @public (undocumented)
 export class OdspTestDriver implements ITestDriver {
-    // (undocumented)
     createContainerUrl(testId: string): Promise<string>;
     // (undocumented)
     createCreateNewRequest(testId: string): IRequest;
@@ -159,7 +137,6 @@ export type RouterliciousDriverApiType = typeof RouterliciousDriverApi;
 
 // @public (undocumented)
 export class RouterliciousTestDriver implements ITestDriver {
-    constructor(tenantId: string, tenantSecret: string, serviceEndpoints: IServiceEndpoint, api: RouterliciousDriverApiType, driverPolicies: IRouterliciousDriverPolicies | undefined, endpointName?: string | undefined);
     // (undocumented)
     createContainerUrl(testId: string): Promise<string>;
     // (undocumented)

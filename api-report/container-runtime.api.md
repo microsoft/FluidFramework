@@ -22,7 +22,6 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidConfiguration } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
@@ -68,7 +67,9 @@ export enum ContainerMessageType {
     // (undocumented)
     FluidDataStoreOp = "component",
     // (undocumented)
-    SetRootDataStoreAlias = "setRootDataStoreAlias"
+    Rejoin = "rejoin",
+    // (undocumented)
+    SetRootDataStoreAlias = "setRootDataStoreAlias",
 }
 
 // @public
@@ -87,7 +88,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
     // (undocumented)
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IFluidDataStoreChannel>;
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IFluidRouter>;
     // (undocumented)
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
     // (undocumented)
@@ -169,11 +170,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     setFlushMode(mode: FlushMode): void;
     // @deprecated
     snapshot(): Promise<ITree>;
-    // @deprecated (undocumented)
-    stop(): Promise<{
-        snapshot?: never;
-        state?: never;
-    }>;
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)

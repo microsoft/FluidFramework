@@ -9,5 +9,5 @@ import { Params } from "express-serve-static-core";
 import { getParam } from "@fluidframework/server-services-utils";
 
 const getParamFromRequest = (params: Params, paramName: string) => getParam(params, paramName) ?? "-";
-export const getDocumentIdFromRequest = (params: Params) => getParamFromRequest(params, "id");
-export const getTenantIdFromRequest = (params: Params) => getParamFromRequest(params, "tenantId");
+export const getIdFromRequest = (params: Params) => getParamFromRequest(params, "id");
+export const getTenantIdFromRequest = (params: Params) => getParam(params, "tenantId") ?? getIdFromRequest(params);

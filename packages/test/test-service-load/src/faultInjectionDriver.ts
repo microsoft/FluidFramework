@@ -100,7 +100,7 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
 
     public get mode() { return this.internal.mode; }
     public get existing() { return this.internal.existing; }
-    public get maxMessageSize() { return this.internal.maxMessageSize; }
+    public get maxMessageSize() { return this.internal.serviceConfiguration.maxMessageSize; }
     public get version() { return this.internal.version; }
     public get initialMessages() { return this.internal.initialMessages; }
 

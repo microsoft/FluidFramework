@@ -17,5 +17,5 @@ runService(
     new GitrestResourcesFactory(),
     new GitrestRunnerFactory(),
     winston,
-    "historian",
+    "gitrest",
     configPath);

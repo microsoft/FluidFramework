@@ -351,7 +351,7 @@ class WholeSummaryDocumentStorageService implements IDocumentStorageService {
         );
         const normalizedWholeSummary = convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary);
         const snapshotId = normalizedWholeSummary.snapshotTree.id;
-        assert(snapshotId !== undefined, "Root tree should contain the id");
+        assert(snapshotId !== undefined, 0x275 /* "Root tree should contain the id" */);
 
         const cachePs: Promise<any>[] = [
             this.snapshotTreeCache.put(
