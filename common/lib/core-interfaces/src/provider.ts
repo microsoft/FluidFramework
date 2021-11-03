@@ -34,8 +34,8 @@
  * This utility type take interface(s) that follow the provider pattern, and produces
  * a new type that can be used for inspection and discovery of those interfaces.
  *
- * It is meant to be used with types that are know to implement the provider pattern.
- * A common way to specify that a type implements that pattern is to expose it as a
+ * It is meant to be used with types that are known to implement the provider pattern.
+ * A common way to specify a type implements the provider pattern is to expose it as a
  * Provider without a generic argument.
  *
  * For example, if we have an interface like below
@@ -48,13 +48,13 @@
  * }
  * ```
  *
- * and a function that returns and Provider. You would do the following
+ * and a function that returns a Provider. You would do the following
  *
  * `const maybeFoo : Provider<IFoo> = getUnknown()`;
  *
  * Either IFoo or IProvideFoo are valid generic arguments. In both case
- * maybeFoo will be of type `{IFoo?: IFoo}`. If IFoo is no undefined,
- * then the IFluidUnknown implements IFoo, and it can be used.
+ * maybeFoo will be of type `{IFoo?: IFoo}`. If IFoo is not undefined,
+ * then the Provider implements IFoo, and it can be used.
  *
  * You can inspect multiple types via a intersection. For example:
  * `Provider<IFoo & IBar>`
