@@ -200,6 +200,12 @@ export class InsecureUrlResolver implements IUrlResolver {
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
     }
 
+// @public
+export interface IProgress {
+    cancel?: AbortSignal;
+    retry?(delayInMs: number, error: any): void;
+}
+
 // @public (undocumented)
 export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;
 
@@ -336,7 +342,7 @@ export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
 }
 
 // @public (undocumented)
-export function runWithRetry<T>(api: () => Promise<T>, fetchCallName: string, refreshDelayInfo: (id: string) => void, emitDelayInfo: (id: string, retryInMs: number, err: any) => void, logger: ITelemetryLogger, checkRetry?: () => void): Promise<T>;
+export function runWithRetry<T>(api: (cancel?: AbortSignal) => Promise<T>, fetchCallName: string, logger: ITelemetryLogger, progress: IProgress): Promise<T>;
 
 // @public (undocumented)
 export abstract class SnapshotExtractor {

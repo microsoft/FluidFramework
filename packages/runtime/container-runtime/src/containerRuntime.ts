@@ -148,7 +148,11 @@ export enum ContainerMessageType {
     // Chunked operation.
     ChunkedOp = "chunkedOp",
 
+    // Signifies that a blob has been attached and should not be garbage collected by storage
     BlobAttach = "blobAttach",
+
+    // Ties our new clientId to our old one on reconnect
+    Rejoin = "rejoin",
 }
 
 export interface IChunkedOp {
@@ -296,6 +300,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
         case ContainerMessageType.ChunkedOp:
         case ContainerMessageType.Attach:
         case ContainerMessageType.BlobAttach:
+        case ContainerMessageType.Rejoin:
         case MessageType.Operation:
             return true;
         default:
@@ -723,13 +728,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly _logger: ITelemetryLogger;
-    private readonly summarizerClientElection: SummarizerClientElection;
+    private readonly summarizerClientElection?: SummarizerClientElection;
     /**
      * summaryManager will only be created if this client is permitted to spawn a summarizing client
      * It is created only by interactive client, i.e. summarizer client, as well as non-interactive bots
      * do not create it (see SummarizerClientElection.clientDetailsPermitElection() for details)
      */
-    private readonly summaryManager: SummaryManager | undefined;
+    private readonly summaryManager?: SummaryManager;
     private readonly summaryCollection: SummaryCollection;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
@@ -749,7 +754,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /** clientId of parent (non-summarizing) container that owns summarizer container */
     public get summarizerClientId(): string | undefined {
-        return this.summarizerClientElection.electedClientId;
+        return this.summarizerClientElection?.electedClientId;
     }
 
     private get summaryConfiguration() {
@@ -874,7 +879,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         this.summarizerNode = createRootSummarizerNodeWithGC(
-            this.logger,
+            ChildLogger.create(this.logger, "SummarizerNode"),
             // Summarize function to call when summarize is called. Summarizer node always tracks summary state.
             async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState),
             // Latest change sequence number, no changes since summary applied yet
@@ -951,49 +956,51 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
-        const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 7000;
-        const defaultAction = () => {
-            if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
-                this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
-                // unregister default to no log on every op after falling behind
-                // and register summary ack handler to re-register this handler
-                // after successful summary
-                this.summaryCollection.once(MessageType.SummaryAck, () => {
-                    this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
-                    // we've caught up, so re-register the default action to monitor for
-                    // falling behind, and unregister ourself
-                    this.summaryCollection.on("default", defaultAction);
-                });
-                this.summaryCollection.off("default", defaultAction);
-            }
-        };
-        this.summaryCollection.on("default", defaultAction);
 
-        const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
-        const orderedClientCollection = new OrderedClientCollection(
-            orderedClientLogger,
-            this.context.deltaManager,
-            this.context.quorum,
-        );
-        const orderedClientElectionForSummarizer = new OrderedClientElection(
-            orderedClientLogger,
-            orderedClientCollection,
-            electedSummarizerData ?? this.context.deltaManager.lastSequenceNumber,
-            SummarizerClientElection.isClientEligible,
-        );
-        const summarizerClientElectionEnabled = getLocalStorageFeatureGate("summarizerClientElection") ??
-            this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
-        this.summarizerClientElection = new SummarizerClientElection(
-            orderedClientLogger,
-            this.summaryCollection,
-            orderedClientElectionForSummarizer,
-            maxOpsSinceLastSummary,
-            summarizerClientElectionEnabled,
-        );
         // Only create a SummaryManager if summaries are enabled and we are not the summarizer client
         if (this.runtimeOptions.summaryOptions.generateSummaries === false) {
             this._logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
         } else {
+            const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 7000;
+            const defaultAction = () => {
+                if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
+                    this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
+                    // unregister default to no log on every op after falling behind
+                    // and register summary ack handler to re-register this handler
+                    // after successful summary
+                    this.summaryCollection.once(MessageType.SummaryAck, () => {
+                        this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
+                        // we've caught up, so re-register the default action to monitor for
+                        // falling behind, and unregister ourself
+                        this.summaryCollection.on("default", defaultAction);
+                    });
+                    this.summaryCollection.off("default", defaultAction);
+                }
+            };
+
+            this.summaryCollection.on("default", defaultAction);
+                const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
+            const orderedClientCollection = new OrderedClientCollection(
+                orderedClientLogger,
+                this.context.deltaManager,
+                this.context.quorum,
+            );
+            const orderedClientElectionForSummarizer = new OrderedClientElection(
+                orderedClientLogger,
+                orderedClientCollection,
+                electedSummarizerData ?? this.context.deltaManager.lastSequenceNumber,
+                SummarizerClientElection.isClientEligible,
+            );
+            const summarizerClientElectionEnabled = getLocalStorageFeatureGate("summarizerClientElection") ??
+                this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
+            this.summarizerClientElection = new SummarizerClientElection(
+                orderedClientLogger,
+                this.summaryCollection,
+                orderedClientElectionForSummarizer,
+                maxOpsSinceLastSummary,
+                summarizerClientElectionEnabled,
+            );
+
             if (this.context.clientDetails.type === summarizerClientType) {
                 this._summarizer = new Summarizer(
                     "/_summarizer",
@@ -1263,9 +1270,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
         }
-        const electedSummarizerContent = JSON.stringify(this.summarizerClientElection.serialize());
-        addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
 
+        if (this.summarizerClientElection) {
+            const electedSummarizerContent = JSON.stringify(this.summarizerClientElection?.serialize());
+            addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
+        }
         const snapshot = this.blobManager.snapshot();
 
         // Some storage (like git) doesn't allow empty tree, so we can omit it.
@@ -1274,15 +1283,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const blobsTree = convertToSummaryTree(snapshot, false);
             addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
         }
-    }
-
-    /**
-     * @deprecated in 0.14, use dispose() to stop the runtime.
-     * Remove after IRuntime definition no longer includes it.
-     */
-    public async stop(): Promise<{snapshot?: never, state?: never}> {
-        this.dispose(new Error("ContainerRuntimeStopped"));
-        throw new Error("Stop is no longer supported, use dispose to stop the runtime");
     }
 
     private replayPendingStates() {
@@ -1317,7 +1317,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /**
      * Used to apply stashed ops at their reference sequence number.
-     * Normal op processing is synchronous, but rebasing is async since the
+     * Normal op processing is synchronous, but applying stashed ops is async since the
      * data store may not be loaded yet, so we pause DeltaManager between ops.
      * It's also important that we see each op so we know all stashed ops have
      * been applied by "connected" event, but process() doesn't see system ops,
@@ -1346,7 +1346,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             case ContainerMessageType.BlobAttach:
                 return;
             case ContainerMessageType.ChunkedOp:
-                throw new Error(`chunkedOp not expected here`);
+                throw new Error("chunkedOp not expected here");
+            case ContainerMessageType.Rejoin:
+                throw new Error("rejoin not expected here");
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
         }
@@ -1534,7 +1536,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
         const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
-        fluidDataStore.bindToContext();
+        fluidDataStore.attachGraph();
         return fluidDataStore;
     }
 
@@ -1554,9 +1556,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         props?: any,
         id = uuid(),
         isRoot = false,
-    ): Promise<IFluidDataStoreChannel> {
-        return this.dataStores._createFluidDataStoreContext(
+    ): Promise<IFluidRouter> {
+        const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
             Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
+        if (isRoot) {
+            fluidDataStore.attachGraph();
+        }
+        return fluidDataStore;
     }
 
     private async _createDataStore(
@@ -1777,7 +1783,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
         const { fullTree, refreshLatestAck, summaryLogger } = options;
-
         if (refreshLatestAck) {
             const latestSummaryRefSeq = await this.refreshLatestSummaryAckFromServer(
                 ChildLogger.create(summaryLogger, undefined, { all: { safeSummary: true } }));
@@ -2182,6 +2187,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 throw new Error(`chunkedOp not expected here`);
             case ContainerMessageType.BlobAttach:
                 this.submit(type, content, localOpMetadata, opMetadata);
+                break;
+            case ContainerMessageType.Rejoin:
+                this.submit(type, content);
                 break;
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);

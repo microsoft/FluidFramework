@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:12.22.1-stretch AS base
+FROM node:12.22.7-stretch AS base
 
 # Add Tini
 ENV TINI_VERSION v0.18.0

@@ -685,16 +685,27 @@ export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISumm
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
 // @public (undocumented)
-export const enum SummaryType {
+export namespace SummaryType {
     // (undocumented)
-    Attachment = 4,
+    export type Attachment = 4;
     // (undocumented)
-    Blob = 2,
+    export type Blob = 2;
     // (undocumented)
-    Handle = 3,
+    export type Handle = 3;
     // (undocumented)
-    Tree = 1
+    export type Tree = 1;
+    const // (undocumented)
+    Tree: Tree;
+    const // (undocumented)
+    Blob: Blob;
+    const // (undocumented)
+    Handle: Handle;
+    const // (undocumented)
+    Attachment: Attachment;
 }
+
+// @public (undocumented)
+export type SummaryType = SummaryType.Attachment | SummaryType.Blob | SummaryType.Handle | SummaryType.Tree;
 
 // @public (undocumented)
 export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;

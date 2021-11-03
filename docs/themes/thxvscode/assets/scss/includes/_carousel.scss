@@ -2,11 +2,11 @@
   // Pre-load trick for images in hidden carousel slides (modern browsers do not load display:none images)
   content: '';
   opacity: 0;
-  background: url('/assets/docs_carousel/debug_b.png'),
-    url('/assets/docs_carousel/multi-cursor-edit.png'),
-    url('/assets/docs_carousel/git_b.png'),
-    url('/assets/docs_carousel/peek_b.png'),
-    url('/assets/docs_carousel/intellisense_b.png');
+//   background: url('/assets/docs_carousel/debug_b.png'),
+//     url('/assets/docs_carousel/multi-cursor-edit.png'),
+//     url('/assets/docs_carousel/git_b.png'),
+//     url('/assets/docs_carousel/peek_b.png'),
+//     url('/assets/docs_carousel/intellisense_b.png');
 }
 .carousel {
   background-color: $gray-95;
@@ -20,21 +20,21 @@
     background-size: 100%;
     background-repeat: no-repeat;
     border-radius: 4px;
-    &.debug {
-      background-image: url('/assets/docs_carousel/debug_b.png');
-    }
-    &.edit {
-      background-image: url('/assets/docs_carousel/multi-cursor-edit.png');
-    }
-    &.git {
-      background-image: url('/assets/docs_carousel/git_b.png');
-    }
-    &.peek {
-      background-image: url('/assets/docs_carousel/peek_b.png');
-    }
-    &.intellisense {
-      background-image: url('/assets/docs_carousel/intellisense_b.png');
-    }
+    // &.debug {
+    //   background-image: url('/assets/docs_carousel/debug_b.png');
+    // }
+    // &.edit {
+    //   background-image: url('/assets/docs_carousel/multi-cursor-edit.png');
+    // }
+    // &.git {
+    //   background-image: url('/assets/docs_carousel/git_b.png');
+    // }
+    // &.peek {
+    //   background-image: url('/assets/docs_carousel/peek_b.png');
+    // }
+    // &.intellisense {
+    //   background-image: url('/assets/docs_carousel/intellisense_b.png');
+    // }
   }
 
   .caption {

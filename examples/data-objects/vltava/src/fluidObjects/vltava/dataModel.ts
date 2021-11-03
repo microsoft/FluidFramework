@@ -9,7 +9,7 @@ import { IFluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidLastEditedTracker } from "@fluid-experimental/last-edited";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IQuorum, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
 
@@ -30,7 +30,7 @@ export interface IVltavaDataModel extends EventEmitter {
 }
 
 export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
-    private readonly quorum: IQuorum;
+    private readonly quorum: IQuorumClients;
     private users: IVltavaUserDetails[] = [];
     private lastEditedTracker: IFluidLastEditedTracker | undefined;
 
