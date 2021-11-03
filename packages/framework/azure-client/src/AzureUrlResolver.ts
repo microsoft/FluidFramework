@@ -70,14 +70,15 @@ export class AzureUrlResolver implements IUrlResolver {
     }
 }
 
-function decodeAzureUrl(url: string): {
+function decodeAzureUrl(urlString: string): {
     ordererUrl: string;
     storageUrl: string;
     tenantId: string;
     containerId?: string,
 } {
-    const [ordererUrl, queryString] = url.split("/?");
-    const searchParams = new URLSearchParams(queryString);
+    const url = new URL(urlString);
+    const ordererUrl = url.origin;
+    const searchParams = url.searchParams;
     const storageUrl = searchParams.get("storage");
     if (storageUrl === null) {
         throw new Error("Azure URL did not contain a storage URL");

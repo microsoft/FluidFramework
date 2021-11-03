@@ -156,7 +156,7 @@ export async function fluidFetchInit(urlStr: string) {
         const url = new URL(urlStr);
         const server = url.hostname.toLowerCase();
         return initializeR11s(server, url.pathname, resolvedUrl);
-    } else if (resolvedUrl.type === "fluid") {
+    } else if (resolvedUrl.url.includes("fluidrelay.azure.com")) {
         const url = new URL(urlStr);
         const tenantId = url.searchParams.get("tenantId");
         if (tenantId === null) {
