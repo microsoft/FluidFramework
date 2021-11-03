@@ -60,7 +60,7 @@ export class TextSegment extends BaseSegment {
         return b;
     }
 
-    public canAppend(segment: ISegment) {
+    public canAppend(segment: ISegment): boolean {
         return !this.text.endsWith("\n")
             && TextSegment.is(segment)
             && (this.cachedLength <= MergeTree.TextSegmentGranularity ||

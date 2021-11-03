@@ -514,7 +514,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         b.seq = this.seq;
     }
 
-    canAppend(segment: ISegment) {
+    canAppend(segment: ISegment): boolean {
         return false;
     }
 
@@ -806,7 +806,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
         return undefined;
     }
 
-    canAppend(segment: ISegment) {
+    canAppend(segment: ISegment): boolean {
         return false;
     }
 

@@ -1803,7 +1803,7 @@ export class TextSegment extends BaseSegment {
     // (undocumented)
     append(segment: ISegment): void;
     // (undocumented)
-    canAppend(segment: ISegment): any;
+    canAppend(segment: ISegment): boolean;
     // (undocumented)
     clone(start?: number, end?: number): TextSegment;
     // (undocumented)
