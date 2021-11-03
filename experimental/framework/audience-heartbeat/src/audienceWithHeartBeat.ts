@@ -17,7 +17,7 @@ import { IFluidAudienceWithHeartBeat } from "./interfaces";
 export class AudienceWithHeartBeat extends EventEmitter implements IFluidAudienceWithHeartBeat {
     private readonly frequency: number;
     private readonly audienceHeartBeat: Map<string, number> = new Map();
-    private readonly audience: IAudience ;
+    private audience: IAudience ;
     private readonly runtime: IFluidDataStoreRuntime ;
     private timer: any = undefined;
 
@@ -61,13 +61,14 @@ export class AudienceWithHeartBeat extends EventEmitter implements IFluidAudienc
 
                 // client missed addMember event.
                 if (this.audience.getMember(message.clientId) === undefined) {
-                    this.emit(MessageType.ClientJoin, message.content);
+                    this.emit(MessageType.ClientJoin, message.content as IClient);
                 }
             }
         });
 
         // Listen for client join
         this.audience.on("addMember", (clientId: string, client: IClient) => {
+            this.audience = this.runtime.getAudience();
             if (this.timer !== undefined && clientId) {
                 this.audienceHeartBeat.set(clientId, Date.now());
             }
@@ -75,6 +76,7 @@ export class AudienceWithHeartBeat extends EventEmitter implements IFluidAudienc
 
         // Listen for client leave
         this.audience.on("removeMember", (clientId: string, client: IClient) => {
+            this.audience = this.runtime.getAudience();
             if (this.timer !== undefined && clientId) {
                 this.audienceHeartBeat.delete(clientId);
             }
