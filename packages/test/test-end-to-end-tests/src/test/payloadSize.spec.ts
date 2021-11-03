@@ -73,12 +73,12 @@ describeNoCompat("Payload size", (getTestObjectProvider) => {
     it("Can send 60 messages of 16k", async () => {
         const largeString = generateStringOfSize(16 * 1000);
         const messageCount = 60;
-        // For ODSP, this will fail at 61 messages
-        // The limit is from socket.io and it is likely 1MB,
+        // The limit is from socket.io seems to be 1MB
         // as experimentally, a payload of 979774 bytes pass, while a
-        // a payload of 996103 bytes does not. The size is not stable,
-        // likely due to escaping happening for another stringify at the
-        // socket layer.
+        // a payload of 996103 bytes does not. Which is also an argument
+        // that the message is stringified again. This will also explain
+        // why the size varies slightly based on the string content
+        // of the message.
         dataObject1.context.containerRuntime.orderSequentially(() => {
             for (let i = 0; i < messageCount; i++) {
                 dataObject1map1.set(`key${i}`, largeString);
