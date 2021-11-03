@@ -14,14 +14,14 @@ import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { TestDataObject } from "./mockSummarizerClient";
 
 /**
  * Validates this scenario: When a data store becomes inactive (has been unreferenced for a given amount of time),
  * using that data store results in an error telemetry.
  */
-describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
+describeFullCompat("GC inactive data store tests", (getTestObjectProvider) => {
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
         TestDataObject,
@@ -42,8 +42,8 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
         runtimeOptions,
     );
     const summaryLogger = new TelemetryNullLogger();
-    const inactiveObjectRevivedEvent = "fluid:telemetry:inactiveObjectRevived";
-    const inactiveObjectChangedEvent = "fluid:telemetry:inactiveObjectChanged";
+    const inactiveObjectRevivedEvent = "fluid:telemetry:SummarizerNode:inactiveObjectRevived";
+    const inactiveObjectChangedEvent = "fluid:telemetry:SummarizerNode:inactiveObjectChanged";
 
     let provider: ITestObjectProvider;
     let containerRuntime: ContainerRuntime;
