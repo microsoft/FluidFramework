@@ -139,8 +139,8 @@ export interface IDocumentService {
 
 // @public (undocumented)
 export interface IDocumentServiceFactory {
-    createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, props?: ILoaderInfoProps): Promise<IDocumentService>;
+    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, props?: ILoaderInfoProps): Promise<IDocumentService>;
     protocolName: string;
 }
 
@@ -222,6 +222,14 @@ export interface IGenericNetworkError extends IDriverErrorBase {
     readonly errorType: DriverErrorType.genericNetworkError;
     // (undocumented)
     readonly statusCode?: number;
+}
+
+// @public
+export interface ILoaderInfoProps {
+    // (undocumented)
+    containerId?: string;
+    // (undocumented)
+    loaderVersion?: string;
 }
 
 // @public (undocumented)

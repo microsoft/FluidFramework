@@ -311,6 +311,9 @@ export interface IDocumentServiceFactory {
     ): Promise<IDocumentService>;
 }
 
+/**
+ * Information that loader can pass to driver.
+ */
 export interface ILoaderInfoProps {
     // Id of the loaded container
     containerId?: string,
