@@ -822,26 +822,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._summarizer;
     }
 
-    private getCreateVersion(metadata?: IContainerRuntimeMetadata): string | undefined {
-        if(!metadata) {
-            return undefined;
-        }
-        return metadata.createContainerRuntimeVersion ?? undefined;
-    }
-
-    private getTimeStamp(metadata?: IContainerRuntimeMetadata): number | undefined {
-        if(!metadata) {
-            return undefined;
-        }
-        return metadata.createContainerTimeStamp ?? undefined;
-    }
-
-    private getSummaryCount(metadata?: IContainerRuntimeMetadata): number | undefined {
-        if(!metadata) {
-            return undefined;
-        }
-        return metadata?.lastSummaryCount ?? undefined;
-    }
     private readonly metadata: IContainerRuntimeMetadata = {summaryFormatVersion: 1, message: undefined};
 
     private constructor(
@@ -868,9 +848,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
           */
         const prevSummaryGCVersion = existing ? getGCVersion(metadata) : undefined;
 
-        this.metadata.createContainerRuntimeVersion = existing ? this.getCreateVersion(metadata) : pkgVersion;
-        this.metadata.createContainerTimeStamp = existing ? this.getTimeStamp(metadata) : performance.now();
-        this.metadata.lastSummaryCount = existing ? this.getSummaryCount(metadata) : 0;
+        /**
+         * If container exists, then get these values from metadata.
+         * If there is no metadata or metadata does not have these values, it means this is an old document,
+         * so these values will be undefined. If container doesn't exist, we initialize these values
+         */
+        this.metadata.createContainerRuntimeVersion = existing ? metadata?.createContainerRuntimeVersion ?? undefined
+            : pkgVersion;
+        this.metadata.createContainerTimeStamp = existing ? metadata?.createContainerTimeStamp ?? undefined
+            : performance.now();
+        this.metadata.lastSummaryCount = existing ? metadata?.lastSummaryCount ?? undefined : 0;
 
         // Default to false for now.
         this.latestSummaryGCVersion = prevSummaryGCVersion ??
@@ -944,7 +931,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     getInitialGCSummaryDetailsFn,
                 ),
             (id: string) => this.summarizerNode.deleteChild(id),
-            this._logger);
+            this._logger,
+            this.metadata);
 
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,

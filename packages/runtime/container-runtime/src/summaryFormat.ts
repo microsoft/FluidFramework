@@ -83,8 +83,11 @@ export interface IContainerRuntimeMetadata {
     readonly disableIsolatedChannels?: true;
     /** 0 to disable GC, > 0 to enable GC, undefined defaults to disabled. */
     readonly gcFeature?: GCVersion;
+    /** Runtime version of the container when it was first created */
     createContainerRuntimeVersion?: string;
+    /** Timestamp of creating the container */
     createContainerTimeStamp?: number;
+    /** Counter of the last summary happened, increments every time we summarize */
     lastSummaryCount?: number;
 }
 

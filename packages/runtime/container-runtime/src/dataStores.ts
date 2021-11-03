@@ -74,6 +74,7 @@ export class DataStores implements IDisposable {
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
         private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
+        private readonly metadata: IContainerRuntimeMetadata,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
         this.logger = ChildLogger.create(baseLogger);
@@ -127,6 +128,10 @@ export class DataStores implements IDisposable {
             eventName: "ContainerLoadStats",
             dataStoreCount: fluidDataStores.size,
             referencedDataStoreCount: fluidDataStores.size - unreferencedDataStoreCount,
+            createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
+            createContainerTimeStamp: metadata?.createContainerTimeStamp,
+            lastSummaryCount: metadata?.lastSummaryCount,
+            summaryFormatVersion: metadata?.summaryFormatVersion,
         });
     }
 
