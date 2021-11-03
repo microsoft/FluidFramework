@@ -184,7 +184,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly initialChannelGCDataP: LazyPromise<Map<string, IGarbageCollectionData>>;
 
     public constructor(
-        private readonly dataStoreContext: IFluidDataStoreContext,
+        readonly dataStoreContext: IFluidDataStoreContext,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
     ) {

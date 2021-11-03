@@ -7,6 +7,7 @@ export * from "./containerRuntime";
 export * from "./deltaScheduler";
 export * from "./dataStoreRegistry";
 export * from "./pendingStateManager";
+export * from "./rootDataStore";
 export * from "./summarizer";
 export * from "./summarizerTypes";
 export * from "./summaryCollection";

@@ -110,9 +110,7 @@ import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo } from "./blobManager";
 import {
     DataStores,
-    IDataStoreAliasMapping,
     getSummaryForDatastores,
-    IDataStoreAliasMessage,
 } from "./dataStores";
 import {
     blobsTreeName,
@@ -142,6 +140,7 @@ import {
 } from "./summarizerTypes";
 import { formExponentialFn, Throttler } from "./throttler";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
+import { IDataStoreAliasMapping, IDataStoreAliasMessage, IRootDataStore, RootDataStore } from "./rootDataStore";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -160,7 +159,7 @@ export enum ContainerMessageType {
     Rejoin = "rejoin",
 
     // Sets the alias of a root data store
-    SetRootDataStoreAlias = "setRootDataStoreAlias",
+    AssignAlias = "assignAlias",
 }
 
 export interface IChunkedOp {
@@ -307,7 +306,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
         case ContainerMessageType.FluidDataStoreOp:
         case ContainerMessageType.ChunkedOp:
         case ContainerMessageType.Attach:
-        case ContainerMessageType.SetRootDataStoreAlias:
+        case ContainerMessageType.AssignAlias:
         case ContainerMessageType.BlobAttach:
         case ContainerMessageType.Rejoin:
         case MessageType.Operation:
@@ -1352,8 +1351,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return this.dataStores.applyStashedOp(op);
             case ContainerMessageType.Attach:
                 return this.dataStores.applyStashedAttachOp(op as unknown as IAttachMessage);
-            // [TODO:andre4i]: Figure out if ContainerMessageType.SetRootDataStoreAlias is needed here
-            case ContainerMessageType.SetRootDataStoreAlias:
+            // [TODO:andre4i]: Figure out if ContainerMessageType.AssignAlias is needed here
+            case ContainerMessageType.AssignAlias:
             case ContainerMessageType.BlobAttach:
                 return;
             case ContainerMessageType.ChunkedOp:
@@ -1363,30 +1362,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
         }
-    }
-
-    // [TODO:andre4i]: Copied from SharedObject.
-    // This needs to be extracted into a common package.
-    private async newAckBasedPromise<T>(
-        executor: (resolve: (value: T | PromiseLike<T>) => void,
-        reject: (reason?: any) => void) => void,
-    ): Promise<T> {
-        let rejectBecauseDispose: () => void;
-        return new Promise<T>((resolve, reject) => {
-            rejectBecauseDispose =
-                () => reject(new Error("FluidDataStoreRuntime disposed while this ack-based Promise was pending"));
-
-            if (this.disposed) {
-                rejectBecauseDispose();
-                return;
-            }
-
-            this.on("dispose", rejectBecauseDispose);
-            executor(resolve, reject);
-        }).finally(() => {
-            // Note: rejectBecauseDispose will never be undefined here
-            this.off("dispose", rejectBecauseDispose);
-        });
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
@@ -1451,7 +1426,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 case ContainerMessageType.Attach:
                     this.dataStores.processAttachMessage(message, local || localAck);
                     break;
-                case ContainerMessageType.SetRootDataStoreAlias:
+                case ContainerMessageType.AssignAlias:
                     aliasResult = this.dataStores.processAliasMessage(message);
                     if (local) {
                         resolve(aliasResult);
@@ -1579,32 +1554,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._createDataStore(pkg, false /* isRoot */);
     }
 
-    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
+    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IRootDataStore> {
         const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
         fluidDataStore.attachGraph();
-        return fluidDataStore;
-    }
-
-    // [TODO:andre4i] Document and add to the IContainerRuntime interface
-    public async trySetRootDataStoreAlias(
-        // [TODO:andre4i] Figure out a better interface for this,
-        // as it would be nice to have access to the supplied datastore id
-        dataStore: IFluidDataStoreChannel,
-        alias: string,
-    ): Promise<boolean> {
-        assert(this.attachState === AttachState.Attached, "Trying to submit message while detached!");
-        // [TODO:andre4i] ensure that the datastore is actually root
-
-        const message: IDataStoreAliasMessage = {
-            id: dataStore.id,
-            alias,
-        };
-
-        const aliasResult = await this.newAckBasedPromise<IDataStoreAliasMapping>((resolve) => {
-            this.submit(ContainerMessageType.SetRootDataStoreAlias, message, resolve);
-        }).catch(() => undefined);
-
-        return aliasResult !== undefined && aliasResult.actualId === aliasResult.proposedId;
+        return new RootDataStore(fluidDataStore);
     }
 
     public createDetachedRootDataStore(
@@ -1623,13 +1576,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         props?: any,
         id = uuid(),
         isRoot = false,
-    ): Promise<IFluidRouter> {
+    ): Promise<IRootDataStore> {
         const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
             Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
         if (isRoot) {
             fluidDataStore.attachGraph();
         }
-        return fluidDataStore;
+        return new RootDataStore(fluidDataStore);
     }
 
     private async _createDataStore(
@@ -1681,7 +1634,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        // [TODO:andre4i]: Figure out if ContainerMessageType.SetRootDataStoreAlias is needed here
+        // [TODO:andre4i]: Figure out if ContainerMessageType.AssignAlias is needed here
         return true;
     }
 
@@ -2092,6 +2045,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.submit(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
     }
 
+    public submitDataStoreAliasOp(message: IDataStoreAliasMessage, localOpMetadata: unknown = undefined): void {
+        this.submit(ContainerMessageType.AssignAlias, message, localOpMetadata);
+    }
+
     public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
         this.verifyNotClosed();
         return this.blobManager.createBlob(blob);
@@ -2250,7 +2207,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.dataStores.resubmitDataStoreOp(content, localOpMetadata);
                 break;
             case ContainerMessageType.Attach:
-            case ContainerMessageType.SetRootDataStoreAlias:
+            case ContainerMessageType.AssignAlias:
                 this.submit(type, content, localOpMetadata);
                 break;
             case ContainerMessageType.ChunkedOp:

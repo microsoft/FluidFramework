@@ -77,6 +77,7 @@ import {
     getAttributesFormatVersion,
     getFluidDataStoreAttributes,
 } from "./summaryFormat";
+import { IDataStoreAliasMessage } from "./rootDataStore";
 
 function createAttributes(
     pkg: readonly string[],
@@ -248,6 +249,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.subLogger = ChildLogger.create(this.logger, "FluidDataStoreContext");
         this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.subLogger);
     }
+    createProps?: any;
 
     public dispose(): void {
         if (this._disposed) {
@@ -492,7 +494,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     /**
      * Updates the used routes of the channel and its child contexts. The channel must be loaded before calling this.
-     * It is called in these two scenarions:
+     * It is called in these two scenarios:
      * 1. When the used routes of the data store is updated and the data store is loaded.
      * 2. When the data store is realized. This updates the channel's used routes as per last GC run.
      */
@@ -531,6 +533,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.id,
             fluidDataStoreContent,
             localOpMetadata);
+    }
+
+    public submitAliasOp(message: IDataStoreAliasMessage, localOpMetadata: unknown): void {
+        this.verifyNotClosed();
+        assert(!!this.channel, "Channel must exist when submitting message");
+        this._containerRuntime.submitDataStoreAliasOp(message, localOpMetadata);
     }
 
     /**
@@ -576,7 +584,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         try
         {
             assert(!this.detachedRuntimeCreation, 0x148 /* "Detached runtime creation on runtime bind" */);
-            assert(this.channelDeferred !== undefined, 0x149 /* "Undefined channel defferal" */);
+            assert(this.channelDeferred !== undefined, 0x149 /* "Undefined channel deferral" */);
             assert(this.pkg !== undefined, 0x14a /* "Undefined package path" */);
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
