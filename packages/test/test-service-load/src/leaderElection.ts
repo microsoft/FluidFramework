@@ -5,41 +5,32 @@
 
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISignalMessage } from "@fluidframework/protocol-definitions";
+import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 
 export class LeaderElection {
     private readonly beatInEveryNSecs: number = 1000; // 1 secs
     private readonly leaderWait: number = 5000; // 5 secs
-    private lastPinged: Date | undefined;
+    private lastPinged: number | undefined;
+    private readonly logger: TelemetryLogger;
 
-    constructor(private readonly dataStoreRuntime: IFluidDataStoreRuntime) { }
+    constructor(private readonly dataStoreRuntime: IFluidDataStoreRuntime) {
+        this.logger = ChildLogger.create(this.dataStoreRuntime.logger, "SignalLeaderElection");
+     }
 
     public setupLeaderElection() {
         this.dataStoreRuntime.on("signal", (signal: ISignalMessage) => this.handleSignal(signal));
-
+        this.lastPinged = Date.now();
         const interval = setInterval(() => {
             if (this.leaderId !== undefined && this.leaderId === this.dataStoreRuntime.clientId) {
                 this.dataStoreRuntime.submitSignal("leaderMessage", "leaderMessage");
-                this.lastPinged = new Date();
+                this.lastPinged = Date.now();
             }else if(this.leaderId === undefined) {
-                this.dataStoreRuntime.logger.send(
-                    {
-                        category: "performance",
-                        eventName: "LeaderElection:Error",
-                        warning: "Leader is undefined.",
-                        leaderId: this.leaderId,
-                        clientId: this.dataStoreRuntime.clientId,
-                    });
+                this.logger.sendErrorEvent({eventName: "LeaderUndefinedEventError"});
             }else {
-                const current = new Date();
-                if(this.lastPinged === undefined || current.getTime() - this.lastPinged?.getTime() > this.leaderWait) {
-                    this.dataStoreRuntime.logger.send(
-                        {
-                            category: "performance",
-                            eventName: "LeaderElection:Error",
-                            warning: "Did not recieve leader message.",
-                            leaderId: this.leaderId,
-                            clientId: this.dataStoreRuntime.clientId,
-                        });
+                const current = Date.now();
+                if(this.lastPinged !== undefined && current - this.lastPinged > this.leaderWait) {
+                    this.logger.sendErrorEvent({eventName: "LeaderLostEventError"});
+                    this.lastPinged = undefined;
                 }
             }
         }, this.beatInEveryNSecs);
@@ -57,17 +48,9 @@ export class LeaderElection {
         // eslint-disable-next-line no-null/no-null
         if(signal.clientId !== null && signal.content === "leaderMessage") {
             if(this.leaderId !== signal.clientId) {
-                this.dataStoreRuntime.logger.send(
-                    {
-                        category: "performance",
-                        eventName: "LeaderElection:Error",
-                        reason: "Recieved unexpected leader id.",
-                        clientId: this.dataStoreRuntime.clientId,
-                        newLeaderId: signal.clientId,
-                        oldLeaderId: this.leaderId,
-                    });
+                this.logger.sendErrorEvent({eventName: "UnexpectedLeaderEventError"});
             }
-            this.lastPinged = new Date();
+            this.lastPinged = Date.now();
         }
     }
 
