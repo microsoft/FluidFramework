@@ -21,9 +21,22 @@ import {
     ICriticalContainerError,
     IThrottlingWarning,
     ReadOnlyInfo,
+    IDeltaQueueEvents,
 } from "@fluidframework/container-definitions";
-import { assert, Deferred, performance, TypedEventEmitter } from "@fluidframework/common-utils";
-import { TelemetryLogger, safeRaiseEvent, logIfFalse, normalizeError } from "@fluidframework/telemetry-utils";
+import {
+    assert,
+    Deferred,
+    performance,
+    TypedEventEmitter,
+    EventForwarder,
+} from "@fluidframework/common-utils";
+import {
+    TelemetryLogger,
+    safeRaiseEvent,
+    logIfFalse,
+    normalizeError,
+    generateStack,
+} from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -68,7 +81,7 @@ import {
     wrapError,
     GenericError,
 } from "@fluidframework/container-utils";
-import { DeltaQueue } from "./deltaQueue";
+import { DeltaQueue, IDeltaQueueWriter } from "./deltaQueue";
 
 const MaxReconnectDelayInMs = 8000;
 const InitialReconnectDelayInMs = 1000;
@@ -158,6 +171,53 @@ class NoDeltaStream
 }
 
 /**
+ * This class exists to help diagnose issues described in https://github.com/microsoft/FluidFramework/issues/7312
+ *
+ * This adapter class tracks resume & pause calls to provide ability to debug cases where
+ * someone is holding queue in paused state too long.
+ * The only thing that it does on top of DeltaQueue is tracking all users who called pause()
+ * and making available callstacks for those calls.
+ *
+ * Long term, we better of switching to tracking callers by
+ *  - pause() returning token that is required to be passed into resume()
+ *  - tracking tokens and stacks with tokens
+ * This would be improvement over current system, as today we can't pair pause & resume calls.
+ */
+class DeltaQueueProxy<T> extends EventForwarder<IDeltaQueueEvents<T>> implements IDeltaQueue<T>, IDeltaQueueWriter<T> {
+    // IDeltaQueueWriter methods
+    public push(task: T) { return this.queue.push(task); }
+    public clear()  { return this.queue.clear(); }
+
+    // IDeltaQueue methods
+    public get paused() { return this.queue.paused; }
+    public get length() { return this.queue.length; }
+    public get idle() { return this.queue.idle; }
+    public peek() { return this.queue.peek(); }
+    public toArray() { return this.queue.toArray(); }
+    public async waitTillProcessingDone() { return this.queue.waitTillProcessingDone(); }
+
+    public async pause() {
+        this.stacks.push(generateStack() ?? "");
+        return this.queue.pause();
+    }
+    public resume() {
+         this.queue.resume();
+         if (!this.paused) {
+             this.stacks.length = 0;
+         }
+    }
+
+    // constructor
+    constructor(private readonly queue: IDeltaQueue<T> & IDeltaQueueWriter<T>) {
+         super(queue);
+    }
+
+    // Tracking offenders
+    protected stacks: string[] = [];
+    public get pauseStacks() { return this.stacks; }
+}
+
+/**
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
@@ -213,7 +273,7 @@ export class DeltaManager
     // The sequence number we initially loaded from
     private initSequenceNumber: number = 0;
 
-    private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
+    private readonly _inbound: DeltaQueueProxy<ISequencedDocumentMessage>;
     private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
     private readonly _outbound: DeltaQueue<IDocumentMessage[]>;
 
@@ -489,6 +549,7 @@ export class DeltaManager
         assert(this.connection !== undefined, 0x238 /* "called only in connected state" */);
 
         const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+        const stacks = this._inbound.pauseStacks;
         this.logger.sendErrorEvent({
             ...event,
             // This directly tells us if fetching ops is in flight, and thus likely the reason of
@@ -503,7 +564,10 @@ export class DeltaManager
             pendingOps: this.pending.length, // Do we have any pending ops?
             pendingFirst: pendingSorted[0]?.sequenceNumber, // is the first pending op the one that we are missing?
             haveHandler: this.handler !== undefined, // do we have handler installed?
-            closed: this.closed,
+            inboundLength: this.inbound.length,
+            inboundPaused: this.inbound.paused,
+            inboundMaxCallers: stacks.length,
+            inboundPauser: stacks.join("\n\n"),
         });
     }
 
@@ -528,10 +592,10 @@ export class DeltaManager
         this.defaultReconnectionMode = this.client.mode;
         this._reconnectMode = reconnectAllowed ? ReconnectMode.Enabled : ReconnectMode.Never;
 
-        this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
+        this._inbound = new DeltaQueueProxy(new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
                 this.processInboundMessage(op);
-            });
+            }));
 
         this._inbound.on("error", (error) => {
             this.close(CreateProcessingError(error, "deltaManagerInboundErrorHandler", this.lastMessage));
