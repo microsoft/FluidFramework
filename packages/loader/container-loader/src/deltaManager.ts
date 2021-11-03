@@ -997,18 +997,18 @@ export class DeltaManager
 
         let opsFromFetch = false;
 
-        const listenerToClear = (op: ISequencedDocumentMessage) => {
+        const opListener = (op: ISequencedDocumentMessage) => {
             assert(op.sequenceNumber === this.lastQueuedSequenceNumber, 0x23a /* "seq#'s" */);
             // Ops that are coming from this request should not cancel itself.
             // This is useless for known ranges (to is defined) as it means request is over either way.
             // And it will cancel unbound request too early, not allowing us to learn where the end of the file is.
             if (!opsFromFetch && cancelFetch(op)) {
                 controller.abort();
-                this._inbound.off("push", listenerToClear);
+                this._inbound.off("push", opListener);
             }
         };
 
-        this._inbound.on("push", listenerToClear);
+        this._inbound.on("push", opListener);
 
         try {
             const stream = this.deltaStorage.fetchMessages(
@@ -1033,7 +1033,7 @@ export class DeltaManager
         } finally {
             assert(!opsFromFetch, "logic error");
             this.closeAbortController.signal.onabort = null;
-            this._inbound.off("push", listenerToClear);
+            this._inbound.off("push", opListener);
         }
     }
 
