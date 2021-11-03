@@ -612,7 +612,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         } catch (error) {
             this.channelDeferred?.reject(error);
             this.logger.sendErrorEvent(
-                { eventName: "bindRuntimeError", fluidDataStoreId: { value: this.id, tag: "PackageData"} },
+                { eventName: "BindRuntimeError", fluidDataStoreId: { value: this.id, tag: "PackageData"} },
                 error);
         }
     }
