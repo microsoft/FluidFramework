@@ -197,6 +197,9 @@ class DeltaQueueProxy<T> extends EventForwarder<IDeltaQueueEvents<T>> implements
     public async waitTillProcessingDone() { return this.queue.waitTillProcessingDone(); }
 
     public async pause() {
+        // Note: this is not cheap. On my rather fast machine it takes ~0.08ms per call
+        // If this becomes perf problem, we need to redesign how often we pause op processing -
+        // it just not right to call it for every incoming op!
         this.stacks.push(generateStack() ?? "");
         return this.queue.pause();
     }
