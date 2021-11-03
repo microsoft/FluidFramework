@@ -639,7 +639,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     }
 
     public changeInterval(interval: TInterval, start: number, end: number) {
-        const newInterval: TInterval = interval.modify(this.label, start, end);
+        const newInterval = interval.modify(this.label, start, end) as TInterval | undefined;
         if (newInterval) {
             this.removeExistingInterval(interval);
             this.add(newInterval);

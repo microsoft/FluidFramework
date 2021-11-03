@@ -59,7 +59,7 @@ export interface ReferencePosition {
     isLeaf(): boolean;
     getSegment(): ISegment | undefined;
     getOffset(): number;
-    addProperties(newProps: PropertySet, op?: ICombiningOp);
+    addProperties(newProps: PropertySet, op?: ICombiningOp): void;
     hasTileLabels(): boolean;
     hasRangeLabels(): boolean;
     hasTileLabel(label: string): boolean;
@@ -90,13 +90,13 @@ export interface IMergeBlock extends IMergeNodeCommon {
     children: IMergeNode[];
     partialLengths?: PartialSequenceLengths;
     hierBlock(): IHierBlock | undefined;
-    assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean);
-    setOrdinal(child: IMergeNode, index: number);
+    assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
+    setOrdinal(child: IMergeNode, index: number): void;
 }
 
 export interface IHierBlock extends IMergeBlock {
-    hierToString(indentCount: number);
-    addNodeReferences(mergeTree: MergeTree, node: IMergeNode);
+    hierToString(indentCount: number): string;
+    addNodeReferences(mergeTree: MergeTree, node: IMergeNode): void;
     rightmostTiles: MapLike<ReferencePosition>;
     leftmostTiles: MapLike<ReferencePosition>;
     rangeStacks: RangeStackMap;
@@ -328,7 +328,7 @@ function addNodeReferences(
                 if (segment.refType & (ReferenceType.NestBegin | ReferenceType.NestEnd)) {
                     const rangeLabels = segment.getRangeLabels();
                     if (rangeLabels) {
-                        for (const label of segment.getRangeLabels()) {
+                        for (const label of segment.getRangeLabels()!) {
                             updateRangeInfo(label, segment);
                         }
                     }
@@ -343,7 +343,7 @@ function addNodeReferences(
                             addTileIfNotPresent(lref, leftmostTiles);
                         }
                         if (lref.refType & (ReferenceType.NestBegin | ReferenceType.NestEnd)) {
-                            for (const label of lref.getRangeLabels()) {
+                            for (const label of lref.getRangeLabels()!) {
                                 updateRangeInfo(label, lref);
                             }
                         }
@@ -727,11 +727,11 @@ export class Marker extends BaseSegment implements ReferencePosition {
         return refHasRangeLabel(this, label);
     }
 
-    getTileLabels() {
+    getTileLabels(): string[] | undefined {
         return refGetTileLabels(this);
     }
 
-    getRangeLabels() {
+    getRangeLabels(): string[] | undefined {
         return refGetRangeLabels(this);
     }
 
@@ -1048,7 +1048,7 @@ function tileShift(
 
 export interface MinListener {
     minRequired: number;
-    onMinGE(minSeq: number);
+    onMinGE(minSeq: number): void;
 }
 
 const minListenerComparer: Comparer<MinListener> = {
@@ -2988,7 +2988,7 @@ export class MergeTree {
         block: IMergeBlock,
         action: (segment: ISegment, accum?: TClientData) => boolean,
         accum?: TClientData,
-    ) {
+    ): boolean {
         let go = true;
         const children = block.children;
         for (let childIndex = 0; go && childIndex < block.childCount; childIndex++) {

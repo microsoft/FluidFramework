@@ -306,15 +306,15 @@ export function createRemoveRangeOp(start: number, end: number, register?: strin
 // @public (undocumented)
 export interface Dictionary<TKey, TData> {
     // (undocumented)
-    diag(): any;
+    diag(): void;
     // (undocumented)
     get(key: TKey): Property<TKey, TData> | undefined;
     // (undocumented)
-    map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum): any;
+    map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum): void;
     // (undocumented)
-    put(key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>): any;
+    put(key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>): void;
     // (undocumented)
-    remove(key: TKey): any;
+    remove(key: TKey): void;
 }
 
 // @public (undocumented)
@@ -377,9 +377,9 @@ export interface IConsensusValue {
 // @public (undocumented)
 export interface IHierBlock extends IMergeBlock {
     // (undocumented)
-    addNodeReferences(mergeTree: MergeTree, node: IMergeNode): any;
+    addNodeReferences(mergeTree: MergeTree, node: IMergeNode): void;
     // (undocumented)
-    hierToString(indentCount: number): any;
+    hierToString(indentCount: number): string;
     // (undocumented)
     leftmostTiles: MapLike<ReferencePosition>;
     // (undocumented)
@@ -407,7 +407,7 @@ export interface IInterval {
     // (undocumented)
     compareStart(b: IInterval): number;
     // (undocumented)
-    modify(label: string, start: number, end: number): any;
+    modify(label: string, start: number, end: number): IInterval | undefined;
     // (undocumented)
     overlaps(b: IInterval): boolean;
     // (undocumented)
@@ -447,7 +447,7 @@ export interface IMarkerModifiedAction {
 // @public (undocumented)
 export interface IMergeBlock extends IMergeNodeCommon {
     // (undocumented)
-    assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): any;
+    assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
     // (undocumented)
     childCount: number;
     // (undocumented)
@@ -461,7 +461,7 @@ export interface IMergeBlock extends IMergeNodeCommon {
     // (undocumented)
     partialLengths?: PartialSequenceLengths;
     // (undocumented)
-    setOrdinal(child: IMergeNode, index: number): any;
+    setOrdinal(child: IMergeNode, index: number): void;
 }
 
 // @public (undocumented)
@@ -766,9 +766,7 @@ export enum IntervalType {
 // @public (undocumented)
 export interface IRBAugmentation<TKey, TData> {
     // (undocumented)
-    init?(node: RBNode<TKey, TData>): any;
-    // (undocumented)
-    update(node: RBNode<TKey, TData>): any;
+    update(node: RBNode<TKey, TData>): void;
 }
 
 // @public (undocumented)
@@ -934,17 +932,17 @@ export class LocalReference implements ReferencePosition {
     // (undocumented)
     getProperties(): PropertySet | undefined;
     // (undocumented)
-    getRangeLabels(): any;
+    getRangeLabels(): string[] | undefined;
     // (undocumented)
     getSegment(): ISegment | undefined;
     // (undocumented)
-    getTileLabels(): any;
+    getTileLabels(): string[] | undefined;
     // (undocumented)
-    hasRangeLabel(label: string): any;
+    hasRangeLabel(label: string): boolean;
     // (undocumented)
-    hasRangeLabels(): any;
+    hasRangeLabels(): boolean;
     // (undocumented)
-    hasTileLabel(label: string): any;
+    hasTileLabel(label: string): boolean;
     // (undocumented)
     hasTileLabels(): boolean;
     // (undocumented)
@@ -1034,15 +1032,15 @@ export class Marker extends BaseSegment implements ReferencePosition {
     // (undocumented)
     getProperties(): PropertySet | undefined;
     // (undocumented)
-    getRangeLabels(): any;
+    getRangeLabels(): string[] | undefined;
     // (undocumented)
     getSegment(): this;
     // (undocumented)
-    getTileLabels(): any;
+    getTileLabels(): string[] | undefined;
     // (undocumented)
     hasRangeLabel(label: string): boolean;
     // (undocumented)
-    hasRangeLabels(): any;
+    hasRangeLabels(): boolean;
     // (undocumented)
     hasSimpleType(simpleTypeName: string): boolean;
     // (undocumented)
@@ -1247,7 +1245,7 @@ export class MergeTree {
     // (undocumented)
     static traceZRemove: boolean;
     // (undocumented)
-    walkAllSegments<TClientData>(block: IMergeBlock, action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): any;
+    walkAllSegments<TClientData>(block: IMergeBlock, action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): boolean;
     // (undocumented)
     windowTime: number;
     // (undocumented)
@@ -1329,7 +1327,7 @@ export interface MinListener {
     // (undocumented)
     minRequired: number;
     // (undocumented)
-    onMinGE(minSeq: number): any;
+    onMinGE(minSeq: number): void;
 }
 
 // @public (undocumented)
@@ -1490,7 +1488,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     // (undocumented)
     nodeHeight(node: RBNode<TKey, TData> | undefined): number;
     // (undocumented)
-    nodeMap<TAccum>(node: RBNode<TKey, TData> | undefined, action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey): any;
+    nodeMap<TAccum>(node: RBNode<TKey, TData> | undefined, action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey): boolean;
     // (undocumented)
     nodeMax(node: RBNode<TKey, TData>): RBNode<TKey, TData>;
     // (undocumented)
@@ -1506,13 +1504,13 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     // (undocumented)
     nodeSize(node: RBNode<TKey, TData> | undefined): number;
     // (undocumented)
-    nodeWalk(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): any;
+    nodeWalk(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean;
     // (undocumented)
-    nodeWalkBackward(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): any;
+    nodeWalkBackward(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean;
     // (undocumented)
     nodeWalkExactMatchesBackward(node: RBNode<TKey, TData> | undefined, compareFn: (node: RBNode<TKey, TData>) => number, actionFn: (node: RBNode<TKey, TData>) => void, continueLeftFn: (cmp: number) => boolean, continueRightFn: (cmp: number) => boolean): void;
     // (undocumented)
-    nodeWalkExactMatchesForward(node: RBNode<TKey, TData> | undefined, compareFn: (node: RBNode<TKey, TData>) => number, actionFn: (node: RBNode<TKey, TData>) => void, continueLeftFn: (number: any) => boolean, continueRightFn: (number: any) => boolean): void;
+    nodeWalkExactMatchesForward(node: RBNode<TKey, TData> | undefined, compareFn: (node: RBNode<TKey, TData>) => number, actionFn: (node: RBNode<TKey, TData>) => void, continueLeftFn: (number: number) => boolean, continueRightFn: (number: number) => boolean): void;
     // (undocumented)
     oppositeColor(c: RBColor): RBColor;
     // (undocumented)
@@ -1539,15 +1537,15 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     // (undocumented)
     walkBackward(actions: RBNodeActions<TKey, TData>): void;
     // (undocumented)
-    walkExactMatchesBackward(compareFn: (node: RBNode<TKey, TData>) => number, actionFn: (node: RBNode<TKey, TData>) => void, continueLeftFn: (number: any) => boolean, continueRightFn: (number: any) => boolean): void;
+    walkExactMatchesBackward(compareFn: (node: RBNode<TKey, TData>) => number, actionFn: (node: RBNode<TKey, TData>) => void, continueLeftFn: (number: number) => boolean, continueRightFn: (number: number) => boolean): void;
     // (undocumented)
-    walkExactMatchesForward(compareFn: (node: RBNode<TKey, TData>) => number, actionFn: (node: RBNode<TKey, TData>) => void, continueLeftFn: (number: any) => boolean, continueRightFn: (number: any) => boolean): void;
+    walkExactMatchesForward(compareFn: (node: RBNode<TKey, TData>) => number, actionFn: (node: RBNode<TKey, TData>) => void, continueLeftFn: (number: number) => boolean, continueRightFn: (number: number) => boolean): void;
 }
 
 // @public (undocumented)
 export interface ReferencePosition {
     // (undocumented)
-    addProperties(newProps: PropertySet, op?: ICombiningOp): any;
+    addProperties(newProps: PropertySet, op?: ICombiningOp): void;
     // (undocumented)
     getOffset(): number;
     // (undocumented)
@@ -1762,7 +1760,7 @@ export class SnapshotLoader {
 // @public (undocumented)
 export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
     // (undocumented)
-    mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey): any;
+    mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey): void;
     // (undocumented)
     max(): Property<TKey, TData> | undefined;
     // (undocumented)
@@ -1805,7 +1803,7 @@ export class TextSegment extends BaseSegment {
     // (undocumented)
     append(segment: ISegment): void;
     // (undocumented)
-    canAppend(segment: ISegment): boolean;
+    canAppend(segment: ISegment): any;
     // (undocumented)
     clone(start?: number, end?: number): TextSegment;
     // (undocumented)

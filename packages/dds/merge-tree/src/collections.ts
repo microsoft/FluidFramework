@@ -381,8 +381,7 @@ export interface RBNode<TKey, TData> {
 }
 
 export interface IRBAugmentation<TKey, TData> {
-    update(node: RBNode<TKey, TData>);
-    init?(node: RBNode<TKey, TData>);
+    update(node: RBNode<TKey, TData>): void;
 }
 
 export interface IRBMatcher<TKey, TData> {
@@ -404,11 +403,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     }
 
     makeNode(key: TKey, data: TData, color: RBColor, size: number) {
-        const node = <RBNode<TKey, TData>>{ key, data, color, size };
-        if (this.aug && this.aug.init) {
-            this.aug.init(node);
-        }
-        return node;
+        return <RBNode<TKey, TData>>{ key, data, color, size };
     }
 
     isRed(node: RBNode<TKey, TData> | undefined) {
@@ -477,8 +472,8 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     walkExactMatchesForward(
         compareFn: (node: RBNode<TKey, TData>) => number,
         actionFn: (node: RBNode<TKey, TData>) => void,
-        continueLeftFn: (number) => boolean,
-        continueRightFn: (number) => boolean) {
+        continueLeftFn: (number: number) => boolean,
+        continueRightFn: (number: number) => boolean) {
         this.nodeWalkExactMatchesForward(this.root, compareFn, actionFn, continueLeftFn, continueRightFn);
     }
 
@@ -486,8 +481,8 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         node: RBNode<TKey, TData> | undefined,
         compareFn: (node: RBNode<TKey, TData>) => number,
         actionFn: (node: RBNode<TKey, TData>) => void,
-        continueLeftFn: (number) => boolean,
-        continueRightFn: (number) => boolean) {
+        continueLeftFn: (number: number) => boolean,
+        continueRightFn: (number: number) => boolean) {
         if (!node) {
             return;
         }
@@ -506,8 +501,8 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     walkExactMatchesBackward(
         compareFn: (node: RBNode<TKey, TData>) => number,
         actionFn: (node: RBNode<TKey, TData>) => void,
-        continueLeftFn: (number) => boolean,
-        continueRightFn: (number) => boolean) {
+        continueLeftFn: (number: number) => boolean,
+        continueRightFn: (number: number) => boolean) {
         this.nodeWalkExactMatchesBackward(this.root, compareFn, actionFn, continueLeftFn, continueRightFn);
     }
 
@@ -946,7 +941,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         this.nodeWalkBackward(this.root, actions);
     }
 
-    nodeWalk(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>) {
+    nodeWalk(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean {
         let go = true;
         if (node) {
             if (actions.pre) {
@@ -974,7 +969,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return go;
     }
 
-    nodeWalkBackward(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>) {
+    nodeWalkBackward(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean {
         let go = true;
         if (node) {
             if (actions.pre) {
@@ -1007,7 +1002,8 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         action: PropertyAction<TKey, TData>,
         accum?: TAccum,
         start?: TKey,
-        end?: TKey) {
+        end?: TKey,
+    ): boolean {
         let _start = start;
         let _end = end;
         if (!node) {
@@ -1163,7 +1159,7 @@ export interface IInterval {
     compare(b: IInterval): number;
     compareStart(b: IInterval): number;
     compareEnd(b: IInterval): number;
-    modify(label: string, start: number, end: number);
+    modify(label: string, start: number, end: number): IInterval | undefined;
     overlaps(b: IInterval): boolean;
     union(b: IInterval): IInterval;
 }
