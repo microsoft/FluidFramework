@@ -33,8 +33,8 @@ import {
     IContainerLoadMode,
 } from "@fluidframework/container-definitions";
 import {
+    CreateProcessingError,
     DataCorruptionError,
-    DataProcessingError,
     extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
@@ -869,7 +869,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             assert(!canRetryOnError(error), 0x24f /* "retriable error thrown from attach()" */);
 
             // add resolved URL on error object so that host has the ability to find this document and delete it
-            const newError = DataProcessingError.wrapIfUnrecognized(
+            const newError = CreateProcessingError(
                 error, "errorWhileUploadingBlobsWhileAttaching", undefined);
             const resolvedUrl = this.resolvedUrl;
             if (resolvedUrl) {
