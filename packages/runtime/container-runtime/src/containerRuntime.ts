@@ -329,6 +329,10 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
     return message;
 }
 
+/**
+ * This class controls pausing and resuming inbound queue to ensure that we never
+ * start processing ops in a batch IF we do not have full batch in.
+ */
 class ScheduleManagerCore {
     private pauseSequenceNumber: number | undefined;
     private currentBatchClientId: string | undefined;
@@ -345,7 +349,7 @@ class ScheduleManagerCore {
 
             // First message will have the batch flag set to true if doing a batched send
             const firstMessageMetadata = messages[0].metadata as IRuntimeMessageMetadata;
-            if (!firstMessageMetadata || !firstMessageMetadata.batch) {
+            if (firstMessageMetadata?.batch !== true) {
                 return;
             }
 
@@ -377,6 +381,10 @@ class ScheduleManagerCore {
         this.updatePauseState(this.deltaManager.lastSequenceNumber);
     }
 
+    /**
+     * The only public function in this class - called when we processed an op,
+     * to make decision if op processing should be paused or not afer that.
+     */
     public afterOpProcessing(sequenceNumber: number) {
         this.updatePauseState(sequenceNumber);
     }
@@ -413,6 +421,9 @@ class ScheduleManagerCore {
         }
     }
 
+    /**
+     * Called for each incoming op (i.e. inbound "push" notification)
+     */
     private trackPending(message: ISequencedDocumentMessage) {
         const metadata = message.metadata as IRuntimeMessageMetadata;
 
@@ -438,6 +449,13 @@ class ScheduleManagerCore {
     }
 }
 
+/**
+ * This class has the following responsibilities:
+ * 1. It tracks batches as we process ops and raises "batchBegin" and "batchEnd" events.
+ *    As part of it, it validates batch correctness (i.e. no system ops in the middle of batch)
+ * 2. It creates instance of ScheduleManagerCore that ensures we process ops in a batch when we have full batch in.
+ *    It notifies it about
+ */
 export class ScheduleManager {
     private readonly deltaScheduler: DeltaScheduler;
     private batchClientId: string | undefined;
@@ -496,7 +514,7 @@ export class ScheduleManager {
         const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
         // If no batchClientId has been set then we're in an individual batch. Else, if we get
         // batch end metadata, this is end of the current batch.
-        if (!this.batchClientId || batch === false) {
+        if (this.batchClientId === undefined || batch === false) {
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", undefined, message);
             this.deltaScheduler.batchEnd();
@@ -1436,6 +1454,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.scheduleManager.afterOpProcessing(undefined, message);
         } catch (e) {
             this.scheduleManager.afterOpProcessing(e, message);
+            throw e;
         }
     }
 

@@ -629,7 +629,7 @@ export class PendingStateManager implements IDisposable {
     replayPendingStates(): void;
     }
 
-// @public (undocumented)
+// @public
 export class ScheduleManager {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, logger: ITelemetryLogger);
     // (undocumented)
