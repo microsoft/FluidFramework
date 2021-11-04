@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import {
     createLocalResolverCreateNewRequest,
@@ -64,10 +64,8 @@ describe("No Delta Stream", () => {
             loaderContainerTracker.add(loader);
         }
 
-        // See issue #7426 - need better long term solution
         const container = await loader.resolve({
             url: documentLoadUrl,
-            headers: { [LoaderHeader.loadMode]: { opsBeforeReturn: "all" }},
         });
         await loaderContainerTracker.ensureSynchronized();
         return container;
@@ -156,7 +154,7 @@ describe("No Delta Stream", () => {
         const createDocServ = documentServiceFactory.createDocumentService.bind(documentServiceFactory);
         documentServiceFactory.createDocumentService = async (...args) => {
             return createDocServ(...args).then((docService) => {
-                docService.connectToDeltaStream = async () => {
+                docService.connectToDeltaStream = () => {
                     throw new DeltaStreamConnectionForbiddenError("asdf");
                 };
                 return docService;

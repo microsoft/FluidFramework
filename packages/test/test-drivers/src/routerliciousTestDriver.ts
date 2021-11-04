@@ -13,7 +13,7 @@ import { IRouterliciousDriverPolicies } from "@fluidframework/routerlicious-driv
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
 
-export interface IServiceEndpoint {
+interface IServiceEndpoint {
     hostUrl: string;
     ordererUrl: string;
     deltaStorageUrl: string;
@@ -101,7 +101,7 @@ export class RouterliciousTestDriver implements ITestDriver {
 
     public readonly type = "routerlicious";
     public get version() { return this.api.version; }
-    constructor(
+    private constructor(
         private readonly tenantId: string,
         private readonly tenantSecret: string,
         private readonly serviceEndpoints: IServiceEndpoint,
