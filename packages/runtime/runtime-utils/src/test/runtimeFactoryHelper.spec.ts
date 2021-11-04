@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
+import { AttachState, IContainerContext, IRuntime } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import Sinon from "sinon";
 import { RuntimeFactoryHelper } from "../runtimeFactoryHelper";
@@ -44,7 +44,8 @@ describe("RuntimeFactoryHelper", () => {
     it("Instantiate when existing flag is `true`", async () => {
         unit.expects("instantiateFirstTime").never();
         unit.expects("instantiateFromExisting").once();
-        await helper.instantiateRuntime(context as IContainerContext, /* existing */ true);
+        const existingContext: Partial<IContainerContext> = {attachState: AttachState.Attached};
+        await helper.instantiateRuntime(existingContext as IContainerContext);
 
         unit.verify();
     });
@@ -52,7 +53,8 @@ describe("RuntimeFactoryHelper", () => {
     it("Instantiate when existing flag is `false`", async () => {
         unit.expects("instantiateFirstTime").once();
         unit.expects("instantiateFromExisting").never();
-        await helper.instantiateRuntime(context as IContainerContext, /* existing */ false);
+        const existingContext: Partial<IContainerContext> = {attachState: AttachState.Detached};
+        await helper.instantiateRuntime(existingContext as IContainerContext);
 
         unit.verify();
     });
@@ -66,7 +68,7 @@ describe("RuntimeFactoryHelper", () => {
     });
 
     it("Instantiate when existing flag is unset and context is existing", async () => {
-        const existingContext: Partial<IContainerContext> = { existing: true };
+        const existingContext: Partial<IContainerContext> = {attachState: AttachState.Attached};
         unit.expects("instantiateFirstTime").never();
         unit.expects("instantiateFromExisting").once();
         await helper.instantiateRuntime(existingContext as IContainerContext);
@@ -75,10 +77,10 @@ describe("RuntimeFactoryHelper", () => {
     });
 
     it("Instantiate when existing flag takes precedence over context", async () => {
-        const existingContext: Partial<IContainerContext> = { existing: true };
+        const existingContext: Partial<IContainerContext> = {attachState: AttachState.Attached};
         unit.expects("instantiateFirstTime").once();
         unit.expects("instantiateFromExisting").never();
-        await helper.instantiateRuntime(existingContext as IContainerContext, /* existing */ false);
+        await helper.instantiateRuntime(existingContext as IContainerContext);
 
         unit.verify();
     });

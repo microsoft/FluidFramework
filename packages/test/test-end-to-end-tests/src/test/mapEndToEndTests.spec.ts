@@ -25,6 +25,12 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
+const getDefaultTestObject = async (container: Container): Promise<ITestFluidObject>=>
+    container.getRuntimeEntryPoint !== undefined
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        ? (await container.getRuntimeEntryPoint()).ITestFluidObject!
+        : requestFluidObject<ITestFluidObject>(container, "default");
+
 describeFullCompat("SharedMap", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
@@ -38,15 +44,15 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
 
     beforeEach(async () => {
         const container1 = await provider.makeTestContainer(testContainerConfig) as Container;
-        dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+        dataObject1 = await getDefaultTestObject(container1);
         sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
 
         const container2 = await provider.loadTestContainer(testContainerConfig) as Container;
-        const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const dataObject2 = await getDefaultTestObject(container2);
         sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
 
         const container3 = await provider.loadTestContainer(testContainerConfig) as Container;
-        const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+        const dataObject3 = await getDefaultTestObject(container3);
         sharedMap3 = await dataObject3.getSharedObject<SharedMap>(mapId);
 
         sharedMap1.set("testKey1", "testValue");

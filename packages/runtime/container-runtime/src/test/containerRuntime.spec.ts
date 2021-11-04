@@ -30,6 +30,7 @@ describe("Runtime", () => {
                     containerRuntime = await ContainerRuntime.load(
                         mockContext as IContainerContext,
                         [],
+                        undefined,
                         {
                             summaryOptions: {
                                 generateSummaries: false,
