@@ -45,7 +45,7 @@ export class LeaderElection {
         }else {
             const current = Date.now();
             if(this.lastPinged !== undefined && current - this.lastPinged > this.leaderWait) {
-                this.logger.sendErrorEvent({eventName: "LeaderLostEventError"});
+                this.logger.sendTelemetryEvent({eventName: "LeaderLostEventError"});
                 this.prevPing = this.lastPinged;
                 this.lastPinged = undefined;
             }
