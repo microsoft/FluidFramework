@@ -42,7 +42,7 @@ export class LeaderElection {
             this.dataStoreRuntime.submitSignal("leaderMessage", "leaderMessage");
             this.updateLastPinged();
         }else if(this.leaderId === undefined) {
-            this.logger.sendErrorEvent({eventName: "LeaderUndefinedEventError"});
+            this.logger.sendTelemetryEvent({eventName: "LeaderUndefinedEventError"});
         }else {
             const current = Date.now();
             if(this.lastPinged !== undefined && current - this.lastPinged > this.leaderWait) {
