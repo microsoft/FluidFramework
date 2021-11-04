@@ -12,11 +12,10 @@ export class LeaderElection {
     private readonly leaderWait: number = 30000; // 30 secs
     private lastPinged: number | undefined;
     private readonly logger: TelemetryLogger;
-    private prevPing: number;
+    private prevPing: number | undefined;
 
     constructor(private readonly dataStoreRuntime: IFluidDataStoreRuntime) {
         this.logger = ChildLogger.create(this.dataStoreRuntime.logger, "SignalLeaderElection");
-        this.prevPing = 0;
     }
 
     public setupLeaderElection() {
@@ -65,7 +64,7 @@ export class LeaderElection {
 
     private updateLastPinged() {
         this.lastPinged = Date.now();
-        if(this.lastPinged === undefined) {
+        if(this.lastPinged === undefined && this.prevPing !== undefined) {
             const time = this.lastPinged - this.prevPing;
             this.logger.sendTelemetryEvent({eventName: "LeaderFound", time});
         }
