@@ -32,7 +32,7 @@ import {
     IDocumentStorageGetVersionsResponse,
     HostStoragePolicyInternal,
     IVersionedValueWithEpoch,
-    ISnapshotResponse,
+    ISnapshotCachedEntry,
 } from "./contracts";
 import { downloadSnapshot, fetchSnapshot, fetchSnapshotWithRedeem } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -414,8 +414,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.logger,
                 { eventName: "ObtainSnapshot" },
                 async (event: PerformanceEvent) => {
-                    let cachedSnapshot: ISnapshotResponse | undefined;
-                    const cachedSnapshotP: Promise<ISnapshotResponse | undefined> =
+                    let cachedSnapshot: ISnapshotCachedEntry | undefined;
+                    const cachedSnapshotP: Promise<ISnapshotCachedEntry | undefined> =
                         this.epochTracker.get(createCacheSnapshotKey(this.odspResolvedUrl));
 
                     let method: string;
@@ -464,7 +464,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                        props["cacheEntryAge"] = Date.now() - cachedSnapshot.cacheEntryTime;
                    }
                     event.end({ ...props });
-                    return cachedSnapshot.snapshot;
+                    return cachedSnapshot;
                 },
                 {end: true, cancel: "error"},
             );
@@ -710,7 +710,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         "snapshotTree",
                     );
                 };
-                const snapshot = (await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger, snapshotDownloader)).snapshot;
+                const snapshot = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger, snapshotDownloader);
                 let treeId = "";
                 if (snapshot.snapshotTree) {
                     assert(snapshot.snapshotTree.id !== undefined, 0x222 /* "Root tree should contain the id!!" */);

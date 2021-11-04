@@ -227,7 +227,9 @@ export interface IFlushOpsResponse {
     lastPersistedSequenceNumber?: number;
 }
 
-export interface ISnapshotResponse {
-    snapshot: ISnapshotContents,
+/**
+ * Represents the cached snapshot value.
+ */
+export interface ISnapshotCachedEntry extends ISnapshotContents {
     cacheEntryTime?: number,
 }
