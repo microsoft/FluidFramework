@@ -13,14 +13,20 @@ import {
     TypeData,
 } from "./typeData";
 import { DecompositionResult, GenericsInfo } from "./typeDecomposition";
+import { log } from "./validatorUtils";
 
 export enum BreakingIncrement {
     none = 0,
     minor = 1,
-    major = 1 << 1,
+    major = minor << 1 | minor, // this makes comparisons easier
 };
 // TODO: correlate type name with exporting package to support name aliasing
-type BrokenTypes = Map<string, BreakingIncrement>;
+export type BrokenTypes = Map<string, BreakingIncrement>;
+
+export interface PackageResult {
+    increment: BreakingIncrement,
+    brokenTypes: BrokenTypes,
+}
 
 interface DecompositionTypeData extends TypeData {
     classData?: ClassData,
@@ -43,7 +49,7 @@ export function validatePackage(
     packageDetails: PackageDetails,
     packageDir: string,
     brokenTypes: BrokenTypes,
-): [BreakingIncrement, BrokenTypes] {
+): PackageResult {
     // for exported symbol, check major, check minor, return total increment
     let pkgIncrement = BreakingIncrement.none;
     const pkgBrokenTypes: BrokenTypes = new Map();
@@ -62,7 +68,10 @@ export function validatePackage(
     for (const oldTypeData of oldDetails.typeData) {
         oldTypeData as DecompositionTypeData;
         const newTypeData = newTypeMap.get(getFullTypeName(oldTypeData)) as DecompositionTypeData | undefined;
+        log(`Validating type ${oldTypeData.name}`);
+
         if (newTypeData === undefined) {
+            log("Type was removed");
             // Type has been removed, package requires major increment
             pkgIncrement |= BreakingIncrement.major;
         } else {
@@ -74,16 +83,16 @@ export function validatePackage(
             // in some situations
             const typeIncrement = checkMajorIncrement(project, packageDir, oldTypeData, newTypeData);
             if (typeIncrement !== BreakingIncrement.none) {
-                console.log(`major increment check found break for ${oldTypeData.name}`);
+                log("Check found major increment");
                 pkgIncrement |= typeIncrement;
                 pkgBrokenTypes.set(oldTypeData.name, typeIncrement);
             } else if (checkMinorIncrement(project, packageDir, oldTypeData, newTypeData)) {
                 // If no major increment, check for minor increment
-                console.log(`minor increment check found break for ${oldTypeData.name}`);
+                log("Check found minor increment");
                 pkgIncrement |= BreakingIncrement.minor;
                 pkgBrokenTypes.set(oldTypeData.name, BreakingIncrement.minor);
             } else {
-                console.log(`did not find needed increment`);
+                log("Check did not find increment");
             }
         }
 
@@ -93,11 +102,12 @@ export function validatePackage(
 
     // All remaining exports are new and should be marked for minor increment
     newTypeMap.forEach((value, key) => {
+        log(`New type added ${key}`);
         pkgIncrement |= BreakingIncrement.minor;
         pkgBrokenTypes.set(key, BreakingIncrement.minor);
     });
 
-    return [pkgIncrement, pkgBrokenTypes];
+    return { increment: pkgIncrement, brokenTypes: pkgBrokenTypes };
 }
 
 function tryDecomposeTypeData(typeChecker: TypeChecker, typeData: DecompositionTypeData): boolean {
@@ -118,7 +128,8 @@ function checkMajorIncrement(
     newTypeData: DecompositionTypeData,
 ): BreakingIncrement {
     // Check for major increment through transitivity then bivariant assignment
-    console.log(oldTypeData.name);
+    // Type decomposition will have converted the class into a form where this is
+    // valid for finding major breaking changes
     let testFile = "";
     if (oldTypeData.classData !== undefined && newTypeData.classData !== undefined) {
         testFile = buildClassTestFileMajor(
@@ -127,8 +138,8 @@ function checkMajorIncrement(
             `new${getFullTypeName(newTypeData)}`,
             newTypeData.classData,
         );
+        log(testFile);
     }
-    console.log(testFile);
 
     // Create a source file in the project and check for diagnostics
     const sourcePath = `${pkgDir}/src/test/typeValidation.spec.ts`;
@@ -136,9 +147,9 @@ function checkMajorIncrement(
     const diagnostics = sourceFile.getPreEmitDiagnostics();
     for (const diagnostic of diagnostics) {
         if (diagnostic.getCategory() === DiagnosticCategory.Error) {
-            console.log(diagnostic.getMessageText().toString());
+            log(diagnostic.getMessageText().toString());
         } else {
-            console.log("non-error diagnostic found");
+            log(`non-error diagnostic found: ${diagnostic.getMessageText().toString()}`);
         }
     }
 
@@ -165,8 +176,8 @@ function checkMinorIncrement(
             `new${getFullTypeName(newTypeData)}`,
             newTypeData.classData,
         );
+        log(testFile);
     }
-    console.log(testFile);
 
     // Create a source file in the project and check for diagnostics
     const sourcePath = `${pkgDir}/src/test/typeValidation.spec.ts`;
@@ -174,9 +185,9 @@ function checkMinorIncrement(
     const diagnostics = sourceFile.getPreEmitDiagnostics();
     for (const diagnostic of diagnostics) {
         if (diagnostic.getCategory() === DiagnosticCategory.Error) {
-            console.log(diagnostic.getMessageText().toString());
+            log(diagnostic.getMessageText().toString());
         } else {
-            console.log("non-error diagnostic found");
+            log(`non-error diagnostic found: ${diagnostic.getMessageText().toString()}`);
         }
     }
 
@@ -244,8 +255,13 @@ function buildClassTestFileMinor(
 
     const requiredGenerics = new GenericsInfo(oldClassData.requiredGenerics);
     requiredGenerics.merge(newClassData.requiredGenerics);
-    for (const generic of requiredGenerics) {
-        fileLines.push(`interface ${generic}<T> { myVar: T; };`);
+    for (const [generic, paramCount] of requiredGenerics) {
+        const numberArray = Array.from(Array(paramCount).keys());
+        const typeParams = numberArray.map((n) => `T${n} = any`).join(", ");
+        const typedProperties = numberArray.map((n) => `myVar${n}: T${n};`).join("\n");
+        fileLines.push(`interface ${generic}<${typeParams}> {`);
+        fileLines.push(typedProperties);
+        fileLines.push(`};`);
     }
 
     let oldTypeParameters = oldClassData.typeParameters.join(", ");

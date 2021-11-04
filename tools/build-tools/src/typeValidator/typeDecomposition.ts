@@ -104,8 +104,6 @@ export function decomposeType(
         replacedTypes: new Set<string>(),
         requiredGenerics: new GenericsInfo(),
     };
-    // console.log(`type as string: ${result.typeAsString}`)
-
 
     // don't try to decompose literals because they don't need to be converted to strings
     // booleans because they are a union of false | true but not aliased
