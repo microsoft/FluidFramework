@@ -533,11 +533,48 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public static async load(
         context: IContainerContext,
         registryEntries: NamedFluidDataStoreRegistryEntries,
+        requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions: IContainerRuntimeOptions = {},
         containerScope: IFluidObject = context.scope,
         existing?: boolean,
-        entrypointHandler?: (runtime: IContainerRuntime) => Promise<IFluidObject>,
     ): Promise<ContainerRuntime> {
+        let router: IFluidRouter | undefined;
+        const requestToEntryPoint = async (cr: IContainerRuntime)=>{
+            if(router === undefined) {
+                router = {
+                    get IFluidRouter() {return this;},
+                    request: async (request)=>{
+                        if (requestHandler !== undefined) {
+                            return requestHandler(request, cr);
+                        }
+
+                        return create404Response(request);
+                    },
+                };
+            }
+            return router;
+        };
+
+        return this.load2(
+            context,
+            registryEntries,
+            requestToEntryPoint,
+            {
+                runtimeOptions,
+                containerScope,
+            },
+        );
+    }
+
+    public static async load2(
+        context: IContainerContext,
+        registryEntries: NamedFluidDataStoreRegistryEntries,
+        entrypointHandler: (runtime: IContainerRuntime) => Promise<IFluidObject>,
+        options?: {
+            runtimeOptions?: IContainerRuntimeOptions,
+            containerScope?: IFluidObject,
+        },
+    ) {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         const passLogger = context.taggedLogger  ?? new TaggedLoggerAdapter(context.logger);
         const logger = ChildLogger.create(passLogger, undefined, {
@@ -550,7 +587,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryOptions = { generateSummaries: true },
             gcOptions = {},
             loadSequenceNumberVerification = "close",
-        } = runtimeOptions;
+        } = options?.runtimeOptions ?? {};
 
         // We pack at data store level only. If isolated channels are disabled,
         // then there are no .channel layers, we pack at level 1, otherwise we pack at level 2
@@ -594,7 +631,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
         const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
         const electedSummarizerData = await tryFetchBlob<ISerializedElection>(electedSummarizerBlobName);
-        const loadExisting = existing === true || context.existing === true;
 
         // read snapshot blobs needed for BlobManager to load
         const blobManagerSnapshot = await BlobManager.load(
@@ -637,9 +673,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 gcOptions,
                 loadSequenceNumberVerification,
             },
-            containerScope,
+            options?.containerScope ?? context.scope,
             logger,
-            loadExisting,
             blobManagerSnapshot,
             entrypointHandler,
             storage,
@@ -841,7 +876,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
         private readonly containerScope: IFluidObject,
         public readonly logger: ITelemetryLogger,
-        existing: boolean,
         blobManagerSnapshot: IBlobManagerLoadInfo,
         private readonly entrypointHandler?: (runtime: IContainerRuntime) => Promise<IFluidObject>,
         private _storage?: IDocumentStorageService,
@@ -854,7 +888,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
           * For existing documents, we get this value from the metadata blob.
           * For new documents, we get this value based on the gcAllowed flag in runtimeOptions.
           */
-        const prevSummaryGCVersion = existing ? getGCVersion(metadata) : undefined;
+        const prevSummaryGCVersion = context.attachState === AttachState.Attached ? getGCVersion(metadata) : undefined;
         // Default to false for now.
         this.latestSummaryGCVersion = prevSummaryGCVersion ??
             (this.runtimeOptions.gcOptions.gcAllowed === true ? this.currentGCVersion : 0);
@@ -1121,32 +1155,29 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * @deprecated - use getEntryPointInstead
      */
-         async request(request: IRequest): Promise<IResponse> {
-            if(this.entrypointHandler) {
-                const entryPoint = await this.getEntryPoint();
-                if(entryPoint.IFluidRouter) {
-                    return entryPoint.IFluidRouter.request(request);
-                }
-            }
-            try {
-                const parser = RequestParser.create(request);
-                const id = parser.pathParts[0];
+    async request(request: IRequest): Promise<IResponse> {
+        const parser = RequestParser.create(request);
+        const id = parser.pathParts[0];
 
-                if (id === "_summarizer" && parser.pathParts.length === 1) {
-                    if (this._summarizer !== undefined) {
-                        return {
-                            status: 200,
-                            mimeType: "fluid/object",
-                            value: this.summarizer,
-                        };
-                    }
-                    return create404Response(request);
-                }
-                return create404Response(request);
-            } catch (error) {
-                return exceptionToResponse(error);
+        // todo - this should move somewhere else so we
+        // don't need to request to get it
+        if (id === "_summarizer" && parser.pathParts.length === 1) {
+            if (this._summarizer !== undefined) {
+                return {
+                    status: 200,
+                    mimeType: "fluid/object",
+                    value: this.summarizer,
+                };
             }
+            return create404Response(request);
         }
+
+        const entryPoint = await this.getEntryPoint();
+        if(entryPoint.IFluidRouter) {
+            return entryPoint.IFluidRouter.request(request);
+        }
+        return create404Response(request);
+    }
 
     /**
      * Resolves URI representing handle

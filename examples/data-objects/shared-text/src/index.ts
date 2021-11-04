@@ -60,7 +60,6 @@ class SharedTextFactoryComponent extends RuntimeFactoryHelper implements IFluidD
 
     public async preInitialize(
         context: IContainerContext,
-        existing: boolean,
     ): Promise<ContainerRuntime> {
         let router: IFluidRouter | undefined;
         const handler =  buildRuntimeRequestHandler(
@@ -68,15 +67,12 @@ class SharedTextFactoryComponent extends RuntimeFactoryHelper implements IFluidD
             innerRequestHandler,
         );
 
-        const runtime: ContainerRuntime = await ContainerRuntime.load(
+        const runtime: ContainerRuntime = await ContainerRuntime.load2(
             context,
             [
                 [SharedTextFactoryComponent.type, Promise.resolve(this)],
                 AgentSchedulerFactory.registryEntry,
             ],
-            undefined, // runtimeOptions
-            undefined, // containerScope
-            existing,
             async (cr)=>{
                 if(router === undefined) {
                     router = {

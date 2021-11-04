@@ -44,18 +44,30 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
             context: IContainerContext,
             existing: boolean,
         ): Promise<IRuntime & IContainerRuntime> {
-            const runtime: ContainerRuntime = await containerRuntimeCtor.load(
+            if(containerRuntimeCtor.load2 !== undefined) {
+                return containerRuntimeCtor.load2(
+                    context,
+                    [
+                        ["default", Promise.resolve(this.dataStoreFactory)],
+                        [this.type, Promise.resolve(this.dataStoreFactory)],
+                    ],
+                    async (cr)=>cr.getRootDataStore("default"),
+                    {
+                        runtimeOptions: this.runtimeOptions,
+                    },
+                );
+            }
+            return containerRuntimeCtor.load(
                 context,
                 [
                     ["default", Promise.resolve(this.dataStoreFactory)],
                     [this.type, Promise.resolve(this.dataStoreFactory)],
                 ],
+                undefined,
                 this.runtimeOptions,
                 undefined, // containerScope
                 existing,
             );
-
-            return runtime as any as IRuntime & IContainerRuntime;
         }
     };
 };

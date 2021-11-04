@@ -24,12 +24,9 @@ class ProseMirrorFactory extends RuntimeFactoryHelper {
             [smde.type, Promise.resolve(smde)],
         ]);
 
-        const runtime = await ContainerRuntime.load(
+        const runtime = await ContainerRuntime.load2(
             context,
             registry,
-            undefined, // runtimeOptions
-            undefined, // containerScope
-            existing,
             async (cr) => cr.getRootDataStore(defaultComponentId),
         );
 

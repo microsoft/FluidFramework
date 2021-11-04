@@ -460,14 +460,10 @@ class ScribeFactory extends RuntimeFactoryHelper implements IFluidDataStoreFacto
 
     public async preInitialize(
         context: IContainerContext,
-        existing: boolean,
     ): Promise<ContainerRuntime> {
-        const runtime: ContainerRuntime = await ContainerRuntime.load(
+        const runtime: ContainerRuntime = await ContainerRuntime.load2(
             context,
             this.registry,
-            undefined, // runtimeOptions
-            undefined, // containerScope
-            existing,
             async (cr)=>cr.getRootDataStore(defaultComponentId),
         );
 

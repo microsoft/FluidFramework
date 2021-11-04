@@ -128,14 +128,10 @@ export class KeyValueFactoryComponent
 
     public async preInitialize(
         context: IContainerContext,
-        existing: boolean,
     ): Promise<ContainerRuntime> {
-        const runtime: ContainerRuntime = await ContainerRuntime.load(
+        const runtime: ContainerRuntime = await ContainerRuntime.load2(
             context,
             new Map([[this.type, Promise.resolve(this)]]),
-            undefined, // runtimeOptions
-            undefined, // containerScope
-            existing,
             async (cr) => cr.getRootDataStore(this.defaultComponentId),
         );
         return runtime;

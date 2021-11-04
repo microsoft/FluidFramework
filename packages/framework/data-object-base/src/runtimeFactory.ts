@@ -41,14 +41,10 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 
     public async preInitialize(
         context: IContainerContext,
-        existing: boolean,
     ): Promise<ContainerRuntime> {
-        const runtime: ContainerRuntime = await ContainerRuntime.load(
+        const runtime: ContainerRuntime = await ContainerRuntime.load2(
             context,
             this.registry,
-            undefined, // runtimeOptions
-            undefined, // containerScope
-            existing,
             async (cr)=>cr.getRootDataStore(defaultStoreId),
         );
 

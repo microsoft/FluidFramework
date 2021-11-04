@@ -69,7 +69,6 @@ export class BaseContainerRuntimeFactory
 
     public async preInitialize(
         context: IContainerContext,
-        existing: boolean,
     ): Promise<ContainerRuntime> {
         const scope: Partial<IProvideFluidDependencySynthesizer> = context.scope;
         const parentDependencyContainer = scope.IFluidDependencySynthesizer;
@@ -85,12 +84,9 @@ export class BaseContainerRuntimeFactory
             ...this.requestHandlers,
             innerRequestHandler);
 
-        const runtime: ContainerRuntime = await ContainerRuntime.load(
+        const runtime: ContainerRuntime = await ContainerRuntime.load2(
             context,
             this.registryEntries,
-            this.runtimeOptions,
-            scope,
-            existing,
             async (cr) => {
                 if(router === undefined) {
                     router = {
@@ -100,7 +96,10 @@ export class BaseContainerRuntimeFactory
                 }
                 return router;
             },
-
+            {
+                containerScope: scope,
+                runtimeOptions: this.runtimeOptions,
+            },
         );
 
         // we register the runtime so developers of providers can use it in the factory pattern.

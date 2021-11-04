@@ -4,6 +4,7 @@
  */
 
 import {
+    AttachState,
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
@@ -15,8 +16,8 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
 
     public async instantiateRuntime(
         context: IContainerContext,
-        existing?: boolean,
     ): Promise<IRuntime> {
+        const existing = context.attachState === AttachState.Attached;
         const fromExisting = existing === undefined
             ? context.existing === true
             : existing;
