@@ -91,7 +91,7 @@ function writeSnapshotSection(
 
     const snapshotId = snapshotTree.id;
     assert(snapshotId !== undefined, 0x21b /* "Snapshot id should be provided" */);
-    addStringProperty(snapshotNode, "snapshotId", snapshotId);
+    addStringProperty(snapshotNode, "id", snapshotId);
     addStringProperty(snapshotNode, "message", `Snapshot@${snapshotSequenceNumber}`);
     addNumberProperty(snapshotNode, "sequenceNumber", snapshotSequenceNumber);
 
