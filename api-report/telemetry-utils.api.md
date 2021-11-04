@@ -67,7 +67,6 @@ export const hasErrorInstanceId: (x: any) => x is {
 
 // @public
 export interface IFluidErrorAnnotations {
-    errorCodeIfNone?: string;
     props?: ITelemetryProperties;
 }
 

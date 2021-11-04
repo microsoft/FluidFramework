@@ -74,8 +74,6 @@ function copyProps(target: ITelemetryProperties | LoggingError, source: ITelemet
 export interface IFluidErrorAnnotations {
     /** Telemetry props to log with the error */
     props?: ITelemetryProperties;
-    /** fluidErrorCode to mention if error isn't already an IFluidErrorBase */
-    errorCodeIfNone?: string;
 }
 
 /** Simplest possible implementation of IFluidErrorBase */
@@ -117,11 +115,10 @@ class SimpleFluidError implements IFluidErrorBase {
 /** For backwards compatibility with pre-fluidErrorCode valid errors */
 function patchWithErrorCode(
     legacyError: Omit<IFluidErrorBase, "fluidErrorCode">,
-    errorCode: string = "<error predates fluidErrorCode>",
 ): asserts legacyError is IFluidErrorBase {
-    const patchMe: { fluidErrorCode?: string } = legacyError as any;
+    const patchMe: { -readonly [P in "fluidErrorCode"]?: IFluidErrorBase[P] } = legacyError as any;
     if (patchMe.fluidErrorCode === undefined) {
-        patchMe.fluidErrorCode = errorCode;
+        patchMe.fluidErrorCode = "<error predates fluidErrorCode>";
     }
 }
 
@@ -137,7 +134,7 @@ export function normalizeError(
 ): IFluidErrorBase {
     // Back-compat, while IFluidErrorBase is rolled out
     if (isValidLegacyError(error)) {
-        patchWithErrorCode(error, annotations.errorCodeIfNone);
+        patchWithErrorCode(error);
     }
 
     if (isFluidError(error)) {
@@ -150,7 +147,7 @@ export function normalizeError(
     const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
     const fluidError: IFluidErrorBase = new SimpleFluidError({
         errorType: "genericError", // Match Container/Driver generic error type
-        fluidErrorCode: annotations.errorCodeIfNone ?? "none",
+        fluidErrorCode: "none",
         message,
         stack: stack ?? generateStack(),
     });
