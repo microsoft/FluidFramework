@@ -91,7 +91,7 @@ export async function validateRepo(options?: IValidationOptions) {
     const repo = new FluidRepoBuild(repoRoot, false);
     repo.setMatched({all: true, match: [], dirs: [] } as any);
     const buildGraph = repo.createBuildGraph({symlink: true, fullSymlink: false}, ["build"]);
-    const packages = (buildGraph as any).buildPackages as Map<string, BuildPackage>;
+    const packages = buildGraph.buildPackages;
 
     const groupBreaks = new Map<string, BreakingIncrement>();
     const allBrokenTypes: BrokenTypes = new Map();
