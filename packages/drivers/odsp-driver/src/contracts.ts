@@ -231,5 +231,5 @@ export interface IFlushOpsResponse {
  * Represents the cached snapshot value.
  */
 export interface ISnapshotCachedEntry extends ISnapshotContents {
-    cacheEntryTime?: number,
+    cacheEntryTime: number,
 }

@@ -414,8 +414,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.logger,
                 { eventName: "ObtainSnapshot" },
                 async (event: PerformanceEvent) => {
-                    let cachedSnapshot: ISnapshotCachedEntry | undefined;
-                    const cachedSnapshotP: Promise<ISnapshotCachedEntry | undefined> =
+                    let cachedSnapshot: ISnapshotContents | undefined;
+                    const cachedSnapshotP: Promise<ISnapshotContents | undefined> =
                         this.epochTracker.get(createCacheSnapshotKey(this.odspResolvedUrl));
 
                     let method: string;
@@ -458,9 +458,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         }
                     }
                    const props = { method };
-                   if (props.method === "cache" && cachedSnapshot.cacheEntryTime !== undefined) {
+                   if (props.method === "cache") {
+                       const snapshotCachedEntry = cachedSnapshot as ISnapshotCachedEntry;
+                       if (snapshotCachedEntry.cacheEntryTime === undefined) {
+                           // If the cached entry does not contain the entry time, then assign it a default of 30 days old.
+                           snapshotCachedEntry.cacheEntryTime = Date.now() - 30 * 24 * 60 * 60 * 1000;
+                       }
                        // eslint-disable-next-line @typescript-eslint/dot-notation
-                       props["cacheEntryAge"] = Date.now() - cachedSnapshot.cacheEntryTime;
+                       props["cacheEntryAge"] = Date.now() - snapshotCachedEntry.cacheEntryTime;
                    }
                     event.end({ ...props });
                     return cachedSnapshot;
