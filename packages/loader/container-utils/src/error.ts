@@ -119,7 +119,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     static wrapIfUnrecognized(
         originalError: any,
         errorCodeIfNone: string,
-        message: ISequencedDocumentMessage | undefined,
+        message?: ISequencedDocumentMessage,
     ): IFluidErrorBase {
         const newErrorFn = (errMsg: string) => {
             const dpe = new DataProcessingError(errMsg, errorCodeIfNone);
