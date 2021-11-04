@@ -140,7 +140,7 @@ import {
 } from "./summarizerTypes";
 import { formExponentialFn, Throttler } from "./throttler";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
-import { IDataStoreAliasMapping, IDataStoreAliasMessage, IRootDataStore, RootDataStore } from "./rootDataStore";
+import { IDataStoreAliasMapping, IDataStoreAliasMessage, IDataStore, DataStore } from "./dataStore";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -1419,19 +1419,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.updateDocumentDirtyState(false);
             }
 
-            type PendingAliasResolve = (value: IDataStoreAliasMapping) => void;
-            const resolve = localOpMetadata as PendingAliasResolve;
-            let aliasResult: IDataStoreAliasMapping;
             switch (message.type) {
                 case ContainerMessageType.Attach:
                     this.dataStores.processAttachMessage(message, local || localAck);
                     break;
                 case ContainerMessageType.AssignAlias:
-                    aliasResult = this.dataStores.processAliasMessage(message);
-                    if (local) {
-                        resolve(aliasResult);
-                    }
-
+                    this.processAliasMessage(message, localOpMetadata, local);
                     break;
                 case ContainerMessageType.FluidDataStoreOp:
                     // if localAck === true, treat this as a local op because it's one we sent on a previous container
@@ -1453,6 +1446,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    private processAliasMessage(
+        message: ISequencedDocumentMessage,
+        localOpMetadata: unknown,
+        local: boolean,
+    ) {
+        type PendingAliasResolve = (value: IDataStoreAliasMapping) => void;
+        const resolve = localOpMetadata as PendingAliasResolve;
+
+        const aliasResult = this.dataStores.processAliasMessage(message);
+        if (local) {
+            resolve(aliasResult);
+        }
+    }
+
     public processSignal(message: ISignalMessage, local: boolean) {
         const envelope = message.content as ISignalEnvelope;
         const transformed: IInboundSignalMessage = {
@@ -1470,10 +1477,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dataStores.processSignal(envelope.address, transformed, local);
     }
 
-    public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
+    public async getRootDataStore(id: string, wait = true): Promise<IDataStore> {
         const context = await this.dataStores.getDataStore(id, wait);
         assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
-        return context.realize();
+        const router = await context.realize();
+        return new DataStore(router, context.id, this);
     }
 
     protected async getDataStore(id: string, wait = true): Promise<IFluidRouter> {
@@ -1554,10 +1562,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._createDataStore(pkg, false /* isRoot */);
     }
 
-    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IRootDataStore> {
+    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IDataStore> {
         const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
         fluidDataStore.attachGraph();
-        return new RootDataStore(fluidDataStore);
+        return new DataStore(fluidDataStore, rootDataStoreId, this);
     }
 
     public createDetachedRootDataStore(
@@ -1576,13 +1584,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         props?: any,
         id = uuid(),
         isRoot = false,
-    ): Promise<IRootDataStore> {
+    ): Promise<IDataStore> {
         const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
             Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
         if (isRoot) {
             fluidDataStore.attachGraph();
         }
-        return new RootDataStore(fluidDataStore);
+        return new DataStore(fluidDataStore, id, this);
     }
 
     private async _createDataStore(
@@ -2045,7 +2053,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.submit(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
     }
 
-    public submitDataStoreAliasOp(message: IDataStoreAliasMessage, localOpMetadata: unknown = undefined): void {
+    public submitDataStoreAliasOp(message: IDataStoreAliasMessage, localOpMetadata: unknown): void {
         this.submit(ContainerMessageType.AssignAlias, message, localOpMetadata);
     }
 

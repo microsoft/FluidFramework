@@ -6,10 +6,9 @@
 import assert from "assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore";
-import { FluidDataStoreContext } from "./dataStoreContext";
+import { ContainerRuntime } from "./containerRuntime";
 
-export interface IRootDataStore extends IFluidRouter {
+export interface IDataStore extends IFluidRouter {
     trySetAlias(alias: string): Promise<boolean>;
 }
 
@@ -24,29 +23,32 @@ export interface IDataStoreAliasMapping {
     readonly aliasedInternalId: string;
 }
 
-export class RootDataStore implements IRootDataStore {
+export class DataStore implements IDataStore {
     async trySetAlias(alias: string): Promise<boolean> {
-        assert(this.dataStoreRuntime.attachState === AttachState.Attached, "Trying to submit message while detached!");
+        assert(this.runtime.attachState === AttachState.Attached, "Trying to submit message while detached!");
 
         const message: IDataStoreAliasMessage = {
-            id: this.dataStoreRuntime.id,
+            id: this.internalId,
             alias,
         };
 
         const aliasResult = await this.newAckBasedPromise<IDataStoreAliasMapping>((resolve) => {
-            (this.dataStoreRuntime.context as FluidDataStoreContext).submitAliasOp(message, resolve);
+            this.runtime.submitDataStoreAliasOp(message, resolve);
         }).catch(() => undefined);
 
         return aliasResult?.aliasedInternalId === aliasResult?.suppliedInternalId;
     }
 
     async request(request: IRequest): Promise<IResponse> {
-        return this.dataStoreRuntime.request(request);
+        return this.router.request(request);
     }
 
-    constructor(private readonly dataStoreRuntime: FluidDataStoreRuntime) {}
-    public get IFluidRouter() { return this.dataStoreRuntime; }
-
+    constructor(
+        private readonly router: IFluidRouter,
+        private readonly internalId: string,
+        private readonly runtime: ContainerRuntime,
+    ) { }
+    public get IFluidRouter() { return this.router; }
 
     // [TODO:andre4i]: Copied from SharedObject.
     // This needs to be extracted into a common package.
@@ -59,16 +61,16 @@ export class RootDataStore implements IRootDataStore {
             rejectBecauseDispose =
                 () => reject(new Error("FluidDataStoreRuntime disposed while this ack-based Promise was pending"));
 
-            if (this.disposed) {
+            if (this.runtime.disposed) {
                 rejectBecauseDispose();
                 return;
             }
 
-            this.on("dispose", rejectBecauseDispose);
+            this.runtime.on("dispose", rejectBecauseDispose);
             executor(resolve, reject);
         }).finally(() => {
             // Note: rejectBecauseDispose will never be undefined here
-            this.off("dispose", rejectBecauseDispose);
+            this.runtime.off("dispose", rejectBecauseDispose);
         });
     }
 }

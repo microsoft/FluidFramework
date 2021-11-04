@@ -77,7 +77,6 @@ import {
     getAttributesFormatVersion,
     getFluidDataStoreAttributes,
 } from "./summaryFormat";
-import { IDataStoreAliasMessage } from "./rootDataStore";
 
 function createAttributes(
     pkg: readonly string[],
@@ -249,7 +248,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.subLogger = ChildLogger.create(this.logger, "FluidDataStoreContext");
         this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.subLogger);
     }
-    createProps?: any;
 
     public dispose(): void {
         if (this._disposed) {
@@ -533,12 +531,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.id,
             fluidDataStoreContent,
             localOpMetadata);
-    }
-
-    public submitAliasOp(message: IDataStoreAliasMessage, localOpMetadata: unknown): void {
-        this.verifyNotClosed();
-        assert(!!this.channel, "Channel must exist when submitting message");
-        this._containerRuntime.submitDataStoreAliasOp(message, localOpMetadata);
     }
 
     /**

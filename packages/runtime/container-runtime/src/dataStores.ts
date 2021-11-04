@@ -51,7 +51,7 @@ import {
     LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
-import { IDataStoreAliasMapping, IDataStoreAliasMessage } from "./rootDataStore";
+import { IDataStoreAliasMapping, IDataStoreAliasMessage } from "./dataStore";
 
  /**
   * This class encapsulates data store handling. Currently it is only used by the container runtime,
