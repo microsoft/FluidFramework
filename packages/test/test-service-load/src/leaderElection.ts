@@ -9,12 +9,14 @@ import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 
 export class LeaderElection {
     private readonly beatInEveryNSecs: number = 1000; // 1 secs
-    private readonly leaderWait: number = 5000; // 5 secs
+    private readonly leaderWait: number = 30000; // 30 secs
     private lastPinged: number | undefined;
     private readonly logger: TelemetryLogger;
+    private prevPing: number;
 
     constructor(private readonly dataStoreRuntime: IFluidDataStoreRuntime) {
         this.logger = ChildLogger.create(this.dataStoreRuntime.logger, "SignalLeaderElection");
+        this.prevPing = 0;
     }
 
     public setupLeaderElection() {
@@ -38,13 +40,14 @@ export class LeaderElection {
     private runLeaderElection() {
         if (this.leaderId !== undefined && this.leaderId === this.dataStoreRuntime.clientId) {
             this.dataStoreRuntime.submitSignal("leaderMessage", "leaderMessage");
-            this.lastPinged = Date.now();
+            this.updateLastPinged();
         }else if(this.leaderId === undefined) {
             this.logger.sendErrorEvent({eventName: "LeaderUndefinedEventError"});
         }else {
             const current = Date.now();
             if(this.lastPinged !== undefined && current - this.lastPinged > this.leaderWait) {
                 this.logger.sendErrorEvent({eventName: "LeaderLostEventError"});
+                this.prevPing = this.lastPinged;
                 this.lastPinged = undefined;
             }
         }
@@ -54,9 +57,17 @@ export class LeaderElection {
         // eslint-disable-next-line no-null/no-null
         if(signal.clientId !== null && signal.content === "leaderMessage") {
             if(this.leaderId !== signal.clientId) {
-                this.logger.sendErrorEvent({eventName: "UnexpectedLeaderEventError"});
+                this.logger.sendTelemetryEvent({eventName: "UnexpectedLeaderEventWarning"});
             }
-            this.lastPinged = Date.now();
+            this.updateLastPinged();
+        }
+    }
+
+    private updateLastPinged() {
+        this.lastPinged = Date.now();
+        if(this.lastPinged === undefined) {
+            const time = this.lastPinged - this.prevPing;
+            this.logger.sendTelemetryEvent({eventName: "LeaderFound", time});
         }
     }
 
