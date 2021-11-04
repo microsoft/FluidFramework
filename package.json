@@ -60,7 +60,7 @@
     "test:report": "npm run test:mocha:report && npm run test:jest:report && npm run test:realsvc:report",
     "test:types": "lerna run test:types --stream --no-bail --no-sort",
     "tsc": "lerna run tsc --stream",
-    "tsc:fast": "fluid-build  --root . -s build:compile",
+    "tsc:fast": "fluid-build  --root . -s tsc",
     "tsfmt": "lerna run tsfmt:fix --no-sort --stream --no-bail",
     "tsfmt:fix": "lerna run tsfmt:fix --no-sort --stream --no-bail",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",

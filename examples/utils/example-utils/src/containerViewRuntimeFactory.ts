@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
+import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
+import { MountableView } from "@fluidframework/view-adapters";
 
 const componentId = "modelComponent";
 
 export type ViewCallback<T> = (fluidModel: T) => any;
 
-export const makeViewRequestHandler = <T>(viewCallback: ViewCallback<T>): RuntimeRequestHandler =>
+const makeViewRequestHandler = <T>(viewCallback: ViewCallback<T>): RuntimeRequestHandler =>
     async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length === 0) {
             const clickerRequest = RequestParser.create({
@@ -44,6 +45,7 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
         super(
             new Map([[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]]),
             [],
+            [mountableViewRequestHandler(MountableView, [makeViewRequestHandler(viewCallback)])],
         );
     }
 

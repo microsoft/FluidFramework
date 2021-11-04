@@ -468,6 +468,7 @@ class ScribeFactory extends RuntimeFactoryHelper implements IFluidDataStoreFacto
             undefined, // runtimeOptions
             undefined, // containerScope
             existing,
+            async (cr)=>cr.getRootDataStore(defaultComponentId),
         );
 
         return runtime;
