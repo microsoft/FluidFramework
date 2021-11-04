@@ -32,6 +32,7 @@ import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { IFluidTokenProvider } from '@fluidframework/container-definitions';
+import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorum } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -70,8 +71,10 @@ export enum ContainerMessageType {
     Rejoin = "rejoin"
 }
 
+// Warning: (ae-forgotten-export) The symbol "IGarbageCollectionRuntime" needs to be exported by the entry point index.d.ts
+//
 // @public
-export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider {
+export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IContainerRuntime, IGarbageCollectionRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider {
     // (undocumented)
     get attachState(): AttachState;
     // (undocumented)
@@ -80,7 +83,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get clientId(): string | undefined;
     // (undocumented)
     get closeFn(): (error?: ICriticalContainerError) => void;
-    collectGarbage(logger: ITelemetryLogger, fullGC?: boolean): Promise<IGCStats>;
+    // Warning: (ae-forgotten-export) The symbol "IGCStats" needs to be exported by the entry point index.d.ts
+    collectGarbage(options: {
+        logger?: ITelemetryLogger;
+        runSweep?: boolean;
+        fullGC?: boolean;
+    }): Promise<IGCStats>;
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
@@ -94,6 +102,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
+    deleteUnusedRoutes(unusedRoutes: string[]): void;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly disableIsolatedChannels: boolean;
@@ -108,13 +117,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get flushMode(): FlushMode;
     // (undocumented)
-    get gcTestMode(): boolean;
-    // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
     getAudience(): IAudience;
     // (undocumented)
     protected getDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     getPendingLocalState(): IPendingLocalState | undefined;
     // (undocumented)
@@ -187,6 +195,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
+    // Warning: (ae-forgotten-export) The symbol "IUsedStateStats" needs to be exported by the entry point index.d.ts
+    updateUsedRoutes(usedRoutes: string[]): IUsedStateStats;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     }
@@ -334,14 +344,6 @@ export interface IGCRuntimeOptions {
     gcAllowed?: boolean;
     runFullGC?: boolean;
     runSweep?: boolean;
-}
-
-// @public
-export interface IGCStats {
-    deletedDataStores: number;
-    deletedNodes: number;
-    totalDataStores: number;
-    totalNodes: number;
 }
 
 // @public
@@ -627,7 +629,7 @@ export class PendingStateManager implements IDisposable {
         localOpMetadata: unknown;
     };
     replayPendingStates(): void;
-}
+    }
 
 // @public (undocumented)
 export class ScheduleManager {
