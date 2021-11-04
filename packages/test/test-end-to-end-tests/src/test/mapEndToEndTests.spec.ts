@@ -25,11 +25,15 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const getDefaultTestObject = async (container: Container): Promise<ITestFluidObject>=>
-    container.getRuntimeEntryPoint !== undefined
+const getDefaultTestObject = async (container: Container): Promise<ITestFluidObject>=>{
+    if(container.getRuntimeEntryPoint) {
+        const res =  await container.getRuntimeEntryPoint();
+        // need to subrequest, as i didn't add entry point to data store runtime
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        ? (await container.getRuntimeEntryPoint()).ITestFluidObject!
-        : requestFluidObject<ITestFluidObject>(container, "default");
+        return requestFluidObject<ITestFluidObject>(res.IFluidRouter!,"");
+    }
+    return requestFluidObject(container, "default");
+};
 
 describeFullCompat("SharedMap", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
