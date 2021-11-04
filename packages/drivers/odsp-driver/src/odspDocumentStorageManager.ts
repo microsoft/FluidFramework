@@ -458,8 +458,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         }
                     }
                    const props = { method };
-                   if (props.method === "cache") {
-                       assert(cachedSnapshot.cacheEntryTime !== undefined, "Cache entry time should be present");
+                   if (props.method === "cache" && cachedSnapshot.cacheEntryTime !== undefined) {
                        // eslint-disable-next-line @typescript-eslint/dot-notation
                        props["cacheEntryAge"] = Date.now() - cachedSnapshot.cacheEntryTime;
                    }
