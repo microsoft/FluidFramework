@@ -6,8 +6,8 @@
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
+import { IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
+import { LoaderHeader } from "@fluidframework/container-definitions";
 import { DriverHeader, DriverErrorType } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { createSummarizingWarning } from "./summarizer";
@@ -382,7 +382,7 @@ export interface ISummarizerRequestOptions {
  * @param reconnect - can reconnect on connection loss
  */
 export const formRequestSummarizerFn = (
-    loaderRouter: ILoader,
+    loaderRouter: IFluidRouter,
     lastSequenceNumber: number,
     { cache, reconnect, summarizingClient }: ISummarizerRequestOptions,
 ) => async () => {
@@ -401,9 +401,6 @@ export const formRequestSummarizerFn = (
         url: "/_summarizer",
     };
 
-    // how do we make this work with the loader resolve flow?
-    // specifically get the summarizer from the entrypoint
-    //
     const fluidObject = await requestFluidObject(loaderRouter, request);
     const summarizer = fluidObject.ISummarizer;
 
