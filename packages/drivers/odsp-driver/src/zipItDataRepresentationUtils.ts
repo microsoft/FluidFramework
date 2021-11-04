@@ -121,7 +121,7 @@ export function getAndValidateNodeProps(node: NodeCore, props: string[], enforce
         }
     }
     if (enforceAllProps) {
-        assert(propSet.size === 0, 0x22a /* "All properties should exist" */);
+        assert(propSet.size === 0, `All properties should exist, Not found: ${[...propSet.keys()]}`);
     }
     return res;
 }

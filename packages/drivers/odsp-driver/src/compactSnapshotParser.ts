@@ -95,13 +95,13 @@ function readTreeSection(node: NodeCore) {
  */
 function readSnapshotSection(node: NodeCore): ISnapshotSection {
     const records = getAndValidateNodeProps(node,
-        ["snapshotId", "sequenceNumber", "treeNodes"]);
+        ["id", "sequenceNumber", "treeNodes"]);
 
     assertNodeCoreInstance(records.treeNodes, "TreeNodes should be of type NodeCore");
     assertNumberInstance(records.sequenceNumber, "sequenceNumber should be of type number");
-    assertBlobCoreInstance(records.snapshotId, "snapshotId should be BlobCore");
+    assertBlobCoreInstance(records.id, "snapshotId should be BlobCore");
     const snapshotTree: ISnapshotTree = readTreeSection(records.treeNodes);
-    snapshotTree.id = records.snapshotId.toString();
+    snapshotTree.id = records.id.toString();
     const sequenceNumber = records.sequenceNumber.valueOf();
     return {
         sequenceNumber,
