@@ -178,7 +178,7 @@ class NoDeltaStream
  * The only thing that it does on top of DeltaQueue is tracking all users who called pause()
  * and making available callstacks for those calls.
  *
- * Long term, we better of switching to tracking callers by
+ * Long term, we better off switching to tracking callers by
  *  - pause() returning token that is required to be passed into resume()
  *  - tracking tokens and stacks with tokens
  * This would be improvement over current system, as today we can't pair pause & resume calls.
