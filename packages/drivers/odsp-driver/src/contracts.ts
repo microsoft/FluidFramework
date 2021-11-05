@@ -206,10 +206,10 @@ export interface IVersionedValueWithEpoch {
     value: any;
     fluidEpoch: string,
     // This is same as "persistedCacheValueVersion" below. This represents the version of data stored in cache.
-    version: 4,
+    version: 3,
 }
 
-export const persistedCacheValueVersion = 4;
+export const persistedCacheValueVersion = 3;
 
 export interface IGetOpsResponse {
     nonce: string;
