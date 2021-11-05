@@ -55,10 +55,10 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.41.0-0",
-    "@fluidframework/core-interfaces": "^0.40.0-0",
+    "@fluidframework/container-definitions": "^0.41.0",
+    "@fluidframework/core-interfaces": "^0.40.0",
     "@fluidframework/datastore-definitions": "^0.51.0",
-    "@fluidframework/driver-definitions": "^0.41.0-0",
+    "@fluidframework/driver-definitions": "^0.41.0",
     "@fluidframework/driver-utils": "^0.51.0",
     "@fluidframework/protocol-definitions": "^0.1025.0",
     "@fluidframework/routerlicious-driver": "^0.51.0",
@@ -71,7 +71,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0",
     "@fluidframework/mocha-test-setup": "^0.51.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@types/jsrsasign": "^8.0.8",

@@ -32,14 +32,14 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.40.0-0",
-    "@fluidframework/driver-definitions": "^0.41.0-0",
+    "@fluidframework/core-interfaces": "^0.40.0",
+    "@fluidframework/driver-definitions": "^0.41.0",
     "@fluidframework/odsp-driver": "^0.51.0",
     "@fluidframework/odsp-driver-definitions": "^0.51.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0",
     "@fluidframework/mocha-test-setup": "^0.51.0",
     "@types/mocha": "^8.2.2",
     "@typescript-eslint/eslint-plugin": "~4.14.0",

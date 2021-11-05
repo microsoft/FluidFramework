@@ -37,7 +37,7 @@
     "@fluidframework/aqueduct": "^0.51.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/container-runtime-definitions": "^0.51.0",
-    "@fluidframework/core-interfaces": "^0.40.0-0",
+    "@fluidframework/core-interfaces": "^0.40.0",
     "@fluidframework/runtime-utils": "^0.51.0",
     "css-loader": "^1.0.0",
     "react": "^16.10.2",
@@ -47,7 +47,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",

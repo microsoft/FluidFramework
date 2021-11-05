@@ -38,7 +38,7 @@
     "@fluidframework/aqueduct": "^0.51.0",
     "@fluidframework/cell": "^0.51.0",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/core-interfaces": "^0.40.0-0",
+    "@fluidframework/core-interfaces": "^0.40.0",
     "@fluidframework/datastore-definitions": "^0.51.0",
     "@fluidframework/map": "^0.51.0",
     "@fluidframework/sequence": "^0.51.0",
@@ -49,7 +49,7 @@
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": "^0.51.0",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0",
     "@types/node": "^12.19.0",
     "@types/react": "^16.9.15",
     "@typescript-eslint/eslint-plugin": "~4.14.0",

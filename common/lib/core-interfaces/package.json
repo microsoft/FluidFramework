@@ -38,7 +38,7 @@
     "@fluidframework/build-tools": "^0.2.41965",
     "@fluidframework/core-interfaces-0.39.8": "npm:@fluidframework/core-interfaces@0.39.8",
     "@fluidframework/core-interfaces-0.40.0": "npm:@fluidframework/core-interfaces@0.40.0",
-    "@fluidframework/eslint-config-fluid": "^0.24.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@types/node": "^12.19.0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
