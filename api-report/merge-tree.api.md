@@ -119,8 +119,6 @@ export class Client {
     // (undocumented)
     cloneFromSegments(): Client;
     // (undocumented)
-    copyLocal(start: number, end: number, register: string): IMergeTreeInsertMsg | undefined;
-    // (undocumented)
     createTextHelper(): MergeTreeTextHelper;
     findReconnectionPostition(segment: ISegment, localSeq: number): number;
     // (undocumented)
@@ -191,16 +189,12 @@ export class Client {
     set mergeTreeMaintenanceCallback(callback: MergeTreeMaintenanceCallback | undefined);
     // (undocumented)
     noVerboseRemoteAnnotate: boolean;
-    // (undocumented)
-    pasteLocal(pos: number, register: string): IMergeTreeInsertMsg | undefined;
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
     // (undocumented)
-    registerCollection: RegisterCollection;
-    // (undocumented)
     removeLocalReference(lref: LocalReference): void;
-    removeRangeLocal(start: number, end: number, register?: string): IMergeTreeRemoveMsg | undefined;
+    removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg | undefined;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
     serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void;
     // (undocumented)
@@ -286,22 +280,16 @@ export function createAnnotateRangeOp(start: number, end: number, props: Propert
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg;
 
 // @public (undocumented)
-export function createInsertFromRegisterOp(pos: number, register: string): IMergeTreeInsertMsg;
-
-// @public (undocumented)
 export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg;
 
 // @public (undocumented)
 export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTreeInsertMsg;
 
 // @public (undocumented)
-export function createInsertToRegisterOp(start: number, end: number, register: string): IMergeTreeInsertMsg;
-
-// @public (undocumented)
 export function createMap<T>(): MapLike<T>;
 
 // @public
-export function createRemoveRangeOp(start: number, end: number, register?: string): IMergeTreeRemoveMsg;
+export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg;
 
 // @public (undocumented)
 export interface Dictionary<TKey, TData> {
@@ -546,8 +534,6 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
     // (undocumented)
     pos2?: number;
     // (undocumented)
-    register?: string;
-    // (undocumented)
     relativePos1?: IRelativePosition;
     // (undocumented)
     relativePos2?: IRelativePosition;
@@ -570,8 +556,6 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
     pos1?: number;
     // (undocumented)
     pos2?: number;
-    // (undocumented)
-    register?: string;
     // (undocumented)
     relativePos1?: IRelativePosition;
     // (undocumented)
@@ -1601,20 +1585,6 @@ export function refHasRangeLabel(refPos: ReferencePosition, label: string): bool
 
 // @public (undocumented)
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean;
-
-// @public (undocumented)
-export class RegisterCollection {
-    // (undocumented)
-    clientCollections: MapLike<MapLike<ISegment[]> | undefined>;
-    // (undocumented)
-    get(clientId: string, id: string): ISegment[] | undefined;
-    // (undocumented)
-    getLength(clientId: string, id: string): number;
-    // (undocumented)
-    removeClient(clientId: string): void;
-    // (undocumented)
-    set(clientId: string, id: string, segments: ISegment[]): void;
-}
 
 // @public (undocumented)
 export const reservedMarkerIdKey = "markerId";
