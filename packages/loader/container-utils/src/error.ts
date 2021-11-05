@@ -113,16 +113,16 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
      * Conditionally coerce the throwable input into a DataProcessingError.
      * @param originalError - Throwable input to be converted.
      * @param message - Sequenced message (op) to include info about via telemetry props
-     * @param errorCodeIfNone - pascaleCased code identifying the call site, used if originalError has no error code.
+     * @param dataProcessingCodepath - which codepath failed while processing data.
      * @returns Either a new DataProcessingError, or (if wrapping is deemed unnecessary) the given error
      */
     static wrapIfUnrecognized(
         originalError: any,
-        errorCodeIfNone: string,
+        dataProcessingCodepath: string,
         message?: ISequencedDocumentMessage,
     ): IFluidErrorBase {
         const newErrorFn = (errMsg: string) => {
-            const dpe = new DataProcessingError(errMsg, errorCodeIfNone);
+            const dpe = new DataProcessingError(errMsg, "" /* fluidErrorCode */);
             dpe.addTelemetryProperties({ untrustedOrigin: 1}); // To match normalizeError
             return dpe;
         };
@@ -130,10 +130,13 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
         // Don't coerce if already has an errorType, to distinguish unknown errors from
         // errors that we raised which we already can interpret apart from this classification
         const error = isValidLegacyError(originalError) // also accepts valid Fluid Error
-            ? normalizeError(originalError, { errorCodeIfNone })
+            ? normalizeError(originalError)
             : wrapError(originalError, newErrorFn);
 
-        error.addTelemetryProperties({ dataProcessingError: 1});
+        error.addTelemetryProperties({
+            dataProcessingError: 1,
+            dataProcessingCodepath,
+        });
         if (message !== undefined) {
             error.addTelemetryProperties(extractSafePropertiesFromMessage(message));
         }
