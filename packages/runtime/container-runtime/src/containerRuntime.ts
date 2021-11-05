@@ -118,6 +118,7 @@ import {
     getGCVersion,
     GCVersion,
     IContainerRuntimeMetadata,
+    ICreateContainerMetadata,
     ISummaryMetadataMessage,
     metadataBlobName,
     wrapSummaryInChannelsTree,
@@ -822,7 +823,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._summarizer;
     }
 
-    private readonly metadata: IContainerRuntimeMetadata = {summaryFormatVersion: 1, message: undefined};
+    private readonly createContainerMetadata: ICreateContainerMetadata = {};
 
     private constructor(
         private readonly context: IContainerContext,
@@ -839,7 +840,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private _storage?: IDocumentStorageService,
     ) {
         super();
-        this.metadata = metadata ?? this.formMetadata();
         this.baseSummaryMessage = metadata?.message;
         /**
           * gcFeature in metadata is introduced with v1 in the metadata blob. Forced to 0/disallowed before that.
@@ -853,11 +853,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          * If there is no metadata or metadata does not have these values, it means this is an old document,
          * so these values will be undefined. If container doesn't exist, we initialize these values
          */
-        this.metadata.createContainerRuntimeVersion = existing ? metadata?.createContainerRuntimeVersion ?? undefined
-            : pkgVersion;
-        this.metadata.createContainerTimeStamp = existing ? metadata?.createContainerTimeStamp ?? undefined
-            : performance.now();
-        this.metadata.lastSummaryCount = existing ? metadata?.lastSummaryCount ?? undefined : 0;
+        if (!existing) {
+            this.createContainerMetadata.createContainerRuntimeVersion = pkgVersion;
+            this.createContainerMetadata.createContainerTimeStamp = performance.now();
+            this.createContainerMetadata.lastSummaryCount = 0;
+        }
 
         // Default to false for now.
         this.latestSummaryGCVersion = prevSummaryGCVersion ??
@@ -931,8 +931,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     getInitialGCSummaryDetailsFn,
                 ),
             (id: string) => this.summarizerNode.deleteChild(id),
-            this._logger,
-            this.metadata);
+            this._logger);
 
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
@@ -1081,6 +1080,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.deltaManager.on("op", this.onOp);
         }
 
+        this.logger.sendTelemetryEvent({
+            eventName: "ContainerLoadStats",
+            dataStoreCount: this.dataStores.dataStoreCount,
+            referencedDataStoreCount: this.dataStores.referencedDataStoreCount,
+            createContainerRuntimeVersion: this.createContainerMetadata.createContainerRuntimeVersion,
+            createContainerTimeStamp: this.createContainerMetadata.createContainerTimeStamp,
+            lastSummaryCount: this.createContainerMetadata.lastSummaryCount,
+            summaryFormatVersion: metadata?.summaryFormatVersion,
+        });
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
@@ -1219,9 +1227,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // The last message processed at the time of summary. If there are no messages, nothing has changed from
             // the base summary we loaded from. So, use the message from its metadata blob.
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.baseSummaryMessage,
-            createContainerRuntimeVersion: this.metadata.createContainerRuntimeVersion,
-            createContainerTimeStamp: this.metadata.createContainerTimeStamp,
-            lastSummaryCount: this.metadata.lastSummaryCount,
+            createContainerRuntimeVersion: this.createContainerMetadata.createContainerRuntimeVersion,
+            createContainerTimeStamp: this.createContainerMetadata.createContainerTimeStamp,
+            lastSummaryCount: this.createContainerMetadata.lastSummaryCount,
         };
     }
 
@@ -1781,8 +1789,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         /** True to run GC sweep phase after the mark phase; defaults to false */
         runSweep?: boolean,
     }): Promise<ISummaryTreeWithStats> {
-        if (this.metadata.lastSummaryCount !== undefined) {
-            this.metadata.lastSummaryCount++;
+        if (this.createContainerMetadata.lastSummaryCount !== undefined) {
+            this.createContainerMetadata.lastSummaryCount++;
         }
         const { summaryLogger, fullTree = false, trackState = true, runGC = true, fullGC = false } = options;
 

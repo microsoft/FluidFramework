@@ -66,6 +66,9 @@ export class DataStores implements IDisposable {
 
     private readonly disposeOnce = new Lazy<void>(() => this.contexts.dispose());
 
+    dataStoreCount: number;
+    referencedDataStoreCount: number;
+
     constructor(
         private readonly baseSnapshot: ISnapshotTree | undefined,
         private readonly runtime: ContainerRuntime,
@@ -74,7 +77,6 @@ export class DataStores implements IDisposable {
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
         private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
-        private readonly metadata: IContainerRuntimeMetadata,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
         this.logger = ChildLogger.create(baseLogger);
@@ -124,15 +126,8 @@ export class DataStores implements IDisposable {
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
         }
-        this.logger.sendTelemetryEvent({
-            eventName: "ContainerLoadStats",
-            dataStoreCount: fluidDataStores.size,
-            referencedDataStoreCount: fluidDataStores.size - unreferencedDataStoreCount,
-            createContainerRuntimeVersion: this.metadata.createContainerRuntimeVersion,
-            createContainerTimeStamp: this.metadata.createContainerTimeStamp,
-            lastSummaryCount: this.metadata.lastSummaryCount,
-            summaryFormatVersion: this.metadata.summaryFormatVersion,
-        });
+        this.dataStoreCount = fluidDataStores.size;
+        this.referencedDataStoreCount = this.dataStoreCount - unreferencedDataStoreCount;
     }
 
     public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {

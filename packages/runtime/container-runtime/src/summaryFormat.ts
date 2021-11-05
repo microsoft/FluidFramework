@@ -75,7 +75,7 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 }
 
 export type GCVersion = number;
-export interface IContainerRuntimeMetadata {
+export interface IContainerRuntimeMetadata extends ICreateContainerMetadata {
     readonly summaryFormatVersion: 1;
     /** The last message processed at the time of summary. Only primitive propertiy types are added to the summary. */
     readonly message: ISummaryMetadataMessage | undefined;
@@ -83,6 +83,9 @@ export interface IContainerRuntimeMetadata {
     readonly disableIsolatedChannels?: true;
     /** 0 to disable GC, > 0 to enable GC, undefined defaults to disabled. */
     readonly gcFeature?: GCVersion;
+}
+
+export interface ICreateContainerMetadata {
     /** Runtime version of the container when it was first created */
     createContainerRuntimeVersion?: string;
     /** Timestamp of creating the container */
