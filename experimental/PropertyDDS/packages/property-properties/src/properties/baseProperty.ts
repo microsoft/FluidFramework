@@ -1063,16 +1063,19 @@ export abstract class BaseProperty {
      *     must not appear)
      * @param in_filteringOptions
      *    The filtering options to consider while deserializing the property.
+     * @param in_createChangeSet
+     *    Should a changeset be created for this deserialization?
      * @throws if called on a read-only property.
      * @returns ChangeSet with the changes that actually were performed during the
      *     deserialization
      */
     deserialize(
         in_serializedObj: SerializedChangeSet,
-        in_filteringOptions = {}
+        in_filteringOptions = {},
+        in_createChangeSet = true
     ): SerializedChangeSet {
         this._checkIsNotReadOnly(false);
-        return this._deserialize(in_serializedObj, true, in_filteringOptions);
+        return this._deserialize(in_serializedObj, true, in_filteringOptions, in_createChangeSet);
     };
 
     /**
@@ -1084,13 +1087,16 @@ export abstract class BaseProperty {
      *     and  a modified event there. When batching updates, this can be prevented via this flag.
      * @param in_filteringOptions
      *    The filtering options to consider while deserializing the property.
+     * @param in_createChangeSet
+     *    Should a changeset be created for this deserialization?
      * @returns ChangeSet with the changes that actually were performed during the
      *     deserialization
      */
     _deserialize(
         in_serializedObj: SerializedChangeSet,
         in_reportToView: boolean,
-        in_filteringOptions = {}
+        in_filteringOptions = {},
+        in_createChangeSet = true
     ): SerializedChangeSet {
         return {};
     };

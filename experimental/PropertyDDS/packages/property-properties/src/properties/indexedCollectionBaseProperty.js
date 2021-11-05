@@ -366,12 +366,14 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
      * @inheritdoc
      */
     // eslint-disable-next-line complexity
-    _deserialize(in_serializedObj, in_reportToView) {
+    _deserialize(in_serializedObj, in_reportToView,
+                 in_filteringOptions, in_createChangeSet) {
 
         var currentEntries = this._dynamicChildren;
         var allInsertedKeys = {};
 
-        var appliedChangeset = AbstractStaticCollectionProperty.prototype._deserialize.call(this, in_serializedObj, false);
+        var appliedChangeset = AbstractStaticCollectionProperty.prototype._deserialize.call(
+           this, in_serializedObj, false, in_filteringOptions, in_createChangeSet);
 
         // Perform updates to the children
 
@@ -504,8 +506,9 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
                         }
                     }
                 } else {
-                    changes = this._dynamicChildren[modifiedKeys[i]]
-                        ._deserialize(modifiedEntries[typeid][modifiedKeys[i]], false);
+                    changes = this._dynamicChildren[modifiedKeys[i]]._deserialize(
+                        modifiedEntries[typeid][modifiedKeys[i]],
+                        false, in_filteringOptions, in_createChangeSet);
                     valueWasChanged = !ChangeSet.isEmptyChangeSet(changes);
 
                     modifiedEntries[typeid] = modifiedEntries[typeid] || {};

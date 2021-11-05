@@ -1211,7 +1211,8 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             // Recursively check the entries within the segment for modifications
             for (var j = 0; j < segmentLength; j++) {
                 var existingEntry = this._dataArrayGetValue(startPointInInitialArray + j + offset);
-                var entryChanges = existingEntry._deserialize(targetArray[startPointInTargetArray + j], false);
+                var entryChanges = existingEntry._deserialize(targetArray[startPointInTargetArray + j],
+                                                              false, undefined, true);
 
                 // We had changes which we have to report back
                 if (!ChangeSet.isEmptyChangeSet(entryChanges)) {
@@ -1297,7 +1298,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * @inheritdoc
      */
-    _deserialize(in_serializedObj, in_reportToView) {
+    _deserialize(in_serializedObj, in_reportToView, in_filteringOptions, in_createChangeSet) {
         this._checkIsNotReadOnly(false);
 
         if ((in_serializedObj.remove && in_serializedObj.remove.length > 0) ||
@@ -1339,7 +1340,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
             // The changes we will report as result of this function
             var simpleChanges = {
-                insert: deepCopy(in_serializedObj.insert)
+                insert: in_createChangeSet ? deepCopy(in_serializedObj.insert) : in_serializedObj.insert
             };
             if (arrayLength > 0) {
                 simpleChanges.remove = [[0, arrayLength]];
@@ -1353,7 +1354,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                     var createdProperty = Property.PropertyFactory._createProperty(
                         propertyDescriptions[i]['typeid'], null, undefined, scope);
                     createdProperty._setParent(this);
-                    createdProperty._deserialize(propertyDescriptions[i], false);
+                    createdProperty._deserialize(propertyDescriptions[i], false, in_filteringOptions, false);
                     result.push(createdProperty);
                 }
                 this._clearRange(0, this._dataArrayGetLength());
