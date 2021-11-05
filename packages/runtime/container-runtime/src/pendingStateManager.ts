@@ -283,7 +283,7 @@ export class PendingStateManager implements IDisposable {
         // if this is an ack for a stashed op, dequeue one message.
         // we should have seen its ref seq num by now and the DDS should be ready for it to be ACKed
         if (isOriginalClientId || isNewClientId) {
-            assert(this.clientId === undefined, "multiple clients connected with stashed ops");
+            assert(this.clientId === undefined, 0x28b /* "multiple clients connected with stashed ops" */);
             while (!this.pendingStates.isEmpty()) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const nextState = this.pendingStates.shift()!;
@@ -304,15 +304,15 @@ export class PendingStateManager implements IDisposable {
     }
 
     private assertOpMatch(state: IPendingMessage, message: ISequencedDocumentMessage, isOriginalClientId: boolean) {
-        assert(message.type === state.messageType, "different message type");
+        assert(message.type === state.messageType, 0x28c /* "different message type" */);
         assert(message.clientSequenceNumber === state.clientSequenceNumber || !isOriginalClientId,
-            "client sequence number doesn't match");
+            0x28d /* "client sequence number doesn't match" */);
         switch(message.type) {
             case ContainerMessageType.Attach:
-                assert(message.contents.id === state.content.id, "datastore ID doesn't match");
+                assert(message.contents.id === state.content.id, 0x28e /* "datastore ID doesn't match" */);
                 break;
             case ContainerMessageType.FluidDataStoreOp:
-                assert(message.contents.address === state.content.address, "address doesn't match");
+                assert(message.contents.address === state.content.address, 0x28f /* "address doesn't match" */);
                 break;
             case ContainerMessageType.BlobAttach:
                 // todo: assert we have blob storage, assert blob IDs match, remove blob from blob storage since it made
@@ -467,11 +467,11 @@ export class PendingStateManager implements IDisposable {
         if (!prevClientId && this.stashedCount > 0) {
             // this is first connect, verify we are about to "resubmit" only stashed ops
             assert(this.pendingStates.toArray().filter((s) => s.type === "message").length === this.stashedCount,
-                "unexpected message queued before first connect");
+                0x290 /* "unexpected message queued before first connect" */);
 
             Array.from(this.previousClientIds).map((id) =>
                 assert(this.containerRuntime.getQuorum().getMember(id) === undefined,
-                    "client with stashed ops already connected"));
+                    0x291 /* "client with stashed ops already connected" */));
 
             // send rejoin op with stashed client ID if we have it
             if (this.previousClientIds.size > 0) {

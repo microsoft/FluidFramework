@@ -166,8 +166,8 @@ function serializeBlob(buffer: WriteBuffer, blob: BlobCore, dictionary: Map<stri
             // Write marker code for const string.
             buffer.write(code);
             const bytes = getValueSafely(codeToBytesMap, code);
-            assert(bytes >= lengthOfDataLen, "Length of data len should fit in the bytes from the map");
-            assert(bytes >= idLength, "Length of id should fit in the bytes from the map");
+            assert(bytes >= lengthOfDataLen, 0x283 /* "Length of data len should fit in the bytes from the map" */);
+            assert(bytes >= idLength, 0x284 /* "Length of id should fit in the bytes from the map" */);
             // Assign and write id for const string.
             buffer.write(id, bytes);
             // Write length of const string.
@@ -209,8 +209,8 @@ function serializeNodeCore(buffer: WriteBuffer, nodeCore: NodeCore, dictionary: 
             // For a tree node start and end with set/list start and end marker codes.
             const startCode = MarkerCodesStart[child.type];
             const endCode = MarkerCodesEnd[child.type];
-            assert(startCode !== undefined, "Start code should not undefined");
-            assert(endCode !== undefined, "End code should not undefined");
+            assert(startCode !== undefined, 0x285 /* "Start code should not undefined" */);
+            assert(endCode !== undefined, 0x286 /* "End code should not undefined" */);
             buffer.write(startCode);
             serializeNodeCore(buffer, child, dictionary);
             buffer.write(endCode);
