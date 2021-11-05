@@ -515,10 +515,8 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     protected applyStashedOp(): void;
     // (undocumented)
     protected client: Client;
-    copy(start: number, end: number, register: string): void;
     // (undocumented)
     createPositionReference(segment: T, offset: number, refType: ReferenceType): LocalReference;
-    cut(start: number, end: number, register: string): void;
     // (undocumented)
     protected didAttach(): void;
     // (undocumented)
@@ -562,7 +560,6 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     protected onConnect(): void;
     // (undocumented)
     protected onDisconnect(): void;
-    paste(pos: number, register: string): number;
     posFromRelativePos(relativePos: IRelativePosition): number;
     // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;

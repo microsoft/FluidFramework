@@ -242,48 +242,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return removeOp;
     }
 
-    /**
-     * Removes the range and puts the content of the removed range in a register
-     *
-     * @param start - The inclusive start of the range to remove
-     * @param end - The exclusive end of the range to remove
-     * @param register - The name of the register to store the removed range in
-     */
-    public cut(start: number, end: number, register: string) {
-        const removeOp = this.client.removeRangeLocal(start, end, register);
-        if (removeOp) {
-            this.submitSequenceMessage(removeOp);
-        }
-    }
-
-    /**
-     * Inserts the content of the register.
-     *
-     * @param pos - The position to insert the content at.
-     * @param register - The name of the register to get the content from
-     */
-    public paste(pos: number, register: string) {
-        const insertOp = this.client.pasteLocal(pos, register);
-        if (insertOp) {
-            this.submitSequenceMessage(insertOp);
-        }
-        return pos;
-    }
-
-    /**
-     * Puts the content of the range in a register
-     *
-     * @param start - The inclusive start of the range
-     * @param end - The exclusive end of the range
-     * @param register - The name of the register to store the range in
-     */
-    public copy(start: number, end: number, register: string) {
-        const insertOp = this.client.copyLocal(start, end, register);
-        if (insertOp) {
-            this.submitSequenceMessage(insertOp);
-        }
-    }
-
     public groupOperation(groupOp: IMergeTreeGroupMsg) {
         this.client.localTransaction(groupOp);
         this.submitSequenceMessage(groupOp);
