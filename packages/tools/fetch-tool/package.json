@@ -30,7 +30,7 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-runtime": "^0.51.0",
     "@fluidframework/datastore": "^0.51.0",
-    "@fluidframework/driver-definitions": "^0.41.0-0",
+    "@fluidframework/driver-definitions": "^0.41.0",
     "@fluidframework/driver-utils": "^0.51.0",
     "@fluidframework/odsp-doclib-utils": "^0.51.0",
     "@fluidframework/odsp-driver": "^0.51.0",
@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0",
     "@types/node": "^12.19.0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",

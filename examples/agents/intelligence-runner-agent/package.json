@@ -24,7 +24,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.40.0-0",
+    "@fluidframework/core-interfaces": "^0.40.0",
     "@fluidframework/map": "^0.51.0",
     "@fluidframework/protocol-definitions": "^0.1025.0",
     "@fluidframework/sequence": "^0.51.0",
@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0",
     "@types/node": "^12.19.0",
     "@types/request": "^2.47.1",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
