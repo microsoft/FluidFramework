@@ -28,12 +28,23 @@ export interface IFluidSerializer extends IProvideFluidSerializer {
      *
      * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
      * the root to any replaced handles.  (If no handles are found, returns the original object.)
+     *
+     * This will be deprecated and replaced in the future with encode.
      */
     replaceHandles(value: any, bind: IFluidHandle): any;
 
     /**
+     * Given a mostly-plain object that may have handle objects embedded within, will return a fully-plain object
+     * where any embedded IFluidHandles have been replaced with a serializable form.
+     *
+     * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
+     * the root to any replaced handles.  (If no handles are found, returns the original object.)
+     */
+    encode?(value: any, bind: IFluidHandle): any;
+
+    /**
      * Given a fully-jsonable object tree that may have encoded handle objects embedded within, will return an
-     * equivalent object tree where any encoded IFluidHandles have been replaced with thier decoded form.
+     * equivalent object tree where any encoded IFluidHandles have been replaced with their decoded form.
      *
      * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
      * the root to any replaced handles.  (If no handles are found, returns the original object.)

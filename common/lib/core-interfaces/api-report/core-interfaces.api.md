@@ -116,6 +116,7 @@ export const IFluidSerializer: keyof IProvideFluidSerializer;
 // @public (undocumented)
 export interface IFluidSerializer extends IProvideFluidSerializer {
     decode?(input: any): any;
+    encode?(value: any, bind: IFluidHandle): any;
     parse(value: string): any;
     replaceHandles(value: any, bind: IFluidHandle): any;
     stringify(value: any, bind: IFluidHandle): string;
