@@ -823,6 +823,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.garbageCollector = GarbageCollector.create(
             this,
             this.runtimeOptions.gcOptions,
+            (unusedRoutes: string[]) => this.dataStores.deleteUnusedRoutes(unusedRoutes),
             this._logger,
             existing,
             metadata,
@@ -1689,16 +1690,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // of this client's connection - https://github.com/microsoft/FluidFramework/issues/7152.
             this.deltaManager.lastMessage?.timestamp,
         );
-    }
-
-    /**
-     * Implementation of IGarbageCollectionRuntime::deleteUnusedRoutes.
-     * Currently only called when this container is running in GC test mode. It is called to delete objects whose
-     * routes are unused. This enables testing scenarios where the container hase deleted content.
-     * @param unusedRoutes - The routes that are unused in all data stores in this Container.
-     */
-    public deleteUnusedRoutes(unusedRoutes: string[]): void {
-        this.dataStores.deleteUnusedRoutes(unusedRoutes);
     }
 
     /**

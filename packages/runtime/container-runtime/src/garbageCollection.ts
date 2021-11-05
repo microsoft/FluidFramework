@@ -49,8 +49,6 @@ export interface IGarbageCollectionRuntime {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     /** After GC has run, called to notify the runtime of routes that are used in it. */
     updateUsedRoutes(usedRoutes: string[]): IUsedStateStats;
-    /** After GC has run, called to delete objects in the runtime whose routes are unused. */
-    deleteUnusedRoutes(unusedRoutes: string[]): void;
 }
 
 /** Defines the contract for the garbage collector. */
@@ -81,11 +79,12 @@ export class GarbageCollector implements IGarbageCollector {
     public static create(
         provider: IGarbageCollectionRuntime,
         gcOptions: IGCRuntimeOptions,
+        deleteUnusedRoutes: (unusedRoutes: string[]) => void,
         baseLogger: ITelemetryLogger,
         existing: boolean,
         metadata?: IContainerRuntimeMetadata,
     ): IGarbageCollector {
-        return new GarbageCollector(provider, gcOptions, baseLogger, existing, metadata);
+        return new GarbageCollector(provider, gcOptions, deleteUnusedRoutes, baseLogger, existing, metadata);
     }
 
     /**
@@ -129,6 +128,11 @@ export class GarbageCollector implements IGarbageCollector {
     protected constructor(
         private readonly provider: IGarbageCollectionRuntime,
         private readonly gcOptions: IGCRuntimeOptions,
+        /**
+         * After GC has run, called to delete objects in the runtime whose routes are unused. This is not part of the
+         * provider because its specific to this garbage collector implementation and is not part of the contract.
+         */
+        private readonly deleteUnusedRoutes: (unusedRoutes: string[]) => void,
         baseLogger: ITelemetryLogger,
         existing: boolean,
         metadata?: IContainerRuntimeMetadata,
@@ -221,7 +225,7 @@ export class GarbageCollector implements IGarbageCollector {
             // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
             // involving access to deleted data.
             if (this.testMode) {
-                this.provider.deleteUnusedRoutes(deletedNodeIds);
+                this.deleteUnusedRoutes(deletedNodeIds);
             }
             event.end(gcStats);
             return gcStats as IGCStats;
