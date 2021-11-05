@@ -849,13 +849,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const prevSummaryGCVersion = existing ? getGCVersion(metadata) : undefined;
 
         /**
-         * If container exists, then get these values from metadata.
-         * If there is no metadata or metadata does not have these values, it means this is an old document,
-         * so these values will be undefined. If container doesn't exist, we initialize these values
+         * If this is a new container, we initialize these values. If it's an existing container,
+         * these values would stay undefined
          */
         if (!existing) {
             this.createContainerMetadata.createContainerRuntimeVersion = pkgVersion;
-            this.createContainerMetadata.createContainerTimeStamp = performance.now();
+            this.createContainerMetadata.createContainerTimestamp = performance.now();
             this.createContainerMetadata.lastSummaryCount = 0;
         }
 
@@ -1085,7 +1084,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             dataStoreCount: this.dataStores.dataStoreCount,
             referencedDataStoreCount: this.dataStores.referencedDataStoreCount,
             createContainerRuntimeVersion: this.createContainerMetadata.createContainerRuntimeVersion,
-            createContainerTimeStamp: this.createContainerMetadata.createContainerTimeStamp,
+            createContainerTimestamp: this.createContainerMetadata.createContainerTimestamp,
             lastSummaryCount: this.createContainerMetadata.lastSummaryCount,
             summaryFormatVersion: metadata?.summaryFormatVersion,
         });
@@ -1219,6 +1218,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private formMetadata(): IContainerRuntimeMetadata {
         return {
+            ...this.createContainerMetadata,
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
             // If GC is disabled for this document, the gcFeature is whatever we loaded from. If GC is enabled,
@@ -1227,9 +1227,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // The last message processed at the time of summary. If there are no messages, nothing has changed from
             // the base summary we loaded from. So, use the message from its metadata blob.
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.baseSummaryMessage,
-            createContainerRuntimeVersion: this.createContainerMetadata.createContainerRuntimeVersion,
-            createContainerTimeStamp: this.createContainerMetadata.createContainerTimeStamp,
-            lastSummaryCount: this.createContainerMetadata.lastSummaryCount,
         };
     }
 

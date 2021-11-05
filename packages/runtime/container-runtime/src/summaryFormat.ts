@@ -88,8 +88,8 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata {
 export interface ICreateContainerMetadata {
     /** Runtime version of the container when it was first created */
     createContainerRuntimeVersion?: string;
-    /** Timestamp of creating the container */
-    createContainerTimeStamp?: number;
+    /** Timestamp of the container when it was first created */
+    createContainerTimestamp?: number;
     /** Counter of the last summary happened, increments every time we summarize */
     lastSummaryCount?: number;
 }
