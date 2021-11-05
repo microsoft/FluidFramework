@@ -33,7 +33,6 @@ import {
     IContainerLoadMode,
 } from "@fluidframework/container-definitions";
 import {
-    CreateProcessingError,
     DataCorruptionError,
     extractSafePropertiesFromMessage,
     GenericError,
