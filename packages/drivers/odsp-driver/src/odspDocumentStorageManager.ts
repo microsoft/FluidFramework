@@ -415,8 +415,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 { eventName: "ObtainSnapshot" },
                 async (event: PerformanceEvent) => {
                     const props = {};
-                    let cachedSnapshot: ISnapshotContents | ISnapshotCachedEntry | undefined;
-                    const cachedSnapshotP: Promise<ISnapshotCachedEntry | undefined> =
+                    let cachedSnapshot: ISnapshotContents | undefined;
+                    const cachedSnapshotP: Promise<ISnapshotContents | undefined> =
                         this.epochTracker.get(createCacheSnapshotKey(this.odspResolvedUrl))
                             .then((snapshotCachedEntry: ISnapshotCachedEntry) => {
                                 if (snapshotCachedEntry !== undefined) {
