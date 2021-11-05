@@ -34,7 +34,7 @@ export class FluidSerializer implements IFluidSerializer {
      * Given a mostly-jsonable object tree that may have handle objects embedded within, will return a
      * fully-jsonable object tree where any embedded IFluidHandles have been replaced with a serializable form.
      *
-     * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
+     * The original `input` object is not mutated.  This method will shallowly clone all objects in the path from
      * the root to any replaced handles.  (If no handles are found, returns the original object.)
      *
      * Any unbound handles encountered are bound to the provided IFluidHandle.
@@ -52,7 +52,7 @@ export class FluidSerializer implements IFluidSerializer {
      * Given a mostly-jsonable object tree that may have handle objects embedded within, will return a
      * fully-jsonable object tree where any embedded IFluidHandles have been replaced with a serializable form.
      *
-     * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
+     * The original `input` object is not mutated.  This method will shallowly clone all objects in the path from
      * the root to any replaced handles.  (If no handles are found, returns the original object.)
      *
      * Any unbound handles encountered are bound to the provided IFluidHandle.
@@ -97,7 +97,7 @@ export class FluidSerializer implements IFluidSerializer {
     }
 
     // If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
-    // Otherwise returns the original 'value'.  Used by 'replaceHandles()' and 'stringify()'.
+    // Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
     private readonly encodeValue = (value: any, bind: IFluidHandle) => {
         // Detect if 'value' is an IFluidHandle.
         const handle = value?.IFluidHandle;
