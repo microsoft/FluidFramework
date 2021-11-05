@@ -20,39 +20,4 @@ if (program.verbose !== undefined) {
     enableLogging(true);
 }
 
-const groups = [
-    {
-        name: "client",
-        include: ["packages/**"],
-    },
-    {
-        name: "routerlicious",
-        include: ["server/routerlicious/**"],
-    },
-    {
-        name: "protocol-definitions",
-        include: ["common/lib/protocol-definitions/**"],
-    },
-    {
-        name: "driver-definitions",
-        include: ["common/lib/driver-definitions/**"],
-    },
-    {
-        name: "core-interfaces",
-        include: ["common/lib/core-interfaces/**"],
-        exclude: [],
-    },
-    {
-        name: "container-definitions",
-        include: ["common/lib/container-definitions/**"],
-    },
-    {
-        name: "common-utils",
-        include: ["common/lib/common-utils/**"],
-    },
-    {
-        name: "common-definitions",
-        include: ["common/lib/common-definitions/**"],
-    },
-];
-validateRepo({packageGroups: groups, logForPackages }).catch((e) => console.log(e));
+validateRepo({ logForPackages }).catch((e) => console.log(e));

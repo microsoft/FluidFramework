@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import fs from "fs";
 import { DiagnosticCategory, Node, Project, TypeChecker } from "ts-morph";
 import { PackageDetails } from "./packageJson";
 import { ClassData, decomposeClassDeclaration } from "./classDecomposition";
@@ -54,8 +55,15 @@ export function validatePackage(
     let pkgIncrement = BreakingIncrement.none;
     const pkgBrokenTypes: BrokenTypes = new Map();
 
+    // skip packages without tsconfigs or that haven't specified versions for now
+    if (!fs.existsSync(`${packageDir}/tsconfig.json`) ||
+        packageDetails.oldVersions === undefined ||
+        packageDetails.oldVersions.length === 0) {
+        return { increment: pkgIncrement, brokenTypes: pkgBrokenTypes };
+    }
+
     // Compare only against the most recent version
-    const oldVersion = packageDetails.oldVersions[0];
+    const oldVersion = packageDetails.oldVersions[packageDetails.oldVersions.length - 1];
     const newDetails: PackageAndTypeData = generateTypeDataForProject(packageDir, undefined);
     const oldDetails: PackageAndTypeData = generateTypeDataForProject(packageDir, oldVersion);
     const newTypeMap = new Map<string, TypeData>(newDetails.typeData.map((v) => [getFullTypeName(v), v]));

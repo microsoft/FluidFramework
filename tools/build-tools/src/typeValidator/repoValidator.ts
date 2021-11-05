@@ -5,13 +5,13 @@
 
 import minimatch from "minimatch";
 import path from "path";
+import { IFluidRepoPackageEntry } from "../common/fluidRepo";
+import { getPackageManifest } from "../common/fluidUtils";
 import { FluidRepoBuild } from "../fluidBuild/fluidRepoBuild"
-import { BuildPackage } from "../fluidBuild/buildGraph"
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { getPackageDetails } from "./packageJson";
 import { BreakingIncrement, BrokenTypes, validatePackage } from "./packageValidator";
 import { enableLogging, log } from "./validatorUtils";
-import { group } from "console";
 
 /**
  * Groupings of packages that should be versioned in lockstep
@@ -23,19 +23,50 @@ import { group } from "console";
  * to need a major/minor version increment that isn't already needed.
  * TODO: verify/fix this expectation
  */
-export interface PackageGroup {
+interface PackageGroup {
     name: string,
-    include: string[],
-    exclude?: string[],
+    directory: string,
+    ignoredDirs?: string[],
 }
 
 export interface IValidationOptions {
-    packageGroups?: PackageGroup[],
-
     /**
      * Enable verbose logging for specific packages rather than everything
      */
     logForPackages?: Set<string>;
+}
+
+function buildPackageGroups(repoRoot: string): PackageGroup[] {
+    const manifest = getPackageManifest(repoRoot);
+    const groups: PackageGroup[] = [];
+    const repoPackages = manifest.repoPackages ?? [];
+    const addGroup = (name: string, entry: IFluidRepoPackageEntry) => {
+        if (name === "client") {
+            // special case client for now because its values expect
+            // special handling in the old repo structure
+            groups.push({ name, directory: "packages/**" });
+        } else if (Array.isArray(entry)) {
+            // This can create multiple groups with the same name but these are
+            // tracked by name later and get combined
+            entry.map(subEntry => addGroup(name, subEntry));
+        } else if (typeof entry === "string") {
+            groups.push({ name, directory: path.join(entry, "**") });
+        } else {
+            groups.push({
+                name,
+                // add "**" for glob matching since we match package paths to these dirs
+                // rather than traversing these dirs for packages
+                directory: path.join(entry.directory, "**"),
+                // ignoredDirs are relative to the directory
+                ignoredDirs: entry.ignoredDirs?.map(relDir => path.join(entry.directory, relDir, "**")),
+            });
+        }
+    }
+    for (const name in repoPackages) {
+        addGroup(name, repoPackages[name]);
+    }
+    console.log(groups);
+    return groups;
 }
 
 function groupForPackage(groups: PackageGroup[], pkgJsonPath: string): string | undefined {
@@ -43,15 +74,13 @@ function groupForPackage(groups: PackageGroup[], pkgJsonPath: string): string | 
         group_block: {
             // return the first group that matches any include glob and doesn't
             // match any exclude glob
-            for (const include of group.include) {
-                if (minimatch(pkgJsonPath, include)) {
-                    for (const exclude of group.exclude ?? []) {
-                        if (minimatch(pkgJsonPath, exclude)) {
-                            break group_block;
-                        }
+            if (minimatch(pkgJsonPath, group.directory)) {
+                for (const exclude of group.ignoredDirs ?? []) {
+                    if (minimatch(pkgJsonPath, exclude)) {
+                        break group_block;
                     }
-                    return group.name;
                 }
+                return group.name;
             }
         }
     }
@@ -93,6 +122,8 @@ export async function validateRepo(options?: IValidationOptions) {
     const buildGraph = repo.createBuildGraph({symlink: true, fullSymlink: false}, ["build"]);
     const packages = buildGraph.buildPackages;
 
+    const packageGroups = buildPackageGroups(repoRoot);
+
     const groupBreaks = new Map<string, BreakingIncrement>();
     const allBrokenTypes: BrokenTypes = new Map();
     const breakSummary: any[] = [];
@@ -110,13 +141,13 @@ export async function validateRepo(options?: IValidationOptions) {
                 if (packageData.oldVersions.length > 0) {
                     log(`${pkgName}, ${buildPkg.level}`);
 
-                    let { increment, brokenTypes} = validatePackage(packageData, pkgJsonPath, allBrokenTypes);
+                    let { increment, brokenTypes} = validatePackage(packageData, buildPkg.pkg.directory, allBrokenTypes);
 
                     brokenTypes.forEach((v, k) => allBrokenTypes.set(k, v));
 
                     // Add to group breaks
                     const groupName = setPackageGroupIncrement(
-                        pkgJsonRelativePath, increment, options?.packageGroups, groupBreaks);
+                        pkgJsonRelativePath, increment, packageGroups, groupBreaks);
 
                     breakSummary.push({ name: packageData.name, level: increment, group: groupName });
                 }

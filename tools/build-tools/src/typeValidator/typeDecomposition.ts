@@ -82,7 +82,7 @@ export function typeToString(typeChecker: TypeChecker, type: Type): string {
  * replacement, e.g. Promise<UncomparableClass | OtherClass> ->
  * Promise<"UncomparableClass" | "OtherClass">
  * This removes external dependencies from the type while preserving its structure, where those
- * external types can be checked separately
+ * external types can be checked separately.  Structure must be preserved to check back-compat.
  *
  * TODO: handle multiple type args/params in result output
  * TODO: handle type constraints
