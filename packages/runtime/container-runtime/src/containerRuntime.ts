@@ -1181,7 +1181,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @deprecated - Use summarize to get summary of the container runtime.
      */
     public async snapshot(): Promise<ITree> {
-        await this.collectGarbage({ logger: this.logger, fullGC: true /* fullGC */ });
+        if (this.garbageCollector.shouldRunGC) {
+            await this.collectGarbage({ logger: this.logger, fullGC: true /* fullGC */ });
+        }
 
         const root: ITree = { entries: [] };
         const entries = await this.dataStores.snapshot();
