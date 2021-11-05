@@ -820,7 +820,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
 
-        this.garbageCollector = new GarbageCollector(
+        this.garbageCollector = GarbageCollector.create(
             this,
             this.runtimeOptions.gcOptions,
             this._logger,
@@ -1660,7 +1660,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * IGarbageCollectionRuntime::getGCData implementation. Returns the GC data for this container.
+     * Implementation of IGarbageCollectionRuntime::getGCData.
+     * Generates and returns the GC data for this container.
      * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
     public async getGCData(fullGC?: boolean): Promise<IGarbageCollectionData> {
@@ -1668,8 +1669,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * IGarbageCollectionRuntime::updateUsedRoutes implementation. After GC has run, called to notify this
-     * container's nodes of routes that are used in it.
+     * Implementation of IGarbageCollectionRuntime::updateUsedRoutes.
+     * After GC has run, called to notify this container's nodes of routes that are used in it.
      * @param usedRoutes - The routes that are used in all nodes in this Container.
      * @returns the statistics of the used state of the data stores.
      */
@@ -1689,9 +1690,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * IGarbageCollectionRuntime::deleteUnusedRoutes implementation. Currently only called when this container is
-     * running in GC test mode. It is called to delete objects whose routes are unused. This enables testing scenarios
-     * where the container hase deleted content.
+     * Implementation of IGarbageCollectionRuntime::deleteUnusedRoutes.
+     * Currently only called when this container is running in GC test mode. It is called to delete objects whose
+     * routes are unused. This enables testing scenarios where the container hase deleted content.
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
      */
     public deleteUnusedRoutes(unusedRoutes: string[]): void {

@@ -71,8 +71,6 @@ export enum ContainerMessageType {
     Rejoin = "rejoin"
 }
 
-// Warning: (ae-forgotten-export) The symbol "IGarbageCollectionRuntime" needs to be exported by the entry point index.d.ts
-//
 // @public
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IContainerRuntime, IGarbageCollectionRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider {
     // (undocumented)
@@ -83,7 +81,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get clientId(): string | undefined;
     // (undocumented)
     get closeFn(): (error?: ICriticalContainerError) => void;
-    // Warning: (ae-forgotten-export) The symbol "IGCStats" needs to be exported by the entry point index.d.ts
     collectGarbage(options: {
         logger?: ITelemetryLogger;
         runSweep?: boolean;
@@ -195,7 +192,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
-    // Warning: (ae-forgotten-export) The symbol "IUsedStateStats" needs to be exported by the entry point index.d.ts
     updateUsedRoutes(usedRoutes: string[]): IUsedStateStats;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
@@ -336,6 +332,13 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
     readonly override?: boolean;
 }
 
+// @public
+export interface IGarbageCollectionRuntime {
+    deleteUnusedRoutes(unusedRoutes: string[]): void;
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    updateUsedRoutes(usedRoutes: string[]): IUsedStateStats;
+}
+
 // @public (undocumented)
 export interface IGCRuntimeOptions {
     [key: string]: any;
@@ -344,6 +347,18 @@ export interface IGCRuntimeOptions {
     gcAllowed?: boolean;
     runFullGC?: boolean;
     runSweep?: boolean;
+}
+
+// @public
+export interface IGCStats {
+    // (undocumented)
+    deletedDataStores: number;
+    // (undocumented)
+    deletedNodes: number;
+    // (undocumented)
+    totalDataStores: number;
+    // (undocumented)
+    totalNodes: number;
 }
 
 // @public
@@ -592,6 +607,14 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
     // (undocumented)
     readonly stage: "upload";
     readonly uploadDuration: number;
+}
+
+// @public
+export interface IUsedStateStats {
+    // (undocumented)
+    totalNodeCount: number;
+    // (undocumented)
+    unusedNodeCount: number;
 }
 
 // @public

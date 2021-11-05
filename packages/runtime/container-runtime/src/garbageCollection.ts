@@ -55,12 +55,12 @@ export interface IGarbageCollectionRuntime {
 
 /** Defines the contract for the garbage collector. */
 export interface IGarbageCollector {
-    /** The GC version that was used to generate the GC data to be written in a summary. */
-    gcSummaryFeatureVersion: number;
     /** Tells whether GC should run or not. */
-    shouldRunGC: boolean;
+    readonly shouldRunGC: boolean;
+    /** The GC version that was used to generate the GC data to be written in a summary. */
+    readonly gcSummaryFeatureVersion: number;
     /** Tells whether the GC version has changed compared to the version in the latest summary. */
-    hasGCVersionChanged: boolean;
+    readonly hasGCVersionChanged: boolean;
     /** Run garbage collection and update the reference / used state of the system. */
     collectGarbage(
         options: { logger?: ITelemetryLogger, runGC?: boolean, runSweep?: boolean, fullGC?: boolean },
@@ -74,16 +74,17 @@ export interface IGarbageCollector {
  * its state across summaries.
  */
 export class GarbageCollector implements IGarbageCollector {
-    public readonly gcEnabled: boolean;
-    public readonly shouldRunGC: boolean;
-    private readonly shouldRunSweep: boolean;
-    private readonly testMode: boolean;
-    private readonly logger: ITelemetryLogger;
+    public static create(
+        provider: IGarbageCollectionRuntime,
+        gcOptions: IGCRuntimeOptions,
+        baseLogger: ITelemetryLogger,
+        existing: boolean,
+        metadata?: IContainerRuntimeMetadata,
+    ): IGarbageCollector {
+        return new GarbageCollector(provider, gcOptions, baseLogger, existing, metadata);
+    }
 
-    // The current GC version that this container is running.
-    private readonly currentGCVersion = GCVersion;
-    // This is the version of GC data in the latest summary being tracked.
-    private latestSummaryGCVersion: GCVersion;
+    public readonly shouldRunGC: boolean;
 
     /**
      * Returns the GC version that was used to generate the GC data to be written in a summary.
@@ -105,7 +106,17 @@ export class GarbageCollector implements IGarbageCollector {
         return this.shouldRunGC && this.latestSummaryGCVersion !== this.currentGCVersion;
     }
 
-    constructor(
+    private readonly shouldRunSweep: boolean;
+    private readonly gcEnabled: boolean;
+    private readonly testMode: boolean;
+    private readonly logger: ITelemetryLogger;
+
+    // The current GC version that this container is running.
+    private readonly currentGCVersion = GCVersion;
+    // This is the version of GC data in the latest summary being tracked.
+    private latestSummaryGCVersion: GCVersion;
+
+    protected constructor(
         private readonly provider: IGarbageCollectionRuntime,
         private readonly gcOptions: IGCRuntimeOptions,
         baseLogger: ITelemetryLogger,
