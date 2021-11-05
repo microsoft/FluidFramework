@@ -57,7 +57,11 @@ export interface IGarbageCollectionRuntime {
 export interface IGarbageCollector {
     /** Tells whether GC should run or not. */
     readonly shouldRunGC: boolean;
-    /** The GC version that was used to generate the GC data to be written in a summary. */
+    /**
+     * This tracks two things:
+     * 1. Whether GC is enabled - If this is 0, GC is disabled. If this is > 0, GC is enabled.
+     * 2. If GC is enabled, the version of GC used to generate the GC data written in a summary.
+     */
     readonly gcSummaryFeatureVersion: number;
     /** Tells whether the GC version has changed compared to the version in the latest summary. */
     readonly hasGCVersionChanged: boolean;
@@ -84,16 +88,18 @@ export class GarbageCollector implements IGarbageCollector {
         return new GarbageCollector(provider, gcOptions, baseLogger, existing, metadata);
     }
 
+    /**
+     * Tells whether GC should be run based on the GC options and local storage flags.
+     */
     public readonly shouldRunGC: boolean;
 
     /**
-     * Returns the GC version that was used to generate the GC data to be written in a summary.
+     * This tracks two things:
+     * 1. Whether GC is enabled - If this is 0, GC is disabled. If this is > 0, GC is enabled.
+     * 2. If GC is enabled, the version of GC used to generate the GC data written in a summary.
      */
     public get gcSummaryFeatureVersion(): number {
-        // If GC does not run, the latest summary state is not updated. So, gc version is the same that in the summary
-        // that this client loaded from.
-        // If GC runs, GC version is the current GC version as that is what is used to generate the GC data.
-        return this.shouldRunGC ? this.currentGCVersion : this.latestSummaryGCVersion;
+        return this.gcEnabled ? this.currentGCVersion : 0;
     }
 
     /**
@@ -106,8 +112,12 @@ export class GarbageCollector implements IGarbageCollector {
         return this.shouldRunGC && this.latestSummaryGCVersion !== this.currentGCVersion;
     }
 
-    private readonly shouldRunSweep: boolean;
+    /**
+     * Tracks if GC is enabled for this document. This is specified during document creation and doesn't change
+     * throughout its lifetime.
+     */
     private readonly gcEnabled: boolean;
+    private readonly shouldRunSweep: boolean;
     private readonly testMode: boolean;
     private readonly logger: ITelemetryLogger;
 
