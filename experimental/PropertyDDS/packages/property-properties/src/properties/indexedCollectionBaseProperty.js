@@ -13,6 +13,8 @@ const { deserialize } = require('../containerSerializer');
 const { ChangeSet } = require('@fluid-experimental/property-changeset');
 const { ConsoleUtils } = require('@fluid-experimental/property-common');
 const { MSG } = require('@fluid-experimental/property-common').constants;
+const { validationsEnabled } = require('../enableValidations');
+
 /**
  * typedef {property-properties.BaseProperty|string|number|boolean} property-properties.IndexedCollectionBaseProperty~ValueType
  *
@@ -138,11 +140,13 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
      *     When batching updates, this can be prevented via this flag.
      */
     _insert(in_key, in_value, in_reportToView) {
-        this._checkIsNotReadOnly(false);
+	    if (validationsEnabled.enabled) {
+	        this._checkIsNotReadOnly(false);
+	    }
 
         if (!this.has(in_key)) {
             // Make sure, the property we are inserting is not already part of some other collection
-            if (!this._containsPrimitiveTypes) {
+            if (validationsEnabled.enabled && !this._containsPrimitiveTypes) {
                 in_value._validateInsertIn(this)
             }
 
@@ -154,7 +158,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
             this._setDirty(false);
 
             if (!this._containsPrimitiveTypes) {
-                // Dirty the tree
+                // Dirty the tree (TODO: is this needed?)
                 in_value._setDirtyTree(false);
 
                 in_value._setParent(this);

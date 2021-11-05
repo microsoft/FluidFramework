@@ -20,6 +20,7 @@ const { LazyLoadedProperties: Property } = require('./lazyLoadedProperties');
 const { UniversalDataArray, ConsoleUtils } = require('@fluid-experimental/property-common');
 const fastestJSONCopy = require('fastest-json-copy');
 const deepCopy = fastestJSONCopy.copy;
+const { validationsEnabled } = require('../enableValidations');
 
 
 var MODIFIED_STATE_FLAGS = BaseProperty.MODIFIED_STATE_FLAGS;
@@ -601,12 +602,14 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'ArrayProperty.insertRange');
         }
 
-        for (var i = 0; i < in_array.length; i++) {
-            if (in_array[i] instanceof BaseProperty) {
-                in_array[i]._validateInsertIn(this)
-            }
-        }
-        this._checkIsNotReadOnly(true);
+	    if (validationsEnabled.enabled) {
+	        for (var i = 0; i < in_array.length; i++) {
+	            if (in_array[i] instanceof BaseProperty) {
+	                in_array[i]._validateInsertIn(this)
+	            }
+	        }
+	        this._checkIsNotReadOnly(true);
+	    }
         this._insertRangeWithoutDirtying(in_offset, in_array);
         this._setDirty();
     };
