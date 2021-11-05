@@ -51,17 +51,7 @@ import {
     LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
-
-export interface IDataStoreAliasMapping {
-    readonly suppliedInternalId: string;
-    readonly alias: string;
-    readonly aliasedInternalId: string;
-}
-
-export interface IDataStoreAliasMessage {
-    readonly id: string;
-    readonly alias: string;
-}
+import { IDataStoreAliasMapping, IDataStoreAliasMessage } from "./dataStore";
 
  /**
   * This class encapsulates data store handling. Currently it is only used by the container runtime,

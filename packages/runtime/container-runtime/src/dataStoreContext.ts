@@ -492,7 +492,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     /**
      * Updates the used routes of the channel and its child contexts. The channel must be loaded before calling this.
-     * It is called in these two scenarions:
+     * It is called in these two scenarios:
      * 1. When the used routes of the data store is updated and the data store is loaded.
      * 2. When the data store is realized. This updates the channel's used routes as per last GC run.
      */
@@ -576,7 +576,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         try
         {
             assert(!this.detachedRuntimeCreation, 0x148 /* "Detached runtime creation on runtime bind" */);
-            assert(this.channelDeferred !== undefined, 0x149 /* "Undefined channel defferal" */);
+            assert(this.channelDeferred !== undefined, 0x149 /* "Undefined channel deferral" */);
             assert(this.pkg !== undefined, 0x14a /* "Undefined package path" */);
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

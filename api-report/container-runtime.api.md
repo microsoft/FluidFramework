@@ -59,6 +59,8 @@ export const agentSchedulerId = "_scheduler";
 // @public (undocumented)
 export enum ContainerMessageType {
     // (undocumented)
+    AssignAlias = "assignAlias",
+    // (undocumented)
     Attach = "attach",
     // (undocumented)
     BlobAttach = "blobAttach",
@@ -67,9 +69,7 @@ export enum ContainerMessageType {
     // (undocumented)
     FluidDataStoreOp = "component",
     // (undocumented)
-    Rejoin = "rejoin",
-    // (undocumented)
-    SetRootDataStoreAlias = "setRootDataStoreAlias",
+    Rejoin = "rejoin"
 }
 
 // @public
@@ -88,13 +88,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
     // (undocumented)
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IFluidRouter>;
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IDataStore>;
     // (undocumented)
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
     // (undocumented)
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     // (undocumented)
-    createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
+    createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IDataStore>;
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -122,7 +122,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     getQuorum(): IQuorum;
     // (undocumented)
-    getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
+    getRootDataStore(id: string, wait?: boolean): Promise<IDataStore>;
     // (undocumented)
     get IContainerRuntime(): this;
     // (undocumented)
@@ -173,6 +173,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)
+    submitDataStoreAliasOp(message: IDataStoreAliasMessage, localOpMetadata: unknown): void;
+    // (undocumented)
     submitDataStoreOp(id: string, contents: any, localOpMetadata?: unknown): void;
     // (undocumented)
     submitDataStoreSignal(address: string, type: string, content: any): void;
@@ -190,8 +192,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
     // (undocumented)
-    trySetRootDataStoreAlias(dataStore: IFluidDataStoreChannel, alias: string): Promise<boolean>;
-    // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     }
 
@@ -205,6 +205,17 @@ export interface ContainerRuntimeMessage {
 
 // @public (undocumented)
 export const createSummarizingWarning: (errorCode: string, logged: boolean) => SummarizingWarning;
+
+// @public (undocumented)
+export class DataStore implements IDataStore {
+    constructor(router: IFluidRouter, internalId: string, runtime: ContainerRuntime);
+    // (undocumented)
+    get IFluidRouter(): IFluidRouter;
+    // (undocumented)
+    request(request: IRequest): Promise<IResponse>;
+    // (undocumented)
+    trySetAlias(alias: string): Promise<boolean>;
+}
 
 // @public
 export class DeltaScheduler {
@@ -322,6 +333,32 @@ export interface IContainerRuntimeOptions {
     loadSequenceNumberVerification?: "close" | "log" | "bypass";
     // (undocumented)
     summaryOptions?: ISummaryRuntimeOptions;
+    // (undocumented)
+    useDataStoreAliasing?: boolean;
+}
+
+// @public (undocumented)
+export interface IDataStore extends IFluidRouter {
+    // (undocumented)
+    trySetAlias(alias: string): Promise<boolean>;
+}
+
+// @public (undocumented)
+export interface IDataStoreAliasMapping {
+    // (undocumented)
+    readonly alias: string;
+    // (undocumented)
+    readonly aliasedInternalId: string;
+    // (undocumented)
+    readonly suppliedInternalId: string;
+}
+
+// @public (undocumented)
+export interface IDataStoreAliasMessage {
+    // (undocumented)
+    readonly alias: string;
+    // (undocumented)
+    readonly id: string;
 }
 
 // @public
@@ -631,7 +668,7 @@ export class PendingStateManager implements IDisposable {
         localOpMetadata: unknown;
     };
     replayPendingStates(): void;
-}
+    }
 
 // @public (undocumented)
 export class ScheduleManager {
