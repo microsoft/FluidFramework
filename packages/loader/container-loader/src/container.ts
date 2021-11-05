@@ -869,8 +869,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             assert(!canRetryOnError(error), 0x24f /* "retriable error thrown from attach()" */);
 
             // add resolved URL on error object so that host has the ability to find this document and delete it
-            const newError = CreateProcessingError(
-                error, "errorWhileUploadingBlobsWhileAttaching", undefined);
+            const newError = normalizeError(error);
             const resolvedUrl = this.resolvedUrl;
             if (resolvedUrl) {
                 ensureFluidResolvedUrl(resolvedUrl);

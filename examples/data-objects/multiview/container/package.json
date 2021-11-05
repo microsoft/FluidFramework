@@ -66,7 +66,7 @@
     "@types/react-dom": "^16.9.4",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
-    "concurrently": "^5.2.0",
+    "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
     "cross-env": "^7.0.2",
     "css-loader": "^1.0.0",

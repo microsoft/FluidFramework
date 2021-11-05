@@ -16,6 +16,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Deprecated `Loader._create` is removed](#deprecated-loadercreate-is-removed)
 - [Stop exporting internal class `CollabWindowTracker` ](#stop-exporting-internal-class-collabwindowtracker)
 - [base-host package removed](#base-host-package-removed)
+- [Registers removed from sequence and merge-tree](#Registers-removed-from-sequence-and-merge-tree)
 
 ### `maxMessageSize` property has been deprecated from IConnectionDetails and IDocumentDeltaConnection
 `maxMessageSize` is redundant and will be removed soon. Please use the `serviceConfiguration.maxMessageSize` property instead.
@@ -35,6 +36,9 @@ Use the Loader constructor with the `ILoaderProps` instead.
 The `@fluidframework/base-host` package has been removed.  See the [quick-start guide](https://fluidframework.com/docs/start/quick-start/) for recommended hosting practices.
 
 If you were using the `UpgradeManager` utility from this package, external access to Quorum proposals is planned to be deprecated and so this is no longer recommended.  To upgrade code, instead use the `Container` API `proposeCodeDetails`.
+
+### Registers removed from sequence and merge-tree
+The `@fluidframework/sequence` and `@fluidframework/merge-tree` packages provided cut/copy/paste functionalities that built on a register concept.  These functionalities were never fully implemented and have been removed.
 
 ## 0.50 Breaking changes
 - [OpProcessingController removed](#opprocessingcontroller-removed)
