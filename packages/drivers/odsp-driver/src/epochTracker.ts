@@ -231,7 +231,7 @@ export class EpochTracker implements IPersistedFileCache {
                 fetchOptions.headers = {
                     ...fetchOptions.headers,
                 };
-                assert(fetchOptions.headers !== undefined, "Headers should be present now");
+                assert(fetchOptions.headers !== undefined, 0x282 /* "Headers should be present now" */);
                 fetchOptions.headers[key] = val;
             };
             addHeader("X-RequestStats", clientCorelationId);
