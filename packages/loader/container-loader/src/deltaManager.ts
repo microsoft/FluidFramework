@@ -23,7 +23,13 @@ import {
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { assert, Deferred, performance, TypedEventEmitter } from "@fluidframework/common-utils";
-import { TelemetryLogger, safeRaiseEvent, logIfFalse, normalizeError } from "@fluidframework/telemetry-utils";
+import {
+    TelemetryLogger,
+    safeRaiseEvent,
+    logIfFalse,
+    normalizeError,
+    wrapError,
+} from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -65,7 +71,6 @@ import {
     ThrottlingWarning,
     CreateProcessingError,
     DataCorruptionError,
-    wrapError,
     GenericError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";

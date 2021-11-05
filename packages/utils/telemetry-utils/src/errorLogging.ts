@@ -6,10 +6,12 @@
 import {
     ILoggingError,
     ITaggedTelemetryPropertyType,
+    ITelemetryLogger,
     ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { v4 as uuid } from "uuid";
 import {
+    hasErrorInstanceId,
     IFluidErrorBase,
     isFluidError,
     isValidLegacyError,
@@ -178,6 +180,60 @@ export function generateStack(): string | undefined {
         }
     }
     return stack;
+}
+
+/**
+ * Create a new error, wrapping and caused by the given unknown error.
+ * Copies the inner error's message and stack over but otherwise uses newErrorFn to define the error.
+ * The inner error's instance id will also be logged for telemetry analysis.
+ * @param innerError - An error from untrusted/unknown origins
+ * @param newErrorFn - callback that will create a new error given the original error's message
+ * @returns A new error object "wrapping" the given error
+ */
+ export function wrapError<T extends IFluidErrorBase>(
+    innerError: unknown,
+    newErrorFn: (message: string) => T,
+): T {
+    const {
+        message,
+        stack,
+    } = extractLogSafeErrorProperties(innerError, false /* sanitizeStack */);
+
+    const newError = newErrorFn(message);
+
+    if (stack !== undefined) {
+        // supposedly setting stack on an Error can throw.
+        try {
+            Object.assign(newError, { stack });
+        } catch (errorSettingStack) {
+            newError.addTelemetryProperties({ stack2: stack });
+        }
+    }
+
+    if (hasErrorInstanceId(innerError)) {
+        newError.addTelemetryProperties({ innerErrorInstanceId: innerError.errorInstanceId });
+    }
+
+    return newError;
+}
+
+/** The same as wrapError, but also logs the innerError, including the wrapping error's instance id */
+export function wrapErrorAndLog<T extends IFluidErrorBase>(
+    innerError: unknown,
+    newErrorFn: (message: string) => T,
+    logger: ITelemetryLogger,
+) {
+    const newError = wrapError(innerError, newErrorFn);
+    const wrappedByErrorInstanceId = hasErrorInstanceId(newError)
+        ? newError.errorInstanceId
+        : undefined;
+
+    logger.sendTelemetryEvent({
+        eventName: "WrapError",
+        wrappedByErrorInstanceId,
+    }, innerError);
+
+    return newError;
 }
 
 /**
