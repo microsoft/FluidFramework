@@ -72,7 +72,7 @@ export interface IFluidErrorAnnotations {
 }
 
 // @public
-export interface IFluidErrorBase extends Readonly<Partial<Error>> {
+export interface IFluidErrorBase extends Readonly<Error> {
     addTelemetryProperties: (props: ITelemetryProperties) => void;
     readonly errorInstanceId: string;
     readonly errorType: string;

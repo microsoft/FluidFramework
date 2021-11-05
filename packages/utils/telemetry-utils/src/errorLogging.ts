@@ -86,20 +86,20 @@ class SimpleFluidError implements IFluidErrorBase {
     readonly fluidErrorCode: string;
     readonly message: string;
     readonly stack?: string;
-    readonly name?: string;
+    readonly name: string = "Error";
     readonly errorInstanceId: string;
 
     constructor(
         errorProps: Omit<IFluidErrorBase,
-            "getTelemetryProperties" |
-            "addTelemetryProperties" |
-            "errorInstanceId">,
+            | "getTelemetryProperties"
+            | "addTelemetryProperties"
+            | "errorInstanceId"
+            | "name">,
     ) {
         this.errorType = errorProps.errorType;
         this.fluidErrorCode = errorProps.fluidErrorCode;
         this.message = errorProps.message;
         this.stack = errorProps.stack;
-        this.name = errorProps.name;
         this.errorInstanceId = uuid();
 
         this.addTelemetryProperties(errorProps);
