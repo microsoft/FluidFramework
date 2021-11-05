@@ -38,7 +38,7 @@ The `@fluidframework/base-host` package has been removed.  See the [quick-start 
 If you were using the `UpgradeManager` utility from this package, external access to Quorum proposals is planned to be deprecated and so this is no longer recommended.  To upgrade code, instead use the `Container` API `proposeCodeDetails`.
 
 ### Registers removed from sequence and merge-tree
-The `@fluidframework/sequence` and `@fluidframework/merge-tree` packages provided cut/copy/paste functionalities that built on a register concept.  These functionalities have been removed.
+The `@fluidframework/sequence` and `@fluidframework/merge-tree` packages provided cut/copy/paste functionalities that built on a register concept.  These functionalities were never fully implemented and have been removed.
 
 ## 0.50 Breaking changes
 - [OpProcessingController removed](#opprocessingcontroller-removed)
