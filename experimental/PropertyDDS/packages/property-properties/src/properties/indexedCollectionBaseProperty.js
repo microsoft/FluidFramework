@@ -89,28 +89,33 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     cleanDirty(in_flags) {
         in_flags = in_flags !== undefined ? in_flags : BaseProperty.MODIFIED_STATE_FLAGS.DIRTY |
             BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE;
-        // Clean all entries inside of the collection
-        var entryKeys;
-        if (in_flags === BaseProperty.MODIFIED_STATE_FLAGS.DIRTY) {
-            // Only use the dirty entries
-            entryKeys = _.keys(this._dirtyChanges.insert).concat(_.keys(this._dirtyChanges.modify));
-        } else if (in_flags === BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE) {
-            // Only use the pending changes
-            entryKeys = _.keys(this._pendingChanges.insert).concat(_.keys(this._pendingChanges.modify));
-        } else {
-            entryKeys = _.keys(this._pendingChanges.insert)
-                .concat(_.keys(this._pendingChanges.modify))
-                .concat(_.keys(this._dirtyChanges.insert)
-                    .concat(_.keys(this._dirtyChanges.modify)));
-        }
 
-        var entry;
-        if (!this._containsPrimitiveTypes) {
-            for (var i = 0; i < entryKeys.length; i++) {
-                entry = this._dynamicChildren[entryKeys[i]];
+        // Clean all entries inside of the collection
+        let cleanDirtiness = (collection) => {
+            var entry;
+
+            for (let key in collection) {
+                entry = this._dynamicChildren[key];
                 if (entry._isDirty(in_flags)) {
                     entry.cleanDirty(in_flags);
                 }
+            }
+        };
+
+        if (!this._containsPrimitiveTypes) {
+            if (in_flags === BaseProperty.MODIFIED_STATE_FLAGS.DIRTY) {
+                // Only use the dirty entries
+                cleanDirtiness(this._dirtyChanges.insert);
+                cleanDirtiness(this._dirtyChanges.modify);
+            } else if (in_flags === BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE) {
+                // Only use the pending changes
+                cleanDirtiness(this._pendingChanges.insert);
+                cleanDirtiness(this._pendingChanges.modify);
+            } else {
+                cleanDirtiness(this._pendingChanges.insert);
+                cleanDirtiness(this._pendingChanges.modify);
+                cleanDirtiness(this._dirtyChanges.insert);
+                cleanDirtiness(this._dirtyChanges.modify);
             }
         }
 
