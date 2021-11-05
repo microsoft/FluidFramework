@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { requestFluidObject, waitAndCreateRootDataStore } from "@fluidframework/runtime-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ITestFluidObject,
     ITestObjectProvider,
@@ -195,35 +195,5 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                 const ds = await getRootDataStore(dataObject3, alias);
                 assert.equal(ds, ds1);
             });
-    });
-
-    describe("Creating", () => {
-        beforeEach(async () => setupContainers());
-        afterEach(async () => reset());
-
-        const alias = "alias";
-
-        it("Create multiple data stores to the same alias, first write wins, same container", async () => {
-            const ds1 = await waitAndCreateRootDataStore(runtimeOf(dataObject1), packageName, alias);
-            const ds2 = await waitAndCreateRootDataStore(runtimeOf(dataObject1), packageName, alias);
-
-            const ds = await getRootDataStore(dataObject1, alias);
-            assert.equal(ds1, ds2);
-            assert.equal(ds, ds1);
-        });
-
-        it("Create multiple data stores to the same alias, first write wins, different containers", async () => {
-            const ds1 = await waitAndCreateRootDataStore(
-                runtimeOf(dataObject1), packageName, alias);
-            const ds2 = await waitAndCreateRootDataStore(
-                runtimeOf(dataObject2), packageName, alias);
-            assert.equal(ds1, ds2);
-
-            const container3 = await provider.loadTestContainer(testContainerConfig);
-            const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
-
-            const ds = await getRootDataStore(dataObject3, alias);
-            assert.equal(ds, ds1);
-        });
     });
 });

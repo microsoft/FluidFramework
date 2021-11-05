@@ -229,9 +229,6 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 // @public (undocumented)
 export function utf8ByteLength(str: string): number;
 
-// @public (undocumented)
-export function waitAndCreateRootDataStore(runtime: IContainerRuntime, pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
-
 
 // (No @packageDocumentation comment for this package)
 

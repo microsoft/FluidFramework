@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     IFluidObject,
     IFluidRouter,
@@ -16,7 +15,6 @@ import {
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
-import { waitForOpCatchUp } from "./waitForOpsCatchUp";
 
 interface IResponseException extends Error {
     errorFromRequestFluidObject: true;
@@ -115,31 +113,4 @@ export function createDataStoreFactory(
         instantiateDataStore: async (context, existing) => (await factory).instantiateDataStore(context, existing),
         get: async (name: string) => (await factory).IFluidDataStoreRegistry?.get(name),
     };
-}
-
-export async function waitAndCreateRootDataStore(
-    runtime: IContainerRuntime,
-    pkg: string | string[],
-    rootDataStoreId: string,
-): Promise<IFluidRouter> {
-    await waitForOpCatchUp(runtime);
-
-    try {
-        return await runtime.getRootDataStore(rootDataStoreId, false /* wait */);
-    } catch (error) {
-        if (error.code !== 404) {
-            throw error;
-        }
-
-        return runtime.createRootDataStore(pkg, rootDataStoreId);
-        /*
-        [TODO:aiacob] remove the above and enable the code below
-        after the alias function is added to the IContainerRuntime interface
-
-        const newDataStore = await runtime.createRootDataStore(pkg, rootDataStoreId)
-            as unknown as IFluidDataStoreChannel;
-        const aliasResult = await runtime.tryAssignAlias(newDataStore, rootDataStoreId);
-        return aliasResult ? newDataStore : await runtime.getRootDataStore(rootDataStoreId);
-        */
-    }
 }
