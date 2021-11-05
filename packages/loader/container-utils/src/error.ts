@@ -122,8 +122,8 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
         message?: ISequencedDocumentMessage,
     ): IFluidErrorBase {
         const newErrorFn = (errMsg: string) => {
-            const dpe = new DataProcessingError(errMsg, "none" /* fluidErrorCode */);
-            dpe.addTelemetryProperties({ untrustedOrigin: 1}); // To match normalizeError. Redundant with "none" above
+            const dpe = new DataProcessingError(errMsg, "" /* fluidErrorCode */);
+            dpe.addTelemetryProperties({ untrustedOrigin: 1}); // To match normalizeError
             return dpe;
         };
 

@@ -132,7 +132,8 @@ describe("Errors", () => {
             const coercedError = CreateProcessingError(originalError, "anErrorCode", undefined);
 
             assert(coercedError as any === originalError);
-            assert(coercedError.fluidErrorCode === "none");
+            assert(coercedError.errorType === "genericError");
+            assert(coercedError.fluidErrorCode === "");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
         });
         it("Should skip coercion for LoggingError with errorType", () => {
@@ -144,6 +145,7 @@ describe("Errors", () => {
             const coercedError = CreateProcessingError(originalError, "anErrorCode", undefined);
 
             assert(coercedError as any === originalError);
+            assert(coercedError.errorType === "Some error type");
             assert(coercedError.fluidErrorCode === "<error predates fluidErrorCode>");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "anErrorCode");
@@ -157,7 +159,7 @@ describe("Errors", () => {
             assert(coercedError as any !== originalError);
             assert(coercedError instanceof DataProcessingError);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
-            assert(coercedError.fluidErrorCode === "none");
+            assert(coercedError.fluidErrorCode === "");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "anErrorCode");
             assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
@@ -173,7 +175,7 @@ describe("Errors", () => {
             assert(coercedError as any !== originalError);
             assert(coercedError instanceof DataProcessingError);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
-            assert(coercedError.fluidErrorCode === "none");
+            assert(coercedError.fluidErrorCode === "");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "anErrorCode");
             assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
@@ -201,7 +203,7 @@ describe("Errors", () => {
                 coercedErrors.every(
                     (error) =>
                         typeof error.message === "string" &&
-                        error.fluidErrorCode === "none" &&
+                        error.fluidErrorCode === "" &&
                         error.errorType === ContainerErrorType.dataProcessingError &&
                         error.getTelemetryProperties().dataProcessingError === 1 &&
                         error.getTelemetryProperties().dataProcessingCodepath === "anErrorCode" &&
@@ -225,7 +227,7 @@ describe("Errors", () => {
 
             assert(coercedError.message === originalMessage);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
-            assert(coercedError.fluidErrorCode === "none");
+            assert(coercedError.fluidErrorCode === "");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "anErrorCode");
         });
@@ -238,7 +240,7 @@ describe("Errors", () => {
 
             assert(coercedError.message === originalError.message);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
-            assert(coercedError.fluidErrorCode === "none");
+            assert(coercedError.fluidErrorCode === "");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "anErrorCode");
         });

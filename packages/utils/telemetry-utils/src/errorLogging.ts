@@ -147,7 +147,7 @@ export function normalizeError(
     const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
     const fluidError: IFluidErrorBase = new SimpleFluidError({
         errorType: "genericError", // Match Container/Driver generic error type
-        fluidErrorCode: "none",
+        fluidErrorCode: "",
         message,
         stack: stack ?? generateStack(),
     });

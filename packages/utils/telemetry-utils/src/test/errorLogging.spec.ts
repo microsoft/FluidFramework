@@ -443,7 +443,7 @@ describe("normalizeError", () => {
         });
         const typicalOutput = (message: string, stackHint: "<<generated stack>>" | "<<stack from input>>") => new TestFluidError({
             errorType: "genericError",
-            fluidErrorCode: "none",
+            fluidErrorCode: "",
             message,
             stack: stackHint,
         }).withExpectedTelemetryProps({ untrustedOrigin: 1 });
