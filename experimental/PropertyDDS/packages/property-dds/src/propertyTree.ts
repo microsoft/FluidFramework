@@ -5,9 +5,9 @@
 
 /* eslint-disable import/no-internal-modules */
 import isEmpty from "lodash/isEmpty";
-import cloneDeep from "lodash/cloneDeep";
 import findIndex from "lodash/findIndex";
 import range from "lodash/range";
+import {copy as cloneDeep} from "fastest-json-copy";
 
 import {
 	ISequencedDocumentMessage,

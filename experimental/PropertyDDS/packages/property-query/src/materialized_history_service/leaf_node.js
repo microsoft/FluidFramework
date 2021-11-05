@@ -14,11 +14,12 @@
       getBaseNodeRef = require('../utils/node_refs').getBaseNodeRef,
       StorageManager = require('./storage_backends/storage_manager'),
       NodeDependencyManager = require('./node_dependency_manager'),
-      deepCopy = _.cloneDeep,
       ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils,
       OperationError = require('@fluid-experimental/property-common').OperationError,
       HTTPStatus = require('http-status'),
       { ChangeSet } = require('@fluid-experimental/property-changeset');
+  const fastestJSONCopy = require('fastest-json-copy');
+  const deepCopy = fastestJSONCopy.copy;
 
   let NodeStatus = NodeDependencyManager.NodeStatus;
 

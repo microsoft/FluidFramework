@@ -18,7 +18,8 @@ const {
 const { MSG } = require('@fluid-experimental/property-common').constants;
 const { LazyLoadedProperties: Property } = require('./lazyLoadedProperties');
 const { UniversalDataArray, ConsoleUtils } = require('@fluid-experimental/property-common');
-const deepCopy = _.cloneDeep;
+const fastestJSONCopy = require('fastest-json-copy');
+const deepCopy = fastestJSONCopy.copy;
 
 
 var MODIFIED_STATE_FLAGS = BaseProperty.MODIFIED_STATE_FLAGS;
