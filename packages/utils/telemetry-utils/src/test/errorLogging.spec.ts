@@ -10,8 +10,9 @@ import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger";
-import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, IFluidErrorAnnotations } from "../errorLogging";
+import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, IFluidErrorAnnotations, wrapError, wrapErrorAndLog } from "../errorLogging";
 import { IFluidErrorBase } from "../fluidErrorBase";
+import { MockLogger } from "../mockLogger";
 
 describe("Error Logging", () => {
     describe("TelemetryLogger.prepareErrorObject", () => {
@@ -578,4 +579,29 @@ describe("normalizeError", () => {
             }
         }
     });
+});
+
+describe("wrapError", () => {
+    it("Copy message and stack", () => {
+        const innerError = new LoggingError("hello");
+        innerError.stack = "extra special stack";
+        const newError = wrapError(innerError, (message) => (new LoggingError(message)) as LoggingError & { fluidErrorCode: "fluidErrorCode", errorType: "genericError" });
+        assert.equal(newError.message, innerError.message, "messages should match");
+        assert.equal(newError.stack, innerError.stack, "stacks should match");
+    });
+    it("Include innerErrorInstanceId in telemetry props", () => {
+        const innerError = new LoggingError("hello");
+        const newError = wrapError(innerError, (message) => (new LoggingError(message)) as LoggingError & { fluidErrorCode: "fluidErrorCode", errorType: "genericError" });
+        assert(newError.getTelemetryProperties().innerErrorInstanceId === innerError.errorInstanceId);
+    });
+});
+describe("wrapErrorAndLog", () => {
+    const mockLogger = new MockLogger();
+    const innerError = new LoggingError("hello");
+    const newError = wrapErrorAndLog(innerError, (message) => (new LoggingError(message)) as LoggingError & { fluidErrorCode: "fluidErrorCode", errorType: "genericError" }, mockLogger);
+    assert(mockLogger.matchEvents([{
+        eventName: "WrapError",
+        wrappedByErrorInstanceId: newError.errorInstanceId,
+        error: "hello",
+     }]), "Expected the 'WrapError' event to be logged");
 });

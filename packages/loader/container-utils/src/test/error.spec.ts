@@ -7,9 +7,9 @@
 
 import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { isILoggingError, LoggingError, MockLogger, normalizeError } from "@fluidframework/telemetry-utils";
+import { isILoggingError, LoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { CreateProcessingError, DataProcessingError, GenericError, wrapError, wrapErrorAndLog } from "../error";
+import { CreateProcessingError, DataProcessingError, GenericError } from "../error";
 
 // NOTE about this (temporary) alias:
 // CreateContainerError has been removed, with most call sites now using normalizeError.
@@ -96,30 +96,6 @@ describe("Errors", () => {
             assert.deepEqual(error2.message, err.message, "Message text should not be lost!!");
         });
     });
-    describe("wrapError", () => {
-        it("Copy message and stack", () => {
-            const innerError = new LoggingError("hello");
-            innerError.stack = "extra special stack";
-            const newError = wrapError(innerError, (message) => (new LoggingError(message)) as LoggingError & { fluidErrorCode: "fluidErrorCode", "errorType": ContainerErrorType.genericError });
-            assert.equal(newError.message, innerError.message, "messages should match");
-            assert.equal(newError.stack, innerError.stack, "stacks should match");
-        });
-        it("Include innerErrorInstanceId in telemetry props", () => {
-            const innerError = new LoggingError("hello");
-            const newError = wrapError(innerError, (message) => (new LoggingError(message)) as LoggingError & { fluidErrorCode: "fluidErrorCode", "errorType": ContainerErrorType.genericError });
-            assert(newError.getTelemetryProperties().innerErrorInstanceId === innerError.errorInstanceId);
-        });
-    });
-    describe("wrapErrorAndLog", () => {
-        const mockLogger = new MockLogger();
-        const innerError = new LoggingError("hello");
-        const newError = wrapErrorAndLog(innerError, (message) => (new LoggingError(message)) as LoggingError & { fluidErrorCode: "fluidErrorCode", "errorType": ContainerErrorType.genericError }, mockLogger);
-        assert(mockLogger.matchEvents([{
-            eventName: "WrapError",
-            wrappedByErrorInstanceId: newError.errorInstanceId,
-            error: "hello",
-         }]), "Expected the 'WrapError' event to be logged");
-});
     describe("DataProcessingError coercion via CreateProcessingError", () => {
         it("Should preserve the stack", () => {
             const originalError = new Error();
