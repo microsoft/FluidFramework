@@ -32,11 +32,11 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         fluidDataObjectType: DataObjectFactoryType.Test,
     };
 
-    const setupContainers = async () => {
-        container1 = await provider.makeTestContainer(testContainerConfig);
+    const setupContainers = async (containerConfig: ITestContainerConfig = testContainerConfig) => {
+        container1 = await provider.makeTestContainer(containerConfig);
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "/");
 
-        container2 = await provider.loadTestContainer(testContainerConfig);
+        container2 = await provider.loadTestContainer(containerConfig);
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "/");
 
         await provider.ensureSynchronized();
@@ -59,7 +59,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         runtimeOf(dataObject).getRootDataStore(id);
 
     describe("Name conflict expected failures", () => {
-        beforeEach(async () => setupContainers());
+        beforeEach(async () => setupContainers(testContainerConfig));
         afterEach(async () => reset());
 
         it("Root datastore creation fails at attach op", async () => {
@@ -118,7 +118,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(!aliasResult2);
 
             const ds = await getRootDataStore(dataObject1, alias);
-            assert.equal(ds, ds1);
+            assert.deepStrictEqual(ds, ds1);
         });
 
         it("Assign multiple data stores to the same alias, first write wins, different containers", async () => {
@@ -135,7 +135,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
 
             const ds = await getRootDataStore(dataObject3, alias);
-            assert.equal(ds, ds1);
+            // andre4i: Need to get rid of this
+            assert.strictEqual((ds as any).internalId, (ds1 as any).internalId);
         });
 
         it("Assign multiple data stores to the same alias, first write wins, " +
@@ -164,36 +165,32 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
             assert(!aliasResult3);
             const ds = await getRootDataStore(dataObject3, alias);
-            assert.equal(ds, ds1);
+            // andre4i: Need to get rid of this
+            assert.strictEqual((ds as any).internalId, (ds1 as any).internalId);
         });
+    });
 
-        it("Assign multiple data stores to the same alias, first write wins, " +
-            "different containers from snapshot", async () => {
-                const ds1 = await createRootDataStore(dataObject1, "1");
-                const ds2 = await createRootDataStore(dataObject2, "2");
-
-                const aliasResult1 = await ds1.trySetAlias(alias);
-                const aliasResult2 = await ds2.trySetAlias(alias);
-
-                assert(aliasResult1);
-                assert(!aliasResult2);
-
-                await provider.ensureSynchronized();
-                await runtimeOf(dataObject1).summarize({
-                    runGC: false,
-                    fullTree: true,
-                    trackState: false,
-                    summaryLogger: new TelemetryNullLogger(),
-                });
-
-                const container3 = await provider.loadTestContainer(testContainerConfig);
-                const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
-                const ds3 = await createRootDataStore(dataObject3, "3");
-                const aliasResult3 = await ds3.trySetAlias(alias);
-
-                assert(!aliasResult3);
-                const ds = await getRootDataStore(dataObject3, alias);
-                assert.equal(ds, ds1);
+    describe("Aliasing feature gate", () => {
+        it("Root datastore creation fails immediately when aliasing feature is enabled", async () => {
+            await setupContainers({
+                fluidDataObjectType: DataObjectFactoryType.Test,
+                runtimeOptions: {
+                    useDataStoreAliasing: true,
+                },
             });
+
+            await createRootDataStore(dataObject1, "2");
+            await provider.ensureSynchronized();
+
+            let error: Error | undefined;
+            try {
+                await createRootDataStore(dataObject2, "2");
+            } catch (err) {
+                error = err as Error;
+            }
+
+            assert(error);
+            await reset();
+        });
     });
 });

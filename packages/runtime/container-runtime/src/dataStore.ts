@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { ContainerRuntime } from "./containerRuntime";
