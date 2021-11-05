@@ -286,6 +286,7 @@ export interface IContainerRuntimeOptions {
      * 3. "bypass" will skip the check entirely. This is not recommended.
      */
     loadSequenceNumberVerification?: "close" | "log" | "bypass";
+    useDataStoreAliasing?: boolean;
 }
 
 interface IRuntimeMessageMetadata {
@@ -559,6 +560,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryOptions = { generateSummaries: true },
             gcOptions = {},
             loadSequenceNumberVerification = "close",
+            useDataStoreAliasing = false,
         } = runtimeOptions;
 
         // We pack at data store level only. If isolated channels are disabled,
@@ -645,6 +647,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 summaryOptions,
                 gcOptions,
                 loadSequenceNumberVerification,
+                useDataStoreAliasing,
             },
             containerScope,
             logger,
@@ -1562,10 +1565,27 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._createDataStore(pkg, false /* isRoot */);
     }
 
+    private async createRootDataStoreCore(pkg: string | string[], isRoot: boolean, id: string) {
+        const fluidDataStore = await this._createDataStore(pkg, isRoot, id);
+        if (isRoot) {
+            fluidDataStore.attachGraph();
+        }
+
+        return new DataStore(fluidDataStore, id, this);
+    }
+
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IDataStore> {
-        const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
-        fluidDataStore.attachGraph();
-        return new DataStore(fluidDataStore, rootDataStoreId, this);
+        if (this.runtimeOptions.useDataStoreAliasing === true) {
+            const dataStore = await this.createRootDataStoreCore(pkg, true /* isRoot */, uuid());
+            const result = await dataStore.trySetAlias(rootDataStoreId);
+            if (result) {
+                return dataStore;
+            } else {
+                throw new Error("Root datastore creation name conflict");
+            }
+        }
+
+        return this.createRootDataStoreCore(pkg, true /* isRoot */, rootDataStoreId);
     }
 
     public createDetachedRootDataStore(
@@ -1585,12 +1605,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         id = uuid(),
         isRoot = false,
     ): Promise<IDataStore> {
-        const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
-            Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
-        if (isRoot) {
-            fluidDataStore.attachGraph();
+        if (this.runtimeOptions.useDataStoreAliasing === true && isRoot) {
+            const dataStore = await this.createRootDataStoreCore(pkg, isRoot, uuid());
+            const result = await dataStore.trySetAlias(id);
+            if (result) {
+                return dataStore;
+            } else {
+                throw new Error("Root datastore creation name conflict");
+            }
         }
-        return new DataStore(fluidDataStore, id, this);
+
+        return this.createRootDataStoreCore(pkg, isRoot, id);
     }
 
     private async _createDataStore(

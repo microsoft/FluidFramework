@@ -333,6 +333,8 @@ export interface IContainerRuntimeOptions {
     loadSequenceNumberVerification?: "close" | "log" | "bypass";
     // (undocumented)
     summaryOptions?: ISummaryRuntimeOptions;
+    // (undocumented)
+    useDataStoreAliasing?: boolean;
 }
 
 // @public (undocumented)
