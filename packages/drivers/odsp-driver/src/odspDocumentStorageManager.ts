@@ -468,6 +468,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         }
                     }
                     if (method === "network") {
+                        // eslint-disable-next-line @typescript-eslint/dot-notation
                         props["cacheEntryAge"] = undefined;
                     }
                     event.end({ ...props, method });
