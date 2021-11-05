@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
- import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { Property } from "./base";
 import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber } from "./constants";

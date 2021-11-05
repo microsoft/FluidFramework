@@ -40,6 +40,17 @@ export class Collection<T> implements ICollection<T> {
                 private readonly property: ICollectionProperty) {
     }
 
+    public aggregate(group: any, options?: any): any {
+        throw new Error("Method Not Implemented");
+    }
+
+    public async updateMany(filter: any, set: any, addToSet: any): Promise<void> {
+        throw new Error("Method Not Implemented");
+    }
+    public async distinct(key: any, query: any): Promise<any> {
+        throw new Error("Method Not Implemented");
+    }
+
     public async find(query: any, sort?: any): Promise<T[]> {
         return this.findInternal(query, sort);
     }

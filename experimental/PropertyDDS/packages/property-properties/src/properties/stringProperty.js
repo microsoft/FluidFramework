@@ -217,7 +217,8 @@ export class StringProperty extends ValueArrayProperty {
     /**
      * @inheritdoc
      */
-    _deserialize(in_serializedObj, in_reportToView) {
+    _deserialize(in_serializedObj, in_reportToView,
+                 in_filteringOptions, in_createChangeSet) {
         if ((in_serializedObj.remove && in_serializedObj.remove.length > 0) ||
             (in_serializedObj.modify && in_serializedObj.modify.length > 0) ||
             (in_serializedObj.insert &&

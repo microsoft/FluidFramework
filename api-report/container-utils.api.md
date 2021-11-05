@@ -36,7 +36,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     readonly errorType = ContainerErrorType.dataProcessingError;
     // (undocumented)
     readonly fluidErrorCode: string;
-    static wrapIfUnrecognized(originalError: any, errorCodeIfNone: string, message?: ISequencedDocumentMessage): IFluidErrorBase;
+    static wrapIfUnrecognized(originalError: any, dataProcessingCodepath: string, message?: ISequencedDocumentMessage): IFluidErrorBase;
 }
 
 // @public (undocumented)

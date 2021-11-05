@@ -4,23 +4,20 @@
  */
 
 import program from "commander";
-import { getPackageDetails } from "./packageJson";
-import { BreakingIncrement, validatePackage } from "./packageValidator";
-
-function runOnPackage(packageDir: string) {
-    const packageData = getPackageDetails(packageDir);
-    const [increment, types] = validatePackage(packageData, packageDir, new Map());
-    console.log(`major:${increment & BreakingIncrement.major ? "yes" : "no"}`);
-    console.log(`minor:${increment & BreakingIncrement.minor ? "yes" : "no"}`);
-    console.log(types.keys());
-}
+import { validateRepo } from "./repoValidator";
+import { enableLogging } from "./validatorUtils";
 
 /**
  * argument parsing
  */
 program
-    .option("-d|--packageDir <dir>","The root directory of the package")
+    .option("-p|--packages <names...>", "Specific packages to output info, otherwise all")
     .option('-v|--verbose', 'Verbose logging mode')
     .parse(process.argv);
 
-runOnPackage(program.packageDir);
+const logForPackages: Set<string> | undefined = new Set(program.packages);
+if (program.verbose !== undefined) {
+    enableLogging(true);
+}
+
+validateRepo({ logForPackages }).catch((e) => console.log(e));

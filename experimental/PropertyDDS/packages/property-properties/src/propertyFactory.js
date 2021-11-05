@@ -9,7 +9,8 @@
  * Responsible for creating property sets and registering property templates
  */
 const _ = require('lodash');
-const deepCopy = _.cloneDeep;
+const fastestJSONCopy = require('fastest-json-copy');
+const deepCopy = fastestJSONCopy.copy;
 
 const {
     Collection,

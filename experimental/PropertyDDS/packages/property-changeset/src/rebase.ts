@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import cloneDeep from "lodash/cloneDeep";
+import {copy as cloneDeep} from "fastest-json-copy";
 import isEqual from "lodash/isEqual";
 
 import { ChangeSet } from "./changeset";

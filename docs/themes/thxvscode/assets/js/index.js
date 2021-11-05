@@ -19,5 +19,5 @@ $(function () {
   loadSkipToContentButton()
   loadDocsJavascript()
   loadNavSearch()
-  loadUpdatesBanner()
+  // loadUpdatesBanner()
 })
