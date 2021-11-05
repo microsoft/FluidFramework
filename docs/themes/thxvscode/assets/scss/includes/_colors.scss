@@ -42,7 +42,7 @@ $link-color-hover: #23527c;
 $header-background: #2C2C32;
 $accent-primary: #0066B8;
 
-$banner-background: #25252B;
+$banner-background: $header-background; // #25252B;
 $banner-link-color: #0098FF;
 $banner-text: #CCC;
 $link-color: #0071BC;

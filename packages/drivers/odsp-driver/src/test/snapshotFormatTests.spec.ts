@@ -18,42 +18,44 @@ const snapshotTree: ISnapshotTree = {
     commits: {},
     trees: {
         ".protocol": {
-                blobs: {
+            blobs: {
                 attributes: "bARADgIe4qmDjJl2l2zz12IM3",
                 quorumMembers: "bARBkx1nses1pHL1vKnmFUfIC",
                 quorumProposals: "bARBkx1nses1pHL1vKnmFUfIC",
-                },
-                commits: {},
-                trees: {},
+            },
+            commits: {},
+            trees: {},
         },
         ".app": {
                 blobs: { ".metadata": "bARD4RKvW4LL1KmaUKp6hUMSp" },
                 commits: {},
                 trees: {
                     ".channels": {
-                            blobs: {},
-                            commits: {},
-                            trees: {
-                                default: {
-                                        blobs: {
-                                            ".component": "bARC6dCXlcrPxQHw3PeROtmKc",
-                                            "gc": "bARDNMoBed+nKrsf04id52iUA",
-                                        },
-                                        commits: {},
-                                        trees: {
-                                            ".channels": {
-                                                blobs: {},
-                                                commits: {},
-                                                trees: {
-                                                    root: { blobs: {}, commits: {}, trees: {} },
-                                                },
+                        blobs: {},
+                        commits: {},
+                        trees: {
+                            default: {
+                                    blobs: {
+                                        ".component": "bARC6dCXlcrPxQHw3PeROtmKc",
+                                        "gc": "bARDNMoBed+nKrsf04id52iUA",
+                                    },
+                                    commits: {},
+                                    trees: {
+                                        ".channels": {
+                                            blobs: {},
+                                            commits: {},
+                                            trees: {
+                                                root: { blobs: {}, commits: {}, trees: {} },
                                             },
                                         },
-                                },
+                                    },
                             },
+                        },
+                        unreferenced: true,
                     },
                     ".blobs": { blobs: {}, commits: {}, trees: {} },
                 },
+                unreferenced: true,
         },
     },
 };

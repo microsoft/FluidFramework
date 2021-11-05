@@ -29,7 +29,6 @@ api-report/dds-interceptions.api.md                                       @micro
 api-report/debugger.api.md                                                @microsoft/fluid-cr-internal-api
 api-report/driver-base.api.md                                             @microsoft/fluid-cr-internal-api
 api-report/driver-utils.api.md                                            @microsoft/fluid-cr-internal-api
-api-report/execution-context-loader.api.md                                @microsoft/fluid-cr-internal-api
 api-report/file-driver.api.md                                             @microsoft/fluid-cr-internal-api
 api-report/fluid-static.api.md                                            @microsoft/fluid-cr-internal-api
 api-report/garbage-collector.api.md                                       @microsoft/fluid-cr-internal-api
