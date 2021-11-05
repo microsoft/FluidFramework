@@ -72,13 +72,15 @@ export interface IFluidErrorAnnotations {
 }
 
 // @public
-export interface IFluidErrorBase extends Readonly<Error> {
+export interface IFluidErrorBase extends Error {
     addTelemetryProperties: (props: ITelemetryProperties) => void;
     readonly errorInstanceId: string;
     readonly errorType: string;
     readonly fluidErrorCode: string;
     getTelemetryProperties(): ITelemetryProperties;
     readonly message: string;
+    readonly name: string;
+    readonly stack?: string;
 }
 
 // @public

@@ -10,7 +10,7 @@ import { ITelemetryProperties } from "@fluidframework/common-definitions";
  * It features errorType, fluidErrorCode, and message strings, plus Error's members as optional
  * and a getter/setter for telemetry props to be included when the error is logged.
  */
-export interface IFluidErrorBase extends Readonly<Error> {
+export interface IFluidErrorBase extends Error {
     /** Classification of what type of error this is, used programmatically by consumers to interpret the error */
     readonly errorType: string;
 
@@ -22,6 +22,12 @@ export interface IFluidErrorBase extends Readonly<Error> {
 
     /** The free-form error message */
     readonly message: string;
+
+    /** Error's stack property, made readonly */
+    readonly stack?: string;
+
+    /** Error's name property, made readonly */
+    readonly name: string;
 
     /**
      * A Guid identifying this error instance.

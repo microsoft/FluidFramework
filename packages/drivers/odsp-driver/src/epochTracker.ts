@@ -167,7 +167,6 @@ export class EpochTracker implements IPersistedFileCache {
             throw error;
         }).catch((error) => {
             const fluidError = normalizeError(error, {props: {"X-RequestStats": clientCorelationId}});
-            // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw fluidError;
         });
     }
@@ -209,7 +208,6 @@ export class EpochTracker implements IPersistedFileCache {
             throw error;
         }).catch((error) => {
             const fluidError = normalizeError(error, {props: {"X-RequestStats": clientCorelationId}});
-            // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw fluidError;
         });
     }
