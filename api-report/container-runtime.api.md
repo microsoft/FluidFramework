@@ -156,6 +156,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
     get reSubmitFn(): (type: ContainerMessageType, content: any, localOpMetadata: unknown, opMetadata: Record<string, unknown> | undefined) => void;
+    // (undocumented)
+    reuploadBlob(metadata: Record<string, unknown>): Promise<Record<string, unknown>>;
     // @internal @deprecated (undocumented)
     readonly runtimeVersion: string;
     // (undocumented)
@@ -610,7 +612,7 @@ export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck |
 
 // @public
 export class PendingStateManager implements IDisposable {
-    constructor(containerRuntime: ContainerRuntime, applyStashedOp: (type: any, content: any) => Promise<unknown>, initialState: IPendingLocalState | undefined);
+    constructor(containerRuntime: ContainerRuntime, applyStashedOp: (type: any, content: any, metadata: any) => Promise<unknown>, initialState: IPendingLocalState | undefined);
     applyStashedOpsAt(seqNum: number): Promise<void>;
     // (undocumented)
     readonly dispose: () => void;
@@ -626,8 +628,8 @@ export class PendingStateManager implements IDisposable {
         localAck: boolean;
         localOpMetadata: unknown;
     };
-    replayPendingStates(): void;
-}
+    replayPendingStates(): Promise<void>;
+    }
 
 // @public (undocumented)
 export class ScheduleManager {

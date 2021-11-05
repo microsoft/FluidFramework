@@ -18,6 +18,8 @@ import {
     DataObjectFactoryType,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { Container } from "@fluidframework/container-loader";
 
 const mapId = "map";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -445,5 +447,54 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
         await provider.ensureSynchronized();
         setCounts.map((setCount, i) => assert.strictEqual(setCount, 1, `${i} not set exactly once`));
+    });
+
+    it("stashed blobs", async () => {
+        const container = await provider.loadTestContainer(testContainerConfig);
+        const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+        const map = await dataStore.getSharedObject<SharedMap>(mapId);
+
+        await provider.ensureSynchronized();
+
+        (container.deltaManager as any).connection.emit("disconnect");
+        assert(!(container as Container).connected);
+
+        // handle should work on offline container
+        const blobHandle = await dataStore.runtime.uploadBlob(stringToBuffer("test", "utf8"));
+        map.set("blob handle", blobHandle);
+        const handle = await map.wait("blob handle");
+        const blob = await handle.get();
+        assert.strictEqual(bufferToString(blob, "utf8"), "test");
+
+        const pendingRuntimeState = (container as any).context.runtime.getPendingLocalState();
+        assert(container.resolvedUrl !== undefined && container.resolvedUrl.type === "fluid");
+        const stashedOps = JSON.stringify({
+            url: container.resolvedUrl.url,
+            pendingRuntimeState,
+        });
+        container.close();
+
+        // handle should work on new container given stashed ops during/after resubmission
+        const container2 = await loader.resolve({ url }, stashedOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+        const handle2 = await map2.wait("blob handle");
+        const blob2 = await handle2.get();
+        assert.strictEqual(bufferToString(blob2, "utf8"), "test");
+
+        await provider.ensureSynchronized();
+
+        // handle should work on new container
+        const container3 = await loader.resolve({ url });
+        const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+        const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
+        const handle3 = await map3.wait("blob handle");
+        const blob3 = await handle3.get();
+        assert.strictEqual(bufferToString(blob3, "utf8"), "test");
+
+        // handle should work on container that was open/connected the whole time
+        const handle1 = await map1.wait("blob handle");
+        const blob1 = await handle1.get();
+        assert.strictEqual(bufferToString(blob1, "utf8"), "test");
     });
 });

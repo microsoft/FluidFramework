@@ -115,7 +115,7 @@ export class PendingStateManager implements IDisposable {
 
     constructor(
         private readonly containerRuntime: ContainerRuntime,
-        private readonly applyStashedOp: (type, content) => Promise<unknown>,
+        private readonly applyStashedOp: (type, content, metadata) => Promise<unknown>,
         initialState: IPendingLocalState | undefined,
     ) {
         this.initialStates = new Deque<IPendingState>(initialState?.pendingStates ?? []);
@@ -237,7 +237,11 @@ export class PendingStateManager implements IDisposable {
                 }
 
                 // applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
-                const localOpMetadata = await this.applyStashedOp(nextState.messageType, nextState.content);
+                const localOpMetadata = await this.applyStashedOp(
+                    nextState.messageType,
+                    nextState.content,
+                    nextState.opMetadata,
+                );
                 nextState.localOpMetadata = localOpMetadata;
             }
 
@@ -448,7 +452,7 @@ export class PendingStateManager implements IDisposable {
      * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
      * states in its queue. This includes setting the FlushMode and triggering resubmission of unacked ops.
      */
-    public replayPendingStates() {
+    public async replayPendingStates() {
         assert(this.connected, 0x172 /* "The connection state is not consistent with the runtime" */);
 
         // This assert suggests we are about to send same ops twice, which will result in data loss.
@@ -518,6 +522,21 @@ export class PendingStateManager implements IDisposable {
             switch (pendingState.type) {
                 case "message":
                     {
+                        if (pendingState.messageType === ContainerMessageType.BlobAttach) {
+                            // todo: even if the blob has been uploaded, we should check
+                            // its TTL and reupload if it expired (#6469)
+                            if (pendingState.opMetadata?.blobId === undefined) {
+                                assert(!!pendingState.opMetadata, "no metadata");
+                                const metadata = await this.containerRuntime.reuploadBlob(pendingState.opMetadata);
+                                this.containerRuntime.reSubmitFn(
+                                    ContainerMessageType.BlobAttach,
+                                    undefined,
+                                    undefined,
+                                    metadata,
+                                );
+                                break;
+                            }
+                        }
                         this.containerRuntime.reSubmitFn(
                             pendingState.messageType,
                             pendingState.content,

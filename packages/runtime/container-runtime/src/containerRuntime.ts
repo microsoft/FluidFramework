@@ -927,7 +927,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.IFluidHandleContext,
             blobManagerSnapshot,
             () => this.storage,
-            (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
+            (blobId, localId) =>
+                this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId, localId }),
             this,
             this.logger,
         );
@@ -942,7 +943,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.pendingStateManager = new PendingStateManager(
             this,
-            async (type, content) => this.applyStashedOp(type, content),
+            async (type, content, opMetadata) => this.applyStashedOp(type, content, opMetadata),
             context.pendingLocalState as IPendingLocalState);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
@@ -1155,7 +1156,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
-                const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
+                const handle = await this.blobManager.getBlobHandle(requestParser.pathParts[1]);
                 if (handle) {
                     return {
                         status: 200,
@@ -1301,18 +1302,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.emitDirtyDocumentEvent = false;
         let newState: boolean;
 
-        try {
-            // replay the ops
-            this.pendingStateManager.replayPendingStates();
-        } finally {
+        // replay the ops
+        this.pendingStateManager.replayPendingStates().then(() => {
             // Save the new start and restore the old state, re-enable event emit
             newState = this.dirtyContainer;
             this.dirtyContainer = oldState;
             this.emitDirtyDocumentEvent = true;
-        }
-
-        // Officially transition from the old state to the new state.
-        this.updateDocumentDirtyState(newState);
+            // Officially transition from the old state to the new state.
+            this.updateDocumentDirtyState(newState);
+        }, (err) => this.dispose(err));
     }
 
     /**
@@ -1337,14 +1335,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
     };
 
-    private async applyStashedOp(type: ContainerMessageType, op: ISequencedDocumentMessage): Promise<unknown> {
+    private async applyStashedOp(
+        type: ContainerMessageType,
+        op: ISequencedDocumentMessage,
+        metadata: Record<string, unknown> | undefined,
+    ): Promise<unknown> {
         switch (type) {
             case ContainerMessageType.FluidDataStoreOp:
                 return this.dataStores.applyStashedOp(op);
             case ContainerMessageType.Attach:
                 return this.dataStores.applyStashedAttachOp(op as unknown as IAttachMessage);
             case ContainerMessageType.BlobAttach:
-                return;
+                return this.blobManager.applyStashedBlobAttachOp(metadata);
             case ContainerMessageType.ChunkedOp:
                 throw new Error("chunkedOp not expected here");
             case ContainerMessageType.Rejoin:
@@ -1418,8 +1420,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.dataStores.processFluidDataStoreOp(message, local || localAck, localOpMetadata);
                     break;
                 case ContainerMessageType.BlobAttach:
-                    assert(message?.metadata?.blobId, 0x12a /* "Missing blob id on metadata" */);
-                    this.blobManager.processBlobAttachOp(message.metadata.blobId, local);
+                    this.blobManager.processBlobAttachOp(message, local);
                     break;
                 default:
             }
@@ -2026,6 +2027,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
         this.verifyNotClosed();
         return this.blobManager.createBlob(blob);
+    }
+
+    public async reuploadBlob(metadata: Record<string, unknown>): Promise<Record<string, unknown>> {
+        return this.blobManager.reuploadBlob(metadata);
     }
 
     private submit(
