@@ -30,7 +30,7 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Main
+        poolBuild: Large
         testPackage: "@fluid-internal/test-service-load"
         testWorkspace: ${{ variables.testWorkspace }}
         timeoutInMinutes: 120
