@@ -38,8 +38,26 @@ export class FluidSerializer implements IFluidSerializer {
      * the root to any replaced handles.  (If no handles are found, returns the original object.)
      *
      * Any unbound handles encountered are bound to the provided IFluidHandle.
+     *
+     * @deprecated - use encode
      */
-     public replaceHandles(
+    public replaceHandles(
+        input: any,
+        bind: IFluidHandle,
+    ) {
+        return this.encode(input, bind);
+    }
+
+    /**
+     * Given a mostly-jsonable object tree that may have handle objects embedded within, will return a
+     * fully-jsonable object tree where any embedded IFluidHandles have been replaced with a serializable form.
+     *
+     * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
+     * the root to any replaced handles.  (If no handles are found, returns the original object.)
+     *
+     * Any unbound handles encountered are bound to the provided IFluidHandle.
+     */
+    public encode(
         input: any,
         bind: IFluidHandle,
     ) {
@@ -53,14 +71,14 @@ export class FluidSerializer implements IFluidSerializer {
 
     /**
      * Given a fully-jsonable object tree that may have encoded handle objects embedded within, will return an
-     * equivalent object tree where any encoded IFluidHandles have been replaced with thier decoded form.
+     * equivalent object tree where any encoded IFluidHandles have been replaced with their decoded form.
      *
-     * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
+     * The original `input` object is not mutated.  This method will shallowly clone all objects in the path from
      * the root to any replaced handles.  (If no handles are found, returns the original object.)
      *
      * The decoded handles are implicitly bound to the handle context of this serializer.
      */
-     public decode(input: any) {
+    public decode(input: any) {
         // If the given 'input' cannot contain handles, return it immediately.  Otherwise,
         // return the result of 'recursivelyReplace()'.
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions

@@ -84,10 +84,12 @@ export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreReg
 export class FluidSerializer implements IFluidSerializer {
     constructor(context: IFluidHandleContext);
     decode(input: any): any;
+    encode(input: any, bind: IFluidHandle): any;
     // (undocumented)
     get IFluidSerializer(): this;
     // (undocumented)
     parse(input: string): any;
+    // @deprecated
     replaceHandles(input: any, bind: IFluidHandle): any;
     // (undocumented)
     protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle): {
