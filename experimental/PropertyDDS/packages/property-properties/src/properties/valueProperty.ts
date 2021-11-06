@@ -15,7 +15,7 @@ const { MSG } = constants;
  */
 export class ValueProperty<T = any> extends BaseProperty {
     protected _data: T = undefined;
-    private _castFunctor: any;
+    protected _castFunctor: any;
 
 
     constructor(in_params: IBasePropertyParams) {

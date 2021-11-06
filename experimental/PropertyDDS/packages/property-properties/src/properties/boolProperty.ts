@@ -7,13 +7,13 @@
  * @fileoverview Definition of the BooleanProperty class
  */
 
-const { ValueProperty } = require('./valueProperty');
-const { _castFunctors } = require('./primitiveTypeCasts');
+import { ValueProperty } from './valueProperty';
+import { _castFunctors } from './primitiveTypeCasts';
 
 /**
  * A primitive property for a boolean value
  */
-export class BoolProperty extends ValueProperty {
+export class BoolProperty extends ValueProperty<Boolean> {
 
     /**
      * @param in_params - the parameters
