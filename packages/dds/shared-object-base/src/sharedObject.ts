@@ -14,12 +14,12 @@ import {
     IChannelStorageService,
     IChannelServices,
 } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IGarbageCollectionData,
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { convertToSummaryTreeWithStats, FluidSerializer } from "@fluidframework/runtime-utils";
+import { FluidSerializer } from "@fluidframework/runtime-utils";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
@@ -28,8 +28,9 @@ import { ISharedObject, ISharedObjectEvents } from "./types";
 /**
  *  Base class from which all shared objects derive
  */
-export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
-    extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
+export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents,
+                                   TState = ISummaryTreeWithStats>
+    extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent, TState> {
     /**
      * @param obj - The thing to check if it is a SharedObject
      * @returns Returns true if the thing is a SharedObject
@@ -85,7 +86,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
          * During summarize, the SummarySerializer keeps track of IFluidHandles that are serialized. These handles
          * represent references to other Fluid objects and are used for garbage collection.
          *
-         * This is fine for now. However, if we implement delay loading in DDss, they may load and de-serialize content
+         * This is fine for now. However, if we implement delay loading in DDSs, they may load and de-serialize content
          * in summarize. When that happens, they may incorrectly hit this assert and we will have to change this.
          */
         assert(!this._isSummarizing,
@@ -110,7 +111,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     {
         super((eventName, error) => this.runtime.raiseContainerWarning(error));
 
-        this.handle = new SharedObjectHandle(
+        this.handle = new SharedObjectHandle<TState>(
             this,
             id,
             runtime.IFluidHandleContext);
@@ -195,22 +196,47 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc (ISharedObject:interface).summarize}
      */
     public summarize(fullTree: boolean = false, trackState: boolean = false): ISummaryTreeWithStats {
+            // summaryTree = convertToSummaryTreeWithStats(snapshot, fullTree);
+
+        return this.wrapSummaryMethod<ISummaryTreeWithStats>((serializer) => {
+            return this.summarizeCore(serializer);
+        });
+    }
+
+    /**
+     * {@inheritDoc (IChannel:interface).captureSummaryState}
+     */
+    public captureSummaryState(fullTree?: boolean): TState {
+        return this.wrapSummaryMethod<TState>((serializer) => {
+            return this.captureSummaryStateCore(serializer, fullTree);
+        });
+    }
+
+    /**
+     * {@inheritDoc (IChannel:interface).summarizeState}
+     */
+    public summarizeState(capture: TState): ISummaryTreeWithStats {
+        return this.wrapSummaryMethod<ISummaryTreeWithStats>((serializer) => {
+            return this.summarizeStateCore(serializer, capture);
+        });
+    }
+
+    private wrapSummaryMethod<T>(summaryMethod: (serializer: SummarySerializer) => T): T {
         // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created below)
         // to serialize handles in this object's data. The routes of these serialized handles are outbound routes
         // to other Fluid objects.
         assert(!this._isSummarizing, 0x076 /* "Possible re-entrancy! Summary should not already be in progress." */);
         this._isSummarizing = true;
 
-        let summaryTree: ISummaryTreeWithStats;
+        let result: T;
         try {
             const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
-            const snapshot: ITree = this.snapshotCore(serializer);
-            summaryTree = convertToSummaryTreeWithStats(snapshot, fullTree);
+            result = summaryMethod(serializer);
             assert(this._isSummarizing, 0x077 /* "Possible re-entrancy! Summary should have been in progress." */);
         } finally {
             this._isSummarizing = false;
         }
-        return summaryTree;
+        return result;
     }
 
     /**
@@ -243,7 +269,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
         // See: https://github.com/microsoft/FluidFramework/issues/4547
         const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
-        this.snapshotCore(serializer);
+        this.summarizeCore(serializer);
 
         // The GC data for this shared object contains a single GC node. The outbound routes of this node are the
         // routes of handles serialized during snapshot.
@@ -254,9 +280,19 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     /**
      * Gets a form of the object that can be serialized.
-     * @returns A tree representing the snapshot of the shared object.
+     * @returns A tree representing the summary of the shared object.
      */
-    protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
+    protected abstract summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+
+    /**
+     *
+     */
+    protected abstract captureSummaryStateCore(serializer: IFluidSerializer, fullTree?: boolean): TState;
+
+    /**
+     *
+     */
+    protected abstract summarizeStateCore(serializer: IFluidSerializer, capture: TState): ISummaryTreeWithStats;
 
     /**
      * Allows the distributed data type to perform custom loading

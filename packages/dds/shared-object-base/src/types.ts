@@ -16,8 +16,8 @@ export interface ISharedObjectEvents extends IErrorEvent {
 /**
  * Base interface for shared objects from which other interfaces derive. Implemented by SharedObject
  */
-export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
-    extends IChannel, IEventProvider<TEvent> {
+export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents, TState = ISummaryTreeWithStats>
+    extends IChannel<TState>, IEventProvider<TEvent> {
     /**
      * Binds the given shared object to its containing data store runtime, causing it to attach once
      * the runtime attaches.

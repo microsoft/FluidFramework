@@ -9,8 +9,9 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { create404Response } from "@fluidframework/runtime-utils";
-import { ISharedObject } from "./types";
+import { ISharedObject, ISharedObjectEvents } from "./types";
 
 /**
  * Handle for shared object
@@ -20,7 +21,8 @@ import { ISharedObject } from "./types";
  * FluidDataStoreRuntime.request() recognizes requests in the form of '/<shared object id>'
  * and loads shared object.
  */
-export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
+export class SharedObjectHandle<TState = ISummaryTreeWithStats>
+            extends FluidObjectHandle<ISharedObject<ISharedObjectEvents, TState>> {
     /**
      * Whether services have been attached for the associated shared object.
      */
@@ -35,7 +37,7 @@ export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
      * @param routeContext - The parent IFluidHandleContext that has a route to this handle.
      */
     constructor(
-        value: ISharedObject,
+        value: ISharedObject<ISharedObjectEvents, TState>,
         path: string,
         routeContext: IFluidHandleContext,
     ) {
