@@ -99,7 +99,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
-    deleteUnusedRoutes(unusedRoutes: string[]): void;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly disableIsolatedChannels: boolean;
@@ -334,7 +333,6 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 
 // @public
 export interface IGarbageCollectionRuntime {
-    deleteUnusedRoutes(unusedRoutes: string[]): void;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     updateUsedRoutes(usedRoutes: string[]): IUsedStateStats;
 }
