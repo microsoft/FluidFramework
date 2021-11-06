@@ -48,7 +48,7 @@ function serialize(directory1: SharedDirectory): string {
     assert.strictEqual(summaryObjectKeys[0], "header", "summary should have a header blob");
     assert.strictEqual(summaryTree.tree.header.type, SummaryType.Blob, "header is not of SummaryType.Blob");
 
-    const content = (summaryTree.tree.header as ISummaryBlob).content as string;
+    const content = summaryTree.tree.header.content as string;
     return JSON.stringify((JSON.parse(content) as IDirectoryNewStorageFormat).content);
 }
 
