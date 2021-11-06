@@ -672,7 +672,7 @@ export abstract class BaseProperty {
         return [];
     }
 
-    get(id: string, params?: { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION }): BaseProperty | undefined {
+    get(id: string, params?: BaseProperty.PathResolutionOptions): BaseProperty | undefined {
         return undefined;
     }
 
@@ -1284,6 +1284,8 @@ export abstract class BaseProperty {
 
 
 export namespace BaseProperty {
+
+    export type PathResolutionOptions = { referenceResolutionMode?: BaseProperty.REFERENCE_RESOLUTION }
 
     export type PathFilteringOptions = {
         basePath: string,

@@ -192,7 +192,7 @@ export class Integer64Property extends ValueProperty {
      * @param in_includeReferencedRepositories - If this is set to true, the serialize
      *     function will descend into referenced repositories. WARNING: if there are loops in the references
      *     this can result in an infinite loop
-     * @returns he serialized representation of this property
+     * @returns the serialized representation of this property
      * @private
      */
     _serialize(

@@ -11,6 +11,9 @@ import { ReferenceProperty, ValueProperty } from '..';
 
 const { MSG, PROPERTY_PATH_DELIMITER } = constants;
 const { BREAK_TRAVERSAL, PATH_TOKENS } = BaseProperty;
+
+type PropertyTraversalCallback = (node: BaseProperty, pathFromTraversalStart: string) => void;
+
 /**
  * This class serves as a view to read, write and listen to changes in an
  * object's value field. To do this we simply keep a pointer to the object and
@@ -48,7 +51,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      */
     get(
         in_ids: string | number | Array<string | number | BaseProperty.PATH_TOKENS> | BaseProperty.PATH_TOKENS,
-        in_options: { referenceResolutionMode?: BaseProperty.REFERENCE_RESOLUTION } = {}
+        in_options: BaseProperty.PathResolutionOptions = {}
     ): BaseProperty | undefined {
 
         in_options = _.isObject(in_options) ? in_options : {};
@@ -64,7 +67,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
                     prop = prop.ref;
                 }
             }
-        } else if (_.isArray(in_ids)) {
+        } else if (Array.isArray(in_ids)) {
             for (let i = 0; i < in_ids.length && prop; i++) {
                 let mode = in_options.referenceResolutionMode;
                 // do not do anything with token itself, only changes behavior of path preceding the token;
@@ -150,7 +153,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      */
     getValue(
         in_ids: string | number | Array<string | number>,
-        in_options: { referenceResolutionMode?: BaseProperty.REFERENCE_RESOLUTION } = {}
+        in_options: BaseProperty.PathResolutionOptions = {}
     ): any {
         const property = this.get(in_ids, in_options);
         ConsoleUtils.assert((property instanceof Property.ValueProperty || property instanceof Property.StringProperty),
@@ -244,7 +247,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      */
     resolvePath(
         in_path: string,
-        in_options: { referenceResolutionMode?: BaseProperty.REFERENCE_RESOLUTION } = {}
+        in_options: BaseProperty.PathResolutionOptions  = {}
     ): BaseProperty | undefined {
         in_options.referenceResolutionMode = in_options.referenceResolutionMode ?? BaseProperty.REFERENCE_RESOLUTION.ALWAYS;
 
@@ -470,7 +473,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * @returns Returns BaseProperty.BREAK_TRAVERSAL if the traversal has been interrupted,
      *                            otherwise undefined
      */
-    traverseDown(in_callback: (node: BaseProperty, pathFromTraversalStart: string) => void): string | undefined {
+    traverseDown(in_callback: PropertyTraversalCallback): string | undefined {
         ConsoleUtils.assert(_.isFunction(in_callback), MSG.CALLBACK_NOT_FCT);
         return this._traverse(in_callback, '');
     };
@@ -486,7 +489,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * @private
      */
     _traverse(
-        in_callback: (node: BaseProperty, pathFromTraversalStart: string) => void,
+        in_callback: PropertyTraversalCallback,
         in_pathFromTraversalStart: string
     ): string | undefined {
         if (in_pathFromTraversalStart) {
@@ -522,7 +525,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * @protected
      */
     _traverseStaticProperties(
-        in_callback: (node: BaseProperty, pathFromTraversalStart: string) => void,
+        in_callback: PropertyTraversalCallback,
         in_pathFromTraversalStart = ""
     ) {
         const propertyKeys = _.keys(this._staticChildren);

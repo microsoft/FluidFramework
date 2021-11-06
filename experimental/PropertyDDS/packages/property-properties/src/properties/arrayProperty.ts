@@ -1739,7 +1739,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * @param {Number} in_position - Position at which the insert should be done
      * @param {Array} in_range     - The array to insert
      */
-    _dataArrayInsertRange(in_position, in_range) {
+    _dataArrayInsertRange(in_position:number, in_range) {
         this._dataArrayRef.insertRange(in_position, in_range);
     };
 
@@ -1766,13 +1766,12 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * @returns The guid representing the scope in which the
      * map belongs to. If there is a workspace scope return it, else return the scope of this array.
      * @override
-     * @private
      */
     _getScope(): string | undefined {
         var scope = super._getScope.call(this);
 
         if (scope !== undefined) {
-            return scope
+            return scope;
         } else {
             return this._scope;
         }
