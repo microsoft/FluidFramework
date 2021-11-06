@@ -6,19 +6,20 @@
 /**
 * @fileoverview This file contains the implementation of the ContainerProperty class
 */
-const _ = require('underscore');
-const { BaseProperty } = require('./baseProperty');
-const { AbstractStaticCollectionProperty } = require('./abstractStaticCollectionProperty');
-const { MSG } = require('@fluid-experimental/property-common').constants;
-const { ConsoleUtils } = require('@fluid-experimental/property-common');
-const { IndexedCollectionBaseProperty } = require('./indexedCollectionBaseProperty');
-const { validationsEnabled } = require('../enableValidations');
-
+import _ from 'underscore';
+import { BaseProperty } from './baseProperty';
+import { AbstractStaticCollectionProperty } from './abstractStaticCollectionProperty';
+import { constants } from '@fluid-experimental/property-common';
+import { ConsoleUtils } from '@fluid-experimental/property-common';
+import { IndexedCollectionBaseProperty } from './indexedCollectionBaseProperty';
+import { validationsEnabled } from '../enableValidations';
+const { MSG } = constants;
 /**
  * A property object that allows to add child properties dynamically.
  *
  */
 export class ContainerProperty extends IndexedCollectionBaseProperty {
+    private _optionalChildren: Record<string, string>;
     /**
      * @param {Object} in_params - Input parameters for property creation
      * @protected
@@ -216,12 +217,12 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
     /**
      * Removes an entry with the given key
      *
-     * @param {string} in_key - key of the entry
-     * @param {boolean} in_reportToView -
-     *     By default, the dirtying will always be reported to the checkout view and trigger a modified event there.
+     * @param in_key - key of the entry
+     * @param in_reportToView - By default, the dirtying will always be
+     *     reported to the checkout view and trigger a modified event there.
      *     When batching updates, this can be prevented via this flag.
      */
-    _removeByKey(in_key, in_reportToView) {
+    _removeByKey(in_key: string, in_reportToView?: boolean) {
         this._checkIsNotReadOnly(true);
 
         if (this._dynamicChildren[in_key]) {
@@ -259,18 +260,18 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
     /**
      * Returns the name of all the static sub-properties of this property.
      *
-     * @return {Array.<string>} An array of all the static property ids
+     * @returns An array of all the static property ids
      */
-    getStaticIds() {
+    getStaticIds(): string[] {
         return Object.keys(this._staticChildren);
     };
 
     /**
      * Returns the name of all the dynamic sub-properties of this property.
      *
-     * @return {Array.<string>} An array of all the dynamic property ids
+     * @returns An array of all the dynamic property ids
      */
-    getDynamicIds() {
+    getDynamicIds(): string[] {
         return Object.keys(this._dynamicChildren);
     };
 

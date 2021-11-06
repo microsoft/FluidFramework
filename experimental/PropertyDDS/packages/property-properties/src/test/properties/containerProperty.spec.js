@@ -228,7 +228,7 @@ describe('ContainerProperty', function () {
 
             const instance = PropertyFactory.create('SimpleTest:OptionalPrimitive-1.0.0');
 
-            expect(() => { instance.remove('num'); }).to.throw(MSG.CANNOT_REMOVE_NONE_OPTIONAL_PROP + 'num');
+            expect(() => { instance.remove('num'); }).to.throw(MSG.CANNOT_REMOVE_NON_OPTIONAL_PROP + 'num');
         });
     });
 });

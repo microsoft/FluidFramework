@@ -92,7 +92,7 @@ export function serialize(in_psets, in_dirtyOnly) {
  * @return {{}} an object of guid : pset
  * @alias property-properties.deserialize
  */
-export function deserialize(in_data, in_scope, in_filteringOptions) {
+export function deserialize(in_data, in_scope, in_filteringOptions = undefined) {
 
     if (!in_data) {
         console.warn(MSG.NOTHING_TO_DESERIALIZE);

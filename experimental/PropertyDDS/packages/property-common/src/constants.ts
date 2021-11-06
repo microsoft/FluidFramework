@@ -138,6 +138,13 @@ const TypeidHelperError = {
 };
 
 const PropertyError = {
+
+    CANNOT_INSERT_UNKNOWN_PROPERTY: "CANNOT_INSERT_UNKNOWN_PROPERTY",
+
+    MISMATCHING_PROPERTY_TYPEID: "MISMATCHING_PROPERTY_TYPEID",
+
+    CANNOT_REMOVE_NON_OPTIONAL_PROP:"CANNOT_REMOVE_NON_OPTIONAL_PROP",
+
     TYPEID_NOT_NATIVE: "TYPEID_NOT_NATIVE",
     /**
      * methods: ArrayProperty.length.set, StringProperty.length.set

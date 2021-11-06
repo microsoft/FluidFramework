@@ -6,14 +6,16 @@
 /**
  * @fileoverview Abstract base class for indexed collections (sets and maps)
  */
-const _ = require('lodash');
-const { BaseProperty } = require('./baseProperty');
-const { AbstractStaticCollectionProperty } = require('./abstractStaticCollectionProperty');
-const { deserialize } = require('../containerSerializer');
-const { ChangeSet } = require('@fluid-experimental/property-changeset');
-const { ConsoleUtils } = require('@fluid-experimental/property-common');
-const { MSG } = require('@fluid-experimental/property-common').constants;
-const { validationsEnabled } = require('../enableValidations');
+import _ from 'lodash';
+import { BaseProperty } from './baseProperty';
+import { AbstractStaticCollectionProperty } from './abstractStaticCollectionProperty';
+import { deserialize } from '../containerSerializer';
+import { ChangeSet, SerializedChangeSet } from '@fluid-experimental/property-changeset';
+import { ConsoleUtils } from '@fluid-experimental/property-common';
+import { constants } from '@fluid-experimental/property-common';
+import { validationsEnabled } from '../enableValidations';
+
+const { MSG } = constants;
 
 /**
  * typedef {property-properties.BaseProperty|string|number|boolean} property-properties.IndexedCollectionBaseProperty~ValueType
@@ -28,6 +30,9 @@ const { validationsEnabled } = require('../enableValidations');
  */
 export class IndexedCollectionBaseProperty extends AbstractStaticCollectionProperty {
 
+    private _pendingChanges: SerializedChangeSet;
+    private _dirtyChanges: SerializedChangeSet;
+    protected _dynamicChildren: Record<string, BaseProperty>;
     /**
      * @param {Object} in_params - Input parameters for property creation
      *
@@ -140,9 +145,9 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
      *     When batching updates, this can be prevented via this flag.
      */
     _insert(in_key, in_value, in_reportToView) {
-	    if (validationsEnabled.enabled) {
-	        this._checkIsNotReadOnly(false);
-	    }
+        if (validationsEnabled.enabled) {
+            this._checkIsNotReadOnly(false);
+        }
 
         if (!this.has(in_key)) {
             // Make sure, the property we are inserting is not already part of some other collection
@@ -197,13 +202,12 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * Removes an entry with the given key
      *
-     * @param {string} in_key -
-     *     key of the entry
-     * @param {boolean} in_reportToView -
-     *     By default, the dirtying will always be reported to the checkout view and trigger a modified event there.
+     * @param in_key - key of the entry
+     * @param in_reportToView - By default, the dirtying will always be
+     *     reported to the checkout view and trigger a modified event there.
      *     When batching updates, this can be prevented via this flag.
      */
-    _removeByKey(in_key, in_reportToView) {
+    _removeByKey(in_key: string, in_reportToView: boolean) {
         this._checkIsNotReadOnly(false);
 
         if (this._dynamicChildren[in_key] !== undefined) {
@@ -266,7 +270,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
         var that = this;
 
         // Helper function to decide whether to include a typeid or not in the ChangeSet
-        var addEntryInChangeSet = function (in_changes, in_typeid, in_key, in_value) {
+        var addEntryInChangeSet = function(in_changes, in_typeid, in_key, in_value) {
             // Determine where to insert the key. If necessary, an entry for the type is added.
             if (that._containsPrimitiveTypes) {
                 in_changes[in_key] = that._serializeValue(in_value);
@@ -376,18 +380,18 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
      */
     // eslint-disable-next-line complexity
     _deserialize(in_serializedObj, in_reportToView,
-                 in_filteringOptions, in_createChangeSet) {
+        in_filteringOptions, in_createChangeSet) {
 
         var currentEntries = this._dynamicChildren;
         var allInsertedKeys = {};
 
         var appliedChangeset = AbstractStaticCollectionProperty.prototype._deserialize.call(
-           this, in_serializedObj, false, in_filteringOptions, in_createChangeSet);
+            this, in_serializedObj, false, in_filteringOptions, in_createChangeSet);
 
         // Perform updates to the children
 
         // We make copies on two levels, since those are modified by the calls below
-        var insertedEntries = _.mapValues(in_serializedObj.insert, function (x) { return _.clone(x); }) || {};
+        var insertedEntries = _.mapValues(in_serializedObj.insert, function(x) { return _.clone(x); }) || {};
         var removedEntries = {};
         var modifiedEntries = {};
 
@@ -493,8 +497,8 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
                     // Determine if value has changed
                     if (this._typeid === 'Int64' || this._typeid === 'Uint64') {
                         // For (u)int64, we will compare (Ui/I)nt64 objects with arrays [low, high]
-                        valueWasChanged = this._dynamicChildren[modifiedKeys[i]].getValueLow() !== changes[0] ||
-                            this._dynamicChildren[modifiedKeys[i]].getValueHigh() !== changes[1];
+                        valueWasChanged = (this._dynamicChildren[modifiedKeys[i]] as any).getValueLow() !== changes[0] ||
+                            (this._dynamicChildren[modifiedKeys[i]] as any).getValueHigh() !== changes[1];
                     } else {
                         valueWasChanged = this._dynamicChildren[modifiedKeys[i]] !== changes;
                     }
@@ -624,8 +628,8 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
                     in_changeSet.modify :
                     in_changeSet.modify[classKeys[iClass]];
                 var keys = Object.keys(modifiedEntries);
-                for (var i = 0; i < keys.length; i++) {
-                    var key = keys[i];
+                for (let i = 0; i < keys.length; i++) {
+                    const key = keys[i];
                     if (this._dynamicChildren[key] !== undefined) {
                         if (this._containsPrimitiveTypes) {
                             var modifiedEntry = modifiedEntries[key];
@@ -735,7 +739,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * @inheritdoc
      */
-    _setDirty(in_reportToView, in_callingChild) {
+    _setDirty(in_reportToView, in_callingChild?) {
         // Mark the child as modified
         if (in_callingChild && !this._containsPrimitiveTypes) {
             var key = in_callingChild.getId();

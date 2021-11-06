@@ -134,7 +134,7 @@ export abstract class BaseProperty {
      * @returns The guid representing the scope in which the
      * property belongs to
      */
-    protected _getScope(): string | undefined {
+    _getScope(): string | undefined {
         if (this._parent) {
             return this.getRoot()._getScope();
         } else {
@@ -1096,7 +1096,7 @@ export abstract class BaseProperty {
      * @throws if in_options is defined but is not an object.
      * @returns The serialized representation of this property
      */
-    serialize(in_options: ISerializeOptions) {
+    serialize(in_options?: ISerializeOptions) {
         var opts = {
             dirtyOnly: false,
             includeRootTypeid: false,
@@ -1284,6 +1284,12 @@ export abstract class BaseProperty {
 
 
 export namespace BaseProperty {
+
+    export type PathFilteringOptions = {
+        basePath: string,
+        paths: string[]
+    }
+
     /**
      * Determines in which cases a reference will automatically be resolved
      */

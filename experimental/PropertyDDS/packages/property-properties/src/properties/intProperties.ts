@@ -7,29 +7,21 @@
  * @fileoverview Definition of the Int*Property classes
  */
 
-const _ = require('lodash');
-const { ValueProperty } = require('./valueProperty');
-const { _castFunctors } = require('./primitiveTypeCasts');
-const { ChangeSet } = require('@fluid-experimental/property-changeset');
-const {
+import _ from 'lodash';
+import { ValueProperty } from './valueProperty';
+import { _castFunctors } from './primitiveTypeCasts';
+import { ChangeSet, SerializedChangeSet } from '@fluid-experimental/property-changeset';
+import {
     ConsoleUtils,
-    constants: { MSG },
+    constants,
     Uint64,
     Int64
-} = require('@fluid-experimental/property-common');
+} from '@fluid-experimental/property-common';
+import { BaseProperty } from '..';
 
-const BIT32 = 4294967296;
-
+const { MSG } = constants;
 export class Int8Property extends ValueProperty {
-    /**
-     * A primitive property for an signed 8 bit integer value.
-     * @param {Object=} in_params - the parameters
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueProperty
-     * @alias property-properties.Int8Property
-     * @category Value Properties
-     */
+
     constructor(in_params) {
         super({ ...in_params, typeid: 'Int8' });
         // default for this property type is '0'
@@ -43,14 +35,7 @@ export class Int8Property extends ValueProperty {
  * A primitive property for an signed 16 bit integer value.
  */
 export class Int16Property extends ValueProperty {
-    /**
-     * @param {Object=} in_params - the parameters
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueProperty
-     * @alias property-properties.Int16Property
-     * @category Value Properties
-     */
+
     constructor(in_params) {
         super({ ...in_params, typeid: 'Int16' });
         // default for this property type is '0'
@@ -65,14 +50,7 @@ export class Int16Property extends ValueProperty {
  * A primitive property for an signed 32 bit integer value.
  */
 export class Int32Property extends ValueProperty {
-    /**
-     * @param {Object=} in_params - the parameters
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueProperty
-     * @alias property-properties.Int32Property
-     * @category Value Properties
-     */
+
     constructor(in_params) {
         super({ typeid: 'Int32', ...in_params });
         // default for this property type is '0'
@@ -85,16 +63,8 @@ export class Int32Property extends ValueProperty {
  * A primitive property base class for big integer values.
  */
 export class Integer64Property extends ValueProperty {
-    /**
-     * @param {Object=} in_params - the parameters
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueProperty
-     * @alias property-properties.Integer64Property
-     * @protected
-     * @abstract
-     * @category Value Properties
-     */
+    DataConstructor: any;
+
     constructor(in_params, dataConstructor) {
         super(in_params);
         this.DataConstructor = dataConstructor
@@ -106,51 +76,51 @@ export class Integer64Property extends ValueProperty {
     /**
      * Internal function to update the value of the Integer64Property
      *
-     * @param {Int64|String|Number} in_value the new value
-     * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
+     * @param in_value - the new value
+     * @param in_reportToView - By default, the dirtying will always be reported to the checkout view
      *                                             and trigger a modified event there. When batching updates, this
      *                                             can be prevented via this flag.
-     * @return {boolean} true if the value was actually changed
+     * @returns true if the value was actually changed
      * @throws if in_value is a string that contains characters other than numbers
      */
-    _setValue(in_value, in_reportToView) {
+    _setValue(in_value: Int64 | String | Number, in_reportToView = true) {
         var oldLowValue = this._data.getValueLow();
         var oldHighValue = this._data.getValueHigh();
 
-        in_value = this._castFunctor(in_value);
+        const value: Int64 = this._castFunctor(in_value);
 
-        var newHighValue = in_value.getValueHigh();
-        var newLowValue = in_value.getValueLow();
+        var newHighValue = value.getValueHigh();
+        var newLowValue = value.getValueLow();
 
         var changed = oldHighValue !== newHighValue || oldLowValue !== newLowValue;
 
         if (changed) {
-            this._data = in_value.clone();
+            this._data = value.clone();
             this._setDirty(in_reportToView);
         }
         return changed;
     };
 
     /**
-     * @return {number} the higher 32 bit integer part
+     * @returns the higher 32 bit integer part
      */
-    getValueHigh() {
+    getValueHigh(): number {
         return this._data.getValueHigh();
     };
 
     /**
-     * @return {number} the lower 32 bit integer part
+     * @returns the lower 32 bit integer part
      */
-    getValueLow() {
+    getValueLow(): number {
         return this._data.getValueLow();
     };
 
     /**
-     * @param {number} in_high set the higher 32 bit integer part
+     * @param in_high - set the higher 32 bit integer part
      * @throws if in_high is not a number
-     * @return {boolen} true if the value was actually changed
+     * @returns true if the value was actually changed
      */
-    setValueHigh(in_high) {
+    setValueHigh(in_high: number): boolean {
         ConsoleUtils.assert(_.isNumber(in_high), MSG.IN_HIGH_MUST_BE_NUMBER + in_high);
         var changed = this._data.getValueHigh() !== in_high;
 
@@ -163,11 +133,11 @@ export class Integer64Property extends ValueProperty {
     };
 
     /**
-     * @param {number} in_low set the lower 32 bit integer part
+     * @param in_low - set the lower 32 bit integer part
      * @throws if in_low is not a number
-     * @return {boolen} true if the value was actually changed
+     * @returns true if the value was actually changed
      */
-    setValueLow(in_low) {
+    setValueLow(in_low: number): boolean {
         ConsoleUtils.assert(_.isNumber(in_low), MSG.IN_LOW_MUST_BE_NUMBER + in_low);
         var changed = this._data.getValueLow() !== in_low;
 
@@ -182,8 +152,12 @@ export class Integer64Property extends ValueProperty {
     /**
      * @inheritdoc
      */
-    _deserialize(in_serializedObj, in_reportToView,
-                 in_filteringOptions, in_createChangeSet) {
+    _deserialize(
+        in_serializedObj: SerializedChangeSet,
+        in_reportToView: boolean,
+        in_filteringOptions?: BaseProperty.PathFilteringOptions,
+        in_createChangeSet?: boolean
+    ) {
         if (ChangeSet.isEmptyChangeSet(in_serializedObj)) {
             return undefined;
         } else {
@@ -211,21 +185,22 @@ export class Integer64Property extends ValueProperty {
     /**
      * Serialize the property
      *
-     * @param {boolean} in_dirtyOnly -
-     *     Only include dirty entries in the serialization
-     * @param {boolean} in_includeRootTypeid -
-     *     Include the typeid of the root of the hierarchy - has no effect for value properties
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
-     *     The type of dirtiness to use when reporting dirty changes. By default this is
-     *     PENDING_CHANGE   * @return {*} The serialized representation of this property
-     * @param {boolean} [in_includeReferencedRepositories=false] - If this is set to true, the serialize
+     * @param in_dirtyOnly - Only include dirty entries in the serialization
+     * @param in_includeRootTypeid - Include the typeid of the root of the hierarchy.
+     *     Has no effect for value properties
+     * @param in_dirtinessType - The type of dirtiness to use when reporting dirty changes.
+     * @param in_includeReferencedRepositories - If this is set to true, the serialize
      *     function will descend into referenced repositories. WARNING: if there are loops in the references
      *     this can result in an infinite loop
-     * @return {*} The serialized representation of this property
+     * @returns he serialized representation of this property
      * @private
      */
-    _serialize(in_dirtyOnly, in_includeRootTypeid,
-        in_dirtinessType, in_includeReferencedRepositories) {
+    _serialize(
+        in_dirtyOnly: boolean,
+        in_includeRootTypeid: boolean,
+        in_dirtinessType = BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE,
+        in_includeReferencedRepositories = false
+    ) {
         if (in_dirtyOnly) {
             if (this._isDirty(in_dirtinessType)) {
                 return [this._data.getValueLow(), this._data.getValueHigh()];
@@ -237,31 +212,29 @@ export class Integer64Property extends ValueProperty {
         }
     };
 
-
-
     /**
      * The toString() method returns a string representing the specified Integer64 object.
      *
-     * @param {number} [in_radix = 10]  An integer between 2 and 36 specifying
+     * @param in_radix - An integer between 2 and 36 specifying
      *      the base to use for representing numeric values.
-     * @return {string} A string representing the specified Integer64 object.
+     * @returns A string representing the specified Integer64 object.
      */
-    toString(in_radix) {
+    toString(in_radix = 10): string {
         return this._data.toString(in_radix);
     };
 
     /**
      * The Integer64.fromString() method parses a string argument updates object's lower and higher 32 bit integer parts.
      *
-     * @param {string} in_string The value to parse. Leading whitespace in the string argument is ignored.
-     * @param {number} [in_radix = 10] An integer between 2 and 36 that represents the
+     * @param in_string - The value to parse. Leading whitespace in the string argument is ignored.
+     * @param in_radix - An integer between 2 and 36 that represents the
      *     radix (the base in mathematical numeral systems) of the above mentioned string.
      * @throws if in_string is not a string
      * @throws if in_radix is entered but is not a number between 2 and 36
      * @throws if the property is a Uint64 property and in_string is a negative number
      * @throws if in_string contains characters other than numbers
      */
-    fromString(in_string, in_radix) {
+    fromString(in_string: string, in_radix = 10) {
         ConsoleUtils.assert(_.isString(in_string), MSG.IN_STRING_MUST_BE_STRING + in_string);
         var int = this._castFunctor(in_string, in_radix);
 
@@ -275,14 +248,7 @@ export class Integer64Property extends ValueProperty {
  * A primitive property class for big signed integer values.
  */
 export class Int64Property extends Integer64Property {
-    /**
-     * @param {Object=} in_params - the parameters
-     * @constructor
-     * @protected
-     * @extends property-properties.Integer64Property
-     * @alias property-properties.Int64Property
-     * @category Value Properties
-     */
+
     constructor(in_params) {
         super({ ...in_params, typeid: 'Int64' }, Int64);
     };
@@ -291,17 +257,10 @@ export class Int64Property extends Integer64Property {
 }
 
 /**
- * A primitive property class for big unsingned integer values.
+ * A primitive property class for big unsigned integer values.
  */
 export class Uint64Property extends Integer64Property {
-    /**
-     * @param {Object=} in_params - the parameters
-     * @constructor
-     * @protected
-     * @extends property-properties.Integer64Property
-     * @alias property-properties.Uint64Property
-     * @category Value Properties
-     */
+
     constructor(in_params) {
         super({ ...in_params, typeid: 'Uint64' }, Uint64);
     };
