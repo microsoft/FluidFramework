@@ -1043,11 +1043,11 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
     /**
      * Removes the dirtiness flag from this property
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean, if none are supplied all
+     * @param in_flags - The flags to clean, if none are supplied all
      *                                                                       will be removed
      * @private
      */
-    _cleanDirty(in_flags) {
+    _cleanDirty(in_flags?: BaseProperty.MODIFIED_STATE_FLAGS) {
         // Invoke parent - cleans own dirty flag
         BaseProperty.prototype._cleanDirty.call(this, in_flags);
 
@@ -1071,10 +1071,10 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Removes the dirtiness flag from this property and recursively from all of its children
      *
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] - The flags to clean,
+     * @param in_dirtinessType - The flags to clean,
      * if none are supplied all will be removed
      */
-    cleanDirty(in_dirtinessType) {
+    cleanDirty(in_dirtinessType?: BaseProperty.MODIFIED_STATE_FLAGS) {
         if (!this._isPrimitive) {
             for (var i = 0; i < this._dataArrayGetLength(); ++i) {
                 this._dataArrayGetValue(i).cleanDirty(in_dirtinessType);
@@ -1088,15 +1088,15 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Internal helper function that implements the deserialize algorithm for an array of named properties.
      *
-     * @param {property-properties.SerializedChangeSet} in_serializedObj - The serialized changeset to apply. This
+     * @param in_serializedObj - The serialized changeset to apply. This
      *     has to be a normalized change-set (only containing inserts. Removes and Modifies are forbidden).
-     * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
+     * @param in_reportToView - By default, the dirtying will always be reported to the checkout view
      *                                             and trigger a modified event there. When batching updates, this
      *                                             can be prevented via this flag.
-     * @return {property-properties.SerializedChangeSet} ChangeSet with the changes that actually were performed during the
+     * @return ChangeSet with the changes that actually were performed during the
      *     deserialization
      */
-    _deserializeNamedPropertyArray(in_serializedObj, in_reportToView) {
+    _deserializeNamedPropertyArray(in_serializedObj: SerializedChangeSet, in_reportToView = true): SerializedChangeSet {
         if (!_.isArray(in_serializedObj.insert[0][1])) {
             throw new Error(MSG.INVALID_CHANGESET);
         }
@@ -1315,7 +1315,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * @inheritdoc
      */
-    _deserialize(in_serializedObj, in_reportToView, in_filteringOptions, in_createChangeSet) {
+    _deserialize(in_serializedObj, in_reportToView, in_filteringOptions: object, in_createChangeSet: boolean) {
         this._checkIsNotReadOnly(false);
 
         if ((in_serializedObj.remove && in_serializedObj.remove.length > 0) ||

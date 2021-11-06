@@ -616,7 +616,12 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * @returns ChangeSet with the changes that actually were performed during the
      *     deserialization
      */
-    _deserialize(in_serializedObj: SerializedChangeSet, in_reportToView = true): SerializedChangeSet {
+    _deserialize(
+        in_serializedObj: SerializedChangeSet,
+        in_reportToView = true,
+        in_filteringOptions = {},
+        in_createChangeSet: boolean
+    ): SerializedChangeSet {
 
         const changeSet = {};
 
