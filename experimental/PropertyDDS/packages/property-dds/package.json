@@ -47,7 +47,7 @@
   "devDependencies": {
     "@fluid-experimental/property-common": "^0.52.0",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/driver-definitions": "^0.41.0",
+    "@fluidframework/driver-definitions": "^0.42.0-0",
     "@fluidframework/eslint-config-fluid": "^0.24.0",
     "@fluidframework/local-driver": "^0.52.0",
     "@fluidframework/mocha-test-setup": "^0.52.0",
