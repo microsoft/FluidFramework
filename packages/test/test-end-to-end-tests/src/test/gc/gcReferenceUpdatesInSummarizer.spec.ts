@@ -31,6 +31,8 @@ class TestDataObject extends DataObject {
         return this.context;
     }
 
+    public get id() { return this.context.id; }
+
     private readonly matrixKey = "matrix";
     public matrix!: SharedMatrix;
     public undoRedoStackManager!: UndoRedoStackManager;

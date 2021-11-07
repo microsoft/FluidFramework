@@ -87,7 +87,9 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     protected get root(): ISharedDirectory;
-    }
+    // (undocumented)
+    get uniqueId(): string;
+}
 
 // @public
 export class DataObjectFactory<TObj extends DataObject<O, S, E>, O, S, E extends IEvent = IEvent> extends PureDataObjectFactory<TObj, O, S, E> {
@@ -147,7 +149,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
     protected getService<T extends IFluidObject>(id: string): Promise<T>;
     get handle(): IFluidHandle<this>;
     protected hasInitialized(): Promise<void>;
-    // (undocumented)
+    // @deprecated (undocumented)
     get id(): string;
     // (undocumented)
     get IFluidHandle(): IFluidHandle<this>;

@@ -55,7 +55,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
             const response = await container.request({ url: "/" });
             assert.strictEqual(response.status, 200, `Component should exist!! ${response.value}`);
             const defaultDataStore = response.value as TestFluidObject;
-            assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
+            assert.strictEqual(defaultDataStore.context.id, "default", "Id should be default");
 
             // Check for dds
             const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
@@ -94,7 +94,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
             const response = await container2.request({ url: "/" });
             assert.strictEqual(response.status, 200, `Component should exist!! ${response.value}`);
             const defaultDataStore = response.value as TestFluidObject;
-            assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
+            assert.strictEqual(defaultDataStore.context.id, "default", "Id should be default");
 
             // Check for dds
             const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);

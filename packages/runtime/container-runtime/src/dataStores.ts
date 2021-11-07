@@ -117,7 +117,7 @@ export class DataStores implements IDisposable {
                     this.runtime.storage,
                     this.runtime.scope,
                     this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
-                    (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+                    (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr, key),
                     snapshotTree,
                     undefined,
                 );
@@ -196,8 +196,7 @@ export class DataStores implements IDisposable {
         Promise.resolve().then(async () => remotedFluidDataStoreContext.realize());
     }
 
-    public bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
-        const id = fluidDataStoreRuntime.id;
+    private bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel, id: string): void {
         const localContext = this.contexts.getUnbound(id);
         assert(!!localContext, 0x15f /* "Could not find unbound context to bind" */);
 
@@ -213,7 +212,7 @@ export class DataStores implements IDisposable {
             this.attachOpFiredForDataStore.add(id);
         }
 
-        this.contexts.bind(fluidDataStoreRuntime.id);
+        this.contexts.bind(id);
     }
 
     public createDetachedDataStoreCore(
@@ -228,7 +227,7 @@ export class DataStores implements IDisposable {
             this.runtime.storage,
             this.runtime.scope,
             this.getCreateChildSummarizerNodeFn(id, { type: CreateSummarizerNodeSource.Local }),
-            (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+            (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr, id),
             isRoot,
         );
         this.contexts.addUnbound(context);
@@ -243,7 +242,7 @@ export class DataStores implements IDisposable {
             this.runtime.storage,
             this.runtime.scope,
             this.getCreateChildSummarizerNodeFn(id, { type: CreateSummarizerNodeSource.Local }),
-            (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+            (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr, id),
             undefined,
             isRoot,
             props,

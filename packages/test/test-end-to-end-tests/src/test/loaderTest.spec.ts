@@ -59,8 +59,8 @@ class TestSharedDataObject2 extends DataObject {
         return this.context;
     }
 
-    public get _id() {
-        return this.id;
+    public get id() {
+        return this.context.id;
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -79,6 +79,8 @@ class TestSharedDataObject2 extends DataObject {
  * used to validate that headers are correctly propagated all the way in the stack.
  */
 class TestDataObjectWithRequestHeaders extends DataObject {
+    public get id() { return this.context.id; }
+
     public async request(request: IRequest): Promise<IResponse> {
         // If the request has headers, return a specialized response with the headers in the request.
         if (request.headers !== undefined) {

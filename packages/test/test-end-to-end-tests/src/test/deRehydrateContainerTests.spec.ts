@@ -238,7 +238,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             assertProtocolTree(snapshotTree);
             assertDatastoreTree(snapshotTree, "default");
 
-            assertDatastoreTree(snapshotTree, dataStore2.runtime.id, "Handle Bounded dataStore should be in summary");
+            assertDatastoreTree(snapshotTree, dataStore2.context.id, "Handle Bounded dataStore should be in summary");
         });
 
         it("Rehydrate container from snapshot and check contents before attach", async () => {
@@ -253,7 +253,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const response = await container2.request({ url: "/" });
             assert.strictEqual(response.status, 200, "Component should exist!!");
             const defaultDataStore = response.value as TestFluidObject;
-            assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
+            assert.strictEqual(defaultDataStore.context.id, "default", "Id should be default");
 
             // Check for dds
             const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
@@ -291,7 +291,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const response = await container2.request({ url: "/" });
             assert.strictEqual(response.status, 200, "Component should exist!!");
             const defaultDataStore = response.value as TestFluidObject;
-            assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
+            assert.strictEqual(defaultDataStore.context.id, "default", "Id should be default");
 
             // Check for dds
             const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
@@ -329,7 +329,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const response = await container1.request({ url: "/" });
             assert.strictEqual(response.status, 200, `Component should exist!! ${response.value}`);
             const defaultDataStore = response.value as TestFluidObject;
-            assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
+            assert.strictEqual(defaultDataStore.context.id, "default", "Id should be default");
 
             // Check for dds
             const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
@@ -590,7 +590,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const response = await rehydratedContainer.request({ url: `/${dataStore2.context.id}` });
             const dataStore2FromRC = response.value as TestFluidObject;
             assert(dataStore2FromRC, "DataStore2 should have been serialized properly");
-            assert.strictEqual(dataStore2FromRC.runtime.id, dataStore2.runtime.id, "DataStore2 id should match");
+            assert.strictEqual(dataStore2FromRC.context.id, dataStore2.context.id, "DataStore2 id should match");
         });
 
         it("Container rehydration with not bounded dds handle stored in root of bounded dataStore", async () => {
@@ -607,7 +607,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const snapshotTree = container.serialize();
             const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
-            const response = await rehydratedContainer.request({ url: `/${defaultDataStore.runtime.id}/${ddsId}` });
+            const response = await rehydratedContainer.request({ url: `/${defaultDataStore.context.id}/${ddsId}` });
             const ddd2FromRC = response.value as SharedString;
             assert(ddd2FromRC, "ddd2 should have been serialized properly");
             assert.strictEqual(ddd2FromRC.id, ddsId, "DDS id should match");
@@ -636,7 +636,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
             const responseForDDS =
-                await rehydratedContainer.request({ url: `/${defaultDataStore.runtime.id}/${ddsId}` });
+                await rehydratedContainer.request({ url: `/${defaultDataStore.context.id}/${ddsId}` });
             const ddd2FromRC = responseForDDS.value as SharedString;
             assert(ddd2FromRC, "ddd2 should have been serialized properly");
             assert.strictEqual(ddd2FromRC.id, ddsId, "DDS id should match");
@@ -645,7 +645,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const responseForDataStore = await rehydratedContainer.request({ url: `/${dataStore2.context.id}` });
             const dataStore2FromRC = responseForDataStore.value as TestFluidObject;
             assert(dataStore2FromRC, "DataStore2 should have been serialized properly");
-            assert.strictEqual(dataStore2FromRC.runtime.id, dataStore2.runtime.id, "DataStore2 id should match");
+            assert.strictEqual(dataStore2FromRC.context.id, dataStore2.context.id, "DataStore2 id should match");
         });
 
         it("Container rehydration with not bounded data store handle stored in root of bound dataStore. " +
@@ -670,7 +670,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const snapshotTree = container.serialize();
             const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
-            const responseForDDS = await rehydratedContainer.request({ url: `/${dataStore2.runtime.id}/${ddsId}` });
+            const responseForDDS = await rehydratedContainer.request({ url: `/${dataStore2.context.id}/${ddsId}` });
             const ddd2FromRC = responseForDDS.value as SharedString;
             assert(ddd2FromRC, "ddd2 should have been serialized properly");
             assert.strictEqual(ddd2FromRC.id, ddsId, "DDS id should match");
@@ -679,7 +679,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const responseForDataStore = await rehydratedContainer.request({ url: `/${dataStore2.context.id}` });
             const dataStore2FromRC = responseForDataStore.value as TestFluidObject;
             assert(dataStore2FromRC, "DataStore2 should have been serialized properly");
-            assert.strictEqual(dataStore2FromRC.runtime.id, dataStore2.runtime.id, "DataStore2 id should match");
+            assert.strictEqual(dataStore2FromRC.context.id, dataStore2.context.id, "DataStore2 id should match");
         });
 
         it("Not bounded/Unreferenced data store should not get serialized on container serialization", async () => {

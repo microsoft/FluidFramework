@@ -23,6 +23,8 @@ export class TestDataObject extends DataObject {
         return this.root;
     }
 
+    public get id() { return this.context.id; }
+
     public get containerRuntime(): ContainerRuntime {
         return this.context.containerRuntime as ContainerRuntime;
     }

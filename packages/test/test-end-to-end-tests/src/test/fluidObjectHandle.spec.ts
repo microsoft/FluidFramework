@@ -57,7 +57,7 @@ describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
 
     it("should generate the absolute path for FluidDataObjectRuntime correctly", function() {
         // The expected absolute path for the FluidDataObjectRuntime.
-        const absolutePath = `/${firstContainerObject1._runtime.id}`;
+        const absolutePath = `/${firstContainerObject1._context.id}`;
 
         // Verify that the local client's FluidDataObjectRuntime has the correct absolute path.
         const fluidHandleContext11 = firstContainerObject1._runtime.rootRoutingContext;
@@ -111,7 +111,7 @@ describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
         const sharedMapHandle = sharedMap.handle;
 
         // The expected absolute path.
-        const absolutePath = `/${firstContainerObject2._runtime.id}/${sharedMap.id}`;
+        const absolutePath = `/${firstContainerObject2._context.id}/${sharedMap.id}`;
 
         // Verify that the local client's handle has the correct absolute path.
         assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's path is incorrect");
@@ -136,7 +136,7 @@ describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
 
     it("can store and retrieve a PureDataObject from handle in different data store runtime", async () => {
         // The expected absolute path.
-        const absolutePath = `/${firstContainerObject2._runtime.id}`;
+        const absolutePath = `/${firstContainerObject2._context.id}`;
 
         const dataObjectHandle = firstContainerObject2.handle;
 

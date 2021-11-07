@@ -33,14 +33,12 @@ describe("FluidDataStoreRuntime Tests", () => {
 
     it("can create a data store runtime", () => {
         let failed: boolean = false;
-        let dataStoreRuntime: FluidDataStoreRuntime | undefined;
         try {
-            dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
+            void loadRuntime(dataStoreContext, sharedObjectRegistry);
         } catch (error) {
             failed = true;
         }
         assert.strictEqual(failed, false, "Data store runtime creation failed");
-        assert.strictEqual(dataStoreRuntime?.id, dataStoreContext.id, "Data store runtime's id in incorrect");
     });
 
     it("can summarize an empty data store runtime", async () => {

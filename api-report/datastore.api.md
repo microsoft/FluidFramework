@@ -80,7 +80,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     getQuorum(): IQuorum;
     // (undocumented)
-    readonly id: string;
+    get id(): string;
     // (undocumented)
     get IFluidHandleContext(): this;
     // (undocumented)

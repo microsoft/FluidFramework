@@ -74,7 +74,10 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
 
     public get disposed() { return this._disposed; }
 
-    public get id() { return this.runtime.id; }
+    /**
+     * @deprecated - internal routing IDs are become ambiguous. If you need unique ID, use DataObject.uniqueId
+     */
+    public get id() { return this.context.id; }
     public get IFluidRouter() { return this; }
     public get IFluidLoadable() { return this; }
     public get IFluidHandle() { return this.innerHandle; }

@@ -123,8 +123,6 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     bindToContext(): void;
     getAttachSummary(): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
-    // (undocumented)
-    readonly id: string;
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     processSignal(message: any, local: boolean): void;
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;

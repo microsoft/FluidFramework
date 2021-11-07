@@ -23,21 +23,21 @@ interface IColor {
     };
 }
 
+const presenceKey = `PresenceManager-6eb56a01-af1a-4b94-9d36-c62ec587caa6`;
+
 /**
  * This should be super generic and only do really generic things.
  * This will only take a dependency on the runtime.
  */
 class PresenceManager extends EventEmitter {
-    private readonly presenceKey: string;
     private readonly presenceMap: Map<string, IPresenceInfo> = new Map();
 
     public constructor(private readonly runtime: IFluidDataStoreRuntime) {
         super();
-        this.presenceKey = `presence-${runtime.id}`;
 
         runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             // Only process presence keys that are not local while we are connected and have a non-null clientId
-            if (message.type === this.presenceKey && !local && runtime.connected && message.clientId) {
+            if (message.type === presenceKey && !local && runtime.connected && message.clientId) {
                 console.log(`received new presence signal: ${JSON.stringify(message)}`);
                 const presenceInfo = {
                     userId: message.clientId,
@@ -54,7 +54,7 @@ class PresenceManager extends EventEmitter {
     public send(location: {}) {
         if (this.runtime.connected) {
             console.log(`sending new presence signal: ${JSON.stringify(location)}`);
-            this.runtime.submitSignal(this.presenceKey, location);
+            this.runtime.submitSignal(presenceKey, location);
         }
     }
 

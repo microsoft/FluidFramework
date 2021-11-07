@@ -83,7 +83,7 @@ export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> impl
         maxCol: number): Promise<ITable> {
         const component = await TableSlice.getFactory().createChildInstance(
             this.context,
-            { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol },
+            { docId: this.context.id, name, minRow, minCol, maxRow, maxCol },
         );
         this.root.set(sliceId, component.handle);
         return component;
@@ -152,7 +152,7 @@ export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> impl
         const matrix = SparseMatrix.create(this.runtime, "matrix");
         this.root.set("matrix", matrix.handle);
 
-        this.root.set(ConfigKey.docId, this.runtime.id);
+        this.root.set(ConfigKey.docId, this.context.id);
     }
 
     protected async hasInitialized() {

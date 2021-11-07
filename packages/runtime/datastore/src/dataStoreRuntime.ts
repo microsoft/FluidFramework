@@ -136,7 +136,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public get absolutePath(): string {
-        return generateHandleContextPath(this.id, this.routeContext);
+        return generateHandleContextPath(this.dataStoreContext.id, this.routeContext);
     }
 
     public get routeContext(): IFluidHandleContext {
@@ -168,7 +168,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private boundhandles: Set<IFluidHandle> | undefined;
     private _attachState: AttachState;
 
-    public readonly id: string;
+    // @deprecated - internal routing IDs are become ambiguous. If you need unique ID, please
+    // use DataObject.uniqueId or create your own in similar way
+    public get id() { return this.dataStoreContext.id; }
+
     public readonly options: ILoaderOptions;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private readonly quorum: IQuorum;
@@ -197,7 +200,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             {all:{ dataStoreId: uuid() }},
         );
 
-        this.id = dataStoreContext.id;
         this.options = dataStoreContext.options;
         this.deltaManager = dataStoreContext.deltaManager;
         this.quorum = dataStoreContext.getQuorum();

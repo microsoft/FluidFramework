@@ -150,8 +150,6 @@ export interface IFluidDataStoreChannel extends
     IFluidRouter,
     IDisposable {
 
-    readonly id: string;
-
     /**
      * Indicates the attachment state of the channel to a host service.
      */

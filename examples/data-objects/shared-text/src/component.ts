@@ -115,7 +115,7 @@ export class SharedTextRunner
             const insights = this.sharedTextDocument.createMap(insightsMapId);
             this.rootView.set(insightsMapId, insights.handle);
 
-            debug(`Not existing ${this.runtime.id} - ${performance.now()}`);
+            debug(`Not existing ${this.context.id} - ${performance.now()}`);
             this.rootView.set("users", this.sharedTextDocument.createMap().handle);
             const seq = SharedNumberSequence.create(this.sharedTextDocument.runtime);
             this.rootView.set("sequence-test", seq.handle);
@@ -149,15 +149,15 @@ export class SharedTextRunner
             insights.set(newString.id, this.sharedTextDocument.createMap().handle);
         }
 
-        debug(`collabDoc loaded ${this.runtime.id} - ${performance.now()}`);
-        debug(`Getting root ${this.runtime.id} - ${performance.now()}`);
+        debug(`collabDoc loaded ${this.context.id} - ${performance.now()}`);
+        debug(`Getting root ${this.context.id} - ${performance.now()}`);
 
         await this.rootView.wait("flowContainerMap");
 
         this.sharedString = await this.rootView.get<IFluidHandle<SharedString>>("text").get();
         this.insightsMap = await this.rootView.get<IFluidHandle<ISharedMap>>("insights").get();
         debug(`Shared string ready - ${performance.now()}`);
-        debug(`id is ${this.runtime.id}`);
+        debug(`id is ${this.context.id}`);
         debug(`Partial load fired: ${performance.now()}`);
 
         const agentSchedulerResponse = await this.context.containerRuntime.request({ url: "/_scheduler" });
@@ -235,7 +235,7 @@ export class SharedTextRunner
         this.sharedString.loaded.then(() => {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             theFlow.loadFinished(performance.now());
-            debug(`${this.runtime.id} fully loaded: ${performance.now()} `);
+            debug(`${this.context.id} fully loaded: ${performance.now()} `);
         });
     }
 }

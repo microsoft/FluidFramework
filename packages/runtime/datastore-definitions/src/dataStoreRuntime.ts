@@ -45,6 +45,8 @@ export interface IFluidDataStoreRuntime extends
     IDisposable,
     Partial<IProvideFluidDataStoreRegistry> {
 
+    // @deprecated - internal routing IDs are become ambiguous. If you need unique ID, please
+    // use DataObject.uniqueId or create your own in similar way
     readonly id: string;
 
     readonly IFluidSerializer: IFluidSerializer;

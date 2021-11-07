@@ -118,16 +118,12 @@ export class LoadTestDataStoreModel {
             // Force the new data store to be attached.
             root.set("Fake", gcDataStore.handle);
             root.delete("Fake");
-            root.set(gcDataStoreIdKey, gcDataStore.id);
+            root.set(gcDataStoreIdKey, gcDataStore.handle);
         }
         // If we did not create the data store above, load it by getting its url.
         if (gcDataStore === undefined) {
-            const gcDataStoreId = root.get(gcDataStoreIdKey);
-            const response = await containerRuntime.request({ url: `/${gcDataStoreId}` });
-            if (response.status !== 200 || response.mimeType !== "fluid/object") {
-                throw new Error("GC data store not available");
-            }
-            gcDataStore = response.value as LoadTestDataStore;
+            gcDataStore = await root.get<IFluidHandle<LoadTestDataStore>>(gcDataStoreIdKey)?.get();
+            assert(gcDataStore !== undefined, "no handle");
         }
         return gcDataStore;
     }

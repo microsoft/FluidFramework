@@ -3,15 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { v4 as uuid } from "uuid";
 import {
     IFluidObject,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/common-utils";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
 import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
 import { IEvent } from "@fluidframework/common-definitions";
 import { PureDataObject } from "./pureDataObject";
+
+const uniqueIdKey = "_DOUniqueKey";
 
 /**
  * DataObject is a base data store that is primed with a root directory. It
@@ -31,6 +35,12 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
 {
     private internalRoot: ISharedDirectory | undefined;
     private readonly rootDirectoryId = "root";
+
+    public get uniqueId(): string {
+        const id = this.internalRoot?.get(uniqueIdKey);
+        assert(typeof id === "string", "string");
+        return id;
+    }
 
     public async request(request: IRequest): Promise<IResponse> {
         const requestParser = RequestParser.create(request);
@@ -66,6 +76,7 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
         if (!existing) {
             // Create a root directory and register it before calling initializingFirstTime
             this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
+            this.internalRoot.set(uniqueIdKey, uuid());
             this.internalRoot.bindToContext();
         } else {
             // data store has a root directory so we just need to set it before calling initializingFromExisting
