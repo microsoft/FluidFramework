@@ -17,6 +17,9 @@ import { LazyLoadedProperties as Property } from './lazyLoadedProperties';
 const { MSG, PROPERTY_PATH_DELIMITER } = constants;
 const BREAK_TRAVERSAL = 'BREAK';
 
+export type CheckedOutRepositoryInfo = any;
+export type CheckoutView = any;
+type PrintFunction = (x: any) => void;
 
 export interface IBasePropertyParams {
     /** id of the property */
@@ -74,7 +77,7 @@ export abstract class BaseProperty {
 
     _tree: any;
     _checkoutView: any;
-    _checkedOutRepositoryInfo: any;
+    _checkedOutRepositoryInfo: CheckedOutRepositoryInfo;
 
     constructor(in_params: IBasePropertyParams) {
         // Pre-conditions
@@ -496,28 +499,27 @@ export abstract class BaseProperty {
 
     /**
      * Sets the checkedOutRepositoryInfo.
-     * @param {property-properties.CheckoutView~CheckedOutRepositoryInfo} value - The checkedOut repository info.
+     * @param value - The checkedOut repository info.
      * @protected
      */
-    _setCheckoutView(value) {
+    _setCheckoutView(value: CheckoutView) {
         this._checkoutView = value;
     };
 
     /**
      * Returns the checkoutView
-     * @return {property-properties.CheckoutView} - the checkout view
+     * @returns the checkout view
      */
-    _getCheckoutView() {
+    _getCheckoutView(): CheckoutView {
         let checkedOutRepositoryInfo = this._getCheckedOutRepositoryInfo();
         return checkedOutRepositoryInfo ? checkedOutRepositoryInfo.getCheckoutView() : undefined;
     };
 
     /**
      * Returns the checkedOutRepositoryInfo.
-     * @return {property-properties.CheckoutView~CheckedOutRepositoryInfo} The checkedOut repository info.
-     * @protected
+     * @returns The checkedOut repository info.
      */
-    _getCheckedOutRepositoryInfo() {
+    protected _getCheckedOutRepositoryInfo(): CheckedOutRepositoryInfo {
         if (!this._parent) {
             return this._checkedOutRepositoryInfo;
         } else {
@@ -548,13 +550,13 @@ export abstract class BaseProperty {
     /**
      * Resolves a direct child node based on the given path segment
      *
-     * @param {String} in_segment                                   - The path segment to resolve
-     * @param {property-properties.PathHelper.TOKEN_TYPES} in_segmentType - The type of segment in the tokenized path
+     * @param in_segment - The path segment to resolve
+     * @param in_segmentType - The type of segment in the tokenized path
      *
-     * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
+     * @returns The child property that has been resolved
      * @protected
      */
-    _resolvePathSegment(in_segment: string, in_segmentType: PathHelper.TOKEN_TYPES) {
+    _resolvePathSegment(in_segment: string, in_segmentType: PathHelper.TOKEN_TYPES): BaseProperty | undefined {
         // Base Properties only support paths separated via dots
         if (in_segmentType !== PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN) {
             throw new Error(MSG.INVALID_PATH_TOKEN + in_segment);
@@ -566,12 +568,10 @@ export abstract class BaseProperty {
     /**
      * Set the id of this property
      *
-     * @param {string} in_id - The id for this property
-     *
-     * @return {string} the new id
-     * @private
+     * @param in_id - The id for this property
+     * @returns the new id
      */
-    _setId(in_id) {
+    _setId(in_id: string | number): string {
         if (!_.isString(in_id) && !_.isNumber(in_id)) {
             throw new Error(MSG.ID_STRING_OR_NUMBER + in_id);
         }
@@ -585,7 +585,7 @@ export abstract class BaseProperty {
         // flush caches
         this._setDirty();
 
-        return in_id;
+        return this._id;
     };
 
     /**
@@ -610,9 +610,9 @@ export abstract class BaseProperty {
 
     /**
      * Returns true if the property is a primitive type
-     * @return {boolean} true if the property is a primitive type
+     * @returns true if the property is a primitive type
      */
-    isPrimitiveType() {
+    isPrimitiveType(): boolean {
         return TypeIdHelper.isPrimitiveType(this._typeid);
     };
 
@@ -635,9 +635,9 @@ export abstract class BaseProperty {
      * Repeatedly calls back the given function with human-readable string representations
      * of the property and of its sub-properties. By default it logs to the console.
      * If printFct is not a function, it will default to console.log
-     * @param {function} [printFct=console.log] - Function to call for printing each property
+     * @param printFct - Function to call for printing each property
      */
-    prettyPrint(printFct) {
+    prettyPrint(printFct: PrintFunction = console.log) {
         if (typeof printFct !== 'function') {
             printFct = console.log;
         }
@@ -679,12 +679,12 @@ export abstract class BaseProperty {
     /**
      * Repeatedly calls back the given function with human-readable string
      * representations of the property and of its sub-properties.
-     * @param {string} indent - Leading spaces to create the tree representation
-     * @param {string} externalId - Name of the current property at the upper level.
+     * @param indent - Leading spaces to create the tree representation
+     * @param externalId - Name of the current property at the upper level.
      *                              Used for arrays.
-     * @param {function} printFct - Function to call for printing each property
+     * @param printFct - Function to call for printing each property
      */
-    _prettyPrint(indent, externalId, printFct) {
+    _prettyPrint(indent: string, externalId: string, printFct: PrintFunction) {
         var context = '';
         switch (this._context) {
             case 'map': context = 'Map of '; break;
@@ -715,11 +715,11 @@ export abstract class BaseProperty {
      *
      * @param  in_fromProperty - The node from which the
      *     path is computed
-     * @return {Array<string | undefined>} The paths between from_property and this property
+     * @returns The paths between from_property and this property
      * will return an empty array if trying to get the path from a child repo to a parent repo.
      * @private
      */
-    _getPathsThroughRepoRef(in_fromProperty: BaseProperty): string[] {
+    _getPathsThroughRepoRef(in_fromProperty: BaseProperty): string[] | undefined {
         var paths: string[] = [];
         var that = this;
         var referenceProps: BaseProperty[] = [];

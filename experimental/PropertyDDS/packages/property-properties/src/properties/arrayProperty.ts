@@ -851,7 +851,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     ): BaseProperty | undefined {
         in_options.referenceResolutionMode = in_options.referenceResolutionMode ?? BaseProperty.REFERENCE_RESOLUTION.ALWAYS;
         var prop = this;
-        if (_.isArray(in_position)) {
+        if (Array.isArray(in_position)) {
             var iterationStart = 0;
             let prop: any = this;
             if (in_position[0] === PATH_TOKENS.UP) {
@@ -933,7 +933,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     };
 
     /**
-     * @returns he current length of the array
+     * @returns the current length of the array
      */
     getLength(): number {
         return this._dataArrayGetLength();
@@ -971,7 +971,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                     case ArrayChangeSetIterator.types.REMOVE:
                         // Handle removes
                         var numRemoved = arrayIterator.opDescription.operation[1];
-                        if (!_.isNumber(numRemoved)) {
+                        if (typeof numRemoved !== 'number') {
                             numRemoved = numRemoved.length;
                         }
                         this._removeRangeWithoutDirtying(arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset, numRemoved);
@@ -1006,7 +1006,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                     case ArrayChangeSetIterator.types.REMOVE:
                         // Handle removes
                         var removeLength = arrayIterator.opDescription.operation[1];
-                        if (_.isArray(removeLength) || _.isString(removeLength)) {
+                        if (Array.isArray(removeLength) || typeof removeLength === 'string') {
                             removeLength = removeLength.length;
                         }
 
@@ -1739,7 +1739,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * @param {Number} in_position - Position at which the insert should be done
      * @param {Array} in_range     - The array to insert
      */
-    _dataArrayInsertRange(in_position:number, in_range) {
+    _dataArrayInsertRange(in_position: number, in_range) {
         this._dataArrayRef.insertRange(in_position, in_range);
     };
 
