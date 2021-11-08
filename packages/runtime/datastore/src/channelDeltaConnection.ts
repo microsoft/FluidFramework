@@ -41,7 +41,6 @@ export class ChannelDeltaConnection implements IDeltaConnection {
             // catches as data processing error whether or not they come from async pending queues
             this.handler.process(message, local, localOpMetadata);
         } catch (error) {
-            // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw CreateProcessingError(error, "channelDeltaConnectionFailedToProcessMessage", message);
         }
     }
