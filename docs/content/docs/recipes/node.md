@@ -12,7 +12,7 @@ To jump ahead into the finished demo, check out the [Node demo in our FluidExamp
 
 The following image shows the random number generated open in four terminals after every one second.
 
-![Four terminals with the Random Number app open in them.](https://user-images.githubusercontent.com/46719950/139499122-76edb832-50ec-4c92-b6b7-06869e9bef9f.png)
+![Four terminals with the Random Number app open in them.](https://user-images.githubusercontent.com/46719950/140808244-abb4a046-6170-48e2-8766-c497e6ce977d.png)
 
 {{< callout note >}}
 
@@ -108,7 +108,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     return containerId;
     ```
 
-1. To ensure that both local and remote changes to the random number are reflected in the terminal, we will use the `newRandomNumber()` function to store the local value and `updateConsole()` function to ensure that the map is updated whenever any client changes the value. This helps in keeping the client terminals synchronized with the Fluid data.
+1. To ensure that both local and remote changes to the random number are reflected in the terminal, we will use the `newRandomNumber()` function to store the local value and `updateConsole()` function to ensure that the console is updated whenever any client changes the value. This helps in keeping the client terminals synchronized with the Fluid data.
 
    Replace `TODO 3` with the following code. It will set a timer to update the random number every one second.
 
@@ -119,7 +119,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
    setInterval(newRandomNumber, 1000);
    ```
 
-  Replace `TODO 4` with the following code. It will Llsten for updates and print changes to the random number.
+  Replace `TODO 4` with the following code. It will listen for updates and print changes to the random number.
 
    ```js
    const updateConsole = () => {
@@ -148,7 +148,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
    loadCli(container.initialObjects.map);
    ```
 
-1. Replace `TODO 7` with the following code. Note that, this code will first take the container id as the input. If a new Fluid container is created, press Enter or type `undefined`. A new container will be initialized and the container id will be printed in the terminal. You can copy the container id, launch a new terminal window, and type/paste the initial container id to have multiple collaborative NodeJS clients.
+2. Replace `TODO 7` with the following code. Note that, this code will first take the container id as the input. To create a new Fluid container, press Enter or type `undefined`. A new container will be initialized and the container id will be printed in the terminal. You can copy the container id, launch a new terminal window, and type/paste the initial container id to have multiple collaborative NodeJS clients.
 
    ```js
    const containerId = await readInput();
