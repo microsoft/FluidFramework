@@ -463,7 +463,7 @@ export class LayerGraph {
             const remainingLayers = layers.map((l) => `${l.node.name} --> ${l.childrenToVisit.map((c) => c?.name)}`);
             const errorMessage = `
 ERROR: Circular dependency detected between layers!
-Please inspect this subset of layers and their dependencies to find the cycle:
+Please inspect these layers and their dependencies to find the cycle:
 
 ${remainingLayers.join(newline)}
 
