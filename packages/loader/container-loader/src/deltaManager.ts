@@ -761,7 +761,6 @@ export class DeltaManager
                     if (!canRetryOnError(origError)) {
                         const error = normalizeError(origError);
                         this.close(error);
-                        // eslint-disable-next-line @typescript-eslint/no-throw-literal
                         throw error;
                     }
 
