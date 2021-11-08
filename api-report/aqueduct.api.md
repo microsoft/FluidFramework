@@ -87,7 +87,6 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     protected get root(): ISharedDirectory;
-    // (undocumented)
     get uniqueId(): string;
 }
 

@@ -10,6 +10,22 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.52 Breaking changes
+
+- [`Deprecation of DataStoreRuntime id`](#Deprecation-of-DataStoreRuntime-id)
+
+### Deprecation of DataStoreRuntime id
+The following changes are made in this release:
+- IFluidDataStoreChannel.id removed
+- IFluidDataStoreRuntime.id deprecated
+- FluidDataStoreRuntime.id deprecated
+- PureDateObject.id deprecated 
+- DateObject.uniqueId is added
+
+FluidDataStoreRuntime.id is internal id used for internal routing. It should not be used for other purposes. Objects without data store could be always accessed through their handles (that they need to expose). If there is a need to have unique ID identifying data store, please consider using Aqueduct (DataObject and it's uniqueId property) or implement similar technique for your own data store.
+Theses changes are made due to upcoming changes that will change semantics and meaning of IDs. While some form of ID will likely be available, it might differ in how it works for root data objects, so it's better not to depend on such concepts.
+More info is to come...
+
 ## 0.51 Breaking changes
 - [`maxMessageSize` property has been deprecated from IConnectionDetails and IDocumentDeltaConnection](#maxmessagesize-property-has-been-deprecated-from-iconnectiondetails-and-idocumentdeltaconnection)
 - [_createDataStoreWithProps and IFluidDataStoreChannel](#createdatastorewithprops-and-ifluiddatastorechannel)

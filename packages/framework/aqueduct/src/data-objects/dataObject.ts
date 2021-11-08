@@ -36,6 +36,11 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
     private internalRoot: ISharedDirectory | undefined;
     private readonly rootDirectoryId = "root";
 
+    /**
+     * Unique ID of this DataObject.
+     * This id is a random guid that is created when data store is initially created
+     * It is preserved in container and can be accessed next time this data object is loaded.
+     */
     public get uniqueId(): string {
         const id = this.internalRoot?.get(uniqueIdKey);
         assert(typeof id === "string", "string");
