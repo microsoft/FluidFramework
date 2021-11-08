@@ -13,7 +13,7 @@ import { ILocalDeltaConnectionServer } from '@fluidframework/server-local-server
 import { InsecureTinyliciousUrlResolver } from '@fluidframework/tinylicious-driver';
 import { InsecureUrlResolver } from '@fluidframework/driver-utils';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { IRouterliciousDriverPolicies } from '@fluidframework/routerlicious-driver';
+import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ITestDriver } from '@fluidframework/test-driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { LocalDeltaConnectionServer } from '@fluidframework/server-local-server';
@@ -53,28 +53,6 @@ export interface FluidTestDriverConfig {
 
 // @public (undocumented)
 export const generateOdspHostStoragePolicy: (seed: number) => HostStoragePolicy[];
-
-// @public (undocumented)
-export interface IOdspTestLoginInfo {
-    // (undocumented)
-    password: string;
-    // (undocumented)
-    server: string;
-    // (undocumented)
-    supportsBrowserAuth?: boolean;
-    // (undocumented)
-    username: string;
-}
-
-// @public (undocumented)
-export interface IServiceEndpoint {
-    // (undocumented)
-    deltaStorageUrl: string;
-    // (undocumented)
-    hostUrl: string;
-    // (undocumented)
-    ordererUrl: string;
-}
 
 // @public (undocumented)
 export const LocalDriverApi: {
@@ -160,9 +138,8 @@ export type RouterliciousDriverApiType = typeof RouterliciousDriverApi;
 
 // @public (undocumented)
 export class RouterliciousTestDriver implements ITestDriver {
-    constructor(tenantId: string, tenantSecret: string, serviceEndpoints: IServiceEndpoint, api: RouterliciousDriverApiType, driverPolicies: IRouterliciousDriverPolicies | undefined, endpointName?: string | undefined);
     // (undocumented)
-    createContainerUrl(testId: string): Promise<string>;
+    createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string>;
     // (undocumented)
     createCreateNewRequest(testId: string): IRequest;
     // (undocumented)
@@ -185,7 +162,7 @@ export class RouterliciousTestDriver implements ITestDriver {
 export class TinyliciousTestDriver implements ITestDriver {
     constructor(api?: RouterliciousDriverApiType);
     // (undocumented)
-    createContainerUrl(testId: string): Promise<string>;
+    createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string>;
     // (undocumented)
     createCreateNewRequest(testId: string): IRequest;
     // (undocumented)

@@ -8,12 +8,12 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { v4 as uuid } from "uuid";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRouterliciousDriverPolicies } from "@fluidframework/routerlicious-driver";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
 
-export interface IServiceEndpoint {
+interface IServiceEndpoint {
     hostUrl: string;
     ordererUrl: string;
     deltaStorageUrl: string;
@@ -101,7 +101,7 @@ export class RouterliciousTestDriver implements ITestDriver {
 
     public readonly type = "routerlicious";
     public get version() { return this.api.version; }
-    constructor(
+    private constructor(
         private readonly tenantId: string,
         private readonly tenantSecret: string,
         private readonly serviceEndpoints: IServiceEndpoint,
@@ -111,8 +111,10 @@ export class RouterliciousTestDriver implements ITestDriver {
     ) {
     }
 
-    async createContainerUrl(testId: string): Promise<string> {
-        return `${this.serviceEndpoints.hostUrl}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(testId)}`;
+    async createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string> {
+        const containerId = containerUrl && "id" in containerUrl ? containerUrl.id : testId;
+        // eslint-disable-next-line max-len
+        return `${this.serviceEndpoints.hostUrl}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(containerId)}`;
     }
 
     createDocumentServiceFactory(): IDocumentServiceFactory {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage, IQuorum } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, IQuorumClients } from "@fluidframework/protocol-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ILastEditDetails, IFluidLastEditedTracker } from "./interfaces";
@@ -21,7 +21,7 @@ function shouldDiscardMessageDefault(message: ISequencedDocumentMessage) {
 // client who sent the message doesn't exist in the quorum.
 function getLastEditDetailsFromMessage(
     message: ISequencedDocumentMessage,
-    quorum: IQuorum,
+    quorum: IQuorumClients,
 ): ILastEditDetails | undefined {
     const sequencedClient = quorum.getMember(message.clientId);
     const user = sequencedClient?.client.user;
