@@ -1159,7 +1159,7 @@ export class DeltaManager
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
         assert(this.connectionP !== undefined || this.closed,
             0x27f /* "reentrancy may result in incorrect behavior" */);
-        assert(!connection.disposed, "can't be disposed - Callers need to ensure that!");
+        assert(!connection.disposed, 0x281 /* "can't be disposed - Callers need to ensure that!" */);
 
         this.connectionP = undefined;
         this.connection = connection;
