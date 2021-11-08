@@ -133,7 +133,7 @@ async function runnerProcess(
     seed: number,
 ): Promise<number> {
     try {
-        const loaderOptions = generateLoaderOptions(seed);
+        const loaderOptions = generateLoaderOptions(seed, runConfig.testConfig.loaderOptions);
         const containerOptions = generateRuntimeOptions(seed);
 
         const testDriver: ITestDriver = await createTestDriver(driver, seed, runConfig.runId);

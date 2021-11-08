@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ILoaderOptions } from "@fluidframework/container-definitions";
+
 /** Type modeling the structure of the testConfig.json file */
 export interface ITestConfig {
     profiles: { [name: string]: ILoadTestConfig | undefined };
@@ -30,4 +32,6 @@ export interface ILoadTestConfig {
      * Number of "attachment" type blobs to add while detached. Note this is only supported on ODSP currently.
      */
     detachedBlobCount?: number,
+
+    loaderOptions?: Partial<ILoaderOptions>;
 }

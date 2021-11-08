@@ -25,10 +25,21 @@ const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     summarizeProtocolTree: [undefined],
 };
 
-export const generateLoaderOptions = (seed: number): ILoaderOptions[]=>
-    generatePairwiseOptions<ILoaderOptions>(
-        loaderOptionsMatrix,
+export const generateLoaderOptions = (seed: number, overrides?: Partial<ILoaderOptions>): ILoaderOptions[]=>{
+    const matrix = {
+        ... loaderOptionsMatrix,
+    };
+
+    if(overrides !== undefined) {
+        for(const option of Object.keys(overrides)) {
+            matrix[option] = [overrides[option]];
+        }
+    }
+
+    return generatePairwiseOptions<ILoaderOptions>(
+        matrix,
         seed);
+    };
 
 const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
     disableGC: booleanCases,
