@@ -102,7 +102,8 @@ export class ValueProperty extends BaseProperty {
     /**
      * @inheritdoc
      */
-    _deserialize(in_serializedObj, in_reportToView, in_filteringOptions) {
+    _deserialize(in_serializedObj, in_reportToView,
+                 in_filteringOptions, in_createChangeSet) {
         if (ChangeSet.isEmptyChangeSet(in_serializedObj)) {
             console.warn(MSG.DESERIALIZE_EMPTY_CHANGESET);
             return undefined;

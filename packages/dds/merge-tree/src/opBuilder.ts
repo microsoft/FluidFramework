@@ -58,18 +58,15 @@ export function createAnnotateRangeOp(
 }
 
 /**
- * Creates the op to remove a range and puts the content of the removed range in a register
- * if a register name is provided
+ * Creates the op to remove a range
  *
  * @param start - The inclusive start of the range to remove
  * @param end - The exclusive end of the range to remove
- * @param register - Optional. The name of the register to store the removed range in
  */
-export function createRemoveRangeOp(start: number, end: number, register?: string): IMergeTreeRemoveMsg {
+export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg {
     return {
         pos1: start,
         pos2: end,
-        register,
         type: MergeTreeDeltaType.REMOVE,
     };
 }
@@ -89,34 +86,6 @@ export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg {
     return {
         pos1: pos,
         seg: segSpec,
-        type: MergeTreeDeltaType.INSERT,
-    };
-}
-
-/**
- *
- * @param pos - The position to insert the register contents at
- * @param register - The name of the register to insert the value of
- */
-export function createInsertFromRegisterOp(pos: number, register: string): IMergeTreeInsertMsg {
-    return {
-        pos1: pos,
-        register,
-        type: MergeTreeDeltaType.INSERT,
-    };
-}
-
-/**
- *
- * @param start - The inclusive start of the range to insert into the register
- * @param end - The exclusive end of the range to insert into the register
- * @param register - The name of the register to insert the range contents into
- */
-export function createInsertToRegisterOp(start: number, end: number, register: string): IMergeTreeInsertMsg {
-    return {
-        pos1: start,
-        pos2: end,
-        register,
         type: MergeTreeDeltaType.INSERT,
     };
 }

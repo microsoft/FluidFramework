@@ -5,7 +5,6 @@
 import { Deferred, bufferToString, assert } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import * as MergeTree from "@fluidframework/merge-tree";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -18,6 +17,31 @@ import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
+import {
+    Client,
+    createAnnotateRangeOp,
+    createGroupOp,
+    createInsertOp,
+    createRemoveRangeOp,
+    ICombiningOp,
+    IJSONSegment,
+    IMergeTreeAnnotateMsg,
+    IMergeTreeDeltaOp,
+    IMergeTreeGroupMsg,
+    IMergeTreeOp,
+    IMergeTreeRemoveMsg,
+    IRelativePosition,
+    ISegment,
+    ISegmentAction,
+    LocalReference,
+    matchProperties,
+    MergeTreeDeltaType,
+    PropertySet,
+    RangeStackMap,
+    ReferencePosition,
+    ReferenceType,
+    SegmentGroup,
+} from "@fluidframework/merge-tree";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
     makeHandlesSerializable,
@@ -77,19 +101,19 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
         listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void);
 }
 
-export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
+export abstract class SharedSegmentSequence<T extends ISegment>
     extends SharedObject<ISharedSegmentSequenceEvents>
     implements ISharedIntervalCollection<SequenceInterval> {
     get loaded(): Promise<void> {
         return this.loadedDeferred.promise;
     }
 
-    private static createOpsFromDelta(event: SequenceDeltaEvent): MergeTree.IMergeTreeDeltaOp[] {
-        const ops: MergeTree.IMergeTreeDeltaOp[] = [];
+    private static createOpsFromDelta(event: SequenceDeltaEvent): IMergeTreeDeltaOp[] {
+        const ops: IMergeTreeDeltaOp[] = [];
         for (const r of event.ranges) {
             switch (event.deltaOperation) {
-                case MergeTree.MergeTreeDeltaType.ANNOTATE: {
-                    const lastAnnotate = ops[ops.length - 1] as MergeTree.IMergeTreeAnnotateMsg;
+                case MergeTreeDeltaType.ANNOTATE: {
+                    const lastAnnotate = ops[ops.length - 1] as IMergeTreeAnnotateMsg;
                     const props = {};
                     for (const key of Object.keys(r.propertyDeltas)) {
                         props[key] =
@@ -97,10 +121,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                             r.segment.properties[key] === undefined ? null : r.segment.properties[key];
                     }
                     if (lastAnnotate && lastAnnotate.pos2 === r.position &&
-                        MergeTree.matchProperties(lastAnnotate.props, props)) {
+                        matchProperties(lastAnnotate.props, props)) {
                         lastAnnotate.pos2 += r.segment.cachedLength;
                     } else {
-                        ops.push(MergeTree.createAnnotateRangeOp(
+                        ops.push(createAnnotateRangeOp(
                             r.position,
                             r.position + r.segment.cachedLength,
                             props,
@@ -109,18 +133,18 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                     break;
                 }
 
-                case MergeTree.MergeTreeDeltaType.INSERT:
-                    ops.push(MergeTree.createInsertOp(
+                case MergeTreeDeltaType.INSERT:
+                    ops.push(createInsertOp(
                         r.position,
                         r.segment.clone().toJSONObject()));
                     break;
 
-                case MergeTree.MergeTreeDeltaType.REMOVE: {
-                    const lastRem = ops[ops.length - 1] as MergeTree.IMergeTreeRemoveMsg;
+                case MergeTreeDeltaType.REMOVE: {
+                    const lastRem = ops[ops.length - 1] as IMergeTreeRemoveMsg;
                     if (lastRem?.pos1 === r.position) {
                         lastRem.pos2 += r.segment.cachedLength;
                     } else {
-                        ops.push(MergeTree.createRemoveRangeOp(
+                        ops.push(createRemoveRangeOp(
                             r.position,
                             r.position + r.segment.cachedLength));
                     }
@@ -133,12 +157,12 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return ops;
     }
 
-    protected client: MergeTree.Client;
+    protected client: Client;
     // Deferred that triggers once the object is loaded
     protected loadedDeferred = new Deferred<void>();
     // cache out going ops created when parital loading
     private readonly loadedDeferredOutgoingOps:
-        [MergeTree.IMergeTreeOp, MergeTree.SegmentGroup | MergeTree.SegmentGroup[]][] = [];
+        [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] = [];
     // cache incoming ops that arrive when partial loading
     private deferIncomingOps = true;
     private readonly loadedDeferredIncomingOps: ISequencedDocumentMessage[] = [];
@@ -149,7 +173,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         private readonly dataStoreRuntime: IFluidDataStoreRuntime,
         public id: string,
         attributes: IChannelAttributes,
-        public readonly segmentFromSpec: (spec: MergeTree.IJSONSegment) => MergeTree.ISegment,
+        public readonly segmentFromSpec: (spec: IJSONSegment) => ISegment,
     ) {
         super(id, dataStoreRuntime, attributes);
 
@@ -157,7 +181,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
         });
 
-        this.client = new MergeTree.Client(
+        this.client = new Client(
             segmentFromSpec,
             ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
             dataStoreRuntime.options);
@@ -218,49 +242,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return removeOp;
     }
 
-    /**
-     * Removes the range and puts the content of the removed range in a register
-     *
-     * @param start - The inclusive start of the range to remove
-     * @param end - The exclusive end of the range to remove
-     * @param register - The name of the register to store the removed range in
-     */
-    public cut(start: number, end: number, register: string) {
-        const removeOp = this.client.removeRangeLocal(start, end, register);
-        if (removeOp) {
-            this.submitSequenceMessage(removeOp);
-        }
-    }
-
-    /**
-     * Inserts the content of the register.
-     *
-     * @param pos - The position to insert the content at.
-     * @param register - The name of the register to get the content from
-     */
-    public paste(pos: number, register: string) {
-        const insertOp = this.client.pasteLocal(pos, register);
-        if (insertOp) {
-            this.submitSequenceMessage(insertOp);
-        }
-        return pos;
-    }
-
-    /**
-     * Puts the content of the range in a register
-     *
-     * @param start - The inclusive start of the range
-     * @param end - The exclusive end of the range
-     * @param register - The name of the register to store the range in
-     */
-    public copy(start: number, end: number, register: string) {
-        const insertOp = this.client.copyLocal(start, end, register);
-        if (insertOp) {
-            this.submitSequenceMessage(insertOp);
-        }
-    }
-
-    public groupOperation(groupOp: MergeTree.IMergeTreeGroupMsg) {
+    public groupOperation(groupOp: IMergeTreeGroupMsg) {
         this.client.localTransaction(groupOp);
         this.submitSequenceMessage(groupOp);
     }
@@ -281,7 +263,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
      * does not exist in this sequence
      * @param segment - The segment to get the position of
      */
-    public getPosition(segment: MergeTree.ISegment): number {
+    public getPosition(segment: ISegment): number {
         return this.client.getPosition(segment);
     }
 
@@ -297,8 +279,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     public annotateRange(
         start: number,
         end: number,
-        props: MergeTree.PropertySet,
-        combiningOp?: MergeTree.ICombiningOp) {
+        props: PropertySet,
+        combiningOp?: ICombiningOp) {
         const annotateOp =
             this.client.annotateRangeLocal(start, end, props, combiningOp);
         if (annotateOp) {
@@ -317,15 +299,15 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     public createPositionReference(
         segment: T,
         offset: number,
-        refType: MergeTree.ReferenceType): MergeTree.LocalReference {
-        const lref = new MergeTree.LocalReference(this.client, segment, offset, refType);
-        if (refType !== MergeTree.ReferenceType.Transient) {
+        refType: ReferenceType): LocalReference {
+        const lref = new LocalReference(this.client, segment, offset, refType);
+        if (refType !== ReferenceType.Transient) {
             this.addLocalReference(lref);
         }
         return lref;
     }
 
-    public localRefToPos(localRef: MergeTree.LocalReference) {
+    public localRefToPos(localRef: LocalReference) {
         if (localRef.segment) {
             return localRef.offset + this.getPosition(localRef.segment);
         } else {
@@ -351,13 +333,13 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             remoteClientId);
     }
 
-    public submitSequenceMessage(message: MergeTree.IMergeTreeOp) {
+    public submitSequenceMessage(message: IMergeTreeOp) {
         if (!this.isAttached()) {
             return;
         }
         const translated = makeHandlesSerializable(message, this.serializer, this.handle);
         const metadata = this.client.peekPendingSegmentGroups(
-            message.type === MergeTree.MergeTreeDeltaType.GROUP ? message.ops.length : 1);
+            message.type === MergeTreeDeltaType.GROUP ? message.ops.length : 1);
 
         // if loading isn't complete, we need to cache
         // local ops until loading is complete, and then
@@ -369,11 +351,11 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
     }
 
-    public addLocalReference(lref) {
+    public addLocalReference(lref: LocalReference) {
         return this.client.addLocalReference(lref);
     }
 
-    public removeLocalReference(lref) {
+    public removeLocalReference(lref: LocalReference) {
         return this.client.removeLocalReference(lref);
     }
 
@@ -382,7 +364,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
      * and convert the position to a character position.
      * @param relativePos - Id of marker (may be indirect) and whether position is before or after marker.
      */
-    public posFromRelativePos(relativePos) {
+    public posFromRelativePos(relativePos: IRelativePosition) {
         return this.client.posFromRelativePos(relativePos);
     }
 
@@ -400,13 +382,13 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
      * @param splitRange - Optional. Splits boundary segments on the range boundaries
      */
     public walkSegments<TClientData>(
-        handler: MergeTree.ISegmentAction<TClientData>,
+        handler: ISegmentAction<TClientData>,
         start?: number, end?: number, accum?: TClientData,
         splitRange: boolean = false) {
         return this.client.walkSegments<TClientData>(handler, start, end, accum, splitRange);
     }
 
-    public getStackContext(startPos: number, rangeLabels: string[]) {
+    public getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {
         return this.client.getStackContext(startPos, rangeLabels);
     }
 
@@ -414,7 +396,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return this.client.getCurrentSeq();
     }
 
-    public insertAtReferencePosition(pos: MergeTree.ReferencePosition, segment: T) {
+    public insertAtReferencePosition(pos: ReferencePosition, segment: T) {
         const insertOp = this.client.insertAtReferencePositionLocal(pos, segment);
         if (insertOp) {
             this.submitSequenceMessage(insertOp);
@@ -503,7 +485,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
      * @param end - The end of the range to replace
      * @param segment - The segment that will replace the range
      */
-    protected replaceRange(start: number, end: number, segment: MergeTree.ISegment) {
+    protected replaceRange(start: number, end: number, segment: ISegment) {
         // Insert at the max end of the range when start > end, but still remove the range later
         const insertIndex: number = Math.max(start, end);
 
@@ -512,7 +494,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         if (insert) {
             if (start < end) {
                 const remove = this.client.removeRangeLocal(start, end);
-                this.submitSequenceMessage(MergeTree.createGroupOp(insert, remove));
+                this.submitSequenceMessage(createGroupOp(insert, remove));
             } else {
                 this.submitSequenceMessage(insert);
             }
@@ -530,8 +512,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         if (!this.intervalMapKernel.trySubmitMessage(content, localOpMetadata)) {
             this.submitSequenceMessage(
                 this.client.regeneratePendingOp(
-                    content as MergeTree.IMergeTreeOp,
-                    localOpMetadata as MergeTree.SegmentGroup | MergeTree.SegmentGroup[]));
+                    content as IMergeTreeOp,
+                    localOpMetadata as SegmentGroup | SegmentGroup[]));
         }
     }
 
@@ -650,7 +632,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         rawMessage: ISequencedDocumentMessage) {
         const message = parseHandles(rawMessage, this.serializer);
 
-        const ops: MergeTree.IMergeTreeDeltaOp[] = [];
+        const ops: IMergeTreeDeltaOp[] = [];
         function transfromOps(event: SequenceDeltaEvent) {
             ops.push(...SharedSegmentSequence.createOpsFromDelta(event));
         }
@@ -672,7 +654,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                 stashMessage = {
                     ... message,
                     referenceSequenceNumber: stashMessage.sequenceNumber - 1,
-                    contents: ops.length !== 1 ? MergeTree.createGroupOp(...ops) : ops[0],
+                    contents: ops.length !== 1 ? createGroupOp(...ops) : ops[0],
                 };
             }
 
