@@ -12,7 +12,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:gen && concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:compile": "concurrently npm:tsc npm:build:esnext && npm run build:test",
+    "build:commonjs": "npm run tsc && npm run build:test",
+    "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
@@ -36,8 +37,8 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.0",
-    "@fluidframework/core-interfaces": "^0.40.0-0",
-    "@fluidframework/driver-definitions": "^0.41.0-0",
+    "@fluidframework/core-interfaces": "^0.40.0",
+    "@fluidframework/driver-definitions": "^0.42.0-0",
     "@fluidframework/protocol-definitions": "^0.1026.0-0"
   },
   "devDependencies": {
@@ -46,7 +47,7 @@
     "@fluidframework/container-definitions-0.39.8": "npm:@fluidframework/container-definitions@0.39.8",
     "@fluidframework/container-definitions-0.40.0": "npm:@fluidframework/container-definitions@0.40.0",
     "@fluidframework/container-definitions-0.41.0": "npm:@fluidframework/container-definitions@0.41.0",
-    "@fluidframework/eslint-config-fluid": "^0.24.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^12.19.0",

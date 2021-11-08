@@ -42,6 +42,10 @@ export class TscTask extends LeafTask {
     }
 
     protected addDependentTasks(dependentTasks: LeafTask[]) {
+        if (this.addChildTask(dependentTasks, this.node, "npm run build:gen")) {
+            this.logVerboseDependency(this.node, "build:gen");
+        }
+
         if (this.addChildTask(dependentTasks, this.node, "npm run build:genver")) {
             this.logVerboseDependency(this.node, "build:genver");
         }

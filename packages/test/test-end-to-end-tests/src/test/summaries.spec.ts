@@ -141,9 +141,6 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
         // Validate summary
         assert(!summary.unreferenced, "Root summary should be referenced.");
-
-        assert(summary.tree[".metadata"] === undefined, "Unexpected .metadata blob in summary root.");
-
         assert(summary.tree[channelsTreeName] === undefined, "Unexpected .channels tree in summary root.");
 
         const defaultDataStoreNode = summary.tree[defaultDataStoreId];

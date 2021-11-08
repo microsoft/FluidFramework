@@ -2676,6 +2676,13 @@ declare module "@fluid-experimental/property-properties" {
 
         }
 
+        /**
+         * Switch off validation to increase performance (but you risk modifying read only properties, creating cycles in
+         * the tree, etc...)
+         *
+         * @param enabled - Are the validations enabled?
+         */
+        function enableValidations(enabled : boolean);
     }
     export = PROPERTY_TREE_NS;
 }
