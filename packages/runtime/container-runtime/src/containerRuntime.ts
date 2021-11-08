@@ -47,7 +47,6 @@ import {
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
 import { DataCorruptionError, GenericError } from "@fluidframework/container-utils";
-import { runGarbageCollection } from "@fluidframework/garbage-collector";
 import {
     BlobTreeEntry,
     TreeTreeEntry,
@@ -58,7 +57,6 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
     ISignalMessage,
-    ISnapshotTree,
     ISummaryConfiguration,
     ISummaryContent,
     ISummaryTree,
@@ -114,8 +112,6 @@ import {
     chunksBlobName,
     electedSummarizerBlobName,
     extractSummaryMetadataMessage,
-    getGCVersion,
-    GCVersion,
     IContainerRuntimeMetadata,
     ISummaryMetadataMessage,
     metadataBlobName,
@@ -137,6 +133,13 @@ import {
 } from "./summarizerTypes";
 import { formExponentialFn, Throttler } from "./throttler";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
+import {
+    GarbageCollector,
+    IGarbageCollectionRuntime,
+    IGarbageCollector,
+    IGCStats,
+    IUsedStateStats,
+} from "./garbageCollection";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -186,21 +189,6 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
     // the min of the two will be chosen
     maxAckWaitTime: 120000,
 };
-
-/** This is the current version of garbage collection */
-const GCVersion = 1;
-
-/** The statistics of a garbage collection run */
-export interface IGCStats {
-    /** Total number of nodes in the GC graph */
-    totalNodes: number;
-    /** Number of nodes that have been marked as deleted */
-    deletedNodes: number;
-    /** Total number of data stores in the GC graph */
-    totalDataStores: number;
-    /** Number of data stores that have been marked as deleted */
-    deletedDataStores: number;
-}
 
 export interface IGCRuntimeOptions {
     /* Flag that will disable garbage collection if set to true. */
@@ -285,12 +273,6 @@ interface IRuntimeMessageMetadata {
     batch?: boolean;
 }
 
-// Local storage key to turn GC on / off.
-const runGCKey = "FluidRunGC";
-// Local storage key to turn GC test mode on / off.
-const gcTestModeKey = "FluidGCTestMode";
-// Local storage key to turn GC sweep on / off.
-const runSweepKey = "FluidRunSweep";
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "FluidFlushModeTurnBased";
 
@@ -509,6 +491,7 @@ export const agentSchedulerId = "_scheduler";
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     implements
         IContainerRuntime,
+        IGarbageCollectionRuntime,
         IRuntime,
         ISummarizerRuntime,
         ISummarizerInternalsProvider
@@ -783,20 +766,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly scheduleManager: ScheduleManager;
     private readonly blobManager: BlobManager;
     private readonly pendingStateManager: PendingStateManager;
+    private readonly garbageCollector: IGarbageCollector;
 
     // Local copy of incomplete received chunks.
     private readonly chunkMap: Map<string, string[]>;
 
     private readonly dataStores: DataStores;
 
-    // The current GC version that this container is running.
-    private readonly currentGCVersion = GCVersion;
-    // This is the version of GC data in the latest summary this client has seen.
-    private latestSummaryGCVersion: GCVersion;
-    // This is the source of truth for whether GC is enabled or not.
-    private readonly shouldRunGC: boolean;
-    // This is the source of truth for whether GC sweep phase should run or not.
-    private readonly shouldRunSweep: boolean;
     /**
      * True if generating summaries with isolated channels is
      * explicitly disabled. This only affects how summaries are written,
@@ -808,17 +784,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private static get defaultFlushMode(): FlushMode {
         return getLocalStorageFeatureGate(turnBasedFlushModeKey) ? FlushMode.TurnBased : FlushMode.Immediate;
-    }
-
-    // Tells whether GC is enabled for this document or not. If the summaryGCVersion is > 0, GC is enabled.
-    private get gcEnabled(): boolean {
-        return this.latestSummaryGCVersion > 0;
-    }
-
-    // Tells whether this container is running in GC test mode. If so, unreferenced data stores are immediately
-    // deleted as soon as GC runs.
-    public get gcTestMode(): boolean {
-        return getLocalStorageFeatureGate(gcTestModeKey) ?? this.runtimeOptions.gcOptions?.runGCInTestMode === true;
     }
 
     private get summarizer(): Summarizer {
@@ -843,28 +808,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         super();
 
         this.baseSummaryMessage = metadata?.message;
-        /**
-          * gcFeature in metadata is introduced with v1 in the metadata blob. Forced to 0/disallowed before that.
-          * For existing documents, we get this value from the metadata blob.
-          * For new documents, we get this value based on the gcAllowed flag in runtimeOptions.
-          */
-        const prevSummaryGCVersion = existing ? getGCVersion(metadata) : undefined;
-        // Default to false for now.
-        this.latestSummaryGCVersion = prevSummaryGCVersion ??
-            (this.runtimeOptions.gcOptions.gcAllowed === true ? this.currentGCVersion : 0);
-
-        // Whether GC should run or not. Can override with localStorage flag.
-        this.shouldRunGC = getLocalStorageFeatureGate(runGCKey) ?? (
-            // GC must be enabled for the document.
-            this.gcEnabled
-            // Must not be disabled by runtime option.
-            && !this.runtimeOptions.gcOptions.disableGC
-        );
-
-        // Whether GC sweep phase should run or not. If this is false, only GC mark phase is run. Can override with
-        // localStorage flag.
-        this.shouldRunSweep = this.shouldRunGC &&
-            (getLocalStorageFeatureGate(runSweepKey) ?? this.runtimeOptions.gcOptions.runSweep === true);
 
         // Default to false (enabled).
         this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? false;
@@ -876,6 +819,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
 
         this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
+
+        this.garbageCollector = GarbageCollector.create(
+            this,
+            this.runtimeOptions.gcOptions,
+            (unusedRoutes: string[]) => this.dataStores.deleteUnusedRoutes(unusedRoutes),
+            this._logger,
+            existing,
+            metadata,
+        );
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         this.summarizerNode = createRootSummarizerNodeWithGC(
@@ -893,8 +845,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // Must set to true to throw on any data stores failure that was too severe to be handled.
                 // We also are not decoding the base summaries at the root.
                 throwOnFailure: true,
-                // If GC is disabled, let the summarizer node know so that it does not track GC state.
-                gcDisabled: !this.shouldRunGC,
+                // If GC should not run, let the summarizer node know so that it does not track GC state.
+                gcDisabled: !this.garbageCollector.shouldRunGC,
                 // The max duration for which objects can be unreferenced before they are eligible for deletion.
                 maxUnreferencedDurationMs: this.runtimeOptions.gcOptions.maxUnreferencedDurationMs,
             },
@@ -1167,7 +1119,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 }
             } else if (requestParser.pathParts.length > 0) {
                 /**
-                 * If GC is enabled and this an external app request with "externalRequest" header, we need to return
+                 * If GC should run and this an external app request with "externalRequest" header, we need to return
                  * an error if the data store being requested is marked as unreferenced as per the data store's initial
                  * summary.
                  *
@@ -1175,7 +1127,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                  * and marked as unreferenced by GC. Returning an error will fail to load the data store for the app.
                  */
                 const wait = typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
-                const dataStore = request.headers?.externalRequest && this.shouldRunGC
+                const dataStore = request.headers?.externalRequest && this.garbageCollector.shouldRunGC
                     ? await this.getDataStoreIfInitiallyReferenced(id, wait)
                     : await this.getDataStore(id, wait);
                 const subRequest = requestParser.createSubRequest(1);
@@ -1192,19 +1144,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    private get shouldWriteMetadata(): boolean {
-        // We need the metadata blob if either isolated channels are enabled
-        // or GC is enabled at the document level.
-        return !this.disableIsolatedChannels || this.gcEnabled;
-    }
-
     private formMetadata(): IContainerRuntimeMetadata {
         return {
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
-            // If GC is disabled for this document, the gcFeature is whatever we loaded from. If GC is enabled,
-            // we always write the current GC version as that is what is used to generate the GC data.
-            gcFeature: this.gcEnabled ? this.currentGCVersion : this.latestSummaryGCVersion,
+            gcFeature: this.garbageCollector.gcSummaryFeatureVersion,
             // The last message processed at the time of summary. If there are no messages, nothing has changed from
             // the base summary we loaded from. So, use the message from its metadata blob.
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.baseSummaryMessage,
@@ -1238,8 +1182,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @deprecated - Use summarize to get summary of the container runtime.
      */
     public async snapshot(): Promise<ITree> {
-        if (this.shouldRunGC) {
-            await this.collectGarbage(this.logger, true /* fullGC */);
+        if (this.garbageCollector.shouldRunGC) {
+            await this.collectGarbage({ logger: this.logger, fullGC: true /* fullGC */ });
         }
 
         const root: ITree = { entries: [] };
@@ -1251,9 +1195,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             root.entries.push(new TreeTreeEntry(channelsTreeName, { entries }));
         }
 
-        if (this.shouldWriteMetadata) {
-            root.entries.push(new BlobTreeEntry(metadataBlobName, JSON.stringify(this.formMetadata())));
-        }
+        root.entries.push(new BlobTreeEntry(metadataBlobName, JSON.stringify(this.formMetadata())));
 
         if (this.chunkMap.size > 0) {
             root.entries.push(new BlobTreeEntry(chunksBlobName, JSON.stringify([...this.chunkMap])));
@@ -1263,9 +1205,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
-        if (this.shouldWriteMetadata) {
-            addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
-        }
+        addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
         if (this.chunkMap.size > 0) {
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
@@ -1675,57 +1615,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.getAbsoluteUrl(relativeUrl);
     }
 
-    /**
-     * Runs garbage collection and udpates the reference / used state of the nodes in the container.
-     * @returns the number of data stores that have been marked as unreferenced.
-     */
-    public async collectGarbage(logger: ITelemetryLogger, fullGC: boolean = false): Promise<IGCStats> {
-        return PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
-            const gcStats: {
-                deletedNodes?: number,
-                totalNodes?: number,
-                deletedDataStores?: number,
-                totalDataStores?: number,
-            } = {};
-            // Get the container's GC data and run GC on the reference graph in it.
-            const gcData = await this.dataStores.getGCData(fullGC);
-            const { referencedNodeIds, deletedNodeIds } = runGarbageCollection(
-                gcData.gcNodes, [ "/" ],
-                this.logger,
-            );
-
-            // Update our summarizer node's used routes. Updating used routes in summarizer node before
-            // summarizing is required and asserted by the the summarizer node. We are the root and are
-            // always referenced, so the used routes is only self-route (empty string).
-            this.summarizerNode.updateUsedRoutes([""]);
-
-            // Remove this node's route ("/") and notify data stores of routes that are used in it.
-            const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
-            const { dataStoreCount, unusedDataStoreCount } = this.dataStores.updateUsedRoutes(
-                usedRoutes,
-                // For now, we use the timestamp of the last op for gcTimestamp. However, there can be cases where
-                // we don't have an op (on demand summaries for instance). In those cases, we will use the timestamp
-                // of this client's connection - https://github.com/microsoft/FluidFramework/issues/7152.
-                this.deltaManager.lastMessage?.timestamp,
-            );
-
-            // Update stats to be reported in the peformance event.
-            gcStats.deletedNodes = deletedNodeIds.length;
-            gcStats.totalNodes = referencedNodeIds.length + deletedNodeIds.length;
-            gcStats.deletedDataStores = unusedDataStoreCount;
-            gcStats.totalDataStores = dataStoreCount;
-
-            // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
-            // involving access to deleted data.
-            if (this.gcTestMode) {
-                this.dataStores.deleteUnusedRoutes(deletedNodeIds);
-            }
-            event.end(gcStats);
-            return gcStats as IGCStats;
-        },
-        { end: true, cancel: "error" });
-    }
-
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const summarizeResult = await this.dataStores.summarize(fullTree, trackState);
         let pathPartsForChildren: string[] | undefined;
@@ -1755,15 +1644,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         trackState?: boolean,
         /** True to run garbage collection before summarizing; defaults to true */
         runGC?: boolean,
-        /** True to generate full GC data; defaults to false */
+        /** True to generate full GC data */
         fullGC?: boolean,
-        /** True to run GC sweep phase after the mark phase; defaults to false */
+        /** True to run GC sweep phase after the mark phase */
         runSweep?: boolean,
     }): Promise<ISummaryTreeWithStats> {
-        const { summaryLogger, fullTree = false, trackState = true, runGC = true, fullGC = false } = options;
+        const { summaryLogger, fullTree = false, trackState = true, runGC = true, runSweep, fullGC } = options;
 
         if (runGC) {
-            await this.collectGarbage(summaryLogger, fullGC);
+            await this.collectGarbage({ logger: summaryLogger, runSweep, fullGC });
         }
 
         const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
@@ -1771,6 +1660,53 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             0x12f /* "Container Runtime's summarize should always return a tree" */);
 
         return summarizeResult as ISummaryTreeWithStats;
+    }
+
+    /**
+     * Implementation of IGarbageCollectionRuntime::getGCData.
+     * Generates and returns the GC data for this container.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
+     */
+    public async getGCData(fullGC?: boolean): Promise<IGarbageCollectionData> {
+        return this.dataStores.getGCData(fullGC);
+    }
+
+    /**
+     * Implementation of IGarbageCollectionRuntime::updateUsedRoutes.
+     * After GC has run, called to notify this container's nodes of routes that are used in it.
+     * @param usedRoutes - The routes that are used in all nodes in this Container.
+     * @returns the statistics of the used state of the data stores.
+     */
+    public updateUsedRoutes(usedRoutes: string[]): IUsedStateStats {
+        // Update our summarizer node's used routes. Updating used routes in summarizer node before
+        // summarizing is required and asserted by the the summarizer node. We are the root and are
+        // always referenced, so the used routes is only self-route (empty string).
+        this.summarizerNode.updateUsedRoutes([""]);
+
+        return this.dataStores.updateUsedRoutes(
+            usedRoutes,
+            // For now, we use the timestamp of the last op for gcTimestamp. However, there can be cases where
+            // we don't have an op (on demand summaries for instance). In those cases, we will use the timestamp
+            // of this client's connection - https://github.com/microsoft/FluidFramework/issues/7152.
+            this.deltaManager.lastMessage?.timestamp,
+        );
+    }
+
+    /**
+     * Runs garbage collection and udpates the reference / used state of the nodes in the container.
+     * @returns the statistics of the garbage collection run.
+     */
+    public async collectGarbage(
+        options: {
+            /** Logger to use for logging GC events */
+            logger?: ITelemetryLogger,
+            /** True to run GC sweep phase after the mark phase */
+            runSweep?: boolean,
+            /** True to generate full GC data */
+            fullGC?: boolean,
+        },
+    ): Promise<IGCStats> {
+        return this.garbageCollector.collectGarbage(options);
     }
 
     /**
@@ -1845,24 +1781,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error: continueResult.error };
             }
 
-            // If the GC version that this container is loaded from differs from the current GC version that this
-            // container is running, we need to regenerate the GC data and run full summary. This is used to handle
-            // scenarios where we upgrade the GC version because we cannot trust the data from the previous GC version.
-            let forceRegenerateData = false;
-            if (this.gcEnabled && this.latestSummaryGCVersion !== this.currentGCVersion) {
-                forceRegenerateData = true;
-            }
-
             const trace = Trace.start();
             let summarizeResult: ISummaryTreeWithStats;
             try {
                 summarizeResult = await this.summarize({
                     summaryLogger,
-                    fullTree: fullTree || forceRegenerateData,
+                    // If the GC version changed since the last summary was submitted, we need to regenerate summary by
+                    // running full summary. This is used to handle scenarios where we upgrade the GC version because we
+                    // cannot trust the data from the previous GC version anymore.
+                    fullTree: fullTree || this.garbageCollector.hasGCVersionChanged,
                     trackState: true,
-                    runGC: this.shouldRunGC,
-                    fullGC: this.runtimeOptions.gcOptions.runFullGC || forceRegenerateData,
-                    runSweep: this.shouldRunSweep,
+                    runGC: this.garbageCollector.shouldRunGC,
                 });
             } catch (error) {
                 return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error };
@@ -2215,18 +2144,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryLogger,
         );
 
-        // Update the summaryGCVersion if GC is enabled and the latest summary tracked by this container was updated.
-        if (this.gcEnabled && result.latestSummaryUpdated) {
-            // If the summary was tracked by this client, it was the one that generated the summary in the first place.
-            // Update the summaryGCVersion to the currentGCVersion of this client.
-            if (result.wasSummaryTracked) {
-                this.latestSummaryGCVersion = this.currentGCVersion;
-                return;
-            }
-            // If the summary was not tracked by this client, update summaryGCVersion from the snapshot that was used
-            // to update the latest summary.
-            await this.updateSummaryGCVersionFromSnapshot(result.snapshot);
-        }
+        // Notify the garbage collector so it can update its latest summary state.
+        await this.garbageCollector.latestSummaryStateRefreshed(result, readAndParseBlob);
     }
 
     /**
@@ -2252,28 +2171,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryLogger,
         );
 
-        // Update the summaryGCVersion if GC is enabled and the latest summary tracked by this container was updated.
-        if (this.gcEnabled && result.latestSummaryUpdated) {
-            // Since there is not proposal handle for this summary, it should not have been tracked.
-            assert(!result.wasSummaryTracked,
-                0x1fd /* "Summary without proposal handle should not have been tracked" */);
-            // Update summaryGCVersion from the snapshot that was used to update the latest summary.
-            await this.updateSummaryGCVersionFromSnapshot(result.snapshot);
-        }
+        // Notify the garbage collector so it can update its latest summary state.
+        await this.garbageCollector.latestSummaryStateRefreshed(result, readAndParseBlob);
 
         return snapshotRefSeq;
-    }
-
-    /**
-     * Updates the summary GC version as per the metadata blob in given snapshot.
-     */
-    private async updateSummaryGCVersionFromSnapshot(snapshot: ISnapshotTree) {
-        assert(this.gcEnabled, 0x25a /* "GC version should not be updated when GC is disabled" */);
-        const metadataBlobId = snapshot.blobs[metadataBlobName];
-        if (metadataBlobId) {
-            const metadata = await readAndParse<IContainerRuntimeMetadata>(this.storage, metadataBlobId);
-            this.latestSummaryGCVersion = getGCVersion(metadata);
-        }
     }
 
     private async fetchSnapshotFromStorage(versionId: string, logger: ITelemetryLogger, event: ITelemetryGenericEvent) {

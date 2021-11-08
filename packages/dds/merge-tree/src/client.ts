@@ -25,7 +25,6 @@ import {
     Marker,
     MergeTree,
     RangeStackMap,
-    RegisterCollection,
     SegmentGroup,
 } from "./mergeTree";
 import { MergeTreeDeltaCallback } from "./mergeTreeDeltaCallback";
@@ -33,9 +32,7 @@ import {
     createAnnotateMarkerOp,
     createAnnotateRangeOp,
     createGroupOp,
-    createInsertFromRegisterOp,
     createInsertSegmentOp,
-    createInsertToRegisterOp,
     createRemoveRangeOp,
 } from "./opBuilder";
 import {
@@ -66,7 +63,6 @@ export class Client {
     public verboseOps = false;
     public noVerboseRemoteAnnotate = false;
     public measureOps = false;
-    public registerCollection = new RegisterCollection();
     public accumTime = 0;
     public localTime = 0;
     public localOps = 0;
@@ -201,15 +197,13 @@ export class Client {
     }
 
     /**
-     * Removes the range and puts the content of the removed range in a register
-     * if a register name is provided
+     * Removes the range
      *
      * @param start - The inclusive start of the range to remove
      * @param end - The exclusive end of the range to remove
-     * @param register - Optional. The name of the register to store the removed range in
      */
-    public removeRangeLocal(start: number, end: number, register?: string) {
-        const removeOp = createRemoveRangeOp(start, end, register);
+    public removeRangeLocal(start: number, end: number) {
+        const removeOp = createRemoveRangeOp(start, end);
 
         if (this.applyRemoveRangeOp({ op: removeOp })) {
             return removeOp;
@@ -270,32 +264,6 @@ export class Client {
             traceStart);
 
         return op;
-    }
-
-    /**
-     * @param pos - The position to insert the register contents at
-     * @param register - The name of the register to insert the value of
-     */
-    public pasteLocal(pos: number, register: string) {
-        const insertOp = createInsertFromRegisterOp(pos, register);
-        if (this.applyInsertOp({ op: insertOp })) {
-            return insertOp;
-        }
-        return undefined;
-    }
-
-    /**
-     *
-     * @param start - he inclusive start of the range to copy into the register
-     * @param end - The exclusive end of the range to copy into the register
-     * @param register - The name of the register to insert the range contents into
-     */
-    public copyLocal(start: number, end: number, register: string) {
-        const insertOp = createInsertToRegisterOp(start, end, register);
-        if (this.applyInsertOp({ op: insertOp })) {
-            return insertOp;
-        }
-        return undefined;
     }
 
     public walkSegments<TClientData>(handler: ISegmentAction<TClientData>,
@@ -384,11 +352,6 @@ export class Client {
             return false;
         }
 
-        if (op.register) {
-            // Cut
-            this.copy(range, op.register, clientArgs);
-        }
-
         let traceStart: Trace | undefined;
         if (this.measureOps) {
             traceStart = Trace.start();
@@ -461,21 +424,6 @@ export class Client {
         let segments: ISegment[] | undefined;
         if (op.seg) {
             segments = [this.specToSegment(op.seg)];
-        } else if (op.register) {
-            if (range.end) {
-                this.copy(range, op.register, clientArgs);
-                // Enqueue an empty segment group to be dequeued on ack
-                //
-                if (clientArgs.sequenceNumber === UnassignedSequenceNumber) {
-                    this.mergeTree.pendingSegments!.enqueue(
-                        { segments: [], localSeq: this.getCollabWindow().localSeq },
-                    );
-                }
-                return true;
-            }
-            segments = this.registerCollection.get(
-                this.getLongClientId(clientArgs.clientId),
-                op.register);
         }
 
         if (!segments || segments.length === 0) {
@@ -628,21 +576,6 @@ export class Client {
                 sequenceNumber: opArgs.sequencedMessage.sequenceNumber,
             };
         }
-    }
-
-    /**
-     * @param range - The range to copy into the register
-     * @param register - The name of the register to copy to range into
-     * @param clientArgs - The client args to use when evaluating the range for copying
-     */
-    private copy(range: IIntegerRange, register: string, clientArgs: IMergeTreeClientSequenceArgs) {
-        const segs = this.mergeTree.cloneSegments(
-            clientArgs.referenceSequenceNumber,
-            clientArgs.clientId,
-            range.start,
-            range.end);
-        this.registerCollection.set(
-            this.getLongClientId(clientArgs.clientId), register, segs);
     }
 
     private ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs) {

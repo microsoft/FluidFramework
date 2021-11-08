@@ -9,7 +9,7 @@
  */
 import isEmpty from "lodash/isEmpty";
 import isNumber from "lodash/isNumber";
-import cloneDeep from "lodash/cloneDeep";
+import {copy as cloneDeep} from "fastest-json-copy";
 import range from "lodash/range";
 
 

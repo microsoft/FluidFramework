@@ -52,7 +52,7 @@ function readOpsSection(node: NodeCore) {
     for (let i = 0; i < records.deltas.length; ++i) {
         ops.push(JSON.parse(records.deltas.getString(i)));
     }
-    assert(records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber, "Validate first op seq number");
+    assert(records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber, 0x280 /* "Validate first op seq number" */);
     return ops;
 }
 
@@ -82,7 +82,7 @@ function readTreeSection(node: NodeCore) {
         if (records.unreferenced !== undefined) {
             assertBoolInstance(records.unreferenced, "Unreferenced flag should be bool");
             const unreferenced = records.unreferenced.valueOf();
-            assert(unreferenced, "Unreferenced if present should be true");
+            assert(unreferenced, 0x281 /* "Unreferenced if present should be true" */);
             snapshotTree.unreferenced = unreferenced;
         }
     }

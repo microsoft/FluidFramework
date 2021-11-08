@@ -4,8 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { MergeTree, MergeTreeDeltaType, MergeTreeMaintenanceType, ReferenceType, TextSegment } from "../";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
+import { MergeTree } from "../mergeTree";
+import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
+import {
+    MergeTreeDeltaType,
+    ReferenceType,
+} from "../ops";
+import { TextSegment } from "../textSegment";
 import { countOperations, insertMarker, insertText } from "./testUtils";
 
 describe("MergeTree", () => {
