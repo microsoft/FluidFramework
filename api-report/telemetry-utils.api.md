@@ -67,7 +67,6 @@ export const hasErrorInstanceId: (x: any) => x is {
 
 // @public
 export interface IFluidErrorAnnotations {
-    errorCodeIfNone?: string;
     props?: ITelemetryProperties;
 }
 
@@ -246,6 +245,12 @@ export class ThresholdCounter {
     send(eventName: string, value: number): void;
     sendIfMultiple(eventName: string, value: number): void;
     }
+
+// @public
+export function wrapError<T extends IFluidErrorBase>(innerError: unknown, newErrorFn: (message: string) => T): T;
+
+// @public
+export function wrapErrorAndLog<T extends IFluidErrorBase>(innerError: unknown, newErrorFn: (message: string) => T, logger: ITelemetryLogger): T;
 
 
 // (No @packageDocumentation comment for this package)

@@ -14,6 +14,7 @@ import {
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent, LoggingError, ChildLogger } from "@fluidframework/telemetry-utils";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
     IAckSummaryResult,
     INackSummaryResult,
@@ -219,10 +220,15 @@ export class SummaryGenerator {
             const retryAfterSeconds = getRetryDelaySecondsFromError(error);
 
             // Report any failure as an error unless it was due to cancellation (like "disconnected" error)
+            // If failure happened on upload, we may not yet realized that socket disconnected, so check
+            // offlineError too.
+            const category = cancellationToken.cancelled || error?.errorType === DriverErrorType.offlineError ?
+                "generic" : "error";
+
             summarizeEvent.cancel({
                  ...properties,
                  reason: errorCode,
-                 category: cancellationToken.cancelled ? "generic" : "error",
+                 category,
                  retryAfterSeconds,
             }, error);
             resultsBuilder.fail(getFailMessage(errorCode), error, nackSummaryResult, retryAfterSeconds);

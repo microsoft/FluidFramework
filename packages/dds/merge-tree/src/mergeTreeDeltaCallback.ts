@@ -4,9 +4,13 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IMergeTreeGroupMsg } from "./ops";
+import {
+    IMergeTreeGroupMsg,
+    IMergeTreeOp,
+    MergeTreeDeltaType,
+} from "./ops";
 import { PropertySet } from "./properties";
-import { IMergeTreeOp, ISegment, MergeTreeDeltaType } from "./";
+import { ISegment } from "./mergeTree";
 
 export type MergeTreeDeltaOperationType =
     MergeTreeDeltaType.ANNOTATE | MergeTreeDeltaType.INSERT | MergeTreeDeltaType.REMOVE;

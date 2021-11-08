@@ -56,6 +56,13 @@ params:
   dateformShort: "Jan 2"
   githubRepo: "microsoft/FluidFramework"
   twitterHandle: "fluidframework"
+  banner:
+    showBanner: true # show or hide the banner completely
+    bannerClose: false # show or hide the close button on the banner
+    version: "0.50"
+    urlRef: "docs/updates/v0.50.md"
+    message: | # if set, this will override the release notes updates
+      [Azure Fluid Relay](/docs/deployment/azure-frs/) is available in _Public Preview_!
 
 menu:
   main:

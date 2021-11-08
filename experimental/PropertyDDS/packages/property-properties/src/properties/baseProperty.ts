@@ -1063,16 +1063,23 @@ export abstract class BaseProperty {
      *     must not appear)
      * @param in_filteringOptions
      *    The filtering options to consider while deserializing the property.
+     * @param in_createChangeSet
+     *    Should a changeset be created for this deserialization?
+     * @param in_reportToView
+     *    Usually the dirtying should be reported to the view and trigger a modified
+     *    event there. This can be prevented via this flag.
      * @throws if called on a read-only property.
      * @returns ChangeSet with the changes that actually were performed during the
      *     deserialization
      */
     deserialize(
         in_serializedObj: SerializedChangeSet,
-        in_filteringOptions = {}
+        in_filteringOptions = {},
+        in_createChangeSet = true,
+        in_reportToView = false
     ): SerializedChangeSet {
         this._checkIsNotReadOnly(false);
-        return this._deserialize(in_serializedObj, true, in_filteringOptions);
+        return this._deserialize(in_serializedObj, in_reportToView, in_filteringOptions, in_createChangeSet);
     };
 
     /**
@@ -1080,17 +1087,20 @@ export abstract class BaseProperty {
      *
      * @param in_serializedObj - The serialized changeset to apply. This
      *     has to be a normalized change-set (only containing inserts. Removes and Modifies are forbidden).
-     * @param in_reportToView - Usually the dirtying should be reported to the checkout view
-     *     and  a modified event there. When batching updates, this can be prevented via this flag.
+     * @param in_reportToView - Usually the dirtying should be reported to the view
+     *     and trigger a modified event there. When batching updates, this can be prevented via this flag.
      * @param in_filteringOptions
      *    The filtering options to consider while deserializing the property.
+     * @param in_createChangeSet
+     *    Should a changeset be created for this deserialization?
      * @returns ChangeSet with the changes that actually were performed during the
      *     deserialization
      */
     _deserialize(
         in_serializedObj: SerializedChangeSet,
         in_reportToView: boolean,
-        in_filteringOptions = {}
+        in_filteringOptions = {},
+        in_createChangeSet = true,
     ): SerializedChangeSet {
         return {};
     };
