@@ -107,7 +107,7 @@ export class EnumProperty extends Int32Property {
      *                since that is not aplicable here, this param is ignored
      * @return {string} The typeid
      */
-    getFullTypeid(in_hideCollection) {
+    getFullTypeid(in_hideCollection = false) {
         return TypeIdHelper.createSerializationTypeId(this._typeid, 'single', true);
     };
 

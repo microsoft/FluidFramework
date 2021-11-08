@@ -765,12 +765,12 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             assert.equal(serialized2.length, 3, "Incorrect interval collection size in container 2");
             assert.equal(serialized3.length, 3, "Incorrect interval collection size in container 3");
 
-            const interval1From3 = serialized3[0] as ISerializedInterval;
+            const interval1From3 = serialized3[0];
             assert(interval1From3.properties);
             const comment1From3 = await (interval1From3.properties.story as IFluidHandle<SharedString>).get();
             assert.equal(
                 comment1From3.getText(0, 12), "a comment...", "Incorrect text in interval collection's shared string");
-            const interval3From3 = serialized3[2] as ISerializedInterval;
+            const interval3From3 = serialized3[2];
             assert(interval3From3.properties);
             const mapFrom3 = await (interval3From3.properties.story as IFluidHandle<SharedMap>).get();
             assert.equal(

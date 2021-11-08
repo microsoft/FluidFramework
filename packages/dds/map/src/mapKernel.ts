@@ -277,8 +277,7 @@ export class MapKernel {
         return new Promise<T>((resolve) => {
             const callback = (changed: IValueChanged) => {
                 if (key === changed.key) {
-                    // eslint-disable-next-line max-len
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     resolve(this.get<T>(changed.key)!);
                     this.eventEmitter.removeListener("valueChanged", callback);
                 }

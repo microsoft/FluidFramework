@@ -19,6 +19,7 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
+import { LeaderElection } from "./leaderElection";
 
 export interface IRunConfig {
     runId: number,
@@ -410,6 +411,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     public async run(config: IRunConfig, reset: boolean) {
         const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
             config, reset, this.root, this.runtime, this.context.containerRuntime);
+
+        const leaderElection = new LeaderElection(this.runtime);
+        leaderElection.setupLeaderElection();
 
          // At every moment, we want half the client to be concurrent writers, and start and stop
         // in a rotation fashion for every cycle.

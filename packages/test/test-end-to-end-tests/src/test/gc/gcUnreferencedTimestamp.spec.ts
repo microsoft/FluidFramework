@@ -16,6 +16,7 @@ import {
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import {
     ISummaryTree,
+    SummaryObject,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, IGarbageCollectionSummaryDetails } from "@fluidframework/runtime-definitions";
@@ -92,25 +93,34 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
     }
 
     /**
-     * Generates a summary and returns the unreferenced timestamp for the data store with the given id in the summary.
-     * If the data store is referenced, the ureferenced timestamp is undefined.
+     * Generate and submit a summary. Return the data store channels summary tree.
      */
-    async function getDataStoreUnreferencedTimestamp(
+    async function getChannelsSummary(
         summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
-        dataStoreId: string,
-    ): Promise<number | undefined> {
+    ) {
         const summaryResult = await submitAndAckSummary(provider, summarizerClient, logger, true /* fullTree */);
         latestAckedSummary = summaryResult.ackedSummary;
-
         assert(
             latestSummaryContext && latestSummaryContext.referenceSequenceNumber >= summaryResult.summarySequenceNumber,
             `Did not get expected summary. Expected: ${summaryResult.summarySequenceNumber}. ` +
             `Actual: ${latestSummaryContext?.referenceSequenceNumber}.`,
         );
         assert(latestUploadedSummary !== undefined, "Did not get a summary");
+        return (latestUploadedSummary.tree[channelsTreeName] as ISummaryTree)?.tree ?? latestUploadedSummary.tree;
+    }
 
-        const channelsTree =
-            (latestUploadedSummary.tree[channelsTreeName] as ISummaryTree)?.tree ?? latestUploadedSummary.tree;
+    /**
+     * Returns the unreferenced timestamp for the data store with the given id. If the data store is referenced, the
+     * ureferenced timestamp is undefined.
+     * If channelsSummary parameter is passed, get the unreferenced timestamp off of it. If it is undefined, generate
+     * and submit a summary, and get the data store channels summary tree first.
+     */
+    async function getDataStoreUnreferencedTimestamp(
+        summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
+        dataStoreId: string,
+        channelsSummary?: { [path: string]: SummaryObject },
+    ): Promise<number | undefined> {
+        const channelsTree = channelsSummary ?? await getChannelsSummary(summarizerClient);
         for (const [ id, summaryObject ] of Object.entries(channelsTree)) {
             if (id === dataStoreId) {
                 assert(
@@ -207,6 +217,96 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         assert(unrefTimestamp3 !== undefined, `new data store should still have unreferenced timestamp`);
         assert.strictEqual(unrefTimestamp2, unrefTimestamp3, "The unreferenced timestamp should not have changed");
 
+    // This test has increased timeout because it waits for multiple summaries to be uploaded to server. It then also
+    // waits for those summaries to be ack'd. This may take a while.
+    }).timeout(20000);
+
+    /**
+     * This scenario is currently broken. Re-enable test once the following item is completed -
+     * https://github.com/microsoft/FluidFramework/issues/7924
+     */
+    it.skip(`updates unreferenced timestamp when data store transitions between ` +
+       `unreferenced -> referenced -> unreferenced between summaries`, async () => {
+        const summarizerClient = await getNewSummarizer();
+
+        // Create a new data store and mark it as referenced by storing its handle in a referenced DDS.
+        const newDataStore = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
+        mainDataStore._root.set("newDataStore", newDataStore.handle);
+        await provider.ensureSynchronized();
+
+        // Mark the data store as unreferenced by deleting its handle from the DDS and validate that it now has an
+        // unreferenced timestamp.
+        mainDataStore._root.delete("newDataStore");
+        const unrefTimestamp1 = await getDataStoreUnreferencedTimestamp(summarizerClient, newDataStore.id);
+        assert(unrefTimestamp1 !== undefined, `data store should have unreferenced timestamp after being unreferenced`);
+
+        // Store the data store's handle in the referenced DDS again and the delete it again. The data store will
+        // transition from unreferened -> referenced -> unreferenced before the next summary happens. The data store
+        // will still be unreferenced but the unreferenced timestamp should update.
+        mainDataStore._root.set("newDataStore", newDataStore.handle);
+        await provider.ensureSynchronized();
+        mainDataStore._root.delete("newDataStore");
+
+        const unrefTimestamp2 = await getDataStoreUnreferencedTimestamp(summarizerClient, newDataStore.id);
+        assert(unrefTimestamp2 !== undefined, `data store should still have unreferenced timestamp`);
+        assert(unrefTimestamp2 > unrefTimestamp1, `new timestamp should be greater that the previous one`);
+    // This test has increased timeout because it waits for multiple summaries to be uploaded to server. It then also
+    // waits for those summaries to be ack'd. This may take a while.
+    }).timeout(20000);
+
+    /**
+     * Tests the following scenario where A, B and C are data stores:
+     * 1. Summary 1 at t1. Reference graph: A -> B -> C.
+     * 2. Summary 2 at t2. Reference graph: A    B (t2) -> C (t2). B and C have unreferenced time t2.
+     * 3. Op adds reference from A -> B.
+     *    Op removes reference from B -> C.
+     *    Op removes reference from A -> B.
+     *    A client could have added in-memory references to both B and C.
+     * 4. Summary 3 at t3. Reference graph: A    B (t3)    C (t3).
+     * Validates that the unreferenced time for B and C are t3.
+     *
+     * This scenario is currently broken. Re-enable test once the following item is completed -
+     * https://github.com/microsoft/FluidFramework/issues/7924
+    */
+    it.skip(`updates unreferenced timestamp when data store has outboung referenes, and transitions between ` +
+       `unreferenced -> referenced -> unreferenced between summaries`, async () => {
+        const summarizerClient = await getNewSummarizer();
+        const dataStoreA = mainDataStore;
+
+        // Create data stores A and B and mark them referenced as follows by storing their handles accordingly:
+        // dataStoreA -> dataStoreB -> dataStoreC
+        const dataStoreB = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
+        const dataStoreC = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
+        dataStoreB._root.set("dataStoreC", dataStoreC.handle);
+        dataStoreA._root.set("dataStoreB", dataStoreB.handle);
+        await provider.ensureSynchronized();
+
+        // Remove the reference to dataStoreB which marks both B and C as unreferenced.
+        dataStoreA._root.delete("dataStoreB");
+
+        // Validate that both B and C are both marked unreferenced at the same time.
+        const channelsSummary1 = await getChannelsSummary(summarizerClient);
+        const dsBTime1 = await getDataStoreUnreferencedTimestamp(summarizerClient, dataStoreB.id, channelsSummary1);
+        assert(dsBTime1 !== undefined, `data store B should have unreferenced timestamp after being unreferenced`);
+        const dsCTime1 = await getDataStoreUnreferencedTimestamp(summarizerClient, dataStoreC.id, channelsSummary1);
+        assert(dsBTime1 === dsCTime1, `data stores B and C should have the same unreferenced time`);
+
+        // Now update the references via ops as follows:
+        // 1. Add reference from A -> B
+        // 2. Remove reference from B -> C
+        // 3. Remove reference from A -> B
+        dataStoreA._root.set("dataStoreB", dataStoreB.handle);
+        await provider.ensureSynchronized();
+        dataStoreB._root.delete("dataStoreC");
+        dataStoreA._root.delete("dataStoreB");
+
+        // Validate that both B and C's unreferenced timestamps are updated and are the same.
+        const channelsSummary2 = await getChannelsSummary(summarizerClient);
+        const dsBTime2 = await getDataStoreUnreferencedTimestamp(summarizerClient, dataStoreB.id, channelsSummary2);
+        assert(dsBTime2 !== undefined, `data store B should still have unreferenced timestamp`);
+        assert(dsBTime2 > dsBTime1, `The unreferenced timestamp should have been updated`);
+        const dsCTime2 = await getDataStoreUnreferencedTimestamp(summarizerClient, dataStoreC.id, channelsSummary2);
+        assert(dsBTime2 === dsCTime2, `data stores B and C should have the same unreferenced time`);
     // This test has increased timeout because it waits for multiple summaries to be uploaded to server. It then also
     // waits for those summaries to be ack'd. This may take a while.
     }).timeout(20000);

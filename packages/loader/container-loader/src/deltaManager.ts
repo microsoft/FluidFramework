@@ -23,7 +23,13 @@ import {
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { assert, Deferred, performance, TypedEventEmitter } from "@fluidframework/common-utils";
-import { TelemetryLogger, safeRaiseEvent, logIfFalse, normalizeError } from "@fluidframework/telemetry-utils";
+import {
+    TelemetryLogger,
+    safeRaiseEvent,
+    logIfFalse,
+    normalizeError,
+    wrapError,
+} from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -65,7 +71,6 @@ import {
     ThrottlingWarning,
     CreateProcessingError,
     DataCorruptionError,
-    wrapError,
     GenericError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
@@ -958,8 +963,11 @@ export class DeltaManager
             this.deltaStorage = await docService.connectToDeltaStorage();
         }
 
-        let controller = this.closeAbortController;
-        let listenerToClear: ((op: ISequencedDocumentMessage) => void) | undefined;
+        assert(this.closeAbortController.signal.onabort === null, 0x1e8 /* "reentrancy" */);
+        const controller = new AbortController();
+        this.closeAbortController.signal.onabort = () => controller.abort();
+
+        let cancelFetch: (op: ISequencedDocumentMessage) => boolean;
 
         if (to !== undefined) {
             const lastExpectedOp = to - 1; // make it inclusive!
@@ -978,26 +986,34 @@ export class DeltaManager
                 return;
             }
 
-            controller = new AbortController();
-
-            assert(this.closeAbortController.signal.onabort === null, 0x1e8 /* "reentrancy" */);
-            this.closeAbortController.signal.onabort = () => controller.abort();
-
-            const listener = (op: ISequencedDocumentMessage) => {
-                // Be prepared for the case where webSocket would receive the ops that we are trying to fill through
-                // storage. Ideally it should never happen (i.e. ops on socket are always ordered, and thus once we
-                // detected gap, this gap can't be filled in later on through websocket).
-                // And in practice that does look like the case. The place where this code gets hit is if we lost
-                // connection and reconnected (likely to another box), and new socket's initial ops contains these ops.
-                assert(op.sequenceNumber === this.lastQueuedSequenceNumber, 0x23a /* "seq#'s" */);
-                if (this.lastQueuedSequenceNumber >= lastExpectedOp) {
-                    controller.abort();
-                    this._inbound.off("push", listener);
-                }
-            };
-            this._inbound.on("push", listener);
-            listenerToClear = listener;
+            // Be prepared for the case where webSocket would receive the ops that we are trying to fill through
+            // storage. Ideally it should never happen (i.e. ops on socket are always ordered, and thus once we
+            // detected gap, this gap can't be filled in later on through websocket).
+            // And in practice that does look like the case. The place where this code gets hit is if we lost
+            // connection and reconnected (likely to another box), and new socket's initial ops contains these ops.
+            cancelFetch = (op: ISequencedDocumentMessage) => op.sequenceNumber >= lastExpectedOp;
+        } else {
+            // Unbound requests are made to proactively fetch ops, but also get up to date in cases where socket
+            // is silent (and connection is "read", thus we might not have any data on how far client is behind).
+            // Once we have any op coming in from socket, we can cancel it as it's not needed any more.
+            // That said, if we have socket connection, make sure we got ops up to checkpointSequenceNumber!
+            cancelFetch = (op: ISequencedDocumentMessage) => op.sequenceNumber >= this.lastObservedSeqNumber;
         }
+
+        let opsFromFetch = false;
+
+        const opListener = (op: ISequencedDocumentMessage) => {
+            assert(op.sequenceNumber === this.lastQueuedSequenceNumber, 0x23a /* "seq#'s" */);
+            // Ops that are coming from this request should not cancel itself.
+            // This is useless for known ranges (to is defined) as it means request is over either way.
+            // And it will cancel unbound request too early, not allowing us to learn where the end of the file is.
+            if (!opsFromFetch && cancelFetch(op)) {
+                controller.abort();
+                this._inbound.off("push", opListener);
+            }
+        };
+
+        this._inbound.on("push", opListener);
 
         try {
             const stream = this.deltaStorage.fetchMessages(
@@ -1012,13 +1028,17 @@ export class DeltaManager
                 if (result.done) {
                     break;
                 }
-                callback(result.value);
+                try {
+                    opsFromFetch = true;
+                    callback(result.value);
+                } finally {
+                    opsFromFetch = false;
+                }
             }
         } finally {
+            assert(!opsFromFetch, 0x289 /* "logic error" */);
             this.closeAbortController.signal.onabort = null;
-            if (listenerToClear !== undefined) {
-                this._inbound.off("push", listenerToClear);
-            }
+            this._inbound.off("push", opListener);
         }
     }
 
@@ -1159,7 +1179,7 @@ export class DeltaManager
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
         assert(this.connectionP !== undefined || this.closed,
             0x27f /* "reentrancy may result in incorrect behavior" */);
-        assert(!connection.disposed, "can't be disposed - Callers need to ensure that!");
+        assert(!connection.disposed, 0x28a /* "can't be disposed - Callers need to ensure that!" */);
 
         this.connectionP = undefined;
         this.connection = connection;
