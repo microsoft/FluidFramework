@@ -124,7 +124,7 @@ class LayerNode extends BaseNode {
 };
 
 /** Used for traversing the layer dependency graph */
-type LayerDependencyNode = { node: LayerNode, childrenToVisit: LayerNode[], orderedChildren: LayerNode[] };
+type LayerDependencyNode = { node: LayerNode, orderedChildren: LayerNode[] };
 
 class GroupNode extends BaseNode {
     public layerNodes: LayerNode[] = [];
@@ -251,6 +251,8 @@ export class LayerGraph {
     private groupNodes: GroupNode[] = [];
     private layerNodeMap = new Map<string, LayerNode>();
     private packageNodeMap = new Map<string, PackageNode>();
+    /** List of all layers ordered such that all dependencies for a given layer appear earlier in the list */
+    private orderedLayers: LayerDependencyNode[] = [];
     private dirMapping: { [key: string]: LayerNode } = {};
 
     private createPackageNode(name: string, layer: LayerNode) {
@@ -309,6 +311,9 @@ export class LayerGraph {
                 }
             }
         }
+
+        // Walk the layer dependency graph in order of least dependencies to build up orderedLayers and check for cycles
+        this.traverseLayerDependencyGraph();
     }
     private initializePackages(packages: Packages) {
         this.initializePackageMatching(packages);
@@ -407,13 +412,14 @@ export class LayerGraph {
         }
     }
 
+
     /**
-     * Returns the list of all layers, listing their dependencies, ordered such that
-     * all dependencies for a given layer appear earlier in the list.
+     * Walk the layers in order such that a layer's dependencies are visited before that layer.
+     * In doing so, we can also validate that the layer dependency graph has no cycles.
      */
     private traverseLayerDependencyGraph() {
         // Walk all packages, grouping by layers and which layers contain dependencies of that layer
-        const layers: LayerDependencyNode[] = []
+        const layers: (LayerDependencyNode & { childrenToVisit: LayerNode[] })[] = []
         for (const groupNode of this.groupNodes) {
             for (const layerNode of groupNode.layerNodes) {
                 const childLayers: Set<LayerNode> = new Set();
@@ -430,7 +436,6 @@ export class LayerGraph {
 
         // Traverse the layers in order of least dependencies.
         // OrderedLayers, and orderedChildren for each layer, will reflect that ordering
-        const orderedLayers: LayerDependencyNode[] = [];
         for(let
             nextIndex = layers.findIndex((l) => l.childrenToVisit.length === 0);
             nextIndex >= 0;
@@ -438,7 +443,7 @@ export class LayerGraph {
         ) {
             // Move this childless child dependecy node to orderedLayers
             const [childDepNode] = layers.splice(nextIndex, 1);
-            orderedLayers.push(childDepNode);
+            this.orderedLayers.push(childDepNode);
 
             // Update all dependent layers. After this at least one layer will have no more children to visit.
             layers.forEach((l) => {
@@ -466,8 +471,6 @@ and doesn't indicate a strict circular dependency between packages.
 But some packages in layer A depend on packages in layer B, and likewise some in B depend on some in A.`
             throw new Error(errorMessage);
         }
-
-        return orderedLayers;
     }
 
     /**
@@ -476,9 +479,9 @@ But some packages in layer A depend on packages in layer B, and likewise some in
     public generatePackageLayersMarkdown(repoRoot: string) {
         const lines: string[] = [];
         let packageCount: number = 0;
-        for (const layerDepNode of this.traverseLayerDependencyGraph()) {
+        for (const layerDepNode of this.orderedLayers) {
             const layerNode = layerDepNode.node;
-           lines.push(`### ${layerNode.name}${newline}`);
+            lines.push(`### ${layerNode.name}${newline}`);
             const packagesInCell: string[] = [];
             for (const packageNode of [...layerNode.packages]) {
                 ++packageCount;
@@ -513,7 +516,7 @@ ${lines.join(newline)}
         return packagesMdContents;
     }
 
-    public static load(root: string, packages: Packages, info?: string) {
+    public static load(root: string, packages: Packages, info?: string): LayerGraph {
         const layerInfoFile = require(info ?? path.join(__dirname, "..", "..", "data", "layerInfo.json"));
         return new LayerGraph(root, layerInfoFile, packages);
     }
