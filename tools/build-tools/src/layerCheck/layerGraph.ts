@@ -124,7 +124,7 @@ class LayerNode extends BaseNode {
 };
 
 /** Used for traversing the layer dependency graph */
-type LayerDependencyNode = { node: LayerNode, childrenToVisit: (LayerNode | undefined)[], orderedChildren: LayerNode[] };
+type LayerDependencyNode = { node: LayerNode, childrenToVisit: LayerNode[], orderedChildren: LayerNode[] };
 
 class GroupNode extends BaseNode {
     public layerNodes: LayerNode[] = [];
@@ -408,46 +408,11 @@ export class LayerGraph {
     }
 
     /**
-     * The sink is a layer with no unvisited child dependencies.
-     * We'll add it to orderedLayers, and remove it from all other layers'
-     * childrenToVisit, to uncover new roots and recurse.
-     * Nothing is returned, but orderedLayers grows with each recursive call.
-     */
-    private processSink(
-        sink: LayerDependencyNode,
-        unprocessedLayers: LayerDependencyNode[],
-        orderedLayers: LayerDependencyNode[],
-    ) {
-        // Prevent re-entrancy
-        if (orderedLayers.find((l) => l.node.name === sink.node.name)) {
-            console.error("HOW?!?!");
-            return;
-        }
-
-        orderedLayers.push(sink);
-
-        // Move this root from childrenToVisit to orderedChildren if present
-        // This will create at least one new root (i.e. it has no unvisited dependencies)
-        unprocessedLayers
-            .forEach((l) => {
-                const foundIdx = l.childrenToVisit.findIndex((child) => child?.name === sink.node.name);
-                if (foundIdx >= 0) {
-                    l.orderedChildren.push(l.childrenToVisit[foundIdx]!);
-                    l.childrenToVisit.splice(foundIdx, 1);
-                }
-            });
-
-        // Recurse for every layer with no more unvisited dependencies itself (i.e. now a root itself)
-        // allLayers
-        //     .filter((l) => l.childrenToVisit.every((c) => !c)) // Also accepts empty childrenToVisit
-        //     .forEach((newRoot) => this.traverseSubgraph(newRoot, allLayers, orderedLayers));
-    }
-
-    /**
-     * Returns the list of all layers, ordered such that
+     * Returns the list of all layers, listing their dependencies, ordered such that
      * all dependencies for a given layer appear earlier in the list.
      */
     private traverseLayerDependencyGraph() {
+        // Walk all packages, grouping by layers and which layers contain dependencies of that layer
         const layers: LayerDependencyNode[] = []
         for (const groupNode of this.groupNodes) {
             for (const layerNode of groupNode.layerNodes) {
@@ -463,28 +428,44 @@ export class LayerGraph {
             }
         }
 
-        // We'll traverse in order of least dependencies so orderedLayers will reflect that ordering
+        // Traverse the layers in order of least dependencies.
+        // OrderedLayers, and orderedChildren for each layer, will reflect that ordering
         const orderedLayers: LayerDependencyNode[] = [];
-
         for(let
-            sinkIdx = layers.findIndex((l) => l.childrenToVisit.length === 0);
-            sinkIdx >= 0;
-            sinkIdx = layers.findIndex((l) => l.childrenToVisit.length === 0)
+            nextIndex = layers.findIndex((l) => l.childrenToVisit.length === 0);
+            nextIndex >= 0;
+            nextIndex = layers.findIndex((l) => l.childrenToVisit.length === 0)
         ) {
-            console.log(sinkIdx);
-            const [sink] = layers.splice(sinkIdx, 1);
-            this.processSink(sink, layers, orderedLayers);
+            // Move this childless child dependecy node to orderedLayers
+            const [childDepNode] = layers.splice(nextIndex, 1);
+            orderedLayers.push(childDepNode);
+
+            // Update all dependent layers. After this at least one layer will have no more children to visit.
+            layers.forEach((l) => {
+                const foundIdx = l.childrenToVisit.findIndex((child) => child.name === childDepNode.node.name);
+                if (foundIdx >= 0) {
+                    // Move this child node to orderedChildren for each dependent layer
+                    const [childNode] = l.childrenToVisit.splice(foundIdx, 1);
+                    l.orderedChildren.push(childNode);
+                }
+            });
         }
 
-        for (const l of layers) {
-            console.log(`${l.node.name} | ${l.childrenToVisit.map((c) => c?.name)}`);
-        }
+        // When we exit the loop above, layers will be empty... unless the layer dependency graph has cycles.
+        // If that's the case, throw an error showing the remaining layers and dependencies to highlight the cycle.
+        if (layers.length >= 0) {
+            const remainingLayers = layers.map((l) => `${l.node.name} --> ${l.childrenToVisit.map((c) => c?.name)}`);
+            const errorMessage = `
+ERROR: Circular dependency detected between layers!
+Please inspect this subset of layers and their dependencies to find the cycle:
 
-        // Take any "roots" (layers with no child dependencies) and traverse those subgraphs,
-        // building up orderedLayers as we go
-        // layers
-        //     .filter((l) => l.childrenToVisit.length === 0)
-        //     .forEach((root) => this.processSink(root, layers, orderedLayers));
+${remainingLayers.join(newline)}
+
+Note that the dependency may not be explicit in the layer info JSON,
+and doesn't indicate a strict circular dependency between packages.
+But some packages in layer A depend on packages in layer B, and likewise some in B depend on some in A.`
+            throw new Error(errorMessage);
+        }
 
         return orderedLayers;
     }
@@ -497,11 +478,10 @@ export class LayerGraph {
         let packageCount: number = 0;
         for (const layerDepNode of this.traverseLayerDependencyGraph()) {
             const layerNode = layerDepNode.node;
-//            lines.push(`### ${layerNode.name}${newline}`);
+           lines.push(`### ${layerNode.name}${newline}`);
             const packagesInCell: string[] = [];
             for (const packageNode of [...layerNode.packages]) {
                 ++packageCount;
-                lines.push(`${packageNode.name}`);// | ${packageNode.layerName}`);
                 const dirRelativePath = "/" + path.relative(repoRoot, packageNode.pkg.directory).replace(/\\/g, "/");
                 const ifPrivate = packageNode.pkg.isPublished ? "" : " (private)";
                 packagesInCell.push(`- [${packageNode.name}](${dirRelativePath})${ifPrivate}`);
@@ -513,28 +493,22 @@ export class LayerGraph {
             }
 
             this.padArraysToSameLength(packagesInCell, layersInCell, "&nbsp;");
-//            lines.push(`| Packages | Layer Dependencies |`);
-//            lines.push(`| --- | --- |`);
-//            lines.push(`| ${packagesInCell.join("</br>")} | ${layersInCell.join("</br>")} |${newline}`);
+           lines.push(`| Packages | Layer Dependencies |`);
+           lines.push(`| --- | --- |`);
+           lines.push(`| ${packagesInCell.join("</br>")} | ${layersInCell.join("</br>")} |${newline}`);
         }
 
-        if (packageCount !== this.packageNodeMap.size) {
-            console.error(`YOOOO: Did not find all packages while traversing layers ${packageCount} / ${this.packageNodeMap.size}`);
-        }
-
-        const all = Array.from(this.packageNodeMap.entries()).map(([name, _node], _) => name);
+        assert(packageCount === this.packageNodeMap.size, "ERROR: Did not find all packages while traversing layers");
 
         const packagesMdContents: string =
-//             `# Package Layers
+            `# Package Layers
 
-// [//]: <> (This file is generated, please don't edit it manually!)
+[//]: <> (This file is generated, please don't edit it manually!)
 
-// _These are the logical layers into which our packages are grouped.
-// The dependencies between layers are enforced by the layer-check command._
+_These are the logical layers into which our packages are grouped.
+The dependencies between layers are enforced by the layer-check command._
 
-`${lines.join(newline)}
-
-${all.join(newline)}
+${lines.join(newline)}
 `;
         return packagesMdContents;
     }
