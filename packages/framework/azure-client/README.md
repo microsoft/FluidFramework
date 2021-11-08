@@ -50,7 +50,7 @@ When running against a live Azure Fluid Relay instance, we can use the same inte
 ```typescript
 import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client";
 
-const lientProps = {
+const clientProps = {
     connection: {
         tenantId: "YOUR-TENANT-ID-HERE",
         tokenProvider: new AzureFunctionTokenProvider(
