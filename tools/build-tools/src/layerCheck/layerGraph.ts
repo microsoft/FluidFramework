@@ -408,38 +408,39 @@ export class LayerGraph {
     }
 
     /**
-     * The root is a layer with no unvisited child dependencies.
+     * The sink is a layer with no unvisited child dependencies.
      * We'll add it to orderedLayers, and remove it from all other layers'
      * childrenToVisit, to uncover new roots and recurse.
      * Nothing is returned, but orderedLayers grows with each recursive call.
      */
-    private traverseSubgraph(
-        root: LayerDependencyNode,
-        allLayers: LayerDependencyNode[],
+    private processSink(
+        sink: LayerDependencyNode,
+        unprocessedLayers: LayerDependencyNode[],
         orderedLayers: LayerDependencyNode[],
     ) {
         // Prevent re-entrancy
-        if (orderedLayers.find((l) => l.node.name === root.node.name)) {
+        if (orderedLayers.find((l) => l.node.name === sink.node.name)) {
+            console.error("HOW?!?!");
             return;
         }
 
-        orderedLayers.push(root);
+        orderedLayers.push(sink);
 
         // Move this root from childrenToVisit to orderedChildren if present
         // This will create at least one new root (i.e. it has no unvisited dependencies)
-        allLayers
+        unprocessedLayers
             .forEach((l) => {
-                const foundIdx = l.childrenToVisit.findIndex((child) => child?.name === root.node.name);
+                const foundIdx = l.childrenToVisit.findIndex((child) => child?.name === sink.node.name);
                 if (foundIdx >= 0) {
                     l.orderedChildren.push(l.childrenToVisit[foundIdx]!);
-                    l.childrenToVisit[foundIdx] = undefined;
+                    l.childrenToVisit.splice(foundIdx, 1);
                 }
             });
 
         // Recurse for every layer with no more unvisited dependencies itself (i.e. now a root itself)
-        allLayers
-            .filter((l) => l.childrenToVisit.every((c) => !c)) // Also accepts empty childrenToVisit
-            .forEach((newRoot) => this.traverseSubgraph(newRoot, allLayers, orderedLayers));
+        // allLayers
+        //     .filter((l) => l.childrenToVisit.every((c) => !c)) // Also accepts empty childrenToVisit
+        //     .forEach((newRoot) => this.traverseSubgraph(newRoot, allLayers, orderedLayers));
     }
 
     /**
@@ -465,11 +466,25 @@ export class LayerGraph {
         // We'll traverse in order of least dependencies so orderedLayers will reflect that ordering
         const orderedLayers: LayerDependencyNode[] = [];
 
+        for(let
+            sinkIdx = layers.findIndex((l) => l.childrenToVisit.length === 0);
+            sinkIdx >= 0;
+            sinkIdx = layers.findIndex((l) => l.childrenToVisit.length === 0)
+        ) {
+            console.log(sinkIdx);
+            const [sink] = layers.splice(sinkIdx, 1);
+            this.processSink(sink, layers, orderedLayers);
+        }
+
+        for (const l of layers) {
+            console.log(`${l.node.name} | ${l.childrenToVisit.map((c) => c?.name)}`);
+        }
+
         // Take any "roots" (layers with no child dependencies) and traverse those subgraphs,
         // building up orderedLayers as we go
-        layers
-            .filter((l) => l.childrenToVisit.length === 0)
-            .forEach((root) => this.traverseSubgraph(root, layers, orderedLayers));
+        // layers
+        //     .filter((l) => l.childrenToVisit.length === 0)
+        //     .forEach((root) => this.processSink(root, layers, orderedLayers));
 
         return orderedLayers;
     }
@@ -482,10 +497,11 @@ export class LayerGraph {
         let packageCount: number = 0;
         for (const layerDepNode of this.traverseLayerDependencyGraph()) {
             const layerNode = layerDepNode.node;
-            lines.push(`### ${layerNode.name}${newline}`);
+//            lines.push(`### ${layerNode.name}${newline}`);
             const packagesInCell: string[] = [];
             for (const packageNode of [...layerNode.packages]) {
                 ++packageCount;
+                lines.push(`${packageNode.name}`);// | ${packageNode.layerName}`);
                 const dirRelativePath = "/" + path.relative(repoRoot, packageNode.pkg.directory).replace(/\\/g, "/");
                 const ifPrivate = packageNode.pkg.isPublished ? "" : " (private)";
                 packagesInCell.push(`- [${packageNode.name}](${dirRelativePath})${ifPrivate}`);
@@ -497,22 +513,28 @@ export class LayerGraph {
             }
 
             this.padArraysToSameLength(packagesInCell, layersInCell, "&nbsp;");
-            lines.push(`| Packages | Layer Dependencies |`);
-            lines.push(`| --- | --- |`);
-            lines.push(`| ${packagesInCell.join("</br>")} | ${layersInCell.join("</br>")} |${newline}`);
+//            lines.push(`| Packages | Layer Dependencies |`);
+//            lines.push(`| --- | --- |`);
+//            lines.push(`| ${packagesInCell.join("</br>")} | ${layersInCell.join("</br>")} |${newline}`);
         }
 
-        assert(packageCount === this.packageNodeMap.size, "ERROR: Did not find all packages while traversing layers");
+        if (packageCount !== this.packageNodeMap.size) {
+            console.error(`YOOOO: Did not find all packages while traversing layers ${packageCount} / ${this.packageNodeMap.size}`);
+        }
+
+        const all = Array.from(this.packageNodeMap.entries()).map(([name, _node], _) => name);
 
         const packagesMdContents: string =
-            `# Package Layers
+//             `# Package Layers
 
-[//]: <> (This file is generated, please don't edit it manually!)
+// [//]: <> (This file is generated, please don't edit it manually!)
 
-_These are the logical layers into which our packages are grouped.
-The dependencies between layers are enforced by the layer-check command._
+// _These are the logical layers into which our packages are grouped.
+// The dependencies between layers are enforced by the layer-check command._
 
-${lines.join(newline)}
+`${lines.join(newline)}
+
+${all.join(newline)}
 `;
         return packagesMdContents;
     }
