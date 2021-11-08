@@ -268,6 +268,9 @@ export class LayerGraph {
     private constructor(root: string, layerInfo: ILayerInfoFile, packages: Packages) {
         this.initializeLayers(root, layerInfo);
         this.initializePackages(packages);
+
+        // Walk the layer dependency graph in order of least dependencies to build up orderedLayers and check for cycles
+        this.traverseLayerDependencyGraph();
     }
 
     private initializeLayers(root: string, layerInfo: ILayerInfoFile) {
@@ -311,10 +314,8 @@ export class LayerGraph {
                 }
             }
         }
-
-        // Walk the layer dependency graph in order of least dependencies to build up orderedLayers and check for cycles
-        this.traverseLayerDependencyGraph();
     }
+
     private initializePackages(packages: Packages) {
         this.initializePackageMatching(packages);
         this.initializeDependencies();
@@ -458,7 +459,7 @@ export class LayerGraph {
 
         // When we exit the loop above, layers will be empty... unless the layer dependency graph has cycles.
         // If that's the case, throw an error showing the remaining layers and dependencies to highlight the cycle.
-        if (layers.length >= 0) {
+        if (layers.length > 0) {
             const remainingLayers = layers.map((l) => `${l.node.name} --> ${l.childrenToVisit.map((c) => c?.name)}`);
             const errorMessage = `
 ERROR: Circular dependency detected between layers!
