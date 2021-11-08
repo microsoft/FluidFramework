@@ -13,6 +13,8 @@ const { deserialize } = require('../containerSerializer');
 const { ChangeSet } = require('@fluid-experimental/property-changeset');
 const { ConsoleUtils } = require('@fluid-experimental/property-common');
 const { MSG } = require('@fluid-experimental/property-common').constants;
+const { validationsEnabled } = require('../enableValidations');
+
 /**
  * typedef {property-properties.BaseProperty|string|number|boolean} property-properties.IndexedCollectionBaseProperty~ValueType
  *
@@ -89,28 +91,33 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     cleanDirty(in_flags) {
         in_flags = in_flags !== undefined ? in_flags : BaseProperty.MODIFIED_STATE_FLAGS.DIRTY |
             BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE;
-        // Clean all entries inside of the collection
-        var entryKeys;
-        if (in_flags === BaseProperty.MODIFIED_STATE_FLAGS.DIRTY) {
-            // Only use the dirty entries
-            entryKeys = _.keys(this._dirtyChanges.insert).concat(_.keys(this._dirtyChanges.modify));
-        } else if (in_flags === BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE) {
-            // Only use the pending changes
-            entryKeys = _.keys(this._pendingChanges.insert).concat(_.keys(this._pendingChanges.modify));
-        } else {
-            entryKeys = _.keys(this._pendingChanges.insert)
-                .concat(_.keys(this._pendingChanges.modify))
-                .concat(_.keys(this._dirtyChanges.insert)
-                    .concat(_.keys(this._dirtyChanges.modify)));
-        }
 
-        var entry;
-        if (!this._containsPrimitiveTypes) {
-            for (var i = 0; i < entryKeys.length; i++) {
-                entry = this._dynamicChildren[entryKeys[i]];
+        // Clean all entries inside of the collection
+        let cleanDirtiness = (collection) => {
+            var entry;
+
+            for (let key in collection) {
+                entry = this._dynamicChildren[key];
                 if (entry._isDirty(in_flags)) {
                     entry.cleanDirty(in_flags);
                 }
+            }
+        };
+
+        if (!this._containsPrimitiveTypes) {
+            if (in_flags === BaseProperty.MODIFIED_STATE_FLAGS.DIRTY) {
+                // Only use the dirty entries
+                cleanDirtiness(this._dirtyChanges.insert);
+                cleanDirtiness(this._dirtyChanges.modify);
+            } else if (in_flags === BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE) {
+                // Only use the pending changes
+                cleanDirtiness(this._pendingChanges.insert);
+                cleanDirtiness(this._pendingChanges.modify);
+            } else {
+                cleanDirtiness(this._pendingChanges.insert);
+                cleanDirtiness(this._pendingChanges.modify);
+                cleanDirtiness(this._dirtyChanges.insert);
+                cleanDirtiness(this._dirtyChanges.modify);
             }
         }
 
@@ -133,11 +140,13 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
      *     When batching updates, this can be prevented via this flag.
      */
     _insert(in_key, in_value, in_reportToView) {
-        this._checkIsNotReadOnly(false);
+	    if (validationsEnabled.enabled) {
+	        this._checkIsNotReadOnly(false);
+	    }
 
         if (!this.has(in_key)) {
             // Make sure, the property we are inserting is not already part of some other collection
-            if (!this._containsPrimitiveTypes) {
+            if (validationsEnabled.enabled && !this._containsPrimitiveTypes) {
                 in_value._validateInsertIn(this)
             }
 
@@ -149,7 +158,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
             this._setDirty(false);
 
             if (!this._containsPrimitiveTypes) {
-                // Dirty the tree
+                // Dirty the tree (TODO: is this needed?)
                 in_value._setDirtyTree(false);
 
                 in_value._setParent(this);
@@ -366,12 +375,14 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
      * @inheritdoc
      */
     // eslint-disable-next-line complexity
-    _deserialize(in_serializedObj, in_reportToView) {
+    _deserialize(in_serializedObj, in_reportToView,
+                 in_filteringOptions, in_createChangeSet) {
 
         var currentEntries = this._dynamicChildren;
         var allInsertedKeys = {};
 
-        var appliedChangeset = AbstractStaticCollectionProperty.prototype._deserialize.call(this, in_serializedObj, false);
+        var appliedChangeset = AbstractStaticCollectionProperty.prototype._deserialize.call(
+           this, in_serializedObj, false, in_filteringOptions, in_createChangeSet);
 
         // Perform updates to the children
 
@@ -504,8 +515,9 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
                         }
                     }
                 } else {
-                    changes = this._dynamicChildren[modifiedKeys[i]]
-                        ._deserialize(modifiedEntries[typeid][modifiedKeys[i]], false);
+                    changes = this._dynamicChildren[modifiedKeys[i]]._deserialize(
+                        modifiedEntries[typeid][modifiedKeys[i]],
+                        false, in_filteringOptions, in_createChangeSet);
                     valueWasChanged = !ChangeSet.isEmptyChangeSet(changes);
 
                     modifiedEntries[typeid] = modifiedEntries[typeid] || {};

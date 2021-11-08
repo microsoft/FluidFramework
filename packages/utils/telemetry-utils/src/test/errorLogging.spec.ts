@@ -10,8 +10,9 @@ import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger";
-import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, IFluidErrorAnnotations } from "../errorLogging";
+import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, IFluidErrorAnnotations, wrapError, wrapErrorAndLog } from "../errorLogging";
 import { IFluidErrorBase } from "../fluidErrorBase";
+import { MockLogger } from "../mockLogger";
 
 describe("Error Logging", () => {
     describe("TelemetryLogger.prepareErrorObject", () => {
@@ -367,9 +368,7 @@ class TestFluidError implements IFluidErrorBase {
 
 const annotationCases: Record<string, IFluidErrorAnnotations> = {
     noAnnotations: {},
-    justErrorCodeIfNone: { errorCodeIfNone: "foo" },
     justProps: { props: { foo: "bar", one: 1, u: undefined, t: true } },
-    allAnnotations: { props: { foo: "bar", one: 1, u: undefined }, errorCodeIfNone: "foo" },
 };
 
 describe("normalizeError", () => {
@@ -381,9 +380,6 @@ describe("normalizeError", () => {
                 const errorProps =
                     {errorType: "et1", message: "m1", fluidErrorCode: "toBeRemoved" };
                 const legacyError = new TestFluidError(errorProps).withoutProperty("fluidErrorCode");
-                const expectedErrorCode = annotations.errorCodeIfNone === undefined
-                    ? "<error predates fluidErrorCode>"
-                    : annotations.errorCodeIfNone;
 
                 // Act
                 const normalizedError = normalizeError(legacyError, annotations);
@@ -391,7 +387,7 @@ describe("normalizeError", () => {
                 // Assert
                 assert.equal(normalizedError, legacyError, "normalize should yield the same error as passed in");
                 assert.equal(normalizedError.errorType, "et1", "errorType should be unchanged");
-                assert.equal(normalizedError.fluidErrorCode, expectedErrorCode, "errorCode should be patched properly");
+                assert.equal(normalizedError.fluidErrorCode, "<error predates fluidErrorCode>", "errorCode should be patched properly");
                 assert.equal(normalizedError.message, "m1", "message should be unchanged");
                 if (annotations.props !== undefined) {
                     assert(legacyError.atpStub.calledWith(annotations.props), "addTelemetryProperties should have been called");
@@ -448,7 +444,7 @@ describe("normalizeError", () => {
         });
         const typicalOutput = (message: string, stackHint: "<<generated stack>>" | "<<stack from input>>") => new TestFluidError({
             errorType: "genericError",
-            fluidErrorCode: "<none>",
+            fluidErrorCode: "",
             message,
             stack: stackHint,
         }).withExpectedTelemetryProps({ untrustedOrigin: 1 });
@@ -541,16 +537,10 @@ describe("normalizeError", () => {
             annotations: IFluidErrorAnnotations = {},
             inputStack: string,
         ) {
-            const expectedErrorCode =
-                expected.fluidErrorCode === "<none>"
-                    ? annotations.errorCodeIfNone === undefined
-                        ? "none"
-                        : annotations.errorCodeIfNone
-                    : expected.fluidErrorCode;
-            expected.withExpectedTelemetryProps({ ...annotations.props, fluidErrorCode: expectedErrorCode });
+            expected.withExpectedTelemetryProps({ ...annotations.props, fluidErrorCode: expected.fluidErrorCode });
 
             assert.strictEqual(actual.errorType, expected.errorType, "errorType should match");
-            assert.strictEqual(actual.fluidErrorCode, expectedErrorCode, "fluidErrorCode should match");
+            assert.strictEqual(actual.fluidErrorCode, expected.fluidErrorCode, "fluidErrorCode should match");
             assert.strictEqual(actual.message, expected.message, "message should match");
             assert.strictEqual(actual.name, expected.name, "name should match");
 
@@ -589,4 +579,29 @@ describe("normalizeError", () => {
             }
         }
     });
+});
+
+describe("wrapError", () => {
+    it("Copy message and stack", () => {
+        const innerError = new LoggingError("hello");
+        innerError.stack = "extra special stack";
+        const newError = wrapError(innerError, (message) => (new LoggingError(message)) as LoggingError & { fluidErrorCode: "fluidErrorCode", errorType: "genericError" });
+        assert.equal(newError.message, innerError.message, "messages should match");
+        assert.equal(newError.stack, innerError.stack, "stacks should match");
+    });
+    it("Include innerErrorInstanceId in telemetry props", () => {
+        const innerError = new LoggingError("hello");
+        const newError = wrapError(innerError, (message) => (new LoggingError(message)) as LoggingError & { fluidErrorCode: "fluidErrorCode", errorType: "genericError" });
+        assert(newError.getTelemetryProperties().innerErrorInstanceId === innerError.errorInstanceId);
+    });
+});
+describe("wrapErrorAndLog", () => {
+    const mockLogger = new MockLogger();
+    const innerError = new LoggingError("hello");
+    const newError = wrapErrorAndLog(innerError, (message) => (new LoggingError(message)) as LoggingError & { fluidErrorCode: "fluidErrorCode", errorType: "genericError" }, mockLogger);
+    assert(mockLogger.matchEvents([{
+        eventName: "WrapError",
+        wrappedByErrorInstanceId: newError.errorInstanceId,
+        error: "hello",
+     }]), "Expected the 'WrapError' event to be logged");
 });

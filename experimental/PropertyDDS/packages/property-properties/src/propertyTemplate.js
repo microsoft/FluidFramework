@@ -9,7 +9,8 @@
  */
 const _ = require('lodash');
 const { TypeIdHelper } = require('@fluid-experimental/property-changeset');
-const deepCopy = _.cloneDeep;
+const fastestJSONCopy = require('fastest-json-copy');
+const deepCopy = fastestJSONCopy.copy;
 const { ConsoleUtils } = require('@fluid-experimental/property-common');
 const { MSG } = require('@fluid-experimental/property-common').constants;
 

@@ -23,7 +23,13 @@ import {
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { assert, Deferred, performance, TypedEventEmitter } from "@fluidframework/common-utils";
-import { TelemetryLogger, safeRaiseEvent, logIfFalse, normalizeError } from "@fluidframework/telemetry-utils";
+import {
+    TelemetryLogger,
+    safeRaiseEvent,
+    logIfFalse,
+    normalizeError,
+    wrapError,
+} from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -65,7 +71,6 @@ import {
     ThrottlingWarning,
     CreateProcessingError,
     DataCorruptionError,
-    wrapError,
     GenericError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
@@ -1031,7 +1036,7 @@ export class DeltaManager
                 }
             }
         } finally {
-            assert(!opsFromFetch, "logic error");
+            assert(!opsFromFetch, 0x289 /* "logic error" */);
             this.closeAbortController.signal.onabort = null;
             this._inbound.off("push", opListener);
         }
@@ -1174,7 +1179,7 @@ export class DeltaManager
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
         assert(this.connectionP !== undefined || this.closed,
             0x27f /* "reentrancy may result in incorrect behavior" */);
-        assert(!connection.disposed, "can't be disposed - Callers need to ensure that!");
+        assert(!connection.disposed, 0x28a /* "can't be disposed - Callers need to ensure that!" */);
 
         this.connectionP = undefined;
         this.connection = connection;
