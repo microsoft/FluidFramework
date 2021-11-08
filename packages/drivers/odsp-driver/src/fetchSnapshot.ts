@@ -101,7 +101,7 @@ export async function fetchSnapshotWithRedeem(
             logger.sendErrorEvent({
                 eventName: "RedeemFallback",
                 errorType: error.errorType,
-            });
+            }, error);
             await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
             const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
                 { ...odspResolvedUrl, sharingLinkToRedeem: undefined };
