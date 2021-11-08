@@ -956,8 +956,8 @@ export class LocalReferenceCollection {
         next(): IteratorResult<LocalReference>;
         [Symbol.iterator](): any;
     };
-    // Warning: (ae-forgotten-export) The symbol "IRefsAtOffest" needs to be exported by the entry point index.d.ts
-    constructor(segment: ISegment, initialRefsByfOffset?: (IRefsAtOffest | undefined)[]);
+    // Warning: (ae-forgotten-export) The symbol "IRefsAtOffset" needs to be exported by the entry point index.d.ts
+    constructor(segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
     // (undocumented)
     addAfterTombstones(...refs: Iterable<LocalReference>[]): void;
     // (undocumented)
