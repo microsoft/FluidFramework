@@ -20,7 +20,11 @@ export class CheckpointContext {
         private readonly context: IContext) {
     }
 
-    public checkpoint(checkpoint: ICheckpointParams) {
+    /**
+     * Checkpoints to the database & kafka
+     * Note: This is an async method, but you should not await this
+     */
+    public async checkpoint(checkpoint: ICheckpointParams) {
         // Exit early if already closed
         if (this.closed) {
             return;
@@ -33,43 +37,58 @@ export class CheckpointContext {
             return;
         }
 
-        // Write the checkpoint data to MongoDB
-        this.pendingUpdateP = this.checkpointCore(checkpoint);
-        this.pendingUpdateP?.then(
-            () => {
-                // kafka checkpoint
-                // depending on the sequence of events, it might try to checkpoint the same offset a second time
-                // detect and prevent that case here
-                const kafkaCheckpointMessage = checkpoint.kafkaCheckpointMessage;
-                if (kafkaCheckpointMessage &&
-                    (this.lastKafkaCheckpointOffset === undefined ||
-                        kafkaCheckpointMessage.offset > this.lastKafkaCheckpointOffset)) {
-                    this.lastKafkaCheckpointOffset = kafkaCheckpointMessage.offset;
-                    this.context.checkpoint(kafkaCheckpointMessage);
-                }
+        // Database checkpoint
+        try {
+            this.pendingUpdateP = this.checkpointCore(checkpoint);
+            await this.pendingUpdateP;
+        } catch (ex) {
+            // TODO flag context as error / use this.context.error() instead?
+            this.context.log?.error(
+                `Error writing checkpoint to the database: ${JSON.stringify(ex)}`,
+                {
+                    messageMetaData: {
+                        documentId: this.id,
+                        tenantId: this.tenantId,
+                    },
+                });
+            Lumberjack.error(`Error writing checkpoint to the database`,
+                getLumberBaseProperties(this.id, this.tenantId), ex);
+            return;
+        }
 
-                this.pendingUpdateP = undefined;
+        // Kafka checkpoint
+        try {
+            // depending on the sequence of events, it might try to checkpoint the same offset a second time
+            // detect and prevent that case here
+            const kafkaCheckpointMessage = checkpoint.kafkaCheckpointMessage;
+            if (kafkaCheckpointMessage &&
+                (this.lastKafkaCheckpointOffset === undefined ||
+                    kafkaCheckpointMessage.offset > this.lastKafkaCheckpointOffset)) {
+                this.lastKafkaCheckpointOffset = kafkaCheckpointMessage.offset;
+                this.context.checkpoint(kafkaCheckpointMessage);
+            }
+        } catch (ex) {
+            // TODO flag context as error / use this.context.error() instead?
+            this.context.log?.error(
+                `Error writing checkpoint to kafka: ${JSON.stringify(ex)}`,
+                {
+                    messageMetaData: {
+                        documentId: this.id,
+                        tenantId: this.tenantId,
+                    },
+                });
+            Lumberjack.error(`Error writing checkpoint to the kafka`,
+                getLumberBaseProperties(this.id, this.tenantId), ex);
+        }
 
-                // Trigger another round if there is a pending update
-                if (this.pendingCheckpoint) {
-                    const pendingCheckpoint = this.pendingCheckpoint;
-                    this.pendingCheckpoint = undefined;
-                    this.checkpoint(pendingCheckpoint);
-                }
-            },
-            (error) => {
-                // TODO flag context as error
-                this.context.log?.error(
-                    `Error writing checkpoint to MongoDB: ${JSON.stringify(error)}`,
-                    {
-                        messageMetaData: {
-                            documentId: this.id,
-                            tenantId: this.tenantId,
-                        },
-                    });
-                Lumberjack.error(`Error writing checkpoint to MongoDB`,
-                    getLumberBaseProperties(this.id, this.tenantId), error);
-            });
+        this.pendingUpdateP = undefined;
+
+        // Trigger another round if there is a pending update
+        if (this.pendingCheckpoint) {
+            const pendingCheckpoint = this.pendingCheckpoint;
+            this.pendingCheckpoint = undefined;
+            void this.checkpoint(pendingCheckpoint);
+        }
     }
 
     public close() {
@@ -91,7 +110,7 @@ export class CheckpointContext {
             // clone the checkpoint
             const deliCheckpoint: IDeliState = { ...checkpoint.deliState };
 
-            updateP = this.checkpointManager.writeCheckpoint(deliCheckpoint);
+            updateP = this.checkpointManager.writeCheckpoint(deliCheckpoint, checkpoint.reason);
         }
 
         // Retry the checkpoint on error

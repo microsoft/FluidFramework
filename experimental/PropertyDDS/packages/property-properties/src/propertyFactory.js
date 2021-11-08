@@ -906,7 +906,7 @@ class PropertyFactory {
      * @return {property-properties.PropertyTemplate|undefined} Template identified by the typeid.
      */
     getTemplate(in_typeid) {
-        if (this._localPrimitivePropertiesAndTemplates.has(in_typeid)) {
+        if (this._localPrimitivePropertiesAndTemplates.has(in_typeid) && !TypeIdHelper.isPrimitiveType(in_typeid)) {
             return this._localPrimitivePropertiesAndTemplates.item(in_typeid).getPropertyTemplate();
         } else return undefined;
     };
@@ -1521,11 +1521,7 @@ class PropertyFactory {
             return true;
         } else {
             var parents = {};
-            var scope = in_options.workspace ?
-                in_options.workspace.getRoot()._getCheckedOutRepositoryInfo().getScope() :
-                in_options.scope;
-
-            this._getAllParentsForTemplateInternal(in_templateTypeid, parents, true, scope);
+            this._getAllParentsForTemplateInternal(in_templateTypeid, parents, true, in_options.scope);
 
             // update the cache
             this._inheritanceCache[in_templateTypeid] = parents;

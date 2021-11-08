@@ -51,6 +51,21 @@ export class LoadTestDataStoreModel {
     }
 
     private static async waitForCatchup(runtime: IFluidDataStoreRuntime): Promise<void> {
+        if (!runtime.connected) {
+            await new Promise<void>((resolve, reject) => {
+                const connectListener = () => {
+                    runtime.off("dispose", disposeListener);
+                    resolve();
+                };
+                const disposeListener = () => {
+                    runtime.off("connected", connectListener);
+                    reject(new Error("disposed"));
+                };
+
+                runtime.once("connected", connectListener);
+                runtime.once("dispose", disposeListener);
+            });
+        }
         const lastKnownSeq = runtime.deltaManager.lastKnownSeqNumber;
         assert(runtime.deltaManager.lastSequenceNumber <= lastKnownSeq,
             "lastKnownSeqNumber should never be below last processed sequence number");
@@ -99,6 +114,9 @@ export class LoadTestDataStoreModel {
         if (!root.has(gcDataStoreIdKey)) {
             // The data store for this pair doesn't exist, create it and store its url.
             gcDataStore = await LoadTestDataStoreInstantiationFactory.createInstance(containerRuntime);
+            // Force the new data store to be attached.
+            root.set("Fake", gcDataStore.handle);
+            root.delete("Fake");
             root.set(gcDataStoreIdKey, gcDataStore.id);
         }
         // If we did not create the data store above, load it by getting its url.

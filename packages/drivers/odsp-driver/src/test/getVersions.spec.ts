@@ -24,7 +24,7 @@ import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
 
-const createUtLocalCache = () => new LocalPersistentCache(10000);
+const createUtLocalCache = () => new LocalPersistentCache(2000);
 
 describe("Tests for snapshot fetch", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -46,6 +46,7 @@ describe("Tests for snapshot fetch", () => {
     };
 
     const hostPolicy: HostStoragePolicyInternal = {
+        snapshotOptions: { timeout: 2000 },
         summarizerClient: false,
         fetchBinarySnapshotFormat: false,
         // for testing both network and cache fetch
@@ -154,7 +155,7 @@ describe("Tests for snapshot fetch", () => {
         );
         } catch (error) {
             isCaught = true;
-            assert.strictEqual(error.message, "Error 404 (undefined)", "incorrect error message");
+            assert.strictEqual(error.message, "odspFetchError [404] (undefined)", "incorrect error message");
         }
         // making sure network fetch did throw and catch block was executed
         assert(isCaught, "catch block was not executed");
@@ -185,7 +186,7 @@ describe("Tests for snapshot fetch", () => {
             );
         } catch (error) {
             isCaught = true;
-            assert.strictEqual(error.message, "Error 404 (undefined)", "incorrect error message");
+            assert.strictEqual(error.message, "odspFetchError [404] (undefined)", "incorrect error message");
         }
         // making sure network fetch did throw and catch block was executed
         assert(isCaught, "catch block was not executed");

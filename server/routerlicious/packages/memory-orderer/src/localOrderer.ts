@@ -18,7 +18,7 @@ import {
     SummaryReader,
     SummaryWriter,
 } from "@fluidframework/server-lambdas";
-import { IGitManager } from "@fluidframework/server-services-client";
+import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
 import {
     DefaultServiceConfiguration,
     IContext,
@@ -60,6 +60,7 @@ const DefaultDeli: IDeliState = {
     clients: undefined,
     durableSequenceNumber: 0,
     epoch: 0,
+    expHash1: defaultHash,
     logOffset: -1,
     sequenceNumber: 0,
     term: 1,
@@ -297,7 +298,8 @@ export class LocalOrderer implements IOrderer {
                 this.deltasKafka,
                 this.setup,
                 this.moiraContext,
-                async (_, context) => new MoiraLambda(context, this.serviceConfiguration),
+                async (_, context) =>
+                    new MoiraLambda(context, this.serviceConfiguration, this.tenantId, this.documentId),
             );
         }
     }

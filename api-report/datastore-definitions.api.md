@@ -115,6 +115,7 @@ export interface IFluidDataStoreRuntime extends IFluidRouter, IEventProvider<IFl
     readonly objectsRoutingContext: IFluidHandleContext;
     // (undocumented)
     readonly options: ILoaderOptions;
+    // @deprecated
     raiseContainerWarning(warning: ContainerWarning): void;
     // (undocumented)
     readonly rootRoutingContext: IFluidHandleContext;

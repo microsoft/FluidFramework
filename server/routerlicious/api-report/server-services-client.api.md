@@ -7,6 +7,7 @@
 import * as api from '@fluidframework/protocol-definitions';
 import { AxiosInstance } from 'axios';
 import { AxiosRequestConfig } from 'axios';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISnapshotTreeEx } from '@fluidframework/protocol-definitions';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
@@ -46,6 +47,9 @@ export function convertSummaryTreeToWholeSummaryTree(parentHandle: string | unde
 export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(flatSummary: IWholeFlatSummary): INormalizedWholeSummary;
 
 // @public (undocumented)
+export const defaultHash = "00000000";
+
+// @public (undocumented)
 export type ExtendedSummaryObject = SummaryObject | IEmbeddedSummaryHandle;
 
 // @public
@@ -56,6 +60,9 @@ export function generateUser(): IUser;
 
 // @public (undocumented)
 export const getAuthorizationTokenFromCredentials: (credentials: ICredentials) => string;
+
+// @public (undocumented)
+export function getNextHash(message: ISequencedDocumentMessage, lastHash: string): string;
 
 // @public (undocumented)
 export function getOrCreateRepository(endpoint: string, owner: string, repository: string): Promise<void>;

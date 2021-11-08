@@ -92,8 +92,3 @@ export interface IOauthAccessInfo {
     refreshToken: string;
     expiresAt: string;
 }
-
-export interface IRedisParameters {
-    prefix?: string;
-    expireAfterSeconds?: number;
-}
