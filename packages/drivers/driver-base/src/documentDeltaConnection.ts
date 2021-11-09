@@ -165,7 +165,7 @@ export class DocumentDeltaConnection
         });
 
         this.isBatchManagerDisabled = DocumentDeltaConnection.booleanFeature(batchManagerDisabledKey);
-        this.isMessageSizeTrackingEnabled =  DocumentDeltaConnection.booleanFeature(messageSizeTrackingEnabledKey);
+        this.isMessageSizeTrackingEnabled = DocumentDeltaConnection.booleanFeature(messageSizeTrackingEnabledKey);
     }
 
     /**
