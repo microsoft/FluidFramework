@@ -5,50 +5,50 @@
 /* eslint-disable unicorn/filename-case */
 // eslint-disable-next-line import/no-extraneous-dependencies
 import {expectError} from "tsd";
-import { IFluidLoadable, IProvideFluidLoadable, Provider, ProviderKeys } from "../dist";
+import { IFluidLoadable, IProvideFluidLoadable, FluidObject, FluidObjectKeys } from "../dist";
 
 
-declare function getUnknown(): Provider;
+declare function getUnknownFluidObject(): FluidObject;
 
-declare function useUnknown(params: Provider | undefined): void;
+declare function useUnknownFluidObject(params: FluidObject | undefined): void;
 
-declare function useProvider<T extends Provider>(params: Provider<T> | undefined): void;
+declare function useProvider<T extends FluidObject>(params: FluidObject<T> | undefined): void;
 
-declare function useProviderKey<T,TKey extends ProviderKeys<T> = ProviderKeys<T>>(key: TKey): void;
+declare function useProviderKey<T,TKey extends FluidObjectKeys<T> = FluidObjectKeys<T>>(key: TKey): void;
 
-declare function useLoadable(params: Provider<IFluidLoadable> | undefined): void;
+declare function useLoadable(params: FluidObject<IFluidLoadable> | undefined): void;
 
-// test with provider
+// test implicit conversions between FluidObject and a FluidObject with a provides interface
 {
-    const provider: Provider<IProvideFluidLoadable> = getUnknown();
-    useUnknown(provider);
-    useUnknown(provider.IFluidLoadable);
-    useProvider(provider);
-    useProvider(provider.IFluidLoadable);
-    useLoadable(provider);
-    useLoadable(provider.IFluidLoadable);
-    expectError(provider.handle);
-    provider.IFluidLoadable?.handle;
-    const unknown: Provider | undefined = provider.IFluidLoadable;
-    useUnknown(unknown);
+    const FluidObject: FluidObject<IProvideFluidLoadable> = getUnknownFluidObject();
+    useUnknownFluidObject(FluidObject);
+    useUnknownFluidObject(FluidObject.IFluidLoadable);
+    useProvider(FluidObject);
+    useProvider(FluidObject.IFluidLoadable);
+    useLoadable(FluidObject);
+    useLoadable(FluidObject.IFluidLoadable);
+    expectError(FluidObject.handle);
+    FluidObject.IFluidLoadable?.handle;
+    const unknown: FluidObject | undefined = FluidObject.IFluidLoadable;
+    useUnknownFluidObject(unknown);
     useProvider(unknown);
     useProvider<IFluidLoadable>(unknown);
     useLoadable(unknown);
 }
 
-// test with interface
+// test implicit conversions between FluidObject and a FluidObject with a implementation interface
 {
-    const foo: Provider<IFluidLoadable> = getUnknown();
-    useUnknown(foo);
-    useUnknown(foo.IFluidLoadable);
+    const foo: FluidObject<IFluidLoadable> = getUnknownFluidObject();
+    useUnknownFluidObject(foo);
+    useUnknownFluidObject(foo.IFluidLoadable);
     useProvider(foo);
     useProvider(foo.IFluidLoadable);
     useLoadable(foo);
     useLoadable(foo.IFluidLoadable);
     expectError(foo.handle);
     foo.IFluidLoadable?.handle;
-    const unknown: Provider | undefined = foo.IFluidLoadable;
-    useUnknown(unknown);
+    const unknown: FluidObject | undefined = foo.IFluidLoadable;
+    useUnknownFluidObject(unknown);
     useProvider(unknown);
     useProvider<IFluidLoadable>(unknown);
     useLoadable(unknown);
@@ -56,8 +56,33 @@ declare function useLoadable(params: Provider<IFluidLoadable> | undefined): void
 
 // test getting keys
 {
-    useProviderKey<IFluidLoadable>(IFluidLoadable);
+    useProviderKey<IProvideFluidLoadable>(IFluidLoadable);
     useProviderKey<IFluidLoadable>(IFluidLoadable);
     const loadableKey: keyof IFluidLoadable = "handle";
     expectError(useProviderKey<IFluidLoadable>(loadableKey));
+}
+
+// test implicit conversions between FluidObject and a FluidObject with a partial provider interface
+{
+
+    interface IProvideFoo{
+        IFoo: IFoo;
+    }
+    interface IFoo extends Partial<IProvideFoo>{
+        doFoo();
+    }
+
+    const foo: FluidObject<IFoo> = getUnknownFluidObject();
+    useUnknownFluidObject(foo);
+    useUnknownFluidObject(foo.IFoo);
+    useProvider(foo);
+    useProvider(foo.IFoo);
+    foo.IFoo?.doFoo();
+    const fooKey: keyof IFoo = "doFoo";
+    expectError(useProviderKey<IFoo>(fooKey));
+    const unknown: FluidObject | undefined = foo.IFoo;
+    useUnknownFluidObject(unknown);
+    useProvider(unknown);
+    useProvider<IFoo>(unknown);
+    useLoadable(unknown);
 }

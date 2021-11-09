@@ -5,11 +5,11 @@
 
 /**
  * @internal
- * This utility type is primarily meant for internal use by @see Provider
- * Produces a valid Provider key given a type and a property.
- * A valid Provider key is a property that exists on the incoming type
+ * This utility type is primarily meant for internal use by @see FluidObject
+ * Produces a valid FluidObject key given a type and a property.
+ * A valid FluidObject key is a property that exists on the incoming type
  * as well as on the type of the property itself. For example, IProvideFoo.IFoo.IFoo
- * This aligns with the provider pattern expected to be used with all Providers.
+ * This aligns with the FluidObject pattern expected to be used with all FluidObjects.
  * For example:
  * ```
  * interface IProvideFoo{
@@ -20,9 +20,9 @@
  * }
  * ```
  * This pattern enables discovery, and delegation in a standard way which is central
- * to Provider pattern
+ * to FluidObject pattern
  */
- export type ProviderPropertyKeys<T, TProp extends keyof T = keyof T> =
+ export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> =
     string extends TProp ? never : number extends TProp? never : // exclude indexers [key:string |number]: any
     TProp extends keyof T[TProp] // TProp is a property of T, T[TProp] and, T[TProp][TProp]
         ? TProp extends keyof T[TProp][TProp] // ex; IProvideFoo.IFoo.IFoo.IFoo
@@ -31,11 +31,11 @@
         : never;
 
 /**
- * This utility type take interface(s) that follow the provider pattern, and produces
+ * This utility type take interface(s) that follow the FluidObject pattern, and produces
  * a new type that can be used for inspection and discovery of those interfaces.
  *
- * It is meant to be used with types that are known to implement the provider pattern.
- * A common way to specify a type implements the provider pattern is to expose it as a
+ * It is meant to be used with types that are known to implement the FluidObject pattern.
+ * A common way to specify a type implements the FluidObject pattern is to expose it as a
  * Provider without a generic argument.
  *
  * For example, if we have an interface like below
@@ -48,25 +48,25 @@
  * }
  * ```
  *
- * and a function that returns a Provider. You would do the following
+ * and a function that returns a FluidObject. You would do the following
  *
- * `const maybeFoo : Provider<IFoo> = getUnknown()`;
+ * `const maybeFoo : Provider<IFoo> = getFluidObject()`;
  *
  * Either IFoo or IProvideFoo are valid generic arguments. In both case
  * maybeFoo will be of type `{IFoo?: IFoo}`. If IFoo is not undefined,
- * then the Provider implements IFoo, and it can be used.
+ * then the FluidObject implements IFoo, and it can be used.
  *
  * You can inspect multiple types via a intersection. For example:
- * `Provider<IFoo & IBar>`
+ * `FluidObject<IFoo & IBar>`
  *
  */
- export type Provider<T = unknown> = Partial<Pick<T, ProviderPropertyKeys<T>>>;
+ export type FluidObject<T = unknown> = Partial<Pick<T, FluidObjectProviderKeys<T>>>;
 
 /**
  * This utility type creates a type that is the union of all keys on the generic type
- * which implement the provider pattern. @see Provider
+ * which implement the FluidObject pattern. @see FluidObject
  *
- * For example `ProviderKeys<IFoo | IBar>` would result in `"IFoo" | "IBar"`
+ * For example `FluidObjectKeys<IFoo | IBar>` would result in `"IFoo" | "IBar"`
  *
  */
-export type ProviderKeys<T> = keyof Provider<T>;
+export type FluidObjectKeys<T> = keyof FluidObject<T>;
