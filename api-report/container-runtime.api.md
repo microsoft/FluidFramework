@@ -180,6 +180,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     submitDataStoreSignal(address: string, type: string, content: any): void;
     submitSignal(type: string, content: any): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
+    // (undocumented)
+    summariesDisabled(): boolean;
     summarize(options: {
         summaryLogger: ITelemetryLogger;
         fullTree?: boolean;
@@ -589,7 +591,7 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 export interface ISummaryRuntimeOptions {
     // (undocumented)
     disableIsolatedChannels?: boolean;
-    generateSummaries?: boolean;
+    disableSummaries?: boolean;
     // (undocumented)
     initialSummarizerDelayMs?: number;
     // (undocumented)
