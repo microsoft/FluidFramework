@@ -351,24 +351,35 @@ class ScheduleManagerCore {
             "push",
             (message: ISequencedDocumentMessage) => {
                 this.trackPending(message);
-                this.updatePauseState(message.sequenceNumber);
             });
+
+        // Start with baseline - empty inbound queue.
+        this.setPaused(true);
 
         const allPending = this.deltaManager.inbound.toArray();
         for (const pending of allPending) {
             this.trackPending(pending);
         }
-
-        // Based on track pending update the pause state
-        this.updatePauseState(this.deltaManager.lastSequenceNumber);
     }
 
     /**
      * The only public function in this class - called when we processed an op,
      * to make decision if op processing should be paused or not afer that.
      */
-    public afterOpProcessing(sequenceNumber: number) {
-        this.updatePauseState(sequenceNumber);
+     public afterOpProcessing(sequenceNumber: number) {
+        // If the inbound queue is ever empty we pause it and wait for new events
+        if (this.deltaManager.inbound.length === 0) {
+            this.setPaused(true);
+            return;
+        }
+
+        // If no message has caused the pause flag to be set, or the next message up is not the one we need to pause at
+        // then we simply continue processing
+        if (this.pauseSequenceNumber !== undefined && sequenceNumber + 1 >= this.pauseSequenceNumber) {
+            this.setPaused(true);
+        } else {
+            this.setPaused(false);
+        }
     }
 
     private setPaused(localPaused: boolean) {
@@ -386,45 +397,46 @@ class ScheduleManagerCore {
         }
     }
 
-    private updatePauseState(sequenceNumber: number) {
-        // If the inbound queue is ever empty we pause it and wait for new events
-        if (this.deltaManager.inbound.length === 0) {
-            this.setPaused(true);
-            return;
-        }
-
-        // If no message has caused the pause flag to be set, or the next message up is not the one we need to pause at
-        // then we simply continue processing
-        if (this.pauseSequenceNumber === undefined || sequenceNumber + 1 < this.pauseSequenceNumber) {
-            this.setPaused(false);
-        } else {
-            // Otherwise the next message requires us to pause
-            this.setPaused(true);
-        }
-    }
-
     /**
      * Called for each incoming op (i.e. inbound "push" notification)
      */
     private trackPending(message: ISequencedDocumentMessage) {
+        assert(this.deltaManager.inbound.length !== 0, "we have something in the queue that generates this event");
+
         const metadata = message.metadata as IRuntimeMessageMetadata;
 
         // Protocol messages are never part of a runtime batch of messages
         if (!isRuntimeMessage(message)) {
+            // Protocol messages should never show up in the middle of the batch!
+            assert(this.currentBatchClientId === undefined, "System message in the middle of batch!");
+
             this.pauseSequenceNumber = undefined;
             this.currentBatchClientId = undefined;
+            this.setPaused(false);
             return;
         }
 
-        const batchMetadata = metadata ? metadata.batch : undefined;
+        const batchMetadata = metadata?.batch;
 
         // If the client ID changes then we can move the pause point. If it stayed the same then we need to check.
         // If batchMetadata is not undefined then if it's true we've begun a new batch - if false we've ended
         // the previous one
-        // We check the batch flag for the new clientID - if true we pause otherwise we reset the tracking data
-        if (this.currentBatchClientId !== message.clientId || batchMetadata !== undefined) {
-            this.pauseSequenceNumber = batchMetadata ? message.sequenceNumber : undefined;
-            this.currentBatchClientId = batchMetadata ? message.clientId : undefined;
+        if (this.currentBatchClientId !== undefined || batchMetadata === false) {
+            assert(this.currentBatchClientId === message.clientId,
+                "Batch not closed, yet message from another client!");
+        }
+        if (batchMetadata) {
+            assert(this.currentBatchClientId === undefined, "there can't be active batch");
+            this.pauseSequenceNumber = message.sequenceNumber;
+            this.currentBatchClientId = message.clientId;
+            this.setPaused(true);
+        } else if (batchMetadata === false) {
+            assert(this.localPaused, "active batch, should be paused");
+            this.pauseSequenceNumber = undefined;
+            this.currentBatchClientId = undefined;
+            this.setPaused(false);
+        } else {
+            this.setPaused(this.pauseSequenceNumber !== undefined);
         }
     }
 }
@@ -439,6 +451,8 @@ class ScheduleManagerCore {
 export class ScheduleManager {
     private readonly deltaScheduler: DeltaScheduler;
     private batchClientId: string | undefined;
+    private hitError = false;
+
     private readonly scheduler: ScheduleManagerCore;
 
     constructor(
@@ -455,17 +469,16 @@ export class ScheduleManager {
 
     public beforeOpProcessing(message: ISequencedDocumentMessage) {
         if (this.batchClientId !== message.clientId) {
-            // As a back stop for any bugs marking the end of a batch - if the client ID flipped, we
-            // consider the previous batch over.
+            // FOLLOWUP: Should be assert instead of recovery code
             if (this.batchClientId !== undefined) {
-                this.emitter.emit("batchEnd", "Did not receive real batchEnd message", undefined);
-                this.deltaScheduler.batchEnd();
-
-                this.logger.sendTelemetryEvent({
+                // As a back stop for any bugs marking the end of a batch - if the client ID flipped, we
+                // consider the previous batch over.
+                this.logger.sendErrorEvent({
                     eventName: "BatchEndNotReceived",
-                    clientId: this.batchClientId,
                     sequenceNumber: message.sequenceNumber,
                 });
+                this.emitter.emit("batchEnd", "Did not receive real batchEnd message", undefined);
+                this.deltaScheduler.batchEnd();
             }
 
             // This could be the beginning of a new batch or an individual message.
@@ -482,14 +495,22 @@ export class ScheduleManager {
     }
 
     public afterOpProcessing(error: any | undefined, message: ISequencedDocumentMessage) {
+        // If this is no longer true, we need to revisit what we do where we set this.hitError.
+        assert(!this.hitError, "container should be closed on any error");
+
+        // Let the scheduler know how far we progressed, to decide if op processing
+        // should be paused or not.
+        this.scheduler.afterOpProcessing(message.sequenceNumber);
+
         if (error) {
+            // We assume here that loader will close container and stop processing all future ops.
+            // This is implicit dependency. If this flow changes, this code might no longer be correct.
+            this.hitError = true;
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", error, message);
             this.deltaScheduler.batchEnd();
             return;
         }
-
-        this.scheduler.afterOpProcessing(message.sequenceNumber);
 
         const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
         // If no batchClientId has been set then we're in an individual batch. Else, if we get
