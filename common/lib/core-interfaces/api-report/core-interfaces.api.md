@@ -4,6 +4,19 @@
 
 ```ts
 
+// Warning: (ae-incompatible-release-tags) The symbol "FluidObject" is marked as @public, but its signature references "FluidObjectProviderKeys" which is marked as @internal
+//
+// @public
+export type FluidObject<T = unknown> = Partial<Pick<T, FluidObjectProviderKeys<T>>>;
+
+// @public
+export type FluidObjectKeys<T> = keyof FluidObject<T>;
+
+// Warning: (ae-internal-missing-underscore) The name "FluidObjectProviderKeys" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof T[TProp] ? TProp extends keyof T[TProp][TProp] ? TProp : never : never;
+
 // @public
 export interface IFluidCodeDetails {
     readonly config?: IFluidCodeDetailsConfig;
@@ -212,19 +225,6 @@ export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFlui
 
 // @public
 export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
-
-// Warning: (ae-incompatible-release-tags) The symbol "Provider" is marked as @public, but its signature references "ProviderPropertyKeys" which is marked as @internal
-//
-// @public
-export type Provider<T = unknown> = Partial<Pick<T, ProviderPropertyKeys<T>>>;
-
-// @public
-export type ProviderKeys<T> = keyof Provider<T>;
-
-// Warning: (ae-internal-missing-underscore) The name "ProviderPropertyKeys" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export type ProviderPropertyKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof T[TProp] ? TProp extends keyof T[TProp][TProp] ? TProp : never : never;
 
 
 // (No @packageDocumentation comment for this package)
