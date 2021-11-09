@@ -29,7 +29,7 @@ import { ChildLogger } from "@fluidframework/telemetry-utils";
 const batchManagerDisabledKey = "FluidDisableBatchManager";
 
 // See #8129.
-// Need to move to common-utils.
+// Need to move to common-utils (tracked as #8165)
 // Borrowed from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#examples
 // Avoids runtime errors with circular references.
 // Not ideal, as will cut values that are not necessarily circular references.
@@ -379,6 +379,13 @@ export class DocumentDeltaConnection
 
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
+                try {
+                    const description = error?.description;
+                    if (description && typeof description === "object") {
+                        // That's a WebSocket. Clear it as we can't log it.
+                        description.target = undefined;
+                    }
+                } catch(_e) {}
                 fail(true, this.createErrorObject("connectError", error));
             });
 
