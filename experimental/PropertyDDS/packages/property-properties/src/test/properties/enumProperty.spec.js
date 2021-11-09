@@ -8,24 +8,27 @@
  *    described in /src/properties/enumProperty.js
  */
 
-var PropertyFactory, TestEnumTemplate, TestInlineEnumTemplate, TestEnumArrayTemplate,
-    BaseProperty, ChangeSet, TestBaseContainingEnumTemplate, MSG, deepCopy, _;
+const { PropertyFactory } = require('../..');
+const { BaseProperty } = require('../..');
+const { ChangeSet } = require('@fluid-experimental/property-changeset');
+const { MSG } = require('@fluid-experimental/property-common').constants;
+const _ = require('lodash');
+const deepCopy = _.cloneDeep;
+
+let TestEnumTemplate,
+    TestInlineEnumTemplate,
+    TestEnumArrayTemplate,
+    TestBaseContainingEnumTemplate;
 
 describe('Test EnumProperty', function () {
     /**
      * Get all the objects we need in this test here.
      */
     before(function () {
-        PropertyFactory = require('../..').PropertyFactory;
-        BaseProperty = require('../..').BaseProperty;
-        ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
-        MSG = require('@fluid-experimental/property-common').constants.MSG
-        _ = require('lodash');
-        deepCopy = _.cloneDeep;
 
 
         // the following templates are copies from the specification
-        // disableling the single quote rule to keep exact copies
+        // disabling the single quote rule to keep exact copies
         /* eslint-disable quotes*/
         TestEnumTemplate = {
             typeid: "autodesk.core:UnitsEnum-1.0.0",
