@@ -37,11 +37,11 @@ parameters:
 
 - name: poolCG
   type: object
-  default: Lite
+  default: Small
 
 - name: poolBuild
   type: object
-  default: Lite
+  default: Small
 
 - name: preCG
   type: stepList

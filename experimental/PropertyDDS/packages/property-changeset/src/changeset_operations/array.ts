@@ -5,11 +5,10 @@
 /**
  * @fileoverview Helper functions and classes to work with array ChangeSets
  */
-
-import cloneDeep from "lodash/cloneDeep";
-import isNumber from "lodash/isNumber";
-import isString from "lodash/isString";
-import isEqual from "lodash/isEqual";
+ import {copy as cloneDeep} from "fastest-json-copy";
+ import isNumber from "lodash/isNumber";
+ import isString from "lodash/isString";
+ import isEqual from "lodash/isEqual";
 
 // @ts-ignore
 import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
