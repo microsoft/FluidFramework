@@ -4,10 +4,16 @@
  */
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 
+/**
+ * @alpha
+ */
 export interface IConfigProviderBase{
     getRawConfig(name: string): string | undefined;
 }
 
+/**
+ * @alpha
+ */
 export interface TypeConverters{
     number: TypeConverter<number>;
     string: TypeConverter<string>;
@@ -18,9 +24,19 @@ export interface TypeConverters{
     never: TypeConverter<never>
 }
 
+/**
+ * @alpha
+ */
 export type TypeConverter<T> = (v: string | undefined) => T | undefined;
+
+/**
+ * @alpha
+ */
 export type TypeConverterNames = keyof TypeConverters;
 
+/**
+ * @alpha
+ */
 export interface IConfigProvider extends IConfigProviderBase{
     getConfig<T extends TypeConverterNames>(
         name: string, converter: T,
@@ -61,6 +77,9 @@ interface ConfigCacheEntry extends ReturnToProp<TypeConverters> {
     readonly raw: string | undefined;
 }
 
+/**
+ * @alpha
+ */
 export function tryCreateSessionStorageConfigProvider(): IConfigProviderBase | undefined {
     if(sessionStorage !== undefined && sessionStorage !== null && typeof sessionStorage === "object") {
         return {
@@ -74,6 +93,9 @@ export function tryCreateSessionStorageConfigProvider(): IConfigProviderBase | u
     }
 }
 
+/**
+ * @alpha
+ */
 export function tryCreateObjectConfigProvider(
     namespace: string, obj: Record<string, string>): IConfigProviderBase | undefined {
         return {
@@ -83,6 +105,10 @@ export function tryCreateObjectConfigProvider(
            },
         };
     }
+
+/**
+ * @alpha
+ */
 export class ConfigProvider implements IConfigProvider {
     private readonly configCache = new Map<string, ConfigCacheEntry | undefined>();
     private readonly orderedBaseProviders: (IConfigProviderBase| undefined)[];
@@ -137,8 +163,14 @@ export class ConfigProvider implements IConfigProvider {
     }
 }
 
+/**
+ * @alpha
+ */
 export type ITelemetryLoggerWithConfig = ITelemetryLogger & IConfigProvider;
 
+/**
+ * @alpha
+ */
 export function mixinConfigProvider(logger: ITelemetryLogger, config: IConfigProvider): ITelemetryLoggerWithConfig {
     const mixin: ITelemetryLogger & Partial<IConfigProvider> = logger;
     mixin.getConfig = config.getConfig.bind(config);
