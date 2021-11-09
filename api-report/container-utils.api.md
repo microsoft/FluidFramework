@@ -36,7 +36,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     readonly errorType = ContainerErrorType.dataProcessingError;
     // (undocumented)
     readonly fluidErrorCode: string;
-    static wrapIfUnrecognized(originalError: any, errorCodeIfNone: string, message: ISequencedDocumentMessage | undefined): IFluidErrorBase;
+    static wrapIfUnrecognized(originalError: any, dataProcessingCodepath: string, message?: ISequencedDocumentMessage): IFluidErrorBase;
 }
 
 // @public (undocumented)
@@ -80,12 +80,6 @@ export class UsageError extends LoggingError implements IFluidErrorBase {
     // (undocumented)
     readonly fluidErrorCode: string;
 }
-
-// @public
-export function wrapError<T extends IFluidErrorBase>(innerError: unknown, newErrorFn: (message: string) => T): T;
-
-// @public
-export function wrapErrorAndLog<T extends IFluidErrorBase>(innerError: unknown, newErrorFn: (message: string) => T, logger: ITelemetryLogger): T;
 
 
 // (No @packageDocumentation comment for this package)

@@ -45,11 +45,10 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Lite
+        poolBuild: Small
         testPackage: "@fluidframework/azure-client"
         testWorkspace: ${{ variables.testWorkspace }}
         testCommand: test:realsvc:azure
-        downloadTestFiles: true
         testFileTarName: azure-client
         extraDependencies: "cross-env mocha @fluidframework/test-client-utils"
         env:

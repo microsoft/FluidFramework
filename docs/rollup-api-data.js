@@ -29,10 +29,16 @@ const memberCombineInstructions = [
         ])
     },
     {
+        package: "@fluidframework/azure-client",
+        sourceImports: new Map([
+            ["@fluidframework/routerlicious-driver", ["ITokenProvider", "ITokenResponse"]],
+            ["@fluidframework/protocol-definitions", ["ScopeType", "ITokenClaims", "IUser"]],
+        ])
+    },
+    {
         package: "@fluidframework/azure-service-utils",
         sourceImports: new Map([
             ["@fluidframework/server-services-client", ["generateToken"]],
-            ["@fluidframework/protocol-definitions", ["ScopeType"]],
         ])
     },
     {
