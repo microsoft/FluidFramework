@@ -331,7 +331,7 @@ class ScheduleManagerCore {
 
             // First message will have the batch flag set to true if doing a batched send
             const firstMessageMetadata = messages[0].metadata as IRuntimeMessageMetadata;
-            if (firstMessageMetadata?.batch !== true) {
+            if (!firstMessageMetadata?.batch) {
                 return;
             }
 
@@ -418,15 +418,13 @@ class ScheduleManagerCore {
 
         const batchMetadata = metadata ? metadata.batch : undefined;
 
-        if (batchMetadata !== undefined) {
-            // If batchMetadata is not undefined then if it's true we've begun a new batch - if false we've ended
-            // the previous one
-            this.pauseSequenceNumber = message.sequenceNumber;
-            this.currentBatchClientId = message.clientId;
-        } else if (this.currentBatchClientId !== message.clientId) {
-            // If the client ID changes then we can move the pause point. If it stayed the same then we need to check.
-            this.pauseSequenceNumber = undefined;
-            this.currentBatchClientId = undefined;
+        // If the client ID changes then we can move the pause point. If it stayed the same then we need to check.
+        // If batchMetadata is not undefined then if it's true we've begun a new batch - if false we've ended
+        // the previous one
+        // We check the batch flag for the new clientID - if true we pause otherwise we reset the tracking data
+        if (this.currentBatchClientId !== message.clientId || batchMetadata !== undefined) {
+            this.pauseSequenceNumber = batchMetadata ? message.sequenceNumber : undefined;
+            this.currentBatchClientId = batchMetadata ? message.clientId : undefined;
         }
     }
 }
@@ -459,7 +457,7 @@ export class ScheduleManager {
         if (this.batchClientId !== message.clientId) {
             // As a back stop for any bugs marking the end of a batch - if the client ID flipped, we
             // consider the previous batch over.
-            if (this.batchClientId) {
+            if (this.batchClientId !== undefined) {
                 this.emitter.emit("batchEnd", "Did not receive real batchEnd message", undefined);
                 this.deltaScheduler.batchEnd();
 
