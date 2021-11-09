@@ -23,7 +23,10 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import {
+    ITelemetryLoggerWithConfig,
+    mixinChildLoggerWithConfigProvider,
+} from "@fluidframework/telemetry-utils";
 
 // Local storage key to disable the BatchManager
 const batchManagerDisabledKey = "FluidDisableBatchManager";
@@ -103,7 +106,7 @@ export class DocumentDeltaConnection
      * After disconnection, we flip this to prevent any stale messages from being emitted.
      */
     protected _disposed: boolean = false;
-    protected readonly logger: ITelemetryLogger;
+    protected readonly logger: ITelemetryLoggerWithConfig;
     protected readonly isBatchManagerDisabled: boolean = false;
 
     public get details(): IConnected {
@@ -124,7 +127,7 @@ export class DocumentDeltaConnection
     ) {
         super();
 
-        this.logger = ChildLogger.create(logger, "DeltaConnection");
+        this.logger = mixinChildLoggerWithConfigProvider(logger, "DeltaConnection");
 
         this.submitManager = new BatchManager<IDocumentMessage[]>(
             (submitType, work) => this.emitMessages(submitType, work));
@@ -157,7 +160,8 @@ export class DocumentDeltaConnection
             }
         });
 
-        this.isBatchManagerDisabled = DocumentDeltaConnection.disabledBatchManagerFeatureGate;
+        this.isBatchManagerDisabled =
+            this.logger.getConfig(batchManagerDisabledKey, "boolean") ?? false;
     }
 
     /**
@@ -286,15 +290,6 @@ export class DocumentDeltaConnection
         if (!this.disposed) {
             this.socket.emit(type, this.clientId, messages);
         }
-    }
-
-    private static get disabledBatchManagerFeatureGate() {
-        try {
-            return localStorage !== undefined
-                && typeof localStorage === "object"
-                && localStorage.getItem(batchManagerDisabledKey) === "1";
-        } catch (e) { }
-        return false;
     }
 
     protected submitCore(type: string, messages: IDocumentMessage[]) {

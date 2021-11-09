@@ -2,7 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { Lazy } from "@fluidframework/common-utils";
+import { ChildLogger, ITelemetryLoggerPropertyBags } from "./logger";
 
 /**
  * @alpha
@@ -76,11 +78,7 @@ type ReturnToProp<T> ={[P in keyof T]?: T[P] extends (...args: any) => any ? Ret
 interface ConfigCacheEntry extends ReturnToProp<TypeConverters> {
     readonly raw: string | undefined;
 }
-
-/**
- * @alpha
- */
-export function tryCreateSessionStorageConfigProvider(): IConfigProviderBase | undefined {
+const sessionStorageProvider = new Lazy(()=>{
     if(sessionStorage !== undefined && sessionStorage !== null && typeof sessionStorage === "object") {
         return {
            getRawConfig: (name: string)=> {
@@ -91,30 +89,44 @@ export function tryCreateSessionStorageConfigProvider(): IConfigProviderBase | u
            },
         };
     }
-}
+});
 
-/**
- * @alpha
- */
-export function tryCreateObjectConfigProvider(
-    namespace: string, obj: Record<string, string>): IConfigProviderBase | undefined {
-        return {
-           getRawConfig: (name: string)=> {
-               const nname = name.startsWith(namespace) ? name.substr(namespace.length) : name;
-               return obj[nname];
-           },
-        };
-    }
+export const tryCreateSessionStorageConfigProvider = ()=>sessionStorageProvider.value;
 
-/**
- * @alpha
- */
 export class ConfigProvider implements IConfigProvider {
     private readonly configCache = new Map<string, ConfigCacheEntry | undefined>();
     private readonly orderedBaseProviders: (IConfigProviderBase| undefined)[];
+    private readonly namespace: string | undefined;
 
-    constructor(private readonly namespace: string, ... orderedBaseProviders: (IConfigProviderBase | undefined)[]) {
-        this.orderedBaseProviders = [... orderedBaseProviders];
+    constructor(
+        orderedBaseProviders: (IConfigProviderBase | ITelemetryBaseLogger | undefined)[],
+        namespace: string | undefined,
+    ) {
+        this.orderedBaseProviders = [];
+        const knownProviders = new Set<IConfigProviderBase>();
+        const candidateProviders = [... orderedBaseProviders];
+        while(candidateProviders.length > 0) {
+            const baseProvider = candidateProviders.shift()!;
+            if (baseProvider !== undefined
+                && isConfigProviderBase(baseProvider)
+                && !knownProviders.has(baseProvider)
+            ) {
+                knownProviders.add(baseProvider);
+                if(baseProvider instanceof ConfigProvider) {
+                    // we build up the namespace. so take the namespace of the highest
+                    // base provider, and append ours below if specified
+                    if(this.namespace === undefined) {
+                        this.namespace = baseProvider.namespace;
+                    }
+                    candidateProviders.push(... baseProvider.orderedBaseProviders);
+                }else{
+                    this.orderedBaseProviders.push(baseProvider);
+                }
+            }
+        }
+        if(namespace !== undefined) {
+            this.namespace = this.namespace === undefined ? namespace : `${this.namespace}.${namespace}`;
+        }
     }
 
     getRawConfig(name: string): string | undefined {
@@ -144,7 +156,7 @@ export class ConfigProvider implements IConfigProvider {
     }
 
     private getCacheEntry(name: string): ConfigCacheEntry | undefined {
-        const nname = `${this.namespace}.${name}`;
+        const nname = this.namespace ? `${this.namespace}.${name}` : name;
         if(!this.configCache.has(nname)) {
             for(const provider of this.orderedBaseProviders) {
                 const str = provider?.getRawConfig(nname);
@@ -171,9 +183,32 @@ export type ITelemetryLoggerWithConfig = ITelemetryLogger & IConfigProvider;
 /**
  * @alpha
  */
-export function mixinConfigProvider(logger: ITelemetryLogger, config: IConfigProvider): ITelemetryLoggerWithConfig {
+export function mixinChildLoggerWithConfigProvider(
+    logger: ITelemetryLogger,
+    namespace?: string,
+    properties?: ITelemetryLoggerPropertyBags,
+): ITelemetryLoggerWithConfig {
+    const config = new ConfigProvider([sessionStorageProvider.value, logger], namespace);
+    const mixin: ITelemetryLogger & Partial<IConfigProvider> = ChildLogger.create(logger, namespace, properties);
+    mixin.getConfig = config.getConfig.bind(config);
+    mixin.getRawConfig = config.getRawConfig.bind(config);
+    return mixin as ITelemetryLoggerWithConfig;
+}
+
+export function mixinConfigProvider(
+    logger: ITelemetryLogger,
+    config: IConfigProvider,
+): ITelemetryLoggerWithConfig {
+    if(isConfigProviderBase(logger)) {
+        throw new Error("Logger Is already config provider");
+    }
     const mixin: ITelemetryLogger & Partial<IConfigProvider> = logger;
     mixin.getConfig = config.getConfig.bind(config);
     mixin.getRawConfig = config.getRawConfig.bind(config);
     return mixin as ITelemetryLoggerWithConfig;
+}
+
+function isConfigProviderBase<T>(obj: T): obj is T & IConfigProviderBase {
+    const maybeConfig: Partial<IConfigProviderBase> = obj;
+    return maybeConfig?.getRawConfig !== undefined;
 }

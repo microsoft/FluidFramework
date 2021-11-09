@@ -8,10 +8,13 @@ import { runGarbageCollection } from "@fluidframework/garbage-collector";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { ReadAndParseBlob, RefreshSummaryResult } from "@fluidframework/runtime-utils";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import {
+    ITelemetryLoggerWithConfig,
+    mixinChildLoggerWithConfigProvider,
+    PerformanceEvent,
+} from "@fluidframework/telemetry-utils";
 
 import { IGCRuntimeOptions } from "./containerRuntime";
-import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
 import {
     getGCVersion,
     GCVersion,
@@ -118,7 +121,7 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly gcEnabled: boolean;
     private readonly shouldRunSweep: boolean;
     private readonly testMode: boolean;
-    private readonly logger: ITelemetryLogger;
+    private readonly logger: ITelemetryLoggerWithConfig;
 
     // The current GC version that this container is running.
     private readonly currentGCVersion = GCVersion;
@@ -137,7 +140,7 @@ export class GarbageCollector implements IGarbageCollector {
         existing: boolean,
         metadata?: IContainerRuntimeMetadata,
     ) {
-        this.logger = ChildLogger.create(baseLogger, "GarbageCollector");
+        this.logger = mixinChildLoggerWithConfigProvider(baseLogger, "GarbageCollector");
 
         let prevSummaryGCVersion: number | undefined;
         // GC can only be enabled during creation. After that, it can never be enabled again. So, for existing
@@ -156,7 +159,7 @@ export class GarbageCollector implements IGarbageCollector {
         this.latestSummaryGCVersion = prevSummaryGCVersion ?? this.currentGCVersion;
 
         // Whether GC should run or not. Can override with localStorage flag.
-        this.shouldRunGC = getLocalStorageFeatureGate(runGCKey) ?? (
+        this.shouldRunGC = this.logger.getConfig(runGCKey, "boolean") ?? (
             // GC must be enabled for the document.
             this.gcEnabled
             // GC must not be disabled via GC options.
@@ -166,10 +169,10 @@ export class GarbageCollector implements IGarbageCollector {
         // Whether GC sweep phase should run or not. If this is false, only GC mark phase is run. Can override with
         // localStorage flag.
         this.shouldRunSweep = this.shouldRunGC &&
-            (getLocalStorageFeatureGate(runSweepKey) ?? gcOptions.runSweep === true);
+            (this.logger.getConfig(runSweepKey, "boolean") ?? gcOptions.runSweep === true);
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
-        this.testMode = getLocalStorageFeatureGate(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
+        this.testMode = this.logger.getConfig(gcTestModeKey, "boolean") ?? gcOptions.runGCInTestMode === true;
     }
 
     /**

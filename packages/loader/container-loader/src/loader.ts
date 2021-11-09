@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidCodeDetails,
     IFluidObject,
@@ -26,10 +26,10 @@ import {
     LoaderHeader,
 } from "@fluidframework/container-definitions";
 import {
-    ChildLogger,
     ConfigProvider,
     DebugLogger,
     ITelemetryLoggerWithConfig,
+    mixinChildLoggerWithConfigProvider,
     mixinConfigProvider,
     PerformanceEvent,
     tryCreateSessionStorageConfigProvider,
@@ -253,7 +253,7 @@ export interface ILoaderServices {
     /**
      * The logger downstream consumers should construct their loggers from
      */
-    readonly subLogger: ITelemetryLoggerWithConfig;
+    readonly subLogger: ITelemetryLogger;
 
     /**
      * Blobs storage for detached containers.
@@ -287,9 +287,11 @@ export class Loader implements IHostLoader {
             scope.ILoader = this;
         }
 
-        const configProvider = new ConfigProvider(
-            "fluid",
-            tryCreateSessionStorageConfigProvider());
+        const subLogger = mixinConfigProvider(
+            DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all:{loaderId: uuid()} }),
+            new ConfigProvider([tryCreateSessionStorageConfigProvider(), loaderProps.logger], "Fluid"));
+
+        this.logger = mixinChildLoggerWithConfigProvider(subLogger, "Loader");
 
         this.services = {
             urlResolver: createCachedResolver(MultiUrlResolver.create(loaderProps.urlResolver)),
@@ -297,15 +299,10 @@ export class Loader implements IHostLoader {
             codeLoader: loaderProps.codeLoader,
             options: loaderProps.options ?? {},
             scope,
-            subLogger: mixinConfigProvider(
-                DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all:{loaderId: uuid()} }),
-                configProvider),
+            subLogger,
             proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
             detachedBlobStorage: loaderProps.detachedBlobStorage,
         };
-        this.logger = mixinConfigProvider(
-            ChildLogger.create(this.services.subLogger, "Loader"),
-            new ConfigProvider("loader",nname));
     }
 
     public get IFluidRouter(): IFluidRouter { return this; }
@@ -372,7 +369,7 @@ export class Loader implements IHostLoader {
                     this.containers.delete(key);
                 });
             }
-        }).catch((error) => {});
+        }).catch(() => {});
     }
 
     private async resolveCore(
@@ -423,7 +420,7 @@ export class Loader implements IHostLoader {
         }
 
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
-            await new Promise<void>((resolve, reject) => {
+            await new Promise<void>((resolve) => {
                 function opHandler(message: ISequencedDocumentMessage) {
                     if (message.sequenceNumber > fromSequenceNumber) {
                         resolve();

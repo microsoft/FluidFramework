@@ -43,6 +43,8 @@ import {
     PerformanceEvent,
     normalizeError,
     TaggedLoggerAdapter,
+    mixinChildLoggerWithConfigProvider,
+    ITelemetryLoggerWithConfig,
 } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
@@ -118,7 +120,6 @@ import {
     wrapSummaryInChannelsTree,
 } from "./summaryFormat";
 import { SummaryCollection } from "./summaryCollection";
-import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
 import { ISerializedElection, OrderedClientCollection, OrderedClientElection } from "./orderedClientElection";
 import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
 import {
@@ -710,7 +711,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public readonly IFluidHandleContext: IFluidHandleContext;
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
-    private readonly _logger: ITelemetryLogger;
+    private readonly _logger: ITelemetryLoggerWithConfig;
     private readonly summarizerClientElection?: SummarizerClientElection;
     /**
      * summaryManager will only be created if this client is permitted to spawn a summarizing client
@@ -723,7 +724,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
     private _orderSequentiallyCalls: number = 0;
-    private _flushMode = ContainerRuntime.defaultFlushMode;
+    private _flushMode: FlushMode;
     private needsFlush = false;
     private flushTrigger = false;
 
@@ -782,10 +783,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /** The message in the metadata of the base summary this container is loaded from. */
     private readonly baseSummaryMessage: ISummaryMetadataMessage | undefined;
 
-    private static get defaultFlushMode(): FlushMode {
-        return getLocalStorageFeatureGate(turnBasedFlushModeKey) ? FlushMode.TurnBased : FlushMode.Immediate;
-    }
-
     private get summarizer(): Summarizer {
         assert(this._summarizer !== undefined, 0x257 /* "This is not summarizing container" */);
         return this._summarizer;
@@ -818,7 +815,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.IFluidHandleContext = new ContainerFluidHandleContext("", this);
         this.IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
 
-        this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
+        this._logger = mixinChildLoggerWithConfigProvider(this.logger, "ContainerRuntime");
+
+        this._flushMode =
+            this._logger.getConfig(turnBasedFlushModeKey, "boolean") ? FlushMode.TurnBased : FlushMode.Immediate;
 
         this.garbageCollector = GarbageCollector.create(
             this,
@@ -943,7 +943,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 electedSummarizerData ?? this.context.deltaManager.lastSequenceNumber,
                 SummarizerClientElection.isClientEligible,
             );
-            const summarizerClientElectionEnabled = getLocalStorageFeatureGate("summarizerClientElection") ??
+            const summarizerClientElectionEnabled = this._logger.getConfig("summarizerClientElection", "boolean") ??
                 this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
             this.summarizerClientElection = new SummarizerClientElection(
                 orderedClientLogger,

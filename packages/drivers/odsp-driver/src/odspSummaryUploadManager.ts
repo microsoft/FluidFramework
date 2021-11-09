@@ -3,13 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import {
+    ITelemetryLoggerWithConfig,
+    mixinChildLoggerWithConfigProvider,
+    PerformanceEvent,
+ } from "@fluidframework/telemetry-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IOdspSummaryPayload,
     IWriteSummaryResponse,
@@ -24,23 +28,6 @@ import { getWithRetryForTokenRefresh } from "./odspUtils";
 
 /* eslint-disable max-len */
 
-// Gate that when flipped, instructs to mark unreferenced nodes as such in the summary sent to SPO.
-function gatesMarkUnreferencedNodes() {
-    try {
-        // Leave override for testing purposes
-        if (typeof localStorage === "object" && localStorage !== null) {
-            if  (localStorage.FluidMarkUnreferencedNodes === "1") {
-                return true;
-            }
-            if  (localStorage.FluidMarkUnreferencedNodes === "0") {
-                return false;
-            }
-        }
-    } catch (e) {}
-
-    return true;
-}
-
 /**
  * This class manages a summary upload. When it receives a call to upload summary, it converts the summary tree into
  * a snapshot tree and then uploads that to the server.
@@ -48,13 +35,15 @@ function gatesMarkUnreferencedNodes() {
 export class OdspSummaryUploadManager {
     // Last proposed handle of the uploaded app summary.
     private lastSummaryProposalHandle: string | undefined;
+    private readonly logger: ITelemetryLoggerWithConfig;
 
     constructor(
         private readonly snapshotUrl: string,
         private readonly getStorageToken: InstrumentedStorageTokenFetcher,
-        private readonly logger: ITelemetryLogger,
+        logger: ITelemetryLogger,
         private readonly epochTracker: EpochTracker,
     ) {
+        this.logger = mixinChildLoggerWithConfigProvider(logger);
     }
 
     public async writeSummaryTree(tree: api.ISummaryTree, context: ISummaryContext) {
@@ -145,7 +134,7 @@ export class OdspSummaryUploadManager {
         tree: api.ISummaryTree,
         rootNodeName: string,
         path: string = "",
-        markUnreferencedNodes: boolean = gatesMarkUnreferencedNodes(),
+        markUnreferencedNodes: boolean = this.logger.getConfig("FluidMarkUnreferencedNodes", "boolean") ?? true,
     ) {
         const snapshotTree: IOdspSummaryTree = {
             type: "tree",

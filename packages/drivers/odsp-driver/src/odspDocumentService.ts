@@ -5,7 +5,10 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import {
+    ITelemetryLoggerWithConfig,
+    mixinChildLoggerWithConfigProvider,
+} from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -40,16 +43,6 @@ import { OpsCache } from "./opsCaching";
 import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter";
 
 // Gate that when set to "1", instructs to fetch the binary format snapshot from the spo.
-function gatesBinaryFormatSnapshot() {
-    try {
-        if (typeof localStorage === "object" && localStorage !== null) {
-            if  (localStorage.binaryFormatSnapshot === "1") {
-                return true;
-            }
-        }
-    } catch (e) {}
-    return false;
-}
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -98,7 +91,7 @@ export class OdspDocumentService implements IDocumentService {
 
     private storageManager?: OdspDocumentStorageService;
 
-    private readonly logger: TelemetryLogger;
+    private readonly logger: ITelemetryLoggerWithConfig;
 
     private readonly joinSessionKey: string;
 
@@ -139,7 +132,8 @@ export class OdspDocumentService implements IDocumentService {
         };
 
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
-        this.logger = ChildLogger.create(logger,
+        this.logger = mixinChildLoggerWithConfigProvider(
+            logger,
             undefined,
             {
                 all: {
@@ -148,7 +142,7 @@ export class OdspDocumentService implements IDocumentService {
             });
 
         this.hostPolicy = hostPolicy;
-        this.hostPolicy.fetchBinarySnapshotFormat ??= gatesBinaryFormatSnapshot();
+        this.hostPolicy.fetchBinarySnapshotFormat ??= this.logger.getConfig("binaryFormatSnapshot", "boolean");
         if (this.odspResolvedUrl.summarizer) {
             this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
         }
