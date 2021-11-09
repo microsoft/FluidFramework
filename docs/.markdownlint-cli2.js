@@ -12,6 +12,13 @@ const excludedTypography = [
     ["–", "-"],
 ];
 
+const excludedWords = [
+    "Azure Fluid Relay service",
+    "Azure Relay Service",
+    "FRS",
+    "`Tinylicious`",
+]
+
 const clamp = (number, min, max) => {
     return Math.max(min, Math.min(number, max));
 };
@@ -25,6 +32,26 @@ module.exports = {
     "customRules": [
         "markdownlint-rule-emphasis-style",
         "markdownlint-rule-github-internal-links",
+        {
+            "names": ["ban-words"],
+            "description": "Using a banned word",
+            "tags": ["style"],
+            "function": (params, onError) => {
+                forEachLine(getLineMetadata(params), (line, lineIndex) => {
+                    for (const word of excludedWords) {
+                        const column = line.indexOf(word);
+                        if (column >= 0) {
+                            onError({
+                                "lineNumber": lineIndex + 1,
+                                "detail": `Found banned word "${word}" at column ${column}`,
+                                "context": extractContext(line, column),
+                                "range": [column + 1, 1],
+                            });
+                        }
+                    }
+                });
+            }
+        },
         {
             "names": ["proper-typography"],
             "description": "Using improper typography",
@@ -85,13 +112,21 @@ module.exports = {
         "proper-names": { // MD044
             "code_blocks": false,
             "names": [
+                "Azure AD",
+                "Azure Active Directory",
+                "Azure Fluid Relay",
+                "Fluid container",
+                "Fluid containers",
                 "Fluid Framework",
                 "JavaScript",
                 "JSON",
                 "Microsoft",
                 "npm",
                 "Routerlicious",
-                "Tinylicious"
+                "Tinylicious",
+                // Without the following entries, markdownlint incorrectly flags various correct usages of tinylicious.
+                "tinylicious.md",
+                "tinylicious-client",
             ]
         }
     },

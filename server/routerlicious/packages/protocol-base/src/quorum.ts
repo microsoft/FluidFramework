@@ -6,7 +6,7 @@
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 
-import { assert, Deferred, doIfNotDisposed, EventForwarder, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ICommittedProposal,
     IPendingProposal,
@@ -417,27 +417,5 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     public dispose(): void {
         throw new Error("Not implemented.");
         this.isDisposed = true;
-    }
-}
-
-/**
- * Proxies Quorum events.
- */
-export class QuorumProxy extends EventForwarder<IQuorumEvents> implements IQuorum {
-    public readonly propose: (key: string, value: any) => Promise<void>;
-    public readonly has: (key: string) => boolean;
-    public readonly get: (key: string) => any;
-    public readonly getApprovalData: (key: string) => ICommittedProposal | undefined;
-    public readonly getMembers: () => Map<string, ISequencedClient>;
-    public readonly getMember: (clientId: string) => ISequencedClient | undefined;
-
-    constructor(quorum: IQuorum) {
-        super(quorum);
-        this.propose = doIfNotDisposed(this, quorum.propose.bind(quorum));
-        this.has = doIfNotDisposed(this, quorum.has.bind(quorum));
-        this.get = doIfNotDisposed(this, quorum.get.bind(quorum));
-        this.getApprovalData = doIfNotDisposed(this, quorum.getApprovalData.bind(quorum));
-        this.getMembers = doIfNotDisposed(this, quorum.getMembers.bind(quorum));
-        this.getMember = doIfNotDisposed(this, quorum.getMember.bind(quorum));
     }
 }

@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
-    DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
@@ -16,25 +15,14 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { calculateStats, mergeStats, requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { flattenRuntimeOptions } from "../flattenRuntimeOptions";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { TestDataObject } from "./mockSummarizerClient";
 
 /**
- * This data store creates only one DDS (root SharedDirectory created by DataObject). Each of these has 2 GC nodes:
- * 1 for the data store itself and 1 for its DDS.
+ * Validates that we generate correct garbage collection stats, such as total number of nodes, number of unreferenced
+ * nodes, number of unreferenced data stores, etc.
  */
-class TestDataObject extends DataObject {
-    public get _root() {
-        return this.root;
-    }
-
-    public get _context() {
-        return this.context;
-    }
-}
-
-// REVIEW: enable compat testing?
-describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
+describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
         TestDataObject,
@@ -51,7 +39,7 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         ],
         undefined,
         undefined,
-        flattenRuntimeOptions(runtimeOptions),
+        runtimeOptions,
     );
     const logger = new TelemetryNullLogger();
 
@@ -86,11 +74,19 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         return summaryStats;
     }
 
-    beforeEach(async () => {
+    before(function() {
         provider = getTestObjectProvider();
+        // These tests validate the GC stats in summary by calling summarize directly on the container runtime.
+        // They do not post these summaries or download them. So, it doesn't need to run against real services.
+        if (provider.driver.type !== "local") {
+            this.skip();
+        }
+    });
+
+    beforeEach(async () => {
         const container = await createContainer() as Container;
         defaultDataStore = await requestFluidObject<TestDataObject>(container, "/");
-        containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
+        containerRuntime = defaultDataStore.containerRuntime;
     });
 
     /**
@@ -109,7 +105,7 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
             defaultDataStore._root.set("dataStore2", dataStore2.handle);
             await provider.ensureSynchronized();
 
-            const gcStats = await containerRuntime.collectGarbage(logger);
+            const gcStats = await containerRuntime.collectGarbage({ logger });
             assert.strictEqual(gcStats.totalNodes, 7, "Total GC nodes in incorrect");
             assert.strictEqual(gcStats.deletedNodes, 0, "There shouldn't be any deleted node");
             assert.strictEqual(gcStats.totalDataStores, 3, "The data store count is incorrect");
@@ -129,7 +125,7 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
             defaultDataStore._root.delete("dataStore1");
             await provider.ensureSynchronized();
 
-            const gcStats = await containerRuntime.collectGarbage(logger);
+            const gcStats = await containerRuntime.collectGarbage({ logger });
             assert.strictEqual(gcStats.totalNodes, 7, "Total GC nodes in incorrect");
             assert.strictEqual(gcStats.deletedNodes, 2, "The deleted data store and its DDS is not reflected");
             assert.strictEqual(gcStats.totalDataStores, 3, "The data store count is incorrect");
@@ -154,7 +150,7 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
             defaultDataStore._root.delete("dataStore2");
             await provider.ensureSynchronized();
 
-            const gcStats = await containerRuntime.collectGarbage(logger);
+            const gcStats = await containerRuntime.collectGarbage({ logger });
             assert.strictEqual(gcStats.totalNodes, 7, "Total GC nodes in incorrect");
             assert.strictEqual(gcStats.deletedNodes, 4, "The deleted data store and its DDS is not reflected");
             assert.strictEqual(gcStats.totalDataStores, 3, "The data store count is incorrect");
@@ -180,7 +176,7 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
             defaultDataStore._root.set("dataStore2", dataStore2.handle);
             await provider.ensureSynchronized();
 
-            const gcStats = await containerRuntime.collectGarbage(logger);
+            const gcStats = await containerRuntime.collectGarbage({ logger });
             assert.strictEqual(gcStats.totalNodes, 7, "Total GC nodes in incorrect");
             assert.strictEqual(gcStats.deletedNodes, 0, "There shouldn't be any deleted node");
             assert.strictEqual(gcStats.totalDataStores, 3, "The data store count is incorrect");

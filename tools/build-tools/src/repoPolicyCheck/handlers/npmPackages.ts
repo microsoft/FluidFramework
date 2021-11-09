@@ -28,10 +28,8 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 `;
 
 function packageShouldBePrivate(name: string): boolean {
-    // See https://github.com/microsoft/FluidFramework/issues/2625
-    if (name === "@fluid-internal/client-api"
-        || name.startsWith("@fluid-internal/test-")         // allow test packages to be packaged
-    ) {
+    // allow test packages to be packaged
+    if (name.startsWith("@fluid-internal/test-")) {
         return false;
     }
 
@@ -99,11 +97,16 @@ export const handlers: Handler[] = [
 
             const validationResults = PJV.validate(jsonStr, 'npm', { warnings: false, recommendations: false });
 
-            // special handling for the end-to-end tests package since it uses non-standard version values.
-            if (file.includes("end-to-end-tests") && !validationResults.valid) {
+            if (!validationResults.valid) {
                 validationResults.errors = validationResults.errors.filter(
                     (error: string) => {
-                        return !error.startsWith("Invalid version range for dependency");
+                        // special handling for packages that use non-standard version values.
+                        // e.g. "name": "npm:package@version"
+                        // 'Invalid version range for dependency @fluidframework/protocol-definitions-0.1024.0: npm:@fluidframework/protocol-definitions@0.1024.0'
+                        const shouldIgnore =
+                            error.startsWith("Invalid version range for dependency")
+                            && error.startsWith(": npm:", error.indexOf(":"))
+                        return !shouldIgnore;
                     }
                 );
 

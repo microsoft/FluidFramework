@@ -65,6 +65,7 @@ describe("RouterliciousDriverRestWrapper", () => {
             new TelemetryUTLogger(),
             rateLimiter,
             getAuthHeader,
+            false,
         );
         await restWrapper.load();
     });

@@ -19,9 +19,8 @@ import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
-import { flattenRuntimeOptions } from "../flattenRuntimeOptions";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -63,8 +62,17 @@ class TestDataObject extends DataObject {
     }
 }
 
-// REVIEW: enable compat testing?
-describeNoCompat("GC reference updates in summarizer", (getTestObjectProvider) => {
+/**
+ * Validates this scenario: When all references to a data store are deleted, the data store is marked as unreferenced
+ * in the next summary. When a reference to the data store is re-added, it is marked as referenced in the next summary.
+ * Basically, if the handle to a data store is not stored in any DDS, its summary tree will have the "unreferenced"
+ * property set to true. If the handle to a data store exists or it's a root data store, its summary tree does not have
+ * the "unreferenced" property.
+ *
+ * The difference between these tests and the ones in the file 'gcReferenceUpdatesInLocalSummary' is that here we submit
+ * summaries to the server, load new containers from the summary downloaded from server and validate them.
+ */
+describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const factory = new DataObjectFactory(
         "TestDataObject",
@@ -94,7 +102,7 @@ describeNoCompat("GC reference updates in summarizer", (getTestObjectProvider) =
         ],
         undefined,
         undefined,
-        flattenRuntimeOptions(runtimeOptions),
+        runtimeOptions,
     );
 
     let mainContainer: IContainer;
@@ -107,7 +115,7 @@ describeNoCompat("GC reference updates in summarizer", (getTestObjectProvider) =
      * @returns the version of this summary. This version can be used to load a Container with the summary associated
      * with it.
      */
-     async function waitForSummary(): Promise<string> {
+    async function waitForSummary(): Promise<string> {
         await provider.ensureSynchronized();
         const ackedSummary: IAckedSummary =
             await summaryCollection.waitSummaryAck(mainContainer.deltaManager.lastSequenceNumber);

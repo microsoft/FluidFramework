@@ -16,7 +16,6 @@ import {
 import {
     SharedObject,
 } from "@fluidframework/shared-object-base";
-import { debug } from "./debug";
 import { SharedXTreeFactory } from "./runtime";
 
 export class SharedXTree extends SharedObject
@@ -44,7 +43,7 @@ export class SharedXTree extends SharedObject
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) { throw new Error("not implemented"); }
 
-    protected onDisconnect() { debug(`${this.id} is now disconnected`); }
+    protected onDisconnect() {}
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}

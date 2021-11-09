@@ -5,7 +5,6 @@
 
 import { IClient, IDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IServiceConfiguration } from "./configuration";
-import { IDocumentDetails } from "./document";
 import { IWebSocket } from "./http";
 
 /**
@@ -32,10 +31,6 @@ export interface IOrdererConnection {
     readonly tenantId: string;
 
     readonly documentId: string;
-
-    // TODO - this can probably be phased out in favor of an explicit create of the ordering context
-    // For now it maps to whether the connection is to an existing ordering context or a new one
-    readonly existing: boolean;
 
     readonly maxMessageSize: number;
 
@@ -67,8 +62,7 @@ export interface IOrderer {
     connect(
         socket: IWebSocket,
         clientId: string,
-        client: IClient,
-        details: IDocumentDetails): Promise<IOrdererConnection>;
+        client: IClient): Promise<IOrdererConnection>;
 
     close(): Promise<void>;
 }

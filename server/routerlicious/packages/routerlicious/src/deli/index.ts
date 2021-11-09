@@ -8,6 +8,7 @@ import { createDocumentRouter } from "@fluidframework/server-routerlicious-base"
 import { LocalKafka, LocalContext, LocalLambdaController } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { RedisOptions } from "ioredis";
 import * as winston from "winston";
@@ -19,6 +20,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
     const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
     const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
+    const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
 
     const kafkaForwardClientId = config.get("deli:kafkaClientId");
     const kafkaReverseClientId = config.get("alfred:kafkaClientId");
@@ -47,7 +49,8 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         true,
         kafkaProducerPollIntervalMs,
         kafkaNumberOfPartitions,
-        kafkaReplicationFactor);
+        kafkaReplicationFactor,
+        kafkaSslCACertFilePath);
     const reverseProducer = services.createProducer(
         kafkaLibrary,
         kafkaEndpoint,
@@ -56,7 +59,8 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         false,
         kafkaProducerPollIntervalMs,
         kafkaNumberOfPartitions,
-        kafkaReplicationFactor);
+        kafkaReplicationFactor,
+        kafkaSslCACertFilePath);
 
     const redisConfig = config.get("redis");
     const redisOptions: RedisOptions = {
@@ -72,12 +76,13 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const publisher = new services.SocketIoRedisPublisher(redisOptions);
     publisher.on("error", (err) => {
         winston.error("Error with Redis Publisher:", err);
+        Lumberjack.error("Error with Redis Publisher:", undefined, err);
     });
 
     const localContext = new LocalContext(winston);
 
     const localProducer = new LocalKafka();
-    const combinedProducer = new core.CombinedProducer([forwardProducer, localProducer]);
+    const combinedProducer = new core.CombinedProducer([forwardProducer, localProducer], true);
 
     const broadcasterLambda = new LocalLambdaController(
         localProducer,

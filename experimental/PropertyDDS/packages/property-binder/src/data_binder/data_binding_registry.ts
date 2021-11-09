@@ -143,7 +143,7 @@ class DataBindingRegistry {
 
     // BFS of the templates and return the first registered one (closest)
     while (typeidQueue.length > 0) {
-      const currentTypeid = typeidQueue.shift();
+      const currentTypeid = typeidQueue.shift() as string;
       serializedTypeid = currentTypeid;
       if (splitTypeID.context !== 'single') {
         serializedTypeid = TypeIdHelper.createSerializationTypeId(currentTypeid, splitTypeID.context,

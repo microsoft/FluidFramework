@@ -18,7 +18,7 @@ import {
     SummaryReader,
     SummaryWriter,
 } from "@fluidframework/server-lambdas";
-import { IGitManager } from "@fluidframework/server-services-client";
+import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
 import {
     DefaultServiceConfiguration,
     IContext,
@@ -53,17 +53,20 @@ const DefaultScribe: IScribe = {
     minimumSequenceNumber: -1,
     protocolState: undefined,
     sequenceNumber: -1,
+    lastSummarySequenceNumber: 0,
 };
 
 const DefaultDeli: IDeliState = {
     clients: undefined,
     durableSequenceNumber: 0,
     epoch: 0,
+    expHash1: defaultHash,
     logOffset: -1,
     sequenceNumber: 0,
     term: 1,
     lastSentMSN: 0,
     nackMessages: undefined,
+    successfullyStartedLambdas: [],
 };
 
 class LocalSocketPublisher implements IPublisher {
@@ -285,7 +288,9 @@ export class LocalOrderer implements IOrderer {
                     checkpointManager,
                     this.deltasKafka,
                     this.rawDeltasKafka,
-                    this.serviceConfiguration);
+                    this.serviceConfiguration,
+                    undefined,
+                    undefined);
             });
 
         if (this.serviceConfiguration.moira.enable) {
@@ -293,7 +298,8 @@ export class LocalOrderer implements IOrderer {
                 this.deltasKafka,
                 this.setup,
                 this.moiraContext,
-                async (_, context) => new MoiraLambda(context, this.serviceConfiguration),
+                async (_, context) =>
+                    new MoiraLambda(context, this.serviceConfiguration, this.tenantId, this.documentId),
             );
         }
     }
@@ -331,9 +337,11 @@ export class LocalOrderer implements IOrderer {
             this.tenantId,
             this.documentId,
             this.gitManager,
-            scribeMessagesCollection);
-        const summaryReader = new SummaryReader(this.documentId, this.gitManager);
+            scribeMessagesCollection,
+            false);
+        const summaryReader = new SummaryReader(this.documentId, this.gitManager, false);
         const checkpointManager = new CheckpointManager(
+            context,
             this.tenantId,
             this.documentId,
             documentCollection,
@@ -352,7 +360,8 @@ export class LocalOrderer implements IOrderer {
             protocolHandler,
             1, // TODO (Change when local orderer also ticks epoch)
             protocolHead,
-            scribeMessages.map((message) => message.operation));
+            scribeMessages.map((message) => message.operation),
+            undefined);
     }
 
     private startLambdas() {

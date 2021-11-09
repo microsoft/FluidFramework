@@ -6,6 +6,7 @@
 import { ICommit, ICommitDetails } from "@fluidframework/gitresources";
 import { IProtocolState, ISummaryTree, ICommittedProposal } from "@fluidframework/protocol-definitions";
 import { IGitCache } from "@fluidframework/server-services-client";
+import { LambdaName } from "./lambdas";
 import { INackMessagesControlMessageContents } from "./messages";
 
 export interface IDocumentDetails {
@@ -14,7 +15,7 @@ export interface IDocumentDetails {
 }
 
 export interface IDocumentStorage {
-    getDocument(tenantId: string, documentId: string): Promise<any>;
+    getDocument(tenantId: string, documentId: string): Promise<IDocument>;
 
     getOrCreateDocument(tenantId: string, documentId: string): Promise<IDocumentDetails>;
 
@@ -32,6 +33,7 @@ export interface IDocumentStorage {
         summary: ISummaryTree,
         sequenceNumber: number,
         term: number,
+        initialHash: string,
         values: [string, ICommittedProposal][]): Promise<IDocumentDetails>;
 }
 
@@ -44,6 +46,7 @@ export interface IClientSequenceNumber {
     referenceSequenceNumber: number;
     clientSequenceNumber: number;
     scopes: string[];
+    serverMetadata?: any;
 }
 
 export interface IDeliState {
@@ -59,6 +62,9 @@ export interface IDeliState {
     // Sequence number at logOffset
     sequenceNumber: number;
 
+    // Rolling hash at sequenceNumber
+    expHash1: string;
+
     // Epoch of stream provider
     epoch: number;
 
@@ -70,6 +76,9 @@ export interface IDeliState {
 
     // Nack messages state
     nackMessages: INackMessagesControlMessageContents | undefined;
+
+    // List of successfully started lambdas at session start
+    successfullyStartedLambdas: LambdaName[];
 }
 
 // TODO: We should probably rename this to IScribeState
@@ -89,6 +98,9 @@ export interface IScribe {
 
     // Ref of the last client generated summary
     lastClientSummaryHead: string | undefined;
+
+    // Sequence number of the last operation that was part of latest summary
+    lastSummarySequenceNumber: number | undefined;
 }
 
 export interface IDocument {
@@ -107,4 +119,8 @@ export interface IDocument {
 
     // Deli state
     deli: string;
+
+    // Timestamp of when this document and related data will be hard deleted.
+    // The document is soft deleted if a scheduled deletion timestamp is present.
+    scheduledDeletionTime?: string;
 }

@@ -7,12 +7,16 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { UnassignedSequenceNumber } from "./constants";
-import { CollaborationWindow } from "./mergeTree";
 import { ICombiningOp, IMergeTreeAnnotateMsg } from "./ops";
-import * as Properties from "./properties";
+import {
+    combine,
+    createMap,
+    MapLike,
+    PropertySet,
+} from "./properties";
 
 export class PropertiesManager {
-    private pendingKeyUpdateCount: Properties.MapLike<number> | undefined;
+    private pendingKeyUpdateCount: MapLike<number> | undefined;
     private pendingRewriteCount: number;
 
     constructor() {
@@ -37,16 +41,14 @@ export class PropertiesManager {
     }
 
     public addProperties(
-        oldProps: Properties.PropertySet,
-        newProps: Properties.PropertySet,
+        oldProps: PropertySet,
+        newProps: PropertySet,
         op?: ICombiningOp,
         seq?: number,
-        collabWindow?: CollaborationWindow): Properties.PropertySet | undefined {
+        collaborating: boolean = false): PropertySet | undefined {
         if (!this.pendingKeyUpdateCount) {
-            this.pendingKeyUpdateCount = Properties.createMap<number>();
+            this.pendingKeyUpdateCount = createMap<number>();
         }
-
-        const collaborating = collabWindow && collabWindow.collaborating;
 
         // There are outstanding local rewrites, so block all non-local changes
         if (this.pendingRewriteCount > 0 && seq !== UnassignedSequenceNumber && collaborating) {
@@ -65,7 +67,7 @@ export class PropertiesManager {
             return false;
         };
 
-        const deltas: Properties.PropertySet = {};
+        const deltas: PropertySet = {};
         if (rewrite) {
             if (collaborating && seq === UnassignedSequenceNumber) {
                 this.pendingRewriteCount++;
@@ -98,7 +100,7 @@ export class PropertiesManager {
             deltas[key] = (previousValue === undefined) ? null : previousValue;
             let newValue: any;
             if (combiningOp) {
-                newValue = Properties.combine(combiningOp, previousValue, newValue, seq);
+                newValue = combine(combiningOp, previousValue, newValue, seq);
             } else {
                 newValue = newProps[key];
             }
@@ -114,14 +116,14 @@ export class PropertiesManager {
     }
 
     public copyTo(
-        oldProps: Properties.PropertySet,
-        newProps: Properties.PropertySet | undefined,
+        oldProps: PropertySet,
+        newProps: PropertySet | undefined,
         newManager: PropertiesManager,
-    ): Properties.PropertySet | undefined {
+    ): PropertySet | undefined {
         if (oldProps) {
             if (!newProps) {
                 // eslint-disable-next-line no-param-reassign
-                newProps = Properties.createMap<any>();
+                newProps = createMap<any>();
             }
             if (!newManager) {
                 throw new Error("Must provide new PropertyManager");
@@ -130,7 +132,7 @@ export class PropertiesManager {
                 newProps[key] = oldProps[key];
             }
             newManager.pendingRewriteCount = this.pendingRewriteCount;
-            newManager.pendingKeyUpdateCount = Properties.createMap<number>();
+            newManager.pendingKeyUpdateCount = createMap<number>();
             for (const key of Object.keys(this.pendingKeyUpdateCount!)) {
                 newManager.pendingKeyUpdateCount[key] = this.pendingKeyUpdateCount![key];
             }

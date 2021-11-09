@@ -14,28 +14,32 @@ import { getGitType } from "@fluidframework/protocol-base";
 import { SummaryType, ISummaryTree, ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IFileEntry, IOdspResolvedUrl, TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
+import {
+    IFileEntry,
+    InstrumentedStorageTokenFetcher,
+    IOdspResolvedUrl,
+} from "@fluidframework/odsp-driver-definitions";
 import {
     IOdspSummaryTree,
     OdspSummaryTreeValue,
     OdspSummaryTreeEntry,
     ICreateFileResponse,
     IOdspSummaryPayload,
-    IOdspSnapshot,
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
     createCacheSnapshotKey,
     getWithRetryForTokenRefresh,
     INewFileInfo,
-    ISnapshotCacheValue,
     getOrigin,
+    ISnapshotContents,
 } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { convertCreateNewSummaryTreeToIOdspSnapshot } from "./createNewUtils";
+import { convertCreateNewSummaryTreeToTreeAndBlobs } from "./createNewUtils";
+import { runWithRetry } from "./retryUtils";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -47,7 +51,7 @@ const isInvalidFileName = (fileName: string): boolean => {
  * Returns resolved url
  */
 export async function createNewFluidFile(
-    getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    getStorageToken: InstrumentedStorageTokenFetcher,
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree | undefined,
@@ -57,12 +61,13 @@ export async function createNewFluidFile(
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
-        throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameStatusCode);
+        throwOdspNetworkError("invalidFilename", invalidFileNameStatusCode);
     }
 
     let itemId: string;
     let summaryHandle: string = "";
-
+    let sharingLink: string | undefined;
+    let sharingLinkErrorReason: string | undefined;
     if (createNewSummary === undefined) {
         itemId = await createNewEmptyFluidFile(getStorageToken, newFileInfo, logger, epochTracker);
     } else {
@@ -70,6 +75,8 @@ export async function createNewFluidFile(
             getStorageToken, newFileInfo, logger, createNewSummary, epochTracker);
         itemId = content.itemId;
         summaryHandle = content.id;
+        sharingLink = content.sharingLink;
+        sharingLinkErrorReason = content.sharingLinkErrorReason;
     }
 
     const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
@@ -78,30 +85,34 @@ export async function createNewFluidFile(
     fileEntry.docId = odspResolvedUrl.hashedDocumentId;
     fileEntry.resolvedUrl = odspResolvedUrl;
 
+    if(sharingLink || sharingLinkErrorReason) {
+        odspResolvedUrl.shareLinkInfo = {
+            createLink: {
+                type: newFileInfo.createLinkType,
+                link: sharingLink,
+                error: sharingLinkErrorReason,
+            },
+        };
+    }
+
     if (createNewSummary !== undefined && createNewCaching) {
         assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
         // converting summary and getting sequence number
-        const snapshot: IOdspSnapshot = convertCreateNewSummaryTreeToIOdspSnapshot(createNewSummary, summaryHandle);
-        const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
-        const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
-        const sequenceNumber = documentAttributes.sequenceNumber;
-
+        const snapshot: ISnapshotContents = convertCreateNewSummaryTreeToTreeAndBlobs(createNewSummary, summaryHandle);
         // caching the converted summary
-        const value: ISnapshotCacheValue = { snapshot, sequenceNumber };
-        await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), value);
+        await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), snapshot);
     }
-
     return odspResolvedUrl;
 }
 
 export async function createNewEmptyFluidFile(
-    getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    getStorageToken: InstrumentedStorageTokenFetcher,
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
     epochTracker: EpochTracker,
 ): Promise<string> {
     const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
-    // add .tmp to filename, the app is responsible for removing this once a summary is posted.
+    // add .tmp extension to empty file (host is expected to rename)
     const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
     const initialUrl =
         `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:/${filePath
@@ -117,18 +128,23 @@ export async function createNewEmptyFluidFile(
                 const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                 headers["Content-Type"] = "application/json";
 
-                const fetchResponse = await epochTracker.fetchAndParseAsJSON<ICreateFileResponse>(
-                    url,
-                    {
-                        body: undefined,
-                        headers,
-                        method: "PUT",
-                    },
-                    "createFile");
+                const fetchResponse = await runWithRetry(
+                    async () => epochTracker.fetchAndParseAsJSON<ICreateFileResponse>(
+                        url,
+                        {
+                            body: undefined,
+                            headers,
+                            method: "PUT",
+                        },
+                        "createFile",
+                    ),
+                    "createFile",
+                    logger,
+                );
 
                 const content = fetchResponse.content;
                 if (!content || !content.id) {
-                    throwOdspNetworkError("Could not parse item from Vroom response", fetchIncorrectResponse);
+                    throwOdspNetworkError("couldNotParseItemFromVroomResponse", fetchIncorrectResponse);
                 }
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
@@ -141,7 +157,7 @@ export async function createNewEmptyFluidFile(
 }
 
 export async function createNewFluidFileFromSummary(
-    getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    getStorageToken: InstrumentedStorageTokenFetcher,
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree,
@@ -154,7 +170,8 @@ export async function createNewFluidFileFromSummary(
         `${filePath}/${encodedFilename}`;
 
     const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
-    const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot`;
+    const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot${newFileInfo.createLinkType ?
+        `?createLinkType=${newFileInfo.createLinkType}` : ""}`;
 
     return getWithRetryForTokenRefresh(async (options) => {
         const storageToken = await getStorageToken(options, "CreateNewFile");
@@ -166,26 +183,32 @@ export async function createNewFluidFileFromSummary(
                 const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                 headers["Content-Type"] = "application/json";
 
-                const fetchResponse = await epochTracker.fetchAndParseAsJSON<ICreateFileResponse>(
-                    url,
-                    {
-                        body: JSON.stringify(containerSnapshot),
-                        headers,
-                        method: "POST",
-                    },
-                    "createFile");
+                const fetchResponse = await runWithRetry(
+                    async () => epochTracker.fetchAndParseAsJSON<ICreateFileResponse>(
+                        url,
+                        {
+                            body: JSON.stringify(containerSnapshot),
+                            headers,
+                            method: "POST",
+                        },
+                        "createFile",
+                    ),
+                    "createFile",
+                    logger,
+                );
 
                 const content = fetchResponse.content;
                 if (!content || !content.itemId) {
-                    throwOdspNetworkError("Could not parse item from Vroom response", fetchIncorrectResponse);
+                    throwOdspNetworkError("couldNotParseItemFromVroomResponse", fetchIncorrectResponse);
                 }
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
+                    attempts: options.refresh ? 2 : 1,
                     ...fetchResponse.commonSpoHeaders,
                 });
                 return content;
             },
-            { end: true, cancel: "error" });
+        );
     });
 }
 

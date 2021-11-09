@@ -19,7 +19,6 @@ import {
 import { readAndParse } from "@fluidframework/driver-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { CounterFactory } from "./counterFactory";
-import { debug } from "./debug";
 import { ISharedCounter, ISharedCounterEvents } from "./interfaces";
 
 /**
@@ -42,6 +41,7 @@ const snapshotFileName = "header";
 
 /**
  * A `SharedCounter` is a shared object which holds a number that can be incremented or decremented.
+ * @public
  *
  * @remarks
  * ### Creation
@@ -128,6 +128,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * Create a snapshot for the counter
      *
      * @returns the snapshot of the current state of the counter
+     * @internal
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
         // Get a serializable form of data
@@ -155,6 +156,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
+     * @internal
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const content = await readAndParse<ICounterSnapshotFormat>(storage, snapshotFileName);
@@ -164,16 +166,16 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
+     * @internal
      */
     protected registerCore() {
     }
 
     /**
-     * Call back on disconnect
+     * Called when the object has disconnected from the delta stream.
+     * @internal
      */
-    protected onDisconnect() {
-        debug(`SharedCounter ${this.id} is now disconnected`);
-    }
+    protected onDisconnect() { }
 
     /**
      * Process a counter operation
@@ -182,6 +184,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * @param local - whether the message was sent by the local client
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
+     * @internal
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation && !local) {
@@ -200,6 +203,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 
     /**
      * Not implemented.
+     * @internal
      */
     protected applyStashedOp() {
         throw new Error("not implemented");

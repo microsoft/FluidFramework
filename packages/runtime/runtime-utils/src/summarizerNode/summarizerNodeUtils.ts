@@ -44,6 +44,7 @@ export interface ISummarizerNodeRootContract {
     clearSummary(): void;
     refreshLatestSummary(
         proposalHandle: string | undefined,
+        summaryRefSeq: number,
         getSnapshot: () => Promise<ISnapshotTree>,
         readAndParseBlob: ReadAndParseBlob,
         correlatedSummaryLogger: ITelemetryLogger,
@@ -186,7 +187,6 @@ export function decodeSummary(
                             if (newEarliestSeq <= latestSeq) {
                                 logger.sendTelemetryEvent({
                                     eventName:"DuplicateOutstandingOps",
-                                    category: "generic",
                                     // eslint-disable-next-line max-len
                                     message: `newEarliestSeq <= latestSeq in decodeSummary: ${newEarliestSeq} <= ${latestSeq}`,
                                 });

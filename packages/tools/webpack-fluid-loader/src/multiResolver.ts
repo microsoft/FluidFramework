@@ -6,7 +6,7 @@
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { LocalResolver } from "@fluidframework/local-driver";
-import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
+import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { ITinyliciousRouteOptions, RouteOptions } from "./loader";
 import { OdspUrlResolver } from "./odspUrlResolver";
 

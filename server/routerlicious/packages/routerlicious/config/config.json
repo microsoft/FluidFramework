@@ -11,6 +11,11 @@
         "endpoint": "mongodb://mongodb:27017",
         "expireAfterSeconds": -1,
         "createCosmosDBIndexes": false,
+        "softDeletionRetentionPeriodMs": 2592000000,
+        "offlineWindowMs": 86400000,
+        "softDeletionEnabled": false,
+        "permanentDeletionEnabled": false,
+        "deletionIntervalMs": 3600000,
         "collectionNames": {
             "deltas": "deltas",
             "rawdeltas": "rawdeltas",
@@ -24,15 +29,22 @@
     },
     "kafka": {
         "lib": {
-            "name": "kafka-node",
+            "name": "rdkafka",
             "endpoint": "kafka:9092",
             "producerPollIntervalMs": 10,
             "numberOfPartitions": 8,
-            "replicationFactor": 1
+            "replicationFactor": 1,
+            "rdkafkaOptimizedRebalance": true,
+            "rdkafkaAutomaticConsume": true,
+            "rdkafkaConsumeTimeout": 5,
+            "rdkafkaMaxConsumerCommitRetries": 10
         }
     },
     "zookeeper": {
         "endpoint": "zookeeper:2181"
+    },
+    "storage": {
+        "enableWholeSummaryUpload": false
     },
     "alfred": {
         "kafkaClientId": "alfred",
@@ -76,10 +88,11 @@
                 "key": "create-new-tenants-if-going-to-production"
             }
         ],
-        "socketIoAdapter" : {
+        "socketIoAdapter": {
             "enableCustomSocketIoAdapter": true,
             "shouldDisableDefaultNamespace": false
-        }
+        },
+        "enforceServerGeneratedDocumentId": false
     },
     "client": {
         "type": "browser",
@@ -150,11 +163,28 @@
     },
     "foreman": {
         "alfred": "http://alfred:3000",
-        "queues": ["paparazziQueue", "augloopQueue", "headlessQueue"],
+        "queues": [
+            "paparazziQueue",
+            "augloopQueue",
+            "headlessQueue"
+        ],
         "permissions": {
-            "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
-            "augloopQueue": ["augmentation"],
-            "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell", "chain-cache"]
+            "paparazziQueue": [
+                "snapshot",
+                "spell",
+                "intel",
+                "translation"
+            ],
+            "augloopQueue": [
+                "augmentation"
+            ],
+            "headlessQueue": [
+                "chain-snapshot",
+                "chain-intel",
+                "chain-translation",
+                "chain-spell",
+                "chain-cache"
+            ]
         }
     },
     "paparazzi": {
@@ -180,14 +210,23 @@
     },
     "error": {
         "track": false,
-        "endpoint" : ""
+        "endpoint": ""
     },
     "worker": {
         "alfredUrl": "http://alfred:3003",
         "serverUrl": "http://localhost:3003",
         "blobStorageUrl": "http://historian:3000",
         "internalBlobStorageUrl": "http://historian:3000",
-        "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
+        "permission": [
+            "snapshot",
+            "spell",
+            "intel",
+            "translation",
+            "chain-snapshot",
+            "chain-spell",
+            "chain-intel",
+            "chain-translation"
+        ]
     },
     "tenantConfig": [
         {

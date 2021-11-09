@@ -55,7 +55,7 @@ export interface ICollabSessionOptions {
      * Value indicating the display name for session that admits unauthenticated user.
      * This name will be used in attribution associated with edits made by such user.
      */
-     unauthenticatedUserDisplayName?: string;
+    unauthenticatedUserDisplayName?: string;
 }
 
 export interface HostStoragePolicy {
@@ -93,5 +93,23 @@ export interface HostStoragePolicy {
     /**
      * Policy controlling if we will cache initial summary when we create a document
      */
-     cacheCreateNewSummary?: boolean;
+    cacheCreateNewSummary?: boolean;
+
+    /**
+     * Policy controlling if we want to fetch binary format snapshot.
+     */
+    fetchBinarySnapshotFormat?: boolean;
+
+    /**
+     * If set to true, socket cache are per OdspDocumentService instead of shared across all instances
+     */
+    isolateSocketCache?: boolean;
+
+    /**
+     * Enable creation of sharing link along with the creation of file by setting this value to true.
+     * If the host provides a 'createLinkType' parameter in the request URL to the container.attach()
+     * method, we will request for send the request to ODSP with the same (if the flag is enabled) so
+     * that a sharing can be created with the creation of file to save number for round trips made to ODSP.
+     */
+     enableShareLinkWithCreate?: boolean
 }

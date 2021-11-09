@@ -13,12 +13,13 @@ import { Historian, ICredentials, getAuthorizationTokenFromCredentials } from ".
 import { BasicRestWrapper, RestWrapper } from "../restWrapper";
 import { IWholeSummaryPayload, IWriteSummaryResponse } from "../storageContracts";
 
-describe.only("Historian", () => {
+describe("Historian", () => {
     const endpoint = "http://test:3000";
     const sha = "123456abcdef";
     const ref = "xyz789";
     const tag = "1a2b3c";
-    const axiosMock = new AxiosMockAdapter(Axios);
+    const axiosInstance = Axios.create();
+    const axiosMock = new AxiosMockAdapter(axiosInstance);
     const initialCredentials: ICredentials = {
         user: "test-user",
         password: "test-password",
@@ -35,7 +36,7 @@ describe.only("Historian", () => {
     };
     const mockBlob: git.IBlob = {
         content: "Hello, World!",
-        encoding: "utf8",
+        encoding: "utf-8",
         url: `${endpoint}/blob/${sha}`,
         sha,
         size: 20,
@@ -143,7 +144,7 @@ describe.only("Historian", () => {
             undefined,
             undefined,
             initialHeaders,
-            undefined,
+            axiosInstance,
             undefined,
             () => newHeaders)
         historian = new Historian(
@@ -210,7 +211,7 @@ describe.only("Historian", () => {
         const url = getUrlWithToken(`/git/blobs`, initialCredentials);
         const blobParams: git.ICreateBlobParams = {
             content: "Hello, World",
-            encoding: "utf8",
+            encoding: "utf-8",
         };
         const response: git.ICreateBlobResponse = {
             sha,

@@ -22,7 +22,7 @@ import detect from "detect-port";
 import * as app from "./app";
 
 export class TinyliciousRunner implements IRunner {
-    private server: IWebServer;
+    private server?: IWebServer;
     private runningDeferred: Deferred<void>;
 
     constructor(
@@ -36,6 +36,9 @@ export class TinyliciousRunner implements IRunner {
     ) { }
 
     public async start(): Promise<void> {
+        const version = process.env.npm_package_version;
+        winston.info(`Starting tinylicious@${version}`);
+
         this.runningDeferred = new Deferred<void>();
 
         // Make sure provided port is unoccupied
@@ -74,15 +77,19 @@ export class TinyliciousRunner implements IRunner {
     }
 
     public stop(): Promise<void> {
-        // Close the underlying server and then resolve the runner once closed
-        this.server.close().then(
-            () => {
-                this.runningDeferred.resolve();
-            },
-            (error) => {
-                this.runningDeferred.reject(error);
-            },
-        );
+        if (this.server) {
+            // Close the underlying server and then resolve the runner once closed
+            this.server.close().then(
+                () => {
+                    this.runningDeferred.resolve();
+                },
+                (error) => {
+                    this.runningDeferred.reject(error);
+                },
+            );
+        } else {
+            this.runningDeferred.resolve();
+        }
 
         return this.runningDeferred.promise;
     }

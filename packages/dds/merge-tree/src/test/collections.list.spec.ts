@@ -4,14 +4,17 @@
  */
 
 import { strict as assert } from "assert";
-import * as Collections from "../collections";
+import {
+    List,
+    ListMakeHead,
+} from "../collections";
 
 describe("Collections.List", () => {
     const listCount = 5;
-    let list: Collections.List<number>;
+    let list: List<number>;
 
     beforeEach(() => {
-        list = Collections.ListMakeHead<number>();
+        list = ListMakeHead<number>();
         for (let i = 0; i < listCount; i++) {
             list.push(i);
         }

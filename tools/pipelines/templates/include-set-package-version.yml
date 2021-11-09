@@ -41,6 +41,9 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
+      echo SETVERSION_VERSION=$SETVERSION_VERSION
+      echo SETVERSION_CODEVERSION=$SETVERSION_CODEVERSION
+
       if [ -f "lerna.json" ]; then
         if [ "$VERSION_RELEASE" = "release" ]; then
           npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes

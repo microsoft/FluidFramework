@@ -17,7 +17,6 @@ import {
     CreateChildSummarizerNodeParam,
     CreateSummarizerNodeSource,
     IAttachMessage,
-    IChannelSummarizeResult,
     IEnvelope,
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
@@ -35,7 +34,7 @@ import {
      responseToException,
      SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { BlobCacheStorageService, buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy } from "@fluidframework/common-utils";
@@ -52,6 +51,7 @@ import {
     LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
+import { IUsedStateStats } from "./garbageCollection";
 
  /**
   * This class encapsulates data store handling. Currently it is only used by the container runtime,
@@ -65,7 +65,7 @@ export class DataStores implements IDisposable {
 
     private readonly logger: ITelemetryLogger;
 
-    private readonly disposeOnce = new Lazy<void>(()=>this.contexts.dispose());
+    private readonly disposeOnce = new Lazy<void>(() => this.contexts.dispose());
 
     constructor(
         private readonly baseSnapshot: ISnapshotTree | undefined,
@@ -144,9 +144,16 @@ export class DataStores implements IDisposable {
 
          // If a non-local operation then go and create the object, otherwise mark it as officially attached.
         if (this.contexts.has(attachMessage.id)) {
+            // TODO: dataStoreId may require a different tag from PackageData #7488
             const error = new DataCorruptionError(
-                "Duplicate data store created with existing ID",
-                extractSafePropertiesFromMessage(message),
+                "duplicateDataStoreCreatedWithExistingId",
+                {
+                    ...extractSafePropertiesFromMessage(message),
+                    dataStoreId: {
+                        value: attachMessage.id,
+                        tag: TelemetryDataTag.PackageData,
+                    },
+                },
             );
             throw error;
         }
@@ -222,7 +229,6 @@ export class DataStores implements IDisposable {
             this.runtime.scope,
             this.getCreateChildSummarizerNodeFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
-            undefined,
             isRoot,
         );
         this.contexts.addUnbound(context);
@@ -375,8 +381,7 @@ export class DataStores implements IDisposable {
         return this.contexts.size;
     }
 
-    public async summarize(fullTree: boolean, trackState: boolean): Promise<IChannelSummarizeResult> {
-        const gcDataBuilder = new GCDataBuilder();
+    public async summarize(fullTree: boolean, trackState: boolean): Promise<ISummaryTreeWithStats> {
         const summaryBuilder = new SummaryTreeBuilder();
 
         // Iterate over each store and ask it to snapshot
@@ -389,20 +394,9 @@ export class DataStores implements IDisposable {
             }).map(async ([contextId, context]) => {
                 const contextSummary = await context.summarize(fullTree, trackState);
                 summaryBuilder.addWithStats(contextId, contextSummary);
-
-                if (contextSummary.gcData !== undefined) {
-                    // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node to
-                    // be a path from the root.
-                    gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
-                }
             }));
 
-        // Get the outbound routes and add a GC node for this channel.
-        gcDataBuilder.addNode("/", await this.getOutboundRoutes());
-        return {
-            ...summaryBuilder.getSummaryTree(),
-            gcData: gcDataBuilder.getGCData(),
-        };
+        return summaryBuilder.getSummaryTree();
     }
 
     public createSummary(): ISummaryTreeWithStats {
@@ -474,9 +468,11 @@ export class DataStores implements IDisposable {
     /**
      * After GC has run, called to notify this Container's data stores of routes that are used in it.
      * @param usedRoutes - The routes that are used in all data stores in this Container.
-     * @returns the total number of data stores and the number of data stores that are unused.
+     * @param gcTimestamp - The time when GC was run that generated these used routes. If any node node becomes
+     * unreferenced as part of this GC run, this should be used to update the time when it happens.
+     * @returns the statistics of the used state of the data stores.
      */
-    public updateUsedRoutes(usedRoutes: string[]) {
+    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats {
         // Get a map of data store ids to routes used in it.
         const usedDataStoreRoutes = getChildNodesUsedRoutes(usedRoutes);
 
@@ -487,14 +483,14 @@ export class DataStores implements IDisposable {
 
         // Update the used routes in each data store. Used routes is empty for unused data stores.
         for (const [contextId, context] of this.contexts) {
-            context.updateUsedRoutes(usedDataStoreRoutes.get(contextId) ?? []);
+            context.updateUsedRoutes(usedDataStoreRoutes.get(contextId) ?? [], gcTimestamp);
         }
 
         // Return the number of data stores that are unused.
         const dataStoreCount = this.contexts.size;
         return {
-            dataStoreCount,
-            unusedDataStoreCount: dataStoreCount - usedDataStoreRoutes.size,
+            totalNodeCount: dataStoreCount,
+            unusedNodeCount: dataStoreCount - usedDataStoreRoutes.size,
         };
     }
 
@@ -504,7 +500,6 @@ export class DataStores implements IDisposable {
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
      */
     public deleteUnusedRoutes(unusedRoutes: string[]) {
-        assert(this.runtime.gcTestMode, 0x1df /* "Data stores should be deleted only in GC test mode" */);
         for (const route of unusedRoutes) {
             const dataStoreId = route.split("/")[1];
             // Delete the contexts of unused data stores.
@@ -532,7 +527,7 @@ export class DataStores implements IDisposable {
 
 export function getSummaryForDatastores(
     snapshot: ISnapshotTree | undefined,
-    metadata: IContainerRuntimeMetadata | undefined,
+    metadata?: IContainerRuntimeMetadata,
 ): ISnapshotTree | undefined {
     if (!snapshot) {
         return undefined;

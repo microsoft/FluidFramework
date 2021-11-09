@@ -1,5 +1,6 @@
 ---
 title: Build a custom distributed data structure
-menuPosition: 6
-status: placeholder
+menuPosition: 9
+status: unwritten
+draft: true
 ---

@@ -1,3 +1,315 @@
+## Adding breaking change notes
+
+Notes on breaking and otherwise interesting changes go here.  They will be reviewed and published along with each release.  Published changelogs may be found on the docs site at fluidframework.com.
+
+### Writing a change note
+
+There are a few steps you can take to write a good change note and avoid needing to followup for clarification.
+- Provide a concise title.  It should make clear what the topic of the change is.
+- Ensure the affected packages are named or clearly identifiable within the body.
+- Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
+- Consider providing code examples as part of guidance for non-trivial changes.
+
+## 0.51 Breaking changes
+- [`maxMessageSize` property has been deprecated from IConnectionDetails and IDocumentDeltaConnection](#maxmessagesize-property-has-been-deprecated-from-iconnectiondetails-and-idocumentdeltaconnection)
+- [_createDataStoreWithProps and IFluidDataStoreChannel](#createdatastorewithprops-and-ifluiddatastorechannel)
+- [Deprecated `Loader._create` is removed](#deprecated-loadercreate-is-removed)
+- [Stop exporting internal class `CollabWindowTracker` ](#stop-exporting-internal-class-collabwindowtracker)
+- [base-host package removed](#base-host-package-removed)
+- [Registers removed from sequence and merge-tree](#Registers-removed-from-sequence-and-merge-tree)
+- [Token fetch errors have proper errorType](#token-fetch-errors-have-proper-errorType)
+
+### `maxMessageSize` property has been deprecated from IConnectionDetails and IDocumentDeltaConnection
+`maxMessageSize` is redundant and will be removed soon. Please use the `serviceConfiguration.maxMessageSize` property instead.
+
+### _createDataStoreWithProps and IFluidDataStoreChannel
+ContainerRuntime._createDataStoreWithProps() is made consistent with the rest of API (same API on IContainerRuntimeBase interface, all other create methods to create data store) and returns now only IFluidRouter. IFluidDataStoreChannel is internal communication mechanism between ContainerRuntime and data stores and should be used only for this purpose, by data store authors. It is not a public interface that should be exposed by data stores.
+While casting IFluidRouter objects returned by various data store creation APIs to IFluidDataStoreChannel would continue to work in this release, this is not supported and will be taken away in next releases due to upcoming work in GC & named component creation space.
+
+### Deprecated `Loader._create` is removed
+Removing API `Loader._create` from `@fluidframework/container-loader`, which was an interim replacement of the Loader constructor API change in version 0.28.
+Use the Loader constructor with the `ILoaderProps` instead.
+
+### Stop exporting internal class `CollabWindowTracker`
+`CollabWindowTracker` is an internal implementation for `@fluidframework/container-loader` and should never been exported.
+
+### base-host package removed
+The `@fluidframework/base-host` package has been removed.  See the [quick-start guide](https://fluidframework.com/docs/start/quick-start/) for recommended hosting practices.
+
+If you were using the `UpgradeManager` utility from this package, external access to Quorum proposals is planned to be deprecated and so this is no longer recommended.  To upgrade code, instead use the `Container` API `proposeCodeDetails`.
+
+### Registers removed from sequence and merge-tree
+The `@fluidframework/sequence` and `@fluidframework/merge-tree` packages provided cut/copy/paste functionalities that built on a register concept.  These functionalities were never fully implemented and have been removed.
+
+### Token fetch errors have proper errorType
+If the tokenFetcher provided by the host thrown an error, this error will be propagated through the code with errorType "fetchTokenError".
+Previously, the errorType was either empty, or recently and incorrectly, "dataProcessingError".
+
+## 0.50 Breaking changes
+- [OpProcessingController removed](#opprocessingcontroller-removed)
+- [Expose isDirty flag in the FluidContainer](#expose-isdirty-flag-in-the-fluidcontainer)
+- [get-container API changed](#get-container-api-changed)
+- [SharedCell serialization](#sharedcell-serialization)
+- [Expose saved and dirty events in FluidContainer](#expose-saved-and-dirty-events-in-fluidcontainer)
+- [Deprecated bindToContext in IFluidDataStoreChannel](#Deprecated-bindToContext-in-IFluidDataStoreChannel)
+
+### OpProcessingController removed
+OpProcessingController has been deprecated for very long time. It's being removed in this release.
+Please use LoaderContainerTracker instead (see https://github.com/microsoft/FluidFramework/pull/7784 as an example of changes required)
+If you can't make this transition, you can always copy implementation of LoaderContainerTracker to your repo and maintain it. That said, it has bugs and tests using it are easily broken but subtle changes in reconnection logic, as evident from PRs #7753, #7393)
+
+### Expose isDirty flag in the FluidContainer
+The `isDirty` flag is exposed onto the FluidContainer. The property is already exposed on the Container and it is just piped up to the FluidContainer.
+
+### get-container API changed
+The signature of methods `getTinyliciousContainer` and `getFRSContainer` exported from the `get-container` package has been changed to accomodate the new container create flow. Both methods now return a tuple of the container instance and container ID associated with it. The `documentId` parameter is ignored when a new container is requested. Client applications need to use the ID returned by the API.
+The `get-container` API is widely used in multiple sample applications across the repository. All samples were refactored to reflect the change in the API. External samples consuming these methods should be updated accordingly.
+
+### SharedCell serialization
+`SharedCell` serialization format has changed. Values stored from previous versions will be broken.
+
+### Expose saved and dirty events in FluidContainer
+The `saved` and `dirty` container events are exposed onto the FluidContainer. The events are emitted on the Container already.
+
+### Deprecated bindToContext in IFluidDataStoreChannel
+bindToContext in IFluidDataStoreChannel has been deprecated. This should not be used to explicitly bind data stores. Root data stores will automatically be bound to container. Non-root data stores will be bound when their handles are stored in an already bound DDS.
+
+## 0.49 Breaking changes
+- [Deprecated dirty document events and property removed from ContainerRuntime](#deprecated-dirty-document-events-and-property-removed-from-containerruntime)
+- [Removed deltaManager.ts from @fluidframework/container-loader export](#deltamanager-removed-from-fluid-framework-export)
+- [Container class protected function resumeInternal made private](#resumeinternal-made-private)
+- [url removed from ICreateBlobResponsee](#url-removed-from-ICreateBlobResponse)
+- [encoding type change](#encoding-type-change)
+
+### Deprecated dirty document events and property removed from ContainerRuntime
+The `isDocumentDirty()` method, `"dirtyDocument"` and `"savedDocument"` events that were deprecated in 0.35 have now been removed.  For more information on replacements, see [DirtyDocument events and property](#DirtyDocument-events-and-property).
+
+### DeltaManager removed from fluid-framework export
+The `DeltaManager` class, the `IConnectionArgs` interface, the `IDeltaManagerInternalEvents` interface, and the `ReconnectedMode` enum have been removed from `@fluidframework/container-loader` package exports. Instead of `DeltaManager`, `IDeltaManager` should be used where appropriate.
+
+### resumeInternal made private
+The `protected` function `resumeInternal` under the class `Container` has been made `private`.
+
+### `url` removed from ICreateBlobResponse
+The unused `url` property of `ICreateBlobResponse` in `@fluidframework/protocol-definitions` has been removed
+
+### `encoding` type change
+The `encoding` property of `IBlob` in `@fluidframework/protocol-definitions` has changed type from `string` to `"utf-8" | "base64"` to match the only supported values.
+
+## 0.48 Breaking changes
+- [client-api package removed](#client-api-package-removed)
+- [SignalManager removed from fluid-framework export](#signalmanager-removed-from-fluid-framework-export)
+- [MockLogger removed from @fluidframework/test-runtime-utils](#mocklogger-removed-from-fluidframeworktest-runtime-utils)
+
+### client-api package removed
+The `@fluid-internal/client-api` package was deprecated in 0.20 and has now been removed.  Usage of this package should be replaced with direct usage of the `Loader`, `FluidDataStoreRuntime`, `ContainerRuntime`, and other supported functionality.
+
+### SignalManager removed from fluid-framework export
+The `SignalManager` and `Signaler` classes have been removed from the `@fluid-framework/fluid-static` and `fluid-framework` package exports and moved to the `@fluid-experimental/data-objects` package.  This is because of its experimental state and the intentional omission of experimental features from `fluid-framework`.  Users should instead import the classes from the `@fluid-experimental/data-objects` package.
+
+### MockLogger removed from @fluidframework/test-runtime-utils
+MockLogger is only used internally, so it's removed from @fluidframework/test-runtime-utils.
+
+## 0.47 Breaking changes
+- [Property removed from IFluidDataStoreContext](#Property-removed-from-IFluidDataStoreContext)
+- [Changes to IFluidDataStoreFactory](#Changes-to-IFluidDataStoreFactory)
+- [FlushMode enum values renamed](#FlushMode-enum-values-renamed)
+- [name removed from ContainerSchema](#name-removed-from-ContainerSchema)
+- [Anonymous return types for container calls in client packages](#Anonymous-return-types-for-container-calls-in-client-packages)
+- [createContainer and getContainer response objects properties renamed](#createContainer-and-getContainer-response-objects-properties-renamed)
+- [tinylicious and azure clients createContainer now detached](#tinylicious-and-azure-clients-createContainer-now-detached)
+- [container id is returned from new attach() and not exposed on the container](#container-id-is-returned-from-new-attach-and-not-exposed-on-the-container)
+- [AzureClient initialization as a singular config](#AzureClient-initialization-as-a-singular-config)
+
+### Property removed from IFluidDataStoreContext
+- the `existing` property from `IFluidDataStoreContext` (and `FluidDataStoreContext`) has been removed.
+
+### Changes to IFluidDataStoreFactory
+- The `existing` parameter from the `instantiateDataStore` function is now mandatory to differentiate creating vs loading.
+
+### `FlushMode` enum values renamed
+`FlushMode` enum values from `@fluidframework/runtime-definitions` have ben renamed as following:
+- `FlushMode.Manual` to `FlushMode.TurnBased`
+- `FlushMode.Automatic` to `FlushMode.Immediate`
+
+### `name` removed from ContainerSchema
+The `name` property on the ContainerSchema was used for multi-container scenarios but has not materialized to be a useful schema property. The feedback has been negative to neutral so it is being removed before it becomes formalized. Support for multi-container scenarios, if any is required, will be addressed as a future change.
+
+### Anonymous return types for container calls in client packages
+`createContainer` and `getContainer` in `@fluidframework/azure-client` and `@fluidframework/tinylicious-client` will no longer return typed objects but instead will return an anonymous type. This provide the flexibility that comes with tuple deconstruction with the strong typing of property names.
+
+```javascript
+// `@fluidframework/azure-client`
+createContainer(containerSchema: ContainerSchema): Promise<{
+    container: FluidContainer;
+    services: AzureContainerServices;
+}>;
+getContainer(id: string, containerSchema: ContainerSchema): Promise<{
+    container: FluidContainer;
+    services: AzureContainerServices;
+}>;
+
+// `@fluidframework/tinylicious-client`
+createContainer(containerSchema: ContainerSchema): Promise<{
+    container: FluidContainer;
+    services: TinyliciousContainerServices;
+}>;
+getContainer(id: string, containerSchema: ContainerSchema): Promise<{
+    container: FluidContainer;
+    services: TinyliciousContainerServices;
+}>;
+```
+
+### createContainer and getContainer response objects properties renamed
+For all `*-client` packages `createContainer` and `getContainer` would return an object with `fluidContainer` and `containerServices`. These have been renamed to the following for brevity.
+
+- fluidContainer => container
+- containerServices => services
+
+```javascript
+// old
+const { fluidContainer, containerServices } = client.getContainer(...);
+
+// new
+const { container, services } = client.getContainer(...);
+```
+
+### tinylicious and azure clients createContainer now detached
+Creating a new container now requires and explicit attach step. All changes made in between container creation, and attaching, will be persisted as part of creation and guaranteed to always be available to users. This allows developers to initialize `initialObjects` with state before the container is connected to the service. It also enables draft creation modes.
+
+```javascript
+// old
+const { fluidContainer } = client.createContainer(...);
+
+// new
+const { container } = client.createContainer(...);
+const id = container.attach();
+```
+
+### container id is returned from new attach() and not exposed on the container
+Because we now have an explicit attach flow, the container id is part of that flow as well. The id is returned from the `attach()` call.
+
+```javascript
+// old
+const { fluidContainer } = client.createContainer(...);
+const containerId = fluidContainer.id;
+
+// new
+const { container } = client.createContainer(...);
+const containerId = container.attach();
+```
+
+### AzureClient initialization as a singular config
+AzureClient now takes a singular config instead of multiple parameters. This enables easier scaling of config properties as we introduce new functionality.
+
+```js
+// old
+const connectionConfig = {...};
+const logger = new MyLogger();
+const client = new AzureClient(connectionConfig, logger);
+
+// new
+const config = {
+    connection: {...},
+    logger: new MyLogger(...)
+}
+const client = new AzureClient(config);
+```
+
+## 0.46 Breaking changes
+- [@fluid-experimental/fluid-framework package name changed](#fluid-experimentalfluid-framework-package-name-changed)
+- [FrsClient has been renamed to AzureClient and moved out of experimental state](#FrsClient-has-been-renamed-to-AzureClient-and-moved-out-of-experimental-state)
+- [documentId removed from IFluidDataStoreRuntime and IFluidDataStoreContext](#documentId-removed-from-IFluidDataStoreRuntime-and-IFluidDataStoreContext)
+- [@fluid-experimental/tinylicious-client package name changed](#fluid-experimentaltinylicious-client-package-name-changed)
+- [@fluid-experimental/fluid-static package name changed](#fluid-experimentalfluid-static-package-name-changed)
+- [TinyliciousClient and AzureClient container API changed](#tinyliciousclient-and-azureclient-container-api-changed)
+
+### `@fluid-experimental/fluid-framework` package name changed
+The `@fluid-experimental/fluid-framework` package has been renamed to now be `fluid-framework`. The scope has been removed.
+
+
+### FrsClient has been renamed to AzureClient and moved out of experimental state
+The `@fluid-experimental/frs-client` package for connecting with the Azure Fluid Relay service has been renamed to now be `@fluidframework/azure-client`. This also comes with the following name changes for the exported classes and interfaces from the package:
+- `FrsClient` -> `AzureClient`
+- `FrsAudience` -> `AzureAudience`
+- `IFrsAudience` -> `IAzureAudience`
+- `FrsMember` -> `AzureMember`
+- `FrsConnectionConfig` -> `AzureConnectionConfig`
+- `FrsContainerConfig` -> `AzureContainerConfig`
+- `FrsResources` -> `AzureResources`
+- `FrsAzFunctionTokenProvider` -> `AzureFunctionTokenProvider`
+- `FrsUrlResolver` -> `AzureUrlResolver`
+
+### documentId removed from IFluidDataStoreRuntime and IFluidDataStoreContext
+- `documentId` property is removed from IFluidDataStoreRuntime and IFluidDataStoreContext. It is a document level concept and is no longer exposed from data store level.
+
+### `@fluid-experimental/tinylicious-client` package name changed
+The `@fluid-experimental/tinylicious-client` package has been renamed to now be `@fluidframework/tinylicious-client`.
+
+### `@fluid-experimental/fluid-static` package name changed
+The `@fluid-experimental/fluid-static` package has been renamed to now be `@fluidframework/fluid-static`.
+
+### TinyliciousClient and AzureClient container API changed
+
+Tinylicious and Azure client API changed to comply with the new container creation flow. From now on,
+the new container ID will be generated by the framework. In addition to that, the `AzureContainerConfig`
+parameter's got decommissioned and the logger's moved to the client's constructor.
+
+```ts
+// Create a client using connection settings and an optional logger
+const client = new AzureClient(connectionConfig, logger);
+// Create a new container
+const { fluidContainer, containerServices } = await client.createContainer(containerSchema);
+// Retrieve the new container ID
+const containerId = fluidContainer.id;
+// Access the existing container
+const { fluidContainer, containerServices }= await client.getContainer(containerId, containerSchema);
+```
+
+## 0.45 Breaking changes
+- [Changes to local testing in insecure environments and associated bundle size increase](#changes-to-local-testing-in-insecure-environments-and-associated-bundle-size-increase)
+- [Property removed from IFluidDataStoreRuntime](#Property-removed-from-IFluidDataStoreRuntime)
+- [Changes to client-api Document](#changes-to-client-api-Document)
+- [Changes to PureDataObject](#changes-to-PureDataObject)
+- [Changes to DataObject](#changes-to-DataObject)
+- [Changes to PureDataObjectFactory](#changes-to-PureDataObjectFactory)
+- [webpack-fluid-loader package name changed](#webpack-fluid-loader-package-name-changed)
+- [Loggers without tag support now deprecated in ContainerContext](#loggers-without-tag-support-now-deprecated-in-containercontext)
+- [Creating new containers with Container.load is no longer supported](#Creating-new-containers-with-Containerload-is-no-longer-supported)
+- [getHashedDocumentId is now async](#gethasheddocumentid-is-now-async)
+
+### Changes to local testing in insecure environments and associated bundle size increase
+Previously the `@fluidframework/common-utils` package exposed a `setInsecureContextHashFn` function so users could set an override when testing locally in insecure environments because the `crypto.subtle` library is not available.  This is now done automatically as a fallback and the function is removed.  The fallback exists as a dynamic import of our equivalent Node platform implementation, and will show as a chunk named "FluidFramework-HashFallback" and be up to ~25KB parsed in size.  It will not be served when running normally in a modern browser.
+
+### Property removed from IFluidDataStoreRuntime
+- the `existing` property from `IFluidDataStoreRuntime` (and `FluidDataStoreRuntime`) has been removed. There is no need for this property in the class, as the flag can be supplied as a parameter to `FluidDataStoreRuntime.load` or to the constructor of `FluidDataStoreRuntime`. The `IFluidDataStoreFactory.instantiateDataStore` function has an `existing` parameter which can be supplied to the `FluidDataStoreRuntime` when the latter is created.
+
+### Changes to client-api Document
+- The `existing` property from the `Document` class in `@fluid-internal/client-api` has been removed. It can be assumed that the property would have always been `true`.
+
+### Changes to PureDataObject
+- The `initializeInternal` and the `finishInitialization` functions have a mandatory `existing` parameter to differentiate creating vs loading.
+
+### Changes to DataObject
+- The `initializeInternal` function has a mandatory `existing` parameter to differentiate creating vs loading.
+
+### Changes to PureDataObjectFactory
+- The `createDataObject` in `PureDataObjectFactory` has a mandatory `existing` parameter to differentiate creating vs loading.
+
+### `webpack-fluid-loader` package name changed
+The `webpack-fluid-loader` utility was previously available from a package named `@fluidframework/webpack-fluid-loader`.  However, since it is a tool and should not be used in production, it is now available under the tools scope `@fluid-tools/webpack-fluid-loader`.
+
+### Loggers without tag support now deprecated in ContainerContext
+The `logger` property of `ContainerContext` has been marked deprecated. Loggers passed to ContainerContext will need to support tagged events.
+
+### Creating new containers with Container.load is no longer supported
+- See [Creating new containers with Container.load has been deprecated](#Creating-new-containers-with-Containerload-has-been-deprecated)
+- The `createOnLoad` flag to inside `IContainerLoadOptions` has been removed.
+- `LegacyCreateOnLoadEnvironmentKey` from `@fluidframework/container-loader` has been removed.
+
+### getHashedDocumentId is now async
+`@fluidframework/odsp-driver`'s `getHashedDocumentId` function is now async to take advantage of shared hashing functionality.  It drops its dependency on the `sha.js` package as a result, which contributed ~37KB to the parsed size of the `odsp-driver` bundle.
+
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
 - [attach() should only be called once](#attach-should-only-be-called-once)

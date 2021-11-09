@@ -4,7 +4,6 @@
 
 ```ts
 
-import { EventForwarder } from '@fluidframework/common-utils';
 import * as git from '@fluidframework/gitresources';
 import { IAttachment } from '@fluidframework/protocol-definitions';
 import { IBlob } from '@fluidframework/protocol-definitions';
@@ -43,7 +42,7 @@ export class AttachmentTreeEntry {
 
 // @public
 export class BlobTreeEntry {
-    constructor(path: string, contents: string, encoding?: string);
+    constructor(path: string, contents: string, encoding?: "utf-8" | "base64");
     // (undocumented)
     readonly mode = FileMode.File;
     // (undocumented)
@@ -55,20 +54,7 @@ export class BlobTreeEntry {
 }
 
 // @public
-export function buildHierarchy(flatTree: git.ITree, blobsShaToPathCache?: Map<string, string>): ISnapshotTreeEx;
-
-// @public
-export class CommitTreeEntry {
-    constructor(path: string, value: string);
-    // (undocumented)
-    readonly mode = FileMode.Commit;
-    // (undocumented)
-    readonly path: string;
-    // (undocumented)
-    readonly type = TreeEntry.Commit;
-    // (undocumented)
-    readonly value: string;
-}
+export function buildHierarchy(flatTree: git.ITree, blobsShaToPathCache?: Map<string, string>, removeAppTreePrefix?: boolean): ISnapshotTreeEx;
 
 // @public (undocumented)
 export function generateServiceProtocolEntries(deli: string, scribe: string): ITreeEntry[];
@@ -160,23 +146,6 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     snapshotValues(): IQuorumSnapshot["values"];
     updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean;
     }
-
-// @public
-export class QuorumProxy extends EventForwarder<IQuorumEvents> implements IQuorum {
-    constructor(quorum: IQuorum);
-    // (undocumented)
-    readonly get: (key: string) => any;
-    // (undocumented)
-    readonly getApprovalData: (key: string) => ICommittedProposal | undefined;
-    // (undocumented)
-    readonly getMember: (clientId: string) => ISequencedClient | undefined;
-    // (undocumented)
-    readonly getMembers: () => Map<string, ISequencedClient>;
-    // (undocumented)
-    readonly has: (key: string) => boolean;
-    // (undocumented)
-    readonly propose: (key: string, value: any) => Promise<void>;
-}
 
 // @public
 export class TreeTreeEntry {

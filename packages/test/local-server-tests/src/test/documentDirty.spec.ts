@@ -248,6 +248,9 @@ describe("Document Dirty", () => {
 
                 checkDirtyState("after value set", true, 0);
 
+                // Manually flush the ops before disconnecting
+                (dataObject.context.containerRuntime as IContainerRuntime).flush();
+
                 // Disconnect the client.
                 assert(container.clientId);
                 documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
@@ -308,6 +311,9 @@ describe("Document Dirty", () => {
 
                 checkDirtyState("after batch value set", true, 0);
 
+                // Manually flush the ops so that they are sent as a batch.
+                (dataObject.context.containerRuntime as IContainerRuntime).flush();
+
                 // Disconnect the client.
                 documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
 
@@ -359,6 +365,9 @@ describe("Document Dirty", () => {
                 sharedMap.set("key", "value");
 
                 checkDirtyState("after value set", true, 0);
+
+                // Manually flush the ops so that they are sent as a batch.
+                (dataObject.context.containerRuntime as IContainerRuntime).flush();
 
                 // force readonly
                 container.forceReadonly(true);

@@ -5,7 +5,12 @@
 
 import type * as git from "@fluidframework/gitresources";
 import type * as protocol from "@fluidframework/protocol-definitions";
-import { IGitManager, IWholeSummaryPayload, IWriteSummaryResponse } from "@fluidframework/server-services-client";
+import {
+    IGitManager,
+    IWholeFlatSummary,
+    IWholeSummaryPayload,
+    IWriteSummaryResponse,
+} from "@fluidframework/server-services-client";
 import { runWithRetry } from "@fluidframework/driver-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 
@@ -135,21 +140,26 @@ export class RetriableGitManager implements IGitManager {
         );
     }
 
+    public async deleteSummary(softDelete: boolean): Promise<void> {
+        return this.runWithRetry(
+            async () => this.internalGitManager.deleteSummary(softDelete),
+            "gitManager_deleteSummary",
+        );
+    }
+
+    public async getSummary(sha: string): Promise<IWholeFlatSummary> {
+        return this.runWithRetry(
+            async () => this.internalGitManager.getSummary(sha),
+            "gitManager_getSummary",
+        );
+    }
+
     private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {
         return runWithRetry(
             api,
             callName,
-            (id: string) => this.refreshDelayInfo(id),
-            (id: string, retryInMs: number, err: any) => this.emitDelayInfo(id, retryInMs, err),
             this.logger,
+            {}, // progress
         );
-    }
-
-    private refreshDelayInfo(id: string): void {
-        return;
-    }
-
-    private emitDelayInfo(id: string, retryInMs: number, err: any): void {
-        return;
     }
 }

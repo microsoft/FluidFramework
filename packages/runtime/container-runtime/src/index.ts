@@ -6,8 +6,9 @@
 export * from "./containerRuntime";
 export * from "./deltaScheduler";
 export * from "./dataStoreRegistry";
+export { IGarbageCollectionRuntime, IGCStats, IUsedStateStats } from "./garbageCollection";
 export * from "./pendingStateManager";
-export * from "./runWhileConnectedCoordinator";
 export * from "./summarizer";
 export * from "./summarizerTypes";
 export * from "./summaryCollection";
+export { ICancellableSummarizerController, neverCancelledSummaryToken } from "./runWhileConnectedCoordinator";

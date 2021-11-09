@@ -16,6 +16,7 @@ DOCUMENTATION/_build/
 
 # Distribution files that we don't want in git
 dist/
+lib/
 
 .nyc_output
 debug.log

@@ -1,0 +1,36 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# build-docs-site pipeline
+
+name: $(Build.BuildId)
+
+# We don't need to run this in the main CI since it's not a published package
+trigger: none
+
+pr:
+  branches:
+    include:
+    - main
+    - release/*
+  paths:
+    include:
+    - docs
+    - tools/pipelines/build-docs-site.yml
+    - tools/pipelines/scripts/build-version.js
+    - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
+
+extends:
+  template: templates/build-npm-package.yml
+  parameters:
+    publishOverride: skip
+    releaseBuildOverride: none
+    buildDirectory: docs
+    taskBuild: build
+    taskBuildDocs: false
+    taskLint: true
+    taskTest: false
+    taskPack: false
+    buildNumberInPatch: true

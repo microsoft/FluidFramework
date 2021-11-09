@@ -47,7 +47,7 @@ export interface IBlob {
     // (undocumented)
     contents: string;
     // (undocumented)
-    encoding: string;
+    encoding: "utf-8" | "base64";
 }
 
 // @public
@@ -76,6 +76,7 @@ export interface IClient {
     permission: string[];
     // (undocumented)
     scopes: string[];
+    timestamp?: number;
     // (undocumented)
     user: IUser;
 }
@@ -122,6 +123,7 @@ export interface IConnect {
     id: string;
     mode: ConnectionMode;
     nonce?: string;
+    supportedFeatures?: Record<string, any>;
     tenantId: string;
     token: string | null;
     versions: string[];
@@ -141,7 +143,9 @@ export interface IConnected {
     mode: ConnectionMode;
     nonce?: string;
     serviceConfiguration: IClientConfiguration;
+    supportedFeatures?: Record<string, any>;
     supportedVersions: string[];
+    timestamp?: number;
     version: string;
 }
 
@@ -149,6 +153,8 @@ export interface IConnected {
 export interface ICreateBlobResponse {
     // (undocumented)
     id: string;
+    // @deprecated (undocumented)
+    url: string;
 }
 
 // @public (undocumented)
@@ -325,6 +331,8 @@ export interface ISequencedDocumentMessage {
     clientSequenceNumber: number;
     // (undocumented)
     contents: any;
+    // @alpha
+    expHash1?: string;
     // (undocumented)
     metadata?: any;
     // (undocumented)
@@ -533,6 +541,8 @@ export interface ITokenClaims {
     // (undocumented)
     iat: number;
     // (undocumented)
+    jti?: string;
+    // (undocumented)
     scopes: string[];
     // (undocumented)
     tenantId: string;
@@ -675,16 +685,27 @@ export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISumm
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
 // @public (undocumented)
-export const enum SummaryType {
+export namespace SummaryType {
     // (undocumented)
-    Attachment = 4,
+    export type Attachment = 4;
     // (undocumented)
-    Blob = 2,
+    export type Blob = 2;
     // (undocumented)
-    Handle = 3,
+    export type Handle = 3;
     // (undocumented)
-    Tree = 1
+    export type Tree = 1;
+    const // (undocumented)
+    Tree: Tree;
+    const // (undocumented)
+    Blob: Blob;
+    const // (undocumented)
+    Handle: Handle;
+    const // (undocumented)
+    Attachment: Attachment;
 }
+
+// @public (undocumented)
+export type SummaryType = SummaryType.Attachment | SummaryType.Blob | SummaryType.Handle | SummaryType.Tree;
 
 // @public (undocumented)
 export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;

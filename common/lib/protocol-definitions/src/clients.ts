@@ -23,6 +23,11 @@ export interface IClient {
     permission: string[];
     user: IUser;
     scopes: string[];
+
+    /**
+     * The time the client connected
+     */
+    timestamp?: number;
 }
 
 export interface ISequencedClient {

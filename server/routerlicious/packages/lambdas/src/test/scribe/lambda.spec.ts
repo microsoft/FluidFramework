@@ -63,7 +63,7 @@ describe("Routerlicious", () => {
                 testKafka = new TestKafka();
                 testProducer = testKafka.createProducer();
                 testTenantManager = new TestTenantManager();
-                const tenant = await testTenantManager.getTenant(testTenantId);
+                const tenant = await testTenantManager.getTenant(testTenantId, testDocumentId);
                 testGitManager = tenant.gitManager as GitManager;
                 const createTreeEntry: ICreateTreeEntry[] = [];
                 const requestBody: ICreateTreeParams = {
@@ -78,7 +78,8 @@ describe("Routerlicious", () => {
                     testMessageCollection,
                     testProducer,
                     testTenantManager,
-                    DefaultServiceConfiguration);
+                    DefaultServiceConfiguration,
+                    false);
 
                 testContext = new TestContext();
                 lambda = await factory.create({ documentId: testDocumentId, tenantId: testTenantId, leaderEpoch: 0 }, testContext) as ScribeLambda;

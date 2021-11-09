@@ -9,5 +9,10 @@ module.exports = {
     transform: {
         "^.+\\.(j|t)sx?$": "ts-jest",
     },
+    globals: {
+        'ts-jest': {
+            tsconfig: 'src/test/tsconfig.json'
+        }
+    },
     testPathIgnorePatterns: ['/node_modules/']
 };

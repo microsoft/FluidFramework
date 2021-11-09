@@ -21,7 +21,6 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import * as path from "path-browserify";
-import { debug } from "./debug";
 import {
     IDirectory,
     IDirectoryEvents,
@@ -190,7 +189,7 @@ type IDirectorySubDirectoryOperation = IDirectoryCreateSubDirectoryOperation | I
 /**
  * Any operation on a directory
  */
-type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
+export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
 
 /**
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
@@ -564,6 +563,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
+     * @internal
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
         return serializeDirectory(this.root, serializer);
@@ -582,13 +582,13 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
+     * @internal
      */
-    protected onDisconnect() {
-        debug(`Directory ${this.id} is now disconnected`);
-    }
+    protected onDisconnect() {}
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
+     * @internal
      */
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         const message = content as IDirectoryOperation;
@@ -599,6 +599,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
+     * @internal
      */
     protected async loadCore(storage: IChannelStorageService) {
         const data = await readAndParse(storage, snapshotFileName);
@@ -658,6 +659,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
+     * @internal
      */
     protected registerCore(): void {
         const subdirsToRegisterFrom = new Array<SubDirectory>();
@@ -678,6 +680,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
+     * @internal
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         if (message.type === MessageType.Operation) {
@@ -817,6 +820,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         );
     }
 
+    /**
+     * @internal
+     */
     protected applyStashedOp() {
         throw new Error("not implemented");
     }

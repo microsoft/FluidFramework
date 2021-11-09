@@ -13,6 +13,10 @@ export interface ITenantConfig {
     orderer: ITenantOrderer;
 
     customData: ITenantCustomData;
+
+    // Timestamp of when this tenant will be hard deleted.
+    // The tenant is soft deleted if a deletion timestamp is present.
+    scheduledDeletionTime?: string;
 }
 
 export interface ITenantStorage {
@@ -70,7 +74,7 @@ export interface ITenantManager {
     /**
      * Retrieves details for the given tenant
      */
-    getTenant(tenantId: string): Promise<ITenant>;
+    getTenant(tenantId: string, documentId: string): Promise<ITenant>;
 
     /**
      * Verifies that the given auth token is valid. A rejected promise indicates an invalid token.

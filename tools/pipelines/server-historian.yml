@@ -46,6 +46,7 @@ trigger:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-publish-docker-service.yml
     - tools/pipelines/templates/include-publish-docker-service-steps.yml

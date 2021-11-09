@@ -12,6 +12,7 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";
+import { Lumberjack, BaseTelemetryProperties } from "@fluidframework/server-services-telemetry";
 
 // TODO: Move this to config.
 const RequestWindowMS = 15000;
@@ -106,6 +107,11 @@ export class ForemanLambda implements core.IPartitionLambda {
                             documentId: docId,
                             tenantId,
                         },
+                    });
+                Lumberjack.info(`Request to ${queueName}: ${clientId}:${JSON.stringify(tasks)}`,
+                    {
+                        [BaseTelemetryProperties.tenantId]: tenantId,
+                        [BaseTelemetryProperties.documentId]: docId,
                     });
             }
         }

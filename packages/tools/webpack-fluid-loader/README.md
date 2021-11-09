@@ -1,4 +1,4 @@
-# @fluidframework/webpack-fluid-loader
+# @fluid-tools/webpack-fluid-loader
 
 This folder contains the webpack-fluid-loader. This package is meant to be used with the webpack-dev-server and is used by yo Fluid as the default `start` option.
 
@@ -14,6 +14,7 @@ The following environment variables can be defined when running webpack-dev-serv
 | `tenantId` | Tenant ID for your host. If you supply this you must supply a tenant secret |
 | `tenantSecret` | Secret for your tenant |
 | `bearerSecret` | Secret for your bearer |
+| `enableWholeSummaryUpload` | Enables whole summary upload functionality when using routerlicious or docker mode |
 
 
 | modes | description |
@@ -49,6 +50,7 @@ npm run start -- --env.fluidHost https://fluidhost.com --env.tenantId my_tenant 
 - `fluid__webpack__tenantSecret`
 - `fluid__webpack__bearerSecret`
 - `fluid__webpack__npm`
+- `fluid__webpack__enableWholeSummaryUpload`
 
 ### config file:
 or in an optional `config.json` file in the `baseDir` passed into `webpack-fluid-loader.after()` that looks like this:
@@ -60,7 +62,8 @@ or in an optional `config.json` file in the `baseDir` passed into `webpack-fluid
             "tenantId": "my_tenant",
             "tenantSecret": "my_secret",
             "bearerSecret": "bear_secret",
-            "npm": "npm.com"
+            "npm": "npm.com",
+            "enableWholeSummaryUpload": false,
         }
     }
 }

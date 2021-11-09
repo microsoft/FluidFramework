@@ -28,10 +28,26 @@ import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { ILoader, ILoaderOptions } from "./loader";
 
-// Represents the attachment state of the entity.
+/**
+ * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
+ * service.  The transition from detached to attached state is a one-way transition.
+ */
 export enum AttachState {
+    /**
+     * In detached state, the data is only present on the local client's machine.  It has not yet been uploaded
+     * to the service.
+     */
     Detached = "Detached",
+
+    /**
+     * In attaching state, the data has started the upload to the service, but has not yet completed.
+     */
     Attaching = "Attaching",
+
+    /**
+     * In attached state, the data has completed upload to the service.  It can be accessed by other clients after
+     * reaching attached state.
+     */
     Attached = "Attached",
 }
 
@@ -64,15 +80,6 @@ export interface IRuntime extends IDisposable {
     setConnectionState(connected: boolean, clientId?: string);
 
     /**
-     * @deprecated in 0.14 async stop()
-     * Use snapshot to get a snapshot for an IRuntimeState as needed, followed by dispose
-     *
-     * Stops the runtime. Once stopped no more messages will be delivered and the context passed to the runtime
-     * on creation will no longer be active
-     */
-    stop(): Promise<{snapshot?: never, state?: never}>;
-
-    /**
      * Processes the given op (message)
      */
     process(message: ISequencedDocumentMessage, local: boolean, context: any);
@@ -82,7 +89,14 @@ export interface IRuntime extends IDisposable {
      */
     processSignal(message: any, local: boolean);
 
-    createSummary(): ISummaryTree;
+    /**
+     * Create a summary. Used when attaching or serializing a detached container.
+     *
+     * @param blobRedirectTable - A table passed during the attach process. While detached, blob upload is supported
+     * using IDs generated locally. After attach, these IDs cannot be used, so this table maps the old local IDs to the
+     * new storage IDs so requests can be redirected.
+     */
+    createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
 
     /**
      * Propagate the container state when container is attaching or attached.

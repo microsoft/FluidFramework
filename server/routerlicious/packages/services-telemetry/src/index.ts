@@ -8,3 +8,4 @@ export * from "./lumberEventNames";
 export * from "./lumberjack";
 export * from "./resources";
 export * from "./schema";
+export * from "./lumberjackCommonTestUtils";

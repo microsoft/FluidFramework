@@ -14,6 +14,7 @@ import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
 import { getOdspResolvedUrl } from "../odspUtils";
 import { getHashedDocumentId } from "../odspPublicUtils";
+import { LocalPersistentCache } from "../odspCache";
 import { mockFetchOk, mockFetchMultiple, okResponse } from "./mockFetch";
 
 describe("Odsp Create Container Test", () => {
@@ -38,6 +39,8 @@ describe("Odsp Create Container Test", () => {
     const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
         async (_options) => "token",
         async (_options) => "token",
+        new LocalPersistentCache(2000),
+        { snapshotOptions : { timeout : 2000 }},
     );
 
     const createSummary = (putAppTree: boolean, putProtocolTree: boolean) => {
@@ -80,7 +83,7 @@ describe("Odsp Create Container Test", () => {
 
     it("Check Document Service Successfully", async () => {
         const resolved = await resolver.resolve(request);
-        const docID = getHashedDocumentId(driveId, itemId);
+        const docID = await getHashedDocumentId(driveId, itemId);
         const summary = createSummary(true, true);
         const docService = await mockFetchOk(
             async () => odspDocumentServiceFactory.createContainer(summary, resolved, new TelemetryUTLogger()),
@@ -132,7 +135,7 @@ describe("Odsp Create Container Test", () => {
             assert.strictEqual(error.statusCode, fetchIncorrectResponse, "Wrong error code");
             assert.strictEqual(error.errorType, DriverErrorType.incorrectServerResponse,
                 "Error type should be correct");
-            assert.strictEqual(error.message, "Could not parse item from Vroom response", "Message should be correct");
+            assert.strictEqual(error.message, "couldNotParseItemFromVroomResponse", "Message should be correct");
         }
     });
 });

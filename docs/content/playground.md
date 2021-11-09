@@ -1,4 +1,0 @@
----
-type: "page"
-layout: "playground"
----

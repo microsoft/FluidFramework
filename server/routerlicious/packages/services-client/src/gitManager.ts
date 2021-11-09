@@ -9,7 +9,7 @@ import { buildHierarchy } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 import { ICreateRefParamsExternal, IPatchRefParamsExternal, IGitManager, IHistorian } from "./storage";
-import { IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
+import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
 
 export class GitManager implements IGitManager {
     private readonly blobCache = new Map<string, resources.IBlob>();
@@ -119,7 +119,7 @@ export class GitManager implements IGitManager {
         return this.historian.getContent(path, commit);
     }
 
-    public createBlob(content: string, encoding: string): Promise<resources.ICreateBlobResponse> {
+    public createBlob(content: string, encoding: "utf-8" |"base64"): Promise<resources.ICreateBlobResponse> {
         const blob: resources.ICreateBlobParams = {
             content,
             encoding,
@@ -143,6 +143,14 @@ export class GitManager implements IGitManager {
 
     public async createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
         return this.historian.createSummary(summary);
+    }
+
+    public async deleteSummary(softDelete: boolean): Promise<void> {
+        return this.historian.deleteSummary(softDelete);
+    }
+
+    public async getSummary(sha: string): Promise<IWholeFlatSummary> {
+        return this.historian.getSummary(sha);
     }
 
     public async getRef(ref: string): Promise<resources.IRef> {
@@ -261,10 +269,6 @@ export class GitManager implements IGitManager {
                     const entryAsTree = entry.value as api.ITree;
                     const treeBlobP = this.createTreeCore(entryAsTree, depth + 1);
                     entriesP.push(treeBlobP);
-                    break;
-
-                case api.TreeEntry.Commit:
-                    entriesP.push(Promise.resolve({ sha: entry.value as string, url: "" }));
                     break;
 
                 default:

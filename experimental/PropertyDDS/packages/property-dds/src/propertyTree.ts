@@ -3,6 +3,13 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-internal-modules */
+import isEmpty from "lodash/isEmpty";
+import findIndex from "lodash/findIndex";
+import range from "lodash/range";
+import {copy as cloneDeep} from "fastest-json-copy";
+
+import { AttachState } from "@fluidframework/container-definitions";
 import {
 	ISequencedDocumentMessage,
 	ITree,
@@ -25,13 +32,12 @@ import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
 	ChangeSet,
 	Utils as ChangeSetUtils,
-    rebaseToRemoteChanges,
+	rebaseToRemoteChanges,
 } from "@fluid-experimental/property-changeset";
 
 import { PropertyFactory, BaseProperty, NodeProperty } from "@fluid-experimental/property-properties";
 
 import { v4 as uuidv4 } from "uuid";
-import _ from "lodash";
 import axios from "axios";
 import { PropertyTreeFactory } from "./propertyTreeFactory";
 
@@ -158,10 +164,14 @@ export class SharedPropertyTree extends SharedObject {
 	}
 
 	public _reportDirtinessToView() {
-		const changes = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
-		const _changeSet = new ChangeSet(changes);
-		if (!_.isEmpty(_changeSet.getSerializedChangeSet())) {
-			this.emit("localModification", _changeSet);
+		// Check whether anybody is listening. If not, we don't want to pay the price
+		// for the serialization of the data structure
+		if (this.listenerCount("localModification") > 0) {
+			const changes = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
+			const _changeSet = new ChangeSet(changes);
+			if (!isEmpty(_changeSet.getSerializedChangeSet())) {
+				this.emit("localModification", _changeSet);
+			}
 		}
 		this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
 	}
@@ -171,12 +181,12 @@ export class SharedPropertyTree extends SharedObject {
 		return this.tipView;
 	}
 
-    public get activeCommit(): IPropertyTreeMessage {
-        if(this.localChanges.length > 0) {
-            return this.localChanges[this.localChanges.length - 1];
-        } else {
-            return this.remoteChanges[this.remoteChanges.length - 1];
-        }
+	public get activeCommit(): IPropertyTreeMessage {
+		if(this.localChanges.length > 0) {
+			return this.localChanges[this.localChanges.length - 1];
+		} else {
+			return this.remoteChanges[this.remoteChanges.length - 1];
+		}
 	}
 	public get root(): NodeProperty {
 		return this._root as NodeProperty;
@@ -185,17 +195,17 @@ export class SharedPropertyTree extends SharedObject {
 	public commit(metadata?: Metadata, submitEmptyChange?: boolean) {
 		const changes = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
 
-        let doSubmit = !!submitEmptyChange;
+		let doSubmit = !!submitEmptyChange;
 
-        // if no override provided dont submit unless metadata are provided
-        if (submitEmptyChange === undefined) {
-            doSubmit =  metadata !== undefined;
-        }
+		// if no override provided dont submit unless metadata are provided
+		if (submitEmptyChange === undefined) {
+			doSubmit =  metadata !== undefined;
+		}
 
-        if (doSubmit || !_.isEmpty(changes)) {
-            this.applyChangeSet(changes, metadata || {});
-            this.root.cleanDirty();
-        }
+		if (doSubmit || !isEmpty(changes)) {
+			this.applyChangeSet(changes, metadata || {});
+			this.root.cleanDirty();
+		}
 	}
 
 	private applyChangeSet(changeSet: SerializedChangeSet, metadata: Metadata) {
@@ -221,9 +231,9 @@ export class SharedPropertyTree extends SharedObject {
 
 		// Queue the op for transmission to the Fluid service.
 		if (this.transmissionsHaveBeenStopped) {
-			this.enqueuedMessages.push(_.cloneDeep(change));
+			this.enqueuedMessages.push(cloneDeep(change));
 		} else {
-			this.submitLocalMessage(change);
+			this.submitLocalMessage(cloneDeep(change));
 		}
 	}
 
@@ -277,7 +287,7 @@ export class SharedPropertyTree extends SharedObject {
 				case OpKind.ChangeSet:
 					// If the op originated locally from this client, we've already accounted for it
 					// by advancing the state.  Otherwise, advance the PRNG now.
-					this._applyRemoteChangeSet(_.cloneDeep(content));
+					this._applyRemoteChangeSet(cloneDeep(content));
 					break;
 				default:
 					break;
@@ -336,11 +346,11 @@ export class SharedPropertyTree extends SharedObject {
 					visitedRemoteChanges.add(visitor.referenceGuid);
 				}
 
-                // If we have a change that refers to the start of the history (remoteHeadGuid === ""), we have to
-                // keep all remote Changes until this change has been processed
-                if (visitor.remoteHeadGuid === "") {
-                    visitedRemoteChanges.add(remoteChanges[0].guid);
-                }
+				// If we have a change that refers to the start of the history (remoteHeadGuid === ""), we have to
+				// keep all remote Changes until this change has been processed
+				if (visitor.remoteHeadGuid === "") {
+					visitedRemoteChanges.add(remoteChanges[0].guid);
+				}
 			}
 		}
 		let pruned = 0;
@@ -398,8 +408,8 @@ export class SharedPropertyTree extends SharedObject {
 				unrebasedRemoteChanges: this.unrebasedRemoteChanges,
 			};
 			const chunkSize = 5000 * 1024; // Default limit seems to be 5MB
-			let serializedSummary =
-				serializer !== undefined ? serializer.stringify(summary, this.handle) : JSON.stringify(summary);
+			let serializedSummary = JSON.stringify(summary);
+				// serializer !== undefined ? serializer.stringify(summary, this.handle) : JSON.stringify(summary);
 
 			// JSON.stringify does not escape unicode characters. As a consequence,
 			// the chunking code below could create chunks which are bigger than the
@@ -459,15 +469,15 @@ export class SharedPropertyTree extends SharedObject {
 		try {
 			if (!snapshot.useMH) {
 				// We load all chunks
-				const chunks = await Promise.all(
-					_.range(snapshot.numChunks).map(async (i) => {
+				const chunks: string[] = await Promise.all(
+					range(snapshot.numChunks).map(async (i) => {
 						return bufferToString(await storage.readBlob(`summaryChunk_${i}`), "utf8");
 					}),
 				);
 
-				const serializedSummary = _.reduce(chunks, (a, b) => a + b, "");
-				const snapshotSummary: ISnapshotSummary =
-					serializer !== undefined ? serializer.parse(serializedSummary) : JSON.parse(serializedSummary);
+				const serializedSummary = chunks.reduce((a, b) => a + b, "");
+				const snapshotSummary: ISnapshotSummary = JSON.parse(serializedSummary);
+					// serializer !== undefined ? serializer.parse(serializedSummary) : JSON.parse(serializedSummary);
 				if (
 					snapshotSummary.remoteChanges === undefined ||
 					snapshotSummary.remoteTipView === undefined ||
@@ -487,7 +497,7 @@ export class SharedPropertyTree extends SharedObject {
 						this.options.paths,
 					);
 				}
-				this.tipView = _.cloneDeep(this.remoteTipView);
+				this.tipView = cloneDeep(this.remoteTipView);
 
 				this.skipSequenceNumber = 0;
 			} else {
@@ -510,7 +520,7 @@ export class SharedPropertyTree extends SharedObject {
 				}
 
 				this.tipView = materializedView;
-				this.remoteTipView = _.cloneDeep(this.tipView);
+				this.remoteTipView = cloneDeep(this.tipView);
 				this.remoteChanges = [];
 
 				let missingDeltas: ISequencedDocumentMessage[] = [];
@@ -555,7 +565,11 @@ export class SharedPropertyTree extends SharedObject {
 			this.remoteTipView = {};
 			this.remoteChanges = [];
 		} finally {
-			this._root.deserialize(this.tipView);
+			this._root.deserialize(this.tipView, undefined, false, false);
+			const _changeSet = new ChangeSet(this.tipView);
+			if (!isEmpty(_changeSet.getSerializedChangeSet())) {
+				this.emit("localModification", _changeSet);
+			}
 			this.root.cleanDirty();
 		}
 	}
@@ -567,11 +581,16 @@ export class SharedPropertyTree extends SharedObject {
 		const changeSetWrapper = new ChangeSet(this.tipView);
 		changeSetWrapper.applyChangeSet(change.changeSet);
 
-		this.localChanges.push(change);
+		if (this.runtime.attachState === AttachState.Detached) {
+			const remoteChangeSetWrapper = new ChangeSet(this.remoteTipView);
+			remoteChangeSetWrapper.applyChangeSet(change.changeSet);
+		} else {
+			this.localChanges.push(change);
+		}
 	}
 
 	private _applyRemoteChangeSet(change: IRemotePropertyTreeMessage) {
-		this.unrebasedRemoteChanges[change.guid] = _.cloneDeep(change);
+		this.unrebasedRemoteChanges[change.guid] = cloneDeep(change);
 
 		// This is the first message in the history of the document.
 		if (this.remoteChanges.length !== 0) {
@@ -613,9 +632,9 @@ export class SharedPropertyTree extends SharedObject {
 	}
 
 	getRebasedChanges(startGuid: string, endGuid?: string) {
-		const startIndex = _.findIndex(this.remoteChanges, (c) => c.guid === startGuid);
-		if (endGuid) {
-			const endIndex = _.findIndex(this.remoteChanges, (c) => c.guid === endGuid);
+		const startIndex = findIndex(this.remoteChanges, (c) => c.guid === startGuid);
+		if (endGuid !== undefined) {
+			const endIndex = findIndex(this.remoteChanges, (c) => c.guid === endGuid);
 			return this.remoteChanges.slice(startIndex + 1, endIndex + 1);
 		}
 		return this.remoteChanges.slice(startIndex + 1);
@@ -626,7 +645,7 @@ export class SharedPropertyTree extends SharedObject {
 		pendingChanges: SerializedChangeSet,
 		newTipDelta: SerializedChangeSet,
 	): boolean {
-		let rebaseBaseChangeSet = _.cloneDeep(change.changeSet);
+		let rebaseBaseChangeSet = cloneDeep(change.changeSet);
 
 		const accumulatedChanges: SerializedChangeSet = {};
 		const conflicts = [] as any[];
@@ -651,12 +670,12 @@ export class SharedPropertyTree extends SharedObject {
 
 			const rebaseMetaInformation = new Map();
 
-			const copiedChangeSet = new ChangeSet(_.cloneDeep(this.localChanges[i].changeSet));
+			const copiedChangeSet = new ChangeSet(cloneDeep(this.localChanges[i].changeSet));
 			new ChangeSet(rebaseBaseChangeSet)._rebaseChangeSet(this.localChanges[i].changeSet, conflicts, {
 				applyAfterMetaInformation: rebaseMetaInformation,
 			});
 
-			copiedChangeSet._toInverseChangeSet();
+			copiedChangeSet.toInverseChangeSet();
 			copiedChangeSet.applyChangeSet(rebaseBaseChangeSet);
 			copiedChangeSet.applyChangeSet(this.localChanges[i].changeSet, {
 				applyAfterMetaInformation: rebaseMetaInformation,
@@ -670,7 +689,7 @@ export class SharedPropertyTree extends SharedObject {
 		const pendingChangesRebaseMetaInformation = new Map();
 		const deltaToTipCS = new ChangeSet(newTipDelta);
 		deltaToTipCS.applyChangeSet(pendingChanges);
-		deltaToTipCS._toInverseChangeSet();
+		deltaToTipCS.toInverseChangeSet();
 
 		// Perform a rebase of the pending changes
 		new ChangeSet(rebaseBaseChangeSet)._rebaseChangeSet(pendingChanges, conflicts, {
@@ -686,12 +705,12 @@ export class SharedPropertyTree extends SharedObject {
 
 		// Update the tip view
 		if (!this.tipView) {
-            this.tipView = _.cloneDeep(this.remoteTipView);
-            const changeSet = new ChangeSet(this.tipView);
-            changeSet.applyChangeSet(accumulatedChanges);
-        } else {
-            new ChangeSet(this.tipView).applyChangeSet(newTipDelta);
-        }
+			this.tipView = cloneDeep(this.remoteTipView);
+			const changeSet = new ChangeSet(this.tipView);
+			changeSet.applyChangeSet(accumulatedChanges);
+		} else {
+			new ChangeSet(this.tipView).applyChangeSet(newTipDelta);
+		}
 
 		return true;
 	}

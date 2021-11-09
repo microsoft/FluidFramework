@@ -5,11 +5,11 @@
 
 import { IIntegerRange } from "./base";
 import { BaseSegment, glc, ISegment, Marker, MergeTree } from "./mergeTree";
-import * as ops from "./ops";
-import * as Properties from "./properties";
+import { IJSONSegment } from "./ops";
+import { PropertySet } from "./properties";
 import { LocalReferenceCollection } from "./localReference";
 
-export interface IJSONTextSegment extends ops.IJSONSegment {
+export interface IJSONTextSegment extends IJSONSegment {
     text: string;
 }
 
@@ -20,7 +20,7 @@ export class TextSegment extends BaseSegment {
         return segment.type === TextSegment.type;
     }
 
-    public static make(text: string, props?: Properties.PropertySet) {
+    public static make(text: string, props?: PropertySet) {
         const tseg = new TextSegment(text);
         if (props) {
             tseg.addProperties(props);
@@ -33,7 +33,7 @@ export class TextSegment extends BaseSegment {
             return new TextSegment(spec);
         } else if (spec && typeof spec === "object" && "text" in spec) {
             const textSpec = spec as IJSONTextSegment;
-            return TextSegment.make(textSpec.text, textSpec.props as Properties.PropertySet);
+            return TextSegment.make(textSpec.text, textSpec.props as PropertySet);
         }
         return undefined;
     }
@@ -60,7 +60,7 @@ export class TextSegment extends BaseSegment {
         return b;
     }
 
-    public canAppend(segment: ISegment) {
+    public canAppend(segment: ISegment): boolean {
         return !this.text.endsWith("\n")
             && TextSegment.is(segment)
             && (this.cachedLength <= MergeTree.TextSegmentGranularity ||

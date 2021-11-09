@@ -123,7 +123,7 @@ describe("LocalDeltaConnectionServer", () => {
 
         // Wait for the first client to be connected and joined.
         const connected1 = await connected1P;
-        assert.equal(connected1.existing, false, "The document should not be existing for the first client");
+        assert.equal(connected1.existing, true, "The document should be existing for the first client");
 
         const join1 = await join1P;
         assert.equal(

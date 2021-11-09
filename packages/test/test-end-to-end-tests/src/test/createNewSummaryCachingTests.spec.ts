@@ -12,11 +12,10 @@ import {
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { MockLogger } from "@fluidframework/test-runtime-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { AttachState } from "@fluidframework/container-definitions";
-import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -57,7 +56,7 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
         ],
         undefined,
         undefined,
-        flattenRuntimeOptions(runtimeOptions),
+        runtimeOptions,
     );
 
     let mockLogger: MockLogger;

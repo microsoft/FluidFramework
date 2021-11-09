@@ -39,8 +39,12 @@ describe("Tests for Epoch Tracker With Redemption", () => {
     const driveId = "driveId";
     const itemId = "itemId";
     let epochTracker: EpochTrackerWithRedemption;
-    const hashedDocumentId = getHashedDocumentId(driveId, itemId);
+    let hashedDocumentId: string;
     let epochCallback: DeferralWithCallback;
+
+    before(async () => {
+        hashedDocumentId = await getHashedDocumentId(driveId, itemId);
+    });
 
     beforeEach(() => {
         const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;

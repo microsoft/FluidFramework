@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { MockLogger } from "@fluidframework/test-runtime-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ISequencedClient, MessageType } from "@fluidframework/protocol-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISerializedElection, OrderedClientCollection, OrderedClientElection } from "../orderedClientElection";
 import { ISummaryCollectionOpEvents } from "../summaryCollection";
 import { SummarizerClientElection } from "../summarizerClientElection";

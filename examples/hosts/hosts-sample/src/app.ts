@@ -7,10 +7,8 @@ import {
     IUser,
 } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import {
-    InsecureTokenProvider,
-    InsecureUrlResolver,
-} from "@fluidframework/test-runtime-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { InsecureUrlResolver, ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader";
 import { setupUI } from "./codeDetailsView";
 import { InMemoryCodeDetailsLoader } from "./codeDetailsLoader";
@@ -40,26 +38,11 @@ const user = {
     name: "Test User", // Optional value that we included
 } as IUser;
 
-// Parse the browser URL and retrieve the container ID.
-// The URL format: `http://localhost:8080/[#container-id]`,
-// where `container-id` is an alphanumerical string representing the unique Fluid document ID.
-function parseAppUrl() {
-    let isNew = false;
-    if (window.location.hash.length === 0) {
-        // Create a new container with an auto-generated ID when the hash param is not specified
-        isNew = true;
-        window.location.hash = Date.now().toString();
-    }
-    const containerId = window.location.hash.substring(1);
-    return { containerId, isNew };
-}
-
 // Create or load the Fluid container using specified document info and render the root component.
-async function start(
-    origin: string,
-    containerId: string,
-    shouldCreateNew: boolean,
-) {
+// The method parses the browser URL and retrieves the container ID.
+// The URL format: `http://localhost:8080/[#container-id]`,
+//   where `container-id` is an optional alphanumerical string representing the unique ID of existing Fluid document.
+async function start() {
     // Create the InsecureUrlResolver so we can generate access tokens to connect to Fluid documents stored in our
     // tenant. Note that given we are storing the tenant secret in the clear on the client side this is a security
     // hole but it simplifies setting up this example. To make this clear we named it the InsecureUrlResolver. You would
@@ -74,6 +57,8 @@ async function start(
         bearerSecret,
     );
 
+    // The token provider is used by the runtime to generate access tokens on-demand.
+    // We use a test provider that generates a JWT token by signing it using the provided hard-coded key.
     const tokenProvider = new InsecureTokenProvider(tenantKey, user);
 
     // The RouterliciousDocumentServiceFactory creates the driver that allows connections to the Tinylicious service.
@@ -93,20 +78,31 @@ async function start(
     });
 
     // Request URL associated with the document.
-    const url = `${origin}/${containerId}`;
-
+    let url: string;
     let container: Container;
+
+    // when the document ID is not provided, create a new one.
+    const shouldCreateNew = location.hash.length === 0;
     if (shouldCreateNew) {
         // Utilize a Fluid utility function to extract the default package name and version.
         const packageId = extractPackageIdentifierDetails(defaultPackage);
-
         // This flow is used to create a new container and then attach it to the storage.
         container = await loader.createDetachedContainer({
             package: packageId.fullId,
         });
-        await container.attach(urlResolver.createCreateNewRequest(containerId));
+        await container.attach(urlResolver.createCreateNewRequest());
+        // after the container is attached to the storage, we need to retrieve the actual URL
+        // associated with the container.
+        const resolved = container.resolvedUrl;
+        ensureFluidResolvedUrl(resolved);
+        const containerId = resolved.id;
+        location.hash = containerId;
+        url = `${location.origin}/${containerId}`;
     } else {
         // This flow is used to get the existing container.
+        // Parse application URL parameters and determine which Fluid document to load.
+        const containerId = location.hash.substring(1);
+        url = `${location.origin}/${containerId}`;
         container = await loader.resolve({ url });
     }
 
@@ -139,15 +135,12 @@ async function start(
 
 // App main method to load the home page.
 (function() {
-    // Parse application URL parameters and determine which Fluid document to load.
-    const { containerId, isNew } = parseAppUrl();
-
     // Load container and start collaboration session using provided app parameters.
-    start(document.location.origin, containerId, isNew)
+    start()
         // Initialize the application UI in case of successful load.
         .then(setupUI)
         // Something went wrong. Display the error message and quit.
         .catch((error) =>
-            window.alert(`🛑 Failed to open document\n\n${error}`),
+            window.alert(`🛑 Failed to open the document\n\n${error}`),
         );
 })();

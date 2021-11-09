@@ -15,7 +15,6 @@ import {
 import {
     NamedFluidDataStoreRegistryEntries,
     IFluidDataStoreFactory,
-    FlushMode,
 } from "@fluidframework/runtime-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
@@ -58,8 +57,6 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
             existing,
         );
 
-        // Flush mode to manual to batch operations within a turn
-        runtime.setFlushMode(FlushMode.Manual);
         return runtime;
     }
 }

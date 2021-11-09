@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const fluidRoute = require("@fluidframework/webpack-fluid-loader");
+const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require("path");
 const merge = require("webpack-merge");
 
@@ -15,7 +15,7 @@ module.exports = env => {
 
     return merge({
         entry: {
-            main: "./src/index.tsx"
+            main: "./src/index.ts"
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],

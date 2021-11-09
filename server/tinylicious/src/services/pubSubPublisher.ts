@@ -4,9 +4,10 @@
  */
 
 import { ISubscriber, IPubSub } from "@fluidframework/server-memory-orderer";
+import { Server } from "socket.io";
 
 export class PubSubPublisher implements IPubSub {
-    constructor(private readonly io: SocketIO.Server) {}
+    constructor(private readonly io: Server) {}
 
     // Publish to all sockets subscribed to this topic in the SocketIO server.
     public publish(topic: string, event: string, ...args: any[]): void {

@@ -61,6 +61,7 @@ export async function lockRC() {
         retries: {
             forever: true,
         },
+        stale:60000,
         realpath: false,
     });
 }

@@ -21,7 +21,7 @@ import {
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { mergeStats, convertToSummaryTree, calculateStats } from "../summaryUtils";
-import { ReadAndParseBlob, seqFromTree } from "../utils";
+import { ReadAndParseBlob } from "../utils";
 import {
     decodeSummary,
     encodeSummary,
@@ -57,7 +57,7 @@ export class SummarizerNode implements IRootSummarizerNode {
      * Returns 0 if there is not yet an acked summary.
      */
     public get referenceSequenceNumber() {
-        return this.latestSummary?.referenceSequenceNumber ?? 0;
+        return this._latestSummary?.referenceSequenceNumber ?? 0;
     }
 
     protected readonly children = new Map<string, SummarizerNode>();
@@ -87,7 +87,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
         // Try to reuse the tree if unchanged
         if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
-            const latestSummary = this.latestSummary;
+            const latestSummary = this._latestSummary;
             if (latestSummary !== undefined) {
                 this.wipLocalPaths = {
                     localPath: latestSummary.localPath,
@@ -118,7 +118,7 @@ export class SummarizerNode implements IRootSummarizerNode {
             if (this.throwOnError || this.trackingSequenceNumber < this._changeSequenceNumber) {
                 throw error;
             }
-            const latestSummary = this.latestSummary;
+            const latestSummary = this._latestSummary;
             const initialSummary = this.initialSummary;
 
             let encodeParam: EncodeSummaryParam;
@@ -176,7 +176,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         let localPathsToUse = this.wipLocalPaths;
 
         if (parentSkipRecursion) {
-            const latestSummary = this.latestSummary;
+            const latestSummary = this._latestSummary;
             if (latestSummary !== undefined) {
                 // This case the parent node created a failure summary or was reused.
                 // This node and all children should only try to reference their path
@@ -240,7 +240,8 @@ export class SummarizerNode implements IRootSummarizerNode {
 
     /**
      * Refreshes the latest summary tracked by this node. If we have a pending summary for the given proposal handle,
-     * it becomes the latest summary. Otherwise, we get the snapshot by calling `getSnapshot` and update latest
+     * it becomes the latest summary. If the current summary is already ahead (e.g., loaded from a service summary),
+     * we skip the update. Otherwise, we get the snapshot by calling `getSnapshot` and update latest
      * summary based off of that.
      * @returns A RefreshSummaryResult type which returns information based on the following three scenarios:
      *          1. The latest summary was not udpated.
@@ -250,6 +251,7 @@ export class SummarizerNode implements IRootSummarizerNode {
      */
     public async refreshLatestSummary(
         proposalHandle: string | undefined,
+        summaryRefSeq: number,
         getSnapshot: () => Promise<ISnapshotTree>,
         readAndParseBlob: ReadAndParseBlob,
         correlatedSummaryLogger: ITelemetryLogger,
@@ -263,16 +265,14 @@ export class SummarizerNode implements IRootSummarizerNode {
             }
         }
 
-        const snapshotTree = await getSnapshot();
-        const referenceSequenceNumber = await seqFromTree(snapshotTree, readAndParseBlob);
-
-        // If we have seen a summary same or later as the downloaded one, ignore it.
-        if (this.referenceSequenceNumber >= referenceSequenceNumber) {
+        // If we have seen a summary same or later as the current one, ignore it.
+        if (this.referenceSequenceNumber >= summaryRefSeq) {
             return { latestSummaryUpdated: false };
         }
 
+        const snapshotTree = await getSnapshot();
         await this.refreshLatestSummaryFromSnapshot(
-            referenceSequenceNumber,
+            summaryRefSeq,
             snapshotTree,
             undefined,
             EscapedPath.create(""),
@@ -290,7 +290,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         if (summaryNode === undefined) {
             // This should only happen if parent skipped recursion AND no prior summary existed.
             assert(
-                this.latestSummary === undefined,
+                this._latestSummary === undefined,
                 0x1a6 /* "Not found pending summary, but this node has previously completed a summary" */,
             );
             return;
@@ -307,7 +307,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
         this.refreshLatestSummaryCore(referenceSequenceNumber);
 
-        this.latestSummary = summaryNode;
+        this._latestSummary = summaryNode;
 
         // Propagate update to all child nodes
         for (const child of this.children.values()) {
@@ -332,7 +332,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
         const { baseSummary, pathParts } = decodeSummary(snapshotTree, correlatedSummaryLogger);
 
-        this.latestSummary = new SummaryNode({
+        this._latestSummary = new SummaryNode({
             referenceSequenceNumber,
             basePath,
             localPath,
@@ -344,11 +344,11 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
 
         if (pathParts.length > 0) {
-            this.latestSummary.additionalPath = EscapedPath.createAndConcat(pathParts);
+            this._latestSummary.additionalPath = EscapedPath.createAndConcat(pathParts);
         }
 
         // Propagate update to all child nodes
-        const pathForChildren = this.latestSummary.fullPathForChildren;
+        const pathForChildren = this._latestSummary.fullPathForChildren;
         await Promise.all(Array.from(this.children)
             .filter(([id]) => {
                 // Assuming subtrees missing from snapshot are newer than the snapshot,
@@ -386,8 +386,8 @@ export class SummarizerNode implements IRootSummarizerNode {
         // Check base summary to see if it has any additional path parts
         // separating child SummarizerNodes. Checks for .channels subtrees.
         const { childrenPathPart } = parseSummaryForSubtrees(snapshot);
-        if (childrenPathPart !== undefined && this.latestSummary !== undefined) {
-            this.latestSummary.additionalPath = EscapedPath.create(childrenPathPart);
+        if (childrenPathPart !== undefined && this._latestSummary !== undefined) {
+            this._latestSummary.additionalPath = EscapedPath.create(childrenPathPart);
         }
     }
 
@@ -403,8 +403,8 @@ export class SummarizerNode implements IRootSummarizerNode {
             decodedSummary.pathParts.push(childrenPathPart);
         }
 
-        if (decodedSummary.pathParts.length > 0 && this.latestSummary !== undefined) {
-            this.latestSummary.additionalPath = EscapedPath.createAndConcat(decodedSummary.pathParts);
+        if (decodedSummary.pathParts.length > 0 && this._latestSummary !== undefined) {
+            this._latestSummary.additionalPath = EscapedPath.createAndConcat(decodedSummary.pathParts);
         }
 
         // Defensive assertion: tracking number should already exceed this number.
@@ -451,8 +451,17 @@ export class SummarizerNode implements IRootSummarizerNode {
         return this._changeSequenceNumber > this.referenceSequenceNumber;
     }
 
+    public get latestSummary(): Readonly<SummaryNode> | undefined {
+        return this._latestSummary;
+    }
+
     private readonly canReuseHandle: boolean;
     private readonly throwOnError: boolean;
+    /**
+     * Sequence number of latest tracked op. This updates during recordChange,
+     * but not for invalidate since we don't have the op. If this drifts from
+     * changeSequenceNumber and we try to create a differential summary we assert.
+     */
     private trackingSequenceNumber: number;
 
     /**
@@ -465,7 +474,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         config: ISummarizerNodeConfig,
         private _changeSequenceNumber: number,
         /** Undefined means created without summary */
-        private latestSummary?: SummaryNode,
+        private _latestSummary?: SummaryNode,
         private readonly initialSummary?: IInitialSummary,
         protected wipSummaryLogger?: ITelemetryLogger,
     ) {
@@ -526,7 +535,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         let latestSummary: SummaryNode | undefined;
         let changeSequenceNumber: number;
 
-        const parentLatestSummary = this.latestSummary;
+        const parentLatestSummary = this._latestSummary;
         switch (createParam.type) {
             case CreateSummarizerNodeSource.FromAttach: {
                 if (

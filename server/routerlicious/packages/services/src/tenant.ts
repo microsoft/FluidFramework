@@ -49,17 +49,18 @@ export class TenantManager implements core.ITenantManager {
         return result.data;
     }
 
-    public async getTenant(tenantId: string): Promise<core.ITenant> {
+    public async getTenant(tenantId: string, documentId: string, includeDisabledTenant = false): Promise<core.ITenant> {
         const [details, key] = await Promise.all([
-            Axios.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`),
-            this.getKey(tenantId)]);
+            Axios.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`,
+            { params: { includeDisabledTenant }}),
+            this.getKey(tenantId, includeDisabledTenant)]);
 
         const defaultQueryString = {
             token: fromUtf8ToBase64(`${tenantId}`),
         };
         const getDefaultHeaders = () => {
             const credentials: ICredentials = {
-                password: generateToken(tenantId, null, key, null),
+                password: generateToken(tenantId, documentId, key, null),
                 user: tenantId,
             };
             return ({
@@ -95,8 +96,10 @@ export class TenantManager implements core.ITenantManager {
             { token });
     }
 
-    public async getKey(tenantId: string): Promise<string> {
-        const result = await Axios.get(`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/key`);
+    public async getKey(tenantId: string, includeDisabledTenant = false): Promise<string> {
+        const result = await Axios.get(
+            `${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/key`,
+            { params: { includeDisabledTenant }});
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return result.data;
     }

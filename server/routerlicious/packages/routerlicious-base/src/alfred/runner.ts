@@ -5,6 +5,7 @@
 
 import { Deferred } from "@fluidframework/common-utils";
 import {
+    ICache,
     IClientManager,
     IDocumentStorage,
     IOrdererManager,
@@ -20,6 +21,7 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import { createMetricClient } from "@fluidframework/server-services";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import * as app from "./app";
 
@@ -36,6 +38,7 @@ export class AlfredRunner implements IRunner {
         private readonly restThrottler: IThrottler,
         private readonly socketConnectThrottler: IThrottler,
         private readonly socketSubmitOpThrottler: IThrottler,
+        private readonly singleUseTokenCache: ICache,
         private readonly storage: IDocumentStorage,
         private readonly clientManager: IClientManager,
         private readonly appTenants: IAlfredTenant[],
@@ -53,6 +56,7 @@ export class AlfredRunner implements IRunner {
             this.config,
             this.tenantManager,
             this.restThrottler,
+            this.singleUseTokenCache,
             this.storage,
             this.appTenants,
             this.mongoManager,
@@ -137,5 +141,6 @@ export class AlfredRunner implements IRunner {
             ? `pipe ${addr}`
             : `port ${addr.port}`;
         winston.info(`Listening on ${bind}`);
+        Lumberjack.info(`Listening on ${bind}`);
     }
 }

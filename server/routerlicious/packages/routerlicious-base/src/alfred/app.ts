@@ -10,8 +10,9 @@ import {
     ITenantManager,
     MongoManager,
     IThrottler,
+    ICache,
 } from "@fluidframework/server-services-core";
-import * as bodyParser from "body-parser";
+import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -21,7 +22,9 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
-import { catch404, getTenantIdFromRequest, handleError } from "../utils";
+import { RestLessServer } from "@fluidframework/server-services";
+import { logRequestMetric, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import * as alfredRoutes from "./routes";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -33,6 +36,7 @@ const split = require("split");
 const stream = split().on("data", (message) => {
     if (message !== undefined) {
         winston.info(message);
+        Lumberjack.info(message);
     }
 });
 
@@ -40,6 +44,7 @@ export function create(
     config: Provider,
     tenantManager: ITenantManager,
     throttler: IThrottler,
+    singleUseTokenCache: ICache,
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
     mongoManager: MongoManager,
@@ -49,6 +54,18 @@ export function create(
 
     // Express app configuration
     const app: express.Express = express();
+
+    // initialize RestLess server translation
+    const restLessMiddleware: () => express.RequestHandler = () => {
+        const restLessServer = new RestLessServer();
+        return (req, res, next) => {
+            restLessServer
+                .translate(req)
+                .then(() => next())
+                .catch(next);
+        };
+    };
+    app.use(restLessMiddleware());
 
     // Running behind iisnode
     app.set("trust proxy", 1);
@@ -62,11 +79,13 @@ export function create(
                 url: tokens.url(req, res),
                 status: tokens.status(req, res),
                 contentLength: tokens.res(req, res, "content-length"),
-                responseTime: tokens["response-time"](req, res),
+                durationInMs: tokens["response-time"](req, res),
                 tenantId: getTenantIdFromRequest(req.params),
+                documentId: getIdFromRequest(req.params),
                 serviceName: "alfred",
                 eventName: "http_requests",
              };
+             logRequestMetric(messageMetaData);
              winston.info("request log generated", { messageMetaData });
              return undefined;
         }, { stream }));
@@ -75,8 +94,8 @@ export function create(
     }
 
     app.use(cookieParser());
-    app.use(bodyParser.json({ limit: requestSize }));
-    app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
+    app.use(json({ limit: requestSize }));
+    app.use(urlencoded({ limit: requestSize, extended: false }));
 
     app.use(bindCorrelationId());
 
@@ -85,6 +104,7 @@ export function create(
         config,
         tenantManager,
         throttler,
+        singleUseTokenCache,
         mongoManager,
         storage,
         producer,

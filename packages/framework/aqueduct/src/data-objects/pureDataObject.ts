@@ -87,7 +87,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
     public static async getDataObject(runtime: IFluidDataStoreRuntime) {
         const obj = (runtime as any)._dataObject as PureDataObject;
         assert(obj !== undefined, 0x0bc /* "Runtime has no DataObject!" */);
-        await obj.finishInitialization();
+        await obj.finishInitialization(true);
         return obj;
     }
 
@@ -138,11 +138,11 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
      * But if you are supplying your own implementation of DataStoreRuntime factory and overriding some methods
      * and need fully initialized object, then you can call this API to ensure object is fully initialized.
      */
-    public async finishInitialization(): Promise<void> {
+    public async finishInitialization(existing: boolean): Promise<void> {
         if (this.initializeP !== undefined) {
             return this.initializeP;
         }
-        this.initializeP = this.initializeInternal();
+        this.initializeP = this.initializeInternal(existing);
         return this.initializeP;
     }
 
@@ -153,9 +153,9 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
      * Calls initializingFirstTime, initializingFromExisting, and hasInitialized. Caller is
      * responsible for ensuring this is only invoked once.
      */
-    public async initializeInternal(): Promise<void> {
+    public async initializeInternal(existing: boolean): Promise<void> {
         await this.preInitialize();
-        if (this.runtime.existing) {
+        if (existing) {
             assert(this.initProps === undefined,
                 0x0be /* "Trying to initialize from existing while initProps is set!" */);
             await this.initializingFromExisting();

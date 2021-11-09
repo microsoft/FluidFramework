@@ -38,6 +38,7 @@ $ kubectl create configmap nginx-template --from-file=nginx.tmpl=./nginx.tmpl
 If your kube cluster uses rbac, deploy the roles and bindings from the rbac folder. 
 
 Deploy the controller now. This assumes a rbac enabled cluster, so remove <em>serviceAccountName: nginx-serviceaccount</em> line from the deployment files if your cluster is not rbac enabled.
+For security reasons, TLS 1.0 and 1.1 are disabled. Only TLS 1.2 is supported.
 
 ```bash
 $ kubectl create -f ./nginx-ingress-controller.yml

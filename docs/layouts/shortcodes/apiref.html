@@ -1,0 +1,7 @@
+{{- $name := .Get 0 -}}
+{{- $kind := .Get 1 -}}
+{{- $md := delimit (slice $name ".md") "" -}}
+
+<a href="{{ relref . $md }}"><code>{{ $name }}</code></a>
+
+{{- /* Strip trailing newline. */ -}}

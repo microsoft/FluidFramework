@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { inspect } from "util";
 import { toUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
@@ -22,8 +23,9 @@ import {
 } from "@fluidframework/server-services-core";
 import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
 import { FileMode } from "@fluidframework/protocol-definitions";
-import { IGitManager } from "@fluidframework/server-services-client";
-import { NoOpLambda } from "../utils";
+import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
+import { Lumber, LumberEventName } from "@fluidframework/server-services-telemetry";
+import { NoOpLambda, createSessionMetric } from "../utils";
 import { DeliLambda } from "./lambda";
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
 
@@ -36,11 +38,13 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
         clients: undefined,
         durableSequenceNumber: 0,
         epoch,
+        expHash1: defaultHash,
         logOffset: -1,
         sequenceNumber: 0,
         term: 1,
         lastSentMSN: 0,
         nackMessages: undefined,
+        successfullyStartedLambdas: [],
     };
 };
 
@@ -57,24 +61,40 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
     public async create(config: IPartitionLambdaConfig, context: IContext): Promise<IPartitionLambda> {
         const { documentId, tenantId, leaderEpoch } = config;
-
-        const tenant = await this.tenantManager.getTenant(tenantId);
-        const gitManager = tenant.gitManager;
-
-        // Lookup the last sequence number stored
-        // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
-        const dbObject = await this.collection.findOne({ documentId, tenantId });
-        if (!dbObject) {
-            // Temporary guard against failure until we figure out what causing this to trigger.
-            return new NoOpLambda(context);
-        }
-
-        let lastCheckpoint: IDeliState;
+        const sessionMetric = createSessionMetric(tenantId, documentId,
+            LumberEventName.SessionResult, this.serviceConfiguration);
+        const sessionStartMetric = createSessionMetric(tenantId, documentId,
+            LumberEventName.StartSessionResult, this.serviceConfiguration);
 
         const messageMetaData = {
             documentId,
             tenantId,
         };
+
+        let gitManager: IGitManager;
+        let dbObject: IDocument;
+
+        try {
+            const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+            gitManager = tenant.gitManager;
+
+            // Lookup the last sequence number stored
+            // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
+            dbObject = await this.collection.findOne({ documentId, tenantId });
+            // Check if the document was deleted prior.
+        } catch (error) {
+            const errMsg = "Deli lambda creation failed";
+            context.log?.error(`${errMsg}. Exception: ${inspect(error)}`, { messageMetaData });
+            this.logSessionFailureMetrics(sessionMetric, sessionStartMetric, errMsg);
+            throw error;
+        }
+
+        if (!dbObject || dbObject.scheduledDeletionTime) {
+            // Temporary guard against failure until we figure out what causing this to trigger.
+            return new NoOpLambda(context);
+        }
+
+        let lastCheckpoint: IDeliState;
 
         // Restore deli state if not present in the cache. Mongodb casts undefined as null so we are checking
         // both to be safe. Empty sring denotes a cache that was cleared due to a service summary or the document
@@ -90,7 +110,10 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 const lastCheckpointFromSummary =
                     await this.loadStateFromSummary(tenantId, documentId, gitManager, context.log);
                 if (lastCheckpointFromSummary === undefined) {
-                    context.log?.error(`Summary cannot be fetched`, { messageMetaData });
+                    const errMsg = "Could not load state from summary";
+                    context.log?.error(errMsg, { messageMetaData });
+                    this.logSessionFailureMetrics(sessionMetric, sessionStartMetric, errMsg);
+
                     lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
                 } else {
                     lastCheckpoint = lastCheckpointFromSummary;
@@ -100,7 +123,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     // the sequence number is 'n' rather than '0'.
                     lastCheckpoint.logOffset = -1;
                     lastCheckpoint.epoch = leaderEpoch;
-                    context.log?.info(JSON.stringify(lastCheckpoint));
+                    context.log?.info(`Deli checkpoint from summary:
+                        ${ JSON.stringify(lastCheckpoint)}`, { messageMetaData });
                 }
             } else {
                 lastCheckpoint = JSON.parse(dbObject.deli);
@@ -137,7 +161,17 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             // The producer as well it shouldn't take. Maybe it just gives an output stream?
             this.forwardProducer,
             this.reverseProducer,
-            this.serviceConfiguration);
+            this.serviceConfiguration,
+            sessionMetric,
+            sessionStartMetric);
+    }
+
+    private logSessionFailureMetrics(
+        sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
+        sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
+        errMsg: string) {
+            sessionMetric?.error(errMsg);
+            sessionStartMetric?.error(errMsg);
     }
 
     public async dispose(): Promise<void> {

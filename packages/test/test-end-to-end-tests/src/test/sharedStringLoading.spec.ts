@@ -19,12 +19,11 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IDocumentStorageService,
-    LoaderCachingPolicy,
+    IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 
 // REVIEW: enable compat testing?
@@ -37,8 +36,9 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
         };
         const text = "hello world";
         const documentId = createDocumentId();
+        let containerUrl: IResolvedUrl | undefined;
         const provider = getTestObjectProvider();
-        const logger = ChildLogger.create(getTestLogger?.(), undefined, {all: {driverType: provider.driver.type}});
+        const logger = provider.logger;
 
         { // creating client
             const codeDetails = { package: "no-dynamic-pkg" };
@@ -60,6 +60,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
             sharedString.insertText(0, text);
 
             await container.attach(provider.driver.createCreateNewRequest(documentId));
+            containerUrl = container.resolvedUrl;
         }
         { // normal load client
             const codeDetails = { package: "no-dynamic-pkg" };
@@ -74,7 +75,9 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                 logger,
             });
 
-            const container = await loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
+            const container = await loader.resolve({
+                url: await provider.driver.createContainerUrl(documentId, containerUrl),
+            });
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
             const sharedString = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
             assert(sharedString);
@@ -90,18 +93,15 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                     mockDs.connectToStorage = async () => {
                         const realStorage = await realDs.connectToStorage();
                         const mockstorage = Object.create(realStorage) as IDocumentStorageService;
-                        (mockstorage as any).policies = {
-                            ...realStorage.policies,
-                            caching: LoaderCachingPolicy.NoCaching,
-                        };
                         mockstorage.readBlob = async (id) => {
                             const blob = await realStorage.readBlob(id);
                             const blobObj = await readAndParse<any>(realStorage, id);
                             // throw when trying to load the header blob
                             if (blobObj.headerMetadata !== undefined) {
                                 throw new NonRetryableError(
+                                    "notFound",
                                     "Not Found",
-                                    "",
+                                    "someErrorType",
                                     { statusCode: 404 });
                             }
                             return blob;
@@ -123,7 +123,9 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                 logger,
             });
 
-            const container = await loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
+            const container = await loader.resolve({
+                url: await provider.driver.createContainerUrl(documentId, containerUrl),
+            });
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 
             try {
@@ -141,8 +143,9 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
         };
         const text = "hello world";
         const documentId = createDocumentId();
+        let containerUrl: IResolvedUrl | undefined;
         const provider = getTestObjectProvider();
-        const logger = ChildLogger.create(getTestLogger?.(), undefined, {all: {driverType: provider.driver.type}});
+        const logger = provider.logger;
 
         let initialText = "";
         { // creating client
@@ -179,6 +182,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
             initialText = sharedString.getText();
 
             await container.attach(provider.driver.createCreateNewRequest(documentId));
+            containerUrl = container.resolvedUrl;
         }
         { // normal load client
             const codeDetails = { package: "no-dynamic-pkg" };
@@ -193,7 +197,9 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                 logger,
             });
 
-            const container = await loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
+            const container = await loader.resolve({
+                url: await provider.driver.createContainerUrl(documentId, containerUrl),
+            });
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
             const sharedString = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
             assert(sharedString);

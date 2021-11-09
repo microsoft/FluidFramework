@@ -1,6 +1,8 @@
 .cache-loader
 node_modules
 dist
+lib
+!common/lib
 nyc
 *.log
 .DS_Store
@@ -21,3 +23,6 @@ bundleAnalysis
 artifacts
 
 docs/resources/_gen/
+
+# documentation tool artifact
+tsdoc-metadata.json

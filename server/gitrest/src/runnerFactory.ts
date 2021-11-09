@@ -4,7 +4,7 @@
  */
 
 import { Provider } from "nconf";
-import * as services from "@fluidframework/server-services";
+import * as services from "@fluidframework/server-services-shared";
 import * as core from "@fluidframework/server-services-core";
 import { normalizePort } from "@fluidframework/server-services-utils";
 import { ExternalStorageManager, IExternalStorageManager } from "./externalStorageManager";

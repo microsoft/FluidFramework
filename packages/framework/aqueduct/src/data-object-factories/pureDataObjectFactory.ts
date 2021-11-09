@@ -52,6 +52,7 @@ async function createDataObject<TObj extends PureDataObject<O, S, E>, O, S, E ex
     sharedObjectRegistry: ISharedObjectRegistry,
     optionalProviders: FluidObjectSymbolProvider<O>,
     runtimeClassArg: typeof FluidDataStoreRuntime,
+    existing: boolean,
     initProps?: S)
 {
     // base
@@ -68,6 +69,7 @@ async function createDataObject<TObj extends PureDataObject<O, S, E>, O, S, E ex
     const runtime = new runtimeClass(
         context,
         sharedObjectRegistry,
+        existing,
     );
 
     // Create object right away.
@@ -88,8 +90,8 @@ async function createDataObject<TObj extends PureDataObject<O, S, E>, O, S, E ex
     // to this data store, as it's still not initialized and not known to container runtime yet.
     // In the future, we should address it by using relative paths for handles and be able to resolve
     // local DDSs while data store is not fully initialized.
-    if (!runtime.existing) {
-        await instance.finishInitialization();
+    if (!existing) {
+        await instance.finishInitialization(existing);
     }
 
     return { instance, runtime };
@@ -149,13 +151,14 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
      *
      * @param context - data store context used to load a data store runtime
      */
-    public async instantiateDataStore(context: IFluidDataStoreContext) {
+    public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
         const { runtime } = await createDataObject(
             this.ctor,
             context,
             this.sharedObjectRegistry,
             this.optionalProviders,
-            this.runtimeClass);
+            this.runtimeClass,
+            existing);
 
         return runtime;
     }
@@ -259,6 +262,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
             this.sharedObjectRegistry,
             this.optionalProviders,
             this.runtimeClass,
+            false, // existing
             initialState);
 
         await context.attachRuntime(this, runtime);

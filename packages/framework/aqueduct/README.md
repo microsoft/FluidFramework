@@ -161,9 +161,8 @@ A Container is a collection of data objects and functionality that produce an ex
 of data objects as well as defining the data objects that can be created within the Container. Because of this data
 objects cannot be consumed except for when they are within a Container.
 
-The Aqueduct library provides the
-[ContainerRuntimeFactoryWithDefaultDataStore](./src/containerRuntimeFactories/containerRuntimeFactoryWithDefaultDataStore.ts)
-that enables you as a container developer to:
+The Aqueduct library provides the [ContainerRuntimeFactoryWithDefaultDataStore][] that enables you as a container
+developer to:
 
 - Define the registry of data objects that can be created
 - Declare the default data object
@@ -248,6 +247,7 @@ type:"text/plain", value:"blue"}`.
 We use custom handlers to build the Container Services pattern.
 
 <!-- Links -->
+[ContainerRuntimeFactoryWithDefaultDataStore]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/containerRuntimeFactories/containerRuntimeFactoryWithDefaultDataStore.ts
 [DataObject]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-objects/dataObject.ts
 [DataObjectFactory]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-object-factories/dataObjectFactory.ts
 [PureDataObject]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-object-factories/pureDataObject.ts

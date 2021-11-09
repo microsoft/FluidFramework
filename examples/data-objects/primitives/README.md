@@ -4,7 +4,7 @@ This is a basic example container giving a UI to different distributed data stru
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) -->
 <!-- The getting started instructions are automatically generated.
-To update them, edit md-magic.config.js in the root of the repo, then run npm run readme:update -->
+To update them, edit docs/md-magic.config.js, then run 'npm run build:md-magic' -->
 
 ## Getting Started
 

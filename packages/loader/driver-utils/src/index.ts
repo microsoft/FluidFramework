@@ -7,6 +7,7 @@ export * from "./blobCacheStorageService";
 export * from "./blobAggregationStorage";
 export * from "./buildSnapshotTree";
 export * from "./documentStorageServiceProxy";
+export * from "./insecureUrlResolver";
 export * from "./multiDocumentServiceFactory";
 export * from "./multiUrlResolver";
 export * from "./network";

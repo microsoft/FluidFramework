@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./kafkaFactory";
+export * from "./kafkaProducerFactory";
 export * from "./messageReceiver";
 export * from "./messageSender";
 export * from "./metricClient";

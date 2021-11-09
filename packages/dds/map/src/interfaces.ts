@@ -99,6 +99,49 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
 }
 
+/**
+ * Events emitted in response to changes to the directory data.  These events only emit on the ISharedDirectory itself,
+ * and not on subdirectories.
+ *
+ * ### "valueChanged"
+ *
+ * The valueChanged event is emitted when a key is set or deleted.  This is emitted for any key in the ISharedDirectory
+ * or any subdirectory.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (
+ *     changed: IDirectoryValueChanged,
+ *     local: boolean,
+ *     op: ISequencedDocumentMessage | null,
+ *     target: IEventThisPlaceHolder,
+ * ) => void
+ * ```
+ * - `changed` - Information on the key that changed, its value prior to the change, and the path to the key that
+ *   changed.
+ *
+ * - `local` - Whether the change originated from the this client.
+ *
+ * - `op` - The op that caused the change in value.
+ *
+ * - `target` - The ISharedDirectory itself.
+ *
+ * ### "clear"
+ *
+ * The clear event is emitted when the ISharedDirectory is cleared.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (local: boolean, op: ISequencedDocumentMessage | null, target: IEventThisPlaceHolder) => void
+ * ```
+ * - `local` - Whether the clear originated from the this client.
+ *
+ * - `op` - The op that caused the clear.
+ *
+ * - `target` - The ISharedDirectory itself.
+ */
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
         changed: IDirectoryValueChanged,
@@ -113,6 +156,25 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     ) => void);
 }
 
+/**
+ * Events emitted in response to changes to the directory data.
+ *
+ * ### "containedValueChanged"
+ *
+ * The containedValueChanged event is emitted when a key is set or deleted.  As opposed to the SharedDirectory's
+ * valueChanged event, this is emitted only on the IDirectory that directly contains the key.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void
+ * ```
+ * - `changed` - Information on the key that changed and its value prior to the change.
+ *
+ * - `local` - Whether the change originated from the this client.
+ *
+ * - `target` - The IDirectory itself.
+ */
 export interface IDirectoryEvents extends IEvent {
     (event: "containedValueChanged", listener: (
         changed: IValueChanged,
@@ -143,6 +205,46 @@ export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
 }
 
+/**
+ * Events emitted in response to changes to the map data.
+ *
+ * ### "valueChanged"
+ *
+ * The valueChanged event is emitted when a key is set or deleted.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (
+ *     changed: IValueChanged,
+ *     local: boolean,
+ *     op: ISequencedDocumentMessage | null,
+ *     target: IEventThisPlaceHolder,
+ * ) => void
+ * ```
+ * - `changed` - Information on the key that changed and its value prior to the change.
+ *
+ * - `local` - Whether the change originated from the this client.
+ *
+ * - `op` - The op that caused the change in value.
+ *
+ * - `target` - The map itself.
+ *
+ * ### "clear"
+ *
+ * The clear event is emitted when the map is cleared.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (local: boolean, op: ISequencedDocumentMessage | null, target: IEventThisPlaceHolder) => void
+ * ```
+ * - `local` - Whether the clear originated from the this client.
+ *
+ * - `op` - The op that caused the clear.
+ *
+ * - `target` - The map itself.
+ */
 export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
         changed: IValueChanged,

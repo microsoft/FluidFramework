@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ElementHandle } from "puppeteer";
 import { globals } from "../jest.config";
 
 describe("canvas", () => {
@@ -21,8 +20,16 @@ describe("canvas", () => {
     it("can be drawn upon with a computer mouse input peripheral", async () => {
         // draw on the canvas
         await page.waitForSelector("canvas");
-        const canvas: ElementHandle = await page.$("canvas");
+        const canvas = await page.$("canvas");
+        expect(canvas).not.toBe(null);
+        if (canvas === null) {
+            throw new Error("Canvas not found");
+        }
         const boundingBox = await canvas.boundingBox();
+        expect(boundingBox).not.toBe(null);
+        if (boundingBox === null) {
+            throw new Error("Bounding box not defined");
+        }
         await page.mouse.move(boundingBox.x + boundingBox.width / 2, boundingBox.y + boundingBox.height / 2);
         await page.mouse.down();
         await page.mouse.move(126, 19);
@@ -37,7 +44,13 @@ describe("canvas", () => {
             const width = Math.min(...canvases.map((c) => c.width));
             const height = Math.min(...canvases.map((c) => c.height));
 
-            const imgs = canvases.map((c) => c.getContext("2d").getImageData(0, 0, width, height).data);
+            const imgs = canvases.map((c) => {
+                const context = c.getContext("2d");
+                if (context === null) {
+                    throw new Error("Failed to get 2d context");
+                }
+                return context.getImageData(0, 0, width, height).data;
+            });
             if (imgs[0].length == 0) {
                 return "Canvas 1 doesn't have any pixels";
             }

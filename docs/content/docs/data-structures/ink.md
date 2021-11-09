@@ -1,5 +1,6 @@
 ---
 title: Ink
 menuPosition: 10
-status: placeholder
+status: unwritten
+draft: true
 ---

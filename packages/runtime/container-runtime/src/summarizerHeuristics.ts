@@ -81,13 +81,9 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         }
     }
 
-    public runOnClose(): boolean {
+    public shouldRunLastSummary(): boolean {
         const opsSinceLastAck = this.opsSinceLastAck;
-        if (opsSinceLastAck > this.minOpsForAttemptOnClose) {
-            this.trySummarize("lastSummary");
-            return true;
-        }
-        return false;
+        return (opsSinceLastAck > this.minOpsForAttemptOnClose);
     }
 
     public dispose() {

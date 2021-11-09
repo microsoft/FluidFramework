@@ -23,6 +23,7 @@ import {
     HostStoragePolicy,
     IFileEntry,
 } from "@fluidframework/odsp-driver-definitions";
+import { v4 as uuid } from "uuid";
 import {
     LocalPersistentCache,
     NonPersistentCache,
@@ -46,6 +47,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-odsp:";
 
     private readonly nonPersistentCache = new NonPersistentCache();
+    private readonly socketReferenceKeyPrefix?: string;
 
     public async createContainer(
         createNewSummary: ISummaryTree | undefined,
@@ -62,11 +64,15 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         if (filePath === undefined || filePath === null) {
             throw new Error("File path should be provided!!");
         }
-        const newFileParams: INewFileInfo = {
+        const newFileInfo: INewFileInfo = {
             driveId: odspResolvedUrl.driveId,
             siteUrl: odspResolvedUrl.siteUrl,
             filePath,
             filename: odspResolvedUrl.fileName,
+            // set createLinkType to undefined if enableShareLinkWithCreate is set to false,
+            // so that share link creation with create file can be enabled
+            createLinkType: this.hostPolicy.enableShareLinkWithCreate ?
+            odspResolvedUrl.shareLinkInfo?.createLink?.type : undefined,
         };
 
         const odspLogger = createOdspLogger(logger);
@@ -92,7 +98,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                         this.getStorageToken,
                         true /* throwOnNullToken */,
                     ),
-                    newFileParams,
+                    newFileInfo,
                     odspLogger,
                     createNewSummary,
                     cacheAndTracker.epochTracker,
@@ -124,6 +130,10 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},
     ) {
+        if (this.hostPolicy.isolateSocketCache === true) {
+            // create the key to separate the socket reuse cache
+            this.socketReferenceKeyPrefix = uuid();
+        }
     }
 
     public async createDocumentService(
@@ -170,6 +180,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             cacheAndTracker.cache,
             this.hostPolicy,
             cacheAndTracker.epochTracker,
+            this.socketReferenceKeyPrefix,
         );
     }
 }

@@ -22,7 +22,7 @@ import {
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { Container, DeltaManager, waitContainerToCatchUp } from "@fluidframework/container-loader";
+import { Container, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
 
@@ -63,7 +63,10 @@ describe("No Delta Stream", () => {
         if (!storageOnly) {
             loaderContainerTracker.add(loader);
         }
-        const container = await loader.resolve({ url: documentLoadUrl });
+
+        const container = await loader.resolve({
+            url: documentLoadUrl,
+        });
         await loaderContainerTracker.ensureSynchronized();
         return container;
     }
@@ -91,7 +94,6 @@ describe("No Delta Stream", () => {
         assert.strictEqual(container.deltaManager.active, false, "active");
         assert.strictEqual(container.deltaManager.readonly, false, "readonly");
 
-        assert.strictEqual(dataObject.runtime.existing, false, "existing");
         assert.strictEqual(dataObject.runtime.connected, true, "connected");
         assert.notStrictEqual(dataObject.runtime.clientId, undefined, "clientId");
 
@@ -113,17 +115,14 @@ describe("No Delta Stream", () => {
         assert.strictEqual(container.readonlyPermissions, true, "container.readonlyPermissions");
         assert.ok(container.readOnlyInfo.readonly, "container.storageOnly");
 
-        const deltaManager = container.deltaManager as DeltaManager;
+        const deltaManager = container.deltaManager;
         assert.strictEqual(deltaManager.active, false, "deltaManager.active");
         assert.strictEqual(deltaManager.readonly, true, "deltaManager.readonly");
-        assert.strictEqual(deltaManager.readonlyPermissions, true, "deltaManager.readonlyPermissions");
-        assert.strictEqual(deltaManager.connectionMode, "read", "deltaManager.connectionMode");
         assert.ok(deltaManager.readOnlyInfo.readonly, "deltaManager.readOnlyInfo.readonly");
         assert.ok(deltaManager.readOnlyInfo.permissions, "deltaManager.readOnlyInfo.permissions");
         assert.ok(deltaManager.readOnlyInfo.storageOnly, "deltaManager.readOnlyInfo.storageOnly");
 
         const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-        assert.strictEqual(dataObject.runtime.existing, true, "dataObject.runtime.existing");
         assert.strictEqual(dataObject.runtime.connected, true, "dataObject.runtime.connected");
         assert.strictEqual(dataObject.runtime.clientId, "storage-only client", "dataObject.runtime.clientId");
 
@@ -169,17 +168,14 @@ describe("No Delta Stream", () => {
         assert.strictEqual(container.readonlyPermissions, true, "container.readonlyPermissions");
         assert.ok(container.readOnlyInfo.readonly, "container.storageOnly");
 
-        const deltaManager = container.deltaManager as DeltaManager;
+        const deltaManager = container.deltaManager;
         assert.strictEqual(deltaManager.active, false, "deltaManager.active");
         assert.strictEqual(deltaManager.readonly, true, "deltaManager.readonly");
-        assert.strictEqual(deltaManager.readonlyPermissions, true, "deltaManager.readonlyPermissions");
-        assert.strictEqual(deltaManager.connectionMode, "read", "deltaManager.connectionMode");
         assert.ok(deltaManager.readOnlyInfo.readonly, "deltaManager.readOnlyInfo.readonly");
         assert.ok(deltaManager.readOnlyInfo.permissions, "deltaManager.readOnlyInfo.permissions");
         assert.ok(deltaManager.readOnlyInfo.storageOnly, "deltaManager.readOnlyInfo.storageOnly");
 
         const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-        assert.strictEqual(dataObject.runtime.existing, true, "dataObject.runtime.existing");
         assert.strictEqual(dataObject.runtime.connected, true, "dataObject.runtime.connected");
         assert.strictEqual(dataObject.runtime.clientId, "storage-only client", "dataObject.runtime.clientId");
 

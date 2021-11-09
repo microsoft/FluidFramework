@@ -34,6 +34,7 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
     disableGC: booleanCases,
     gcAllowed: booleanCases,
     runFullGC: booleanCases,
+    runSweep: [false],
 };
 
 export function generateRuntimeOptions(seed: number) {
@@ -50,6 +51,7 @@ export function generateRuntimeOptions(seed: number) {
     const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {
         gcOptions: [undefined, ...generatePairwiseOptions(gcOptionsMatrix, seed)],
         summaryOptions: [undefined, ...generatePairwiseOptions(summaryOptionsMatrix, seed)],
+        loadSequenceNumberVerification: [undefined],
     };
 
     return generatePairwiseOptions<IContainerRuntimeOptions>(runtimeOptionsMatrix, seed);

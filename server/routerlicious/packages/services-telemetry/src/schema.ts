@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ILumberjackSchemaValidator, ILumberjackSchemaValidationResult, SchemaProperties } from "./resources";
+import { ILumberjackSchemaValidator, ILumberjackSchemaValidationResult,
+    BaseTelemetryProperties, QueuedMessageProperties } from "./resources";
 
 export abstract class BaseLumberjackSchemaValidator implements ILumberjackSchemaValidator {
     protected readonly validators = new Map<string, (propvalue: string) => boolean>();
@@ -27,12 +28,17 @@ export abstract class BaseLumberjackSchemaValidator implements ILumberjackSchema
     }
 
     // Validators
-    protected readonly idValidation = (propValue: any) => {
+    protected readonly stringValidation = (propValue: any) => {
         return this.isUndefined(propValue)
             || (this.isString(propValue) && propValue.length > 0);
     };
 
-    protected readonly seqNumberValidation = (propValue: any) => {
+    protected readonly numberValidation = (propValue: any) => {
+        return this.isUndefined(propValue)
+            || (this.isNumber(propValue));
+    };
+
+    protected readonly positiveNumberValidation = (propValue: any) => {
         return this.isUndefined(propValue)
             || (this.isNumber(propValue) && propValue >= -1);
     };
@@ -51,11 +57,11 @@ export abstract class BaseLumberjackSchemaValidator implements ILumberjackSchema
     }
 }
 
-export class DocumentSchemaValidator extends BaseLumberjackSchemaValidator {
+export class BasePropertiesValidator extends BaseLumberjackSchemaValidator {
     constructor() {
         super();
-        this.validators.set(SchemaProperties.tenantId, this.idValidation);
-        this.validators.set(SchemaProperties.documentId, this.idValidation);
+        this.validators.set(BaseTelemetryProperties.tenantId, this.stringValidation);
+        this.validators.set(BaseTelemetryProperties.documentId, this.stringValidation);
     }
 
     validate(props: Map<string, any>): ILumberjackSchemaValidationResult {
@@ -63,12 +69,12 @@ export class DocumentSchemaValidator extends BaseLumberjackSchemaValidator {
     }
 }
 
-export class LambdaSchemaValidator extends DocumentSchemaValidator {
+export class LambdaSchemaValidator extends BasePropertiesValidator {
     constructor() {
         super();
-        this.validators.set(SchemaProperties.clientId, this.idValidation);
-        this.validators.set(SchemaProperties.sequenceNumber, this.seqNumberValidation);
-        this.validators.set(SchemaProperties.clientSequenceNumber, this.seqNumberValidation);
+        this.validators.set(QueuedMessageProperties.topic, this.stringValidation);
+        this.validators.set(QueuedMessageProperties.partition, this.positiveNumberValidation);
+        this.validators.set(QueuedMessageProperties.offset, this.numberValidation);
     }
 
     validate(props: Map<string, any>): ILumberjackSchemaValidationResult {

@@ -39,13 +39,10 @@ import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 
-// @public (undocumented)
+// @public
 export enum AttachState {
-    // (undocumented)
     Attached = "Attached",
-    // (undocumented)
     Attaching = "Attaching",
-    // (undocumented)
     Detached = "Detached"
 }
 
@@ -64,7 +61,8 @@ export enum ContainerErrorType {
     dataCorruptionError = "dataCorruptionError",
     dataProcessingError = "dataProcessingError",
     genericError = "genericError",
-    throttlingError = "throttlingError"
+    throttlingError = "throttlingError",
+    usageError = "usageError"
 }
 
 // @public
@@ -77,9 +75,7 @@ export interface IAudience extends EventEmitter {
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
     // (undocumented)
-    on(event: "addMember", listener: (clientId: string, details: IClient) => void): this;
-    // (undocumented)
-    on(event: "removeMember", listener: (clientId: string) => void): this;
+    on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
 }
 
 // @public
@@ -104,7 +100,7 @@ export interface IConnectionDetails {
     existing: boolean;
     // (undocumented)
     initialClients: ISignalClient[];
-    // (undocumented)
+    // @deprecated (undocumented)
     maxMessageSize: number;
     // (undocumented)
     mode: ConnectionMode;
@@ -428,8 +424,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 
 // @public
 export interface IRuntime extends IDisposable {
-    // (undocumented)
-    createSummary(): ISummaryTree;
+    createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getPendingLocalState(): unknown;
     process(message: ISequencedDocumentMessage, local: boolean, context: any): any;
     processSignal(message: any, local: boolean): any;
@@ -437,11 +432,6 @@ export interface IRuntime extends IDisposable {
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     setConnectionState(connected: boolean, clientId?: string): any;
     snapshot(tagMessage: string, fullTree?: boolean): Promise<ITree | null>;
-    // @deprecated (undocumented)
-    stop(): Promise<{
-        snapshot?: never;
-        state?: never;
-    }>;
 }
 
 // @public (undocumented)
@@ -461,6 +451,12 @@ export interface IThrottlingWarning extends IErrorBase {
     readonly errorType: ContainerErrorType.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;
+}
+
+// @public
+export interface IUsageError extends IErrorBase {
+    // (undocumented)
+    readonly errorType: ContainerErrorType.usageError;
 }
 
 // @public

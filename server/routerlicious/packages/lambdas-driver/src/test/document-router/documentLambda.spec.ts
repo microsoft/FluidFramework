@@ -155,7 +155,9 @@ describe("document-router", () => {
 
                     context.on("error", (error, errorData: IContextErrorData) => {
                         assert.ok(error);
-                        assert.ok(errorData.restart);
+                        // We expect that lambda factory errors do not trigger restarts,
+                        // since they affect one document only.
+                        assert.ok(!errorData.restart);
                         resolve();
                     });
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEventProvider, IErrorEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { IDisposable, IEventProvider, IErrorEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -91,7 +91,7 @@ export interface IDocumentStorageServicePolicies {
 /**
  * Interface to provide access to snapshots saved for a shared object
  */
-export interface IDocumentStorageService {
+export interface IDocumentStorageService extends Partial<IDisposable> {
     repositoryUrl: string;
 
     /**
@@ -148,7 +148,7 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     (event: "error", listener: (error: any) => void);
 }
 
-export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaConnectionEvents> {
+export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<IDocumentDeltaConnectionEvents> {
     /**
      * ClientID for the connection
      */
@@ -171,6 +171,8 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
 
     /**
      * Maximum size of a message that can be sent to the server. Messages larger than this size must be chunked.
+     *
+     * @deprecated - please use `serviceConfiguration.maxMessageSize`
      */
     maxMessageSize: number;
 
@@ -220,6 +222,7 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
 
     /**
      * Disconnects the given delta connection
+     * @deprecated in 0.45, please use dispose()
      */
     close(): void;
 }

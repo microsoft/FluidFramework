@@ -13,6 +13,7 @@ export interface ITokenClaims {
     iat: number;
     exp: number;
     ver: string;
+    jti?: string;
 }
 
 export interface ISummaryTokenClaims {

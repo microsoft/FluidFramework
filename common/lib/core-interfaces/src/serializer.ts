@@ -32,6 +32,17 @@ export interface IFluidSerializer extends IProvideFluidSerializer {
     replaceHandles(value: any, bind: IFluidHandle): any;
 
     /**
+     * Given a fully-jsonable object tree that may have encoded handle objects embedded within, will return an
+     * equivalent object tree where any encoded IFluidHandles have been replaced with thier decoded form.
+     *
+     * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
+     * the root to any replaced handles.  (If no handles are found, returns the original object.)
+     *
+     * The decoded handles are implicitly bound to the handle context of this serializer.
+     */
+    decode?(input: any): any;
+
+    /**
      * Stringifies a given value. Converts any IFluidHandle to its stringified equivalent.
      */
     stringify(value: any, bind: IFluidHandle): string;

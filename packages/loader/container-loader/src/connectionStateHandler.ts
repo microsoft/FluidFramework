@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { ConnectionMode, ISequencedClient } from "@fluidframework/protocol-definitions";
-import { EventEmitterWithErrorHandling, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { ConnectionState } from "./container";
 
@@ -17,24 +17,23 @@ export interface IConnectionStateHandler {
         (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
     shouldClientJoinWrite: () => boolean,
     maxClientLeaveWaitTime: number | undefined,
+    logConnectionIssue: (eventName: string) => void,
+    connectionStateChanged: () => void,
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
 }
 
-/**
- * Events emitted by the ConnectionStateHandler.
- */
-export interface IConnectionStateHandlerEvents extends IEvent {
-    (event: "connectionStateChanged", listener: () => void);
-}
+const JoinOpTimer = 45000;
 
-export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConnectionStateHandlerEvents> {
+export class ConnectionStateHandler {
     private _connectionState = ConnectionState.Disconnected;
     private _pendingClientId: string | undefined;
     private _clientId: string | undefined;
     private readonly prevClientLeftTimer: Timer;
+    private readonly joinOpTimer: Timer;
+
     private waitEvent: PerformanceEvent | undefined;
 
     public get connectionState(): ConnectionState {
@@ -57,7 +56,6 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         private readonly handler: IConnectionStateHandler,
         private readonly logger: ITelemetryLogger,
     ) {
-        super();
         this.prevClientLeftTimer = new Timer(
             // Default is 90 sec for which we are going to wait for its own "leave" message.
             this.handler.maxClientLeaveWaitTime ?? 90000,
@@ -65,11 +63,42 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
                 this.applyForConnectedState("timeout");
             },
         );
+
+        // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
+        // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
+        // if retrying fixes the problem, we should not see these events.
+        this.joinOpTimer = new Timer(
+            JoinOpTimer,
+            () => {
+                // I've observed timer firing within couple ms from disconnect event, looks like
+                // queued timer callback is not cancelled if timer is cancelled while callback sits in the queue.
+                if (this.connectionState === ConnectionState.Connecting) {
+                    this.handler.logConnectionIssue("NoJoinOp");
+                }
+            },
+        );
+    }
+
+    private startJoinOpTimer() {
+        assert(!this.joinOpTimer.hasTimer, 0x234 /* "has joinOpTimer" */);
+        this.joinOpTimer.start();
+    }
+
+    private stopJoinOpTimer() {
+        assert(this.joinOpTimer.hasTimer, 0x235 /* "no joinOpTimer" */);
+        this.joinOpTimer.clear();
     }
 
     public receivedAddMemberEvent(clientId: string) {
         // This is the only one that requires the pending client ID
         if (clientId === this.pendingClientId) {
+            if (this.joinOpTimer.hasTimer) {
+                this.stopJoinOpTimer();
+            } else {
+                // timer has already fired, meaning it took too long to get join on.
+                // Record how long it actually took to recover.
+                this.handler.logConnectionIssue("ReceivedJoinOp");
+            }
             // Start the event in case we are waiting for leave or timeout.
             if (this.prevClientLeftTimer.hasTimer) {
                 this.waitEvent = PerformanceEvent.start(this.logger, {
@@ -84,12 +113,13 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
 
     private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout") {
         const protocolHandler = this.handler.protocolHandler();
+        assert(protocolHandler !== undefined, 0x236 /* "In all cases it should be already installed" */);
         // Move to connected state only if we are in Connecting state, we have seen our join op
         // and there is no timer running which means we are not waiting for previous client to leave
         // or timeout has occured while doing so.
         if (this.pendingClientId !== this.clientId
             && this.pendingClientId !== undefined
-            && protocolHandler !== undefined && protocolHandler.quorum.getMember(this.pendingClientId) !== undefined
+            && protocolHandler.quorum.getMember(this.pendingClientId) !== undefined
             && !this.prevClientLeftTimer.hasTimer
         ) {
             this.waitEvent?.end({ source });
@@ -117,13 +147,15 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     }
 
     public receivedDisconnectEvent(reason: string) {
+        if (this.joinOpTimer.hasTimer) {
+            this.stopJoinOpTimer();
+        }
         this.setConnectionState(ConnectionState.Disconnected, reason);
     }
 
     public receivedConnectEvent(
         connectionMode: ConnectionMode,
         details: IConnectionDetails,
-        opsBehind?: number,
     ) {
         const oldState = this._connectionState;
         this._connectionState = ConnectionState.Connecting;
@@ -149,6 +181,8 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             || connectionMode === "read"
         ) {
             this.setConnectionState(ConnectionState.Connected);
+        } else if (connectionMode === "write") {
+            this.startJoinOpTimer();
         }
     }
 
@@ -201,7 +235,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             }
         }
 
-        this.emit("connectionStateChanged");
+        this.handler.connectionStateChanged();
 
         // Report telemetry after we set client id!
         this.handler.logConnectionStateChangeTelemetry(this._connectionState, oldState, reason);

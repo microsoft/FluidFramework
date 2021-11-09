@@ -16,6 +16,10 @@ parameters:
   type: boolean
   default: false
 
+- name: nonScopedPackages
+  type: object
+  default: []
+
 - name: buildNumberInPatch
   type: string
 
@@ -74,6 +78,12 @@ variables:
     and(
       eq(variables.pushImage, true),
       eq(parameters.releaseImage, true)
+    )}}
+- name: publishNonScopedPackages
+  value: ${{
+    ne(
+      length(parameters.nonScopedPackages),
+      0
     )}}
 
 # compute the release variable

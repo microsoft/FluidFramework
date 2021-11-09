@@ -50,10 +50,6 @@ packages/runtime/**:
 - vladsud
 - arinwt
 - curtisman
-packages/hosts/**:
-- anthony-murphy
-- ChumpChief
-- curtisman
 
 packages/test/**:
 - markfields
@@ -79,18 +75,27 @@ server/**:
 - anthony-murphy
 - GaryWilber
 - hedasilv
+- pradeepvairamani
 
 # examples
 examples/**:
 - skylerjokiel
 - ChumpChief
 
-# experimental
+# Experimental (SharedTree)
 experimental/dds/tree/**:
 - DLehenbauer
 - taylorsw04
 - CraigMacomber
 - Abe27342
+
+# Experimental (PropertyTree)
+experimental/PropertyDDS/**:
+- DLehebauer
+- evaliyev
+- karlbom
+- nedalhy
+- ruiterr
 
 # tools
 tools/**:

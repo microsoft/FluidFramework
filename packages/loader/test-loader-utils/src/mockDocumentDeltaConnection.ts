@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IDisposable } from "@fluidframework/common-definitions";
 import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
@@ -33,7 +34,7 @@ const DefaultServiceConfiguration: IClientConfiguration = {
  */
 export class MockDocumentDeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-    implements IDocumentDeltaConnection {
+    implements IDocumentDeltaConnection, IDisposable {
     public claims: ITokenClaims = {
         documentId: "documentId",
         scopes: ["doc:read", "doc:write", "summary:write"],
@@ -74,9 +75,15 @@ export class MockDocumentDeltaConnection
             this.submitSignalHandler(message);
         }
     }
-    public close(reason?: string) {
-        this.emit("disconnect", reason ?? "mock close() called");
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+    public dispose(error?: Error) {
+        this._disposed = true;
+        this.emit("disconnect", error?.message ?? "mock close() called");
     }
+
+    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
+    public close(error?: Error): void { this.dispose(error); }
 
     // Mock methods for raising events
     public emitOp(documentId: string, messages: Partial<ISequencedDocumentMessage>[]) {

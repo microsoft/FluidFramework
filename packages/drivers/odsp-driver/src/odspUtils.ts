@@ -7,7 +7,8 @@ import { ITelemetryProperties, ITelemetryBaseLogger, ITelemetryLogger } from "@f
 import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definitions";
 import { isOnline, OnlineStatus } from "@fluidframework/driver-utils";
 import { assert, performance } from "@fluidframework/common-utils";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ChildLogger, PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
 import {
     fetchIncorrectResponse,
     offlineFetchFailureStatusCode,
@@ -16,6 +17,7 @@ import {
     throwOdspNetworkError,
     getSPOAndGraphRequestIdsFromResponse,
     fetchTokenErrorCode,
+    createOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
 import {
     IOdspResolvedUrl,
@@ -24,9 +26,11 @@ import {
     tokenFromResponse,
     isTokenFromCache,
     OdspResourceTokenFetchOptions,
+    ShareLinkTypes,
     TokenFetcher,
     ICacheEntry,
     snapshotKey,
+    InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { fetch } from "./fetch";
 import { pkgVersion } from "./packageVersion";
@@ -37,9 +41,11 @@ export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRep
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;
 
-export interface ISnapshotCacheValue {
-    snapshot: IOdspSnapshot;
-    sequenceNumber: number | undefined;
+export interface ISnapshotContents {
+    snapshotTree: ISnapshotTree,
+    blobs: Map<string, ArrayBuffer>,
+    ops: ISequencedDocumentMessage[],
+    sequenceNumber: number | undefined,
 }
 
 export interface IOdspResponse<T> {
@@ -101,11 +107,11 @@ export async function fetchHelper(
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
-            throwOdspNetworkError(`No response from the server`, fetchIncorrectResponse);
+            throwOdspNetworkError("odspFetchErrorNoResponse", fetchIncorrectResponse);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
-                `Error ${response.status}`, response.status, response, await response.text());
+                `odspFetchError [${response.status}]`, response.status, response, await response.text());
         }
 
         const headers = headersToMap(response.headers);
@@ -125,10 +131,10 @@ export async function fetchHelper(
             online = OnlineStatus.Offline;
         }
         if (error.name === "AbortError") {
-            throwOdspNetworkError("Timeout during fetch", fetchTimeoutStatusCode);
+            throwOdspNetworkError("timeoutDuringFetch", fetchTimeoutStatusCode);
         }
         if (errorText.indexOf("ETIMEDOUT") !== -1) {
-            throwOdspNetworkError("Timeout during fetch (ETIMEDOUT)", fetchTimeoutStatusCode);
+            throwOdspNetworkError("timeoutDuringFetch(ETIMEDOUT)", fetchTimeoutStatusCode);
         }
 
         //
@@ -136,10 +142,10 @@ export async function fetchHelper(
         // It could container PII, like URI in message itself, or token in properties.
         // It is also non-serializable object due to circular references.
         //
+        const failureCode = online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode;
         throwOdspNetworkError(
-            `Fetch error`,
-            online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode,
-            undefined, // response
+            `odspFetchThrewError [${failureCode}]`,
+            failureCode,
         );
     });
 }
@@ -191,7 +197,13 @@ export async function fetchAndParseAsJSONHelper<T>(
         };
         return res;
     } catch (e) {
-        throwOdspNetworkError(`Error while parsing fetch response: ${e}`, fetchIncorrectResponse, content);
+        throwOdspNetworkError(
+            "errorWhileParsingFetchResponse",
+            fetchIncorrectResponse,
+            content,
+            undefined,
+            { error: Object(e) },
+        );
     }
 }
 
@@ -200,6 +212,12 @@ export interface INewFileInfo {
     driveId: string;
     filename: string;
     filePath: string;
+    /**
+     * application can request creation of a share link along with the creation of a new file
+     * by passing in an optional param to specify the kind of sharing link
+     * (at the time of adding this comment Sept/2021), odsp only supports csl
+     */
+    createLinkType?: ShareLinkTypes;
 }
 
 export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl {
@@ -245,8 +263,8 @@ export function toInstrumentedOdspTokenFetcher(
     resolvedUrl: IOdspResolvedUrl,
     tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
     throwOnNullToken: boolean,
-): (options: TokenFetchOptions, name: string) => Promise<string | null> {
-    return async (options: TokenFetchOptions, name: string) => {
+): InstrumentedStorageTokenFetcher {
+    return async (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry: boolean = false) => {
         // Telemetry note: if options.refresh is true, there is a potential perf issue:
         // Host should optimize and provide non-expired tokens on all critical paths.
         // Exceptions: race conditions around expiration, revoked tokens, host that does not care
@@ -269,14 +287,21 @@ export function toInstrumentedOdspTokenFetcher(
                 // This event alone generates so many events that is materially impacts cost of telemetry
                 // Thus do not report end event when it comes back quickly.
                 // Note that most of the hosts do not report if result is comming from cache or not,
-                // so we can't rely on that here
-                if (event.duration >= 32) {
+                // so we can't rely on that here. But always record if specified explicitly for cases such as
+                // calling trees/latest during load.
+                if (alwaysRecordTokenFetchTelemetry || event.duration >= 32) {
                     event.end({ fromCache: isTokenFromCache(tokenResponse), isNull: token === null });
                 }
                 if (token === null && throwOnNullToken) {
-                    throwOdspNetworkError(`${name} Token is null`, fetchTokenErrorCode);
+                    throwOdspNetworkError("tokenIsNull", fetchTokenErrorCode, undefined, undefined, { method: name });
                 }
                 return token;
+            }, (error) => {
+                const tokenError = wrapError(
+                    error,
+                    (errorMessage) => createOdspNetworkError("tokenFetcherFailed", errorMessage, fetchTokenErrorCode));
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal
+                throw tokenError;
             }),
             { cancel: "generic" });
     };

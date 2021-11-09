@@ -1,5 +1,23 @@
 > **Note:** These breaking changes are only relevant to the server packages and images released from `./routerlicious`.
 
+## 0.1032 Breaking Changes
+- [deleteSummary added to IGitManager and IGitService](#deleteSummary-added-to-IGitManager-and-IGitService)
+- [encoding type change](#encoding-type-change)
+
+### @fluidframework/server-services-client@0.1032
+
+#### `deleteSummary` added to `IGitManager` and `IGitService`
+
+```ts
+deleteSummary(softDelete: boolean): Promise<void>;
+```
+
+### @fluidframework/gitresources@0.1032
+
+#### `encoding` type change
+
+The `encoding` property of `ICreateBlobParams` has changed type from `string` to `"utf-8" | "base64"` to match the only supported values.
+
 ## 0.1023 Breaking Changes
 - [@fluidframework/server-services-shared@0.1023](#@fluidframework/server-services-shared@0.1023)
   - [`shared.SocketIORedisConnection and shared.SocketIoServer` takes in an ioredis client instead of a node-redis client](#`shared.SocketIORedisConnection-and-shared.SocketIoServer`-using-ioredis)

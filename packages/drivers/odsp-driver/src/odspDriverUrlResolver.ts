@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
 import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { IOdspResolvedUrl, ShareLinkTypes, ShareLinkInfoType } from "@fluidframework/odsp-driver-definitions";
 import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
@@ -67,8 +67,17 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             const driveID = searchParams.get("driveId");
             const filePath = searchParams.get("path");
             const packageName = searchParams.get("containerPackageName");
+            const createLinkType = searchParams.get("createLinkType");
             if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
                 throw new Error("Proper new file params should be there!!");
+            }
+            let shareLinkInfo: ShareLinkInfoType | undefined;
+            if(createLinkType && createLinkType in ShareLinkTypes) {
+                shareLinkInfo = {
+                    createLink: {
+                        type: ShareLinkTypes[createLinkType],
+                    },
+                };
             }
             return {
                 endpoints: {
@@ -92,10 +101,11 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                     containerPackageName: packageName ? packageName : undefined,
                 },
                 fileVersion: undefined,
+                shareLinkInfo,
             };
         }
         const { siteUrl, driveId, itemId, path, containerPackageName, fileVersion } = decodeOdspUrl(request.url);
-        const hashedDocumentId = getHashedDocumentId(driveId, itemId);
+        const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
         assert(!hashedDocumentId.includes("/"), 0x0a8 /* "Docid should not contain slashes!!" */);
 
         let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;

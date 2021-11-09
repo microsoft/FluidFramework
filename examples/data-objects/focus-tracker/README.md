@@ -2,13 +2,13 @@
 
 **_This demo is a work-in-progress_**
 
-**Focus Tracker** is an example that demonstrates how transient state of audience members can be tracked among other audience members using signals.  It does so using fluid-static's `FluidContainer`, `ServiceAudience`, and `ISignaler`.
+**Focus Tracker** is an example that demonstrates how transient state of audience members can be tracked among other audience members using signals.  It does so using fluid-framework's `FluidContainer`, `IServiceAudience`, and `SignalManager`.
 
 This implementation visualizes the Container in a standalone application, rather than using the webpack-fluid-loader environment that most of our examples use.  This implementation relies on [Tinylicious](/server/tinylicious), so there are a few extra steps to get started.  We bring our own view that we will bind to the data in the container.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
 <!-- The getting started instructions are automatically generated.
-To update them, edit md-magic.config.js in the root of the repo, then run npm run readme:update -->
+To update them, edit docs/md-magic.config.js, then run 'npm run build:md-magic' -->
 
 ## Getting Started
 

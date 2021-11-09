@@ -77,19 +77,19 @@ export class LocalReference implements ReferencePosition {
         return !!this.getRangeLabels();
     }
 
-    public hasTileLabel(label: string) {
+    public hasTileLabel(label: string): boolean {
         return refHasTileLabel(this, label);
     }
 
-    public hasRangeLabel(label: string) {
+    public hasRangeLabel(label: string): boolean {
         return refHasRangeLabel(this, label);
     }
 
-    public getTileLabels() {
+    public getTileLabels(): string[] | undefined {
         return refGetTileLabels(this);
     }
 
-    public getRangeLabels() {
+    public getRangeLabels(): string[] | undefined {
         return refGetRangeLabels(this);
     }
 
@@ -99,6 +99,10 @@ export class LocalReference implements ReferencePosition {
 
     public addProperties(newProps: PropertySet, op?: ICombiningOp) {
         this.properties = addProperties(this.properties, newProps, op);
+    }
+
+    public getClient() {
+        return this.client;
     }
 
     public getSegment() {

@@ -61,10 +61,6 @@ export interface IFluidDataStoreRuntime extends
 
     readonly clientId: string | undefined;
 
-    readonly documentId: string;
-
-    readonly existing: boolean;
-
     readonly connected: boolean;
 
     readonly logger: ITelemetryLogger;
@@ -123,6 +119,7 @@ export interface IFluidDataStoreRuntime extends
 
     /**
      * Errors raised by distributed data structures
+     * @deprecated Warnings are being deprecated
      */
     raiseContainerWarning(warning: ContainerWarning): void;
 }

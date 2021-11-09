@@ -25,6 +25,7 @@ import {
     MongoDatabaseManager,
     MongoManager,
 } from "@fluidframework/server-services-core";
+import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
 import {
     DebugLogger,
     ITestDbFactory,
@@ -65,6 +66,11 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
         testDbFactory: ITestDbFactory = new TestDbFactory({}),
         serviceConfiguration?: Partial<IServiceConfiguration>,
     ): ILocalDeltaConnectionServer {
+        if (!Lumberjack.isSetupCompleted())
+        {
+            Lumberjack.setup([new TestEngine1()]);
+        }
+
         const nodesCollectionName = "nodes";
         const documentsCollectionName = "documents";
         const deltasCollectionName = "deltas";
@@ -162,12 +168,14 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 
             const earlyOpHandler = (docId: string, msgs: ISequencedDocumentMessage[]) => {
                 this.logger.info(`Queued early ops: ${msgs.length}`);
+                Lumberjack.info(`Queued early ops: ${msgs.length}`);
                 queuedMessages.push(...msgs);
             };
             socket.on("op", earlyOpHandler);
 
             const earlySignalHandler = (msg: ISignalMessage) => {
                 this.logger.info("Queued early signals");
+                Lumberjack.info("Queued early signals");
                 queuedSignals.push(msg);
             };
             socket.on("signal", earlySignalHandler);

@@ -44,9 +44,9 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { FluidSerializer, getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
 import {
-    IChannelSummarizeResult,
     IFluidDataStoreChannel,
     IGarbageCollectionData,
+    ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
@@ -312,6 +312,7 @@ export class MockQuorum implements IQuorum, EventEmitter {
 
             case "addMember":
             case "removeMember":
+            case "addProposal":
             case "approveProposal":
             case "commitProposal":
                 this.eventEmitter.on(event, listener);
@@ -501,7 +502,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return null;
     }
 
-    public async summarize(fullTree?: boolean, trackState?: boolean): Promise<IChannelSummarizeResult> {
+    public async summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats> {
         const stats = mergeStats();
         stats.treeNodeCount++;
         return {
@@ -510,9 +511,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
                 tree: {},
             },
             stats,
-            gcData: {
-                gcNodes: {},
-            },
         };
     }
 
@@ -522,13 +520,13 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         };
     }
 
-    public updateUsedRoutes(usedRoutes: string[]) {}
+    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {}
 
     public getAttachSnapshot(): ITreeEntry[] {
         return [];
     }
 
-    public getAttachSummary(): IChannelSummarizeResult {
+    public getAttachSummary(): ISummaryTreeWithStats {
         const stats = mergeStats();
         stats.treeNodeCount++;
         return {
@@ -537,9 +535,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
                 tree: {},
             },
             stats,
-            gcData: {
-                gcNodes: {},
-            },
         };
     }
 

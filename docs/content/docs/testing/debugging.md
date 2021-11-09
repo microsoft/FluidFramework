@@ -1,7 +1,7 @@
 ---
-title: Testing and debugging
-menuPosition: 2
-status: placeholder
+title: Debugging
+menuPosition: 4
+status: unwritten
 ---
 
 ## How to test your application

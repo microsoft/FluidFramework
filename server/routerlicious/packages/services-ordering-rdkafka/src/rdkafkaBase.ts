@@ -11,6 +11,7 @@ import { tryImportNodeRdkafka } from "./tryImport";
 export interface IKafkaBaseOptions {
     numberOfPartitions: number;
     replicationFactor: number;
+    sslCACertFilePath?: string;
 }
 
 export interface IKafkaEndpoints {
@@ -20,6 +21,7 @@ export interface IKafkaEndpoints {
 
 export abstract class RdkafkaBase extends EventEmitter {
     protected readonly kafka: typeof kafkaTypes;
+    protected readonly sslOptions?: kafkaTypes.ConsumerGlobalConfig;
     private readonly options: IKafkaBaseOptions;
 
     constructor(
@@ -41,6 +43,29 @@ export abstract class RdkafkaBase extends EventEmitter {
             numberOfPartitions: options?.numberOfPartitions ?? 32,
             replicationFactor: options?.replicationFactor ?? 3,
         };
+
+        // In RdKafka, we can check what features are enabled using kafka.features. If "ssl" is listed,
+        // it means RdKafka has been built with support for SSL.
+        // To build node-rdkafka with SSL support, make sure OpenSSL libraries are available in the
+        // environment node-rdkafka would be running. Once OpenSSL is available, building node-rdkafka
+        // as usual will automatically include SSL support.
+        const rdKafkaHasSSLEnabled =
+            kafka.features.filter((feature) => feature.toLowerCase().indexOf("ssl") >= 0).length > 0;
+
+        if (options?.sslCACertFilePath) {
+            // If the use of SSL is desired, but rdkafka has not been built with SSL support,
+            // throw an error making that clear to the user.
+            if (!rdKafkaHasSSLEnabled) {
+                throw new Error(
+                    "Attempted to configure SSL, but rdkafka has not been built to support it. " +
+                    "Please make sure OpenSSL is available and build rdkafka again.");
+            }
+
+            this.sslOptions = {
+                "security.protocol": "ssl",
+                "ssl.ca.location": options?.sslCACertFilePath,
+            };
+        }
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.initialize();
@@ -64,10 +89,13 @@ export abstract class RdkafkaBase extends EventEmitter {
     }
 
     protected async ensureTopics() {
-        const adminClient = this.kafka.AdminClient.create({
+        const options: kafkaTypes.GlobalConfig = {
             "client.id": `${this.clientId}-admin`,
             "metadata.broker.list": this.endpoints.kafka.join(","),
-        });
+            ...this.sslOptions,
+        };
+
+        const adminClient = this.kafka.AdminClient.create(options);
 
         const newTopic: kafkaTypes.NewTopic = {
             topic: this.topic,
