@@ -312,8 +312,8 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
 }
 
 /**
- * This class controls pausing and resuming inbound queue to ensure that we never
- * start processing ops in a batch IF we do not have full batch in.
+ * This class controls pausing and resuming of inbound queue to ensure that we never
+ * start processing ops in a batch IF we do not have all ops in the batch.
  */
 class ScheduleManagerCore {
     private pauseSequenceNumber: number | undefined;
@@ -445,8 +445,8 @@ class ScheduleManagerCore {
  * This class has the following responsibilities:
  * 1. It tracks batches as we process ops and raises "batchBegin" and "batchEnd" events.
  *    As part of it, it validates batch correctness (i.e. no system ops in the middle of batch)
- * 2. It creates instance of ScheduleManagerCore that ensures we process ops in a batch when we have full batch in.
- *    It notifies it about
+ * 2. It creates instance of ScheduleManagerCore that ensures we never start processing ops from batch
+ *    unless all ops of the batch are in.
  */
 export class ScheduleManager {
     private readonly deltaScheduler: DeltaScheduler;
