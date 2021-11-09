@@ -4,6 +4,7 @@
  */
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Lazy } from "@fluidframework/common-utils";
+import { DebugLogger } from "./debugLogger";
 import { ChildLogger, ITelemetryLoggerPropertyBags } from "./logger";
 
 /**
@@ -77,6 +78,7 @@ type ReturnToProp<T> ={[P in keyof T]?: T[P] extends (...args: any) => any ? Ret
 
 interface ConfigCacheEntry extends ReturnToProp<TypeConverters> {
     readonly raw: string | undefined;
+    readonly name: string;
 }
 const sessionStorageProvider = new Lazy(()=>{
     if(sessionStorage !== undefined && sessionStorage !== null && typeof sessionStorage === "object") {
@@ -94,9 +96,10 @@ const sessionStorageProvider = new Lazy(()=>{
 export const tryCreateSessionStorageConfigProvider = ()=>sessionStorageProvider.value;
 
 export class ConfigProvider implements IConfigProvider {
-    private readonly configCache = new Map<string, ConfigCacheEntry | undefined>();
+    private readonly configCache = new Map<string, ConfigCacheEntry>();
     private readonly orderedBaseProviders: (IConfigProviderBase| undefined)[];
     private readonly namespace: string | undefined;
+    private static readonly logger = DebugLogger.create("fluid:telemetry:configProvider");
 
     constructor(
         orderedBaseProviders: (IConfigProviderBase | ITelemetryBaseLogger | undefined)[],
@@ -138,7 +141,8 @@ export class ConfigProvider implements IConfigProvider {
     ): ReturnType<TypeConverters[T]> | undefined {
         const cacheValue = this.getCacheEntry(name);
 
-        if(cacheValue === undefined) {
+        if(cacheValue?.raw === undefined) {
+            ConfigProvider.logger.sendTelemetryEvent({eventName:"ConfigValueNotSet", name:cacheValue?.name});
             return undefined;
         }
 
@@ -152,6 +156,11 @@ export class ConfigProvider implements IConfigProvider {
             cacheValue[converter] = value;
             return value as ReturnType<TypeConverters[T]>;
         }
+        ConfigProvider.logger.sendErrorEvent({
+            eventName:"ConfigValueNotCovertable",
+            name:cacheValue?.name,
+            value: cacheValue.raw,
+            converter});
         return undefined;
     }
 
@@ -163,13 +172,14 @@ export class ConfigProvider implements IConfigProvider {
                 if(str !== undefined) {
                     const entry: ConfigCacheEntry = {
                         raw: str,
+                        name,
                     };
                     this.configCache.set(nname, entry);
                     return entry;
                 }
             }
             // configs are immutable, if the first lookup returned no results, all lookups should
-            this.configCache.set(nname, undefined);
+            this.configCache.set(nname, {raw:undefined, name:nname});
         }
         return this.configCache.get(nname);
     }
