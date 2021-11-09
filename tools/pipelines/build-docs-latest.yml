@@ -62,11 +62,11 @@ resources:
 stages:
 - stage: build
   displayName: 'Build docs'
-  pool: Main
+  pool: Large
   jobs:
   - job:
     displayName: Component Detection
-    pool: Lite
+    pool: Small
     steps:
     - script: |
         echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}
@@ -113,7 +113,7 @@ stages:
 
 - stage: deploy
   displayName: Deploy Stage
-  pool: Main
+  pool: Large
   dependsOn: build
   jobs:
     - deployment: latest_release
