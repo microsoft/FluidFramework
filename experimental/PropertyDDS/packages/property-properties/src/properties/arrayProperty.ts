@@ -27,6 +27,8 @@ import { validationsEnabled } from '../enableValidations';
 const deepCopy = fastestJSONCopy.copy;
 const { MSG } = constants;
 
+type PrintFunction = (x: any) => void;
+
 // Some global constant objects that are used to indicate a few special
 // cases for the dirty object. If there are no entries in the pending and
 // dirty changesets, but the array still has a pending or dirty state
@@ -181,12 +183,11 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Returns the path segment for a child
      *
-     * @param {property-properties.BaseProperty} in_childNode - The child for which the path is returned
+     * @param in_childNode - The child for which the path is returned
      *
-     * @return {string|undefined} The path segment to resolve the child property under this property
-     * @protected
+     * @returns The path segment to resolve the child property under this property
      */
-    _getPathSegmentForChildNode(in_childNode) {
+    _getPathSegmentForChildNode(in_childNode: BaseProperty): string | never {
 
         var index = this._dataArrayGetBuffer().indexOf(in_childNode);
         if (index === -1) {
@@ -199,16 +200,16 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Resolves a direct child node based on the given path segment
      *
-     * @param {String} in_segment                                   - The path segment to resolve
-     * @param {property-properties.PathHelper.TOKEN_TYPES} in_segmentType - The type of segment in the tokenized path
+     * @param in_segment - The path segment to resolve
+     * @param in_segmentType - The type of segment in the tokenized path
      *
-     * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
+     * @returns The child property that has been resolved
      * @protected
      */
-    _resolvePathSegment(in_segment, in_segmentType) {
+    _resolvePathSegment(in_segment: string, in_segmentType: PathHelper.TOKEN_TYPES): BaseProperty | undefined {
         // Base Properties only support paths separated via dots
         if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
-            var index = Math.floor(in_segment);
+            var index = Math.floor(+in_segment);
 
             // Specifying a non-integer index is regarded a mal-formed path and thus throws an exception
             if (!isFinite(index)) {
@@ -222,21 +223,20 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             }
             return this._dataArrayGetValue(index);
         } else {
-            return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
         }
     };
 
     /**
      * Insert into the array at a given position.
      * It will not overwrite the existing values, it will push them to the right.
-     * @param {number} in_position target index
+     * @param in_position - target index
      * @param {*} in_value inserted value or property
      * @throws if in_position is smaller than zero, larger than the length of the array or not a number.
      * @throws if trying to insert a property that already has a parent.
      * @throws if trying to modify a referenced property.
      * @throws if trying to insert a property that is a root property
      */
-    insert(in_position, in_value) {
+    insert(in_position: number, in_value) {
         this.insertRange(in_position, [in_value]);
     };
 
@@ -348,13 +348,13 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Change an existing element of the array. This will overwrite an existing element.
      * E.g. [1, 2, 3]  .set(1, 8) => [1, 8, 3]
-     * @param {number} in_position the target index
-     * @param {*} in_value the new property or value
+     * @param in_position - the target index
+     * @param {*} in_value - the new property or value
      * @throws if in_position is not a number
      * @throws if in_position is smaller than zero
      */
-    set(in_position, in_value) {
-        if (_.isArray(in_value)) {
+    set(in_position: number, in_value) {
+        if (Array.isArray(in_value)) {
             throw new Error(MSG.ARRAY_SET_ONE_ELEMENT + in_value);
         }
         this.setRange(in_position, [in_value]);
@@ -363,15 +363,12 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Sets the values of items in the array.
      * If values are typed, iterates through the values and creates a property with the defined type and value.
-     * @see {setValues}
      * @param {Array<*>} in_values  - The list of typed values.
-     * @param {Bool} in_typed  - Whether the values are typed/polymorphic.
-     * @param {Bool} in_initial  - Whether we are setting default/initial values
+     * @param in_typed  - Whether the values are typed/polymorphic.
+     * @param in_initial  - Whether we are setting default/initial values
      *   or if the function is called directly with the values to set.
-     * @protected
-     * @override
      */
-    _setValues(in_values, in_typed, in_initial) {
+    _setValues(in_values, in_typed: boolean, in_initial: boolean) {
         if (in_typed) {
             if (!this._isPrimitive) {
                 ConsoleUtils.assert(_.isArray(in_values), MSG.IN_ARRAY_NOT_ARRAY + 'ArrayProperty._setValues');
@@ -400,7 +397,6 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
     /**
      * @param {Array<*>|Object} in_values an array or object containing the values to be set.
-     * @see {setValues}
      */
     _setValuesInternal(in_values) {
         this._checkIsNotReadOnly(true);
@@ -473,10 +469,10 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * Private helper function to update the internal dirty and pending changes
      * is overwritten by StringProperty
      *
-     * @param {property-properties.SerializedChangeSet} in_changeSet - The changeset to apply
+     * @param in_changeSet - The changeset to apply
      * @private
      */
-    _updateChanges(in_changeSet) {
+    _updateChanges(in_changeSet: SerializedChangeSet) {
         var pendingChanges = this._getPendingChanges();
         ChangeSet.prototype._performApplyAfterOnPropertyArray(pendingChanges,
             in_changeSet, this.getFullTypeid(true));
@@ -499,23 +495,21 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
     /**
      * Returns the dirty changeset for this object
-     * @return {property-properties.SerializedChangeSet} The dirty changes
+     * @returns The dirty changes
      */
-    _getDirtyChanges() {
+    _getDirtyChanges(): SerializedChangeSet {
         return (this._dirty && this._dirty.dirty) || {};
     };
 
     /**
      * Sets the pending and dirty changesets
      *
-     * @param {property-properties.SerializedChangeSet|undefined|null} in_pending
-     *     The pending changeset. If null is passed, no change will be
+     * @param in_pending - The pending changeset. If null is passed, no change will be
      *     applied. undefined indicates that the changes should be reset
-     * @param {property-properties.SerializedChangeSet|undefined|null} in_dirty
-     *     The dirty changeset. If null is passed, no change will be
+     * @param in_dirty - The dirty changeset. If null is passed, no change will be
      *     applied. undefined indicates that the changes should be reset
      */
-    _setChanges(in_pending, in_dirty) {
+    _setChanges(in_pending?: SerializedChangeSet, in_dirty?: SerializedChangeSet) {
         var oldFlags = this._dirty ? this._dirty.flags : 0;
 
         if (this._dirty &&
@@ -560,9 +554,9 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
     /**
      * Sets the dirty flags for this property
-     * @param {Number} in_flags The dirty flags
+     * @param in_flags - The dirty flags
      */
-    _setDirtyFlags(in_flags) {
+    _setDirtyFlags(in_flags: number) {
         if (this._dirty) {
             if (this._dirty !== DIRTY_STATE_FLAGS_ARRAY[this._dirty.flags]) {
                 this._dirty.flags = in_flags;
@@ -583,7 +577,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
     /**
      * Gets the dirty flags for this property
-     * @return {Number} The dirty flags
+     * @returns The dirty flags
      */
     _getDirtyFlags(): number {
         if (this._dirty === undefined) {
@@ -625,9 +619,9 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * inserts the content of a given array, but doesn't dirty the property
      * this is useful for batch changes
-     * @param {number} in_offset target index
-     * @param {Array<*>} in_array the array to be inserted
-     * @param {Boolean=} [in_setParents=true] If true, set parent of inserted properties.
+     * @param in_offset - target index
+     * @param {Array<*>} in_array - the array to be inserted
+     * @param in_setParents - If true, set parent of inserted properties.
      *                   If false, caller has already set parents.
      * @private
      */
@@ -658,7 +652,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
         // Insert entry into changesets
         var changeSet = {
-            'insert': [[in_offset, this._serializeArray(in_array)]]
+            insert: [[in_offset, this._serializeArray(in_array)]]
         };
         this._updateChanges(changeSet);
     };
@@ -735,7 +729,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * Sets the array properties elements to the content of the given array
      * All changed elements must already exist. This will overwrite existing elements.
      * E.g. [1, 2, 3, 4, 5]  .setRange(1, [7, 8]) => [1, 7, 8, 4, 5]
-     * @param {number} in_offset target start index
+     * @param in_offset - target start index
      * @param {Array<*>|Array<property-properties.BaseProperty>} in_array contains the elements to be set
      * @throws if in_offset is not a number
      * @throws if in_offset is smaller than zero or higher than the length of the array
@@ -906,7 +900,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
     /**
      * Returns an object with all the nested values contained in this property
-     * @return {array<object> | array<*>} an array of objects or values representing the values of your property
+     * @returns an array of objects or values representing the values of your property
      * for example: [
      * {
      *   position: {
@@ -922,7 +916,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * }]
      * or for a Value Array: [1, 3, 6]
      */
-    getValues() {
+    getValues(): object[] {
         var result = [];
         var ids = this.getIds();
         for (var i = 0; i < ids.length; i++) {
@@ -1269,9 +1263,9 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * special treatment on serialization. For supported types, we can just return the input here.
      *
      * @param {*} in_obj - The object to be serialized
-     * @return {property-properties.SerializedChangeSet} the serialized object
+     * @returns the serialized object
      */
-    _serializeValue(in_obj) {
+    _serializeValue(in_obj): SerializedChangeSet {
         // we have to convert the propertySet objects to changesets
         return in_obj._serialize(false, true);
     };
@@ -1282,9 +1276,9 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * special treatment on serialization. For supported types, we can just return the input here.
      *
      * @param {Array} in_array - The array of special objects to be serialized
-     * @return {Array<property-properties.SerializedChangeSet>} the serialized object
+     * @returns the serialized object
      */
-    _serializeArray(in_array) {
+    _serializeArray(in_array): SerializedChangeSet[] {
         var len = in_array.length;
         var result = new Array(len);
         if (this._isPrimitive) {
@@ -1521,7 +1515,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                     currentArrayIndex += currentInsert[1].length; // we've read and used these entries above
                     iterator.next(); // we've completely consumed that op
                 } else if (op.type === ArrayChangeSetIterator.types.MODIFY) {
-                    // Prevent from looping infinitly
+                    // Prevent from looping infinitely
                     // TODO: Might want to decide if there's something to do here
                     iterator.next(); // we've completely consumed that op
                 }
@@ -1533,14 +1527,13 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Serialize the property
      *
-     * @param {boolean} in_dirtyOnly -
+     * @param in_dirtyOnly -
      *     Only include dirty entries in the serialization
-     * @param {boolean} in_includeRootTypeid -
+     * @param in_includeRootTypeid -
      *     Include the typeid of the root of the hierarchy - has no effect for ArrayProperty
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
-     *     The type of dirtiness to use when reporting dirty changes. By default this is
+     * @param in_dirtinessType - The type of dirtiness to use when reporting dirty changes. By default this is
      *     PENDING_CHANGE
-     * @param {boolean} [in_includeReferencedRepositories=false] - If this is set to true, the _serialize
+     * @param in_includeReferencedRepositories - If this is set to true, the _serialize
      *     function will descend into referenced repositories. WARNING: if there are loops in the references
      *     this can result in an infinite loop
      *
@@ -1548,10 +1541,15 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * @return {Object} The serialized representation of this property
      * @private
      */
-    _serialize(in_dirtyOnly, in_includeRootTypeid,
-        in_dirtinessType, in_includeReferencedRepositories) {
-        var result = AbstractStaticCollectionProperty.prototype._serialize.call(this, in_dirtyOnly, in_includeRootTypeid,
-            in_dirtinessType, in_includeReferencedRepositories);
+    _serialize(
+        in_dirtyOnly: boolean,
+        in_includeRootTypeid: boolean,
+        in_dirtinessType: BaseProperty.MODIFIED_STATE_FLAGS = BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE,
+        in_includeReferencedRepositories = false
+    ) {
+        var result = AbstractStaticCollectionProperty.prototype._serialize.call(
+            this, in_dirtyOnly, in_includeRootTypeid, in_dirtinessType, in_includeReferencedRepositories
+        );
 
         if (!this._isPrimitive) {
             if (in_dirtyOnly) {
@@ -1594,12 +1592,12 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Repeatedly calls back the given function with human-readable string
      * representations of the property and of its sub-properties.
-     * @param {string} indent - Leading spaces to create the tree representation
-     * @param {string} externalId - Name of the current property at the upper level.
+     * @param indent - Leading spaces to create the tree representation
+     * @param externalId - Name of the current property at the upper level.
      *                              Used for arrays.
-     * @param {function} printFct - Function to call for printing each property
+     * @param printFct - Function to call for printing each property
      */
-    _prettyPrint(indent, externalId, printFct) {
+    _prettyPrint(indent: string, externalId: string, printFct: PrintFunction) {
 
         printFct(indent + externalId + this.getId() + ' (Array of ' + this.getTypeid() + '): [');
         if (!this._isPrimitive) {
@@ -1622,10 +1620,10 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Repeatedly calls back the given function with human-readable string
      * representations of the property's sub-properties.
-     * @param {string} indent - Leading spaces to create the tree representation
-     * @param {function} printFct - Function to call for printing each property
+     * @param indent - Leading spaces to create the tree representation
+     * @param printFct - Function to call for printing each property
      */
-    _prettyPrintChildren(indent, printFct) {
+    _prettyPrintChildren(indent, printFct: PrintFunction) {
         indent += '  ';
         var ids = this.getIds();
         for (var i = 0; i < ids.length; i++) {
@@ -1693,9 +1691,9 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
     /**
      * Returns the length of the data array
-     * @return {Number} The length
+     * @returns The length
      */
-    _dataArrayGetLength() {
+    _dataArrayGetLength(): number {
         return this._dataArrayRef.length;
     };
 
@@ -1736,7 +1734,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
     /**
      * Inserts a range into the data array
-     * @param {Number} in_position - Position at which the insert should be done
+     * @param in_position - Position at which the insert should be done
      * @param {Array} in_range     - The array to insert
      */
     _dataArrayInsertRange(in_position: number, in_range) {
