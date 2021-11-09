@@ -32,6 +32,7 @@ import {
     IDocumentStorageGetVersionsResponse,
     HostStoragePolicyInternal,
     IVersionedValueWithEpoch,
+    ISnapshotCachedEntry,
 } from "./contracts";
 import { downloadSnapshot, fetchSnapshot, fetchSnapshotWithRedeem } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -413,9 +414,19 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.logger,
                 { eventName: "ObtainSnapshot" },
                 async (event: PerformanceEvent) => {
+                    const props = {};
                     let cachedSnapshot: ISnapshotContents | undefined;
                     const cachedSnapshotP: Promise<ISnapshotContents | undefined> =
-                        this.epochTracker.get(createCacheSnapshotKey(this.odspResolvedUrl));
+                        this.epochTracker.get(createCacheSnapshotKey(this.odspResolvedUrl))
+                            .then((snapshotCachedEntry: ISnapshotCachedEntry) => {
+                                if (snapshotCachedEntry !== undefined) {
+                                    // If the cached entry does not contain the entry time, then assign it a default of 30 days old.
+                                    // eslint-disable-next-line @typescript-eslint/dot-notation
+                                    props["cacheEntryAge"] = Date.now() - (snapshotCachedEntry.cacheEntryTime ??
+                                        (Date.now() - 30 * 24 * 60 * 60 * 1000));
+                                }
+                                return snapshotCachedEntry;
+                        });
 
                     let method: string;
                     if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
@@ -456,7 +467,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                             cachedSnapshot = await this.fetchSnapshot(hostSnapshotOptions);
                         }
                     }
-                    event.end({ method });
+                    if (method === "network") {
+                        // eslint-disable-next-line @typescript-eslint/dot-notation
+                        props["cacheEntryAge"] = undefined;
+                    }
+                    event.end({ ...props, method });
                     return cachedSnapshot;
                 },
                 {end: true, cancel: "error"},

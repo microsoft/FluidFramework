@@ -64,7 +64,7 @@ resources:
 stages:
 - stage: check
   displayName: Checks
-  pool: Lite
+  pool: Small
   jobs:
   - job:
     displayName: Component Detection
@@ -90,7 +90,7 @@ stages:
 
 - stage: json
   displayName: 'API Extractor'
-  pool: Lite
+  pool: Small
   jobs:
     - deployment: upload_json
       displayName: 'Upload JSON'

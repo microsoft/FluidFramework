@@ -145,6 +145,6 @@ export const logRequestMetric = (messageMetaData) => {
     restProperties.set(CommonProperties.telemetryGroupName, messageMetaData.eventName);
     const httpMetric = Lumberjack.newLumberMetric(LumberEventName.HttpRequest, restProperties);
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    messageMetaData.status.startsWith("2") ? httpMetric.success("Request successful")
+    messageMetaData.status?.startsWith("2") ? httpMetric.success("Request successful")
         : httpMetric.error("Request failed");
 };

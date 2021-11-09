@@ -77,7 +77,6 @@ export async function submitAndAckSummary(
     // Wait for all pending ops to be processed by all clients.
     await provider.ensureSynchronized();
     const summarySequenceNumber = summarizerClient.containerRuntime.deltaManager.lastSequenceNumber;
-    console.log(`Last sequence Number: ${summarySequenceNumber}`);
     // Submit a summary
     const result = await summarizerClient.containerRuntime.submitSummary({
         fullTree,

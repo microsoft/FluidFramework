@@ -150,7 +150,7 @@ export interface IDocumentServicePolicies {
 }
 
 // @public
-export interface IDocumentStorageService {
+export interface IDocumentStorageService extends Partial<IDisposable> {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;

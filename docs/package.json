@@ -44,7 +44,7 @@
     "@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",
     "@vscode/codicons": "0.0.25",
     "broken-link-checker": "^0.7.8",
-    "concurrently": "^5.2.0",
+    "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
     "cpy": "^8.1.2",
     "deepdash": "^5.3.9",

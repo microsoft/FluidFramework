@@ -34,7 +34,6 @@ import {
 } from "@fluidframework/container-definitions";
 import {
     DataCorruptionError,
-    DataProcessingError,
     extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
@@ -885,15 +884,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             assert(!canRetryOnError(error), 0x24f /* "retriable error thrown from attach()" */);
 
             // add resolved URL on error object so that host has the ability to find this document and delete it
-            const newError = DataProcessingError.wrapIfUnrecognized(
-                error, "errorWhileUploadingBlobsWhileAttaching", undefined);
+            const newError = normalizeError(error);
             const resolvedUrl = this.resolvedUrl;
             if (resolvedUrl) {
                 ensureFluidResolvedUrl(resolvedUrl);
                 newError.addTelemetryProperties({ resolvedUrl: resolvedUrl.url });
             }
             this.close(newError);
-            // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw newError;
         }
     }

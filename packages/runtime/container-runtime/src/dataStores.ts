@@ -51,6 +51,7 @@ import {
     LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
+import { IUsedStateStats } from "./garbageCollection";
 
  /**
   * This class encapsulates data store handling. Currently it is only used by the container runtime,
@@ -469,9 +470,9 @@ export class DataStores implements IDisposable {
      * @param usedRoutes - The routes that are used in all data stores in this Container.
      * @param gcTimestamp - The time when GC was run that generated these used routes. If any node node becomes
      * unreferenced as part of this GC run, this should be used to update the time when it happens.
-     * @returns the total number of data stores and the number of data stores that are unused.
+     * @returns the statistics of the used state of the data stores.
      */
-    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
+    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats {
         // Get a map of data store ids to routes used in it.
         const usedDataStoreRoutes = getChildNodesUsedRoutes(usedRoutes);
 
@@ -488,8 +489,8 @@ export class DataStores implements IDisposable {
         // Return the number of data stores that are unused.
         const dataStoreCount = this.contexts.size;
         return {
-            dataStoreCount,
-            unusedDataStoreCount: dataStoreCount - usedDataStoreRoutes.size,
+            totalNodeCount: dataStoreCount,
+            unusedNodeCount: dataStoreCount - usedDataStoreRoutes.size,
         };
     }
 
@@ -499,7 +500,6 @@ export class DataStores implements IDisposable {
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
      */
     public deleteUnusedRoutes(unusedRoutes: string[]) {
-        assert(this.runtime.gcTestMode, 0x1df /* "Data stores should be deleted only in GC test mode" */);
         for (const route of unusedRoutes) {
             const dataStoreId = route.split("/")[1];
             // Delete the contexts of unused data stores.
