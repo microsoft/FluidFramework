@@ -121,9 +121,9 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly codeDetails: IFluidCodeDetails | undefined;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    getLoadedCodeDetails?(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorum;
     getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
-    getUsedCodeDetails?(): IFluidCodeDetails | undefined;
     readonly isDirty: boolean;
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     request(request: IRequest): Promise<IResponse>;

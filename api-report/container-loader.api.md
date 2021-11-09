@@ -77,9 +77,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     forceReadonly(readonly: boolean): void;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    getLoadedCodeDetails(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorum;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
-    getUsedCodeDetails(): IFluidCodeDetails | undefined;
     // (undocumented)
     get id(): string;
     // (undocumented)

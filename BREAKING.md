@@ -38,7 +38,7 @@ The `@fluidframework/base-host` package has been removed.  See the [quick-start 
 If you were using the `UpgradeManager` utility from this package, external access to Quorum proposals is planned to be deprecated and so this is no longer recommended.  To upgrade code, instead use the `Container` API `proposeCodeDetails`.
 
 ### `chaincodePackage` removed from `Container`
-The `chaincodePackage` property on `Container` was deprecated in 0.28, and has now been removed.  Two new APIs have been added to replace its functionality, `getSpecifiedCodeDetails()` and `getUsedCodeDetails()`.  Use `getSpecifiedCodeDetails()` to get the code details currently specified for the `Container`, or `getUsedCodeDetails()` to get the code details that were used to load the `Container`.
+The `chaincodePackage` property on `Container` was deprecated in 0.28, and has now been removed.  Two new APIs have been added to replace its functionality, `getSpecifiedCodeDetails()` and `getLoadedCodeDetails()`.  Use `getSpecifiedCodeDetails()` to get the code details currently specified for the `Container`, or `getLoadedCodeDetails()` to get the code details that were used to load the `Container`.
 
 ## 0.50 Breaking changes
 - [OpProcessingController removed](#opprocessingcontroller-removed)
