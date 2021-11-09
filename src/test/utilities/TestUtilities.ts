@@ -175,12 +175,16 @@ export const rightTraitLocation = {
  */
 export const simpleRevisionView = RevisionView.fromTree(simpleTestTree);
 
-/** Convenient pre-made RevisionView for 'initialTree'. */
+/**
+ * Convenient pre-made RevisionView for 'initialTree'.
+ */
 export const initialRevisionView = RevisionView.fromTree(initialTree);
 
 /**
  * Convenient pre-made RevisionView for 'simpleTestTree'.
  * Expensive validation is turned on for this view, and it should not be used for performance testing.
+ *
+ * @deprecated Construct a {@link RevisionView} from a non-static tree.
  */
 export const simpleRevisionViewWithValidation = RevisionView.fromTree(simpleTestTree, true);
 
