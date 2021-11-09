@@ -6,7 +6,7 @@
 parameters:
 - name: poolBuild
   type: object
-  default: Lite
+  default: Small
 
 - name: testPackage
   type: string

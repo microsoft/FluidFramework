@@ -876,41 +876,6 @@ export function internedSpaces(n: number) {
     }
     return indentStrings[n];
 }
-export class RegisterCollection {
-    clientCollections: MapLike<MapLike<ISegment[]> | undefined> = createMap();
-    set(clientId: string, id: string, segments: ISegment[]) {
-        let clientCollection = this.clientCollections[clientId];
-        if (!clientCollection) {
-            clientCollection = createMap();
-            this.clientCollections[clientId] = clientCollection;
-        }
-        clientCollection[id] = segments;
-    }
-
-    get(clientId: string, id: string) {
-        const clientCollection = this.clientCollections[clientId];
-        if (clientCollection) {
-            return clientCollection[id];
-        }
-    }
-
-    getLength(clientId: string, id: string) {
-        const segs = this.get(clientId, id);
-        let len = 0;
-        if (segs) {
-            for (const seg of segs) {
-                len += seg.cachedLength;
-            }
-        }
-        return len;
-    }
-
-    removeClient(clientId: string) {
-        this.clientCollections[clientId] = undefined;
-    }
-
-    // TODO: snapshot
-}
 
 export interface IConsensusInfo {
     marker: Marker;

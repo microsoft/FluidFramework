@@ -25,7 +25,7 @@ import includes from "lodash/includes";
 import map from "lodash/map";
 import find from "lodash/find";
 import isEmpty from "lodash/isEmpty";
-import cloneDeep from "lodash/cloneDeep";
+import {copy as cloneDeep} from "fastest-json-copy";
 
 import { gt, diff, major, valid, compare } from "semver";
 import traverse from "traverse";

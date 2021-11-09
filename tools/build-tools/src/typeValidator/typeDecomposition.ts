@@ -82,7 +82,7 @@ export function typeToString(typeChecker: TypeChecker, type: Type): string {
  * replacement, e.g. Promise<UncomparableClass | OtherClass> ->
  * Promise<"UncomparableClass" | "OtherClass">
  * This removes external dependencies from the type while preserving its structure, where those
- * external types can be checked separately
+ * external types can be checked separately.  Structure must be preserved to check back-compat.
  *
  * TODO: handle multiple type args/params in result output
  * TODO: handle type constraints
@@ -104,8 +104,6 @@ export function decomposeType(
         replacedTypes: new Set<string>(),
         requiredGenerics: new GenericsInfo(),
     };
-    // console.log(`type as string: ${result.typeAsString}`)
-
 
     // don't try to decompose literals because they don't need to be converted to strings
     // booleans because they are a union of false | true but not aliased
