@@ -79,8 +79,9 @@ describe("Tests for snapshot fetch", () => {
         sequenceNumber: 0,
     };
 
-    const value: IVersionedValueWithEpoch =
-    {value: content, fluidEpoch: "epoch1", version: persistedCacheValueVersion };
+    const value: IVersionedValueWithEpoch = { value: { ...content, cacheEntryTime: Date.now() },
+        fluidEpoch: "epoch1",
+        version: persistedCacheValueVersion };
 
     const expectedVersion = [{ id: "id", treeId: undefined!}];
 

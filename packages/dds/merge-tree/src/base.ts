@@ -23,16 +23,16 @@ export type ConflictAction<TKey, TData> =
 
 export interface Dictionary<TKey, TData> {
     get(key: TKey): Property<TKey, TData> | undefined;
-    put(key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>);
-    remove(key: TKey);
-    map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum);
-    diag();
+    put(key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>): void;
+    remove(key: TKey): void;
+    map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum): void;
+    diag(): void;
 }
 
 export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
     max(): Property<TKey, TData> | undefined;
     min(): Property<TKey, TData> | undefined;
-    mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey);
+    mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey): void;
 }
 
 export interface KeyComparer<TKey> {

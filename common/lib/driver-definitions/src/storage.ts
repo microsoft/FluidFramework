@@ -91,7 +91,7 @@ export interface IDocumentStorageServicePolicies {
 /**
  * Interface to provide access to snapshots saved for a shared object
  */
-export interface IDocumentStorageService {
+export interface IDocumentStorageService extends Partial<IDisposable> {
     repositoryUrl: string;
 
     /**

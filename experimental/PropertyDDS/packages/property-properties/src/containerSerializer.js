@@ -148,7 +148,7 @@ export function deserialize(in_data, in_scope, in_filteringOptions) {
 
             scopeProperty._append(entity, false);
 
-            entity.deserialize(classed[classKeys[iClass]], filteringOptions);
+            entity.deserialize(classed[classKeys[iClass]], filteringOptions, false);
 
             scopeProperty._remove(id);
 
@@ -189,7 +189,7 @@ export function deserializeNonPrimitiveArrayElements(in_data, in_scope) {
 
         scopeProperty._append(createdProperty, false);
 
-        createdProperty._deserialize(in_data[i], false);
+        createdProperty._deserialize(in_data[i], false, undefined, false);
 
         scopeProperty._remove(id);
 
