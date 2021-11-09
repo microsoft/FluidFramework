@@ -76,7 +76,7 @@ export abstract class BaseProperty {
     protected _noDirtyInBase: boolean;
 
     _tree: any;
-    _checkoutView: any;
+    _checkoutView: CheckoutView;
     _checkedOutRepositoryInfo: CheckedOutRepositoryInfo;
 
     constructor(in_params: IBasePropertyParams) {
