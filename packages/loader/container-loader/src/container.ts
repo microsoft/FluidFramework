@@ -875,7 +875,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 newError.addTelemetryProperties({ resolvedUrl: resolvedUrl.url });
             }
             this.close(newError);
-            // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw newError;
         }
     }
