@@ -55,6 +55,7 @@ describe("Runtime", () => {
             describe("Batch processing events", () => {
                 let batchBegin: number = 0;
                 let batchEnd: number = 0;
+                let seqNumber: number = 0;
                 let emitter: EventEmitter;
                 let deltaManager: MockDeltaManager;
                 let scheduleManager: ScheduleManager;
@@ -90,9 +91,12 @@ describe("Runtime", () => {
                 afterEach(() => {
                     batchBegin = 0;
                     batchEnd = 0;
+                    seqNumber = 0;
                 });
 
                 function processOp(message: ISequencedDocumentMessage) {
+                    seqNumber++;
+                    message.sequenceNumber = seqNumber;
                     deltaManager.inbound.push(message);
                 }
 
@@ -100,7 +104,6 @@ describe("Runtime", () => {
                     const clientId: string = "test-client";
                     const message: Partial<ISequencedDocumentMessage> = {
                         clientId,
-                        sequenceNumber: 0,
                         type: MessageType.Operation,
                     };
 
@@ -116,7 +119,6 @@ describe("Runtime", () => {
                     const clientId: string = "test-client";
                     const message: Partial<ISequencedDocumentMessage> = {
                         clientId,
-                        sequenceNumber: 0,
                         type: MessageType.Operation,
                     };
 
@@ -136,7 +138,6 @@ describe("Runtime", () => {
                     const clientId: string = "test-client";
                     const message: Partial<ISequencedDocumentMessage> = {
                         clientId,
-                        sequenceNumber: 0,
                         type: MessageType.Operation,
                         metadata: { foo: 1 },
                     };
@@ -153,20 +154,17 @@ describe("Runtime", () => {
                     const clientId: string = "test-client";
                     const batchBeginMessage: Partial<ISequencedDocumentMessage> = {
                         clientId,
-                        sequenceNumber: 0,
                         type: MessageType.Operation,
                         metadata: { batch: true },
                     };
 
                     const batchMessage: Partial<ISequencedDocumentMessage> = {
                         clientId,
-                        sequenceNumber: 0,
                         type: MessageType.Operation,
                     };
 
                     const batchEndMessage: Partial<ISequencedDocumentMessage> = {
                         clientId,
-                        sequenceNumber: 0,
                         type: MessageType.Operation,
                         metadata: { batch: false },
                     };
@@ -192,22 +190,28 @@ describe("Runtime", () => {
 
                     const batchBeginMessage: Partial<ISequencedDocumentMessage> = {
                         clientId: clientId1,
-                        sequenceNumber: 0,
                         type: MessageType.Operation,
                         metadata: { batch: true },
                     };
 
                     const batchMessage: Partial<ISequencedDocumentMessage> = {
                         clientId: clientId1,
-                        sequenceNumber: 0,
                         type: MessageType.Operation,
                     };
 
                     const messagesToFail: Partial<ISequencedDocumentMessage>[] = [
+                        // System op from same client
+                        {
+                            clientId: clientId1,
+                            type: MessageType.NoOp,
+                        },
+
+                        // Batch messages interleaved with a batch begin message from same client
+                        batchBeginMessage,
+
                         // Send a message from another client. This should result in a a violation!
                         {
                             clientId: clientId2,
-                            sequenceNumber: 0,
                             type: MessageType.Operation,
                         },
 
@@ -216,7 +220,6 @@ describe("Runtime", () => {
                         // should get a "batchBegin" and a "batchEnd" event for the new client.
                         {
                             clientId: clientId2,
-                            sequenceNumber: 0,
                             type: MessageType.Operation,
                             metadata: { foo: 1 },
                         },
@@ -226,13 +229,9 @@ describe("Runtime", () => {
                         // one "batchEnd" event for the batch from the new client.
                         {
                             clientId: clientId2,
-                            sequenceNumber: 0,
                             type: MessageType.Operation,
                             metadata: { batch: true },
                         },
-
-                        // Batch messages interleaved with a batch begin message from same client
-                        batchBeginMessage,
                     ];
 
                     let counter = 0;
