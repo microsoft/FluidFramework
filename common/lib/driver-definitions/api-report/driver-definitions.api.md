@@ -96,6 +96,7 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
     initialClients: ISignalClient[];
     initialMessages: ISequencedDocumentMessage[];
     initialSignals: ISignalMessage[];
+    // @deprecated
     maxMessageSize: number;
     mode: ConnectionMode;
     serviceConfiguration: IClientConfiguration;
@@ -149,7 +150,7 @@ export interface IDocumentServicePolicies {
 }
 
 // @public
-export interface IDocumentStorageService {
+export interface IDocumentStorageService extends Partial<IDisposable> {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;

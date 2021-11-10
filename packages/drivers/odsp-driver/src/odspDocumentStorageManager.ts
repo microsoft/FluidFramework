@@ -32,6 +32,7 @@ import {
     IDocumentStorageGetVersionsResponse,
     HostStoragePolicyInternal,
     IVersionedValueWithEpoch,
+    ISnapshotCachedEntry,
 } from "./contracts";
 import { downloadSnapshot, fetchSnapshot, fetchSnapshotWithRedeem } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -99,7 +100,7 @@ class BlobCache {
         if (this.blobCacheTimeout !== undefined) {
             // If we already have an outstanding timer, just signal that we should defer the clear
             this.deferBlobCacheClear = true;
-        } else {
+        } else if (this.purgeEnabled) {
             // If we don't have an outstanding timer, set a timer
             // When the timer runs out, we'll decide whether to proceed with the cache clear or reset the timer
             const clearCacheOrDefer = () => {
@@ -114,10 +115,8 @@ class BlobCache {
                     // We want to optimize both - memory footprint and number of future requests to storage.
                     // Note that Container can realize data store or DDS on-demand at any point in time, so we do not
                     // control when blobs will be used.
-                    if (this.purgeEnabled) {
-                        this._blobCache.forEach((_, blobId) => this.blobsEvicted.add(blobId));
-                        this._blobCache.clear();
-                    }
+                    this._blobCache.forEach((_, blobId) => this.blobsEvicted.add(blobId));
+                    this._blobCache.clear();
                 }
             };
             this.blobCacheTimeout = setTimeout(clearCacheOrDefer, this.blobCacheTimeoutDuration);
@@ -415,9 +414,19 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.logger,
                 { eventName: "ObtainSnapshot" },
                 async (event: PerformanceEvent) => {
+                    const props = {};
                     let cachedSnapshot: ISnapshotContents | undefined;
                     const cachedSnapshotP: Promise<ISnapshotContents | undefined> =
-                        this.epochTracker.get(createCacheSnapshotKey(this.odspResolvedUrl));
+                        this.epochTracker.get(createCacheSnapshotKey(this.odspResolvedUrl))
+                            .then((snapshotCachedEntry: ISnapshotCachedEntry) => {
+                                if (snapshotCachedEntry !== undefined) {
+                                    // If the cached entry does not contain the entry time, then assign it a default of 30 days old.
+                                    // eslint-disable-next-line @typescript-eslint/dot-notation
+                                    props["cacheEntryAge"] = Date.now() - (snapshotCachedEntry.cacheEntryTime ??
+                                        (Date.now() - 30 * 24 * 60 * 60 * 1000));
+                                }
+                                return snapshotCachedEntry;
+                        });
 
                     let method: string;
                     if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
@@ -458,7 +467,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                             cachedSnapshot = await this.fetchSnapshot(hostSnapshotOptions);
                         }
                     }
-                    event.end({ method });
+                    if (method === "network") {
+                        // eslint-disable-next-line @typescript-eslint/dot-notation
+                        props["cacheEntryAge"] = undefined;
+                    }
+                    event.end({ ...props, method });
                     return cachedSnapshot;
                 },
                 {end: true, cancel: "error"},

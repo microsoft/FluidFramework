@@ -91,7 +91,7 @@ export interface IDocumentStorageServicePolicies {
 /**
  * Interface to provide access to snapshots saved for a shared object
  */
-export interface IDocumentStorageService {
+export interface IDocumentStorageService extends Partial<IDisposable> {
     repositoryUrl: string;
 
     /**
@@ -171,6 +171,8 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
 
     /**
      * Maximum size of a message that can be sent to the server. Messages larger than this size must be chunked.
+     *
+     * @deprecated - please use `serviceConfiguration.maxMessageSize`
      */
     maxMessageSize: number;
 

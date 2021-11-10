@@ -1,0 +1,57 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# test-azure-frs pipeline
+
+name: $(Build.BuildId)
+
+trigger:
+  branches:
+    include:
+    - main
+    - release/*
+  paths:
+    include:
+    - packages/framework/azure-client
+    - packages/framework/loader/container-loader
+    - packages/framework/fluid-static
+    - packages/drivers/routerlicious-driver
+    - packages/dds/map
+    - tools/pipelines/test-azure-frs.yml
+    - tools/pipelines/templates/include-test-real-service.yml
+
+pr: none
+
+resources:
+  pipelines:
+  - pipeline: client   # Name of the pipeline resource
+    source: Build - client packages
+    trigger:
+      branches:
+        include:
+        - releases/*
+        - main
+
+variables:
+- group: prague-key-vault
+- name: testWorkspace
+  value: $(Pipeline.Workspace)/test
+
+stages:
+  # Run Azure FRS Tests
+  - stage:
+    displayName: e2e - azure
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small
+        testPackage: "@fluidframework/azure-client"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:realsvc:azure
+        testFileTarName: azure-client
+        extraDependencies: "cross-env mocha @fluidframework/test-client-utils"
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
+          azure__fluid__relay__service__function__url: $(azure-fluid-relay-service-function-url)

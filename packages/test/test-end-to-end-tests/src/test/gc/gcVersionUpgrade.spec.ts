@@ -39,7 +39,8 @@ class ContainerRuntimeFactoryWithGC extends ContainerRuntimeFactoryWithDefaultDa
         context: IContainerContext,
     ): Promise<IRuntime> {
         const runtime = await super.instantiateRuntime(context);
-        (runtime as any).currentGCVersion += 1;
+        // A hack to update the currentGCVersion.
+        (runtime as any).garbageCollector.currentGCVersion += 1;
         return runtime;
     }
 }

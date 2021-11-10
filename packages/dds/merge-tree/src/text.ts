@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import * as MergeTree from "./mergeTree";
-import * as ops from "./ops";
+import {
+    ISegment,
+    Marker,
+    MergeTree,
+    reservedTileLabelsKey,
+} from "./mergeTree";
+import { ReferenceType } from "./ops";
 import { TextSegment } from "./textSegment";
 
 export function loadSegments(content: string, segLimit: number, markers: boolean = false, withProps: boolean = true) {
@@ -21,12 +26,12 @@ export function loadSegments(content: string, segLimit: number, markers: boolean
         }
     }
 
-    const segments = [] as MergeTree.ISegment[];
+    const segments = [] as ISegment[];
     for (const paragraph of paragraphs) {
-        let pgMarker: MergeTree.Marker | undefined;
+        let pgMarker: Marker | undefined;
         if (markers) {
-            pgMarker = MergeTree.Marker.make(ops.ReferenceType.Tile,
-                { [MergeTree.reservedTileLabelsKey]: ["pg"] });
+            pgMarker = Marker.make(ReferenceType.Tile,
+                { [reservedTileLabelsKey]: ["pg"] });
         }
         if (withProps) {
             if ((paragraph.includes("Chapter")) || (paragraph.includes("PRIDE AND PREJ"))) {
@@ -68,7 +73,7 @@ export function loadSegments(content: string, segLimit: number, markers: boolean
     return segments;
 }
 
-export function loadText(content: string, mergeTree: MergeTree.MergeTree, segLimit: number, markers = false) {
+export function loadText(content: string, mergeTree: MergeTree, segLimit: number, markers = false) {
     const segments = loadSegments(content, segLimit, markers);
     mergeTree.reloadFromSegments(segments);
     // console.log(`Number of Segments: ${segments.length}`);

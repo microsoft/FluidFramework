@@ -8,18 +8,18 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { v4 as uuid } from "uuid";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRouterliciousDriverPolicies } from "@fluidframework/routerlicious-driver";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
 
-export interface IServiceEndpoint {
+interface IServiceEndpoint {
     hostUrl: string;
     ordererUrl: string;
     deltaStorageUrl: string;
 }
 
-const dockerConfig = {
+const dockerConfig = (driverPolicies?: IRouterliciousDriverPolicies) => ({
     serviceEndpoint: {
         hostUrl: "http://localhost:3000",
         ordererUrl: "http://localhost:3003",
@@ -27,8 +27,8 @@ const dockerConfig = {
     },
     tenantId: "fluid",
     tenantSecret: "create-new-tenants-if-going-to-production",
-    driverPolicies: undefined,
-};
+    driverPolicies,
+});
 
 function getConfig(
     fluidHost?: string,
@@ -59,6 +59,10 @@ function getLegacyConfigFromEnv() {
 
 function getEndpointConfigFromEnv(r11sEndpointName: string) {
     const configStr = process.env[`fluid__test__driver__${r11sEndpointName}`];
+    if (r11sEndpointName === "docker") {
+        const dockerDriverPolicies = configStr === undefined ? configStr : (JSON.parse(configStr)).driverPolicies;
+        return dockerConfig(dockerDriverPolicies);
+    }
     if (r11sEndpointName === "r11s" && configStr === undefined) {
         // Allow legacy setting from fluid__webpack__ for r11s for now
         return getLegacyConfigFromEnv();
@@ -75,9 +79,9 @@ function getConfigFromEnv(r11sEndpointName?: string) {
             // default to get it with the per service env for r11s
             return getEndpointConfigFromEnv("r11s");
         }
-        return fluidHost.includes("localhost") ? dockerConfig : getLegacyConfigFromEnv();
+        return fluidHost.includes("localhost") ? dockerConfig() : getLegacyConfigFromEnv();
     }
-    return r11sEndpointName === "docker" ? dockerConfig : getEndpointConfigFromEnv(r11sEndpointName);
+    return getEndpointConfigFromEnv(r11sEndpointName);
 }
 
 export class RouterliciousTestDriver implements ITestDriver {
@@ -97,7 +101,7 @@ export class RouterliciousTestDriver implements ITestDriver {
 
     public readonly type = "routerlicious";
     public get version() { return this.api.version; }
-    constructor(
+    private constructor(
         private readonly tenantId: string,
         private readonly tenantSecret: string,
         private readonly serviceEndpoints: IServiceEndpoint,
@@ -107,8 +111,10 @@ export class RouterliciousTestDriver implements ITestDriver {
     ) {
     }
 
-    async createContainerUrl(testId: string): Promise<string> {
-        return `${this.serviceEndpoints.hostUrl}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(testId)}`;
+    async createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string> {
+        const containerId = containerUrl && "id" in containerUrl ? containerUrl.id : testId;
+        // eslint-disable-next-line max-len
+        return `${this.serviceEndpoints.hostUrl}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(containerId)}`;
     }
 
     createDocumentServiceFactory(): IDocumentServiceFactory {

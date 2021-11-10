@@ -21,6 +21,7 @@ import { Int64Property, Uint64Property } from './properties/intProperties';
 import { ValueArrayProperty } from './properties/valueArrayProperty';
 import { ValueMapProperty } from './properties/valueMapProperty';
 import { ValueProperty } from './properties/valueProperty';
+import { enableValidations } from './enableValidations';
 
 
 export {
@@ -42,5 +43,6 @@ export {
     Int64Property,
     ValueArrayProperty,
     ValueMapProperty,
-    ValueProperty
+    ValueProperty,
+    enableValidations
 }

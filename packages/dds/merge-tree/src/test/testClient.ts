@@ -10,7 +10,10 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import random from "random-js";
 import { Client } from "../client";
-import * as Collections from "../collections";
+import {
+    List,
+    ListMakeHead,
+} from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
 import { ISegment, Marker, MergeTree } from "../mergeTree";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
@@ -74,11 +77,11 @@ export class TestClient extends Client {
         return client2;
     }
 
-    public mergeTree: MergeTree;
+    declare public mergeTree: MergeTree;
 
-    public readonly checkQ: Collections.List<string> = Collections.ListMakeHead<string>();
+    public readonly checkQ: List<string> = ListMakeHead<string>();
     // eslint-disable-next-line max-len
-    protected readonly q: Collections.List<ISequencedDocumentMessage> = Collections.ListMakeHead<ISequencedDocumentMessage>();
+    protected readonly q: List<ISequencedDocumentMessage> = ListMakeHead<ISequencedDocumentMessage>();
 
     private readonly textHelper: MergeTreeTextHelper;
     constructor(

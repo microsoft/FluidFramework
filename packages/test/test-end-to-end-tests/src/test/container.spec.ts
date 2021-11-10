@@ -168,10 +168,13 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         const container = await loadContainer({ documentServiceFactory: mockFactory });
         assert.strictEqual(container.connectionState, ConnectionState.Connecting,
             "Container should be in Connecting state");
+        // Note: this will create infinite loop of reconnects as every reconnect would bring closed connection.
+        // Only closing container will break that cycle.
         deltaConnection.close();
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
             "Container should be in Disconnected state");
         deltaConnection.removeAllListeners();
+        container.close();
     });
 
     it("Raise connection error event", async () => {
@@ -198,6 +201,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             message: "Test error",
             canRetry: false,
         };
+        // Note: this will create infinite loop of reconnects as every reconnect would bring closed connection.
+        // Only closing container will break that cycle.
         deltaConnection.emitError(err);
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
             "Container should be in Disconnected state");
@@ -205,6 +210,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         assert.strictEqual(container.closed, false, "Container should not be closed");
         assert.strictEqual(errorRaised, false, "Error event should not be raised.");
         deltaConnection.removeAllListeners();
+        container.close();
     });
 
     it("Close called on container", async () => {

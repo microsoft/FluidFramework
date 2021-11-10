@@ -98,8 +98,8 @@ describe("Runtime", () => {
                     };
 
                     // Send a non-batch message.
-                    scheduleManager.beginOperation(message as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, message as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(message as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, message as ISequencedDocumentMessage);
 
                     assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin events");
                     assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd events");
@@ -114,20 +114,20 @@ describe("Runtime", () => {
                     };
 
                     // Sent 5 non-batch messages.
-                    scheduleManager.beginOperation(message as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, message as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(message as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, message as ISequencedDocumentMessage);
 
-                    scheduleManager.beginOperation(message as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, message as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(message as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, message as ISequencedDocumentMessage);
 
-                    scheduleManager.beginOperation(message as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, message as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(message as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, message as ISequencedDocumentMessage);
 
-                    scheduleManager.beginOperation(message as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, message as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(message as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, message as ISequencedDocumentMessage);
 
-                    scheduleManager.beginOperation(message as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, message as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(message as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, message as ISequencedDocumentMessage);
 
                     assert.strictEqual(5, batchBegin, "Did not receive correct batchBegin events");
                     assert.strictEqual(5, batchEnd, "Did not receive correct batchEnd events");
@@ -142,8 +142,8 @@ describe("Runtime", () => {
                         metadata: { foo: 1 },
                     };
 
-                    scheduleManager.beginOperation(message as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, message as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(message as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, message as ISequencedDocumentMessage);
 
                     // We should have a "batchBegin" and a "batchEnd" event for the batch.
                     assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
@@ -173,17 +173,17 @@ describe("Runtime", () => {
                     };
 
                     // Send a batch with 4 messages.
-                    scheduleManager.beginOperation(batchBeginMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, batchBeginMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(batchBeginMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, batchBeginMessage as ISequencedDocumentMessage);
 
-                    scheduleManager.beginOperation(batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, batchMessage as ISequencedDocumentMessage);
 
-                    scheduleManager.beginOperation(batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, batchMessage as ISequencedDocumentMessage);
 
-                    scheduleManager.beginOperation(batchEndMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, batchEndMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(batchEndMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, batchEndMessage as ISequencedDocumentMessage);
 
                     // We should have only received one "batchBegin" and one "batchEnd" event for the batch.
                     assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
@@ -207,14 +207,14 @@ describe("Runtime", () => {
                     };
 
                     // Send a batch with 3 messages from first client but don't send batch end message.
-                    scheduleManager.beginOperation(batchBeginMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, batchBeginMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(batchBeginMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, batchBeginMessage as ISequencedDocumentMessage);
 
-                    scheduleManager.beginOperation(batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, batchMessage as ISequencedDocumentMessage);
 
-                    scheduleManager.beginOperation(batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, batchMessage as ISequencedDocumentMessage);
 
                     // Send a message from another client. This should result in a "batchEnd" event for the
                     // previous batch since the client id changes. Also, we should get a "batchBegin" and
@@ -225,8 +225,8 @@ describe("Runtime", () => {
                         type: MessageType.Operation,
                     };
 
-                    scheduleManager.beginOperation(client2Message as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, client2Message as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(client2Message as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, client2Message as ISequencedDocumentMessage);
 
                     // We should have received two sets of "batchBegin" and "batchEnd" events.
                     assert.strictEqual(2, batchBegin, "Did not receive correct batchBegin event for the batch");
@@ -250,14 +250,14 @@ describe("Runtime", () => {
                     };
 
                     // Send a batch with 3 messages from first client but don't send batch end message.
-                    scheduleManager.beginOperation(batchBeginMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, batchBeginMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(batchBeginMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, batchBeginMessage as ISequencedDocumentMessage);
 
-                    scheduleManager.beginOperation(batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, batchMessage as ISequencedDocumentMessage);
 
-                    scheduleManager.beginOperation(batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, batchMessage as ISequencedDocumentMessage);
 
                     // Send a message from another client with non batch-related metadata. This should result
                     // in a "batchEnd" event for the previous batch since the client id changes. Also, we
@@ -269,8 +269,8 @@ describe("Runtime", () => {
                         metadata: { foo: 1 },
                     };
 
-                    scheduleManager.beginOperation(client2Message as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, client2Message as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(client2Message as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, client2Message as ISequencedDocumentMessage);
 
                     // We should have received two sets of "batchBegin" and "batchEnd" events.
                     assert.strictEqual(2, batchBegin, "Did not receive correct batchBegin event for the batch");
@@ -294,14 +294,14 @@ describe("Runtime", () => {
                     };
 
                     // Send a batch with 3 messages from first client but don't send batch end message.
-                    scheduleManager.beginOperation(client1batchBeginMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, client1batchBeginMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(client1batchBeginMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, client1batchBeginMessage as ISequencedDocumentMessage);
 
-                    scheduleManager.beginOperation(client1batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, client1batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(client1batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, client1batchMessage as ISequencedDocumentMessage);
 
-                    scheduleManager.beginOperation(client1batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, client1batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(client1batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, client1batchMessage as ISequencedDocumentMessage);
 
                     // Send a batch from another client. This should result in a "batchEnd" event for the
                     // previous batch since the client id changes. Also, we should get one "batchBegin" and
@@ -326,14 +326,14 @@ describe("Runtime", () => {
                         metadata: { batch: false },
                     };
 
-                    scheduleManager.beginOperation(client2batchBeginMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, client2batchBeginMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(client2batchBeginMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, client2batchBeginMessage as ISequencedDocumentMessage);
 
-                    scheduleManager.beginOperation(client2batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, client2batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(client2batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, client2batchMessage as ISequencedDocumentMessage);
 
-                    scheduleManager.beginOperation(client2batchEndMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, client2batchEndMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(client2batchEndMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, client2batchEndMessage as ISequencedDocumentMessage);
 
                     // We should have received two sets of "batchBegin" and one "batchEnd" events.
                     assert.strictEqual(2, batchBegin, "Did not receive correct batchBegin event for the batches");
@@ -363,21 +363,21 @@ describe("Runtime", () => {
                     };
 
                     // Send a batch with an interleaved batch begin message.
-                    scheduleManager.beginOperation(batchBeginMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, batchBeginMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(batchBeginMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, batchBeginMessage as ISequencedDocumentMessage);
 
-                    scheduleManager.beginOperation(batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, batchMessage as ISequencedDocumentMessage);
 
-                    scheduleManager.beginOperation(batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, batchMessage as ISequencedDocumentMessage);
 
                     // The interleaved batch begin message. We should not get a "batchBegin" event for this.
-                    scheduleManager.beginOperation(batchBeginMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, batchBeginMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(batchBeginMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, batchBeginMessage as ISequencedDocumentMessage);
 
-                    scheduleManager.beginOperation(batchEndMessage as ISequencedDocumentMessage);
-                    scheduleManager.endOperation(undefined, batchEndMessage as ISequencedDocumentMessage);
+                    scheduleManager.beforeOpProcessing(batchEndMessage as ISequencedDocumentMessage);
+                    scheduleManager.afterOpProcessing(undefined, batchEndMessage as ISequencedDocumentMessage);
 
                     // We should have only received one "batchBegin" and one "batchEnd" for the batch.
                     assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");

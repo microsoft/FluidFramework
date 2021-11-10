@@ -3,18 +3,43 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { delay, performance } from "@fluidframework/common-utils";
 import { canRetryOnError, getRetryDelayFromError } from "./network";
 
+/**
+ * Interface describing an object passed to various network APIs.
+ * It allows caller to control cancellation, as well as learn about any delays.
+ */
+export interface IProgress {
+    /**
+     * Abort signal used to cancel operation
+     * Note that most of the layers do not use this signal yet. We need to change that over time.
+     * Please consult with API documentation / implementation.
+     * Note that  number of layers may not check this signal while holding this request in a queue,
+     * so it may take a while it takes effect. This can be improved in the future.
+     * Layers in question are:
+     *    - driver (RateLimiter)
+     *    - runWithRetry
+     */
+    cancel?: AbortSignal;
+
+    /**
+     * Called whenever api returns cancellable error and the call is going to be retried.
+     * Any exception thrown from this call back result in cancellation of operation
+     * and propagation of thrown exception.
+     * @param delayInMs - delay before next retry. This value will depend on internal back-off logic,
+     * as well as information provided by service (like 429 error asking to wait for some time before retry)
+     * @param error - error object returned from the call.
+     */
+    retry?(delayInMs: number, error: any): void;
+}
+
 export async function runWithRetry<T>(
-    api: () => Promise<T>,
+    api: (cancel?: AbortSignal) => Promise<T>,
     fetchCallName: string,
-    refreshDelayInfo: (id: string) => void,
-    emitDelayInfo: (id: string, retryInMs: number, err: any) => void,
     logger: ITelemetryLogger,
-    checkRetry?: () => void,
+    progress: IProgress,
 ): Promise<T> {
     let result: T | undefined;
     let success = false;
@@ -22,21 +47,14 @@ export async function runWithRetry<T>(
     let numRetries = 0;
     const startTime = performance.now();
     let lastError: any;
-    let id: string | undefined;
     do {
         try {
-            result = await api();
-            if (id !== undefined) {
-                refreshDelayInfo(id);
-            }
+            result = await api(progress.cancel);
             success = true;
         } catch (err) {
-            if (checkRetry !== undefined) {
-                checkRetry();
-            }
             // If it is not retriable, then just throw the error.
             if (!canRetryOnError(err)) {
-                logger.sendErrorEvent({
+                logger.sendTelemetryEvent({
                     eventName: `${fetchCallName}_cancel`,
                     retry: numRetries,
                     duration: performance.now() - startTime,
@@ -48,10 +66,9 @@ export async function runWithRetry<T>(
             // If the error is throttling error, then wait for the specified time before retrying.
             // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
             retryAfterMs = getRetryDelayFromError(err) ?? Math.min(retryAfterMs * 2, 8000);
-            if (id === undefined) {
-                id = uuid();
+            if (progress.retry) {
+                progress.retry(retryAfterMs, err);
             }
-            emitDelayInfo(id, retryAfterMs, err);
             await delay(retryAfterMs);
         }
     } while (!success);

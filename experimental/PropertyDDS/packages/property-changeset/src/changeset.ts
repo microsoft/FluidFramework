@@ -8,7 +8,7 @@
 
 import isObject from "lodash/isObject";
 import isString from "lodash/isString";
-import cloneDeep from "lodash/cloneDeep";
+import {copy as cloneDeep} from "fastest-json-copy";
 import isEmpty from "lodash/isEmpty";
 import extend from "lodash/extend";
 import each from "lodash/each";
@@ -79,12 +79,12 @@ export class ChangeSet {
     static isEmptyChangeSet = isEmptyChangeSet;
     static isReservedKeyword = isReservedKeyword;
 
-    public _cleanIndexedCollectionChangeSet: typeof ChangeSetIndexedCollectionFunctions._cleanIndexedCollectionChangeSet;
-    public _performApplyAfterOnPropertyArray: typeof ChangeSetArrayFunctions._performApplyAfterOnPropertyArray;
-    public _rebaseArrayChangeSetForProperty: typeof ChangeSetArrayFunctions._rebaseArrayChangeSetForProperty;
-    public _rebaseChangeSetForString: typeof ChangeSetArrayFunctions._rebaseChangeSetForString;
-    public _performApplyAfterOnPropertyIndexedCollection: typeof ChangeSetIndexedCollectionFunctions._performApplyAfterOnPropertyIndexedCollection;
-    public _rebaseIndexedCollectionChangeSetForProperty: typeof ChangeSetIndexedCollectionFunctions._rebaseIndexedCollectionChangeSetForProperty;
+    declare public _cleanIndexedCollectionChangeSet: typeof ChangeSetIndexedCollectionFunctions._cleanIndexedCollectionChangeSet;
+    declare public _performApplyAfterOnPropertyArray: typeof ChangeSetArrayFunctions._performApplyAfterOnPropertyArray;
+    declare public _rebaseArrayChangeSetForProperty: typeof ChangeSetArrayFunctions._rebaseArrayChangeSetForProperty;
+    declare public _rebaseChangeSetForString: typeof ChangeSetArrayFunctions._rebaseChangeSetForString;
+    declare public _performApplyAfterOnPropertyIndexedCollection: typeof ChangeSetIndexedCollectionFunctions._performApplyAfterOnPropertyIndexedCollection;
+    declare public _rebaseIndexedCollectionChangeSetForProperty: typeof ChangeSetIndexedCollectionFunctions._rebaseIndexedCollectionChangeSetForProperty;
 
 
     _changes: SerializedChangeSet;

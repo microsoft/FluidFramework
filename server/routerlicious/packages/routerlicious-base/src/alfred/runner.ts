@@ -21,6 +21,7 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import { createMetricClient } from "@fluidframework/server-services";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import * as app from "./app";
 
@@ -140,5 +141,6 @@ export class AlfredRunner implements IRunner {
             ? `pipe ${addr}`
             : `port ${addr.port}`;
         winston.info(`Listening on ${bind}`);
+        Lumberjack.info(`Listening on ${bind}`);
     }
 }
