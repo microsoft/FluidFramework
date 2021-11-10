@@ -852,11 +852,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          * If this is a new container, we initialize these values. If it's an existing container,
          * these values would stay undefined
          */
-        if (!existing) {
-            this.createContainerMetadata.createContainerRuntimeVersion = pkgVersion;
-            this.createContainerMetadata.createContainerTimestamp = performance.now();
-            this.createContainerMetadata.lastSummaryCount = 0;
-        }
+        this.createContainerMetadata.createContainerRuntimeVersion = existing
+            ? metadata?.createContainerRuntimeVersion
+            : pkgVersion;
+        this.createContainerMetadata.createContainerTimestamp = existing
+            ? metadata?.createContainerTimestamp
+            : performance.now();
+        this.createContainerMetadata.lastSummaryCount = existing
+            ? metadata?.lastSummaryCount
+            : 0;
 
         // Default to false for now.
         this.latestSummaryGCVersion = prevSummaryGCVersion ??
@@ -1081,7 +1085,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.logger.sendTelemetryEvent({
             eventName: "ContainerLoadStats",
-            dataStoreCount: this.dataStores.dataStoreCount,
+            dataStoreCount: this.dataStores.containerLoadDataStoreCount,
             referencedDataStoreCount: this.dataStores.referencedDataStoreCount,
             createContainerRuntimeVersion: this.createContainerMetadata.createContainerRuntimeVersion,
             createContainerTimestamp: this.createContainerMetadata.createContainerTimestamp,
@@ -1786,9 +1790,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         /** True to run GC sweep phase after the mark phase; defaults to false */
         runSweep?: boolean,
     }): Promise<ISummaryTreeWithStats> {
-        if (this.createContainerMetadata.lastSummaryCount !== undefined) {
-            this.createContainerMetadata.lastSummaryCount++;
-        }
+        // if (this.createContainerMetadata.lastSummaryCount !== undefined) {
+        //     this.createContainerMetadata.lastSummaryCount++;
+        // }
         const { summaryLogger, fullTree = false, trackState = true, runGC = true, fullGC = false } = options;
 
         if (runGC) {
@@ -1811,6 +1815,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param options - options controlling how the summary is generated or submitted
      */
     public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
+        if (this.createContainerMetadata.lastSummaryCount !== undefined) {
+            this.createContainerMetadata.lastSummaryCount++;
+        }
         const { fullTree, refreshLatestAck, summaryLogger } = options;
         if (refreshLatestAck) {
             const latestSummaryRefSeq = await this.refreshLatestSummaryAckFromServer(
