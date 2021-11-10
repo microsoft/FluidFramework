@@ -20,16 +20,16 @@ declare function useLoadable(params: FluidObject<IFluidLoadable> | undefined): v
 
 // test implicit conversions between FluidObject and a FluidObject with a provides interface
 {
-    const FluidObject: FluidObject<IProvideFluidLoadable> = getUnknownFluidObject();
-    useUnknownFluidObject(FluidObject);
-    useUnknownFluidObject(FluidObject.IFluidLoadable);
-    useProvider(FluidObject);
-    useProvider(FluidObject.IFluidLoadable);
-    useLoadable(FluidObject);
-    useLoadable(FluidObject.IFluidLoadable);
-    expectError(FluidObject.handle);
-    FluidObject.IFluidLoadable?.handle;
-    const unknown: FluidObject | undefined = FluidObject.IFluidLoadable;
+    const provider: FluidObject<IProvideFluidLoadable> = getUnknownFluidObject();
+    useUnknownFluidObject(provider);
+    useUnknownFluidObject(provider.IFluidLoadable);
+    useProvider(provider);
+    useProvider(provider.IFluidLoadable);
+    useLoadable(provider);
+    useLoadable(provider.IFluidLoadable);
+    expectError(provider.handle);
+    provider.IFluidLoadable?.handle;
+    const unknown: FluidObject | undefined = provider.IFluidLoadable;
     useUnknownFluidObject(unknown);
     useProvider(unknown);
     useProvider<IFluidLoadable>(unknown);

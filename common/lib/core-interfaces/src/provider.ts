@@ -5,7 +5,7 @@
 
 /**
  * @internal
- * This utility type is primarily meant for internal use by @see FluidObject
+ * This utility type is meant for internal use by @see FluidObject
  * Produces a valid FluidObject key given a type and a property.
  * A valid FluidObject key is a property that exists on the incoming type
  * as well as on the type of the property itself. For example, IProvideFoo.IFoo.IFoo
@@ -24,11 +24,9 @@
  */
  export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> =
     string extends TProp ? never : number extends TProp? never : // exclude indexers [key:string |number]: any
-    TProp extends keyof T[TProp] // TProp is a property of T, T[TProp] and, T[TProp][TProp]
-        ? TProp extends keyof T[TProp][TProp] // ex; IProvideFoo.IFoo.IFoo.IFoo
-            ? TProp
-            :never
-        : never;
+    TProp extends keyof T[TProp] // TProp is a property of T, and T[TProp]
+        ? TProp
+        :never;
 
 /**
  * This utility type take interface(s) that follow the FluidObject pattern, and produces

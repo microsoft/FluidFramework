@@ -15,7 +15,7 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 // Warning: (ae-internal-missing-underscore) The name "FluidObjectProviderKeys" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal
-export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof T[TProp] ? TProp extends keyof T[TProp][TProp] ? TProp : never : never;
+export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof T[TProp] ? TProp : never;
 
 // @public
 export interface IFluidCodeDetails {
