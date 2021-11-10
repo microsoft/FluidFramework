@@ -20,29 +20,29 @@ export interface IFluidObject {
     /**
      * @deprecated - use `FluidObject<IFluidLoadable>` instead
      */
-    IFluidLoadable?: IFluidLoadable;
+    readonly IFluidLoadable?: IFluidLoadable;
     /**
      * @deprecated - use `FluidObject<IFluidRunnable>` instead
      */
-    IFluidRunnable?: IFluidRunnable
+    readonly IFluidRunnable?: IFluidRunnable
     /**
      * @deprecated - use `FluidObject<IFluidRouter>` instead
      */
-    IFluidRouter?: IFluidRouter;
+    readonly IFluidRouter?: IFluidRouter;
     /**
      * @deprecated - use `FluidObject<IFluidHandleContext>` instead
      */
-    IFluidHandleContext?: IFluidHandleContext;
+    readonly IFluidHandleContext?: IFluidHandleContext;
     /**
      * @deprecated - use `FluidObject<IFluidConfiguration>` instead
      */
-    IFluidConfiguration?: IFluidConfiguration;
+    readonly IFluidConfiguration?: IFluidConfiguration;
     /**
      * @deprecated - use `FluidObject<IFluidHandle>` instead
      */
-    IFluidHandle?: IFluidHandle;
+    readonly IFluidHandle?: IFluidHandle;
     /**
      * @deprecated - use `FluidObject<IFluidSerializer>` instead
      */
-    IFluidSerializer?: IFluidSerializer;
+    readonly IFluidSerializer?: IFluidSerializer;
 }
