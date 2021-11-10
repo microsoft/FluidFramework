@@ -422,8 +422,10 @@ class ScheduleManagerCore {
         // If batchMetadata is not undefined then if it's true we've begun a new batch - if false we've ended
         // the previous one
         if (this.currentBatchClientId !== undefined || batchMetadata === false) {
-            assert(this.currentBatchClientId === message.clientId,
-                "Batch not closed, yet message from another client!");
+            if (this.currentBatchClientId !== message.clientId) {
+                // "Batch not closed, yet message from another client!"
+                throw new DataCorruptionError("OpBatchIncomplete", {});
+            }
         }
         if (batchMetadata) {
             assert(this.currentBatchClientId === undefined, "there can't be active batch");
@@ -469,7 +471,8 @@ export class ScheduleManager {
 
     public beforeOpProcessing(message: ISequencedDocumentMessage) {
         if (this.batchClientId !== message.clientId) {
-            assert(this.batchClientId === undefined, "Batch is interrupted by other client op");
+            assert(this.batchClientId === undefined,
+                "Batch is interrupted by other client op. Should be caught by trackPending()");
 
             // This could be the beginning of a new batch or an individual message.
             this.emitter.emit("batchBegin", message);
@@ -634,8 +637,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
             // Unless bypass is explicitly set, then take action when sequence numbers mismatch.
             if (loadSequenceNumberVerification !== "bypass" && runtimeSequenceNumber !== protocolSequenceNumber) {
+                // "Load from summary, runtime metadata sequenceNumber !== initialSequenceNumber"
                 const error = new DataCorruptionError(
-                    "Load from summary, runtime metadata sequenceNumber !== initialSequenceNumber",
+                    "SummaryMetadataMismatch",
                     { runtimeSequenceNumber, protocolSequenceNumber },
                 );
 
