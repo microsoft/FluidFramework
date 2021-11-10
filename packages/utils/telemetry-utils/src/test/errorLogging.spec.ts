@@ -330,15 +330,14 @@ class TestFluidError implements IFluidErrorBase {
     readonly fluidErrorCode: string;
     readonly message: string;
     readonly stack?: string;
-    readonly name?: string;
+    readonly name: string = "Error";
     readonly errorInstanceId: string;
 
-    constructor(errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties" | "errorInstanceId">) {
+    constructor(errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties" | "errorInstanceId" | "name">) {
         this.errorType = errorProps.errorType;
         this.fluidErrorCode = errorProps.fluidErrorCode;
         this.message = errorProps.message;
         this.stack = errorProps.stack;
-        this.name = errorProps.name;
         this.errorInstanceId = uuid();
 
         this.atpStub = sinon.stub(this, "addTelemetryProperties");
@@ -440,7 +439,6 @@ describe("normalizeError", () => {
             fluidErrorCode: "someCode",
             message: "Hello",
             stack: "cool stack trace",
-            name: "someName!!!",
         });
         const typicalOutput = (message: string, stackHint: "<<generated stack>>" | "<<stack from input>>") => new TestFluidError({
             errorType: "genericError",

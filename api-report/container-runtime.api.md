@@ -652,15 +652,13 @@ export class PendingStateManager implements IDisposable {
     replayPendingStates(): void;
     }
 
-// @public (undocumented)
+// @public
 export class ScheduleManager {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, logger: ITelemetryLogger);
     // (undocumented)
-    beginOperation(message: ISequencedDocumentMessage): void;
+    afterOpProcessing(error: any | undefined, message: ISequencedDocumentMessage): void;
     // (undocumented)
-    endOperation(error: any | undefined, message: ISequencedDocumentMessage): void;
-    // (undocumented)
-    setPaused(localPaused: boolean): void;
+    beforeOpProcessing(message: ISequencedDocumentMessage): void;
     }
 
 // @public

@@ -65,7 +65,7 @@
     "@fluidframework/runtime-definitions": "^0.52.0",
     "@fluidframework/runtime-utils": "^0.52.0",
     "@fluidframework/telemetry-utils": "^0.52.0",
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "jsrsasign": "^10.2.0",
     "uuid": "^8.3.1"
   },

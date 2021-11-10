@@ -117,10 +117,13 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     close(error?: ICriticalContainerError): void;
     closeAndGetPendingLocalState(): string;
     readonly closed: boolean;
+    // @deprecated
     readonly codeDetails: IFluidCodeDetails | undefined;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    getLoadedCodeDetails?(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorum;
+    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     readonly isDirty: boolean;
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     request(request: IRequest): Promise<IResponse>;

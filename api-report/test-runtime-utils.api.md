@@ -186,9 +186,9 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     // (undocumented)
     get IDeltaSender(): this;
     // (undocumented)
-    get inbound(): IDeltaQueue<ISequencedDocumentMessage>;
+    get inbound(): MockDeltaQueue<ISequencedDocumentMessage>;
     // (undocumented)
-    get inboundSignal(): IDeltaQueue<ISignalMessage>;
+    get inboundSignal(): MockDeltaQueue<ISignalMessage>;
     // (undocumented)
     initialSequenceNumber: number;
     // (undocumented)
@@ -202,7 +202,7 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     // (undocumented)
     minimumSequenceNumber: number;
     // (undocumented)
-    get outbound(): IDeltaQueue<IDocumentMessage[]>;
+    get outbound(): MockDeltaQueue<IDocumentMessage[]>;
     // (undocumented)
     readonly readonly = false;
     // (undocumented)
@@ -215,6 +215,43 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     submitSignal(content: any): void;
     // (undocumented)
     get version(): string;
+}
+
+// @public
+export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
+    constructor();
+    // (undocumented)
+    dispose(): void;
+    // (undocumented)
+    get disposed(): any;
+    // (undocumented)
+    get idle(): boolean;
+    // (undocumented)
+    get length(): number;
+    // (undocumented)
+    pause(): Promise<void>;
+    // (undocumented)
+    protected pauseCount: number;
+    // (undocumented)
+    get paused(): boolean;
+    // (undocumented)
+    peek(): T | undefined;
+    // (undocumented)
+    pop(): T;
+    // (undocumented)
+    protected process(): void;
+    // (undocumented)
+    processCallback: (el: T) => void;
+    // (undocumented)
+    push(el: T): void;
+    // (undocumented)
+    protected readonly queue: T[];
+    // (undocumented)
+    resume(): void;
+    // (undocumented)
+    toArray(): T[];
+    // (undocumented)
+    waitTillProcessingDone(): Promise<void>;
 }
 
 // @public
