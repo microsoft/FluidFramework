@@ -861,13 +861,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.baseSummaryMessage = metadata?.message;
 
         /**
-          * gcFeature in metadata is introduced with v1 in the metadata blob. Forced to 0/disallowed before that.
-          * For existing documents, we get this value from the metadata blob.
-          * For new documents, we get this value based on the gcAllowed flag in runtimeOptions.
-          */
-        const prevSummaryGCVersion = existing ? getGCVersion(metadata) : undefined;
-
-        /**
          * If this is a new container, we initialize these values. If it's an existing container,
          * these values would stay undefined
          */
@@ -880,23 +873,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.createContainerMetadata.summaryCount = existing
             ? metadata?.summaryCount
             : 0;
-
-        // Default to false for now.
-        this.latestSummaryGCVersion = prevSummaryGCVersion ??
-            (this.runtimeOptions.gcOptions.gcAllowed === true ? this.currentGCVersion : 0);
-
-        // Whether GC should run or not. Can override with localStorage flag.
-        this.shouldRunGC = getLocalStorageFeatureGate(runGCKey) ?? (
-            // GC must be enabled for the document.
-            this.gcEnabled
-            // Must not be disabled by runtime option.
-            && !this.runtimeOptions.gcOptions.disableGC
-        );
-
-        // Whether GC sweep phase should run or not. If this is false, only GC mark phase is run. Can override with
-        // localStorage flag.
-        this.shouldRunSweep = this.shouldRunGC &&
-            (getLocalStorageFeatureGate(runSweepKey) ?? this.runtimeOptions.gcOptions.runSweep === true);
 
         // Default to false (enabled).
         this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? false;
