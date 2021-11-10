@@ -381,7 +381,6 @@ class ScheduleManagerCore {
         // If the inbound queue is ever empty we pause it and wait for new events
         if (this.deltaManager.inbound.length === 0) {
             this.setPaused(true);
-            return;
         }
     }
 

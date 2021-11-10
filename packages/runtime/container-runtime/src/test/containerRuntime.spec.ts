@@ -110,7 +110,7 @@ describe("Runtime", () => {
                     // Send a non-batch message.
                     processOp(message);
 
-                    assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
+                    assert.strictEqual(deltaManager.inbound.length, 0, "Did not process all ops");
                     assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin events");
                     assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd events");
                 });
@@ -129,7 +129,7 @@ describe("Runtime", () => {
                     processOp(message);
                     processOp(message);
 
-                    assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
+                    assert.strictEqual(deltaManager.inbound.length, 0, "Did not process all ops");
                     assert.strictEqual(5, batchBegin, "Did not receive correct batchBegin events");
                     assert.strictEqual(5, batchEnd, "Did not receive correct batchEnd events");
                 });
@@ -145,7 +145,7 @@ describe("Runtime", () => {
                     processOp(message);
 
                     // We should have a "batchBegin" and a "batchEnd" event for the batch.
-                    assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
+                    assert.strictEqual(deltaManager.inbound.length, 0, "Did not process all ops");
                     assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
                     assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
                 });
@@ -174,12 +174,12 @@ describe("Runtime", () => {
                     processOp(batchMessage);
                     processOp(batchMessage);
 
-                    assert.strictEqual(deltaManager.inbound.length, 3, "none of the batched ops are processed yet");
+                    assert.strictEqual(deltaManager.inbound.length, 3, "Some of partial batch ops were processed yet");
 
                     processOp(batchEndMessage);
 
                     // We should have only received one "batchBegin" and one "batchEnd" event for the batch.
-                    assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
+                    assert.strictEqual(deltaManager.inbound.length, 0, "Did not process all ops");
                     assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
                     assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
                 });
@@ -243,11 +243,12 @@ describe("Runtime", () => {
                             processOp(batchMessage);
                             processOp(batchMessage);
 
-                            assert.strictEqual(deltaManager.inbound.length, 3, "none of the batch ops are processed");
+                            assert.strictEqual(deltaManager.inbound.length, 3,
+                                "Some of partial batch ops were processed yet");
 
                             assert.throws(() => processOp(messageToFail));
 
-                            assert.strictEqual(deltaManager.inbound.length, 4, "none of the ops are processed");
+                            assert.strictEqual(deltaManager.inbound.length, 4, "Some of batch ops were processed");
                             assert.strictEqual(0, batchBegin, "Did not receive correct batchBegin event for the batch");
                             assert.strictEqual(0, batchEnd, "Did not receive correct batchBegin event for the batch");
                         });
