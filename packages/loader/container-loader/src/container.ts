@@ -495,14 +495,30 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
-     * @deprecated use codeDetails
+     * The current code details for the container's runtime
+     * @deprecated use getSpecifiedCodeDetails for the code details currently specified for this container, or
+     * getLoadedCodeDetails for the code details that the container's context was loaded with.
+     * To be removed after getSpecifiedCodeDetails and getLoadedCodeDetails become ubiquitous.
      */
-    public get chaincodePackage(): IFluidCodeDetails | undefined {
-        return this.codeDetails;
-    }
-
     public get codeDetails(): IFluidCodeDetails | undefined {
         return this._context?.codeDetails ?? this.getCodeDetailsFromQuorum();
+    }
+
+    /**
+     * Get the code details that are currently specified for the container.
+     * @returns The current code details if any are specified, undefined if none are specified.
+     */
+    public getSpecifiedCodeDetails(): IFluidCodeDetails | undefined {
+        return this.getCodeDetailsFromQuorum();
+    }
+
+    /**
+     * Get the code details that were used to load the container.
+     * @returns The code details that were used to load the container if it is loaded, undefined if it is not yet
+     * loaded.
+     */
+    public getLoadedCodeDetails(): IFluidCodeDetails | undefined {
+        return this._context?.codeDetails;
     }
 
     /**
