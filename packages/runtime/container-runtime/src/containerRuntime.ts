@@ -367,6 +367,8 @@ class ScheduleManagerCore {
      * to make decision if op processing should be paused or not afer that.
      */
      public afterOpProcessing(sequenceNumber: number) {
+        assert(!this.localPaused, "can't have op processing paused if we are processing an op");
+
         // If the inbound queue is ever empty we pause it and wait for new events
         if (this.deltaManager.inbound.length === 0) {
             this.setPaused(true);
@@ -377,8 +379,6 @@ class ScheduleManagerCore {
         // then we simply continue processing
         if (this.pauseSequenceNumber !== undefined && sequenceNumber + 1 >= this.pauseSequenceNumber) {
             this.setPaused(true);
-        } else {
-            this.setPaused(false);
         }
     }
 
@@ -469,17 +469,7 @@ export class ScheduleManager {
 
     public beforeOpProcessing(message: ISequencedDocumentMessage) {
         if (this.batchClientId !== message.clientId) {
-            // FOLLOWUP: Should be assert instead of recovery code
-            if (this.batchClientId !== undefined) {
-                // As a back stop for any bugs marking the end of a batch - if the client ID flipped, we
-                // consider the previous batch over.
-                this.logger.sendErrorEvent({
-                    eventName: "BatchEndNotReceived",
-                    sequenceNumber: message.sequenceNumber,
-                });
-                this.emitter.emit("batchEnd", "Did not receive real batchEnd message", undefined);
-                this.deltaScheduler.batchEnd();
-            }
+            assert(this.batchClientId === undefined, "Batch is interrupted by other client op");
 
             // This could be the beginning of a new batch or an individual message.
             this.emitter.emit("batchBegin", message);

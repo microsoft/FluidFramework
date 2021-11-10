@@ -7,11 +7,10 @@ import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { DebugLogger, MockLogger } from "@fluidframework/telemetry-utils";
 import {
-    IDocumentMessage,
     ISequencedDocumentMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
+import { IContainerContext } from "@fluidframework/container-definitions";
 import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
 import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
 
@@ -57,12 +56,16 @@ describe("Runtime", () => {
                 let batchBegin: number = 0;
                 let batchEnd: number = 0;
                 let emitter: EventEmitter;
-                let deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+                let deltaManager: MockDeltaManager;
                 let scheduleManager: ScheduleManager;
 
                 beforeEach(() => {
                     emitter = new EventEmitter();
                     deltaManager = new MockDeltaManager();
+                    deltaManager.inbound.processCallback = (message: ISequencedDocumentMessage) => {
+                        scheduleManager.beforeOpProcessing(message);
+                        scheduleManager.afterOpProcessing(undefined, message);
+                    };
                     scheduleManager = new ScheduleManager(
                         deltaManager,
                         emitter,
@@ -89,6 +92,10 @@ describe("Runtime", () => {
                     batchEnd = 0;
                 });
 
+                function processOp(message: ISequencedDocumentMessage) {
+                    deltaManager.inbound.push(message);
+                }
+
                 it("Single non-batch message", () => {
                     const clientId: string = "test-client";
                     const message: Partial<ISequencedDocumentMessage> = {
@@ -98,8 +105,7 @@ describe("Runtime", () => {
                     };
 
                     // Send a non-batch message.
-                    scheduleManager.beforeOpProcessing(message as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, message as ISequencedDocumentMessage);
+                    processOp(message as ISequencedDocumentMessage);
 
                     assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin events");
                     assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd events");
@@ -114,20 +120,11 @@ describe("Runtime", () => {
                     };
 
                     // Sent 5 non-batch messages.
-                    scheduleManager.beforeOpProcessing(message as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, message as ISequencedDocumentMessage);
-
-                    scheduleManager.beforeOpProcessing(message as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, message as ISequencedDocumentMessage);
-
-                    scheduleManager.beforeOpProcessing(message as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, message as ISequencedDocumentMessage);
-
-                    scheduleManager.beforeOpProcessing(message as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, message as ISequencedDocumentMessage);
-
-                    scheduleManager.beforeOpProcessing(message as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, message as ISequencedDocumentMessage);
+                    processOp(message as ISequencedDocumentMessage);
+                    processOp(message as ISequencedDocumentMessage);
+                    processOp(message as ISequencedDocumentMessage);
+                    processOp(message as ISequencedDocumentMessage);
+                    processOp(message as ISequencedDocumentMessage);
 
                     assert.strictEqual(5, batchBegin, "Did not receive correct batchBegin events");
                     assert.strictEqual(5, batchEnd, "Did not receive correct batchEnd events");
@@ -142,8 +139,7 @@ describe("Runtime", () => {
                         metadata: { foo: 1 },
                     };
 
-                    scheduleManager.beforeOpProcessing(message as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, message as ISequencedDocumentMessage);
+                    processOp(message as ISequencedDocumentMessage);
 
                     // We should have a "batchBegin" and a "batchEnd" event for the batch.
                     assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
@@ -173,26 +169,20 @@ describe("Runtime", () => {
                     };
 
                     // Send a batch with 4 messages.
-                    scheduleManager.beforeOpProcessing(batchBeginMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, batchBeginMessage as ISequencedDocumentMessage);
-
-                    scheduleManager.beforeOpProcessing(batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, batchMessage as ISequencedDocumentMessage);
-
-                    scheduleManager.beforeOpProcessing(batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, batchMessage as ISequencedDocumentMessage);
-
-                    scheduleManager.beforeOpProcessing(batchEndMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, batchEndMessage as ISequencedDocumentMessage);
+                    processOp(batchBeginMessage as ISequencedDocumentMessage);
+                    processOp(batchMessage as ISequencedDocumentMessage);
+                    processOp(batchMessage as ISequencedDocumentMessage);
+                    processOp(batchEndMessage as ISequencedDocumentMessage);
 
                     // We should have only received one "batchBegin" and one "batchEnd" event for the batch.
                     assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
                     assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
                 });
 
-                it("Partial batch messages followed by a non-batch message from another client", () => {
+                function testWrongBatches() {
                     const clientId1: string = "test-client-1";
                     const clientId2: string = "test-client-2";
+
                     const batchBeginMessage: Partial<ISequencedDocumentMessage> = {
                         clientId: clientId1,
                         sequenceNumber: 0,
@@ -206,183 +196,56 @@ describe("Runtime", () => {
                         type: MessageType.Operation,
                     };
 
-                    // Send a batch with 3 messages from first client but don't send batch end message.
-                    scheduleManager.beforeOpProcessing(batchBeginMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, batchBeginMessage as ISequencedDocumentMessage);
+                    const messagesToFail: Partial<ISequencedDocumentMessage>[] = [
+                        // Send a message from another client. This should result in a a violation!
+                        {
+                            clientId: clientId2,
+                            sequenceNumber: 0,
+                            type: MessageType.Operation,
+                        },
 
-                    scheduleManager.beforeOpProcessing(batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, batchMessage as ISequencedDocumentMessage);
+                        // Send a message from another client with non batch-related metadata. This should result
+                        // in a "batchEnd" event for the previous batch since the client id changes. Also, we
+                        // should get a "batchBegin" and a "batchEnd" event for the new client.
+                        {
+                            clientId: clientId2,
+                            sequenceNumber: 0,
+                            type: MessageType.Operation,
+                            metadata: { foo: 1 },
+                        },
 
-                    scheduleManager.beforeOpProcessing(batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, batchMessage as ISequencedDocumentMessage);
+                        // Send a batch from another client. This should result in a "batchEnd" event for the
+                        // previous batch since the client id changes. Also, we should get one "batchBegin" and
+                        // one "batchEnd" event for the batch from the new client.
+                        {
+                            clientId: clientId2,
+                            sequenceNumber: 0,
+                            type: MessageType.Operation,
+                            metadata: { batch: true },
+                        },
 
-                    // Send a message from another client. This should result in a "batchEnd" event for the
-                    // previous batch since the client id changes. Also, we should get a "batchBegin" and
-                    // a "batchEnd" event for the new client.
-                    const client2Message: Partial<ISequencedDocumentMessage> = {
-                        clientId: clientId2,
-                        sequenceNumber: 0,
-                        type: MessageType.Operation,
-                    };
+                        // Batch messages interleaved with a batch begin message from same client
+                        batchBeginMessage,
+                    ];
 
-                    scheduleManager.beforeOpProcessing(client2Message as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, client2Message as ISequencedDocumentMessage);
+                    let counter = 0;
+                    for (const messageToFail of messagesToFail) {
+                        counter++;
+                        it(`Partial batch messages, case ${counter}`, () => {
+                            // Send a batch with 3 messages from first client but don't send batch end message.
+                            processOp(batchBeginMessage as ISequencedDocumentMessage);
+                            processOp(batchMessage as ISequencedDocumentMessage);
+                            processOp(batchMessage as ISequencedDocumentMessage);
 
-                    // We should have received two sets of "batchBegin" and "batchEnd" events.
-                    assert.strictEqual(2, batchBegin, "Did not receive correct batchBegin event for the batch");
-                    assert.strictEqual(2, batchEnd, "Did not receive correct batchBegin event for the batch");
-                });
+                            assert.throws(() => processOp(messageToFail as ISequencedDocumentMessage));
 
-                it("Partial batch messages followed by non batch-related metadata message from another client", () => {
-                    const clientId1: string = "test-client-1";
-                    const clientId2: string = "test-client-2";
-                    const batchBeginMessage: Partial<ISequencedDocumentMessage> = {
-                        clientId: clientId1,
-                        sequenceNumber: 0,
-                        type: MessageType.Operation,
-                        metadata: { batch: true },
-                    };
+                            assert.strictEqual(0, batchBegin, "Did not receive correct batchBegin event for the batch");
+                            assert.strictEqual(0, batchEnd, "Did not receive correct batchBegin event for the batch");
+                        });
+                    }
+                }
 
-                    const batchMessage: Partial<ISequencedDocumentMessage> = {
-                        clientId: clientId1,
-                        sequenceNumber: 0,
-                        type: MessageType.Operation,
-                    };
-
-                    // Send a batch with 3 messages from first client but don't send batch end message.
-                    scheduleManager.beforeOpProcessing(batchBeginMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, batchBeginMessage as ISequencedDocumentMessage);
-
-                    scheduleManager.beforeOpProcessing(batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, batchMessage as ISequencedDocumentMessage);
-
-                    scheduleManager.beforeOpProcessing(batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, batchMessage as ISequencedDocumentMessage);
-
-                    // Send a message from another client with non batch-related metadata. This should result
-                    // in a "batchEnd" event for the previous batch since the client id changes. Also, we
-                    // should get a "batchBegin" and a "batchEnd" event for the new client.
-                    const client2Message: Partial<ISequencedDocumentMessage> = {
-                        clientId: clientId2,
-                        sequenceNumber: 0,
-                        type: MessageType.Operation,
-                        metadata: { foo: 1 },
-                    };
-
-                    scheduleManager.beforeOpProcessing(client2Message as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, client2Message as ISequencedDocumentMessage);
-
-                    // We should have received two sets of "batchBegin" and "batchEnd" events.
-                    assert.strictEqual(2, batchBegin, "Did not receive correct batchBegin event for the batch");
-                    assert.strictEqual(2, batchEnd, "Did not receive correct batchBegin event for the batch");
-                });
-
-                it("Partial batch messages followed by batch messages from another client", () => {
-                    const clientId1: string = "test-client-1";
-                    const clientId2: string = "test-client-2";
-                    const client1batchBeginMessage: Partial<ISequencedDocumentMessage> = {
-                        clientId: clientId1,
-                        sequenceNumber: 0,
-                        type: MessageType.Operation,
-                        metadata: { batch: true },
-                    };
-
-                    const client1batchMessage: Partial<ISequencedDocumentMessage> = {
-                        clientId: clientId1,
-                        sequenceNumber: 0,
-                        type: MessageType.Operation,
-                    };
-
-                    // Send a batch with 3 messages from first client but don't send batch end message.
-                    scheduleManager.beforeOpProcessing(client1batchBeginMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, client1batchBeginMessage as ISequencedDocumentMessage);
-
-                    scheduleManager.beforeOpProcessing(client1batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, client1batchMessage as ISequencedDocumentMessage);
-
-                    scheduleManager.beforeOpProcessing(client1batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, client1batchMessage as ISequencedDocumentMessage);
-
-                    // Send a batch from another client. This should result in a "batchEnd" event for the
-                    // previous batch since the client id changes. Also, we should get one "batchBegin" and
-                    // one "batchEnd" event for the batch from the new client.
-                    const client2batchBeginMessage: Partial<ISequencedDocumentMessage> = {
-                        clientId: clientId2,
-                        sequenceNumber: 0,
-                        type: MessageType.Operation,
-                        metadata: { batch: true },
-                    };
-
-                    const client2batchMessage: Partial<ISequencedDocumentMessage> = {
-                        clientId: clientId2,
-                        sequenceNumber: 0,
-                        type: MessageType.Operation,
-                    };
-
-                    const client2batchEndMessage: Partial<ISequencedDocumentMessage> = {
-                        clientId: clientId2,
-                        sequenceNumber: 0,
-                        type: MessageType.Operation,
-                        metadata: { batch: false },
-                    };
-
-                    scheduleManager.beforeOpProcessing(client2batchBeginMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, client2batchBeginMessage as ISequencedDocumentMessage);
-
-                    scheduleManager.beforeOpProcessing(client2batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, client2batchMessage as ISequencedDocumentMessage);
-
-                    scheduleManager.beforeOpProcessing(client2batchEndMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, client2batchEndMessage as ISequencedDocumentMessage);
-
-                    // We should have received two sets of "batchBegin" and one "batchEnd" events.
-                    assert.strictEqual(2, batchBegin, "Did not receive correct batchBegin event for the batches");
-                    assert.strictEqual(2, batchEnd, "Did not receive correct batchBegin event for the batches");
-                });
-
-                it("Batch messages interleaved with a batch begin message from same client", () => {
-                    const clientId: string = "test-client";
-                    const batchBeginMessage: Partial<ISequencedDocumentMessage> = {
-                        clientId,
-                        sequenceNumber: 0,
-                        type: MessageType.Operation,
-                        metadata: { batch: true },
-                    };
-
-                    const batchMessage: Partial<ISequencedDocumentMessage> = {
-                        clientId,
-                        sequenceNumber: 0,
-                        type: MessageType.Operation,
-                    };
-
-                    const batchEndMessage: Partial<ISequencedDocumentMessage> = {
-                        clientId,
-                        sequenceNumber: 0,
-                        type: MessageType.Operation,
-                        metadata: { batch: false },
-                    };
-
-                    // Send a batch with an interleaved batch begin message.
-                    scheduleManager.beforeOpProcessing(batchBeginMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, batchBeginMessage as ISequencedDocumentMessage);
-
-                    scheduleManager.beforeOpProcessing(batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, batchMessage as ISequencedDocumentMessage);
-
-                    scheduleManager.beforeOpProcessing(batchMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, batchMessage as ISequencedDocumentMessage);
-
-                    // The interleaved batch begin message. We should not get a "batchBegin" event for this.
-                    scheduleManager.beforeOpProcessing(batchBeginMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, batchBeginMessage as ISequencedDocumentMessage);
-
-                    scheduleManager.beforeOpProcessing(batchEndMessage as ISequencedDocumentMessage);
-                    scheduleManager.afterOpProcessing(undefined, batchEndMessage as ISequencedDocumentMessage);
-
-                    // We should have only received one "batchBegin" and one "batchEnd" for the batch.
-                    assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
-                    assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
-                });
+                testWrongBatches();
             });
         });
     });
