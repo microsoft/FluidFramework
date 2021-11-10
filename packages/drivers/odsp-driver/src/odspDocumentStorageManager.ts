@@ -427,7 +427,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                     // eslint-disable-next-line @typescript-eslint/dot-notation
                                     props["cacheEntryAge"] = age;
 
-                                    if(age > 2 * 24 * 60 * 60 * 1000) {
+                                    // Default the age of the cached entry to 2 days if no other values are set.
+                                    const cacheLife = hostSnapshotOptions?.maxSessionActiveTime ?? 2 * 24 * 60 * 60 * 1000;
+                                    if(age > cacheLife) {
                                         await this.epochTracker.removeEntries();
                                         return undefined;
                                     }
