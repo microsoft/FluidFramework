@@ -21,6 +21,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { convertToSummaryTreeWithStats, FluidSerializer } from "@fluidframework/runtime-utils";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
+import { DataProcessingError } from "@fluidframework/container-utils";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
@@ -73,6 +74,11 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     private _isSummarizing: boolean = false;
 
     /**
+     * Tracks error that closed this object.
+     */
+    private closeError?: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>;
+
+    /**
      * Gets the connection state
      * @returns The state of the connection
      */
@@ -102,13 +108,21 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param id - The id of the shared object
      * @param runtime - The IFluidDataStoreRuntime which contains the shared object
      * @param attributes - Attributes of the shared object
+     * @param closeOnEventListenerException - if true (default), results in critical error (container closure) on
+     * exception thrown from from any event listeners for any events raised by this object.
      */
     constructor(
         public id: string,
         protected runtime: IFluidDataStoreRuntime,
-        public readonly attributes: IChannelAttributes)
+        public readonly attributes: IChannelAttributes,
+        closeOnEventListenerException = true)
     {
-        super((eventName, error) => this.runtime.raiseContainerWarning(error));
+        super((event: string | symbol, e: any) => {
+            if (closeOnEventListenerException) {
+                this.eventListenerErrorHandler(event, e);
+            }
+            throw e;
+        });
 
         this.handle = new SharedObjectHandle(
             this,
@@ -124,6 +138,61 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         this._serializer = new FluidSerializer(this.runtime.channelsRoutingContext);
 
         this.attachListeners();
+    }
+
+    /**
+     * Marks this objects as closed. Any attempt to change it (local changes or processing remote ops)
+     * would result in same error thrown. If called multiple times, only first error is remembered.
+     * @param error - error object that is thrown whenever an attempt is made to modify this object
+     */
+    protected closeWithError(error: any) {
+        if (this.closeError === undefined) {
+            this.closeError = error;
+        }
+    }
+
+    /**
+     * Verifies that this object is not closed via closeWithError(). If it is, throws an error used to close it.
+     */
+     protected verifyNotClosed() {
+        if (this.closeError !== undefined) {
+            throw this.closeError;
+        }
+    }
+
+    /**
+     * Event listener handler helper that can be used to react to exceptions thrown from event listeners
+     * It wraps error with DataProcessingError, closes this object and throws resulting error.
+     * See closeWithError() for more details
+     * Ideally such situation never happens, as consumers of DDS should never throw exceptions
+     * in event listeners (i.e. catch any of the issues and make determination on how to handle it).
+     * When such exceptions propagate through, most likely data model is no longer consistent, i.e.
+     * DDS state does not match what user sees. Because of it DDS moves to "corrupted state" and does not
+     * allow processing of ops or local changes, which very quickly results in container closure.
+     */
+     protected eventListenerErrorHandler(event: string | symbol, e: any) {
+        const error = DataProcessingError.wrapIfUnrecognized(
+            e,
+            "SharedObjectEventListenerException",
+            undefined); // message
+        error.addTelemetryProperties({ emittedEventName: String(event) });
+
+        this.closeWithError(error);
+        throw error;
+    }
+
+    /**
+     * Helper method that can be used to emit events and respond to exceptions thrown from event listeners
+     * by closing this object. Please see eventListenerErrorHandler() & closeWithError() for more info.
+     * @param event - event to raise
+     * @param args - payload of event
+     */
+    protected safeRaiseEvent(event, ...args) {
+        try {
+            this.emit(event, ...args);
+        } catch (e) {
+            this.eventListenerErrorHandler(event, e);
+        }
     }
 
     private attachListeners() {
@@ -306,6 +375,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * also sent if we are asked to resubmit the message.
      */
     protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
+        this.verifyNotClosed();
         if (this.isAttached()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.services!.deltaConnection.submit(content, localOpMetadata);
@@ -433,9 +503,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * For messages from a remote client, this will be undefined.
      */
     private process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        this.emit("pre-op", message, local, this);
+        this.verifyNotClosed(); // This will result in container closure.
+        this.safeRaiseEvent("pre-op", message, local, this);
         this.processCore(message, local, localOpMetadata);
-        this.emit("op", message, local, this);
+        this.safeRaiseEvent("op", message, local, this);
     }
 
     /**

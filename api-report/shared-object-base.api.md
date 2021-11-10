@@ -48,16 +48,18 @@ export function serializeHandles(value: any, serializer: IFluidSerializer, bind:
 
 // @public
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, closeOnEventListenerException?: boolean);
     // (undocumented)
     protected abstract applyStashedOp(content: any): unknown;
     // (undocumented)
     readonly attributes: IChannelAttributes;
     bindToContext(): void;
+    protected closeWithError(error: any): void;
     connect(services: IChannelServices): void;
     get connected(): boolean;
     protected didAttach(): void;
     protected dirty(): void;
+    protected eventListenerErrorHandler(event: string | symbol, e: any): void;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     protected getGCDataCore(): IGarbageCollectionData;
     readonly handle: IFluidHandle;
@@ -85,11 +87,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     protected runtime: IFluidDataStoreRuntime;
+    protected safeRaiseEvent(event: any, ...args: any[]): void;
     // (undocumented)
     protected get serializer(): IFluidSerializer;
     protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
     protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
     summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    protected verifyNotClosed(): void;
 }
 
 // @public
