@@ -55,7 +55,7 @@ describe("Runtime", () => {
             describe("Batch processing events", () => {
                 let batchBegin: number = 0;
                 let batchEnd: number = 0;
-                let seqNumber: number = 0;
+                let sequenceNumber: number = 0;
                 let emitter: EventEmitter;
                 let deltaManager: MockDeltaManager;
                 let scheduleManager: ScheduleManager;
@@ -91,13 +91,12 @@ describe("Runtime", () => {
                 afterEach(() => {
                     batchBegin = 0;
                     batchEnd = 0;
-                    seqNumber = 0;
+                    sequenceNumber = 0;
                 });
 
                 function processOp(message: Partial<ISequencedDocumentMessage>) {
-                    seqNumber++;
-                    message.sequenceNumber = seqNumber;
-                    deltaManager.inbound.push(message as ISequencedDocumentMessage);
+                    sequenceNumber++;
+                    deltaManager.inbound.push({ ...message, sequenceNumber } as ISequencedDocumentMessage);
                 }
 
                 it("Single non-batch message", () => {

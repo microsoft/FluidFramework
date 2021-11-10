@@ -369,8 +369,9 @@ class ScheduleManagerCore {
      public afterOpProcessing(sequenceNumber: number) {
         assert(!this.localPaused, "can't have op processing paused if we are processing an op");
 
-        // If the inbound queue is ever empty we pause it and wait for new events
+        // If the inbound queue is ever empty, nothing to do!
         if (this.deltaManager.inbound.length === 0) {
+            assert(this.pauseSequenceNumber === undefined, "there should be no pending batch if we have no ops");
             return;
         }
 
