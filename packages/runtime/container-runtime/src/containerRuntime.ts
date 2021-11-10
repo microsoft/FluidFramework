@@ -46,7 +46,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
-import { DataCorruptionError, GenericError } from "@fluidframework/container-utils";
+import { DataCorruptionError, GenericError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
 import {
     BlobTreeEntry,
     TreeTreeEntry,
@@ -373,7 +373,7 @@ class ScheduleManagerCore {
         // then we simply continue processing
         if (this.pauseSequenceNumber !== undefined) {
             assert(sequenceNumber < this.pauseSequenceNumber, "processed op we should have not processed");
-            if (sequenceNumber + 1 >= this.pauseSequenceNumber) {
+            if (sequenceNumber + 1 === this.pauseSequenceNumber) {
                 this.setPaused(true);
             }
         }
@@ -427,7 +427,12 @@ class ScheduleManagerCore {
         if (this.currentBatchClientId !== undefined || batchMetadata === false) {
             if (this.currentBatchClientId !== message.clientId) {
                 // "Batch not closed, yet message from another client!"
-                throw new DataCorruptionError("OpBatchIncomplete", {});
+                throw new DataCorruptionError(
+                    "OpBatchIncomplete",
+                    {
+                        batchClientId: this.currentBatchClientId,
+                        ...extractSafePropertiesFromMessage(message),
+                    });
             }
         }
         if (batchMetadata) {

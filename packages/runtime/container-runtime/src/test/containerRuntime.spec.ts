@@ -94,10 +94,10 @@ describe("Runtime", () => {
                     seqNumber = 0;
                 });
 
-                function processOp(message: ISequencedDocumentMessage) {
+                function processOp(message: Partial<ISequencedDocumentMessage>) {
                     seqNumber++;
                     message.sequenceNumber = seqNumber;
-                    deltaManager.inbound.push(message);
+                    deltaManager.inbound.push(message as ISequencedDocumentMessage);
                 }
 
                 it("Single non-batch message", () => {
@@ -108,7 +108,7 @@ describe("Runtime", () => {
                     };
 
                     // Send a non-batch message.
-                    processOp(message as ISequencedDocumentMessage);
+                    processOp(message);
 
                     assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
                     assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin events");
@@ -123,11 +123,11 @@ describe("Runtime", () => {
                     };
 
                     // Sent 5 non-batch messages.
-                    processOp(message as ISequencedDocumentMessage);
-                    processOp(message as ISequencedDocumentMessage);
-                    processOp(message as ISequencedDocumentMessage);
-                    processOp(message as ISequencedDocumentMessage);
-                    processOp(message as ISequencedDocumentMessage);
+                    processOp(message);
+                    processOp(message);
+                    processOp(message);
+                    processOp(message);
+                    processOp(message);
 
                     assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
                     assert.strictEqual(5, batchBegin, "Did not receive correct batchBegin events");
@@ -142,7 +142,7 @@ describe("Runtime", () => {
                         metadata: { foo: 1 },
                     };
 
-                    processOp(message as ISequencedDocumentMessage);
+                    processOp(message);
 
                     // We should have a "batchBegin" and a "batchEnd" event for the batch.
                     assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
@@ -170,13 +170,13 @@ describe("Runtime", () => {
                     };
 
                     // Send a batch with 4 messages.
-                    processOp(batchBeginMessage as ISequencedDocumentMessage);
-                    processOp(batchMessage as ISequencedDocumentMessage);
-                    processOp(batchMessage as ISequencedDocumentMessage);
+                    processOp(batchBeginMessage);
+                    processOp(batchMessage);
+                    processOp(batchMessage);
 
                     assert.strictEqual(deltaManager.inbound.length, 3, "none of the batched ops are processed yet");
 
-                    processOp(batchEndMessage as ISequencedDocumentMessage);
+                    processOp(batchEndMessage);
 
                     // We should have only received one "batchBegin" and one "batchEnd" event for the batch.
                     assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
@@ -239,13 +239,13 @@ describe("Runtime", () => {
                         counter++;
                         it(`Partial batch messages, case ${counter}`, () => {
                             // Send a batch with 3 messages from first client but don't send batch end message.
-                            processOp(batchBeginMessage as ISequencedDocumentMessage);
-                            processOp(batchMessage as ISequencedDocumentMessage);
-                            processOp(batchMessage as ISequencedDocumentMessage);
+                            processOp(batchBeginMessage);
+                            processOp(batchMessage);
+                            processOp(batchMessage);
 
                             assert.strictEqual(deltaManager.inbound.length, 3, "none of the batch ops are processed");
 
-                            assert.throws(() => processOp(messageToFail as ISequencedDocumentMessage));
+                            assert.throws(() => processOp(messageToFail));
 
                             assert.strictEqual(deltaManager.inbound.length, 4, "none of the ops are processed");
                             assert.strictEqual(0, batchBegin, "Did not receive correct batchBegin event for the batch");
