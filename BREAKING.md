@@ -10,6 +10,12 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.52 Breaking changes
+- [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
+
+### `chaincodePackage` removed from `Container`
+The `chaincodePackage` property on `Container` was deprecated in 0.28, and has now been removed.  Two new APIs have been added to replace its functionality, `getSpecifiedCodeDetails()` and `getLoadedCodeDetails()`.  Use `getSpecifiedCodeDetails()` to get the code details currently specified for the `Container`, or `getLoadedCodeDetails()` to get the code details that were used to load the `Container`.
+
 ## 0.51 Breaking changes
 - [`maxMessageSize` property has been deprecated from IConnectionDetails and IDocumentDeltaConnection](#maxmessagesize-property-has-been-deprecated-from-iconnectiondetails-and-idocumentdeltaconnection)
 - [_createDataStoreWithProps and IFluidDataStoreChannel](#createdatastorewithprops-and-ifluiddatastorechannel)

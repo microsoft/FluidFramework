@@ -173,7 +173,7 @@ describe("Runtime", () => {
                     processOp(batchMessage);
                     processOp(batchMessage);
 
-                    assert.strictEqual(deltaManager.inbound.length, 3, "Some of partial batch ops were processed yet");
+                    assert.strictEqual(deltaManager.inbound.length, 3, "Some of partial batch ops were processed");
 
                     processOp(batchEndMessage);
 
@@ -292,7 +292,7 @@ describe("Runtime", () => {
                             processOp(batchMessage);
 
                             assert.strictEqual(deltaManager.inbound.length, 3,
-                                "Some of partial batch ops were processed yet");
+                                "Some of partial batch ops were processed");
 
                             assert.throws(() => processOp(messageToFail));
 
