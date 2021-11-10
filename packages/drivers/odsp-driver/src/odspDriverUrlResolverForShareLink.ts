@@ -22,7 +22,7 @@ import {
     encodeOdspFluidDataStoreLocator,
     locatorQueryParamName,
 } from "./odspFluidFileLink";
-import { OdspDocumentInfo, OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic";
+import { OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic";
 import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
@@ -254,7 +254,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     /**
      * Crafts a supported document/driver URL
      */
-    public static createDocumentUrl(baseUrl: string, driverInfo: OdspDocumentInfo) {
+    public static createDocumentUrl(baseUrl: string, driverInfo: OdspFluidDataStoreLocator) {
         const url = new URL(baseUrl);
 
         storeLocatorInOdspUrl(url, driverInfo);
