@@ -23,6 +23,7 @@ data:
             "endpoint": "{{ .Values.mongodb.url }}",
             "expireAfterSeconds": "{{ .Values.mongodb.expireAfterSeconds }}",
             "createCosmosDBIndexes": "{{ .Values.mongodb.createCosmosDBIndexes }}",
+            "bufferMaxEntries": {{ .Values.mongodb.bufferMaxEntries }},
             "collectionNames": {
                 "deltas": "deltas",
                 "documents": "documents",

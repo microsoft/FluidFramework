@@ -21,7 +21,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
     const messagesCollectionName = config.get("mongo:collectionNames:scribeDeltas");
     const createCosmosDBIndexes = config.get("mongo:createCosmosDBIndexes");
-    const bufferMaxEntries = config.get("mongo:bufferMaxEntries");
+    const bufferMaxEntries = config.get("mongo:bufferMaxEntries") as number | undefined;
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
     const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");

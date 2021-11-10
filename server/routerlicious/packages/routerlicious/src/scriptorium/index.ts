@@ -13,7 +13,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
     const createCosmosDBIndexes = config.get("mongo:createCosmosDBIndexes");
-    const bufferMaxEntries = config.get("mongo:bufferMaxEntries");
+    const bufferMaxEntries = config.get("mongo:bufferMaxEntries") as number | undefined;
     const mongoFactory = new services.MongoDbFactory(mongoUrl, bufferMaxEntries);
     const mongoManager = new MongoManager(mongoFactory, false);
 

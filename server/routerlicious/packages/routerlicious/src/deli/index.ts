@@ -14,7 +14,7 @@ import * as winston from "winston";
 
 export async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
     const mongoUrl = config.get("mongo:endpoint") as string;
-    const bufferMaxEntries = config.get("mongo:bufferMaxEntries");
+    const bufferMaxEntries = config.get("mongo:bufferMaxEntries") as number | undefined;
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
     const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
