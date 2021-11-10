@@ -61,9 +61,10 @@ export interface IConnect {
     supportedFeatures?: Record<string, any>;
 
     /**
-     * Properties that client can send to server to tell info about client loader, driver versions etc.
+     * Properties that client can send to server to tell info about client environment like loader, driver versions etc.
+     * Format: "prop1:val1;prop2:val2;prop3:val3"
     */
-    correlationProperties?: string,
+    relayServiceAgent?: string,
 }
 
 /**
@@ -159,6 +160,7 @@ export interface IConnected {
     /**
      * Properties that server can send to client to tell info about node that client is connected to. For ex, for spo
      * it could contain info like build version, environment, region etc.
+     * Format: "prop1:val1;prop2:val2;prop3:val3"
      */
-    correlationProperties?: string,
+    relayServiceAgent?: string,
 }

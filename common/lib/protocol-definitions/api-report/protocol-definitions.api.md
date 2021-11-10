@@ -97,7 +97,6 @@ export interface IClientDetails {
     capabilities: ICapabilities;
     // (undocumented)
     device?: string;
-    // (undocumented)
     environment?: string;
     // (undocumented)
     type?: string;
@@ -119,11 +118,11 @@ export type ICommittedProposal = {
 // @public
 export interface IConnect {
     client: IClient;
-    correlationProperties?: string;
     epoch?: string;
     id: string;
     mode: ConnectionMode;
     nonce?: string;
+    relayServiceAgent?: string;
     supportedFeatures?: Record<string, any>;
     tenantId: string;
     token: string | null;
@@ -135,7 +134,6 @@ export interface IConnected {
     checkpointSequenceNumber?: number;
     claims: ITokenClaims;
     clientId: string;
-    correlationProperties?: string;
     epoch?: string;
     existing: boolean;
     initialClients: ISignalClient[];
@@ -144,6 +142,7 @@ export interface IConnected {
     maxMessageSize: number;
     mode: ConnectionMode;
     nonce?: string;
+    relayServiceAgent?: string;
     serviceConfiguration: IClientConfiguration;
     supportedFeatures?: Record<string, any>;
     supportedVersions: string[];
