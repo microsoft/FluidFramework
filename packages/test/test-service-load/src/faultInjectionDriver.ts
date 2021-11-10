@@ -138,9 +138,6 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
         }
     }
 
-    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
-    public close(): void { this.dispose(); }
-
     public injectNack(docId: string, canRetry: boolean | undefined) {
         assert(!this.disposed, "cannot inject nack into closed delta connection");
         const nack: Partial<INack> = {
