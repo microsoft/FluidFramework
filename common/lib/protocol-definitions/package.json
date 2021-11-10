@@ -77,6 +77,11 @@
         "InterfaceDeclaration_IDocumentAttributes": {
           "backCompat": false
         }
+      },
+      "0.1025.0": {
+        "InterfaceDeclaration_IDocumentAttributes": {
+          "backCompat": false
+        }
       }
     }
   }
