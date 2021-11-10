@@ -159,7 +159,6 @@ export interface ICreateBlobResponse {
 
 // @public (undocumented)
 export interface IDocumentAttributes {
-    branch: string;
     minimumSequenceNumber: number;
     sequenceNumber: number;
     term: number | undefined;
