@@ -110,8 +110,8 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         assert.strictEqual(containerStatsEvents.length, 3, "wrong number of containerLoadStats events");
         assert.strictEqual(containerStatsEvents[2].containerLoadDataStoreCount, 1, "data store count is wrong");
         assert.strictEqual(containerStatsEvents[2].referencedDataStoreCount, 1, "summarized data store count is wrong");
-        assert.strictEqual(containerStatsEvents[1].lastSummaryCount, 0, "wrong summary count");
-        assert.strictEqual(containerStatsEvents[2].lastSummaryCount, 1, "wrong summary count");
+        assert.strictEqual(containerStatsEvents[1].summaryCount, 0, "wrong summary count");
+        assert.strictEqual(containerStatsEvents[2].summaryCount, 1, "wrong summary count");
 
         // close the current summarizer and start a new summarizer container
         // this is to test summaryCount will still increment instead of reset
@@ -135,7 +135,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
             "create container runtime version is inconsistent");
 
         // summary count should increment instead of reset to 0
-        assert.strictEqual(containerStatsEvents[4].lastSummaryCount, 1, "wrong summary count");
-        assert.strictEqual(containerStatsEvents[5].lastSummaryCount, 2, "wrong summary count");
+        assert.strictEqual(containerStatsEvents[4].summaryCount, 1, "wrong summary count");
+        assert.strictEqual(containerStatsEvents[5].summaryCount, 2, "wrong summary count");
     });
 });

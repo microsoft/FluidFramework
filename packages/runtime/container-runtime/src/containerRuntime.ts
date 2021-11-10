@@ -858,8 +858,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.createContainerMetadata.createContainerTimestamp = existing
             ? metadata?.createContainerTimestamp
             : performance.now();
-        this.createContainerMetadata.lastSummaryCount = existing
-            ? metadata?.lastSummaryCount
+        this.createContainerMetadata.summaryCount = existing
+            ? metadata?.summaryCount
             : 0;
 
         // Default to false for now.
@@ -1085,11 +1085,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.logger.sendTelemetryEvent({
             eventName: "ContainerLoadStats",
-            dataStoreCount: this.dataStores.containerLoadDataStoreCount,
+            containerLoadDataStoreCount: this.dataStores.containerLoadDataStoreCount,
             referencedDataStoreCount: this.dataStores.referencedDataStoreCount,
             createContainerRuntimeVersion: this.createContainerMetadata.createContainerRuntimeVersion,
             createContainerTimestamp: this.createContainerMetadata.createContainerTimestamp,
-            lastSummaryCount: this.createContainerMetadata.lastSummaryCount,
+            summaryCount: this.createContainerMetadata.summaryCount,
             summaryFormatVersion: metadata?.summaryFormatVersion,
         });
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
@@ -1815,8 +1815,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param options - options controlling how the summary is generated or submitted
      */
     public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-        if (this.createContainerMetadata.lastSummaryCount !== undefined) {
-            this.createContainerMetadata.lastSummaryCount++;
+        if (this.createContainerMetadata.summaryCount !== undefined) {
+            this.createContainerMetadata.summaryCount++;
         }
         const { fullTree, refreshLatestAck, summaryLogger } = options;
         if (refreshLatestAck) {
