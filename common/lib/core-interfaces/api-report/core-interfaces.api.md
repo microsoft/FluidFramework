@@ -83,7 +83,21 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
 }
 
 // @public @deprecated (undocumented)
-export interface IFluidObject extends Readonly<Partial<IProvideFluidLoadable & IProvideFluidRunnable & IProvideFluidRouter & IProvideFluidHandleContext & IProvideFluidConfiguration & IProvideFluidHandle & IProvideFluidSerializer>> {
+export interface IFluidObject {
+    // @deprecated (undocumented)
+    IFluidConfiguration?: IFluidConfiguration;
+    // @deprecated (undocumented)
+    IFluidHandle?: IFluidHandle;
+    // @deprecated (undocumented)
+    IFluidHandleContext?: IFluidHandleContext;
+    // @deprecated (undocumented)
+    IFluidLoadable?: IFluidLoadable;
+    // @deprecated (undocumented)
+    IFluidRouter?: IFluidRouter;
+    // @deprecated (undocumented)
+    IFluidRunnable?: IFluidRunnable;
+    // @deprecated (undocumented)
+    IFluidSerializer?: IFluidSerializer;
 }
 
 // @public

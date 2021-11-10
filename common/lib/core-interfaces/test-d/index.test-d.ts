@@ -5,7 +5,7 @@
 /* eslint-disable unicorn/filename-case */
 // eslint-disable-next-line import/no-extraneous-dependencies
 import {expectError} from "tsd";
-import { IFluidLoadable, IProvideFluidLoadable, FluidObject, FluidObjectKeys } from "../dist";
+import { IFluidLoadable, IProvideFluidLoadable, FluidObject, FluidObjectKeys, IFluidObject } from "../dist";
 
 
 declare function getUnknownFluidObject(): FluidObject;
@@ -86,3 +86,6 @@ declare function useLoadable(params: FluidObject<IFluidLoadable> | undefined): v
     useProvider<IFoo>(unknown);
     useLoadable(unknown);
 }
+
+const foo: IFluidObject = getUnknownFluidObject();
+foo.IFluidRouter.;
