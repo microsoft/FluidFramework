@@ -107,6 +107,7 @@ describe("Runtime", () => {
                     // Send a non-batch message.
                     processOp(message as ISequencedDocumentMessage);
 
+                    assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
                     assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin events");
                     assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd events");
                 });
@@ -126,6 +127,7 @@ describe("Runtime", () => {
                     processOp(message as ISequencedDocumentMessage);
                     processOp(message as ISequencedDocumentMessage);
 
+                    assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
                     assert.strictEqual(5, batchBegin, "Did not receive correct batchBegin events");
                     assert.strictEqual(5, batchEnd, "Did not receive correct batchEnd events");
                 });
@@ -142,6 +144,7 @@ describe("Runtime", () => {
                     processOp(message as ISequencedDocumentMessage);
 
                     // We should have a "batchBegin" and a "batchEnd" event for the batch.
+                    assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
                     assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
                     assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
                 });
@@ -172,9 +175,13 @@ describe("Runtime", () => {
                     processOp(batchBeginMessage as ISequencedDocumentMessage);
                     processOp(batchMessage as ISequencedDocumentMessage);
                     processOp(batchMessage as ISequencedDocumentMessage);
+
+                    assert.strictEqual(deltaManager.inbound.length, 3, "none of the batched ops are processed yet");
+
                     processOp(batchEndMessage as ISequencedDocumentMessage);
 
                     // We should have only received one "batchBegin" and one "batchEnd" event for the batch.
+                    assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
                     assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
                     assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
                 });
@@ -237,8 +244,11 @@ describe("Runtime", () => {
                             processOp(batchMessage as ISequencedDocumentMessage);
                             processOp(batchMessage as ISequencedDocumentMessage);
 
+                            assert.strictEqual(deltaManager.inbound.length, 3, "none of the batch ops are processed");
+
                             assert.throws(() => processOp(messageToFail as ISequencedDocumentMessage));
 
+                            assert.strictEqual(deltaManager.inbound.length, 4, "none of the ops are processed");
                             assert.strictEqual(0, batchBegin, "Did not receive correct batchBegin event for the batch");
                             assert.strictEqual(0, batchEnd, "Did not receive correct batchBegin event for the batch");
                         });

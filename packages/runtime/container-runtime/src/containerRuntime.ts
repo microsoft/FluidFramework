@@ -369,16 +369,19 @@ class ScheduleManagerCore {
      public afterOpProcessing(sequenceNumber: number) {
         assert(!this.localPaused, "can't have op processing paused if we are processing an op");
 
+        // If no message has caused the pause flag to be set, or the next message up is not the one we need to pause at
+        // then we simply continue processing
+        if (this.pauseSequenceNumber !== undefined) {
+            assert(sequenceNumber < this.pauseSequenceNumber, "processed op we should have not processed");
+            if (sequenceNumber + 1 >= this.pauseSequenceNumber) {
+                this.setPaused(true);
+            }
+        }
+
         // If the inbound queue is ever empty we pause it and wait for new events
         if (this.deltaManager.inbound.length === 0) {
             this.setPaused(true);
             return;
-        }
-
-        // If no message has caused the pause flag to be set, or the next message up is not the one we need to pause at
-        // then we simply continue processing
-        if (this.pauseSequenceNumber !== undefined && sequenceNumber + 1 >= this.pauseSequenceNumber) {
-            this.setPaused(true);
         }
     }
 
