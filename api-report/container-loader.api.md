@@ -56,8 +56,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get attachState(): AttachState;
     get audience(): IAudience;
-    // @deprecated (undocumented)
-    get chaincodePackage(): IFluidCodeDetails | undefined;
     // (undocumented)
     get clientDetails(): IClientDetails;
     get clientId(): string | undefined;
@@ -67,7 +65,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     closeAndGetPendingLocalState(): string;
     // (undocumented)
     get closed(): boolean;
-    // (undocumented)
+    // @deprecated
     get codeDetails(): IFluidCodeDetails | undefined;
     // (undocumented)
     get connected(): boolean;
@@ -79,7 +77,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     forceReadonly(readonly: boolean): void;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    getLoadedCodeDetails(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorum;
+    getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
     // (undocumented)
     get id(): string;
     // (undocumented)

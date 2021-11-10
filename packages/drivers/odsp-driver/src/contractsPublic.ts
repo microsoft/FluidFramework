@@ -5,11 +5,6 @@
 
 import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
 
-/**
- * @deprecated - use OdspFluidDataStoreLocator
- */
-export type OdspDocumentInfo = OdspFluidDataStoreLocator;
-
 export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
     dataStorePath: string;
     appName?: string;
