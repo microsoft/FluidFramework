@@ -34,9 +34,7 @@
     "linkcheck:site": "blc -ore --input http://localhost:1313 --exclude http://localhost:1313/index.xml --exclude https://twitter.com/intent/tweet* --exclude http://localhost:8080 --exclude http://localhost:1313/docs/apis/*",
     "lint": "markdownlint-cli2",
     "lint:fix": "markdownlint-cli2-fix",
-    "start": "npm run build:md-magic && run-script-os",
-    "start:default": "\"./bin/hugo\" server",
-    "start:win32": "call \"bin/hugo.exe\" server"
+    "start": "npm run build:md-magic && hugo server"
   },
   "dependencies": {
     "@tylerbu/bin-installer": "^0.0.2",
