@@ -214,14 +214,15 @@ describe("Runtime", () => {
                     void deltaManager.inbound.pause();
 
                     // Send a batch with 4 messages.
-                    processOp(batchBeginMessage as ISequencedDocumentMessage);
-                    processOp(batchMessage as ISequencedDocumentMessage);
-                    processOp(batchMessage as ISequencedDocumentMessage);
-                    processOp(batchEndMessage as ISequencedDocumentMessage);
+                    processOp(batchBeginMessage);
+                    processOp(batchMessage);
+                    processOp(batchMessage);
+                    processOp(batchEndMessage);
 
-                    processOp(batchBeginMessage as ISequencedDocumentMessage);
-                    processOp(batchMessage as ISequencedDocumentMessage);
-                    processOp(batchMessage as ISequencedDocumentMessage);
+                    // Add incomplete batch
+                    processOp(batchBeginMessage);
+                    processOp(batchMessage);
+                    processOp(batchMessage);
 
                     assert.strictEqual(deltaManager.inbound.length, 7, "none of the batched ops are processed yet");
 
@@ -232,10 +233,9 @@ describe("Runtime", () => {
                     assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
                     assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
 
-                    processOp(batchEndMessage as ISequencedDocumentMessage);
+                    // End the batch - all ops should be processed.
+                    processOp(batchEndMessage);
                     assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
-
-                    // We should have only received one "batchBegin" and one "batchEnd" event for the batch.
                     assert.strictEqual(2, batchBegin, "Did not receive correct batchBegin event for the batch");
                     assert.strictEqual(2, batchEnd, "Did not receive correct batchEnd event for the batch");
                 });
