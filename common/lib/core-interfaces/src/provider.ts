@@ -24,7 +24,7 @@
  */
  export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> =
     string extends TProp ? never : number extends TProp? never : // exclude indexers [key:string |number]: any
-    TProp extends keyof T[TProp] // TProp is a property of T, and T[TProp]
+    TProp extends keyof Exclude<T[TProp], undefined> // TProp is a property of T, and T[TProp]
         ? TProp
         :never;
 

@@ -15,7 +15,7 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 // Warning: (ae-internal-missing-underscore) The name "FluidObjectProviderKeys" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal
-export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof T[TProp] ? TProp : never;
+export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Exclude<T[TProp], undefined> ? TProp : never;
 
 // @public
 export interface IFluidCodeDetails {
@@ -85,19 +85,19 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
 // @public @deprecated (undocumented)
 export interface IFluidObject {
     // @deprecated (undocumented)
-    IFluidConfiguration?: IFluidConfiguration;
+    readonly IFluidConfiguration?: IFluidConfiguration;
     // @deprecated (undocumented)
-    IFluidHandle?: IFluidHandle;
+    readonly IFluidHandle?: IFluidHandle;
     // @deprecated (undocumented)
-    IFluidHandleContext?: IFluidHandleContext;
+    readonly IFluidHandleContext?: IFluidHandleContext;
     // @deprecated (undocumented)
-    IFluidLoadable?: IFluidLoadable;
+    readonly IFluidLoadable?: IFluidLoadable;
     // @deprecated (undocumented)
-    IFluidRouter?: IFluidRouter;
+    readonly IFluidRouter?: IFluidRouter;
     // @deprecated (undocumented)
-    IFluidRunnable?: IFluidRunnable;
+    readonly IFluidRunnable?: IFluidRunnable;
     // @deprecated (undocumented)
-    IFluidSerializer?: IFluidSerializer;
+    readonly IFluidSerializer?: IFluidSerializer;
 }
 
 // @public
