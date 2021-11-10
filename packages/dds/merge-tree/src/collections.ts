@@ -9,8 +9,15 @@
 /* Remove once strictNullCheck is enabled */
 
 import { Trace } from "@fluidframework/common-utils";
-import * as Base from "./base";
-import * as MergeTree from "./mergeTree";
+import {
+    ConflictAction,
+    IIntegerRange,
+    KeyComparer,
+    Property,
+    PropertyAction,
+    SortedDictionary,
+} from "./base";
+import { internedSpaces } from "./mergeTree";
 
 export class Stack<T> {
     items: T[] = [];
@@ -268,13 +275,13 @@ export class Heap<T> {
 }
 
 // For testing
-export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDictionary<TKey, TData> {
-    const props: Base.Property<TKey, TData>[] = [];
-    const compareProps = (a: Base.Property<TKey, TData>, b: Base.Property<TKey, TData>) => compareKeys(a.key, b.key);
+export function LinearDictionary<TKey, TData>(compareKeys: KeyComparer<TKey>): SortedDictionary<TKey, TData> {
+    const props: Property<TKey, TData>[] = [];
+    const compareProps = (a: Property<TKey, TData>, b: Property<TKey, TData>) => compareKeys(a.key, b.key);
     function diag() {
         console.log(`size is ${props.length}`);
     }
-    function mapRange<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
+    function mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
         let _start = start;
         let _end = end;
 
@@ -301,7 +308,7 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
         }
     }
 
-    function map<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum) {
+    function map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum) {
         mapRange(action, accum);
     }
 
@@ -374,8 +381,7 @@ export interface RBNode<TKey, TData> {
 }
 
 export interface IRBAugmentation<TKey, TData> {
-    update(node: RBNode<TKey, TData>);
-    init?(node: RBNode<TKey, TData>);
+    update(node: RBNode<TKey, TData>): void;
 }
 
 export interface IRBMatcher<TKey, TData> {
@@ -390,18 +396,14 @@ export interface RBNodeActions<TKey, TData> {
     showStructure?: boolean;
 }
 
-export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TData> {
+export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> {
     root: RBNode<TKey, TData> | undefined;
-    constructor(public compareKeys: Base.KeyComparer<TKey>, public aug?: IRBAugmentation<TKey, TData>) {
+    constructor(public compareKeys: KeyComparer<TKey>, public aug?: IRBAugmentation<TKey, TData>) {
 
     }
 
     makeNode(key: TKey, data: TData, color: RBColor, size: number) {
-        const node = <RBNode<TKey, TData>>{ key, data, color, size };
-        if (this.aug && this.aug.init) {
-            this.aug.init(node);
-        }
-        return node;
+        return <RBNode<TKey, TData>>{ key, data, color, size };
     }
 
     isRed(node: RBNode<TKey, TData> | undefined) {
@@ -470,8 +472,8 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     walkExactMatchesForward(
         compareFn: (node: RBNode<TKey, TData>) => number,
         actionFn: (node: RBNode<TKey, TData>) => void,
-        continueLeftFn: (number) => boolean,
-        continueRightFn: (number) => boolean) {
+        continueLeftFn: (number: number) => boolean,
+        continueRightFn: (number: number) => boolean) {
         this.nodeWalkExactMatchesForward(this.root, compareFn, actionFn, continueLeftFn, continueRightFn);
     }
 
@@ -479,8 +481,8 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         node: RBNode<TKey, TData> | undefined,
         compareFn: (node: RBNode<TKey, TData>) => number,
         actionFn: (node: RBNode<TKey, TData>) => void,
-        continueLeftFn: (number) => boolean,
-        continueRightFn: (number) => boolean) {
+        continueLeftFn: (number: number) => boolean,
+        continueRightFn: (number: number) => boolean) {
         if (!node) {
             return;
         }
@@ -499,8 +501,8 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     walkExactMatchesBackward(
         compareFn: (node: RBNode<TKey, TData>) => number,
         actionFn: (node: RBNode<TKey, TData>) => void,
-        continueLeftFn: (number) => boolean,
-        continueRightFn: (number) => boolean) {
+        continueLeftFn: (number: number) => boolean,
+        continueRightFn: (number: number) => boolean) {
         this.nodeWalkExactMatchesBackward(this.root, compareFn, actionFn, continueLeftFn, continueRightFn);
     }
 
@@ -525,7 +527,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         }
     }
 
-    put(key: TKey, data: TData, conflict?: Base.ConflictAction<TKey, TData>) {
+    put(key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>) {
         if (key !== undefined) {
             if (data === undefined) {
                 this.remove(key);
@@ -540,7 +542,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     nodePut(
         node: RBNode<TKey, TData> | undefined,
         key: TKey, data: TData,
-        conflict?: Base.ConflictAction<TKey, TData>,
+        conflict?: ConflictAction<TKey, TData>,
     ) {
         let _node = node;
         if (!_node) {
@@ -904,11 +906,11 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         return node;
     }
 
-    mapRange<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
+    mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
         this.nodeMap(this.root, action, start, end);
     }
 
-    map<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum) {
+    map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum) {
         // TODO: optimize to avoid comparisons
         this.nodeMap(this.root, action, accum);
     }
@@ -939,7 +941,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         this.nodeWalkBackward(this.root, actions);
     }
 
-    nodeWalk(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>) {
+    nodeWalk(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean {
         let go = true;
         if (node) {
             if (actions.pre) {
@@ -967,7 +969,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         return go;
     }
 
-    nodeWalkBackward(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>) {
+    nodeWalkBackward(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean {
         let go = true;
         if (node) {
             if (actions.pre) {
@@ -997,10 +999,11 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
 
     nodeMap<TAccum>(
         node: RBNode<TKey, TData> | undefined,
-        action: Base.PropertyAction<TKey, TData>,
+        action: PropertyAction<TKey, TData>,
         accum?: TAccum,
         start?: TKey,
-        end?: TKey) {
+        end?: TKey,
+    ): boolean {
         let _start = start;
         let _end = end;
         if (!node) {
@@ -1033,7 +1036,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
 }
 
 export interface AugIntegerRangeNode {
-    minmax: Base.IIntegerRange;
+    minmax: IIntegerRange;
 }
 
 export interface AugmentedIntervalNode {
@@ -1044,18 +1047,18 @@ export interface AugmentedIntervalNode {
  * @param a - A range
  * @param b - A range
  */
-export function integerRangeUnion(a: Base.IIntegerRange, b: Base.IIntegerRange) {
-    return <Base.IIntegerRange>{
+export function integerRangeUnion(a: IIntegerRange, b: IIntegerRange) {
+    return <IIntegerRange>{
         start: Math.min(a.start, b.start),
         end: Math.max(a.end, b.end),
     };
 }
 
-export function integerRangeOverlaps(a: Base.IIntegerRange, b: Base.IIntegerRange) {
+export function integerRangeOverlaps(a: IIntegerRange, b: IIntegerRange) {
     return (a.start < b.end) && (a.end > b.start);
 }
 
-export function integerRangeComparer(a: Base.IIntegerRange, b: Base.IIntegerRange) {
+export function integerRangeComparer(a: IIntegerRange, b: IIntegerRange) {
     if (a.start === b.start) {
         return a.end - b.end;
     } else {
@@ -1063,24 +1066,24 @@ export function integerRangeComparer(a: Base.IIntegerRange, b: Base.IIntegerRang
     }
 }
 
-export const integerRangeCopy = (r: Base.IIntegerRange) => <Base.IIntegerRange>{ start: r.start, end: r.end };
+export const integerRangeCopy = (r: IIntegerRange) => <IIntegerRange>{ start: r.start, end: r.end };
 
-export const integerRangeToString = (range: Base.IIntegerRange) => `[${range.start},${range.end})`;
+export const integerRangeToString = (range: IIntegerRange) => `[${range.start},${range.end})`;
 
-export type IntegerRangeNode = RBNode<Base.IIntegerRange, AugIntegerRangeNode>;
+export type IntegerRangeNode = RBNode<IIntegerRange, AugIntegerRangeNode>;
 
 // TODO: handle duplicate keys
 
-export class IntegerRangeTree implements IRBAugmentation<Base.IIntegerRange, AugIntegerRangeNode>,
-    IRBMatcher<Base.IIntegerRange, AugIntegerRangeNode> {
-    ranges = new RedBlackTree<Base.IIntegerRange, AugIntegerRangeNode>(integerRangeComparer, this);
+export class IntegerRangeTree implements IRBAugmentation<IIntegerRange, AugIntegerRangeNode>,
+    IRBMatcher<IIntegerRange, AugIntegerRangeNode> {
+    ranges = new RedBlackTree<IIntegerRange, AugIntegerRangeNode>(integerRangeComparer, this);
     diag = false;
 
-    remove(r: Base.IIntegerRange) {
+    remove(r: IIntegerRange) {
         this.ranges.remove(r);
     }
 
-    put(r: Base.IIntegerRange) {
+    put(r: IIntegerRange) {
         this.ranges.put(r, { minmax: integerRangeCopy(r) });
     }
 
@@ -1097,7 +1100,7 @@ export class IntegerRangeTree implements IRBAugmentation<Base.IIntegerRange, Aug
                 if (n.color === RBColor.RED) {
                     red = "R ";
                 }
-                buf += MergeTree.internedSpaces(indentAmt);
+                buf += internedSpaces(indentAmt);
                 buf += `${red}key: ${integerRangeToString(n.key)} minmax: ${integerRangeToString(n.data.minmax)}\n`;
                 indentAmt += 2;
                 return true;
@@ -1116,15 +1119,15 @@ export class IntegerRangeTree implements IRBAugmentation<Base.IIntegerRange, Aug
         return this.match({ start: pos, end: pos + 1 });
     }
 
-    match(r: Base.IIntegerRange) {
+    match(r: IIntegerRange) {
         return this.ranges.gather(r, this);
     }
 
-    matchNode(node: IntegerRangeNode | undefined, key: Base.IIntegerRange) {
+    matchNode(node: IntegerRangeNode | undefined, key: IIntegerRange) {
         return !!node && integerRangeOverlaps(node.key, key);
     }
 
-    continueSubtree(node: IntegerRangeNode | undefined, key: Base.IIntegerRange) {
+    continueSubtree(node: IntegerRangeNode | undefined, key: IIntegerRange) {
         const cont = !!node && integerRangeOverlaps(node.data.minmax, key);
         if (this.diag && (!cont)) {
             if (node) {
@@ -1156,7 +1159,7 @@ export interface IInterval {
     compare(b: IInterval): number;
     compareStart(b: IInterval): number;
     compareEnd(b: IInterval): number;
-    modify(label: string, start: number, end: number);
+    modify(label: string, start: number, end: number): IInterval | undefined;
     overlaps(b: IInterval): boolean;
     union(b: IInterval): IInterval;
 }
@@ -1186,7 +1189,7 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
     }
 
     put(x: T, conflict?: IntervalConflictResolver<T>) {
-        let rbConflict: Base.ConflictAction<T, AugmentedIntervalNode> | undefined;
+        let rbConflict: ConflictAction<T, AugmentedIntervalNode> | undefined;
         if (conflict) {
             rbConflict = (key: T, currentKey: T) => {
                 const ival = conflict(key, currentKey);

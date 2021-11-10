@@ -22,6 +22,7 @@ import {
     ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
 const counterKey = "count";
 
@@ -113,12 +114,14 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
         );
         loaderContainerTracker.add(loader);
         const container = await createAndAttachContainer(
-            codeDetails, loader, provider.driver.createCreateNewRequest(documentId));
-        provider.updateDocumentId(container.resolvedUrl);
+            codeDetails, loader, provider.driver.createCreateNewRequest(documentId),
+        );
         return container;
     }
 
-    async function loadContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
+    async function loadContainer(
+        documentId: string, containerUrl: IResolvedUrl | undefined, factory: IFluidDataStoreFactory,
+    ): Promise<IContainer> {
         const loader = createLoader(
             [[codeDetails, factory]],
             provider.documentServiceFactory,
@@ -126,7 +129,9 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
             provider.logger,
         );
         loaderContainerTracker.add(loader);
-        return loader.resolve({ url: await provider.driver.createContainerUrl(provider.documentId) });
+        return loader.resolve({
+            url: await provider.driver.createContainerUrl(documentId, containerUrl),
+        });
     }
 
     describe("1 dataObject", () => {
@@ -152,7 +157,7 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
             const container1 = await createContainer(documentId, testDataObjectFactory);
             const dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
 
-            const container2 = await loadContainer(testDataObjectFactory);
+            const container2 = await loadContainer(documentId, container1.resolvedUrl, testDataObjectFactory);
             const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
 
             assert(dataObject1 !== dataObject2, "Each container must return a separate TestDataObject instance.");
@@ -181,7 +186,7 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
             assert.equal(dataObject1.value, 1, "Local update by 'dataObject1' must be promptly observable");
 
             // Wait until ops are pending before opening second TestDataObject instance.
-            const container2 = await loadContainer(testDataObjectFactory);
+            const container2 = await loadContainer(documentId, container1.resolvedUrl, testDataObjectFactory);
             const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
             assert(dataObject1 !== dataObject2, "Each container must return a separate TestDataObject instance.");
 
@@ -229,7 +234,7 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
                 dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
                 text1 = await dataObject1.getSharedObject<SharedString>("text");
 
-                const container2 = await loadContainer(factory);
+                const container2 = await loadContainer(documentId, container1.resolvedUrl, factory);
                 dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
                 text2 = await dataObject2.getSharedObject<SharedString>("text");
             });
@@ -259,7 +264,7 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
                 container1 = await createContainer(documentId, testDataObjectFactory);
                 dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
 
-                container2 = await loadContainer(testDataObjectFactory);
+                container2 = await loadContainer(documentId, container1.resolvedUrl, testDataObjectFactory);
                 dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
             });
 

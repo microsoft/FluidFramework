@@ -88,6 +88,7 @@ describe("Data Store Context Tests", () => {
             containerRuntime = {
                 IFluidDataStoreRegistry: registry,
                 on: (event, listener) => { },
+                logger: new TelemetryNullLogger(),
             } as ContainerRuntime;
         });
 
