@@ -30,10 +30,10 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Main
+        poolBuild: Large
         testPackage: "@fluid-internal/test-service-load"
         testWorkspace: ${{ variables.testWorkspace }}
-        timeoutInMinutes: 60
+        timeoutInMinutes: 120
         testCommand: start
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)

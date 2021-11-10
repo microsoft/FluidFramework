@@ -2,6 +2,6 @@
 blank_issues_enabled: true
 contact_links:
   -
-    about: "Please ask and answer usage questions on Stack Overflow."
+    about: "Please ask and answer usage questions in our GitHub Discussions."
     name: Question
-    url: "https://stackoverflow.com/questions/tagged/fluid-framework"
+    url: "https://github.com/microsoft/FluidFramework/discussions"

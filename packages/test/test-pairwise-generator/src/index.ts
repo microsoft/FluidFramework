@@ -72,6 +72,18 @@ export function generatePairwiseOptions<T extends Record<string, any>>(
         .filter((k)=>optionsMatrix[k].length > 1 || optionsMatrix[k][0] !== undefined)
         .sort((a,b)=>optionsMatrix[b].length  - optionsMatrix[a].length);
 
+    if(matrixKeys.length === 0) {
+        return [];
+    }
+
+    if(matrixKeys.length === 1) {
+        const values = optionsMatrix[matrixKeys[0]];
+        return values.map<T>((v) => {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            return {[matrixKeys[0]]: v} as T;
+        });
+    }
+
     // compute all pairs, and apply them
     const partials: PartialWithKeyCount<T>[] = [];
     for(let i = 0; i < matrixKeys.length - 1; i++) {

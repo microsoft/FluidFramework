@@ -24,7 +24,7 @@ import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
 
-const createUtLocalCache = () => new LocalPersistentCache(10000);
+const createUtLocalCache = () => new LocalPersistentCache(2000);
 
 describe("Tests for snapshot fetch", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -46,6 +46,7 @@ describe("Tests for snapshot fetch", () => {
     };
 
     const hostPolicy: HostStoragePolicyInternal = {
+        snapshotOptions: { timeout: 2000 },
         summarizerClient: false,
         fetchBinarySnapshotFormat: false,
         // for testing both network and cache fetch
@@ -78,8 +79,9 @@ describe("Tests for snapshot fetch", () => {
         sequenceNumber: 0,
     };
 
-    const value: IVersionedValueWithEpoch =
-    {value: content, fluidEpoch: "epoch1", version: persistedCacheValueVersion };
+    const value: IVersionedValueWithEpoch = { value: { ...content, cacheEntryTime: Date.now() },
+        fluidEpoch: "epoch1",
+        version: persistedCacheValueVersion };
 
     const expectedVersion = [{ id: "id", treeId: undefined!}];
 

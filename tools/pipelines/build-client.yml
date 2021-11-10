@@ -25,7 +25,7 @@ parameters:
 - name: nonScopedPackages
   displayName: Non-scoped packages to publish
   type: object
-  default: 
+  default:
   - fluid-framework
 
 trigger:
@@ -80,7 +80,7 @@ extends:
     nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildDirectory: .
     tagName: client
-    poolBuild: Main
+    poolBuild: Large
     cgSubDirectory: packages
     checkoutSubmodules: true
     taskBundleAnalysis: true

@@ -182,7 +182,8 @@ export class Integer64Property extends ValueProperty {
     /**
      * @inheritdoc
      */
-    _deserialize(in_serializedObj, in_reportToView, in_filteringOptions) {
+    _deserialize(in_serializedObj, in_reportToView,
+                 in_filteringOptions, in_createChangeSet) {
         if (ChangeSet.isEmptyChangeSet(in_serializedObj)) {
             return undefined;
         } else {

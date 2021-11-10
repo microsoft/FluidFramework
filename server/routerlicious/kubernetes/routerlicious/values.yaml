@@ -71,7 +71,12 @@ mongodb:
   url: mongodb_url
   expireAfterSeconds: -1
   createCosmosDBIndexes: false
-  bufferMaxEntries: 50
+  bufferMaxEntries: 50,
+  softDeletionRetentionPeriodMs: 2592000000
+  offlineWindowMs: 86400000
+  softDeletionEnabled: false
+  permanentDeletionEnabled: false
+  deletionIntervalMs: 3600000
 
 rabbitmq:
   connectionString: ""

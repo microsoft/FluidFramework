@@ -100,7 +100,7 @@ export class InnerDocumentDeltaConnection
      * @returns the maximum size of a message before chunking is required
      */
     public get maxMessageSize(): number {
-        return this.details.maxMessageSize;
+        return this.details.serviceConfiguration.maxMessageSize;
     }
 
     /**

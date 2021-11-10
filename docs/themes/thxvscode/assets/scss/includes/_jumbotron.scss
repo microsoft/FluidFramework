@@ -117,7 +117,7 @@
             position: absolute;
             right: 0;
             top: 0;
-            background-image: url(/assets/icons/chevronDown.svg);
+            // background-image: url(/assets/icons/chevronDown.svg);
             background-size: 16px 16px;
             background-repeat: no-repeat;
             background-position: 50%;
@@ -126,7 +126,7 @@
 
           @media screen and (-ms-high-contrast: black-on-white) {
             .download-dropdown {
-              background-image: url(/assets/icons/chevronDown_black.svg);
+            //   background-image: url(/assets/icons/chevronDown_black.svg);
             }
           }
 

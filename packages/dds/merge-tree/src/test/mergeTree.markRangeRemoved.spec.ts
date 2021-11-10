@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { TextSegment } from "../";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
+import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
 
 describe("MergeTree.markRangeRemoved", () => {

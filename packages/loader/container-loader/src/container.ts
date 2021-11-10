@@ -10,7 +10,7 @@ import {
     IDisposable,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
-import { assert, performance, unreachableCase, Timer } from "@fluidframework/common-utils";
+import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
 import {
     IRequest,
     IResponse,
@@ -34,7 +34,6 @@ import {
 } from "@fluidframework/container-definitions";
 import {
     DataCorruptionError,
-    DataProcessingError,
     extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
@@ -83,6 +82,7 @@ import {
     IPendingProposal,
     SummaryType,
     ISummaryContent,
+    IQuorumProposals,
 } from "@fluidframework/protocol-definitions";
 import {
     ChildLogger,
@@ -106,6 +106,7 @@ import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService
 import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
 import { getSnapshotTreeFromSerializedContainer } from "./utils";
 import { QuorumProxy } from "./quorum";
+import { CollabWindowTracker } from "./collabWindowTracker";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -219,103 +220,9 @@ export async function waitContainerToCatchUp(container: Container) {
     });
 }
 
-// Here are key considerations when deciding conditions for when to send non-immediate noops:
-// 1. Sending them too often results in increase in file size and bandwidth, as well as catch up performance
-// 2. Sending too infrequently ensures that collab window is large, and as result Sequence DDS would have
-//    large catchUp blobs - see Issue #6364
-// 3. Similarly, processes that rely on "core" snapshot (and can't parse trailing ops, including above), like search
-//    parser in SPO, will result in non-accurate results due to presence of catch up blobs.
-// 4. Ordering service used 250ms timeout to coalesce non-immediate noops. It was changed to 2000 ms to allow more
-//    aggressive noop sending from client side.
-// 5. Number of ops sent by all clients is proportional to number of "write" clients (every client sends noops),
-//    but number of sequenced noops is a function of time (one op per 2 seconds at most).
-//    We should consider impact to both outbound traffic (might be huge, depends on number of clients) and file size.
-// Please also see Issue #5629 for more discussions.
-//
-// With that, the current algorithm is as follows:
-// 1. Sent noop 2000 ms of receiving an op if no ops were sent by this client within this timeframe.
-//    This will ensure that MSN moves forward with reasonable speed. If that results in too many sequenced noops,
-//    server timeout of 2000ms should be reconsidered to be increased.
-// 2. If there are more than 50 ops received without sending any ops, send noop to keep collab window small.
-//    Note that system ops (including noops themselves) are excluded, so it's 1 noop per 50 real ops.
-export class CollabWindowTracker {
-    private opsCountSinceNoop = 0;
-    private readonly timer: Timer;
-
-    constructor(
-        private readonly submit: (type: MessageType, contents: any) => void,
-        private readonly activeConnection: () => boolean,
-        NoopTimeFrequency: number = 2000,
-        private readonly NoopCountFrequency: number = 50,
-    ) {
-        this.timer = new Timer(NoopTimeFrequency, () => {
-            // Can get here due to this.stopSequenceNumberUpdate() not resetting timer.
-            // Also timer callback can fire even after timer cancellation if it was queued before cancellation.
-            if (this.opsCountSinceNoop !== 0) {
-                assert(this.activeConnection(),
-                    0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */);
-                this.submitNoop(false /* immediate */);
-            }
-        });
-    }
-
-    /**
-     * Schedules as ack to the server to update the reference sequence number
-     */
-    public scheduleSequenceNumberUpdate(message: ISequencedDocumentMessage, immediateNoOp: boolean): void {
-        // Exit early for inactive (not in quorum or not writers) clients.
-        // They don't take part in the minimum sequence number calculation.
-        if (!this.activeConnection()) {
-            return;
-        }
-
-        // While processing a message, an immediate no-op can be requested.
-        // i.e. to expedite approve or commit phase of quorum.
-        if (immediateNoOp) {
-            this.submitNoop(true /* immediate */);
-            return;
-        }
-
-        // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
-        // update, which updates the MSN, then ack the update, etc...). Also, don't
-        // count system messages in ops count.
-        if (isSystemMessage(message)) {
-            return;
-        }
-        assert(message.type !== MessageType.NoOp, 0x0ce /* "Don't acknowledge no-ops" */);
-
-        this.opsCountSinceNoop++;
-        if (this.opsCountSinceNoop >= this.NoopCountFrequency) {
-            this.submitNoop(false /* immediate */);
-            return;
-        }
-        if (this.opsCountSinceNoop === 1) {
-            this.timer.restart();
-        }
-        assert(this.timer.hasTimer, 0x242 /* "has timer" */);
-    }
-
-    private submitNoop(immediate: boolean) {
-        // Anything other than null is immediate noop
-        this.submit(MessageType.NoOp, immediate ? "" : null);
-        assert(this.opsCountSinceNoop === 0,
-            0x243 /* "stopSequenceNumberUpdate should be called as result of sending any op!" */);
-    }
-
-    public stopSequenceNumberUpdate(): void {
-        this.opsCountSinceNoop = 0;
-        // Ideally, we cancel timer here. But that will result in too often set/reset cycle if this client
-        // keeps sending ops. In most cases it's actually better to let it expire (at most - 4 times per second)
-        // for nothing, then have a ton of set/reset cycles.
-        // Note that Timer.restart() is smart and will not change timer expiration if we keep extending timer
-        // expiration - it will restart the timer instead when it fires with adjusted expiration.
-        // this.timer.clear();
-    }
-}
-
 const getCodeProposal =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    (quorum: IQuorum) => quorum.get("code") ?? quorum.get("code2");
+    (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
@@ -340,6 +247,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             container.logger,
             { eventName: "Load" },
             async (event) => new Promise<Container>((res, rej) => {
+                container._lifecycleState = "loading";
                 const version = loadOptions.version;
 
                 // always load unpaused with pending ops!
@@ -385,6 +293,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const container = new Container(
             loader,
             {});
+        container._lifecycleState = "loading";
         await container.createDetached(codeDetails);
         return container;
     }
@@ -401,6 +310,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             loader,
             {});
         const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
+        container._lifecycleState = "loading";
         await container.rehydrateDetachedFromSnapshot(deserializedSummary);
         return container;
     }
@@ -413,7 +323,27 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly logger: ITelemetryLogger;
 
-    private loaded = false;
+    private _lifecycleState: "created" | "loading" | "loaded" | "closing" | "closed" = "created";
+
+    private get loaded(): boolean {
+        return (this._lifecycleState !== "created" && this._lifecycleState !== "loading");
+    }
+
+    private set loaded(t: boolean) {
+        assert(t, 0x27d /* "Setting loaded state to false is not supported" */);
+        assert(this._lifecycleState !== "created", 0x27e /* "Must go through loading state before loaded" */);
+
+        // It's conceivable the container could be closed when this is called
+        // Only transition states if currently loading
+        if (this._lifecycleState === "loading") {
+            this._lifecycleState = "loaded";
+        }
+    }
+
+    public get closed(): boolean {
+        return (this._lifecycleState === "closing" || this._lifecycleState === "closed");
+    }
+
     private _attachState = AttachState.Detached;
 
     private readonly _storage: ContainerStorageAdapter;
@@ -462,8 +392,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private lastVisible: number | undefined;
     private readonly connectionStateHandler: ConnectionStateHandler;
-
-    private _closed = false;
 
     private setAutoReconnectTime = performance.now();
 
@@ -520,10 +448,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      */
     public forceReadonly(readonly: boolean) {
         this._deltaManager.forceReadonly(readonly);
-    }
-
-    public get closed(): boolean {
-        return this._closed;
     }
 
     public get id(): string {
@@ -640,7 +564,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     containerId: uuid(),
                     docId: () => this.id,
                     containerAttachState: () => this._attachState,
-                    containerLoaded: () => this.loaded,
+                    containerLifecycleState: () => this._lifecycleState,
+                    containerConnectionState: () => ConnectionState[this.connectionState],
                 },
                 // we need to be judicious with our logging here to avoid generting too much data
                 // all data logged here should be broadly applicable, and not specific to a
@@ -677,18 +602,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this._deltaManager.logConnectionIssue({
                         eventName,
                         duration: performance.now() - this.connectionTransitionTimes[ConnectionState.Connecting],
-                        loaded: this.loaded,
                     });
+                },
+                connectionStateChanged: () => {
+                    if (this.loaded) {
+                        this.propagateConnectionState();
+                    }
                 },
             },
             this.logger,
         );
-
-        this.connectionStateHandler.on("connectionStateChanged", () => {
-            if (this.loaded) {
-                this.propagateConnectionState();
-            }
-        });
 
         this._deltaManager = this.createDeltaManager();
         this._storage = new ContainerStorageAdapter(
@@ -767,44 +690,48 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public close(error?: ICriticalContainerError) {
-        if (this._closed) {
+        if (this.closed) {
             return;
         }
-        this._closed = true;
 
-        // Ensure that we raise all key events even if one of these throws
         try {
-            this._deltaManager.close(error);
+            this._lifecycleState = "closing";
 
-            this._protocolHandler?.close();
+            // Ensure that we raise all key events even if one of these throws
+            try {
+                this._deltaManager.close(error);
 
-            this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
+                this._protocolHandler?.close();
 
-            assert(this.connectionState === ConnectionState.Disconnected,
-                0x0cf /* "disconnect event was not raised!" */);
+                this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
-            this._storageService?.dispose();
+                assert(this.connectionState === ConnectionState.Disconnected,
+                    0x0cf /* "disconnect event was not raised!" */);
 
-            // Notify storage about critical errors. They may be due to disconnect between client & server knowledge
-            // about file, like file being overwritten in storage, but client having stale local cache.
-            // Driver need to ensure all caches are cleared on critical errors
-            this.service?.dispose(error);
-        } catch (exception) {
-            this.logger.sendErrorEvent({ eventName: "ContainerCloseException"}, exception);
+                this._storageService?.dispose();
+
+                // Notify storage about critical errors. They may be due to disconnect between client & server knowledge
+                // about file, like file being overwritten in storage, but client having stale local cache.
+                // Driver need to ensure all caches are cleared on critical errors
+                this.service?.dispose(error);
+            } catch (exception) {
+                this.logger.sendErrorEvent({ eventName: "ContainerCloseException"}, exception);
+            }
+
+            this.logger.sendTelemetryEvent(
+                {
+                    eventName: "ContainerClose",
+                    category: error === undefined ? "generic" : "error",
+                },
+                error,
+            );
+
+            this.emit("closed", error);
+
+            this.removeAllListeners();
+        } finally {
+            this._lifecycleState = "closed";
         }
-
-        this.logger.sendTelemetryEvent(
-            {
-                eventName: "ContainerClose",
-                loaded: this.loaded,
-                category: error === undefined ? "generic" : "error",
-            },
-            error,
-        );
-
-        this.emit("closed", error);
-
-        this.removeAllListeners();
     }
 
     public closeAndGetPendingLocalState(): string {
@@ -843,12 +770,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async attach(request: IRequest): Promise<void> {
-        if (!this.loaded) {
-            throw new UsageError("containerMustBeLoadedBeforeAttaching");
-        }
-
-        if (this.closed) {
-            throw new UsageError("cannotAttachClosedContainer");
+        if (this._lifecycleState !== "loaded") {
+            throw new UsageError(`containerNotValidForAttach [${this._lifecycleState}]`);
         }
 
         // If container is already attached or attach is in progress, throw an error.
@@ -890,10 +813,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         this.subLogger,
                     ),
                     "containerAttach",
-                    (id: string) => this._deltaManager.refreshDelayInfo(id),
-                    (id: string, delayMs: number, error: any) =>
-                        this._deltaManager.emitDelayInfo(id, delayMs, error),
                     this.logger,
+                    {}, // progress
                 );
             }
             const resolvedUrl = this.service.resolvedUrl;
@@ -947,15 +868,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             assert(!canRetryOnError(error), 0x24f /* "retriable error thrown from attach()" */);
 
             // add resolved URL on error object so that host has the ability to find this document and delete it
-            const newError = DataProcessingError.wrapIfUnrecognized(
-                error, "errorWhileUploadingBlobsWhileAttaching", undefined);
+            const newError = normalizeError(error);
             const resolvedUrl = this.resolvedUrl;
             if (resolvedUrl) {
                 ensureFluidResolvedUrl(resolvedUrl);
                 newError.addTelemetryProperties({ resolvedUrl: resolvedUrl.url });
             }
             this.close(newError);
-            // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw newError;
         }
     }
@@ -1424,7 +1343,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const storageService = await this.service.connectToStorage();
 
         this._storageService =
-            new RetriableDocumentStorageService(storageService, this._deltaManager, this.logger);
+            new RetriableDocumentStorageService(storageService, this.logger);
 
         if(this.options.summarizeProtocolTree === true) {
             this._storageService =
@@ -1626,7 +1545,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // state to "read" mode.
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         assert(!active || this.getQuorum().getMember(this.clientId!) !== undefined,
-            "active connection not present in quorum");
+            0x276 /* "active connection not present in quorum" */);
 
         return active;
     }
@@ -1650,7 +1569,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.connectionStateHandler.receivedConnectEvent(
                 this._deltaManager.connectionMode,
                 details,
-                opsBehind,
             );
 
             // Back-compat for new client and old server.

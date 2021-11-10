@@ -5,12 +5,50 @@ theme: "thxvscode"
 title: "Fluid Framework"
 titleCaseStyle: "Chicago"
 
+# Hugo modules enable mapping content from outside the Hugo folder
+module:
+  noVendor: "github.com/**"
+  hugoVersion:
+    extended: true
+    min: "0.76.5"
+  mounts:
+  - source: content
+    target: content
+  - source: _replacements
+    target: content
+  - source: ../packages/dds/sequence/README.md
+    target: content/docs/sequence-readme.md
+
+  - source: static
+    target: static
+
+  # SVG icons from the @vscode/codicons package
+  - source: node_modules/@vscode/codicons/src/icons/beaker.svg
+    target: static/codicons/beaker.svg
+  - source: node_modules/@vscode/codicons/src/icons/book.svg
+    target: static/codicons/book.svg
+  - source: node_modules/@vscode/codicons/src/icons/bug.svg
+    target: static/codicons/bug.svg
+  - source: node_modules/@vscode/codicons/src/icons/comment-discussion.svg
+    target: static/codicons/comment-discussion.svg
+  - source: node_modules/@vscode/codicons/src/icons/edit.svg
+    target: static/codicons/edit.svg
+  - source: node_modules/@vscode/codicons/src/icons/github.svg
+    target: static/codicons/github.svg
+  - source: node_modules/@vscode/codicons/src/icons/play-circle.svg
+    target: static/codicons/play-circle.svg
+  - source: node_modules/@vscode/codicons/src/icons/rss.svg
+    target: static/codicons/rss.svg
+  - source: node_modules/@vscode/codicons/src/icons/twitter.svg
+    target: static/codicons/twitter.svg
+
 permalinks:
   page: "/:slug"
   post: "/:year/:month/:title"
 
 params:
   appInsightKey: ""  # This is provided by the build system as an env variable
+  cookies: false
   customCSS: ["css/fluid.css", "css/tango.css"]
   dateform: "Jan 2, 2006"
   dateformNum: "2006-01-02"
@@ -18,6 +56,13 @@ params:
   dateformShort: "Jan 2"
   githubRepo: "microsoft/FluidFramework"
   twitterHandle: "fluidframework"
+  banner:
+    showBanner: true # show or hide the banner completely
+    bannerClose: false # show or hide the close button on the banner
+    version: "0.50"
+    urlRef: "docs/updates/v0.50.md"
+    message: | # if set, this will override the release notes updates
+      [Azure Fluid Relay](/docs/deployment/azure-frs/) is available in _Public Preview_!
 
 menu:
   main:
@@ -90,7 +135,7 @@ markup:
   goldmark:
     parser:
       attribute:
-        # enables adding CSS classes to black elements in markdown
+        # enables adding CSS classes to block elements in markdown
         block: true
     renderer:
       autoHeadingIDType: "github"
