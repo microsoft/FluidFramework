@@ -369,10 +369,10 @@ class ScheduleManagerCore {
      public afterOpProcessing(sequenceNumber: number) {
         assert(!this.localPaused, "can't have op processing paused if we are processing an op");
 
-        // If no message has caused the pause flag to be set, or the next message up is not the one we need to pause at
-        // then we simply continue processing
+        // do we have incomplete batch to worry about?
         if (this.pauseSequenceNumber !== undefined) {
-            assert(sequenceNumber < this.pauseSequenceNumber, "processed op we should have not processed");
+            assert(sequenceNumber < this.pauseSequenceNumber, "we should never start processing incomplete batch!");
+            // If the next op is the start of incomplete batch, then we can't process it until it's fully in - pause!
             if (sequenceNumber + 1 === this.pauseSequenceNumber) {
                 this.setPaused(true);
             }
