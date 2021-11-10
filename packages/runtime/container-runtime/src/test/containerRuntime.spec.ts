@@ -94,9 +94,10 @@ describe("Runtime", () => {
                     sequenceNumber = 0;
                 });
 
-                function processOp(message: Partial<ISequencedDocumentMessage>) {
+                function processOp(partialMessage: Partial<ISequencedDocumentMessage>) {
                     sequenceNumber++;
-                    deltaManager.inbound.push({ ...message, sequenceNumber } as ISequencedDocumentMessage);
+                    const message = { ...partialMessage, sequenceNumber };
+                    deltaManager.inbound.push(message as ISequencedDocumentMessage);
                 }
 
                 it("Single non-batch message", () => {
