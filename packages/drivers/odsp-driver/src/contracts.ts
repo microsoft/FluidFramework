@@ -5,6 +5,7 @@
 
 import * as api from "@fluidframework/protocol-definitions";
 import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions";
+import { ISnapshotContents } from "./odspUtils";
 
 /**
  * Socket storage discovery api response
@@ -224,4 +225,11 @@ export interface IFlushOpsResponse {
     /** Time in seconds */
     retryAfter?: number;
     lastPersistedSequenceNumber?: number;
+}
+
+/**
+ * Represents the cached snapshot value.
+ */
+export interface ISnapshotCachedEntry extends ISnapshotContents {
+    cacheEntryTime: number,
 }

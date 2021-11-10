@@ -7,8 +7,14 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-shadow, max-len, no-bitwise */
 
 import { assert, Trace } from "@fluidframework/common-utils";
-import * as Base from "./base";
-import * as Collections from "./collections";
+import { IIntegerRange } from "./base";
+import {
+    Comparer,
+    Heap,
+    List,
+    ListMakeHead,
+    Stack,
+} from "./collections";
 import {
     LocalClientId,
     NonCollabClient,
@@ -25,20 +31,35 @@ import {
     MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback";
 import { TrackingGroupCollection } from "./mergeTreeTracking";
-import * as ops from "./ops";
+import {
+    ICombiningOp,
+    IJSONSegment,
+    IMarkerDef,
+    IRelativePosition,
+    MergeTreeDeltaType,
+    ReferenceType,
+} from "./ops";
 import { PartialSequenceLengths } from "./partialLengths";
-import * as Properties from "./properties";
+import {
+    clone,
+    createMap,
+    extend,
+    extendIfUndefined,
+    MapLike,
+    matchProperties,
+    PropertySet,
+} from "./properties";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { PropertiesManager } from "./segmentPropertiesManager";
 
 export interface ReferencePosition {
-    properties?: Properties.PropertySet;
-    refType: ops.ReferenceType;
+    properties?: PropertySet;
+    refType: ReferenceType;
     // True if this reference is a segment.
     isLeaf(): boolean;
     getSegment(): ISegment | undefined;
     getOffset(): number;
-    addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp);
+    addProperties(newProps: PropertySet, op?: ICombiningOp): void;
     hasTileLabels(): boolean;
     hasRangeLabels(): boolean;
     hasTileLabel(label: string): boolean;
@@ -47,7 +68,7 @@ export interface ReferencePosition {
     getRangeLabels(): string[] | undefined;
 }
 
-export type RangeStackMap = Properties.MapLike<Collections.Stack<ReferencePosition>>;
+export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
 export interface IMergeNodeCommon {
     parent?: IMergeBlock;
@@ -69,15 +90,15 @@ export interface IMergeBlock extends IMergeNodeCommon {
     children: IMergeNode[];
     partialLengths?: PartialSequenceLengths;
     hierBlock(): IHierBlock | undefined;
-    assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean);
-    setOrdinal(child: IMergeNode, index: number);
+    assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
+    setOrdinal(child: IMergeNode, index: number): void;
 }
 
 export interface IHierBlock extends IMergeBlock {
-    hierToString(indentCount: number);
-    addNodeReferences(mergeTree: MergeTree, node: IMergeNode);
-    rightmostTiles: Properties.MapLike<ReferencePosition>;
-    leftmostTiles: Properties.MapLike<ReferencePosition>;
+    hierToString(indentCount: number): string;
+    addNodeReferences(mergeTree: MergeTree, node: IMergeNode): void;
+    rightmostTiles: MapLike<ReferencePosition>;
+    leftmostTiles: MapLike<ReferencePosition>;
     rangeStacks: RangeStackMap;
 }
 
@@ -100,13 +121,13 @@ export interface ISegment extends IMergeNodeCommon, IRemovalInfo {
     seq?: number;  // If not present assumed to be previous to window min
     clientId: number;
     localRefs?: LocalReferenceCollection;
-    properties?: Properties.PropertySet;
+    properties?: PropertySet;
     addProperties(
-        newProps: Properties.PropertySet,
-        op?: ops.ICombiningOp,
+        newProps: PropertySet,
+        op?: ICombiningOp,
         seq?: number,
         collabWindow?: CollaborationWindow,
-    ): Properties.PropertySet | undefined;
+    ): PropertySet | undefined;
     clone(): ISegment;
     canAppend(segment: ISegment): boolean;
     append(segment: ISegment): void;
@@ -251,7 +272,7 @@ function applyStackDelta(currentStackMap: RangeStackMap, deltaStackMap: RangeSta
         if (!deltaStack.empty()) {
             let currentStack = currentStackMap[label];
             if (currentStack === undefined) {
-                currentStack = new Collections.Stack<ReferencePosition>();
+                currentStack = new Stack<ReferencePosition>();
                 currentStackMap[label] = currentStack;
             }
             for (const delta of deltaStack.items) {
@@ -261,15 +282,15 @@ function applyStackDelta(currentStackMap: RangeStackMap, deltaStackMap: RangeSta
     }
 }
 
-function applyRangeReference(stack: Collections.Stack<ReferencePosition>, delta: ReferencePosition) {
-    if (delta.refType & ops.ReferenceType.NestBegin) {
+function applyRangeReference(stack: Stack<ReferencePosition>, delta: ReferencePosition) {
+    if (delta.refType & ReferenceType.NestBegin) {
         stack.push(delta);
         return true;
     } else {
         // Assume delta is end reference
         const top = stack.top();
         // TODO: match end with begin
-        if (top && (top.refType & ops.ReferenceType.NestBegin)) {
+        if (top && (top.refType & ReferenceType.NestBegin)) {
             stack.pop();
         } else {
             stack.push(delta);
@@ -280,12 +301,12 @@ function applyRangeReference(stack: Collections.Stack<ReferencePosition>, delta:
 
 function addNodeReferences(
     mergeTree: MergeTree, node: IMergeNode,
-    rightmostTiles: Properties.MapLike<ReferencePosition>,
-    leftmostTiles: Properties.MapLike<ReferencePosition>, rangeStacks: RangeStackMap) {
+    rightmostTiles: MapLike<ReferencePosition>,
+    leftmostTiles: MapLike<ReferencePosition>, rangeStacks: RangeStackMap) {
     function updateRangeInfo(label: string, refPos: ReferencePosition) {
         let stack = rangeStacks[label];
         if (stack === undefined) {
-            stack = new Collections.Stack<ReferencePosition>();
+            stack = new Stack<ReferencePosition>();
             rangeStacks[label] = stack;
         }
         applyRangeReference(stack, refPos);
@@ -300,14 +321,14 @@ function addNodeReferences(
                 if (markerId) {
                     mergeTree.mapIdToSegment(markerId, segment);
                 }
-                if (segment.refType & ops.ReferenceType.Tile) {
+                if (segment.refType & ReferenceType.Tile) {
                     addTile(segment, rightmostTiles);
                     addTileIfNotPresent(segment, leftmostTiles);
                 }
-                if (segment.refType & (ops.ReferenceType.NestBegin | ops.ReferenceType.NestEnd)) {
+                if (segment.refType & (ReferenceType.NestBegin | ReferenceType.NestEnd)) {
                     const rangeLabels = segment.getRangeLabels();
                     if (rangeLabels) {
-                        for (const label of segment.getRangeLabels()) {
+                        for (const label of segment.getRangeLabels()!) {
                             updateRangeInfo(label, segment);
                         }
                     }
@@ -317,12 +338,12 @@ function addNodeReferences(
                 if (baseSegment.localRefs && (baseSegment.localRefs.hierRefCount !== undefined) &&
                     (baseSegment.localRefs.hierRefCount > 0)) {
                     for (const lref of baseSegment.localRefs) {
-                        if (lref.refType & ops.ReferenceType.Tile) {
+                        if (lref.refType & ReferenceType.Tile) {
                             addTile(lref, rightmostTiles);
                             addTileIfNotPresent(lref, leftmostTiles);
                         }
-                        if (lref.refType & (ops.ReferenceType.NestBegin | ops.ReferenceType.NestEnd)) {
-                            for (const label of lref.getRangeLabels()) {
+                        if (lref.refType & (ReferenceType.NestBegin | ReferenceType.NestEnd)) {
+                            for (const label of lref.getRangeLabels()!) {
                                 updateRangeInfo(label, lref);
                             }
                         }
@@ -333,8 +354,8 @@ function addNodeReferences(
     } else {
         const block = <IHierBlock>node;
         applyStackDelta(rangeStacks, block.rangeStacks);
-        Properties.extend(rightmostTiles, block.rightmostTiles);
-        Properties.extendIfUndefined(leftmostTiles, block.leftmostTiles);
+        extend(rightmostTiles, block.rightmostTiles);
+        extendIfUndefined(leftmostTiles, block.leftmostTiles);
     }
 }
 
@@ -404,15 +425,15 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
 }
 
 class HierMergeBlock extends MergeBlock implements IMergeBlock {
-    rightmostTiles: Properties.MapLike<ReferencePosition>;
-    leftmostTiles: Properties.MapLike<ReferencePosition>;
-    rangeStacks: Properties.MapLike<Collections.Stack<ReferencePosition>>;
+    rightmostTiles: MapLike<ReferencePosition>;
+    leftmostTiles: MapLike<ReferencePosition>;
+    rangeStacks: MapLike<Stack<ReferencePosition>>;
 
     constructor(childCount: number) {
         super(childCount);
-        this.rightmostTiles = Properties.createMap<ReferencePosition>();
-        this.leftmostTiles = Properties.createMap<ReferencePosition>();
-        this.rangeStacks = Properties.createMap<Collections.Stack<ReferencePosition>>();
+        this.rightmostTiles = createMap<ReferencePosition>();
+        this.leftmostTiles = createMap<ReferencePosition>();
+        this.rangeStacks = createMap<Stack<ReferencePosition>>();
     }
 
     addNodeReferences(mergeTree: MergeTree, node: IMergeNode) {
@@ -459,18 +480,18 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
     propertyManager?: PropertiesManager;
-    properties?: Properties.PropertySet;
+    properties?: PropertySet;
     localRefs?: LocalReferenceCollection;
     abstract readonly type: string;
     localSeq?: number;
     localRemovedSeq?: number;
 
-    addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number, collabWindow?: CollaborationWindow) {
+    addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow) {
         if (!this.propertyManager) {
             this.propertyManager = new PropertiesManager();
         }
         if (!this.properties) {
-            this.properties = Properties.createMap<any>();
+            this.properties = createMap<any>();
         }
         return this.propertyManager.addProperties(this.properties, newProps, op, seq, collabWindow && collabWindow.collaborating);
     }
@@ -486,18 +507,18 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     cloneInto(b: ISegment) {
         b.clientId = this.clientId;
         // TODO: deep clone properties
-        b.properties = Properties.clone(this.properties);
+        b.properties = clone(this.properties);
         b.removedClientId = this.removedClientId;
         // TODO: copy removed client overlap and branch removal info
         b.removedSeq = this.removedSeq;
         b.seq = this.seq;
     }
 
-    canAppend(segment: ISegment) {
+    canAppend(segment: ISegment): boolean {
         return false;
     }
 
-    addSerializedProps(jseg: ops.IJSONSegment) {
+    addSerializedProps(jseg: IJSONSegment) {
         if (this.properties) {
             jseg.props = this.properties;
         }
@@ -509,18 +530,18 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         const currentSegmentGroup = this.segmentGroups.dequeue();
         assert(currentSegmentGroup === segmentGroup, 0x043 /* "On ack, unexpected segmentGroup!" */);
         switch (opArgs.op.type) {
-            case ops.MergeTreeDeltaType.ANNOTATE:
+            case MergeTreeDeltaType.ANNOTATE:
                 assert(!!this.propertyManager, 0x044 /* "On annotate ack, missing segment property manager!" */);
                 this.propertyManager.ackPendingProperties(opArgs.op);
                 return true;
 
-            case ops.MergeTreeDeltaType.INSERT:
+            case MergeTreeDeltaType.INSERT:
                 assert(this.seq === UnassignedSequenceNumber, 0x045 /* "On insert, seq number already assigned!" */);
                 this.seq = opArgs.sequencedMessage!.sequenceNumber;
                 this.localSeq = undefined;
                 return true;
 
-            case ops.MergeTreeDeltaType.REMOVE:
+            case MergeTreeDeltaType.REMOVE:
                 const removalInfo = mergeTree.getRemovalInfo(this);
                 assert(!!removalInfo, 0x046 /* "On remove ack, missing removal info!" */);
                 assert(!!removalInfo.removedSeq, 0x047 /* "On remove ack, missing removed sequence number!" */);
@@ -591,10 +612,10 @@ export const reservedRangeLabelsKey = "referenceRangeLabels";
 export const reservedMarkerIdKey = "markerId";
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
-export const refGetTileLabels = (refPos: ReferencePosition) => (refPos.refType & ops.ReferenceType.Tile) &&
+export const refGetTileLabels = (refPos: ReferencePosition) => (refPos.refType & ReferenceType.Tile) &&
     refPos.properties ? refPos.properties[reservedTileLabelsKey] as string[] : undefined;
 
-export const refGetRangeLabels = (refPos: ReferencePosition) => (refPos.refType & (ops.ReferenceType.NestBegin | ops.ReferenceType.NestEnd)) &&
+export const refGetRangeLabels = (refPos: ReferencePosition) => (refPos.refType & (ReferenceType.NestBegin | ReferenceType.NestEnd)) &&
     refPos.properties ? refPos.properties[reservedRangeLabelsKey] as string[] : undefined;
 
 export function refHasTileLabel(refPos: ReferencePosition, label: string) {
@@ -621,8 +642,8 @@ export function refHasRangeLabel(refPos: ReferencePosition, label: string) {
     return false;
 }
 
-export interface IJSONMarkerSegment extends ops.IJSONSegment {
-    marker: ops.IMarkerDef;
+export interface IJSONMarkerSegment extends IJSONSegment {
+    marker: IMarkerDef;
 }
 
 export class Marker extends BaseSegment implements ReferencePosition {
@@ -633,7 +654,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
     public readonly type = Marker.type;
 
     public static make(
-        refType: ops.ReferenceType, props?: Properties.PropertySet) {
+        refType: ReferenceType, props?: PropertySet) {
         const marker = new Marker(refType);
         if (props) {
             marker.addProperties(props);
@@ -641,7 +662,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
         return marker;
     }
 
-    constructor(public refType: ops.ReferenceType) {
+    constructor(public refType: ReferenceType) {
         super();
         this.cachedLength = 1;
     }
@@ -656,7 +677,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
         if (spec && typeof spec === "object" && "marker" in spec) {
             return Marker.make(
                 spec.marker.refType,
-                spec.props as Properties.PropertySet);
+                spec.props as PropertySet);
         }
         return undefined;
     }
@@ -706,26 +727,26 @@ export class Marker extends BaseSegment implements ReferencePosition {
         return refHasRangeLabel(this, label);
     }
 
-    getTileLabels() {
+    getTileLabels(): string[] | undefined {
         return refGetTileLabels(this);
     }
 
-    getRangeLabels() {
+    getRangeLabels(): string[] | undefined {
         return refGetRangeLabels(this);
     }
 
     toString() {
         let bbuf = "";
-        if (this.refType & ops.ReferenceType.Tile) {
+        if (this.refType & ReferenceType.Tile) {
             bbuf += "Tile";
         }
-        if (this.refType & ops.ReferenceType.NestBegin) {
+        if (this.refType & ReferenceType.NestBegin) {
             if (bbuf.length > 0) {
                 bbuf += "; ";
             }
             bbuf += "RangeBegin";
         }
-        if (this.refType & ops.ReferenceType.NestEnd) {
+        if (this.refType & ReferenceType.NestEnd) {
             if (bbuf.length > 0) {
                 bbuf += "; ";
             }
@@ -750,7 +771,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
         const rangeLabels = this.getRangeLabels();
         if (rangeLabels) {
             let rangeKind = "begin";
-            if (this.refType & ops.ReferenceType.NestEnd) {
+            if (this.refType & ReferenceType.NestEnd) {
                 rangeKind = "end";
             }
             if (tileLabels) {
@@ -785,7 +806,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
         return undefined;
     }
 
-    canAppend(segment: ISegment) {
+    canAppend(segment: ISegment): boolean {
         return false;
     }
 
@@ -855,41 +876,6 @@ export function internedSpaces(n: number) {
     }
     return indentStrings[n];
 }
-export class RegisterCollection {
-    clientCollections: Properties.MapLike<Properties.MapLike<ISegment[]> | undefined> = Properties.createMap();
-    set(clientId: string, id: string, segments: ISegment[]) {
-        let clientCollection = this.clientCollections[clientId];
-        if (!clientCollection) {
-            clientCollection = Properties.createMap();
-            this.clientCollections[clientId] = clientCollection;
-        }
-        clientCollection[id] = segments;
-    }
-
-    get(clientId: string, id: string) {
-        const clientCollection = this.clientCollections[clientId];
-        if (clientCollection) {
-            return clientCollection[id];
-        }
-    }
-
-    getLength(clientId: string, id: string) {
-        const segs = this.get(clientId, id);
-        let len = 0;
-        if (segs) {
-            for (const seg of segs) {
-                len += seg.cachedLength;
-            }
-        }
-        return len;
-    }
-
-    removeClient(clientId: string) {
-        this.clientCollections[clientId] = undefined;
-    }
-
-    // TODO: snapshot
-}
 
 export interface IConsensusInfo {
     marker: Marker;
@@ -901,7 +887,7 @@ export interface ClientSeq {
     clientId: string;
 }
 
-export const clientSeqComparer: Collections.Comparer<ClientSeq> = {
+export const clientSeqComparer: Comparer<ClientSeq> = {
     min: { refSeq: -1, clientId: "" },
     compare: (a, b) => a.refSeq - b.refSeq,
 };
@@ -911,7 +897,7 @@ export interface LRUSegment {
     maxSeq: number;
 }
 
-const LRUSegmentComparer: Collections.Comparer<LRUSegment> = {
+const LRUSegmentComparer: Comparer<LRUSegment> = {
     min: { maxSeq: -2 },
     compare: (a, b) => a.maxSeq - b.maxSeq,
 };
@@ -946,7 +932,7 @@ function applyLeafRangeMarker(marker: Marker, searchInfo: IMarkerSearchRangeInfo
         if (marker.hasRangeLabel(rangeLabel)) {
             let currentStack = searchInfo.stacks[rangeLabel];
             if (currentStack === undefined) {
-                currentStack = new Collections.Stack<Marker>();
+                currentStack = new Stack<Marker>();
                 searchInfo.stacks[rangeLabel] = currentStack;
             }
             applyRangeReference(currentStack, marker);
@@ -959,7 +945,7 @@ function recordRangeLeaf(
     searchInfo: IMarkerSearchRangeInfo) {
     if (Marker.is(segment)) {
         if (segment.refType &
-            (ops.ReferenceType.NestBegin | ops.ReferenceType.NestEnd)) {
+            (ReferenceType.NestBegin | ReferenceType.NestEnd)) {
             applyLeafRangeMarker(segment, searchInfo);
         }
     }
@@ -973,7 +959,7 @@ function rangeShift(
         const seg = node;
         if ((searchInfo.mergeTree.localNetLength(seg) ?? 0 > 0) && Marker.is(seg)) {
             if (seg.refType &
-                (ops.ReferenceType.NestBegin | ops.ReferenceType.NestEnd)) {
+                (ReferenceType.NestBegin | ReferenceType.NestEnd)) {
                 applyLeafRangeMarker(seg, searchInfo);
             }
         }
@@ -1027,10 +1013,10 @@ function tileShift(
 
 export interface MinListener {
     minRequired: number;
-    onMinGE(minSeq: number);
+    onMinGE(minSeq: number): void;
 }
 
-const minListenerComparer: Collections.Comparer<MinListener> = {
+const minListenerComparer: Comparer<MinListener> = {
     min: { minRequired: Number.MIN_VALUE, onMinGE: () => { assert(false, 0x048 /* "onMinGE()" */); } },
     compare: (a, b) => a.minRequired - b.minRequired,
 };
@@ -1081,20 +1067,20 @@ export class MergeTree {
     root: IMergeBlock;
     blockUpdateActions: BlockUpdateActions;
     collabWindow = new CollaborationWindow();
-    pendingSegments: Collections.List<SegmentGroup> | undefined;
-    segmentsToScour: Collections.Heap<LRUSegment> | undefined;
+    pendingSegments: List<SegmentGroup> | undefined;
+    segmentsToScour: Heap<LRUSegment> | undefined;
     // TODO: change this to ES6 map; add remove on segment remove
     // for now assume only markers have ids and so point directly at the Segment
     // if we need to have pointers to non-markers, we can change to point at local refs
-    idToSegment = Properties.createMap<ISegment>();
-    minSeqListeners: Collections.Heap<MinListener> | undefined;
+    idToSegment = createMap<ISegment>();
+    minSeqListeners: Heap<MinListener> | undefined;
     // For diagnostics
     getLongClientId?: (id: number) => string;
     mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
     mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
 
     // TODO: make and use interface describing options
-    constructor(public options?: Properties.PropertySet) {
+    constructor(public options?: PropertySet) {
         this.blockUpdateActions = MergeTree.initBlockUpdateActions;
         this.root = this.makeBlock(0);
     }
@@ -1223,8 +1209,8 @@ export class MergeTree {
         this.collabWindow.minSeq = minSeq;
         this.collabWindow.collaborating = true;
         this.collabWindow.currentSeq = currentSeq;
-        this.segmentsToScour = new Collections.Heap<LRUSegment>([], LRUSegmentComparer);
-        this.pendingSegments = Collections.ListMakeHead<SegmentGroup>();
+        this.segmentsToScour = new Heap<LRUSegment>([], LRUSegmentComparer);
+        this.pendingSegments = ListMakeHead<SegmentGroup>();
         const measureFullCollab = false;
         let clockStart: Trace | undefined;
         if (measureFullCollab) {
@@ -1286,7 +1272,7 @@ export class MergeTree {
                         if (segment.seq! <= this.collabWindow.minSeq) {
                             const canAppend = prevSegment
                                 && prevSegment.canAppend(segment)
-                                && Properties.matchProperties(prevSegment.properties, segment.properties)
+                                && matchProperties(prevSegment.properties, segment.properties)
                                 && prevSegment.trackingCollection.matches(segment.trackingCollection)
                                 && this.localNetLength(segment) > 0;
 
@@ -1513,7 +1499,7 @@ export class MergeTree {
     }
 
     findHistorialRangeFromClient(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, clientId: number) {
-        const ranges: Base.IIntegerRange[] = [];
+        const ranges: IIntegerRange[] = [];
         const recordRange = (
             segment: ISegment,
             pos: number,
@@ -1669,7 +1655,7 @@ export class MergeTree {
 
     addMinSeqListener(minRequired: number, onMinGE: (minSeq: number) => void) {
         if (!this.minSeqListeners) {
-            this.minSeqListeners = new Collections.Heap<MinListener>([],
+            this.minSeqListeners = new Heap<MinListener>([],
                 minListenerComparer);
         }
         this.minSeqListeners.add({ minRequired, onMinGE });
@@ -1715,7 +1701,7 @@ export class MergeTree {
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
         const searchInfo: IMarkerSearchRangeInfo = {
             mergeTree: this,
-            stacks: Properties.createMap<Collections.Stack<Marker>>(),
+            stacks: createMap<Stack<Marker>>(),
             rangeLabels,
         };
 
@@ -1923,7 +1909,7 @@ export class MergeTree {
      * @param clientId - The client id with which to compute the position.
      */
     posFromRelativePos(
-        relativePos: ops.IRelativePosition,
+        relativePos: IRelativePosition,
         refseq = this.collabWindow.currentSeq,
         clientId = this.collabWindow.clientId) {
         let pos = -1;
@@ -1971,7 +1957,7 @@ export class MergeTree {
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
-                    operation: ops.MergeTreeDeltaType.INSERT,
+                    operation: MergeTreeDeltaType.INSERT,
                     deltaSegments: segments.map((segment) => ({ segment })),
                 });
         }
@@ -2087,7 +2073,7 @@ export class MergeTree {
                 opArgs,
                 {
                     deltaSegments: [{ segment: insertSegment }],
-                    operation: ops.MergeTreeDeltaType.INSERT,
+                    operation: MergeTreeDeltaType.INSERT,
                 });
         }
 
@@ -2556,7 +2542,7 @@ export class MergeTree {
      * @param opArgs - The op args for the annotate op. this is passed to the merge tree callback if there is one
      */
     annotateRange(
-        start: number, end: number, props: Properties.PropertySet, combiningOp: ops.ICombiningOp | undefined, refSeq: number,
+        start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined, refSeq: number,
         clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs) {
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
@@ -2586,7 +2572,7 @@ export class MergeTree {
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
-                    operation: ops.MergeTreeDeltaType.ANNOTATE,
+                    operation: MergeTreeDeltaType.ANNOTATE,
                     deltaSegments,
                 });
         }
@@ -2696,7 +2682,7 @@ export class MergeTree {
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
-                    operation: ops.MergeTreeDeltaType.REMOVE,
+                    operation: MergeTreeDeltaType.REMOVE,
                     deltaSegments: removedSegments,
                 });
         }
@@ -2741,8 +2727,8 @@ export class MergeTree {
         let len = 0;
         const hierBlock = block.hierBlock();
         if (hierBlock) {
-            hierBlock.rightmostTiles = Properties.createMap<Marker>();
-            hierBlock.leftmostTiles = Properties.createMap<Marker>();
+            hierBlock.rightmostTiles = createMap<Marker>();
+            hierBlock.leftmostTiles = createMap<Marker>();
             hierBlock.rangeStacks = {};
         }
         for (let i = 0; i < block.childCount; i++) {
@@ -2836,7 +2822,7 @@ export class MergeTree {
         return this.nodeToString(this.root, "", 0);
     }
 
-    public incrementalBlockMap<TContext>(stateStack: Collections.Stack<IncrementalMapState<TContext>>) {
+    public incrementalBlockMap<TContext>(stateStack: Stack<IncrementalMapState<TContext>>) {
         while (!stateStack.empty()) {
             // We already check the stack is not empty
             const state = stateStack.top()!;
@@ -2967,7 +2953,7 @@ export class MergeTree {
         block: IMergeBlock,
         action: (segment: ISegment, accum?: TClientData) => boolean,
         accum?: TClientData,
-    ) {
+    ): boolean {
         let go = true;
         const children = block.children;
         for (let childIndex = 0; go && childIndex < block.childCount; childIndex++) {

@@ -5,7 +5,19 @@
 
 // eslint-disable-next-line import/no-unassigned-import
 import { } from "@fluidframework/core-interfaces";
-import * as MergeTree from "@fluidframework/merge-tree";
+import {
+    ICombiningOp,
+    IMergeTreeInsertMsg,
+    IMergeTreeRemoveMsg,
+    IRelativePosition,
+    ISegment,
+    Marker,
+    MergeTreeTextHelper,
+    PropertySet,
+    ReferencePosition,
+    ReferenceType,
+    TextSegment,
+} from "@fluidframework/merge-tree";
 import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/datastore-definitions";
 import { SharedSegmentSequence } from "./sequence";
 import { SharedStringFactory } from "./sequenceFactory";
@@ -20,7 +32,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
      * @param text - The text to insert
      * @param props - The properties of text
      */
-    insertText(pos: number, text: string, props?: MergeTree.PropertySet);
+    insertText(pos: number, text: string, props?: PropertySet): void;
 
     /**
      * Inserts a marker at the position.
@@ -28,15 +40,15 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
      * @param refType - The reference type of the marker
      * @param props - The properties of the marker
      */
-    insertMarker(pos: number, refType: MergeTree.ReferenceType, props?: MergeTree.PropertySet);
+    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg;
 
     /**
      * {@inheritDoc SharedSegmentSequence.posFromRelativePos}
      */
-    posFromRelativePos(relativePos: MergeTree.IRelativePosition);
+    posFromRelativePos(relativePos: IRelativePosition): number;
 }
 
-export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker;
+export type SharedStringSegment = TextSegment | Marker;
 
 /**
  * The Shared String is a specialized data structure for handling collaborative
@@ -71,7 +83,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         return this;
     }
 
-    private readonly mergeTreeTextHelper: MergeTree.MergeTreeTextHelper;
+    private readonly mergeTreeTextHelper: MergeTreeTextHelper;
 
     constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
         super(document, id, attributes, SharedStringFactory.segmentFromSpec);
@@ -85,10 +97,10 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
      * @param props - The properties of the marker
      */
     public insertMarkerRelative(
-        relativePos1: MergeTree.IRelativePosition,
-        refType: MergeTree.ReferenceType,
-        props?: MergeTree.PropertySet) {
-        const segment = new MergeTree.Marker(refType);
+        relativePos1: IRelativePosition,
+        refType: ReferenceType,
+        props?: PropertySet) {
+        const segment = new Marker(refType);
         if (props) {
             segment.addProperties(props);
         }
@@ -105,9 +117,9 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
      */
     public insertMarker(
         pos: number,
-        refType: MergeTree.ReferenceType,
-        props?: MergeTree.PropertySet) {
-        const segment = new MergeTree.Marker(refType);
+        refType: ReferenceType,
+        props?: PropertySet): IMergeTreeInsertMsg {
+        const segment = new Marker(refType);
         if (props) {
             segment.addProperties(props);
         }
@@ -125,8 +137,8 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
      * @param text - The text to insert
      * @param props - The properties of text
      */
-    public insertTextRelative(relativePos1: MergeTree.IRelativePosition, text: string, props?: MergeTree.PropertySet) {
-        const segment = new MergeTree.TextSegment(text);
+    public insertTextRelative(relativePos1: IRelativePosition, text: string, props?: PropertySet) {
+        const segment = new TextSegment(text);
         if (props) {
             segment.addProperties(props);
         }
@@ -141,8 +153,8 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     /**
      * {@inheritDoc ISharedString.insertText}
      */
-    public insertText(pos: number, text: string, props?: MergeTree.PropertySet) {
-        const segment = new MergeTree.TextSegment(text);
+    public insertText(pos: number, text: string, props?: PropertySet) {
+        const segment = new TextSegment(text);
         if (props) {
             segment.addProperties(props);
         }
@@ -160,8 +172,8 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
      * @param text - The text to replace the range with
      * @param props - Optional. The properties of the replacement text
      */
-    public replaceText(start: number, end: number, text: string, props?: MergeTree.PropertySet) {
-        this.replaceRange(start, end, MergeTree.TextSegment.make(text, props));
+    public replaceText(start: number, end: number, text: string, props?: PropertySet) {
+        this.replaceRange(start, end, TextSegment.make(text, props));
     }
 
     /**
@@ -170,7 +182,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
      * @param end - The exclusive end of the range to replace
      * @returns the message sent.
      */
-    public removeText(start: number, end: number) {
+    public removeText(start: number, end: number): IMergeTreeRemoveMsg {
         return this.removeRange(start, end);
     }
 
@@ -181,9 +193,9 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
      * @param consensusCallback - The callback called when consensus is reached
      */
     public annotateMarkerNotifyConsensus(
-        marker: MergeTree.Marker,
-        props: MergeTree.PropertySet,
-        callback: (m: MergeTree.Marker) => void) {
+        marker: Marker,
+        props: PropertySet,
+        callback: (m: Marker) => void) {
         const annotateOp = this.client.annotateMarkerNotifyConsensus(marker, props, callback);
         if (annotateOp) {
             this.submitSequenceMessage(annotateOp);
@@ -197,16 +209,19 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
      * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
      */
     public annotateMarker(
-        marker: MergeTree.Marker,
-        props: MergeTree.PropertySet,
-        combiningOp?: MergeTree.ICombiningOp) {
+        marker: Marker,
+        props: PropertySet,
+        combiningOp?: ICombiningOp) {
         const annotateOp = this.client.annotateMarker(marker, props, combiningOp);
         if (annotateOp) {
             this.submitSequenceMessage(annotateOp);
         }
     }
 
-    public findTile(startPos: number | undefined, tileLabel: string, preceding = true) {
+    public findTile(startPos: number | undefined, tileLabel: string, preceding = true): {
+        tile: ReferencePosition;
+        pos: number;
+    } {
         return this.client.findTile(startPos, tileLabel, preceding);
     }
 
@@ -244,7 +259,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "*", start, end);
     }
 
-    public getMarkerFromId(id: string) {
+    public getMarkerFromId(id: string): ISegment {
         return this.client.getMarkerFromId(id);
     }
 }
