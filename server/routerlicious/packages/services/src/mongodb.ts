@@ -157,7 +157,7 @@ export class MongoDbFactory implements core.IDbFactory {
         // Need to cast to any before MongoClientOptions due to missing properties in d.ts
         const options: MongoClientOptions = {
             autoReconnect: true,
-            bufferMaxEntries: this.bufferMaxEntries ?? 0,
+            bufferMaxEntries: this.bufferMaxEntries ?? 50,
             keepAlive: true,
             keepAliveInitialDelay: 180000,
             reconnectInterval: 1000,
