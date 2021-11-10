@@ -86,6 +86,3 @@ declare function useLoadable(params: FluidObject<IFluidLoadable> | undefined): v
     useProvider<IFoo>(unknown);
     useLoadable(unknown);
 }
-
-const foo: IFluidObject = getUnknownFluidObject();
-foo.IFluidRouter.;
