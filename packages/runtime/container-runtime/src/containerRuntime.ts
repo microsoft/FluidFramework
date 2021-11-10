@@ -46,7 +46,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
-import { DataCorruptionError, GenericError } from "@fluidframework/container-utils";
+import { DataCorruptionError, GenericError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
 import {
     BlobTreeEntry,
     TreeTreeEntry,
@@ -367,18 +367,20 @@ class ScheduleManagerCore {
      * to make decision if op processing should be paused or not afer that.
      */
      public afterOpProcessing(sequenceNumber: number) {
+        assert(!this.localPaused, "can't have op processing paused if we are processing an op");
+
+        // do we have incomplete batch to worry about?
+        if (this.pauseSequenceNumber !== undefined) {
+            assert(sequenceNumber < this.pauseSequenceNumber, "we should never start processing incomplete batch!");
+            // If the next op is the start of incomplete batch, then we can't process it until it's fully in - pause!
+            if (sequenceNumber + 1 === this.pauseSequenceNumber) {
+                this.setPaused(true);
+            }
+        }
+
         // If the inbound queue is ever empty we pause it and wait for new events
         if (this.deltaManager.inbound.length === 0) {
             this.setPaused(true);
-            return;
-        }
-
-        // If no message has caused the pause flag to be set, or the next message up is not the one we need to pause at
-        // then we simply continue processing
-        if (this.pauseSequenceNumber !== undefined && sequenceNumber + 1 >= this.pauseSequenceNumber) {
-            this.setPaused(true);
-        } else {
-            this.setPaused(false);
         }
     }
 
@@ -422,8 +424,15 @@ class ScheduleManagerCore {
         // If batchMetadata is not undefined then if it's true we've begun a new batch - if false we've ended
         // the previous one
         if (this.currentBatchClientId !== undefined || batchMetadata === false) {
-            assert(this.currentBatchClientId === message.clientId,
-                "Batch not closed, yet message from another client!");
+            if (this.currentBatchClientId !== message.clientId) {
+                // "Batch not closed, yet message from another client!"
+                throw new DataCorruptionError(
+                    "OpBatchIncomplete",
+                    {
+                        batchClientId: this.currentBatchClientId,
+                        ...extractSafePropertiesFromMessage(message),
+                    });
+            }
         }
         if (batchMetadata) {
             assert(this.currentBatchClientId === undefined, "there can't be active batch");
@@ -469,17 +478,8 @@ export class ScheduleManager {
 
     public beforeOpProcessing(message: ISequencedDocumentMessage) {
         if (this.batchClientId !== message.clientId) {
-            // FOLLOWUP: Should be assert instead of recovery code
-            if (this.batchClientId !== undefined) {
-                // As a back stop for any bugs marking the end of a batch - if the client ID flipped, we
-                // consider the previous batch over.
-                this.logger.sendErrorEvent({
-                    eventName: "BatchEndNotReceived",
-                    sequenceNumber: message.sequenceNumber,
-                });
-                this.emitter.emit("batchEnd", "Did not receive real batchEnd message", undefined);
-                this.deltaScheduler.batchEnd();
-            }
+            assert(this.batchClientId === undefined,
+                "Batch is interrupted by other client op. Should be caught by trackPending()");
 
             // This could be the beginning of a new batch or an individual message.
             this.emitter.emit("batchBegin", message);
@@ -644,8 +644,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
             // Unless bypass is explicitly set, then take action when sequence numbers mismatch.
             if (loadSequenceNumberVerification !== "bypass" && runtimeSequenceNumber !== protocolSequenceNumber) {
+                // "Load from summary, runtime metadata sequenceNumber !== initialSequenceNumber"
                 const error = new DataCorruptionError(
-                    "Load from summary, runtime metadata sequenceNumber !== initialSequenceNumber",
+                    "SummaryMetadataMismatch",
                     { runtimeSequenceNumber, protocolSequenceNumber },
                 );
 
