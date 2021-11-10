@@ -73,6 +73,9 @@
         },
         "TypeAliasDeclaration_ITreeEntry": {
           "forwardCompat": false
+        },
+        "InterfaceDeclaration_IDocumentAttributes": {
+          "backCompat": false
         }
       }
     }
