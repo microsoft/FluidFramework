@@ -83,6 +83,11 @@ describe("Tests for snapshot fetch", () => {
         fluidEpoch: "epoch1",
         version: persistedCacheValueVersion };
 
+    const valueWithExpiredCache: IVersionedValueWithEpoch = {
+        value: { ...content, cacheEntryTime: Date.now() - 3 * 24 * 60 * 60 * 1000 },
+        fluidEpoch: "epoch1",
+        version: persistedCacheValueVersion };
+
     const expectedVersion = [{ id: "id", treeId: undefined!}];
 
     before(async () => {
@@ -179,6 +184,42 @@ describe("Tests for snapshot fetch", () => {
 
     it("empty cache and network fetch throws", async () => {
         let isCaught = false;
+        try {
+            await mockFetchSingle(
+            async () => service.getVersions(null,1),
+            // 404 response expected so network fetch throws
+            notFound,
+            );
+        } catch (error) {
+            isCaught = true;
+            assert.strictEqual(error.message, "odspFetchError [404] (undefined)", "incorrect error message");
+        }
+        // making sure network fetch did throw and catch block was executed
+        assert(isCaught, "catch block was not executed");
+    });
+
+    it("cache expires and network fetch succeeds", async () => {
+        const cacheEntry: ICacheEntry = {
+            key:"",
+            type: "snapshot",
+            file: { docId: hashedDocumentId, resolvedUrl } };
+        await localCache.put(cacheEntry, valueWithExpiredCache);
+
+        const version = await mockFetchSingle(
+            async () => service.getVersions(null,1),
+            async () => createResponse({ "x-fluid-epoch": "epoch1" }, odspSnapshot, 200),
+        );
+        assert.deepStrictEqual(version, expectedVersion, "incorrect version");
+    });
+
+    it("cache expires and network fetch throws", async () => {
+        let isCaught = false;
+        const cacheEntry: ICacheEntry = {
+            key:"",
+            type: "snapshot",
+            file: { docId: hashedDocumentId, resolvedUrl } };
+        await localCache.put(cacheEntry, valueWithExpiredCache);
+
         try {
             await mockFetchSingle(
             async () => service.getVersions(null,1),

@@ -178,7 +178,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private readonly odspSummaryUploadManager: OdspSummaryUploadManager;
     private _ops: api.ISequencedDocumentMessage[] | undefined;
 
-    private firstVersionCall = true;
+    private readonly firstVersionCall = true;
     private _snapshotSequenceNumber: number | undefined;
 
     private readonly documentId: string;
@@ -418,13 +418,21 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     let cachedSnapshot: ISnapshotContents | undefined;
                     const cachedSnapshotP: Promise<ISnapshotContents | undefined> =
                         this.epochTracker.get(createCacheSnapshotKey(this.odspResolvedUrl))
-                            .then((snapshotCachedEntry: ISnapshotCachedEntry) => {
+                            .then(async (snapshotCachedEntry: ISnapshotCachedEntry) => {
                                 if (snapshotCachedEntry !== undefined) {
-                                    // If the cached entry does not contain the entry time, then assign it a default of 30 days old.
+                                    // If the cached entry does not contain the entry time, then assign it a default of 2 days old.
+                                    const age = Date.now() - (snapshotCachedEntry.cacheEntryTime ??
+                                        (Date.now() - 2 * 24 * 60 * 60 * 1000));
+
                                     // eslint-disable-next-line @typescript-eslint/dot-notation
-                                    props["cacheEntryAge"] = Date.now() - (snapshotCachedEntry.cacheEntryTime ??
-                                        (Date.now() - 30 * 24 * 60 * 60 * 1000));
+                                    props["cacheEntryAge"] = age;
+
+                                    if(age > 2 * 24 * 60 * 60 * 1000) {
+                                        await this.epochTracker.removeEntries();
+                                        return undefined;
+                                    }
                                 }
+
                                 return snapshotCachedEntry;
                         });
 
@@ -478,7 +486,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             );
 
             // Successful call, redirect future calls to getVersion only!
-            this.firstVersionCall = false;
+            // TODO: add a getVersion call or just delete these comments and this.firstVersionCall
+            // this.firstVersionCall = false;
 
             this._snapshotSequenceNumber = odspSnapshotCacheValue.sequenceNumber;
             const { snapshotTree, blobs, ops } = odspSnapshotCacheValue;
