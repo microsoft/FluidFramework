@@ -39,7 +39,7 @@
     "@fluidframework/datastore-definitions": "^0.52.0",
     "@fluidframework/protocol-definitions": "^0.1026.0-0",
     "@fluidframework/shared-object-base": "^0.52.0",
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "fastest-json-copy": "^1.0.1",
     "lodash": "^4.17.21",
     "uuid": "^8.3.1"

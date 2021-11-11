@@ -121,8 +121,24 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 
     /**
      * The current code details for the container's runtime
+     * @deprecated use getSpecifiedCodeDetails for the code details currently specified for this container, or
+     * getLoadedCodeDetails for the code details that the container's context was loaded with.
+     * To be removed after getSpecifiedCodeDetails and getLoadedCodeDetails become ubiquitous.
      */
-    readonly codeDetails: IFluidCodeDetails | undefined
+    readonly codeDetails: IFluidCodeDetails | undefined;
+
+    /**
+     * Get the code details that are currently specified for the container.
+     * @returns The current code details if any are specified, undefined if none are specified.
+     */
+    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
+
+    /**
+     * Get the code details that were used to load the container.
+     * @returns The code details that were used to load the container if it is loaded, undefined if it is not yet
+     * loaded.
+     */
+    getLoadedCodeDetails?(): IFluidCodeDetails | undefined;
 
     /**
      * Returns true if the container has been closed, otherwise false

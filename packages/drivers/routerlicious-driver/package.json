@@ -65,7 +65,7 @@
     "@fluidframework/protocol-definitions": "^0.1026.0-0",
     "@fluidframework/server-services-client": "^0.1034.0-0",
     "@fluidframework/telemetry-utils": "^0.52.0",
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "json-stringify-safe": "5.0.1",
     "socket.io-client": "^2.4.0",
     "url-parse": "^1.5.3",
