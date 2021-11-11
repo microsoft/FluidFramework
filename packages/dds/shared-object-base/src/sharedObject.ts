@@ -108,21 +108,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param id - The id of the shared object
      * @param runtime - The IFluidDataStoreRuntime which contains the shared object
      * @param attributes - Attributes of the shared object
-     * @param closeOnEventListenerException - if true (default), results in critical error (container closure) on
-     * exception thrown from from any event listeners for any events raised by this object.
      */
     constructor(
         public id: string,
         protected runtime: IFluidDataStoreRuntime,
-        public readonly attributes: IChannelAttributes,
-        closeOnEventListenerException = true)
+        public readonly attributes: IChannelAttributes)
     {
-        super((event: string | symbol, e: any) => {
-            if (closeOnEventListenerException) {
-                this.eventListenerErrorHandler(event, e);
-            }
-            throw e;
-        });
+        super((event: string | symbol, e: any) => this.eventListenerErrorHandler(event, e));
 
         this.handle = new SharedObjectHandle(
             this,
@@ -145,7 +137,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * would result in same error thrown. If called multiple times, only first error is remembered.
      * @param error - error object that is thrown whenever an attempt is made to modify this object
      */
-    protected closeWithError(error: any) {
+    private closeWithError(error: any) {
         if (this.closeError === undefined) {
             this.closeError = error;
         }
@@ -154,7 +146,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * Verifies that this object is not closed via closeWithError(). If it is, throws an error used to close it.
      */
-     protected verifyNotClosed() {
+    private verifyNotClosed() {
         if (this.closeError !== undefined) {
             throw this.closeError;
         }
@@ -170,7 +162,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * DDS state does not match what user sees. Because of it DDS moves to "corrupted state" and does not
      * allow processing of ops or local changes, which very quickly results in container closure.
      */
-     protected eventListenerErrorHandler(event: string | symbol, e: any) {
+    private eventListenerErrorHandler(event: string | symbol, e: any) {
         const error = DataProcessingError.wrapIfUnrecognized(
             e,
             "SharedObjectEventListenerException",
@@ -179,20 +171,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
         this.closeWithError(error);
         throw error;
-    }
-
-    /**
-     * Helper method that can be used to emit events and respond to exceptions thrown from event listeners
-     * by closing this object. Please see eventListenerErrorHandler() & closeWithError() for more info.
-     * @param event - event to raise
-     * @param args - payload of event
-     */
-    protected safeRaiseEvent(event, ...args) {
-        try {
-            this.emit(event, ...args);
-        } catch (e) {
-            this.eventListenerErrorHandler(event, e);
-        }
     }
 
     private attachListeners() {
@@ -504,9 +482,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     private process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         this.verifyNotClosed(); // This will result in container closure.
-        this.safeRaiseEvent("pre-op", message, local, this);
+        this.emit("pre-op", message, local, this);
         this.processCore(message, local, localOpMetadata);
-        this.safeRaiseEvent("op", message, local, this);
+        this.emit("op", message, local, this);
     }
 
     /**
