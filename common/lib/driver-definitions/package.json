@@ -75,7 +75,8 @@
           "backCompat": false
         },
         "InterfaceDeclaration_IDocumentDeltaConnection": {
-          "forwardCompat": false
+          "forwardCompat": false,
+          "backCompat": false
         },
         "InterfaceDeclaration_IDocumentService": {
           "forwardCompat": false,
@@ -99,6 +100,37 @@
           "backCompat": false
         },
         "InterfaceDeclaration_IThrottlingWarning": {
+          "backCompat": false
+        },
+        "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
+          "backCompat": false
+        }
+      },
+      "0.40.0": {
+        "InterfaceDeclaration_IDocumentDeltaConnection": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentService": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentServiceFactory": {
+          "backCompat": false
+        },
+        "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
+          "backCompat": false
+        }
+      },
+      "0.41.0": {
+        "InterfaceDeclaration_IDocumentDeltaConnection": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentService": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentServiceFactory": {
+          "backCompat": false
+        },
+        "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
           "backCompat": false
         }
       }
