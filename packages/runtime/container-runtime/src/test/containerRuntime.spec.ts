@@ -97,7 +97,7 @@ describe("Runtime", () => {
                 /**
                  * Pushes single op to the inbound queue. Adds proper sequence numbers to them
                  */
-                function inboundOp(partialMessage: Partial<ISequencedDocumentMessage>) {
+                function pushOp(partialMessage: Partial<ISequencedDocumentMessage>) {
                     sequenceNumber++;
                     const message = { ...partialMessage, sequenceNumber };
                     deltaManager.inbound.push(message as ISequencedDocumentMessage);
@@ -121,7 +121,7 @@ describe("Runtime", () => {
                     };
 
                     // Send a non-batch message.
-                    inboundOp(message);
+                    pushOp(message);
 
                     await processOps();
 
@@ -138,11 +138,11 @@ describe("Runtime", () => {
                     };
 
                     // Sent 5 non-batch messages.
-                    inboundOp(message);
-                    inboundOp(message);
-                    inboundOp(message);
-                    inboundOp(message);
-                    inboundOp(message);
+                    pushOp(message);
+                    pushOp(message);
+                    pushOp(message);
+                    pushOp(message);
+                    pushOp(message);
 
                     await processOps();
 
@@ -159,7 +159,7 @@ describe("Runtime", () => {
                         metadata: { foo: 1 },
                     };
 
-                    inboundOp(message);
+                    pushOp(message);
                     await processOps();
 
                     // We should have a "batchBegin" and a "batchEnd" event for the batch.
@@ -188,14 +188,14 @@ describe("Runtime", () => {
                     };
 
                     // Send a batch with 4 messages.
-                    inboundOp(batchBeginMessage);
-                    inboundOp(batchMessage);
-                    inboundOp(batchMessage);
+                    pushOp(batchBeginMessage);
+                    pushOp(batchMessage);
+                    pushOp(batchMessage);
 
                     await processOps();
                     assert.strictEqual(deltaManager.inbound.length, 3, "Some of partial batch ops were processed");
 
-                    inboundOp(batchEndMessage);
+                    pushOp(batchEndMessage);
                     await processOps();
 
                     // We should have only received one "batchBegin" and one "batchEnd" event for the batch.
@@ -224,18 +224,18 @@ describe("Runtime", () => {
                     };
 
                     // Pause to not allow ops to be processed while we accumulated them.
-                    void deltaManager.inbound.pause();
+                    await deltaManager.inbound.pause();
 
                     // Send a batch with 4 messages.
-                    inboundOp(batchBeginMessage);
-                    inboundOp(batchMessage);
-                    inboundOp(batchMessage);
-                    inboundOp(batchEndMessage);
+                    pushOp(batchBeginMessage);
+                    pushOp(batchMessage);
+                    pushOp(batchMessage);
+                    pushOp(batchEndMessage);
 
                     // Add incomplete batch
-                    inboundOp(batchBeginMessage);
-                    inboundOp(batchMessage);
-                    inboundOp(batchMessage);
+                    pushOp(batchBeginMessage);
+                    pushOp(batchMessage);
+                    pushOp(batchMessage);
 
                     assert.strictEqual(deltaManager.inbound.length, 7, "none of the batched ops are processed yet");
 
@@ -248,7 +248,7 @@ describe("Runtime", () => {
                     assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
 
                     // End the batch - all ops should be processed.
-                    inboundOp(batchEndMessage);
+                    pushOp(batchEndMessage);
                     await processOps();
 
                     assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
@@ -276,16 +276,16 @@ describe("Runtime", () => {
                     };
 
                     // Pause to not allow ops to be processed while we accumulated them.
-                    void deltaManager.inbound.pause();
+                    await deltaManager.inbound.pause();
 
                     // Send a batch with 2 messages.
-                    inboundOp(batchMessage);
-                    inboundOp(batchMessage);
+                    pushOp(batchMessage);
+                    pushOp(batchMessage);
 
                     // Add incomplete batch
-                    inboundOp(batchBeginMessage);
-                    inboundOp(batchMessage);
-                    inboundOp(batchMessage);
+                    pushOp(batchBeginMessage);
+                    pushOp(batchMessage);
+                    pushOp(batchMessage);
 
                     await processOps();
 
@@ -298,7 +298,7 @@ describe("Runtime", () => {
                         "none of the second batch ops are processed yet");
 
                     // End the batch - all ops should be processed.
-                    inboundOp(batchEndMessage);
+                    pushOp(batchEndMessage);
                     await processOps();
 
                     assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
@@ -361,15 +361,15 @@ describe("Runtime", () => {
                         counter++;
                         it(`Partial batch messages, case ${counter}`, async () => {
                             // Send a batch with 3 messages from first client but don't send batch end message.
-                            inboundOp(batchBeginMessage);
-                            inboundOp(batchMessage);
-                            inboundOp(batchMessage);
+                            pushOp(batchBeginMessage);
+                            pushOp(batchMessage);
+                            pushOp(batchMessage);
 
                             await processOps();
                             assert.strictEqual(deltaManager.inbound.length, 3,
                                 "Some of partial batch ops were processed");
 
-                            assert.throws(() => inboundOp(messageToFail));
+                            assert.throws(() => pushOp(messageToFail));
 
                             assert.strictEqual(deltaManager.inbound.length, 4, "Some of batch ops were processed");
                             assert.strictEqual(0, batchBegin, "Did not receive correct batchBegin event for the batch");

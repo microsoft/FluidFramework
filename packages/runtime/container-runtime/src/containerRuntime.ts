@@ -103,7 +103,7 @@ import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
 import { formRequestSummarizerFn, ISummarizerRequestOptions, SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
-import { ReportOpPerfTelemetry } from "./connectionTelemetry";
+import { ReportOpPerfTelemetry, latencyThreshold } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo } from "./blobManager";
@@ -389,12 +389,12 @@ class ScheduleManagerCore {
             assert(sequenceNumber < this.pauseSequenceNumber, "we should never start processing incomplete batch!");
             // If the next op is the start of incomplete batch, then we can't process it until it's fully in - pause!
             if (sequenceNumber + 1 === this.pauseSequenceNumber) {
-                this.setPaused();
+                this.pauseQueue();
             }
         }
     }
 
-    private setPaused() {
+    private pauseQueue() {
         assert(!this.localPaused, "always called from resumed state");
         this.localPaused = true;
         this.timePaused = performance.now();
@@ -402,7 +402,7 @@ class ScheduleManagerCore {
         this.deltaManager.inbound.pause();
     }
 
-    private setResumed(startBatch: number, endBatch: number) {
+    private resumeQueue(startBatch: number, endBatch: number) {
         // Return early if no change in value
         if (!this.localPaused) {
             return;
@@ -411,9 +411,9 @@ class ScheduleManagerCore {
         this.localPaused = false;
         const duration = performance.now() - this.timePaused;
         // Random round number - we want to know when batch waiting paused op processing.
-        if (duration > 5000) {
+        if (duration > latencyThreshold) {
             this.logger.sendErrorEvent({
-                eventName: "BatchWaitTime",
+                eventName: "MaxBatchWaitTimeExceeded",
                 duration,
                 sequenceNumber: endBatch,
                 length: endBatch - startBatch,
@@ -478,12 +478,12 @@ class ScheduleManagerCore {
             // Only pause processing if queue has no other ops!
             // If there are any other ops in the queue, processing will be stopped when they are processed!
             if (this.deltaManager.inbound.length === 1) {
-                this.setPaused();
+                this.pauseQueue();
             }
         } else if (batchMetadata === false) {
             assert(this.pauseSequenceNumber !== undefined, "batch presence was validated above");
             // Batch is complete, we can process it!
-            this.setResumed(this.pauseSequenceNumber, message.sequenceNumber);
+            this.resumeQueue(this.pauseSequenceNumber, message.sequenceNumber);
             this.pauseSequenceNumber = undefined;
             this.currentBatchClientId = undefined;
         } else {
