@@ -175,28 +175,12 @@ async function orchestratorProcess(
             const userName = userNames[(index + startIndex) % userNames.length];
             const password: string = profile.testUsers.credentials[userName];
 
-            const homeDir = path.join(os.homedir(), "fluidStressTest", userName);
-
-            await new Promise<void>((resolve, reject) => {
-                fs.mkdir(homeDir, {
-                    recursive: true,
-                }, (err) => {
-                    if (!err) {
-                        resolve();
-                    } else {
-                        reject(err);
-                    }
-                });
-            });
-
             const childProcess = child_process.spawn(
                 "node",
                 childArgs,
                 {
                     env: {
                         ...process.env,
-                        HOME: homeDir,
-                        USERPROFILE: homeDir,
                         login__odsp__test__accounts: createLoginEnv(userName, password),
                     },
                 });
