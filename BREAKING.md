@@ -13,6 +13,7 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
 - [OdspDocumentInfo type replaced with OdspFluidDataStoreLocator interface](#OdspDocumentInfo-type-replaced-with-OdspFluidDataStoreLocator-interface)
+- [close() removed from IDocumentDeltaConnection](#close-removed-from-IDocumentDeltaConnection)
 - [Replace createCreateNewRequest with createOdspCreateContainerRequest](#Replace-createCreateNewRequest-with-createOdspCreateContainerRequest)
 
 ### `chaincodePackage` removed from `Container`

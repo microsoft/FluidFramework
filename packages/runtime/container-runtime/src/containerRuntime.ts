@@ -354,7 +354,7 @@ class ScheduleManagerCore {
             });
 
         // Start with baseline - empty inbound queue.
-        this.setPaused(true);
+        this.setPaused(false);
 
         const allPending = this.deltaManager.inbound.toArray();
         for (const pending of allPending) {
@@ -369,6 +369,18 @@ class ScheduleManagerCore {
      public afterOpProcessing(sequenceNumber: number) {
         assert(!this.localPaused, "can't have op processing paused if we are processing an op");
 
+        // If the inbound queue is ever empty, nothing to do!
+        if (this.deltaManager.inbound.length === 0) {
+            assert(this.pauseSequenceNumber === undefined, "there should be no pending batch if we have no ops");
+            return;
+        }
+
+        // The queue is
+        // 1. paused only when the next message to be processed is the beginning of a batch. Done in two places:
+        //    - here (processing ops until reaching start of incomplete batch)
+        //    - in trackPending(), when queue was empty and start of batch showed up.
+        // 2. resumed when batch end comes in (in trackPending())
+
         // do we have incomplete batch to worry about?
         if (this.pauseSequenceNumber !== undefined) {
             assert(sequenceNumber < this.pauseSequenceNumber, "we should never start processing incomplete batch!");
@@ -376,11 +388,6 @@ class ScheduleManagerCore {
             if (sequenceNumber + 1 === this.pauseSequenceNumber) {
                 this.setPaused(true);
             }
-        }
-
-        // If the inbound queue is ever empty we pause it and wait for new events
-        if (this.deltaManager.inbound.length === 0) {
-            this.setPaused(true);
         }
     }
 
@@ -405,20 +412,25 @@ class ScheduleManagerCore {
     private trackPending(message: ISequencedDocumentMessage) {
         assert(this.deltaManager.inbound.length !== 0, "we have something in the queue that generates this event");
 
+        assert((this.currentBatchClientId === undefined) === (this.pauseSequenceNumber === undefined),
+            "non-synchronized state");
+
         const metadata = message.metadata as IRuntimeMessageMetadata;
+        const batchMetadata = metadata?.batch;
 
         // Protocol messages are never part of a runtime batch of messages
         if (!isRuntimeMessage(message)) {
             // Protocol messages should never show up in the middle of the batch!
             assert(this.currentBatchClientId === undefined, "System message in the middle of batch!");
-
-            this.pauseSequenceNumber = undefined;
-            this.currentBatchClientId = undefined;
-            this.setPaused(false);
+            assert(batchMetadata === undefined, "system op in a batch?");
+            assert(!this.localPaused, "we should be processing ops when there is no active batch");
             return;
         }
 
-        const batchMetadata = metadata?.batch;
+        if (this.currentBatchClientId === undefined && batchMetadata === undefined) {
+            assert(!this.localPaused, "we should be processing ops when there is no active batch");
+            return;
+        }
 
         // If the client ID changes then we can move the pause point. If it stayed the same then we need to check.
         // If batchMetadata is not undefined then if it's true we've begun a new batch - if false we've ended
@@ -434,18 +446,32 @@ class ScheduleManagerCore {
                     });
             }
         }
+
+        // The queue is
+        // 1. paused only when the next message to be processed is the beginning of a batch. Done in two places:
+        //    - in afterOpProcessing() - processing ops until reaching start of incomplete batch
+        //    - here (batchMetadata == false below), when queue was empty and start of batch showed up.
+        // 2. resumed when batch end comes in (batchMetadata === true case below)
+
         if (batchMetadata) {
             assert(this.currentBatchClientId === undefined, "there can't be active batch");
+            assert(!this.localPaused, "we should be processing ops when there is no active batch");
             this.pauseSequenceNumber = message.sequenceNumber;
             this.currentBatchClientId = message.clientId;
-            this.setPaused(true);
+            // Start of the batch
+            // Only pause processing if queue has no other ops!
+            // If there are any other ops in the queue, processing will be stopped when they are processed!
+            if (this.deltaManager.inbound.length === 1) {
+                this.setPaused(true);
+            }
         } else if (batchMetadata === false) {
-            assert(this.localPaused, "active batch, should be paused");
             this.pauseSequenceNumber = undefined;
             this.currentBatchClientId = undefined;
+            // Batch is complete, we can process it!
             this.setPaused(false);
         } else {
-            this.setPaused(this.pauseSequenceNumber !== undefined);
+            // Continuation of current batch. Do nothing
+            assert(this.currentBatchClientId !== undefined, "logic error");
         }
     }
 }
