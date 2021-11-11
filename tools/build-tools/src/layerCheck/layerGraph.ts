@@ -293,6 +293,10 @@ export class LayerGraph {
                 if (layerInfo.packages) {
                     layerInfo.packages.forEach(pkg => this.createPackageNode(pkg, layerNode));
                 }
+
+                if (layerInfo.dev && layerInfo.deps) {
+                    throw new Error(`ERROR: dev layers should not specify allowed deps since verification is skipped for dev layers (${layerName})`);
+                }
             }
         }
 
