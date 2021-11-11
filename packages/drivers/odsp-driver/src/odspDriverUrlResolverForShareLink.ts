@@ -23,7 +23,6 @@ import {
     locatorQueryParamName,
 } from "./odspFluidFileLink";
 import { OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic";
-import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import { getOdspResolvedUrl, createOdspLogger } from "./odspUtils";
@@ -75,18 +74,6 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
                 tokenFetcher: this.toInstrumentedTokenFetcher(this.logger, shareLinkFetcherProps.tokenFetcher),
             };
         }
-    }
-
-    /**
-     * @deprecated - use createOdspCreateContainerRequest
-     */
-    public createCreateNewRequest(
-        siteUrl: string,
-        driveId: string,
-        filePath: string,
-        fileName: string,
-    ) {
-        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     }
 
     /**
