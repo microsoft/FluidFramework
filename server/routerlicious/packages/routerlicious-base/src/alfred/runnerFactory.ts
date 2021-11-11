@@ -91,7 +91,8 @@ export class AlfredResources implements core.IResources {
         public mongoManager: core.MongoManager,
         public port: any,
         public documentsCollectionName: string,
-        public metricClientConfig: any) {
+        public metricClientConfig: any,
+        public globalDbMongoManager?: core.MongoManager) {
         const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
         this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig, socketIoAdapterConfig);
     }
@@ -154,14 +155,23 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const redisClientForJwtCache = new Redis(redisOptions2);
         const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
 
-        // Database connection
-        const mongoUrl = config.get("mongo:endpoint") as string;
-        const mongoFactory = new services.MongoDbFactory(mongoUrl);
-        const mongoManager = new core.MongoManager(mongoFactory);
+        // Database connection for global db if enabled
+        let globalDbMongoManager;
+        const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
+        if (globalDbEnabled) {
+            const globalDbMongoUrl = config.get("mongo:globalDbEndpoint") as string;
+            const globalDbMongoFactory = new services.MongoDbFactory(globalDbMongoUrl);
+            globalDbMongoManager = new core.MongoManager(globalDbMongoFactory);
+        }
+
+        // Database connection for operations db
+        const operationsDbMongoUrl = config.get("mongo:operationsDbEndpoint") as string;
+        const operationsDbMongoFactory = new services.MongoDbFactory(operationsDbMongoUrl);
+        const operationsDbMongoManager = new core.MongoManager(operationsDbMongoFactory);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
         // Create the index on the documents collection
-        const db = await mongoManager.getDatabase();
+        const db = await operationsDbMongoManager.getDatabase();
         const documentsCollection = db.collection<core.IDocument>(documentsCollectionName);
         await documentsCollection.createIndex(
             {
@@ -179,11 +189,11 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         await taskMessageSender.initialize();
 
         const nodeCollectionName = config.get("mongo:collectionNames:nodes");
-        const nodeManager = new NodeManager(mongoManager, nodeCollectionName);
+        const nodeManager = new NodeManager(operationsDbMongoManager, nodeCollectionName);
         // This.nodeTracker.on("invalidate", (id) => this.emit("invalidate", id));
         const reservationManager = new ReservationManager(
             nodeManager,
-            mongoManager,
+            operationsDbMongoManager,
             config.get("mongo:collectionNames:reservations"));
 
         const tenantManager = new services.TenantManager(authEndpoint);
@@ -267,7 +277,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             winston);
 
         const databaseManager = new core.MongoDatabaseManager(
-            mongoManager,
+            operationsDbMongoManager,
             nodeCollectionName,
             documentsCollectionName,
             deltasCollectionName,
@@ -325,10 +335,11 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             redisJwtCache,
             storage,
             appTenants,
-            mongoManager,
+            operationsDbMongoManager,
             port,
             documentsCollectionName,
-            metricClientConfig);
+            metricClientConfig,
+            globalDbMongoManager);
     }
 }
 
@@ -349,6 +360,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.appTenants,
             resources.mongoManager,
             resources.producer,
-            resources.metricClientConfig);
+            resources.metricClientConfig,
+            resources.globalDbMongoManager);
     }
 }

@@ -41,7 +41,7 @@ export class RiddlerResources implements IResources {
 export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResources> {
     public async create(config: Provider): Promise<RiddlerResources> {
         // Database connection
-        const mongoUrl = config.get("mongo:endpoint") as string;
+        const mongoUrl = config.get("mongo:operationsDbEndpoint") as string;
         const mongoFactory = new services.MongoDbFactory(mongoUrl);
         const mongoManager = new MongoManager(mongoFactory);
         const tenantsCollectionName = config.get("mongo:collectionNames:tenants");

@@ -17,7 +17,7 @@ import { Provider } from "nconf";
 
 export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFactory> {
     // Access config values
-    const mongoUrl = config.get("mongo:endpoint") as string;
+    const mongoUrl = config.get("mongo:operationsDbEndpoint") as string;
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
     const messagesCollectionName = config.get("mongo:collectionNames:scribeDeltas");
     const createCosmosDBIndexes = config.get("mongo:createCosmosDBIndexes");
