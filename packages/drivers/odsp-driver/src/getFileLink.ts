@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { fetchHelper, getWithRetryForTokenRefresh } from "./odspUtils";
+import { fetchIncorrectResponse, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 
 // Store cached responses for the lifetime of web session as file link remains the same for given file item
 const fileLinkCache = new PromiseCache<string, string | undefined>();
@@ -113,7 +114,11 @@ async function getFileLinkCore(
                 additionalProps = response.commonSpoHeaders;
                 if (response.content.ok) {
                     const sharingInfo = await response.content.json();
-                    return sharingInfo?.d?.directUrl as string;
+                    const url = sharingInfo?.d?.directUrl;
+                    if (typeof url !== "string") {
+                        throwOdspNetworkError("malformedFileLinkResponse", fetchIncorrectResponse);
+                    }
+                    return url;
                 }
                 return undefined;
             });
