@@ -78,6 +78,7 @@ describe("Odsp Create Container Test", () => {
         new TelemetryUTLogger());
 
     beforeEach(() => {
+        resolver = new OdspDriverUrlResolver();
         request = createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     });
 
