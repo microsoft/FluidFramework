@@ -13,6 +13,7 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
 - [OdspDocumentInfo type replaced with OdspFluidDataStoreLocator interface](#OdspDocumentInfo-type-replaced-with-OdspFluidDataStoreLocator-interface)
+- [close() removed from IDocumentDeltaConnection](#close-removed-from-IDocumentDeltaConnection)
 
 ### `chaincodePackage` removed from `Container`
 The `chaincodePackage` property on `Container` was deprecated in 0.28, and has now been removed.  Two new APIs have been added to replace its functionality, `getSpecifiedCodeDetails()` and `getLoadedCodeDetails()`.  Use `getSpecifiedCodeDetails()` to get the code details currently specified for the `Container`, or `getLoadedCodeDetails()` to get the code details that were used to load the `Container`.
