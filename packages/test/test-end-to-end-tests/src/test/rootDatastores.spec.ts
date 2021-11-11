@@ -12,8 +12,12 @@ import {
     DataObjectFactoryType,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ContainerErrorType, IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import {
+    ContainerRuntime,
+    IAckedSummary,
+    SummaryCollection,
+} from "@fluidframework/container-runtime";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
@@ -28,8 +32,22 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let dataObject2: ITestFluidObject;
 
     const packageName = "default";
+    const IdleDetectionTime = 100;
     const testContainerConfig: ITestContainerConfig = {
         fluidDataObjectType: DataObjectFactoryType.Test,
+        runtimeOptions: {
+            summaryOptions: {
+                generateSummaries: true,
+                initialSummarizerDelayMs: 10,
+                summaryConfigOverrides: {
+                    idleTime: IdleDetectionTime,
+                    maxTime: IdleDetectionTime * 12,
+                },
+            },
+            gcOptions: {
+                gcAllowed: true,
+            },
+        },
     };
 
     const setupContainers = async (containerConfig: ITestContainerConfig = testContainerConfig) => {
@@ -141,6 +159,20 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
         it("Assign multiple data stores to the same alias, first write wins, " +
         "different containers from snapshot", async () => {
+            // andre4i: Move this into test utils or something. Same as for other
+            // flavors of this function across the end to end tests
+            const waitForSummary = async (
+                testObjectProvider: ITestObjectProvider,
+                container: IContainer,
+                summaryCollection: SummaryCollection,
+            ): Promise<string> => {
+                await testObjectProvider.ensureSynchronized();
+                const ackedSummary: IAckedSummary =
+                    await summaryCollection.waitSummaryAck(container.deltaManager.lastSequenceNumber);
+                return ackedSummary.summaryAck.contents.handle;
+            };
+
+            const sc = new SummaryCollection(container1.deltaManager, new TelemetryNullLogger());
             const ds1 = await createRootDataStore(dataObject1, "1");
             const ds2 = await createRootDataStore(dataObject2, "2");
 
@@ -151,14 +183,14 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(!aliasResult2);
 
             await provider.ensureSynchronized();
-            await runtimeOf(dataObject1).summarize({
-                runGC: false,
-                fullTree: true,
-                trackState: false,
-                summaryLogger: new TelemetryNullLogger(),
-            });
+            const version = await waitForSummary(provider, container1, sc);
 
-            const container3 = await provider.loadTestContainer(testContainerConfig);
+            const container3 = await provider.loadTestContainer(
+                testContainerConfig,
+                {
+                    [LoaderHeader.version]: version,
+                }, // requestHeader
+            );
             const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
             const ds3 = await createRootDataStore(dataObject3, "3");
             const aliasResult3 = await ds3.trySetAlias(alias);
