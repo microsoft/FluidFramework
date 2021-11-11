@@ -265,13 +265,13 @@ use_current_InterfaceDeclaration_IDocumentService(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
 * "InterfaceDeclaration_IDocumentService": {"backCompat": false}
-*/
 declare function get_current_InterfaceDeclaration_IDocumentService():
     current.IDocumentService;
 declare function use_old_InterfaceDeclaration_IDocumentService(
     use: old.IDocumentService);
 use_old_InterfaceDeclaration_IDocumentService(
     get_current_InterfaceDeclaration_IDocumentService());
+*/
 
 /*
 * Validate forward compat by using old type in place of current type
