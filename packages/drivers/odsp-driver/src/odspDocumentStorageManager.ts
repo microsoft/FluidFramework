@@ -178,7 +178,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private readonly odspSummaryUploadManager: OdspSummaryUploadManager;
     private _ops: api.ISequencedDocumentMessage[] | undefined;
 
-    private readonly firstVersionCall = true;
+    private firstVersionCall = true;
     private _snapshotSequenceNumber: number | undefined;
 
     private readonly documentId: string;
@@ -488,8 +488,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             );
 
             // Successful call, redirect future calls to getVersion only!
-            // TODO: add a getVersion call or just delete these comments and this.firstVersionCall
-            // this.firstVersionCall = false;
+            this.firstVersionCall = false;
 
             this._snapshotSequenceNumber = odspSnapshotCacheValue.sequenceNumber;
             const { snapshotTree, blobs, ops } = odspSnapshotCacheValue;
