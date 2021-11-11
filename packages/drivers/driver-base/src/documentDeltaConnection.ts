@@ -334,9 +334,6 @@ export class DocumentDeltaConnection
             createGenericNetworkError("clientClosingConnection", undefined, true /* canRetry */));
     }
 
-    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
-    public close() { this.dispose(); }
-
     protected disposeCore(socketProtocolError: boolean, err: any) {
         // Can't check this.disposed here, as we get here on socket closure,
         // so _disposed & socket.connected might be not in sync while processing

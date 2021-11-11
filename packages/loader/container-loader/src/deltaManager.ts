@@ -157,9 +157,6 @@ class NoDeltaStream
     private _disposed = false;
     public get disposed() { return this._disposed; }
     public dispose() { this._disposed = true; }
-
-    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
-    public close(): void { this.dispose(); }
 }
 
 /**
