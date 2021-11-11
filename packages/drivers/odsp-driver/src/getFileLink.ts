@@ -7,6 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, delay, PromiseCache } from "@fluidframework/common-utils";
 import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { fetchIncorrectResponse, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IOdspUrlParts,
     OdspResourceTokenFetchOptions,
@@ -16,7 +17,6 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { fetchHelper, getWithRetryForTokenRefresh } from "./odspUtils";
-import { fetchIncorrectResponse, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 
 // Store cached responses for the lifetime of web session as file link remains the same for given file item
 const fileLinkCache = new PromiseCache<string, string>();
@@ -154,7 +154,7 @@ const isFileItemLite = (maybeFileItemLite: any): maybeFileItemLite is FileItemLi
         return false;
     }
     return true;
-}
+};
 
 async function getFileItemLite(
     getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
