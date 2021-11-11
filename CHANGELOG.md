@@ -1,5 +1,20 @@
 # Change Log
 
+## 14.2.3
+
+* build: update dependencies
+  * Associated pull request: [35998](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/35998)
+  * Commit: [d21f61f6495ecd9130572f5719888c88f730d76a](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d21f61f6495ecd9130572f5719888c88f730d76a)
+* test: Update Transaction.tests to use TestTree
+  * Associated pull request: [35854](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/35854)
+  * Commit: [e20243b19f0b6ae1a2bd9d9db0d133d5f2040f3d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/e20243b19f0b6ae1a2bd9d9db0d133d5f2040f3d)
+* docs: add shared tree compression document
+  * Associated pull request: [35546](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/35546)
+  * Commit: [126add22a3e816702cb0deaff0697927aac007ed](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/126add22a3e816702cb0deaff0697927aac007ed)
+* test: Update `SharedTree.tests` to use `SimpleTestTree`
+  * Associated pull request: [35770](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/35770)
+  * Commit: [2d114687f163d1ae6ca654d8d0241128680915fc](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/2d114687f163d1ae6ca654d8d0241128680915fc)
+
 ## 14.0.2
 
 * chore: update dependencies
