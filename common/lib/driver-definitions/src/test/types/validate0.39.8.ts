@@ -193,13 +193,13 @@ use_current_InterfaceDeclaration_IDocumentDeltaConnection(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDocumentDeltaConnection": {"backCompat": false}
-*/
 declare function get_current_InterfaceDeclaration_IDocumentDeltaConnection():
     current.IDocumentDeltaConnection;
 declare function use_old_InterfaceDeclaration_IDocumentDeltaConnection(
     use: old.IDocumentDeltaConnection);
 use_old_InterfaceDeclaration_IDocumentDeltaConnection(
     get_current_InterfaceDeclaration_IDocumentDeltaConnection());
+*/
 
 /*
 * Validate forward compat by using old type in place of current type

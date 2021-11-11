@@ -8,7 +8,7 @@ import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definition
 import { isOnline, OnlineStatus } from "@fluidframework/driver-utils";
 import { assert, performance } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ChildLogger, PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
 import {
     fetchIncorrectResponse,
     offlineFetchFailureStatusCode,
@@ -17,6 +17,7 @@ import {
     throwOdspNetworkError,
     getSPOAndGraphRequestIdsFromResponse,
     fetchTokenErrorCode,
+    createOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
 import {
     IOdspResolvedUrl,
@@ -295,6 +296,12 @@ export function toInstrumentedOdspTokenFetcher(
                     throwOdspNetworkError("tokenIsNull", fetchTokenErrorCode, undefined, undefined, { method: name });
                 }
                 return token;
+            }, (error) => {
+                const tokenError = wrapError(
+                    error,
+                    (errorMessage) => createOdspNetworkError("tokenFetcherFailed", errorMessage, fetchTokenErrorCode));
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal
+                throw tokenError;
             }),
             { cancel: "generic" });
     };

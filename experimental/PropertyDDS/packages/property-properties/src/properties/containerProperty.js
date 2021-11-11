@@ -12,6 +12,7 @@ const { AbstractStaticCollectionProperty } = require('./abstractStaticCollection
 const { MSG } = require('@fluid-experimental/property-common').constants;
 const { ConsoleUtils } = require('@fluid-experimental/property-common');
 const { IndexedCollectionBaseProperty } = require('./indexedCollectionBaseProperty');
+const { validationsEnabled } = require('../enableValidations');
 
 /**
  * A property object that allows to add child properties dynamically.
@@ -84,12 +85,16 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
             if (this._dynamicChildren[in_id] !== undefined) {
                 throw new Error(MSG.PROPERTY_ALREADY_EXISTS + in_id);
             }
-            in_property._validateInsertIn(this);
+            if (validationsEnabled.enabled) {
+                in_property._validateInsertIn(this);
+            }
             // If an id is passed, it is stored in the child property object
             in_property._setId(in_id);
         }
 
-        this._validateInsert(in_property.getId(), in_property);
+        if (validationsEnabled.enabled) {
+            this._validateInsert(in_property.getId(), in_property);
+        }
 
         // Add the child property to the dynamic properties
         this._insert(in_property.getId(), in_property, true);
@@ -194,7 +199,9 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      *     When batching updates, this can be prevented via this flag.
      */
     _insert(in_key, in_property, in_reportToView) {
-        this._checkIsNotReadOnly(true);
+        if (validationsEnabled.enabled) {
+            this._checkIsNotReadOnly(true);
+        }
 
         // Add the child property to the dynamic properties
         IndexedCollectionBaseProperty.prototype._insert.call(this, in_key, in_property, false);

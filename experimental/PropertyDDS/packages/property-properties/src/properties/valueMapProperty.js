@@ -13,6 +13,8 @@ const { BaseProperty } = require('./baseProperty');
 const { MapProperty } = require('./mapProperty');
 const { Int64, Uint64 } = require('@fluid-experimental/property-common');
 const { Int64Property, Uint64Property } = require('../properties/intProperties');
+const { validationsEnabled } = require('../enableValidations');
+
 
 /**
  * A ValueMapProperty is a collection class that can contain an dictionary that maps from strings to primitive types.
@@ -104,11 +106,15 @@ export class ValueMapProperty extends MapProperty {
      * @param {string} in_key the key under which the entry is set
      * @param {*} in_value the value to be set
      */
-    set(in_key, in_value) {
-        this._checkIsNotReadOnly(true);
-        var castedValue = this._castFunctor ? this._castFunctor(in_value) : in_value;
-        if (this._dynamicChildren[in_key] !== castedValue) {
-            this._checkIsNotReadOnly(true);
+	set(in_key, in_value) {
+	    if (validationsEnabled.enabled) {
+	        this._checkIsNotReadOnly(true);
+	    }
+	        var castedValue = this._castFunctor ? this._castFunctor(in_value) : in_value;
+	    if (this._dynamicChildren[in_key] !== castedValue) {
+	        if (validationsEnabled.enabled) {
+	            this._checkIsNotReadOnly(true);
+	        }
             if (this._dynamicChildren[in_key] !== undefined) {
                 this._removeByKey(in_key, false);
             }

@@ -93,7 +93,7 @@ export class BuildPackage {
 }
 
 export class BuildGraph {
-    private readonly buildPackages = new Map<string, BuildPackage>();
+    public readonly buildPackages = new Map<string, BuildPackage>();
     private readonly buildContext = new BuildContext(
         options.worker ? new WorkerPool(options.workerThreads, options.workerMemoryLimit) : undefined);
 

@@ -5,7 +5,7 @@
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { LoggingError, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { IFluidErrorBase, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     AuthorizationError,
     createGenericNetworkError,
@@ -126,8 +126,8 @@ export function createOdspNetworkError(
     response?: Response,
     responseText?: string,
     props: ITelemetryProperties = {},
-): LoggingError & OdspError & IFacetCodes {
-    let error: LoggingError & OdspError & IFacetCodes;
+): IFluidErrorBase & OdspError & IFacetCodes {
+    let error: IFluidErrorBase & OdspError & IFacetCodes;
     const parseResult = tryParseErrorResponse(responseText);
     let facetCodes: string[] | undefined;
     let innerMostErrorCode: string | undefined;
@@ -227,7 +227,7 @@ export function createOdspNetworkError(
 }
 
 export function enrichOdspError(
-    error: LoggingError & OdspError & IFacetCodes,
+    error: IFluidErrorBase & OdspError & IFacetCodes,
     response?: Response,
     facetCodes?: string[],
     props: ITelemetryProperties = {},
@@ -270,6 +270,7 @@ export function throwOdspNetworkError(
         responseText,
         props);
 
+    // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw networkError;
 }
 

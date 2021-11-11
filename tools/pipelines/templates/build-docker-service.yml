@@ -60,7 +60,7 @@ parameters:
 
 - name: pool
   type: string
-  default: Lite
+  default: Small
 
 trigger: none
 

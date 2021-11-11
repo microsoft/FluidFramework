@@ -11,7 +11,7 @@ import {
     defaultTinyliciousPort,
 } from "@fluidframework/tinylicious-driver";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
 
 export class TinyliciousTestDriver implements ITestDriver {
@@ -29,7 +29,8 @@ export class TinyliciousTestDriver implements ITestDriver {
     createCreateNewRequest(testId: string): IRequest {
         return createTinyliciousCreateNewRequest(testId);
     }
-    async createContainerUrl(testId: string): Promise<string> {
-        return `http://localhost:${defaultTinyliciousPort}/${testId}`;
+    async createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string> {
+        const containerId = containerUrl && "id" in containerUrl ? containerUrl.id : testId;
+        return `http://localhost:${defaultTinyliciousPort}/${containerId}`;
     }
 }

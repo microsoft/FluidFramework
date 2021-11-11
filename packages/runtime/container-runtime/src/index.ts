@@ -6,6 +6,7 @@
 export * from "./containerRuntime";
 export * from "./deltaScheduler";
 export * from "./dataStoreRegistry";
+export { IGarbageCollectionRuntime, IGCStats, IUsedStateStats } from "./garbageCollection";
 export * from "./pendingStateManager";
 export * from "./dataStore";
 export * from "./summarizer";

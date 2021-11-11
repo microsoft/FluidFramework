@@ -34,7 +34,6 @@ import {
 } from "@fluidframework/container-definitions";
 import {
     DataCorruptionError,
-    DataProcessingError,
     extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
@@ -176,7 +175,7 @@ export async function waitContainerToCatchUp(container: Container) {
         throw new Error("Container is closed");
     }
 
-    return new Promise<boolean>((accept, reject) => {
+    return new Promise<boolean>((resolve, reject) => {
         const deltaManager = container.deltaManager;
 
         container.on("closed", reject);
@@ -190,12 +189,12 @@ export async function waitContainerToCatchUp(container: Container) {
             assert(deltaManager.lastSequenceNumber <= connectionOpSeqNumber,
                 0x266 /* "lastKnownSeqNumber should never be below last processed sequence number" */);
             if (deltaManager.lastSequenceNumber === connectionOpSeqNumber) {
-                accept(hasCheckpointSequenceNumber);
+                resolve(hasCheckpointSequenceNumber);
                 return;
             }
             const callbackOps = (message: ISequencedDocumentMessage) => {
                 if (connectionOpSeqNumber <= message.sequenceNumber) {
-                    accept(hasCheckpointSequenceNumber);
+                    resolve(hasCheckpointSequenceNumber);
                     deltaManager.off("op", callbackOps);
                 }
             };
@@ -496,14 +495,30 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
-     * @deprecated use codeDetails
+     * The current code details for the container's runtime
+     * @deprecated use getSpecifiedCodeDetails for the code details currently specified for this container, or
+     * getLoadedCodeDetails for the code details that the container's context was loaded with.
+     * To be removed after getSpecifiedCodeDetails and getLoadedCodeDetails become ubiquitous.
      */
-    public get chaincodePackage(): IFluidCodeDetails | undefined {
-        return this.codeDetails;
-    }
-
     public get codeDetails(): IFluidCodeDetails | undefined {
         return this._context?.codeDetails ?? this.getCodeDetailsFromQuorum();
+    }
+
+    /**
+     * Get the code details that are currently specified for the container.
+     * @returns The current code details if any are specified, undefined if none are specified.
+     */
+    public getSpecifiedCodeDetails(): IFluidCodeDetails | undefined {
+        return this.getCodeDetailsFromQuorum();
+    }
+
+    /**
+     * Get the code details that were used to load the container.
+     * @returns The code details that were used to load the container if it is loaded, undefined if it is not yet
+     * loaded.
+     */
+    public getLoadedCodeDetails(): IFluidCodeDetails | undefined {
+        return this._context?.codeDetails;
     }
 
     /**
@@ -657,12 +672,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 switch (event) {
                     case dirtyContainerEvent:
                         if (this._dirtyContainer) {
-                            listener(this._dirtyContainer);
+                            listener(dirtyContainerEvent);
                         }
                         break;
                     case savedContainerEvent:
                         if (!this._dirtyContainer) {
-                            listener(this._dirtyContainer);
+                            listener(savedContainerEvent);
                         }
                         break;
                     case connectedEventName:
@@ -869,15 +884,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             assert(!canRetryOnError(error), 0x24f /* "retriable error thrown from attach()" */);
 
             // add resolved URL on error object so that host has the ability to find this document and delete it
-            const newError = DataProcessingError.wrapIfUnrecognized(
-                error, "errorWhileUploadingBlobsWhileAttaching", undefined);
+            const newError = normalizeError(error);
             const resolvedUrl = this.resolvedUrl;
             if (resolvedUrl) {
                 ensureFluidResolvedUrl(resolvedUrl);
                 newError.addTelemetryProperties({ resolvedUrl: resolvedUrl.url });
             }
             this.close(newError);
-            // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw newError;
         }
     }
