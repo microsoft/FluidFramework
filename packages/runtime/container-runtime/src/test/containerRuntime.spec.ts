@@ -256,6 +256,56 @@ describe("Runtime", () => {
                     assert.strictEqual(2, batchEnd, "Did not receive correct batchEnd event for the batch");
                 });
 
+                it("non-batched ops followed by batch", async () => {
+                    const clientId: string = "test-client";
+                    const batchBeginMessage: Partial<ISequencedDocumentMessage> = {
+                        clientId,
+                        type: MessageType.Operation,
+                        metadata: { batch: true },
+                    };
+
+                    const batchMessage: Partial<ISequencedDocumentMessage> = {
+                        clientId,
+                        type: MessageType.Operation,
+                    };
+
+                    const batchEndMessage: Partial<ISequencedDocumentMessage> = {
+                        clientId,
+                        type: MessageType.Operation,
+                        metadata: { batch: false },
+                    };
+
+                    // Pause to not allow ops to be processed while we accumulated them.
+                    void deltaManager.inbound.pause();
+
+                    // Send a batch with 2 messages.
+                    inboundOp(batchMessage);
+                    inboundOp(batchMessage);
+
+                    // Add incomplete batch
+                    inboundOp(batchBeginMessage);
+                    inboundOp(batchMessage);
+                    inboundOp(batchMessage);
+
+                    await processOps();
+
+                    assert.strictEqual(deltaManager.inbound.length, 5, "none of the batched ops are processed yet");
+
+                    void deltaManager.inbound.resume();
+                    await processOps();
+
+                    assert.strictEqual(deltaManager.inbound.length, 3,
+                        "none of the second batch ops are processed yet");
+
+                    // End the batch - all ops should be processed.
+                    inboundOp(batchEndMessage);
+                    await processOps();
+
+                    assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
+                    assert.strictEqual(3, batchBegin, "Did not receive correct batchBegin event for the batch");
+                    assert.strictEqual(3, batchEnd, "Did not receive correct batchEnd event for the batch");
+                });
+
                 function testWrongBatches() {
                     const clientId1: string = "test-client-1";
                     const clientId2: string = "test-client-2";

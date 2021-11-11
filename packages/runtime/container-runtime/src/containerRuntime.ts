@@ -378,6 +378,12 @@ class ScheduleManagerCore {
             return;
         }
 
+        // The queue is
+        // 1. paused only when the next message to be processed is the beginning of a batch. Done in two places:
+        //    - here (processing ops until reaching start of incomplete batch)
+        //    - in trackPending(), when queue was empty and start of batch showed up.
+        // 2. resumed when batch end comes in (in trackPending())
+
         // do we have incomplete batch to worry about?
         if (this.pauseSequenceNumber !== undefined) {
             assert(sequenceNumber < this.pauseSequenceNumber, "we should never start processing incomplete batch!");
@@ -456,6 +462,12 @@ class ScheduleManagerCore {
                     });
             }
         }
+
+        // The queue is
+        // 1. paused only when the next message to be processed is the beginning of a batch. Done in two places:
+        //    - in afterOpProcessing() - processing ops until reaching start of incomplete batch
+        //    - here (batchMetadata == false below), when queue was empty and start of batch showed up.
+        // 2. resumed when batch end comes in (batchMetadata === true case below)
 
         if (batchMetadata) {
             assert(this.currentBatchClientId === undefined, "there can't be active batch");
