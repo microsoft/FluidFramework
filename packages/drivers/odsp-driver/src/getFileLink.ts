@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { delay, PromiseCache } from "@fluidframework/common-utils";
+import { assert, delay, PromiseCache } from "@fluidframework/common-utils";
 import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
@@ -19,7 +19,7 @@ import { fetchHelper, getWithRetryForTokenRefresh } from "./odspUtils";
 import { fetchIncorrectResponse, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 
 // Store cached responses for the lifetime of web session as file link remains the same for given file item
-const fileLinkCache = new PromiseCache<string, string | undefined>();
+const fileLinkCache = new PromiseCache<string, string>();
 
 /**
  * Returns file link for a file with given drive and item ids.
@@ -40,10 +40,11 @@ export async function getFileLink(
     odspUrlParts: IOdspUrlParts,
     identityType: IdentityType,
     logger: ITelemetryLogger,
-): Promise<string | undefined> {
+): Promise<string> {
     const cacheKey = `${odspUrlParts.siteUrl}_${odspUrlParts.driveId}_${odspUrlParts.itemId}`;
-    if (fileLinkCache.has(cacheKey)) {
-        return fileLinkCache.get(cacheKey);
+    const maybeFileLinkCacheEntry = fileLinkCache.get(cacheKey);
+    if (maybeFileLinkCacheEntry !== undefined) {
+        return maybeFileLinkCacheEntry;
     }
 
     const valueGenerator = async function() {
@@ -55,10 +56,9 @@ export async function getFileLink(
                 result = await getFileLinkCore(getToken, odspUrlParts, identityType, logger);
                 success = true;
             } catch (err) {
-                // If it is not retriable, then just return undefined
+                // If it is not retriable, then just throw
                 if (!canRetryOnError(err)) {
-                    fileLinkCache.remove(cacheKey);
-                    return undefined;
+                    throw err;
                 }
                 // If the error is throttling error, then wait for the specified time before retrying.
                 // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
@@ -66,10 +66,18 @@ export async function getFileLink(
                 await delay(retryAfterMs);
             }
         } while (!success);
+
+        // We are guaranteed to run the getFileLinkCore at least once with successful result (which must be a string)
+        assert(result !== undefined, "Unexpected undefined result from getFileLinkCore");
         return result;
     };
     fileLinkCache.add(cacheKey, valueGenerator);
-    return fileLinkCache.get(cacheKey);
+    // PromiseCache secretly invokes the promise generating function when adding if the cache was empty, and adds the
+    // result promise to the cache.  So, this get() is guaranteed to return a result since we know our
+    // promise-generating function will return a string or else there was already a string result available.
+    const fileLink = fileLinkCache.get(cacheKey);
+    assert(fileLink !== undefined, "Unexpected empty share file link cache");
+    return fileLink;
 }
 
 async function getFileLinkCore(
@@ -77,11 +85,8 @@ async function getFileLinkCore(
     odspUrlParts: IOdspUrlParts,
     identityType: IdentityType,
     logger: ITelemetryLogger,
-): Promise<string | undefined> {
+): Promise<string> {
     const fileItem = await getFileItemLite(getToken, odspUrlParts, logger);
-    if (!fileItem) {
-        return undefined;
-    }
 
     // ODC canonical link does not require any additional processing
     if (identityType === "Consumer") {
@@ -112,15 +117,23 @@ async function getFileLinkCore(
                 };
                 const response = await fetchHelper(url, requestInit);
                 additionalProps = response.commonSpoHeaders;
-                if (response.content.ok) {
-                    const sharingInfo = await response.content.json();
-                    const url = sharingInfo?.d?.directUrl;
-                    if (typeof url !== "string") {
-                        throwOdspNetworkError("malformedFileLinkResponse", fetchIncorrectResponse);
-                    }
-                    return url;
+
+                // We actually already know the response is ok, or else the fetchHelper would have thrown
+                // (it does an even more thorough check).  Keeping it here though for layers of protection.
+                if (!response.content.ok) {
+                    throwOdspNetworkError(
+                        `odspFetchError [${response.content.status}]`,
+                        response.content.status,
+                        response.content,
+                        await response.content.text(),
+                    );
                 }
-                return undefined;
+                const sharingInfo = await response.content.json();
+                const directUrl = sharingInfo?.d?.directUrl;
+                if (typeof directUrl !== "string") {
+                    throwOdspNetworkError("malformedGetSharingInformationResponse", fetchIncorrectResponse);
+                }
+                return directUrl;
             });
             event.end({ ...additionalProps, attempts });
             return fileLink;
@@ -136,11 +149,18 @@ interface FileItemLite {
     webDavUrl: string;
 }
 
+const isFileItemLite = (maybeFileItemLite: any): maybeFileItemLite is FileItemLite => {
+    if (typeof maybeFileItemLite.webUrl !== "string" || typeof maybeFileItemLite.webDavUrl !== "string") {
+        return false;
+    }
+    return true;
+}
+
 async function getFileItemLite(
     getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
     odspUrlParts: IOdspUrlParts,
     logger: ITelemetryLogger,
-): Promise<FileItemLite | undefined> {
+): Promise<FileItemLite> {
     return PerformanceEvent.timedExecAsync(
         logger,
         { eventName: "odspFileLink", requestName: "getFileItemLite" },
@@ -158,16 +178,25 @@ async function getFileItemLite(
                 const requestInit = { method: "GET", headers };
                 const response = await fetchHelper(url, requestInit);
                 additionalProps = response.commonSpoHeaders;
-                if (response.content.ok) {
-                    return await response.content.json() as FileItemLite;
+
+                // We actually already know the response is ok, or else the fetchHelper would have thrown
+                // (it does an even more thorough check).  Keeping it here though for layers of protection.
+                if (!response.content.ok) {
+                    throwOdspNetworkError(
+                        `odspFetchError [${response.content.status}]`,
+                        response.content.status,
+                        response.content,
+                        await response.content.text(),
+                    );
                 }
-                return undefined;
+                const responseJson = await response.content.json();
+                if (!isFileItemLite(responseJson)) {
+                    throwOdspNetworkError("malformedGetFileItemLiteResponse", fetchIncorrectResponse);
+                }
+                return responseJson;
             });
             event.end({ ...additionalProps, attempts });
-            if (fileItem && fileItem.webDavUrl && fileItem.webUrl) {
-                return fileItem;
-            }
-            return undefined;
+            return fileItem;
         },
     );
 }
