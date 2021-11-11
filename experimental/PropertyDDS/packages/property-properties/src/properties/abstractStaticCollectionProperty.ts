@@ -50,7 +50,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * @returns The property you seek or undefined if none is found.
      */
     get(
-        in_ids: string | number | Array<string | number | BaseProperty.PATH_TOKENS> | BaseProperty.PATH_TOKENS,
+        in_ids: BaseProperty.PropertyResolutionPath,
         in_options: BaseProperty.PathResolutionOptions = {}
     ): BaseProperty | undefined {
 
@@ -247,7 +247,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      */
     resolvePath(
         in_path: string,
-        in_options: BaseProperty.PathResolutionOptions  = {}
+        in_options: BaseProperty.PathResolutionOptions = {}
     ): BaseProperty | undefined {
         in_options.referenceResolutionMode = in_options.referenceResolutionMode ?? BaseProperty.REFERENCE_RESOLUTION.ALWAYS;
 

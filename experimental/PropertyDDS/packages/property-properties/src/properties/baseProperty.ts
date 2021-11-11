@@ -68,7 +68,7 @@ interface ISerializeOptions {
  *
     */
 export abstract class BaseProperty {
-    protected _id: string | undefined;
+    _id: string | undefined;
     protected _isConstant: boolean = false;
     protected _dirty: any;
     protected _typeid: string;
@@ -412,7 +412,7 @@ export abstract class BaseProperty {
         }
     }
 
-    protected resolvePath(path: string, params?: any): BaseProperty {
+    resolvePath(path: string, params?: any): BaseProperty {
         throw new Error("Method not implemented.");
     };
 
@@ -672,7 +672,10 @@ export abstract class BaseProperty {
         return [];
     }
 
-    get(id: string, params?: BaseProperty.PathResolutionOptions): BaseProperty | undefined {
+    get(
+        id: BaseProperty.PropertyResolutionPath,
+        params?: BaseProperty.PathResolutionOptions
+    ): BaseProperty | undefined {
         return undefined;
     }
 
@@ -766,12 +769,12 @@ export abstract class BaseProperty {
      * Returns the possible paths from the given in_fromProperty to this property. If no direct paths
      * exist, it returns an indirect path between the two properties.
      *
-     * @param {property-properties.BaseProperty} in_fromProperty - The node from which the
+     * @param in_fromProperty - The node from which the
      *     path is computed
-     * @return {string} The path between the given in_fromProperty and this property
+     * @returns The path between the given in_fromProperty and this property
      * @private
      */
-    _getIndirectPath(in_fromProperty) {
+    _getIndirectPath(in_fromProperty: BaseProperty): string {
         var path = [];
         var that = this;
         var foundPath = undefined;
@@ -799,12 +802,12 @@ export abstract class BaseProperty {
      * Returns the path from the given in_fromProperty to this property if a direct path
      * exists between the two properties. Otherwise returns undefined.
      *
-     * @param {property-properties.BaseProperty} in_fromProperty - The node from which the
+     * @param in_fromProperty - The node from which the
      *     path is computed
-     * @return {string} The path between the given in_fromProperty and this property
+     * @returns The path between the given in_fromProperty and this property
      * @private
      */
-    _getDirectPath(in_fromProperty) {
+    _getDirectPath(in_fromProperty: BaseProperty): string {
         var path = [];
         var foundAncestor = undefined;
         if (in_fromProperty === this) {
@@ -842,12 +845,12 @@ export abstract class BaseProperty {
     /**
      * Returns the possible paths from the given in_fromProperty to this property.
      *
-     * @param {property-properties.BaseProperty} in_fromProperty - The node from which the
+     * @param in_fromProperty - The node from which the
      *     path is computed
-     * @return {Array<string>} The paths between the given in_fromProperty and this property
+     * @returns The paths between the given in_fromProperty and this property
      * @private
      */
-    _getAllRelativePaths(in_fromProperty) {
+    _getAllRelativePaths(in_fromProperty: BaseProperty): string[] {
         if (this.getRoot() !== in_fromProperty.getRoot()) {
             // if this and in_fromProperty have different roots, go through a repo ref
             // this is the case where we might have more than one path
@@ -896,9 +899,9 @@ export abstract class BaseProperty {
      * Returns the path from the root of the workspace to this node
      * (including a slash at the beginning)
      *
-     * @return {string} The path from the root
+     * @returns The path from the root
      */
-    getAbsolutePath() {
+    getAbsolutePath(): string {
         var that = this;
         var referenceProps = [];
         // get all reference properties pointing to the root the repository containing 'this'
@@ -957,10 +960,10 @@ export abstract class BaseProperty {
      * @param {Function} in_callback - Callback to invoke for each of the parents. The traversal can be stopped
      *                                 by returning BaseProperty.BREAK_TRAVERSAL
      * @throws if in_callback is not a function.
-     * @return {string|undefined} Returns BaseProperty.BREAK_TRAVERSAL, if the traversal didn't reach the root,
+     * @returns Returns BaseProperty.BREAK_TRAVERSAL, if the traversal didn't reach the root,
      *                            otherwise undefined
      */
-    traverseUp(in_callback) {
+    traverseUp(in_callback): string | undefined {
         ConsoleUtils.assert(_.isFunction(in_callback), MSG.CALLBACK_NOT_FCT);
         if (this._parent) {
             var result = in_callback(this._parent);
@@ -975,7 +978,7 @@ export abstract class BaseProperty {
     };
 
     /**
-     * @type {string} Constant to stop the traversal in traverseUp and traverseDown functions
+     * Constant to stop the traversal in traverseUp and traverseDown functions
      */
     static BREAK_TRAVERSAL = BREAK_TRAVERSAL;
 
@@ -1332,4 +1335,6 @@ export namespace BaseProperty {
 
     type Keys = keyof typeof PATH_TOKENS;
     export type PATH_TOKENS = typeof PATH_TOKENS[Keys];
+
+    export type PropertyResolutionPath = string | number | Array<string | number | PATH_TOKENS> | PATH_TOKENS;
 }

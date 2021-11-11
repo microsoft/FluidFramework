@@ -32,7 +32,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 
     private _pendingChanges: SerializedChangeSet;
     private _dirtyChanges: SerializedChangeSet;
-    protected _dynamicChildren: Record<string, BaseProperty>;
+    _dynamicChildren: Record<string, BaseProperty>;
     /**
      * @param {Object} in_params - Input parameters for property creation
      *
@@ -354,10 +354,10 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
      * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
      * special treatment on deserialization. For supported types, we can just return the input here.
      *
-     * @param {property-properties.SerializedChangeSet} in_serializedObj - The object to be deserialized
+     * @param in_serializedObj - The object to be deserialized
      * @return {*} the deserialized value
      */
-    _deserializeValue(in_serializedObj) {
+    _deserializeValue(in_serializedObj: SerializedChangeSet) {
         return in_serializedObj;
     };
 

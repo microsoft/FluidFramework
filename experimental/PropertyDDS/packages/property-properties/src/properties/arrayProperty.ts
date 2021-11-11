@@ -840,8 +840,8 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * or undefined if nothing was found.
      */
     get(
-        in_position: number | BaseProperty.PATH_TOKENS | Array<number | BaseProperty.PATH_TOKENS>,
-        in_options: { referenceResolutionMode?: BaseProperty.REFERENCE_RESOLUTION } = {}
+        in_position: BaseProperty.PropertyResolutionPath,
+        in_options: BaseProperty.PathResolutionOptions = {}
     ): BaseProperty | undefined {
         in_options.referenceResolutionMode = in_options.referenceResolutionMode ?? BaseProperty.REFERENCE_RESOLUTION.ALWAYS;
         var prop = this;
