@@ -2325,7 +2325,7 @@ describe('PropertyFactory', function () {
             };
 
             PropertyFactory.register(ConstantTemplateEntry);
-            PropertyFactory.register(ConstantTemplate);
+            PropertyFactory._reregister(ConstantTemplate);
 
             var instance = PropertyFactory.create('SimpleTest:ConstantTemplate-1.0.0');
 
@@ -2433,7 +2433,7 @@ describe('PropertyFactory', function () {
                 ],
                 properties: [{ id: 'default', typeid: 'Uint32' }]
             };
-            PropertyFactory.register(ConstantTemplate);
+            PropertyFactory._reregister(ConstantTemplate);
             var instance = PropertyFactory.create('SimpleTest:ConstantTemplate-1.0.0');
 
             expect(instance.get('map')._contextKeyType).to.equal('typeid');

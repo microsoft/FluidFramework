@@ -396,6 +396,12 @@ class PropertyFactory {
         /** Cache of constructor function that are auto-generated for typeids */
         this._typedPropertyConstructorCache = {};
 
+        /** A cache of the resulting data structure which will be created for this typeID */
+        this._cachedTypeIds = new Map();
+
+        /** This is used to collect all properties that have to be added to a specific typeid */
+        this._currentCreateCache = undefined;
+
         this._init();
     };
 
@@ -966,7 +972,102 @@ class PropertyFactory {
             }
         }
 
+        const scopeEntry = this._cachedTypeIds.get(in_typeid);
+        const contextEntry = scopeEntry && scopeEntry.get(in_scope);
+        const cacheEntry = contextEntry && contextEntry.get(context);
+
+
+        if (cacheEntry) {
+            let rootProperty = undefined;
+
+            const creationStack = [{
+                id: undefined,
+                entry: cacheEntry,
+                parent:undefined
+            }];
+            while (creationStack.length > 0) {
+                const currentEntry = creationStack.pop();
+
+                // We have an entry on the stack that is just waiting for its children to finish, but has already
+                // been created
+                if (currentEntry.signalChildrenFinished) {
+                    currentEntry.property._signalAllStaticMembersHaveBeenAdded(in_scope);
+                    if (currentEntry.initialValue) {
+                        this._setInitialValue(currentEntry.property, currentEntry.initialValue);
+                    }
+                    if (currentEntry.constant) {
+                        currentEntry.property._setAsConstant();
+                    }
+                    continue;
+                }
+
+                let property = new (currentEntry.entry.constructorFunction)(currentEntry.entry.entry);
+                if (currentEntry.parent) {
+                    if (currentEntry.entry.optional) {
+                        currentEntry.parent._insert(property.getId(), property, true);
+                    } else {
+                        currentEntry.parent._append(property, currentEntry.entry.allowChildMerges);
+                    }
+                } else {
+                    rootProperty = property;
+                }
+                if (currentEntry.entry.signal) {
+                    property._signalAllStaticMembersHaveBeenAdded(in_scope);
+                }
+
+                if (currentEntry.setGuid) {
+                    property.value = GuidUtils.generateGUID();
+                }
+
+                if (currentEntry.entry.optionalChildren) {
+                    for (let [id, typeid] of Object.entries(currentEntry.entry.optionalChildren)) {
+                        property._addOptionalChild(id, typeid);
+                    }
+                }
+
+                if (currentEntry.entry.children) {
+                    creationStack.push({
+                        signalChildrenFinished: true,
+                        initialValue: currentEntry.entry.initialValue,
+                        property,
+                        constant: currentEntry.entry.constant
+                    });
+
+                    for (let [id, child] of currentEntry.entry.children) {
+                        creationStack.push({
+                            parent: property,
+                            id: id,
+                            entry: child,
+                            signalParent: false,
+                            setGuid: currentEntry.entry.assignGuid && id ===
+                            'guid'
+                        })
+                    }
+                } else {
+                    if (currentEntry.entry.initialValue) {
+                        this._setInitialValue(property, currentEntry.entry.initialValue);
+                    }
+                    if (currentEntry.entry.constant) {
+                        property._setAsConstant();
+                    }
+
+                    property._signalAllStaticMembersHaveBeenAdded(in_scope);
+                }
+            }
+
+            if (in_initialProperties !== undefined) {
+                this._setInitialValue(rootProperty, {
+                    value: in_initialProperties
+                });
+            }
+            return rootProperty;
+        }
+
+        let createCache = {};
+        const lastCreateCache = this._currentCreateCache;
+        this._currentCreateCache = createCache;
         let property;
+
         if (in_optimizeConstants) {
             var templateOrProperty = this._getWrapper(in_typeid, undefined, in_scope);
             var isProperty = templateOrProperty instanceof PropertyTemplateWrapper;
@@ -993,6 +1094,21 @@ class PropertyFactory {
             });
         }
 
+        let scopes = this._cachedTypeIds.get(in_typeid);
+        if (!scopes) {
+            scopes = new Map();
+            this._cachedTypeIds.set(in_typeid, scopes);
+        }
+        let contexts = scopes.get(in_scope);
+        if (!contexts) {
+            contexts = new Map();
+            scopes.set(in_scope, contexts);
+        }
+
+        contexts.set(context, createCache);
+        this._currentCreateCache = lastCreateCache;
+
+        property = this._createProperty(in_typeid, context, in_initialProperties, in_scope, in_optimizeConstants);
         return property;
     };
 
@@ -1148,6 +1264,10 @@ class PropertyFactory {
         ConstructorFunction = this._getConstructorFunctionForTypeidAndID(
             'single', in_typeid, ConstructorFunction, in_id, in_scope);
 
+        this._currentCreateCache.constructorFunction = ConstructorFunction;
+        this._currentCreateCache.signal = true;
+        this._currentCreateCache.entry = params;
+
         return new ConstructorFunction(params);
     };
 
@@ -1273,6 +1393,10 @@ class PropertyFactory {
                             in_scope);
                     }
 
+                    this._currentCreateCache.constructorFunction = templateOrConstructor;
+                    this._currentCreateCache.signal = true;
+                    this._currentCreateCache.entry = in_propertiesEntry;
+
                     // If this is a primitive type, we create it via the registered constructor
                     var result = new templateOrConstructor(in_propertiesEntry); // eslint-disable-line new-cap
                     return result;
@@ -1300,14 +1424,18 @@ class PropertyFactory {
                         var isEnum = this.inheritsFrom(typeid, 'Enum', { scope: in_scope });
 
                         var result;
+                        var constructorFunction;
                         switch (context) {
                             case 'array':
                                 if (isEnum) {
                                     var enumPropertyEntry = deepCopy(in_propertiesEntry);
                                     enumPropertyEntry._enumDictionary = templateOrConstructor._enumDictionary;
-                                    result = new EnumArrayProperty(enumPropertyEntry);
+                                    in_propertiesEntry = enumPropertyEntry;
+
+                                    constructorFunction = EnumArrayProperty;
                                 } else {
-                                    result = new ArrayProperty(in_propertiesEntry, in_scope);
+
+                                    constructorFunction = ArrayProperty;
                                 }
                                 break;
                             case 'set':
@@ -1317,14 +1445,20 @@ class PropertyFactory {
                                     throw new Error(MSG.SET_ONLY_NAMED_PROPS + typeid);
                                 }
 
-                                result = new SetProperty(in_propertiesEntry, in_scope);
+                                constructorFunction = SetProperty;
                                 break;
                             case 'map':
-                                result = new MapProperty(in_propertiesEntry, in_scope);
+                                constructorFunction = MapProperty;
                                 break;
                             default:
                                 throw new Error(MSG.UNKNOWN_CONTEXT_SPECIFIED + context);
                         }
+
+                        this._currentCreateCache.constructorFunction = constructorFunction;
+                        this._currentCreateCache.signal = false;
+                        this._currentCreateCache.entry = in_propertiesEntry;
+
+                        result = new (constructorFunction)(in_propertiesEntry, in_scope);
                         return result;
                     }
                 }
@@ -1343,6 +1477,9 @@ class PropertyFactory {
             if (!parent) {
                 // If this is a declaration which contains a properties list, we have to create a new base property for it
                 parent = new ContainerProperty(in_propertiesEntry);
+                this._currentCreateCache.constructorFunction = ContainerProperty;
+                this._currentCreateCache.entry = in_propertiesEntry;
+                this._currentCreateCache.signal = false;
             }
 
             // And then parse the entry like a template
@@ -1352,6 +1489,7 @@ class PropertyFactory {
         // If this property inherits from NamedProperty we assign a random GUID
         if (typeid && this.inheritsFrom(typeid, 'NamedProperty', { scope: in_scope })) {
             parent.get('guid', { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER }).value = GuidUtils.generateGUID();
+            this._currentCreateCache.assignGuid = true;
         }
 
         return parent;
@@ -1445,10 +1583,23 @@ class PropertyFactory {
 
                     if (optional) {
                         in_parent._addOptionalChild(id, typeid);
+                        this._currentCreateCache.optionalChildren = this._currentCreateCache.optionalChildren || {};
+                        this._currentCreateCache.optionalChildren[id] = typeid;
                     }
 
                     if (valueParsed.value) {
+                        const newChildEntry = {
+                            initialValue: valueParsed,
+                            optional,
+                            allowChildMerges: in_allowChildMerges
+                        };
+                        this._currentCreateCache.children = this._currentCreateCache.children || [];
+                        this._currentCreateCache.children.unshift([properties[i].id, newChildEntry]);
+                        const oldCreateCache = this._currentCreateCache
+                        this._currentCreateCache = newChildEntry;
                         const property = this._createFromPropertyDeclaration(properties[i], undefined, in_scope, false);
+                        this._currentCreateCache = oldCreateCache;
+
                         this._setInitialValue(property, valueParsed);
                         if (optional) {
                             in_parent._insert(property.getId(), property, true);
@@ -1456,7 +1607,16 @@ class PropertyFactory {
                             in_parent._append(property, in_allowChildMerges);
                         }
                     } else if (!optional) {
+                        const newChildEntry = {
+                            initialValue: undefined
+                        };
+                        this._currentCreateCache.children = this._currentCreateCache.children || []
+                        this._currentCreateCache.children.unshift([properties[i].id, newChildEntry]);
+                        const oldCreateCache = this._currentCreateCache
+                        this._currentCreateCache = newChildEntry;
                         const property = this._createFromPropertyDeclaration(properties[i], undefined, in_scope, false);
+                        this._currentCreateCache = oldCreateCache;
+
                         in_parent._append(property, in_allowChildMerges);
                     }
                 }
@@ -1467,10 +1627,22 @@ class PropertyFactory {
                 for (let i = 0; i < constants.length; i++) {
                     const context = constants[i].context || 'single';
                     const valueParsed = this._parseTypedValue(constants[i], in_scope, context);
+
+                    const newChildEntry = {
+                        initialValue: undefined,
+                        constant: true
+                    };
+                    this._currentCreateCache.children = this._currentCreateCache.children || [];
+                    this._currentCreateCache.children.unshift([constants[i].id, newChildEntry]);
+                    const oldCreateCache = this._currentCreateCache
+                    this._currentCreateCache = newChildEntry;
+
                     const constant = this._createFromPropertyDeclaration(constants[i], undefined, in_scope, true);
+                    this._currentCreateCache = oldCreateCache;
 
                     if (valueParsed.value) {
                         this._setInitialValue(constant, valueParsed);
+                        newChildEntry.initialValue = valueParsed;
                     }
 
                     constant._setAsConstant();
@@ -1662,6 +1834,9 @@ class PropertyFactory {
                 delete this._typedPropertyConstructorCache[registeredConstructors[i]];
             }
         }
+
+        // Remove from typeid creation cache
+        this._cachedTypeIds.delete(typeid);
 
         // And repeat the registration
         registerLocal.call(this, in_template);
