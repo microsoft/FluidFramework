@@ -55,7 +55,7 @@ export class OrdererManager implements core.IOrdererManager {
         winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
         Lumberjack.info(
             `tenant orderer: ${JSON.stringify(tenant.orderer)}`,
-            getLumberBaseProperties(documentId, tenantId),
+            getLumberBaseProperties(tenantId, documentId),
         );
 
         if (tenant.orderer.url !== this.ordererUrl) {
