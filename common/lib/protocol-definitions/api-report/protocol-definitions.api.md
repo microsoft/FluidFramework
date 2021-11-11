@@ -122,7 +122,7 @@ export interface IConnect {
     id: string;
     mode: ConnectionMode;
     nonce?: string;
-    relayServiceAgent?: string;
+    relayUserAgent?: string;
     supportedFeatures?: Record<string, any>;
     tenantId: string;
     token: string | null;

@@ -61,10 +61,11 @@ export interface IConnect {
     supportedFeatures?: Record<string, any>;
 
     /**
-     * Properties that client can send to server to tell info about client environment like loader, driver versions etc.
+     * Properties that client can send to server to tell info about client environment. These are a bunch of properties
+     * separated by ";" which server can log to better understand client environment etc.
      * Format: "prop1:val1;prop2:val2;prop3:val3"
     */
-    relayServiceAgent?: string,
+    relayUserAgent?: string,
 }
 
 /**
