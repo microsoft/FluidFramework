@@ -36,6 +36,7 @@ import {
     Trace,
     TypedEventEmitter,
     unreachableCase,
+    performance,
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
@@ -319,9 +320,11 @@ class ScheduleManagerCore {
     private pauseSequenceNumber: number | undefined;
     private currentBatchClientId: string | undefined;
     private localPaused = false;
+    private timePaused = 0;
 
     constructor(
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        private readonly logger: ITelemetryLogger,
     ) {
         // Listen for delta manager sends and add batch metadata to messages
         this.deltaManager.on("prepareSend", (messages: IDocumentMessage[]) => {
@@ -354,7 +357,7 @@ class ScheduleManagerCore {
             });
 
         // Start with baseline - empty inbound queue.
-        this.setPaused(false);
+        assert(!this.localPaused, "initial state");
 
         const allPending = this.deltaManager.inbound.toArray();
         for (const pending of allPending) {
@@ -380,24 +383,37 @@ class ScheduleManagerCore {
             assert(sequenceNumber < this.pauseSequenceNumber, "we should never start processing incomplete batch!");
             // If the next op is the start of incomplete batch, then we can't process it until it's fully in - pause!
             if (sequenceNumber + 1 === this.pauseSequenceNumber) {
-                this.setPaused(true);
+                this.setPaused();
             }
         }
     }
 
-    private setPaused(localPaused: boolean) {
+    private setPaused() {
+        assert(!this.localPaused, "always called from resumed state");
+        this.localPaused = true;
+        this.timePaused = performance.now();
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.deltaManager.inbound.pause();
+    }
+
+    private setResumed(startBatch: number, endBatch: number) {
         // Return early if no change in value
-        if (this.localPaused === localPaused) {
+        if (!this.localPaused) {
             return;
         }
 
-        this.localPaused = localPaused;
-        if (localPaused) {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            this.deltaManager.inbound.pause();
-        } else {
-            this.deltaManager.inbound.resume();
+        this.localPaused = false;
+        const duration = performance.now() - this.timePaused;
+        // Random round number - we want to know when batch waiting paused op processing.
+        if (duration > 5000) {
+            this.logger.sendErrorEvent({
+                eventName: "BatchWaitTime",
+                duration,
+                sequenceNumber: endBatch,
+                length: endBatch - startBatch,
+            });
         }
+        this.deltaManager.inbound.resume();
     }
 
     /**
@@ -450,13 +466,14 @@ class ScheduleManagerCore {
             // Only pause processing if queue has no other ops!
             // If there are any other ops in the queue, processing will be stopped when they are processed!
             if (this.deltaManager.inbound.length === 1) {
-                this.setPaused(true);
+                this.setPaused();
             }
         } else if (batchMetadata === false) {
+            assert(this.pauseSequenceNumber !== undefined, "batch presence was validated above");
+            // Batch is complete, we can process it!
+            this.setResumed(this.pauseSequenceNumber, message.sequenceNumber);
             this.pauseSequenceNumber = undefined;
             this.currentBatchClientId = undefined;
-            // Batch is complete, we can process it!
-            this.setPaused(false);
         } else {
             // Continuation of current batch. Do nothing
             assert(this.currentBatchClientId !== undefined, "logic error");
@@ -487,7 +504,7 @@ export class ScheduleManager {
             this.deltaManager,
             ChildLogger.create(this.logger, "DeltaScheduler"),
         );
-        this.scheduler = new ScheduleManagerCore(deltaManager);
+        this.scheduler = new ScheduleManagerCore(deltaManager, logger);
     }
 
     public beforeOpProcessing(message: ISequencedDocumentMessage) {
