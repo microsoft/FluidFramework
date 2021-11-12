@@ -108,9 +108,6 @@ export function getBlobSize(content: ISummaryBlob["content"]): number;
 export function getNormalizedObjectStoragePathParts(path: string): string[];
 
 // @public (undocumented)
-export function getStack(): string | undefined;
-
-// @public (undocumented)
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {
 }
 
@@ -185,8 +182,10 @@ export class RequestParser implements IRequest {
     get url(): string;
 }
 
+// Warning: (ae-forgotten-export) The symbol "IResponseException" needs to be exported by the entry point index.d.ts
+//
 // @public (undocumented)
-export function responseToException(response: IResponse, request: IRequest): Error;
+export function responseToException(response: IResponse, request: IRequest): Error & IResponseException;
 
 // @public (undocumented)
 export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRuntimeFactory {
