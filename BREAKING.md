@@ -12,9 +12,9 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
-- [OdspDocumentInfo type replaced with OdspFluidDataStoreLocator interface](#OdspDocumentInfo-type-replaced-with-OdspFluidDataStoreLocator-interface)
+- [`OdspDocumentInfo` type replaced with `OdspFluidDataStoreLocator` interface](#OdspDocumentInfo-type-replaced-with-OdspFluidDataStoreLocator-interface)
 - [close() removed from IDocumentDeltaConnection](#close-removed-from-IDocumentDeltaConnection)
-- [Replace createCreateNewRequest with createOdspCreateContainerRequest](#Replace-createCreateNewRequest-with-createOdspCreateContainerRequest)
+- [Replace `createCreateNewRequest` with `createOdspCreateContainerRequest`](#Replace-createCreateNewRequest-with-createOdspCreateContainerRequest)
 
 ### `chaincodePackage` removed from `Container`
 The `chaincodePackage` property on `Container` was deprecated in 0.28, and has now been removed.  Two new APIs have been added to replace its functionality, `getSpecifiedCodeDetails()` and `getLoadedCodeDetails()`.  Use `getSpecifiedCodeDetails()` to get the code details currently specified for the `Container`, or `getLoadedCodeDetails()` to get the code details that were used to load the `Container`.
@@ -22,7 +22,7 @@ The `chaincodePackage` property on `Container` was deprecated in 0.28, and has n
 ### `OdspDocumentInfo` type replaced with `OdspFluidDataStoreLocator` interface
 The `OdspDocumentInfo` type is removed from `odsp-driver` package. It is removed from `packages\drivers\odsp-driver\src\contractsPublic.ts` and replaced with `OdspFluidDataStoreLocator` interface as parameter in `OdspDriverUrlResolverForShareLink.createDocumentUrl()`. If there are any instances of `OdspDocumentInfo` type used, it can be simply replaced with `OdspFluidDataStoreLocator` interface.
 
-### Replace `createCreateNewRequest` function with `createOdspCreateContainerRequest` function
+### Replace `createCreateNewRequest` with `createOdspCreateContainerRequest`
 The `createCreateNewRequest` function is removed from `odspDriverUrlResolver.ts` and `odspDriverUrlResolverForShareLink.ts` files under the `odsp-driver` package. `createCreateNewRequest` function is replaced with `createOdspCreateContainerRequest` function in `odspCreateContainer.spec.ts` and `odspDriverResolverTest.spec.ts`. The update is also made in `webpack-fluid-loader` package. If any instances of `createCreateNewRequest` function are used, replace them with `createOdspCreateContainerRequest` function by importing it from `@fluidframework/odsp-driver` package.
 
 ## 0.51 Breaking changes
