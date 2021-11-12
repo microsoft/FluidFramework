@@ -48,7 +48,7 @@ export function exceptionToResponse(err: any): IResponse {
     };
 }
 
-export function responseToException(response: IResponse, request: IRequest) {
+export function responseToException(response: IResponse, request: IRequest): Error {
     const message = response.value;
     const errWithStack = generateErrorWithStack();
     const responseErr: Error & IResponseException = {
