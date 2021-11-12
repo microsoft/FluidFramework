@@ -253,7 +253,7 @@ Now that we have married the basic creation flow of Teams and Fluid, you can now
 If you are running your Teams application locally with Azure Client local mode, make sure to run the following command in the Command Prompt to start the Fluid service. Note that `tinylicious` is the name of the Fluid service that runs on localhost.
 
 ```dotnetcli
-npx tinylicious
+npx @fluidframework/azure-local-service@latest
 ```
 
 To run and start the Teams application, open another terminal and follow the instructions [here](https://docs.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/create-channel-group-tab?tabs=nodejs#upload-your-application-to-teams).
@@ -265,7 +265,7 @@ Now follow the [instructions](https://docs.microsoft.com/en-us/microsoftteams/pl
 Hostnames with `ngrok`'s free tunnels are not preserved. Each run will generate a different URL. This means that anytime a new `ngrok` tunnel is created, the older container will no longer be accessible. For production scenario, please visit [here]()
 to learn about deploying a static web application and using the static URL.
 
-{{< callout >}}
+{{< /callout >}}
 
 ## Next steps
 
