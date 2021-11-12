@@ -107,7 +107,7 @@ export async function createContainer() : Promise<string> {
 };
 ```
 
-1. Replace `TODO: 6` with the following code. Note that when we fetch the fluid container we want to return the container itself since we will need to interact with the container and the DDSes inside it in the content page.
+1. Replace `TODO: 6` with the following code. Note that when we fetch the Fluid container we want to return the container itself since we will need to interact with the container and the DDSes inside it in the content page.
 
 ```ts
 export async function getContainer(id : string) : Promise<IFluidContainer> {
