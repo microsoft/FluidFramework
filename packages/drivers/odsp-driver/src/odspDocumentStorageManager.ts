@@ -322,6 +322,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         // fix the branch name in attributes
         // this prevents issues when generating summaries
         const documentAttributes: api.IDocumentAttributes = JSON.parse(bufferToString(blob, "utf8"));
+        documentAttributes.branch = this.documentId;
         const content = JSON.stringify(documentAttributes);
         const patchedBlob = stringToBuffer(content, "utf8");
         return patchedBlob;
