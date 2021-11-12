@@ -308,7 +308,7 @@ webpack.EnvironmentPlugin({
 }),
 ```
 
-Now, let's access the environment variable in [Util.ts](./src/client/Util.ts)
+Now, let's access the environment variable in `Util.ts`
 
 ```ts
 // Util.ts
