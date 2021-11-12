@@ -4,9 +4,9 @@
  */
 /* globals should, sinon, expect */
 import { DataBinder } from '../../src/data_binder/dataBinder';
-import { DataBinding } from '../../src/data_binder/data_binding';
-import { catchConsoleErrors } from './catch_console_errors';
-import { MockSharedPropertyTree } from './mock_shared_property_tree';
+import { DataBinding } from '../../src/data_binder/dataBinding';
+import { catchConsoleErrors } from './catchConsoleError';
+import { MockSharedPropertyTree } from './mockSharedPropertyTree';
 import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
 const NEVER = { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER };
 

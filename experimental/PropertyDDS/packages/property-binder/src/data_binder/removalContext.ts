@@ -8,7 +8,7 @@
  */
 import { BaseContext } from './baseContext';
 import { DataBinding } from './dataBinding';
-import { ArrayNode, DataBindingTree } from './dataBindingTree';
+import { NodeType } from './dataBindingTree';
 
 /**
  * Context which describes a remove operation
@@ -17,7 +17,7 @@ import { ArrayNode, DataBindingTree } from './dataBindingTree';
  * @public
  */
 class RemovalContext extends BaseContext {
-  private _subTree: DataBindingTree | ArrayNode;
+  private _subTree: NodeType;
 
   /**
    * @param in_subTree - The entity tree that was removed by this operation
@@ -31,7 +31,7 @@ class RemovalContext extends BaseContext {
    * @hidden
    * @package
    */
-  constructor(in_subTree: DataBindingTree | ArrayNode, in_baseDataBinding: DataBinding, in_path: string, in_simulated: boolean = false) {
+  constructor(in_subTree: NodeType, in_baseDataBinding?: DataBinding, in_path?: string, in_simulated: boolean = false) {
     super('remove', '', in_path, in_baseDataBinding, undefined, in_simulated);
     this._subTree = in_subTree;
   }
@@ -49,7 +49,7 @@ class RemovalContext extends BaseContext {
    */
   getDataBinding(in_bindingType: string = ''): DataBinding | undefined {
     var originalDataBindingType = this._baseDataBinding ? this._baseDataBinding.getDataBindingType() : undefined;
-    return this._subTree.getDataBindingByType(in_bindingType || originalDataBindingType!) || undefined;
+    return this._subTree!.getDataBindingByType(in_bindingType || originalDataBindingType!) || undefined;
   }
 
   /**

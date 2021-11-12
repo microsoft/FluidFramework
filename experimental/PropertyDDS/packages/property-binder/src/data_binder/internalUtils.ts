@@ -5,7 +5,7 @@
 /**
  * @fileoverview Some internal utils functions
  */
-import _ from 'underscore';
+import _ from 'lodash';
 import { BaseProperty, ContainerProperty, PropertyFactory, PropertyTemplate } from '@fluid-experimental/property-properties';
 import { PathHelper, TypeIdHelper, ArrayChangeSetIterator, Utils, SerializedChangeSet } from '@fluid-experimental/property-changeset';
 import { ModificationContext } from './modificationContext';
@@ -13,9 +13,10 @@ import { getOrInsertDefaultInNestedObjects } from '../external/utils/nestedObjec
 import { DataBinderHandle } from '../internal/dataBinderHandle';
 import { RESOLVE_NEVER, RESOLVE_ALWAYS } from '../internal/constants';
 import { DataBinding, PropertyElement } from '..';
-import { DataBindingTree } from './dataBindingTree';
+import { DataBindingTree, NodeType } from './dataBindingTree';
 import { BaseContext } from './baseContext';
 
+export type RecursiveCallback = (in_propertyElement: PropertyElement, in_path: string, in_tokenizedPath: (string|number)[], in_dataBindingTreeNode: NodeType) => boolean
 
 interface InvokeContext {
     traversalContext: Utils.TraversalContext;
@@ -57,7 +58,7 @@ const escapeTokenizedStringForMap = function(in_string: string): string {
  * @package
  * @hidden
  */
-const escapeTokenizedPathForMap = function(in_path: string | any[]): string | string[] {
+const escapeTokenizedPathForMap = function(in_path: string | string[]): string | string[] {
     if (_.isArray(in_path)) {
         return _.map(in_path, escapeTokenizedStringForMap);
     } else {
@@ -78,7 +79,7 @@ const unescapeTokenizedStringForMap = function(in_string: string): string {
     if (in_string[0] === '_' &&
         in_string[1] === '_' &&
         in_string[2] === '_') {
-        in_string = in_string.substring(1);
+        in_string = in_string.substr(1);
     }
     return in_string;
 
@@ -195,7 +196,7 @@ const assertOperation = function(operation: string) {
  */
 const _callCorrespondingHandlers = function(
     in_invokeContext: InvokeContext,
-    in_operationType: string,
+    in_operationType: Utils.OperationType,
     in_handlers: DataBinderHandle[],
     in_changeSetKeys: (number | string)[],
     in_changeSetObject: SerializedChangeSet | undefined = undefined,
@@ -230,7 +231,7 @@ const _callCorrespondingHandlers = function(
                 if (in_operationType === 'remove') {
                     modificationContext._setRemovedDataBindingPath(in_invokeContext.dataBindingPath + '[' + removeKey + ']');
                 }
-                in_handlers[j].pathCallback.call(in_invokeContext.dataBinding, key, modificationContext);
+                in_handlers[j].pathCallback!.call(in_invokeContext.dataBinding, key, modificationContext);
             });
         }
     }
@@ -298,7 +299,7 @@ const _invokeArrayCallbacks = function(in_invokeContext: InvokeContext, in_handl
  * @private
  * @hidden
  */
-const _iterateChangesetTypeids = function(in_invokeContext: InvokeContext, in_currentOperationType: string, in_opHandlers: DataBinderHandle[]) {
+const _iterateChangesetTypeids = function(in_invokeContext: InvokeContext, in_currentOperationType: Utils.OperationType, in_opHandlers: DataBinderHandle[]) {
     const traversalContext = in_invokeContext.traversalContext;
     const nestedChangeSet = traversalContext.getNestedChangeSet();
     const isPrimitive = TypeIdHelper.isPrimitiveType(traversalContext.getSplitTypeID().typeid);
@@ -453,7 +454,7 @@ const invokeCallbacks = function(
         in_registeredHandlers._calledForVisit = in_visitIndex;
 
         if (in_isReference) {
-            const referenceOperationType = 'reference' + operationType[0].toUpperCase() + operationType.substring(1);
+            const referenceOperationType = 'reference' + operationType[0].toUpperCase() + operationType.substr(1);
 
             if (in_registeredHandlers[referenceOperationType]) {
                 _invokePropertyCallbacks(invokeContext, in_registeredHandlers[referenceOperationType], true);
@@ -532,13 +533,13 @@ const recursivelyVisitHierarchy = function(
     in_rootPropertyElement: PropertyElement,
     in_elementAbsolutePath: string,
     in_dataBindingTreeRoot: DataBindingTree,
-    in_callback: Function) {
+    in_callback: RecursiveCallback) {
     const tokenizedPath = PathHelper.tokenizePathString(
-        in_elementAbsolutePath[0] === '/' ? in_elementAbsolutePath.substring(1) : in_elementAbsolutePath
+        in_elementAbsolutePath[0] === '/' ? in_elementAbsolutePath.substr(1) : in_elementAbsolutePath
     );
 
-    const _recursiveStep = function(in_propertyElement: PropertyElement, in_path: string, in_tokenizedPath: any[], in_dataBindingTreeNode: DataBindingTree) {
-        const recurse = in_callback(in_propertyElement, in_path, in_dataBindingTreeNode);
+    const _recursiveStep = function(in_propertyElement: PropertyElement, in_path: string, in_tokenizedPath: (string | number)[], in_dataBindingTreeNode: NodeType) {
+        const recurse = in_callback(in_propertyElement, in_path, in_tokenizedPath, in_dataBindingTreeNode);
         const typeId = in_propertyElement.getTypeId()!;
 
         if (recurse) {

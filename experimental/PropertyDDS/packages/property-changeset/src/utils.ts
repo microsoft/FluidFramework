@@ -1246,7 +1246,7 @@ export namespace Utils {
      * At least one of the pre- or post-order callbacks must be specified. Both may be specified as well.
      *
      * @param in_changeSet - The ChangeSet to process
-     * @param in_finalizer]                 -                      A callback when traversal is completed
+     * @param in_finalizer - A callback when traversal is completed
      *
      */
     export function traverseChangeSetRecursivelyAsync(in_changeSet: SerializedChangeSet, in_params?: TraversalOptions, in_finalizer?: (any) => any) {

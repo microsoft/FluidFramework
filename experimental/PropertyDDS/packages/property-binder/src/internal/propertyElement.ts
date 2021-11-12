@@ -21,13 +21,6 @@ function hasGetValues(property: Property): boolean {
     return (property as any).getValues && (property!.getTypeid() !== 'String' || isCollection(property));
 }
 
-/** TODO: Revisit this type guard logic, currently isPrimitiveCollectionPrimitive relies on this._childToken to determine whether
- * The property is primitive collection or not.
- */
-// function isPrimitiveCollection(property: Property): property is ValueArrayProperty | ValueMapProperty {
-//     return TypeIdHelper.isPrimitiveType(property!.getTypeid()) && isCollection(property);
-// }
-
 export interface IOptions {
     /*
     * Define how should this function behave during reference resolution?
@@ -43,7 +36,7 @@ let Options: IOptions = {
  * Currently not exposed to the world
  * @hidden
  */
-class PropertyElement {
+export class PropertyElement {
     _property: Property;
 
     _childToken: string | number | undefined;
@@ -491,4 +484,3 @@ class PropertyElement {
         return new PropertyElement(this._property, this._childToken);
     };
 };
-export { PropertyElement };

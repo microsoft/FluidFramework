@@ -8,7 +8,7 @@
 import { BaseProperty, PropertyFactory, ReferenceProperty } from '@fluid-experimental/property-properties';
 import { PathHelper, TypeIdHelper, ArrayChangeSetIterator, Utils } from '@fluid-experimental/property-changeset';
 
-import _ from 'underscore';
+import _ from 'lodash';
 import { ModificationContext } from './modificationContext';
 import { RemovalContext } from './removalContext';
 import { getOrInsertDefaultInNestedObjects, getInNestedObjects } from '../external/utils/nestedObjectHelpers';
@@ -26,7 +26,7 @@ import {
 } from './internalUtils';
 import { concatTokenizedPath } from './DataBindingTree';
 import { RESOLVE_NEVER, RESOLVE_ALWAYS, RESOLVE_NO_LEAFS } from '../internal/constants';
-import { Property, PropertyElement } from '../internal/propertyElement';
+import { PropertyElement } from '../internal/propertyElement';
 import { DataBinder, DataBinderHandle, IRegisterOnPathOptions } from '..';
 import { isCollection, isReferenceProperty } from '../internal/typeGuards';
 import { IRegisterOnPropertyOptions } from './IRegisterOnPropertyOptions';
@@ -46,13 +46,13 @@ const validOptions = ['requireProperty', 'isDeferred'];
 // An object containing the initialization parameters.
 export interface DataBindingParams {
     // The property that this binding represents.
-    property: BaseProperty,
+    property?: BaseProperty,
     // The DataBinder that created this binding
-    dataBinder: DataBinder,
+    dataBinder?: DataBinder,
     // The type of the binding.  (ex. 'VIEW', 'DRAW', 'UI', etc.)
-    bindingType: string,
+    bindingType?: string,
     // the information relating to the activation (userData, databinder...)
-    activationInfo: any
+    activationInfo?: any
 }
 
 
@@ -70,8 +70,8 @@ export interface DataBindingOptions {
 }
 
 export interface CallbackOptions {
-    //i f true, the callback is executed after the current ChangeSet processing is complete. The default is false.
-    isDeferred: boolean;
+    // If true, the callback is executed after the current ChangeSet processing is complete. The default is false.
+    isDeferred?: boolean;
 }
 
 /**
@@ -204,7 +204,7 @@ export class DataBinding {
      * @package
      * @hidden
      */
-    getPropertyElementForTokenizedPath(in_tokenizedPath: string[], in_resolveReference?: boolean): PropertyElement {
+    getPropertyElementForTokenizedPath(in_tokenizedPath: string[], in_resolveReference = true): PropertyElement {
         const element = new PropertyElement(this._property);
         if (element.isValid()) {
             element.becomeChild(in_tokenizedPath, in_resolveReference === false ? RESOLVE_NO_LEAFS : RESOLVE_ALWAYS);
@@ -334,7 +334,7 @@ export class DataBinding {
     }
 
     /**
-     * @param n_tokenizedAbsolutePath - starting absolute path
+     * @param in_tokenizedAbsolutePath - starting absolute path
      * @param in_simulated - are we pretending something is being removed, or is it for realz?
      * @hidden
      * @private
@@ -409,7 +409,7 @@ export class DataBinding {
         in_referencePropertySubTable: any,
         in_indirectionsAtRoot: number,
         in_previousSourceReferencePropertyInfo: any,
-        in_retroactiveRegister: boolean
+        in_retroactiveRegister = false
     ) {
         if (PropertyFactory.instanceOf(in_rootProperty, 'Reference', 'single')) {
             this._registerCallbacksForSingleReferenceProperty(
@@ -588,7 +588,7 @@ export class DataBinding {
             let finalReferencedPath: string;
             if (originalReferencedPath[0] === '/') {
                 // We are referencing an absolute property - optimize this case.
-                finalReferencedPath = originalReferencedPath.substring(1);
+                finalReferencedPath = originalReferencedPath.substr(1);
             } else {
                 // The eventual referencedElement may be invalid (it may not exist yet, but we still need to bind to
                 // notice when it appears (if it does)).
@@ -609,7 +609,7 @@ export class DataBinding {
                 let absolutePathTokenTypes = [];
                 console.assert(in_referenceProperty);
                 // the path to which the referenced path is relative to is actually the _parent_ of the referenceProperty!
-                let absolutePath = in_referenceProperty!.getParent()!.getAbsolutePath().substring(1);
+                let absolutePath = in_referenceProperty!.getParent()!.getAbsolutePath().substr(1);
                 let tokenizedAbsolutePath = PathHelper.tokenizePathString(absolutePath, absolutePathTokenTypes);
                 // cut off from the end of the absolute path the levels that we traversed upwards
                 console.assert(tokenizedAbsolutePath.length >= numberOfRaiseLevelTokens);
@@ -1417,7 +1417,7 @@ export class DataBinding {
                     );
                     // Since we have the property, cache it on the context to avoid recomputation
                     modificationContext._hintModifiedProperty(currentProperty);
-                    _.each(registeredPaths.__registeredDataBindingHandlers.insert, (in_handler) => {
+                    _.each(registeredPaths.__registeredDataBindingHandlers.insert, function(this: any, in_handler: any) {
                         // the insert handlers probably should always be called (TODO: even w.r.t. bindToReference?)
                         // console.log('calling insert for: ' + traversalPath + ' currentProperty: ' + currentProperty);
                         // note that the nested ChangeSet supplied is undefined!
@@ -1439,14 +1439,14 @@ export class DataBinding {
                     );
                     // Since we have the property, cache it on the context to avoid recomputation
                     modificationContext._hintModifiedProperty(currentReferenceProperty);
-                    _.each(registeredPaths.__registeredDataBindingHandlers.referenceInsert, (in_handler) => {
+                    _.each(registeredPaths.__registeredDataBindingHandlers.referenceInsert, function(this: any, in_handler) {
                         if (registrationId === undefined || in_handler.registrationId === registrationId) {
                             in_handler.pathCallback.call(this, modificationContext);
                         }
                     });
                 }
                 if (currentProperty !== undefined && registeredPaths.__registeredDataBindingHandlers.collectionInsert) {
-                    _.each(registeredPaths.__registeredDataBindingHandlers.collectionInsert, (in_handler) => {
+                    _.each(registeredPaths.__registeredDataBindingHandlers.collectionInsert, function(this: any, in_handler) {
                         const rightId = (registrationId === undefined || in_handler.registrationId === registrationId);
                         const isContainer = isCollection(currentProperty);
                         if (rightId && isContainer) {
@@ -1543,7 +1543,7 @@ export class DataBinding {
      */
     _registerOnPath(
         in_dataBindingConstructor: typeof DataBinding, in_path: (string | number)[] | string,
-        in_operations: string[], in_function: Function, in_options: any
+        in_operations: string[], in_function: Function, in_options: CallbackOptions = {isDeferred: false}
     ): DataBinderHandle {
         // We support registering on path for absolute path callbacks, and our databinding is marked as internal
         if (!in_dataBindingConstructor.__absolutePathInternalBinding) {
@@ -1562,7 +1562,8 @@ export class DataBinding {
                 'deprecated feature'
             );
         }
-        if (in_options && in_options.replaceExisting !== undefined) {
+        if (in_options && (in_options as any).replaceExisting !== undefined) {
+            // @TODO remove this
             console.warn('replaceExisting is deprecated. The behavior is now as if replaceExisting is false');
         }
 

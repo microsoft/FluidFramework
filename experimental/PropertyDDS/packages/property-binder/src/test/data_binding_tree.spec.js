@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 /* globals should, expect */
-import { DataBindingTree } from '../../src/data_binder/data_binding_tree';
-import { catchConsoleErrors } from './catch_console_errors';
+import { DataBindingTree } from '../../src/data_binder/dataBindingTree';
+import { catchConsoleErrors } from './catchConsoleError';
 
 describe('DataBindingTree', function() {
   catchConsoleErrors();
@@ -608,13 +608,13 @@ describe('DataBindingTree', function() {
       // Closest node for an exact path to a node should be that node
       var path = exactPaths[i];
       closest = tree.getClosestNode(path);
-      expect(closest.path).toEqual(path.substring(1)); // we never get back the leading '/'
+      expect(closest.path).toEqual(path.substr(1)); // we never get back the leading '/'
       expect(closest.node).toEqual(tree.getNode(path));
 
       // Closest node should be the most recent node in a path
       var notAPath = path + '.not.a.path';
       closest = tree.getClosestNode(notAPath);
-      expect(closest.path).toEqual(path.substring(1)); // we never get back the leading '/'
+      expect(closest.path).toEqual(path.substr(1)); // we never get back the leading '/'
       expect(closest.node).toEqual(tree.getNode(path));
     }
 

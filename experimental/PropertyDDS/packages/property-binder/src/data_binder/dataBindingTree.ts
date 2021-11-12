@@ -17,6 +17,8 @@ import {
 } from "@fluid-experimental/property-properties";
 import { DataBinding } from "./dataBinding";
 
+export type NodeType = DataBindingTree | ArrayNode | null | undefined;
+
 /**
  * Helper function: returns true if and only if the given string parses as a non-negative integer.
  *
@@ -98,7 +100,7 @@ const _tokenizePath = function (
 export class DataBindingTree {
     _value: null;
 
-   _childNodes: (DataBindingTree | ArrayNode | undefined)[];
+   _childNodes: NodeType[];
 
     /**
      * Constructor
@@ -232,7 +234,8 @@ export class DataBindingTree {
     _getClosestNode(
         in_tokenizedPath: (string | number)[],
         in_pathDelimiters: PATH_TOKENS_TYPE[],
-        in_position: number
+        in_position: number,
+        _in_parent?: DataBindingTree | ArrayNode
     ): any {
         // we're at the end of the path, return this node
         if (in_position === in_tokenizedPath.length) {
@@ -299,7 +302,7 @@ export class DataBindingTree {
         in_position: number,
         in_pathDelimiters?: PATH_TOKENS_TYPE[],
         io_collectedNodes?: DataBindingTree[]
-    ): DataBindingTree | ArrayNode | undefined {
+    ): NodeType {
         if (io_collectedNodes) {
             io_collectedNodes.push(this);
         }
@@ -316,7 +319,7 @@ export class DataBindingTree {
             );
         } else {
             // can't follow the path
-            return undefined;
+            return null;
         }
     }
 
@@ -324,10 +327,10 @@ export class DataBindingTree {
      * Returns the node in the tree that is at the given path (if one exists).
      *
      * @param path - The path to search for.
-     * @returns The node at the path if one exists, undefined otherwise.
+     * @returns The node at the path if one exists, null otherwise.
      * @package
      */
-    getNode(path: string): DataBindingTree | ArrayNode | undefined {
+    getNode(path: string): NodeType {
         // if given an empty path, just return this node
         if (path === "") {
             return this;
@@ -346,7 +349,7 @@ export class DataBindingTree {
      */
     getNodeForTokenizedPath(
         tokenizedPath: Array<string | number>
-    ): DataBindingTree | ArrayNode | undefined {
+    ): NodeType {
         return this._getNode(tokenizedPath, 0);
     }
 
@@ -364,7 +367,7 @@ export class DataBindingTree {
         in_pathDelimiters: PATH_TOKENS_TYPE[],
         in_position: number,
         in_value: any
-    ): DataBindingTree {
+    ): NodeType {
         // we're at the end of the path, set the value and return this node
         if (in_position === in_tokenizedPath.length) {
             this._value = in_value;
@@ -421,9 +424,9 @@ export class DataBindingTree {
     insertChild(
         in_tokenizedPathOrToken: Array<string | number> | string | number,
         in_propertyContext: string
-    ): DataBindingTree | ArrayNode {
+    ): NodeType {
         let currentNode: DataBindingTree = this;
-        let node: DataBindingTree | ArrayNode;
+        let node: NodeType;
         let token: string | number;
         if (_.isArray(in_tokenizedPathOrToken)) {
             for (let i = 0; i < in_tokenizedPathOrToken.length - 1; i++) {
@@ -486,7 +489,7 @@ export class DataBindingTree {
     insertNodeForPathCallback(
         in_absolutePath: string,
         in_value?: any
-    ): DataBindingTree | ArrayNode {
+    ): NodeType {
         const pathDelimiters = [];
         const tokenizedPath = _tokenizePath(in_absolutePath, pathDelimiters);
         const lastElem = tokenizedPath.pop();
@@ -514,7 +517,7 @@ export class DataBindingTree {
             }
         }
         if (in_value) {
-            newNode.setValue(in_value);
+            newNode!.setValue(in_value);
         }
         return newNode;
     }
@@ -557,12 +560,12 @@ export class DataBindingTree {
      * @param io_parentNode - parent node whose child we convert
      * @param in_key - key (index) of the child we want to replace
      */
-    private _convertFromSpecializedNode(
+    protected _convertFromSpecializedNode(
         io_parentNode: DataBindingTree | ArrayNode | MapNode,
         in_key: string | number
     ) {
         let replacementNode = new DataBindingTree();
-        // this syntax should work both for ArrayNodes and DataBindingTree parentnodes
+        // this syntax should work both for ArrayNodes and DataBindingTree parent nodes
         let oldNode = io_parentNode._childNodes[in_key];
         console.assert(
             oldNode instanceof ArrayNode || oldNode instanceof MapNode
@@ -591,7 +594,7 @@ export class DataBindingTree {
         in_key: string | number
     ) {
         let replacementNode = new ArrayNode();
-        // this syntax should work both for ArrayNodes and DataBindingTree parentnodes
+        // this syntax should work both for ArrayNodes and DataBindingTree parent nodes
         let oldDataBindingTreeNode = io_parentNode._childNodes[in_key];
         console.assert(oldDataBindingTreeNode instanceof DataBindingTree);
         let keys = Object.keys(oldDataBindingTreeNode._childNodes);
@@ -619,7 +622,7 @@ export class DataBindingTree {
         in_key: string | number
     ) {
         let replacementNode = new MapNode();
-        // this syntax should work both for ArrayNodes and DataBindingTree parentnodes
+        // this syntax should work both for ArrayNodes and DataBindingTree parent nodes
         let oldDataBindingTreeNode = io_parentNode._childNodes[in_key];
         console.assert(oldDataBindingTreeNode instanceof DataBindingTree);
         let keys = Object.keys(oldDataBindingTreeNode._childNodes);
@@ -637,7 +640,7 @@ export class DataBindingTree {
      */
     static _createDataBindingTreeNodeForContext(
         in_context: string
-    ): MapNode | ArrayNode | DataBindingTree {
+    ): MapNode | NodeType {
         if (in_context === "array") {
             return new ArrayNode();
         } else if (in_context === "map") {
@@ -655,7 +658,7 @@ export class DataBindingTree {
      * @returns The node that was created for the path
      * @package
      */
-    insert(in_path: string, in_value: any): DataBindingTree {
+    insert(in_path: string, in_value: any): NodeType {
         // if given an empty path, just return this node
         if (in_path === "") {
             this._value = in_value;
@@ -675,11 +678,11 @@ export class DataBindingTree {
      * @returns The root of the subtree that was removed, or null
      * @private
      */
-    private _remove(
+     _remove(
         in_tokenizedPath: (string | number)[],
         in_pathDelimiters: TOKEN_TYPES_TYPE[],
         in_position: number
-    ): DataBindingTree | null {
+    ): NodeType {
         if (this._childNodes.hasOwnProperty(in_tokenizedPath[in_position])) {
             if (in_position === in_tokenizedPath.length - 1) {
                 // we're at at the end of the path -> need to remove a direct child
@@ -707,7 +710,7 @@ export class DataBindingTree {
      * @returns The subtree that was removed. Null if nothing was removed
      * @package
      */
-    remove(in_path: string): DataBindingTree | null {
+    remove(in_path: string): NodeType {
         // if given an empty path, just return this node
         if (in_path === "") {
             return this;
@@ -766,7 +769,7 @@ export class DataBindingTree {
      * @returns the array of nodes
      * @package
      */
-    getNodesInPath(in_path: string): Array<DataBindingTree> {
+    getNodesInPath(in_path: string): Array<NodeType> {
         let nodes = [];
         // if given an empty path, just an empty array
         if (in_path === "") {
@@ -858,12 +861,12 @@ export class DataBindingTree {
      * @returns The specified child node (or undefined)
      * @package
      */
-    getChild(in_child: string | Array<string>): DataBindingTree | undefined {
+    getChild(in_child: string | Array<string>): NodeType {
         let that = this;
         if (_.isArray(in_child)) {
-            let child: DataBindingTree | undefined = undefined;
+            let child: NodeType = undefined;
             in_child.forEach(function (act_child) {
-                if (child === undefined) {
+                if (!child) {
                     child = that.getChild(act_child);
                 } else {
                     child = child.getChild(act_child);
@@ -882,14 +885,14 @@ export class DataBindingTree {
      * @returns The subtree that was removed. Null if nothing was removed
      * @package
      */
-    removeChild(in_child: number): DataBindingTree | ArrayNode | undefined {
+    removeChild(in_child: number | string): NodeType {
         if (this._childNodes.hasOwnProperty(in_child)) {
             let node = this._childNodes[in_child];
             delete this._childNodes[in_child];
             return node;
         } else {
             // unknown child, return null don't do anything
-            return undefined;
+            return null;
         }
     }
 
@@ -1032,7 +1035,7 @@ export class ArrayNode extends DataBindingTree {
         in_pathDelimiters: TOKEN_TYPES_TYPE[],
         in_position: number,
         in_value: any
-    ): DataBindingTree {
+    ): NodeType {
         let index = parseInt(in_tokenizedPath[in_position] as string, 10);
         //    console.log('_inserting at path: ' +
         //      concatTokenizedPath(in_tokenizedPath, in_pathDelimiters, in_position + 1) +
@@ -1076,7 +1079,7 @@ export class ArrayNode extends DataBindingTree {
      * @returns node
      * @package
      */
-    insertChild(in_index: number, in_propertyContext: string): any {
+    insertChild(in_index: number, in_propertyContext: string): NodeType {
         let length =
             this._highestPathCallbackIndex > -1
                 ? this._actualLength
@@ -1105,7 +1108,7 @@ export class ArrayNode extends DataBindingTree {
             );
         }
 
-        let node: DataBindingTree | ArrayNode | undefined = undefined;
+        let node: NodeType = null;
         if (
             this._highestPathCallbackIndex > -1 &&
             this._highestPathCallbackIndex >= in_index
@@ -1120,7 +1123,7 @@ export class ArrayNode extends DataBindingTree {
                     this._childNodes[in_index] instanceof ArrayNode &&
                     in_propertyContext !== "array"
                 ) {
-                    this._convertFromArrayNode(this, in_index);
+                    this._convertFromSpecializedNode(this, in_index);
                 }
                 if (
                     !(this._childNodes[in_index] instanceof ArrayNode) &&
@@ -1154,10 +1157,6 @@ export class ArrayNode extends DataBindingTree {
         return node;
     }
 
-    protected _convertFromArrayNode(_arg0: this, in_index: any) {
-        throw new Error("Method not implemented.");
-    }
-
     /**
      * Returns the tree node farthest along the given path.
      *
@@ -1170,12 +1169,12 @@ export class ArrayNode extends DataBindingTree {
      * (partial) path
      */
     _getClosestNode(
-        in_tokenizedPath: string[],
-        in_pathDelimiters: TOKEN_TYPES_TYPE[],
+        in_tokenizedPath: (string | number)[],
+        in_pathDelimiters: PATH_TOKENS_TYPE[],
         in_position: number,
         in_parent: DataBindingTree | ArrayNode
     ): any {
-        let index = parseInt(in_tokenizedPath[in_position], 10);
+        let index = parseInt(in_tokenizedPath[in_position] as string, 10);
         if (
             isNaN(index) ||
             index < 0 ||
@@ -1215,7 +1214,7 @@ export class ArrayNode extends DataBindingTree {
         in_position: number,
         in_pathDelimiters: TOKEN_TYPES_TYPE[],
         io_collectedNodes?: DataBindingTree[]
-    ): DataBindingTree | ArrayNode | undefined {
+    ): NodeType {
         if (in_position === in_tokenizedPath.length) {
             return this;
         }
@@ -1229,7 +1228,7 @@ export class ArrayNode extends DataBindingTree {
                 in_pathDelimiters[in_position] !==
                     PathHelper.TOKEN_TYPES.ARRAY_TOKEN)
         ) {
-            return undefined;
+            return null;
         }
         return this._childNodes[index]!._getNode(
             in_tokenizedPath,
@@ -1246,7 +1245,7 @@ export class ArrayNode extends DataBindingTree {
      * @returns The node at the path if one exists. Otherwise, undefined.
      * @package
      */
-    getNode(path: string): DataBindingTree | ArrayNode | undefined {
+    getNode(path: string): NodeType {
         let pathDelimiters = [];
         let tokenizedPath = _tokenizePath(path, pathDelimiters);
         return this._getNode(tokenizedPath, 0, pathDelimiters);
@@ -1264,7 +1263,7 @@ export class ArrayNode extends DataBindingTree {
         in_tokenizedPath: string[],
         in_pathDelimiters: TOKEN_TYPES_TYPE[],
         in_position: number
-    ): DataBindingTree | ArrayNode | undefined {
+    ): NodeType {
         let index = parseInt(in_tokenizedPath[in_position], 10);
         if (index >= 0 && index < this._childNodes.length) {
             if (in_position === in_tokenizedPath.length - 1) {
@@ -1282,7 +1281,7 @@ export class ArrayNode extends DataBindingTree {
             }
         } else {
             // we can't go on with the path, return null and don't do anything
-            return undefined;
+            return null;
         }
     }
 
@@ -1290,10 +1289,10 @@ export class ArrayNode extends DataBindingTree {
      * Removes the subtree of a direct child
      *
      * @param in_index - the index of the child to remove
-     * @returns The subtree that was removed. undefined if nothing was removed
+     * @returns The subtree that was removed. null if nothing was removed
      * @package
      */
-    removeChild(in_index: number): DataBindingTree | ArrayNode | undefined {
+    removeChild(in_index: number): NodeType {
         let length =
             this._highestPathCallbackIndex > -1
                 ? this._actualLength
@@ -1332,7 +1331,7 @@ export class ArrayNode extends DataBindingTree {
             // we have a removal at the end of our (potentially partially filled) array. Just set this child to undefined
             // and decrement our length
             console.assert(in_index === this._actualLength - 1);
-            this._childNodes[in_index] = undefined;
+            this._childNodes[in_index] = null;
             this._actualLength--;
         } else {
             // either this ArrayNode does not have any "reference" nodes or we're removing an element beyond the reference
@@ -1434,10 +1433,10 @@ export class ArrayNode extends DataBindingTree {
      * @param in_child - the name of the child or an array of names
      * if an array is passed, the .getChild() function will be performed on each child in sequence
      * for example .get(['position','x']) is equivalent to .get('position').get('x')
-     * @returns The specified child node (or undefined)
+     * @returns The specified child node (or null)
      * @package
      */
-    getChild(in_child: string | string[]): DataBindingTree | undefined {
+    getChild(in_child: string | string[]): NodeType {
         return DataBindingTree.prototype.getChild.call(this, in_child);
     }
 }

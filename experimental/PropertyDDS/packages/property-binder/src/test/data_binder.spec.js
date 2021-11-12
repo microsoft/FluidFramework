@@ -15,9 +15,9 @@
  * we plan to get rid of modificationSet mid-term, it makes no sense to try and fix those.
  *
  */
-import _ from 'underscore';
+import _ from 'lodash';
 import { DataBinder } from '../../src/data_binder/dataBinder';
-import { ModificationContext } from '../../src/data_binder/modification_context';
+import { ModificationContext } from '../../src/data_binder/modificationContext';
 import {
   registerTestTemplates, ParentTemplate, ChildTemplate,
   PrimitiveChildrenTemplate, ArrayContainerTemplate, SetContainerTemplate,
@@ -26,7 +26,7 @@ import {
   positionTemplate, ReferenceParentTemplate,
   EscapingTestTemplate
 } from './testTemplates';
-import { DataBinding } from '../../src/data_binder/data_binding.js';
+import { DataBinding } from '../../src/data_binder/dataBinding';
 
 import {
   ParentDataBinding,
@@ -37,11 +37,11 @@ import {
 } from './testDataBindings';
 import {
   catchConsoleErrors, hadConsoleError, clearConsoleError
-} from './catch_console_errors';
-import { unregisterAllOnPathListeners } from '../../src/data_binder/internal_utils';
+} from './catchConsoleError';
+import { unregisterAllOnPathListeners } from '../../src/data_binder/internalUtils';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 import { RESOLVE_NEVER } from '../../src/internal/constants';
-import { MockSharedPropertyTree } from './mock_shared_property_tree'
+import { MockSharedPropertyTree } from './mockSharedPropertyTree'
 
 const cleanupClasses = function() {
   // Unregister DataBinding paths

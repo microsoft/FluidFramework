@@ -6,12 +6,12 @@
 /* eslint-disable require-jsdoc */
 /* globals expect */
 import { DataBinder } from '../../src/data_binder/dataBinder';
-import { MockSharedPropertyTree } from './mock_shared_property_tree';
+import { MockSharedPropertyTree } from './mockSharedPropertyTree';
 import {
   catchConsoleErrors
-} from './catch_console_errors';
+} from './catchConsoleError';
 
-import { DataBinding } from '../../src/data_binder/data_binding';
+import { DataBinding } from '../../src/data_binder/dataBinding';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 import { UpgradeType } from '../../src';
 

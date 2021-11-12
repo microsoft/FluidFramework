@@ -26,7 +26,7 @@ export class StatelessDataBinding extends DataBinding {
      *
      * @param params - An object containing the initialization parameters.
      */
-  constructor(params: IStatelessDataBindingOptions) {
+  constructor(params: IStatelessDataBindingOptions = {}) {
     super(params);
     // we'll need this for the DataBinder instance & the databinding type set by the wrapper
     this._activationInfo = {};

@@ -3,8 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { DataBinding } from "..";
+import { ModificationContext } from "../data_binder/modificationContext";
+
 declare type DataBindingHandle = any; // TODO declare handle type
 declare type DestroyCallbackType = (handle: DataBindingHandle, userData: any) => any
+
+type PathCallback = {
+    call: (arg0: DataBinding, arg1: string | number, arg2: ModificationContext) => void;
+};
 
 /**
  * The handle represents a reversable operation done with the DataBinder. For example,
@@ -23,7 +30,7 @@ class DataBinderHandle {
 
     _userData: any;
 
-    pathCallback: any;
+    pathCallback: PathCallback | undefined;
 
     /**
      * Build the registration handle

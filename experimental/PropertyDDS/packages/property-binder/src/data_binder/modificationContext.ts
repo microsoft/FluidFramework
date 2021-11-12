@@ -55,7 +55,7 @@ class ModificationContext extends BaseContext {
      * @hidden
      */
     constructor(in_nestedChangeSet: SerializedChangeSet,
-      in_operationType: string | undefined,
+      in_operationType: Utils.OperationType | undefined,
       in_path?: string | undefined,
       in_context?: string | undefined,
       in_baseDataBinding?: DataBinding,

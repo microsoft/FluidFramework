@@ -6,7 +6,7 @@
 import { ChangeSet, ExtractedContext, PathHelper, TraversalContext, TypeIdHelper, Utils } from '@fluid-experimental/property-changeset';
 import { SharedPropertyTree } from '@fluid-experimental/property-dds';
 import { BaseProperty, PropertyFactory, TOKEN_TYPES_TYPE } from '@fluid-experimental/property-properties';
-import _ from 'underscore';
+import _ from 'lodash';
 import { IActivateDataBindingOptions, IDefineRepresentationOptions, IRegisterOnPathOptions, representationGenerator } from '..';
 import { ActivationQueryCacheHelper, ActivationType } from '../internal/activationQueryCacheHelper';
 import { RESOLVE_ALWAYS, RESOLVE_NEVER, RESOLVE_NO_LEAFS } from '../internal/constants';
@@ -14,12 +14,12 @@ import { DataBinderHandle } from '../internal/dataBinderHandle';
 import { PropertyElement } from '../internal/propertyElement';
 import { SemverMap, UpgradeType } from '../internal/semvermap';
 import StatelessDataBindingWrapper from '../internal/statelessDataBindingWrapper';
-import { DataBinding } from './dataBinding';
+import { CallbackOptions, DataBinding } from './dataBinding';
 import { DataBindingRegistry } from './dataBindingRegistry';
-import { ArrayNode, concatTokenizedPath, DataBindingTree } from './dataBindingTree';
+import { ArrayNode, concatTokenizedPath, DataBindingTree, NodeType } from './dataBindingTree';
 import { IDefineDataBindingOptions } from './IDefineDataBindingOptions';
 import {
-    assertOperation, deferCallback, forEachProperty, invokeCallbacks, isPrimitiveCollection, makeCallbackOncePerChangeSet, minimalRootPaths, recursivelyVisitHierarchy, visitTypeHierarchy
+    assertOperation, deferCallback, forEachProperty, invokeCallbacks, isPrimitiveCollection, makeCallbackOncePerChangeSet, minimalRootPaths, RecursiveCallback, recursivelyVisitHierarchy, visitTypeHierarchy
 } from './internalUtils';
 import { ModificationContext } from './modificationContext';
 import { RemovalContext } from './removalContext';
@@ -86,7 +86,7 @@ const _normalizePath = function(in_path: string | undefined): string {
         }
         // Clean the path (get rid of a..b etc.)
         const delimiters = [];
-        const tokenized = PathHelper.tokenizePathString(result.substring(1), delimiters);
+        const tokenized = PathHelper.tokenizePathString(result.substr(1), delimiters);
         result = '/' + concatTokenizedPath(tokenized, delimiters, tokenized.length);
     }
     return result;
@@ -169,7 +169,7 @@ export class DataBinder {
 
     _registry: DataBindingRegistry;
 
-    _onModifiedRegistrationKey: null;
+    _onModifiedRegistrationKey: any | undefined;
 
     _propertyTree: SharedPropertyTree | undefined;
 
@@ -245,7 +245,7 @@ export class DataBinder {
 
         this._AbsolutePathDataBinding = AbsolutePathDataBinding;
 
-        this.defineDataBinding(_INTERNAL_DATA_BINDINGTYPE, 'NodeProperty', AbsolutePathDataBinding, {
+        this.register(_INTERNAL_DATA_BINDINGTYPE, 'NodeProperty', AbsolutePathDataBinding, {
             exactPath: '/'
         });
 
@@ -278,7 +278,7 @@ export class DataBinder {
         statelessOptions.userData = _.clone(in_options.userData || {});
         statelessOptions.userData.singleton = in_statelessConstructor;
 
-        return this.defineDataBinding(in_bindingType, in_typeID, StatelessDataBindingWrapper, statelessOptions);
+        return this.register(in_bindingType, in_typeID, StatelessDataBindingWrapper, statelessOptions);
     }
 
     /**
@@ -296,6 +296,46 @@ export class DataBinder {
     hasDataBinding(in_bindingType: string, in_typeID: string): boolean {
         return this._registry.has(in_bindingType, in_typeID);
     }
+
+    /**
+   * Defines and activates a new data binding.
+   * This function will retroactively create bindings for any properties already present in the workspace that
+   * match the path options provided.
+   *
+   * @deprecated Please use {@link DataBinder.defineDataBinding} and {@link DataBinder.activateDataBinding} instead.
+   *
+   * @param in_bindingType - The type of the data binding.  (ex. 'BINDING', 'DRAW', 'UI', etc.)
+   * @param in_typeID - The id to use for this registration, usually the type id of the
+   *                                              objects being represented (like a PropertySet template id).
+   * @param in_bindingConstructor - The constructor for the data binding. Must take a parameter object
+   *                                              as its only argument.
+   * @param in_options - An object containing additional parameters.
+   *
+   * @returns A handle that can be used to unregister this data binding.
+   * @public
+   * @throws Will throw an error if the constructor is missing or invalid.
+   */
+  register(in_bindingType: string, in_typeID: string, in_bindingConstructor: typeof DataBinding, in_options: any = {}): DataBinderHandle {
+    if (in_options.onDemandEntity) {
+      console.warn('DataBinder.register with \'onDemandEntity\' is deprecated. All entities are now on-demand.');
+    }
+
+    const definitionHandle = this.defineDataBinding(in_bindingType, in_typeID, in_bindingConstructor);
+    const activationHandle = this.activateDataBinding(in_bindingType, in_typeID, in_options);
+
+    const handle = new DataBinderHandle(function() {
+      activationHandle.destroy();
+      definitionHandle.destroy();
+    });
+
+    // Be nice to current clients
+    (handle as any).unregister = function() {
+      console.warn('unregister() on a handle is deprecated. Please use destroy()');
+      this.destroy();
+    };
+
+    return handle;
+  }
 
     /**
      * Defines a new DataBinding in the DataBinder. No instances are created until activateDataBinding is called for the
@@ -318,7 +358,7 @@ export class DataBinder {
      * @throws If the constructor is missing or invalid.
      * @throws If the bindingType/typeID pairing is already defined.
      */
-    defineDataBinding(in_bindingType: string, in_typeID: string, in_bindingConstructor: typeof DataBinding, in_options: IDefineDataBindingOptions | undefined = {}): DataBinderHandle {
+    defineDataBinding(in_bindingType: string, in_typeID: string, in_bindingConstructor: typeof DataBinding, in_options?: IDefineDataBindingOptions): DataBinderHandle {
 
         // Ensure we don't define the same bindingtype/typeID pair twice
         if (this._registry.has(in_bindingType, in_typeID)) {
@@ -428,6 +468,7 @@ export class DataBinder {
         // The activationInfo is a structure that will be shared by all instances of the databinding
         // when they are created.
         const activationInfo = {
+            bindingType: in_bindingType,
             dataBinder: this,
             userData: in_options.userData
         };
@@ -568,7 +609,7 @@ export class DataBinder {
     }
 
     /**
-     * Set/increment a variable on the data binding that says that it is registered with one or more
+     * Set/increment a letiable on the data binding that says that it is registered with one or more
      * DataBinders. This allows DataBinding.registerOnPath to alert the user when they are registering a
      * path or property to a DataBinding after it is already registered in the manager.
      *
@@ -584,7 +625,7 @@ export class DataBinder {
     }
 
     /**
-     * Clear/decrement a variable on the data binding that says that it is registered with one or more
+     * Clear/decrement a letiable on the data binding that says that it is registered with one or more
      * DataBinders. This allows DataBinding.registerOnPath to alert the user when they are registering a
      * path or property to a DataBinding after it is already registered in the manager.
      *
@@ -618,8 +659,8 @@ export class DataBinder {
      * @hidden
      */
     private _createFakeTraversalContext(in_property: BaseProperty, in_traversalPath: string, in_absTokenizedPath: Array<string>,
-        in_dataBindingTreeNode: DataBindingTree | ArrayNode): Utils.TraversalContext {
-        var fakeContext = new TraversalContext({
+        in_dataBindingTreeNode: NodeType): Utils.TraversalContext {
+        let fakeContext = new TraversalContext({
             fullPostPath: in_traversalPath,
             fullPath: in_traversalPath,
             propertyContainerType: in_property.getContext() as any,
@@ -717,7 +758,7 @@ export class DataBinder {
             const typeId = property.getFullTypeid();
             const bindings = activationHelper.typeRootBindings(typeId);
             if (bindings.length) {
-                const propertyPath = property.getAbsolutePath().substring(1);
+                const propertyPath = property.getAbsolutePath().substr(1);
                 const tokenizedPath = PathHelper.tokenizePathString(propertyPath);
                 const treeNode = this._dataBindingTree.getNodeForTokenizedPath(tokenizedPath);
 
@@ -771,8 +812,8 @@ export class DataBinder {
      */
     _generalCreateRetroactive(in_rootPropertyElement: PropertyElement, in_activationRules: ActivationType[], io_instantiatedBindings: DataBinding[]) {
         // General case traverser.
-        const generalVisitor = (in_propertyElement: PropertyElement, in_path: string, in_treeNode: DataBindingTree) => {
-            const typeId = in_propertyElement.getTypeId();
+        const generalVisitor: RecursiveCallback = (in_propertyElement: PropertyElement, in_path: string, in_tokenizedPath: (string | number)[], in_treeNode: NodeType): boolean => {
+            const typeId = in_propertyElement.getTypeId()!;
             const propertySplitType = TypeIdHelper.extractContext(typeId);
 
             // We currently only instantiate databindings on properties, never elements of primitive
@@ -823,7 +864,7 @@ export class DataBinder {
                     // Get all the definitions for this typeid, and then filter them for ones that are activated.
                     const definitions = this._registry.getApplicableBindingDefinitions(
                         typeId, rule.bindingType, this._propertyTree
-                    ).filter((definition) => {
+                    ).filter((definition: any) => {
                         return this._activationAppliesToTypeId(rule.activationSplitType!, propertySplitType, definition.splitType);
                     });
 
@@ -835,10 +876,10 @@ export class DataBinder {
                             // The path options apply; does the definition match this property type?
                             if (!tokenizedAbsPath) {
                                 // The path we took to get here may have gone through a reference; we need the direct path.
-                                const absPath = property.getAbsolutePath().substring(1);
+                                const absPath = property.getAbsolutePath().substr(1);
                                 tokenizedAbsPath = PathHelper.tokenizePathString(absPath);
                             }
-                            const unnormalizedPath = in_path.substring(1);
+                            const unnormalizedPath = in_path.substr(1);
                             const fakeContext = this._createFakeTraversalContext(
                                 property,
                                 unnormalizedPath,
@@ -856,7 +897,7 @@ export class DataBinder {
                                     rule.bindingType
                                 );
                             } else {
-                                existingBinding._incReferenceCount();
+                                (existingBinding as DataBinding)._incReferenceCount();
                             }
                         }
                     }
@@ -889,7 +930,7 @@ export class DataBinder {
 
         // Find all the path roots to start recursing from. We end with all the deepest starting
         // points for the set of handles.
-        const pathRoots = minimalRootPaths(_.pluck(in_activationRules, 'startPath'));
+        const pathRoots = minimalRootPaths(_.map(in_activationRules, 'startPath'));
 
         // Batch the rules based on these roots. Some of these rules may be a simple traversal to do, while
         // others may require careful checking of references etc.
@@ -921,7 +962,7 @@ export class DataBinder {
             if (subTreeRootElement.isValid()) {
                 // If there are no exactpaths (which may go through references, exclude prefixes, and all of the
                 // paths start at the same root, we can use a significantly leaner traverser.
-                const easy = _.all(in_rules,
+                const easy = _.every(in_rules,
                     (rule) => rule.exactPath === '' && rule.excludePrefix === '' && rule.startPath === in_root
                 );
                 if (easy) {
@@ -943,7 +984,7 @@ export class DataBinder {
      * Remove all the bindings that were created for the provided activation rule. If the binding was created due to
      * two activations, it will not be removed, it will simply be derefed.
      *
-     * @param {Object} in_activationRule - The description of the activation
+     * @param in_activationRule - The description of the activation
      *
      * @private
      * @hidden
@@ -953,7 +994,7 @@ export class DataBinder {
         const removedBindings: any[] = [];
         const bindingType = in_activationRule.bindingType;
 
-        const visit = function(in_propertyElement, in_path, in_tokenizedPath, in_dataBindingTreeNode) {
+        const visit: RecursiveCallback = function(in_propertyElement: PropertyElement, in_path: string, in_tokenizedPath: (string|number)[], in_dataBindingTreeNode: NodeType): boolean {
             if (in_activationRule.excludePrefix !== '' && in_path === in_activationRule.excludePrefix) {
                 // Falls under our exclusion path: don't check this property, and don't recurse
                 return false;
@@ -962,7 +1003,7 @@ export class DataBinder {
             const value = in_dataBindingTreeNode ? in_dataBindingTreeNode.getValue() : undefined;
             if (value && value.ordered) {
                 // Find the binding with this binding type
-                const index = _.findIndex(value.ordered, (binding) => (binding.getDataBindingType() === bindingType));
+                const index = _.findIndex(value.ordered, (binding: DataBinding) => (binding.getDataBindingType() === bindingType));
                 if (index !== -1) {
                     // We have found a databinding that was created for this binding type. Decrement the reference count
                     const dataBinding = value.ordered[index];
@@ -1000,7 +1041,7 @@ export class DataBinder {
 
         const startPath = in_activationRule.startPath;
         const out_pathDelimiters: TOKEN_TYPES_TYPE[] = [];
-        const pathArr = PathHelper.tokenizePathString(startPath.substring(1), out_pathDelimiters);
+        const pathArr = PathHelper.tokenizePathString(startPath.substr(1), out_pathDelimiters);
         // we need to resolve the references along the way to our subtree but not at the leaf!
         const subTreeRootElement = new PropertyElement(this._propertyTree!.root);
         subTreeRootElement.becomeChild(pathArr, RESOLVE_NO_LEAFS, out_pathDelimiters);
@@ -1047,10 +1088,10 @@ export class DataBinder {
      * @hidden
      */
     _getDataBindingsByType(in_bindingType: string): Array<DataBinding> {
-        var dataBindings: DataBinding[] = [];
+        let dataBindings: DataBinding[] = [];
         this._dataBindingTree.forEachChild(function(value) {
             if (value) {
-                var dataBinding = value.groupedByDataBindingType.get(in_bindingType);
+                let dataBinding = value.groupedByDataBindingType.get(in_bindingType);
                 if (dataBinding) {
                     dataBindings.push(dataBinding);
                 }
@@ -1079,7 +1120,7 @@ export class DataBinder {
             console.warn('replaceExisting is deprecated. The behavior is now as if replaceExisting is false');
         }
 
-        let dataBindingNode: ArrayNode | DataBindingTree | null = this._dataBindingTree.getNode(in_absolutePath);
+        let dataBindingNode: NodeType = this._dataBindingTree.getNode(in_absolutePath);
         if (!dataBindingNode) {
             dataBindingNode = this._dataBindingTree.insertNodeForPathCallback(in_absolutePath);
         } else {
@@ -1089,10 +1130,10 @@ export class DataBinder {
 
         const dataBinder = this;
         const isDeferred = in_options.isDeferred;
-        let value = dataBindingNode.getValue();
+        let value = dataBindingNode!.getValue();
         if (!value) {
-            dataBindingNode.setValue({});
-            value = dataBindingNode.getValue();
+            dataBindingNode!.setValue({});
+            value = dataBindingNode!.getValue();
         }
         if (!value.pathCallbacks) {
             value.pathCallbacks = {};
@@ -1199,7 +1240,7 @@ export class DataBinder {
                         handle.destroy();
                     });
                 });
-            } else if (array) {
+            } else if (_.isArray(in_absolutePath)) {
                 resultHandle = this._internalRegisterOnPath(in_absolutePath[0], in_operations, callback, newOptions);
             } else {
                 resultHandle = this._internalRegisterOnPath(in_absolutePath, in_operations, callback, newOptions);
@@ -1231,16 +1272,17 @@ export class DataBinder {
      */
     private _internalRegisterOnPath(in_absolutePath: string, in_operations: Array<string>, in_callback: Function, in_options: IRegisterOnPathOptions = {}): DataBinderHandle {
         if (in_options.replaceExisting !== undefined) {
+            // @TODO remove this
             console.warn('replaceExisting is deprecated. The behavior is now as if replaceExisting is false');
         }
 
         // Now register a _relative_ path on this temporary class
         let relativePath = in_absolutePath;
         if (relativePath[0] === '/') {
-            relativePath = relativePath.substring(1);
+            relativePath = relativePath.substr(1);
         }
-        const callbackOptions = {
-            isDeferred: in_options.isDeferred
+        const callbackOptions: CallbackOptions = {
+            isDeferred: !!in_options.isDeferred!
         };
 
         // Note; for performance reasons we allow adding registrations on this._AbsolutePathDataBinding despite the
@@ -1251,7 +1293,7 @@ export class DataBinder {
 
         // Get the instance of _AbsolutePathDataBinding -- may not exist yet if not attached, or in a push
         // scope
-        const dataBinding = this.resolve<DataBinding>('/', _INTERNAL_DATA_BINDINGTYPE);
+        const dataBinding = this.resolve<DataBinding>('/', _INTERNAL_DATA_BINDINGTYPE) as DataBinding;
         if (dataBinding) {
             const tokenizedPath = PathHelper.tokenizePathString(relativePath);
 
@@ -1292,7 +1334,7 @@ export class DataBinder {
                     interestingPaths = parent;
                 }
                 dataBinding._invokeInsertCallbacksForPaths(
-                    [], registeredPaths, dataBinding.getProperty(), true, true, interestingPaths, handle
+                    [], registeredPaths, dataBinding.getProperty()!, true, true, interestingPaths, handle
                 );
             }
         }
@@ -1396,7 +1438,7 @@ export class DataBinder {
         if (this._onModifiedRegistrationKey) {
             this._propertyTree!.off('localModification', this._onModifiedRegistrationKey);
             this._onModifiedRegistrationKey = null;
-            this._propertyTree = null;
+            this._propertyTree = undefined;
         }
 
         this.popBindingActivationScope();
@@ -1514,10 +1556,10 @@ export class DataBinder {
      * @hidden
      */
     _createBindingFromDefinition(in_context: Utils.TraversalContext, in_definition: ActivationType, in_activationInfo: object): DataBinding | undefined {
-        var property = in_context.getUserData().property;
+        let property = in_context.getUserData().property;
 
         // Check if it has already been instantiated
-        var node = in_context.getUserData().dataBindingTreeNode;
+        let node = in_context.getUserData().dataBindingTreeNode;
         let nodeValue = node.getValue();
         if (nodeValue && nodeValue.groupedByDataBindingType) {
             const existing = nodeValue.groupedByDataBindingType.get(in_definition.bindingType);
@@ -1566,11 +1608,11 @@ export class DataBinder {
      * @hidden
      */
     private _createAllBindingsAtPath(in_context: Utils.TraversalContext, in_path: string) {
-        var property = in_context.getUserData().property;
+        let property = in_context.getUserData().property;
         const propertyTypeId = property.getFullTypeid();
         const propertySplitType = TypeIdHelper.extractContext(propertyTypeId);
 
-        var definitions = this._registry.getApplicableBindingDefinitions(
+        let definitions = this._registry.getApplicableBindingDefinitions(
             property.getFullTypeid(), undefined, this._propertyTree
         );
 
@@ -1635,11 +1677,11 @@ export class DataBinder {
      * @hidden
      */
     _postCreateDataBinding(in_context: Utils.TraversalContext) {
-        var createdBindings = in_context.getUserData().createdBindings;
-        var pathCallbackContext: any | undefined = undefined;
+        let createdBindings = in_context.getUserData().createdBindings;
+        let pathCallbackContext: any | undefined = undefined;
         if (createdBindings) {
-            for (var i = 0; i < createdBindings.length; i++) {
-                var modificationContext = ModificationContext._fromContext(in_context, createdBindings[i], []);
+            for (let i = 0; i < createdBindings.length; i++) {
+                let modificationContext = ModificationContext._fromContext(in_context, createdBindings[i], []);
                 createdBindings[i]._onPostCreate(modificationContext);
                 if (createdBindings[i].onPostCreate !== DataBinding.prototype.onPostCreate) {
                     createdBindings[i].onPostCreate(modificationContext);
@@ -1665,7 +1707,7 @@ export class DataBinder {
      *
      * @hidden
     */
-    private _callPathCallbacks(in_context: Utils.TraversalContext, in_modificationContext: ModificationContext) {
+    private _callPathCallbacks(in_context: Utils.TraversalContext, in_modificationContext?: ModificationContext) {
         const value = in_context.getUserData().dataBindingTreeNode.getValue();
         if (value && value.pathCallbacks) {
             if (!in_modificationContext) {
@@ -1699,19 +1741,19 @@ export class DataBinder {
      *
      * @hidden
      */
-    private _removeDataBindings(in_parentNode: DataBindingTree | ArrayNode, in_index: Array<string> | number, in_path: string) {
-        var subTree = in_parentNode.getChild(in_index as any);
-        var that = this;
+    private _removeDataBindings(in_parentNode: DataBindingTree | ArrayNode, in_index: string | number, in_path: string) {
+        let subTree = in_parentNode.getChild(in_index as any);
+        let that = this;
 
-        var rootPath = in_parentNode instanceof ArrayNode ? '[' + in_index + ']' : in_index;
+        let rootPath = in_parentNode instanceof ArrayNode ? '[' + in_index + ']' : in_index;
         const fullTokenizedPath = PathHelper.tokenizePathString(in_path);
 
         const reinsertions: any[] = [];
-        var callback = function(post, value, tokenizedPath, dataBindingNode) {
+        let callback = function(post, value, tokenizedPath, dataBindingNode) {
             if (!value) {
                 return;
             }
-            var dataBindingPath = in_path || '';
+            let dataBindingPath = in_path || '';
             tokenizedPath.forEach((segment) => {
                 const escapedSegment = _.isString(segment) ? PathHelper.quotePathSegmentIfNeeded(segment) : segment;
                 if (dataBindingPath.length) {
@@ -1724,7 +1766,7 @@ export class DataBinder {
                 const oldLength = fullTokenizedPath.length;
                 fullTokenizedPath.push(...tokenizedPath);
                 value.ordered.forEach(function(dataBinding) {
-                    var removalContext;
+                    let removalContext;
                     if (post) {
                         // the removalContext is dependent on the DataBinding so we need to create a new one for each DataBinding
                         removalContext = new RemovalContext(dataBindingNode, dataBinding, dataBindingPath, false);
@@ -1738,7 +1780,7 @@ export class DataBinder {
                         if (!(dataBinding instanceof that._AbsolutePathDataBinding)) {
                             that._dataBindingRemovedCounter++;
                         }
-                        var bindingType = dataBinding.getDataBindingType();
+                        let bindingType = dataBinding.getDataBindingType();
                         // add the deleted DataBinding to our removed DataBindings map so that callbacks can get this later
                         if (!that._removedDataBindings.has(dataBindingPath)) {
                             that._removedDataBindings.set(dataBindingPath, {
@@ -1746,7 +1788,7 @@ export class DataBinder {
                                 ordered: []
                             });
                         }
-                        var currentPathObject = that._removedDataBindings.get(dataBindingPath);
+                        let currentPathObject = that._removedDataBindings.get(dataBindingPath);
                         currentPathObject.groupedByDataBindingType.set(bindingType, dataBinding);
                         currentPathObject.ordered.push(dataBinding);
                     }
@@ -1765,7 +1807,7 @@ export class DataBinder {
                 if (value.pathCallbacks['remove']) {
                     // TODO: Use the first registered DataBinding (if it exists) as "default" DataBinding for the absolute path
                     // TODO: callbacks, maybe change it later?
-                    var pathCallbackContext: any = undefined;
+                    let pathCallbackContext: any = undefined;
                     if (value.ordered && value.ordered.length > 0) {
                         pathCallbackContext = new RemovalContext(dataBindingNode, value.ordered[0], dataBindingPath, false);
                     } else {
@@ -1808,7 +1850,7 @@ export class DataBinder {
         }
 
         // Only remove the subtree after the callbacks have all been called.
-        in_parentNode.removeChild(in_index);
+        in_parentNode.removeChild(in_index as number);
 
         // Reinsert any remove callbacks
         reinsertions.forEach((entry) => {
@@ -1825,13 +1867,13 @@ export class DataBinder {
      * @hidden
      */
     _handleModify(in_context: Utils.TraversalContext, in_post: boolean) {
-        var node = in_context.getUserData().dataBindingTreeNode;
+        let node = in_context.getUserData().dataBindingTreeNode;
         if (node && node.getValue()) {
-            var orderedDataBindings = node.getValue().ordered;
-            var modificationContext;
-            var pathCallbackContext = undefined;
+            let orderedDataBindings = node.getValue().ordered;
+            let modificationContext;
+            let pathCallbackContext = undefined;
             if (orderedDataBindings) {
-                for (var i = 0; i < orderedDataBindings.length; i++) {
+                for (let i = 0; i < orderedDataBindings.length; i++) {
                     modificationContext = ModificationContext._fromContext(in_context, orderedDataBindings[i], []);
                     // TODO: Use the first registered DataBinding (if it exists) as "default" DataBinding for the absolute path
                     // TODO: callbacks, maybe change it later?
@@ -1873,17 +1915,17 @@ export class DataBinder {
      */
     _handleRemove(in_context: Utils.TraversalContext, in_post: boolean, in_tokenizedPathSegments: string | Array<string | number>) {
         if (!in_post) {
-            var fullPath = in_context.getFullPostPath();
-            var that = this;
+            let fullPath = in_context.getFullPostPath();
+            let that = this;
 
             // notify potential parent DataBindings
             // TODO: what if in_tokenizedPathSegments is an array? Can it ever be an array for a 'remove' operation?
             console.assert(!_.isArray(in_tokenizedPathSegments));
-            var oldNode = in_context.getUserData().oldTreeNode;
+            let oldNode = in_context.getUserData().oldTreeNode;
             console.assert(this._dataBindingTree.getNode(fullPath) === oldNode.getChild(in_tokenizedPathSegments));
 
             // we need to use the "previous" path here as well to be consistent with the array case
-            that._removeDataBindings(oldNode, in_tokenizedPathSegments, in_context.getFullPath());
+            that._removeDataBindings(oldNode, in_tokenizedPathSegments as string, in_context.getFullPath());
             in_context.getUserData().dataBindingTreeNode = null;
         }
     }
@@ -1911,14 +1953,14 @@ export class DataBinder {
             // TODO: We may revisit this later
 
             // Insert a new node into the tree
-            var oldTreeNode = in_context.getUserData().oldTreeNode;
-            var newTreeNode = oldTreeNode.insertChild(in_tokenizedPathSegments, in_propertyContext);
+            let oldTreeNode = in_context.getUserData().oldTreeNode;
+            let newTreeNode = oldTreeNode.insertChild(in_tokenizedPathSegments, in_propertyContext);
 
             // Update the new dataBindingTreeNode setting
             in_context.getUserData().dataBindingTreeNode = newTreeNode;
 
             // Create the bindings for this property
-            var postPath = in_context.getFullPostPath();
+            let postPath = in_context.getFullPostPath();
             this._createAllBindingsAtPath(in_context, postPath);
         }
     }
@@ -1932,7 +1974,6 @@ export class DataBinder {
      * @hidden
      */
     _handleChange(in_context: Utils.TraversalContext, in_post: boolean) {
-        // console.log('---> callback in <---, post:', in_post);
         // remove is handled independently of anything else
         // 'NodeProperty', 'map', 'array', 'set', 'template', 'root'
         //    console.log(opType + ' for type: ' + splitType.typeid + ' at: ' + fullPath + ' context: ' + context);
@@ -1946,7 +1987,7 @@ export class DataBinder {
             containerType === 'set' ||
             containerType === 'array') {
             if (opType === 'insert') {
-                var splitType = in_context.getSplitTypeID();
+                let splitType = in_context.getSplitTypeID();
                 this._handleInsert(in_context, in_post, tokenizedPathSegments, splitType.context);
             } else if (opType === 'remove') {
                 this._handleRemove(in_context, in_post, tokenizedPathSegments);
@@ -1967,14 +2008,14 @@ export class DataBinder {
      * @hidden
      */
     _preTraversalCallBack(in_context: Utils.TraversalContext) {
-        var opType = in_context.getOperationType();
+        let opType = in_context.getOperationType();
         const delims = [];
 
         // compute current property and node
-        var oldProperty = in_context.getUserData().property;
-        var oldTreeNode = in_context.getUserData().dataBindingTreeNode;
+        let oldProperty = in_context.getUserData().property;
+        let oldTreeNode = in_context.getUserData().dataBindingTreeNode;
 
-        var tokenizedPathSegments: any = in_context.getPostLastSegment();
+        let tokenizedPathSegments: any = in_context.getPostLastSegment();
         if (in_context.getPropertyContainerType() === 'template') {
             const asString = tokenizedPathSegments.toString();
             if (asString.indexOf('.') !== -1 || asString.indexOf('"') !== -1) {
@@ -1982,8 +2023,8 @@ export class DataBinder {
             }
         }
 
-        var newProperty;
-        var newTreeNode;
+        let newProperty;
+        let newTreeNode;
         if (in_context.getPropertyContainerType() === 'root') {
             // we're still at the start
             newProperty = oldProperty;
@@ -2037,13 +2078,13 @@ export class DataBinder {
      * @hidden
      */
     _traverseChangeSet(in_changeSet: any) {
-        var notifications = {
+        let notifications = {
             insert: new Map(),
             remove: new Map(),
             modify: new Map(),
             dataBinder: this
         };
-        var myUserData = {
+        let myUserData = {
             property: this._propertyTree!.root,
             dataBindingTreeNode: this._dataBindingTree,
             retroactive: false    // We are not retroactively installing bindings
@@ -2091,7 +2132,7 @@ export class DataBinder {
         this.pushBindingActivationScope();
         this._activeTraversal = true;
         try {
-            var serializedChanges = in_changeSet.getSerializedChangeSet ? in_changeSet.getSerializedChangeSet() :
+            let serializedChanges = in_changeSet.getSerializedChangeSet ? in_changeSet.getSerializedChangeSet() :
                 in_changeSet;
             this._traverseChangeSet(serializedChanges);
         } catch (e) {
@@ -2118,7 +2159,7 @@ export class DataBinder {
         const queue = this._postProcessingCallbackQueue;
         this._postProcessingCallbackQueue = [];
         while (queue.length !== 0) {
-            var callback = queue.pop()!;
+            let callback = queue.pop()!;
             callback();
         }
     }
@@ -2152,10 +2193,10 @@ export class DataBinder {
 
         // Internally we store paths without the leading '/' character so we need to get rid of those
         if (path[0] === '/') {
-            path = path.substring(1);
+            path = path.substr(1);
         }
 
-        var node = this._dataBindingTree.getNode(path);
+        let node = this._dataBindingTree.getNode(path);
         if (node) {
             return (in_bindingType === undefined) ? node.getDataBindings() as any : node.getDataBindingByType(in_bindingType) as any;
         } else {
@@ -2179,9 +2220,9 @@ export class DataBinder {
         }
         // Internally we store paths without the leading '/' character so we need to get rid of those
         if (in_path[0] === '/') {
-            in_path = in_path.substring(1);
+            in_path = in_path.substr(1);
         }
-        var removedDataBindingsForPath = this._removedDataBindings.get(in_path);
+        let removedDataBindingsForPath = this._removedDataBindings.get(in_path);
         if (removedDataBindingsForPath) {
             const groupedByType = removedDataBindingsForPath.groupedByDataBindingType.get(in_bindingType);
             if (groupedByType) {
@@ -2329,7 +2370,7 @@ export class DataBinder {
         if (!in_representationInfo.stateless) {
             const dataBinder = this;
 
-            const visit = function(in_propElement, in_path, in_tokenizedPath, in_dataBindingTreeNode) {
+            const visit: RecursiveCallback = (in_propElement: PropertyElement, in_path: string, in_tokenizedPath: (string | number)[], in_dataBindingTreeNode: NodeType): boolean => {
                 if (!in_propElement.isPrimitiveCollectionElement() &&
                     in_propElement.getTypeId() === in_representationInfo.typeID) {
                     // Found a property that should have a runtime representation associated with it
@@ -2434,7 +2475,7 @@ export class DataBinder {
             // Nice try
             throw new Error('Calling getRepresentation with an undefined property');
         }
-        return this._getRepresentationAtPathInternal(property.getAbsolutePath().substring(1), property, bindingType);
+        return this._getRepresentationAtPathInternal(property.getAbsolutePath().substr(1), property, bindingType);
     }
 
     /**
@@ -2465,7 +2506,7 @@ export class DataBinder {
                 throw new Error('Calling getRepresentationAtPath for a path that does not resolve to a property');
             }
             if (path.length && path[0] === '/') {
-                path = path.substring(1);
+                path = path.substr(1);
             }
             return this._getRepresentationAtPathInternal(path, property, bindingType);
         }
@@ -2539,15 +2580,15 @@ export class DataBinder {
      * @private
      * @hidden
      */
-    _instantiateNodeAndValueForProperty(in_property: BaseProperty, in_tokenizedPath: Array<string>): DataBindingTree | ArrayNode {
+    _instantiateNodeAndValueForProperty(in_property: BaseProperty, in_tokenizedPath: Array<string>): NodeType {
         let dataBindingTreeNode = this._dataBindingTree.getNodeForTokenizedPath(in_tokenizedPath);
         if (!dataBindingTreeNode) {
             dataBindingTreeNode = this._dataBindingTree.insertChild(in_tokenizedPath, in_property.getContext());
         }
-        let value = dataBindingTreeNode.getValue();
+        let value = dataBindingTreeNode!.getValue();
         if (!value) {
             value = {};
-            dataBindingTreeNode.setValue(value);
+            dataBindingTreeNode!.setValue(value);
         }
 
         return dataBindingTreeNode;
@@ -2600,8 +2641,8 @@ export class DataBinder {
             throw new Error('Calling associateRepresentation for a property/binding type that has a stateless runtime representation defined for it');
         }
 
-        const tokenizedPath = PathHelper.tokenizePathString(in_property.getAbsolutePath().substring(1));
-        const dataBindingTreeNode = this._instantiateNodeAndValueForProperty(in_property, tokenizedPath);
+        const tokenizedPath = PathHelper.tokenizePathString(in_property.getAbsolutePath().substr(1));
+        const dataBindingTreeNode = this._instantiateNodeAndValueForProperty(in_property, tokenizedPath)!;
         const value = dataBindingTreeNode.getValue();
 
         if (value.representations && value.representations.get(in_bindingType)) {
@@ -2682,7 +2723,7 @@ export class DataBinder {
         if (in_representationInfo.stateless) {
             this._buildingStatelessRepresentations.set(in_key, _BUILDING_FLAG);
         } else {
-            const dataBindingTreeNode = this._instantiateNodeAndValueForProperty(in_property, in_tokenizedPath);
+            const dataBindingTreeNode = this._instantiateNodeAndValueForProperty(in_property, in_tokenizedPath)!;
             value = dataBindingTreeNode.getValue();
             const representations = value.representations || new Map();
             value.representations = representations;

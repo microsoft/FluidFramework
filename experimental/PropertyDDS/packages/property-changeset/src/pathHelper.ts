@@ -62,15 +62,15 @@ export namespace PathHelper {
                 out_types.push(TOKEN_TYPES.PATH_ROOT_TOKEN);
             }
             path_start = 1;
-        } else if (in_path.substring(0, 3) === "../") {
+        } else if (in_path.substr(0, 3) === "../") {
             // Handle relative paths by extracting the number steps above
             var extractLevel = function(current_path) {
-                if (current_path.substring(0, 3) === "../") {
+                if (current_path.substr(0, 3) === "../") {
                     if (out_types) {
                         out_types.push(TOKEN_TYPES.RAISE_LEVEL_TOKEN);
                     }
                     tokens.push("../");
-                    extractLevel(current_path.substring(3));
+                    extractLevel(current_path.substr(3));
                     path_start = path_start + 3;
                 }
             };
@@ -78,7 +78,7 @@ export namespace PathHelper {
         }
 
         // Let's see if the path is simple enough to use a fast-track algorithm.
-        let hackedPath = in_path.substring(path_start);
+        let hackedPath = in_path.substr(path_start);
         if (in_path.indexOf("\\") === -1 && in_path.indexOf('"') === -1 && in_path.indexOf("*") === -1) {
             // Yes, we can do something faster than parsing each character one by one.
             let additionalTokens: string[] = [];

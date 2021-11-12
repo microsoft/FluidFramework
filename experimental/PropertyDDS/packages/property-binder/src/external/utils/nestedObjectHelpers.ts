@@ -7,7 +7,7 @@
  *
  * A few helper functions to make sure that an entry exists/gets deleted in a nested hierarchy of JS objects
  */
- import _ from 'underscore';
+ import _ from 'lodash';
 
  /**
   * Inserts an object into a nested Object hierarchy. If an entry already exists, it will be overwritten.
@@ -21,21 +21,21 @@
   * @package
   * @hidden
   */
- function insertInNestedObjects(in_object: object, in_path?: string, in_newEntry?: any): boolean {
+ function insertInNestedObjects(in_object: object, ...args: [in_path: string, in_newEntry: any]): boolean {
    let currentObject = in_object;
 
    // Insert all intermediate steps as needed
-   for (let j = 1; j < arguments.length - 2; j++) {
+   for (let j = 1; j < args.length - 2; j++) {
      // Make sure the entry exits
-     currentObject[arguments[j]] = currentObject[arguments[j]] || {};
+     currentObject[args[j]] = currentObject[args[j]] || {};
 
-     currentObject = currentObject[arguments[j]];
+     currentObject = currentObject[args[j]];
    }
 
    // Insert the new entry
-   let result = currentObject[arguments[arguments.length - 2]] !== undefined;
+   let result = currentObject[args[args.length - 2]] !== undefined;
 
-   currentObject[arguments[arguments.length - 2]] = arguments[arguments.length - 1];
+   currentObject[args[args.length - 2]] = args[args.length - 1];
 
    return result;
  };
@@ -51,12 +51,12 @@
   * @package
   * @hidden
   */
- function existsInNestedObjects(in_object: object, in_path?: string): boolean {
+ function existsInNestedObjects(in_object: object, ...args: [in_path: string]): boolean {
    let currentObject = in_object;
 
    // traverse all intermediate steps as needed
-   for (let j = 1; j < arguments.length; j++) {
-     currentObject = currentObject[arguments[j]];
+   for (let j = 1; j < args.length; j++) {
+     currentObject = currentObject[args[j]];
 
      if (currentObject === undefined) {
        return false;
@@ -104,16 +104,16 @@
   * @package
   * @hidden
   */
-  function getOrInsertDefaultInNestedObjects<T=object>(this: any, in_object: T, _in_path?: string, _in_default?: T): T {
+  function getOrInsertDefaultInNestedObjects<T=object>(this: any, in_object: T, ...args: [in_path?: string, in_default?: any]): T {
    let currentObject = in_object;
 
    // traverse all intermediate steps as needed
-   for (let j = 1; j < arguments.length - 1; j++) {
-     let nextObject = currentObject[arguments[j]];
+   for (let j = 1; j < args.length - 1; j++) {
+     let nextObject = currentObject[args[j]];
 
      if (nextObject === undefined) {
-       insertInNestedObjects.apply(this, [currentObject].concat(Array.from(arguments).slice(j)) as any);
-       return arguments[arguments.length - 1];
+       insertInNestedObjects.apply(this, [currentObject].concat(Array.from(args).slice(j)) as any);
+       return args[args.length - 1];
      } else {
        currentObject = nextObject;
      }
@@ -132,14 +132,14 @@
   * @package
   * @hidden
   */
- function deleteInNestedObjects(in_object: object, in_path?: string) {
+ function deleteInNestedObjects(in_object: object, ...args: [in_path: string]) {
    let currentObject = in_object;
 
    // traverse all intermediate steps as needed
    var objectList: object[] = [];
-   for (let j = 1; j < arguments.length - 1; j++) {
+   for (let j = 1; j < args.length - 1; j++) {
      objectList.push(currentObject);
-     currentObject = currentObject[arguments[j]];
+     currentObject = currentObject[args[j]];
 
      if (currentObject === undefined) {
        break;
@@ -148,13 +148,13 @@
 
    // Delete the entry
    if (currentObject) {
-     delete currentObject[arguments[arguments.length - 1]];
+     delete currentObject[args[args.length - 1]];
      objectList.push(currentObject);
    }
    // Go backwards and remove no longer needed entries
    for (let j = objectList.length - 1; j > 0; j--) {
      if (_.isEmpty(objectList[j])) {
-       delete objectList[j - 1][arguments[j]];
+       delete objectList[j - 1][args[j]];
      }
    }
  };
