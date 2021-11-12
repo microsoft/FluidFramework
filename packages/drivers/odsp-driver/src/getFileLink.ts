@@ -7,7 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, delay, PromiseCache } from "@fluidframework/common-utils";
 import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { fetchIncorrectResponse, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IOdspUrlParts,
     OdspResourceTokenFetchOptions,
@@ -131,7 +131,11 @@ async function getFileLinkCore(
                 const sharingInfo = await response.content.json();
                 const directUrl = sharingInfo?.d?.directUrl;
                 if (typeof directUrl !== "string") {
-                    throwOdspNetworkError("malformedGetSharingInformationResponse", fetchIncorrectResponse);
+                    // Here use a generic error.  fetchIncorrectResponse might be preferable but will result in a
+                    // retry, which we don't want.  Both because we don't have a reason to expect a different
+                    // response on retry, and also because the retry loop in in getFileLink doesn't have the same
+                    // "retry once" logic that getWithRetryForTokenRefresh does.
+                    throwOdspNetworkError("malformedGetSharingInformationResponse", 400);
                 }
                 return directUrl;
             });
@@ -191,7 +195,11 @@ async function getFileItemLite(
                 }
                 const responseJson = await response.content.json();
                 if (!isFileItemLite(responseJson)) {
-                    throwOdspNetworkError("malformedGetFileItemLiteResponse", fetchIncorrectResponse);
+                    // Here use a generic error.  fetchIncorrectResponse might be preferable but will result in a
+                    // retry, which we don't want.  Both because we don't have a reason to expect a different
+                    // response on retry, and also because the retry loop in in getFileLink doesn't have the same
+                    // "retry once" logic that getWithRetryForTokenRefresh does.
+                    throwOdspNetworkError("malformedGetFileItemLiteResponse", 400);
                 }
                 return responseJson;
             });
