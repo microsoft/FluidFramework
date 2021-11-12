@@ -106,10 +106,7 @@ import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo } from "./blobManager";
-import {
-    DataStores,
-    getSummaryForDatastores,
-} from "./dataStores";
+import { DataStores, getSummaryForDatastores } from "./dataStores";
 import {
     aliasBlobName,
     blobsTreeName,

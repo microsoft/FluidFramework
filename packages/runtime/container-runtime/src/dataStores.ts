@@ -86,9 +86,6 @@ export class DataStores implements IDisposable {
         if (baseSnapshot) {
             for (const [key, value] of Object.entries(baseSnapshot.trees)) {
                 fluidDataStores.set(key, value);
-                // This is needed in order to backfill the alias map
-                // for existing (older) datastores
-                this.aliasMap.set(key, key);
             }
         }
 
@@ -127,7 +124,8 @@ export class DataStores implements IDisposable {
                     undefined,
                 );
             }
-            this.contexts.addBoundOrRemoted(dataStoreContext);
+
+            this.addBoundOrRemoted(key, dataStoreContext);
         }
         this.logger.sendTelemetryEvent({
             eventName: "ContainerLoadStats",
@@ -197,8 +195,7 @@ export class DataStores implements IDisposable {
                 }),
             pkg);
 
-        // Resolve pending gets and store off any new ones
-        this.contexts.addBoundOrRemoted(remotedFluidDataStoreContext);
+        this.addBoundOrRemoted(attachMessage.id, remotedFluidDataStoreContext);
 
         // Equivalent of nextTick() - Prefetch once all current ops have completed
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -267,7 +264,7 @@ export class DataStores implements IDisposable {
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             isRoot,
         );
-        this.addContext(id, context);
+        this.addBound(id, context);
         return context;
     }
 
@@ -284,7 +281,7 @@ export class DataStores implements IDisposable {
             isRoot,
             props,
         );
-        this.addContext(id, context);
+        this.addBound(id, context);
         return context;
     }
 
@@ -561,9 +558,14 @@ export class DataStores implements IDisposable {
         return outboundRoutes;
     }
 
-    private addContext(id: string, context: LocalFluidDataStoreContext) {
+    private addBound(id: string, context: LocalFluidDataStoreContext) {
         this.aliasMap.set(id, id);
         this.contexts.addUnbound(context);
+    }
+
+    private addBoundOrRemoted(id: string, context: FluidDataStoreContext) {
+        this.aliasMap.set(id, id);
+        this.contexts.addBoundOrRemoted(context);
     }
 }
 
