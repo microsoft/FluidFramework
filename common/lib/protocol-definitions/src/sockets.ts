@@ -59,6 +59,13 @@ export interface IConnect {
      * If we have standardized features across all services, they need to be exposed in more structured way.
      */
     supportedFeatures?: Record<string, any>;
+
+    /**
+     * Properties that client can send to server to tell info about client environment. These are a bunch of properties
+     * separated by ";" which server can log to better understand client environment etc.
+     * Format: "prop1:val1;prop2:val2;prop3:val3"
+    */
+    relayUserAgent?: string,
 }
 
 /**
@@ -150,4 +157,12 @@ export interface IConnected {
      * The time the client connected
      */
     timestamp?: number;
+
+    /**
+     * Properties that server can send to client to tell info about node that client is connected to. For ex, for spo
+     * it could contain info like build version, environment, region etc. These properties can be logged by client
+     * to better understand server environment etc. and use it in case error occurs.
+     * Format: "prop1:val1;prop2:val2;prop3:val3"
+     */
+    relayServiceAgent?: string,
 }

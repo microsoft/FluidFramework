@@ -55,7 +55,7 @@ export class OrdererManager implements core.IOrdererManager {
         winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
         Lumberjack.info(
             `tenant orderer: ${JSON.stringify(tenant.orderer)}`,
-            getLumberBaseProperties(tenantId, documentId),
+            getLumberBaseProperties(documentId, tenantId),
         );
 
         if (tenant.orderer.url !== this.ordererUrl) {
@@ -166,7 +166,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
         // Database connection for operations db
         const operationsDbMongoUrl = config.get("mongo:operationsDbEndpoint") as string;
-        const operationsDbMongoFactory = new services.MongoDbFactory(operationsDbMongoUrl);
+        const bufferMaxEntries = config.get("mongo:bufferMaxEntries") as number | undefined;
+        const operationsDbMongoFactory = new services.MongoDbFactory(operationsDbMongoUrl, bufferMaxEntries);
         const operationsDbMongoManager = new core.MongoManager(operationsDbMongoFactory);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
 

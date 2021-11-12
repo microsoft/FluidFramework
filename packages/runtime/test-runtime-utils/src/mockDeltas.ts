@@ -42,9 +42,11 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     }
 
     protected process() {
-        while (this.pauseCount === 0 && this.length > 0) {
-            this.processCallback(this.pop());
-        }
+        void Promise.resolve().then(() => {
+            while (this.pauseCount === 0 && this.length > 0) {
+                this.processCallback(this.pop());
+            }
+        });
     }
 
     public push(el: T) {
