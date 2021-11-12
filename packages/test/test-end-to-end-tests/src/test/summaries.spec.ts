@@ -6,7 +6,10 @@
 import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert, bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime, ISummaryRuntimeOptions } from "@fluidframework/container-runtime";
+import { ContainerRuntime,
+    ISummaryRuntimeOptions,
+    formRequestSummarizerFn,
+    ISummarizerRequestOptions } from "@fluidframework/container-runtime";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
@@ -27,7 +30,7 @@ class TestDataObject extends DataObject {
 
 async function createContainer(
     provider: ITestObjectProvider,
-    summaryOpt: Omit<ISummaryRuntimeOptions, "generateSummaries">,
+    summaryOpt: ISummaryRuntimeOptions,
 ): Promise<IContainer> {
     const factory = new DataObjectFactory(TestDataObject.dataObjectName, TestDataObject, [
         SharedMap.getFactory(),
@@ -58,6 +61,8 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
     return JSON.parse(json);
 }
 
+let summarizer;
+
 // REVIEW: enable compat testing?
 describeNoCompat("Summaries", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -71,6 +76,32 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
         const containerRuntime = defaultDataStore.getContext().containerRuntime as ContainerRuntime;
 
         await provider.ensureSynchronized();
+
+        const requestOptions: ISummarizerRequestOptions =
+        {
+            cache: false,
+            reconnect: false,
+            summarizingClient: true,
+        };
+        const requestSummarizerFn = formRequestSummarizerFn(
+            containerRuntime.loader,
+            containerRuntime.deltaManager.lastSequenceNumber,
+            requestOptions);
+
+        summarizer = await requestSummarizerFn();
+        const result = await summarizer.summarizeOnDemand({ reason: "test" });
+        assert(result.alreadyRunning === undefined, "Summarizer should not be running");
+
+        const submitResult = await result.summarySubmitted;
+
+        assert(submitResult.success, "on-demand summary should submit");
+        assert(submitResult.data.stage === "submit",
+            "on-demand summary submitted data stage should be submit");
+
+        assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
+
+        const broadcastResult = await result.summaryOpBroadcasted;
+        assert(broadcastResult.success, "summary op should be broadcast");
 
         const { stats, summary } = await containerRuntime.summarize({
             runGC: false,
@@ -124,12 +155,28 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
         await provider.ensureSynchronized();
 
+        const result = await summarizer.summarizeOnDemand({ reason: "test" });
+        assert(result.alreadyRunning === undefined, "Summarizer should not be running");
+
+        const submitResult = await result.summarySubmitted;
+
+        assert(submitResult.success, "on-demand summary should submit");
+        assert(submitResult.data.stage === "submit",
+            "on-demand summary submitted data stage should be submit");
+
+        assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
+
+        const broadcastResult = await result.summaryOpBroadcasted;
+        assert(broadcastResult.success, "summary op should be broadcast");
+
         const { stats, summary } = await containerRuntime.summarize({
             runGC: false,
             fullTree: false,
             trackState: false,
             summaryLogger: new TelemetryNullLogger(),
         });
+
+        await summarizer.stopOnDemand();
 
         // Validate stats
         assert(stats.handleNodeCount === 0, "Expecting no handles for first summary.");

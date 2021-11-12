@@ -120,13 +120,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     private async runCore(
         onBehalfOf: string,
         options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason> {
-        // Initialize values and first ack (time is not exact)
-        this.logger.sendTelemetryEvent({
-            eventName: "RunningSummarizer",
-            onBehalfOf,
-            initSummarySeqNumber: this.runtime.deltaManager.initialSequenceNumber,
-        });
-
         const runCoordinator: ICancellableSummarizerController = await this.runCoordinatorCreateFn(this.runtime);
 
         // Wait for either external signal to cancel, or loss of connectivity.
@@ -142,6 +135,47 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         if (runCoordinator.cancelled) {
             return runCoordinator.waitCancelled;
         }
+
+        const runningSummarizer = await this.start(onBehalfOf, runCoordinator, options);
+
+        // Wait for either external signal to cancel, or loss of connectivity.
+        const stopReason = await stopP;
+
+        // There are two possible approaches here:
+        // 1. Propagate cancellation from this.stopDeferred to runCoordinator. This will ensure that we move to the exit
+        //    faster, including breaking out of the RunningSummarizer.trySummarize() faster.
+        //    We could create new coordinator and pass it to waitStop() -> trySummarizeOnce("lastSummary") flow.
+        //    The con of this approach is that we might cancel active summary, and lastSummary will fail because it
+        //    did not wait for ack/nack from previous summary. Plus we disregard any 429 kind of info from service
+        //    that way (i.e. trySummarize() loop might have been waiting for 5 min because storage told us so).
+        //    In general, it's more wasted resources.
+        // 2. We can not do it and make waitStop() do last summary only if there was no active summary. This ensures
+        //    that client behaves properly (from server POV) and we do not waste resources. But, it may mean we wait
+        //    substantially longer for trySummarize() retries to play out and thus this summary loop may run into
+        //    conflict with new summarizer client starting on different client.
+        // As of now, #2 is implemented. It's more forward looking, as issue #7279 suggests changing design for new
+        // summarizer client to not be created until current summarizer fully moves to exit, and that would reduce
+        // cons of #2 substantially.
+
+        // Cleanup after running
+        await runningSummarizer.waitStop(!runCoordinator.cancelled /* allowLastSummary */);
+
+        // Propagate reason and ensure that if someone is waiting for cancellation token, they are moving to exit
+        runCoordinator.stop(stopReason);
+
+        return stopReason;
+    }
+
+    private async start(
+        onBehalfOf: string,
+        runCoordinator: ICancellableSummarizerController,
+        options?: Readonly<Partial<ISummarizerOptions>>): Promise<RunningSummarizer> {
+        // Initialize values and first ack (time is not exact)
+        this.logger.sendTelemetryEvent({
+            eventName: "RunningSummarizer",
+            onBehalfOf,
+            initSummarySeqNumber: this.runtime.deltaManager.initialSequenceNumber,
+        });
 
         // Summarizing container ID (with clientType === "summarizer")
         const clientId = this.runtime.clientId;
@@ -186,32 +220,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         this.opListener = (error: any, op: ISequencedDocumentMessage) => runningSummarizer.handleOp(error, op);
         this.runtime.on("batchEnd", this.opListener);
 
-        // Wait for either external signal to cancel, or loss of connectivity.
-        const stopReason = await stopP;
-
-        // There are two possible approaches here:
-        // 1. Propagate cancellation from this.stopDeferred to runCoordinator. This will ensure that we move to the exit
-        //    faster, including breaking out of the RunningSummarizer.trySummarize() faster.
-        //    We could create new coordinator and pass it to waitStop() -> trySummarizeOnce("lastSummary") flow.
-        //    The con of this approach is that we might cancel active summary, and lastSummary will fail because it
-        //    did not wait for ack/nack from previous summary. Plus we disregard any 429 kind of info from service
-        //    that way (i.e. trySummarize() loop might have been waiting for 5 min because storage told us so).
-        //    In general, it's more wasted resources.
-        // 2. We can not do it and make waitStop() do last summary only if there was no active summary. This ensures
-        //    that client behaves properly (from server POV) and we do not waste resources. But, it may mean we wait
-        //    substantially longer for trySummarize() retries to play out and thus this summary loop may run into
-        //    conflict with new summarizer client starting on different client.
-        // As of now, #2 is implemented. It's more forward looking, as issue #7279 suggests changing design for new
-        // summarizer client to not be created until current summarizer fully moves to exit, and that would reduce
-        // cons of #2 substantially.
-
-        // Cleanup after running
-        await runningSummarizer.waitStop(!runCoordinator.cancelled /* allowLastSummary */);
-
-        // Propagate reason and ensure that if someone is waiting for cancellation token, they are moving to exit
-        runCoordinator.stop(stopReason);
-
-        return stopReason;
+        return runningSummarizer;
     }
 
     /**
@@ -237,12 +246,32 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         }
     }
 
-    public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
-        if (this._disposed || this.runningSummarizer === undefined || this.runningSummarizer.disposed) {
-            throw Error("Summarizer is not running or already disposed.");
+    public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = async (...args) => {
+        if (this._disposed) {
+            throw Error("Summarizer is already disposed.");
+        } else if (this.runningSummarizer?.disposed === false) {
+            return this.runningSummarizer.summarizeOnDemand(...args);
+        } else {
+            const runCoordinator: ICancellableSummarizerController = await this.runCoordinatorCreateFn(this.runtime);
+            const runningSummarizer =
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                await this.start(this.runtime.clientId!, runCoordinator, { disableHeuristics: true });
+            const result = runningSummarizer.summarizeOnDemand(...args);
+            // Wait for summarization to finish.
+            if (result.alreadyRunning === undefined) {
+                await result.receivedSummaryAckOrNack;
+            }
+            return result;
         }
-        return this.runningSummarizer.summarizeOnDemand(...args);
     };
+
+    public async stopOnDemand() {
+        if (this._disposed) {
+            return;
+        }
+        await this.runningSummarizer?.stopOnDemand();
+        this.runtime.closeFn();
+    }
 
     public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
         if (this._disposed || this.runningSummarizer === undefined || this.runningSummarizer.disposed) {

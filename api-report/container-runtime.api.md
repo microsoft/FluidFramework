@@ -33,6 +33,7 @@ import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IFluidTokenProvider } from '@fluidframework/container-definitions';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -144,6 +145,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get isDirty(): boolean;
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean): Promise<ContainerRuntime>;
     // (undocumented)
+    get loader(): ILoader;
+    // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
     get options(): ILoaderOptions;
@@ -178,8 +181,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     submitDataStoreSignal(address: string, type: string, content: any): void;
     submitSignal(type: string, content: any): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
-    // (undocumented)
-    summariesDisabled(): boolean;
     summarize(options: {
         summaryLogger: ITelemetryLogger;
         fullTree?: boolean;
@@ -244,6 +245,9 @@ export const gcBlobPrefix = "__gc";
 
 // @public (undocumented)
 export const gcTreeKey = "gc";
+
+// @public
+export const formRequestSummarizerFn: (loaderRouter: IFluidRouter, lastSequenceNumber: number, { cache, reconnect, summarizingClient }: ISummarizerRequestOptions) => () => Promise<ISummarizer>;
 
 // @public
 export interface IAckedSummary {
@@ -500,7 +504,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidLo
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
     // (undocumented)
     stop(reason: SummarizerStopReason): void;
-    summarizeOnDemand(options: IOnDemandSummarizeOptions): OnDemandSummarizeResult;
+    summarizeOnDemand(options: IOnDemandSummarizeOptions): Promise<OnDemandSummarizeResult>;
 }
 
 // @public (undocumented)
@@ -524,6 +528,16 @@ export interface ISummarizerInternalsProvider {
 // @public
 export interface ISummarizerOptions {
     disableHeuristics: boolean;
+}
+
+// @public (undocumented)
+export interface ISummarizerRequestOptions {
+    // (undocumented)
+    cache: boolean;
+    // (undocumented)
+    reconnect: boolean;
+    // (undocumented)
+    summarizingClient: boolean;
 }
 
 // @public (undocumented)
@@ -690,6 +704,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     // (undocumented)
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
     stop(reason: SummarizerStopReason): void;
+    // (undocumented)
+    stopOnDemand(): Promise<void>;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     // (undocumented)

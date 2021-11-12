@@ -308,7 +308,7 @@ export interface ISummarizer extends
      * that resolve as the summarize attempt progresses. They will resolve with success
      * false if a failure is encountered.
      */
-    summarizeOnDemand(options: IOnDemandSummarizeOptions): OnDemandSummarizeResult;
+    summarizeOnDemand(options: IOnDemandSummarizeOptions): Promise<OnDemandSummarizeResult>;
     /**
      * Enqueue an attempt to summarize after the specified sequence number.
      * If afterSequenceNumber is provided, the summarize attempt is "enqueued"
