@@ -76,6 +76,7 @@ export class DataStores implements IDisposable {
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
         private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
+        private readonly aliasMap: Map<string, string>,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
         this.logger = ChildLogger.create(baseLogger);
@@ -85,6 +86,9 @@ export class DataStores implements IDisposable {
         if (baseSnapshot) {
             for (const [key, value] of Object.entries(baseSnapshot.trees)) {
                 fluidDataStores.set(key, value);
+                // This is needed in order to backfill the alias map
+                // for existing (older) datastores
+                this.aliasMap.set(key, key);
             }
         }
 
@@ -130,6 +134,10 @@ export class DataStores implements IDisposable {
             dataStoreCount: fluidDataStores.size,
             referencedDataStoreCount: fluidDataStores.size - unreferencedDataStoreCount,
         });
+    }
+
+    public aliases(): ReadonlyMap<string, string> {
+        return this.aliasMap;
     }
 
     public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
@@ -200,22 +208,23 @@ export class DataStores implements IDisposable {
     public processAliasMessage(message: ISequencedDocumentMessage): IDataStoreAliasMapping {
         const aliasMessage = message.contents as IDataStoreAliasMessage;
 
-        const existingContext = this.contexts.get(aliasMessage.alias);
-        if (existingContext !== undefined) {
+        const existingMapping = this.aliasMap.get(aliasMessage.alias);
+        if (existingMapping !== undefined) {
             return {
                 suppliedInternalId: aliasMessage.id,
                 alias: aliasMessage.alias,
-                aliasedInternalId: existingContext.id,
+                aliasedInternalId: existingMapping,
             };
         }
 
-        const currentContext = this.contexts.get(aliasMessage.id);
-        if (currentContext === undefined) {
+        const currentId = this.aliasMap.get(aliasMessage.id);
+        if (currentId === undefined) {
             const request = { url: aliasMessage.id };
             throw responseToException(create404Response(request), request);
         }
 
-        this.contexts.aliasContext(aliasMessage.id, aliasMessage.alias);
+        this.aliasMap.set(aliasMessage.alias, aliasMessage.id);
+
         return {
             suppliedInternalId: aliasMessage.id,
             alias: aliasMessage.alias,
@@ -258,7 +267,7 @@ export class DataStores implements IDisposable {
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             isRoot,
         );
-        this.contexts.addUnbound(context);
+        this.addContext(id, context);
         return context;
     }
 
@@ -275,7 +284,7 @@ export class DataStores implements IDisposable {
             isRoot,
             props,
         );
-        this.contexts.addUnbound(context);
+        this.addContext(id, context);
         return context;
     }
 
@@ -311,14 +320,15 @@ export class DataStores implements IDisposable {
     }
 
     public async getDataStore(id: string, wait: boolean): Promise<FluidDataStoreContext> {
-        const context = await this.contexts.getBoundOrRemoted(id, wait);
-
-        if (context === undefined) {
+        const internalId = this.aliasMap.get(id);
+        if (internalId === undefined) {
             // The requested data store does not exits. Throw a 404 response exception.
             const request = { url: id };
             throw responseToException(create404Response(request), request);
         }
 
+        const context = await this.contexts.getBoundOrRemoted(internalId, wait);
+        assert(!!context, "There should be a context for the id");
         return context;
     }
 
@@ -466,8 +476,8 @@ export class DataStores implements IDisposable {
     /**
      * Generates data used for garbage collection. It does the following:
      * 1. Calls into each child data store context to get its GC data.
-     * 2. Prefixs the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be
-     *    idenfied as belonging to the child.
+     * 2. Prefixes the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be
+     *    identified as belonging to the child.
      * 3. Adds a GC node for this channel to the nodes received from the children. All these nodes together represent
      *    the GC data of this channel.
      * @param fullGC - true to bypass optimizations and force full generation of GC data.
@@ -549,6 +559,11 @@ export class DataStores implements IDisposable {
             }
         }
         return outboundRoutes;
+    }
+
+    private addContext(id: string, context: LocalFluidDataStoreContext) {
+        this.aliasMap.set(id, id);
+        this.contexts.addUnbound(context);
     }
 }
 

@@ -111,6 +111,7 @@ import {
     getSummaryForDatastores,
 } from "./dataStores";
 import {
+    aliasBlobName,
     blobsTreeName,
     chunksBlobName,
     electedSummarizerBlobName,
@@ -661,6 +662,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
         const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
         const electedSummarizerData = await tryFetchBlob<ISerializedElection>(electedSummarizerBlobName);
+        const aliases = await tryFetchBlob<[string, string][]>(aliasBlobName) ?? [];
+
         const loadExisting = existing === true || context.existing === true;
 
         // read snapshot blobs needed for BlobManager to load
@@ -700,6 +703,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             metadata,
             electedSummarizerData,
             chunks,
+            aliases,
             {
                 summaryOptions,
                 gcOptions,
@@ -882,6 +886,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         metadata: IContainerRuntimeMetadata | undefined,
         electedSummarizerData: ISerializedElection | undefined,
         chunks: [string, string[]][],
+        dataStoreAliasMap: [string, string][],
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
         private readonly containerScope: IFluidObject,
         public readonly logger: ITelemetryLogger,
@@ -958,7 +963,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     getInitialGCSummaryDetailsFn,
                 ),
             (id: string) => this.summarizerNode.deleteChild(id),
-            this._logger);
+            this._logger,
+            new Map<string, string>(dataStoreAliasMap));
 
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
@@ -1286,11 +1292,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             root.entries.push(new BlobTreeEntry(chunksBlobName, JSON.stringify([...this.chunkMap])));
         }
 
+        const dataStoreAliases = this.dataStores.aliases();
+        if (dataStoreAliases.size > 0) {
+            root.entries.push(new BlobTreeEntry(aliasBlobName, JSON.stringify([...dataStoreAliases])));
+        }
+
         return root;
     }
 
     private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
+        addBlobToSummary(summaryTree, aliasBlobName, JSON.stringify([...this.dataStores.aliases()]));
+
         if (this.chunkMap.size > 0) {
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
