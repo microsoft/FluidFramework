@@ -332,7 +332,7 @@ class WholeSummaryDocumentStorageService implements IDocumentStorageService {
     private async fetchAndCacheSnapshotTree(versionId: string): Promise<{ id: string, snapshotTree: ISnapshotTree }> {
         const cachedSnapshotTree = await this.snapshotTreeCache.get(versionId);
         if (cachedSnapshotTree !== undefined) {
-            return { id: versionId, snapshotTree: cachedSnapshotTree };
+            return { id: cachedSnapshotTree.id!, snapshotTree: cachedSnapshotTree };
         }
 
         const wholeFlatSummary = await PerformanceEvent.timedExecAsync(
