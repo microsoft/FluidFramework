@@ -38,7 +38,7 @@ export class Stack<T> {
     }
 }
 
-export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined {
+function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined {
     if (entry === undefined) {
         return undefined;
     }
@@ -52,7 +52,7 @@ export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined {
     return (entry);
 }
 
-export function ListMakeEntry<U>(data: U): List<U> {
+function ListMakeEntry<U>(data: U): List<U> {
     return new List<U>(false, data);
 }
 
@@ -212,11 +212,6 @@ export interface Comparer<T> {
     compare(a: T, b: T): number;
     min: T;
 }
-
-export const numberComparer: Comparer<number> = {
-    min: Number.MIN_VALUE,
-    compare: (a, b) => a - b,
-};
 
 export class Heap<T> {
     L: T[];
@@ -1047,18 +1042,18 @@ export interface AugmentedIntervalNode {
  * @param a - A range
  * @param b - A range
  */
-export function integerRangeUnion(a: IIntegerRange, b: IIntegerRange) {
+function integerRangeUnion(a: IIntegerRange, b: IIntegerRange) {
     return <IIntegerRange>{
         start: Math.min(a.start, b.start),
         end: Math.max(a.end, b.end),
     };
 }
 
-export function integerRangeOverlaps(a: IIntegerRange, b: IIntegerRange) {
+function integerRangeOverlaps(a: IIntegerRange, b: IIntegerRange) {
     return (a.start < b.end) && (a.end > b.start);
 }
 
-export function integerRangeComparer(a: IIntegerRange, b: IIntegerRange) {
+function integerRangeComparer(a: IIntegerRange, b: IIntegerRange) {
     if (a.start === b.start) {
         return a.end - b.end;
     } else {
@@ -1066,7 +1061,7 @@ export function integerRangeComparer(a: IIntegerRange, b: IIntegerRange) {
     }
 }
 
-export const integerRangeCopy = (r: IIntegerRange) => <IIntegerRange>{ start: r.start, end: r.end };
+const integerRangeCopy = (r: IIntegerRange) => <IIntegerRange>{ start: r.start, end: r.end };
 
 export const integerRangeToString = (range: IIntegerRange) => `[${range.start},${range.end})`;
 
@@ -1164,7 +1159,7 @@ export interface IInterval {
     union(b: IInterval): IInterval;
 }
 
-export const intervalComparer = (a: IInterval, b: IInterval) => a.compare(b);
+const intervalComparer = (a: IInterval, b: IInterval) => a.compare(b);
 export type IntervalNode<T extends IInterval> = RBNode<T, AugmentedIntervalNode>;
 export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
 

@@ -643,16 +643,7 @@ export interface InsertContext {
 }
 
 // @public (undocumented)
-export function integerRangeComparer(a: IIntegerRange, b: IIntegerRange): number;
-
-// @public (undocumented)
-export const integerRangeCopy: (r: IIntegerRange) => IIntegerRange;
-
-// @public (undocumented)
 export type IntegerRangeNode = RBNode<IIntegerRange, AugIntegerRangeNode>;
-
-// @public (undocumented)
-export function integerRangeOverlaps(a: IIntegerRange, b: IIntegerRange): boolean;
 
 // @public (undocumented)
 export const integerRangeToString: (range: IIntegerRange) => string;
@@ -683,14 +674,8 @@ export class IntegerRangeTree implements IRBAugmentation<IIntegerRange, AugInteg
     update(node: IntegerRangeNode): void;
 }
 
-// @public
-export function integerRangeUnion(a: IIntegerRange, b: IIntegerRange): IIntegerRange;
-
 // @public (undocumented)
 export function internedSpaces(n: number): string;
-
-// @public (undocumented)
-export const intervalComparer: (a: IInterval, b: IInterval) => number;
 
 // @public (undocumented)
 export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
@@ -835,9 +820,6 @@ export interface KeyComparer<TKey> {
 }
 
 // @public (undocumented)
-export function LinearDictionary<TKey, TData>(compareKeys: KeyComparer<TKey>): SortedDictionary<TKey, TData>;
-
-// @public (undocumented)
 export class List<T> {
     constructor(isHead: boolean, data: T | undefined);
     // (undocumented)
@@ -883,15 +865,6 @@ export class List<T> {
     // (undocumented)
     walk(fn: (data: T, l: List<T>) => void): void;
 }
-
-// @public (undocumented)
-export function ListMakeEntry<U>(data: U): List<U>;
-
-// @public (undocumented)
-export function ListMakeHead<U>(): List<U>;
-
-// @public (undocumented)
-export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined;
 
 // @public (undocumented)
 export function loadSegments(content: string, segLimit: number, markers?: boolean, withProps?: boolean): ISegment[];
@@ -1323,9 +1296,6 @@ export interface NodeAction<TClientData> {
 export const NonCollabClient = -2;
 
 // @public (undocumented)
-export const numberComparer: Comparer<number>;
-
-// @public (undocumented)
 export function ordinalToArray(ord: string): number[];
 
 // @public (undocumented)
@@ -1655,8 +1625,6 @@ export class SnapshotLegacy {
     constructor(mergeTree: MergeTree, logger: ITelemetryLogger, filename?: string | undefined, onCompletion?: (() => void) | undefined);
     // (undocumented)
     static readonly body = "body";
-    // (undocumented)
-    static readonly catchupOps = "catchupOps";
     emit(catchUpMsgs: ISequencedDocumentMessage[], serializer: IFluidSerializer, bind: IFluidHandle): ITree;
     // (undocumented)
     extractSync(): IJSONSegment[];
@@ -1671,15 +1639,6 @@ export class SnapshotLegacy {
     // (undocumented)
     static readonly sizeOfFirstChunk: number;
 }
-
-// @public (undocumented)
-export class SnapshotLoader {
-    constructor(runtime: IFluidDataStoreRuntime, client: Client, mergeTree: MergeTree, logger: ITelemetryLogger, serializer: IFluidSerializer);
-    // (undocumented)
-    initialize(services: IChannelStorageService): Promise<{
-        catchupOpsP: Promise<ISequencedDocumentMessage[]>;
-    }>;
-    }
 
 // @public (undocumented)
 export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {

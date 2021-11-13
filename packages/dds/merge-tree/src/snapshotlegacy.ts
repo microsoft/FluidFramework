@@ -39,7 +39,7 @@ interface SnapshotHeader {
 export class SnapshotLegacy {
     public static readonly header = "header";
     public static readonly body = "body";
-    public static readonly catchupOps = "catchupOps";
+    private static readonly catchupOps = "catchupOps";
 
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
     // Please note that this number has no direct relationship to anything other than size of raw text (characters).

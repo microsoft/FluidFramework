@@ -5,7 +5,32 @@
 
 export * from "./base";
 export * from "./client";
-export * from "./collections";
+export {
+    AugIntegerRangeNode,
+    AugmentedIntervalNode,
+    Comparer,
+    Heap,
+    IInterval,
+    IntegerRangeNode,
+    integerRangeToString,
+    IntegerRangeTree,
+    IntervalConflictResolver,
+    IntervalNode,
+    IntervalTree,
+    IRBAugmentation,
+    IRBMatcher,
+    List,
+    ProxString,
+    RBColor,
+    RBNode,
+    RBNodeActions,
+    RedBlackTree,
+    Stack,
+    TST,
+    TSTNode,
+    TSTPrefix,
+    TSTResult,
+} from "./collections";
 export * from "./constants";
 export * from "./localReference";
 export * from "./mergeTree";
@@ -17,7 +42,6 @@ export * from "./properties";
 export * from "./segmentGroupCollection";
 export * from "./segmentPropertiesManager";
 export * from "./snapshotlegacy";
-export * from "./snapshotLoader";
 export * from "./sortedSegmentSet";
 export { loadSegments } from "./text";
 export * from "./textSegment";
