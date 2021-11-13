@@ -9,7 +9,6 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IsoBuffer } from '@fluidframework/common-utils';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { Trace } from '@fluidframework/common-utils';
@@ -1652,39 +1651,10 @@ export class SegmentGroupCollection {
 }
 
 // @public (undocumented)
-export interface SnapChunk {
-    // (undocumented)
-    buffer?: IsoBuffer;
-    // (undocumented)
-    lengthBytes: number;
-    position: number;
-    // (undocumented)
-    sequenceLength: number;
-}
-
-// @public (undocumented)
-export interface SnapshotHeader {
-    // (undocumented)
-    chunkCount?: number;
-    // (undocumented)
-    indexOffset?: number;
-    // (undocumented)
-    minSeq?: number;
-    // (undocumented)
-    segmentsOffset?: number;
-    // (undocumented)
-    segmentsTotalLength: number;
-    // (undocumented)
-    seq: number;
-}
-
-// @public (undocumented)
 export class SnapshotLegacy {
     constructor(mergeTree: MergeTree, logger: ITelemetryLogger, filename?: string | undefined, onCompletion?: (() => void) | undefined);
     // (undocumented)
     static readonly body = "body";
-    // (undocumented)
-    buffer: IsoBuffer | undefined;
     // (undocumented)
     static readonly catchupOps = "catchupOps";
     emit(catchUpMsgs: ISequencedDocumentMessage[], serializer: IFluidSerializer, bind: IFluidHandle): ITree;
@@ -1692,28 +1662,12 @@ export class SnapshotLegacy {
     extractSync(): IJSONSegment[];
     // (undocumented)
     filename?: string | undefined;
-    // Warning: (ae-forgotten-export) The symbol "MergeTreeChunkLegacy" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    getSeqLengthSegs(allSegments: IJSONSegment[], allLengths: number[], approxSequenceLength: number, startIndex?: number): MergeTreeChunkLegacy;
     // (undocumented)
     static readonly header = "header";
-    // (undocumented)
-    header: SnapshotHeader | undefined;
-    // (undocumented)
-    logger: ITelemetryLogger;
     // (undocumented)
     mergeTree: MergeTree;
     // (undocumented)
     onCompletion?: (() => void) | undefined;
-    // (undocumented)
-    pendingChunk: SnapChunk | undefined;
-    // (undocumented)
-    segmentLengths: number[] | undefined;
-    // (undocumented)
-    segments: IJSONSegment[] | undefined;
-    // (undocumented)
-    seq: number | undefined;
     // (undocumented)
     static readonly sizeOfFirstChunk: number;
 }
