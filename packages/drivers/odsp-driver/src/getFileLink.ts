@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, delay, PromiseCache } from "@fluidframework/common-utils";
+import { assert, delay } from "@fluidframework/common-utils";
 import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { fetchIncorrectResponse, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
@@ -19,7 +19,7 @@ import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { fetchHelper, getWithRetryForTokenRefresh } from "./odspUtils";
 
 // Store cached responses for the lifetime of web session as file link remains the same for given file item
-const fileLinkCache = new PromiseCache<string, string>();
+const fileLinkCache = new Map<string, Promise<string>>();
 
 /**
  * Returns file link for a file with given drive and item ids.
@@ -58,6 +58,8 @@ export async function getFileLink(
             } catch (err) {
                 // If it is not retriable, then just throw
                 if (!canRetryOnError(err)) {
+                    // Delete from the cache to permit retrying later.
+                    fileLinkCache.delete(cacheKey);
                     throw err;
                 }
                 // If the error is throttling error, then wait for the specified time before retrying.
@@ -71,12 +73,8 @@ export async function getFileLink(
         assert(result !== undefined, "Unexpected undefined result from getFileLinkCore");
         return result;
     };
-    fileLinkCache.add(cacheKey, valueGenerator);
-    // PromiseCache secretly invokes the promise generating function when adding if the cache was empty, and adds the
-    // result promise to the cache.  So, this get() is guaranteed to return a result since we know our
-    // promise-generating function will return a string or else there was already a string result available.
-    const fileLink = fileLinkCache.get(cacheKey);
-    assert(fileLink !== undefined, "Unexpected empty share file link cache");
+    const fileLink = valueGenerator();
+    fileLinkCache.set(cacheKey, fileLink);
     return fileLink;
 }
 
