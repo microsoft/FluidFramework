@@ -463,6 +463,8 @@ export interface ISummaryCommitter {
 // @public (undocumented)
 export interface ISummaryConfiguration {
     // (undocumented)
+    disableSummaries?: boolean;
+    // (undocumented)
     idleTime: number;
     // (undocumented)
     maxAckWaitTime: number;
