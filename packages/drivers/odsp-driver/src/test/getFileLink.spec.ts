@@ -27,8 +27,13 @@ describe("getFileLink", () => {
     });
 
     it("should reject for Consumer user if file web url is missing", async () => {
-        await assert.rejects(mockFetchOk(
+        await assert.rejects(mockFetchMultiple(
             async () => getFileLink(storageTokenFetcher, {siteUrl, driveId, itemId: "itemId2"}, "Consumer", logger),
+            [
+                async () => okResponse({}, {}),
+                // We retry once on malformed response from server, so need a second response mocked.
+                async () => okResponse({}, {}),
+            ],
         ), "Should reject for unexpected empty response");
     });
 
@@ -53,8 +58,13 @@ describe("getFileLink", () => {
     });
 
     it("should reject for Enterprise user if file web dav url is missing", async () => {
-        await assert.rejects(mockFetchOk(
+        await assert.rejects(mockFetchMultiple(
             async () => getFileLink(storageTokenFetcher, {siteUrl, driveId, itemId: "itemId5"}, "Enterprise", logger),
+            [
+                async () => okResponse({}, {}),
+                // We retry once on malformed response from server, so need a second response mocked.
+                async () => okResponse({}, {}),
+            ],
         ), "File link should reject for malformed url");
     });
 
