@@ -104,7 +104,7 @@ export async function fetchSnapshotWithRedeem(
             }, error);
             await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
             const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
-                { ...odspResolvedUrl, sharingLinkToRedeem: undefined };
+                { ...odspResolvedUrl };
             if(odspResolvedUrlWithoutShareLink.shareLinkInfo) {
                 odspResolvedUrlWithoutShareLink.shareLinkInfo = {
                     ...odspResolvedUrlWithoutShareLink.shareLinkInfo,
@@ -466,7 +466,7 @@ export async function downloadSnapshot(
 }
 
 function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any) {
-    if (odspResolvedUrl.sharingLinkToRedeem !== undefined
+    if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined
         && (typeof error === "object" && error !== null)
         && (error.errorType === DriverErrorType.authorizationError
         || error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError)) {
