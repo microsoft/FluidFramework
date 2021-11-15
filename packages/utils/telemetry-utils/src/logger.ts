@@ -15,7 +15,7 @@ import {
     ITaggedTelemetryPropertyType,
     TelemetryEventCategory,
 } from "@fluidframework/common-definitions";
-import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
+import { assert, BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 import {
     isILoggingError,
     extractLogSafeErrorProperties,
@@ -206,6 +206,65 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             }
         }
         return newEvent;
+    }
+}
+
+/**
+ * SamplingLoggerAdapter can add event sampling to your logger.
+ */
+export class SamplingLoggerAdapter implements ITelemetryBaseLogger {
+    private readonly sampleCountMap: Map<string, number> = new Map();
+    private readonly sampleRate: number;
+
+    constructor(
+        private readonly logger: ITelemetryBaseLogger,
+        /**
+         * Log {sampleRatePercent}% of events.
+         */
+        sampleRatePercent: number,
+        /**
+         * Only perform sampling if event category matches an element in this list.
+         * If undefined, will sample events regardless of category.
+         */
+        private readonly categoriesToSample?: string[],
+        /**
+         * Only perform sampling if event name matches an element in this list.
+         * If undefined, will sample events regardless of event name.
+         */
+        private readonly eventNamesToSample?: string[],
+    ) {
+        assert(sampleRatePercent <= 100, "sampleRatePercent should not be higher than 100%");
+        this.sampleRate = Math.floor(100 / sampleRatePercent);
+    }
+
+    public send(event: ITelemetryBaseEvent) {
+        if (!this.shouldSampleEvent(event)) {
+            return this.logger.send(event);
+        }
+
+        const eventKey = this.getSampleMapKey(event);
+        const sampleCount = (this.sampleCountMap.get(eventKey) ?? 0) + 1;
+        if (sampleCount >= this.sampleRate) {
+            this.logger.send(event);
+            this.sampleCountMap.set(eventKey, 0);
+        } else {
+            this.sampleCountMap.set(eventKey, sampleCount);
+        }
+    }
+
+    private shouldSampleEvent(event: ITelemetryBaseEvent): boolean {
+        let shouldSample = true;
+        if (this.categoriesToSample !== undefined) {
+            shouldSample = shouldSample && this.categoriesToSample.includes(event.category);
+        }
+        if (this.eventNamesToSample !== undefined) {
+            shouldSample = shouldSample &&  this.eventNamesToSample.includes(event.eventName);
+        }
+        return true;
+    }
+
+    private getSampleMapKey(event: ITelemetryBaseEvent): string {
+        return `${event.category}_${event.eventName}`;
     }
 }
 

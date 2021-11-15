@@ -180,6 +180,16 @@ export function raiseConnectedEvent(logger: ITelemetryLogger, emitter: EventEmit
 export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLogger, event: string, ...args: any[]): void;
 
 // @public
+export class SamplingLoggerAdapter implements ITelemetryBaseLogger {
+    constructor(logger: ITelemetryBaseLogger,
+    sampleRatePercent: number,
+    categoriesToSample?: string[] | undefined,
+    eventNamesToSample?: string[] | undefined);
+    // (undocumented)
+    send(event: ITelemetryBaseEvent): void;
+    }
+
+// @public
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
     constructor(logger: ITelemetryBaseLogger);
     // (undocumented)
