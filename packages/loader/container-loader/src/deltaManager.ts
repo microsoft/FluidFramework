@@ -1322,14 +1322,7 @@ export class DeltaManager
         this._outbound.clear();
         this.emit("disconnect", reason);
 
-        // back-compat: added in 0.45. Make it unconditional (i.e. use connection.dispose()) in some future.
-        const disposable = connection as Partial<IDisposable>;
-
-        if (disposable.dispose !== undefined) {
-            disposable.dispose();
-        } else {
-            connection.close();
-        }
+        connection.dispose();
 
         this.connectionStateProps = {};
 
