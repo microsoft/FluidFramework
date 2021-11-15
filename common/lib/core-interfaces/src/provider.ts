@@ -64,7 +64,7 @@
  * This utility type creates a type that is the union of all keys on the generic type
  * which implement the FluidObject pattern. @see FluidObject
  *
- * For example `FluidObjectKeys<IFoo | IBar>` would result in `"IFoo" | "IBar"`
+ * For example `FluidObjectKeys<IFoo & IBar>` would result in `"IFoo" | "IBar"`
  *
  */
 export type FluidObjectKeys<T> = keyof FluidObject<T>;
