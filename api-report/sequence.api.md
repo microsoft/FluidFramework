@@ -352,10 +352,10 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
     readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>;
     // (undocumented)
     readonly deltaOperation: TOperation;
-    get first(): Readonly<ISequenceDeltaRange<TOperation>>;
+    get first(): Readonly<ISequenceDeltaRange<TOperation>> | undefined;
     // (undocumented)
     readonly isEmpty: boolean;
-    get last(): Readonly<ISequenceDeltaRange<TOperation>>;
+    get last(): Readonly<ISequenceDeltaRange<TOperation>> | undefined;
     get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[];
     }
 
