@@ -71,9 +71,6 @@ export const OdcApiSiteOrigin = "https://api.onedrive.com";
 // @public (undocumented)
 export const OdcFileSiteOrigin = "https://1drv.ms";
 
-// @public @deprecated (undocumented)
-export type OdspDocumentInfo = OdspFluidDataStoreLocator;
-
 // @public
 export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
@@ -114,7 +111,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     appendDataStorePath(requestUrl: URL, pathToAppend: string): string | undefined;
     // @deprecated (undocumented)
     createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest;
-    static createDocumentUrl(baseUrl: string, driverInfo: OdspDocumentInfo): string;
+    static createDocumentUrl(baseUrl: string, driverInfo: OdspFluidDataStoreLocator): string;
     static createNavParam(locator: OdspFluidDataStoreLocator): string;
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, dataStorePath: string, codeDetails?: IFluidCodeDetails): Promise<string>;
     resolve(request: IRequest): Promise<IOdspResolvedUrl>;
