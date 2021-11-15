@@ -116,16 +116,6 @@ async function getFileLinkCore(
                 const response = await fetchHelper(url, requestInit);
                 additionalProps = response.commonSpoHeaders;
 
-                // We actually already know the response is ok, or else the fetchHelper would have thrown
-                // (it does an even more thorough check).  Keeping it here though for layers of protection.
-                if (!response.content.ok) {
-                    throwOdspNetworkError(
-                        `odspFetchError [${response.content.status}]`,
-                        response.content.status,
-                        response.content,
-                        await response.content.text(),
-                    );
-                }
                 const sharingInfo = await response.content.json();
                 const directUrl = sharingInfo?.d?.directUrl;
                 if (typeof directUrl !== "string") {
@@ -178,16 +168,6 @@ async function getFileItemLite(
                 const response = await fetchHelper(url, requestInit);
                 additionalProps = response.commonSpoHeaders;
 
-                // We actually already know the response is ok, or else the fetchHelper would have thrown
-                // (it does an even more thorough check).  Keeping it here though for layers of protection.
-                if (!response.content.ok) {
-                    throwOdspNetworkError(
-                        `odspFetchError [${response.content.status}]`,
-                        response.content.status,
-                        response.content,
-                        await response.content.text(),
-                    );
-                }
                 const responseJson = await response.content.json();
                 if (!isFileItemLite(responseJson)) {
                     // This will retry once in getWithRetryForTokenRefresh
