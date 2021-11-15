@@ -266,6 +266,62 @@ export function memoizeGetter<T, K extends keyof T>(object: T, propName: K, valu
 }
 
 /**
+ * Map an iterable to another iterable
+ */
+export function* map<T, R>(sequence: Iterable<T>, mapper: (t: T) => R): Iterable<R> {
+	for (const t of sequence) {
+		yield mapper(t);
+	}
+}
+
+/**
+ * Filter an iterable into another iterable
+ */
+export function* filter<T>(sequence: Iterable<T>, filter: (t: T) => boolean): Iterable<T> {
+	for (const t of sequence) {
+		if (filter(t)) {
+			yield t;
+		}
+	}
+}
+
+/**
+ * Reduce an iterable into a single value, or undefined if the iterable has too few elements to reduce
+ */
+export function reduce<T>(
+	sequence: Iterable<T>,
+	reduce: (previous: T, current: T) => T,
+	initialValue?: T
+): T | undefined {
+	let previous: T | undefined;
+	let current: T | undefined;
+	for (const t of sequence) {
+		current = t;
+		if (previous === undefined) {
+			if (initialValue !== undefined) {
+				current = reduce(initialValue, current);
+			}
+		} else {
+			current = reduce(previous, current);
+		}
+		previous = current;
+	}
+	return current;
+}
+
+/**
+ * Returns the first element of the given sequence that satisfies the given predicate, or undefined if no such element exists
+ */
+export function find<T>(sequence: Iterable<T>, find: (t: T) => boolean): T | undefined {
+	for (const t of sequence) {
+		if (find(t)) {
+			return t;
+		}
+	}
+	return undefined;
+}
+
+/**
  * Iterate through two iterables and return true if they yield equivalent elements in the same order.
  * @param iterableA - the first iterable to compare
  * @param iterableB - the second iterable to compare
@@ -361,10 +417,33 @@ export function compareMaps<K, V>(
 }
 
 /**
+ * Retrieve a value from a map with the given key, or create a new entry if the key is not in the map.
+ * @param map - the map to query/update
+ * @param key - the key to lookup in the map
+ * @param defaultValue - a function which returns a default value. This is called and used to set an initial value in the map if none exists
+ * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
+ */
+export function getOrCreate<K, V>(map: Map<K, V>, key: K, defaultValue: () => V): V {
+	let value = map.get(key);
+	if (value === undefined) {
+		value = defaultValue();
+		map.set(key, value);
+	}
+	return value;
+}
+
+/**
  * Function which does nothing (no-ops).
  */
 export function noop(): void {
 	// noop
+}
+
+/**
+ * Function which returns its input
+ */
+export function identity<T>(t: T): T {
+	return t;
 }
 
 /**
