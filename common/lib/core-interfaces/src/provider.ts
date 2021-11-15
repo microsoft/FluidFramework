@@ -52,7 +52,7 @@
  *
  * Either IFoo or IProvideFoo are valid generic arguments. In both case
  * maybeFoo will be of type `{IFoo?: IFoo}`. If IFoo is not undefined,
- * then the FluidObject implements IFoo, and it can be used.
+ * then the FluidObject provides IFoo, and it can be used.
  *
  * You can inspect multiple types via a intersection. For example:
  * `FluidObject<IFoo & IBar>`
