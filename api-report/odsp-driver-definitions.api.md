@@ -94,7 +94,7 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
     odspResolvedUrl: true;
     shareLinkInfo?: ShareLinkInfoType;
     // @deprecated (undocumented)
-    sharingLinkToRedeem?: string;
+    sharingLinkToRedeem?: ShareLinkInfoType["sharingLinkToRedeem"];
     // (undocumented)
     summarizer: boolean;
     // (undocumented)
