@@ -71,7 +71,7 @@
     "webpack:profile": "lerna run --no-sort webpack:profile --stream"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.43260",
+    "@fluidframework/build-tools": "^0.2.43369",
     "@fluidframework/test-tools": "^0.2.3074",
     "@microsoft/api-documenter": "^7.12.7",
     "@microsoft/api-extractor": "^7.16.1",
@@ -138,7 +138,9 @@
       "services": {
         "directory": "server",
         "ignoredDirs": [
-          "routerlicious"
+          "routerlicious",
+          "tinylicious",
+          "azure-local-service"
         ]
       }
     },
