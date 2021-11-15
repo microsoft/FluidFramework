@@ -78,6 +78,9 @@ export class MockDocumentDeltaConnection
     private _disposed = false;
     public get disposed() { return this._disposed; }
     public dispose(error?: Error) {
+        if (this._disposed) {
+            return;
+        }
         this._disposed = true;
         this.emit("disconnect", error?.message ?? "mock close() called");
     }
