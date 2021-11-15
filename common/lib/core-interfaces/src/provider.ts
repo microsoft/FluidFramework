@@ -48,7 +48,7 @@
  *
  * and a function that returns a FluidObject. You would do the following
  *
- * `const maybeFoo : Provider<IFoo> = getFluidObject()`;
+ * `const maybeFoo: FluidObject<IFoo> = getFluidObject()`;
  *
  * Either IFoo or IProvideFoo are valid generic arguments. In both case
  * maybeFoo will be of type `{IFoo?: IFoo}`. If IFoo is not undefined,
