@@ -34,7 +34,7 @@
  *
  * It is meant to be used with types that are known to implement the FluidObject pattern.
  * A common way to specify a type implements the FluidObject pattern is to expose it as a
- * Provider without a generic argument.
+ * FluidObject without a generic argument.
  *
  * For example, if we have an interface like below
  * ```
@@ -64,7 +64,7 @@
  * This utility type creates a type that is the union of all keys on the generic type
  * which implement the FluidObject pattern. @see FluidObject
  *
- * For example `FluidObjectKeys<IFoo | IBar>` would result in `"IFoo" | "IBar"`
+ * For example `FluidObjectKeys<IFoo & IBar>` would result in `"IFoo" | "IBar"`
  *
  */
 export type FluidObjectKeys<T> = keyof FluidObject<T>;
