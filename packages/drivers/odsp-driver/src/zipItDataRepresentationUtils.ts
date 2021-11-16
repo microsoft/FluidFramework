@@ -488,7 +488,6 @@ function throwBufferParseException(
             nodeType: getNodeType(node),
             expectedNodeType,
         });
-    // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw error;
 }
 

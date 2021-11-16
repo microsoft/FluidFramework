@@ -90,8 +90,6 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
     checkpointSequenceNumber?: number;
     claims: ITokenClaims;
     clientId: string;
-    // @deprecated
-    close(): void;
     existing: boolean;
     initialClients: ISignalClient[];
     initialMessages: ISequencedDocumentMessage[];
