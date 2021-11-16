@@ -733,6 +733,7 @@ export class DeltaManager
             let delayMs = InitialReconnectDelayInMs;
             let connectRepeatCount = 0;
             const connectStartTime = performance.now();
+            let lastError: any;
 
             // This loop will keep trying to connect until successful, with a delay between each iteration.
             while (connection === undefined) {
@@ -773,9 +774,12 @@ export class DeltaManager
                             {
                                 delay: delayMs, // milliseconds
                                 eventName: "DeltaConnectionFailureToConnect",
+                                duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
                             },
                             origError);
                     }
+
+                    lastError = origError;
 
                     const retryDelayFromError = getRetryDelayFromError(origError);
                     delayMs = retryDelayFromError ?? Math.min(delayMs * 2, MaxReconnectDelayInMs);
@@ -789,11 +793,14 @@ export class DeltaManager
 
             // If we retried more than once, log an event about how long it took
             if (connectRepeatCount > 1) {
-                this.logger.sendTelemetryEvent({
-                    attempts: connectRepeatCount,
-                    duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
-                    eventName: "MultipleDeltaConnectionFailures",
-                });
+                this.logger.sendTelemetryEvent(
+                    {
+                        eventName: "MultipleDeltaConnectionFailures",
+                        attempts: connectRepeatCount,
+                        duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+                    },
+                    lastError,
+                );
             }
 
             this.setupNewSuccessfulConnection(connection, requestedMode);
