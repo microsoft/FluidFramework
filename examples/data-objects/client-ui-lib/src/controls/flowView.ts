@@ -4198,7 +4198,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     public async insertComponentNew(prefix: string, chaincode: string, inline = false) {
         const router = await this.context.containerRuntime.createDataStore(chaincode);
-        const object = await requestFluidObject(router, "");
+        const object: FluidObject<IFluidLoadable> = await requestFluidObject(router, "");
         const loadable = object.IFluidLoadable;
 
         const props = {
