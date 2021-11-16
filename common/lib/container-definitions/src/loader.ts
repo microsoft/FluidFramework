@@ -353,7 +353,7 @@ export interface ILoaderHeader {
     [LoaderHeader.version]: string | undefined;
 }
 
-interface IProvideLoader {
+export interface IProvideLoader {
     readonly ILoader: ILoader;
 }
 

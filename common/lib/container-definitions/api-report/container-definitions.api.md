@@ -355,8 +355,6 @@ export interface IHostLoader extends ILoader {
     rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
 }
 
-// Warning: (ae-forgotten-export) The symbol "IProvideLoader" needs to be exported by the entry point index.d.ts
-//
 // @public
 export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
     resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
@@ -407,6 +405,12 @@ export interface IProvideDeltaSender {
 export interface IProvideFluidTokenProvider {
     // (undocumented)
     readonly IFluidTokenProvider: IFluidTokenProvider;
+}
+
+// @public (undocumented)
+export interface IProvideLoader {
+    // (undocumented)
+    readonly ILoader: ILoader;
 }
 
 // @public (undocumented)
