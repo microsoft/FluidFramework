@@ -117,7 +117,7 @@ export class DataStores implements IDisposable {
                     this.runtime.storage,
                     this.runtime.scope,
                     this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
-                    (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+                    async (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
                     snapshotTree,
                     undefined,
                 );
@@ -196,7 +196,7 @@ export class DataStores implements IDisposable {
         Promise.resolve().then(async () => remotedFluidDataStoreContext.realize());
     }
 
-    public bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
+    public async bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): Promise<void> {
         const id = fluidDataStoreRuntime.id;
         const localContext = this.contexts.getUnbound(id);
         assert(!!localContext, 0x15f /* "Could not find unbound context to bind" */);
@@ -206,7 +206,7 @@ export class DataStores implements IDisposable {
         // clients.
         if (this.runtime.attachState !== AttachState.Detached) {
             localContext.emit("attaching");
-            const message = localContext.generateAttachMessage();
+            const message = await localContext.generateAttachMessage();
 
             this.pendingAttach.set(id, message);
             this.submitAttachFn(message);
@@ -228,7 +228,7 @@ export class DataStores implements IDisposable {
             this.runtime.storage,
             this.runtime.scope,
             this.getCreateChildSummarizerNodeFn(id, { type: CreateSummarizerNodeSource.Local }),
-            (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+            async (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             isRoot,
         );
         this.contexts.addUnbound(context);
@@ -243,7 +243,7 @@ export class DataStores implements IDisposable {
             this.runtime.storage,
             this.runtime.scope,
             this.getCreateChildSummarizerNodeFn(id, { type: CreateSummarizerNodeSource.Local }),
-            (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+            async (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
             isRoot,
             props,
@@ -417,10 +417,10 @@ export class DataStores implements IDisposable {
                         || builderTree[key]
                         || this.attachOpFiredForDataStore.has(key)),
                 )
-                .map(([key, value]) => {
+                .map(async ([key, value]) => {
                     let dataStoreSummary: ISummarizeResult;
                     if (value.isLoaded) {
-                        const snapshot = value.generateAttachMessage().snapshot;
+                        const snapshot = (await value.generateAttachMessage()).snapshot;
                         dataStoreSummary = convertToSummaryTree(snapshot, true);
                     } else {
                         // If this data store is not yet loaded, then there should be no changes in the snapshot from

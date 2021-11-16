@@ -100,7 +100,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
         return summarizeChannel(this.channel, fullTree, trackState);
     }
 
-    public getAttachSummary(): ISummarizeResult {
+    public async getAttachSummary(): Promise<ISummarizeResult> {
         assert(this.isLoaded && this.channel !== undefined, 0x18d /* "Channel should be loaded to take snapshot" */);
         return summarizeChannel(this.channel, true /* fullTree */, false /* trackState */);
     }

@@ -526,7 +526,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return [];
     }
 
-    public getAttachSummary(): ISummaryTreeWithStats {
+    public async getAttachSummary(): Promise<ISummaryTreeWithStats> {
         const stats = mergeStats();
         stats.treeNodeCount++;
         return {

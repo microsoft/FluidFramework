@@ -391,13 +391,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * If the runtime is not attached we will defer the attach until the runtime attaches.
      * @param channel - channel to be registered.
      */
-    public bindChannel(channel: IChannel): void {
+    public async bindChannel(channel: IChannel): Promise<void> {
         assert(this.notBoundedChannelContextSet.has(channel.id),
         0x17b /* "Channel to be binded should be in not bounded set" */);
         this.notBoundedChannelContextSet.delete(channel.id);
         // If our data store is attached, then attach the channel.
         if (this.isAttached) {
-            this.attachChannel(channel);
+            await this.attachChannel(channel);
             return;
         } else {
             this.bind(channel.handle);
@@ -687,6 +687,15 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummaryTreeWithStats> {
         const summaryBuilder = new SummaryTreeBuilder();
 
+        // TODO: split this into two passes: one to capture state to be summarized.
+        //       then another to actually produce the summary async.
+
+        // prep
+
+        // synchronously gather all state capture
+
+        // asynchronously await all summaries from state capture
+
         // Iterate over each data store and ask it to summarize
         await Promise.all(Array.from(this.contexts)
             .filter(([contextId, _]) => {
@@ -710,7 +719,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return summaryBuilder.getSummaryTree();
     }
 
-    public getAttachSummary(): ISummaryTreeWithStats {
+    public async getAttachSummary(): Promise<ISummaryTreeWithStats> {
         // back-compat 0.50: attachGraph() will be called when creating a root data store or when adding the handle
         // of a non-root data store to an already bound DDS.
         // To be removed when N >= 0.52
@@ -727,7 +736,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             if (!this.notBoundedChannelContextSet.has(contextId)) {
                 let summaryTree: ISummaryTreeWithStats;
                 if (context.isLoaded) {
-                    const contextSummary = context.getAttachSummary();
+                    const contextSummary = await context.getAttachSummary();
                     assert(
                         contextSummary.summary.type === SummaryType.Tree,
                         0x180 /* "getAttachSummary should always return a tree" */);
@@ -770,7 +779,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     /**
      * Attach channel should only be called after the data store has been attached
      */
-    private attachChannel(channel: IChannel): void {
+    private async attachChannel(channel: IChannel): Promise<void> {
         this.verifyNotClosed();
         // If this handle is already attached no need to attach again.
         if (channel.handle.isAttached) {
@@ -783,7 +792,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         // Get the object snapshot only if the data store is Bound and its graph is attached too,
         // because if the graph is attaching, then it would get included in the data store snapshot.
         if (this.bindState === BindState.Bound && this.graphAttachState === AttachState.Attached) {
-            const summarizeResult = summarizeChannel(channel, true /* fullTree */, false /* trackState */);
+            const summarizeResult = await summarizeChannel(channel, true /* fullTree */, false /* trackState */);
             // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
             const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
 

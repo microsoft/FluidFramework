@@ -16,8 +16,8 @@ export interface ISharedObjectEvents extends IErrorEvent {
 /**
  * Base interface for shared objects from which other interfaces derive. Implemented by SharedObject
  */
-export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents, TState = ISummaryTreeWithStats>
-    extends IChannel<TState>, IEventProvider<TEvent> {
+export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
+    extends IChannel, IEventProvider<TEvent> {
     /**
      * Binds the given shared object to its containing data store runtime, causing it to attach once
      * the runtime attaches.
@@ -35,6 +35,17 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
      * @returns A tree representing the summary of the shared object.
      */
     summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+
+    /**
+     * Capture the current content of the channel to be used to generate a summary by summarizeState
+     * @returns Current state sufficient to create a summary to be generated asynchronously
+     */
+    captureSummaryState(fullTree?: boolean): any;
+
+    /**
+     * Produce a summary from the previously captured state
+     */
+    summarizeState(capture: any): Promise<ISummaryTreeWithStats>;
 
     /**
      * Enables the channel to send and receive ops.

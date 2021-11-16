@@ -25,10 +25,12 @@ import { ITree } from '@fluidframework/protocol-definitions';
 // @public
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
     bindToContext(): void;
+    captureSummaryState(fullTree?: boolean): any;
     connect(services: IChannelServices): void;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     isAttached(): boolean;
     summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    summarizeState(capture: any): Promise<ISummaryTreeWithStats>;
 }
 
 // @public (undocumented)
@@ -54,6 +56,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     // (undocumented)
     readonly attributes: IChannelAttributes;
     bindToContext(): void;
+    captureSummaryState(fullTree?: boolean): any;
+    protected captureSummaryStateCore(serializer: IFluidSerializer, fullTree: boolean): any;
     connect(services: IChannelServices): void;
     get connected(): boolean;
     protected didAttach(): void;
@@ -90,6 +94,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
     protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
     summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    summarizeState(capture: any): Promise<ISummaryTreeWithStats>;
+    protected summarizeStateCore(serializer: IFluidSerializer, capture: any): Promise<ISummaryTreeWithStats>;
 }
 
 // @public

@@ -21,6 +21,8 @@ import {
     Serializable,
 } from "@fluidframework/datastore-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { ISharedCell, ISharedCellEvents } from "./interfaces";
@@ -227,6 +229,25 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
         };
 
         return tree;
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.captureSummaryStateCore}
+     */
+     protected captureSummaryStateCore(serializer: IFluidSerializer, fullTree: boolean): any {
+        const content: ICellValue = { value: this.data };
+        const blobContent = serializer.stringify(content, this.handle);
+        const builder = new SummaryTreeBuilder();
+        builder.addBlob(snapshotFileName, blobContent);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return builder.getSummaryTree();
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeStateCore}
+     */
+    protected async summarizeStateCore(serializer: IFluidSerializer, capture: any): Promise<ISummaryTreeWithStats> {
+        return capture as ISummaryTreeWithStats;
     }
 
     /**

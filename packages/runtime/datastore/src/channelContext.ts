@@ -69,12 +69,15 @@ export function createServiceEndpoints(
     };
 }
 
-export function summarizeChannel(
+// TODO: this needs to be split up into two calls so callers do all the captures first before summarizeState
+export async function summarizeChannel(
     channel: IChannel,
     fullTree: boolean = false,
     trackState: boolean = false,
-): ISummaryTreeWithStats {
-    const summarizeResult = channel.summarize(fullTree, trackState);
+): Promise<ISummaryTreeWithStats> {
+    const state = channel.captureSummaryState(fullTree);
+    const summarizeResult = await channel.summarizeState(state);
+    // const summarizeResult = channel.summarize(fullTree, trackState);
 
     // Add the channel attributes to the returned result.
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));

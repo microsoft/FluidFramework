@@ -58,6 +58,14 @@ class UnknownChannel implements IChannel {
         };
     }
 
+    public captureSummaryState(fullTree?: boolean): any {
+        return undefined;
+    }
+
+    public async summarizeState(capture: any): Promise<ISummaryTreeWithStats> {
+        return this.summarize();
+    }
+
     public isAttached() { return true; }
 
     public connect(services: IChannelServices): void {}

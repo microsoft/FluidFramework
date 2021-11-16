@@ -340,7 +340,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     getAttachSnapshot(): ITreeEntry[];
     // (undocumented)
-    getAttachSummary(): ISummaryTreeWithStats;
+    getAttachSummary(): Promise<ISummaryTreeWithStats>;
     // (undocumented)
     getAudience(): IAudience;
     // (undocumented)

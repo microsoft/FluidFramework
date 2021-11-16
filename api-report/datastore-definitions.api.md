@@ -27,10 +27,10 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 
 // @public (undocumented)
-export interface IChannel<TState = ISummaryTreeWithStats> extends IFluidLoadable {
+export interface IChannel extends IFluidLoadable {
     // (undocumented)
     readonly attributes: IChannelAttributes;
-    captureSummaryState(fullTree?: boolean): TState;
+    captureSummaryState(fullTree?: boolean): any;
     connect(services: IChannelServices): void;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     readonly id: string;
@@ -38,7 +38,7 @@ export interface IChannel<TState = ISummaryTreeWithStats> extends IFluidLoadable
     // (undocumented)
     readonly owner?: string;
     summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
-    summarizeState(capture: TState): ISummaryTreeWithStats;
+    summarizeState(capture: any): Promise<ISummaryTreeWithStats>;
 }
 
 // @public

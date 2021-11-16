@@ -52,7 +52,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get attachState(): AttachState;
     // (undocumented)
     bind(handle: IFluidHandle): void;
-    bindChannel(channel: IChannel): void;
+    bindChannel(channel: IChannel): Promise<void>;
     bindToContext(): void;
     // (undocumented)
     get channelsRoutingContext(): this;
@@ -71,7 +71,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
-    getAttachSummary(): ISummaryTreeWithStats;
+    getAttachSummary(): Promise<ISummaryTreeWithStats>;
     // (undocumented)
     getAudience(): IAudience;
     // (undocumented)

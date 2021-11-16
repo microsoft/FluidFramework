@@ -9,7 +9,7 @@ import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/r
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
-export interface IChannel<TState = ISummaryTreeWithStats> extends IFluidLoadable {
+export interface IChannel extends IFluidLoadable {
     /**
      * A readonly identifier for the channel
      */
@@ -28,12 +28,12 @@ export interface IChannel<TState = ISummaryTreeWithStats> extends IFluidLoadable
     /**
      * Capture the current content of the channel to be used to generate a summary
      */
-    captureSummaryState(fullTree?: boolean): TState;
+    captureSummaryState(fullTree?: boolean): any;
 
     /**
      * Produce a summary from the previously captured state
      */
-    summarizeState(capture: TState): ISummaryTreeWithStats;
+    summarizeState(capture: any): Promise<ISummaryTreeWithStats>;
 
     /**
      * True if the data structure is attached to storage.

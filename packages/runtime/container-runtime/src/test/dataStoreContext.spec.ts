@@ -49,7 +49,7 @@ describe("Data Store Context Tests", () => {
         let localDataStoreContext: LocalFluidDataStoreContext;
         let storage: IDocumentStorageService;
         let scope: IFluidObject;
-        const attachCb = (mR: IFluidDataStoreChannel) => { };
+        const attachCb = async (mR: IFluidDataStoreChannel) => { };
         let containerRuntime: ContainerRuntime;
         let summarizerNode: IRootSummarizerNodeWithGC;
 
@@ -106,7 +106,7 @@ describe("Data Store Context Tests", () => {
                     true /* isRootDataStore */);
 
                 await localDataStoreContext.realize();
-                const attachMessage = localDataStoreContext.generateAttachMessage();
+                const attachMessage = await localDataStoreContext.generateAttachMessage();
 
                 const attributesEntry = attachMessage.snapshot.entries.find(
                     (e) => e.path === dataStoreAttributesBlobName);
@@ -177,7 +177,7 @@ describe("Data Store Context Tests", () => {
 
                 await localDataStoreContext.realize();
 
-                const attachMessage = localDataStoreContext.generateAttachMessage();
+                const attachMessage = await localDataStoreContext.generateAttachMessage();
                 const attributesEntry = attachMessage.snapshot.entries.find(
                     (e) => e.path === dataStoreAttributesBlobName);
                 assert(attributesEntry !== undefined, "There is no attributes blob in the summary tree");
@@ -251,7 +251,7 @@ describe("Data Store Context Tests", () => {
 
                 await localDataStoreContext.realize();
 
-                const attachMessage = localDataStoreContext.generateAttachMessage();
+                const attachMessage = await localDataStoreContext.generateAttachMessage();
                 const gcEntry = attachMessage.snapshot.entries.find((e) => e.path === gcBlobKey);
                 assert(gcEntry !== undefined, "There is no GC blob in the summary tree");
 

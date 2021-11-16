@@ -12,6 +12,7 @@ import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
@@ -37,6 +38,8 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
     protected applyStashedOp(): void;
+    // (undocumented)
+    protected captureSummaryStateCore(serializer: IFluidSerializer, fullTree: boolean): any;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell<any>;
     delete(): void;
     empty(): boolean;
@@ -50,7 +53,9 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     protected registerCore(): void;
     set(value: Serializable<T>): void;
     protected snapshotCore(serializer: IFluidSerializer): ITree;
-    }
+    // (undocumented)
+    protected summarizeStateCore(serializer: IFluidSerializer, capture: any): Promise<ISummaryTreeWithStats>;
+}
 
 
 // (No @packageDocumentation comment for this package)

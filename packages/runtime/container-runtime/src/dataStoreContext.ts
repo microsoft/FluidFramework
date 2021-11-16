@@ -191,7 +191,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected registry: IFluidDataStoreRegistry | undefined;
 
     protected detachedRuntimeCreation = false;
-    public readonly bindToContext: () => void;
+    public readonly bindToContext: () => Promise<void>;
     protected channel: IFluidDataStoreChannel | undefined;
     private loaded = false;
     protected pending: ISequencedDocumentMessage[] | undefined = [];
@@ -216,7 +216,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private bindState: BindState,
         public readonly isLocalDataStore: boolean,
-        bindChannel: (channel: IFluidDataStoreChannel) => void,
+        bindChannel: (channel: IFluidDataStoreChannel) => Promise<void>,
         protected pkg?: readonly string[],
     ) {
         super();
@@ -228,11 +228,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this._attachState = this.containerRuntime.attachState !== AttachState.Detached && this.existing ?
             this.containerRuntime.attachState : AttachState.Detached;
 
-        this.bindToContext = () => {
+        this.bindToContext = async () => {
             assert(this.bindState === BindState.NotBound, 0x13b /* "datastore context is already in bound state" */);
             this.bindState = BindState.Binding;
             assert(this.channel !== undefined, 0x13c /* "undefined channel on datastore context" */);
-            bindChannel(this.channel);
+            await bindChannel(this.channel);
             this.bindState = BindState.Bound;
         };
 
@@ -623,7 +623,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.getAbsoluteUrl(relativeUrl);
     }
 
-    public abstract generateAttachMessage(): IAttachMessage;
+    public abstract generateAttachMessage(): Promise<IAttachMessage>;
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
@@ -780,7 +780,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         return this.gcDetailsInInitialSummaryP;
     }
 
-    public generateAttachMessage(): IAttachMessage {
+    public async generateAttachMessage(): Promise<IAttachMessage> {
         throw new Error("Cannot attach remote store");
     }
 }
@@ -796,7 +796,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         storage: IDocumentStorageService,
         scope: IFluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
-        bindChannel: (channel: IFluidDataStoreChannel) => void,
+        bindChannel: (channel: IFluidDataStoreChannel) => Promise<void>,
         private readonly snapshotTree: ISnapshotTree | undefined,
         protected isRootDataStore: boolean | undefined,
         /**
@@ -829,13 +829,13 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         });
     }
 
-    public generateAttachMessage(): IAttachMessage {
+    public async generateAttachMessage(): Promise<IAttachMessage> {
         assert(this.channel !== undefined, 0x14f /* "There should be a channel when generating attach message" */);
         assert(this.pkg !== undefined, 0x150 /* "pkg should be available in local data store context" */);
         assert(this.isRootDataStore !== undefined,
             0x151 /* "isRootDataStore should be available in local data store context" */);
 
-        const summarizeResult = this.channel.getAttachSummary();
+        const summarizeResult = await this.channel.getAttachSummary();
 
         if (!this.disableIsolatedChannels) {
             // Wrap dds summaries in .channels subtree.
@@ -916,7 +916,7 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
         storage: IDocumentStorageService,
         scope: IFluidObject & IFluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
-        bindChannel: (channel: IFluidDataStoreChannel) => void,
+        bindChannel: (channel: IFluidDataStoreChannel) => Promise<void>,
         snapshotTree: ISnapshotTree | undefined,
         isRootDataStore: boolean | undefined,
         /**
@@ -955,7 +955,7 @@ export class LocalDetachedFluidDataStoreContext
         storage: IDocumentStorageService,
         scope: IFluidObject & IFluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
-        bindChannel: (channel: IFluidDataStoreChannel) => void,
+        bindChannel: (channel: IFluidDataStoreChannel) => Promise<void>,
         isRootDataStore: boolean,
     ) {
         super(

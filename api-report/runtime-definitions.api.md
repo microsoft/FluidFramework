@@ -121,7 +121,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     readonly attachState: AttachState;
     // @deprecated (undocumented)
     bindToContext(): void;
-    getAttachSummary(): ISummaryTreeWithStats;
+    getAttachSummary(): Promise<ISummaryTreeWithStats>;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     readonly id: string;

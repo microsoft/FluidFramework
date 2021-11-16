@@ -173,7 +173,7 @@ export interface IFluidDataStoreChannel extends
     /**
      * Retrieves the summary used as part of the initial summary message
      */
-    getAttachSummary(): ISummaryTreeWithStats;
+    getAttachSummary(): Promise<ISummaryTreeWithStats>;
 
     /**
      * Processes the op.
