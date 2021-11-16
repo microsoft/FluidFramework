@@ -229,6 +229,4 @@ The site theme/template lives in `themes/thxvscode`.
 | `lint:fix` | `markdownlint-cli2-fix` |
 | `postinstall` | --- |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
-| `start:default` | --- |
-| `start:win32` | --- |
 <!-- AUTO-GENERATED-CONTENT:END -->
