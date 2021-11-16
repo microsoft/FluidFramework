@@ -214,14 +214,14 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
  */
 export class SamplingLoggerAdapter implements ITelemetryBaseLogger {
     private readonly sampleCountMap: Map<string, number> = new Map();
-    private readonly sampleRate: number;
 
     constructor(
         private readonly logger: ITelemetryBaseLogger,
         /**
-         * Log {sampleRatePercent}% of events.
+         * Send {sampleRate[0]} of every {sampleRate[1]} events.
+         * Example: [2, 5] will log 2 of every 5 events.
          */
-        sampleRatePercent: number,
+        private readonly sampleRate: number[],
         /**
          * Only perform sampling if event category matches an element in this list.
          * If undefined, will sample events regardless of category.
@@ -233,8 +233,7 @@ export class SamplingLoggerAdapter implements ITelemetryBaseLogger {
          */
         private readonly eventNamesToSample?: string[],
     ) {
-        assert(sampleRatePercent <= 100, "sampleRatePercent should not be higher than 100%");
-        this.sampleRate = Math.floor(100 / sampleRatePercent);
+        assert(sampleRate.length === 2 && sampleRate[1] > sampleRate[0], "sampleRate must be a fraction less than 1");
     }
 
     public send(event: ITelemetryBaseEvent) {
@@ -244,8 +243,12 @@ export class SamplingLoggerAdapter implements ITelemetryBaseLogger {
 
         const eventKey = this.getSampleMapKey(event);
         const sampleCount = (this.sampleCountMap.get(eventKey) ?? 0) + 1;
-        if (sampleCount >= this.sampleRate) {
+        // Send first {sampleRate[0]} of {sampleRate[1]} events.
+        if (sampleCount <= this.sampleRate[0]) {
             this.logger.send(event);
+        }
+        // Reset count when {sampleRate[1]} events are received.
+        if (sampleCount >= this.sampleRate[1]) {
             this.sampleCountMap.set(eventKey, 0);
         } else {
             this.sampleCountMap.set(eventKey, sampleCount);
@@ -258,9 +261,9 @@ export class SamplingLoggerAdapter implements ITelemetryBaseLogger {
             shouldSample = shouldSample && this.categoriesToSample.includes(event.category);
         }
         if (this.eventNamesToSample !== undefined) {
-            shouldSample = shouldSample &&  this.eventNamesToSample.includes(event.eventName);
+            shouldSample = shouldSample && this.eventNamesToSample.includes(event.eventName);
         }
-        return true;
+        return shouldSample;
     }
 
     private getSampleMapKey(event: ITelemetryBaseEvent): string {
