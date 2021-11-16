@@ -60,7 +60,7 @@ export class DocumentStorage implements IDocumentStorage {
         values: [string, ICommittedProposal][],
     ): ISummaryTree {
         const documentAttributes: IDocumentAttributes = {
-            branch: documentId,
+            // branch: documentId,
             minimumSequenceNumber: sequenceNumber,
             sequenceNumber,
             term,
