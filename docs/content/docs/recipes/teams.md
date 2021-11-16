@@ -3,19 +3,24 @@ title: Using Fluid with Microsoft Teams
 menuPosition: 1
 ---
 
-This is a recipe for integrating Fluid-powered real-time collaboration features into a [Microsoft Teams tab application](https://docs.microsoft.com/en-us/microsoftteams/platform/tabs/what-are-tabs). The application enables every connected client to make changes to the container's dynamic data stucture (DDS) that will reflect on all other clients almost instantly. You'll also learn how to connect the Fluid data layer with a view layer made in [React](https://reactjs.org/).
+This is a tutorial for integrating Fluid-powered real-time collaboration features into a [Microsoft Teams tab application](https://docs.microsoft.com/en-us/microsoftteams/platform/tabs/what-are-tabs). By the end of this tutorial you will be able to integrate any Fluid-powered applications into Micrisoft Teams and collaborate with others in real-time.
 
-For an example of this recipe, check out the [Teams Fluid Hello World](https://github.com/microsoft/FluidExamples/tree/main/teams-fluid-hello-world) in our FluidExamples repo.
+Concepts you will learn:
+1. How to integrate a Fluid client into a Microsoft Teams tab application
+2. How to run and connect your Teams application to a Fluid service (Azure Fluid Relay)
+3. How to create and get Fluid Containers and pass it to a React component
+
+For an example of how this recipe may be used to build a more complex application, check out the [Teams Fluid Hello World](https://github.com/microsoft/FluidExamples/tree/main/teams-fluid-hello-world) in our FluidExamples repo.
 
 {{< callout note >}}
 
-This tutorial assumes that you are familiar with the [Fluid Framework Overview]({{< relref "/docs/_index.md" >}}) and that you have completed the [QuickStart]({{< relref "quick-start.md" >}}). You should also be familiar with the basics of [React](https://reactjs.org/), [React Hooks](https://reactjs.org/docs/hooks-intro.html), and [Microsoft Teams Tab](https://docs.microsoft.com/en-us/microsoftteams/platform/tabs/what-are-tabs).
+This tutorial assumes that you are familiar with the [Fluid Framework Overview]({{< relref "/docs/_index.md" >}}) and that you have completed the [QuickStart]({{< relref "quick-start.md" >}}). You should also be familiar with the basics of [React](https://reactjs.org/), [React Hooks](https://reactjs.org/docs/hooks-intro.html), and [Microsoft Teams Tabs](https://docs.microsoft.com/en-us/microsoftteams/platform/tabs/what-are-tabs).
 
 {{< /callout >}}
 
 ## Create the project
 
-1. Open a Command Prompt and navigate to the parent folder where you want to create the project; e.g., `c:\My Microsoft Teams Projects`.
+1. Open a Command Prompt and navigate to the parent folder where you want to create the project, e.g., `/My Microsoft Teams Projects`.
 1. Create a vanilla Teams tab application by running the below command. See [the Microsoft Teams documentation](https://docs.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/create-channel-group-tab?tabs=nodejs) for more information on setting up Teams applications.
 
     ```dotnetcli
@@ -27,7 +32,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     |Library |Description |
     |---|---|
-    | `fluid-framework`    |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. *This object will hold the most recent timestamp update made by any client.*|
+    | `fluid-framework`    |Contains the IFluidContainer and other [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients.|
     | `@fluidframework/azure-client`   |Defines the starting schema for the [Fluid container][].|
     | `@fluidframework/test-client-utils` |Defines the `InsecureTokenProvider` needed to create the connection to a Fluid service.|
     {.table}
@@ -40,12 +45,12 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 ## Code the project
 
-1. Open the file `\src\client/<your tab name>` in your code editor. Create a new file named `Util.ts`. Then add the following import statements:
+1. Open the file `/src/client/<your tab name>` in your code editor. Create a new file named `Util.ts`. Then add the following import statements:
 
     ```ts
     //`Util.ts
 
-    import { SharedMap, IFluidContainer } from "fluid-framework";
+    import { IFluidContainer } from "fluid-framework";
     import { AzureClient, AzureClientProps, LOCAL_MODE_TENANT_ID } from "@fluidframework/azure-client";
     import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
     ```
@@ -91,7 +96,7 @@ const connectionConfig : AzureClientProps =
 };
 ```
 
-1. Replace `TODO: 4` with the following code. The client is a new instance of the `AzureClient`, where it supports both remote (Azure Fluid Relay) and local mode (Azure Local Service).
+1. Replace `TODO: 4` with the following code.
 
 ```ts
 const client = new AzureClient(connectionConfig);
@@ -128,7 +133,7 @@ import { createContainer, containerIdQueryParamKey } from "./Util";
 
 1. Replace the `onSaveHandler` method with the following code. Note that the only lines added here are calling the create container method defined earlier in `Utils.ts`. Then appending the returned container ID to the `contentUrl` and `websiteUrl` as a query parameter.
 
-```ts {hl_lines=[134,136,137]}
+```ts {linenos=inline,hl_lines=[134,136,137]}
 const onSaveHandler = async (saveEvent: microsoftTeams.settings.SaveEvent) => {
     const host = "https://" + window.location.host;
     const containerId = await createContainer();
@@ -143,7 +148,7 @@ const onSaveHandler = async (saveEvent: microsoftTeams.settings.SaveEvent) => {
 };
 ```
 
-Please make sure to replace `<your tab name>` with the acutal tab name from your project.
+Please make sure to replace `<your tab name>` with the actual tab name from your project.
 
 {{< callout warning >}}
 
@@ -156,7 +161,7 @@ Additionally, every content page can only support one container ID.
 
 Open the file `src/client/<your tab name>/<your tab name>.tsx` in your code editor. A typical Fluid-powered application consists of a view and a Fluid data structure. Let's just focus on getting/loading the Fluid container and leave all the Fluid related interactions in a React component.
 
-1. Add the following import statement in the content page.
+1. Add the following import statements in the content page.
 
 ```ts
 import { IFluidContainer } from "fluid-framework";
@@ -250,20 +255,19 @@ Now that you have married the basic creation flow of Teams and Fluid, you can no
 
 ## Start the Fluid server and run the application
 
-If you are running your Teams application locally with Azure Client local mode, make sure to run the following command in the Command Prompt to start the Fluid service. Note that `tinylicious` is the name of the Fluid service that runs on localhost.
+If you are running your Teams application locally with Azure Client local mode, make sure to run the following command in the Command Prompt to start the Fluid service.
 
 ```dotnetcli
 npx @fluidframework/azure-local-service@latest
 ```
 
-To run and start the Teams application, open another terminal and follow the instructions [here](https://docs.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/create-channel-group-tab?tabs=nodejs#upload-your-application-to-teams).
+To run and start the Teams application, open another terminal and follow the [instructions](https://docs.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/create-channel-group-tab?tabs=nodejs#upload-your-application-to-teams) to run the application server.
 
 Now follow the [instructions](https://docs.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/create-channel-group-tab?tabs=nodejs#upload-your-application-to-teams) to upload the application to a Teams Tab.
 
 {{< callout warning >}}
 
-Hostnames with `ngrok`'s free tunnels are not preserved. Each run will generate a different URL. This means that anytime a new `ngrok` tunnel is created, the older container will no longer be accessible. For production scenario, please visit [here]()
-to learn about deploying a static web application and using the static URL.
+Hostnames with `ngrok`'s free tunnels are not preserved. Each run will generate a different URL. This means that anytime a new `ngrok` tunnel is created, the older container will no longer be accessible. For production scenarios, please visit [the section below](#using-azureClient-with-azure-fluid-relay)
 
 {{< /callout >}}
 
@@ -271,7 +275,7 @@ to learn about deploying a static web application and using the static URL.
 
 ### Using AzureClient with Azure Fluid Relay
 
-Because this is a Teams tab application, collaboration and interaction is the main focus. Consider replacing the local mode `AzureClientProps` provided above with non-local credentials from your Azure service instance, so others can join in and interact with you in the application! Check out how to provision your Azure Fluid Relay service [here](https://docs.microsoft.com/en-us/azure/azure-fluid-relay/how-tos/provision-fluid-azure-portal).
+Because this is a Teams tab application, collaboration and interaction is the main focus. Consider replacing the local mode `AzureClientProps` provided above with non-local credentials from your Azure service instance, so others can join in and interact with you in the application! Check out [how to provision your Azure Fluid Relay service](https://docs.microsoft.com/en-us/azure/azure-fluid-relay/how-tos/provision-fluid-azure-portal).
 
 {{< callout note >}}
 
