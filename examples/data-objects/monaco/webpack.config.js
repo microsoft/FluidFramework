@@ -59,7 +59,7 @@ module.exports = env => {
                 },
                 {
                     test: /\.html$/,
-                    loader: 'html-loader'
+                    loader: require.resolve('html-loader')
                 }
             ]
         },
