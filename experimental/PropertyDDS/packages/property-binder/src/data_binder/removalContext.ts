@@ -16,7 +16,7 @@ import { NodeType } from './dataBindingTree';
  * @alias RemovalContext
  * @public
  */
-class RemovalContext extends BaseContext {
+export class RemovalContext extends BaseContext {
   private _subTree: NodeType;
 
   /**
@@ -80,4 +80,3 @@ class RemovalContext extends BaseContext {
   }
 }
 
-export { RemovalContext};

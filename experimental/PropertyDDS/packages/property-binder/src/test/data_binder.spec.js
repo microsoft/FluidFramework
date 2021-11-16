@@ -101,7 +101,7 @@ describe('DataBinder', function() {
       var dataBinder;
       expect(() => { dataBinder = new DataBinder(workspace) }).not.toThrow();
       expect(dataBinder.isAttached()).toEqual(true);
-      expect(dataBinder.getWorkspace()).toEqual(workspace);
+      expect(dataBinder.getPropertyTree()).toEqual(workspace);
     });
 
     it('should be possible to modify a workspace that was passed to the constructor', function() {

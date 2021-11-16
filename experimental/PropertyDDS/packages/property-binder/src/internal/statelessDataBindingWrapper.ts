@@ -21,7 +21,7 @@ export interface StatelessParams {
  * @private
  * @hidden
  */
-class StatelessDataBindingWrapper extends DataBinding {
+export class StatelessDataBindingWrapper extends DataBinding {
   _singleton: any;
 
   /**
@@ -88,5 +88,3 @@ class StatelessDataBindingWrapper extends DataBinding {
     this._singleton._internalOnRemove(this.getProperty(), in_removalContext);
   }
 }
-
-export default StatelessDataBindingWrapper;

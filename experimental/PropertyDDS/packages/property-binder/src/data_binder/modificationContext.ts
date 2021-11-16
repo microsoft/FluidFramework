@@ -18,7 +18,7 @@ import { SerializedChangeSet, Utils } from '@fluid-experimental/property-changes
  * @extends BaseContext
  * @public
  */
-class ModificationContext extends BaseContext {
+export class ModificationContext extends BaseContext {
     _relativeTokenizedPath: string[];
 
     _removedDataBindingPath: string | undefined;
@@ -56,8 +56,8 @@ class ModificationContext extends BaseContext {
      */
     constructor(in_nestedChangeSet: SerializedChangeSet,
       in_operationType: Utils.OperationType | undefined,
-      in_path?: string | undefined,
-      in_context?: string | undefined,
+      in_path?: string,
+      in_context?: string,
       in_baseDataBinding?: DataBinding,
       in_relativeTokenizedPath: Array<string> = [],
       in_simulated: boolean = false,
@@ -254,5 +254,3 @@ class ModificationContext extends BaseContext {
       return this._relativeTokenizedPath;
     }
 }
-
-export { ModificationContext };

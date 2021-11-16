@@ -130,7 +130,7 @@ const joinPaths = function(in_path1: string | undefined, in_path2: string | unde
  * @private
  * @hidden
  *
- * @return {Bool} True if the handler should be called, false otherwise
+ * @returns True if the handler should be called, false otherwise
  */
 const shouldHandlerBeCalled = function(in_invokeContext: InvokeContext, in_bindToReference: boolean): boolean {
 
@@ -394,16 +394,16 @@ const _invokePropertyCallbacks = function(in_invokeContext: InvokeContext, in_op
 /**
  * Invoke the callbacks.
  *
- * @param {DataBinding|undefined} in_dataBinding - the databinding for which we are invoking, if present
- * @param {ModificationContext} in_baseModificationContext - a context
- * @param {Boolean} in_calledForReference - is this called for a reference
- * @param {Array.<String>} in_tokenizedFullPath - tokenized path ... to where?
- * @param {Number} in_visitIndex - single-context callbacks will not be called if they've already been
+ * @param in_dataBinding - the databinding for which we are invoking, if present
+ * @param in_baseModificationContext - a context
+ * @param in_calledForReference - is this called for a reference
+ * @param in_tokenizedFullPath - tokenized path ... to where?
+ * @param in_visitIndex - single-context callbacks will not be called if they've already been
  *  called in this visit.
- * @param {TraversalContext} in_traversalContext - the traversal context of the current changeset
- * @param {*} in_registeredHandlers - the handlers that are registered.
- * @param {Array.<String>} in_tokenizedPath - another tokenized path
- * @param {Boolean} in_isReference - is something a reference
+ * @param in_traversalContext - the traversal context of the current changeset
+ * @param in_registeredHandlers - the handlers that are registered.
+ * @param in_tokenizedPath - another tokenized path
+ * @param in_isReference - is something a reference
  *
  * @package
  * @hidden
@@ -478,7 +478,7 @@ const invokeCallbacks = function(
     }
 };
 
-const isSubPath = function(a: string | any[],  b: string | any[]) {
+const isSubPath = function(a: string,  b: string) {
     return b.indexOf(a as string) === 0 && ((b[a.length] === '.' || b[a.length] === '[') || a.length === b.length);
 };
 
@@ -706,7 +706,7 @@ const visitTypeHierarchy = function(in_typeID: string, in_callback: (typeid: str
  * @private
  * @hidden
  */
-const makeCallbackOncePerChangeSet = function(in_callback: (...args: any[]) => any): () => any {
+const makeCallbackOncePerChangeSet = function(in_callback: Function): Function {
     // When the callback is called, the 'this' pointer will be the DataBinding
     // This will give us access to the DataBinder.
 
@@ -737,19 +737,19 @@ const makeCallbackOncePerChangeSet = function(in_callback: (...args: any[]) => a
  * @private
  * @hidden
  */
-const deferCallback = function(in_callback: (this: DataBinding, ...args: any[]) => any): (...args: any) => any {
-    return function(this: DataBinding, ...args: any[]) {
-        if (arguments.length > 1) {
-            var clonedContext = arguments[1] ? arguments[1]._clone() : undefined;
-            var index = arguments[0];
-            this.getDataBinder().requestChangesetPostProcessing(() => {
+const deferCallback = function(in_callback: Function): (...args: any) => any {
+    return function (this: DataBinding, ...args: [context: BaseContext] | [index: number | string, context: BaseContext]) {
+        if (args.length > 1) {
+            var clonedContext = args[1] ? args[1]._clone() : undefined;
+            var index = args[0];
+            this.getDataBinder().requestChangesetPostProcessing(function (this: DataBinding){
                 in_callback.apply(this, [index, clonedContext]);
-            });
+            }, this);
         } else {
-            var clonedContext = arguments[0] ? arguments[0]._clone() : undefined;
-            this.getDataBinder().requestChangesetPostProcessing(() => {
+            var clonedContext = args[0] ? (args[0] as BaseContext)._clone() : undefined;
+            this.getDataBinder().requestChangesetPostProcessing(function (this: DataBinding) {
                 in_callback.apply(this, [clonedContext]);
-            });
+            }, this);
         }
     };
 };
@@ -837,8 +837,8 @@ const getOrCreateMemberOnPrototype = function <T = Object>(in_dataBindingConstru
  */
 const _getHandlerList = function(this: any, in_dataBindingConstructor: typeof DataBinding, in_escapedPath: string, in_memberName: string, in_operation: string): any[] {
     const registeredPaths = getOrCreateMemberOnPrototype(in_dataBindingConstructor, in_memberName, {});
-    const args = [registeredPaths, in_escapedPath, {}] as [object, string, object];
-    const pathNode = getOrInsertDefaultInNestedObjects.apply(this, args) as any;
+    // @ts-ignore
+    const pathNode = getOrInsertDefaultInNestedObjects.apply(this, [registeredPaths].concat(in_escapedPath).concat([{}])) as any;
 
     pathNode.__registeredDataBindingHandlers = pathNode.__registeredDataBindingHandlers || {};
 
@@ -1025,7 +1025,7 @@ const createRegistrationFunction = function(in_registrationType: string, in_call
     const events = in_callbackArgs[1];
     const options = in_callbackArgs[2];
 
-    return function(target: { constructor: (...args1: any) => void }, property: any, descriptor: { value: any; }) {
+    return function(target: any, property: any, descriptor: { value: any; }) {
         const callback = descriptor.value;
         const args = [path, events, callback, options];
         target.constructor[in_registrationType](...args);

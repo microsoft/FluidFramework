@@ -18,6 +18,18 @@ import {
 import { DataBinding } from "./dataBinding";
 
 export type NodeType = DataBindingTree | ArrayNode | null | undefined;
+interface Value {
+    pathCallbacks?: Record<string, Array<{
+        pathCallback: Function
+    }>>;
+    representations?: Map<string, any>;
+    ordered?: DataBinding[],
+    groupedByDataBindingType?: Map<string, DataBinding>
+}
+
+export type NodeValue = Value | null;
+
+
 
 /**
  * Helper function: returns true if and only if the given string parses as a non-negative integer.
@@ -98,9 +110,10 @@ const _tokenizePath = function (
  * @hidden
  */
 export class DataBindingTree {
-    _value: null;
+    _value: NodeValue = null;
 
-   _childNodes: NodeType[];
+   _childNodes: any; // @TODO extract this property to common interface/abstract class, ArrayNode uses it as [], and the rest
+                     // as an object.
 
     /**
      * Constructor
@@ -109,7 +122,7 @@ export class DataBindingTree {
     constructor() {
         this._value = null; // The value at this node
 
-        this._childNodes = [];
+        this._childNodes = {};
     }
 
     /**
@@ -118,14 +131,14 @@ export class DataBindingTree {
      * @returns The value stored at this node.
      * @package
      */
-    getValue(): any {
+    getValue(): NodeValue {
         return this._value;
     }
 
     /**
      * @param value The value to store at this node
      */
-    setValue(value: any) {
+    setValue(value: NodeValue) {
         this._value = value;
     }
 
@@ -134,7 +147,7 @@ export class DataBindingTree {
      *
      * @returns the path
      */
-    generatePathFromTokens(in_tokens: string[]): string | undefined {
+    generatePathFromTokens(in_tokens: (string | number)[]): string | undefined {
         return this._generatePathFromTokensInternal(0, in_tokens);
     }
 
@@ -198,7 +211,7 @@ export class DataBindingTree {
      */
     _generatePathFromTokensInternal(
         in_from: number,
-        in_tokens: string[]
+        in_tokens: (string | number)[]
     ): string | undefined {
         if (in_from < in_tokens.length) {
             const child = this._childNodes[in_tokens[in_from]];
@@ -904,10 +917,11 @@ export class DataBindingTree {
      * @package
      */
     getDataBindingByType(in_bindingType: string): DataBinding | undefined {
+        const value = this.getValue();
         let groupedByType =
-            this.getValue() &&
-            this.getValue().groupedByDataBindingType &&
-            this.getValue().groupedByDataBindingType.get(in_bindingType);
+            value &&
+            value.groupedByDataBindingType &&
+            value.groupedByDataBindingType.get(in_bindingType);
         if (groupedByType) {
             return groupedByType;
         } else {
@@ -923,10 +937,10 @@ export class DataBindingTree {
      * @package
      */
     getDataBindings(): Array<DataBinding> {
-        if (!this.getValue()) {
+        if (!this._value) {
             return [];
         }
-        return this.getValue().ordered || [];
+        return this._value.ordered || [];
     }
 }
 
@@ -1257,7 +1271,7 @@ export class ArrayNode extends DataBindingTree {
      * @param in_tokenizedPath - tokenized path to be removed
      * @param in_pathDelimiters - token types for the path
      * @param in_position - where we are along the path
-     * @return The root of the subtree that was removed, or null
+     * @returns The root of the subtree that was removed, or null
      */
     _remove(
         in_tokenizedPath: string[],
@@ -1344,17 +1358,6 @@ export class ArrayNode extends DataBindingTree {
 
         return node;
     }
-
-    /**
-     * Removes a sub tree
-     *
-     * @param path - The path to remove
-     * @returns The subtree that was removed. Null if nothing was removed
-     * @package
-     */
-    //  ArrayNode.prototype.remove = function(path) {
-    //    return DataBindingTree.prototype.remove.call(this, path);
-    //  };
 
     /**
      * Calls a function with each value stored in the tree.

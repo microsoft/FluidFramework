@@ -25,7 +25,7 @@ type PathCallback = {
  *
  * @public
  */
-class DataBinderHandle {
+export class DataBinderHandle {
     _destroyCallback: DestroyCallbackType | undefined;
 
     _userData: any;
@@ -104,5 +104,3 @@ class DataBinderHandle {
       return this._userData;
     }
 }
-
-export { DataBinderHandle };

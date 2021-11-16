@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeSet, ExtractedContext, PathHelper, TraversalContext, TypeIdHelper, Utils } from '@fluid-experimental/property-changeset';
+import { ChangeSet, ExtractedContext, PathHelper, SerializedChangeSet, TraversalContext, TypeIdHelper, Utils } from '@fluid-experimental/property-changeset';
 import { SharedPropertyTree } from '@fluid-experimental/property-dds';
 import { BaseProperty, PropertyFactory, TOKEN_TYPES_TYPE } from '@fluid-experimental/property-properties';
 import _ from 'lodash';
@@ -13,7 +13,7 @@ import { RESOLVE_ALWAYS, RESOLVE_NEVER, RESOLVE_NO_LEAFS } from '../internal/con
 import { DataBinderHandle } from '../internal/dataBinderHandle';
 import { PropertyElement } from '../internal/propertyElement';
 import { SemverMap, UpgradeType } from '../internal/semvermap';
-import StatelessDataBindingWrapper from '../internal/statelessDataBindingWrapper';
+import { StatelessDataBindingWrapper } from '../internal/statelessDataBindingWrapper';
 import { CallbackOptions, DataBinding } from './dataBinding';
 import { DataBindingRegistry } from './dataBindingRegistry';
 import { ArrayNode, concatTokenizedPath, DataBindingTree, NodeType } from './dataBindingTree';
@@ -95,7 +95,7 @@ const _normalizePath = function(in_path: string | undefined): string {
 /**
  * Compute the appropriate starting path for searching for places to instantiate the handle.
  *
- * @param n_exactPath - the exact path to match, or empty string to disable
+ * @param in_exactPath - the exact path to match, or empty string to disable
  * @param in_includePrefix - the prefix requirement to instantiate the binding
  *
  * @returns the appropriate starting path
@@ -346,12 +346,12 @@ export class DataBinder {
      * choose the definition that best matches the property type (based on inheritance), and create the binding using
      * the constructor.
      *
-     * @param in_bindingType             - The type of the data binding.  (ex. 'BINDING', 'DRAW', 'UI', etc.)
-     * @param in_typeID                  - The id to use for this registration, usually the type id of the
-     *                                              objects being represented (like a PropertySet template id).
-     * @param in_bindingConstructor    - The constructor for the data binding. Must take a parameter object
+     * @param in_bindingType - The type of the data binding.  (ex. 'BINDING', 'DRAW', 'UI', etc.)
+     * @param in_typeID - The id to use for this registration, usually the type id of the objects
+     *                    being represented (like a PropertySet template id).
+     * @param in_bindingConstructor  - The constructor for the data binding. Must take a parameter object
      *                                              as its only argument.
-     * @param in_options        - optional options for the new databinding
+     * @param in_options - optional options for the new databinding
      * @returns A handle that can be used to undefine the binding.
      *
      * @public
@@ -663,7 +663,7 @@ export class DataBinder {
         let fakeContext = new TraversalContext({
             fullPostPath: in_traversalPath,
             fullPath: in_traversalPath,
-            propertyContainerType: in_property.getContext() as any,
+            propertyContainerType: in_property.getContext() as any, // @TODO fix BaseProperty.getContext() return type to be more specific
             operationType: "insert"
         });
 
@@ -934,9 +934,9 @@ export class DataBinder {
 
         // Batch the rules based on these roots. Some of these rules may be a simple traversal to do, while
         // others may require careful checking of references etc.
-        const rootsToRules = {};
+        const rootsToRules: Record<string, ActivationType[]> = {};
         for (let i = 0; i < pathRoots.length; ++i) {
-            const rules: any[] = [];
+            const rules: ActivationType[] = [];
             for (let j = 0; j < in_activationRules.length; j++) {
                 if (in_activationRules[j].startPath.indexOf(pathRoots[i]) === 0) {
                     // This rule is encompassed in this subtree
@@ -947,7 +947,7 @@ export class DataBinder {
         }
 
         // For each root, recursively traverse the property hierarchy and instantiate bindings.
-        _.each(rootsToRules, (in_rules: any, in_root: any) => {
+        _.each(rootsToRules, (in_rules: ActivationType[], in_root: string) => {
             const out_pathDelimiters = [];
             const pathArr = PathHelper.tokenizePathString(in_root, out_pathDelimiters);
             if (in_root[0] === '/') {
@@ -991,7 +991,11 @@ export class DataBinder {
      */
     _unbindActiveBindings(in_activationRule: ActivationType) {
         const dataBinder = this;
-        const removedBindings: any[] = [];
+        const removedBindings: Array<{
+            tokenizedPath: (string | number)[],
+            context: RemovalContext,
+            binding: DataBinding
+        }> = [];
         const bindingType = in_activationRule.bindingType;
 
         const visit: RecursiveCallback = function(in_propertyElement: PropertyElement, in_path: string, in_tokenizedPath: (string|number)[], in_dataBindingTreeNode: NodeType): boolean {
@@ -1028,7 +1032,7 @@ export class DataBinder {
                         value.ordered.splice(index, 1);
 
                         // If we removed the last reference count to it, delete from the map of data binding types as well
-                        value.groupedByDataBindingType.delete(bindingType);
+                        value.groupedByDataBindingType!.delete(bindingType);
                     }
                 }
             }
@@ -1133,8 +1137,9 @@ export class DataBinder {
         let value = dataBindingNode!.getValue();
         if (!value) {
             dataBindingNode!.setValue({});
-            value = dataBindingNode!.getValue();
+            value = dataBindingNode!.getValue()!;
         }
+
         if (!value.pathCallbacks) {
             value.pathCallbacks = {};
         }
@@ -1168,17 +1173,17 @@ export class DataBinder {
      */
     private _unregisterOnSimplePath(in_handle: DataBinderHandle, in_registrationInfo: any) {
         const dataBindingNode = this._dataBindingTree.getNode(in_registrationInfo.path)!;
-        const value = dataBindingNode.getValue();
+        const value = dataBindingNode.getValue()!;
         const operationKeys = in_registrationInfo.operations;
 
         for (let i = 0; i < operationKeys.length; i++) {
-            const operationCallbacks = value.pathCallbacks[operationKeys[i]];
+            const operationCallbacks = value.pathCallbacks![operationKeys[i]];
             if (operationCallbacks) {
                 for (let j = 0; j < operationCallbacks.length; j++) {
                     if (operationCallbacks[j].pathCallback === in_registrationInfo.pathCallback) {
                         operationCallbacks.splice(j, 1);
                         if (operationCallbacks.length === 0) {
-                            delete value.pathCallbacks[operationKeys[i]];
+                            delete value.pathCallbacks![operationKeys[i]];
 
                             // TODO: Remove nodes from DataBinding tree, if no corresponding nodes in the property tree exist...
                             // 1. check the children if they have anything registered
@@ -1212,7 +1217,7 @@ export class DataBinder {
      * @returns A handle that can be used to unregister the callback.
      * @public
      */
-    registerOnPath(in_absolutePath: string | Array<string>, in_operations: Array<string>, in_callback: any, in_options: IRegisterOnPathOptions = {}): DataBinderHandle {
+    registerOnPath(in_absolutePath: string | Array<string>, in_operations: Array<string>, in_callback: Function, in_options: IRegisterOnPathOptions = {}): DataBinderHandle {
         let resultHandle;
 
         this.pushBindingActivationScope();
@@ -1578,9 +1583,10 @@ export class DataBinder {
         }
 
         const modificationContext = ModificationContext._fromContext(in_context);
-        const binding = new in_definition.bindingConstructor({ // eslint-disable-line new-cap
+        const binding = new in_definition.bindingConstructor!({
             property: property,
-            modificationContext: modificationContext,
+            // @ts-ignore
+            modificationContext: modificationContext, // @TODO redundant param ?
             activationInfo: in_activationInfo
         });
         binding._incReferenceCount();
@@ -2077,7 +2083,7 @@ export class DataBinder {
      * @private
      * @hidden
      */
-    _traverseChangeSet(in_changeSet: any) {
+    _traverseChangeSet(in_changeSet: SerializedChangeSet) {
         let notifications = {
             insert: new Map(),
             remove: new Map(),
@@ -2248,7 +2254,7 @@ export class DataBinder {
      *   the ```this``` parameter to the target function when the bound function is called
      * @public
      */
-    requestChangesetPostProcessing(in_callback: Function, in_context?: ExtractedContext) {
+    requestChangesetPostProcessing(in_callback: Function, in_context?: any) {
         this._postProcessingCallbackQueue.push(in_callback.bind(in_context));
     }
 
@@ -2644,6 +2650,9 @@ export class DataBinder {
         const tokenizedPath = PathHelper.tokenizePathString(in_property.getAbsolutePath().substr(1));
         const dataBindingTreeNode = this._instantiateNodeAndValueForProperty(in_property, tokenizedPath)!;
         const value = dataBindingTreeNode.getValue();
+        if (!value) {
+            throw new Error('Probably a bug ? No binding node associated to this property.');
+        }
 
         if (value.representations && value.representations.get(in_bindingType)) {
             throw new Error('Runtime representation already associated with the given property');

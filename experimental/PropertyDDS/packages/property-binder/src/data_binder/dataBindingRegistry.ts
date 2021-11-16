@@ -31,11 +31,11 @@ export class DataBindingRegistry {
    * be created in the same order in which they have been registered. The same DataBindingObject may be registered
    * multiple times and there are no checks to prevent this
    *
-   * @param bindingType The type of the representation.  (ex. 'VIEW', 'DRAW', 'UI', etc.)
-   * @param typeid The id to use for this registration, usually the type id of the objects being represented
+   * @param bindingType - The type of the representation.  (ex. 'VIEW', 'DRAW', 'UI', etc.)
+   * @param typeid - The id to use for this registration, usually the type id of the objects being represented
    *                    (like a PropertySet template id).
-   * @param upgradeType what semver range this data binding applies to.
-   * @param dataBindingObject The Data Binding and its associated metadata.
+   * @param upgradeType - What semver range this data binding applies to.
+   * @param dataBindingObject - The Data Binding and its associated metadata.
    * @public
    */
   public register(bindingType: string, typeid: string, upgradeType: UpgradeType, dataBindingObject: DataBindingDefinition) {
@@ -53,8 +53,8 @@ export class DataBindingRegistry {
   /**
    * Unregisters a Data Binding.
    *
-   * @param bindingType   - The type of the representation.
-   * @param typeid       - The registration id.
+   * @param bindingType - The type of the representation.
+   * @param typeid - The registration id.
    * @returns True if the representation was successfully removed
    * @public
    */
@@ -74,8 +74,8 @@ export class DataBindingRegistry {
   }
 
   /**
-   * @param bindingType The type of the representation.
-   * @param typeid The registration id.
+   * @param bindingType - The type of the representation.
+   * @param typeid - The registration id.
    * @returns true if there is a precise rule for this bindingtype/typeid pair
    * @public
    */

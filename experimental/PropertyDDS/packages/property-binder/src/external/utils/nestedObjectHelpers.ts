@@ -25,17 +25,17 @@
    let currentObject = in_object;
 
    // Insert all intermediate steps as needed
-   for (let j = 1; j < args.length - 2; j++) {
+   for (let j = 1; j < arguments.length - 2; j++) {
      // Make sure the entry exits
-     currentObject[args[j]] = currentObject[args[j]] || {};
+     currentObject[arguments[j]] = currentObject[arguments[j]] || {};
 
-     currentObject = currentObject[args[j]];
+     currentObject = currentObject[arguments[j]];
    }
 
    // Insert the new entry
-   let result = currentObject[args[args.length - 2]] !== undefined;
+   let result = currentObject[arguments[arguments.length - 2]] !== undefined;
 
-   currentObject[args[args.length - 2]] = args[args.length - 1];
+   currentObject[arguments[arguments.length - 2]] = arguments[arguments.length - 1];
 
    return result;
  };
@@ -55,8 +55,8 @@
    let currentObject = in_object;
 
    // traverse all intermediate steps as needed
-   for (let j = 1; j < args.length; j++) {
-     currentObject = currentObject[args[j]];
+   for (let j = 1; j < arguments.length; j++) {
+     currentObject = currentObject[arguments[j]];
 
      if (currentObject === undefined) {
        return false;
@@ -108,12 +108,12 @@
    let currentObject = in_object;
 
    // traverse all intermediate steps as needed
-   for (let j = 1; j < args.length - 1; j++) {
-     let nextObject = currentObject[args[j]];
+   for (let j = 1; j < arguments.length - 1; j++) {
+     let nextObject = currentObject[arguments[j]];
 
      if (nextObject === undefined) {
-       insertInNestedObjects.apply(this, [currentObject].concat(Array.from(args).slice(j)) as any);
-       return args[args.length - 1];
+       insertInNestedObjects.apply(this, [currentObject].concat(Array.from(arguments).slice(j)) as any);
+       return arguments[arguments.length - 1];
      } else {
        currentObject = nextObject;
      }
@@ -137,9 +137,9 @@
 
    // traverse all intermediate steps as needed
    var objectList: object[] = [];
-   for (let j = 1; j < args.length - 1; j++) {
+   for (let j = 1; j < arguments.length - 1; j++) {
      objectList.push(currentObject);
-     currentObject = currentObject[args[j]];
+     currentObject = currentObject[arguments[j]];
 
      if (currentObject === undefined) {
        break;
@@ -148,13 +148,13 @@
 
    // Delete the entry
    if (currentObject) {
-     delete currentObject[args[args.length - 1]];
+     delete currentObject[arguments[arguments.length - 1]];
      objectList.push(currentObject);
    }
    // Go backwards and remove no longer needed entries
    for (let j = objectList.length - 1; j > 0; j--) {
      if (_.isEmpty(objectList[j])) {
-       delete objectList[j - 1][args[j]];
+       delete objectList[j - 1][arguments[j]];
      }
    }
  };

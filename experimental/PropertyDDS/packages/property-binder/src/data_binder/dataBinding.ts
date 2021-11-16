@@ -24,7 +24,7 @@ import {
     invokeWithCollectionProperty,
     createRegistrationFunction
 } from './internalUtils';
-import { concatTokenizedPath } from './DataBindingTree';
+import { concatTokenizedPath } from './dataBindingTree';
 import { RESOLVE_NEVER, RESOLVE_ALWAYS, RESOLVE_NO_LEAFS } from '../internal/constants';
 import { PropertyElement } from '../internal/propertyElement';
 import { DataBinder, DataBinderHandle, IRegisterOnPathOptions } from '..';
@@ -339,7 +339,7 @@ export class DataBinding {
      * @hidden
      * @private
      */
-    _invokeRemoveCallbacks(in_tokenizedAbsolutePath: string[], in_simulated: boolean) {
+    _invokeRemoveCallbacks(in_tokenizedAbsolutePath: (string | number)[], in_simulated: boolean) {
         if (this._registeredPaths) {
             this._forEachPrototypeMember('_registeredPaths', (in_registeredPaths) => {
                 this._handleRemovals(
@@ -503,7 +503,7 @@ export class DataBinding {
     private _registerCallbacksForSingleReferenceProperty(
         in_tokenizedRegistrySubPath: (string | number)[],
         in_tokenizedFullPath: (string | number)[],
-        in_registeredSubPaths: any,
+        in_registeredSubPaths: string[],
         in_referencePropertySubTable: any[],
         in_indirectionsAtRoot: number,
         in_referenceProperty: ReferenceProperty,
@@ -1069,7 +1069,7 @@ export class DataBinding {
      */
     private _handleModifications(
         in_modificationContext: ModificationContext,
-        in_registeredSubPaths: any,
+        in_registeredSubPaths: { [key: string]: any; },
         in_referencePropertySubTable: any,
         in_calledForReferenceTargetChanged: boolean,
         in_rootPathOrProperty: any,
@@ -1186,8 +1186,8 @@ export class DataBinding {
      * @hidden
      */
     _handleRemovals(
-        in_tokenizedAbsolutePath: string[],
-        in_registeredSubPaths: any,
+        in_tokenizedAbsolutePath: (string | number)[],
+        in_registeredSubPaths: string,
         in_referencePropertySubTable: any,
         in_indirectionsAtRoot: number,
         in_options: DataBindingOptions
@@ -1214,7 +1214,7 @@ export class DataBinding {
      * @hidden
      */
     _handleRemovalsInternal(
-        in_tokenizedAbsolutePath: string[],
+        in_tokenizedAbsolutePath: (string | number)[],
         in_registeredSubPaths: any,
         in_referencePropertySubTable: any,
         in_indirectionsAtRoot: number,
@@ -1417,7 +1417,7 @@ export class DataBinding {
                     );
                     // Since we have the property, cache it on the context to avoid recomputation
                     modificationContext._hintModifiedProperty(currentProperty);
-                    _.each(registeredPaths.__registeredDataBindingHandlers.insert, function(this: any, in_handler: any) {
+                    _.each(registeredPaths.__registeredDataBindingHandlers.insert, (in_handler: any) => {
                         // the insert handlers probably should always be called (TODO: even w.r.t. bindToReference?)
                         // console.log('calling insert for: ' + traversalPath + ' currentProperty: ' + currentProperty);
                         // note that the nested ChangeSet supplied is undefined!
@@ -1439,14 +1439,14 @@ export class DataBinding {
                     );
                     // Since we have the property, cache it on the context to avoid recomputation
                     modificationContext._hintModifiedProperty(currentReferenceProperty);
-                    _.each(registeredPaths.__registeredDataBindingHandlers.referenceInsert, function(this: any, in_handler) {
+                    _.each(registeredPaths.__registeredDataBindingHandlers.referenceInsert, (in_handler) => {
                         if (registrationId === undefined || in_handler.registrationId === registrationId) {
                             in_handler.pathCallback.call(this, modificationContext);
                         }
                     });
                 }
                 if (currentProperty !== undefined && registeredPaths.__registeredDataBindingHandlers.collectionInsert) {
-                    _.each(registeredPaths.__registeredDataBindingHandlers.collectionInsert, function(this: any, in_handler) {
+                    _.each(registeredPaths.__registeredDataBindingHandlers.collectionInsert, (in_handler) => {
                         const rightId = (registrationId === undefined || in_handler.registrationId === registrationId);
                         const isContainer = isCollection(currentProperty);
                         if (rightId && isContainer) {

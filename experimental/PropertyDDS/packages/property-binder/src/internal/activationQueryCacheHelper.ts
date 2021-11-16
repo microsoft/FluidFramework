@@ -7,7 +7,7 @@ import { TypeIdHelper } from '@fluid-experimental/property-changeset';
 
 import * as _ from 'underscore';
 import { getLocalOrRemoteSchema } from '../data_binder/internalUtils';
-import { DataBinder } from '..';
+import { DataBinder, DataBinding } from '..';
 import { ExtractedContext } from '@fluid-experimental/property-changeset/dist/helpers/typeidHelper';
 
 
@@ -17,7 +17,7 @@ export interface ActivationInfo {
 }
 
 export interface ActivationType {
-    bindingConstructor?: any;
+    bindingConstructor?: typeof DataBinding;
     activationSplitType: ExtractedContext | undefined;
     bindingType: string;
     startPath: string;
