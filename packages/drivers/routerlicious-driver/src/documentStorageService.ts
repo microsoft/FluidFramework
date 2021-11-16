@@ -38,23 +38,8 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
         blobCache?: ICache<ArrayBufferLike>,
         snapshotTreeCache?: ICache<ISnapshotTree>): IDocumentStorageService {
         const storageService = driverPolicies?.enableWholeSummaryUpload ?
-            new WholeSummaryDocumentStorageService(
-                id,
-                manager,
-                logger,
-                policies,
-                blobCache,
-                snapshotTreeCache,
-            ) :
-            new ShreddedSummaryDocumentStorageService(
-                id,
-                manager,
-                logger,
-                policies,
-                driverPolicies,
-                blobCache,
-                snapshotTreeCache,
-            );
+            new WholeSummaryDocumentStorageService(id, manager, logger, policies, blobCache, snapshotTreeCache) :
+            new ShreddedSummaryDocumentStorageService(id, manager, logger, policies);
         // TODO: worth prefetching latest summary making version + snapshot call with WholeSummary storage?
         if (!driverPolicies?.enableWholeSummaryUpload && policies.caching === LoaderCachingPolicy.Prefetch) {
             return new PrefetchDocumentStorageService(storageService);

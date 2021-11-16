@@ -20,13 +20,13 @@ import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
-import { IFluidHTMLView, IFluidMountableView } from "@fluidframework/view-interfaces";
+import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import {
     extractPackageIdentifierDetails,
     resolveFluidPackageEnvironment,
     WebCodeLoader,
 } from "@fluidframework/web-code-loader";
-import { FluidObject, IFluidPackage, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidObject, IFluidPackage, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { RequestParser, createDataStoreFactory } from "@fluidframework/runtime-utils";
@@ -346,7 +346,7 @@ async function getFluidObjectAndRender(container: Container, url: string, div: H
         return false;
     }
 
-    const fluidObject: FluidObject<IFluidMountableView & IFluidHTMLView> = response.value;
+    const fluidObject = response.value as IFluidObject;
     if (fluidObject === undefined) {
         return;
     }

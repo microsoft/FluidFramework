@@ -16,7 +16,6 @@ import {
 import { buildHierarchy } from "@fluidframework/protocol-base";
 import {
     ICreateBlobResponse,
-    ISnapshotTree,
     ISnapshotTreeEx,
     ISummaryHandle,
     ISummaryTree,
@@ -29,12 +28,7 @@ import {
     SummaryTreeUploadManager,
 } from "@fluidframework/server-services-client";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IRouterliciousDriverPolicies } from "./policies";
-import { ICache, InMemoryCache } from "./cache";
 import { RetriableGitManager } from "./retriableGitManager";
-
-// eslint-disable-next-line no-new-func,@typescript-eslint/no-implied-eval
-const isNode = (new Function("try {return this===global;}catch(e){ return false;}"))();
 
 /**
  * Document access to underlying storage for routerlicious driver.
@@ -45,8 +39,6 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
     // The values of this cache is useless. We only need the keys. So we are always putting
     // empty strings as values.
     protected readonly blobsShaCache = new Map<string, string>();
-    private readonly blobCache: ICache<ArrayBufferLike> | undefined;
-    private readonly snapshotTreeCache: ICache<ISnapshotTreeEx> | undefined;
     private readonly summaryUploadManager: ISummaryUploadManager;
 
     public get repositoryUrl(): string {
@@ -57,19 +49,12 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
         protected readonly id: string,
         protected readonly manager: GitManager,
         protected readonly logger: ITelemetryLogger,
-        public readonly policies: IDocumentStorageServicePolicies = {},
-        driverPolicies?: IRouterliciousDriverPolicies,
-        blobCache?: ICache<ArrayBufferLike>,
-        snapshotTreeCache?: ICache<ISnapshotTree>) {
+        public readonly policies: IDocumentStorageServicePolicies = {}) {
         this.summaryUploadManager = new SummaryTreeUploadManager(
                 new RetriableGitManager(manager, logger),
                 this.blobsShaCache,
                 this.getPreviousFullSnapshot.bind(this),
             );
-        if (driverPolicies?.enableRestLess === true || isNode) {
-            this.blobCache = blobCache ?? new InMemoryCache();
-            this.snapshotTreeCache = (snapshotTreeCache ?? new InMemoryCache()) as ICache<ISnapshotTreeEx>;
-        }
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
@@ -101,11 +86,6 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
             requestVersion = versions[0];
         }
 
-        const cachedSnapshotTree = await this.snapshotTreeCache?.get(requestVersion.treeId);
-        if (cachedSnapshotTree) {
-            return cachedSnapshotTree;
-        }
-
         const rawTree = await PerformanceEvent.timedExecAsync(
             this.logger,
             {
@@ -121,16 +101,10 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
             },
         );
         const tree = buildHierarchy(rawTree, this.blobsShaCache, true);
-        await this.snapshotTreeCache?.put(tree.id, tree);
         return tree;
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        const cachedBlob = await this.blobCache?.get(blobId);
-        if (cachedBlob) {
-            return cachedBlob;
-        }
-
         const value = await PerformanceEvent.timedExecAsync(
             this.logger,
             {
@@ -146,9 +120,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
             },
         );
         this.blobsShaCache.set(value.sha, "");
-        const bufferContent = stringToBuffer(value.content, value.encoding);
-        await this.blobCache?.put(value.sha, bufferContent);
-        return bufferContent;
+        return stringToBuffer(value.content, value.encoding);
     }
 
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {

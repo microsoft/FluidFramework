@@ -203,8 +203,12 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             resolvedUrl,
             this.shareLinkFetcherProps.identityType,
             this.logger,
-        ).catch((error) => {
-            // This should imply that error is a non-retriable error.
+        ).then((fileLink) => {
+            if (!fileLink) {
+                throw new Error("Failed to get share link");
+            }
+            return fileLink;
+        }).catch((error) => {
             this.logger.sendErrorEvent({ eventName: "FluidFileUrlError" }, error);
             this.sharingLinkCache.remove(key);
             throw error;

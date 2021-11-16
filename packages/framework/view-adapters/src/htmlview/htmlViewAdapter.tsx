@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import {
     IFluidHTMLView,
     IFluidHTMLOptions,
@@ -22,11 +22,10 @@ export class HTMLViewAdapter implements IFluidHTMLView {
      * Test whether the given view can be successfully adapted by an HTMLViewAdapter.
      * @param view - the view to test if it is adaptable.
      */
-    public static canAdapt(view: FluidObject) {
-        const maybeView: FluidObject<IFluidHTMLView> = view;
+    public static canAdapt(view: IFluidObject) {
         return (
             React.isValidElement(view)
-            || maybeView.IFluidHTMLView !== undefined
+            || view.IFluidHTMLView !== undefined
         );
     }
 
@@ -39,7 +38,7 @@ export class HTMLViewAdapter implements IFluidHTMLView {
     /**
      * @param view - The view to adapt into an IFluidHTMLView
      */
-    constructor(private readonly view:  FluidObject<IFluidHTMLView>) { }
+    constructor(private readonly view: IFluidObject) { }
 
     /**
      * {@inheritDoc @fluidframework/view-interfaces#IFluidHTMLView.render}

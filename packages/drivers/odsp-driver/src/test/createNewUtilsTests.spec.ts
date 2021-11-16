@@ -19,6 +19,7 @@ const createUtLocalCache = () => new LocalPersistentCache(2000);
 
 describe("Create New Utils Tests", () => {
     const documentAttributes: api.IDocumentAttributes = {
+        branch: "",
         minimumSequenceNumber: 0,
         sequenceNumber: 0,
         term: 1,

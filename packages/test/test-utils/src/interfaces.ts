@@ -8,6 +8,11 @@ import { ISharedMap } from "@fluidframework/map";
 import { IFluidDataStoreContext, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
+declare module "@fluidframework/core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideTestFluidObject>> { }
+}
+
 export interface IProvideTestFluidObject {
     readonly ITestFluidObject: ITestFluidObject;
 }

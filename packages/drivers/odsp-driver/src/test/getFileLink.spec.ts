@@ -26,23 +26,20 @@ describe("getFileLink", () => {
         assert.strictEqual(result, fileItemResponse.webUrl, "File link for Consumer user should match webUrl");
     });
 
-    it("should reject for Consumer user if file web url is missing", async () => {
-        await assert.rejects(mockFetchMultiple(
+    it("should return undefined for Consumer user if file web url is missing", async () => {
+        const result = await mockFetchOk(
             async () => getFileLink(storageTokenFetcher, {siteUrl, driveId, itemId: "itemId2"}, "Consumer", logger),
-            [
-                async () => okResponse({}, {}),
-                // We retry once on malformed response from server, so need a second response mocked.
-                async () => okResponse({}, {}),
-            ],
-        ), "Should reject for unexpected empty response");
+        );
+        assert.strictEqual(result, undefined, "File link should be undefined");
     });
 
-    it("should reject for Consumer user if file item is not found", async () => {
-        await assert.rejects(mockFetchSingle(async () => {
+    it("should return undefined for Consumer user if file item is not found", async () => {
+        const result = await mockFetchSingle(async () => {
                 return getFileLink(storageTokenFetcher, {siteUrl, driveId, itemId: "itemId3"}, "Consumer", logger);
             },
             notFound,
-        ), "File link should reject when not found");
+        );
+        assert.strictEqual(result, undefined, "File link should be undefined");
     });
 
     it("should return share link with existing access for Enterprise user", async () => {
@@ -57,22 +54,18 @@ describe("getFileLink", () => {
             result, "sharelink", "File link for Enterprise user should match url returned from sharing information");
     });
 
-    it("should reject for Enterprise user if file web dav url is missing", async () => {
-        await assert.rejects(mockFetchMultiple(
+    it("should return undefined for Enterprise user if file web dav url is missing", async () => {
+        const result = await mockFetchOk(
             async () => getFileLink(storageTokenFetcher, {siteUrl, driveId, itemId: "itemId5"}, "Enterprise", logger),
-            [
-                async () => okResponse({}, {}),
-                // We retry once on malformed response from server, so need a second response mocked.
-                async () => okResponse({}, {}),
-            ],
-        ), "File link should reject for malformed url");
+        );
+        assert.strictEqual(result, undefined, "File link should be undefined");
     });
 
-    it("should reject for Enterprise user if file item is not found", async () => {
-        await assert.rejects(mockFetchSingle(async () => {
+    it("should return undefined for Enterprise user if file item is not found", async () => {
+        const result = await mockFetchSingle(async () => {
             return getFileLink(storageTokenFetcher, {siteUrl, driveId, itemId: "itemId6"}, "Enterprise", logger);
             },
-            notFound,
-        ), "File link should reject when not found");
+            notFound);
+        assert.strictEqual(result, undefined, "File link should be undefined");
     });
 });

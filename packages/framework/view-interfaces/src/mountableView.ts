@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 
 export const IFluidMountableView: keyof IProvideFluidMountableView = "IFluidMountableView";
 
@@ -18,12 +18,12 @@ export interface IFluidMountableViewClass {
     /**
      * @param view - The view to make mountable
      */
-    new(view: FluidObject): IFluidMountableView;
+    new(view: IFluidObject): IFluidMountableView;
     /**
      * Test whether the given view can be successfully mounted by a MountableView.
      * @param view - the view to test if it can be mounted.
      */
-    canMount(view: FluidObject): boolean;
+    canMount(view: IFluidObject): boolean;
 }
 
 /**
