@@ -68,7 +68,7 @@
 		"@types/socket.io-client": "^1.4.36",
 		"@typescript-eslint/parser": "^4.33.0",
 		"chai": "^4.3.4",
-		"concurrently": "^6.3.0",
+		"concurrently": "^6.4.0",
 		"copyfiles": "^2.4.1",
 		"env-cmd": "^10.1.0",
 		"eslint": "^7.32.0",
