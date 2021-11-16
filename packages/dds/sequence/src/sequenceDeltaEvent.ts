@@ -27,8 +27,8 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
     public readonly isEmpty: boolean;
     public readonly deltaOperation: TOperation;
     private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>;
-    private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation> | undefined>;
-    private readonly pLast: Lazy<ISequenceDeltaRange<TOperation> | undefined>;
+    private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation>>;
+    private readonly pLast: Lazy<ISequenceDeltaRange<TOperation>>;
 
     constructor(
         public readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>,
@@ -71,7 +71,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 
     /**
      * The in-order ranges affected by this delta.
-     * These may not be continuos.
+     * These may not be continous.
      */
     public get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[] {
         return this.sortedRanges.value.items;
@@ -85,18 +85,16 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
     }
 
     /**
-     * The first of the modified ranges. Undefined if delta is empty,
-     * like in the case where a delete comes in for a previously deleted range
+     * The first of the modified ranges.
      */
-    public get first(): Readonly<ISequenceDeltaRange<TOperation>> | undefined {
+    public get first(): Readonly<ISequenceDeltaRange<TOperation>> {
         return this.pFirst.value;
     }
 
     /**
-     * The last of the modified ranges. Undefined if delta is empty,
-     * like in the case where a delete comes in for a previously deleted range
+     * The last of the modified ranges.
      */
-    public get last(): Readonly<ISequenceDeltaRange<TOperation>> | undefined {
+    public get last(): Readonly<ISequenceDeltaRange<TOperation>> {
         return this.pLast.value;
     }
 }
