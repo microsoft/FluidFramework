@@ -7,8 +7,6 @@ import { default as AbortController } from "abort-controller";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     assert,
-    stringToBuffer,
-    bufferToString,
     delay,
 } from "@fluidframework/common-utils";
 import {
