@@ -3,13 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject, FluidObjectKeys } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideFluidObjectInternalRegistry>> { }
-}
 
 export const IFluidObjectInternalRegistry: keyof IProvideFluidObjectInternalRegistry = "IFluidObjectInternalRegistry";
 
@@ -21,8 +16,8 @@ export interface IProvideFluidObjectInternalRegistry {
  * Provides functionality to retrieve subsets of an internal registry.
  */
 export interface IFluidObjectInternalRegistry extends IProvideFluidObjectInternalRegistry {
-    getFromCapability(type: keyof (IFluidObject)): IInternalRegistryEntry[];
-    hasCapability(type: string, capability: keyof (IFluidObject)): boolean;
+    getFromCapability<T>(type: keyof FluidObject<T>): IInternalRegistryEntry[];
+    hasCapability<T>(type: string, capability: FluidObjectKeys<T>): boolean;
 }
 
 /**
@@ -30,7 +25,7 @@ export interface IFluidObjectInternalRegistry extends IProvideFluidObjectInterna
  */
 export interface IInternalRegistryEntry {
     factory: IFluidDataStoreFactory;
-    capabilities: (keyof (IFluidObject))[];
+    capabilities: string[];
     friendlyName: string;
     fabricIconName: string;
 }

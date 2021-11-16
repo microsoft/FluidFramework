@@ -8,7 +8,7 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IEvent } from "@fluidframework/common-definitions";
-import { IFluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -17,6 +17,7 @@ import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import React from "react";
 import ReactDOM from "react-dom";
 
+import { IProvideFluidObjectInternalRegistry } from "../../interfaces";
 import { TabsDataModel, ITabsDataModel } from "./dataModel";
 import { TabsView } from "./view";
 
@@ -48,8 +49,7 @@ export class TabsFluidObject extends DataObject implements IFluidHTMLView {
         const runtime = this.context.containerRuntime as IContainerRuntime;
 
         const registry = await runtime.IFluidDataStoreRegistry.get("internalRegistry");
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const registryDetails = (registry as IFluidObject).IFluidObjectInternalRegistry!;
+        const registryDetails = (registry as IProvideFluidObjectInternalRegistry).IFluidObjectInternalRegistry;
         this.dataModelInternal =
             new TabsDataModel(
                 this.root,

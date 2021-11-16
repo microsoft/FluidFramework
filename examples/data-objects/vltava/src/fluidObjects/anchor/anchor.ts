@@ -71,7 +71,7 @@ export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvid
                 ?.IFluidHTMLView;
 
         this.lastEditedFluidObject =
-            (await this.root.get<IFluidHandle>(this.lastEditedFluidObjectId)?.get())
+            (await this.root.get<IFluidHandle<IFluidLastEditedTracker>>(this.lastEditedFluidObjectId)?.get())
                 ?.IFluidLastEditedTracker;
     }
 }
