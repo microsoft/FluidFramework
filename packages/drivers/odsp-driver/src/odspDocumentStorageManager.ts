@@ -318,13 +318,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (!this.attributesBlobHandles.has(blobId)) {
             return blob;
         }
-        // ODSP document ids are random guids (different per session)
-        // fix the branch name in attributes
-        // this prevents issues when generating summaries
-        const documentAttributes: api.IDocumentAttributes = JSON.parse(bufferToString(blob, "utf8"));
-        const content = JSON.stringify(documentAttributes);
-        const patchedBlob = stringToBuffer(content, "utf8");
-        return patchedBlob;
+        return blob;
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
