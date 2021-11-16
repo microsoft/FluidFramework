@@ -104,13 +104,7 @@ export async function fetchSnapshotWithRedeem(
             }, error);
             await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
             const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
-                { ...odspResolvedUrl };
-            if(odspResolvedUrlWithoutShareLink.shareLinkInfo) {
-                odspResolvedUrlWithoutShareLink.shareLinkInfo = {
-                    ...odspResolvedUrlWithoutShareLink.shareLinkInfo,
-                    sharingLinkToRedeem: undefined,
-                };
-            }
+            { ...odspResolvedUrl, shareLinkInfo: { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem: undefined } };
 
             return fetchLatestSnapshotCore(
                 odspResolvedUrlWithoutShareLink,
