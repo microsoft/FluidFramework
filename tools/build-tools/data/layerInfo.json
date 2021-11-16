@@ -146,14 +146,6 @@
                 "dev": true,
                 "packages": [
                     "@fluid-experimental/get-container"
-                ],
-                "deps": [
-                    "Framework",
-                    "Loader",
-                    "Routerlicious-Driver",
-                    "Server-Libs",
-                    "Server-Shared-Utils",
-                    "Test"
                 ]
             },
             "Runtime": {
@@ -215,12 +207,6 @@
                     "experimental/examples/",
                     "experimental/PropertyDDS/examples/",
                     "experimental/PropertyDDS/services/"
-                ],
-                "deps": [
-                    "Framework",
-                    "Driver",
-                    "Routerlicious-Driver",
-                    "Test"
                 ]
             },
             "Build": {

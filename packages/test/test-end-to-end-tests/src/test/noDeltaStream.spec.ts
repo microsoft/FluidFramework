@@ -46,7 +46,7 @@ const testContainerConfig: ITestContainerConfig = {
 
 describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvider) => {
     for(const testConfig of testConfigs) {
-        it(`Validate Load Modes: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
+        it.skip(`Validate Load Modes: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
             const provider  = getTestObjectProvider();
             let containerUrl: IResolvedUrl | undefined;
             // initialize the container and its data
