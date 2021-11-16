@@ -8,7 +8,7 @@ import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { Spaces } from "@fluid-example/spaces";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { FluidObjectKeys, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     setupLastEditedTrackerForContainer,
@@ -22,6 +22,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import {
     Anchor,
     TabsFluidObject,
@@ -31,12 +32,15 @@ import {
     IInternalRegistryEntry,
 } from "./interfaces";
 
-export class InternalRegistry implements IFluidDataStoreRegistry, IFluidObjectInternalRegistry {
+export type InternalRegistryTypes = IFluidHTMLView & IFluidLoadable;
+
+export class InternalRegistry implements IFluidDataStoreRegistry,
+    IFluidObjectInternalRegistry<InternalRegistryTypes> {
     public get IFluidDataStoreRegistry() { return this; }
     public get IFluidObjectInternalRegistry() { return this; }
 
     constructor(
-        private readonly containerFluidObjectArray: IInternalRegistryEntry[],
+        private readonly containerFluidObjectArray: IInternalRegistryEntry<InternalRegistryTypes>[],
     ) {
     }
 
@@ -51,16 +55,17 @@ export class InternalRegistry implements IFluidDataStoreRegistry, IFluidObjectIn
         return undefined;
     }
 
-    public getFromCapability<T>(capability: keyof FluidObject<T>): IInternalRegistryEntry[] {
+    public getFromCapability(capability: FluidObjectKeys<InternalRegistryTypes>):
+    IInternalRegistryEntry<InternalRegistryTypes>[] {
         return this.containerFluidObjectArray.filter(
-            (fluidObjectDetails) => fluidObjectDetails.capabilities.includes(capability as never));
+            (fluidObjectDetails) => fluidObjectDetails.capabilities.includes(capability));
     }
 
-    public hasCapability<T>(type: string, capability: keyof FluidObject<T>) {
+    public hasCapability(type: string, capability: FluidObjectKeys<InternalRegistryTypes>) {
         const index = this.containerFluidObjectArray.findIndex(
             (containerFluidObject) => type === containerFluidObject.factory.type,
         );
-        return index >= 0 && this.containerFluidObjectArray[index].capabilities.includes(capability as never);
+        return index >= 0 && this.containerFluidObjectArray[index].capabilities.includes(capability);
     }
 }
 
@@ -87,7 +92,7 @@ export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultData
 }
 
 const generateFactory = () => {
-    const containerFluidObjectsDefinition: IInternalRegistryEntry[] = [
+    const containerFluidObjectsDefinition: IInternalRegistryEntry<InternalRegistryTypes>[] = [
         {
             factory: ClickerInstantiationFactory,
             capabilities: ["IFluidHTMLView", "IFluidLoadable"],

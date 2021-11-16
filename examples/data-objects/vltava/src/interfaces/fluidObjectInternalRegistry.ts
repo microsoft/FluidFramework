@@ -8,24 +8,24 @@ import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 
 export const IFluidObjectInternalRegistry: keyof IProvideFluidObjectInternalRegistry = "IFluidObjectInternalRegistry";
 
-export interface IProvideFluidObjectInternalRegistry {
-    readonly IFluidObjectInternalRegistry: IFluidObjectInternalRegistry;
+export interface IProvideFluidObjectInternalRegistry<T=FluidObject> {
+    readonly IFluidObjectInternalRegistry: IFluidObjectInternalRegistry<T>;
 }
 
 /**
  * Provides functionality to retrieve subsets of an internal registry.
  */
-export interface IFluidObjectInternalRegistry extends IProvideFluidObjectInternalRegistry {
-    getFromCapability<T>(type: keyof FluidObject<T>): IInternalRegistryEntry[];
-    hasCapability<T>(type: string, capability: FluidObjectKeys<T>): boolean;
+export interface IFluidObjectInternalRegistry<T> extends IProvideFluidObjectInternalRegistry<T> {
+    getFromCapability(type: FluidObjectKeys<T>): IInternalRegistryEntry<T>[];
+    hasCapability(type: string, capability: FluidObjectKeys<T>): boolean;
 }
 
 /**
  * A registry entry, with extra metadata.
  */
-export interface IInternalRegistryEntry {
+export interface IInternalRegistryEntry<T> {
     factory: IFluidDataStoreFactory;
-    capabilities: string[];
+    capabilities: FluidObjectKeys<T>[];
     friendlyName: string;
     fabricIconName: string;
 }
