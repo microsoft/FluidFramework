@@ -22,8 +22,11 @@ import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
 
 declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideSummarizer>> { }
+    export interface IFluidObject {
+        /** @deprecated - use `FluidObject<ISummarizer>` instead */
+        readonly ISummarizer?: ISummarizer;
+
+     }
 }
 
 export const ISummarizer: keyof IProvideSummarizer = "ISummarizer";
@@ -283,7 +286,8 @@ export interface ISummarizerEvents extends IEvent {
     (event: "summarizingError", listener: (error: ISummarizingWarning) => void);
 }
 
-export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidLoadable {
+export interface ISummarizer extends
+    IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidLoadable, Partial<IProvideSummarizer>{
     stop(reason: SummarizerStopReason): void;
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
 

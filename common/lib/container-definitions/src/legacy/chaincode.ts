@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IProvideRuntimeFactory } from "../runtime";
+import { IRuntimeFactory } from "../runtime";
 
 export const IFluidTokenProvider: keyof IProvideFluidTokenProvider = "IFluidTokenProvider";
 
@@ -16,9 +16,10 @@ export interface IFluidTokenProvider extends IProvideFluidTokenProvider {
 }
 
 declare module "@fluidframework/core-interfaces" {
-    /* eslint-disable @typescript-eslint/no-empty-interface */
-    export interface IFluidObject extends Readonly<Partial<
-        IProvideRuntimeFactory &
-        IProvideFluidTokenProvider>> { }
-    /* eslint-enable @typescript-eslint/no-empty-interface */
+    export interface IFluidObject  {
+        /** @deprecated - use `FluidObject<IRuntimeFactory>` instead */
+        readonly IRuntimeFactory?: IRuntimeFactory;
+        /** @deprecated - use `FluidObject<IFluidTokenProvider>` instead */
+        readonly IFluidTokenProvider?: IFluidTokenProvider;
+    }
 }

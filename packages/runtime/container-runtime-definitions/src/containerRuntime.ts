@@ -34,8 +34,13 @@ import {
  } from "@fluidframework/runtime-definitions";
 
 declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideContainerRuntime>> { }
+    export interface IFluidObject {
+        /**
+         * @deprecated - use `FluidObject<IContainerRuntime>` instead
+         */
+        readonly IContainerRuntime?: IContainerRuntime;
+
+     }
 }
 
 export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
