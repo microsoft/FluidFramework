@@ -287,7 +287,7 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "idle", listener: (count: number, duration: number) => void): any;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IDeltaSender: keyof IProvideDeltaSender;
 
 // @public
@@ -330,10 +330,10 @@ export interface IFluidModule {
     fluidExport: IFluidObject & Partial<Readonly<IProvideFluidCodeDetailsComparer>>;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IFluidTokenProvider: keyof IProvideFluidTokenProvider;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IFluidTokenProvider extends IProvideFluidTokenProvider {
     // (undocumented)
     intelligence: {
@@ -355,8 +355,10 @@ export interface IHostLoader extends ILoader {
     rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
 }
 
+// Warning: (ae-forgotten-export) The symbol "IProvideLoader" needs to be exported by the entry point index.d.ts
+//
 // @public
-export interface ILoader extends IFluidRouter {
+export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
     resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
 }
 
@@ -395,13 +397,13 @@ export interface IPendingLocalState {
     url: string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IProvideDeltaSender {
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly IDeltaSender: IDeltaSender;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IProvideFluidTokenProvider {
     // (undocumented)
     readonly IFluidTokenProvider: IFluidTokenProvider;
