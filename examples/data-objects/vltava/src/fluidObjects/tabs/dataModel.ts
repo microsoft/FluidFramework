@@ -98,7 +98,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     public getNewTabTypes(): ITabsTypes[] {
         const response: ITabsTypes[] = [];
-        this.internalRegistry.getFromCapability<IFluidHTMLView>(IFluidHTMLView).forEach((e) => {
+        this.internalRegistry.getFromCapability(IFluidHTMLView).forEach((e) => {
             response.push({
                 friendlyName: e.friendlyName,
                 fabricIconName: e.fabricIconName,

@@ -3,19 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject, FluidObjectKeys } from "@fluidframework/core-interfaces";
+import { FluidObjectKeys, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 export const IFluidObjectInternalRegistry: keyof IProvideFluidObjectInternalRegistry = "IFluidObjectInternalRegistry";
 
-export interface IProvideFluidObjectInternalRegistry<T=FluidObject> {
+export type DefaultRegistryTypes = IFluidHTMLView & IFluidLoadable;
+
+export interface IProvideFluidObjectInternalRegistry<T=DefaultRegistryTypes> {
     readonly IFluidObjectInternalRegistry: IFluidObjectInternalRegistry<T>;
 }
 
 /**
  * Provides functionality to retrieve subsets of an internal registry.
  */
-export interface IFluidObjectInternalRegistry<T> extends IProvideFluidObjectInternalRegistry<T> {
+export interface IFluidObjectInternalRegistry<T=DefaultRegistryTypes> extends IProvideFluidObjectInternalRegistry<T> {
     getFromCapability(type: FluidObjectKeys<T>): IInternalRegistryEntry<T>[];
     hasCapability(type: string, capability: FluidObjectKeys<T>): boolean;
 }
@@ -23,7 +26,7 @@ export interface IFluidObjectInternalRegistry<T> extends IProvideFluidObjectInte
 /**
  * A registry entry, with extra metadata.
  */
-export interface IInternalRegistryEntry<T> {
+export interface IInternalRegistryEntry<T=DefaultRegistryTypes> {
     factory: IFluidDataStoreFactory;
     capabilities: FluidObjectKeys<T>[];
     friendlyName: string;
