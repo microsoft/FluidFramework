@@ -429,17 +429,17 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         });
 
         this.localChannelContextQueue.clear();
-        this.bindToContext();
+        this.updateBindState();
         this.graphAttachState = AttachState.Attached;
     }
 
     /**
-     * Binds this runtime to the container
+     * Binds this runtime to the container and updates the bind state to Bound.
      * This includes the following:
      * 1. Sending an Attach op that includes all existing state
      * 2. Attaching the graph if the data store becomes attached.
      */
-    public bindToContext() {
+    private updateBindState() {
         if (this.bindState !== BindState.NotBound) {
             return;
         }
