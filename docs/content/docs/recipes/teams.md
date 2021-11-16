@@ -118,7 +118,7 @@ export async function getContainer(id : string) : Promise<IFluidContainer> {
 
 ### Creating Fluid container in the configuration page
 
-Open the file `src/client/<your tab name>/<your tab name>Config.tsx` in your code editor. The standard Teams tab application flow goes from configuration to content page. To allow collaborations, persisting the container while loading into the content page is crucial. The best solution to persist the container is to append the container ID onto the `contentUrl` and `websiteUrl`, the URLs of the content page, as a query parameter. Given that the save button in the Teams configuration page is the gateway between configuration page and content page, it is a great place to create the container and append the container ID in the settings.
+Open the file `src/client/<your tab name>/<your tab name>Config.tsx` in your code editor. The standard Teams tab application flow goes from configuration to content page. To enable collaboration, persisting the container while loading into the content page is crucial. The best solution to persist the container is to append the container ID onto the `contentUrl` and `websiteUrl`, the URLs of the content page, as a query parameter. Since the save button in the Teams configuration page is the gateway between the configuration page and the content page, it is a great place to create the container and append the container ID in the settings.
 
 1. Add the following import statement.
 
@@ -128,7 +128,7 @@ import { createContainer, containerIdQueryParamKey } from "./Util";
 
 1. Replace the `onSaveHandler` method with the following code. Note that the only lines added here are calling the create container method defined earlier in `Utils.ts`. Then appending the returned container ID to the `contentUrl` and `websiteUrl` as a query parameter.
 
-```ts
+```ts {hl_lines=[134,136,137]}
 const onSaveHandler = async (saveEvent: microsoftTeams.settings.SaveEvent) => {
     const host = "https://" + window.location.host;
     const containerId = await createContainer();
@@ -147,14 +147,14 @@ Please make sure to replace `<your tab name>` with the acutal tab name from your
 
 {{< callout warning >}}
 
-Since content page URL is used to store the container ID, this record will be removed if the Teams tab is deleted.
+Since the content page URL is used to store the container ID, this record will be removed if the Teams tab is deleted.
 Additionally, every content page can only support one container ID.
 
 {{< /callout >}}
 
 ### Refactor content page to reflect Fluid application
 
-Open the file `src/client/<your tab name>/<your tab name>.tsx` in your code editor. A standard Fluid powered application consists of view and Fluid data component. Let's just focus on getting/loading the Fluid container and leave all the Fluid related interactions in a React component.
+Open the file `src/client/<your tab name>/<your tab name>.tsx` in your code editor. A typical Fluid-powered application consists of a view and a Fluid data structure. Let's just focus on getting/loading the Fluid container and leave all the Fluid related interactions in a React component.
 
 1. Add the following import statement in the content page.
 
@@ -176,7 +176,7 @@ export const <your tab name> = () => {
 }
 ```
 
-1. Replace `TODO 1` with the following code. For the content page to display in Teams, you must include the [Microsoft Teams JavaScript client SDK](https://docs.microsoft.com/en-us/javascript/api/overview/msteams-client?view=msteams-client-js-latest&preserve-view=true) and include a call to initialize it after your page loads.
+1. Replace `TODO 1` with the following code. For the content page to display in Teams, you must include the [Microsoft Teams JavaScript client SDK](https://docs.microsoft.com/javascript/api/overview/msteams-client?view=msteams-client-js-latest&preserve-view=true) and include a call to initialize it after your page loads.
 
 ```ts
 microsoftTeams.initialize();
