@@ -409,13 +409,13 @@ use_current_InterfaceDeclaration_IDocumentAttributes(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "InterfaceDeclaration_IDocumentAttributes": {"backCompat": false}
-*/
 declare function get_current_InterfaceDeclaration_IDocumentAttributes():
     current.IDocumentAttributes;
 declare function use_old_InterfaceDeclaration_IDocumentAttributes(
     use: old.IDocumentAttributes);
 use_old_InterfaceDeclaration_IDocumentAttributes(
     get_current_InterfaceDeclaration_IDocumentAttributes());
+*/
 
 /*
 * Validate forward compat by using old type in place of current type
