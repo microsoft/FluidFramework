@@ -1154,10 +1154,6 @@ export class DeltaManager
     };
 
     private readonly errorHandler = (error) => {
-        // Observation based on early pre-production telemetry:
-        // We are getting transport errors from WebSocket here, right before or after "disconnect".
-        // This happens only in Firefox.
-        logNetworkFailure(this.logger, { eventName: "DeltaConnectionError" }, error);
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.reconnectOnError(
             this.defaultReconnectionMode,
