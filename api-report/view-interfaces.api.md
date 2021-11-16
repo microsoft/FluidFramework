@@ -4,7 +4,7 @@
 
 ```ts
 
-import { FluidObject } from '@fluidframework/core-interfaces';
+import { IFluidObject } from '@fluidframework/core-interfaces';
 
 // @public (undocumented)
 export interface IFluidHTMLOptions {
@@ -33,8 +33,8 @@ export interface IFluidMountableView extends IProvideFluidMountableView {
 // @public
 export interface IFluidMountableViewClass {
     // (undocumented)
-    new (view: FluidObject): IFluidMountableView;
-    canMount(view: FluidObject): boolean;
+    new (view: IFluidObject): IFluidMountableView;
+    canMount(view: IFluidObject): boolean;
 }
 
 // @public (undocumented)

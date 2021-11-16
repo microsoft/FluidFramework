@@ -4,7 +4,6 @@
 
 ```ts
 
-import { FluidObject } from '@fluidframework/core-interfaces';
 import { IFluidHTMLOptions } from '@fluidframework/view-interfaces';
 import { IFluidHTMLView } from '@fluidframework/view-interfaces';
 import { IFluidMountableView } from '@fluidframework/view-interfaces';
@@ -13,8 +12,8 @@ import { default as React_2 } from 'react';
 
 // @public
 export class HTMLViewAdapter implements IFluidHTMLView {
-    constructor(view: FluidObject<IFluidHTMLView>);
-    static canAdapt(view: FluidObject): boolean;
+    constructor(view: IFluidObject);
+    static canAdapt(view: IFluidObject): boolean;
     // (undocumented)
     get IFluidHTMLView(): this;
     // (undocumented)
