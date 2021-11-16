@@ -5,12 +5,21 @@
 
 import { IRuntimeFactory } from "../runtime";
 
+/**
+ * @deprecated - This will be removed in a later release.
+ */
 export const IFluidTokenProvider: keyof IProvideFluidTokenProvider = "IFluidTokenProvider";
 
+/**
+ * @deprecated - This will be removed in a later release.
+ */
 export interface IProvideFluidTokenProvider {
     readonly IFluidTokenProvider: IFluidTokenProvider;
 }
 
+/**
+ * @deprecated - This will be removed in a later release.
+ */
 export interface IFluidTokenProvider extends IProvideFluidTokenProvider {
     intelligence: { [service: string]: any };
 }

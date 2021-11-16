@@ -43,9 +43,18 @@ declare module "@fluidframework/core-interfaces" {
      }
 }
 
+/**
+ * @deprecated - This will be removed in a later release.
+ */
 export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
 
+/**
+ * @deprecated - This will be removed in a later release.
+ */
 export interface IProvideContainerRuntime {
+    /**
+     * @deprecated - This will be removed in a later release.
+     */
     IContainerRuntime: IContainerRuntime;
 }
 
