@@ -1,5 +1,14 @@
 # Change Log
 
+## 15.0.0
+
+* build: BREAKING CHANGE: update Fluid dependencies 0.49 -> 0.50
+  * Associated pull request: [36054](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/36054)
+  * Commit: [6f14354cefdbd9bab1450cf1732bc8ad40ea70db](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/6f14354cefdbd9bab1450cf1732bc8ad40ea70db)
+* feat: add additional utilities in shared-tree Common.ts
+  * Associated pull request: [36059](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/36059)
+  * Commit: [1993536a7cfef680deedc744ed541511f5d10a05](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/1993536a7cfef680deedc744ed541511f5d10a05)
+
 ## 14.2.3
 
 * build: update dependencies
