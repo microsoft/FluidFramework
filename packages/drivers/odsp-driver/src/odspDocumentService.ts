@@ -283,6 +283,10 @@ export class OdspDocumentService implements IDocumentService {
                 connection.on("op", (documentId, ops: ISequencedDocumentMessage[]) => {
                     this.opsReceived(ops);
                 });
+                this.logger.sendTelemetryEvent({
+                    eventName: "relayServiceAgent",
+                    details: connection.details.relayServiceAgent,
+                });
                 this.currentConnection = connection;
                 return connection;
             } catch (error) {

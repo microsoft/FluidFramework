@@ -1539,7 +1539,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (this.clientDetailsOverride !== undefined) {
             merge(client.details, this.clientDetailsOverride);
         }
-
+        client.details.environment = client.details.environment !== undefined ?
+            `${client.details.environment};loaderVersion:${pkgVersion}` : `loaderVersion:${pkgVersion}`;
         return client;
     }
 
