@@ -83,6 +83,7 @@
     "@fluidframework/test-pairwise-generator": "^0.50.0",
     "@fluidframework/test-utils": "^0.50.0",
     "@fluidframework/tool-utils": "^0.50.0",
+    "@fluid-experimental/audience-heartbeat": "^0.50.0",
     "commander": "^5.1.0",
     "random-js": "^1.0.8"
   },

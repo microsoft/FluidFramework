@@ -81,4 +81,6 @@ export interface IOldestClientObserverEvents extends IEvent {
 
 export interface IOldestClientObserver extends IEventProvider<IOldestClientObserverEvents> {
     isOldest(): boolean;
+    pick(taskId: string, worker: () => Promise<void>): Promise<void>;
+    release(...taskUrls: string[]): Promise<void>;
 }
