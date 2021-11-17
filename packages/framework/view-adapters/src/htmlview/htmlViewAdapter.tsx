@@ -35,7 +35,7 @@ export class HTMLViewAdapter implements IFluidHTMLView {
      * the React case.  This also doubles as a way for us to know if we are mounted or not.
      */
     private containerNode: HTMLElement | undefined;
-    private readonly view: FluidObject<IFluidHTMLView>;
+    private readonly view: FluidObject;
 
     /**
      * @param view - The view to adapt into an IFluidHTMLView
@@ -51,8 +51,8 @@ export class HTMLViewAdapter implements IFluidHTMLView {
         // Note that if we're already mounted, this can cause multiple rendering with possibly unintended effects.
         // Probably try to avoid doing this.
         this.containerNode = elm;
-
-        const htmlView = this.view.IFluidHTMLView;
+        const maybeView: FluidObject<IFluidHTMLView> = this.view;
+        const htmlView = maybeView.IFluidHTMLView;
         if (htmlView !== undefined) {
             htmlView.render(elm, options);
             return;
@@ -87,7 +87,8 @@ export class HTMLViewAdapter implements IFluidHTMLView {
             return;
         }
 
-        const htmlView = this.view.IFluidHTMLView;
+        const maybeView: FluidObject<IFluidHTMLView> = this.view;
+        const htmlView = maybeView.IFluidHTMLView;
         if (htmlView !== undefined && htmlView.remove !== undefined) {
             htmlView.remove();
             this.containerNode = undefined;

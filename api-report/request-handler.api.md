@@ -19,9 +19,9 @@ export function buildRuntimeRequestHandler(...handlers: RuntimeRequestHandler[])
 
 // @public (undocumented)
 export const createFluidObjectResponse: (fluidObject: FluidObject) => {
-    status: number;
-    mimeType: string;
-    value: Partial<Pick<unknown, never>>;
+    status: 200;
+    mimeType: "fluid/object";
+    value: FluidObject;
 };
 
 // @public (undocumented)

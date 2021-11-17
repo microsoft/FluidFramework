@@ -50,7 +50,7 @@ export class MountableView implements IFluidMountableView {
      */
     private reactView: JSX.Element | undefined;
 
-    private readonly view: FluidObject<IFluidHTMLView>;
+    private readonly view: FluidObject;
 
     /**
      * {@inheritDoc @fluidframework/view-interfaces#IFluidMountableViewClass.new}
@@ -74,7 +74,8 @@ export class MountableView implements IFluidMountableView {
 
         // Try to get an IFluidHTMLView if we don't have one already.
         if (this.htmlView === undefined) {
-            this.htmlView = this.view.IFluidHTMLView;
+            const maybeHtmlView: FluidObject<IFluidHTMLView> = this.view;
+            this.htmlView = maybeHtmlView.IFluidHTMLView;
         }
         // Render with IFluidHTMLView if possible.
         if (this.htmlView !== undefined) {

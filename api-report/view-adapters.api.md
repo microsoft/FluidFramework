@@ -24,7 +24,7 @@ export class HTMLViewAdapter implements IFluidHTMLView {
 
 // @public (undocumented)
 export interface IReactViewAdapterProps {
-    view: FluidObject<IFluidHTMLView>;
+    view: FluidObject;
 }
 
 // @public

@@ -11,7 +11,7 @@ export interface IReactViewAdapterProps {
     /**
      * The view to adapt into a React component.
      */
-    view: FluidObject<IFluidHTMLView>;
+    view: FluidObject;
 }
 
 /**
@@ -45,8 +45,8 @@ export class ReactViewAdapter extends React.Component<IReactViewAdapterProps> {
             this.element = this.props.view;
             return;
         }
-
-        const htmlView = this.props.view.IFluidHTMLView;
+        const maybeView: FluidObject<IFluidHTMLView> = this.props.view;
+        const htmlView = maybeView.IFluidHTMLView;
         if (htmlView !== undefined) {
             this.element = <HTMLViewEmbeddedComponent htmlView={htmlView} />;
             return;
