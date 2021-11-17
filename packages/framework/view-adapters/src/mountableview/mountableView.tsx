@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import {
     IFluidHTMLView,
     IFluidMountableView,
@@ -25,10 +25,11 @@ export class MountableView implements IFluidMountableView {
     /**
      * {@inheritDoc @fluidframework/view-interfaces#IFluidMountableViewClass.canMount}
      */
-    public static canMount(view: IFluidObject) {
+    public static canMount(view: FluidObject) {
+        const maybeView: FluidObject<IFluidHTMLView> = view;
         return (
             React.isValidElement(view)
-            || view.IFluidHTMLView !== undefined
+            || maybeView.IFluidHTMLView !== undefined
         );
     }
 
@@ -49,13 +50,16 @@ export class MountableView implements IFluidMountableView {
      */
     private reactView: JSX.Element | undefined;
 
+    private readonly view: FluidObject<IFluidHTMLView>;
+
     /**
      * {@inheritDoc @fluidframework/view-interfaces#IFluidMountableViewClass.new}
      */
-    constructor(private readonly view: IFluidObject) {
-        if (!MountableView.canMount(this.view)) {
+    constructor(view: FluidObject) {
+        if (!MountableView.canMount(view)) {
             throw new Error("Unmountable view type");
         }
+        this.view = view;
     }
 
     /**
