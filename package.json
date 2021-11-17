@@ -138,7 +138,9 @@
       "services": {
         "directory": "server",
         "ignoredDirs": [
-          "routerlicious"
+          "routerlicious",
+          "tinylicious",
+          "azure-local-service"
         ]
       }
     },

@@ -300,7 +300,6 @@ export function toInstrumentedOdspTokenFetcher(
                 const tokenError = wrapError(
                     error,
                     (errorMessage) => createOdspNetworkError("tokenFetcherFailed", errorMessage, fetchTokenErrorCode));
-                // eslint-disable-next-line @typescript-eslint/no-throw-literal
                 throw tokenError;
             }),
             { cancel: "generic" });
