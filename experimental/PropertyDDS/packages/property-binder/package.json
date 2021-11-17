@@ -7,12 +7,13 @@
   "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft and contributors",
+  "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist",
-    "index.js",
-    "index.d.ts"
+    "dist/**/*",
+    "lib/**/*",
+    "dist/index.d.ts"
   ],
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
