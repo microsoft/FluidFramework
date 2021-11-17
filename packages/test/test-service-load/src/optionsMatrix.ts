@@ -41,6 +41,7 @@ export function generateRuntimeOptions(seed: number) {
     const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
         disableIsolatedChannels: booleanCases,
         disableSummaries: [false],
+        generateSummaries: [true],
         initialSummarizerDelayMs: numberCases,
         summaryConfigOverrides: [undefined],
         maxOpsSinceLastSummary: numberCases,

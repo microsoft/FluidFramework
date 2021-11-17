@@ -592,6 +592,8 @@ export interface ISummaryRuntimeOptions {
     // (undocumented)
     disableIsolatedChannels?: boolean;
     disableSummaries?: boolean;
+    // @deprecated (undocumented)
+    generateSummaries?: boolean;
     // (undocumented)
     initialSummarizerDelayMs?: number;
     // (undocumented)

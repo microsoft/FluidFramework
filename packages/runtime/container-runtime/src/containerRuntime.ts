@@ -224,10 +224,16 @@ export interface IGCRuntimeOptions {
 
 export interface ISummaryRuntimeOptions {
     /**
+     * Flag that disables summaries if it is set to true.
+     */
+    disableSummaries?: boolean;
+
+    /**
+     * @deprecated - To disable summaries, please set disableSummaries===true.
      * Flag that will generate summaries if connected to a service that supports them.
      * This defaults to true and must be explicitly set to false to disable.
      */
-    disableSummaries?: boolean;
+    generateSummaries?: boolean;
 
     /* Delay before first attempt to spawn summarizing container. */
     initialSummarizerDelayMs?: number;
@@ -1001,6 +1007,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
         // Only create a SummaryManager if summaries are enabled and we are not the summarizer client
+        // Map the deprecated generateSummaries flag to disableSummaries.
+        if (this.runtimeOptions.summaryOptions.generateSummaries === false) {
+            this.runtimeOptions.summaryOptions.disableSummaries = true;
+        }
         if (this.summariesDisabled()) {
             this._logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
         } else {
