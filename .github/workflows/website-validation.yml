@@ -44,6 +44,9 @@ jobs:
     - uses: actions/setup-node@v2-beta
       with:
         node-version: "12"
+    - name: Create results folder
+      run: mkdir -p ./results
+
     - name: Download site artifact
       uses: actions/download-artifact@v2
       with:
@@ -58,18 +61,18 @@ jobs:
     - name: Check internal links
       id: linkcheck
       continue-on-error: true
-      run: npm run linkcheck > ./linkcheck-output.txt
+      run: |
+        npm run linkcheck | tee ./results/linkcheck-output.txt
 
     - name: Save PR number
-      run: |
-        mkdir -p ./results
-        echo ${{ github.event.number }} > ./results/pr
+      run: echo ${{ github.event.number }} > ./results/pr
     - name: Save linkcheck report
       run: |
-        cat $GITHUB_WORKSPACE/.github/workflows/data/linkcheck-${{ steps.linkcheck.outcome }}.md > ./results/linkcheck
-        echo "### linkcheck output\n\n```" >> ./results/linkcheck
-        cat ./linkcheck-output.txt >> ./results/linkcheck
-        echo "\n```" >> ./results/linkcheck
+        cat "$GITHUB_WORKSPACE/.github/workflows/data/linkcheck-${{ steps.linkcheck.outcome }}.md" | tee ./results/linkcheck
+        echo -e "\n### linkcheck output\n\n\`\`\`" | tee -a ./results/linkcheck
+        cat ./results/linkcheck-output.txt | tee -a ./results/linkcheck
+        echo -e "\n\`\`\`" | tee -a ./results/linkcheck
+        cat ./results/linkcheck
     - name: Upload results artifact
       uses: actions/upload-artifact@v2
       with:
