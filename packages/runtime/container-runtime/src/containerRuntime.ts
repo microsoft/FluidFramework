@@ -1299,11 +1299,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
-        addBlobToSummary(summaryTree, aliasBlobName, JSON.stringify([...this.dataStores.aliases()]));
 
         if (this.chunkMap.size > 0) {
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
+        }
+
+        const dataStoreAliases = this.dataStores.aliases();
+        if (dataStoreAliases.size > 0) {
+            addBlobToSummary(summaryTree, aliasBlobName, JSON.stringify([...dataStoreAliases]));
         }
 
         if (this.summarizerClientElection) {
