@@ -67,9 +67,9 @@ jobs:
     - name: Save linkcheck report
       run: |
         cat $GITHUB_WORKSPACE/.github/workflows/data/linkcheck-${{ steps.linkcheck.outcome }}.md > ./results/linkcheck
-        echo "### linkcheck output\n\n```" >> ./results.md
-        cat ./linkcheck-output.txt >> ./results.md
-        echo "\n```" >> ./results.md
+        echo "### linkcheck output\n\n```" >> ./results/linkcheck
+        cat ./linkcheck-output.txt >> ./results/linkcheck
+        echo "\n```" >> ./results/linkcheck
     - name: Upload results artifact
       uses: actions/upload-artifact@v2
       with:
