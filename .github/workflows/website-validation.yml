@@ -65,14 +65,15 @@ jobs:
       id: linkcheck
       continue-on-error: true
       run: |
-        npm run linkcheck | tee ./results/linkcheck-output.txt ; test ${PIPESTATUS[0]} -eq 0
+        set -o pipefail
+        npm run linkcheck | tee ./results/linkcheck-output.txt
 
     - name: Save PR number
       run: echo ${{ github.event.number }} > ./results/pr
     - name: Save linkcheck report
       run: |
         cat "$GITHUB_WORKSPACE/.github/workflows/data/linkcheck-${{ steps.linkcheck.outcome }}.md" | tee ./results/linkcheck
-        echo -e "\n### linkcheck output\n\n\`\`\`" | tee -a ./results/linkcheck
+        echo -e "\n#### linkcheck output\n\n\`\`\`" | tee -a ./results/linkcheck
         cat ./results/linkcheck-output.txt | tee -a ./results/linkcheck
         echo -e "\n\`\`\`" | tee -a ./results/linkcheck
     - name: Upload results artifact
