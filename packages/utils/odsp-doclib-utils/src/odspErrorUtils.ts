@@ -201,21 +201,20 @@ export function createOdspNetworkError(
                 fluidErrorCode, errorMessage, OdspErrorType.outOfStorageError, { statusCode });
             break;
         case offlineFetchFailureStatusCode:
-            error = new RetryableError(fluidErrorCode, errorMessage, DriverErrorType.offlineError, { statusCode });
+            error = new RetryableError(fluidErrorCode, errorMessage, DriverErrorType.offlineError);
             break;
         case fetchFailureStatusCode:
-            error = new RetryableError(fluidErrorCode, errorMessage, DriverErrorType.fetchFailure, { statusCode });
+            error = new RetryableError(fluidErrorCode, errorMessage, DriverErrorType.fetchFailure);
             break;
         case fetchIncorrectResponse:
             // Note that getWithRetryForTokenRefresh will retry it once, then it becomes non-retryable error
-            error = new NonRetryableError(
-                fluidErrorCode, errorMessage, DriverErrorType.incorrectServerResponse, { statusCode });
+            error = new NonRetryableError(fluidErrorCode, errorMessage, DriverErrorType.incorrectServerResponse);
             break;
         case fetchTimeoutStatusCode:
-            error = new RetryableError(fluidErrorCode, errorMessage, OdspErrorType.fetchTimeout, { statusCode });
+            error = new RetryableError(fluidErrorCode, errorMessage, OdspErrorType.fetchTimeout);
             break;
         case fetchTokenErrorCode:
-            error = new NonRetryableError(fluidErrorCode, errorMessage, OdspErrorType.fetchTokenError, { statusCode });
+            error = new NonRetryableError(fluidErrorCode, errorMessage, OdspErrorType.fetchTokenError);
             break;
         default:
             const retryAfterMs = retryAfterSeconds !== undefined ? retryAfterSeconds * 1000 : undefined;
@@ -255,15 +254,16 @@ export function enrichOdspError(
  * Throws network error - an object with a bunch of network related properties
  */
 export function throwOdspNetworkError(
-    fluidErrorCode: string,
+    message: string,
     statusCode: number,
     response?: Response,
     responseText?: string,
     props?: ITelemetryProperties,
+    fluidErrorCode = "OdspFetchError",
 ): never {
     const networkError = createOdspNetworkError(
         fluidErrorCode,
-        response && response.statusText !== "" ? `${fluidErrorCode} (${response.statusText})` : fluidErrorCode,
+        response && response.statusText !== "" ? `${message} (${response.statusText})` : message,
         statusCode,
         response ? numberFromHeader(response.headers.get("retry-after")) : undefined, /* retryAfterSeconds */
         response,

@@ -279,7 +279,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         onClosed(err);
                     });
             }),
-            { start: true, end: true, cancel: "error" },
+            { start: true, end: true, cancel: "generic" },
         );
     }
 

@@ -474,7 +474,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     event.end({ ...props, method });
                     return cachedSnapshot;
                 },
-                {end: true, cancel: "error"},
             );
 
             // Successful call, redirect future calls to getVersion only!
