@@ -64,7 +64,7 @@ export class OrdererManager implements core.IOrdererManager {
 
         switch (tenant.orderer.type) {
             case "kafka":
-                return this.kafkaFactory.create(tenantId, documentId);
+                return this.kafkaFactory.create(documentId, tenantId);
             default:
                 return this.localOrderManager.get(tenantId, documentId);
         }
