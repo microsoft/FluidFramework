@@ -13,7 +13,7 @@ import { IAgentScheduler } from "@fluidframework/agent-scheduler";
 import { SharedCell } from "@fluidframework/cell";
 import { performance } from "@fluidframework/common-utils";
 import {
-    IFluidObject,
+    FluidObject,
     IFluidHandle,
     IFluidLoadable,
     IRequest,
@@ -38,6 +38,7 @@ import {
     create404Response,
 } from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidTokenProvider } from "@fluidframework/container-definitions";
 import { SharedTextDocument } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
 
@@ -252,7 +253,7 @@ class TaskScheduler {
 
     public start() {
         const hostTokens =
-            (this.componentContext.containerRuntime as IFluidObject).IFluidTokenProvider;
+            (this.componentContext.containerRuntime as FluidObject<IFluidTokenProvider>).IFluidTokenProvider;
         const intelTokens = hostTokens && hostTokens.intelligence
             ? hostTokens.intelligence.textAnalytics
             : undefined;

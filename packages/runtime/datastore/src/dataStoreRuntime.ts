@@ -14,7 +14,6 @@ import {
     IAudience,
     IDeltaManager,
     ContainerWarning,
-    BindState,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -159,8 +158,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly contexts = new Map<string, IChannelContext>();
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private readonly pendingAttach = new Map<string, IAttachMessage>();
-    private bindState: BindState;
-    // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
+
+    // For new data stores, this is used to break the recursion while attaching the graph. The graph must be attached
+    // before the data store can move to Attached state (see _attachState) and become live.
+    // For existing data stores, the graph is always attached.
     private graphAttachState: AttachState = AttachState.Detached;
     private readonly deferredAttached = new Deferred<void>();
     private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
@@ -285,8 +286,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
 
         this.attachListener();
-        // If exists on storage or loaded from a snapshot, it should already be binded.
-        this.bindState = existing ? BindState.Bound : BindState.NotBound;
+        // If exists on storage or loaded from a snapshot, its graph should be already be attached.
+        this.graphAttachState = existing ? AttachState.Attached : AttachState.Detached;
         this._attachState = dataStoreContext.attachState;
 
         // If it's existing we know it has been attached.
@@ -429,23 +430,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         });
 
         this.localChannelContextQueue.clear();
-        this.bindToContext();
-        this.graphAttachState = AttachState.Attached;
-    }
-
-    /**
-     * Binds this runtime to the container
-     * This includes the following:
-     * 1. Sending an Attach op that includes all existing state
-     * 2. Attaching the graph if the data store becomes attached.
-     */
-    public bindToContext() {
-        if (this.bindState !== BindState.NotBound) {
-            return;
-        }
-        this.bindState = BindState.Binding;
         this.dataStoreContext.bindToContext();
-        this.bindState = BindState.Bound;
+        this.graphAttachState = AttachState.Attached;
     }
 
     public bind(handle: IFluidHandle): void {
@@ -710,11 +696,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public getAttachSummary(): ISummaryTreeWithStats {
-        // back-compat 0.50: attachGraph() will be called when creating a root data store or when adding the handle
-        // of a non-root data store to an already bound DDS.
-        // To be removed when N >= 0.52
-        this.attachGraph();
-
         const summaryBuilder = new SummaryTreeBuilder();
 
         // Craft the .attributes file for each shared object
@@ -779,9 +760,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         channel.handle.attachGraph();
 
         assert(this.isAttached, 0x182 /* "Data store should be attached to attach the channel." */);
-        // Get the object snapshot only if the data store is Bound and its graph is attached too,
-        // because if the graph is attaching, then it would get included in the data store snapshot.
-        if (this.bindState === BindState.Bound && this.graphAttachState === AttachState.Attached) {
+        // Get the object snapshot only if its graph is attached too, because if the graph is attaching,
+        // then it would get included in the data store snapshot.
+        if (this.graphAttachState === AttachState.Attached) {
             const summarizeResult = summarizeChannel(channel, true /* fullTree */, false /* trackState */);
             // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
             const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
@@ -874,16 +855,20 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private attachListener() {
         this.setMaxListeners(Number.MAX_SAFE_INTEGER);
         this.dataStoreContext.once("attaching", () => {
-            assert(this.bindState !== BindState.NotBound,
-                0x186 /* "Data store attaching should not occur if it is not bound" */);
+            assert(
+                this.graphAttachState !== AttachState.Detached,
+                "Data store attaching should not occur if its graph is detached",
+            );
             this._attachState = AttachState.Attaching;
             // This promise resolution will be moved to attached event once we fix the scheduler.
             this.deferredAttached.resolve();
             this.emit("attaching");
         });
         this.dataStoreContext.once("attached", () => {
-            assert(this.bindState === BindState.Bound,
-                0x187 /* "Data store should only be attached after it is bound" */);
+            assert(
+                this.graphAttachState === AttachState.Attached,
+                "Data store should only be attached after its graph is attached",
+            );
             this._attachState = AttachState.Attached;
             this.emit("attached");
         });

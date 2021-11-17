@@ -4,7 +4,7 @@
  */
 import { DataObject } from "@fluidframework/aqueduct";
 import {
-    IFluidObject,
+    FluidObject,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { IEvent } from "@fluidframework/common-definitions";
@@ -32,8 +32,7 @@ import {
  * is rendered.
  */
 export abstract class SyncedDataObject<
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    P extends IFluidObject = object,
+    P extends FluidObject = FluidObject,
     S = undefined,
     E extends IEvent = IEvent
     > extends DataObject<P, S, E> {

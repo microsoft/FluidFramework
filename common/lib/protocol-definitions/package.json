@@ -73,6 +73,14 @@
         },
         "TypeAliasDeclaration_ITreeEntry": {
           "forwardCompat": false
+        },
+        "InterfaceDeclaration_IDocumentAttributes": {
+          "backCompat": false
+        }
+      },
+      "0.1025.1": {
+        "InterfaceDeclaration_IDocumentAttributes": {
+          "backCompat": false
         }
       }
     }
