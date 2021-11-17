@@ -3,15 +3,6 @@
  * Licensed under the MIT License.
  */
 
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<
-        IProvideViewLayout
-        & IProvideViewCursor
-        & IProvideKeyHandlers>> {
-    }
-}
-
 export const IViewLayout: keyof IProvideViewLayout = "IViewLayout";
 
 export interface IProvideViewLayout {
