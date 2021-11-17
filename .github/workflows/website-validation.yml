@@ -58,19 +58,18 @@ jobs:
     - name: Check internal links
       id: linkcheck
       continue-on-error: true
-      run: npm run linkcheck
+      run: npm run linkcheck > ./linkcheck-output.txt
 
     - name: Save PR number
       run: |
         mkdir -p ./results
         echo ${{ github.event.number }} > ./results/pr
     - name: Save linkcheck report
-      # if: ${{ success() && steps.linkcheck.outcome == 'success' }}
       run: |
         cat $GITHUB_WORKSPACE/.github/workflows/data/linkcheck-${{ steps.linkcheck.outcome }}.md > ./results/linkcheck
-    # - if: ${{ failure() || steps.linkcheck.outcome != 'success' }}
-    #   run: |
-    #     echo ${{ github.event.number }} > ./results/linkcheck
+        cat "### linkcheck output\n\n```" >> ./results.md
+        cat ./linkcheck-output.txt >> ./results.md
+        cat "\n```" >> ./results.md
     - name: Upload results artifact
       uses: actions/upload-artifact@v2
       with:
