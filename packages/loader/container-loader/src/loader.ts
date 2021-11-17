@@ -275,11 +275,10 @@ export class Loader implements IHostLoader {
     private readonly logger: ITelemetryLogger;
 
     constructor(loaderProps: ILoaderProps) {
-        const scope: FluidObject<ILoader> = {
-            ...loaderProps.scope,
-            ILoader: loaderProps.options?.provideScopeLoader !== false ? this : undefined,
-        };
-
+        const scope = { ...loaderProps.scope as FluidObject<ILoader> };
+        if (loaderProps.options?.provideScopeLoader !== false) {
+            scope.ILoader = this;
+        }
         this.services = {
             urlResolver: createCachedResolver(MultiUrlResolver.create(loaderProps.urlResolver)),
             documentServiceFactory: MultiDocumentServiceFactory.create(loaderProps.documentServiceFactory),
