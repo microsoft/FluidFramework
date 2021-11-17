@@ -21,3 +21,4 @@ export {
 export * from "./handles";
 export * from "./serializer";
 export * from "./fluidPackage";
+export * from "./provider";

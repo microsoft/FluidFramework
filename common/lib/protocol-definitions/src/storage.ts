@@ -5,11 +5,6 @@
 
 export interface IDocumentAttributes {
     /**
-     * Name of the branch that created the snapshot
-     */
-    branch: string;
-
-    /**
      * Sequence number at which the snapshot was taken
      */
     sequenceNumber: number;

@@ -4,6 +4,19 @@
 
 ```ts
 
+// Warning: (ae-incompatible-release-tags) The symbol "FluidObject" is marked as @public, but its signature references "FluidObjectProviderKeys" which is marked as @internal
+//
+// @public
+export type FluidObject<T = unknown> = Partial<Pick<T, FluidObjectProviderKeys<T>>>;
+
+// @public
+export type FluidObjectKeys<T> = keyof FluidObject<T>;
+
+// Warning: (ae-internal-missing-underscore) The name "FluidObjectProviderKeys" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Exclude<T[TProp], undefined> ? TProp : never;
+
 // @public
 export interface IFluidCodeDetails {
     readonly config?: IFluidCodeDetailsConfig;
@@ -69,8 +82,22 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
     handle: IFluidHandle;
 }
 
-// @public (undocumented)
-export interface IFluidObject extends Readonly<Partial<IProvideFluidLoadable & IProvideFluidRunnable & IProvideFluidRouter & IProvideFluidHandleContext & IProvideFluidConfiguration & IProvideFluidHandle & IProvideFluidSerializer>> {
+// @public @deprecated (undocumented)
+export interface IFluidObject {
+    // @deprecated (undocumented)
+    readonly IFluidConfiguration?: IFluidConfiguration;
+    // @deprecated (undocumented)
+    readonly IFluidHandle?: IFluidHandle;
+    // @deprecated (undocumented)
+    readonly IFluidHandleContext?: IFluidHandleContext;
+    // @deprecated (undocumented)
+    readonly IFluidLoadable?: IFluidLoadable;
+    // @deprecated (undocumented)
+    readonly IFluidRouter?: IFluidRouter;
+    // @deprecated (undocumented)
+    readonly IFluidRunnable?: IFluidRunnable;
+    // @deprecated (undocumented)
+    readonly IFluidSerializer?: IFluidSerializer;
 }
 
 // @public

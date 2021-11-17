@@ -4,13 +4,13 @@
  */
 
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 
 import React from "react";
 
 interface IEmbeddedFluidObjectWrapperProps {
     id: string;
-    requestFluidObject(id: string): Promise<IFluidObject | undefined>;
+    requestFluidObject(id: string): Promise<FluidObject | undefined>;
 }
 
 interface IEmbeddedFluidObjectWrapperState {
