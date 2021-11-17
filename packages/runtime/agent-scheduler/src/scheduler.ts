@@ -177,7 +177,7 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
         await Promise.all(clearP);
     }
 
-    private getTaskClientId(url: string): string | null | undefined {
+    public getTaskClientId(url: string): string | null | undefined {
         return this.consensusRegisterCollection.read(url);
     }
 
