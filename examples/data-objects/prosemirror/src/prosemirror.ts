@@ -13,6 +13,7 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -28,6 +29,7 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { EditorView } from "prosemirror-view";
+import { ILoader } from "@fluidframework/container-definitions";
 import { nodeTypeKey } from "./fluidBridge";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager";
 
@@ -151,10 +153,11 @@ export class ProseMirror extends EventEmitter
         this.root = await this.runtime.getChannel("root") as ISharedMap;
         this.text = await this.root.get<IFluidHandle<SharedString>>("text")!.get();
 
-        if (this.context.scope.ILoader === undefined) {
+        const scope: FluidObject<ILoader> = this.context.scope;
+        if (scope.ILoader === undefined) {
             throw new Error("scope must include ILoader");
         }
-        this.collabManager = new FluidCollabManager(this.text, this.context.scope.ILoader);
+        this.collabManager = new FluidCollabManager(this.text, scope.ILoader);
 
         // Access for debugging
         // eslint-disable-next-line @typescript-eslint/dot-notation
