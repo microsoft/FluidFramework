@@ -157,14 +157,14 @@ export const ChangeInternal = {
 		type: ChangeTypeInternal.Detach,
 	}),
 
-	setPayload: (nodeToModify: NodeId, payload: Payload): SetValueInternal => ({
-		nodeToModify,
+	setPayload: (nodeToModify: NodeData | NodeId, payload: Payload): SetValueInternal => ({
+		nodeToModify: getNodeId(nodeToModify),
 		payload,
 		type: ChangeTypeInternal.SetValue,
 	}),
 
-	clearPayload: (nodeToModify: NodeId): SetValueInternal => ({
-		nodeToModify,
+	clearPayload: (nodeToModify: NodeData | NodeId): SetValueInternal => ({
+		nodeToModify: getNodeId(nodeToModify),
 		// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface above.)
 		// eslint-disable-next-line no-null/no-null
 		payload: null,

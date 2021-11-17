@@ -150,6 +150,11 @@ export abstract class TreeView {
 		return this.forest.get(id);
 	}
 
+	/** @returns the node associated with the given id in this view, or undefined if it does not exist */
+	public tryGetViewNode(id: NodeId): TreeViewNode | undefined {
+		return this.forest.tryGet(id);
+	}
+
 	/**
 	 * @returns the label of the trait under which a node with the given id resides. Returns undefined if the node is not present or if the
 	 * given id belongs to the root node

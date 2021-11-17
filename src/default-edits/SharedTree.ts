@@ -87,7 +87,7 @@ export class SharedTree extends GenericSharedTree<Change, ChangeInternal, Transa
 	 * {@inheritDoc GenericSharedTree.revertChanges}
 	 * @internal
 	 */
-	public revertChanges(changes: readonly ChangeInternal[], before: RevisionView): ChangeInternal[] {
+	public revertChanges(changes: readonly ChangeInternal[], before: RevisionView): ChangeInternal[] | undefined {
 		return revert(changes, before);
 	}
 

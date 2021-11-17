@@ -148,7 +148,10 @@ export function runSummarySizeTests<TSharedTree extends SharedTree | SharedTreeW
 				for (let i = changes.length - 1; i >= 0; i--) {
 					const editIndex = tree.edits.getIndexOfId(edits[i].id);
 					const edit = tree.edits.getEditInSessionAtIndex(editIndex) as Edit<ChangeInternal>;
-					tree.applyEditInternal(revert(edit.changes, tree.logViewer.getRevisionViewInSession(editIndex)));
+					const reverted = revert(edit.changes, tree.logViewer.getRevisionViewInSession(editIndex));
+					if (reverted !== undefined) {
+						tree.applyEditInternal(reverted);
+					}
 				}
 			}
 

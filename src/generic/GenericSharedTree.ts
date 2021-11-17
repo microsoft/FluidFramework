@@ -968,15 +968,20 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	}
 
 	/**
-	 * Reverts a previous edit.
+	 * Reverts a previous edit by applying a new edit containing the inverse of the original edit's changes.
 	 * @param editId - the edit to revert
+	 * @returns the id of the new edit, or undefined if the original edit could not be inverted given the current tree state.
 	 * @public
 	 */
-	public revert(editId: EditId): EditId {
+	public revert(editId: EditId): EditId | undefined {
 		const index = this.edits.getIndexOfId(editId);
 		const edit = this.editLog.getEditInSessionAtIndex(index);
 		const before = this.logViewer.getRevisionViewInSession(index);
 		const changes = this.revertChanges(edit.changes, before);
+		if (changes === undefined) {
+			return undefined;
+		}
+
 		return this.applyEditInternal(changes).id;
 	}
 
@@ -984,9 +989,13 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 * Revert the given changes
 	 * @param changes - the changes to revert
 	 * @param before - the revision view before the changes were originally applied
+	 * @returns the inverse of `changes` or undefined if the changes could not be inverted for the given tree state.
 	 * @internal
 	 */
-	public abstract revertChanges(changes: readonly TChangeInternal[], before: RevisionView): TChangeInternal[];
+	public abstract revertChanges(
+		changes: readonly TChangeInternal[],
+		before: RevisionView
+	): TChangeInternal[] | undefined;
 
 	private submitEditOp(edit: Edit<TChangeInternal>): void {
 		const editOp: SharedTreeEditOp<TChangeInternal> = {

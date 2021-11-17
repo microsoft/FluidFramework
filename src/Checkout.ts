@@ -337,7 +337,9 @@ export abstract class Checkout<TChange, TChangeInternal, TFailure = unknown>
 		const edit = this.tree.editsInternal.getEditInSessionAtIndex(index);
 		const before = this.tree.logViewer.getRevisionViewInSession(index);
 		const changes = this.tree.revertChanges(edit.changes, before);
-		this.tryApplyChangesInternal(...changes);
+		if (changes !== undefined) {
+			this.tryApplyChangesInternal(...changes);
+		}
 	}
 
 	/**

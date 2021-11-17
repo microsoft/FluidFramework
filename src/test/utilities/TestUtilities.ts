@@ -5,7 +5,7 @@
 
 import * as fs from 'fs';
 import { resolve, join } from 'path';
-import { v4 as uuidv4, v5 as uuidv5 } from 'uuid';
+import { v4 as uuidv4, v4, v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
 import { Container, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
@@ -46,6 +46,8 @@ import {
 import { SharedTreeWithAnchors, SharedTreeWithAnchorsFactory } from '../../anchored-edits';
 import { RevisionView } from '../../TreeView';
 import { EditLog } from '../../EditLog';
+import { IdCompressor } from '../../id-compressor';
+import { createSessionUuid } from '../../id-compressor/NumericUuid';
 import { RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
 
 /** Objects returned by setUpTestSharedTree */
@@ -101,6 +103,14 @@ export interface SharedTreeTestingOptions {
 	 * Telemetry logger injected into the SharedTree.
 	 */
 	logger?: ITelemetryBaseLogger;
+}
+
+/**
+ * Check if the given value is defined using mocha's `expect`. Return the defined value;
+ */
+export function expectDefined<T>(value: T | undefined): T {
+	expect(value).to.be.not.undefined;
+	return value as T;
 }
 
 /**
@@ -790,29 +800,29 @@ const versionComparator = (versionA: string, versionB: string): number => {
 };
 
 /**
- * Create a {@link SimpleTestTree} from the given {@link SharedTree}
+ * Create a {@link SimpleTestTree} from the given {@link SharedTree} or {@link IdCompressor}
  */
-export function testSimpleSharedTree(sharedTree: SharedTree | SharedTreeWithAnchors): TestTree {
-	assert(sharedTree.edits.length === 0, 'tree must be a new SharedTree');
-	const simpleTestTree = new SimpleTestTree(() => sharedTree.generateId());
-	setTestTree(sharedTree, simpleTestTree);
+export function setUpTestTree(idSource?: IdCompressor | SharedTree | SharedTreeWithAnchors): TestTree {
+	const source = idSource ?? new IdCompressor(createSessionUuid());
+	if (source instanceof IdCompressor) {
+		// TODO:#62125: Re-implement this case to return compressed ids created by the IdCompressor
+		return new SimpleTestTree(() => v4() as NodeId);
+	}
+	assert(source.edits.length === 0, 'tree must be a new SharedTree');
+	const simpleTestTree = new SimpleTestTree(() => source.generateId());
+	setTestTree(source, simpleTestTree);
 	return simpleTestTree;
 }
 
 /**
  * Create a {@link SimpleTestTree} before each test
  */
-export function refreshSimpleSharedTree(
-	sharedTreeFactory: () => SharedTree | SharedTreeWithAnchors,
-	fn?: (testTree: SimpleTestTree) => void
+export function refreshTestTree(
+	idSourceFactory?: (() => IdCompressor) | (() => SharedTree | SharedTreeWithAnchors),
+	fn?: (testTree: TestTree) => void
 ): TestTree {
-	const testTree = new RefreshingTestTree(() => {
-		const sharedTree = sharedTreeFactory();
-		assert(sharedTree.edits.length === 0, 'tree must be a new SharedTree');
-		const simpleTestTree = new SimpleTestTree(() => sharedTree.generateId(), true);
-		setTestTree(sharedTree, simpleTestTree);
-		return simpleTestTree;
+	const factory = idSourceFactory ?? (() => new IdCompressor(createSessionUuid()));
+	return new RefreshingTestTree(() => {
+		return setUpTestTree(factory());
 	}, fn);
-
-	return testTree;
 }

@@ -30,6 +30,7 @@ import {
 	leftTraitLabel,
 	rightTraitLabel,
 	setUpLocalServerTestSharedTreeWithAnchors,
+	expectDefined,
 } from './utilities/TestUtilities';
 import { runSharedTreeOperationsTests } from './utilities/SharedTreeTests';
 import { runSummaryFormatCompatibilityTests } from './utilities/SummaryFormatCompatibilityTests';
@@ -93,7 +94,7 @@ interface AnchorCase extends AnchorCaseOutcomes {
 type ConcurrentChanges =
 	| AnchoredChangeInternal
 	| readonly AnchoredChangeInternal[]
-	| ((tree: SharedTreeWithAnchors, anchorCase: AnchorCase) => AnchoredChangeInternal[]);
+	| ((tree: SharedTreeWithAnchors, anchorCase: AnchorCase) => AnchoredChangeInternal[] | undefined);
 
 /**
  * A scenario that an `AnchorCase` could be put through.
@@ -315,7 +316,7 @@ const insertScenarios: TestScenario[] = [
 		outcomeKey: 'onUndoRedoDelete',
 		concurrent: (tree: SharedTreeWithAnchors) => {
 			const deletionEditId = tree.editor.delete(StableRange.only(left));
-			const undoEditId = tree.revert(deletionEditId);
+			const undoEditId = expectDefined(tree.revert(deletionEditId));
 			const undoEditIndex = tree.edits.getIndexOfId(undoEditId);
 			const undoEdit = tree.edits.getEditInSessionAtIndex(undoEditIndex);
 			return revert(
@@ -604,7 +605,7 @@ function insertTest(anchorCase: AnchorCase, expected: Outcome, concurrentSteps?:
 				: [concurrentSteps as AnchoredChangeInternal];
 
 		// Perform the concurrent edit(s) to be sequenced first
-		if (concurrentSteps) {
+		if (concurrentSteps && concurrentChanges !== undefined) {
 			treeB.editor.applyChanges(concurrentChanges);
 		}
 

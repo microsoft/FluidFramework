@@ -24,8 +24,7 @@ import {
 	deepCompareNodes,
 	initialRevisionView,
 	initialRevisionViewWithValidation,
-	refreshSimpleSharedTree,
-	setUpTestSharedTree,
+	refreshTestTree,
 	testTrait,
 } from './utilities/TestUtilities';
 import { SimpleTestTree } from './utilities/TestNode';
@@ -246,7 +245,7 @@ describe('Transaction', () => {
 	});
 
 	describe('Insert', () => {
-		const testTree = refreshSimpleSharedTree(() => setUpTestSharedTree().tree);
+		const testTree = refreshTestTree();
 
 		const buildId = 0 as DetachedSequenceId;
 
@@ -341,7 +340,7 @@ describe('Transaction', () => {
 	});
 
 	describe('Build', () => {
-		const testTree = refreshSimpleSharedTree(() => setUpTestSharedTree().tree);
+		const testTree = refreshTestTree();
 
 		it('can be malformed due to detached ID collision', () => {
 			const transaction = Transaction.factory(testTree.view);
@@ -476,7 +475,7 @@ describe('Transaction', () => {
 	});
 
 	describe('Detach', () => {
-		const testTree = refreshSimpleSharedTree(() => setUpTestSharedTree().tree);
+		const testTree = refreshTestTree();
 
 		it('can be malformed if the target range is malformed', () => {
 			const transaction = Transaction.factory(testTree.view);
@@ -548,7 +547,7 @@ describe('Transaction', () => {
 	});
 
 	describe('Composite changes', () => {
-		const testTree = refreshSimpleSharedTree(() => setUpTestSharedTree().tree);
+		const testTree = refreshTestTree();
 
 		it('can form a node move', () => {
 			const transaction = Transaction.factory(testTree.view);

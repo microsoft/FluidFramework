@@ -5,7 +5,7 @@
 
 import { DetachedSequenceId, NodeId } from '../Identifiers';
 import { assert, fail } from '../Common';
-import { RevisionView, Side, TransactionView } from '../TreeView';
+import { RevisionView, Side, TreeView } from '../TreeView';
 import { BuildNode, TreeNode } from '../generic';
 import {
 	StableRange,
@@ -18,19 +18,21 @@ import {
 } from './PersistedTypes';
 import { Transaction } from './Transaction';
 import { isDetachedSequenceId, rangeFromStableRange } from './EditUtilities';
+import { RangeValidationResultKind, validateStableRange } from '.';
 
 /**
  * Given a sequence of changes, produces an inverse sequence of changes, i.e. the minimal changes required to revert the given changes
  * @param changes - the changes for which to produce an inverse.
  * @param before - a view of the tree state before `changes` are/were applied - used as a basis for generating the inverse.
- * @returns a sequence of changes _r_ that will produce `before` if applied to a view _A_, where _A_ is the result of
+ * @returns if the changes could be reverted, a sequence of changes _r_ that will produce `before` if applied to a view _A_, where _A_ is the result of
  * applying `changes` to `before`. Applying _r_ to views other than _A_ is legal but may cause the changes to fail to apply or may
- * not be a true semantic inverse.
+ * not be a true semantic inverse. If the changes could not be reverted given the state of `before`, returns undefined.
  *
  * TODO: what should this do if `changes` fails to apply to `before`?
+ * TODO:#68574: Pass a view that corresponds to the appropriate fluid reference sequence number rather than the view just before
  * @internal
  */
-export function revert(changes: readonly ChangeInternal[], before: RevisionView): ChangeInternal[] {
+export function revert(changes: readonly ChangeInternal[], before: RevisionView): ChangeInternal[] | undefined {
 	const result: ChangeInternal[] = [];
 
 	const builtNodes = new Map<DetachedSequenceId, NodeId[]>();
@@ -75,33 +77,43 @@ export function revert(changes: readonly ChangeInternal[], before: RevisionView)
 					result.unshift(createInvertedInsert(change, nodesDetached, true));
 					detachedNodes.delete(source);
 				} else {
-					fail('Cannot revert Insert: source has not been built or detached.');
+					// Cannot revert an insert whose source is no longer available for inserting (i.e. not just built, and not detached)
+					return undefined;
 				}
 
 				break;
 			}
 			case ChangeTypeInternal.Detach: {
 				const { destination } = change;
-				const { invertedDetach, detachedNodeIds } = createInvertedDetach(change, editor.view);
+				const invert = createInvertedDetach(change, editor.view);
+				if (invert === undefined) {
+					// Cannot revert a detach whose source does not exist in the tree
+					// TODO:68574: May not be possible once associated todo in `createInvertedDetach` is addressed
+					return undefined;
+				}
+				const { invertedDetach, detachedNodeIds } = invert;
 
 				if (destination !== undefined) {
-					assert(
-						!builtNodes.has(destination),
-						`Cannot revert Detach: destination is already used by a Build`
-					);
-					assert(
-						!detachedNodes.has(destination),
-						`Cannot revert Detach: destination is already used by a Detach`
-					);
+					if (builtNodes.has(destination) || detachedNodes.has(destination)) {
+						// Malformed: destination was already used by a prior build or detach
+						return undefined;
+					}
 					detachedNodes.set(destination, detachedNodeIds);
 				}
 
 				result.unshift(...invertedDetach);
 				break;
 			}
-			case ChangeTypeInternal.SetValue:
-				result.unshift(...createInvertedSetValue(change, editor.view));
+			case ChangeTypeInternal.SetValue: {
+				const invert = createInvertedSetValue(change, editor.view);
+				if (invert === undefined) {
+					// Cannot revert a set for a node that does not exist in the tree
+					// TODO:68574: May not be possible once associated todo in `createInvertedSetValue` is addressed
+					return undefined;
+				}
+				result.unshift(...invert);
 				break;
+			}
 			case ChangeTypeInternal.Constraint:
 				// TODO:#46759: Support Constraint in reverts
 				fail('Revert currently does not support Constraints');
@@ -172,9 +184,14 @@ function createInvertedInsert(
  */
 function createInvertedDetach(
 	detach: DetachInternal,
-	viewBeforeChange: TransactionView
-): { invertedDetach: ChangeInternal[]; detachedNodeIds: NodeId[] } {
+	viewBeforeChange: TreeView
+): { invertedDetach: ChangeInternal[]; detachedNodeIds: NodeId[] } | undefined {
 	const { source } = detach;
+
+	if (validateStableRange(viewBeforeChange, source) !== RangeValidationResultKind.Valid) {
+		// TODO:#68574: having the reference view would potentially allow us to revert some detaches that currently conflict
+		return undefined;
+	}
 
 	const { start, end } = rangeFromStableRange(viewBeforeChange, source);
 	const { trait: referenceTrait } = start;
@@ -224,14 +241,18 @@ function createInvertedDetach(
 	};
 }
 
-function createInvertedSetValue(setValue: SetValueInternal, revisionBeforeChange: TransactionView): ChangeInternal[] {
+function createInvertedSetValue(setValue: SetValueInternal, viewBeforeChange: TreeView): ChangeInternal[] | undefined {
 	const { nodeToModify } = setValue;
-	const oldPayload = revisionBeforeChange.getViewNode(nodeToModify).payload;
+	const node = viewBeforeChange.tryGetViewNode(nodeToModify);
+	if (node === undefined) {
+		// TODO:68574: With a reference view, may be able to better resolve conflicting sets
+		return undefined;
+	}
 
 	// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface)
 	// eslint-disable-next-line no-null/no-null
-	if (oldPayload !== null) {
-		return [ChangeInternal.setPayload(nodeToModify, oldPayload)];
+	if (node.payload !== null) {
+		return [ChangeInternal.setPayload(nodeToModify, node.payload)];
 	}
 	return [ChangeInternal.clearPayload(nodeToModify)];
 }

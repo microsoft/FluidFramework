@@ -208,7 +208,10 @@ export class SharedTreeWithAnchors extends GenericSharedTree<
 	 * {@inheritDoc GenericSharedTree.revertChanges}
 	 * @internal
 	 */
-	public revertChanges(changes: readonly AnchoredChangeInternal[], before: RevisionView): AnchoredChangeInternal[] {
+	public revertChanges(
+		changes: readonly AnchoredChangeInternal[],
+		before: RevisionView
+	): AnchoredChangeInternal[] | undefined {
 		return revert(changes, before);
 	}
 

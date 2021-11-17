@@ -23,7 +23,7 @@ import {
 	ChangeInternal,
 } from '../index';
 import { TestTree } from './utilities/TestNode';
-import { setUpTestSharedTree, SharedTreeTestingOptions, testSimpleSharedTree } from './utilities/TestUtilities';
+import { setUpTestSharedTree, SharedTreeTestingOptions, setUpTestTree } from './utilities/TestUtilities';
 
 /**
  * Checkout test suite
@@ -55,7 +55,7 @@ export function checkoutTests(
 		options: SharedTreeTestingOptions = { localMode: true }
 	): Promise<number> {
 		const { checkout, tree } = await setUpTestCheckout(options);
-		const simpleTestTree = testSimpleSharedTree(tree);
+		const simpleTestTree = setUpTestTree(tree);
 		await checkout.waitForPendingUpdates();
 		let lastView = checkout.currentView;
 		const data = { changeCount: 0 };
@@ -82,7 +82,7 @@ export function checkoutTests(
 		testTree: TestTree;
 	}> {
 		const { checkout, tree } = await setUpTestCheckout();
-		const testTree = testSimpleSharedTree(tree);
+		const testTree = setUpTestTree(tree);
 		await checkout.waitForPendingUpdates();
 		return { checkout, sharedTree: tree, testTree };
 	}
@@ -175,7 +175,7 @@ export function checkoutTests(
 
 		it('can try to apply an invalid edit and abort without causing an error', async () => {
 			const { checkout, tree } = await setUpTestCheckout();
-			const simpleTestTree = testSimpleSharedTree(tree);
+			const simpleTestTree = setUpTestTree(tree);
 
 			// tryApplyEdit aborts when applying an invalid edit and returns undefined
 			expect(
@@ -376,7 +376,7 @@ export function checkoutTests(
 
 		it('emits ViewChange events for remote edits', async () => {
 			const { containerRuntimeFactory, tree } = setUpTestSharedTree({ localMode: false });
-			const simpleTestTree = testSimpleSharedTree(tree);
+			const simpleTestTree = setUpTestTree(tree);
 
 			const { tree: secondTree } = setUpTestSharedTree({
 				containerRuntimeFactory,
@@ -404,7 +404,7 @@ export function checkoutTests(
 			// Invalid edits are allowed here because this test creates edits concurrently in two trees,
 			// which after syncing, end up with one being invalid.
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ localMode: false, allowInvalid: true });
-			const simpleTestTree = testSimpleSharedTree(tree);
+			const simpleTestTree = setUpTestTree(tree);
 			const { tree: secondTree } = setUpTestSharedTree({
 				containerRuntimeFactory,
 				...secondTreeOptions,
@@ -451,7 +451,7 @@ export function checkoutTests(
 
 		it('can successfully rebase an ongoing local edit', async () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ localMode: false });
-			const simpleTestTree = testSimpleSharedTree(tree);
+			const simpleTestTree = setUpTestTree(tree);
 			const { tree: secondTree } = setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions });
 
 			// Sync initial tree
@@ -507,7 +507,7 @@ export function checkoutTests(
 
 		it('can handle a failed rebase of an ongoing local edit', async () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ localMode: false });
-			const simpleTestTree = testSimpleSharedTree(tree);
+			const simpleTestTree = setUpTestTree(tree);
 			const { tree: secondTree } = setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions });
 
 			// Sync initial tree

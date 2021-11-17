@@ -36,14 +36,14 @@ import {
 	initialRevisionView,
 	SharedTreeTestingComponents,
 	SharedTreeTestingOptions,
-	testSimpleSharedTree,
-	refreshSimpleSharedTree,
+	setUpTestTree,
+	refreshTestTree,
 } from './TestUtilities';
 import { runSharedTreeUndoRedoTestSuite } from './UndoRedoTests';
 import { TestFluidHandle, TestFluidSerializer } from './TestSerializer';
 import { TestTree } from './TestNode';
 
-function revertEditInTree(tree: SharedTree, edit: EditId): EditId {
+function revertEditInTree(tree: SharedTree, edit: EditId): EditId | undefined {
 	return tree.revert(edit);
 }
 
@@ -91,7 +91,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 
 	function createSimpleTestTree(options?: SharedTreeTestingOptions): SharedTreeTest {
 		const { tree: sharedTree, componentRuntime, containerRuntimeFactory } = setUpTestSharedTree(options);
-		const testTree = testSimpleSharedTree(sharedTree);
+		const testTree = setUpTestTree(sharedTree);
 		return { sharedTree, testTree, componentRuntime, containerRuntimeFactory };
 	}
 
@@ -828,7 +828,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 		});
 
 		describe('correctly diffs revision views', () => {
-			const testTree = refreshSimpleSharedTree(() => setUpTestSharedTree().tree);
+			const testTree = refreshTestTree(() => setUpTestSharedTree().tree);
 
 			it('that are the same object', () => {
 				const view = RevisionView.fromTree(testTree.buildLeaf());
