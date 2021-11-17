@@ -10,6 +10,8 @@ export interface ISnapshotOptions {
 
     /*
      * Maximum time before the cache is expired (in milliseconds)
+     * The default should be 2 * 24 * 60 * 60 * 1000, or 2 days. Leaving this value undefined will
+     * leave cache expiry disabled.
      */
     maxSessionActiveTime?: number;
 

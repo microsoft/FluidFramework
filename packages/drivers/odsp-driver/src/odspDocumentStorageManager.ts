@@ -422,16 +422,20 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                 if (snapshotCachedEntry !== undefined) {
                                     // If the cached entry does not contain the entry time, then assign it a default of 2 days old.
                                     const age = Date.now() - (snapshotCachedEntry.cacheEntryTime ??
-                                        (Date.now() - 2 * 24 * 60 * 60 * 1000));
+                                        (Date.now() - 30 * 24 * 60 * 60 * 1000));
 
                                     // eslint-disable-next-line @typescript-eslint/dot-notation
                                     props["cacheEntryAge"] = age;
 
-                                    // Default the age of the cached entry to 2 days if no other values are set.
-                                    const cacheLife = hostSnapshotOptions?.maxSessionActiveTime ?? 2 * 24 * 60 * 60 * 1000;
-                                    if(age > cacheLife) {
-                                        await this.epochTracker.removeEntries();
-                                        return undefined;
+                                    // TODO: Permanently enable this with a default of 2 days.
+                                    // TODO: Refactor this (maybe move to a separate function)
+                                    if(hostSnapshotOptions?.maxSessionActiveTime) {
+                                        const cacheLife = hostSnapshotOptions?.maxSessionActiveTime;
+                                        if(age > cacheLife) {
+                                            await this.epochTracker.removeEntries();
+                                            this.logger.sendTelemetryEvent({ eventName: "CacheExpired" });
+                                            return undefined;
+                                        }
                                     }
                                 }
 

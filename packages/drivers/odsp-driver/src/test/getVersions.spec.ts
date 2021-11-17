@@ -46,7 +46,7 @@ describe("Tests for snapshot fetch", () => {
     };
 
     const hostPolicy: HostStoragePolicyInternal = {
-        snapshotOptions: { timeout: 2000 },
+        snapshotOptions: { timeout: 2000, maxSessionActiveTime: 2 * 24 * 60 * 60 * 1000 },
         summarizerClient: false,
         fetchBinarySnapshotFormat: false,
         // for testing both network and cache fetch
