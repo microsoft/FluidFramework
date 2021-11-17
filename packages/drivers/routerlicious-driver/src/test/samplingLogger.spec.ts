@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { SamplingLoggerAdapter } from "../logger";
+import { SamplingLoggerAdapter } from "../telemetry";
 
 class MockBaseLogger implements ITelemetryBaseLogger {
     private readonly _events: ITelemetryBaseEvent[] = [];
@@ -32,7 +32,7 @@ class MockBaseLogger implements ITelemetryBaseLogger {
     }
 }
 
-describe.only("SamplingLoggerAdapter", () => {
+describe("SamplingLoggerAdapter", () => {
     const mockLogger = new MockBaseLogger();
     const genericEvent1 = { eventName: "event1", category: "generic" };
     const errorEvent1 = { eventName: "error1", category: "error" };
@@ -43,7 +43,7 @@ describe.only("SamplingLoggerAdapter", () => {
         mockLogger.clearEvents();
     });
     it("Logs all events", () => {
-        const logger = new SamplingLoggerAdapter(mockLogger, [1, 4], [], []);
+        const logger = new SamplingLoggerAdapter(mockLogger, []);
         const totalEvents = 4;
         for (let i = 0; i < totalEvents; i++) {
             logger.send(genericEvent1);
@@ -57,7 +57,7 @@ describe.only("SamplingLoggerAdapter", () => {
         assert.strictEqual(mockLogger.getEvents(performanceEvent2).length, totalEvents);
     });
     it("Logs sample of all events", () => {
-        const logger = new SamplingLoggerAdapter(mockLogger, [1, 4]);
+        const logger = new SamplingLoggerAdapter(mockLogger, [{ rate: [1, 4] }]);
         const totalEvents = 8;
         const expectedSampleEvents = 2;
         for (let i = 0; i < totalEvents; i++) {
@@ -72,9 +72,13 @@ describe.only("SamplingLoggerAdapter", () => {
         assert.strictEqual(mockLogger.getEvents(performanceEvent2).length, expectedSampleEvents);
     });
     it("Logs sample of specified category events", () => {
-        const logger = new SamplingLoggerAdapter(mockLogger, [1, 10], ["performance"]);
+        const logger = new SamplingLoggerAdapter(mockLogger, [
+            { rate: [1, 10], category: "performance"},
+            { rate: [2, 10], category: "error"},
+        ]);
         const totalEvents = 10;
-        const expectedSampleEvents = 1;
+        const expectedErrorSampleEvents = 2;
+        const expectedPerformanceSampleEvents = 1;
         for (let i = 0; i < totalEvents; i++) {
             logger.send(genericEvent1);
             logger.send(errorEvent1);
@@ -82,42 +86,51 @@ describe.only("SamplingLoggerAdapter", () => {
             logger.send(performanceEvent2);
         }
         assert.strictEqual(mockLogger.getEvents(genericEvent1).length, totalEvents);
-        assert.strictEqual(mockLogger.getEvents(errorEvent1).length, totalEvents);
-        assert.strictEqual(mockLogger.getEvents(performanceEvent1).length, expectedSampleEvents);
-        assert.strictEqual(mockLogger.getEvents(performanceEvent2).length, expectedSampleEvents);
+        assert.strictEqual(mockLogger.getEvents(errorEvent1).length, expectedErrorSampleEvents);
+        assert.strictEqual(mockLogger.getEvents(performanceEvent1).length, expectedPerformanceSampleEvents);
+        assert.strictEqual(mockLogger.getEvents(performanceEvent2).length, expectedPerformanceSampleEvents);
     });
     it("Logs sample of specified eventName events", () => {
-        const logger = new SamplingLoggerAdapter(mockLogger, [6, 10], undefined, ["event1", "perf1"]);
+        const logger = new SamplingLoggerAdapter(
+            mockLogger,
+            [
+                { rate: [6, 10], eventName: "event1"},
+                { rate: [3, 10], eventName: "perf1"},
+            ]);
         const totalEvents = 10;
-        const expectedSampleEvents = 6;
+        const expectedEvent1SampleEvents = 6;
+        const expectedPerf1SampleEvents = 3;
         for (let i = 0; i < totalEvents; i++) {
             logger.send(genericEvent1);
             logger.send(errorEvent1);
             logger.send(performanceEvent1);
             logger.send(performanceEvent2);
         }
-        assert.strictEqual(mockLogger.getEvents(genericEvent1).length, expectedSampleEvents);
+        assert.strictEqual(mockLogger.getEvents(genericEvent1).length, expectedEvent1SampleEvents);
         assert.strictEqual(mockLogger.getEvents(errorEvent1).length, totalEvents);
-        assert.strictEqual(mockLogger.getEvents(performanceEvent1).length, expectedSampleEvents);
+        assert.strictEqual(mockLogger.getEvents(performanceEvent1).length, expectedPerf1SampleEvents);
         assert.strictEqual(mockLogger.getEvents(performanceEvent2).length, totalEvents);
     });
     it("Logs sample of specified eventName+category events", () => {
         const logger = new SamplingLoggerAdapter(
             mockLogger,
-            [2, 5],
-            ["performance", "error"],
-            ["event1", "perf1", "error1"]);
+            [
+                { rate: [2, 5], eventName: "perf1", category: "performance" },
+                { rate: [2, 5], eventName: "perf2", category: "error" },
+                { rate: [4, 5] },
+            ]);
         const totalEvents = 10;
-        const expectedSampleEvents = 4;
+        const expectedPerf1SampleEvents = 4;
+        const expectedOtherSampleEvents = 8;
         for (let i = 0; i < totalEvents; i++) {
             logger.send(genericEvent1);
             logger.send(errorEvent1);
             logger.send(performanceEvent1);
             logger.send(performanceEvent2);
         }
-        assert.strictEqual(mockLogger.getEvents(genericEvent1).length, totalEvents);
-        assert.strictEqual(mockLogger.getEvents(errorEvent1).length, expectedSampleEvents);
-        assert.strictEqual(mockLogger.getEvents(performanceEvent1).length, expectedSampleEvents);
-        assert.strictEqual(mockLogger.getEvents(performanceEvent2).length, totalEvents);
+        assert.strictEqual(mockLogger.getEvents(genericEvent1).length, expectedOtherSampleEvents);
+        assert.strictEqual(mockLogger.getEvents(errorEvent1).length, expectedOtherSampleEvents);
+        assert.strictEqual(mockLogger.getEvents(performanceEvent1).length, expectedPerf1SampleEvents);
+        assert.strictEqual(mockLogger.getEvents(performanceEvent2).length, expectedOtherSampleEvents);
     });
 });

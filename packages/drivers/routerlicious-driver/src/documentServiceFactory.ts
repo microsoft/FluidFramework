@@ -17,7 +17,7 @@ import {
     getQuorumValuesFromProtocolSummary,
     RateLimiter,
 } from "@fluidframework/driver-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
@@ -25,6 +25,7 @@ import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath } from "./urlUtils";
 import { InMemoryCache } from "./cache";
+import { SamplingLoggerAdapter } from "./telemetry";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -33,7 +34,10 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     aggregateBlobsSmallerThanBytes: undefined,
     enableWholeSummaryUpload: false,
     enableRestLess: false,
+    telemetrySampling: undefined,
 };
+
+const telemetryNamespace = "RouterliciousDriver";
 
 /**
  * Factory for creating the routerlicious document service. Use this if you want to
@@ -77,13 +81,13 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
         const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 
-        const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
+        const telemetryLogger = this.getTelemetryLogger(logger);
         const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
         const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
             tenantId,
             undefined,
             this.tokenProvider,
-            logger2,
+            telemetryLogger,
             rateLimiter,
             this.driverPolicies.enableRestLess,
             resolvedUrl.endpoints.ordererUrl,
@@ -147,19 +151,27 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 `Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
 
-        const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
+        const telemetryLogger = this.getTelemetryLogger(logger);
 
         return new DocumentService(
             fluidResolvedUrl,
             ordererUrl,
             deltaStorageUrl,
             storageUrl,
-            logger2,
+            telemetryLogger,
             this.tokenProvider,
             tenantId,
             documentId,
             this.driverPolicies,
             this.blobCache,
             this.snapshotTreeCache);
+    }
+
+    private getTelemetryLogger(baseLogger?: ITelemetryBaseLogger): TelemetryLogger {
+        if (baseLogger === undefined || this.driverPolicies.telemetrySampling === undefined) {
+            return ChildLogger.create(baseLogger, telemetryNamespace);
+        }
+        const samplingLogger = new SamplingLoggerAdapter(baseLogger, this.driverPolicies.telemetrySampling);
+        return ChildLogger.create(samplingLogger, telemetryNamespace);
     }
 }

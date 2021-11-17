@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { EventSampleRate } from "./telemetry";
+
 export interface IRouterliciousDriverPolicies {
     /**
      * Enable prefetching entire snapshot tree into memory before it is loaded by the runtime.
@@ -37,4 +39,9 @@ export interface IRouterliciousDriverPolicies {
      * Default: false
      */
     enableRestLess: boolean;
+    /**
+     * Configure if/how telemetry events from the RouterliciousDriver are sampled.
+     * Default: undefined
+     */
+    telemetrySampling: EventSampleRate[] | undefined;
 }
