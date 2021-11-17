@@ -430,9 +430,9 @@ export interface IPendingMessage {
 // @public (undocumented)
 export type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IProvideSummarizer {
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly ISummarizer: ISummarizer;
 }
 
@@ -483,11 +483,11 @@ export interface ISummarizeOptions {
     readonly refreshLatestAck?: boolean;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const ISummarizer: keyof IProvideSummarizer;
 
 // @public (undocumented)
-export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidLoadable {
+export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidLoadable, Partial<IProvideSummarizer> {
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     // (undocumented)
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;

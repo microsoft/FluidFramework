@@ -128,14 +128,7 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
      */
     public dispose(): void {
         this._disposed = true;
-        const disposable = this.internal as Partial<IDisposable>;
-        if (disposable.dispose !== undefined)
-        {
-            disposable.dispose();
-        } else {
-            // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
-            this.internal.close();
-        }
+        this.internal.dispose();
     }
 
     public injectNack(docId: string, canRetry: boolean | undefined) {

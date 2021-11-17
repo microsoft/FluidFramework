@@ -7,8 +7,6 @@ import { default as AbortController } from "abort-controller";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     assert,
-    stringToBuffer,
-    bufferToString,
     delay,
 } from "@fluidframework/common-utils";
 import {
@@ -318,14 +316,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (!this.attributesBlobHandles.has(blobId)) {
             return blob;
         }
-        // ODSP document ids are random guids (different per session)
-        // fix the branch name in attributes
-        // this prevents issues when generating summaries
-        const documentAttributes: api.IDocumentAttributes = JSON.parse(bufferToString(blob, "utf8"));
-        documentAttributes.branch = this.documentId;
-        const content = JSON.stringify(documentAttributes);
-        const patchedBlob = stringToBuffer(content, "utf8");
-        return patchedBlob;
+        return blob;
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {

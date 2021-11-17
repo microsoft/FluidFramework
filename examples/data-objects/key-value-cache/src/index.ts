@@ -4,7 +4,6 @@
  */
 
 import {
-    IFluidObject,
     IFluidRouter,
     IRequest,
     IResponse,
@@ -41,12 +40,7 @@ export interface IKeyValue extends IProvideKeyValue {
     delete(key: string): boolean;
 }
 
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideKeyValue>> { }
-}
-
-class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
+class KeyValue implements IKeyValue, IFluidRouter {
     public static async load(runtime: IFluidDataStoreRuntime, _context: IFluidDataStoreContext, existing: boolean) {
         const kevValue = new KeyValue(runtime);
         await kevValue.initialize(existing);
