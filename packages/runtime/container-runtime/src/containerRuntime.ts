@@ -1581,12 +1581,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    public async createDataStore(pkg: string | string[]): Promise<IFluidRouter> {
-        return this._createDataStore(pkg, false /* isRoot */);
+    public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
+        return this.createDataStoreCore(pkg, false /* isRoot */, uuid());
     }
 
-    private async createRootDataStoreCore(pkg: string | string[], isRoot: boolean, id: string, props?: any) {
-        const fluidDataStore = await this._createDataStore(pkg, isRoot, id);
+    private async createDataStoreCore(pkg: string | string[], isRoot: boolean, id: string, props?: any) {
+        const fluidDataStore = await this._createDataStore(pkg, isRoot, id, props);
         if (isRoot) {
             fluidDataStore.attachGraph();
         }
@@ -1596,7 +1596,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IDataStore> {
         if (this.runtimeOptions.useDataStoreAliasing === true && this.attachState === AttachState.Attached) {
-            const dataStore = await this.createRootDataStoreCore(pkg, true /* isRoot */, uuid());
+            const dataStore = await this.createDataStore(pkg);
             const result = await dataStore.trySetAlias(rootDataStoreId);
             if (result) {
                 return dataStore;
@@ -1605,7 +1605,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        return this.createRootDataStoreCore(pkg, true /* isRoot */, rootDataStoreId);
+        return this.createDataStoreCore(pkg, true /* isRoot */, rootDataStoreId);
     }
 
     public createDetachedRootDataStore(
@@ -1626,7 +1626,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         isRoot = false,
     ): Promise<IDataStore> {
         if (this.runtimeOptions.useDataStoreAliasing === true && isRoot && this.attachState === AttachState.Attached) {
-            const dataStore = await this.createRootDataStoreCore(pkg, isRoot, uuid(), props);
+            const dataStore = await this.createDataStoreCore(pkg, isRoot, uuid(), props);
             const result = await dataStore.trySetAlias(id);
             if (result) {
                 return dataStore;
@@ -1635,7 +1635,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        return this.createRootDataStoreCore(pkg, isRoot, id, props);
+        return this.createDataStoreCore(pkg, isRoot, id, props);
     }
 
     private async _createDataStore(
