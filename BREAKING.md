@@ -14,6 +14,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
 - [OdspDocumentInfo type replaced with OdspFluidDataStoreLocator interface](#OdspDocumentInfo-type-replaced-with-OdspFluidDataStoreLocator-interface)
 - [close() removed from IDocumentDeltaConnection](#close-removed-from-IDocumentDeltaConnection)
+- [Removed bindToContext from IFluidDataStoreChannel](#Removed-bindToContext-from-IFluidDataStoreChannel)
 - [Remove `IOdspResolvedUrl.sharingLinkToRedeem` and use `IOdspResolvedUrl.shareLinkInfo` instead](#Remove-IOdspResolvedUrl.sharingLinkToRedeem-and-use-IOdspResolvedUrl.shareLinkInfo-instead)
 
 ### `chaincodePackage` removed from `Container`
@@ -21,6 +22,9 @@ The `chaincodePackage` property on `Container` was deprecated in 0.28, and has n
 
 ### `OdspDocumentInfo` type replaced with `OdspFluidDataStoreLocator` interface
 The `OdspDocumentInfo` type is removed from `odsp-driver` package. It is removed from `packages\drivers\odsp-driver\src\contractsPublic.ts` and replaced with `OdspFluidDataStoreLocator` interface as parameter in `OdspDriverUrlResolverForShareLink.createDocumentUrl()`. If there are any instances of `OdspDocumentInfo` type used, it can be simply replaced with `OdspFluidDataStoreLocator` interface.
+
+### Removed bindToContext from IFluidDataStoreChannel
+bindToContext in IFluidDataStoreChannel was deprecated in [0.50](#Deprecated-bindToContext-in-IFluidDataStoreChannel). This has now been removed.
 
 ### Remove `IOdspResolvedUrl.sharingLinkToRedeem` and use `IOdspResolvedUrl.shareLinkInfo` instead
 The `sharingLinkToRedeem` property is removed from the `IOdspResolvedUrl` interface. The property can be accesed from `IOdspResolvedUrl.shareLinkInfo` instead.

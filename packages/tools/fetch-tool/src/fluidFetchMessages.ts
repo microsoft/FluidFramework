@@ -164,7 +164,7 @@ async function* loadAllSequencedMessages(
         timeStart = Date.now();
         const deltaStream = await documentService.connectToDeltaStream(client);
         const initialMessages = deltaStream.initialMessages;
-        deltaStream.close();
+        deltaStream.dispose();
         console.log(`${Math.floor((Date.now() - timeStart) / 1000)} seconds to connect to web socket`);
 
         if (initialMessages) {
