@@ -215,7 +215,7 @@ const getFluidContainer = async (url : URLSearchParams) => {
 1. Replace `TODO 5` with the following code. Now that you've defined how to get the Fluid container, you need to tell React to call `getFluidContainer` on load, and then store the result in state based on if the application is inside Teams.
 React's [useState hook](https://reactjs.org/docs/hooks-state.html) will provide the storage needed, and [useEffect](https://reactjs.org/docs/hooks-effect.html) will allow you to call `getFluidContainer` on render, passing the returned value into `setFluidContainer`.
 
-By adding `inTeams` in the dependency array at the end of the `useEffect`, the app ensure that this function only gets called on content page load.
+By adding `inTeams` in the dependency array at the end of the `useEffect`, the app ensures that this function only gets called on content page load.
 
 ```ts
 useEffect(() => {
