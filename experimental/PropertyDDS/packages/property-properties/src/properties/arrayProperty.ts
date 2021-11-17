@@ -21,10 +21,9 @@ import {
 import { constants } from '@fluid-experimental/property-common';
 import { LazyLoadedProperties as Property } from './lazyLoadedProperties';
 import { UniversalDataArray, ConsoleUtils } from '@fluid-experimental/property-common';
-import fastestJSONCopy from 'fastest-json-copy'
+import { copy as deepCopy } from 'fastest-json-copy'
 import { validationsEnabled } from '../enableValidations';
 
-const deepCopy = fastestJSONCopy.copy;
 const { MSG } = constants;
 
 type PrintFunction = (x: any) => void;
@@ -151,7 +150,7 @@ interface IArrayPropertyParams extends IBasePropertyParams {
 }
 
 export class ArrayProperty extends AbstractStaticCollectionProperty {
-    private _isPrimitive: any;
+    protected _isPrimitive: any;
     _scope: string;
     _dataArrayRef: UniversalDataArray;
     _staticChildren = {};

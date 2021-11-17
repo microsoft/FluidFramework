@@ -2,41 +2,63 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview
  * Declaration of the PropertyTemplate module
  * PropertyTemplate is used to describe a static property
  */
-const _ = require('lodash');
-const { TypeIdHelper } = require('@fluid-experimental/property-changeset');
-const fastestJSONCopy = require('fastest-json-copy');
-const deepCopy = fastestJSONCopy.copy;
-const { ConsoleUtils } = require('@fluid-experimental/property-common');
-const { MSG } = require('@fluid-experimental/property-common').constants;
+
+import _ from 'lodash';
+import { TypeIdHelper } from '@fluid-experimental/property-changeset';
+import { copy as deepCopy } from 'fastest-json-copy';
+import { ConsoleUtils } from '@fluid-experimental/property-common';
+import { constants } from '@fluid-experimental/property-common';
+
+const { MSG } = constants;
+
+type TypedValue = { typeid?: string }
+
+type Constant = {
+    contextKeyType: string
+    context: string
+    value: object
+    typedValue: TypedValue | TypedValue[]
+}
+
+type TemplateLike = {
+    inherits?: string | string[],
+    properties?: TemplateLike[]
+    constants?: Constant[]
+}
+
+type TemplateParameters = {
+    id: string,
+    name: string,
+    typeid: string,
+    length?: number,
+    context: string,
+    properties: PropertyTemplate[],
+    constants: PropertyTemplate[] | Constant[],
+    inherits: string | string[],
+    annotation?: object
+}
 
 export class PropertyTemplate {
-    /**
-     * Constructor for creating a PropertyTemplate based on the given parameters.
-     * @param {object} in_params List of parameters
-     * @param {string} in_params.id id of the property
-     * @param {string} in_params.name Name of the property
-     * @param {string} in_params.typeid The type identifier
-     * @param {number=} [in_params.length=1] The length of the property. Only valid if
-     *   the property is an array, otherwise the length defaults to 1
-     * @param {string} in_params.context The type of property this template represents
-     *   i.e. array, hash, etc.
-     * @param {Array.<object>} in_params.properties List of property templates that
-     *   are used to define children properties
-     * @param {Array.<object>} in_params.constants List of property templates that
-     *   are used to define constant properties and their values
-     * @param {Array.<string>} in_params.inherits List of property template typeids that this
-     *   PropertyTemplate inherits from
-     *
-     * @constructor
-     * @protected
-     * @category Properties
-     */
-    constructor(in_params = {}) {
+    id: string;
+    typeid: string;
+    typedValue?: TypedValue[];
+    value?: string;
+    length: number;
+    context: string;
+    properties: PropertyTemplate[];
+    annotation?: object;
+    constants?: PropertyTemplate[] | Constant[];
+    inherits: string[];
+    _enumDictionary: { enumEntriesById: {}; enumEntriesByValue: {}; defaultValue: any; };
+    _serializedParams: TemplateParameters;
+
+    constructor(in_params: TemplateParameters) {
         let params = deepCopy(in_params);
         /** The identifier of the property */
         this.id = params.id;
@@ -87,18 +109,19 @@ export class PropertyTemplate {
     };
 
     /**
-     * internal function to recursivly traverse a property template and create dictionaries for found inline enums
-     * @param {{}} in_currentPropertyLevel the current level in the template hierarchie
+     * internal function to recursively traverse a property template and create dictionaries for found inline enums
+     * @param in_currentPropertyLevel - the current level in the template hierarchy
      */
-    _digestNestedInlineEnumProperties(in_currentPropertyLevel) {
+    _digestNestedInlineEnumProperties(in_currentPropertyLevel: PropertyTemplate) {
         if (in_currentPropertyLevel.properties) {
             for (var i = 0; i < in_currentPropertyLevel.properties.length; i++) {
-                if (in_currentPropertyLevel.properties[i].typeid === 'Enum') {
-                    var dictionary = this._parseEnums(in_currentPropertyLevel.properties[i].properties);
-                    in_currentPropertyLevel.properties[i]._enumDictionary = dictionary;
-                } else if (in_currentPropertyLevel.properties[i].properties) {
+                const currentProp = in_currentPropertyLevel.properties[i];
+                if (currentProp.typeid === 'Enum') {
+                    var dictionary = this._parseEnums(currentProp.properties);
+                    currentProp._enumDictionary = dictionary;
+                } else if (currentProp.properties) {
                     // call self
-                    this._digestNestedInlineEnumProperties(in_currentPropertyLevel.properties[i]);
+                    this._digestNestedInlineEnumProperties(currentProp);
                 }
             }
         }
@@ -110,7 +133,7 @@ export class PropertyTemplate {
      * @param {Array} in_enumProperties - the list of enums and their values and annotations
      * @return {{}} a dictionary [value->enum] and [enum->value]
      */
-    _parseEnums(in_enumProperties) {
+    _parseEnums(in_enumProperties: PropertyTemplate[]) {
         var enumDictionary = { enumEntriesById: {}, enumEntriesByValue: {}, defaultValue: undefined };
         var minValue;
         if (in_enumProperties.length !== 0) {
@@ -138,18 +161,18 @@ export class PropertyTemplate {
     /**
      * Clones the PropertyTemplate
      *
-     * @return {property-properties.PropertyTemplate} The cloned template
+     * @returns The cloned template
      */
-    clone() {
+    clone(): PropertyTemplate {
         return new PropertyTemplate(deepCopy(this._serializedParams));
     };
 
     /**
      * Method used to check whether the template is versioned.
      * A versioned template is of the form `xxxx-1.0.0`
-     * @return {boolean} Returns true if the template is versioned, false otherwise
+     * @returns Returns true if the template is versioned, false otherwise
      */
-    _isVersioned() {
+    _isVersioned(): boolean {
         var splitTypeId = TypeIdHelper.extractVersion(this.typeid);
 
         if (!splitTypeId.version) {
@@ -163,9 +186,9 @@ export class PropertyTemplate {
 
     /**
      * Return the version number of the template.
-     * @return {string} The version string is returned.
+     * @returns The version string is returned.
      */
-    getVersion() {
+    getVersion(): string {
         if (this._isVersioned()) {
             var splitTypeId = TypeIdHelper.extractVersion(this.typeid);
             var version = splitTypeId.version;
@@ -184,34 +207,30 @@ export class PropertyTemplate {
      * for 'inherits' property is converted to single-value array
      * Deep copy an object.
      *
-     * @param {*}             in_obj               - the object to create a canonical copy of.
-     * @param {Object|Array} [in_target_]          - copy into this object.
-     * @param {string}       [in_key_]             - key in in_target_ at which to place
-     *                                               the copied object.
-     * @param {boolean}      [in_preserve_ = false] - do not overwrite structs / arrays in
-     *                                               in an existing object
+     * @param in_obj - the object to create a canonical copy of.
+     * @param in_target - copy into this object.
+     * @param in_key - key in in_target at which to place the copied object.
+     * @param in_preserve- do not overwrite structs / arrays in an existing object
      *
-     * @return {*} in_target_ if specified, new object containing canonical copy of @obj
+     * @returns in_target if specified, new object containing canonical copy of @obj
      * otherwise.
-     * @return {string} The version string is returned.
+     * @returns The version string is returned.
      */
-    _canonicalForm(in_obj, in_target_, in_key_, in_preserve_) {
-
-        in_preserve_ = in_preserve_ === undefined ? false : in_preserve_;
+    _canonicalForm(in_obj: object, in_target?: object, in_key?: string, in_preserve = false): string | object {
 
         var target, copyMembers;
         var copyDirectlyIntoKey = false;
-        if (in_target_ && (in_key_ === undefined ||
-            (in_key_ &&
-                in_target_.hasOwnProperty(in_key_) &&
-                _.isObject(in_target_[in_key_]) &&
-                in_preserve_))) {
+        if (in_target && (in_key === undefined ||
+            (in_key &&
+                in_target.hasOwnProperty(in_key) &&
+                _.isObject(in_target[in_key]) &&
+                in_preserve))) {
             // If no key is given, we directly copy into the
             // target object. Additionally, when a key is given, the member already exists
             // in the target object and preserve is set, we also keep the target object.
             // This is only possible if the target is already an
             // object.
-            target = in_key_ ? in_target_[in_key_] : in_target_;
+            target = in_key ? in_target[in_key] : in_target;
 
             if (_.isFunction(in_obj) ||
                 _.isDate(in_obj) ||
@@ -259,7 +278,7 @@ export class PropertyTemplate {
             var l = keys.length;
             for (var i = 0; i < l; i++) {
                 var key = keys[i];
-                this._canonicalForm(in_obj[key], target, key, in_preserve_);
+                this._canonicalForm(in_obj[key], target, key, in_preserve);
             }
 
             // If context is array and length is absent set it to 0
@@ -273,22 +292,22 @@ export class PropertyTemplate {
             }
         }
 
-        if (!in_key_) {
+        if (!in_key) {
             // If you don't give a path, then we return the original or copied object
             return target;
         } else if (!copyDirectlyIntoKey) {
             // If you give a path, we use the path as a key.
-            in_target_[in_key_] = target;
+            in_target[in_key] = target;
         }
 
-        return in_target_;
+        return in_target;
     };
 
     /**
      * Return the serialized parameters passed in the constructor
-     * @return {object} Serialized parameters
+     * @returns serialized parameters
      */
-    serialize() {
+    serialize(): TemplateParameters {
         return deepCopy(this._serializedParams);
     };
 
@@ -303,10 +322,10 @@ export class PropertyTemplate {
     /**
      * Return the typeid of the template without the version number
      * i.e. autodesk.core:color instead of autodesk.core:color-1.0.0
-     * @return {string} The typeid without the version is returned.
+     * @returns The typeid without the version is returned.
      * If the template is not versioned, the typeid is return.
      */
-    getTypeidWithoutVersion() {
+    getTypeidWithoutVersion(): string {
         if (this._isVersioned()) {
             var splitTypeId = TypeIdHelper.extractVersion(this.typeid);
             return splitTypeId.typeidWithoutVersion;
@@ -318,12 +337,11 @@ export class PropertyTemplate {
     /**
       * Determines if the argument is a template structure
       *
-      * @public
-      * @param {object} in_param parameter to assess
+      * @param in_param - parameter to assess
       *
-      * @return {Boolean} returns true if in_param is a template
+      * @returns returns true if in_param is a template
       */
-    static isTemplate(in_param) {
+    static isTemplate(in_param): in_param is PropertyTemplate {
         if (in_param.typeid && in_param.typeid.indexOf(':') !== -1) {
             return true;
         }
@@ -333,12 +351,11 @@ export class PropertyTemplate {
     /**
     * Extracts typeids directly referred to in a template
     *
-    * @public
-    * @param {object} template structure from which to extract dependencies
+    * @param template - structure from which to extract dependencies
     *
-    * @return {Array} list of typeids this template refers directly to
+    * @returns list of typeids this template refers directly to
     */
-    static extractDependencies(template) {
+    static extractDependencies(template: PropertyTemplate | TemplateLike): string[] {
         var dependencies = {};
 
         if (template.inherits) {
@@ -392,7 +409,7 @@ export class PropertyTemplate {
                 // the context could be inherited and therefore missing, so we have to try them all.
                 if (constant.typedValue) {
                     // for arrays
-                    if (_.isArray(constant.typedValue)) {
+                    if (Array.isArray(constant.typedValue)) {
                         for (var t = 0; t < constant.typedValue.length; t++) {
                             var typedValue = constant.typedValue[t];
                             dependencies[typedValue.typeid] = true;
