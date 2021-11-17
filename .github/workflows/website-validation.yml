@@ -34,7 +34,7 @@ jobs:
         path: docs/public
         retention-days: 3
 
-  broken_link_check_internal:
+  broken_link_check:
     runs-on: ubuntu-latest
     name: 🔗 Broken Link Check
     needs: build_site
@@ -61,7 +61,7 @@ jobs:
         npm ci
     - name: Start server in background
       run: pm2 start $GITHUB_WORKSPACE/docs/serve.js
-    - name: Check internal links
+    - name: Check for broken links
       id: linkcheck
       continue-on-error: true
       run: |
