@@ -720,6 +720,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             storage,
         );
 
+        // logging hardware telemetry
+        logger.sendTelemetryEvent({
+            eventName:"hardware",
+            deviceMemory: navigator.deviceMemory,
+            hardwareConcurrency: navigator.hardwareConcurrency,
+        });
         return runtime;
     }
 
