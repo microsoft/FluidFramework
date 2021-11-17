@@ -1288,7 +1288,10 @@ export abstract class BaseProperty {
 
 export namespace BaseProperty {
 
-    export type PathResolutionOptions = { referenceResolutionMode?: BaseProperty.REFERENCE_RESOLUTION }
+    export type PathResolutionOptions = {
+        /** How should this function behave during reference resolution? */
+        referenceResolutionMode?: BaseProperty.REFERENCE_RESOLUTION
+    }
 
     export type PathFilteringOptions = {
         basePath: string,

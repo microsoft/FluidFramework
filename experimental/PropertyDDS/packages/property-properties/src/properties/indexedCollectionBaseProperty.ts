@@ -33,7 +33,7 @@ export class IndexedCollectionBaseProperty<T extends BaseProperty = BaseProperty
 
     private _pendingChanges: SerializedChangeSet;
     private _dirtyChanges: SerializedChangeSet;
-    _dynamicChildren: Record<string, BaseProperty>;
+    _dynamicChildren: Record<string, T>;
     /** Specifies, whether this is a collection of base types or of registered templates */
     _containsPrimitiveTypes = false;
 
