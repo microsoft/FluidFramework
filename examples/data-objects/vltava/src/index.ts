@@ -8,7 +8,7 @@ import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { Spaces } from "@fluid-example/spaces";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { FluidObjectKeys } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     setupLastEditedTrackerForContainer,
@@ -27,6 +27,7 @@ import {
     TabsFluidObject,
 } from "./fluidObjects";
 import {
+    DefaultRegistryTypes,
     IFluidObjectInternalRegistry,
     IInternalRegistryEntry,
 } from "./interfaces";
@@ -51,12 +52,13 @@ export class InternalRegistry implements IFluidDataStoreRegistry, IFluidObjectIn
         return undefined;
     }
 
-    public getFromCapability(capability: keyof IFluidObject): IInternalRegistryEntry[] {
+    public getFromCapability(capability: FluidObjectKeys<DefaultRegistryTypes>):
+    IInternalRegistryEntry[] {
         return this.containerFluidObjectArray.filter(
             (fluidObjectDetails) => fluidObjectDetails.capabilities.includes(capability));
     }
 
-    public hasCapability(type: string, capability: keyof IFluidObject) {
+    public hasCapability(type: string, capability: FluidObjectKeys<DefaultRegistryTypes>) {
         const index = this.containerFluidObjectArray.findIndex(
             (containerFluidObject) => type === containerFluidObject.factory.type,
         );

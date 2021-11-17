@@ -26,7 +26,7 @@ import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IContainerRuntime: keyof IProvideContainerRuntime;
 
 // @public (undocumented)
@@ -76,9 +76,9 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     (event: "localHelp", listener: (message: IHelpMessage) => void): any;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IProvideContainerRuntime {
-    // (undocumented)
+    // @deprecated (undocumented)
     IContainerRuntime: IContainerRuntime;
 }
 
