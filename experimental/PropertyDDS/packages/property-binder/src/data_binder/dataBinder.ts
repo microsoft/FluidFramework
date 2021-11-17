@@ -211,7 +211,7 @@ export class DataBinder {
      * Constructor for the DataBinder.
      * @param - The PropertyTree to bind to.
      */
-    constructor(propertyTree: SharedPropertyTree) {
+    constructor(propertyTree?: SharedPropertyTree) {
 
         this._dataBinderId = _dataBinderId++;
 
@@ -2472,7 +2472,7 @@ export class DataBinder {
      *
      * @public
      */
-    getRepresentation(property: BaseProperty, bindingType: string): any | undefined {
+    getRepresentation<T>(property: BaseProperty, bindingType: string): T | undefined {
         if (!this.isAttached()) {
             // Nice try
             throw new Error('Calling getRepresentation when not attached to a workspace');
@@ -2501,7 +2501,7 @@ export class DataBinder {
      *
      * @public
      */
-    getRepresentationAtPath(path: string, bindingType: string): any | undefined {
+    getRepresentationAtPath<T>(path: string, bindingType: string): T | undefined {
         if (!this.isAttached()) {
             // Nice try
             throw new Error('Calling getRepresentationAtPath when not attached to a workspace');

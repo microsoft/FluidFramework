@@ -1642,7 +1642,7 @@ export class DataBinding {
      *
      * @throws If the property associated with this DataBinding does not exist anymore (e.g. in onRemove() callbacks)
      */
-    getRepresentation(in_bindingType: string | undefined = undefined): any | undefined {
+    getRepresentation<T>(in_bindingType: string | undefined = undefined): T | undefined {
         return this.getDataBinder().getRepresentation(this.getProperty()!, in_bindingType || this.getDataBindingType());
     }
 
