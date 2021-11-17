@@ -8,7 +8,6 @@ import { strict as assert } from "assert";
 import {
     IRequest,
     IResponse,
-    IFluidObject,
     IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -28,7 +27,7 @@ class MockRuntime {
             const router: any = {
                 request: async (request: IRequest) => {
                     if (request.url === "" || request.url === "/route") {
-                        return createFluidObjectResponse({ route: request.url } as IFluidObject);
+                        return createFluidObjectResponse({ route: request.url });
                     }
                     return create404Response(request);
                 },

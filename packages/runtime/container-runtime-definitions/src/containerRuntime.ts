@@ -16,6 +16,7 @@ import {
     IFluidObject,
     IFluidRouter,
     IFluidCodeDetails,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -85,7 +86,7 @@ export interface IContainerRuntime extends
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     readonly flushMode: FlushMode;
-    readonly scope: IFluidObject;
+    readonly scope: IFluidObject & FluidObject;
     /**
      * Indicates the attachment state of the container to a host service.
      */

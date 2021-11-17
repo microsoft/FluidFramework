@@ -8,6 +8,7 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
 import { EventEmitter } from 'events';
 import { FluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
@@ -142,7 +143,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get IFluidTokenProvider(): IFluidTokenProvider | undefined;
     get isDirty(): boolean;
-    static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: IFluidObject, existing?: boolean): Promise<ContainerRuntime>;
+    static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
@@ -163,7 +164,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // @internal @deprecated (undocumented)
     readonly runtimeVersion: string;
     // (undocumented)
-    get scope(): IFluidObject;
+    get scope(): IFluidObject & FluidObject;
     // (undocumented)
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     // (undocumented)

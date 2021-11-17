@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IFluidRouter } from "@fluidframework/core-interfaces";
+import { IRequest, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import {
     FluidDataStoreRuntime,
     ISharedObjectRegistry,
@@ -26,6 +26,7 @@ import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
     FluidObjectSymbolProvider,
     DependencyContainer,
+    IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 
 import {
@@ -77,7 +78,8 @@ async function createDataObject<TObj extends PureDataObject<O, S, E>, O, S, E ex
     // becomes globally available. But it's not full initialization - constructor can't
     // access DDSs or other services of runtime as objects are not fully initialized.
     // In order to use object, we need to go through full initialization by calling finishInitialization().
-    const dependencyContainer = new DependencyContainer(context.scope.IFluidDependencySynthesizer);
+    const scope: FluidObject<IFluidDependencySynthesizer> = context.scope;
+    const dependencyContainer = new DependencyContainer(scope.IFluidDependencySynthesizer);
     const providers = dependencyContainer.synthesize<O>(optionalProviders, {});
     const instance = new ctor({ runtime, context, providers, initProps });
 
