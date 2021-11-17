@@ -223,8 +223,6 @@ The site theme/template lives in `themes/thxvscode`.
 | `install:ditaa:force` | Install ditaa to generate diagrams. |
 | `install:ditaa:win32` | --- |
 | `linkcheck` | `npm run linkcheck:site` |
-| `linkcheck:api` | Runs a broken link check against <http://localhost:1313>, including the /apis path. |
-| `linkcheck:site` | Runs a broken link check against <http://localhost:1313>. Does not scan the /apis path. |
 | `lint` | `markdownlint-cli2` |
 | `lint:fix` | `markdownlint-cli2-fix` |
 | `postinstall` | --- |

@@ -18,14 +18,15 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: false
-    - uses: actions/setup-node@v2-beta
+    - uses: actions/setup-node@v2
       with:
         node-version: "12"
+        cache: "npm"
+        cache-dependency-path: docs/package-lock.json
     - name: Build site artifact
       run: |
         npm ci
-        npm run download
-        npm run build
+        npm run ci:build
     - name: Upload site artifact
       uses: actions/upload-artifact@v2
       with:
@@ -41,9 +42,11 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: false
-    - uses: actions/setup-node@v2-beta
+    - uses: actions/setup-node@v2
       with:
         node-version: "12"
+        cache: "npm"
+        cache-dependency-path: docs/package-lock.json
     - name: Create results folder
       run: mkdir -p ./results
 

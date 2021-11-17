@@ -17,6 +17,7 @@
     "build:diagrams": "concurrently \"node ditaa.js content/**/*.ditaa\" \"node ditaa.js static/images/*.ditaa\"",
     "build:fast": "npm run build:api-rollup && concurrently npm:build:md-magic npm:build:api-documenter && npm run hugo",
     "build:md-magic": "node md.js",
+    "ci:build": "npm run download && npm run build",
     "clean": "rimraf public/** content/docs/apis/**",
     "ditaa": "run-script-os",
     "ditaa:default": "\"./bin/ditaa\"",
@@ -29,7 +30,8 @@
     "install:ditaa:default": "[ ! -f bin/ditaa ] && npm run install:ditaa:force ; exit 0",
     "install:ditaa:force": "binstall install -n ditaa -d bin",
     "install:ditaa:win32": "if not exist bin/ditaa.exe npm run install:ditaa:force",
-    "linkcheck": "linkcheck http://localhost:1313 --skip-file expected-broken-links.txt",
+    "linkcheck": "npm run linkcheck:fast -- --external",
+    "linkcheck:fast": "linkcheck http://localhost:1313 --skip-file expected-broken-links.txt",
     "lint": "markdownlint-cli2",
     "lint:fix": "markdownlint-cli2-fix",
     "start": "npm run build:md-magic && hugo server"
