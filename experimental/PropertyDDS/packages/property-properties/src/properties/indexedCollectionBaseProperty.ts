@@ -7,7 +7,7 @@
  * @fileoverview Abstract base class for indexed collections (sets and maps)
  */
 import _ from 'lodash';
-import { BaseProperty } from './baseProperty';
+import { BaseProperty, IBasePropertyParams } from './baseProperty';
 import { AbstractStaticCollectionProperty } from './abstractStaticCollectionProperty';
 import { deserialize } from '../containerSerializer';
 import { ChangeSet, SerializedChangeSet } from '@fluid-experimental/property-changeset';
@@ -28,17 +28,17 @@ const { MSG } = constants;
  * A IndexedCollectionBaseProperty is the base class for indexed collections (maps and sets). It should not be used
  * directly.
  */
-export class IndexedCollectionBaseProperty extends AbstractStaticCollectionProperty {
+export class IndexedCollectionBaseProperty<T extends BaseProperty = BaseProperty>
+    extends AbstractStaticCollectionProperty {
 
     private _pendingChanges: SerializedChangeSet;
     private _dirtyChanges: SerializedChangeSet;
     _dynamicChildren: Record<string, BaseProperty>;
-    /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     */
-    constructor(in_params) {
+    /** Specifies, whether this is a collection of base types or of registered templates */
+    _containsPrimitiveTypes = false;
+
+
+    constructor(in_params: IBasePropertyParams) {
         super(in_params);
         /** Stores the pending changes in the property (those that are part of the current ChangeSet) */
         this._pendingChanges = {
@@ -55,18 +55,12 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
         };
     };
 
-
-    /** Specifies, whether this is a collection of base types or of registered templates */
-    _containsPrimitiveTypes = false;
-
     /**
      * Removes the dirtiness flag from this property
      *
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean, if none are supplied all
-     *                                                                       will be removed
-     * @private
+     * @param in_flags - The flags to clean, if none are supplied all
      */
-    _cleanDirty(in_flags) {
+    _cleanDirty(in_flags?: BaseProperty.MODIFIED_STATE_FLAGS) {
         // Invoke parent
         BaseProperty.prototype._cleanDirty.call(this, in_flags);
 
@@ -90,19 +84,17 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * Removes the dirtiness flag from this property and recursively from all of its children
      *
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean, if none are supplied all
+     * @param in_flags - The flags to clean, if none are supplied all
      *                                                                       will be removed
      */
-    cleanDirty(in_flags) {
-        in_flags = in_flags !== undefined ? in_flags : BaseProperty.MODIFIED_STATE_FLAGS.DIRTY |
-            BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE;
+    cleanDirty(in_flags: BaseProperty.MODIFIED_STATE_FLAGS =
+        BaseProperty.MODIFIED_STATE_FLAGS.DIRTY | BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE) {
 
         // Clean all entries inside of the collection
         let cleanDirtiness = (collection) => {
-            var entry;
 
             for (let key in collection) {
-                entry = this._dynamicChildren[key];
+                const entry = this._dynamicChildren[key];
                 if (entry._isDirty(in_flags)) {
                     entry.cleanDirty(in_flags);
                 }
@@ -136,15 +128,12 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * Inserts a property into the collection
      *
-     * @param {string}                                                 in_key      -
-     *     Key of the entry in the collection
-     * @param {property-properties.IndexedCollectionBaseProperty~ValueType}  in_value    -
-     *     The value to insert
-     * @param {boolean}                                                in_reportToView -
-     *     By default, the dirtying will always be reported to the checkout view and trigger a modified event there.
-     *     When batching updates, this can be prevented via this flag.
+     * @param in_key - Key of the entry in the collection
+     * @param in_value - The value to insert
+     * @param in_reportToView - By default, the dirtying will always be reported to the checkout view and trigger a
+     *                          modified event there. When batching updates, this can be prevented via this flag.
      */
-    _insert(in_key, in_value, in_reportToView) {
+    _insert(in_key: string, in_value: T, in_reportToView: boolean) {
         if (validationsEnabled.enabled) {
             this._checkIsNotReadOnly(false);
         }
@@ -246,24 +235,22 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * Serialize the property
      *
-     * @param {boolean} in_dirtyOnly -
-     *     Only include dirty entries in the serialization
-     * @param {boolean} in_includeRootTypeid -
-     *     Include the typeid of the root of the hierarchy
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
-     *     The type of dirtiness to use when reporting dirty changes. By default this is
-     *     PENDING_CHANGE
-     * @param {boolean} [in_includeReferencedRepositories=false] - If this is set to true, the serialize
+     * @param in_dirtyOnly - Only include dirty entries in the serialization
+     * @param in_includeRootTypeid - Include the typeid of the root of the hierarchy
+     * @param  in_dirtinessType - The type of dirtiness to use when reporting dirty changes.
+     * @param in_includeReferencedRepositories - If this is set to true, the serialize
      *     function will descend into referenced repositories. WARNING: if there are loops in the references
      *     this can result in an infinite loop
      *
-     * @return {Object} The serialized representation of this property
+     * @returns The serialized representation of this property
      * @private
      */
-    _serialize(in_dirtyOnly,
-        in_includeRootTypeid,
-        in_dirtinessType,
-        in_includeReferencedRepositories) {
+    _serialize(
+        in_dirtyOnly: boolean,
+        in_includeRootTypeid: boolean,
+        in_dirtinessType: BaseProperty.MODIFIED_STATE_FLAGS = BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE,
+        in_includeReferencedRepositories = false
+    ): object {
         var serialized = AbstractStaticCollectionProperty.prototype._serialize.call(this, in_dirtyOnly, in_includeRootTypeid,
             in_dirtinessType, in_includeReferencedRepositories);
 
@@ -355,9 +342,9 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
      * special treatment on deserialization. For supported types, we can just return the input here.
      *
      * @param in_serializedObj - The object to be deserialized
-     * @return {*} the deserialized value
+     * @returns the deserialized value
      */
-    _deserializeValue(in_serializedObj: SerializedChangeSet) {
+    _deserializeValue(in_serializedObj: SerializedChangeSet): SerializedChangeSet {
         return in_serializedObj;
     };
 
@@ -366,10 +353,10 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
      * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
      * special treatment on serialization. For supported types, we can just return the input here.
      *
-     * @param {*} in_obj - The object to be serialized
-     * @return {property-properties.SerializedChangeSet} the serialized object
+     * @param in_obj - The object to be serialized
+     * @returns the serialized object
      */
-    _serializeValue(in_obj) {
+    _serializeValue(in_obj: object): SerializedChangeSet {
         ConsoleUtils.assert(this._containsPrimitiveTypes, MSG.ASSERTION_FAILED +
             'Function IndexedCollectionBaseProperty._serializeValue() called on non-primitive collection');
         return in_obj;
@@ -379,8 +366,12 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
      * @inheritdoc
      */
     // eslint-disable-next-line complexity
-    _deserialize(in_serializedObj, in_reportToView,
-        in_filteringOptions, in_createChangeSet) {
+    _deserialize(
+        in_serializedObj: SerializedChangeSet,
+        in_reportToView: boolean,
+        in_filteringOptions: object,
+        in_createChangeSet: boolean
+    ): SerializedChangeSet {
 
         var currentEntries = this._dynamicChildren;
         var allInsertedKeys = {};
@@ -570,7 +561,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * @inheritdoc
      */
-    _applyChangeset(in_changeSet, in_reportToView) {
+    _applyChangeset(in_changeSet: SerializedChangeSet, in_reportToView: boolean) {
         BaseProperty.prototype._applyChangeset.call(this, in_changeSet, false);
 
         // Remove existing entries
@@ -676,7 +667,10 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * @inheritdoc
      */
-    _reapplyDirtyFlags(in_pendingChangeSet, in_dirtyChangeSet) {
+    _reapplyDirtyFlags(
+        in_pendingChangeSet: SerializedChangeSet,
+        in_dirtyChangeSet: SerializedChangeSet
+    ) {
         BaseProperty.prototype._reapplyDirtyFlags.call(this, in_pendingChangeSet, in_dirtyChangeSet);
 
         var i, j, types, keys, key;
@@ -739,7 +733,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * @inheritdoc
      */
-    _setDirty(in_reportToView, in_callingChild?) {
+    _setDirty(in_reportToView: boolean, in_callingChild?: BaseProperty) {
         // Mark the child as modified
         if (in_callingChild && !this._containsPrimitiveTypes) {
             var key = in_callingChild.getId();
