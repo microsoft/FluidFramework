@@ -36,6 +36,19 @@ describe("Class", () => {
         return typeData!;
     }
 
+    function checkIncrement(
+        project: Project,
+        pkgDir: string,
+        oldTypeData: DecompositionTypeData,
+        newTypeData: DecompositionTypeData,
+    ): BreakingIncrement {
+        let increment = checkMajorIncrement(project, pkgDir, oldTypeData, newTypeData);
+        if (increment === BreakingIncrement.none) {
+            increment = checkMinorIncrement(project, pkgDir, oldTypeData, newTypeData);
+        }
+        return increment;
+    }
+
     it("new method", () => {
         const classOld = `
 export class asdf {}
@@ -45,17 +58,14 @@ export class asdf {}
 
         const classNew = `
 export class asdf {
-    public qewr() { return false; }
+    public qwer() { return false; };
 }
 `;
         const newSourceFile = project.createSourceFile(`${pkgDir}/src/classNew.ts`, classNew);
         const newTypeData = getTypeDataForSource(newSourceFile);
 
-        let increment = checkMajorIncrement(project, pkgDir, oldTypeData, newTypeData);
+        let increment = checkIncrement(project, pkgDir, oldTypeData, newTypeData);
         assert(increment === BreakingIncrement.major);
-
-        increment = checkMinorIncrement(project, pkgDir, oldTypeData, newTypeData);
-        assert(increment == BreakingIncrement.none);
 
     }).timeout(10000);
 });
