@@ -11,6 +11,7 @@ import {
     IFluidHandle,
     IRequest,
     IResponse,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -283,7 +284,7 @@ export interface IFluidDataStoreContext extends
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IFluidObject;
+    readonly scope: IFluidObject & FluidObject;
 
     /**
      * Returns the current quorum.

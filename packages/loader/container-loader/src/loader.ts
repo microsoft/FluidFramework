@@ -6,8 +6,8 @@
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    FluidObject,
     IFluidCodeDetails,
-    IFluidObject,
     IFluidRouter,
     IProvideFluidCodeDetailsComparer,
     IRequest,
@@ -184,7 +184,7 @@ export interface ILoaderProps {
      * Scope is provided to all container and is a set of shared
      * services for container's to integrate with their host environment.
      */
-    readonly scope?: IFluidObject;
+    readonly scope?: FluidObject;
 
     /**
      * Proxy loader factories for loading containers via proxy in other contexts,
@@ -235,7 +235,7 @@ export interface ILoaderServices {
      * Scope is provided to all container and is a set of shared
      * services for container's to integrate with their host environment.
      */
-    readonly scope: IFluidObject;
+    readonly scope: FluidObject;
 
     /**
      * Proxy loader factories for loading containers via proxy in other contexts,
@@ -275,10 +275,10 @@ export class Loader implements IHostLoader {
     private readonly logger: ITelemetryLogger;
 
     constructor(loaderProps: ILoaderProps) {
-        const scope = { ...loaderProps.scope };
-        if (loaderProps.options?.provideScopeLoader !== false) {
-            scope.ILoader = this;
-        }
+        const scope: FluidObject<ILoader> = {
+            ...loaderProps.scope,
+            ILoader: loaderProps.options?.provideScopeLoader !== false ? this : undefined,
+        };
 
         this.services = {
             urlResolver: createCachedResolver(MultiUrlResolver.create(loaderProps.urlResolver)),

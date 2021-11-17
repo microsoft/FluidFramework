@@ -10,6 +10,7 @@ import {
     IRequest,
     IFluidHandle,
     IFluidLoadable,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -56,7 +57,7 @@ export const rootDataStoreRequestHandler = async (request: IRequest, runtime: IC
     }
 };
 
-export const createFluidObjectResponse = (fluidObject: IFluidObject) => {
+export const createFluidObjectResponse = (fluidObject: FluidObject) => {
     return { status: 200, mimeType: "fluid/object", value: fluidObject };
 };
 
