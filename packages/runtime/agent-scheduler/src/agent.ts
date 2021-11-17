@@ -66,7 +66,10 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IEventProvider<
 }
 
 declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends
-        Readonly<Partial<IProvideAgentScheduler>> { }
+    export interface IFluidObject{
+        /**
+         * @deprecated - use `FluidObject<IAgentScheduler>` instead
+         */
+        readonly IAgentScheduler?: IAgentScheduler;
+    }
 }

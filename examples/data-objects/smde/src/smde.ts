@@ -7,12 +7,13 @@ import { EventEmitter } from "events";
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 import {
-    IFluidObject,
+    FluidObject,
     IFluidLoadable,
     IFluidRouter,
     IRequest,
     IResponse,
     IFluidHandle,
+    IFluidConfiguration,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -200,7 +201,8 @@ export class Smde extends EventEmitter implements
 
     // TODO: this should be an utility.
     private isReadonly() {
-        const runtimeAsComponent = this.context.containerRuntime as IFluidObject;
+        const runtimeAsComponent =
+             this.context.containerRuntime as FluidObject<IFluidConfiguration>;
         const scopes = runtimeAsComponent.IFluidConfiguration?.scopes;
         return scopes !== undefined && !scopes.includes("doc:write");
     }

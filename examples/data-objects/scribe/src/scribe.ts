@@ -14,6 +14,7 @@ import {
     IResponse,
     IFluidHandle,
     IFluidCodeDetails,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { IContainerContext } from "@fluidframework/container-definitions";
@@ -210,9 +211,8 @@ function initialize(
             console.log(`Error downloading document ${error}`);
         });
     }
-
-    const documentFactory: IDocumentFactory | undefined = context.scope ?
-        context.scope.IDocumentFactory : undefined;
+    const maybeFactory: FluidObject<IDocumentFactory> | undefined = context.scope as FluidObject;
+    const documentFactory: IDocumentFactory | undefined = maybeFactory?.IDocumentFactory;
     if (documentFactory) {
         createButton.classList.remove("hidden");
     } else {

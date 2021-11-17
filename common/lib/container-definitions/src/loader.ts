@@ -202,7 +202,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 /**
  * The Runtime's view of the Loader, used for loading Containers
  */
-export interface ILoader extends IFluidRouter {
+export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
     /**
      * Resolves the resource specified by the URL + headers contained in the request object
      * to the underlying container that will resolve the request.
@@ -353,7 +353,7 @@ export interface ILoaderHeader {
     [LoaderHeader.version]: string | undefined;
 }
 
-interface IProvideLoader {
+export interface IProvideLoader {
     readonly ILoader: ILoader;
 }
 
@@ -361,8 +361,12 @@ declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<ILoaderHeader> { }
 
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideLoader>> { }
+    export interface IFluidObject  {
+        /**
+         * @deprecated - use `FluidObject<ILoader>` instead
+         */
+        readonly ILoader?: ILoader;
+    }
 }
 
 export interface IPendingLocalState {
