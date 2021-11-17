@@ -5,7 +5,7 @@
 
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    IFluidObject,
+    FluidObject,
     IRequest,
     IResponse,
     IFluidHandle,
@@ -212,7 +212,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         public readonly id: string,
         private readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
-        public readonly scope: IFluidObject,
+        public readonly scope: FluidObject | FluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private bindState: BindState,
         public readonly isLocalDataStore: boolean,
@@ -677,7 +677,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         private readonly initSnapshotValue: ISnapshotTree | string | undefined,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IFluidObject,
+        scope: FluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         pkg?: string[],
     ) {
@@ -794,7 +794,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         pkg: Readonly<string[]> | undefined,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IFluidObject,
+        scope: FluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
@@ -914,7 +914,7 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
         pkg: string[] | undefined,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IFluidObject & IFluidObject,
+        scope: FluidObject & FluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         snapshotTree: ISnapshotTree | undefined,
@@ -953,7 +953,7 @@ export class LocalDetachedFluidDataStoreContext
         pkg: Readonly<string[]>,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IFluidObject & IFluidObject,
+        scope: FluidObject & FluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         isRootDataStore: boolean,

@@ -6,6 +6,7 @@
 
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { EventEmitter } from 'events';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
@@ -169,7 +170,7 @@ export interface IContainerContext extends IDisposable {
     readonly quorum: IQuorum;
     // (undocumented)
     raiseContainerWarning(warning: ContainerWarning): void;
-    readonly scope: IFluidObject;
+    readonly scope: IFluidObject & FluidObject;
     // (undocumented)
     readonly serviceConfiguration: IClientConfiguration | undefined;
     // (undocumented)
@@ -327,7 +328,7 @@ export interface IFluidCodeResolver {
 // @public (undocumented)
 export interface IFluidModule {
     // (undocumented)
-    fluidExport: IFluidObject & Partial<Readonly<IProvideFluidCodeDetailsComparer>>;
+    fluidExport: IFluidObject & FluidObject<IRuntimeFactory & IProvideFluidCodeDetailsComparer>;
 }
 
 // @public @deprecated (undocumented)
