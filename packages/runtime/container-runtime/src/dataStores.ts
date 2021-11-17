@@ -220,7 +220,8 @@ export class DataStores implements IDisposable {
             throw responseToException(create404Response(request), request);
         }
 
-        this.aliasMap.set(aliasMessage.alias, aliasMessage.id);
+        this.aliasMap.set(aliasMessage.alias, currentId);
+        this.contexts.get(currentId)?.setRoot();
 
         return {
             suppliedInternalId: aliasMessage.id,
