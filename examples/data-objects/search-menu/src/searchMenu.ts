@@ -9,13 +9,6 @@ import { Cursor } from "./cursor";
 import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
 import * as ui from "./rectangle";
-
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject
-        extends Readonly<Partial<IProvideSearchMenuHost & ISearchMenuClient>> { }
-}
-
 export const ISearchMenuHost: keyof IProvideSearchMenuHost = "ISearchMenuHost";
 
 export interface IProvideSearchMenuHost {

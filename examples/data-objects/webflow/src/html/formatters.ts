@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { Caret as CaretUtil, Direction, Rect, TagName } from "@fluid-example/flow-util-lib";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { Marker, TextSegment } from "@fluidframework/merge-tree";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../document";
@@ -92,7 +92,7 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
                     : TagName.span);
 
             const viewFactory = layout.viewFactoryRegistry.get(marker.properties.view);
-            state.view = layout.doc.getComponentFromMarker(marker).then((component: IFluidObject) => {
+            state.view = layout.doc.getComponentFromMarker(marker).then((component: FluidObject) => {
                 if (viewFactory) {
                     // We found a view class registered for this marker's view type
                     const view = viewFactory.createView(component, layout.scope);
