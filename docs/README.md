@@ -211,6 +211,7 @@ The site theme/template lives in `themes/thxvscode`.
 | `build:diagrams` | Generate the diagram images using ditaa. |
 | `build:fast` | Builds the site in a fast, but incomplete way. Useful for testing and iteration. |
 | `build:md-magic` | Updates generated content in Markdown files. |
+| `ci:build` | `npm run download && npm run build` |
 | `clean` | Remove all generated files. |
 | `ditaa` | Run the local copy of ditaa. |
 | `ditaa:default` | --- |
@@ -223,6 +224,7 @@ The site theme/template lives in `themes/thxvscode`.
 | `install:ditaa:force` | Install ditaa to generate diagrams. |
 | `install:ditaa:win32` | --- |
 | `linkcheck` | `npm run linkcheck:site` |
+| `linkcheck:fast` | `linkcheck http://localhost:1313 --skip-file skipped-urls.txt` |
 | `lint` | `markdownlint-cli2` |
 | `lint:fix` | `markdownlint-cli2-fix` |
 | `postinstall` | --- |
