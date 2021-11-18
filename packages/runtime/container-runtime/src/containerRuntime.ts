@@ -860,19 +860,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         super();
         this.baseSummaryMessage = metadata?.message;
 
-        /**
-         * If this is a new container, we initialize these values. If it's an existing container,
-         * these values would stay undefined
-         */
-        this.createContainerMetadata.createContainerRuntimeVersion = existing
-            ? metadata?.createContainerRuntimeVersion
-            : pkgVersion;
-        this.createContainerMetadata.createContainerTimestamp = existing
-            ? metadata?.createContainerTimestamp
-            : performance.now();
-        this.createContainerMetadata.summaryCount = existing
-            ? metadata?.summaryCount
-            : 0;
+        // If this is a new container, we initialize these values. If it's an existing container,
+        // these values would stay undefined
+        if (existing) {
+            this.createContainerMetadata = {
+                createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
+                createContainerTimestamp: metadata?.createContainerTimestamp,
+                summaryCount: metadata?.summaryCount,
+            };
+        } else {
+            this.createContainerMetadata = {
+                createContainerRuntimeVersion: pkgVersion,
+                createContainerTimestamp: performance.now(),
+                summaryCount: 0,
+            };
+        }
 
         // Default to false (enabled).
         this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? false;
@@ -1792,6 +1794,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
         if (this.createContainerMetadata.summaryCount !== undefined) {
             this.createContainerMetadata.summaryCount++;
+        } else {
+            this.createContainerMetadata.summaryCount = 0;
         }
         const { fullTree, refreshLatestAck, summaryLogger } = options;
         if (refreshLatestAck) {
