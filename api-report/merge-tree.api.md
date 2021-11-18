@@ -1354,11 +1354,7 @@ export interface RBNodeActions<TKey, TData> {
 export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> {
     constructor(compareKeys: KeyComparer<TKey>, aug?: IRBAugmentation<TKey, TData> | undefined);
     // (undocumented)
-    aug?: IRBAugmentation<TKey, TData> | undefined;
-    // (undocumented)
     ceil(key: TKey): RBNode<TKey, TData> | undefined;
-    // (undocumented)
-    compareKeys: KeyComparer<TKey>;
     // (undocumented)
     contains(key: TKey): RBNode<TKey, TData> | undefined;
     // (undocumented)
@@ -1370,15 +1366,9 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     // (undocumented)
     get(key: TKey): RBNode<TKey, TData> | undefined;
     // (undocumented)
-    height(): number;
-    // (undocumented)
     isEmpty(): boolean;
     // (undocumented)
-    isRed(node: RBNode<TKey, TData> | undefined): boolean;
-    // (undocumented)
     keys(): TKey[];
-    // (undocumented)
-    makeNode(key: TKey, data: TData, color: RBColor, size: number): RBNode<TKey, TData>;
     // (undocumented)
     map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum): void;
     // (undocumented)
@@ -1387,28 +1377,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     max(): RBNode<TKey, TData> | undefined;
     // (undocumented)
     min(): RBNode<TKey, TData> | undefined;
-    // (undocumented)
-    nodeCeil(node: RBNode<TKey, TData> | undefined, key: TKey): RBNode<TKey, TData> | undefined;
-    // (undocumented)
-    nodeFloor(node: RBNode<TKey, TData> | undefined, key: TKey): RBNode<TKey, TData> | undefined;
-    // (undocumented)
-    nodeGet(node: RBNode<TKey, TData> | undefined, key: TKey): RBNode<TKey, TData> | undefined;
-    // (undocumented)
-    nodeHeight(node: RBNode<TKey, TData> | undefined): number;
-    // (undocumented)
-    nodePut(node: RBNode<TKey, TData> | undefined, key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>): RBNode<TKey, TData>;
-    // (undocumented)
-    nodeRemove(node: RBNode<TKey, TData>, key: TKey): RBNode<TKey, TData> | undefined;
-    // (undocumented)
-    nodeRemoveMax(node: RBNode<TKey, TData>): RBNode<TKey, TData> | undefined;
-    // (undocumented)
-    nodeRemoveMin(node: RBNode<TKey, TData>): RBNode<TKey, TData> | undefined;
-    // (undocumented)
-    nodeSize(node: RBNode<TKey, TData> | undefined): number;
-    // (undocumented)
-    nodeWalkExactMatchesBackward(node: RBNode<TKey, TData> | undefined, compareFn: (node: RBNode<TKey, TData>) => number, actionFn: (node: RBNode<TKey, TData>) => void, continueLeftFn: (cmp: number) => boolean, continueRightFn: (cmp: number) => boolean): void;
-    // (undocumented)
-    nodeWalkExactMatchesForward(node: RBNode<TKey, TData> | undefined, compareFn: (node: RBNode<TKey, TData>) => number, actionFn: (node: RBNode<TKey, TData>) => void, continueLeftFn: (number: number) => boolean, continueRightFn: (number: number) => boolean): void;
     // (undocumented)
     put(key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>): void;
     // (undocumented)
@@ -1421,8 +1389,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     removeMin(): void;
     // (undocumented)
     size(): number;
-    // (undocumented)
-    updateLocal(node: RBNode<TKey, TData>): void;
     walk(actions: RBNodeActions<TKey, TData>): void;
     // (undocumented)
     walkBackward(actions: RBNodeActions<TKey, TData>): void;
