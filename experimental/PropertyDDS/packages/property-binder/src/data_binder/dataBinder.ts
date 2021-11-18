@@ -36,15 +36,6 @@ export interface DataBindingDefinition {
 }
 
 /**
- * A binding built to hold all absolute path callbacks. One per databinder
- *
- * Note: For class internal use only
- */
-class AbsolutePathDataBinding extends DataBinding {
-    static __absolutePathInternalBinding: boolean;
-}
-
-/**
  * @hidden
  */
 const _INTERNAL_DATA_BINDINGTYPE = '__DataBinderInternal';
@@ -203,7 +194,7 @@ export class DataBinder {
 
     _dataBindingRemovedCounter: number;
 
-    _AbsolutePathDataBinding: typeof AbsolutePathDataBinding;
+    _AbsolutePathDataBinding: typeof DataBinding;
 
     dataBinder: any;
 
@@ -240,6 +231,16 @@ export class DataBinder {
 
         this._dataBindingCreatedCounter = 0; // Debug counter for tests
         this._dataBindingRemovedCounter = 0; // Debug counter for tests
+
+
+        /**
+         * A binding built to hold all absolute path callbacks. One per databinder
+         *
+         * Note: For class internal use only
+         */
+        class AbsolutePathDataBinding extends DataBinding {
+            static __absolutePathInternalBinding: boolean;
+        }
 
         // We register a DataBinding at the root of the entire hierarchy to hold all absolute path callbacks
 

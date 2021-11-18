@@ -466,9 +466,9 @@ export class DataBinding {
      * @hidden
      */
     _dereferenceProperty(in_property: BaseProperty): BaseProperty | undefined {
-        let property: BaseProperty | undefined;
-        while (in_property && isReferenceProperty(in_property)) {
-            property = in_property.get(undefined, RESOLVE_ALWAYS);
+        let property: BaseProperty | undefined = in_property;
+        while (property && isReferenceProperty(property)) {
+            property = property.get(undefined, RESOLVE_ALWAYS);
         }
         return property;
     }

@@ -33,9 +33,10 @@
     "lint:fix": "npm run eslint:fix",
     "precit": "bash -c \"npm run test -- --reporters dots; echo '----------Linting----------'; npm run lint; echo '----------Docs----------'; npm run doc\"",
     "prepublishOnly": "npm run test:dist",
-    "test": "jest",
+    "test": "npm run test:jest",
+    "test:jest": "jest",
     "pretest:coverage": "rimraf coverage/",
-    "test:coverage": "jest --coverage",
+    "test:coverage": "npm run test:jest --coverage",
     "tsc": "tsc"
   },
   "dependencies": {
