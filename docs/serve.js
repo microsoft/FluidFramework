@@ -13,6 +13,8 @@ const server = http.createServer((request, response) => {
   return handler(request, response, {
       "public": "public",
       "cleanUrls": true,
+      "directoryListing": false,
+      "trailingSlash": true,
   });
 })
 
