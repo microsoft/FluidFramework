@@ -5,11 +5,14 @@
 /**
  * @fileoverview Helper functions to cast a JavaScript type to a value that is compatible with a given primitive type
  */
-const _ = require('lodash');
-const { MSG } = require('@fluid-experimental/property-common').constants;
-const { Int64, Uint64 } = require('@fluid-experimental/property-common');
 
-var castArrays = {
+import { constants } from '@fluid-experimental/property-common';
+import { Int64, Uint64 } from '@fluid-experimental/property-common';
+
+const { MSG } = constants;
+
+
+const castArrays = {
     Uint32: new Uint32Array(1),
     Uint16: new Uint16Array(1),
     Uint8: new Uint8Array(1),
@@ -18,18 +21,21 @@ var castArrays = {
     Int8: new Int8Array(1),
     Float32: new Float32Array(1),
     Float64: new Float64Array(1)
-};
+} as const;
+
+type Keys = keyof typeof castArrays;
+type TypedArray = typeof castArrays[Keys];
 
 /**
  * Performs a cast of a value by assigning it into the given data array and returning the resulting value. The
  * result is a native JavaScript datatype, that is compatible with the supplied typed array.
  *
- * @param {TypedArray}                    in_array - The data array to use for the cast
- * @param {number|string|boolean}         in_value - The value to use in the cast
- * @return {number|string|boolean} The casted value
+ * @param in_array - The data array to use for the cast
+ * @param in_value - The value to use in the cast
+ * @returns The casted value
  * @private
  */
-var _simpleCastFunctor = function (in_array, in_value) {
+const _simpleCastFunctor = function(in_array: TypedArray, in_value: number): number {
     in_array[0] = in_value;
     return in_array[0];
 };
@@ -37,19 +43,16 @@ var _simpleCastFunctor = function (in_array, in_value) {
 
 /**
  * Helper functions to cast the input value to the given type
- * @protected
- * @alias property-properties._castFunctors
  */
-const _castFunctors = {
+export const _castFunctors = {
     /**
      * Casts the input value to a Uint64
-     * @param {number} in_value - The value to use in the cast
-     * @param {number} [in_radix = 10] An integer between 2 and 36 that represents the
+     * @param in_value - The value to use in the cast
+     * @param in_radix - An integer between 2 and 36 that represents the
      *    radix (the base in mathematical numeral systems) of the above in_value if it is a string.
-     * @return {number} The casted value
-     * @protected
+     * @returns The casted value
      */
-    Uint64: function (in_value, in_radix) {
+    Uint64: function(in_value: Uint64 | string | number, in_radix = 10): Uint64 {
         if (in_value instanceof Uint64) {
             return in_value;
         }
@@ -63,34 +66,24 @@ const _castFunctors = {
     },
     /**
      * Casts the input value to a Uint32
-     * @param {number} in_value - The value to use in the cast
-     * @return {number} The casted value
-     * @protected
      */
     Uint32: _simpleCastFunctor.bind(undefined, castArrays.Uint32),
     /**
      * Casts the input value to a Uint16
-     * @param {number} in_value - The value to use in the cast
-     * @return {number} The casted value
-     * @protected
      */
     Uint16: _simpleCastFunctor.bind(undefined, castArrays.Uint16),
     /**
      * Casts the input value to a Uint8
-     * @param {number} in_value - The value to use in the cast
-     * @return {number} The casted value
-     * @protected
      */
     Uint8: _simpleCastFunctor.bind(undefined, castArrays.Uint8),
     /**
      * Casts the input value to a Int64
-     * @param {number} in_value - The value to use in the cast
-     * @param {number} [in_radix = 10] An integer between 2 and 36 that represents the
+     * @param in_value - The value to use in the cast
+     * @param in_radix - An integer between 2 and 36 that represents the
      *    radix (the base in mathematical numeral systems) of the above in_value if it is a string.
-     * @return {number} The casted value
-     * @protected
+     * @returns The casted value
      */
-    Int64: function (in_value, in_radix) {
+    Int64: function(in_value: Int64 | string | number, in_radix = 10): Int64 {
         if (in_value instanceof Int64) {
             return in_value;
         }
@@ -104,57 +97,34 @@ const _castFunctors = {
     },
     /**
      * Casts the input value to a Int32
-     * @param {number} in_value - The value to use in the cast
-     * @return {number} The casted value
-     * @protected
      */
     Int32: _simpleCastFunctor.bind(undefined, castArrays.Int32),
     /**
      * Casts the input value to a Int16
-     * @param {number} in_value - The value to use in the cast
-     * @return {number} The casted value
-     * @protected
      */
     Int16: _simpleCastFunctor.bind(undefined, castArrays.Int16),
     /**
      * Casts the input value to a Int8
-     * @param {number} in_value - The value to use in the cast
-     * @return {number} The casted value
-     * @protected
      */
     Int8: _simpleCastFunctor.bind(undefined, castArrays.Int8),
     /**
      * Casts the input value to a Float32
-     * @param {number} in_value - The value to use in the cast
-     * @return {number} The casted value
-     * @protected
      */
     Float32: _simpleCastFunctor.bind(undefined, castArrays.Float32),
     /**
      * Casts the input value to a Float64
-     * @param {number} in_value - The value to use in the cast
-     * @return {number} The casted value
-     * @protected
      */
     Float64: _simpleCastFunctor.bind(undefined, castArrays.Float64),
     /**
      * Casts the input value to a String
-     * @param {number} in_value - The value to use in the cast
-     * @return {number} The casted value
-     * @protected
      */
-    String: function (in_value) {
+    String: function(in_value) {
         return String(in_value);
     },
     /**
      * Casts the input value to a Boolean value
-     * @param {boolean} in_value - The value to use in the cast
-     * @return {boolean} The casted value
-     * @protected
      */
-    Boolean: function (in_value) {
+    Boolean: function(in_value) {
         return !!in_value;
     }
 };
-
-export { _castFunctors };
