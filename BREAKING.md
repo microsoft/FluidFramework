@@ -12,10 +12,11 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
-- [OdspDocumentInfo type replaced with OdspFluidDataStoreLocator interface](#OdspDocumentInfo-type-replaced-with-OdspFluidDataStoreLocator-interface)
+- [`OdspDocumentInfo` type replaced with `OdspFluidDataStoreLocator` interface](#OdspDocumentInfo-type-replaced-with-OdspFluidDataStoreLocator-interface)
 - [close() removed from IDocumentDeltaConnection](#close-removed-from-IDocumentDeltaConnection)
 - [Removed bindToContext from IFluidDataStoreChannel](#Removed-bindToContext-from-IFluidDataStoreChannel)
 - [Remove `IOdspResolvedUrl.sharingLinkToRedeem` and use `IOdspResolvedUrl.shareLinkInfo` instead](#Remove-IOdspResolvedUrl.sharingLinkToRedeem-and-use-IOdspResolvedUrl.shareLinkInfo-instead)
+- [Replace `createCreateNewRequest` function with `createOdspCreateContainerRequest` function](#Replace-createCreateNewRequest-function-with-createOdspCreateContainerRequest-function)
 
 ### `chaincodePackage` removed from `Container`
 The `chaincodePackage` property on `Container` was deprecated in 0.28, and has now been removed.  Two new APIs have been added to replace its functionality, `getSpecifiedCodeDetails()` and `getLoadedCodeDetails()`.  Use `getSpecifiedCodeDetails()` to get the code details currently specified for the `Container`, or `getLoadedCodeDetails()` to get the code details that were used to load the `Container`.
@@ -28,6 +29,9 @@ bindToContext in IFluidDataStoreChannel was deprecated in [0.50](#Deprecated-bin
 
 ### Remove `IOdspResolvedUrl.sharingLinkToRedeem` and use `IOdspResolvedUrl.shareLinkInfo` instead
 The `sharingLinkToRedeem` property is removed from the `IOdspResolvedUrl` interface. The property can be accesed from `IOdspResolvedUrl.shareLinkInfo` instead.
+
+### Replace `createCreateNewRequest` function with `createOdspCreateContainerRequest` function
+The `createCreateNewRequest()` is removed and replaced with `createOdspCreateContainerRequest()` in the `odsp-driver` package. If any instances of `createCreateNewRequest()` are used, replace them with `createOdspCreateContainerRequest()` by importing it from `@fluidframework/odsp-driver` package.
 
 ## 0.51 Breaking changes
 - [`maxMessageSize` property has been deprecated from IConnectionDetails and IDocumentDeltaConnection](#maxmessagesize-property-has-been-deprecated-from-iconnectiondetails-and-idocumentdeltaconnection)
