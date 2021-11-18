@@ -19,8 +19,6 @@ For fun, and to make it easier to demonstrate extension bisect, we have created 
 
 Today, finding a "bad" extension can be easy or hard. Open the Extensions view (Ctrl+Shift+X), [disable an extension](https://code.visualstudio.com/docs/editor/extension-marketplace#_disable-an-extension), reload the window (Developer: Reload Window), and check to see if the problem still exists. If the problem is gone, that extension is "bad" and you are done. Otherwise, re-enable the extension and repeat the process with the next extension.
 
-![Disabling an extension step by step](https://code.visualstudio.com/assets/blogs/2021/02/16/disable_manually.png)
-
 If you are lucky, the first extension is the "bad" one; if you are unlucky, it's the last extension. Using computer science language, this means with `N` extensions, you have a worst-case of repeating the process `O(N)` (order N), and an average-case of `O(N/2)`. Because this algorithm is operated by a human (you), even small values of `N` are laborious. This is where the extension bisect utility comes in handy. It is much better in the worst and average cases because it disables extensions by halves.
 
 ## Welcome extension bisect
@@ -31,16 +29,14 @@ Let's use a sample: I have 24 extensions installed and the 8th extension is "bad
 
 The video below shows starting extension bisect via the Help: Start Extension Bisect command and then selecting either Good now or This is bad until the "bad" extension is identified. Once identified, you have the option to report an issue for that extension.
 
-![The extension bisect process](https://code.visualstudio.com/assets/blogs/2021/02/16/bisect.gif)
-
 Here's step by step how the "bad" extension was found:
 
-1.  Bisect divides 24 extensions into two halves of 12 extensions each, and it disables all 12 extensions of the second half.
-2.  In this sample, the 8th extension is the "bad" one, so it is the first half and not disabled. Things are still not working as we'd expect. Because there is still an issue, extension bisect repeats the process, dividing the first 12 extensions into two parts: 6 are enabled and 6 are disabled. All other extensions are also re-enabled.
-3.  The 8th extension is now disabled. Things are good now. That means bisect can proceed on the second half (extensions 6-11), and divides them into 3 enabled and 3 disabled extensions.
-4.  Now, the 8th extension is re-enabled, and the issue has reappeared. This means bisect proceeds on the first half. It divides them into 1 enabled and 2 disabled extensions.
-5.  The 8th extension is now disabled, things are good again and bisect proceeds on the second half, dividing it into 1 enabled and 1 disabled extension.
-6.  The 8th extension is the only disabled extension, and the issue is gone. This means we have found the "bad" extension and that we are done.
+1. Bisect divides 24 extensions into two halves of 12 extensions each, and it disables all 12 extensions of the second half.
+2. In this sample, the 8th extension is the "bad" one, so it is the first half and not disabled. Things are still not working as we'd expect. Because there is still an issue, extension bisect repeats the process, dividing the first 12 extensions into two parts: 6 are enabled and 6 are disabled. All other extensions are also re-enabled.
+3. The 8th extension is now disabled. Things are good now. That means bisect can proceed on the second half (extensions 6-11), and divides them into 3 enabled and 3 disabled extensions.
+4. Now, the 8th extension is re-enabled, and the issue has reappeared. This means bisect proceeds on the first half. It divides them into 1 enabled and 2 disabled extensions.
+5. The 8th extension is now disabled, things are good again and bisect proceeds on the second half, dividing it into 1 enabled and 1 disabled extension.
+6. The 8th extension is the only disabled extension, and the issue is gone. This means we have found the "bad" extension and that we are done.
 
 ## Troubleshoot faster
 

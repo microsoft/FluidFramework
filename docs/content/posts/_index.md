@@ -1,4 +1,4 @@
 ---
 title: "Blog & Updates"
-draft: true
+draft: false
 ---
