@@ -9,7 +9,14 @@
             "blobSize": 256,
             "readWriteCycleMs": 30000,
             "faultInjectionMinMs": 0,
-            "faultInjectionMaxMs": 150000
+            "faultInjectionMaxMs": 150000,
+            "optionOverrides":{
+                "odsp":{
+                    "loader":{
+                        "summarizeProtocolTree": true
+                    }
+                }
+            }
         },
         "full": {
             "opRatePerMin": 1920,
@@ -28,6 +35,7 @@
             "readWriteCycleMs": 10000,
             "faultInjectionMinMs": 0,
             "faultInjectionMaxMs": 50000
+
         },
         "debug": {
             "opRatePerMin": 60,
