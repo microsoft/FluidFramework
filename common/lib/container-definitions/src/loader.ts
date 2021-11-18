@@ -94,25 +94,27 @@ export interface IContainerEvents extends IEvent {
     (event: "dirty" | "saved", listener: (dirty: boolean) => void);
 }
 
-/**
- * Enum defining the different states of connectivity a container can be in
- */
- export enum ConnectionState {
+export namespace ConnectionState {
     /**
-     * The container is no longer connected to the delta server
+     * The document is no longer connected to the delta server
      */
-    Disconnected,
+    export type Disconnected = 0;
 
     /**
-     * The container has an inbound connection but is still pending for outbound deltas
+     * The document has an inbound connection but is still pending for outbound deltas
      */
-    Connecting,
+    export type Connecting = 1;
 
     /**
-     * The container is fully connected
+     * The document is fully connected
      */
-    Connected,
+     export type Connected = 2;
 }
+
+/**
+ * Type defining the different states of connectivity a container can be in
+ */
+export type ConnectionState = ConnectionState.Disconnected | ConnectionState.Connecting | ConnectionState.Connected;
 
 /**
  * The Host's view of the Container and its connection to storage

@@ -56,12 +56,15 @@ export enum BindState {
     NotBound = "NotBound"
 }
 
-// @public
-export enum ConnectionState {
-    Connected = 2,
-    Connecting = 1,
-    Disconnected = 0
+// @public (undocumented)
+export namespace ConnectionState {
+    export type Connected = 2;
+    export type Connecting = 1;
+    export type Disconnected = 0;
 }
+
+// @public
+export type ConnectionState = ConnectionState.Disconnected | ConnectionState.Connecting | ConnectionState.Connected;
 
 // @public
 export enum ContainerErrorType {
