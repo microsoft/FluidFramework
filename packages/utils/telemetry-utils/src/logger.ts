@@ -253,12 +253,25 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 }
 
+// export interface IChildLoggerOptions {
+//     namespace?: { name: string; logVersion: boolean };
+//     properties?: ITelemetryLoggerPropertyBags;
+// }
+
 /**
  * ChildLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events
  */
 export class ChildLogger extends TelemetryLogger {
+    // public static create2(
+    //     baseLogger?: ITelemetryBaseLogger,
+    //     options: IChildLoggerOptions = {},
+    // ): TelemetryLogger {
+    //     return this.create(
+    //         baseLogger, options.namespace?.name, options.properties ?? {}, options.namespace?.logVersion);
+    // }
+
     /**
      * Create child logger
      * @param baseLogger - Base logger to use to output events. If undefined, proper child logger
@@ -270,7 +283,12 @@ export class ChildLogger extends TelemetryLogger {
     public static create(
         baseLogger?: ITelemetryBaseLogger,
         namespace?: string,
-        properties?: ITelemetryLoggerPropertyBags): TelemetryLogger {
+        properties: ITelemetryLoggerPropertyBags = {},
+        layerVersion?: string,
+    ): TelemetryLogger {
+        // properties.all = { ...properties.all, layerVersion };
+        const layerVersionWithName = `${namespace}:${layerVersion}`; //* What if no namespace?
+
         // if we are creating a child of a child, rather than nest, which will increase
         // the callstack overhead, just generate a new logger that includes everything from the previous
         if (baseLogger instanceof ChildLogger) {
@@ -291,6 +309,11 @@ export class ChildLogger extends TelemetryLogger {
                     }
                 }
             }
+            //* Think through and test corner cases
+            const layerVersions =
+                [combinedProperties.all?.layerVersions, layerVersionWithName].filter((lv) => !!lv).join(", ");
+
+            combinedProperties.all = { ...combinedProperties.all, layerVersions };
 
             const combinedNamespace = baseLogger.namespace === undefined
                 ? namespace
