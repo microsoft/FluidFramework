@@ -1356,8 +1356,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     // (undocumented)
     aug?: IRBAugmentation<TKey, TData> | undefined;
     // (undocumented)
-    balance(input: RBNode<TKey, TData>): RBNode<TKey, TData>;
-    // (undocumented)
     ceil(key: TKey): RBNode<TKey, TData> | undefined;
     // (undocumented)
     compareKeys: KeyComparer<TKey>;
@@ -1365,8 +1363,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     contains(key: TKey): RBNode<TKey, TData> | undefined;
     // (undocumented)
     diag(): void;
-    // (undocumented)
-    flipColors(node: RBNode<TKey, TData>): void;
     // (undocumented)
     floor(key: TKey): RBNode<TKey, TData> | undefined;
     // (undocumented)
@@ -1392,10 +1388,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     // (undocumented)
     min(): RBNode<TKey, TData> | undefined;
     // (undocumented)
-    moveRedLeft(node: RBNode<TKey, TData>): RBNode<TKey, TData>;
-    // (undocumented)
-    moveRedRight(node: RBNode<TKey, TData>): RBNode<TKey, TData>;
-    // (undocumented)
     nodeCeil(node: RBNode<TKey, TData> | undefined, key: TKey): RBNode<TKey, TData> | undefined;
     // (undocumented)
     nodeFloor(node: RBNode<TKey, TData> | undefined, key: TKey): RBNode<TKey, TData> | undefined;
@@ -1403,10 +1395,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     nodeGet(node: RBNode<TKey, TData> | undefined, key: TKey): RBNode<TKey, TData> | undefined;
     // (undocumented)
     nodeHeight(node: RBNode<TKey, TData> | undefined): number;
-    // (undocumented)
-    nodeMax(node: RBNode<TKey, TData>): RBNode<TKey, TData>;
-    // (undocumented)
-    nodeMin(node: RBNode<TKey, TData>): RBNode<TKey, TData>;
     // (undocumented)
     nodePut(node: RBNode<TKey, TData> | undefined, key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>): RBNode<TKey, TData>;
     // (undocumented)
@@ -1422,8 +1410,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     // (undocumented)
     nodeWalkExactMatchesForward(node: RBNode<TKey, TData> | undefined, compareFn: (node: RBNode<TKey, TData>) => number, actionFn: (node: RBNode<TKey, TData>) => void, continueLeftFn: (number: number) => boolean, continueRightFn: (number: number) => boolean): void;
     // (undocumented)
-    oppositeColor(c: RBColor): RBColor;
-    // (undocumented)
     put(key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>): void;
     // (undocumented)
     remove(key: TKey): void;
@@ -1433,10 +1419,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     removeMax(): void;
     // (undocumented)
     removeMin(): void;
-    // (undocumented)
-    rotateLeft(node: RBNode<TKey, TData>): RBNode<TKey, TData>;
-    // (undocumented)
-    rotateRight(node: RBNode<TKey, TData>): RBNode<TKey, TData>;
     // (undocumented)
     size(): number;
     // (undocumented)

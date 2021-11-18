@@ -694,7 +694,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    nodeMin(node: RBNode<TKey, TData>): RBNode<TKey, TData> {
+    private nodeMin(node: RBNode<TKey, TData>): RBNode<TKey, TData> {
         if (!node.left) {
             return node;
         }
@@ -709,7 +709,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    nodeMax(node: RBNode<TKey, TData>): RBNode<TKey, TData> {
+    private nodeMax(node: RBNode<TKey, TData>): RBNode<TKey, TData> {
         if (!node.right) {
             return node;
         }
@@ -718,7 +718,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    rotateRight(node: RBNode<TKey, TData>) {
+    private rotateRight(node: RBNode<TKey, TData>) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const leftChild = node.left!;
         node.left = leftChild.right;
@@ -734,7 +734,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return leftChild;
     }
 
-    rotateLeft(node: RBNode<TKey, TData>) {
+    private rotateLeft(node: RBNode<TKey, TData>) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const rightChild = node.right!;
         node.right = rightChild.left;
@@ -750,11 +750,11 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return rightChild;
     }
 
-    oppositeColor(c: RBColor) {
+    private oppositeColor(c: RBColor) {
         return (c == RBColor.BLACK) ? RBColor.RED : RBColor.BLACK;
     }
 
-    flipColors(node: RBNode<TKey, TData>) {
+    private flipColors(node: RBNode<TKey, TData>) {
         node.color = this.oppositeColor(node.color);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         node.left!.color = this.oppositeColor(node.left!.color);
@@ -762,7 +762,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         node.right!.color = this.oppositeColor(node.right!.color);
     }
 
-    moveRedLeft(node: RBNode<TKey, TData>) {
+    private moveRedLeft(node: RBNode<TKey, TData>) {
         let _node = node;
         this.flipColors(_node);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -775,7 +775,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return _node;
     }
 
-    moveRedRight(node: RBNode<TKey, TData>) {
+    private moveRedRight(node: RBNode<TKey, TData>) {
         let _node = node;
         this.flipColors(_node);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -786,7 +786,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return _node;
     }
 
-    balance(input: RBNode<TKey, TData>) {
+    private balance(input: RBNode<TKey, TData>) {
         let node: RBNode<TKey, TData> | undefined = input;
         if (this.isRed(node.right)) {
             node = this.rotateLeft(node);
@@ -805,7 +805,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return node;
     }
 
-    mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
+    public mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
         this.nodeMap(this.root, action, start, end);
     }
 
@@ -814,7 +814,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         this.nodeMap(this.root, action, accum);
     }
 
-    keys() {
+    public keys() {
         const keyList = <TKey[]>[];
         const actions = <RBNodeActions<TKey, TData>>{
             showStructure: true,
