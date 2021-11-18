@@ -328,8 +328,6 @@ export class Heap<T> {
     // (undocumented)
     get(): T;
     // (undocumented)
-    L: T[];
-    // (undocumented)
     peek(): T;
 }
 
@@ -1412,8 +1410,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     // (undocumented)
     nodeFloor(node: RBNode<TKey, TData> | undefined, key: TKey): RBNode<TKey, TData> | undefined;
     // (undocumented)
-    nodeGather(node: RBNode<TKey, TData> | undefined, results: RBNode<TKey, TData>[], key: TKey, matcher: IRBMatcher<TKey, TData>): void;
-    // (undocumented)
     nodeGet(node: RBNode<TKey, TData> | undefined, key: TKey): RBNode<TKey, TData> | undefined;
     // (undocumented)
     nodeHeight(node: RBNode<TKey, TData> | undefined): number;
@@ -1728,7 +1724,6 @@ export const TreeMaintenanceSequenceNumber = -2;
 
 // @public (undocumented)
 export class TST<T> {
-    constructor();
     // (undocumented)
     collect(x: TSTNode<T> | undefined, prefix: TSTPrefix, q: string[]): void;
     // (undocumented)
@@ -1749,8 +1744,6 @@ export class TST<T> {
     neighbors(text: string, distance?: number): ProxString<T>[];
     // (undocumented)
     nodeGet(x: TSTNode<T> | undefined, key: string, d: number): TSTNode<T> | undefined;
-    // (undocumented)
-    nodeProximity(x: TSTNode<T> | undefined, prefix: TSTPrefix, d: number, pattern: string, distance: number, q: ProxString<T>[]): void;
     // (undocumented)
     nodePut(x: TSTNode<T> | undefined, key: string, val: T, d: number): TSTNode<T>;
     // (undocumented)

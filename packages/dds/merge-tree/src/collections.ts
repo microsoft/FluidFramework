@@ -212,7 +212,7 @@ export interface Comparer<T> {
 }
 
 export class Heap<T> {
-    L: T[];
+    private L: T[];
     count() {
         return this.L.length - 1;
     }
@@ -352,7 +352,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return results;
     }
 
-    nodeGather(
+    private nodeGather(
         node: RBNode<TKey, TData> | undefined,
         results: RBNode<TKey, TData>[],
         key: TKey,
@@ -1097,10 +1097,6 @@ export class TST<T> {
     private n = 0;
     private root: TSTNode<T> | undefined;
 
-    constructor() {
-
-    }
-
     size() {
         return this.n;
     }
@@ -1259,7 +1255,7 @@ export class TST<T> {
         }
     }
 
-    nodeProximity(
+    private nodeProximity(
         x: TSTNode<T> | undefined,
         prefix: TSTPrefix,
         d: number,
