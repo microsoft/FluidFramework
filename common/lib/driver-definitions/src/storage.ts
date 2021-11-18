@@ -49,7 +49,8 @@ export interface IDeltaStorageService {
         tenantId: string,
         id: string,
         from: number, // inclusive
-        to: number // exclusive
+        to: number, // exclusive
+        reason?: string,
     ): Promise<IDeltasFetchResult>;
 }
 
@@ -77,6 +78,7 @@ export interface IDocumentDeltaStorageService {
         to: number | undefined,
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
+        reason?: string,
     ): IStream<ISequencedDocumentMessage[]>;
 }
 
@@ -102,27 +104,27 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     /**
      * Returns the snapshot tree.
      */
-    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
+    getSnapshotTree(version?: IVersion, reason?: string): Promise<ISnapshotTree | null>;
 
     /**
      * Retrieves all versions of the document starting at the specified versionId - or null if from the head
      */
-    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number, reason?: string): Promise<IVersion[]>;
 
     /**
      * Writes to the object with the given ID
      */
-    write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
+    write(root: ITree, parents: string[], message: string, ref: string, reason?: string): Promise<IVersion>;
 
     /**
      * Creates a blob out of the given buffer
      */
-    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+    createBlob(file: ArrayBufferLike, reason?: string): Promise<ICreateBlobResponse>;
 
     /**
      * Reads the object with the given ID, returns content in arrayBufferLike
      */
-    readBlob(id: string): Promise<ArrayBufferLike>;
+    readBlob(id: string, reason?: string): Promise<ArrayBufferLike>;
 
     /**
      * Uploads a summary tree to storage using the given context for reference of previous summary handle.
@@ -130,13 +132,13 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
      * referencing from the previously acked summary.
      * Returns the uploaded summary handle.
      */
-    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
+    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext, reason?: string): Promise<string>;
 
     /**
      * Retrieves the commit that matches the packfile handle. If the packfile has already been committed and the
      * server has deleted it this call may result in a broken promise.
      */
-    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+    downloadSummary(handle: ISummaryHandle, reason?: string): Promise<ISummaryTree>;
 }
 
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
