@@ -210,13 +210,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
             ));
         }
 
-        await Promise.all([
-            this.snapshotTreeCache.put(
-                snapshotId,
-                normalizedWholeSummary.snapshotTree,
-            ),
-            this.initBlobCache(normalizedWholeSummary.blobs),
-        ]);
+        await Promise.all(cachePs);
 
         return { id: snapshotId, snapshotTree: normalizedWholeSummary.snapshotTree};
     }
