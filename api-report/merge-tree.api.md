@@ -788,12 +788,6 @@ export class List<T> {
     // (undocumented)
     first(): T | undefined;
     // (undocumented)
-    insertAfter(data: T): List<T>;
-    // (undocumented)
-    insertBefore(data: T): List<T>;
-    // (undocumented)
-    insertEntryBefore(entry: List<T>): List<T>;
-    // (undocumented)
     isHead: boolean;
     // (undocumented)
     last(): T | undefined;

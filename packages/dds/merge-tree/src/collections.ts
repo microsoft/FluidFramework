@@ -130,19 +130,19 @@ export class List<T> {
         return (i);
     }
 
-    first(): T | undefined {
+    public first(): T | undefined {
         if (!this.empty()) {
             return (this.next.data);
         }
     }
 
-    last(): T | undefined {
+    public last(): T | undefined {
         if (!this.empty()) {
             return (this.prev.data);
         }
     }
 
-    empty(): boolean {
+    public empty(): boolean {
         return (this.next === this);
     }
 
@@ -154,28 +154,6 @@ export class List<T> {
         entry.prev = this;
         this.next = entry;
         entry.next.prev = entry;
-    }
-
-    insertAfter(data: T): List<T> {
-        const entry: List<T> = ListMakeEntry(data);
-        entry.next = this.next;
-        entry.prev = this;
-        this.next = entry;
-        entry.next.prev = entry;
-        return (entry);
-    }
-
-    insertBefore(data: T): List<T> {
-        const entry = ListMakeEntry(data);
-        return this.insertEntryBefore(entry);
-    }
-
-    insertEntryBefore(entry: List<T>): List<T> {
-        this.prev.next = entry;
-        entry.next = this;
-        entry.prev = this.prev;
-        this.prev = entry;
-        return (entry);
     }
 }
 
