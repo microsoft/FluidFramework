@@ -725,7 +725,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             eventName:"hardware",
             deviceMemory: Object.hasOwnProperty.call(window.navigator, "deviceMemory")
             // eslint-disable-next-line @typescript-eslint/dot-notation
-                ? window.avigator["deviceMemory"] : undefined,
+                ? window.navigator["deviceMemory"] : undefined,
             hardwareConcurrency: window.navigator.hardwareConcurrency,
         });
         return runtime;
