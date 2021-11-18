@@ -107,7 +107,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     public constructor(
         protected readonly namespace?: string,
-        protected readonly properties?: ITelemetryLoggerPropertyBags) {
+        protected readonly properties?: ITelemetryLoggerPropertyBags,
+        public readonly _globalProperties: Required<ITelemetryLoggerPropertyBags> = { all: {}, error: {} }) {
     }
 
     /**
@@ -263,7 +264,14 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
  * Creates sub-logger that appends properties to all events
  */
 export class ChildLogger extends TelemetryLogger {
-    protected readonly _globalProperties: Required<ITelemetryLoggerPropertyBags> = { all: {}, error: {} };
+    protected get globalProperties() {
+        return this.baseLogger instanceof TelemetryLogger ? this.baseLogger._globalProperties : undefined;
+    }
+    protected setGlobalProperty(key, val) {
+        if (this.baseLogger instanceof TelemetryLogger) {
+            this.baseLogger._globalProperties.all[key] = val;
+        }
+    }
 
     /**
      * Create child logger
@@ -274,13 +282,17 @@ export class ChildLogger extends TelemetryLogger {
      * @param propertyGetters - Getters to add additional properties to all events
      */
     public static create(
-        baseLogger?: ITelemetryBaseLogger,
+        baseLoggerI?: ITelemetryBaseLogger,
         namespace?: string,
         properties: ITelemetryLoggerPropertyBags = {},
         layerVersion?: string,
     ): TelemetryLogger {
         // properties.all = { ...properties.all, layerVersion };
         const namedLayerVersion = `${namespace}:${layerVersion}`; //* What if no namespace?
+
+        const baseLogger: TelemetryLogger = baseLoggerI instanceof TelemetryLogger
+            ? baseLoggerI
+            : new ChildLogger(baseLoggerI);
 
         // if we are creating a child of a child, rather than nest, which will increase
         // the callstack overhead, just generate a new logger that includes everything from the previous
@@ -304,8 +316,8 @@ export class ChildLogger extends TelemetryLogger {
             }
             //* Think through and test corner cases
             const layerVersions =
-                [baseLogger._globalProperties.all.layerVersions, namedLayerVersion].filter((lv) => !!lv).join(", ");
-            baseLogger._globalProperties.all.layerVersions = layerVersions;
+                [baseLogger.globalProperties?.all.layerVersions, namedLayerVersion].filter((lv) => !!lv).join(", ");
+            baseLogger.setGlobalProperty("layerVersions", layerVersions);
 
             const combinedNamespace = baseLogger.namespace === undefined
                 ? namespace
@@ -314,22 +326,22 @@ export class ChildLogger extends TelemetryLogger {
                     : `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
 
             return new ChildLogger(
-                baseLogger.baseLogger instanceof ChildLogger ? baseLogger.baseLogger : baseLogger,
+                baseLogger.baseLogger,
                 combinedNamespace,
                 combinedProperties,
             );
         }
 
         const childLogger = new ChildLogger(
-            baseLogger ? baseLogger : new BaseTelemetryNullLogger(),
+            baseLogger,
             namespace,
             properties);
-        childLogger._globalProperties.all.layerVersions = namedLayerVersion;
+        baseLogger._globalProperties.all.layerVersions = namedLayerVersion;
         return childLogger;
     }
 
     private constructor(
-        protected readonly baseLogger: ITelemetryBaseLogger,
+        protected readonly baseLogger = new BaseTelemetryNullLogger(),
         namespace?: string,
         properties?: ITelemetryLoggerPropertyBags,
     ) {
@@ -347,9 +359,11 @@ export class ChildLogger extends TelemetryLogger {
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
         const newEvent = { ...event };
-        this.applyProps(
-            newEvent,
-            this.baseLogger instanceof ChildLogger ? this.baseLogger._globalProperties : this._globalProperties);
+        if (this.globalProperties) {
+            this.applyProps(
+                newEvent,
+                this.globalProperties);
+        }
         return super.prepareEvent(newEvent);
     }
 }

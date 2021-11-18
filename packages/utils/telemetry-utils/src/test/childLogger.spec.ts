@@ -18,12 +18,11 @@ describe("ChildLogger", () => {
         const loggerB = ChildLogger.create(loggerA, "B", {}, "0.2");
         const loggerC = ChildLogger.create(loggerB, "C", {}, "0.3");
 
-        // Wrong answers, passes -- bug!
         loggerC.send({ category: "generic", eventName: "test1"});
-        assert(mockLogger.matchEvents([{layerVersions:"A:0.1, B:0.2"}]), "layerVersions not built properly");
+        assert(mockLogger.matchEvents([{layerVersions:"A:0.1, B:0.2, C:0.3"}]), "layerVersions not built properly");
 
         loggerA.send({ category: "generic", eventName: "test2"});
-        assert(mockLogger.matchEvents([{layerVersions:"A:0.1, B:0.2"}]), "layerVersions not propagated globally properly");
+        assert(mockLogger.matchEvents([{layerVersions:"A:0.1, B:0.2, C:0.3"}]), "layerVersions not propagated globally properly");
     });
     it("Properties & Getters Propagate",()=>{
         let sent = false;
