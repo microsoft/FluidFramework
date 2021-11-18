@@ -15,6 +15,7 @@ import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
 import { getOdspResolvedUrl } from "../odspUtils";
 import { getHashedDocumentId } from "../odspPublicUtils";
 import { LocalPersistentCache } from "../odspCache";
+import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest";
 import { mockFetchOk, mockFetchMultiple, okResponse } from "./mockFetch";
 
 describe("Odsp Create Container Test", () => {
@@ -78,7 +79,7 @@ describe("Odsp Create Container Test", () => {
 
     beforeEach(() => {
         resolver = new OdspDriverUrlResolver();
-        request = resolver.createCreateNewRequest(siteUrl, driveId, filePath, fileName);
+        request = createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     });
 
     it("Check Document Service Successfully", async () => {

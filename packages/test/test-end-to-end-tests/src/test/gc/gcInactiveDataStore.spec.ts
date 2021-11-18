@@ -29,7 +29,7 @@ describeFullCompat("GC inactive data store tests", (getTestObjectProvider) => {
         []);
     const maxUnreferencedDurationMs = 2000;
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { generateSummaries: false },
+        summaryOptions: { disableSummaries: true },
         gcOptions: { gcAllowed: true, maxUnreferencedDurationMs },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
