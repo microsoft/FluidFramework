@@ -57,6 +57,13 @@ export enum BindState {
 }
 
 // @public
+export enum ConnectionState {
+    Connected = 2,
+    Connecting = 1,
+    Disconnected = 0
+}
+
+// @public
 export enum ContainerErrorType {
     dataCorruptionError = "dataCorruptionError",
     dataProcessingError = "dataProcessingError",
@@ -114,21 +121,33 @@ export interface IConnectionDetails {
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
     attach(request: IRequest): Promise<void>;
     readonly attachState: AttachState;
+    readonly audience?: IAudience;
+    // @alpha
+    readonly clientId?: string | undefined;
     close(error?: ICriticalContainerError): void;
     closeAndGetPendingLocalState(): string;
     readonly closed: boolean;
     // @deprecated
-    readonly codeDetails: IFluidCodeDetails | undefined;
+    readonly codeDetails?: IFluidCodeDetails | undefined;
+    readonly connected?: boolean;
+    readonly connectionState?: ConnectionState;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    // @alpha
+    forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getLoadedCodeDetails?(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorum;
     getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     readonly isDirty: boolean;
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
+    readonly readOnlyInfo?: ReadOnlyInfo;
     request(request: IRequest): Promise<IResponse>;
     resolvedUrl: IResolvedUrl | undefined;
+    // @alpha
+    resume?(): void;
     serialize(): string;
+    // @alpha
+    setAutoReconnect?(reconnect: boolean): void;
 }
 
 // @public

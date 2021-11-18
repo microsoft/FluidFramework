@@ -20,7 +20,8 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IDeltaManager } from "./deltas";
+import { IAudience } from "./audience";
+import { IDeltaManager, ReadOnlyInfo } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { IFluidModule } from "./fluidModule";
 import { AttachState } from "./runtime";
@@ -94,6 +95,26 @@ export interface IContainerEvents extends IEvent {
 }
 
 /**
+ * Enum defining the different states of connectivity a container can be in
+ */
+ export enum ConnectionState {
+    /**
+     * The container is no longer connected to the delta server
+     */
+    Disconnected,
+
+    /**
+     * The container has an inbound connection but is still pending for outbound deltas
+     */
+    Connecting,
+
+    /**
+     * The container is fully connected
+     */
+    Connected,
+}
+
+/**
  * The Host's view of the Container and its connection to storage
  */
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
@@ -118,14 +139,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * Indicates the attachment state of the container to a host service.
      */
     readonly attachState: AttachState;
-
-    /**
-     * The current code details for the container's runtime
-     * @deprecated use getSpecifiedCodeDetails for the code details currently specified for this container, or
-     * getLoadedCodeDetails for the code details that the container's context was loaded with.
-     * To be removed after getSpecifiedCodeDetails and getLoadedCodeDetails become ubiquitous.
-     */
-    readonly codeDetails: IFluidCodeDetails | undefined;
 
     /**
      * Get the code details that are currently specified for the container.
@@ -197,6 +210,63 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * @param request - The request to be issued against the container
      */
     request(request: IRequest): Promise<IResponse>;
+
+    /**
+     * Provides the current connected state of the container
+     */
+    readonly connectionState: ConnectionState;
+
+    /**
+     * Boolean indicating whether the container is currently connected or not
+     */
+    readonly connected: boolean;
+
+    /**
+     * Dictates whether or not the current container will automatically attempt to reconnect to the delta stream
+     * after receiving a disconnect event
+     * @param reconnect - Boolean indicating if reconnect should automatically occur
+     * @alpha
+     */
+    setAutoReconnect(reconnect: boolean): void;
+
+    /**
+     * Have the container attempt to resume processing ops
+     * @alpha
+     */
+    resume(): void;
+
+    /**
+     * The audience information for all clients currently associated with the document in the current session
+     */
+    readonly audience: IAudience;
+
+    /**
+     * The server provided ID of the client.
+     * Set once this.connected is true, otherwise undefined
+     * @alpha
+     */
+    readonly clientId: string | undefined;
+
+    /**
+     * Tells if container is in read-only mode.
+     * Data stores should listen for "readonly" notifications and disallow user making changes to data stores.
+     * Readonly state can be because of no storage write permission,
+     * or due to host forcing readonly mode for container.
+     *
+     * We do not differentiate here between no write access to storage vs. host disallowing changes to container -
+     * in all cases container runtime and data stores should respect readonly state and not allow local changes.
+     *
+     * It is undefined if we have not yet established websocket connection
+     * and do not know if user has write access to a file.
+     */
+    readonly readOnlyInfo: ReadOnlyInfo;
+
+    /**
+     * Allows the host to have the container force to be in read-only mode
+     * @param readonly - Boolean that toggles if read-only policies will be enforced
+     * @alpha
+     */
+    forceReadonly(readonly: boolean);
 }
 
 /**

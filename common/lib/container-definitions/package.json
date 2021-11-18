@@ -143,6 +143,41 @@
         "InterfaceDeclaration_IRuntimeFactory": {
           "forwardCompat": false,
           "backCompat": false
+        },
+        "InterfaceDeclaration_ILoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProxyLoaderFactory": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IHostLoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IContainer": {
+          "backCompat": false
+        }
+      },
+      "0.41.0": {
+        "InterfaceDeclaration_ILoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProxyLoaderFactory": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IHostLoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IFluidModule": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IContainerContext": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IContainer": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ICodeLoader": {
+          "backCompat": false
         }
       }
     }
