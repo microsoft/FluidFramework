@@ -21,7 +21,6 @@ import {
     extractLogSafeErrorProperties,
     generateStack,
 } from "./errorLogging";
-import { pkgVersion } from "./packageVersion";
 
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
@@ -184,23 +183,24 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         if (this.namespace !== undefined) {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
         }
-        const properties: (undefined | ITelemetryLoggerPropertyBag)[] = [];
-        properties.push({eventCallsiteVersion: pkgVersion}); // innermost logger will win here
-        properties.push(this.properties?.all);
-        if(includeErrorProps) {
-            properties.push(this.properties?.error);
-        }
-        for(const props of properties) {
-            if(props !== undefined) {
-                for (const key of Object.keys(props)) {
-                    if (event[key] !== undefined) {
-                        continue;
-                    }
-                    const getterOrValue = props[key];
-                    // If this throws, hopefully it is handled elsewhere
-                    const value = typeof getterOrValue === "function" ? getterOrValue() : getterOrValue;
-                    if (value !== undefined) {
-                        newEvent[key] = value;
+        if(this.properties) {
+            const properties: (undefined | ITelemetryLoggerPropertyBag)[] = [];
+            properties.push(this.properties.all);
+            if(includeErrorProps) {
+                properties.push(this.properties.error);
+            }
+            for(const props of properties) {
+                if(props !== undefined) {
+                    for (const key of Object.keys(props)) {
+                        if (event[key] !== undefined) {
+                            continue;
+                        }
+                        const getterOrValue = props[key];
+                        // If this throws, hopefully it is handled elsewhere
+                        const value = typeof getterOrValue === "function" ? getterOrValue() : getterOrValue;
+                        if (value !== undefined) {
+                            newEvent[key] = value;
+                        }
                     }
                 }
             }

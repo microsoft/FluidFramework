@@ -16,7 +16,6 @@ import {
     isFluidError,
     isValidLegacyError,
 } from "./fluidErrorBase";
-import { pkgVersion } from "./packageVersion";
 
 /** @returns true if value is an object but neither null nor an array */
 const isRegularObject = (value: any): boolean => {
@@ -298,10 +297,9 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
         // Don't log this list itself either
         omitPropsFromLogging.add("omitPropsFromLogging");
 
-        this.addTelemetryProperties({
-            ...props,
-            errorCallsiteVersion: pkgVersion,
-         });
+        if (props) {
+            this.addTelemetryProperties(props);
+        }
     }
 
     /**
