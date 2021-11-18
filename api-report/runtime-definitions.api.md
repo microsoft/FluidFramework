@@ -130,7 +130,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
     setConnectionState(connected: boolean, clientId?: string): any;
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 // @public
@@ -222,6 +222,20 @@ export interface IGarbageCollectionSummaryDetails {
 }
 
 // @public
+export interface IGCNodeData {
+    outboundRoutes: string[];
+    unreferencedTimestampMs?: number;
+}
+
+// @public
+export interface IGCSummaryState {
+    // (undocumented)
+    gcNodes: {
+        [id: string]: IGCNodeData;
+    };
+}
+
+// @public
 export interface IInboundSignalMessage extends ISignalMessage {
     // (undocumented)
     type: string;
@@ -298,7 +312,6 @@ export interface ISummarizerNodeConfig {
 // @public (undocumented)
 export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
     readonly gcDisabled?: boolean;
-    readonly maxUnreferencedDurationMs?: number;
 }
 
 // @public
@@ -313,11 +326,10 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     // (undocumented)
     getChild(id: string): ISummarizerNodeWithGC | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
-    getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
     isReferenced(): boolean;
     // (undocumented)
     summarize(fullTree: boolean, trackState?: boolean): Promise<ISummarizeResult>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 // @public (undocumented)

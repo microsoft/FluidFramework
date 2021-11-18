@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionData, IGarbageCollectionSummaryDetails } from "@fluidframework/runtime-definitions";
 
 /**
  * Helper function that clones the GC data.
@@ -21,6 +21,50 @@ export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionD
     };
 }
 
+export function getChildNodesGCDetails(gcDetails: IGarbageCollectionSummaryDetails) {
+    const childGCDetailsMap: Map<string, IGarbageCollectionSummaryDetails> = new Map();
+    assert(gcDetails.gcData !== undefined, "GC data not available in GC details");
+
+    for (const [id, outboundRoutes] of Object.entries(gcDetails.gcData.gcNodes)) {
+        assert(id.startsWith("/"), 0x199 /* "id should always be an absolute route" */);
+        const childId = id.split("/")[1];
+        let childGCNodeId = id.slice(childId.length + 1);
+        // GC node id always begins with "/". Handle the special case where the id in parent's GC nodes is of the
+        // for `/root`. This would make `childId=root` and `childGCNodeId=""`.
+        if (childGCNodeId === "") {
+            childGCNodeId = "/";
+        }
+
+        let childGCDetails = childGCDetailsMap.get(childId);
+        if (childGCDetails === undefined) {
+            childGCDetails = { gcData: { gcNodes: {} } };
+        }
+        assert(childGCDetails.gcData !== undefined, "Child GC data should have been initialized in this block itself");
+        childGCDetails.gcData.gcNodes[childGCNodeId] = Array.from(outboundRoutes);
+        childGCDetailsMap.set(childId, childGCDetails);
+    }
+
+    if (gcDetails.usedRoutes !== undefined) {
+        for (const route of gcDetails.usedRoutes) {
+            assert(route.startsWith("/"), 0x198 /* "Used route should always be an absolute route" */);
+            const childId = route.split("/")[1];
+            const childUsedRoute = route.slice(childId.length + 1);
+
+            let childGCDetails = childGCDetailsMap.get(childId);
+            if (childGCDetails === undefined) {
+                childGCDetails = { gcData: { gcNodes: {} } };
+            }
+
+            if (childGCDetails.usedRoutes === undefined) {
+                childGCDetails.usedRoutes = [];
+            }
+
+            childGCDetails.usedRoutes.push(childUsedRoute);
+            childGCDetailsMap.set(childId, childGCDetails);
+        }
+    }
+    return childGCDetailsMap;
+}
 /**
  * Helper function that generates the used routes of children from a given node's used routes.
  * @param usedRoutes - The used routes of a node.
@@ -55,7 +99,7 @@ export function getChildNodesGCData(gcData: IGarbageCollectionData) {
         const childId = id.split("/")[1];
         let childGCNodeId = id.slice(childId.length + 1);
         // GC node id always begins with "/". Handle the special case where the id in parent's GC nodes is of the
-        // for `/root`. This would make `childId=root` and `childGCNodeId=""`.
+        // format `/root`. This would make `childId=root` and `childGCNodeId=""`.
         if (childGCNodeId === "") {
             childGCNodeId = "/";
         }

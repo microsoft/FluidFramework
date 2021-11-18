@@ -36,6 +36,22 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
     pathPartsForChildren?: string[];
 }
 
+/** The garbage collection data of each node in the container to be added to the summary. */
+export interface IGCNodeData {
+    /** The set of routes to other nodes in the container. */
+    outboundRoutes: string[];
+    /** If the node is unreferenced, the timestamp of when it was marked unreferenced. */
+    unreferencedTimestampMs?: number;
+}
+
+/**
+ * The garbage collection state of the container to be added to the summary. It contains a list of
+ * all the nodes in the container and their GC data.
+ */
+export interface IGCSummaryState {
+    gcNodes: { [ id: string ]: IGCNodeData };
+}
+
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
 
 export interface ISummarizerNodeConfig {
@@ -62,8 +78,6 @@ export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
      * This is propagated to all child nodes.
      */
     readonly gcDisabled?: boolean;
-    /** The max duration for which a node can be unreferenced before it is eligible for deletion. */
-    readonly maxUnreferencedDurationMs?: number;
 }
 
 export enum CreateSummarizerNodeSource {
@@ -200,13 +214,8 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
      * 2. To identify if this node or any of its children's used routes changed since last summary.
      *
      * @param usedRoutes - The routes that are used in this node.
-     * @param gcTimestamp - The time when GC was run that generated these used routes. If a node becomes unreferenced
-     * as part of this GC run, this timestamp is used to update the time when it happens.
      */
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
-
-    /** Returns the GC details that may be added to this node's summary. */
-    getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 export const channelsTreeName = ".channels";
