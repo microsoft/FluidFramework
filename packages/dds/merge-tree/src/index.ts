@@ -5,32 +5,7 @@
 
 export * from "./base";
 export * from "./client";
-export {
-    AugIntegerRangeNode,
-    AugmentedIntervalNode,
-    Comparer,
-    Heap,
-    IInterval,
-    IntegerRangeNode,
-    integerRangeToString,
-    IntegerRangeTree,
-    IntervalConflictResolver,
-    IntervalNode,
-    IntervalTree,
-    IRBAugmentation,
-    IRBMatcher,
-    List,
-    ProxString,
-    RBColor,
-    RBNode,
-    RBNodeActions,
-    RedBlackTree,
-    Stack,
-    TST,
-    TSTNode,
-    TSTPrefix,
-    TSTResult,
-} from "./collections";
+export * from "./collections";
 export * from "./constants";
 export * from "./localReference";
 export * from "./mergeTree";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq, object-shorthand */
+/* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq */
 /* eslint-disable no-bitwise */
 
 /* Remove once strictNullCheck is enabled */
@@ -13,7 +13,6 @@ import {
     ConflictAction,
     IIntegerRange,
     KeyComparer,
-    Property,
     PropertyAction,
     SortedDictionary,
 } from "./base";
@@ -267,98 +266,6 @@ export class Heap<T> {
             _k = j;
         }
     }
-}
-
-// For testing
-export function LinearDictionary<TKey, TData>(compareKeys: KeyComparer<TKey>): SortedDictionary<TKey, TData> {
-    const props: Property<TKey, TData>[] = [];
-    const compareProps = (a: Property<TKey, TData>, b: Property<TKey, TData>) => compareKeys(a.key, b.key);
-    function diag() {
-        console.log(`size is ${props.length}`);
-    }
-    function mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
-        let _start = start;
-        let _end = end;
-
-        if (props.length !== 0) { return; }
-
-        if (_start === undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            _start = min()!.key;
-        }
-        if (_end === undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            _end = max()!.key;
-        }
-        for (let i = 0, len = props.length; i < len; i++) {
-            if (compareKeys(_start, props[i].key) <= 0) {
-                const ecmp = compareKeys(_end, props[i].key);
-                if (ecmp < 0) {
-                    break;
-                }
-                if (!action(props[i], accum)) {
-                    break;
-                }
-            }
-        }
-    }
-
-    function map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum) {
-        mapRange(action, accum);
-    }
-
-    function min() {
-        if (props.length > 0) {
-            return props[0];
-        }
-    }
-    function max() {
-        if (props.length > 0) {
-            return props[props.length - 1];
-        }
-    }
-
-    function get(key: TKey) {
-        for (let i = 0, len = props.length; i < len; i++) {
-            if (props[i].key == key) {
-                return props[i];
-            }
-        }
-    }
-
-    function put(key: TKey, data: TData) {
-        if (key !== undefined) {
-            if (data === undefined) {
-                remove(key);
-            }
-            else {
-                props.push({ key, data });
-                props.sort(compareProps); // Go to insertion sort if too slow
-            }
-        }
-    }
-    function remove(key: TKey) {
-        if (key !== undefined) {
-            for (let i = 0, len = props.length; i < len; i++) {
-                if (props[i].key == key) {
-                    props[i] = props[len - 1];
-                    props.length--;
-                    props.sort(compareProps);
-                    break;
-                }
-            }
-        }
-    }
-    return {
-        min: min,
-        max: max,
-        map: map,
-        mapRange: mapRange,
-        remove: remove,
-        get: get,
-        put: put,
-        diag: diag,
-    };
 }
 
 export const enum RBColor {
