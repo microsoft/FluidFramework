@@ -1404,8 +1404,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     // (undocumented)
     nodeHeight(node: RBNode<TKey, TData> | undefined): number;
     // (undocumented)
-    nodeMap<TAccum>(node: RBNode<TKey, TData> | undefined, action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey): boolean;
-    // (undocumented)
     nodeMax(node: RBNode<TKey, TData>): RBNode<TKey, TData>;
     // (undocumented)
     nodeMin(node: RBNode<TKey, TData>): RBNode<TKey, TData>;
@@ -1419,10 +1417,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     nodeRemoveMin(node: RBNode<TKey, TData>): RBNode<TKey, TData> | undefined;
     // (undocumented)
     nodeSize(node: RBNode<TKey, TData> | undefined): number;
-    // (undocumented)
-    nodeWalk(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean;
-    // (undocumented)
-    nodeWalkBackward(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean;
     // (undocumented)
     nodeWalkExactMatchesBackward(node: RBNode<TKey, TData> | undefined, compareFn: (node: RBNode<TKey, TData>) => number, actionFn: (node: RBNode<TKey, TData>) => void, continueLeftFn: (cmp: number) => boolean, continueRightFn: (cmp: number) => boolean): void;
     // (undocumented)
@@ -1439,8 +1433,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     removeMax(): void;
     // (undocumented)
     removeMin(): void;
-    // (undocumented)
-    root: RBNode<TKey, TData> | undefined;
     // (undocumented)
     rotateLeft(node: RBNode<TKey, TData>): RBNode<TKey, TData>;
     // (undocumented)

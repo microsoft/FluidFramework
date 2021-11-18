@@ -297,10 +297,9 @@ export interface RBNodeActions<TKey, TData> {
 }
 
 export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> {
-    root: RBNode<TKey, TData> | undefined;
-    constructor(public compareKeys: KeyComparer<TKey>, public aug?: IRBAugmentation<TKey, TData>) {
+    private root: RBNode<TKey, TData> | undefined;
 
-    }
+    constructor(public compareKeys: KeyComparer<TKey>, public aug?: IRBAugmentation<TKey, TData>) { }
 
     makeNode(key: TKey, data: TData, color: RBColor, size: number) {
         return <RBNode<TKey, TData>>{ key, data, color, size };
@@ -319,7 +318,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     isEmpty() {
         return !this.root;
     }
-    get(key: TKey) {
+    public get(key: TKey) {
         if (key !== undefined) {
             return this.nodeGet(this.root, key);
         }
@@ -427,7 +426,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    put(key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>) {
+    public put(key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>) {
         if (key !== undefined) {
             if (data === undefined) {
                 this.remove(key);
@@ -565,7 +564,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return this.balance(_node);
     }
 
-    remove(key: TKey) {
+    public remove(key: TKey) {
         if (key !== undefined) {
             if (!this.contains(key)) {
                 return;
@@ -635,7 +634,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    floor(key: TKey) {
+    public floor(key: TKey) {
         if (!this.isEmpty()) {
             return this.nodeFloor(this.root, key);
         }
@@ -662,7 +661,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    ceil(key: TKey) {
+    public ceil(key: TKey) {
         if (!this.isEmpty()) {
             return this.nodeCeil(this.root, key);
         }
@@ -810,7 +809,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         this.nodeMap(this.root, action, start, end);
     }
 
-    map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum) {
+    public map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum) {
         // TODO: optimize to avoid comparisons
         this.nodeMap(this.root, action, accum);
     }
@@ -833,15 +832,15 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
      * false, traversal is halted.
      * @param action - action to apply to each node
      */
-    walk(actions: RBNodeActions<TKey, TData>) {
+    public walk(actions: RBNodeActions<TKey, TData>) {
         this.nodeWalk(this.root, actions);
     }
 
-    walkBackward(actions: RBNodeActions<TKey, TData>) {
+    public walkBackward(actions: RBNodeActions<TKey, TData>) {
         this.nodeWalkBackward(this.root, actions);
     }
 
-    nodeWalk(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean {
+    private nodeWalk(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean {
         let go = true;
         if (node) {
             if (actions.pre) {
@@ -869,7 +868,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return go;
     }
 
-    nodeWalkBackward(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean {
+    private nodeWalkBackward(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean {
         let go = true;
         if (node) {
             if (actions.pre) {
@@ -897,7 +896,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return go;
     }
 
-    nodeMap<TAccum>(
+    private nodeMap<TAccum>(
         node: RBNode<TKey, TData> | undefined,
         action: PropertyAction<TKey, TData>,
         accum?: TAccum,
@@ -930,7 +929,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
         return go;
     }
-    diag() {
+    public diag() {
         console.log(`Height is ${this.height()}`);
     }
 }
