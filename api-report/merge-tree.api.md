@@ -649,32 +649,6 @@ export type IntegerRangeNode = RBNode<IIntegerRange, AugIntegerRangeNode>;
 export const integerRangeToString: (range: IIntegerRange) => string;
 
 // @public (undocumented)
-export class IntegerRangeTree implements IRBAugmentation<IIntegerRange, AugIntegerRangeNode>, IRBMatcher<IIntegerRange, AugIntegerRangeNode> {
-    // (undocumented)
-    continueSubtree(node: IntegerRangeNode | undefined, key: IIntegerRange): boolean;
-    // (undocumented)
-    diag: boolean;
-    // (undocumented)
-    match(r: IIntegerRange): RBNode<IIntegerRange, AugIntegerRangeNode>[];
-    // (undocumented)
-    matchNode(node: IntegerRangeNode | undefined, key: IIntegerRange): boolean;
-    // (undocumented)
-    matchPos(pos: number): RBNode<IIntegerRange, AugIntegerRangeNode>[];
-    // (undocumented)
-    nodeToString(node: IntegerRangeNode | undefined): string;
-    // (undocumented)
-    put(r: IIntegerRange): void;
-    // (undocumented)
-    ranges: RedBlackTree<IIntegerRange, AugIntegerRangeNode>;
-    // (undocumented)
-    remove(r: IIntegerRange): void;
-    // (undocumented)
-    toString(): string;
-    // (undocumented)
-    update(node: IntegerRangeNode): void;
-}
-
-// @public (undocumented)
 export function internedSpaces(n: number): string;
 
 // @public (undocumented)

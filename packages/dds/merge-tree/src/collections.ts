@@ -16,7 +16,6 @@ import {
     PropertyAction,
     SortedDictionary,
 } from "./base";
-import { internedSpaces } from "./mergeTree";
 
 export class Stack<T> {
     items: T[] = [];
@@ -944,117 +943,10 @@ export interface AugIntegerRangeNode {
 export interface AugmentedIntervalNode {
     minmax: IInterval;
 }
-/**
- * Union of two ranges; assumes for both ranges start \<= end.
- * @param a - A range
- * @param b - A range
- */
-function integerRangeUnion(a: IIntegerRange, b: IIntegerRange) {
-    return <IIntegerRange>{
-        start: Math.min(a.start, b.start),
-        end: Math.max(a.end, b.end),
-    };
-}
-
-function integerRangeOverlaps(a: IIntegerRange, b: IIntegerRange) {
-    return (a.start < b.end) && (a.end > b.start);
-}
-
-function integerRangeComparer(a: IIntegerRange, b: IIntegerRange) {
-    if (a.start === b.start) {
-        return a.end - b.end;
-    } else {
-        return a.start - b.start;
-    }
-}
-
-const integerRangeCopy = (r: IIntegerRange) => <IIntegerRange>{ start: r.start, end: r.end };
 
 export const integerRangeToString = (range: IIntegerRange) => `[${range.start},${range.end})`;
 
 export type IntegerRangeNode = RBNode<IIntegerRange, AugIntegerRangeNode>;
-
-// TODO: handle duplicate keys
-
-export class IntegerRangeTree implements IRBAugmentation<IIntegerRange, AugIntegerRangeNode>,
-    IRBMatcher<IIntegerRange, AugIntegerRangeNode> {
-    ranges = new RedBlackTree<IIntegerRange, AugIntegerRangeNode>(integerRangeComparer, this);
-    diag = false;
-
-    remove(r: IIntegerRange) {
-        this.ranges.remove(r);
-    }
-
-    put(r: IIntegerRange) {
-        this.ranges.put(r, { minmax: integerRangeCopy(r) });
-    }
-
-    toString() {
-        return this.nodeToString(this.ranges.root);
-    }
-
-    nodeToString(node: IntegerRangeNode | undefined) {
-        let buf = "";
-        let indentAmt = 0;
-        const actions = {
-            pre: (n: IntegerRangeNode) => {
-                let red = "";
-                if (n.color === RBColor.RED) {
-                    red = "R ";
-                }
-                buf += internedSpaces(indentAmt);
-                buf += `${red}key: ${integerRangeToString(n.key)} minmax: ${integerRangeToString(n.data.minmax)}\n`;
-                indentAmt += 2;
-                return true;
-            },
-            post: (n: IntegerRangeNode) => {
-                indentAmt -= 2;
-                return true;
-            },
-            showStructure: true,
-        };
-        this.ranges.nodeWalk(node, actions);
-        return buf;
-    }
-
-    matchPos(pos: number) {
-        return this.match({ start: pos, end: pos + 1 });
-    }
-
-    match(r: IIntegerRange) {
-        return this.ranges.gather(r, this);
-    }
-
-    matchNode(node: IntegerRangeNode | undefined, key: IIntegerRange) {
-        return !!node && integerRangeOverlaps(node.key, key);
-    }
-
-    continueSubtree(node: IntegerRangeNode | undefined, key: IIntegerRange) {
-        const cont = !!node && integerRangeOverlaps(node.data.minmax, key);
-        if (this.diag && (!cont)) {
-            if (node) {
-                console.log(`skipping subtree of size ${node.size} key ${integerRangeToString(key)}`);
-                console.log(this.nodeToString(node));
-            }
-        }
-        return cont;
-    }
-
-    update(node: IntegerRangeNode) {
-        if (node.left && node.right) {
-            node.data.minmax = integerRangeUnion(node.key,
-                integerRangeUnion(node.left.data.minmax, node.right.data.minmax));
-        } else {
-            if (node.left) {
-                node.data.minmax = integerRangeUnion(node.key, node.left.data.minmax);
-            } else if (node.right) {
-                node.data.minmax = integerRangeUnion(node.key, node.right.data.minmax);
-            } else {
-                node.data.minmax = integerRangeCopy(node.key);
-            }
-        }
-    }
-}
 
 export interface IInterval {
     clone(): IInterval;
