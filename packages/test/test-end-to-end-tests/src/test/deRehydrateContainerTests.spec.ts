@@ -439,7 +439,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
                     }
                 }
                 else {
-                    intervalsAfter.delete(interval.start.getOffset(), interval.end.getOffset());
+                    // intervalsAfter.delete(interval.start.getOffset(), interval.end.getOffset());
+                    intervalsAfter.removeIntervalById(interval.getIntervalId() as string);
                 }
             }
             for (const interval of intervalsAfter) {
