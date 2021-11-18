@@ -176,7 +176,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
-        const includeErrorProps = event.category === "error" || event.error !== undefined;
         const newEvent: ITelemetryBaseEvent = {
             ...event,
         };
@@ -184,28 +183,33 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
         }
         if(this.properties) {
-            const properties: (undefined | ITelemetryLoggerPropertyBag)[] = [];
-            properties.push(this.properties.all);
-            if(includeErrorProps) {
-                properties.push(this.properties.error);
-            }
-            for(const props of properties) {
-                if(props !== undefined) {
-                    for (const key of Object.keys(props)) {
-                        if (event[key] !== undefined) {
-                            continue;
-                        }
-                        const getterOrValue = props[key];
-                        // If this throws, hopefully it is handled elsewhere
-                        const value = typeof getterOrValue === "function" ? getterOrValue() : getterOrValue;
-                        if (value !== undefined) {
-                            newEvent[key] = value;
-                        }
+            this.applyProps(newEvent, this.properties);
+        }
+        return newEvent;
+    }
+
+    protected applyProps(event: ITelemetryBaseEvent, propertyBags: ITelemetryLoggerPropertyBags): void {
+        const includeErrorProps = event.category === "error" || event.error !== undefined;
+        const properties: (undefined | ITelemetryLoggerPropertyBag)[] = [];
+        properties.push(propertyBags.all);
+        if(includeErrorProps) {
+            properties.push(propertyBags.error);
+        }
+        for(const props of properties) {
+            if(props !== undefined) {
+                for (const key of Object.keys(props)) {
+                    if (event[key] !== undefined) {
+                        continue;
+                    }
+                    const getterOrValue = props[key];
+                    // If this throws, hopefully it is handled elsewhere
+                    const value = typeof getterOrValue === "function" ? getterOrValue() : getterOrValue;
+                    if (value !== undefined) {
+                        event[key] = value;
                     }
                 }
             }
         }
-        return newEvent;
     }
 }
 
@@ -259,6 +263,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
  * Creates sub-logger that appends properties to all events
  */
 export class ChildLogger extends TelemetryLogger {
+    protected readonly _globalProperties: Required<ITelemetryLoggerPropertyBags> = { all: {}, error: {} };
+
     /**
      * Create child logger
      * @param baseLogger - Base logger to use to output events. If undefined, proper child logger
@@ -298,9 +304,8 @@ export class ChildLogger extends TelemetryLogger {
             }
             //* Think through and test corner cases
             const layerVersions =
-                [combinedProperties.all?.layerVersions, namedLayerVersion].filter((lv) => !!lv).join(", ");
-
-            combinedProperties.all = { ...combinedProperties.all, layerVersions };
+                [baseLogger._globalProperties.all.layerVersions, namedLayerVersion].filter((lv) => !!lv).join(", ");
+            baseLogger._globalProperties.all.layerVersions = layerVersions;
 
             const combinedNamespace = baseLogger.namespace === undefined
                 ? namespace
@@ -309,22 +314,25 @@ export class ChildLogger extends TelemetryLogger {
                     : `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
 
             return new ChildLogger(
-                baseLogger.baseLogger,
+                baseLogger.baseLogger instanceof ChildLogger ? baseLogger.baseLogger : baseLogger,
                 combinedNamespace,
                 combinedProperties,
             );
         }
 
-        return new ChildLogger(
+        const childLogger = new ChildLogger(
             baseLogger ? baseLogger : new BaseTelemetryNullLogger(),
             namespace,
-            { all: { ...properties.all, layerVersions: namedLayerVersion }, error: properties.error });
+            properties);
+        childLogger._globalProperties.all.layerVersions = namedLayerVersion;
+        return childLogger;
     }
 
     private constructor(
         protected readonly baseLogger: ITelemetryBaseLogger,
         namespace?: string,
-        properties?: ITelemetryLoggerPropertyBags) {
+        properties?: ITelemetryLoggerPropertyBags,
+    ) {
         super(namespace, properties);
     }
 
@@ -335,6 +343,14 @@ export class ChildLogger extends TelemetryLogger {
      */
     public send(event: ITelemetryBaseEvent): void {
         this.baseLogger.send(this.prepareEvent(event));
+    }
+
+    protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
+        const newEvent = { ...event };
+        this.applyProps(
+            newEvent,
+            this.baseLogger instanceof ChildLogger ? this.baseLogger._globalProperties : this._globalProperties);
+        return super.prepareEvent(newEvent);
     }
 }
 

@@ -28,6 +28,10 @@ export class ChildLogger extends TelemetryLogger {
     static create(baseLogger?: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags, layerVersion?: string): TelemetryLogger;
     // (undocumented)
     protected get globalProperties(): ITelemetryLoggerPropertyBags;
+    // (undocumented)
+    protected readonly _globalProperties: Required<ITelemetryLoggerPropertyBags>;
+    // (undocumented)
+    protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent;
     send(event: ITelemetryBaseEvent): void;
 }
 
@@ -200,6 +204,8 @@ export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTe
 // @public
 export abstract class TelemetryLogger implements ITelemetryLogger {
     constructor(namespace?: string | undefined, properties?: ITelemetryLoggerPropertyBags | undefined);
+    // (undocumented)
+    protected applyProps(event: ITelemetryBaseEvent, propertyBags: ITelemetryLoggerPropertyBags): void;
     // (undocumented)
     static readonly eventNamespaceSeparator = ":";
     // (undocumented)
