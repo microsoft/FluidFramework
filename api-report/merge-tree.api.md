@@ -1356,8 +1356,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     // (undocumented)
     ceil(key: TKey): RBNode<TKey, TData> | undefined;
     // (undocumented)
-    contains(key: TKey): RBNode<TKey, TData> | undefined;
-    // (undocumented)
     diag(): void;
     // (undocumented)
     floor(key: TKey): RBNode<TKey, TData> | undefined;
@@ -1383,10 +1381,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     remove(key: TKey): void;
     // (undocumented)
     removeExisting(key: TKey): void;
-    // (undocumented)
-    removeMax(): void;
-    // (undocumented)
-    removeMin(): void;
     // (undocumented)
     size(): number;
     walk(actions: RBNodeActions<TKey, TData>): void;

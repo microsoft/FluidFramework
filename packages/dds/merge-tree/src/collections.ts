@@ -315,10 +315,10 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     private nodeSize(node: RBNode<TKey, TData> | undefined) {
         return node ? node.size : 0;
     }
-    size() {
+    public size() {
         return this.nodeSize(this.root);
     }
-    isEmpty() {
+    public isEmpty() {
         return !this.root;
     }
     public get(key: TKey) {
@@ -341,11 +341,11 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
             }
         }
     }
-    contains(key: TKey) {
+    private contains(key: TKey) {
         return this.get(key);
     }
 
-    gather(key: TKey, matcher: IRBMatcher<TKey, TData>) {
+    public gather(key: TKey, matcher: IRBMatcher<TKey, TData>) {
         const results = [] as RBNode<TKey, TData>[];
         if (key !== undefined) {
             this.nodeGather(this.root, results, key, matcher);
@@ -371,7 +371,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    walkExactMatchesForward(
+    public walkExactMatchesForward(
         compareFn: (node: RBNode<TKey, TData>) => number,
         actionFn: (node: RBNode<TKey, TData>) => void,
         continueLeftFn: (number: number) => boolean,
@@ -400,7 +400,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    walkExactMatchesBackward(
+    public walkExactMatchesBackward(
         compareFn: (node: RBNode<TKey, TData>) => number,
         actionFn: (node: RBNode<TKey, TData>) => void,
         continueLeftFn: (number: number) => boolean,
@@ -506,19 +506,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    removeMin() {
-        if (this.root) {
-            if ((!this.isRed(this.root.left)) && (!this.isRed(this.root.right))) {
-                this.root.color = RBColor.RED;
-            }
-
-            this.root = this.nodeRemoveMin(this.root);
-            if (this.root) {
-                this.root.color = RBColor.BLACK;
-            }
-        }
-        // TODO: error on empty
-    }
     private nodeRemoveMin(node: RBNode<TKey, TData>) {
         let _node = node;
         if (_node.left) {
@@ -532,41 +519,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    removeMax() {
-        if (this.root) {
-            if ((!this.isRed(this.root.left)) && (!this.isRed(this.root.right))) {
-                this.root.color = RBColor.RED;
-            }
-
-            this.root = this.nodeRemoveMax(this.root);
-            if (this.root) {
-                this.root.color = RBColor.BLACK;
-            }
-        }
-        // TODO: error on empty
-    }
-
-    private nodeRemoveMax(node: RBNode<TKey, TData>) {
-        let _node = node;
-
-        if (this.isRed(_node.left)) {
-            _node = this.rotateRight(_node);
-        }
-
-        if (!_node.right) {
-            return undefined;
-        }
-
-        if ((!this.isRed(_node.right)) && (!this.isRed(_node.right.left))) {
-            _node = this.moveRedRight(_node);
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        _node.right = this.nodeRemoveMax(_node.right!);
-
-        return this.balance(_node);
-    }
-
     public remove(key: TKey) {
         if (key !== undefined) {
             if (!this.contains(key)) {
@@ -578,7 +530,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         // TODO: error on undefined key
     }
 
-    removeExisting(key: TKey) {
+    public removeExisting(key: TKey) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         if ((!this.isRed(this.root!.left)) && (!this.isRed(this.root!.right))) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
