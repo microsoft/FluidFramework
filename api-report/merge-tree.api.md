@@ -776,13 +776,9 @@ export interface KeyComparer<TKey> {
 export class List<T> {
     constructor(isHead: boolean, data: T | undefined);
     // (undocumented)
-    add(data: T): List<T>;
-    // (undocumented)
     clear(): void;
     // (undocumented)
     count(): number;
-    // (undocumented)
-    data: T | undefined;
     // (undocumented)
     dequeue(): T | undefined;
     // (undocumented)
@@ -796,8 +792,6 @@ export class List<T> {
     // (undocumented)
     insertBefore(data: T): List<T>;
     // (undocumented)
-    insertEntry(entry: List<T>): List<T>;
-    // (undocumented)
     insertEntryBefore(entry: List<T>): List<T>;
     // (undocumented)
     isHead: boolean;
@@ -806,13 +800,9 @@ export class List<T> {
     // (undocumented)
     next: List<T>;
     // (undocumented)
-    popEntry(head: List<T>): List<T> | undefined;
-    // (undocumented)
     prev: List<T>;
     // (undocumented)
     push(data: T): void;
-    // (undocumented)
-    pushEntry(entry: List<T>): void;
     // (undocumented)
     some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T[];
     // (undocumented)

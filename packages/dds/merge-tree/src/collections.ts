@@ -58,22 +58,22 @@ export function ListMakeHead<U>(): List<U> {
 }
 
 export class List<T> {
-    next: List<T>;
-    prev: List<T>;
+    public next: List<T>;
+    public prev: List<T>;
 
-    constructor(public isHead: boolean, public data: T | undefined) {
+    constructor(public isHead: boolean, private data: T | undefined) {
         this.prev = this;
         this.next = this;
     }
 
-    clear(): void {
+    public clear(): void {
         if (this.isHead) {
             this.prev = this;
             this.next = this;
         }
     }
 
-    add(data: T): List<T> {
+    private add(data: T): List<T> {
         const entry = ListMakeEntry(data);
         this.prev.next = entry;
         entry.next = this;
@@ -82,7 +82,7 @@ export class List<T> {
         return (entry);
     }
 
-    dequeue(): T | undefined {
+    public dequeue(): T | undefined {
         if (!this.empty()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const removedEntry = ListRemoveEntry(this.next)!;
@@ -90,18 +90,18 @@ export class List<T> {
         }
     }
 
-    enqueue(data: T): List<T> {
+    public enqueue(data: T): List<T> {
         return this.add(data);
     }
 
-    walk(fn: (data: T, l: List<T>) => void): void {
+    public walk(fn: (data: T, l: List<T>) => void): void {
         for (let entry = this.next; !(entry.isHead); entry = entry.next) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             fn(entry.data!, entry);
         }
     }
 
-    some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T[] {
+    public some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T[] {
         const rtn: T[] = [];
         const start = rev ? this.prev : this.next;
         for (let entry = start; !(entry.isHead); entry = rev ? entry.prev : entry.next) {
@@ -119,7 +119,7 @@ export class List<T> {
         return rtn;
     }
 
-    count(): number {
+    public count(): number {
         let entry: List<T>;
         let i: number;
 
@@ -146,15 +146,7 @@ export class List<T> {
         return (this.next === this);
     }
 
-    pushEntry(entry: List<T>): void {
-        entry.isHead = false;
-        entry.next = this.next;
-        entry.prev = this;
-        this.next = entry;
-        entry.next.prev = entry;
-    }
-
-    push(data: T): void {
+    public push(data: T): void {
         const entry = ListMakeEntry(data);
         entry.data = data;
         entry.isHead = false;
@@ -162,24 +154,6 @@ export class List<T> {
         entry.prev = this;
         this.next = entry;
         entry.next.prev = entry;
-    }
-
-    popEntry(head: List<T>): List<T> | undefined {
-        if (this.next.isHead) {
-            return undefined;
-        }
-        else {
-            return ListRemoveEntry(this.next);
-        }
-    }
-
-    insertEntry(entry: List<T>): List<T> {
-        entry.isHead = false;
-        this.prev.next = entry;
-        entry.next = this;
-        entry.prev = this.prev;
-        this.prev = entry;
-        return entry;
     }
 
     insertAfter(data: T): List<T> {
@@ -212,7 +186,7 @@ export interface Comparer<T> {
 
 export class Heap<T> {
     private L: T[];
-    count() {
+    public count() {
         return this.L.length - 1;
     }
     constructor(a: T[], public comp: Comparer<T>) {
@@ -221,11 +195,11 @@ export class Heap<T> {
             this.add(a[i]);
         }
     }
-    peek() {
+    public peek() {
         return this.L[1];
     }
 
-    get() {
+    public get() {
         const x = this.L[1];
         this.L[1] = this.L[this.count()];
         this.L.pop();
@@ -233,7 +207,7 @@ export class Heap<T> {
         return x;
     }
 
-    add(x: T) {
+    public add(x: T) {
         this.L.push(x);
         this.fixup(this.count());
     }
