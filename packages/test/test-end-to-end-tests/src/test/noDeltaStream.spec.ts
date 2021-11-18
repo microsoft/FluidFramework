@@ -37,7 +37,7 @@ const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
         // strictly control summarization
         summaryOptions: {
-            generateSummaries: false,
+            disableSummaries: true,
             initialSummarizerDelayMs: 0,
             summaryConfigOverrides: { maxOps },
         },
@@ -83,7 +83,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                             ... testContainerConfig.runtimeOptions,
                             summaryOptions:{
                                 ... testContainerConfig.runtimeOptions?.summaryOptions,
-                                generateSummaries: true,
+                                disableSummaries: false,
                             },
                         },
                     })]],

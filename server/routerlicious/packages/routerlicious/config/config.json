@@ -8,7 +8,9 @@
         "label": "winston"
     },
     "mongo": {
-        "endpoint": "mongodb://mongodb:27017",
+        "operationsDbEndpoint": "mongodb://mongodb:27017",
+        "globalDbEndpoint": "mongodb://mongodb:27017",
+        "globalDbEnabled": false,
         "expireAfterSeconds": -1,
         "createCosmosDBIndexes": false,
         "bufferMaxEntries": 50,

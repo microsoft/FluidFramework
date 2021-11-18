@@ -9,6 +9,7 @@ import {
     IFluidConfiguration,
     IRequest,
     IResponse,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -150,7 +151,7 @@ export interface IContainerContext extends IDisposable {
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IFluidObject;
+    readonly scope: IFluidObject & FluidObject;
 
     raiseContainerWarning(warning: ContainerWarning): void;
 

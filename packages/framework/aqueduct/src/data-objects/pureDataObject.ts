@@ -11,6 +11,7 @@ import {
     IProvideFluidHandle,
     IRequest,
     IResponse,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import { AsyncFluidObjectProvider, FluidObjectKey } from "@fluidframework/synthesize";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
@@ -173,7 +174,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
      * @param getObjectFromDirectory - optional callback for fetching object from the directory, allows users to
      * define custom types/getters for object retrieval
      */
-    public async getFluidObjectFromDirectory<T extends IFluidObject & IFluidLoadable>(
+    public async getFluidObjectFromDirectory<T extends IFluidObject & FluidObject & IFluidLoadable>(
         key: string,
         directory: IDirectory,
         getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IFluidHandle | undefined):
