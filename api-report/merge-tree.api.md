@@ -17,12 +17,6 @@ import { Trace } from '@fluidframework/common-utils';
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
 
 // @public (undocumented)
-export interface AugIntegerRangeNode {
-    // (undocumented)
-    minmax: IIntegerRange;
-}
-
-// @public (undocumented)
 export interface AugmentedIntervalNode {
     // (undocumented)
     minmax: IInterval;
@@ -639,9 +633,6 @@ export interface InsertContext {
     // (undocumented)
     structureChange?: boolean;
 }
-
-// @public (undocumented)
-export type IntegerRangeNode = RBNode<IIntegerRange, AugIntegerRangeNode>;
 
 // @public (undocumented)
 export const integerRangeToString: (range: IIntegerRange) => string;
@@ -1676,12 +1667,6 @@ export interface TSTNode<T> {
     right?: TSTNode<T>;
     // (undocumented)
     val?: T;
-}
-
-// @public (undocumented)
-export interface TSTPrefix {
-    // (undocumented)
-    text: string;
 }
 
 // @public (undocumented)

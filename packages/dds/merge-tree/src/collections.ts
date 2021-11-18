@@ -889,17 +889,11 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     }
 }
 
-export interface AugIntegerRangeNode {
-    minmax: IIntegerRange;
-}
-
 export interface AugmentedIntervalNode {
     minmax: IInterval;
 }
 
 export const integerRangeToString = (range: IIntegerRange) => `[${range.start},${range.end})`;
-
-export type IntegerRangeNode = RBNode<IIntegerRange, AugIntegerRangeNode>;
 
 export interface IInterval {
     clone(): IInterval;
@@ -1014,7 +1008,7 @@ export interface TSTNode<T> {
     val?: T;
 }
 
-export interface TSTPrefix {
+interface TSTPrefix {
     text: string;
 }
 
