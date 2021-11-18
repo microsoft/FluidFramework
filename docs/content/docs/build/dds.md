@@ -106,6 +106,7 @@ see [Using handles to store and retrieve shared objects][handles-example].
 
 That's all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles,
 see [Fluid handles]({{< relref "handles.md" >}}).
+
 [handles-example]: {{< relref "data-modeling.md#using-handles-to-store-and-retrieve-fluid-objects" >}}
 
 ## Events
