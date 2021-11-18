@@ -1725,31 +1725,15 @@ export const TreeMaintenanceSequenceNumber = -2;
 // @public (undocumented)
 export class TST<T> {
     // (undocumented)
-    collect(x: TSTNode<T> | undefined, prefix: TSTPrefix, q: string[]): void;
-    // (undocumented)
-    collectPairs(x: TSTNode<T> | undefined, prefix: TSTPrefix, q: TSTResult<T>[]): void;
-    // (undocumented)
-    contains(key: string): T | undefined;
-    // (undocumented)
     get(key: string): T | undefined;
     // (undocumented)
     keysWithPrefix(text: string): string[];
     // (undocumented)
     map(fn: (key: string, val: T) => void): void;
     // (undocumented)
-    mapNode(x: TSTNode<T> | undefined, prefix: TSTPrefix, fn: (key: string, val: T) => void): void;
-    // (undocumented)
-    match(pattern: string): string[];
-    // (undocumented)
     neighbors(text: string, distance?: number): ProxString<T>[];
     // (undocumented)
-    nodeGet(x: TSTNode<T> | undefined, key: string, d: number): TSTNode<T> | undefined;
-    // (undocumented)
-    nodePut(x: TSTNode<T> | undefined, key: string, val: T, d: number): TSTNode<T>;
-    // (undocumented)
     pairsWithPrefix(text: string): TSTResult<T>[];
-    // (undocumented)
-    patternCollect(x: TSTNode<T> | undefined, prefix: TSTPrefix, d: number, pattern: string, q: string[]): void;
     // (undocumented)
     put(key: string, val: T): void;
     // (undocumented)

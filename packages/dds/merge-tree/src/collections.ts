@@ -1097,15 +1097,15 @@ export class TST<T> {
     private n = 0;
     private root: TSTNode<T> | undefined;
 
-    size() {
+    public size() {
         return this.n;
     }
 
-    contains(key: string) {
+    private contains(key: string) {
         return this.get(key);
     }
 
-    get(key: string) {
+    public get(key: string) {
         const x = this.nodeGet(this.root, key, 0);
         if (x === undefined) {
             return undefined;
@@ -1113,7 +1113,7 @@ export class TST<T> {
         return x.val;
     }
 
-    nodeGet(x: TSTNode<T> | undefined, key: string, d: number): TSTNode<T> | undefined {
+    private nodeGet(x: TSTNode<T> | undefined, key: string, d: number): TSTNode<T> | undefined {
         if (x === undefined) {
             return undefined;
         }
@@ -1130,7 +1130,7 @@ export class TST<T> {
         else { return x; }
     }
 
-    put(key: string, val: T) {
+    public put(key: string, val: T) {
         if (!this.contains(key)) {
             this.n++;
         }
@@ -1138,7 +1138,7 @@ export class TST<T> {
         // console.log(`put ${key}`);
     }
 
-    nodePut(x: TSTNode<T> | undefined, key: string, val: T, d: number) {
+    private nodePut(x: TSTNode<T> | undefined, key: string, val: T, d: number) {
         let _x = x;
         const c = key.charAt(d);
         if (_x === undefined) {
@@ -1159,14 +1159,14 @@ export class TST<T> {
         return _x;
     }
 
-    neighbors(text: string, distance = 2) {
+    public neighbors(text: string, distance = 2) {
         let q = <ProxString<T>[]>[];
         this.nodeProximity(this.root, { text: "" }, 0, text, distance, q);
         q = q.filter((value) => (value.text.length > 0));
         return q;
     }
 
-    keysWithPrefix(text: string) {
+    public keysWithPrefix(text: string) {
         const q = <string[]>[];
         const x = this.nodeGet(this.root, text, 0);
         if (x === undefined) {
@@ -1179,7 +1179,7 @@ export class TST<T> {
         return q;
     }
 
-    collect(x: TSTNode<T> | undefined, prefix: TSTPrefix, q: string[]) {
+    private collect(x: TSTNode<T> | undefined, prefix: TSTPrefix, q: string[]) {
         if (x === undefined) {
             return;
         }
@@ -1191,7 +1191,7 @@ export class TST<T> {
         this.collect(x.right, prefix, q);
     }
 
-    mapNode(x: TSTNode<T> | undefined, prefix: TSTPrefix, fn: (key: string, val: T) => void) {
+    private mapNode(x: TSTNode<T> | undefined, prefix: TSTPrefix, fn: (key: string, val: T) => void) {
         if (x === undefined) {
             return;
         }
@@ -1204,11 +1204,11 @@ export class TST<T> {
         this.mapNode(x.right, prefix, fn);
     }
 
-    map(fn: (key: string, val: T) => void) {
+    public map(fn: (key: string, val: T) => void) {
         this.mapNode(this.root, { text: "" }, fn);
     }
 
-    pairsWithPrefix(text: string) {
+    public pairsWithPrefix(text: string) {
         const q = <TSTResult<T>[]>[];
         const x = this.nodeGet(this.root, text, 0);
         if (x === undefined) {
@@ -1221,7 +1221,7 @@ export class TST<T> {
         return q;
     }
 
-    collectPairs(x: TSTNode<T> | undefined, prefix: TSTPrefix, q: TSTResult<T>[]) {
+    private collectPairs(x: TSTNode<T> | undefined, prefix: TSTPrefix, q: TSTResult<T>[]) {
         if (x === undefined) {
             return;
         }
@@ -1231,28 +1231,6 @@ export class TST<T> {
         }
         this.collectPairs(x.mid, { text: prefix.text + x.c }, q);
         this.collectPairs(x.right, prefix, q);
-    }
-
-    patternCollect(x: TSTNode<T> | undefined, prefix: TSTPrefix, d: number, pattern: string, q: string[]) {
-        if (x === undefined) {
-            return;
-        }
-        const c = pattern.charAt(d);
-        if ((c === ".") || (c < x.c)) {
-            this.patternCollect(x.left, prefix, d, pattern, q);
-        }
-        else if ((c === ".") || (c === x.c)) {
-            if ((d === (pattern.length - 1)) && (x.val !== undefined)) {
-                q.push(prefix.text + x.c);
-            }
-            else if (d < (pattern.length - 1)) {
-                this.patternCollect(x.mid, { text: prefix.text + x.c },
-                    d + 1, pattern, q);
-            }
-        }
-        if ((c === ".") || (c > x.c)) {
-            this.patternCollect(x.right, prefix, d, pattern, q);
-        }
     }
 
     private nodeProximity(
@@ -1289,11 +1267,5 @@ export class TST<T> {
         if ((distance > 0) || (c > x.c)) {
             this.nodeProximity(x.right, prefix, d, pattern, distance, q);
         }
-    }
-
-    match(pattern: string) {
-        const q = <string[]>[];
-        this.patternCollect(this.root, { text: "" }, 0, pattern, q);
-        return q;
     }
 }
