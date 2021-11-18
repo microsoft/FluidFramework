@@ -3,11 +3,27 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
+
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { ChildLogger } from "../logger";
+import { MockLogger } from "../mockLogger";
 
 describe("ChildLogger", () => {
+    it.only("layerVersions", () => {
+        // Arrange
+        const mockLogger = new MockLogger();
+        const loggerA = ChildLogger.create(mockLogger, "A", {}, "0.1");
+        const loggerB = ChildLogger.create(loggerA, "B", {}, "0.2");
+        const loggerC = ChildLogger.create(loggerB, "C", {}, "0.3");
+
+        loggerC.send({ category: "generic", eventName: "test1"});
+        assert(mockLogger.matchEvents([{layerVersions:"A:0.1, B:0.2, C:0.3"}]), "layerVersions not built properly");
+
+        loggerA.send({ category: "generic", eventName: "test2"});
+        assert(mockLogger.matchEvents([{layerVersions:"A:0.1"}]), "layerVersions not built properly");
+    });
     it("Properties & Getters Propagate",()=>{
         let sent = false;
         const logger: ITelemetryBaseLogger = {
