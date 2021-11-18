@@ -75,7 +75,7 @@ These behavioral guarantees cannot be implemented in an optimistic way. The cost
 part of what makes Fluid so fast, so using optimistic DDSes is almost always preferred, but you can trade performance
 for behavioral guarantees.
 
-An example of a consensus-based DDS in Fluid Framework is the [TaskManager]][].
+An example of a consensus-based DDS in Fluid Framework is the **TaskManager**.
 
 #### Why consensus-based DDSes are useful
 
