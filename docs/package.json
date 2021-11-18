@@ -31,7 +31,7 @@
     "install:ditaa:force": "binstall install -n ditaa -d bin",
     "install:ditaa:win32": "if not exist bin/ditaa.exe npm run install:ditaa:force",
     "linkcheck": "npm run linkcheck:fast -- --external",
-    "linkcheck:fast": "linkcheck http://localhost:1313 --skip-file expected-broken-links.txt",
+    "linkcheck:fast": "linkcheck http://localhost:1313 --skip-file skipped-urls.txt",
     "lint": "markdownlint-cli2",
     "lint:fix": "markdownlint-cli2-fix",
     "start": "npm run build:md-magic && hugo server"
