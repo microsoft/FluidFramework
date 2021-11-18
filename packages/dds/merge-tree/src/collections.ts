@@ -8,7 +8,6 @@
 
 /* Remove once strictNullCheck is enabled */
 
-import { Trace } from "@fluidframework/common-utils";
 import {
     ConflictAction,
     IIntegerRange,
@@ -964,25 +963,17 @@ export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) =
 
 export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, AugmentedIntervalNode>,
     IRBMatcher<T, AugmentedIntervalNode> {
-    intervals = new RedBlackTree<T, AugmentedIntervalNode>(intervalComparer, this);
-    diag = false;
-    timePut = false;
-    putTime = 0;
-    putCount = 0;
+    public intervals = new RedBlackTree<T, AugmentedIntervalNode>(intervalComparer, this);
 
-    printTiming() {
-        console.log(`put total = ${this.putTime} avg=${(this.putTime / this.putCount).toFixed(2)}`);
-    }
-
-    remove(x: T) {
+    public remove(x: T) {
         this.intervals.remove(x);
     }
 
-    removeExisting(x: T) {
+    public removeExisting(x: T) {
         this.intervals.removeExisting(x);
     }
 
-    put(x: T, conflict?: IntervalConflictResolver<T>) {
+    public put(x: T, conflict?: IntervalConflictResolver<T>) {
         let rbConflict: ConflictAction<T, AugmentedIntervalNode> | undefined;
         if (conflict) {
             rbConflict = (key: T, currentKey: T) => {
@@ -992,17 +983,10 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
                 };
             };
         }
-        if (this.timePut) {
-            const trace = Trace.start();
-            this.intervals.put(x, { minmax: x.clone() }, rbConflict);
-            this.putTime += trace.trace().duration * 1000;
-            this.putCount++;
-        } else {
-            this.intervals.put(x, { minmax: x.clone() }, rbConflict);
-        }
+        this.intervals.put(x, { minmax: x.clone() }, rbConflict);
     }
 
-    map(fn: (x: T) => void) {
+    public map(fn: (x: T) => void) {
         const actions = <RBNodeActions<T, AugmentedIntervalNode>>{
             infix: (node) => {
                 fn(node.key);
@@ -1013,7 +997,7 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
         this.intervals.walk(actions);
     }
 
-    mapUntil(fn: (X: T) => boolean) {
+    public mapUntil(fn: (X: T) => boolean) {
         const actions = <RBNodeActions<T, AugmentedIntervalNode>>{
             infix: (node) => {
                 return fn(node.key);
@@ -1023,7 +1007,7 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
         this.intervals.walk(actions);
     }
 
-    mapBackward(fn: (x: T) => void) {
+    public mapBackward(fn: (x: T) => void) {
         const actions = <RBNodeActions<T, AugmentedIntervalNode>>{
             infix: (node) => {
                 fn(node.key);
@@ -1034,27 +1018,20 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
         this.intervals.walkBackward(actions);
     }
 
-   // TODO: toString()
-    match(x: T) {
+    // TODO: toString()
+    public match(x: T) {
         return this.intervals.gather(x, this);
     }
 
-    matchNode(node: IntervalNode<T> | undefined, key: T) {
+    public matchNode(node: IntervalNode<T> | undefined, key: T) {
         return !!node && node.key.overlaps(key);
     }
 
-    continueSubtree(node: IntervalNode<T> | undefined, key: T) {
-        const cont = !!node && node.data.minmax.overlaps(key);
-        if (this.diag && (!cont)) {
-            if (node) {
-                console.log(`skipping subtree of size ${node.size} key ${key.toString()}`);
-                // console.log(this.nodeToString(node));
-            }
-        }
-        return cont;
+    public continueSubtree(node: IntervalNode<T> | undefined, key: T) {
+        return !!node && node.data.minmax.overlaps(key);
     }
 
-    update(node: IntervalNode<T>) {
+    public update(node: IntervalNode<T>) {
         if (node.left && node.right) {
             node.data.minmax = node.key.union(
                 node.left.data.minmax.union(node.right.data.minmax));

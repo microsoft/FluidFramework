@@ -660,8 +660,6 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
     // (undocumented)
     continueSubtree(node: IntervalNode<T> | undefined, key: T): boolean;
     // (undocumented)
-    diag: boolean;
-    // (undocumented)
     intervals: RedBlackTree<T, AugmentedIntervalNode>;
     // (undocumented)
     map(fn: (x: T) => void): void;
@@ -674,19 +672,11 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
     // (undocumented)
     matchNode(node: IntervalNode<T> | undefined, key: T): boolean;
     // (undocumented)
-    printTiming(): void;
-    // (undocumented)
     put(x: T, conflict?: IntervalConflictResolver<T>): void;
-    // (undocumented)
-    putCount: number;
-    // (undocumented)
-    putTime: number;
     // (undocumented)
     remove(x: T): void;
     // (undocumented)
     removeExisting(x: T): void;
-    // (undocumented)
-    timePut: boolean;
     // (undocumented)
     update(node: IntervalNode<T>): void;
 }
