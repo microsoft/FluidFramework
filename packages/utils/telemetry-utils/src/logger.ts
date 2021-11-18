@@ -107,8 +107,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     public constructor(
         protected readonly namespace?: string,
-        protected readonly properties?: ITelemetryLoggerPropertyBags,
-        public readonly _globalProperties: Required<ITelemetryLoggerPropertyBags> = { all: {}, error: {} }) {
+        protected readonly properties?: ITelemetryLoggerPropertyBags) {
     }
 
     /**
@@ -258,6 +257,19 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 }
 
+class ChildLoggerRoot extends TelemetryLogger {
+    public constructor(
+        private readonly baseLogger: ITelemetryBaseLogger = new BaseTelemetryNullLogger(),
+        readonly _globalProperties: Required<ITelemetryLoggerPropertyBags> = { all: {}, error: {} },
+    ) {
+        super();
+    }
+
+    public send(event: ITelemetryBaseEvent): void {
+        this.baseLogger.send(event);
+    }
+}
+
 /**
  * ChildLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
@@ -265,12 +277,10 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
  */
 export class ChildLogger extends TelemetryLogger {
     protected get globalProperties() {
-        return this.baseLogger instanceof TelemetryLogger ? this.baseLogger._globalProperties : undefined;
+        return this.rootLogger._globalProperties;
     }
     protected setGlobalProperty(key, val) {
-        if (this.baseLogger instanceof TelemetryLogger) {
-            this.baseLogger._globalProperties.all[key] = val;
-        }
+        this.rootLogger._globalProperties.all[key] = val;
     }
 
     /**
@@ -282,17 +292,13 @@ export class ChildLogger extends TelemetryLogger {
      * @param propertyGetters - Getters to add additional properties to all events
      */
     public static create(
-        baseLoggerI?: ITelemetryBaseLogger,
+        baseLogger?: ITelemetryBaseLogger,
         namespace?: string,
         properties: ITelemetryLoggerPropertyBags = {},
         layerVersion?: string,
     ): TelemetryLogger {
         // properties.all = { ...properties.all, layerVersion };
         const namedLayerVersion = `${namespace}:${layerVersion}`; //* What if no namespace?
-
-        const baseLogger: TelemetryLogger = baseLoggerI instanceof TelemetryLogger
-            ? baseLoggerI
-            : new ChildLogger(baseLoggerI);
 
         // if we are creating a child of a child, rather than nest, which will increase
         // the callstack overhead, just generate a new logger that includes everything from the previous
@@ -317,7 +323,7 @@ export class ChildLogger extends TelemetryLogger {
             //* Think through and test corner cases
             const layerVersions =
                 [baseLogger.globalProperties?.all.layerVersions, namedLayerVersion].filter((lv) => !!lv).join(", ");
-            baseLogger.setGlobalProperty("layerVersions", layerVersions);
+            baseLogger.globalProperties.all.layerVersions = layerVersions;
 
             const combinedNamespace = baseLogger.namespace === undefined
                 ? namespace
@@ -326,22 +332,22 @@ export class ChildLogger extends TelemetryLogger {
                     : `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
 
             return new ChildLogger(
-                baseLogger.baseLogger,
+                baseLogger.rootLogger,
                 combinedNamespace,
                 combinedProperties,
             );
         }
 
         const childLogger = new ChildLogger(
-            baseLogger,
+            new ChildLoggerRoot(baseLogger),
             namespace,
             properties);
-        baseLogger._globalProperties.all.layerVersions = namedLayerVersion;
+        childLogger.globalProperties.all.layerVersions = namedLayerVersion;
         return childLogger;
     }
 
     private constructor(
-        protected readonly baseLogger = new BaseTelemetryNullLogger(),
+        protected readonly rootLogger: ChildLoggerRoot,
         namespace?: string,
         properties?: ITelemetryLoggerPropertyBags,
     ) {
@@ -354,7 +360,7 @@ export class ChildLogger extends TelemetryLogger {
      * @param event - the event to send
      */
     public send(event: ITelemetryBaseEvent): void {
-        this.baseLogger.send(this.prepareEvent(event));
+        this.rootLogger.send(this.prepareEvent(event));
     }
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
@@ -364,7 +370,7 @@ export class ChildLogger extends TelemetryLogger {
                 newEvent,
                 this.globalProperties);
         }
-        return super.prepareEvent(newEvent);
+        return super.prepareEvent(newEvent); //* Switch order for precedence
     }
 }
 
