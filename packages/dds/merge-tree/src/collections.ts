@@ -17,20 +17,20 @@ import {
 } from "./base";
 
 export class Stack<T> {
-    items: T[] = [];
-    push(val: T) {
+    public items: T[] = [];
+    public push(val: T) {
         this.items.push(val);
     }
 
-    empty() {
+    public empty() {
         return this.items.length === 0;
     }
 
-    top(): T | undefined {
+    public top(): T | undefined {
         return this.items[this.items.length - 1];
     }
 
-    pop(): T | undefined {
+    public pop(): T | undefined {
         return this.items.pop();
     }
 }
