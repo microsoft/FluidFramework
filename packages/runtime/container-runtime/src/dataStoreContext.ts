@@ -993,7 +993,7 @@ export class LocalDetachedFluidDataStoreContext
         super.bindRuntime(dataStoreRuntime);
 
         if (this.isRootDataStore) {
-            dataStoreRuntime.attachGraph();
+            dataStoreRuntime.bindToContext();
         }
     }
 
