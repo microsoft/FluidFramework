@@ -1235,6 +1235,7 @@ export class DeltaManager
             connectionLastObservedSeqNumber: this.lastObservedSeqNumber,
             clientId: connection.clientId,
             mode: connection.mode,
+            relayServiceAgent: connection.relayServiceAgent,
         };
         this._hasCheckpointSequenceNumber = false;
 
