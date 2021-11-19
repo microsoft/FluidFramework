@@ -14,15 +14,17 @@ describe("ChildLogger", () => {
     it.only("layerVersions", () => {
         // Arrange
         const mockLogger = new MockLogger();
-        const loggerA = ChildLogger.create(mockLogger, "A", {}, "0.1");
-        const loggerB = ChildLogger.create(loggerA, "B", {}, "0.2");
-        const loggerC = ChildLogger.create(loggerB, "C", {}, "0.3");
+        const loggerA = ChildLogger.create(mockLogger, "A", {}, {}, "0.1");
+        const loggerB = ChildLogger.create(loggerA, undefined, {}, {}, "0.2");
+        const loggerC = ChildLogger.create(loggerB, "C", {}, {});
+        const loggerD = ChildLogger.create(loggerC, "D", {}, {}, "0.4");
+        const loggerE = ChildLogger.create(loggerD, "E", {}, {}, "0.5");
 
-        loggerC.send({ category: "generic", eventName: "test1"});
-        assert(mockLogger.matchEvents([{layerVersions:"A:0.1, B:0.2, C:0.3"}]), "layerVersions not built properly");
+        loggerE.send({ category: "generic", eventName: "test1"});
+        assert(mockLogger.matchEvents([{layerVersions:"A:0.1, D:0.4, E:0.5"}]), "layerVersions not built properly");
 
         loggerA.send({ category: "generic", eventName: "test2"});
-        assert(mockLogger.matchEvents([{layerVersions:"A:0.1, B:0.2, C:0.3"}]), "layerVersions not propagated globally properly");
+        assert(mockLogger.matchEvents([{layerVersions:"A:0.1, D:0.4, E:0.5"}]), "layerVersions not propagated globally properly");
     });
     it("Properties & Getters Propagate",()=>{
         let sent = false;

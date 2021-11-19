@@ -300,9 +300,12 @@ export class ChildLogger extends TelemetryLogger {
         baseLogger?: ITelemetryBaseLogger,
         namespace?: string,
         properties: ITelemetryLoggerPropertyBags = {},
+        globalProperties: ITelemetryLoggerPropertyBags = {},
         layerVersion?: string,
     ): TelemetryLogger {
-        const namedLayerVersion = `${namespace}:${layerVersion}`; //* What if no namespace?
+        const namedLayerVersion = namespace !== undefined && layerVersion !== undefined
+            ? `${namespace}:${layerVersion}`
+            : undefined;
 
         // if we are creating a child of a child, rather than nest, which will increase
         // the callstack overhead, just generate a new logger that includes everything from the previous
@@ -325,10 +328,14 @@ export class ChildLogger extends TelemetryLogger {
                 }
             }
 
-            //* Think through and test corner cases
-            const layerVersions =
-                [baseLogger.globalProperties.all.layerVersions, namedLayerVersion].filter((lv) => !!lv).join(", ");
-            baseLogger.globalProperties.all.layerVersions = layerVersions;
+            // Allow global properties to be updated over time
+            Object.assign(baseLogger.globalProperties, globalProperties);
+
+            // Concatenate next layer version to existing versions
+            if (namedLayerVersion !== undefined) {
+                baseLogger.globalProperties.all.layerVersions =
+                    [baseLogger.globalProperties.all.layerVersions, namedLayerVersion].filter((lv) => !!lv).join(", ");
+            }
 
             const combinedNamespace = baseLogger.namespace === undefined
                 ? namespace
