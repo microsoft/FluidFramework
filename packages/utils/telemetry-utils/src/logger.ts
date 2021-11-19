@@ -260,7 +260,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 class ChildLoggerRoot extends TelemetryLogger {
     public constructor(
         private readonly baseLogger: ITelemetryBaseLogger = new BaseTelemetryNullLogger(),
-        readonly _globalProperties: Required<ITelemetryLoggerPropertyBags> = { all: {}, error: {} },
+        readonly globalProperties: Required<ITelemetryLoggerPropertyBags> = { all: {}, error: {} },
     ) {
         super();
     }
@@ -277,10 +277,7 @@ class ChildLoggerRoot extends TelemetryLogger {
  */
 export class ChildLogger extends TelemetryLogger {
     protected get globalProperties() {
-        return this.rootLogger._globalProperties;
-    }
-    protected setGlobalProperty(key, val) {
-        this.rootLogger._globalProperties.all[key] = val;
+        return this.rootLogger.globalProperties;
     }
 
     /**
@@ -297,7 +294,6 @@ export class ChildLogger extends TelemetryLogger {
         properties: ITelemetryLoggerPropertyBags = {},
         layerVersion?: string,
     ): TelemetryLogger {
-        // properties.all = { ...properties.all, layerVersion };
         const namedLayerVersion = `${namespace}:${layerVersion}`; //* What if no namespace?
 
         // if we are creating a child of a child, rather than nest, which will increase
@@ -322,7 +318,7 @@ export class ChildLogger extends TelemetryLogger {
             }
             //* Think through and test corner cases
             const layerVersions =
-                [baseLogger.globalProperties?.all.layerVersions, namedLayerVersion].filter((lv) => !!lv).join(", ");
+                [baseLogger.globalProperties.all.layerVersions, namedLayerVersion].filter((lv) => !!lv).join(", ");
             baseLogger.globalProperties.all.layerVersions = layerVersions;
 
             const combinedNamespace = baseLogger.namespace === undefined
@@ -338,12 +334,12 @@ export class ChildLogger extends TelemetryLogger {
             );
         }
 
-        const childLogger = new ChildLogger(
-            new ChildLoggerRoot(baseLogger),
+        const rootLogger = new ChildLoggerRoot(baseLogger);
+        rootLogger.globalProperties.all.layerVersions = namedLayerVersion;
+        return new ChildLogger(
+            rootLogger,
             namespace,
             properties);
-        childLogger.globalProperties.all.layerVersions = namedLayerVersion;
-        return childLogger;
     }
 
     private constructor(
@@ -364,13 +360,11 @@ export class ChildLogger extends TelemetryLogger {
     }
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
-        const newEvent = { ...event };
+        const newEvent = super.prepareEvent(event);
         if (this.globalProperties) {
-            this.applyProps(
-                newEvent,
-                this.globalProperties);
+            this.applyProps(newEvent, this.globalProperties);
         }
-        return super.prepareEvent(newEvent); //* Switch order for precedence
+        return newEvent;
     }
 }
 
