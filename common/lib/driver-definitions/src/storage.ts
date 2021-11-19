@@ -91,7 +91,7 @@ export interface IDocumentStorageServicePolicies {
 /**
  * Interface to provide access to snapshots saved for a shared object
  */
-export interface IDocumentStorageService {
+export interface IDocumentStorageService extends Partial<IDisposable> {
     repositoryUrl: string;
 
     /**
@@ -219,12 +219,6 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
      * Submit a new signal to the server
      */
     submitSignal(message: any): void;
-
-    /**
-     * Disconnects the given delta connection
-     * @deprecated in 0.45, please use dispose()
-     */
-    close(): void;
 }
 
 export enum LoaderCachingPolicy {

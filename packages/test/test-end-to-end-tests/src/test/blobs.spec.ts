@@ -54,7 +54,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
     beforeEach(async function() {
         provider = getTestObjectProvider();
         // Currently FRS does not support blob API.
-        if (provider.driver.type === "r11s" && provider.driver.endpointName === "frs") {
+        if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
             this.skip();
         }
     });
@@ -222,7 +222,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     beforeEach(async function() {
         provider = getTestObjectProvider();
         // Currently FRS does not support blob API.
-        if (provider.driver.type === "r11s" && provider.driver.endpointName === "frs") {
+        if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
             this.skip();
         }
     });
@@ -243,7 +243,8 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         const attachP = container.attach(provider.driver.createCreateNewRequest(provider.documentId));
         if (provider.driver.type !== "odsp") {
             // this flow is currently only supported on ODSP, the others should explicitly reject on attach
-            return assert.rejects(attachP, /(0x202)|(0x204)/ /* "create empty file not supported" */);
+            return assert.rejects(attachP,
+                (err) => /(0x202)|(0x204)/.test(err.message) /* "create empty file not supported" */);
         }
         await attachP;
 
@@ -292,7 +293,8 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         const attachP = detachedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
         if (provider.driver.type !== "odsp") {
             // this flow is currently only supported on ODSP, the others should explicitly reject on attach
-            return assert.rejects(attachP, /(0x202)|(0x204)/ /* "create empty file not supported" */);
+            return assert.rejects(attachP,
+                (err) => /(0x202)|(0x204)/.test(err.message) /* "create empty file not supported" */);
         }
         await attachP;
         detachedBlobStorage.blobs.clear();
@@ -319,7 +321,8 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         const attachP = rehydratedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
         if (provider.driver.type !== "odsp") {
             // this flow is currently only supported on ODSP, the others should explicitly reject on attach
-            return assert.rejects(attachP, /(0x202)|(0x204)/ /* "create empty file not supported" */);
+            return assert.rejects(attachP,
+                (err) => /(0x202)|(0x204)/.test(err.message) /* "create empty file not supported" */);
         }
         await attachP;
 
@@ -347,7 +350,8 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         const attachP = container.attach(provider.driver.createCreateNewRequest(provider.documentId));
         if (provider.driver.type !== "odsp") {
             // this flow is currently only supported on ODSP, the others should explicitly reject on attach
-            return assert.rejects(attachP, /(0x202)|(0x204)/ /* "create empty file not supported" */);
+            return assert.rejects(attachP,
+                (err) => /(0x202)|(0x204)/.test(err.message) /* "create empty file not supported" */);
         }
         await attachP;
 

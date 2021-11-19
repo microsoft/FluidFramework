@@ -30,21 +30,21 @@ module.exports = env => {
         module: {
             rules: [{
                 test: /\.tsx?$/,
-                loader: "ts-loader"
+                loader: require.resolve("ts-loader")
             },
             {
                 test: /\.less$/,
                 use: [{
-                    loader: 'style-loader' // creates style nodes from JS strings
+                    loader: require.resolve('style-loader') // creates style nodes from JS strings
                 }, {
-                    loader: 'css-loader' // translates CSS into CommonJS
+                    loader: require.resolve('css-loader') // translates CSS into CommonJS
                 }, {
-                    loader: 'less-loader' // compiles Less to CSS
+                    loader: require.resolve('less-loader') // compiles Less to CSS
                 }]
             },
             {
                 test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/,
-                loader: 'url-loader',
+                loader: require.resolve('url-loader'),
                 options: {
                     limit: 10000
                 }

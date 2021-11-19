@@ -24,12 +24,15 @@ module.exports = env => {
             rules: [
                 {
                     test: /\.tsx?$/,
-                    use: 'ts-loader',
+                    use: require.resolve('ts-loader'),
                     exclude: /node_modules/
                 },
                 {
                     test: /\.css$/,
-                    use: [ 'style-loader', 'css-loader' ]
+                    use: [
+                        require.resolve("style-loader"), // creates style nodes from JS strings
+                        require.resolve("css-loader"), // translates CSS into CommonJS
+                    ]
                 },
             ]
         },

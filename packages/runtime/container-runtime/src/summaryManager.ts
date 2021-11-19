@@ -6,14 +6,19 @@
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
 import { LoaderHeader } from "@fluidframework/container-definitions";
-import { DriverHeader } from "@fluidframework/driver-definitions";
+import { DriverHeader, DriverErrorType } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { createSummarizingWarning } from "./summarizer";
 import { ISummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
 import { IThrottler } from "./throttler";
-import { ISummarizer, ISummarizerOptions, ISummarizingWarning, SummarizerStopReason } from "./summarizerTypes";
+import {
+    ISummarizer,
+    ISummarizerOptions,
+    ISummarizingWarning,
+    SummarizerStopReason,
+} from "./summarizerTypes";
 import { SummaryCollection } from "./summaryCollection";
 
 const defaultInitialDelayMs = 5000;
@@ -236,7 +241,16 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             // We could add error.fluidErrorCode !== "containerClosedWithoutErrorDuringLoad" check to narrow it down,
             // but that does not seem to be necessary.
             if (this.getShouldSummarizeState().shouldSummarize || this.summarizer !== undefined) {
-                this.logger.sendErrorEvent({ eventName: "SummarizerException" }, error);
+                // Report any failure as an error unless it was due to cancellation (like "disconnected" error)
+                // If failure happened on container load, we may not yet realized that socket disconnected, so check
+                // offlineError.
+                const category = error?.errorType === DriverErrorType.offlineError ? "generic" : "error";
+                this.logger.sendTelemetryEvent(
+                    {
+                        eventName: "SummarizerException",
+                        category,
+                    },
+                    error);
                 this.emit("summarizerWarning", error);
 
                 // Note that summarizer may keep going (like doing last summary).
@@ -392,7 +406,7 @@ export const formRequestSummarizerFn = (
         url: "/_summarizer",
     };
 
-    const fluidObject = await requestFluidObject(loaderRouter, request);
+    const fluidObject = await requestFluidObject<FluidObject<ISummarizer>>(loaderRouter, request);
     const summarizer = fluidObject.ISummarizer;
 
     if (!summarizer) {

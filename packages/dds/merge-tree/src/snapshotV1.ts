@@ -18,8 +18,14 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { UnassignedSequenceNumber } from "./constants";
-import * as MergeTree from "./mergeTree";
-import * as Properties from "./properties";
+import {
+    ISegment,
+    MergeTree,
+} from "./mergeTree";
+import {
+    matchProperties,
+    PropertySet,
+} from "./properties";
 import {
     IJSONSegmentWithMergeInfo,
     JsonSegmentSpecs,
@@ -46,7 +52,7 @@ export class SnapshotV1 {
     private readonly chunkSize: number;
 
     constructor(
-        public mergeTree: MergeTree.MergeTree,
+        public mergeTree: MergeTree,
         logger: ITelemetryLogger,
         public filename?: string,
         public onCompletion?: () => void,
@@ -67,7 +73,7 @@ export class SnapshotV1 {
         this.segmentLengths = [];
     }
 
-    getSeqLengthSegs(
+    private getSeqLengthSegs(
         allSegments: JsonSegmentSpecs[],
         allLengths: number[],
         approxSequenceLength: number,
@@ -173,12 +179,12 @@ export class SnapshotV1 {
         };
 
         // Helper to serialize the given `segment` and add it to the snapshot (if a segment is provided).
-        const pushSeg = (segment?: MergeTree.ISegment) => {
+        const pushSeg = (segment?: ISegment) => {
             if (segment) { pushSegRaw(segment.toJSONObject(), segment.cachedLength); }
         };
 
-        let prev: MergeTree.ISegment | undefined;
-        const extractSegment = (segment: MergeTree.ISegment) => {
+        let prev: ISegment | undefined;
+        const extractSegment = (segment: ISegment) => {
             // Elide segments that do not need to be included in the snapshot.  A segment may be elided if
             // either condition is true:
             //   a) The segment has not yet been ACKed.  We do not need to snapshot unACKed segments because
@@ -203,7 +209,7 @@ export class SnapshotV1 {
                 if (!prev) {
                     // We do not have a previous candidate for coalescing.  Make the current segment the new candidate.
                     prev = segment;
-                } else if (prev.canAppend(segment) && Properties.matchProperties(prev.properties, segment.properties)) {
+                } else if (prev.canAppend(segment) && matchProperties(prev.properties, segment.properties)) {
                     // We have a compatible pair.  Replace `prev` with the coalesced segment.  Clone to avoid
                     // modifying the segment instances currently in the MergeTree.
                     prev = prev.clone();
@@ -261,7 +267,7 @@ export class SnapshotV1 {
         storage: IChannelStorageService,
         path: string,
         logger: ITelemetryLogger,
-        options: Properties.PropertySet | undefined,
+        options: PropertySet | undefined,
         serializer?: IFluidSerializer,
     ): Promise<MergeTreeChunkV1> {
         const blob = await storage.readBlob(path);
@@ -273,7 +279,7 @@ export class SnapshotV1 {
         path: string,
         chunk: string,
         logger: ITelemetryLogger,
-        options: Properties.PropertySet | undefined,
+        options: PropertySet | undefined,
         serializer?: IFluidSerializer,
     ): MergeTreeChunkV1 {
         const chunkObj = serializer ? serializer.parse(chunk) : JSON.parse(chunk);

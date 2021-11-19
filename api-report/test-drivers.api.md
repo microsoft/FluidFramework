@@ -13,6 +13,7 @@ import { ILocalDeltaConnectionServer } from '@fluidframework/server-local-server
 import { InsecureTinyliciousUrlResolver } from '@fluidframework/tinylicious-driver';
 import { InsecureUrlResolver } from '@fluidframework/driver-utils';
 import { IRequest } from '@fluidframework/core-interfaces';
+import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ITestDriver } from '@fluidframework/test-driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { LocalDeltaConnectionServer } from '@fluidframework/server-local-server';
@@ -138,7 +139,7 @@ export type RouterliciousDriverApiType = typeof RouterliciousDriverApi;
 // @public (undocumented)
 export class RouterliciousTestDriver implements ITestDriver {
     // (undocumented)
-    createContainerUrl(testId: string): Promise<string>;
+    createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string>;
     // (undocumented)
     createCreateNewRequest(testId: string): IRequest;
     // (undocumented)
@@ -161,7 +162,7 @@ export class RouterliciousTestDriver implements ITestDriver {
 export class TinyliciousTestDriver implements ITestDriver {
     constructor(api?: RouterliciousDriverApiType);
     // (undocumented)
-    createContainerUrl(testId: string): Promise<string>;
+    createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string>;
     // (undocumented)
     createCreateNewRequest(testId: string): IRequest;
     // (undocumented)

@@ -37,7 +37,7 @@ const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
         // strictly control summarization
         summaryOptions: {
-            generateSummaries: false,
+            disableSummaries: true,
             initialSummarizerDelayMs: 0,
             summaryConfigOverrides: { maxOps },
         },
@@ -46,8 +46,9 @@ const testContainerConfig: ITestContainerConfig = {
 
 describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvider) => {
     for(const testConfig of testConfigs) {
-        it(`Validate Load Modes: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
+        it.skip(`Validate Load Modes: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
             const provider  = getTestObjectProvider();
+            let containerUrl: IResolvedUrl | undefined;
             // initialize the container and its data
             {
                 const initLoader = createLoader(
@@ -58,6 +59,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 
                 const initContainer = await initLoader.createDetachedContainer(provider.defaultCodeDetails);
                 await initContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
+                containerUrl = initContainer.resolvedUrl;
 
                 const initDataObject = await requestFluidObject<ITestFluidObject>(initContainer, "default");
                 for(let i = 0; i < maxOps; i++) {
@@ -81,7 +83,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                             ... testContainerConfig.runtimeOptions,
                             summaryOptions:{
                                 ... testContainerConfig.runtimeOptions?.summaryOptions,
-                                generateSummaries: true,
+                                disableSummaries: false,
                             },
                         },
                     })]],
@@ -89,7 +91,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                     provider.urlResolver,
                 );
                 const summaryContainer = await summaryLoader.resolve({
-                    url: await provider.driver.createContainerUrl(provider.documentId),
+                    url: await provider.driver.createContainerUrl(provider.documentId, containerUrl),
                 });
 
                 const summaryCollection =
@@ -109,7 +111,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                     provider.urlResolver,
                 );
                 const validationContainer = await validationLoader.resolve({
-                    url: await provider.driver.createContainerUrl(provider.documentId),
+                    url: await provider.driver.createContainerUrl(provider.documentId, containerUrl),
                 });
                 const validationDataObject = await requestFluidObject<ITestFluidObject>(validationContainer, "default");
 
@@ -141,7 +143,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                 );
 
                 const storageOnlyContainer = await storageOnlyLoader.resolve({
-                    url: await provider.driver.createContainerUrl(provider.documentId),
+                    url: await provider.driver.createContainerUrl(provider.documentId, containerUrl),
                     headers: {[LoaderHeader.loadMode]: testConfig.loadOptions},
                 }) as Container;
 

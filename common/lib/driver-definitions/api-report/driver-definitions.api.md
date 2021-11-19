@@ -90,8 +90,6 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
     checkpointSequenceNumber?: number;
     claims: ITokenClaims;
     clientId: string;
-    // @deprecated
-    close(): void;
     existing: boolean;
     initialClients: ISignalClient[];
     initialMessages: ISequencedDocumentMessage[];
@@ -150,7 +148,7 @@ export interface IDocumentServicePolicies {
 }
 
 // @public
-export interface IDocumentStorageService {
+export interface IDocumentStorageService extends Partial<IDisposable> {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;

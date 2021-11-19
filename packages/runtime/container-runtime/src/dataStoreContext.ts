@@ -5,7 +5,7 @@
 
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    IFluidObject,
+    FluidObject,
     IRequest,
     IResponse,
     IFluidHandle,
@@ -212,7 +212,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         public readonly id: string,
         private readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
-        public readonly scope: IFluidObject,
+        public readonly scope: FluidObject | FluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private bindState: BindState,
         public readonly isLocalDataStore: boolean,
@@ -256,14 +256,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this._disposed = true;
 
         // Dispose any pending runtime after it gets fulfilled
+        // Errors are logged where this.channelDeferred is consumed/generated (realizeCore(), bindRuntime())
         if (this.channelDeferred) {
             this.channelDeferred.promise.then((runtime) => {
                 runtime.dispose();
-            }).catch((error) => {
-                this.logger.sendErrorEvent(
-                    { eventName: "ChannelDisposeError", fluidDataStoreId: this.id },
-                    error);
-            });
+            }).catch((error) => {});
         }
     }
 
@@ -276,8 +273,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore(this.existing).catch((error) => {
-                this.channelDeferred?.reject(
-                    CreateProcessingError(error, "realizeFluidDataStoreContext", undefined /* message */));
+                const errorWrapped = CreateProcessingError(error, "realizeFluidDataStoreContext");
+                errorWrapped.addTelemetryProperties({ fluidDataStoreId: { value: this.id, tag: "PackageData"} });
+                this.channelDeferred?.reject(errorWrapped);
+                this.logger.sendErrorEvent({ eventName: "RealizeError"}, errorWrapped);
             });
         }
         return this.channelDeferred.promise;
@@ -611,6 +610,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.channelDeferred.resolve(this.channel);
         } catch (error) {
             this.channelDeferred?.reject(error);
+            this.logger.sendErrorEvent(
+                { eventName: "BindRuntimeError", fluidDataStoreId: { value: this.id, tag: "PackageData"} },
+                error);
         }
     }
 
@@ -675,7 +677,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         private readonly initSnapshotValue: ISnapshotTree | string | undefined,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IFluidObject,
+        scope: FluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         pkg?: string[],
     ) {
@@ -792,7 +794,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         pkg: Readonly<string[]> | undefined,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IFluidObject,
+        scope: FluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
@@ -912,7 +914,7 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
         pkg: string[] | undefined,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IFluidObject & IFluidObject,
+        scope: FluidObject & FluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         snapshotTree: ISnapshotTree | undefined,
@@ -951,7 +953,7 @@ export class LocalDetachedFluidDataStoreContext
         pkg: Readonly<string[]>,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IFluidObject & IFluidObject,
+        scope: FluidObject & FluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         isRootDataStore: boolean,

@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, IsoBuffer } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import {
     IFluidHandle,
     IFluidSerializer,
@@ -14,26 +14,18 @@ import {
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
-import * as MergeTree from "./mergeTree";
-import * as ops from "./ops";
-import * as Properties from "./properties";
+import {
+    ISegment,
+    MergeTree,
+} from "./mergeTree";
+import { IJSONSegment } from "./ops";
+import { matchProperties } from "./properties";
 import {
     MergeTreeChunkLegacy,
     serializeAsMinSupportedVersion,
 } from "./snapshotChunks";
 
-// first three are index entry
-export interface SnapChunk {
-    /**
-     * Offset from beginning of segments.
-     */
-    position: number;
-    lengthBytes: number;
-    sequenceLength: number;
-    buffer?: IsoBuffer;
-}
-
-export interface SnapshotHeader {
+interface SnapshotHeader {
     chunkCount?: number;
     segmentsTotalLength: number;
     indexOffset?: number;
@@ -47,7 +39,7 @@ export interface SnapshotHeader {
 export class SnapshotLegacy {
     public static readonly header = "header";
     public static readonly body = "body";
-    public static readonly catchupOps = "catchupOps";
+    private static readonly catchupOps = "catchupOps";
 
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
     // Please note that this number has no direct relationship to anything other than size of raw text (characters).
@@ -57,27 +49,25 @@ export class SnapshotLegacy {
     // for very chunky text, blob size can easily be 4x-8x of that number.
     public static readonly sizeOfFirstChunk: number = 10000;
 
-    header: SnapshotHeader | undefined;
-    seq: number | undefined;
-    buffer: IsoBuffer | undefined;
-    pendingChunk: SnapChunk | undefined;
-    segments: ops.IJSONSegment[] | undefined;
-    segmentLengths: number[] | undefined;
-    logger: ITelemetryLogger;
+    private header: SnapshotHeader | undefined;
+    private seq: number | undefined;
+    private segments: IJSONSegment[] | undefined;
+    private segmentLengths: number[] | undefined;
+    private readonly logger: ITelemetryLogger;
     private readonly chunkSize: number;
 
-    constructor(public mergeTree: MergeTree.MergeTree, logger: ITelemetryLogger, public filename?: string,
+    constructor(public mergeTree: MergeTree, logger: ITelemetryLogger, public filename?: string,
         public onCompletion?: () => void) {
         this.logger = ChildLogger.create(logger, "Snapshot");
         this.chunkSize = mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotLegacy.sizeOfFirstChunk;
     }
 
-    getSeqLengthSegs(
-        allSegments: ops.IJSONSegment[],
+    private getSeqLengthSegs(
+        allSegments: IJSONSegment[],
         allLengths: number[],
         approxSequenceLength: number,
         startIndex = 0): MergeTreeChunkLegacy {
-        const segs: ops.IJSONSegment[] = [];
+        const segs: IJSONSegment[] = [];
         let sequenceLength = 0;
         let segCount = 0;
         while ((sequenceLength < approxSequenceLength) && ((startIndex + segCount) < allSegments.length)) {
@@ -184,18 +174,18 @@ export class SnapshotLegacy {
             seq: this.mergeTree.collabWindow.minSeq,
         };
 
-        const segs: MergeTree.ISegment[] = [];
-        let prev: MergeTree.ISegment | undefined;
+        const segs: ISegment[] = [];
+        let prev: ISegment | undefined;
         const extractSegment =
             // eslint-disable-next-line max-len
-            (segment: MergeTree.ISegment, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined) => {
+            (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined) => {
                 // eslint-disable-next-line eqeqeq
                 if ((segment.seq != UnassignedSequenceNumber) && (segment.seq! <= this.seq!) &&
                     // eslint-disable-next-line eqeqeq
                     ((segment.removedSeq === undefined) || (segment.removedSeq == UnassignedSequenceNumber) ||
                         (segment.removedSeq > this.seq!))) {
                     if (prev && prev.canAppend(segment)
-                        && Properties.matchProperties(prev.properties, segment.properties)
+                        && matchProperties(prev.properties, segment.properties)
                     ) {
                         prev = prev.clone();
                         prev.append(segment.clone());

@@ -14,7 +14,7 @@ import {
     CreateChildSummarizerNodeFn,
     CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { createRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
@@ -38,7 +38,7 @@ describe("Data Store Creation Tests", () => {
          */
 
         let storage: IDocumentStorageService;
-        let scope: IFluidObject;
+        let scope: FluidObject;
         const attachCb = (mR: IFluidDataStoreChannel) => { };
         let containerRuntime: ContainerRuntime;
         const defaultName = "default";
@@ -94,6 +94,7 @@ describe("Data Store Creation Tests", () => {
             containerRuntime = {
                 IFluidDataStoreRegistry: globalRegistry,
                 on: (event, listener) => { },
+                logger: new TelemetryNullLogger(),
             } as ContainerRuntime;
             const summarizerNode = createRootSummarizerNodeWithGC(
                 new TelemetryNullLogger(),

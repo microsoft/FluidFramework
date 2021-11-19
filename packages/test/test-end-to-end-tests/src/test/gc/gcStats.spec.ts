@@ -29,7 +29,7 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         [],
         []);
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { generateSummaries: false },
+        summaryOptions: { disableSummaries: true },
         gcOptions: { gcAllowed: true },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
@@ -105,7 +105,7 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
             defaultDataStore._root.set("dataStore2", dataStore2.handle);
             await provider.ensureSynchronized();
 
-            const gcStats = await containerRuntime.collectGarbage(logger);
+            const gcStats = await containerRuntime.collectGarbage({ logger });
             assert.strictEqual(gcStats.totalNodes, 7, "Total GC nodes in incorrect");
             assert.strictEqual(gcStats.deletedNodes, 0, "There shouldn't be any deleted node");
             assert.strictEqual(gcStats.totalDataStores, 3, "The data store count is incorrect");
@@ -125,7 +125,7 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
             defaultDataStore._root.delete("dataStore1");
             await provider.ensureSynchronized();
 
-            const gcStats = await containerRuntime.collectGarbage(logger);
+            const gcStats = await containerRuntime.collectGarbage({ logger });
             assert.strictEqual(gcStats.totalNodes, 7, "Total GC nodes in incorrect");
             assert.strictEqual(gcStats.deletedNodes, 2, "The deleted data store and its DDS is not reflected");
             assert.strictEqual(gcStats.totalDataStores, 3, "The data store count is incorrect");
@@ -150,7 +150,7 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
             defaultDataStore._root.delete("dataStore2");
             await provider.ensureSynchronized();
 
-            const gcStats = await containerRuntime.collectGarbage(logger);
+            const gcStats = await containerRuntime.collectGarbage({ logger });
             assert.strictEqual(gcStats.totalNodes, 7, "Total GC nodes in incorrect");
             assert.strictEqual(gcStats.deletedNodes, 4, "The deleted data store and its DDS is not reflected");
             assert.strictEqual(gcStats.totalDataStores, 3, "The data store count is incorrect");
@@ -176,7 +176,7 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
             defaultDataStore._root.set("dataStore2", dataStore2.handle);
             await provider.ensureSynchronized();
 
-            const gcStats = await containerRuntime.collectGarbage(logger);
+            const gcStats = await containerRuntime.collectGarbage({ logger });
             assert.strictEqual(gcStats.totalNodes, 7, "Total GC nodes in incorrect");
             assert.strictEqual(gcStats.deletedNodes, 0, "There shouldn't be any deleted node");
             assert.strictEqual(gcStats.totalDataStores, 3, "The data store count is incorrect");

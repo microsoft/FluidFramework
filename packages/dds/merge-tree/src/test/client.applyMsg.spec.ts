@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { SegmentGroup } from "../";
 import { UnassignedSequenceNumber } from "../constants";
+import { SegmentGroup } from "../mergeTree";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 

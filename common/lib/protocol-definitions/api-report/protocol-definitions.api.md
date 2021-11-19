@@ -97,7 +97,6 @@ export interface IClientDetails {
     capabilities: ICapabilities;
     // (undocumented)
     device?: string;
-    // (undocumented)
     environment?: string;
     // (undocumented)
     type?: string;
@@ -123,6 +122,7 @@ export interface IConnect {
     id: string;
     mode: ConnectionMode;
     nonce?: string;
+    relayUserAgent?: string;
     supportedFeatures?: Record<string, any>;
     tenantId: string;
     token: string | null;
@@ -142,6 +142,7 @@ export interface IConnected {
     maxMessageSize: number;
     mode: ConnectionMode;
     nonce?: string;
+    relayServiceAgent?: string;
     serviceConfiguration: IClientConfiguration;
     supportedFeatures?: Record<string, any>;
     supportedVersions: string[];
@@ -159,7 +160,6 @@ export interface ICreateBlobResponse {
 
 // @public (undocumented)
 export interface IDocumentAttributes {
-    branch: string;
     minimumSequenceNumber: number;
     sequenceNumber: number;
     term: number | undefined;
@@ -461,6 +461,8 @@ export interface ISummaryCommitter {
 
 // @public (undocumented)
 export interface ISummaryConfiguration {
+    // (undocumented)
+    disableSummaries?: boolean;
     // (undocumented)
     idleTime: number;
     // (undocumented)

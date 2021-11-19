@@ -16,7 +16,7 @@ import {
     InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IOdspSnapshot, IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
+import { IOdspSnapshot, ISnapshotCachedEntry, IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
@@ -101,16 +101,10 @@ export async function fetchSnapshotWithRedeem(
             logger.sendErrorEvent({
                 eventName: "RedeemFallback",
                 errorType: error.errorType,
-            });
+            }, error);
             await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
             const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
-                { ...odspResolvedUrl, sharingLinkToRedeem: undefined };
-            if(odspResolvedUrlWithoutShareLink.shareLinkInfo) {
-                odspResolvedUrlWithoutShareLink.shareLinkInfo = {
-                    ...odspResolvedUrlWithoutShareLink.shareLinkInfo,
-                    sharingLinkToRedeem: undefined,
-                };
-            }
+            { ...odspResolvedUrl, shareLinkInfo: { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem: undefined } };
 
             return fetchLatestSnapshotCore(
                 odspResolvedUrlWithoutShareLink,
@@ -266,8 +260,12 @@ async function fetchLatestSnapshotCore(
                 } else if (canCache) {
                     const fluidEpoch = response.odspSnapshotResponse.headers.get("x-fluid-epoch");
                     assert(fluidEpoch !== undefined, 0x1e6 /* "Epoch  should be present in response" */);
+                    const value: ISnapshotCachedEntry = {
+                        ...snapshot,
+                        cacheEntryTime: Date.now(),
+                    };
                     const valueWithEpoch: IVersionedValueWithEpoch = {
-                        value: snapshot,
+                        value,
                         fluidEpoch,
                         version: persistedCacheValueVersion,
                     };
@@ -462,7 +460,7 @@ export async function downloadSnapshot(
 }
 
 function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any) {
-    if (odspResolvedUrl.sharingLinkToRedeem !== undefined
+    if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined
         && (typeof error === "object" && error !== null)
         && (error.errorType === DriverErrorType.authorizationError
         || error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError)) {
