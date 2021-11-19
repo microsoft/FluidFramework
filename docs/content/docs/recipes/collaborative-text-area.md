@@ -1,10 +1,10 @@
 ---
-title: Building a Collaborative Text Area
+title: Building a collaborative TextArea
 menuPosition: 4
 author: scottn12
 ---
 
-In this tutorial, you'll learn how to use the `SharedString` distributed data structure (DDS) with [React](https://reactjs.org/) to create a collaborative text area. To learn more about `SharedString`, click [here](https://fluidframework.com/docs/data-structures/string/).
+In this tutorial, you'll learn how to use the [SharedString]({{< relref "string.md" >}}) distributed data structure (DDS) with [React](https://reactjs.org/) to create a collaborative text area. SharedString is a DDS with specialized features and behaviors for working with text.
 
 To jump ahead into the finished demo, check out the [SharedString example in our FluidExamples repo](TODO_URL_HERE).
 
@@ -18,7 +18,7 @@ TODO: Add image
 
 {{< callout note >}}
 
-This tutorial assumes that you are familiar with the [Fluid Framework Overview]({{< relref "/docs/_index.md" >}}) and that you have completed the [QuickStart]({{< relref "quick-start.md" >}}). You should also be familiar with the basics of [React](https://reactjs.org/), [creating React projects](https://reactjs.org/docs/create-a-new-react-app.html#create-react-app), and [React Hooks](https://reactjs.org/docs/hooks-intro.html).
+This tutorial assumes that you are familiar with the [Fluid Framework Overview]({{< relref "/docs/_index.md" >}}) and that you have completed the [Quick Start]({{< relref "quick-start.md" >}}). You should also be familiar with the basics of [React](https://reactjs.org/), [creating React projects](https://reactjs.org/docs/create-a-new-react-app.html#create-react-app), and [React Hooks](https://reactjs.org/docs/hooks-intro.html).
 
 {{< /callout >}}
 
@@ -36,8 +36,8 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     |Library |Description |
     |---|---|
-    | `fluid-framework`    |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. *This object will hold the most recent timestamp update made by any client.*|
-    | `@fluidframework/tinylicious-client`   |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][].|
+    | `fluid-framework`    |Contains the SharedMap and SharedString [distributed data structures]({{< relref "dds.md" >}}) that synchronize data across clients. *This object will hold the most recent timestamp update made by any client.*|
+    | `@fluidframework/tinylicious-client`   |Defines the connection to a Fluid server and defines the starting schema for the [Fluid container]({{< relref "containers.md" >}}).|
     {.table}
 
     Run the following command to install the libraries.
@@ -92,6 +92,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     ```
 
 1. Replace `TODO 1` with the following code.
+
     ```js
       const client = new TinyliciousClient();
       const containerSchema = {
@@ -139,8 +140,8 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 ### Move the Fluid Data to the view
 
 Inside the `App()` function, add the following code. Note about this code:
-- The `sharedString` object returned from the code above is used to create a `SharedStringHelper` object, which is a class that provides simple APIs to interact with the `sharedString` object.
-- Next, the `SharedStringHelper` object is passed into the `CollaborativeTextArea` React component, which integrates `SharedString` with the default `textarea` HTML element to allow co-editing through Fluid.
+- The `sharedString` object returned from the code above is used to create a `SharedStringHelper` object, which is a class that provides helper APIs to interact with the `sharedString` object.
+- Next, the `SharedStringHelper` object is passed into the `CollaborativeTextArea` React component, which integrates `SharedString` with the default `textarea` HTML element to enable collaboration.
 
 ```js
 const sharedString = useSharedString();
@@ -158,7 +159,7 @@ if (sharedString) {
 
 ### Setup the SharedStringHelper Class
 
-As previously mentioned, the `SharedStringHelper` class provides simple APIs to make interactions with the `SharedString` object easier by handling the merge logic. To implement this class, follow the below instructions.
+As previously mentioned, the `SharedStringHelper` class provides APIs to make interactions with the `SharedString` object easier by handling the merge logic. To implement this class, follow the below instructions.
 
 1. Create a new file `SharedStringHelper.js` inside of the `\src` directory.
 1. Add the following `import` statements and declare the `SharedStringHelper` class:
@@ -190,6 +191,7 @@ As previously mentioned, the `SharedStringHelper` class provides simple APIs to 
     ```
 
 1. Replace `TODO 2` with the following code.
+
     ```js
     getText() {
       return this._latestText;
@@ -445,6 +447,6 @@ Paste the URL of the application into the address bar of another tab or even ano
 
 {{< callout tip >}}
 
-When you make changes to the code the project will automatically rebuild and the application server will reload. However, if you make changes to the container schema, they will only take effect if you close and restart the application server. To do this, give focus to the Command Prompt and press Ctrl-C twice. Then run `npm run start` again.
+When you make changes to the code the project will automatically rebuild and the application server will reload. However, if you make changes to the container schema, they will only take effect if you close and restart the application server. To do this, give focus to the Command Prompt and press <kbd>Ctrl-C</kbd> twice. Then run `npm run start` again.
 
 {{< /callout >}}
