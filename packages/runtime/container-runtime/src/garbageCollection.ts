@@ -111,10 +111,13 @@ class UnreferencedStateTracker {
         public readonly unrefencedTimestampMs: number,
         inactiveTimeoutMs: number,
     ) {
-        // If the timeout has already expired, i.e., inactiveTimeoutMs < 0, the node should become inactive immediately.
-        setTimeout(() => {
+        // If the timeout has already expired, the node should become inactive immediately. Otherwise, start a timer of
+        // inactiveTimeoutMs after which the node will become inactive.
+        if (inactiveTimeoutMs <= 0) {
             this.inactive = true;
-        }, Math.max(inactiveTimeoutMs, 0));
+        } else {
+            setTimeout(() => { this.inactive = true; }, inactiveTimeoutMs);
+        }
     }
 
     /** Logs an error with the given properties if the node  is inactive. */
@@ -281,7 +284,8 @@ export class GarbageCollector implements IGarbageCollector {
                 }
 
                 const gcSummaryDetails = await readAndParseBlob<IGarbageCollectionSummaryDetails>(blobId);
-                if (gcSummaryDetails.gcData === undefined) {
+                // If there are no nodes for this data store, skip it.
+                if (gcSummaryDetails.gcData?.gcNodes === undefined || gcSummaryDetails.gcData.gcNodes === {}) {
                     continue;
                 }
                 const dsRootId = `/${dsId}`;
@@ -291,6 +295,7 @@ export class GarbageCollector implements IGarbageCollector {
                     const rootId = id === "/" ? dsRootId : `${dsRootId}${id}`;
                     gcState.gcNodes[rootId] = { outboundRoutes: Array.from(outboundRoutes) };
                 }
+                assert(gcState.gcNodes[dsRootId] !== undefined, `GC nodes for data store ${dsId} not in GC blob`);
                 gcState.gcNodes[dsRootId].unreferencedTimestampMs = gcSummaryDetails.unrefTimestamp;
             }
             return gcState;
