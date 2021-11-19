@@ -86,10 +86,6 @@
           "forwardCompat": false,
           "backCompat": false
         },
-        "InterfaceDeclaration_IDocumentStorageService": {
-          "forwardCompat": false,
-          "backCompat": false
-        },
         "InterfaceDeclaration_IDriverBasicError": {
           "backCompat": false
         },
