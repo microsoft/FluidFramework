@@ -6,6 +6,7 @@
 import { IRequest, IResponse } from "./fluidRouter";
 import { IFluidObject } from "./fluidObject";
 import { IFluidLoadable } from "./fluidLoadable";
+import { FluidObject } from "./provider";
 
 export const IFluidHandleContext: keyof IProvideFluidHandleContext = "IFluidHandleContext";
 
@@ -52,7 +53,7 @@ export interface IProvideFluidHandle {
  */
 export interface IFluidHandle<
     // REVIEW: Constrain `T` to `IFluidObject & IFluidLoadable`?
-    T = IFluidObject & IFluidLoadable
+    T = IFluidObject & FluidObject & IFluidLoadable
     > extends IProvideFluidHandle {
 
     /**

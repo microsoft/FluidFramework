@@ -207,7 +207,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
      * Gets the service at a given id.
      * @param id - service id
      */
-    protected async getService<T extends IFluidObject>(id: string): Promise<T> {
+    protected async getService<T extends IFluidObject & FluidObject>(id: string): Promise<T> {
         return handleFromLegacyUri<T>(`/${serviceRoutePathRoot}/${id}`, this.context.containerRuntime).get();
     }
 
