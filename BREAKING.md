@@ -34,21 +34,21 @@ The `createCreateNewRequest()` is removed and replaced with `createOdspCreateCon
 This release deprecates the interface `IFluidObject` and introduces the utility type [`FluidObject`](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts). The primary reason for this change is that the module augmentation used by `IFluidObject` creates excessive type coupling where a small breaking change in any type exposed off `IFluidObject` can lead to type error in all usages of `IFluidObject`.
 On investigation we also found that the uber type `IFluidObject` wasn't genenerally necessary, as consumers generally only used a small number of specific types that they knew in advance.
 
-Given these points, we've introduced [`FluidObject`](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts). `FluidObject` is a utility type that is used in both it's generic and non-generic forms.
+Given these points, we've introduced [`FluidObject`](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts). `FluidObject` is a utility type that is used in both its generic and non-generic forms.
 
 The non-generic `FluidObject` is returned or taken in cases where the specific functionally isn't known, or is different based on scenario. You'll see this usage for things like `scope` and the request pattern.
 
 The non-generic `FluidObject` is a hint that the generic form of `FluidObject` should be used to inspect it. For example
 ``` typescript
     const maybeView: FluidObject<IFluidHTMLView> = requestFluidObject(container, "/");
-    if(maybeView.IFluidHTMLView !== undefined){
-        maybeView.render(div)
+    if(provider.IFluidHTMLView !== undefined){
+        provider.IFluidHTMLView.render(div)
     }
 ```
 
 If you want to inspect for multiple interfaces via `FluidObject`, you can use an intersection:
 ``` typescript
-    const maybe: FluidObject<IFluidHTMLView & IFluidMountableView> = requestFluidObject(container, "/");
+    const provider: FluidObject<IFluidHTMLView & IFluidMountableView> = requestFluidObject(container, "/");
 ```
 
 Please begin reducing the usage of `IFluidObject` and moving to `FluidObject`. If you find any unsupported cases for `FluidObject` please file an issue.
