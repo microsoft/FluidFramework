@@ -34,6 +34,7 @@ import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
@@ -296,10 +297,12 @@ export interface IDeltaSender extends IProvideDeltaSender {
 }
 
 // @public
-export interface IErrorBase {
+export interface IErrorBase extends Partial<Error> {
     readonly errorType: string;
-    // (undocumented)
+    getTelemetryProperties?(): ITelemetryProperties;
     readonly message: string;
+    readonly name?: string;
+    readonly stack?: string;
 }
 
 // @public
