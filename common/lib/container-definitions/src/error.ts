@@ -46,7 +46,12 @@ export interface IErrorBase extends Error {
      */
     readonly errorType: string;
 
-    /** See Error.message */
+    /**
+     * See Error.message
+     * Privacy Note - This is a freeform string that we may not control in all cases (e.g. a dependency throws an error)
+     * If there are known cases where this contains privacy-sensitive data it will be tagged and included in the result
+     * of getTelemetryProperties. When logging, consider fetching it that way rather than straight from this field.
+     * /
     readonly message: string;
     /** See Error.name */
     readonly name: string;
