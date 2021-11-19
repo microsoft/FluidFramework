@@ -674,7 +674,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 }
 
 export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
-    private isRootDataStore: boolean = false;
+    private isRootDataStore: boolean | undefined;
 
     constructor(
         id: string,
@@ -703,7 +703,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 
     private readonly initialSnapshotDetailsP =  new LazyPromise<ISnapshotDetails>(async () => {
         let tree: ISnapshotTree | undefined;
-        let isRootDataStore = false;
+        let isRootDataStore = true;
 
         if (typeof this.initSnapshotValue === "string") {
             const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
@@ -746,7 +746,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
              * data stores in older documents are not garbage collected incorrectly. This may lead to additional
              * roots in the document but they won't break.
              */
-            isRootDataStore = this.isRootDataStore || (attributes.isRootDataStore ?? true);
+            isRootDataStore = this.isRootDataStore === true || (attributes.isRootDataStore ?? true);
 
             if (hasIsolatedChannels(attributes)) {
                 tree = tree.trees[channelsTreeName];

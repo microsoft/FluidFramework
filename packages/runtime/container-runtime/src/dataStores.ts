@@ -125,7 +125,7 @@ export class DataStores implements IDisposable {
                 );
             }
 
-            this.addBoundOrRemoted(key, dataStoreContext);
+            this.contexts.addBoundOrRemoted(dataStoreContext);
         }
         this.logger.sendTelemetryEvent({
             eventName: "ContainerLoadStats",
@@ -195,7 +195,7 @@ export class DataStores implements IDisposable {
                 }),
             pkg);
 
-        this.addBoundOrRemoted(attachMessage.id, remotedFluidDataStoreContext);
+        this.contexts.addBoundOrRemoted(remotedFluidDataStoreContext);
 
         // Equivalent of nextTick() - Prefetch once all current ops have completed
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -205,6 +205,7 @@ export class DataStores implements IDisposable {
     public processAliasMessage(message: ISequencedDocumentMessage): IDataStoreAliasMapping {
         const aliasMessage = message.contents as IDataStoreAliasMessage;
 
+        this.buildAliasMap();
         const existingMapping = this.aliasMap.get(aliasMessage.alias);
         if (existingMapping !== undefined) {
             return {
@@ -265,7 +266,7 @@ export class DataStores implements IDisposable {
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             isRoot,
         );
-        this.addBound(id, context);
+        this.contexts.addUnbound(context);
         return context;
     }
 
@@ -282,7 +283,7 @@ export class DataStores implements IDisposable {
             isRoot,
             props,
         );
-        this.addBound(id, context);
+        this.contexts.addUnbound(context);
         return context;
     }
 
@@ -318,15 +319,15 @@ export class DataStores implements IDisposable {
     }
 
     public async getDataStore(id: string, wait: boolean): Promise<FluidDataStoreContext> {
-        const internalId = this.aliasMap.get(id);
-        if (internalId === undefined) {
+        const internalId = this.aliasMap.get(id) ?? id;
+
+        const context = await this.contexts.getBoundOrRemoted(internalId, wait);
+        if (context === undefined) {
             // The requested data store does not exits. Throw a 404 response exception.
             const request = { url: id };
             throw responseToException(create404Response(request), request);
         }
 
-        const context = await this.contexts.getBoundOrRemoted(internalId, wait);
-        assert(!!context, "There should be a context for the id");
         return context;
     }
 
@@ -559,14 +560,19 @@ export class DataStores implements IDisposable {
         return outboundRoutes;
     }
 
-    private addBound(id: string, context: LocalFluidDataStoreContext) {
-        this.aliasMap.set(id, id);
-        this.contexts.addUnbound(context);
-    }
+    /**
+     * This method should be replaced by smearing these map inserts across
+     * all 'add datastore' operations. Its purpose for now is to not create
+     * an alias blob unless we process an alias message.
+     */
+    private buildAliasMap() {
+        for (const [id, _] of this.contexts) {
+            if (this.aliasMap.has(id)) {
+                continue;
+            }
 
-    private addBoundOrRemoted(id: string, context: FluidDataStoreContext) {
-        this.aliasMap.set(id, id);
-        this.contexts.addBoundOrRemoted(context);
+            this.aliasMap.set(id, id);
+        }
     }
 }
 
