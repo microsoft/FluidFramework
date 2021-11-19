@@ -3,26 +3,26 @@
 {{ $area := $current.Params.area }}
 
 <nav id="docs-navbar" aria-label="Topics" class="docs-nav visible-md visible-lg">
+    <h4>Blog posts</h4>
     <ul class="nav" id="main-nav">
-        <li {{if eq .RelPermalink "/community/"}} class="active" {{end}}>
+        <!-- <li {{if eq .RelPermalink "/community/"}} class="active" {{end}}>
             <a class="docs-home{{if eq .RelPermalink "/community/"}} active{{end}}" href="/community/">Community</a>
-        </li>
-        <li {{ if eq .RelPermalink "/posts/"  }} class="active" {{ end }}>
+        </li> -->
+        <!-- <li {{ if eq .RelPermalink "/posts/"  }} class="active" {{ end }}>
             <a class="docs-home" href="/posts/" {{ if eq .RelPermalink "/posts/" }} aria-label="Current Page: Blog"
-                {{ end }}>Updates</a>
-        </li>
+                {{ end }}>{{ .CurrentSection.Title }}</a>
+        </li> -->
 
         {{- range .CurrentSection.RegularPages.GroupByDate "2006" }}
 
         <li class="panel collapsed">
-            <a class="area" aria-label="{{ .Key }} drop down" href="#{{ .Key }}-posts" data-parent="#main-nav"
-                data-toggle="collapse">{{ .Key }}</a>
+            <!-- <a class="area" aria-label="{{ .Key }} drop down" href="#{{ .Key }}-posts" data-parent="#main-nav"
+                data-toggle="collapse">{{ .Key }}</a> -->
 
             <ul id="blog-list">
                 {{- range .Pages }}
                 <li>
-                    <a href="{{ .RelPermalink }}">
-                        {{ dateFormat $.Site.Params.dateformShort .PublishDate }} </a>
+                    <a href="{{ .RelPermalink }}">{{ .Title }}</a>
                 </li>
                 {{- end }}
             </ul>

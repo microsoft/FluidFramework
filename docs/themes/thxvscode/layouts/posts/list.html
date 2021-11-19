@@ -16,13 +16,9 @@
 
             {{ range first 5 .Pages }}
             {{ partial "blog_post.html" .}}
-            <br>
+            <hr />
             {{ end }}
 
-        </div>
-        <div class="hidden-xs col-sm-3 col-md-2 community-subnavbar-container">
-            {{ partial "toc.html" .}}
-            <!-- TODO: OR subnav -->
         </div>
 
     </div>

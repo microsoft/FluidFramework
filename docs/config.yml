@@ -78,9 +78,9 @@ menu:
   - name: "Community"
     url: "/community/"
     weight: -60
-#  - name: "Updates"
-#    url: "/posts/"
-#    weight: -50
+  - name: "Blog"
+    url: "/posts/"
+    weight: -50
 
   old_section:
   - identifier: "quick-start"

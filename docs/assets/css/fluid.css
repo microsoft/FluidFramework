@@ -222,6 +222,10 @@ footer {
     word-wrap: normal !important;
 }
 
+.post-meta {
+    margin-bottom: 10px;
+}
+
 
 /* fixing https://github.com/microsoft/FluidFramework/issues/3821
 where bootstrap caption color is too light for white background */
