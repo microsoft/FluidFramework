@@ -1,6 +1,6 @@
 ---
 title: "Eventual consistency and perceived performance"
-date: "2021-11-15"
+date: "2021-05-01"
 ---
 
-How can Fluid safely make changes locally? How is eventual consistency ensured? (Merge tree algorithm?)
+This post will deep dive into eventual consistency and how DDSes like SharedSequence ensure it while enabling local changes to be merged optimistically. A walk-through or animation of the merge-tree algorithm might be helpful as an illustration.

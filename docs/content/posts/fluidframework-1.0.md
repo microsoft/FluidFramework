@@ -1,9 +1,9 @@
 ---
-title: Announcing Fluid Framework 1.0
-date: "2021-11-18"
+title: Getting to Fluid Framework 1.0
+date: "2021-01-01"
 author:
-  name: Tyler Butler
-  github: tylerbutler
+  name: Dan Roney
+  github: danielroney
 ---
 
 
@@ -30,7 +30,7 @@ Earlier this year, we introduced the @fluid-experimental npm scope and published
 
 This means that with 1.0, some packages have moved between scopes, and you'll need to update your dependencies to the 1.0 @fluidframework packages. We've written [a guide for moving to 1.0] that will help you upgrade to 1.0 with minimal effort.
 
-Server packages are versioned separately from the client packages, though they are all published under the @fluidframework scope. The compatible versions of the client libraries with a given service can be found in our [list of Fluid services], including options for self-hosting Routerlicious yourself.
+Server packages are versioned separately from the client packages, though they are all published under the @fluidframework scope. The compatible versions of the client libraries with a given service can be found in our [list of Fluid services].
 
 For 1.0, it's simple: the 1.0 client packages are all supported against the XXXXX version of Routerlicious, and the now-available Azure Fluid Service.
 

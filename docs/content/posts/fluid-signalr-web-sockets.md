@@ -1,6 +1,6 @@
 ---
 title: "Fluid, SignalR and Web Sockets (oh my!)"
-date: "2021-11-17"
+date: "2021-04-01"
 ---
 
-How is Fluid different than SignalR and vanilla web sockets.
+It's not immediately obvious what Fluid provides over vanilla web sockets or a library like SignalR. This post would explain the differences and tradeoffs.
