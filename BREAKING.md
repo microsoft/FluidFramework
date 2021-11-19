@@ -40,7 +40,7 @@ The non-generic `FluidObject` is returned or taken in cases where the specific f
 
 The non-generic `FluidObject` is a hint that the generic form of `FluidObject` should be used to inspect it. For example
 ``` typescript
-    const maybeView: FluidObject<IFluidHTMLView> = requestFluidObject(container, "/");
+    const provider: FluidObject<IFluidHTMLView> = requestFluidObject(container, "/");
     if(provider.IFluidHTMLView !== undefined){
         provider.IFluidHTMLView.render(div)
     }
