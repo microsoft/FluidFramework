@@ -51,7 +51,7 @@ If you want to inspect for multiple interfaces via `FluidObject`, you can use an
     const provider: FluidObject<IFluidHTMLView & IFluidMountableView> = requestFluidObject(container, "/");
 ```
 
-Please begin reducing the usage of `IFluidObject` and moving to `FluidObject`. If you find any unsupported cases for `FluidObject` please file an issue.
+Please begin reducing the usage of `IFluidObject` and moving to `FluidObject`.  If you find any cases that `FluidObject` doesn't support please file an issue.
 
 ## 0.51 Breaking changes
 - [`maxMessageSize` property has been deprecated from IConnectionDetails and IDocumentDeltaConnection](#maxmessagesize-property-has-been-deprecated-from-iconnectiondetails-and-idocumentdeltaconnection)
