@@ -266,7 +266,15 @@ class ChildLoggerRoot extends TelemetryLogger {
     }
 
     public send(event: ITelemetryBaseEvent): void {
-        this.baseLogger.send(event);
+        this.baseLogger.send(this.prepareEvent(event));
+    }
+
+    protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
+        const newEvent = super.prepareEvent(event);
+        if (this.globalProperties) {
+            this.applyProps(newEvent, this.globalProperties);
+        }
+        return newEvent;
     }
 }
 
@@ -304,18 +312,19 @@ export class ChildLogger extends TelemetryLogger {
                 if(extendedProps !== undefined) {
                     if(extendedProps.all !== undefined) {
                         combinedProperties.all = {
-                            ... combinedProperties.all,
-                            ... extendedProps.all,
+                            ...combinedProperties.all,
+                            ...extendedProps.all,
                         };
                     }
                     if(extendedProps.error !== undefined) {
                         combinedProperties.error = {
-                            ... combinedProperties.error,
-                            ... extendedProps.error,
+                            ...combinedProperties.error,
+                            ...extendedProps.error,
                         };
                     }
                 }
             }
+
             //* Think through and test corner cases
             const layerVersions =
                 [baseLogger.globalProperties.all.layerVersions, namedLayerVersion].filter((lv) => !!lv).join(", ");
@@ -357,14 +366,6 @@ export class ChildLogger extends TelemetryLogger {
      */
     public send(event: ITelemetryBaseEvent): void {
         this.rootLogger.send(this.prepareEvent(event));
-    }
-
-    protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
-        const newEvent = super.prepareEvent(event);
-        if (this.globalProperties) {
-            this.applyProps(newEvent, this.globalProperties);
-        }
-        return newEvent;
     }
 }
 
