@@ -15,7 +15,8 @@
             {{- end }}
 
             {{ range first 5 .Pages }}
-            {{ partial "blog_post.html" . }}
+            {{ .Render "summary" }}
+            <hr class="post-end">
             {{ end }}
 
         </div>

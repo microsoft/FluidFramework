@@ -8,7 +8,7 @@
     <div class="row">
         <div class="col-md-2 docs-navbar-container"> {{ partial "blogNav.html" .}} </div>
         <div class="col-sm-9 col-md-8 body">
-            {{ partial "blog_post.html" .}}
+            {{ .Render "article" }}
         </div>
         <div class="hidden-xs col-sm-3 col-md-2 docs-subnavbar-container">
             {{ partial "toc.html"  .}}
