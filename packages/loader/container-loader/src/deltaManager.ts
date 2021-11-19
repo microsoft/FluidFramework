@@ -1235,8 +1235,10 @@ export class DeltaManager
             connectionLastObservedSeqNumber: this.lastObservedSeqNumber,
             clientId: connection.clientId,
             mode: connection.mode,
-            relayServiceAgent: connection.relayServiceAgent,
         };
+        if (connection.relayServiceAgent !== undefined) {
+            this.connectionStateProps.relayServiceAgent = connection.relayServiceAgent;
+        }
         this._hasCheckpointSequenceNumber = false;
 
         // Some storages may provide checkpointSequenceNumber to identify how far client is behind.
