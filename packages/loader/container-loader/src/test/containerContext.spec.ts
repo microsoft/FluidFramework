@@ -11,8 +11,8 @@ import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import {
+    FluidObject,
     IFluidCodeDetails,
-    IFluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IQuorum,
@@ -62,7 +62,7 @@ describe("ContainerContext Tests", () => {
     ) => {
         return ContainerContext.createOrLoad(
             (mockContainer as unknown) as Container,
-            (sandbox.stub() as unknown) as IFluidObject,
+            (sandbox.stub() as unknown) as FluidObject,
             codeLoader as ICodeDetailsLoader,
             quorumCodeDetails,
             undefined,

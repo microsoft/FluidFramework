@@ -229,25 +229,27 @@ use_old_TypeAliasDeclaration_EventEmitterEventType(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_EventForwarder": {"forwardCompat": false}
+*/
 declare function get_old_ClassDeclaration_EventForwarder():
     Omit<old.EventForwarder,"">;
 declare function use_current_ClassDeclaration_EventForwarder(
     use: Omit<current.EventForwarder,"">);
 use_current_ClassDeclaration_EventForwarder(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_EventForwarder());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_EventForwarder": {"backCompat": false}
+*/
 declare function get_current_ClassDeclaration_EventForwarder():
     Omit<current.EventForwarder,"">;
 declare function use_old_ClassDeclaration_EventForwarder(
     use: Omit<old.EventForwarder,"">);
 use_old_ClassDeclaration_EventForwarder(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_EventForwarder());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

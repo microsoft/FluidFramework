@@ -148,7 +148,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
     // (undocumented)
     static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject<object, undefined, IEvent>>;
     getFluidObjectFromDirectory<T extends IFluidObject & FluidObject & IFluidLoadable>(key: string, directory: IDirectory, getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IFluidHandle | undefined): Promise<T | undefined>;
-    protected getService<T extends IFluidObject>(id: string): Promise<T>;
+    protected getService<T extends IFluidObject & FluidObject>(id: string): Promise<T>;
     get handle(): IFluidHandle<this>;
     protected hasInitialized(): Promise<void>;
     // (undocumented)
