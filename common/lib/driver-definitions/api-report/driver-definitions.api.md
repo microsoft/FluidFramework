@@ -150,16 +150,16 @@ export interface IDocumentServicePolicies {
 
 // @public
 export interface IDocumentStorageService extends Partial<IDisposable> {
-    createBlob(file: ArrayBufferLike, fetchReason?: string): Promise<ICreateBlobResponse>;
-    downloadSummary(handle: ISummaryHandle, fetchReason?: string): Promise<ISummaryTree>;
-    getSnapshotTree(version?: IVersion, fetchReason?: string): Promise<ISnapshotTree | null>;
-    getVersions(versionId: string | null, count: number, fetchReason?: string): Promise<IVersion[]>;
+    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
+    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
     readonly policies?: IDocumentStorageServicePolicies;
-    readBlob(id: string, fetchReason?: string): Promise<ArrayBufferLike>;
+    readBlob(id: string): Promise<ArrayBufferLike>;
     // (undocumented)
     repositoryUrl: string;
-    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext, fetchReason?: string): Promise<string>;
-    write(root: ITree, parents: string[], message: string, ref: string, fetchReason?: string): Promise<IVersion>;
+    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
+    write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
 
 // @public (undocumented)
