@@ -15,8 +15,7 @@
             {{- end }}
 
             {{ range first 5 .Pages }}
-            {{ partial "blog_post.html" .}}
-            <hr />
+            {{ partial "blog_post.html" . }}
             {{ end }}
 
         </div>
