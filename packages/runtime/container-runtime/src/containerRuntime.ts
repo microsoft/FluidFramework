@@ -918,10 +918,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
 
+        /**
+         * Function that return the current server timestamp. This is used by the garbage collector to set the
+         * time when a node becomes unreferenced.
+         * For now, we use the timestamp of the last op for gcTimestamp. However, there can be cases where
+         * we don't have an op (on demand summaries for instance). In those cases, we will use the timestamp
+         * of this client's connection - https://github.com/microsoft/FluidFramework/issues/7152.
+         */
+        const getCurrentTimestamp = () => {
+            return this.deltaManager.lastMessage?.timestamp ?? performance.now();
+        };
         this.garbageCollector = GarbageCollector.create(
             this,
             this.runtimeOptions.gcOptions,
             (unusedRoutes: string[]) => this.dataStores.deleteUnusedRoutes(unusedRoutes),
+            getCurrentTimestamp,
+            context.baseSnapshot,
+            async <T>(id: string) => readAndParse<T>(this.storage, id),
             this._logger,
             existing,
             metadata,
@@ -945,8 +958,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 throwOnFailure: true,
                 // If GC should not run, let the summarizer node know so that it does not track GC state.
                 gcDisabled: !this.garbageCollector.shouldRunGC,
-                // The max duration for which objects can be unreferenced before they are eligible for deletion.
-                maxUnreferencedDurationMs: this.runtimeOptions.gcOptions.maxUnreferencedDurationMs,
             },
         );
 
@@ -971,7 +982,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     getInitialGCSummaryDetailsFn,
                 ),
             (id: string) => this.summarizerNode.deleteChild(id),
-            this._logger);
+            this._logger,
+            (id: string) => this.garbageCollector.nodeChanged(id),
+        );
 
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
@@ -1774,21 +1787,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Implementation of IGarbageCollectionRuntime::updateUsedRoutes.
      * After GC has run, called to notify this container's nodes of routes that are used in it.
      * @param usedRoutes - The routes that are used in all nodes in this Container.
+     * @param gcTimestamp - The time when GC was run that generated these used routes. If any node node becomes
+     * unreferenced as part of this GC run, this should be used to update the time when it happens.
      * @returns the statistics of the used state of the data stores.
      */
-    public updateUsedRoutes(usedRoutes: string[]): IUsedStateStats {
+    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats {
         // Update our summarizer node's used routes. Updating used routes in summarizer node before
         // summarizing is required and asserted by the the summarizer node. We are the root and are
         // always referenced, so the used routes is only self-route (empty string).
         this.summarizerNode.updateUsedRoutes([""]);
 
-        return this.dataStores.updateUsedRoutes(
-            usedRoutes,
-            // For now, we use the timestamp of the last op for gcTimestamp. However, there can be cases where
-            // we don't have an op (on demand summaries for instance). In those cases, we will use the timestamp
-            // of this client's connection - https://github.com/microsoft/FluidFramework/issues/7152.
-            this.deltaManager.lastMessage?.timestamp,
-        );
+        return this.dataStores.updateUsedRoutes(usedRoutes, gcTimestamp);
     }
 
     /**
