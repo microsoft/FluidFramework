@@ -381,7 +381,8 @@ class ScheduleManagerCore {
 
         // If the inbound queue is ever empty, nothing to do!
         if (this.deltaManager.inbound.length === 0) {
-            assert(this.pauseSequenceNumber === undefined, 0x295 /* "there should be no pending batch if we have no ops" */);
+            assert(this.pauseSequenceNumber === undefined,
+                0x295 /* "there should be no pending batch if we have no ops" */);
             return;
         }
 
@@ -393,7 +394,8 @@ class ScheduleManagerCore {
 
         // do we have incomplete batch to worry about?
         if (this.pauseSequenceNumber !== undefined) {
-            assert(sequenceNumber < this.pauseSequenceNumber, 0x296 /* "we should never start processing incomplete batch!" */);
+            assert(sequenceNumber < this.pauseSequenceNumber,
+                0x296 /* "we should never start processing incomplete batch!" */);
             // If the next op is the start of incomplete batch, then we can't process it until it's fully in - pause!
             if (sequenceNumber + 1 === this.pauseSequenceNumber) {
                 this.pauseQueue();
@@ -433,7 +435,8 @@ class ScheduleManagerCore {
      * Called for each incoming op (i.e. inbound "push" notification)
      */
     private trackPending(message: ISequencedDocumentMessage) {
-        assert(this.deltaManager.inbound.length !== 0, 0x298 /* "we have something in the queue that generates this event" */);
+        assert(this.deltaManager.inbound.length !== 0,
+            0x298 /* "we have something in the queue that generates this event" */);
 
         assert((this.currentBatchClientId === undefined) === (this.pauseSequenceNumber === undefined),
             0x299 /* "non-synchronized state" */);
