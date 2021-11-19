@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
 import {
@@ -48,7 +48,7 @@ describe("Data Store Context Tests", () => {
     describe("LocalFluidDataStoreContext", () => {
         let localDataStoreContext: LocalFluidDataStoreContext;
         let storage: IDocumentStorageService;
-        let scope: IFluidObject;
+        let scope: FluidObject;
         const attachCb = (mR: IFluidDataStoreChannel) => { };
         let containerRuntime: ContainerRuntime;
         let summarizerNode: IRootSummarizerNodeWithGC;
@@ -293,7 +293,7 @@ describe("Data Store Context Tests", () => {
         let remotedDataStoreContext: RemotedFluidDataStoreContext;
         let dataStoreAttributes: ReadFluidDataStoreAttributes;
         const storage: Partial<IDocumentStorageService> = {};
-        let scope: IFluidObject;
+        let scope: FluidObject;
         let summarizerNode: IRootSummarizerNodeWithGC;
 
         function mockContainerRuntime(disableIsolatedChannels = true): ContainerRuntime {

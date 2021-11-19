@@ -14,6 +14,7 @@ import {
     IResponse,
     IFluidHandle,
     IFluidConfiguration,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -229,6 +230,12 @@ export interface IGCRuntimeOptions {
 
 export interface ISummaryRuntimeOptions {
     /**
+     * Flag that disables summaries if it is set to true.
+     */
+    disableSummaries?: boolean;
+
+    /**
+     * @deprecated - To disable summaries, please set disableSummaries===true.
      * Flag that will generate summaries if connected to a service that supports them.
      * This defaults to true and must be explicitly set to false to disable.
      */
@@ -616,7 +623,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         registryEntries: NamedFluidDataStoreRegistryEntries,
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions: IContainerRuntimeOptions = {},
-        containerScope: IFluidObject = context.scope,
+        containerScope: FluidObject = context.scope,
         existing?: boolean,
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
@@ -628,7 +635,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         const {
-            summaryOptions = { generateSummaries: true },
+            summaryOptions = {},
             gcOptions = {},
             loadSequenceNumberVerification = "close",
             useDataStoreAliasing = false,
@@ -795,7 +802,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._flushMode;
     }
 
-    public get scope(): IFluidObject {
+    public get scope(): IFluidObject & FluidObject {
         return this.containerScope;
     }
 
@@ -902,7 +909,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         chunks: [string, string[]][],
         dataStoreAliasMap: [string, string][],
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
-        private readonly containerScope: IFluidObject,
+        private readonly containerScope: FluidObject,
         public readonly logger: ITelemetryLogger,
         existing: boolean,
         blobManagerSnapshot: IBlobManagerLoadInfo,
@@ -1015,7 +1022,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
         // Only create a SummaryManager if summaries are enabled and we are not the summarizer client
+        // Map the deprecated generateSummaries flag to disableSummaries.
         if (this.runtimeOptions.summaryOptions.generateSummaries === false) {
+            this.runtimeOptions.summaryOptions.disableSummaries = true;
+        }
+        if (this.summariesDisabled()) {
             this._logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
         } else {
             const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 7000;
@@ -1603,30 +1614,35 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
-        return this.createDataStoreCore(pkg, false /* isRoot */, uuid());
+        const internalId = uuid();
+        return new DataStore(await this.createDataStoreCore(pkg, false /* isRoot */, internalId), internalId, this);
     }
 
     private async createDataStoreCore(pkg: string | string[], isRoot: boolean, id: string, props?: any) {
         const fluidDataStore = await this._createDataStore(pkg, isRoot, id, props);
         if (isRoot) {
-            fluidDataStore.attachGraph();
+            fluidDataStore.bindToContext();
         }
 
-        return new DataStore(fluidDataStore, id, this);
+        return fluidDataStore;
     }
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IDataStore> {
         if (this.runtimeOptions.useDataStoreAliasing === true && this.attachState === AttachState.Attached) {
-            const dataStore = await this.createDataStore(pkg);
-            const result = await dataStore.trySetAlias(rootDataStoreId);
+            const internalId = uuid();
+            const dataStore = await this.createDataStoreCore(pkg, false /* isRoot */, internalId);
+            dataStore.bindToContext();
+            const aliasedDataStore = new DataStore(dataStore, internalId, this);
+            const result = await aliasedDataStore.trySetAlias(rootDataStoreId);
             if (result) {
-                return dataStore;
+                return aliasedDataStore;
             } else {
                 throw new Error("Root datastore creation name conflict");
             }
         }
 
-        return this.createDataStoreCore(pkg, true /* isRoot */, rootDataStoreId);
+        const rootDataStore = await this.createDataStoreCore(pkg, true /* isRoot */, rootDataStoreId);
+        return new DataStore(rootDataStore, rootDataStoreId, this);
     }
 
     public createDetachedRootDataStore(
@@ -1647,16 +1663,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         isRoot = false,
     ): Promise<IDataStore> {
         if (this.runtimeOptions.useDataStoreAliasing === true && isRoot && this.attachState === AttachState.Attached) {
-            const dataStore = await this.createDataStoreCore(pkg, isRoot, uuid(), props);
-            const result = await dataStore.trySetAlias(id);
+            const internalId = uuid();
+            const dataStore = await this.createDataStoreCore(pkg, false /* isRoot */, internalId, props);
+            dataStore.bindToContext();
+            const aliasedDataStore = new DataStore(dataStore, internalId, this);
+            const result = await aliasedDataStore.trySetAlias(id);
             if (result) {
-                return dataStore;
+                return aliasedDataStore;
             } else {
                 throw new Error("Root datastore creation name conflict");
             }
         }
 
-        return this.createDataStoreCore(pkg, isRoot, id, props);
+        const rootDataStore = await this.createDataStoreCore(pkg, isRoot, id, props);
+        return new DataStore(rootDataStore, id, this);
     }
 
     private async _createDataStore(
@@ -2362,6 +2382,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.pendingStateManager.getLocalState();
     }
 
+    /**
+     * @returns true if summaries are explicitly disabled for this ContainerRuntime, false otherwise
+     */
+    public summariesDisabled(): boolean {
+        return this.runtimeOptions.summaryOptions.disableSummaries === true ||
+            this.runtimeOptions.summaryOptions.summaryConfigOverrides?.disableSummaries === true;
+    }
+
     public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
         if (this.clientDetails.type === summarizerClientType) {
             return this.summarizer.summarizeOnDemand(...args);
@@ -2369,10 +2397,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return this.summaryManager.summarizeOnDemand(...args);
         } else {
             // If we're not the summarizer, and we don't have a summaryManager, we expect that
-            // generateSummaries is turned off. We are throwing instead of returning a failure here,
+            // disableSummaries is turned on. We are throwing instead of returning a failure here,
             // because it is a misuse of the API rather than an expected failure.
             throw new Error(
-                `Can't summarize, generateSummaries: ${this.runtimeOptions.summaryOptions.generateSummaries}`,
+                `Can't summarize, disableSummaries: ${this.summariesDisabled()}`,
             );
         }
     };
@@ -2387,7 +2415,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // generateSummaries is turned off. We are throwing instead of returning a failure here,
             // because it is a misuse of the API rather than an expected failure.
             throw new Error(
-                `Can't summarize, generateSummaries: ${this.runtimeOptions.summaryOptions.generateSummaries}`,
+                `Can't summarize, disableSummaries: ${this.summariesDisabled()}`,
             );
         }
     };

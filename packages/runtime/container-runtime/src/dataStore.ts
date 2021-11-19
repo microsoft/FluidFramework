@@ -36,7 +36,7 @@ export class DataStore implements IDataStore {
             this.runtime.submitDataStoreAliasOp(message, resolve);
         }).catch(() => undefined);
 
-        return aliasResult?.aliasedInternalId === aliasResult?.suppliedInternalId;
+        return aliasResult !== undefined && aliasResult.aliasedInternalId === aliasResult.suppliedInternalId;
     }
 
     async request(request: IRequest): Promise<IResponse> {

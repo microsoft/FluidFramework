@@ -6,6 +6,7 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
@@ -56,7 +57,7 @@ export interface IContainerRuntime extends IProvideContainerRuntime, IProvideFlu
     raiseContainerWarning(warning: ContainerWarning): void;
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    readonly scope: IFluidObject;
+    readonly scope: IFluidObject & FluidObject;
     // (undocumented)
     readonly storage: IDocumentStorageService;
 }
