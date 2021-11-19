@@ -23,15 +23,13 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
 export class ChildLogger extends TelemetryLogger {
+    static create(baseLogger?: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags, globalProperties?: ITelemetryLoggerPropertyBags, layerVersion?: string): TelemetryLogger;
     // (undocumented)
-    protected readonly baseLogger: ITelemetryBaseLogger;
-    static create(baseLogger?: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags, layerVersion?: string): TelemetryLogger;
+    protected get globalProperties(): Required<ITelemetryLoggerPropertyBags>;
+    // Warning: (ae-forgotten-export) The symbol "ChildLoggerRoot" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    protected get globalProperties(): ITelemetryLoggerPropertyBags;
-    // (undocumented)
-    protected readonly _globalProperties: Required<ITelemetryLoggerPropertyBags>;
-    // (undocumented)
-    protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent;
+    protected readonly rootLogger: ChildLoggerRoot;
     send(event: ITelemetryBaseEvent): void;
 }
 
