@@ -353,6 +353,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     bindChannel(channel: IChannel): void;
     // (undocumented)
+    bindToContext(): void;
+    // (undocumented)
     get channelsRoutingContext(): IFluidHandleContext;
     // (undocumented)
     clientId: string | undefined;
