@@ -6,15 +6,15 @@ author: scottn12
 
 In this tutorial, you'll learn how to use the [SharedString]({{< relref "string.md" >}}) distributed data structure (DDS) with [React](https://reactjs.org/) to create a collaborative text area. SharedString is a DDS with specialized features and behaviors for working with text.
 
-To jump ahead into the finished demo, check out the [SharedString example in our FluidExamples repo](TODO_URL_HERE).
+To jump ahead into the finished demo, check out the [SharedString example in our FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/collaborative-text-area).
 
 The following image shows a textarea open in four browsers. The same text is in all four.
 
-TODO: Add image
+![Four browsers with the Timestamp app open in them one second after the button has been pushed.](https://fluidframework.blob.core.windows.net/static/images/collaborative_text_area_1.png)
 
-The following image shows the same four clients after an edit was made in one of the browsers. Note that the text has updated in all four browsers.
+The next image shows the same four clients after an edit was made in one of the browsers. Note that the text has updated in all four browsers.
 
-TODO: Add image
+![Four browsers with the Timestamp app open in them one second after the button has been pushed.](https://fluidframework.blob.core.windows.net/static/images/collaborative_text_area_2.png)
 
 {{< callout note >}}
 
@@ -62,7 +62,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     export default App;
     ```
 
-1. Add the following `import` statements. Note: `CollaborativeTextArea` and `SharedStringHelper` will be defined later.
+1. Add the following `import` statements. Note: `CollaborativeTextArea` will be defined later.
 
     ```js
     import React from "react";
@@ -156,133 +156,6 @@ if (sharedString) {
   return <div />;
 }
 ```
-
-### Setup the SharedStringHelper Class
-
-As previously mentioned, the `SharedStringHelper` class provides APIs to make interactions with the `SharedString` object easier by handling the merge logic. To implement this class, follow the below instructions.
-
-1. Create a new file `SharedStringHelper.js` inside of the `\src` directory.
-1. Add the following `import` statements and declare the `SharedStringHelper` class:
-
-    ```js
-    import { TypedEventEmitter } from "@fluidframework/common-utils";
-    import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
-
-    export class SharedStringHelper extends TypedEventEmitter {
-      // TODO 1: Setup the class properties and constructor
-      // TODO 2: Add functions for get, insert, remove, and replace text
-      // TODO 3: Define sequenceDeltaHandler function
-    }
-    ```
-1. Replace `TODO 1` with the following code. Note about this code:
-    - The `SharedString` object from `App.js` is passed in.
-    - `_latestText` is set to the most recent value from `_sharedString`.
-    - The `this.sequenceDeltaHandler` function will be defined later. It will handle changes to the data of `_sharedString`.
-
-    ```js
-    _sharedString;
-    _latestText;
-    constructor(sharedString) {
-      super();
-      this._sharedString = sharedString;
-      this._latestText = this._sharedString.getText();
-      this._sharedString.on("sequenceDelta", this.sequenceDeltaHandler);
-    }
-    ```
-
-1. Replace `TODO 2` with the following code.
-
-    ```js
-    getText() {
-      return this._latestText;
-    }
-    insertText(text, pos) {
-      this._sharedString.insertText(pos, text);
-    }
-    removeText(start, end) {
-      this._sharedString.removeText(start, end);
-    }
-    replaceText(text, start, end) {
-      this._sharedString.replaceText(start, end, text);
-    }
-    ```
-
-1. Replace `TODO 3` with the following code. Note about this code.
-    - This function handles changes made to the `_sharedString` object.
-    - `transformPosition` is a function which will give the new position of the caret given the oldPosition. This function must be defined based on the value of `op.type`.
-
-    ```js
-    sequenceDeltaHandler = (event) => {
-      this._latestText = this._sharedString.getText();
-      const isLocal = event.isLocal;
-
-      const op = event.opArgs.op;
-      let transformPosition;
-      if (op.type === MergeTreeDeltaType.INSERT) {
-        // TODO 3A: Define transformPosition for an INSERT operation
-      } else if (op.type === MergeTreeDeltaType.REMOVE) {
-        // TODO 3B: Define transformPosition for a REMOVE operation
-      } else {
-        throw new Error("Don't know how to handle op types beyond insert and remove");
-      }
-
-      this.emit("textChanged", { isLocal, transformPosition });
-    };
-    ```
-
-    Replace `TODO 3A` with the following code to handle an `INSERT` operation.
-
-    ```js
-    transformPosition = (oldPosition) => {
-      if (op.pos1 === undefined) {
-        throw new Error("pos1 undefined");
-      }
-      if (op.seg === undefined) {
-        throw new Error("seg undefined");
-      }
-      const changeStartPosition = op.pos1;
-      const changeLength = (op.seg).length;
-      let newPosition;
-      if (oldPosition <= changeStartPosition) {
-        // Position is unmoved by the insertion if it is before the insertion's start
-        newPosition = oldPosition;
-      } else {
-        // Position is moved by the length of the insertion if it is after the insertion's start
-        newPosition = oldPosition + changeLength;
-      }
-      return newPosition;
-    };
-    ```
-
-    Replace `TODO 3B` with the following code to handle a `REMOVE` operation.
-
-    ```js
-    transformPosition = (oldPosition) => {
-      if (op.pos1 === undefined) {
-        throw new Error("pos1 undefined");
-      }
-      if (op.pos2 === undefined) {
-        throw new Error("pos2 undefined");
-      }
-      const changeStartPosition = op.pos1;
-      const changeEndPosition = op.pos2;
-      const changeLength = changeEndPosition - changeStartPosition;
-      let newPosition;
-      if (oldPosition <= changeStartPosition) {
-        // Position is unmoved by the deletion if it is before the deletion's start
-        newPosition = oldPosition;
-      } else if (oldPosition > (changeEndPosition - 1)) {
-        // Position is moved by the size of the deletion if it is after the deletion's end
-        newPosition = oldPosition - changeLength;
-      } else {
-        // Position snaps to the left side of the deletion if it is inside the deletion.
-        newPosition = changeStartPosition;
-      }
-      return newPosition;
-    };
-    ```
-
-
 ### Create CollaborativeTextArea component
 
 `CollaborativeTextArea` is a React component which uses a `SharedStringHelper` object to control the text of a HTML `textarea` element. Follow the below steps to create this component.
