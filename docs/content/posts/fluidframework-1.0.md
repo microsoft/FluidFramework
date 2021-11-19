@@ -1,6 +1,9 @@
 ---
 title: Announcing Fluid Framework 1.0
 date: "2021-11-18"
+author:
+  name: Tyler Butler
+  github: tylerbutler
 ---
 
 
