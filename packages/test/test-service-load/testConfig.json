@@ -13,7 +13,7 @@
             "optionOverrides":{
                 "odsp":{
                     "loader":{
-                        "summarizeProtocolTree": true
+                        "summarizeProtocolTree":  [true,false]
                     }
                 }
             }
@@ -34,8 +34,14 @@
             "totalSendCount": 30,
             "readWriteCycleMs": 10000,
             "faultInjectionMinMs": 0,
-            "faultInjectionMaxMs": 50000
-
+            "faultInjectionMaxMs": 50000,
+            "optionOverrides":{
+                "odsp":{
+                    "loader":{
+                        "summarizeProtocolTree": [true,false]
+                    }
+                }
+            }
         },
         "debug": {
             "opRatePerMin": 60,
