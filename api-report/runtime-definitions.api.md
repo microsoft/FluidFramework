@@ -120,6 +120,8 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     applyStashedOp(content: any): Promise<unknown>;
     attachGraph(): void;
     readonly attachState: AttachState;
+    // @deprecated (undocumented)
+    bindToContext(): void;
     getAttachSummary(): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)

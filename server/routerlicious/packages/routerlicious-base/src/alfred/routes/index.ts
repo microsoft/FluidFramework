@@ -27,10 +27,11 @@ export function create(
     tenantManager: ITenantManager,
     throttler: IThrottler,
     singleUseTokenCache: ICache,
-    mongoManager: MongoManager,
+    operationsDbMongoManager: MongoManager,
     storage: IDocumentStorage,
     producer: IProducer,
-    appTenants: IAlfredTenant[]) {
+    appTenants: IAlfredTenant[],
+    globalDbMongoManager?: MongoManager) {
     return {
         api: api.create(
             config,
@@ -38,9 +39,10 @@ export function create(
             throttler,
             singleUseTokenCache,
             storage,
-            mongoManager,
+            operationsDbMongoManager,
             producer,
             appTenants,
+            globalDbMongoManager,
         ),
     };
 }
