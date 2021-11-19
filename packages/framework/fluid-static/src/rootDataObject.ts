@@ -3,23 +3,18 @@
  * Licensed under the MIT License.
  */
 import {
-    BaseContainerRuntimeFactory,
     DataObject,
-    DataObjectFactory,
-    defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    ContainerSchema,
     DataObjectClass,
     LoadableObjectClass,
     LoadableObjectClassRecord,
     LoadableObjectRecord,
     SharedObjectClass,
 } from "./types";
-import { isDataObjectClass, isSharedObjectClass, parseDataObjectsFromSharedObjects } from "./utils";
+import { isDataObjectClass, isSharedObjectClass } from "./utils";
 
 export interface RootDataObjectProps {
     initialObjects: LoadableObjectClassRecord;
@@ -99,39 +94,5 @@ export class RootDataObject extends DataObject<{}, RootDataObjectProps> {
         const factory = sharedObjectClass.getFactory();
         const obj = this.runtime.createChannel(undefined, factory.type);
         return obj as unknown as T;
-    }
-}
-
-const rootDataStoreId = "rootDOId";
-
-/**
- * The DOProviderContainerRuntimeFactory is container code that provides a single RootDataObject.  This data object is
- * dynamically customized (registry and initial objects) based on the schema provided to the container runtime factory.
- */
-export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
-    private readonly rootDataObjectFactory; // type is DataObjectFactory
-    private readonly initialObjects: LoadableObjectClassRecord;
-    constructor(schema: ContainerSchema) {
-        const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
-        const rootDataObjectFactory =
-            // eslint-disable-next-line @typescript-eslint/ban-types
-            new DataObjectFactory<RootDataObject, {}, RootDataObjectProps>(
-                "rootDO",
-                RootDataObject,
-                sharedObjects,
-                {},
-                registryEntries,
-            );
-        super([rootDataObjectFactory.registryEntry], [], [defaultRouteRequestHandler(rootDataStoreId)]);
-        this.rootDataObjectFactory = rootDataObjectFactory;
-        this.initialObjects = schema.initialObjects;
-    }
-
-    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        // The first time we create the container we create the RootDataObject
-        await this.rootDataObjectFactory.createRootInstance(
-            rootDataStoreId,
-            runtime,
-            { initialObjects: this.initialObjects });
     }
 }

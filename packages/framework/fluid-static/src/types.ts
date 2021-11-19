@@ -47,6 +47,21 @@ export type SharedObjectClass<T extends IFluidLoadable>
  */
 export type LoadableObjectCtor<T extends IFluidLoadable> = new(...args: any[]) => T;
 
+// builder?
+// context?
+// snapshot?
+// manager?
+// seed
+export interface IDataMigrator {
+    readonly snapshot: LoadableObjectRecord;
+    addObject(key: string, object: any/* LoadableObjectClass */, props: any): any;
+    dropObject(key: string): void;
+    // move/rename/update?
+    commit(): void;
+}
+
+export type DataMigrationRoutine = (migrator: IDataMigrator) => Promise<void>;
+
 /**
  * The ContainerSchema declares the Fluid objects that will be available in the container.  It includes both the
  * instances of objects that are initially available upon container creation, as well as the types of objects that may
@@ -79,6 +94,9 @@ export interface ContainerSchema {
      * included via initialObjects.
      */
     dynamicObjectTypes?: LoadableObjectClass<any>[];
+
+    /** Code-first data schema migration routines */
+    migrations?: DataMigrationRoutine | DataMigrationRoutine[];
 }
 
 /**
