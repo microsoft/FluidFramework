@@ -233,7 +233,9 @@ export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
             {
                 driverVersion: pkgVersion,
             },
-        });
+        },
+        {},
+        pkgVersion);
 
 export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
     let numTrees = 0;

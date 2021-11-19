@@ -41,6 +41,7 @@ import {
 } from "@fluidframework/driver-utils";
 import { Container } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
+import { pkgVersion } from "./packageVersion";
 
 function canUseCache(request: IRequest): boolean {
     if (request.headers === undefined) {
@@ -290,7 +291,7 @@ export class Loader implements IHostLoader {
             proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
             detachedBlobStorage: loaderProps.detachedBlobStorage,
         };
-        this.logger = ChildLogger.create(this.services.subLogger, "Loader");
+        this.logger = ChildLogger.create(this.services.subLogger, "Loader", {}, {}, pkgVersion);
     }
 
     public get IFluidRouter(): IFluidRouter { return this; }
