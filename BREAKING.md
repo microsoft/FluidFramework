@@ -46,12 +46,12 @@ The non-generic `FluidObject` is a hint that the generic form of `FluidObject` s
     }
 ```
 
-If you want to inspect for multiple interfaces via `FluidObject`, you can uses an intersection:
+If you want to inspect for multiple interfaces via `FluidObject`, you can use an intersection:
 ``` typescript
     const maybe: FluidObject<IFluidHTMLView & IFluidMountableView> = requestFluidObject(container, "/");
 ```
 
-Please begin reducing the usage of `IFluidObject` and moving to `FluidObject`. If you find any unsupported cases `FluidObject` please file an issue.
+Please begin reducing the usage of `IFluidObject` and moving to `FluidObject`. If you find any unsupported cases for `FluidObject` please file an issue.
 
 ## 0.51 Breaking changes
 - [`maxMessageSize` property has been deprecated from IConnectionDetails and IDocumentDeltaConnection](#maxmessagesize-property-has-been-deprecated-from-iconnectiondetails-and-idocumentdeltaconnection)
