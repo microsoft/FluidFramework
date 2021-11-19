@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+
 /**
  * Different error types the Container may report out to the Host
  */
@@ -36,14 +38,25 @@ export enum ContainerErrorType {
 /**
  * Base interface for all errors and warnings at container level
  */
-export interface IErrorBase {
+export interface IErrorBase extends Error {
     /** errorType is a union of error types from
      * - container
      * - runtime
      * - drivers
      */
     readonly errorType: string;
+
+    /** See Error.message */
     readonly message: string;
+    /** See Error.name */
+    readonly name: string;
+    /** See Error.stack */
+    readonly stack?: string;
+    /**
+     * Returns all properties of this error object that are either safe to log
+     * or explicitly tagged as containing privacy-sensitive data.
+     */
+    getTelemetryProperties(): ITelemetryProperties;
 }
 
 /**
