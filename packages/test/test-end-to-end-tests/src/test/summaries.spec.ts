@@ -37,8 +37,7 @@ async function createContainer(
     ], []);
 
     // Force generateSummaries to false.
-    const summaryOptions: ISummaryRuntimeOptions = { ...summaryOpt };
-    summaryOptions.generateSummaries = false;
+    const summaryOptions: ISummaryRuntimeOptions = { ...summaryOpt, disableSummaries: true };
 
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         factory,

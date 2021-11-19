@@ -29,7 +29,7 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
             [],
             []);
         const runtimeOptions: IContainerRuntimeOptions = {
-            summaryOptions: { generateSummaries: false },
+            summaryOptions: { disableSummaries: true },
             gcOptions: { gcAllowed: true, runGCInTestMode: deleteUnreferencedContent },
         };
         const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(

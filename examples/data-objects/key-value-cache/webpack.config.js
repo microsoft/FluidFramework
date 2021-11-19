@@ -24,12 +24,12 @@ module.exports = env => {
             rules: [
                 {
                     test: /\.ts$/,
-                    loader: "ts-loader",
+                    loader: require.resolve("ts-loader"),
                     exclude: /node_modules/
                 },
                 {
                     test: /\.js$/,
-                    use: ["source-map-loader"],
+                    use: [require.resolve("source-map-loader")],
                     enforce: "pre"
                 }
             ]
