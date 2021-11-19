@@ -62,11 +62,6 @@
   "typeValidation": {
     "version": "0.52.0",
     "broken": {
-      "0.51.1":{
-        "InterfaceDeclaration_IContainerRuntime": {"backCompat": false},
-        "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {"backCompat": false},
-        "InterfaceDeclaration_IProvideContainerRuntime": {"backCompat": false}
-      }
     }
   }
 }

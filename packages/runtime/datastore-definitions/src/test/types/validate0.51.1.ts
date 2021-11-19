@@ -25,13 +25,13 @@ use_current_InterfaceDeclaration_IChannel(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.51.1:
 * "InterfaceDeclaration_IChannel": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IChannel():
     current.IChannel;
 declare function use_old_InterfaceDeclaration_IChannel(
     use: old.IChannel);
 use_old_InterfaceDeclaration_IChannel(
     get_current_InterfaceDeclaration_IChannel());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -73,13 +73,13 @@ use_current_InterfaceDeclaration_IChannelFactory(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.51.1:
 * "InterfaceDeclaration_IChannelFactory": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IChannelFactory():
     current.IChannelFactory;
 declare function use_old_InterfaceDeclaration_IChannelFactory(
     use: old.IChannelFactory);
 use_old_InterfaceDeclaration_IChannelFactory(
     get_current_InterfaceDeclaration_IChannelFactory());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -193,13 +193,13 @@ use_current_InterfaceDeclaration_IFluidDataStoreRuntime(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.51.1:
 * "InterfaceDeclaration_IFluidDataStoreRuntime": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IFluidDataStoreRuntime():
     current.IFluidDataStoreRuntime;
 declare function use_old_InterfaceDeclaration_IFluidDataStoreRuntime(
     use: old.IFluidDataStoreRuntime);
 use_old_InterfaceDeclaration_IFluidDataStoreRuntime(
     get_current_InterfaceDeclaration_IFluidDataStoreRuntime());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

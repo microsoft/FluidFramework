@@ -62,19 +62,6 @@
   "typeValidation": {
     "version": "0.52.0",
     "broken": {
-      "0.51.1":{
-        "TypeAliasDeclaration_FluidDataStoreRegistryEntry": {"backCompat": false},
-        "InterfaceDeclaration_IContainerRuntimeBase": {"backCompat": false},
-        "InterfaceDeclaration_IFluidDataStoreContext": {"backCompat": false},
-        "InterfaceDeclaration_IFluidDataStoreContextDetached": {"backCompat": false},
-        "InterfaceDeclaration_IFluidDataStoreFactory": {"backCompat": false},
-        "InterfaceDeclaration_IFluidDataStoreRegistry": {"backCompat": false},
-        "InterfaceDeclaration_IProvideFluidDataStoreFactory": {"backCompat": false},
-        "InterfaceDeclaration_IProvideFluidDataStoreRegistry": {"backCompat": false},
-        "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries": {"backCompat": false},
-        "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry": {"backCompat": false},
-        "InterfaceDeclaration_IFluidDataStoreChannel": {"backCompat": false}
-      }
     }
   }
 }

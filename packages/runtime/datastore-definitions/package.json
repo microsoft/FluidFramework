@@ -81,11 +81,6 @@
   "typeValidation": {
     "version": "0.52.0",
     "broken": {
-      "0.51.1":{
-        "InterfaceDeclaration_IChannel": {"backCompat": false},
-        "InterfaceDeclaration_IChannelFactory": {"backCompat": false},
-        "InterfaceDeclaration_IFluidDataStoreRuntime": {"backCompat": false}
-      }
     }
   }
 }

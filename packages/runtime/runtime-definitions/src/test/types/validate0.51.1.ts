@@ -121,13 +121,13 @@ use_current_TypeAliasDeclaration_FluidDataStoreRegistryEntry(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.51.1:
 * "TypeAliasDeclaration_FluidDataStoreRegistryEntry": {"backCompat": false}
+*/
 declare function get_current_TypeAliasDeclaration_FluidDataStoreRegistryEntry():
     current.FluidDataStoreRegistryEntry;
 declare function use_old_TypeAliasDeclaration_FluidDataStoreRegistryEntry(
     use: old.FluidDataStoreRegistryEntry);
 use_old_TypeAliasDeclaration_FluidDataStoreRegistryEntry(
     get_current_TypeAliasDeclaration_FluidDataStoreRegistryEntry());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -217,13 +217,13 @@ use_current_InterfaceDeclaration_IContainerRuntimeBase(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.51.1:
 * "InterfaceDeclaration_IContainerRuntimeBase": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IContainerRuntimeBase():
     current.IContainerRuntimeBase;
 declare function use_old_InterfaceDeclaration_IContainerRuntimeBase(
     use: old.IContainerRuntimeBase);
 use_old_InterfaceDeclaration_IContainerRuntimeBase(
     get_current_InterfaceDeclaration_IContainerRuntimeBase());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -289,13 +289,13 @@ use_current_InterfaceDeclaration_IFluidDataStoreChannel(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.51.1:
 * "InterfaceDeclaration_IFluidDataStoreChannel": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IFluidDataStoreChannel():
     current.IFluidDataStoreChannel;
 declare function use_old_InterfaceDeclaration_IFluidDataStoreChannel(
     use: old.IFluidDataStoreChannel);
 use_old_InterfaceDeclaration_IFluidDataStoreChannel(
     get_current_InterfaceDeclaration_IFluidDataStoreChannel());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -313,13 +313,13 @@ use_current_InterfaceDeclaration_IFluidDataStoreContext(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.51.1:
 * "InterfaceDeclaration_IFluidDataStoreContext": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IFluidDataStoreContext():
     current.IFluidDataStoreContext;
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContext(
     use: old.IFluidDataStoreContext);
 use_old_InterfaceDeclaration_IFluidDataStoreContext(
     get_current_InterfaceDeclaration_IFluidDataStoreContext());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -337,13 +337,13 @@ use_current_InterfaceDeclaration_IFluidDataStoreContextDetached(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.51.1:
 * "InterfaceDeclaration_IFluidDataStoreContextDetached": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IFluidDataStoreContextDetached():
     current.IFluidDataStoreContextDetached;
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: old.IFluidDataStoreContextDetached);
 use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
     get_current_InterfaceDeclaration_IFluidDataStoreContextDetached());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -409,13 +409,13 @@ use_current_InterfaceDeclaration_IFluidDataStoreFactory(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.51.1:
 * "InterfaceDeclaration_IFluidDataStoreFactory": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IFluidDataStoreFactory():
     current.IFluidDataStoreFactory;
 declare function use_old_InterfaceDeclaration_IFluidDataStoreFactory(
     use: old.IFluidDataStoreFactory);
 use_old_InterfaceDeclaration_IFluidDataStoreFactory(
     get_current_InterfaceDeclaration_IFluidDataStoreFactory());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -457,13 +457,13 @@ use_current_InterfaceDeclaration_IFluidDataStoreRegistry(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.51.1:
 * "InterfaceDeclaration_IFluidDataStoreRegistry": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IFluidDataStoreRegistry():
     current.IFluidDataStoreRegistry;
 declare function use_old_InterfaceDeclaration_IFluidDataStoreRegistry(
     use: old.IFluidDataStoreRegistry);
 use_old_InterfaceDeclaration_IFluidDataStoreRegistry(
     get_current_InterfaceDeclaration_IFluidDataStoreRegistry());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -577,13 +577,13 @@ use_current_InterfaceDeclaration_IProvideFluidDataStoreFactory(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.51.1:
 * "InterfaceDeclaration_IProvideFluidDataStoreFactory": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IProvideFluidDataStoreFactory():
     current.IProvideFluidDataStoreFactory;
 declare function use_old_InterfaceDeclaration_IProvideFluidDataStoreFactory(
     use: old.IProvideFluidDataStoreFactory);
 use_old_InterfaceDeclaration_IProvideFluidDataStoreFactory(
     get_current_InterfaceDeclaration_IProvideFluidDataStoreFactory());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -601,13 +601,13 @@ use_current_InterfaceDeclaration_IProvideFluidDataStoreRegistry(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.51.1:
 * "InterfaceDeclaration_IProvideFluidDataStoreRegistry": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IProvideFluidDataStoreRegistry():
     current.IProvideFluidDataStoreRegistry;
 declare function use_old_InterfaceDeclaration_IProvideFluidDataStoreRegistry(
     use: old.IProvideFluidDataStoreRegistry);
 use_old_InterfaceDeclaration_IProvideFluidDataStoreRegistry(
     get_current_InterfaceDeclaration_IProvideFluidDataStoreRegistry());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -841,13 +841,13 @@ use_current_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.51.1:
 * "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries": {"backCompat": false}
+*/
 declare function get_current_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries():
     current.NamedFluidDataStoreRegistryEntries;
 declare function use_old_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries(
     use: old.NamedFluidDataStoreRegistryEntries);
 use_old_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries(
     get_current_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -865,13 +865,13 @@ use_current_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.51.1:
 * "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry": {"backCompat": false}
+*/
 declare function get_current_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry():
     current.NamedFluidDataStoreRegistryEntry;
 declare function use_old_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry(
     use: old.NamedFluidDataStoreRegistryEntry);
 use_old_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry(
     get_current_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

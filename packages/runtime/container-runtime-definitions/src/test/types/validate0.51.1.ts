@@ -49,13 +49,13 @@ use_current_InterfaceDeclaration_IContainerRuntime(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.51.1:
 * "InterfaceDeclaration_IContainerRuntime": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IContainerRuntime():
     current.IContainerRuntime;
 declare function use_old_InterfaceDeclaration_IContainerRuntime(
     use: old.IContainerRuntime);
 use_old_InterfaceDeclaration_IContainerRuntime(
     get_current_InterfaceDeclaration_IContainerRuntime());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -73,13 +73,13 @@ use_current_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.51.1:
 * "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {"backCompat": false}
+*/
 declare function get_current_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents():
     current.IContainerRuntimeBaseWithCombinedEvents;
 declare function use_old_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents(
     use: old.IContainerRuntimeBaseWithCombinedEvents);
 use_old_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents(
     get_current_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -121,10 +121,10 @@ use_current_InterfaceDeclaration_IProvideContainerRuntime(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.51.1:
 * "InterfaceDeclaration_IProvideContainerRuntime": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IProvideContainerRuntime():
     current.IProvideContainerRuntime;
 declare function use_old_InterfaceDeclaration_IProvideContainerRuntime(
     use: old.IProvideContainerRuntime);
 use_old_InterfaceDeclaration_IProvideContainerRuntime(
     get_current_InterfaceDeclaration_IProvideContainerRuntime());
-*/
