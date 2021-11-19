@@ -6,9 +6,9 @@
 import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert, bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime,
+import {
+    ContainerRuntime,
     ISummaryRuntimeOptions,
-    formRequestSummarizerFn,
     ISummarizerRequestOptions } from "@fluidframework/container-runtime";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -61,6 +61,8 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
     return JSON.parse(json);
 }
 
+const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
+
 let summarizer;
 
 // REVIEW: enable compat testing?
@@ -70,7 +72,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
         provider = getTestObjectProvider();
     });
 
-    it("Should generate summary tree", async () => {
+    it("On demand summaries", async () => {
         const container = await createContainer(provider, { disableIsolatedChannels: false });
         const defaultDataStore = await requestFluidObject<TestDataObject>(container, defaultDataStoreId);
         const containerRuntime = defaultDataStore.getContext().containerRuntime as ContainerRuntime;
@@ -83,25 +85,52 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
             reconnect: false,
             summarizingClient: true,
         };
-        const requestSummarizerFn = formRequestSummarizerFn(
-            containerRuntime.loader,
-            containerRuntime.deltaManager.lastSequenceNumber,
-            requestOptions);
-
+        const requestSummarizerFn = containerRuntime.formRequestSummarizerFn(requestOptions);
         summarizer = await requestSummarizerFn();
-        const result = await summarizer.summarizeOnDemand({ reason: "test" });
+
+        let result = await summarizer.summarizeOnDemand({ reason: "test" });
         assert(result.alreadyRunning === undefined, "Summarizer should not be running");
 
-        const submitResult = await result.summarySubmitted;
+        let submitResult = await result.summarySubmitted;
 
         assert(submitResult.success, "on-demand summary should submit");
         assert(submitResult.data.stage === "submit",
             "on-demand summary submitted data stage should be submit");
-
         assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
 
-        const broadcastResult = await result.summaryOpBroadcasted;
+        let broadcastResult = await result.summaryOpBroadcasted;
         assert(broadcastResult.success, "summary op should be broadcast");
+
+        let ackNackResult = await result.receivedSummaryAckOrNack;
+        assert(ackNackResult.success, "summary op should be acked");
+
+        await flushPromises();
+
+        const seq: number = summarizer.runtime.deltaManager.lastSequenceNumber;
+        result = await summarizer.summarizeOnDemand({ reason: "test" });
+        assert(result.alreadyRunning === undefined, "Summarizer should not be running");
+
+        submitResult = await result.summarySubmitted;
+
+        assert(submitResult.data.referenceSequenceNumber === seq, "ref seq num");
+        assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
+
+        broadcastResult = await result.summaryOpBroadcasted;
+        assert(broadcastResult.success, "summary op should be broadcast");
+
+        assert(broadcastResult.data.summarizeOp.referenceSequenceNumber === seq,
+            "summarize op ref seq num should be same as summary seq");
+
+        ackNackResult = await result.receivedSummaryAckOrNack;
+        assert(ackNackResult.success, "summary op should be acked");
+    });
+
+    it("Should generate summary tree", async () => {
+        const container = await createContainer(provider, { disableIsolatedChannels: false });
+        const defaultDataStore = await requestFluidObject<TestDataObject>(container, defaultDataStoreId);
+        const containerRuntime = defaultDataStore.getContext().containerRuntime as ContainerRuntime;
+
+        await provider.ensureSynchronized();
 
         const { stats, summary } = await containerRuntime.summarize({
             runGC: false,

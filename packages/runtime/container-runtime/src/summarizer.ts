@@ -247,21 +247,22 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     }
 
     public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = async (...args) => {
-        if (this._disposed) {
-            throw Error("Summarizer is already disposed.");
-        } else if (this.runningSummarizer?.disposed === false) {
-            return this.runningSummarizer.summarizeOnDemand(...args);
-        } else {
-            const runCoordinator: ICancellableSummarizerController = await this.runCoordinatorCreateFn(this.runtime);
-            const runningSummarizer =
+        try {
+            if (this._disposed) {
+                throw Error("Summarizer is already disposed.");
+            }
+            if (this.runningSummarizer?.disposed !== false) {
+                this.runningSummarizer = undefined;
+                const runCoordinator: ICancellableSummarizerController =
+                    await this.runCoordinatorCreateFn(this.runtime);
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 await this.start(this.runtime.clientId!, runCoordinator, { disableHeuristics: true });
-            const result = runningSummarizer.summarizeOnDemand(...args);
-            // Wait for summarization to finish.
-            if (result.alreadyRunning === undefined) {
-                await result.receivedSummaryAckOrNack;
             }
-            return result;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return this.runningSummarizer!.summarizeOnDemand(...args);
+        }
+        catch (error) {
+            throw SummarizingWarning.wrap(error, "summarizerRun", false /* logged */, this.logger);
         }
     };
 

@@ -25,7 +25,6 @@ import {
     ContainerWarning,
     ICriticalContainerError,
     AttachState,
-    ILoader,
     ILoaderOptions,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
@@ -825,10 +824,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.attachState;
     }
 
-    public get loader(): ILoader {
-        return this.context.loader;
-    }
-
     public readonly IFluidHandleContext: IFluidHandleContext;
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
@@ -1245,6 +1240,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public get IFluidConfiguration(): IFluidConfiguration {
         return this.context.configuration;
+    }
+
+    public formRequestSummarizerFn(requestOptions: ISummarizerRequestOptions) {
+        return formRequestSummarizerFn(
+            this.context.loader,
+            this.deltaManager.lastSequenceNumber,
+            requestOptions);
     }
 
     /**
