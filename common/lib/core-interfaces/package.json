@@ -40,6 +40,7 @@
     "@fluidframework/build-tools": "^0.2.44421",
     "@fluidframework/core-interfaces-0.39.8": "npm:@fluidframework/core-interfaces@0.39.8",
     "@fluidframework/core-interfaces-0.40.0": "npm:@fluidframework/core-interfaces@0.40.0",
+    "@fluidframework/core-interfaces-0.41.0": "npm:@fluidframework/core-interfaces@0.41.0",
     "@fluidframework/eslint-config-fluid": "^0.24.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@types/node": "^12.19.0",
@@ -63,7 +64,7 @@
     "directory": "test-d"
   },
   "typeValidation": {
-    "version": "0.41.0",
+    "version": "0.41.1",
     "broken": {}
   }
 }
