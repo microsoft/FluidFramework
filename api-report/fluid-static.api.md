@@ -22,7 +22,11 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 export interface ContainerSchema {
     dynamicObjectTypes?: LoadableObjectClass<any>[];
     initialObjects: LoadableObjectClassRecord;
+    migrations?: DataMigrationRoutine | DataMigrationRoutine[];
 }
+
+// @public (undocumented)
+export type DataMigrationRoutine = (migrator: IDataMigrator) => Promise<void>;
 
 // @public
 export type DataObjectClass<T extends IFluidLoadable> = {
@@ -53,6 +57,18 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
 export interface IConnection {
     id: string;
     mode: "write" | "read";
+}
+
+// @public (undocumented)
+export interface IDataMigrator {
+    // (undocumented)
+    addObject(key: string, object: any, props: any): any;
+    // (undocumented)
+    commit(): void;
+    // (undocumented)
+    dropObject(key: string): void;
+    // (undocumented)
+    readonly snapshot: LoadableObjectRecord;
 }
 
 // @public
@@ -122,6 +138,9 @@ export interface RootDataObjectProps {
     // (undocumented)
     initialObjects: LoadableObjectClassRecord;
 }
+
+// @public (undocumented)
+export const rootDataStoreId = "rootDOId";
 
 // @public
 export abstract class ServiceAudience<M extends IMember = IMember> extends TypedEventEmitter<IServiceAudienceEvents<M>> implements IServiceAudience<M> {

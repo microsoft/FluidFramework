@@ -32,10 +32,14 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
                     // no-op if migration routines not provided with the schema
                     return;
                 }
-                const migrator = new DataMigrator();
+                const dir = this.root.getSubDirectory("initial-objects-key");
+                if (!dir) {
+                    return;
+                }
+                const migrator = await DataMigrator.create(dir);
                 if (typeof schema.migrations === "function") {
                     await schema.migrations(migrator);
-                } else  {
+                } else {
                     for (const migration of schema.migrations) {
                         await migration(migrator);
                     }

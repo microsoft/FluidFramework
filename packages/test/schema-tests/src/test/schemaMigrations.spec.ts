@@ -4,14 +4,12 @@
  */
 
 import { strict as assert } from "assert";
+import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
-import { SharedDirectory, SharedMap } from "../../../../dds/map/dist";
 
 describe("Schema Migrations", () => {
     /**
-     * The following tests test the async processing model of ContainerRuntime -
-     * Batch messages are processed in a single turn no matter how long it takes to process them.
-     * Non-batch messages are processed in multiple turns if they take longer than DeltaScheduler's processingTime.
+     * Container-level object manipulations
      */
     describe("Container-level Migrations", () => {
         beforeEach(async () => {
@@ -27,7 +25,7 @@ describe("Schema Migrations", () => {
                     directory: SharedDirectory,
                     map: SharedMap,
                 },
-                migrations: () => {},
+                migrations: async () => {},
             };
             const { container } = await client.createContainer(schema);
             const id = await container.attach();
