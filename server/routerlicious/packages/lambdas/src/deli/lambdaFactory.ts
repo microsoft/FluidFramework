@@ -50,12 +50,13 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
 
 export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
-        private readonly mongoManager: MongoManager,
+        private readonly operationsDbMongoManager: MongoManager,
         private readonly collection: ICollection<IDocument>,
         private readonly tenantManager: ITenantManager,
         private readonly forwardProducer: IProducer,
         private readonly reverseProducer: IProducer,
-        private readonly serviceConfiguration: IServiceConfiguration) {
+        private readonly serviceConfiguration: IServiceConfiguration,
+        private readonly globalDbMongoManager?: MongoManager) {
         super();
     }
 
@@ -163,7 +164,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             this.reverseProducer,
             this.serviceConfiguration,
             sessionMetric,
-            sessionStartMetric);
+            sessionStartMetric,
+            this.globalDbMongoManager);
     }
 
     private logSessionFailureMetrics(
@@ -175,7 +177,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
     }
 
     public async dispose(): Promise<void> {
-        const mongoClosedP = this.mongoManager.close();
+        const mongoClosedP = this.operationsDbMongoManager.close();
         const forwardProducerClosedP = this.forwardProducer.close();
         const reverseProducerClosedP = this.reverseProducer.close();
         await Promise.all([mongoClosedP, forwardProducerClosedP, reverseProducerClosedP]);

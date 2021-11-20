@@ -44,6 +44,7 @@ import {
     IUpdateDSNControlMessageContents,
     LambdaCloseType,
     LambdaName,
+    MongoManager,
 } from "@fluidframework/server-services-core";
 import {
     CommonProperties,
@@ -198,7 +199,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         private readonly reverseProducer: IProducer,
         private readonly serviceConfiguration: IServiceConfiguration,
         private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
-        private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined) {
+        private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
+        globalDbMongoManager?: MongoManager) {
         super();
 
         // Instantiate existing clients
