@@ -7,43 +7,41 @@
  * @fileoverview Definition of the valuearray property class
  */
 
-const _ = require('lodash');
-const { MSG } = require('@fluid-experimental/property-common').constants;
-const { _castFunctors } = require('./primitiveTypeCasts');
-const {
+import _ from 'lodash';
+import { constants } from '@fluid-experimental/property-common';
+import { _castFunctors } from './primitiveTypeCasts';
+import {
     BaseDataArray,
     UniversalDataArray,
     BoolDataArray,
     Uint64,
     Int64
-} = require('@fluid-experimental/property-common');
-const { ArrayProperty } = require('./arrayProperty');
-const { Int64Property, Uint64Property } = require('../properties/intProperties');
-
+} from '@fluid-experimental/property-common';
+import { ArrayProperty, IArrayPropertyParams } from './arrayProperty';
+import { Int64Property, Uint64Property } from '../properties/intProperties';
+import { PathHelper, SerializedChangeSet } from '@fluid-experimental/property-changeset';
+import { BaseProperty } from '.';
+const { MSG } = constants;
 /**
  * An array property which stores primitive values
  */
 export class ValueArrayProperty extends ArrayProperty {
 
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     * @constructor
-     * @protected
-     * @extends property-properties.ArrayProperty
-     * @alias property-properties.ValueArrayProperty
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
-        super(in_params, true);
+    constructor(in_params: IArrayPropertyParams) {
+        super(in_params, 'true');
     };
 
     _isPrimitive = true;
 
     /**
      * returns the value at in_position for a primitive array
-     * @param {number} in_position the array index
+     * @param in_position - the array index
      * @return {*} the value
      */
-    _getValue(in_position) {
+    _getValue(in_position: number) {
         return this._dataArrayRef.getValue(in_position);
     };
 
@@ -64,13 +62,12 @@ export class ValueArrayProperty extends ArrayProperty {
     /**
      * Resolves a direct child node based on the given path segment
      *
-     * @param {String} in_segment                                   - The path segment to resolve
-     * @param {property-properties.PathHelper.TOKEN_TYPES} in_segmentType - The type of segment in the tokenized path
+     * @param in_segment - The path segment to resolve
+     * @param in_segmentType - The type of segment in the tokenized path
      *
-     * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
-     * @protected
+     * @returns The child property that has been resolved
      */
-    _resolvePathSegment(in_segment, in_segmentType) {
+    _resolvePathSegment(in_segment: string, in_segmentType: PathHelper.TOKEN_TYPES): BaseProperty | undefined {
         return this.get(in_segment);
     };
 
@@ -79,10 +76,10 @@ export class ValueArrayProperty extends ArrayProperty {
      * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
      * special treatment on serialization. For supported types, we can just return the input here.
      *
-     * @param {*} in_obj - The object to be serialized
-     * @return {property-properties.SerializedChangeSet} the serialized object
+     * @param in_obj - The object to be serialized
+     * @returns the serialized object
      */
-    _serializeValue(in_obj) {
+    _serializeValue(in_obj: object): SerializedChangeSet {
         return in_obj;
     };
 
@@ -91,10 +88,10 @@ export class ValueArrayProperty extends ArrayProperty {
      * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
      * special treatment on serialization. For supported types, we can just return the input here.
      *
-     * @param {Array} in_array - The array of special objects to be serialized
-     * @return {Array<property-properties.SerializedChangeSet>} the serialized object
+     * @param in_array - The array of special objects to be serialized
+     * @returns the serialized object
      */
-    _serializeArray(in_array) {
+    _serializeArray(in_array: object[]): SerializedChangeSet[] {
         return in_array;
     };
 
@@ -103,10 +100,10 @@ export class ValueArrayProperty extends ArrayProperty {
      * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
      * special treatment on deserialization. For supported types, we can just return the input here.
      *
-     * @param {Array<property-properties.SerializedChangeSet>} in_serializedObj the serialized object
-     * @return {Array} in_array - The array of special objects that were deserialized
+     * @param in_serializedObj the serialized object
+     * @returns The array of special objects that were deserialized
      */
-    _deserializeArray(in_serializedObj) {
+    _deserializeArray(in_serializedObj: SerializedChangeSet): object[] {
         return in_serializedObj;
     };
 }
@@ -115,24 +112,19 @@ export class ValueArrayProperty extends ArrayProperty {
  * An ArrayProperty which stores Float32 values
  */
 export class Float32ArrayProperty extends ValueArrayProperty {
+
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueArrayProperty
-     * @alias property-properties.Float32ArrayProperty
-     * @category Arrays
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IArrayPropertyParams) {
         super({ ...in_params, typeid: 'Float32' });
     };
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param in_length - the initial length of the array
      */
-    _dataArrayCreate(in_length) {
+    _dataArrayCreate(in_length: number) {
         this._dataArrayRef = new BaseDataArray(Float32Array, in_length);
     };
 }
@@ -142,23 +134,17 @@ export class Float32ArrayProperty extends ValueArrayProperty {
  */
 export class Float64ArrayProperty extends ValueArrayProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueArrayProperty
-     * @alias property-properties.Float64ArrayProperty
-     * @category Arrays
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IArrayPropertyParams) {
         super({ ...in_params, typeid: 'Float64' });
     };
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param in_length - the initial length of the array
      */
-    _dataArrayCreate(in_length) {
+    _dataArrayCreate(in_length: number) {
         this._dataArrayRef = new BaseDataArray(Float64Array, in_length);
     };
 }
@@ -182,9 +168,9 @@ export class Uint8ArrayProperty extends ValueArrayProperty {
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param in_length - the initial length of the array
      */
-    _dataArrayCreate(in_length) {
+    _dataArrayCreate(in_length: number) {
         this._dataArrayRef = new BaseDataArray(Uint8Array, in_length);
     };
 }
@@ -195,23 +181,17 @@ export class Uint8ArrayProperty extends ValueArrayProperty {
 */
 export class Int8ArrayProperty extends ValueArrayProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueArrayProperty
-     * @alias property-properties.Int8ArrayProperty
-     * @category Arrays
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IArrayPropertyParams) {
         super({ ...in_params, typeid: 'Int8' });
     };
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param in_length - the initial length of the array
      */
-    _dataArrayCreate(in_length) {
+    _dataArrayCreate(in_length: number) {
         this._dataArrayRef = new BaseDataArray(Int8Array, in_length);
     };
 
@@ -222,23 +202,17 @@ export class Int8ArrayProperty extends ValueArrayProperty {
  */
 export class Uint16ArrayProperty extends ValueArrayProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueArrayProperty
-     * @alias property-properties.Uint16ArrayProperty
-     * @category Arrays
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IArrayPropertyParams) {
         super({ ...in_params, typeid: 'Uint16' });
     };
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param in_length - the initial length of the array
      */
-    _dataArrayCreate(in_length) {
+    _dataArrayCreate(in_length: number) {
         this._dataArrayRef = new BaseDataArray(Uint16Array, in_length);
     };
 }
@@ -249,23 +223,17 @@ export class Uint16ArrayProperty extends ValueArrayProperty {
  */
 export class Int16ArrayProperty extends ValueArrayProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueArrayProperty
-     * @alias property-properties.Int16ArrayProperty
-     * @category Arrays
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IArrayPropertyParams) {
         super({ ...in_params, typeid: 'Int16' });
     };
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param in_length - the initial length of the array
      */
-    _dataArrayCreate(in_length) {
+    _dataArrayCreate(in_length: number) {
         this._dataArrayRef = new BaseDataArray(Int16Array, in_length);
     };
 
@@ -275,24 +243,19 @@ export class Int16ArrayProperty extends ValueArrayProperty {
  * An ArrayProperty which stores Uint32 values
  */
 export class Uint32ArrayProperty extends ValueArrayProperty {
-    /** @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueArrayProperty
-     * @alias property-properties.Uint32ArrayProperty
-     * @category Arrays
+    /**
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IArrayPropertyParams) {
         super({ ...in_params, typeid: 'Uint32' });
     };
 
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param in_length - the initial length of the array
      */
-    _dataArrayCreate(in_length) {
+    _dataArrayCreate(in_length: number) {
         this._dataArrayRef = new BaseDataArray(Uint32Array, in_length);
     };
 }
@@ -303,23 +266,17 @@ export class Uint32ArrayProperty extends ValueArrayProperty {
  */
 export class Int32ArrayProperty extends ValueArrayProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueArrayProperty
-     * @alias property-properties.Int32ArrayProperty
-     * @category Arrays
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IArrayPropertyParams) {
         super({ ...in_params, typeid: 'Int32' });
     };
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param in_length - the initial length of the array
      */
-    _dataArrayCreate(in_length) {
+    _dataArrayCreate(in_length: number) {
         this._dataArrayRef = new BaseDataArray(Int32Array, in_length);
     };
 }
@@ -328,15 +285,10 @@ export class Int32ArrayProperty extends ValueArrayProperty {
  * An ArrayProperty which stores Int64 values
  */
 export class Integer64ArrayProperty extends ValueArrayProperty {
-    /** @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueArrayProperty
-     * @alias property-properties.Integer64ArrayProperty
-     * @category Arrays
+    /**
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IArrayPropertyParams) {
         super(in_params);
     };
 
@@ -345,10 +297,10 @@ export class Integer64ArrayProperty extends ValueArrayProperty {
      * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
      * special treatment on serialization. For supported types, we can just return the input here.
      *
-     * @param {*} in_obj - The object to be serialized
-     * @return {property-properties.SerializedChangeSet} the serialized object
+     * @param in_obj - The object to be serialized
+     * @returns the serialized object
      */
-    _serializeValue(in_obj) {
+    _serializeValue(in_obj): SerializedChangeSet {
         if (in_obj instanceof Int64 || in_obj instanceof Uint64) {
             return [in_obj.getValueLow(), in_obj.getValueHigh()];
         }
@@ -361,10 +313,10 @@ export class Integer64ArrayProperty extends ValueArrayProperty {
      * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
      * special treatment on serialization. For supported types, we can just return the input here.
      *
-     * @param {Array} in_array - The array of special objects to be serialized
-     * @return {Array<property-properties.SerializedChangeSet>} the serialized object
+     * @param in_array - The array of special objects to be serialized
+     * @returns the serialized object
      */
-    _serializeArray(in_array) {
+    _serializeArray(in_array: Array<any>): SerializedChangeSet {
         var result = [];
         for (var i = 0; i < in_array.length; i++) {
             result.push(this._serializeValue(in_array[i]));
@@ -377,10 +329,10 @@ export class Integer64ArrayProperty extends ValueArrayProperty {
      * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
      * special treatment on deserialization. For supported types, we can just return the input here.
      *
-     * @param {Array<property-properties.SerializedChangeSet>} in_serializedObj the serialized object
-     * @return {Array} in_array - The array of special objects that were deserialized
+     * @param in_serializedObj the serialized object
+     * @returns in_array - The array of special objects that were deserialized
      */
-    _deserializeArray(in_serializedObj) {
+    _deserializeArray(in_serializedObj: SerializedChangeSet): Array<SerializedChangeSet> {
         var result = [];
         for (var i = 0; i < in_serializedObj.length; i++) {
             result.push(this._deserializeValue(in_serializedObj[i]));
@@ -416,27 +368,21 @@ export class Integer64ArrayProperty extends ValueArrayProperty {
  */
 export class Int64ArrayProperty extends Integer64ArrayProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.Integer64ArrayProperty
-     * @alias property-properties.Int64ArrayProperty
-     * @category Arrays
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IArrayPropertyParams) {
         super({ ...in_params, typeid: 'Int64' });
     };
 
     /**
      * Sets the array properties elements to the content of the given array
      * All changed elements must already exist. This will overwrite existing elements.
-     * @param {number} in_offset target start index
-     * @param {Array<*>|Array<property-properties.BaseProperty>} in_array contains the elements to be set
+     * @param in_offset - target start index
+     * @param in_array - contains the elements to be set
      * @throws if in_offset is not a number
      * @throws if in_offset is smaller than zero or higher than the length of the array
      */
-    setRange(in_offset, in_array) {
+    setRange(in_offset: number, in_array: Array<string | number | Int64>) {
         if (!_.isArray(in_array)) {
             throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'Int64ArrayProperty.setRange');
         }
@@ -450,13 +396,13 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
      * Inserts the content of a given array into the array property
      * It will not overwrite the existing values but push them to the right instead.
      * E.g. [1, 2, 3] .insertRange(1, [9, 8]) => [1, 9, 8, 2, 3]
-     * @param {number} in_offset target index
-     * @param {Array<*>} in_array the array to be inserted
+     * @param in_offset - target index
+     * @param in_array - the array to be inserted
      * @throws if in_offset is smaller than zero, larger than the length of the array or not a number.
      * @throws if trying to insert a property that already has a parent.
-     * @throws if tyring to modify a referenced property.
+     * @throws if trying to modify a referenced property.
      */
-    insertRange(in_offset, in_array) {
+    insertRange(in_offset: number, in_array: Array<string | number | Int64>) {
         var out_array = in_array.map((element) => {
             return _castFunctors.Int64(element);
         });
@@ -468,18 +414,18 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
      * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
      * special treatment on deserialization. For supported types, we can just return the input here.
      *
-     * @param {property-properties.SerializedChangeSet} in_serializedObj - The object to be deserialized
-     * @return {Int64} the deserialized value
+     * @param in_serializedObj - The object to be deserialized
+     * @returns the deserialized value
      */
-    _deserializeValue(in_serializedObj) {
+    _deserializeValue(in_serializedObj: SerializedChangeSet): Int64 {
         return new Int64(in_serializedObj[0], in_serializedObj[1]);
     };
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param in_length - the initial length of the array
      */
-    _dataArrayCreate(in_length) {
+    _dataArrayCreate(in_length: number) {
         this._dataArrayRef = new UniversalDataArray(in_length);
         for (var i = 0; i < in_length; i++) {
             this._dataArraySetValue(i, new Int64());
@@ -493,15 +439,9 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
  */
 export class Uint64ArrayProperty extends Integer64ArrayProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.Integer64ArrayProperty
-     * @alias property-properties.Uint64ArrayProperty
-     * @category Arrays
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IArrayPropertyParams) {
         super({ ...in_params, typeid: 'Uint64' });
     };
 
@@ -510,22 +450,22 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
      * Some primitive types (e.g. Uint64, which is not natively supported by javascript) require
      * special treatment on deserialization. For supported types, we can just return the input here.
      *
-     * @param {property-properties.SerializedChangeSet} in_serializedObj - The object to be deserialized
-     * @return {Uint64} the deserialized value
+     * @param in_serializedObj - The object to be deserialized
+     * @returns the deserialized value
      */
-    _deserializeValue(in_serializedObj) {
+    _deserializeValue(in_serializedObj: SerializedChangeSet): Uint64 {
         return new Uint64(in_serializedObj[0], in_serializedObj[1]);
     };
 
     /**
      * Sets the array properties elements to the content of the given array
      * All changed elements must already exist. This will overwrite existing elements.
-     * @param {number} in_offset target start index
-     * @param {Array<*>|Array<property-properties.BaseProperty>} in_array contains the elements to be set
+     * @param in_offset - target start index
+     * @param  in_array contains the elements to be set
      * @throws if in_offset is not a number
      * @throws if in_offset is smaller than zero or higher than the length of the array
      */
-    setRange(in_offset, in_array) {
+    setRange(in_offset: number, in_array: Array<string | number | Uint64>) {
         if (!_.isArray(in_array)) {
             throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'Uint64ArrayProperty.setRange');
         }
@@ -539,13 +479,13 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
      * Inserts the content of a given array into the array property
      * It will not overwrite the existing values but push them to the right instead.
      * E.g. [1, 2, 3] .insertRange(1, [9, 8]) => [1, 9, 8, 2, 3]
-     * @param {number} in_offset target index
-     * @param {Array<*>} in_array the array to be inserted
+     * @param in_offset - target index
+     * @param in_array - the array to be inserted
      * @throws if in_offset is smaller than zero, larger than the length of the array or not a number.
      * @throws if trying to insert a property that already has a parent.
-     * @throws if tyring to modify a referenced property.
+     * @throws if trying to modify a referenced property.
      */
-    insertRange(in_offset, in_array) {
+    insertRange(in_offset: number, in_array: Array<string | number | Uint64>) {
         var out_array = in_array.map((element) => {
             return _castFunctors.Uint64(element);
         });
@@ -554,9 +494,9 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param in_length - the initial length of the array
      */
-    _dataArrayCreate(in_length) {
+    _dataArrayCreate(in_length: number) {
         this._dataArrayRef = new UniversalDataArray(in_length);
         for (var i = 0; i < in_length; i++) {
             this._dataArraySetValue(i, new Uint64());
@@ -570,23 +510,17 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
  */
 export class StringArrayProperty extends ValueArrayProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueArrayProperty
-     * @alias property-properties.StringArrayProperty
-     * @category Arrays
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IArrayPropertyParams) {
         super({ ...in_params, typeid: 'String' });
     };
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param in_length      the initial length of the array
      */
-    _dataArrayCreate(in_length) {
+    _dataArrayCreate(in_length: number) {
         this._dataArrayRef = new UniversalDataArray(in_length);
         for (var i = 0; i < in_length; i++) {
             this._dataArraySetValue(i, '');
@@ -600,23 +534,17 @@ export class StringArrayProperty extends ValueArrayProperty {
  */
 export class BoolArrayProperty extends ValueArrayProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueArrayProperty
-     * @alias property-properties.BoolArrayProperty
-     * @category Arrays
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
-        super({ ...in_params, typeid: 'Bool' }, Array, true);
+    constructor(in_params: IArrayPropertyParams) {
+        super({ ...in_params, typeid: 'Bool' });
     };
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param in_length - the initial length of the array
      */
-    _dataArrayCreate(in_length) {
+    _dataArrayCreate(in_length: number) {
         this._dataArrayRef = new BoolDataArray(in_length);
         for (var i = 0; i < in_length; i++) {
             this._dataArraySetValue(i, false);

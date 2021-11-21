@@ -18,7 +18,7 @@ import {
     SerializedChangeSet,
     TypeIdHelper
 } from '@fluid-experimental/property-changeset';
-import { constants } from '@fluid-experimental/property-common';
+import { BaseDataArray, constants } from '@fluid-experimental/property-common';
 import { LazyLoadedProperties as Property } from './lazyLoadedProperties';
 import { UniversalDataArray, ConsoleUtils } from '@fluid-experimental/property-common';
 import { copy as deepCopy } from 'fastest-json-copy'
@@ -143,7 +143,7 @@ function _getLongestIncreasingSubsequenceSegments(in_segmentStarts: number[], in
 };
 
 
-interface IArrayPropertyParams extends IBasePropertyParams {
+export interface IArrayPropertyParams extends IBasePropertyParams {
     /* the length of the array, if applicable */
     length?: number
     size?: number
@@ -152,7 +152,7 @@ interface IArrayPropertyParams extends IBasePropertyParams {
 export class ArrayProperty extends AbstractStaticCollectionProperty {
     protected _isPrimitive: any;
     _scope: string;
-    _dataArrayRef: UniversalDataArray;
+    _dataArrayRef: BaseDataArray;
     _staticChildren = {};
 
     /**
@@ -1249,10 +1249,10 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
      * special treatment on deserialization. For supported types, we can just return the input here.
      *
-     * @param {property-properties.SerializedChangeSet} in_serializedObj - The object to be deserialized
-     * @return {*} the deserialized value
+     * @param in_serializedObj - The object to be deserialized
+     * @returns the deserialized value
      */
-    _deserializeValue(in_serializedObj) {
+    _deserializeValue(in_serializedObj: SerializedChangeSet):any {
         return in_serializedObj;
     };
 
