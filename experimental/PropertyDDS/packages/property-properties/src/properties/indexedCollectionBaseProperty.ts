@@ -31,8 +31,8 @@ const { MSG } = constants;
 export class IndexedCollectionBaseProperty<T extends BaseProperty = BaseProperty>
     extends AbstractStaticCollectionProperty {
 
-    private _pendingChanges: SerializedChangeSet;
-    private _dirtyChanges: SerializedChangeSet;
+    protected _pendingChanges: SerializedChangeSet;
+    protected _dirtyChanges: SerializedChangeSet;
     _dynamicChildren: Record<string, T>;
     /** Specifies, whether this is a collection of base types or of registered templates */
     _containsPrimitiveTypes = false;

@@ -6,31 +6,29 @@
  * @fileoverview Definition of the valuemap property class
  */
 
-const _ = require('lodash');
-const { MSG } = require('@fluid-experimental/property-common').constants;
-const { _castFunctors } = require('./primitiveTypeCasts');
-const { BaseProperty } = require('./baseProperty');
-const { MapProperty } = require('./mapProperty');
-const { Int64, Uint64 } = require('@fluid-experimental/property-common');
-const { Int64Property, Uint64Property } = require('../properties/intProperties');
-const { validationsEnabled } = require('../enableValidations');
+import _ from 'lodash';
+import { constants, Integer64 } from '@fluid-experimental/property-common';
+import { _castFunctors } from './primitiveTypeCasts';
+import { BaseProperty } from './baseProperty';
+import { IMapPropertyParams, MapProperty } from './mapProperty';
+import { Int64, Uint64 } from '@fluid-experimental/property-common';
+import { Int64Property, Integer64Property, Uint64Property } from '../properties/intProperties';
+import { validationsEnabled } from '../enableValidations';
+import { SerializedChangeSet } from '@fluid-experimental/property-changeset';
+const { MSG } = constants;
 
+type PrintFunction = (x: any) => void;
 
 /**
  * A ValueMapProperty is a collection class that can contain an dictionary that maps from strings to primitive types.
  */
-export class ValueMapProperty extends MapProperty {
+export class ValueMapProperty<T extends BaseProperty = BaseProperty> extends MapProperty<T> {
+    _castFunctor: Function;
 
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.MapProperty
-     * @alias property-properties.ValueMapProperty
-     * @category Maps
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IMapPropertyParams) {
         super(in_params);
     };
 
@@ -40,24 +38,24 @@ export class ValueMapProperty extends MapProperty {
     /**
      * Inserts a value into the map. Using insert with a key that already exists will throw an error.
      *
-     * @param {string}                      in_key      - The key under which the entry is added
-     * @param {*}       in_value    - The primitive type value to set
+     * @param in_key - The key under which the entry is added
+     * @param {*} in_value - The primitive type value to set
      * @throws if a value already exists for in_key
      */
-    insert(in_key, in_value) {
+    insert(in_key: string, in_value) {
         var castedValue = this._castFunctor ? this._castFunctor(in_value) : in_value;
         this._insert(in_key, castedValue, true);
     };
 
     /**
      * Returns an object with all the nested values contained in this property
-     * @return {object} an object representing the values of your property
+     * @returns an object representing the values of your property
      * for example: {
           'firstString': 'test1',
           'secondString': 'test2'
         }
       */
-    getValues() {
+    getValues(): object {
         var ids = this.getIds();
         var result = {};
         for (var i = 0; i < ids.length; i++) {
@@ -68,10 +66,10 @@ export class ValueMapProperty extends MapProperty {
 
     /**
      * Return a JSON representation of the map and its items.
-     * @return {object} A JSON representation of the map and its items.
+     * @returns JSON representation of the map and its items.
      * @private
      */
-    _toJson() {
+    _toJson(): object {
         return {
             id: this.getId(),
             context: this._context,
@@ -84,10 +82,10 @@ export class ValueMapProperty extends MapProperty {
     /**
      * Repeatedly calls back the given function with human-readable string
      * representations of the property's sub-properties.
-     * @param {string} indent - Leading spaces to create the tree representation
-     * @param {function} printFct - Function to call for printing each property
+     * @param indent - Leading spaces to create the tree representation
+     * @param printFct - Function to call for printing each property
      */
-    _prettyPrintChildren(indent, printFct) {
+    _prettyPrintChildren(indent: string, printFct: PrintFunction) {
         indent += '  ';
         var prefix = '';
         var suffix = '';
@@ -95,7 +93,7 @@ export class ValueMapProperty extends MapProperty {
             prefix = '"';
             suffix = '"';
         }
-        _.mapValues(this._dynamicChildren, function (val, key) {
+        _.mapValues(this._dynamicChildren, function(val, key) {
             printFct(indent + key + ': ' + prefix + val + suffix);
         });
     };
@@ -103,18 +101,18 @@ export class ValueMapProperty extends MapProperty {
     /**
      * Sets the value of a property into the map.
      *
-     * @param {string} in_key the key under which the entry is set
+     * @param in_key the key under which the entry is set
      * @param {*} in_value the value to be set
      */
-	set(in_key, in_value) {
-	    if (validationsEnabled.enabled) {
-	        this._checkIsNotReadOnly(true);
-	    }
-	        var castedValue = this._castFunctor ? this._castFunctor(in_value) : in_value;
-	    if (this._dynamicChildren[in_key] !== castedValue) {
-	        if (validationsEnabled.enabled) {
-	            this._checkIsNotReadOnly(true);
-	        }
+    set(in_key: string, in_value) {
+        if (validationsEnabled.enabled) {
+            this._checkIsNotReadOnly(true);
+        }
+        var castedValue = this._castFunctor ? this._castFunctor(in_value) : in_value;
+        if (this._dynamicChildren[in_key] !== castedValue) {
+            if (validationsEnabled.enabled) {
+                this._checkIsNotReadOnly(true);
+            }
             if (this._dynamicChildren[in_key] !== undefined) {
                 this._removeByKey(in_key, false);
             }
@@ -201,15 +199,9 @@ export class ValueMapProperty extends MapProperty {
  */
 export class Float32MapProperty extends ValueMapProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueMapProperty
-     * @alias property-properties.Float32MapProperty
-     * @category Maps
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IMapPropertyParams) {
         super({ ...in_params, typeid: 'Float32' });
     }
 
@@ -221,15 +213,9 @@ export class Float32MapProperty extends ValueMapProperty {
  */
 export class Float64MapProperty extends ValueMapProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueMapProperty
-     * @alias property-properties.Float64MapProperty
-     * @category Maps
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IMapPropertyParams) {
         super({ ...in_params, typeid: 'Float64' });
     };
     _castFunctor = _castFunctors.Float64;
@@ -240,15 +226,9 @@ export class Float64MapProperty extends ValueMapProperty {
  */
 export class Uint32MapProperty extends ValueMapProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueMapProperty
-     * @alias property-properties.Uint32MapProperty
-     * @category Maps
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IMapPropertyParams) {
         super({ ...in_params, typeid: 'Uint32' });
     };
 
@@ -261,15 +241,9 @@ export class Uint32MapProperty extends ValueMapProperty {
  */
 export class Uint16MapProperty extends ValueMapProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueMapProperty
-     * @alias property-properties.Uint16MapProperty
-     * @category Maps
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IMapPropertyParams) {
         super({ ...in_params, typeid: 'Uint16' });
     };
 
@@ -281,15 +255,9 @@ export class Uint16MapProperty extends ValueMapProperty {
  */
 export class Uint8MapProperty extends ValueMapProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueMapProperty
-     * @alias property-properties.Uint8MapProperty
-     * @category Maps
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IMapPropertyParams) {
         super({ ...in_params, typeid: 'Uint8' });
     };
 
@@ -301,15 +269,9 @@ export class Uint8MapProperty extends ValueMapProperty {
  */
 export class Int32MapProperty extends ValueMapProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueMapProperty
-     * @alias property-properties.Int32MapProperty
-     * @category Maps
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IMapPropertyParams) {
         super({ ...in_params, typeid: 'Int32' });
     };
 
@@ -319,17 +281,11 @@ export class Int32MapProperty extends ValueMapProperty {
 /**
  * An abstract base class for 64 bit integer map properties
  */
-export class Integer64MapProperty extends ValueMapProperty {
+export class Integer64MapProperty extends ValueMapProperty<Integer64Property> {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueMapProperty
-     * @alias property-properties.Integer64MapProperty
-     * @category Maps
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IMapPropertyParams) {
         super(in_params);
     };
 
@@ -338,10 +294,10 @@ export class Integer64MapProperty extends ValueMapProperty {
      *
      * Note: this will overwrite an already existing value
      *
-     * @param {string}                                  in_key    - The key under which the entry is stored
-     * @param {Int64|Uint64|string|number}              in_value  - The value or property to store in the map
+     * @param in_key - The key under which the entry is stored
+     * @param in_value - The value or property to store in the map
      */
-    set(in_key, in_value) {
+    set(in_key: string, in_value: Int64 | Uint64 | string | number) {
         var castedValue = this._castFunctor ? this._castFunctor(in_value) : in_value;
         var myValue = this._dynamicChildren[in_key];
         if (myValue === undefined) {
@@ -360,20 +316,20 @@ export class Integer64MapProperty extends ValueMapProperty {
      * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
      * special treatment on serialization. For supported types, we can just return the input here.
      *
-     * @param {*} in_obj - The object to be serialized
-     * @return {property-properties.SerializedChangeSet} the serialized object
+     * @param in_obj - The object to be serialized
+     * @returns the serialized object
      */
-    _serializeValue(in_obj) {
+    _serializeValue(in_obj: Integer64): SerializedChangeSet {
         return [in_obj.getValueLow(), in_obj.getValueHigh()];
     };
 
     /**
      * @inheritdoc
      */
-    _prettyPrintChildren(indent, printFct) {
+    _prettyPrintChildren(indent: string, printFct: PrintFunction) {
         indent += '  ';
         var int64Prop;
-        _.mapValues(this._dynamicChildren, function (val, key) {
+        _.mapValues(this._dynamicChildren, function(val, key: string) {
             // TODO: The 'toString()' function is defined on Integer64Property, so we need to create
             //       such object to use it. It would be better to have it in Utils Integer64.prototype.toString
             if (val instanceof Int64) {
@@ -393,15 +349,9 @@ export class Integer64MapProperty extends ValueMapProperty {
  */
 export class Int64MapProperty extends Integer64MapProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends Integer64MapProperty
-     * @alias property-properties.Int64MapProperty
-     * @category Maps
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IMapPropertyParams) {
         super({ ...in_params, typeid: 'Int64', });
     };
 
@@ -413,10 +363,10 @@ export class Int64MapProperty extends Integer64MapProperty {
      * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
      * special treatment on deserialization. For supported types, we can just return the input here.
      *
-     * @param {property-properties.SerializedChangeSet} in_serializedObj - The object to be deserialized
-     * @return {Int64} the deserialized value
+     * @param in_serializedObj - The object to be deserialized
+     * @returns the deserialized value
      */
-    _deserializeValue(in_serializedObj) {
+    _deserializeValue(in_serializedObj: SerializedChangeSet): Int64 {
         return new Int64(in_serializedObj[0], in_serializedObj[1]);
     };
 
@@ -427,15 +377,9 @@ export class Int64MapProperty extends Integer64MapProperty {
  */
 export class Uint64MapProperty extends Integer64MapProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends Integer64MapProperty
-     * @alias property-properties.Uint64MapProperty
-     * @category Maps
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IMapPropertyParams) {
         super({ ...in_params, typeid: 'Uint64' });
     };
 
@@ -446,10 +390,10 @@ export class Uint64MapProperty extends Integer64MapProperty {
      * Some primitive types (e.g. Uint64, which is not natively supported by javascript) require
      * special treatment on deserialization. For supported types, we can just return the input here.
      *
-     * @param {property-properties.SerializedChangeSet} in_serializedObj - The object to be deserialized
-     * @return {Uint64} the deserialized value
+     * @param in_serializedObj - The object to be deserialized
+     * @returns the deserialized value
      */
-    _deserializeValue(in_serializedObj) {
+    _deserializeValue(in_serializedObj: SerializedChangeSet): Uint64 {
         return new Uint64(in_serializedObj[0], in_serializedObj[1]);
     };
 }
@@ -458,15 +402,10 @@ export class Uint64MapProperty extends Integer64MapProperty {
  * A ValueMapProperty which stores Int16 values
  */
 export class Int16MapProperty extends ValueMapProperty {
-    /** @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueMapProperty
-     * @alias property-properties.Int16MapProperty
-     * @category Maps
+    /**
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IMapPropertyParams) {
         super({ ...in_params, typeid: 'Int16' });
     };
 
@@ -478,15 +417,9 @@ export class Int16MapProperty extends ValueMapProperty {
  */
 export class Int8MapProperty extends ValueMapProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueMapProperty
-     * @alias property-properties.Int8MapProperty
-     * @category Maps
-     */
-    constructor(in_params) {
+    * @param in_params - Input parameters for property creation
+    */
+    constructor(in_params: IMapPropertyParams) {
         super({ ...in_params, typeid: 'Int8' });
     };
 
@@ -498,15 +431,9 @@ export class Int8MapProperty extends ValueMapProperty {
  */
 export class StringMapProperty extends ValueMapProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueMapProperty
-     * @alias property-properties.StringMapProperty
-     * @category Maps
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IMapPropertyParams) {
         super({ typeid: 'String', ...in_params, });
     };
 
@@ -518,15 +445,9 @@ export class StringMapProperty extends ValueMapProperty {
  */
 export class BoolMapProperty extends ValueMapProperty {
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueMapProperty
-     * @alias property-properties.BoolMapProperty
-     * @category Maps
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IMapPropertyParams) {
         super({ ...in_params, typeid: 'Bool' });
     };
 

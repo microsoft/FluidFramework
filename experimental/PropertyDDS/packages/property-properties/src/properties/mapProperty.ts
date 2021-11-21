@@ -23,8 +23,8 @@ const { MSG } = constants;
  * be property objects or primitive values
  */
 
-type MapValues = {
-    [key: string]: any
+type MapValues<V = any> = {
+    [key: string]: V
 }
 
 export interface IMapPropertyParams extends IBasePropertyParams {
@@ -34,7 +34,7 @@ export interface IMapPropertyParams extends IBasePropertyParams {
 /**
  * A MapProperty is a collection class that can contain an dictionary that maps from strings to properties.
  */
-export class MapProperty extends IndexedCollectionBaseProperty {
+export class MapProperty<T extends BaseProperty = BaseProperty> extends IndexedCollectionBaseProperty<T>{
     _scope: string;
     _contextKeyType: string;
     ref: this;
@@ -109,7 +109,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
                     }
                 } else {
                     if (value instanceof BaseProperty) {
-                        that.insert(key, value);
+                        that.insert(key, value as T);
                     } else {
                         if (in_typed) {
                             that.insert(key, Property.PropertyFactory._createProperty(
@@ -229,7 +229,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      * @throws if in_key is not a string
      * @throws if the property is a root property
      */
-    insert(in_key: string, in_property: BaseProperty) {
+    insert(in_key: string, in_property: T) {
         ConsoleUtils.assert(_.isString(in_key), MSG.KEY_NOT_STRING + in_key);
         if (this._dynamicChildren[in_key] !== undefined) {
             throw new Error(MSG.PROPERTY_ALREADY_EXISTS + in_key);
@@ -271,7 +271,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      * @throws if trying to insert a property that has a parent
      * @throws if in_key is not a string or a number
      */
-    set(in_key: string, in_property: BaseProperty) {
+    set(in_key: string, in_property: T) {
         this._checkIsNotReadOnly(true);
         if (this._dynamicChildren[in_key] !== in_property) {
             if (this._containsPrimitiveTypes === false && in_property.getParent() !== undefined) {
