@@ -23,7 +23,7 @@ type EnumValue = {
     value: number
 }
 
-type EnumDictionary = {
+export type EnumDictionary = {
     defaultValue: number
     enumEntriesByValue: Record<number, EnumValue>
     enumEntriesById: Record<string, EnumValue>
