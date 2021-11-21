@@ -86,7 +86,7 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
         containerRuntime = defaultDataStore.containerRuntime;
     });
 
-    it.only("can generate events when unreferenced data store is accessed after it's inactive", async () => {
+    it("can generate events when unreferenced data store is accessed after it's inactive", async () => {
         const dataStore1 = await dataObjectFactory.createInstance(containerRuntime);
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
 
