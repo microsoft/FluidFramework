@@ -257,10 +257,23 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 }
 
+function supportsGlobalProps(logger: any): logger is { globalProperties: Required<ITelemetryLoggerPropertyBags>} {
+    const maybeGp: ITelemetryLoggerPropertyBags = logger?.globalProperties;
+    return (typeof maybeGp?.all) === "object" &&
+           (typeof maybeGp?.error) === "object";
+}
+
 class ChildLoggerRoot extends TelemetryLogger {
+    public get globalProperties(): Required<ITelemetryLoggerPropertyBags> {
+        if (supportsGlobalProps(this.baseLogger)) {
+            return this.baseLogger.globalProperties;
+        }
+        return this._globalProperties;
+    }
+
     public constructor(
         private readonly baseLogger: ITelemetryBaseLogger = new BaseTelemetryNullLogger(),
-        readonly globalProperties: Required<ITelemetryLoggerPropertyBags> = { all: {}, error: {} },
+        readonly _globalProperties: Required<ITelemetryLoggerPropertyBags> = { all: {}, error: {} },
     ) {
         super();
     }
@@ -271,9 +284,7 @@ class ChildLoggerRoot extends TelemetryLogger {
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
         const newEvent = super.prepareEvent(event);
-        if (this.globalProperties) {
-            this.applyProps(newEvent, this.globalProperties);
-        }
+        this.applyProps(newEvent, this.globalProperties);
         return newEvent;
     }
 }
