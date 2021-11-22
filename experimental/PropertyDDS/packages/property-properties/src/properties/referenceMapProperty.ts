@@ -5,13 +5,17 @@
 /**
  * @fileoverview Definition of the reference map property class
  */
-const _ = require('lodash');
-const { StringMapProperty } = require('./valueMapProperty');
-const { PathHelper, TypeIdHelper } = require('@fluid-experimental/property-changeset');
-const { BaseProperty } = require('./baseProperty');
-const { MSG } = require('@fluid-experimental/property-common').constants;
-const { ContainerProperty } = require('./containerProperty');
-const { ReferenceProperty } = require('./referenceProperty');
+
+import _ from 'lodash';
+import { StringMapProperty } from './valueMapProperty';
+import { PathHelper, TypeIdHelper } from '@fluid-experimental/property-changeset';
+import { BaseProperty } from './baseProperty';
+import { constants } from '@fluid-experimental/property-common';
+import { ReferenceProperty } from './referenceProperty';
+import { IMapPropertyParams } from './mapProperty';
+import { AbstractStaticCollectionProperty } from './abstractStaticCollectionProperty';
+
+const { MSG } = constants;
 
 
 /**
@@ -20,15 +24,9 @@ const { ReferenceProperty } = require('./referenceProperty');
 export class ReferenceMapProperty extends StringMapProperty {
 
     /**
-     * @param {Object} in_params - Input parameters for property creation
-     *
-     * @constructor
-     * @protected
-     * @extends property-properties.StringMapProperty
-     * @alias property-properties.ReferenceMapProperty
-     * @category Maps
+     * @param in_params - Input parameters for property creation
      */
-    constructor(in_params) {
+    constructor(in_params: IMapPropertyParams) {
         super({ typeid: 'Reference', ...in_params });
     };
 
@@ -38,29 +36,30 @@ export class ReferenceMapProperty extends StringMapProperty {
      * Note: This is the type that is specified in the typeid of this reference and not the actual type
      * of the referenced object, which might inherit from that typeid.
      *
-     * @return {string} The typeid of the nodes this reference may point to
+     * @returns The typeid of the nodes this reference may point to
      */
-    getReferenceTargetTypeId() {
+    getReferenceTargetTypeId(): string {
         return TypeIdHelper.extractReferenceTargetTypeIdFromReference(this.getTypeid());
     };
 
     /**
      * Resolves the referenced property for the given key
      *
-     * @param  {string|array<string|number>} in_ids the ID of the property or an array of IDs
+     * @param in_ids - the ID of the property or an array of IDs
      *     if an array is passed, the .get function will be performed on each id in sequence
      *     for example .get(['position','x']) is equivalent to .get('position').get('x').
      *     If .get resolves to a ReferenceProperty, it will return the property that the ReferenceProperty
      *     refers to.
-     * @param {Object} in_options - parameter object
-     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
-     *     How should this function behave during reference resolution?
+     * @param in_options - parameter object
+     * @param in_options.referenceResolutionMode - How should this function behave during reference resolution?
      *
-     * @return {property-properties.BaseProperty|undefined} The property object the reference points to or undefined if it
+     * @returns The property object the reference points to or undefined if it
      *    could not be resolved
      */
-    get(in_ids, in_options) {
-        in_options = in_options || {};
+    get(
+        in_ids: string | Array<string | number>,
+        in_options: BaseProperty.PathResolutionOptions = {}
+    ): BaseProperty | undefined {
         in_options.referenceResolutionMode =
             in_options.referenceResolutionMode === undefined ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
                 in_options.referenceResolutionMode;
@@ -69,10 +68,8 @@ export class ReferenceMapProperty extends StringMapProperty {
             // Forward handling of arrays to the BaseProperty function
             return AbstractStaticCollectionProperty.prototype.get.call(this, in_ids, in_options);
         } else {
-
-            var value = this._dynamicChildren[in_ids];
-            if (value === undefined ||
-                value === '') {
+            var value = this._dynamicChildren[in_ids] as any;
+            if (value === undefined || value === '') {
                 return undefined;
             }
             return this.getParent().resolvePath(value, in_options);
@@ -82,11 +79,11 @@ export class ReferenceMapProperty extends StringMapProperty {
     /**
      * Removes the entry with the given key from the map
      *
-     * @param {string} in_key - The key of the entry to remove from the map
+     * @param in_key - The key of the entry to remove from the map
      * @throws if trying to remove an entry that does not exist
-     * @return {String} the item removed (a string path)
+     * @returns the item removed (a string path)
      */
-    remove(in_key) {
+    remove(in_key: string): string {
         var item = this.getValue(in_key);
         this._removeByKey(in_key, true);
         return item;
@@ -94,13 +91,13 @@ export class ReferenceMapProperty extends StringMapProperty {
 
     /**
      * Returns an object with all the nested path values
-     * @return {object} an object representing the values of your property
+     * @returns an object representing the values of your property
      * for example: {
           'firstPath': '/path',
           'secondPath': '/path2'
         }
      */
-    getValues() {
+    getValues(): object {
         var ids = this.getIds();
         var result = {};
         for (var i = 0; i < ids.length; i++) {
@@ -112,15 +109,15 @@ export class ReferenceMapProperty extends StringMapProperty {
     /**
      * Sets or inserts the reference to point to the given property object or to be equal to the given path string.
      *
-     * @param {string} in_key - The key under which the entry is stored
-     * @param {property-properties.BaseProperty|undefined|String} in_value - The property to assign to the reference or
+     * @param in_key - The key under which the entry is stored
+     * @param in_value - The property to assign to the reference or
      *   the path to this property. If undefined is passed, the reference will be set to an empty string to
      *   indicate an empty reference.
      * @throws if in_key is not a string
      * @throws if in_value is defined, but is not a property or a string.
      * @throws if map is read only
      */
-    set(in_key, in_value) {
+    set(in_key: string, in_value: BaseProperty | undefined | string) {
         if (!_.isString(in_key)) {
             throw new Error(MSG.KEY_NOT_STRING + in_key);
         }
@@ -131,41 +128,41 @@ export class ReferenceMapProperty extends StringMapProperty {
     /**
      * Sets or inserts the reference to point to the given property object or to be equal to the given path string.
      *
-     * @param {string} in_key - The key under which the entry is stored
-     * @param {property-properties.BaseProperty|undefined|String} in_value - The property to assign to the reference or
+     * @param in_key - The key under which the entry is stored
+     * @param in_value - The property to assign to the reference or
      *   the path to this property. If undefined is passed, the reference will be set to an empty string to
      *   indicate an empty reference.
      * @throws if in_key is not a string
      * @throws if in_value is defined, but is not a property or a string.
      * @deprecated
      */
-    setValue(...args) {
-        return this.set(...args);
+    setValue(in_key: string, in_value: BaseProperty | undefined | string) {
+        return this.set(in_key, in_value);
     }
 
     /**
      * Inserts the reference to point to the given property object or to be equal to the given path string.
      *
-     * @param {string} in_key - The key under which the entry is stored
-     * @param {property-properties.BaseProperty|undefined|String} in_value - The property to assign to the reference or
+     * @param in_key - The key under which the entry is stored
+     * @param in_value - The property to assign to the reference or
      *   the path to this property. If undefined is passed, the reference will be set to an empty string to
      *   indicate an empty reference.
      * @throws if there is already an entry under in_key
      * @throws if in_value is defined, but is not a property or a string.
      */
-    insert(in_key, in_value) {
+    insert(in_key: string, in_value: BaseProperty | undefined | string) {
         var value = ReferenceProperty._convertInputToPath(in_value);
-        this._insert(in_key, value, true);
+        this._insert(in_key, value as any, true);
     };
 
     /**
      * Checks whether the reference is valid. This is either the case when it is empty or when the referenced
      * property exists.
      *
-     * @param {string} in_key - key of the entry to check
-     * @return {boolean} True if the reference is valid, otherwise false.
+     * @param in_key - key of the entry to check
+     * @returns True if the reference is valid, otherwise false.
      */
-    isReferenceValid(in_key) {
+    isReferenceValid(in_key: string): boolean {
         return this.has(in_key) &&
             (this.getValue(in_key) === '' ||
                 this.get(in_key) !== undefined);
@@ -173,11 +170,11 @@ export class ReferenceMapProperty extends StringMapProperty {
 
     /**
      * Returns the string value stored in the map
-     * @param {string} in_key the key of the reference
-     * @return {string} the path string
+     * @param in_key - the key of the reference
+     * @returns the path string
      */
-    getValue(in_key) {
-        return this._getValue(in_key);
+    getValue(in_key: string): string {
+        return this._getValue(in_key) as any;
     };
 
     /**

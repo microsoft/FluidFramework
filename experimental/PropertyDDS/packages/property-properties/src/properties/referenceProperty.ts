@@ -191,7 +191,7 @@ export class ReferenceProperty extends ValueProperty {
      * @returns the path
      * @throws if in_value is defined, but is not a property or a string.
      */
-    static _convertInputToPath(in_value?: BaseProperty | string): string{
+    static _convertInputToPath(in_value?: BaseProperty | string): string {
         var path;
         if (typeof in_value === 'string') {
             path = in_value;
