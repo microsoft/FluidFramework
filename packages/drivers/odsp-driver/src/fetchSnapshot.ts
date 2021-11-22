@@ -146,10 +146,10 @@ async function redeemSharingLink(
             eventName: "RedeemShareLink",
         },
         async () => getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-                assert(!!odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
+                assert(!!odspResolvedUrl.sharingLinkToRedeem,
                     0x1ed /* "Share link should be present" */);
                 const storageToken = await storageTokenFetcher(tokenFetchOptions, "RedeemShareLink");
-                const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.shareLinkInfo.sharingLinkToRedeem);
+                const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.sharingLinkToRedeem);
                 const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
                 const { url, headers } = getUrlAndHeadersWithAuth(redeemUrl, storageToken);
                 headers.prefer = "redeemSharingLink";
@@ -351,8 +351,8 @@ async function fetchSnapshotContentsCoreV1(
             }
         });
     }
-    if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem) {
-        formParams.push(`sl: ${odspResolvedUrl.shareLinkInfo.sharingLinkToRedeem}`);
+    if (odspResolvedUrl.sharingLinkToRedeem) {
+        formParams.push(`sl: ${odspResolvedUrl.sharingLinkToRedeem}`);
     }
     formParams.push(`_post: 1`);
     formParams.push(`\r\n--${formBoundary}--`);
@@ -398,9 +398,9 @@ async function fetchSnapshotContentsCoreV2(
     const fullUrl = `${odspResolvedUrl.siteUrl}/_api/v2.1/drives/${odspResolvedUrl.driveId}/items/${
         odspResolvedUrl.itemId}/opStream/attachments/latest/content`;
     const queryParams = { ...snapshotOptions };
-    if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem) {
+    if (odspResolvedUrl.sharingLinkToRedeem) {
         // eslint-disable-next-line @typescript-eslint/dot-notation
-        queryParams["sl"] = odspResolvedUrl.shareLinkInfo.sharingLinkToRedeem;
+        queryParams["sl"] = odspResolvedUrl.sharingLinkToRedeem;
     }
     const queryString = getQueryString(queryParams);
     const { url, headers } = getUrlAndHeadersWithAuth(`${fullUrl}${queryString}`, storageToken);
