@@ -44,6 +44,13 @@ export interface IDeltasFetchResult {
 export interface IDeltaStorageService {
     /**
      * Retrieves all the delta operations within the inclusive sequence number range
+     * @param tenantId - Id of the tenant.
+     * @param id - document id.
+     * @param from - first op to retrieve (inclusive)
+     * @param to - first op not to retrieve (exclusive end)
+     * @param fetchReason - Reason for fetching the messages. Example, gap between seq number
+     *  of Op on wire and known seq number. It should not contain any PII. It can be logged by
+     *  spo which could help in debugging sessions if any issue occurs.
      */
     get(
         tenantId: string,
@@ -73,13 +80,16 @@ export interface IDocumentDeltaStorageService {
      * @param to - first op not to retrieve (exclusive end)
      * @param abortSignal - signal that aborts operation
      * @param cachedOnly - return only cached ops, i.e. ops available locally on client.
+     * @param fetchReason - Reason for fetching the messages. Example, gap between seq number
+     *  of Op on wire and known seq number. It should not contain any PII. It can be logged by
+     *  spo which could help in debugging sessions if any issue occurs.
      */
      fetchMessages(from: number,
         to: number | undefined,
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
         fetchReason?: string,
-    ): IStream<ISequencedDocumentMessage[]>;
+    ): IStream<ISequencedDocumentMessage[]>;S
 }
 
 export interface IDocumentStorageServicePolicies {
