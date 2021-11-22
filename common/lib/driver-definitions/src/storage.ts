@@ -89,7 +89,7 @@ export interface IDocumentDeltaStorageService {
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
         fetchReason?: string,
-    ): IStream<ISequencedDocumentMessage[]>;S
+    ): IStream<ISequencedDocumentMessage[]>;
 }
 
 export interface IDocumentStorageServicePolicies {
