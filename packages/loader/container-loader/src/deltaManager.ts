@@ -405,6 +405,7 @@ export class DeltaManager
             return {
                 ...common,
                 connectionMode: this.connectionMode,
+                relayServiceAgent: this.connection.relayServiceAgent,
             };
         } else {
             return {
