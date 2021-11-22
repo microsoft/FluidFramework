@@ -182,7 +182,6 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
             return urlResolverWithShareLinkFetcher.resolve(
                 { url: url.toString(), headers: { [SharingLinkHeader.isSharingLinkToRedeem]: true } });
         });
-        assert(resolvedUrl.sharingLinkToRedeem !== undefined, "Sharing link should be set in resolved url");
         assert(resolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined, "Sharing link should be set in resolved url");
     });
 
@@ -206,6 +205,6 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
                 { url: url.toString(), headers: { [SharingLinkHeader.isSharingLinkToRedeem]: true } });
         });
         assert.strictEqual(
-            resolvedUrl.sharingLinkToRedeem, customShareLink, "Nav param should not exist on sharelink");
+            resolvedUrl.shareLinkInfo?.sharingLinkToRedeem, customShareLink, "Nav param should not exist on sharelink");
     });
 });

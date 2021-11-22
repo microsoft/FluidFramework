@@ -31,7 +31,7 @@ export class WholeSummaryReadGitManager {
         if (versionId === "latest") {
             versionId = await this.getLatestVersion();
         }
-        const rawTree = await this.readTreeRecursive(sha);
+        const rawTree = await this.readTreeRecursive(versionId);
         const wholeFlatSummaryTreeEntries: IWholeFlatSummaryTreeEntry[] = [];
         const wholeFlatSummaryBlobPs: Promise<IWholeFlatSummaryBlob>[] = [];
         rawTree.tree.forEach((treeEntry) => {

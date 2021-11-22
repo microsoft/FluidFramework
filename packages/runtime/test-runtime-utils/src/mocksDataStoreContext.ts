@@ -7,7 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
     IFluidHandleContext,
-    IFluidObject,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -66,7 +66,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
      * @deprecated 0.16 Issue #1635, #3631
      */
     public createProps?: any;
-    public scope: IFluidObject;
+    public scope: FluidObject;
 
     constructor(
         public readonly id: string = uuid(),

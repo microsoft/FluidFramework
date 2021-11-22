@@ -44,12 +44,20 @@ export interface IDeltasFetchResult {
 export interface IDeltaStorageService {
     /**
      * Retrieves all the delta operations within the inclusive sequence number range
+     * @param tenantId - Id of the tenant.
+     * @param id - document id.
+     * @param from - first op to retrieve (inclusive)
+     * @param to - first op not to retrieve (exclusive end)
+     * @param fetchReason - Reason for fetching the messages. Example, gap between seq number
+     *  of Op on wire and known seq number. It should not contain any PII. It can be logged by
+     *  spo which could help in debugging sessions if any issue occurs.
      */
     get(
         tenantId: string,
         id: string,
         from: number, // inclusive
-        to: number // exclusive
+        to: number, // exclusive
+        fetchReason?: string,
     ): Promise<IDeltasFetchResult>;
 }
 
@@ -72,11 +80,15 @@ export interface IDocumentDeltaStorageService {
      * @param to - first op not to retrieve (exclusive end)
      * @param abortSignal - signal that aborts operation
      * @param cachedOnly - return only cached ops, i.e. ops available locally on client.
+     * @param fetchReason - Reason for fetching the messages. Example, gap between seq number
+     *  of Op on wire and known seq number. It should not contain any PII. It can be logged by
+     *  spo which could help in debugging sessions if any issue occurs.
      */
      fetchMessages(from: number,
         to: number | undefined,
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
+        fetchReason?: string,
     ): IStream<ISequencedDocumentMessage[]>;
 }
 
@@ -209,6 +221,14 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
      * that is likely to be more up-to-date.
      */
     checkpointSequenceNumber?: number;
+
+    /**
+     * Properties that server can send to client to tell info about node that client is connected to. For ex, for spo
+     * it could contain info like build version, environment, region etc. These properties can be logged by client
+     * to better understand server environment etc. and use it in case error occurs.
+     * Format: "prop1:val1;prop2:val2;prop3:val3"
+     */
+    relayServiceAgent?: string,
 
     /**
      * Submit a new message to the server
