@@ -34,12 +34,6 @@ import { schema } from "./fluidSchema";
 import { FootnoteView } from "./footnoteView";
 import { openPrompt, TextField } from "./prompt";
 import { create as createSelection } from "./selection";
-
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideRichTextEditor>> { }
-}
-
 export const IRichTextEditor: keyof IProvideRichTextEditor = "IRichTextEditor";
 
 export interface IProvideRichTextEditor {

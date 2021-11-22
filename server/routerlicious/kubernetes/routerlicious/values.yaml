@@ -68,7 +68,9 @@ zookeeper:
   url: zookeeper_url:port
 
 mongodb:
-  url: mongodb_url
+  operationsDbEndpoint: mongodb_url
+  globalDbEndpoint: mongoglobaldb_url
+  globalDbEnabled: false
   expireAfterSeconds: -1
   createCosmosDBIndexes: false
   bufferMaxEntries: 50,

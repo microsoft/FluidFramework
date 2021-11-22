@@ -28,6 +28,7 @@ import {
     IProvideFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { FluidObject } from "@fluidframework/core-interfaces";
 
 /**
  * BaseContainerRuntimeFactory produces container runtimes with a given data store and service registry, as well as
@@ -69,7 +70,7 @@ export class BaseContainerRuntimeFactory
         context: IContainerContext,
         existing: boolean,
     ): Promise<ContainerRuntime> {
-        const scope: Partial<IProvideFluidDependencySynthesizer> = context.scope;
+        const scope: FluidObject<IProvideFluidDependencySynthesizer> = context.scope;
         const parentDependencyContainer = scope.IFluidDependencySynthesizer;
         const dc = new DependencyContainer(parentDependencyContainer);
         for (const entry of Array.from(this.providerEntries)) {
