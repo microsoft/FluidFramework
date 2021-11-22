@@ -78,42 +78,6 @@ export interface IFluidErrorAnnotations {
     props?: ITelemetryProperties;
 }
 
-/** Simplest possible implementation of IFluidErrorBase */
-class SimpleFluidError implements IFluidErrorBase {
-    private readonly telemetryProps: ITelemetryProperties = {};
-
-    readonly errorType: string;
-    readonly fluidErrorCode: string;
-    readonly message: string;
-    readonly stack?: string;
-    readonly name: string = "Error";
-    readonly errorInstanceId: string;
-
-    constructor(
-        errorProps: Omit<IFluidErrorBase,
-            | "getTelemetryProperties"
-            | "addTelemetryProperties"
-            | "errorInstanceId"
-            | "name">,
-    ) {
-        this.errorType = errorProps.errorType;
-        this.fluidErrorCode = errorProps.fluidErrorCode;
-        this.message = errorProps.message;
-        this.stack = errorProps.stack;
-        this.errorInstanceId = uuid();
-
-        this.addTelemetryProperties(errorProps);
-    }
-
-    getTelemetryProperties(): ITelemetryProperties {
-        return this.telemetryProps;
-    }
-
-    addTelemetryProperties(props: ITelemetryProperties) {
-        copyProps(this.telemetryProps, props);
-    }
-}
-
 /** For backwards compatibility with pre-fluidErrorCode valid errors */
 function patchWithErrorCode(
     legacyError: Omit<IFluidErrorBase, "fluidErrorCode">,
@@ -320,5 +284,41 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
             stack: this.stack,
             message: this.message,
         };
+    }
+}
+
+/** Simplest possible implementation of IFluidErrorBase */
+class SimpleFluidError implements IFluidErrorBase {
+    private readonly telemetryProps: ITelemetryProperties = {};
+
+    readonly errorType: string;
+    readonly fluidErrorCode: string;
+    readonly message: string;
+    readonly stack?: string;
+    readonly name: string = "Error";
+    readonly errorInstanceId: string;
+
+    constructor(
+        errorProps: Omit<IFluidErrorBase,
+            | "getTelemetryProperties"
+            | "addTelemetryProperties"
+            | "errorInstanceId"
+            | "name">,
+    ) {
+        this.errorType = errorProps.errorType;
+        this.fluidErrorCode = errorProps.fluidErrorCode;
+        this.message = errorProps.message;
+        this.stack = errorProps.stack;
+        this.errorInstanceId = uuid();
+
+        this.addTelemetryProperties(errorProps);
+    }
+
+    getTelemetryProperties(): ITelemetryProperties {
+        return this.telemetryProps;
+    }
+
+    addTelemetryProperties(props: ITelemetryProperties) {
+        copyProps(this.telemetryProps, props);
     }
 }
