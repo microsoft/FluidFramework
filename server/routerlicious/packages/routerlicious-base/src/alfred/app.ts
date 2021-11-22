@@ -47,8 +47,9 @@ export function create(
     singleUseTokenCache: ICache,
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
-    mongoManager: MongoManager,
-    producer: IProducer) {
+    operationsDbMongoManager: MongoManager,
+    producer: IProducer,
+    globalDbMongoManager?: MongoManager) {
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");
 
@@ -105,10 +106,11 @@ export function create(
         tenantManager,
         throttler,
         singleUseTokenCache,
-        mongoManager,
+        operationsDbMongoManager,
         storage,
         producer,
-        appTenants);
+        appTenants,
+        globalDbMongoManager);
 
     app.use("/public", cors(), express.static(path.join(__dirname, "../../public")));
     app.use(routes.api);

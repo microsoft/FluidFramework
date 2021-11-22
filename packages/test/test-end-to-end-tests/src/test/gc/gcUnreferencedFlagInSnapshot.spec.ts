@@ -36,7 +36,7 @@ describeFullCompat("GC unreferenced flag in downloaded snapshot", (getTestObject
         []);
 
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { generateSummaries: false },
+        summaryOptions: { disableSummaries: true },
         gcOptions: { gcAllowed: true },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(

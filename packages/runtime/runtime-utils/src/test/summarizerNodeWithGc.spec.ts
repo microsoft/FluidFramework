@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { cloneGCData } from "@fluidframework/garbage-collector";
-import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/protocol-definitions";
+import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
     CreateSummarizerNodeSource,
     IGarbageCollectionData,
@@ -27,8 +27,6 @@ describe("SummarizerNodeWithGC Tests", () => {
     const subNode1Id = "/gcNode1/subNode";
     const subNode2Id = "/gcNode2/subNode";
 
-    const maxUnreferencedDurationMs = 1000;
-
     let internalGCData: IGarbageCollectionData;
     let initialGCSummaryDetails: IGarbageCollectionSummaryDetails;
     let rootSummarizerNode: IRootSummarizerNodeWithGC;
@@ -48,7 +46,7 @@ describe("SummarizerNodeWithGC Tests", () => {
             summarizeInternal,
             summarizerNodeId,
             { type: CreateSummarizerNodeSource.FromSummary },
-            { maxUnreferencedDurationMs },
+            undefined,
             getInternalGCData,
             getinitialGCSummaryDetails,
         );
@@ -197,80 +195,6 @@ describe("SummarizerNodeWithGC Tests", () => {
                 summarizerNode.summarize(true /* fullTree */),
                 "summarize should not have thrown an error since GC was run",
             );
-        });
-    });
-
-    describe("Unreferenced timeout expiry", () => {
-        const inactiveObjectRevivedEvent = "inactiveObjectRevived";
-        const inactiveObjectChangedEvent = "inactiveObjectChanged";
-
-        async function waitForTimeout(timeout: number): Promise<void> {
-            await new Promise<void>((resolve) => {
-                setTimeout(resolve, timeout);
-            });
-        }
-
-        function validateNoInactiveEvents() {
-            assert(
-                !mockLogger.matchAnyEvent([
-                    { eventName: inactiveObjectRevivedEvent },
-                    { eventName: inactiveObjectChangedEvent },
-                ]),
-                "inactive object events should not have been logged",
-            );
-        }
-
-        it("generates inactive events when inactive node is changed or revived", async () => {
-            // Mark node as unreferenced by updating it with empty used routes.
-            summarizerNode.updateUsedRoutes([], Date.now());
-
-            // Validate that no inactive events are generated yet.
-            validateNoInactiveEvents();
-
-            // The configured maxUnrefencedTime is 1000 ms. Wait for 1100 ms so that the unreferenced timer expires.
-            await waitForTimeout(1100);
-
-            // Record a new op. This should result in an inactiveObjectChanged event since the object inactive.
-            const op: Partial<ISequencedDocumentMessage> = { sequenceNumber: 1 };
-            summarizerNode.recordChange(op as ISequencedDocumentMessage);
-            assert(
-                mockLogger.matchEvents([{ eventName: inactiveObjectChangedEvent, maxUnreferencedDurationMs }]),
-                "inactiveObjectChanged event not generated as expected",
-            );
-
-            // Mark node as referenced by updating it with self route (""). This should result in an
-            // inactiveObjectRevived event since the object inactive.
-            summarizerNode.updateUsedRoutes([""], Date.now());
-            assert(
-                mockLogger.matchEvents([{ eventName: inactiveObjectRevivedEvent, maxUnreferencedDurationMs }]),
-                "inactiveObjectRevived event not generated as expected",
-            );
-
-            // Record a new op. There shouldn't be any more inactive events since the object is referenced now.
-            const op2: Partial<ISequencedDocumentMessage> = { sequenceNumber: 2 };
-            summarizerNode.recordChange(op2 as ISequencedDocumentMessage);
-            validateNoInactiveEvents();
-        });
-
-        it("does not generate inactive events while node is active", async () => {
-            // Mark node as unreferenced by updating it with empty used routes.
-            summarizerNode.updateUsedRoutes([], Date.now());
-
-            // Validate that no inactive events are generated yet.
-            validateNoInactiveEvents();
-
-            // The configured maxUnrefencedTime is 1000 ms. Wait for 500 ms so the unreferenced timer does not expire.
-            await waitForTimeout(500);
-
-            // Record a new op. This should not result in any inactive events since the object has not inactive.
-            const op: Partial<ISequencedDocumentMessage> = { sequenceNumber: 1 };
-            summarizerNode.recordChange(op as ISequencedDocumentMessage);
-            validateNoInactiveEvents();
-
-            // Mark node as referenced by updating it with self route (""). This should not result in any inactive
-            // events since the object has not inactive.
-            summarizerNode.updateUsedRoutes([""], Date.now());
-            validateNoInactiveEvents();
         });
     });
 });

@@ -152,7 +152,7 @@ describe("Odsp Driver Resolver", () => {
     it("Should resolve url with empty file path", async () => {
         // Arrange
         const testFilePath = "";
-        request = resolver.createCreateNewRequest(siteUrl, driveId, testFilePath, fileName);
+        request = createOdspCreateContainerRequest(siteUrl, driveId, testFilePath, fileName);
 
         // Act
         const resolvedUrl = await resolver.resolve(request);

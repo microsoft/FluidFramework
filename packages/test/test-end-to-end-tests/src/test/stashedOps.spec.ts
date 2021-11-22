@@ -27,7 +27,7 @@ const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
         summaryOptions: {
             // currently these tests will break if we load from a summary that was too recent
-            generateSummaries: false,
+            disableSummaries: true,
         },
     },
 };
@@ -304,7 +304,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).bindToContext();
-            dataStore.channel.attachGraph();
+            dataStore.channel.bindToContext();
             (channel as SharedMap).set(testKey, testValue);
         });
 
@@ -331,7 +331,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).bindToContext();
-            dataStore.channel.attachGraph();
+            dataStore.channel.bindToContext();
             (channel as SharedMap).set(testKey, testValue);
         });
 

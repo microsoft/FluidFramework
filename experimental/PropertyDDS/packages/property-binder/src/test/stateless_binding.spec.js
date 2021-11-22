@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 /* globals sinon, expect, should */
-import { DataBinder } from '../../src/data_binder/data_binder';
-import { SingletonDataBinding, StatelessDataBinding } from '../../src/data_binder/stateless_data_binding';
-import { catchConsoleErrors } from './catch_console_errors';
-import { MockSharedPropertyTree } from './mock_shared_property_tree';
+import { DataBinder } from '../../src/data_binder/dataBinder';
+import { SingletonDataBinding, StatelessDataBinding } from '../../src/data_binder/statelessDataBinding';
+import { catchConsoleErrors } from './catchConsoleError';
+import { MockSharedPropertyTree } from './mockSharedPropertyTree';
 
 import {
   registerTestTemplates, AnimalSchema, DogSchema, CatSchema, ChinchillaSchema
@@ -296,8 +296,9 @@ describe('Stateless Binder', function() {
     expect(animalSingleton.getUserData()).toBeUndefined();
   });
 
-  it('using the deprecated API should still work', function() {
+  it.skip('using the deprecated API should still work', function() {
     // Register a singleton using the deprecated API
+    // @TODO clean up this test
     const deprecatedCat = new TestSingletonBinding({ dataBinder: dataBinder });
     const singletonHandle = dataBinder.registerSingleton('SingletonTest', CatSchema.typeid, deprecatedCat);
 

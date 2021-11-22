@@ -157,9 +157,6 @@ class NoDeltaStream
     private _disposed = false;
     public get disposed() { return this._disposed; }
     public dispose() { this._disposed = true; }
-
-    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
-    public close(): void { this.dispose(); }
 }
 
 /**
@@ -405,6 +402,7 @@ export class DeltaManager
             return {
                 ...common,
                 connectionMode: this.connectionMode,
+                relayServiceAgent: this.connection.relayServiceAgent,
             };
         } else {
             return {
@@ -508,7 +506,8 @@ export class DeltaManager
             pendingOps: this.pending.length, // Do we have any pending ops?
             pendingFirst: pendingSorted[0]?.sequenceNumber, // is the first pending op the one that we are missing?
             haveHandler: this.handler !== undefined, // do we have handler installed?
-            closed: this.closed,
+            inboundLength: this.inbound.length,
+            inboundPaused: this.inbound.paused,
         });
     }
 
@@ -732,6 +731,7 @@ export class DeltaManager
             let delayMs = InitialReconnectDelayInMs;
             let connectRepeatCount = 0;
             const connectStartTime = performance.now();
+            let lastError: any;
 
             // This loop will keep trying to connect until successful, with a delay between each iteration.
             while (connection === undefined) {
@@ -772,9 +772,12 @@ export class DeltaManager
                             {
                                 delay: delayMs, // milliseconds
                                 eventName: "DeltaConnectionFailureToConnect",
+                                duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
                             },
                             origError);
                     }
+
+                    lastError = origError;
 
                     const retryDelayFromError = getRetryDelayFromError(origError);
                     delayMs = retryDelayFromError ?? Math.min(delayMs * 2, MaxReconnectDelayInMs);
@@ -788,11 +791,14 @@ export class DeltaManager
 
             // If we retried more than once, log an event about how long it took
             if (connectRepeatCount > 1) {
-                this.logger.sendTelemetryEvent({
-                    attempts: connectRepeatCount,
-                    duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
-                    eventName: "MultipleDeltaConnectionFailures",
-                });
+                this.logger.sendTelemetryEvent(
+                    {
+                        eventName: "MultipleDeltaConnectionFailures",
+                        attempts: connectRepeatCount,
+                        duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+                    },
+                    lastError,
+                );
             }
 
             this.setupNewSuccessfulConnection(connection, requestedMode);
@@ -1153,10 +1159,6 @@ export class DeltaManager
     };
 
     private readonly errorHandler = (error) => {
-        // Observation based on early pre-production telemetry:
-        // We are getting transport errors from WebSocket here, right before or after "disconnect".
-        // This happens only in Firefox.
-        logNetworkFailure(this.logger, { eventName: "DeltaConnectionError" }, error);
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.reconnectOnError(
             this.defaultReconnectionMode,
@@ -1232,6 +1234,9 @@ export class DeltaManager
             clientId: connection.clientId,
             mode: connection.mode,
         };
+        if (connection.relayServiceAgent !== undefined) {
+            this.connectionStateProps.relayServiceAgent = connection.relayServiceAgent;
+        }
         this._hasCheckpointSequenceNumber = false;
 
         // Some storages may provide checkpointSequenceNumber to identify how far client is behind.
@@ -1321,14 +1326,7 @@ export class DeltaManager
         this._outbound.clear();
         this.emit("disconnect", reason);
 
-        // back-compat: added in 0.45. Make it unconditional (i.e. use connection.dispose()) in some future.
-        const disposable = connection as Partial<IDisposable>;
-
-        if (disposable.dispose !== undefined) {
-            disposable.dispose();
-        } else {
-            connection.close();
-        }
+        connection.dispose();
 
         this.connectionStateProps = {};
 

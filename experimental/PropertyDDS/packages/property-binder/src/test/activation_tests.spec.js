@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 /* globals expect */
-import { DataBinder } from '../../src/data_binder/data_binder';
+import { DataBinder } from '../../src/data_binder/dataBinder';
 
-import { catchConsoleErrors } from './catch_console_errors';
+import { catchConsoleErrors } from './catchConsoleError';
 
-import { DataBinding } from '../../src/data_binder/data_binding';
+import { DataBinding } from '../../src/data_binder/dataBinding';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 import { ActivationQueryCacheHelper } from '../../src/internal/activationQueryCacheHelper';
-import { MockSharedPropertyTree } from './mock_shared_property_tree'
+import { MockSharedPropertyTree } from './mockSharedPropertyTree'
 
 /**
  * Dummy class to instantiate

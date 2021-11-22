@@ -54,7 +54,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
     beforeEach(async function() {
         provider = getTestObjectProvider();
         // Currently FRS does not support blob API.
-        if (provider.driver.type === "r11s" && provider.driver.endpointName === "frs") {
+        if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
             this.skip();
         }
     });
@@ -222,7 +222,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     beforeEach(async function() {
         provider = getTestObjectProvider();
         // Currently FRS does not support blob API.
-        if (provider.driver.type === "r11s" && provider.driver.endpointName === "frs") {
+        if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
             this.skip();
         }
     });

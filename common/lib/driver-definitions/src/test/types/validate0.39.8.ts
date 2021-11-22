@@ -25,13 +25,14 @@ use_current_TypeAliasDeclaration_DriverError(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "TypeAliasDeclaration_DriverError": {"backCompat": false}
+*/
 declare function get_current_TypeAliasDeclaration_DriverError():
     current.DriverError;
 declare function use_old_TypeAliasDeclaration_DriverError(
     use: old.DriverError);
 use_old_TypeAliasDeclaration_DriverError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_DriverError());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -49,13 +50,14 @@ use_current_EnumDeclaration_DriverErrorType(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "EnumDeclaration_DriverErrorType": {"backCompat": false}
+*/
 declare function get_current_EnumDeclaration_DriverErrorType():
     current.DriverErrorType;
 declare function use_old_EnumDeclaration_DriverErrorType(
     use: old.DriverErrorType);
 use_old_EnumDeclaration_DriverErrorType(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_DriverErrorType());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -121,13 +123,14 @@ use_current_InterfaceDeclaration_IAuthorizationError(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IAuthorizationError": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IAuthorizationError():
     current.IAuthorizationError;
 declare function use_old_InterfaceDeclaration_IAuthorizationError(
     use: old.IAuthorizationError);
 use_old_InterfaceDeclaration_IAuthorizationError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAuthorizationError());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -181,13 +184,14 @@ use_old_InterfaceDeclaration_IDeltaStorageService(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDocumentDeltaConnection": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IDocumentDeltaConnection():
     old.IDocumentDeltaConnection;
 declare function use_current_InterfaceDeclaration_IDocumentDeltaConnection(
     use: current.IDocumentDeltaConnection);
 use_current_InterfaceDeclaration_IDocumentDeltaConnection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDocumentDeltaConnection());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
@@ -199,6 +203,7 @@ declare function get_current_InterfaceDeclaration_IDocumentDeltaConnection():
 declare function use_old_InterfaceDeclaration_IDocumentDeltaConnection(
     use: old.IDocumentDeltaConnection);
 use_old_InterfaceDeclaration_IDocumentDeltaConnection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentDeltaConnection());
 
 /*
@@ -253,49 +258,53 @@ use_old_InterfaceDeclaration_IDocumentDeltaStorageService(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDocumentService": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IDocumentService():
     old.IDocumentService;
 declare function use_current_InterfaceDeclaration_IDocumentService(
     use: current.IDocumentService);
 use_current_InterfaceDeclaration_IDocumentService(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDocumentService());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDocumentService": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IDocumentService():
     current.IDocumentService;
 declare function use_old_InterfaceDeclaration_IDocumentService(
     use: old.IDocumentService);
 use_old_InterfaceDeclaration_IDocumentService(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentService());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDocumentServiceFactory": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IDocumentServiceFactory():
     old.IDocumentServiceFactory;
 declare function use_current_InterfaceDeclaration_IDocumentServiceFactory(
     use: current.IDocumentServiceFactory);
 use_current_InterfaceDeclaration_IDocumentServiceFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDocumentServiceFactory());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDocumentServiceFactory": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IDocumentServiceFactory():
     current.IDocumentServiceFactory;
 declare function use_old_InterfaceDeclaration_IDocumentServiceFactory(
     use: old.IDocumentServiceFactory);
 use_old_InterfaceDeclaration_IDocumentServiceFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentServiceFactory());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -325,25 +334,25 @@ use_old_InterfaceDeclaration_IDocumentServicePolicies(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDocumentStorageService": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IDocumentStorageService():
     old.IDocumentStorageService;
 declare function use_current_InterfaceDeclaration_IDocumentStorageService(
     use: current.IDocumentStorageService);
 use_current_InterfaceDeclaration_IDocumentStorageService(
     get_old_InterfaceDeclaration_IDocumentStorageService());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDocumentStorageService": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IDocumentStorageService():
     current.IDocumentStorageService;
 declare function use_old_InterfaceDeclaration_IDocumentStorageService(
     use: old.IDocumentStorageService);
 use_old_InterfaceDeclaration_IDocumentStorageService(
     get_current_InterfaceDeclaration_IDocumentStorageService());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -385,13 +394,14 @@ use_current_InterfaceDeclaration_IDriverBasicError(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDriverBasicError": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IDriverBasicError():
     current.IDriverBasicError;
 declare function use_old_InterfaceDeclaration_IDriverBasicError(
     use: old.IDriverBasicError);
 use_old_InterfaceDeclaration_IDriverBasicError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDriverBasicError());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -409,13 +419,14 @@ use_current_InterfaceDeclaration_IDriverErrorBase(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDriverErrorBase": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IDriverErrorBase():
     current.IDriverErrorBase;
 declare function use_old_InterfaceDeclaration_IDriverErrorBase(
     use: old.IDriverErrorBase);
 use_old_InterfaceDeclaration_IDriverErrorBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDriverErrorBase());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -481,13 +492,14 @@ use_current_InterfaceDeclaration_IGenericNetworkError(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IGenericNetworkError": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IGenericNetworkError():
     current.IGenericNetworkError;
 declare function use_old_InterfaceDeclaration_IGenericNetworkError(
     use: old.IGenericNetworkError);
 use_old_InterfaceDeclaration_IGenericNetworkError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGenericNetworkError());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -625,13 +637,14 @@ use_current_InterfaceDeclaration_IThrottlingWarning(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IThrottlingWarning": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IThrottlingWarning():
     current.IThrottlingWarning;
 declare function use_old_InterfaceDeclaration_IThrottlingWarning(
     use: old.IThrottlingWarning);
 use_old_InterfaceDeclaration_IThrottlingWarning(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IThrottlingWarning());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

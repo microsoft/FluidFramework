@@ -4,10 +4,10 @@
  */
 
 import { getTinyliciousContainer } from "@fluid-experimental/get-container";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { IContainer } from "@fluidframework/container-definitions";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
-import { IFluidMountableView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView, IFluidMountableView } from "@fluidframework/view-interfaces";
 import { DiceRollerContainerRuntimeFactory } from "./containerCode";
 
 // I'm choosing to put the docId in the hash just for my own convenience, so the URL will end up looking something
@@ -39,7 +39,7 @@ async function mountDefaultFluidObjectFromContainer(container: IContainer): Prom
     }
 
     // Now we know we got the Fluid Object back, time to start mounting it.
-    const fluidObject = response.value as IFluidObject;
+    const fluidObject: FluidObject<IFluidMountableView & IFluidHTMLView> = response.value;
 
     // In a production app, we should probably be retaining a reference to mountableView long-term so we can call
     // unmount() on it to correctly remove it from the DOM if needed.

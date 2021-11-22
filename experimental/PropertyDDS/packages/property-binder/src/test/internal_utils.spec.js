@@ -4,10 +4,10 @@
  */
 import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
 /* globals expect, sinon  */
-import { forEachProperty, minimalRootPaths, visitTypeHierarchy } from '../../src/data_binder/internal_utils';
-import { catchConsoleErrors } from './catch_console_errors';
+import { forEachProperty, minimalRootPaths, visitTypeHierarchy } from '../../src/data_binder/internalUtils';
+import { catchConsoleErrors } from './catchConsoleError';
 import { PrimitiveChildrenTemplate, AnimalSchema, registerTestTemplates } from './testTemplates';
-import { MockSharedPropertyTree } from './mock_shared_property_tree';
+import { MockSharedPropertyTree } from './mockSharedPropertyTree';
 
 describe('minimalRootPaths', () => {
   it('should return the same array for exclusive paths', () => {

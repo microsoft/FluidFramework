@@ -171,7 +171,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
     private async fetchAndCacheSnapshotTree(versionId: string): Promise<{ id: string, snapshotTree: ISnapshotTree }> {
         const cachedSnapshotTree = await this.snapshotTreeCache.get(versionId);
         if (cachedSnapshotTree !== undefined) {
-            return { id: versionId, snapshotTree: cachedSnapshotTree };
+            return { id: cachedSnapshotTree.id!, snapshotTree: cachedSnapshotTree };
         }
 
         const wholeFlatSummary = await PerformanceEvent.timedExecAsync(
@@ -210,13 +210,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
             ));
         }
 
-        await Promise.all([
-            this.snapshotTreeCache.put(
-                snapshotId,
-                normalizedWholeSummary.snapshotTree,
-            ),
-            this.initBlobCache(normalizedWholeSummary.blobs),
-        ]);
+        await Promise.all(cachePs);
 
         return { id: snapshotId, snapshotTree: normalizedWholeSummary.snapshotTree};
     }
