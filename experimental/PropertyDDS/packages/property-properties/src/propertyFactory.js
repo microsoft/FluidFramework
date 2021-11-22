@@ -399,6 +399,9 @@ class PropertyFactory {
         /** A cache of the resulting data structure which will be created for this typeID */
         this._cachedTypeIds = new Map();
 
+        /** A cache of functions that create the properties */
+        this._cachedCreationFunctions = new Map();
+
         /** This is used to collect all properties that have to be added to a specific typeid */
         this._currentCreateCache = undefined;
 
@@ -972,6 +975,21 @@ class PropertyFactory {
             }
         }
 
+        const scopeFunctionEntry = this._cachedCreationFunctions.get(in_typeid);
+        const contextFunctionEntry = scopeFunctionEntry && scopeFunctionEntry.get(in_scope);
+        const cacheFunctionEntry = contextFunctionEntry && contextFunctionEntry.get(context);
+        if (cacheFunctionEntry) {
+            let property = cacheFunctionEntry();
+
+            if (in_initialProperties !== undefined) {
+                this._setInitialValue(property, {
+                    value: in_initialProperties
+                });
+            }
+
+            return property;
+        }
+
         const scopeEntry = this._cachedTypeIds.get(in_typeid);
         const contextEntry = scopeEntry && scopeEntry.get(in_scope);
         const cacheEntry = contextEntry && contextEntry.get(context);
@@ -985,6 +1003,13 @@ class PropertyFactory {
                 entry: cacheEntry,
                 parent:undefined
             }];
+            let creationFunctionSource = "";
+            let currentParameterIndex = 0;
+            let parameters = [];
+            let currentPropertyNumber = 0;
+            let currentPropertyVarName = "";
+            let resultVarName;
+
             while (creationStack.length > 0) {
                 const currentEntry = creationStack.pop();
 
@@ -992,36 +1017,62 @@ class PropertyFactory {
                 // been created
                 if (currentEntry.signalChildrenFinished) {
                     currentEntry.property._signalAllStaticMembersHaveBeenAdded(in_scope);
+                    creationFunctionSource +=
+                      `${currentEntry.propertyVarname}._signalAllStaticMembersHaveBeenAdded(${JSON.stringify(in_scope)});\n`;
+
                     if (currentEntry.initialValue) {
                         this._setInitialValue(currentEntry.property, currentEntry.initialValue);
+                        creationFunctionSource +=
+                          `this._setInitialValue(${currentEntry.propertyVarname},
+                                                 ${JSON.stringify(currentEntry.initialValue)});\n`;
                     }
                     if (currentEntry.constant) {
                         currentEntry.property._setAsConstant();
+                        creationFunctionSource +=
+                          `${currentEntry.propertyVarname}._setAsConstant();\n`;
                     }
                     continue;
                 }
+
+                currentPropertyNumber++;
+                currentPropertyVarName = `property${currentPropertyNumber}`;
+                creationFunctionSource +=
+                  `const ${currentPropertyVarName} =
+                    new parameters[${currentParameterIndex}](parameters[${currentParameterIndex + 1}]);\n`;
+                parameters.push(currentEntry.entry.constructorFunction);
+                parameters.push(currentEntry.entry.entry);
+                currentParameterIndex += 2;
 
                 let property = new (currentEntry.entry.constructorFunction)(currentEntry.entry.entry);
                 if (currentEntry.parent) {
                     if (currentEntry.entry.optional) {
                         currentEntry.parent._insert(property.getId(), property, true);
+                        creationFunctionSource += `${currentEntry.parentVarName}._insert(
+                            ${JSON.stringify(property.getId())}, ${currentPropertyVarName}, true
+                        );\n`
                     } else {
                         currentEntry.parent._append(property, currentEntry.entry.allowChildMerges);
+                        creationFunctionSource += `${currentEntry.parentVarName}._append(
+                            ${currentPropertyVarName}, ${currentEntry.entry.allowChildMerges}
+                        );\n`
                     }
                 } else {
                     rootProperty = property;
-                }
-                if (currentEntry.entry.signal) {
-                    property._signalAllStaticMembersHaveBeenAdded(in_scope);
+                    resultVarName = currentPropertyVarName;
                 }
 
                 if (currentEntry.setGuid) {
                     property.value = GuidUtils.generateGUID();
+                    creationFunctionSource += `${currentPropertyVarName}.value = GuidUtils.generateGUID();\n`
                 }
 
                 if (currentEntry.entry.optionalChildren) {
                     for (let [id, typeid] of Object.entries(currentEntry.entry.optionalChildren)) {
                         property._addOptionalChild(id, typeid);
+                        creationFunctionSource += `${currentPropertyVarName}._addOptionalChild(
+                            ${JSON.stringify(id)},
+                            ${JSON.stringify(typeid)}
+                        );\n`
                     }
                 }
 
@@ -1030,12 +1081,14 @@ class PropertyFactory {
                         signalChildrenFinished: true,
                         initialValue: currentEntry.entry.initialValue,
                         property,
-                        constant: currentEntry.entry.constant
+                        constant: currentEntry.entry.constant,
+                        propertyVarname: currentPropertyVarName
                     });
 
                     for (let [id, child] of currentEntry.entry.children) {
                         creationStack.push({
                             parent: property,
+                            parentVarName: currentPropertyVarName,
                             id: id,
                             entry: child,
                             signalParent: false,
@@ -1046,14 +1099,45 @@ class PropertyFactory {
                 } else {
                     if (currentEntry.entry.initialValue) {
                         this._setInitialValue(property, currentEntry.entry.initialValue);
+                        creationFunctionSource +=
+                          `this._setInitialValue(${currentPropertyVarName},
+                                                 ${JSON.stringify(currentEntry.entry.initialValue)});\n`;
                     }
                     if (currentEntry.entry.constant) {
                         property._setAsConstant();
+                        creationFunctionSource += `${currentPropertyVarName}._setAsConstant();\n`
                     }
 
-                    property._signalAllStaticMembersHaveBeenAdded(in_scope);
+                    if (currentEntry.entry.signal) {
+                        property._signalAllStaticMembersHaveBeenAdded(in_scope);
+                        creationFunctionSource += `${currentPropertyVarName}._signalAllStaticMembersHaveBeenAdded(
+                            ${JSON.stringify(in_scope)}
+                        );\n`
+                    }
+                    /*property._signalAllStaticMembersHaveBeenAdded(in_scope);
+                    creationFunctionSource += `${currentPropertyVarName}._signalAllStaticMembersHaveBeenAdded(
+                        ${JSON.stringify(in_scope)}
+                    );\n`*/
                 }
             }
+
+            //console.log(creationFunction);
+            creationFunctionSource += ` return ${resultVarName};`;
+            let creationFunction = new Function('parameters',' GuidUtils', creationFunctionSource).bind(this, parameters, GuidUtils);
+            rootProperty = creationFunction();
+
+            let scopesFunction = this._cachedCreationFunctions.get(in_typeid);
+            if (!scopesFunction) {
+                scopesFunction = new Map();
+                this._cachedCreationFunctions.set(in_typeid, scopesFunction);
+            }
+            let contextsFunction = scopesFunction.get(in_scope);
+            if (!contextsFunction) {
+                contextsFunction = new Map();
+                scopesFunction.set(in_scope, contextsFunction);
+            }
+
+            contextsFunction.set(context, creationFunction);
 
             if (in_initialProperties !== undefined) {
                 this._setInitialValue(rootProperty, {
@@ -1394,7 +1478,7 @@ class PropertyFactory {
                     }
 
                     this._currentCreateCache.constructorFunction = templateOrConstructor;
-                    this._currentCreateCache.signal = true;
+                    this._currentCreateCache.signal = false;
                     this._currentCreateCache.entry = in_propertiesEntry;
 
                     // If this is a primitive type, we create it via the registered constructor
@@ -1837,6 +1921,7 @@ class PropertyFactory {
 
         // Remove from typeid creation cache
         this._cachedTypeIds.delete(typeid);
+        this._cachedCreationFunctions.delete(typeid);
 
         // And repeat the registration
         registerLocal.call(this, in_template);
