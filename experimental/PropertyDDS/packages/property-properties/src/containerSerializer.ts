@@ -2,28 +2,32 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/**
- * @namespace property-properties
- */
-const { LazyLoadedProperties: Property } = require('./properties/lazyLoadedProperties');
-const { AbstractStaticCollectionProperty } = require('./properties/abstractStaticCollectionProperty')
-const { PathHelper } = require('@fluid-experimental/property-changeset');
+
+import { LazyLoadedProperties as Property } from './properties/lazyLoadedProperties';
+import { AbstractStaticCollectionProperty } from './properties/abstractStaticCollectionProperty';
+import { PathHelper } from '@fluid-experimental/property-changeset';
+import { BaseProperty, IBasePropertyParams } from './properties/baseProperty';
 
 
-var MSG = {
-    NOTHING_TO_DESERIALIZE: 'Repository deserialize(), no input given'
+const MSG = {
+    NOTHING_TO_DESERIALIZE: 'Repository deserialize(), no input given',
+    REMOVING_NON_EXISTING_ID: "REMOVING_NON_EXISTING_ID"
 };
+
+interface IScopePropertyParams extends IBasePropertyParams {
+    /** The scope to keep track of */
+    scope: string
+}
 
 /**
  * Dummy property used to return the scope to the underlying properties
  */
 class ScopeProperty extends AbstractStaticCollectionProperty {
+    _scope: string;
     /**
-     * @param {object} in_params BaseProperty parameters
-     * @param {string} in_params.scope The scope to keep track of
-     * @constructor
+     * @param in_params BaseProperty parameters
      */
-    constructor(in_params) {
+    constructor(in_params: IScopePropertyParams) {
         // HACK: Normally, we would inherit from NodeProperty however, NodeProperty seems to not be available
         // at this point. There may be a bug with MR.
         super(in_params);
@@ -43,10 +47,10 @@ class ScopeProperty extends AbstractStaticCollectionProperty {
      * This is an internal function, called internally by NodeProperty. Removing children dynamically by the user is
      * only allowed in the NodeProperty.
      *
-     * @param {String} in_id - the id of the property to remove
+     * @param in_id - the id of the property to remove
      * @protected
      */
-    _remove(in_id) {
+    _remove(in_id: string) {
         if (this._staticChildren[in_id] !== undefined) {
             this._staticChildren[in_id]._setParent(undefined);
             delete this._staticChildren[in_id];
@@ -58,12 +62,11 @@ class ScopeProperty extends AbstractStaticCollectionProperty {
 
 /**
  * Serialize the input document.
- * @param {Array<BaseProperty>} in_psets property set
- * @param {bool} in_dirtyOnly serialize dirty properties only
- * @return {{}} JSON data of the document
- * @alias property-properties.serialize
+ * @param in_psets -property set
+ * @param in_dirtyOnly - serialize dirty properties only
+ * @returns JSON data of the document
  */
-export function serialize(in_psets, in_dirtyOnly) {
+export function serialize(in_psets: Array<BaseProperty>, in_dirtyOnly: boolean):object {
 
     in_dirtyOnly = in_dirtyOnly || false;
 
@@ -85,14 +88,14 @@ export function serialize(in_psets, in_dirtyOnly) {
 
 /**
  * Deserialize the input document
- * @param {{}} in_data the input JSON document data
- * @param {string|undefined} in_scope The scope to construct the properties from
- * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions]
- *    The options to selectively create only a subset of a property. Creates all properties if undefined.
- * @return {{}} an object of guid : pset
+ * @param in_data - the input JSON document data
+ * @param in_scope - The scope to construct the properties from
+ * @param in_filteringOptions -The options to selectively create only a subset of a property.
+ *          Creates all properties if undefined.
+ * @returns an object of guid : pset
  * @alias property-properties.deserialize
  */
-export function deserialize(in_data, in_scope, in_filteringOptions = undefined) {
+export function deserialize(in_data: object, in_scope?: string, in_filteringOptions?: BaseProperty.PathFilteringOptions) {
 
     if (!in_data) {
         console.warn(MSG.NOTHING_TO_DESERIALIZE);
@@ -163,12 +166,11 @@ export function deserialize(in_data, in_scope, in_filteringOptions = undefined) 
 };
 /**
  * Deserialize the input document assuming it contains elements of a non-primitive array.
- * @param {array<object>} in_data the input JSON document data
- * @param {string|undefined} in_scope The scope to construct the properties from
- * @return {array<BaseProperty>} an array of psets
- * @alias property-properties.deserializeNonPrimitiveArrayElements
+ * @param in_data - the input JSON document data
+ * @param in_scope - The scope to construct the properties from
+ * @returns an array of psets
  */
-export function deserializeNonPrimitiveArrayElements(in_data, in_scope) {
+export function deserializeNonPrimitiveArrayElements(in_data: Array<object>, in_scope?: string): Array<BaseProperty> {
 
     if (!in_data) {
         console.warn(MSG.NOTHING_TO_DESERIALIZE);
@@ -179,7 +181,7 @@ export function deserializeNonPrimitiveArrayElements(in_data, in_scope) {
     for (var i = 0; i < in_data.length; ++i) {
         // reconstruct entity
         var createdProperty = Property.PropertyFactory._createProperty(
-            in_data[i]['typeid'], null, undefined, in_scope);
+            in_data[i]['typeid'], null, undefined, in_scope) as BaseProperty;
 
         var id = createdProperty.getId();
 
