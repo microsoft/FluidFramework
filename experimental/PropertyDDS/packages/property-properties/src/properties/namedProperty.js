@@ -27,7 +27,7 @@ export class NamedProperty extends ContainerProperty {
      * @category Properties
      */
     constructor(in_params) {
-        super({ typeid: 'NamedProperty', ...in_params });
+        super(in_params);
     };
 
     /**

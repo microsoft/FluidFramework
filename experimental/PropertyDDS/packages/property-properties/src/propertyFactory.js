@@ -1337,12 +1337,15 @@ class PropertyFactory {
                 break;
             case 'NodeProperty':
                 ConstructorFunction = NodeProperty;
+                params.typeid = params.typeid || 'NodeProperty';
                 break;
             case 'NamedProperty':
                 ConstructorFunction = NamedProperty;
+                params.typeid = params.typeid || 'NamedProperty';
                 break;
             default:
                 ConstructorFunction = ContainerProperty;
+                params.typeid = params.typeid || 'ContainerProperty';
         }
 
         ConstructorFunction = this._getConstructorFunctionForTypeidAndID(
@@ -1559,10 +1562,11 @@ class PropertyFactory {
             }
 
             if (!parent) {
-                // If this is a declaration which contains a properties list, we have to create a new base property for it
-                parent = new ContainerProperty(in_propertiesEntry);
+                // If this is a declaration which contains a properties list, we have to create a new container property for it
+                let copiedProperty = Object.assign({typeid: 'ContainerProperty'}, in_propertiesEntry);
+                parent = new ContainerProperty(copiedProperty);
                 this._currentCreateCache.constructorFunction = ContainerProperty;
-                this._currentCreateCache.entry = in_propertiesEntry;
+                this._currentCreateCache.entry = copiedProperty;
                 this._currentCreateCache.signal = false;
             }
 

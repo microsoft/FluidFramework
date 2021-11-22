@@ -24,7 +24,8 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      * @protected
      */
     constructor(in_params) {
-        super({ typeid: 'ContainerProperty', ...in_params });
+        //super({ typeid: 'ContainerProperty', ...in_params });
+        super( in_params );
         this._dynamicChildren = {};
         this._optionalChildren = {};
     };
