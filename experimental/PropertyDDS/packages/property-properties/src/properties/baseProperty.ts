@@ -71,7 +71,7 @@ export abstract class BaseProperty {
     _id: string | undefined;
     protected _isConstant: boolean = false;
     protected _dirty: any;
-    protected _typeid: string;
+    _typeid: string;
     protected _parent: BaseProperty | undefined;
     protected _noDirtyInBase: boolean;
 

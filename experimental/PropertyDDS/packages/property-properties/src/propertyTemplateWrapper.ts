@@ -5,13 +5,15 @@
 
 /**
  * @fileoverview
- * Declaration of the PropertyTemplateWrapper module
  * PropertyTemplateWrapper is used to wrap a property template and perform internal optimizations
  */
-const _ = require('lodash');
-const { ContainerProperty } = require('./properties/containerProperty');
-const { MSG } = require('@fluid-experimental/property-common').constants;
+import _ from 'lodash';
+import { ContainerProperty } from './properties/containerProperty';
+import { constants } from '@fluid-experimental/property-common';
+import { PropertyTemplate } from './propertyTemplate';
+import { BaseProperty, PropertyFactory } from '.';
 
+const { MSG } = constants;
 const reservedTypesWithoutTemplates = {
     'BaseProperty': true,
     'ContainerProperty': true,
@@ -20,26 +22,26 @@ const reservedTypesWithoutTemplates = {
 };
 /**
  * Utility function that validates if the typeid is a reserved type without a template.
- * @param {string} in_typeid The typeid to validate.
- * @return {boolean} True if the typeid is a reserved type without a template, false otherwise.
+ * @param in_typeid - The typeid to validate.
+ * @returns True if the typeid is a reserved type without a template, false otherwise.
  */
-const hasAssociatedTemplate = (in_typeid) => {
+const hasAssociatedTemplate = (in_typeid: string): boolean => {
     return !reservedTypesWithoutTemplates[in_typeid];
 };
 
 export class PropertyTemplateWrapper {
+    _propertyTemplate: PropertyTemplate;
+    _scope: string;
+    _compiledPropertyTemplate: PropertyTemplate;
+    _objectCreationType: string;
+    constantTree: ContainerProperty;
 
     /**
      * Constructor for creating a PropertyTemplateWrapper based on the given template.
-     * @param {PropertyTemplate} in_remoteTemplate A property template
-     * @param {string} in_scope The scope of the template
-     *
-     * @constructor
-     * @package
-     * @alias property-properties.PropertyTemplateWrapper
-     * @category Properties
+     * @param in_remoteTemplate - A property template
+     * @param in_scope - The scope of the template
      */
-    constructor(in_remoteTemplate, in_scope) {
+    constructor(in_remoteTemplate: PropertyTemplate, in_scope?: string) {
         /** The property template this object is wrapping */
         this._propertyTemplate = in_remoteTemplate;
 
@@ -61,10 +63,10 @@ export class PropertyTemplateWrapper {
 
     /**
      * To get the property template that this is wrapping.
-     * @return {property-properties.PropertyTemplate} The template this wrapper contains
+     * @returns The template this wrapper contains
      * @package
      */
-    getPropertyTemplate() {
+    getPropertyTemplate(): PropertyTemplate {
         return this._propertyTemplate;
     };
 
@@ -76,7 +78,7 @@ export class PropertyTemplateWrapper {
      * It has all information from parent Templates, and other changes.
      * @package
      */
-    getCompiledTemplate(in_propertyFactory) {
+    getCompiledTemplate(in_propertyFactory: typeof PropertyFactory) {
         if (this._compiledPropertyTemplate === undefined) {
             this._compiledPropertyTemplate = this._contructCompiledTemplate(in_propertyFactory);
         }
@@ -85,19 +87,17 @@ export class PropertyTemplateWrapper {
 
     /**
      * Returns if the compiled template has been created.
-     * @return {boolean} if the compiled template has been created
-     * @package
+     * @returns if the compiled template has been created
      */
-    hasCompiledTemplate() {
+    hasCompiledTemplate(): boolean {
         return !!this._compiledPropertyTemplate;
     };
 
     /**
      * To get the creation type of the template this wraps.
-     * @return {string} A typeid which represents the creation type of this template
-     * @package
+     * @returns A typeid which represents the creation type of this template
      */
-    getCreationType() {
+    getCreationType(): string {
         return this._objectCreationType;
     };
 
@@ -105,10 +105,9 @@ export class PropertyTemplateWrapper {
      * If current creation type is undefined, sets it to in_typeid if in_typeid is a creation type.
      * If current creation type is defined, throws if in_typeid is a creation type.
      *
-     * @param {string} in_typeid A typeid
-     * @package
+     * @param in_typeid - A typeid
      */
-    setCreationType(in_typeid) {
+    setCreationType(in_typeid: string) {
         // This function could be moved somewhere else, an enum could be made if this information is widely needed.
         const isCreationType = (typeid) => {
             const creationTypes =
@@ -127,14 +126,13 @@ export class PropertyTemplateWrapper {
     };
 
     /**
-     * Contructs the compiled template from the template this wraps
-     * @param {property-properties.PropertyFactory} in_propertyFactory The associated PropertyFactory.
-     * @return {property-properties.PropertyTemplate} The compiled template
+     * Constructs the compiled template from the template this wraps
+     * @param in_propertyFactory - The associated PropertyFactory.
+     * @returns he compiled template
      * A compiled template is the template which is actually used for creating objects.
      * It has all information from parent Templates, and other changes.
-     * @package
      */
-    _contructCompiledTemplate(in_propertyFactory) {
+    _contructCompiledTemplate(in_propertyFactory: typeof PropertyFactory): PropertyTemplate {
         const originalTemplate = this.getPropertyTemplate();
 
         this.setCreationType(originalTemplate.typeid);
@@ -167,7 +165,7 @@ export class PropertyTemplateWrapper {
                 this.setCreationType(parentTemplateId);
 
                 if (hasAssociatedTemplate(parentTemplateId)) {
-                    const parentTemplateWrapper = in_propertyFactory._getWrapper(parentTemplateId, undefined, this._scope);
+                    const parentTemplateWrapper: PropertyTemplateWrapper = in_propertyFactory._getWrapper(parentTemplateId, undefined, this._scope);
                     if (parentTemplateWrapper) {
                         const parentTemplate = parentTemplateWrapper.getCompiledTemplate(in_propertyFactory);
                         const parentCreationType = parentTemplateWrapper.getCreationType();
@@ -193,7 +191,7 @@ export class PropertyTemplateWrapper {
                             }
                         }
 
-                        /* Fills parentsConsantsById and makes sure there are no two properties or constants  with the same id */
+                        /* Fills parentsConstantsById and makes sure there are no two properties or constants  with the same id */
                         if (parentTemplate.hasNestedConstants()) {
                             const parentConstants = parentTemplate.constants;
                             for (let j = 0; j < parentConstants.length; ++j) {
@@ -258,11 +256,11 @@ export class PropertyTemplateWrapper {
     /**
      * A helper function which merges a child and parent property.
      * The changes are applied directly to the in_childProperty.
-     * @param {object} in_childProperty The child's property defition.
-     * @param {object} in_parentProperty The parent's property defition.
+     * @param in_childProperty - The child's property definition.
+     * @param in_parentProperty - The parent's property definition.
      * @package
      */
-    _mergeProperty(in_childProperty, in_parentProperty) {
+    _mergeProperty(in_childProperty: any, in_parentProperty: any) {
         const mergeField = (child, parent, fieldName, defaultValue) => {
             if (child[fieldName] === undefined) {
                 if (parent[fieldName] !== undefined) {
@@ -332,17 +330,17 @@ export class PropertyTemplateWrapper {
 
 
     /**
-     * @return {Boolean} true if a constant tree was already created and stored here
+     * @returns true if a constant tree was already created and stored here
      */
-    hasConstantTree() {
+    hasConstantTree(): boolean {
         return this.constantTree !== undefined;
     };
 
     /**
      * Creates the constant tree if it doesn't exist yet, then apply it to the passed in property
-     * @param {property-properties.BaseProperty} in_property The property which will have constants applied to
+     * @param in_property - The property which will have constants applied to
      */
-    loadConstants(in_property) {
+    loadConstants(in_property: BaseProperty) {
         if (this.hasConstantTree()) {
             this._applyConstants(in_property);
         } else {
@@ -362,11 +360,11 @@ export class PropertyTemplateWrapper {
 
     /**
      * Recursive function which extracts all constants from in_property and saves them.
-     * @param {property-properties.BaseProperty} in_property The property whose constants will be saved
-     * @param {Object} out_property A tree like series of nested objects which holds all constants of in_property
+     * @param in_property The property whose constants will be saved
+     * @param out_property A tree like series of nested objects which holds all constants of in_property
      * @return {Boolean} returns true if there is a constant within the subtree passed in as in_property
      */
-    _saveConstantsRecursive(in_property, out_property) {
+    _saveConstantsRecursive(in_property, out_property: any) {
         if (in_property instanceof ContainerProperty) {
             const children = in_property._staticChildren;
             let isConstant = false;

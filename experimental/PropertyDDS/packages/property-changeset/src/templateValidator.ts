@@ -67,7 +67,6 @@ export interface PropertySchema {
     annotation?: { [key: string]: string };
     properties: PropertiesType;
     typeid: string;
-    values: ValuesType
 }
 
 type SchemaEntityType = PropertySchema | string[] | PropertiesType;

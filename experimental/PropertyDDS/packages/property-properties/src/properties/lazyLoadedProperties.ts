@@ -12,6 +12,7 @@
 
 export const LazyLoadedProperties = {
     PropertyFactory: undefined,
+    ContainerProperty:undefined,
     AbstractStaticCollectionProperty: undefined,
     ArrayProperty: undefined,
     EnumArrayProperty: undefined,

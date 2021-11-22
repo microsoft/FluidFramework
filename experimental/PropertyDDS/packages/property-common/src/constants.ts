@@ -138,12 +138,13 @@ const TypeidHelperError = {
 };
 
 const PropertyError = {
+    OVERRIDEN_PROP_MUST_HAVE_SAME_FIELD_VALUES_AS_BASE_TYPE: "OVERRIDEN_PROP_MUST_HAVE_SAME_FIELD_VALUES_AS_BASE_TYPE",
 
     CANNOT_INSERT_UNKNOWN_PROPERTY: "CANNOT_INSERT_UNKNOWN_PROPERTY",
 
     MISMATCHING_PROPERTY_TYPEID: "MISMATCHING_PROPERTY_TYPEID",
 
-    CANNOT_REMOVE_NON_OPTIONAL_PROP:"CANNOT_REMOVE_NON_OPTIONAL_PROP",
+    CANNOT_REMOVE_NON_OPTIONAL_PROP: "CANNOT_REMOVE_NON_OPTIONAL_PROP",
 
     TYPEID_NOT_NATIVE: "TYPEID_NOT_NATIVE",
     /**
@@ -902,6 +903,7 @@ const PropertyError = {
 
 const PropertyFactoryError = {
 
+    ONLY_ONE_CREATION_TYPE: "ONLY_ONE_CREATION_TYPE",
     /**
      * methods: PropertyFactory.create
      * Each property created with PropertyFactory.create should have a unique id. You should make sure your

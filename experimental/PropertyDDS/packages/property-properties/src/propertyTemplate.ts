@@ -20,6 +20,7 @@ const { MSG } = constants;
 type TypedValue = { typeid?: string }
 
 type Constant = {
+    id: string
     contextKeyType: string
     context: string
     value: object
@@ -32,7 +33,7 @@ type TemplateLike = {
     constants?: Constant[]
 }
 
-type TemplateParameters = {
+export type TemplateParameters = {
     id: string,
     name: string,
     typeid: string,
@@ -130,8 +131,8 @@ export class PropertyTemplate {
     /**
      * read the enum types list of a template and create a dictionary [value->enum] and [enum->value] for it
      * to efficiently lookup enums/values when setting/getting them from the property
-     * @param {Array} in_enumProperties - the list of enums and their values and annotations
-     * @return {{}} a dictionary [value->enum] and [enum->value]
+     * @param in_enumProperties - the list of enums and their values and annotations
+     * @returns a dictionary [value->enum] and [enum->value]
      */
     _parseEnums(in_enumProperties: PropertyTemplate[]) {
         var enumDictionary = { enumEntriesById: {}, enumEntriesByValue: {}, defaultValue: undefined };
@@ -216,7 +217,7 @@ export class PropertyTemplate {
      * otherwise.
      * @returns The version string is returned.
      */
-    _canonicalForm(in_obj: object, in_target?: object, in_key?: string, in_preserve = false): string | object {
+    _canonicalForm(in_obj: object, in_target?: object, in_key?: string, in_preserve = false): PropertyTemplate {
 
         var target, copyMembers;
         var copyDirectlyIntoKey = false;
@@ -300,7 +301,7 @@ export class PropertyTemplate {
             in_target[in_key] = target;
         }
 
-        return in_target;
+        return in_target as PropertyTemplate;
     };
 
     /**
