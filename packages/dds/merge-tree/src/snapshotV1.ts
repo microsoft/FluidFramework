@@ -73,7 +73,7 @@ export class SnapshotV1 {
         this.segmentLengths = [];
     }
 
-    getSeqLengthSegs(
+    private getSeqLengthSegs(
         allSegments: JsonSegmentSpecs[],
         allLengths: number[],
         approxSequenceLength: number,

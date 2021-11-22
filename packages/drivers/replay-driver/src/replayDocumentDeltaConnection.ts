@@ -292,9 +292,6 @@ export class ReplayDocumentDeltaConnection
     public get disposed() { return this._disposed; }
     public dispose() { this._disposed = true; }
 
-    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
-    public close(): void { this.dispose(); }
-
     /**
      * This gets the specified ops from the delta storage endpoint and replays them in the replayer.
      */
