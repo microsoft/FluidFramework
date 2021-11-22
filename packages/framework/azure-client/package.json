@@ -48,7 +48,7 @@
     "@fluidframework/protocol-definitions": "^0.1026.0",
     "@fluidframework/routerlicious-driver": "^0.52.0",
     "@fluidframework/runtime-utils": "^0.52.0",
-    "@fluidframework/server-services-client": "^0.1034.0-0",
+    "@fluidframework/server-services-client": "^0.1034.0",
     "axios": "^0.21.2",
     "uuid": "^8.3.1"
   },
