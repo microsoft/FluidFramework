@@ -107,11 +107,17 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         // Get all the containerLoadStats events
         containerStatsEvents = getContainerLoadStatsEvents();
         assert(containerStatsEvents !== undefined, "container load stats event is undefined");
+
+        // Checking all the stats
         assert.strictEqual(containerStatsEvents.length, 3, "wrong number of containerLoadStats events");
-        assert.strictEqual(containerStatsEvents[2].containerLoadDataStoreCount, 1, "data store count is wrong");
-        assert.strictEqual(containerStatsEvents[2].referencedDataStoreCount, 1, "summarized data store count is wrong");
-        assert.strictEqual(containerStatsEvents[1].summaryCount, 0, "wrong summary count");
-        assert.strictEqual(containerStatsEvents[2].summaryCount, 1, "wrong summary count");
+        assert.strictEqual(containerStatsEvents[0].containerLoadDataStoreCount, 0, "dataStore count should be 0");
+        assert.strictEqual(containerStatsEvents[0].referencedDataStoreCount, 0,
+            "summarized dataStore count should be 0");
+        assert.strictEqual(containerStatsEvents[2].containerLoadDataStoreCount, 1, "data store count should be 1");
+        assert.strictEqual(containerStatsEvents[2].referencedDataStoreCount, 1,
+            "summarized data store count should be 1");
+        assert.strictEqual(containerStatsEvents[1].summaryCount, 0, "summary count should be 0");
+        assert.strictEqual(containerStatsEvents[2].summaryCount, 1, "summary count should be 1");
 
         // close the current summarizer and start a new summarizer container
         // this is to test summaryCount will still increment instead of reset
@@ -135,7 +141,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
             "create container runtime version is inconsistent");
 
         // summary count should increment instead of reset to 0
-        assert.strictEqual(containerStatsEvents[4].summaryCount, 1, "wrong summary count");
-        assert.strictEqual(containerStatsEvents[5].summaryCount, 2, "wrong summary count");
+        assert.strictEqual(containerStatsEvents[4].summaryCount, 1, "summary count should still be 1");
+        assert.strictEqual(containerStatsEvents[5].summaryCount, 2, "summary count should be 2");
     });
 });
