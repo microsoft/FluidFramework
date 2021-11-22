@@ -24,7 +24,6 @@ type PropertyTraversalCallback = (node: BaseProperty, pathFromTraversalStart: st
 export class AbstractStaticCollectionProperty extends BaseProperty {
     _staticChildren: any;
     _constantChildren: {};
-    value: any;
 
     constructor(in_params: IBasePropertyParams) {
         super(in_params);

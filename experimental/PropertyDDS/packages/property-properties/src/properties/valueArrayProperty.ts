@@ -26,6 +26,7 @@ const { MSG } = constants;
  * An array property which stores primitive values
  */
 export class ValueArrayProperty extends ArrayProperty {
+    _isPrimitive = true;
 
     /**
      * @param in_params - Input parameters for property creation
@@ -34,7 +35,6 @@ export class ValueArrayProperty extends ArrayProperty {
         super(in_params, 'true');
     };
 
-    _isPrimitive = true;
 
     /**
      * returns the value at in_position for a primitive array

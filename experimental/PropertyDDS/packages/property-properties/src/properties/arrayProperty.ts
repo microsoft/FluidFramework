@@ -157,7 +157,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
     /**
      * Default constructor for ArrayProperty
-     * @param {Object} [in_params] - the parameters
+     * @param in_params - the parameters
      * @param in_scope - The scope in which the property typeid is defined
      * @protected
      */
@@ -1252,7 +1252,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * @param in_serializedObj - The object to be deserialized
      * @returns the deserialized value
      */
-    _deserializeValue(in_serializedObj: SerializedChangeSet):any {
+    _deserializeValue(in_serializedObj: SerializedChangeSet): any {
         return in_serializedObj;
     };
 
@@ -1633,16 +1633,15 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
     /**
      * Return a JSON representation of the array and its items.
-     * @return {object} A JSON representation of the array and its items.
-     * @private
+     * @returns  A JSON representation of the array and its items.
      */
-    _toJson() {
+    _toJson(): object {
         var json = {
             id: this.getId(),
             context: this._context,
             typeid: this.getTypeid(),
             isConstant: this._isConstant,
-            value: []
+            value: [] as any
         };
 
         if (!this._isPrimitive) {

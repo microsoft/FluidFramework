@@ -435,10 +435,10 @@ class UniversalDataArray extends BaseDataArray {
  * A data container that contains a string
  */
 class StringDataArray extends BaseDataArray {
-    constructor() {
+    constructor(bufferValue = "") {
         super(String, 0);
-        this.size = 0;
-        this._buffer = "";
+        this.size = bufferValue.length;
+        this._buffer = bufferValue;
     }
     /**
      * insert the content of a string into the StringDataArray
