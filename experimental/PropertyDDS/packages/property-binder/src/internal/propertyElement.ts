@@ -9,33 +9,19 @@
  */
 import { RESOLVE_NEVER, RESOLVE_ALWAYS } from './constants';
 
-import { ArrayProperty, BaseProperty, MapProperty, ReferenceProperty, SetProperty, REFERENCE_RESOLUTION_TYPE } from '@fluid-experimental/property-properties';
+import { BaseProperty, REFERENCE_RESOLUTION_TYPE } from '@fluid-experimental/property-properties';
 import { PathHelper, TypeIdHelper } from '@fluid-experimental/property-changeset';
+import { isCollection, isReferenceProperty } from './typeGuards';
 
-declare type Property = BaseProperty | undefined;
+export declare type Property = BaseProperty | undefined;
 
-
-function isReferenceProperty(property: Property): property is ReferenceProperty {
-    return TypeIdHelper.isReferenceTypeId(property!.getTypeid());
-}
-
-function isCollection(property: Property): property is ArrayProperty | MapProperty | SetProperty {
-    return property!.getContext() !== 'single';
-}
 
 // @TODO: Figure out the right types which has `getValues` method
 function hasGetValues(property: Property): boolean {
     return (property as any).getValues && (property!.getTypeid() !== 'String' || isCollection(property));
 }
 
-/** TODO: Revisit this type guard logic, currently isPrimitiveCollectionPrimitive relies on this._childToken to determine whether
- * The property is primitive collection or not.
- */
-// function isPrimitiveCollection(property: Property): property is ValueArrayProperty | ValueMapProperty {
-//     return TypeIdHelper.isPrimitiveType(property!.getTypeid()) && isCollection(property);
-// }
-
-interface IOptions {
+export interface IOptions {
     /*
     * Define how should this function behave during reference resolution?
     */
@@ -50,7 +36,7 @@ let Options: IOptions = {
  * Currently not exposed to the world
  * @hidden
  */
-class PropertyElement {
+export class PropertyElement {
     _property: Property;
 
     _childToken: string | number | undefined;
@@ -62,7 +48,7 @@ class PropertyElement {
      * @param in_childToken -
      * @hidden
      */
-    constructor(in_property: Property, in_childToken: string | number | undefined = undefined) {
+    constructor(in_property?: Property, in_childToken: string | number | undefined = undefined) {
         this._property = in_property;
         this._childToken = in_childToken;
     };
@@ -73,7 +59,7 @@ class PropertyElement {
      *
      * @returns the property the PropertyElement represents, or the container
      */
-    getProperty(): Property | undefined {
+    getProperty(): BaseProperty | undefined {
         return this._property;
     };
 
@@ -329,7 +315,7 @@ class PropertyElement {
      * @returns the element representing the child. If it does not exist,
      *   this.isValid() will return false
      */
-    getChild(in_child: string[] | string, in_options = Options, in_tokensTypes: PathHelper.TOKEN_TYPES[]): PropertyElement {
+    getChild(in_child: string[] | string, in_options = Options, in_tokensTypes?: PathHelper.TOKEN_TYPES[]): PropertyElement {
         const result = new PropertyElement(this._property, this._childToken);
         result.becomeChild(in_child, in_options, in_tokensTypes);
 
@@ -346,7 +332,7 @@ class PropertyElement {
      * @param in_options - parameter object
      * @returns Current property element
      */
-    becomeChild(in_child: string[]|string, in_options = Options, in_tokensTypes: Array<PathHelper.TOKEN_TYPES> = []): PropertyElement {
+    becomeChild(in_child: string[]|string, in_options = Options , in_tokensTypes: Array<PathHelper.TOKEN_TYPES> = []): PropertyElement {
         let child: string[]| string;
         if (!this.isValid()) {
             // If we're invalid, this isn't going to help
@@ -498,4 +484,3 @@ class PropertyElement {
         return new PropertyElement(this._property, this._childToken);
     };
 };
-export { PropertyElement };

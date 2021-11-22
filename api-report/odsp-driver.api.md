@@ -97,8 +97,6 @@ export class OdspDocumentServiceFactoryWithCodeSplit extends OdspDocumentService
 // @public
 export class OdspDriverUrlResolver implements IUrlResolver {
     constructor();
-    // @deprecated (undocumented)
-    createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest;
     // (undocumented)
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, codeDetails?: IFluidCodeDetails): Promise<string>;
     // (undocumented)
@@ -109,8 +107,6 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     constructor(shareLinkFetcherProps?: ShareLinkFetcherProps | undefined, logger?: ITelemetryBaseLogger, appName?: string | undefined);
     appendDataStorePath(requestUrl: URL, pathToAppend: string): string | undefined;
-    // @deprecated (undocumented)
-    createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest;
     static createDocumentUrl(baseUrl: string, driverInfo: OdspFluidDataStoreLocator): string;
     static createNavParam(locator: OdspFluidDataStoreLocator): string;
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, dataStorePath: string, codeDetails?: IFluidCodeDetails): Promise<string>;

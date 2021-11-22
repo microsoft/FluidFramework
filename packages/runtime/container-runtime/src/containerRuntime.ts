@@ -14,6 +14,7 @@ import {
     IResponse,
     IFluidHandle,
     IFluidConfiguration,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -224,6 +225,12 @@ export interface IGCRuntimeOptions {
 
 export interface ISummaryRuntimeOptions {
     /**
+     * Flag that disables summaries if it is set to true.
+     */
+    disableSummaries?: boolean;
+
+    /**
+     * @deprecated - To disable summaries, please set disableSummaries===true.
      * Flag that will generate summaries if connected to a service that supports them.
      * This defaults to true and must be explicitly set to false to disable.
      */
@@ -357,7 +364,7 @@ class ScheduleManagerCore {
             });
 
         // Start with baseline - empty inbound queue.
-        assert(!this.localPaused, "initial state");
+        assert(!this.localPaused, 0x293 /* "initial state" */);
 
         const allPending = this.deltaManager.inbound.toArray();
         for (const pending of allPending) {
@@ -370,11 +377,12 @@ class ScheduleManagerCore {
      * to make decision if op processing should be paused or not afer that.
      */
      public afterOpProcessing(sequenceNumber: number) {
-        assert(!this.localPaused, "can't have op processing paused if we are processing an op");
+        assert(!this.localPaused, 0x294 /* "can't have op processing paused if we are processing an op" */);
 
         // If the inbound queue is ever empty, nothing to do!
         if (this.deltaManager.inbound.length === 0) {
-            assert(this.pauseSequenceNumber === undefined, "there should be no pending batch if we have no ops");
+            assert(this.pauseSequenceNumber === undefined,
+                0x295 /* "there should be no pending batch if we have no ops" */);
             return;
         }
 
@@ -386,7 +394,8 @@ class ScheduleManagerCore {
 
         // do we have incomplete batch to worry about?
         if (this.pauseSequenceNumber !== undefined) {
-            assert(sequenceNumber < this.pauseSequenceNumber, "we should never start processing incomplete batch!");
+            assert(sequenceNumber < this.pauseSequenceNumber,
+                0x296 /* "we should never start processing incomplete batch!" */);
             // If the next op is the start of incomplete batch, then we can't process it until it's fully in - pause!
             if (sequenceNumber + 1 === this.pauseSequenceNumber) {
                 this.pauseQueue();
@@ -395,7 +404,7 @@ class ScheduleManagerCore {
     }
 
     private pauseQueue() {
-        assert(!this.localPaused, "always called from resumed state");
+        assert(!this.localPaused, 0x297 /* "always called from resumed state" */);
         this.localPaused = true;
         this.timePaused = performance.now();
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -426,10 +435,11 @@ class ScheduleManagerCore {
      * Called for each incoming op (i.e. inbound "push" notification)
      */
     private trackPending(message: ISequencedDocumentMessage) {
-        assert(this.deltaManager.inbound.length !== 0, "we have something in the queue that generates this event");
+        assert(this.deltaManager.inbound.length !== 0,
+            0x298 /* "we have something in the queue that generates this event" */);
 
         assert((this.currentBatchClientId === undefined) === (this.pauseSequenceNumber === undefined),
-            "non-synchronized state");
+            0x299 /* "non-synchronized state" */);
 
         const metadata = message.metadata as IRuntimeMessageMetadata;
         const batchMetadata = metadata?.batch;
@@ -437,14 +447,14 @@ class ScheduleManagerCore {
         // Protocol messages are never part of a runtime batch of messages
         if (!isRuntimeMessage(message)) {
             // Protocol messages should never show up in the middle of the batch!
-            assert(this.currentBatchClientId === undefined, "System message in the middle of batch!");
-            assert(batchMetadata === undefined, "system op in a batch?");
-            assert(!this.localPaused, "we should be processing ops when there is no active batch");
+            assert(this.currentBatchClientId === undefined, 0x29a /* "System message in the middle of batch!" */);
+            assert(batchMetadata === undefined, 0x29b /* "system op in a batch?" */);
+            assert(!this.localPaused, 0x29c /* "we should be processing ops when there is no active batch" */);
             return;
         }
 
         if (this.currentBatchClientId === undefined && batchMetadata === undefined) {
-            assert(!this.localPaused, "we should be processing ops when there is no active batch");
+            assert(!this.localPaused, 0x29d /* "we should be processing ops when there is no active batch" */);
             return;
         }
 
@@ -470,8 +480,8 @@ class ScheduleManagerCore {
         // 2. resumed when batch end comes in (batchMetadata === true case below)
 
         if (batchMetadata) {
-            assert(this.currentBatchClientId === undefined, "there can't be active batch");
-            assert(!this.localPaused, "we should be processing ops when there is no active batch");
+            assert(this.currentBatchClientId === undefined, 0x29e /* "there can't be active batch" */);
+            assert(!this.localPaused, 0x29f /* "we should be processing ops when there is no active batch" */);
             this.pauseSequenceNumber = message.sequenceNumber;
             this.currentBatchClientId = message.clientId;
             // Start of the batch
@@ -481,14 +491,14 @@ class ScheduleManagerCore {
                 this.pauseQueue();
             }
         } else if (batchMetadata === false) {
-            assert(this.pauseSequenceNumber !== undefined, "batch presence was validated above");
+            assert(this.pauseSequenceNumber !== undefined, 0x2a0 /* "batch presence was validated above" */);
             // Batch is complete, we can process it!
             this.resumeQueue(this.pauseSequenceNumber, message.sequenceNumber);
             this.pauseSequenceNumber = undefined;
             this.currentBatchClientId = undefined;
         } else {
             // Continuation of current batch. Do nothing
-            assert(this.currentBatchClientId !== undefined, "logic error");
+            assert(this.currentBatchClientId !== undefined, 0x2a1 /* "logic error" */);
         }
     }
 }
@@ -522,7 +532,7 @@ export class ScheduleManager {
     public beforeOpProcessing(message: ISequencedDocumentMessage) {
         if (this.batchClientId !== message.clientId) {
             assert(this.batchClientId === undefined,
-                "Batch is interrupted by other client op. Should be caught by trackPending()");
+                0x2a2 /* "Batch is interrupted by other client op. Should be caught by trackPending()" */);
 
             // This could be the beginning of a new batch or an individual message.
             this.emitter.emit("batchBegin", message);
@@ -539,7 +549,7 @@ export class ScheduleManager {
 
     public afterOpProcessing(error: any | undefined, message: ISequencedDocumentMessage) {
         // If this is no longer true, we need to revisit what we do where we set this.hitError.
-        assert(!this.hitError, "container should be closed on any error");
+        assert(!this.hitError, 0x2a3 /* "container should be closed on any error" */);
 
         // Let the scheduler know how far we progressed, to decide if op processing
         // should be paused or not.
@@ -609,7 +619,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         registryEntries: NamedFluidDataStoreRegistryEntries,
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions: IContainerRuntimeOptions = {},
-        containerScope: IFluidObject = context.scope,
+        containerScope: FluidObject = context.scope,
         existing?: boolean,
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
@@ -621,7 +631,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         const {
-            summaryOptions = { generateSummaries: true },
+            summaryOptions = {},
             gcOptions = {},
             loadSequenceNumberVerification = "close",
         } = runtimeOptions;
@@ -783,7 +793,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._flushMode;
     }
 
-    public get scope(): IFluidObject {
+    public get scope(): IFluidObject & FluidObject {
         return this.containerScope;
     }
 
@@ -889,7 +899,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         electedSummarizerData: ISerializedElection | undefined,
         chunks: [string, string[]][],
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
-        private readonly containerScope: IFluidObject,
+        private readonly containerScope: FluidObject,
         public readonly logger: ITelemetryLogger,
         existing: boolean,
         blobManagerSnapshot: IBlobManagerLoadInfo,
@@ -1001,7 +1011,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
         // Only create a SummaryManager if summaries are enabled and we are not the summarizer client
+        // Map the deprecated generateSummaries flag to disableSummaries.
         if (this.runtimeOptions.summaryOptions.generateSummaries === false) {
+            this.runtimeOptions.summaryOptions.disableSummaries = true;
+        }
+        if (this.summariesDisabled()) {
             this._logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
         } else {
             const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 7000;
@@ -1564,7 +1578,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
         const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
-        fluidDataStore.attachGraph();
+        fluidDataStore.bindToContext();
         return fluidDataStore;
     }
 
@@ -1588,7 +1602,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
             Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
         if (isRoot) {
-            fluidDataStore.attachGraph();
+            fluidDataStore.bindToContext();
         }
         return fluidDataStore;
     }
@@ -2287,6 +2301,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.pendingStateManager.getLocalState();
     }
 
+    /**
+     * @returns true if summaries are explicitly disabled for this ContainerRuntime, false otherwise
+     */
+    public summariesDisabled(): boolean {
+        return this.runtimeOptions.summaryOptions.disableSummaries === true ||
+            this.runtimeOptions.summaryOptions.summaryConfigOverrides?.disableSummaries === true;
+    }
+
     public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
         if (this.clientDetails.type === summarizerClientType) {
             return this.summarizer.summarizeOnDemand(...args);
@@ -2294,10 +2316,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return this.summaryManager.summarizeOnDemand(...args);
         } else {
             // If we're not the summarizer, and we don't have a summaryManager, we expect that
-            // generateSummaries is turned off. We are throwing instead of returning a failure here,
+            // disableSummaries is turned on. We are throwing instead of returning a failure here,
             // because it is a misuse of the API rather than an expected failure.
             throw new Error(
-                `Can't summarize, generateSummaries: ${this.runtimeOptions.summaryOptions.generateSummaries}`,
+                `Can't summarize, disableSummaries: ${this.summariesDisabled()}`,
             );
         }
     };
@@ -2312,7 +2334,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // generateSummaries is turned off. We are throwing instead of returning a failure here,
             // because it is a misuse of the API rather than an expected failure.
             throw new Error(
-                `Can't summarize, generateSummaries: ${this.runtimeOptions.summaryOptions.generateSummaries}`,
+                `Can't summarize, disableSummaries: ${this.summariesDisabled()}`,
             );
         }
     };
