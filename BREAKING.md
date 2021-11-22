@@ -17,6 +17,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove `IOdspResolvedUrl.sharingLinkToRedeem` and use `IOdspResolvedUrl.shareLinkInfo` instead](#Remove-IOdspResolvedUrl.sharingLinkToRedeem-and-use-IOdspResolvedUrl.shareLinkInfo-instead)
 - [Replace `createCreateNewRequest` function with `createOdspCreateContainerRequest` function](#Replace-createCreateNewRequest-function-with-createOdspCreateContainerRequest-function)
 - [Deprecate IFluidObject and introduce FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject)
+- [readOnly and readOnlyPermissions removed from container-loader](#readOnly-and-readOnlyPermissions-removed-from-container-loader)
 
 ### `chaincodePackage` removed from `Container`
 The `chaincodePackage` property on `Container` was deprecated in 0.28, and has now been removed.  Two new APIs have been added to replace its functionality, `getSpecifiedCodeDetails()` and `getLoadedCodeDetails()`.  Use `getSpecifiedCodeDetails()` to get the code details currently specified for the `Container`, or `getLoadedCodeDetails()` to get the code details that were used to load the `Container`.

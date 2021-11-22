@@ -337,33 +337,6 @@ export class DeltaManager
         return this.connection.mode;
     }
 
-    /**
-     * Tells if container is in read-only mode.
-     * Data stores should listen for "readonly" notifications and disallow user
-     * making changes to data stores.
-     * Readonly state can be because of no storage write permission,
-     * or due to host forcing readonly mode for container.
-     * It is undefined if we have not yet established websocket connection
-     * and do not know if user has write access to a file.
-     * @deprecated - use readOnlyInfo
-     */
-    public get readonly() {
-        if (this._forceReadonly) {
-            return true;
-        }
-        return this._readonlyPermissions;
-    }
-
-    /**
-     * Tells if user has no write permissions for file in storage
-     * It is undefined if we have not yet established websocket connection
-     * and do not know if user has write access to a file.
-     * @deprecated - use readOnlyInfo
-     */
-    public get readonlyPermissions() {
-        return this._readonlyPermissions;
-    }
-
     public get readOnlyInfo(): ReadOnlyInfo {
         const storageOnly = this.connection !== undefined && this.connection instanceof NoDeltaStream;
         if (storageOnly || this._forceReadonly || this._readonlyPermissions === true) {
@@ -453,15 +426,15 @@ export class DeltaManager
                 value: readonly,
             });
         }
-        const oldValue = this.readonly;
+        const oldValue = this.readOnlyInfo.readonly;
         this._forceReadonly = readonly;
 
-        if (oldValue !== this.readonly) {
+        if (oldValue !== this.readOnlyInfo.readonly) {
             assert(this._reconnectMode !== ReconnectMode.Never,
                 0x279 /* "API is not supported for non-connecting or closed container" */);
 
             let reconnect = false;
-            if (this.readonly === true) {
+            if (this.readOnlyInfo.readonly === true) {
                 // If we switch to readonly while connected, we should disconnect first
                 // See comment in the "readonly" event handler to deltaManager set up by
                 // the ContainerRuntime constructor
@@ -474,7 +447,7 @@ export class DeltaManager
 
                 reconnect = this.disconnectFromDeltaStream("Force readonly");
             }
-            safeRaiseEvent(this, this.logger, "readonly", this.readonly);
+            safeRaiseEvent(this, this.logger, "readonly", this.readOnlyInfo.readonly);
             if (reconnect) {
                 // reconnect if we disconnected from before.
                 this.triggerConnect({ reason: "forceReadonly", mode: "read", fetchOpsFromStorage: false });
@@ -512,10 +485,10 @@ export class DeltaManager
     }
 
     private set_readonlyPermissions(readonly: boolean) {
-        const oldValue = this.readonly;
+        const oldValue = this.readOnlyInfo.readonly;
         this._readonlyPermissions = readonly;
-        if (oldValue !== this.readonly) {
-            safeRaiseEvent(this, this.logger, "readonly", this.readonly);
+        if (oldValue !== this.readOnlyInfo.readonly) {
+            safeRaiseEvent(this, this.logger, "readonly", this.readOnlyInfo.readonly);
         }
     }
 
@@ -858,7 +831,7 @@ export class DeltaManager
         // const serializedContent = JSON.stringify(this.messageBuffer);
         // const maxOpSize = this.context.deltaManager.maxMessageSize;
 
-        if (this.readonly === true) {
+        if (this.readOnlyInfo.readonly === true) {
             assert(this.readOnlyInfo.readonly === true, 0x1f0 /* "Unexpected mismatch in readonly" */);
             const error = new GenericError("deltaManagerReadonlySubmit", undefined /* error */, {
                 readonly: this.readOnlyInfo.readonly,
