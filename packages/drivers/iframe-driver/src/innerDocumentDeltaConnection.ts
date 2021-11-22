@@ -195,7 +195,4 @@ export class InnerDocumentDeltaConnection
     public dispose() {
         throw new Error("InnerDocumentDeltaConnection: close() not implemented Yet");
     }
-
-    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
-    public close(): void { this.dispose(); }
 }

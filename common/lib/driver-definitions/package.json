@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/driver-definitions",
-  "version": "0.42.0",
+  "version": "0.43.0",
   "description": "Fluid driver definitions",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.43369",
+    "@fluidframework/build-tools": "^0.2.44421",
     "@fluidframework/driver-definitions-0.39.8": "npm:@fluidframework/driver-definitions@0.39.8",
     "@fluidframework/driver-definitions-0.40.0": "npm:@fluidframework/driver-definitions@0.40.0",
     "@fluidframework/driver-definitions-0.41.0": "npm:@fluidframework/driver-definitions@0.41.0",
@@ -83,10 +83,6 @@
           "backCompat": false
         },
         "InterfaceDeclaration_IDocumentServiceFactory": {
-          "forwardCompat": false,
-          "backCompat": false
-        },
-        "InterfaceDeclaration_IDocumentStorageService": {
           "forwardCompat": false,
           "backCompat": false
         },

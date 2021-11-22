@@ -6,13 +6,25 @@ import { PropertyFactory } from '@fluid-experimental/property-properties';
 import { TypeIdHelper } from '@fluid-experimental/property-changeset';
 
 import * as _ from 'underscore';
-import { getLocalOrRemoteSchema } from '../data_binder/internal_utils';
-import { DataBinder } from '..';
+import { getLocalOrRemoteSchema } from '../data_binder/internalUtils';
+import { DataBinder, DataBinding } from '..';
 import { ExtractedContext } from '@fluid-experimental/property-changeset/dist/helpers/typeidHelper';
 
+
+export interface ActivationInfo {
+    dataBinder: DataBinder,
+    userData: any
+}
+
 export interface ActivationType {
-    activationSplitType: ExtractedContext;
+    bindingConstructor?: typeof DataBinding;
+    activationSplitType: ExtractedContext | undefined;
     bindingType: string;
+    startPath: string;
+    includePrefix: string,
+    excludePrefix: string,
+    exactPath: string,
+    activationInfo: ActivationInfo
 }
 
 export interface TypeCacheEntry {
@@ -51,7 +63,7 @@ export class ActivationQueryCacheHelper {
   constructor(in_activations: ActivationType[], in_dataBinder: DataBinder) {
     this._activations = in_activations;
     this._dataBinder = in_dataBinder;
-    this._workspace = in_dataBinder.getWorkspace();
+    this._workspace = in_dataBinder.getPropertyTree();
     this._childrenCache = {};
     this._hierarchyCache = {};
     this._typeCache = {};
@@ -80,7 +92,7 @@ export class ActivationQueryCacheHelper {
       } else {
         // Need to check the actual types of the children more carefully.
         // Note, we don't check the root of the template; we are only interested in the children properties
-        const template = getLocalOrRemoteSchema(in_typeid, this._workspace);
+        const template = getLocalOrRemoteSchema(in_typeid);
         if (template && template.properties) {
           const checkNested = (properties) => {
             let result = false;
@@ -198,7 +210,7 @@ export class ActivationQueryCacheHelper {
    * @returns all the inheriting types
    */
   _getInheritedTypes(in_typeid: string): string[] {
-    const newInheritedTemplates = getLocalOrRemoteSchema(in_typeid, this._workspace);
+    const newInheritedTemplates = getLocalOrRemoteSchema(in_typeid);
     let inherited = (newInheritedTemplates && newInheritedTemplates.inherits) || [];
 
     // The inherited entry may be a simple string (hole in the template validator?)

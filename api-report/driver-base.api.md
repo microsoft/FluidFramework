@@ -29,8 +29,6 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     checkpointSequenceNumber: number | undefined;
     get claims(): ITokenClaims;
     get clientId(): string;
-    // (undocumented)
-    close(): void;
     protected createErrorObject(handler: string, error?: any, canRetry?: boolean): DriverError;
     // (undocumented)
     get details(): IConnected;

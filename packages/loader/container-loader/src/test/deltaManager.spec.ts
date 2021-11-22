@@ -260,7 +260,7 @@ describe("Loader", () => {
                     await startDeltaManager(false /* startDeltaManager */);
 
                     // Closing underlying connection makes container readonly
-                    deltaConnection.close();
+                    deltaConnection.dispose();
                     assert.strictEqual(deltaManager.readonly, true);
 
                     deltaManager.on("readonly", () => {
