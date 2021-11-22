@@ -1,16 +1,16 @@
 ---
 title: Using Fluid with Microsoft Teams
-menuPosition: 1
+menuPosition: 4
 ---
 
-This is a tutorial for integrating Fluid-powered real-time collaboration features into a [Microsoft Teams tab application](https://docs.microsoft.com/en-us/microsoftteams/platform/tabs/what-are-tabs). By the end of this tutorial you will be able to integrate any Fluid-powered applications into Micrisoft Teams and collaborate with others in real-time.
+This is a tutorial for integrating Fluid-powered real-time collaboration features into a [Microsoft Teams tab application](https://docs.microsoft.com/en-us/microsoftteams/platform/tabs/what-are-tabs). By the end of this tutorial you will be able to integrate any Fluid-powered applications into Microsoft Teams and collaborate with others in real-time.
 
 Concepts you will learn:
 1. How to integrate a Fluid client into a Microsoft Teams tab application
 2. How to run and connect your Teams application to a Fluid service (Azure Fluid Relay)
-3. How to create and get Fluid Containers and pass it to a React component
+3. How to create and get Fluid Containers and pass them to a React component
 
-For an example of how this recipe may be used to build a more complex application, check out the [Teams Fluid Hello World](https://github.com/microsoft/FluidExamples/tree/main/teams-fluid-hello-world) in our FluidExamples repo.
+For an example of how this recipe may be used to build a more complex application, check out the [Teams Fluid Hello World](https://github.com/microsoft/FluidExamples/tree/main/teams-fluid-hello-world) example in our FluidExamples repo.
 
 {{< callout note >}}
 
@@ -32,7 +32,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     |Library |Description |
     |---|---|
-    | `fluid-framework`    |Contains the IFluidContainer and other [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients.|
+    | `fluid-framework`    |Contains the IFluidContainer and other [distributed data structures]({{< relref "dds.md" >}}) that synchronize data across clients.|
     | `@fluidframework/azure-client`   |Defines the starting schema for the [Fluid container][].|
     | `@fluidframework/test-client-utils` |Defines the `InsecureTokenProvider` needed to create the connection to a Fluid service.|
     {.table}
@@ -57,7 +57,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 ### Defining Fluid functions and parameters
 
-1. Since this app is intended to be used in the context of Microsoft Teams, having all Fluid related imports, initialization, and functions in one place makes it easier to use in the future. Add the following code below the import statements. The comments will define all the functions and constants needed to interact with the Fluid service and container.
+1. Since this app is intended to be used in the context of Microsoft Teams, having all Fluid-related imports, initialization, and functions in one place makes it easier to use in the future. Add the following code below the import statements. The comments will define all the functions and constants needed to interact with the Fluid service and container.
 
 ```ts
 // TODO 1: Define the parameter key(s).
@@ -68,7 +68,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 // TODO 6: Define get container function.
 ```
 
-1. Replace `TODO 1:` with the following code. Note that the constant is being exported because it will be used to append to the `contentUrl` in the Microsoft Teams settings and later for parsing the container ID in the content page. It's a common pattern to store important query parameter keys as constants, rather than typing the raw string each time.
+1. Replace `TODO 1:` with the following code. Note that the constant is being exported because it will be appended to the `contentUrl` in the Microsoft Teams settings and later for parsing the container ID in the content page. It's a common pattern to store important query parameter keys as constants, rather than typing the raw string each time.
 
 ```ts
 export const containerIdQueryParamKey = "containerId";
@@ -131,7 +131,7 @@ Open the file `src/client/<your tab name>/<your tab name>Config.tsx` in your cod
 import { createContainer, containerIdQueryParamKey } from "./Util";
 ```
 
-1. Replace the `onSaveHandler` method with the following code. Note that the only lines added here are calling the create container method defined earlier in `Utils.ts`. Then appending the returned container ID to the `contentUrl` and `websiteUrl` as a query parameter.
+1. Replace the `onSaveHandler` method with the following code. Note that the only lines added here are calling the create container method defined earlier in `Utils.ts` and then appending the returned container ID to the `contentUrl` and `websiteUrl` as a query parameter.
 
 ```ts {linenos=inline,hl_lines=[134,136,137]}
 const onSaveHandler = async (saveEvent: microsoftTeams.settings.SaveEvent) => {
@@ -168,7 +168,7 @@ import { IFluidContainer } from "fluid-framework";
 import { getContainer, containerIdQueryParamKey } from "./Util";
 ```
 
-1. Now remove all the code below the import statements inside the content page and replace it with the following. Make sure to replace <your tab name> with the tab name you defined for your project.
+1. Now remove all the code below the import statements inside the content page and replace it with the following. Make sure to replace `<your tab name>` with the tab name you defined for your project.
 
 ```ts
 export const <your tab name> = () => {
@@ -187,7 +187,7 @@ export const <your tab name> = () => {
 microsoftTeams.initialize();
 ```
 
-1. Replace `TODO 2` with the following code. Because Teams application is just an IFrame injection of a webpage, you need to initialize the `inTeams` boolean constant in order to know if the application is inside Microsoft Teams or not, and if the Teams resources, such as the `contentUrl`, are available.
+1. Replace `TODO 2` with the following code. Because the Teams application is just an IFrame injection of a webpage, you need to initialize the `inTeams` boolean constant in order to know if the application is inside Microsoft Teams or not, and if the Teams resources, such as the `contentUrl`, are available.
 
 ```ts
 const [{ inTeams }] = useTeams();
@@ -261,9 +261,9 @@ If you are running your Teams application locally with Azure Client local mode, 
 npx @fluidframework/azure-local-service@latest
 ```
 
-To run and start the Teams application, open another terminal and follow the [instructions](https://docs.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/create-channel-group-tab?tabs=nodejs#upload-your-application-to-teams) to run the application server.
+To run and start the Teams application, open another terminal and follow the [instructions to run the application server](https://docs.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/create-channel-group-tab?tabs=nodejs#upload-your-application-to-teams).
 
-Now follow the [instructions](https://docs.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/create-channel-group-tab?tabs=nodejs#upload-your-application-to-teams) to upload the application to a Teams Tab.
+Now follow the [instructions to upload the application to a Teams Tab](https://docs.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/create-channel-group-tab?tabs=nodejs#upload-your-application-to-teams).
 
 {{< callout warning >}}
 
@@ -275,7 +275,7 @@ Hostnames with `ngrok`'s free tunnels are not preserved. Each run will generate 
 
 ### Using AzureClient with Azure Fluid Relay
 
-Because this is a Teams tab application, collaboration and interaction is the main focus. Consider replacing the local mode `AzureClientProps` provided above with non-local credentials from your Azure service instance, so others can join in and interact with you in the application! Check out [how to provision your Azure Fluid Relay service](https://docs.microsoft.com/en-us/azure/azure-fluid-relay/how-tos/provision-fluid-azure-portal).
+Because this is a Teams tab application, collaboration and interaction are the main focuses. Consider replacing the local mode `AzureClientProps` provided above with non-local credentials from your Azure service instance, so others can join in and interact with you in the application! Check out [how to provision your Azure Fluid Relay service](https://docs.microsoft.com/en-us/azure/azure-fluid-relay/how-tos/provision-fluid-azure-portal).
 
 {{< callout note >}}
 
