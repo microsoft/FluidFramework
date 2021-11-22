@@ -115,7 +115,7 @@ export function normalizeError(
         errorType: "genericError", // Match Container/Driver generic error type
         fluidErrorCode: "",
         message,
-        stack: stack ?? generateStack(),
+        stack,
     });
 
     fluidError.addTelemetryProperties({
@@ -163,12 +163,7 @@ export function generateStack(): string | undefined {
     const newError = newErrorFn(message);
 
     if (stack !== undefined) {
-        // supposedly setting stack on an Error can throw.
-        try {
-            Object.assign(newError, { stack });
-        } catch (errorSettingStack) {
-            newError.addTelemetryProperties({ stack2: stack });
-        }
+        overwriteStack(newError, stack);
     }
 
     if (hasErrorInstanceId(innerError)) {
@@ -195,6 +190,15 @@ export function wrapErrorAndLog<T extends IFluidErrorBase>(
     }, innerError);
 
     return newError;
+}
+
+function overwriteStack(error: IFluidErrorBase, stack: string) {
+    // supposedly setting stack on an Error can throw.
+    try {
+        Object.assign(error, { stack });
+    } catch (errorSettingStack) {
+        error.addTelemetryProperties({ stack2: stack });
+    }
 }
 
 /**
@@ -287,16 +291,10 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
     }
 }
 
-/** Simplest possible implementation of IFluidErrorBase */
-class SimpleFluidError implements IFluidErrorBase {
-    private readonly telemetryProps: ITelemetryProperties = {};
-
+/** Simple implementation of IFluidErrorBase, extending LoggingError */
+class SimpleFluidError extends LoggingError implements IFluidErrorBase {
     readonly errorType: string;
     readonly fluidErrorCode: string;
-    readonly message: string;
-    readonly stack?: string;
-    readonly name: string = "Error";
-    readonly errorInstanceId: string;
 
     constructor(
         errorProps: Omit<IFluidErrorBase,
@@ -305,20 +303,13 @@ class SimpleFluidError implements IFluidErrorBase {
             | "errorInstanceId"
             | "name">,
     ) {
+        super(errorProps.message);
         this.errorType = errorProps.errorType;
         this.fluidErrorCode = errorProps.fluidErrorCode;
-        this.message = errorProps.message;
-        this.stack = errorProps.stack;
-        this.errorInstanceId = uuid();
+        if (errorProps.stack !== undefined) {
+            overwriteStack(this, errorProps.stack);
+        }
 
         this.addTelemetryProperties(errorProps);
-    }
-
-    getTelemetryProperties(): ITelemetryProperties {
-        return this.telemetryProps;
-    }
-
-    addTelemetryProperties(props: ITelemetryProperties) {
-        copyProps(this.telemetryProps, props);
     }
 }
