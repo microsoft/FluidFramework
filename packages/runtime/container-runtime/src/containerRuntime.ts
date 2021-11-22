@@ -841,7 +841,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._summarizer;
     }
 
-    private readonly createContainerMetadata: ICreateContainerMetadata = {};
+    private readonly createContainerMetadata: ICreateContainerMetadata;
 
     private constructor(
         private readonly context: IContainerContext,
@@ -866,7 +866,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.createContainerMetadata = {
                 createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
                 createContainerTimestamp: metadata?.createContainerTimestamp,
-                summaryCount: metadata?.summaryCount,
+                summaryCount: metadata?.summaryCount ?? 0,
             };
         } else {
             this.createContainerMetadata = {
@@ -1788,11 +1788,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param options - options controlling how the summary is generated or submitted
      */
     public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-        if (this.createContainerMetadata.summaryCount !== undefined) {
-            this.createContainerMetadata.summaryCount++;
-        } else {
-            this.createContainerMetadata.summaryCount = 0;
-        }
+        // increment summary count
+        this.createContainerMetadata.summaryCount++;
+
         const { fullTree, refreshLatestAck, summaryLogger } = options;
         if (refreshLatestAck) {
             const latestSummaryRefSeq = await this.refreshLatestSummaryAckFromServer(

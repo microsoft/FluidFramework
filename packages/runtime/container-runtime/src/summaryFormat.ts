@@ -91,7 +91,7 @@ export interface ICreateContainerMetadata {
     /** Timestamp of the container when it was first created */
     createContainerTimestamp?: number;
     /** Counter of the last summary happened, increments every time we summarize */
-    summaryCount?: number;
+    summaryCount: number;
 }
 
 /** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
