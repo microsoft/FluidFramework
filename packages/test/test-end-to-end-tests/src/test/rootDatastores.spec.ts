@@ -139,6 +139,13 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.deepStrictEqual(ds, ds1);
         });
 
+        it("Assign regular datastore to alias", async () => {
+            const ds = await runtimeOf(dataObject1).createDataStore(packageName);
+
+            const aliasResult = await ds.trySetAlias(alias);
+            assert(aliasResult);
+        });
+
         it("Assign multiple data stores to the same alias, first write wins, different containers", async () => {
             const ds1 = await createRootDataStore(dataObject1, "1");
             const ds2 = await createRootDataStore(dataObject2, "2");
