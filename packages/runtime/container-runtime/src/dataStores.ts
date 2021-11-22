@@ -67,10 +67,12 @@ export class DataStores implements IDisposable {
 
     private readonly disposeOnce = new Lazy<void>(() => this.contexts.dispose());
 
-    // number of dataStores during loadContainer
-    public readonly containerLoadDataStoreCount: number;
-    // number of unreferenced dataStores during loadContainer
-    public readonly referencedDataStoreCount: number;
+    public readonly containerLoadStats: {
+        // number of dataStores during loadContainer
+        readonly containerLoadDataStoreCount: number;
+        // number of unreferenced dataStores during loadContainer
+        readonly referencedDataStoreCount: number;
+    };
 
     constructor(
         private readonly baseSnapshot: ISnapshotTree | undefined,
@@ -129,8 +131,10 @@ export class DataStores implements IDisposable {
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
         }
-        this.containerLoadDataStoreCount = fluidDataStores.size;
-        this.referencedDataStoreCount = this.containerLoadDataStoreCount - unreferencedDataStoreCount;
+        this.containerLoadStats = {
+            containerLoadDataStoreCount: fluidDataStores.size,
+            referencedDataStoreCount: fluidDataStores.size - unreferencedDataStoreCount;
+        }
     }
 
     public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
