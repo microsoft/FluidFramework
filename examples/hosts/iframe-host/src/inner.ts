@@ -6,7 +6,7 @@
 import * as Comlink from "comlink";
 import { fluidExport as TodoContainer } from "@fluid-example/todo";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import {
     InnerDocumentServiceFactory,
     InnerUrlResolver,
@@ -22,7 +22,7 @@ async function getFluidObjectAndRender(container: Container, div: HTMLDivElement
     if (response.status !== 200 || response.mimeType !== "fluid/object") {
         return undefined;
     }
-    const fluidObject = response.value as IFluidObject;
+    const fluidObject: FluidObject = response.value;
 
     // Render the Fluid object with an HTMLViewAdapter to abstract the UI framework used by the Fluid object
     const view = new HTMLViewAdapter(fluidObject);

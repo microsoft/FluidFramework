@@ -128,6 +128,7 @@ export class ConnectionStateHandler {
             // Adding this event temporarily so that we can get help debugging if something goes wrong.
             this.logger.sendTelemetryEvent({
                 eventName: "connectedStateRejected",
+                category: source === "timeout" ? "error" : "generic",
                 source,
                 pendingClientId: this.pendingClientId,
                 clientId: this.clientId,
@@ -168,7 +169,7 @@ export class ConnectionStateHandler {
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         this._pendingClientId = details.clientId;
 
-        // Report telemetry after we set client id!
+        // Report telemetry after we set client id, but before transitioning to Connected state below!
         this.handler.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
 
         const protocolHandler = this.handler.protocolHandler();
@@ -235,9 +236,10 @@ export class ConnectionStateHandler {
             }
         }
 
-        this.handler.connectionStateChanged();
-
-        // Report telemetry after we set client id!
+        // Report transition before we propagate event across layers
         this.handler.logConnectionStateChangeTelemetry(this._connectionState, oldState, reason);
+
+        // Propagate event across layers
+        this.handler.connectionStateChanged();
     }
 }

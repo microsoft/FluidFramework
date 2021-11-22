@@ -159,8 +159,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly contexts = new Map<string, IChannelContext>();
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private readonly pendingAttach = new Map<string, IAttachMessage>();
+
     private bindState: BindState;
-    // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
+    // For new data stores, this is used to break the recursion while attaching the graph. The graph must be attached
+    // before the data store can move to Attached state (see _attachState) and become live.
+    // For existing data stores, the graph is always attached.
     private graphAttachState: AttachState = AttachState.Detached;
     private readonly deferredAttached = new Deferred<void>();
     private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
@@ -439,7 +442,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * 1. Sending an Attach op that includes all existing state
      * 2. Attaching the graph if the data store becomes attached.
      */
-    public bindToContext() {
+     public bindToContext() {
         if (this.bindState !== BindState.NotBound) {
             return;
         }
@@ -710,9 +713,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public getAttachSummary(): ISummaryTreeWithStats {
-        // back-compat 0.50: attachGraph() will be called when creating a root data store or when adding the handle
-        // of a non-root data store to an already bound DDS.
-        // To be removed when N >= 0.52
         this.attachGraph();
 
         const summaryBuilder = new SummaryTreeBuilder();

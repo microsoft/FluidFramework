@@ -12,50 +12,76 @@ import {
     ISignalMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-
 import {
     IDeltaManager,
     IDeltaManagerEvents,
     IDeltaQueue,
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 
 /**
  * Mock implementation of IDeltaQueue for testing that does nothing
  */
-class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
+export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
+    protected readonly queue: T[] = [];
+    protected pauseCount = 0;
+
+    public processCallback: (el: T) => void = () => {};
+
     public get disposed() { return undefined; }
 
     public get paused(): boolean {
-        return false;
+        return this.pauseCount !== 0;
     }
 
-    public get length(): number {
-        return 0;
-    }
+    public get length() { return this.queue.length; }
 
     public get idle(): boolean {
-        return false;
+        return this.queue.length === 0;
+    }
+
+    protected process() {
+        void Promise.resolve().then(() => {
+            while (this.pauseCount === 0 && this.length > 0) {
+                this.processCallback(this.pop());
+            }
+        });
+    }
+
+    public push(el: T) {
+        this.queue.push(el);
+        this.emit("push", el);
+        this.process();
+    }
+
+    public pop() {
+        return this.queue.shift();
     }
 
     public async pause(): Promise<void> {
+        this.pauseCount++;
         return;
     }
 
-    public resume(): void { }
+    public resume(): void {
+        this.pauseCount--;
+        this.process();
+    }
 
     public peek(): T | undefined {
-        return undefined;
+        return this.queue[0];
     }
 
     public toArray(): T[] {
-        return [];
+        return this.queue;
     }
 
     public dispose() { }
 
-    public async waitTillProcessingDone() { }
+    public async waitTillProcessingDone() {
+        assert(false, "NYI");
+    }
 
     constructor() {
         super();
@@ -79,15 +105,15 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents>
     private readonly _inboundSignal: MockDeltaQueue<ISignalMessage>;
     private readonly _outbound: MockDeltaQueue<IDocumentMessage[]>;
 
-    public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
+    public get inbound(): MockDeltaQueue<ISequencedDocumentMessage> {
         return this._inbound;
     }
 
-    public get outbound(): IDeltaQueue<IDocumentMessage[]> {
+    public get outbound(): MockDeltaQueue<IDocumentMessage[]> {
         return this._outbound;
     }
 
-    public get inboundSignal(): IDeltaQueue<ISignalMessage> {
+    public get inboundSignal(): MockDeltaQueue<ISignalMessage> {
         return this._inboundSignal;
     }
     public minimumSequenceNumber = 0;

@@ -4,6 +4,7 @@
 
 ```ts
 
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
@@ -166,7 +167,7 @@ export type RefreshSummaryResult = {
 };
 
 // @public (undocumented)
-export function requestFluidObject<T = IFluidObject>(router: IFluidRouter, url: string | IRequest): Promise<T>;
+export function requestFluidObject<T = IFluidObject & FluidObject>(router: IFluidRouter, url: string | IRequest): Promise<T>;
 
 // @public
 export class RequestParser implements IRequest {
