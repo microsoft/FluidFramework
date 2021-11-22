@@ -309,7 +309,5 @@ class SimpleFluidError extends LoggingError implements IFluidErrorBase {
         if (errorProps.stack !== undefined) {
             overwriteStack(this, errorProps.stack);
         }
-
-        this.addTelemetryProperties(errorProps);
     }
 }
