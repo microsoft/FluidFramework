@@ -43,7 +43,6 @@ import {
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
     FluidDataStoreRegistryEntry,
-    gcBlobKey,
     IAttachMessage,
     IFluidDataStoreChannel,
     IFluidDataStoreContext,
@@ -416,9 +415,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         const attributes = createAttributes(pkg, isRootDataStore, this.disableIsolatedChannels);
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
-        // Add GC details to the summary.
-        addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(this.summarizerNode.getGCSummaryDetails()));
-
         // If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob
         // size in the summary stats with the blobs size of this data store.
         if (!this.summarizerNode.isReferenced()) {
@@ -675,6 +671,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     constructor(
         id: string,
         private readonly initSnapshotValue: ISnapshotTree | string | undefined,
+        public readonly getBaseSummaryGCDetails: () => Promise<IGarbageCollectionSummaryDetails | undefined>,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: FluidObject,
@@ -760,16 +757,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     });
 
     private readonly gcDetailsInInitialSummaryP = new LazyPromise<IGarbageCollectionSummaryDetails>(async () => {
-        // If the initial snapshot is undefined or string, the snapshot is in old format and won't have GC details.
-        if (!(!this.initSnapshotValue || typeof this.initSnapshotValue === "string")
-            && this.initSnapshotValue.blobs[gcBlobKey] !== undefined) {
-            return readAndParse<IGarbageCollectionSummaryDetails>(
-                this.storage,
-                this.initSnapshotValue.blobs[gcBlobKey],
-            );
-        } else {
-            return {};
-        }
+        return (await this.getBaseSummaryGCDetails()) ?? {};
     });
 
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
@@ -849,9 +837,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             this.disableIsolatedChannels,
         );
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
-
-        // Add GC details to the summary.
-        addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(this.summarizerNode.getGCSummaryDetails()));
 
         // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
         const snapshot = convertSummaryTreeToITree(summarizeResult.summary);

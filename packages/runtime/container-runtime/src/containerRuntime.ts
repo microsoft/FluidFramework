@@ -1014,6 +1014,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 ),
             (id: string) => this.summarizerNode.deleteChild(id),
             this._logger,
+            async () => this.garbageCollector.getBaseSummaryGCDetails(),
             (id: string) => this.garbageCollector.nodeChanged(id),
         );
 
@@ -1377,6 +1378,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const blobsTree = convertToSummaryTree(snapshot, false);
             addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
         }
+
+        this.garbageCollector.addGCStateToSummary(summaryTree);
     }
 
     private replayPendingStates() {

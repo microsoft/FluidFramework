@@ -216,6 +216,20 @@ export interface IGarbageCollectionData {
 }
 
 // @public
+export interface IGarbageCollectionNodeData {
+    outboundRoutes: string[];
+    unreferencedTimestampMs?: number;
+}
+
+// @public
+export interface IGarbageCollectionState {
+    // (undocumented)
+    gcNodes: {
+        [id: string]: IGarbageCollectionNodeData;
+    };
+}
+
+// @public
 export interface IGarbageCollectionSummaryDetails {
     gcData?: IGarbageCollectionData;
     unrefTimestamp?: number;

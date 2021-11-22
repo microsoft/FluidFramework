@@ -10,8 +10,11 @@ import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
     IGarbageCollectionData,
     IGarbageCollectionSummaryDetails,
+    IGarbageCollectionNodeData,
+    IGarbageCollectionState,
+    ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { ReadAndParseBlob, RefreshSummaryResult } from "@fluidframework/runtime-utils";
+import { addBlobToSummary, ReadAndParseBlob, RefreshSummaryResult } from "@fluidframework/runtime-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 
 import { IGCRuntimeOptions } from "./containerRuntime";
@@ -75,26 +78,14 @@ export interface IGarbageCollector {
     collectGarbage(
         options: { logger?: ITelemetryLogger, runGC?: boolean, runSweep?: boolean, fullGC?: boolean },
     ): Promise<IGCStats>;
+    /** Adds the most recent GC state to the summary. */
+    addGCStateToSummary(summaryTree: ISummaryTreeWithStats): void;
+    /** Returns the GC details in the base summary. */
+    getBaseSummaryGCDetails(): Promise<IGarbageCollectionSummaryDetails>;
     /** Called when the latest summary of the system has been refreshed. */
     latestSummaryStateRefreshed(result: RefreshSummaryResult, readAndParseBlob: ReadAndParseBlob): Promise<void>;
     /** Called when a node is changed. Used to detect and log when an inactive node is changed. */
     nodeChanged(id: string): void;
-}
-
-/** The garbage collection data of each node in the reference graph. */
-interface IGCNodeData {
-    /** The set of routes to other nodes in the graph. */
-    outboundRoutes: string[];
-    /** If the node is unreferenced, the timestamp of when it was marked unreferenced. */
-    unreferencedTimestampMs?: number;
-}
-
-/**
- * The garbage collection state of the reference graph. It contains a list of all the nodes in the graph and their
- * GC data.
- */
-interface IGCState {
-    gcNodes: { [ id: string ]: IGCNodeData };
 }
 
 /**
@@ -216,10 +207,11 @@ export class GarbageCollector implements IGarbageCollector {
     private latestSummaryGCVersion: GCVersion;
 
     // The current state - each node's GC data and unreferenced timestamp.
-    private currentGCState: IGCState | undefined;
+    private currentGCState: IGarbageCollectionState | undefined;
 
     // Promise when resolved initializes the base state of the nodes from the base summary state.
     private readonly initializeBaseStateP: Promise<void>;
+    private readonly baseSummaryGCDetailsP: Promise<IGarbageCollectionSummaryDetails>;
     // The time after which an unreferenced node can be deleted. Currently, we only set the node's state to expired.
     private readonly deleteTimeoutMs: number;
     // Map of node ids to their unreferenced state tracker.
@@ -276,13 +268,20 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Get the GC state from the GC blob in the base snapshot. Use LazyPromise because we only want to do
         // this once since it involves fetching blobs from storage which is expensive.
-        const baseSummaryStateP = new LazyPromise<IGCState>(async () => {
-            const gcState: IGCState = { gcNodes: {} };
+        const baseSummaryStateP = new LazyPromise<IGarbageCollectionState>(async () => {
             if (baseSnapshot === undefined) {
-                return gcState;
+                return { gcNodes: {} };
             }
 
-            // Get GC blobs from each data store's summary tree. Get them and consolidate into IGCState format.
+            // For newer documents, GC blob should be present in the root.
+            const gcBlobId = baseSnapshot.blobs[gcBlobName];
+            if (gcBlobId !== undefined) {
+                return readAndParseBlob<IGarbageCollectionState>(gcBlobId);
+            }
+
+            // back-compat - Older documents will have the GC blobs in each data store's summary tree. Get them and
+            // consolidate into the IGarbageCollectionState format.
+            const gcState: IGarbageCollectionState = { gcNodes: {} };
             const dataStoreSnaphotTree = getSummaryForDatastores(baseSnapshot, metadata);
             assert(dataStoreSnaphotTree !== undefined, "Expected data store snapshot tree in base snapshot");
             for (const [dsId, dsSnapshotTree] of Object.entries(dataStoreSnaphotTree.trees)) {
@@ -312,7 +311,7 @@ export class GarbageCollector implements IGarbageCollector {
         // Set up the initializer which initializes the base GC state from the base snapshot. Use lazy promise because
         // we only do this once - the very first time we run GC.
         this.initializeBaseStateP = new LazyPromise<void>(async () => {
-            const gcNodes: { [ id: string ]: IGCNodeData } = {};
+            const gcNodes: { [ id: string ]: IGarbageCollectionNodeData } = {};
             const baseState = await baseSummaryStateP;
             if (baseState === undefined) {
                 this.currentGCState = { gcNodes };
@@ -341,6 +340,30 @@ export class GarbageCollector implements IGarbageCollector {
                 };
             }
             this.currentGCState = { gcNodes };
+        });
+
+        // Get the GC details from the GC state in the base summary. This is returned in getBaseSummaryGCDetails which
+        // should ideally be called only once. However, use lazy promise to ensure we do this processing only once.
+        this.baseSummaryGCDetailsP = new LazyPromise<IGarbageCollectionSummaryDetails>(async () => {
+            const gcNodes: { [ id: string ]: string[] } = {};
+            let usedRoutes: string[] | undefined;
+
+            const baseState = await baseSummaryStateP;
+            if (baseState !== undefined) {
+                for (const [id, nodeData] of Object.entries(baseState.gcNodes)) {
+                    gcNodes[id] = Array.from(nodeData.outboundRoutes);
+                }
+                // Run GC on the nodes in the base summary to get the routes used in each node in the container.
+                // This is an optimization for space (vs performance) wherein we don't need to store the used routes of
+                // each node in the summary.
+                usedRoutes = runGarbageCollection(
+                    gcNodes,
+                    [ "/" ],
+                    this.logger,
+                ).referencedNodeIds;
+            }
+            const gcDetails: IGarbageCollectionSummaryDetails = { gcData: { gcNodes }, usedRoutes };
+            return gcDetails;
         });
     }
 
@@ -408,6 +431,23 @@ export class GarbageCollector implements IGarbageCollector {
             return gcStats as IGCStats;
         },
         { end: true, cancel: "error" });
+    }
+
+    /**
+     * Adds the most recent GC state to the summary.
+     */
+     public addGCStateToSummary(summaryTree: ISummaryTreeWithStats) {
+        if (this.shouldRunGC && this.currentGCState !== undefined) {
+            addBlobToSummary(summaryTree, gcBlobName, JSON.stringify(this.currentGCState));
+        }
+    }
+
+    /**
+     * Returns the GC details from the GC state in the base summary we loaded from. The GC details is used to
+     * initialize the nodes in the container with initial GC state.
+     */
+    public async getBaseSummaryGCDetails(): Promise<IGarbageCollectionSummaryDetails> {
+        return this.baseSummaryGCDetailsP;
     }
 
     /**

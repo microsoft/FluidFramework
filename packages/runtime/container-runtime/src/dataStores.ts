@@ -19,6 +19,7 @@ import {
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
     IGarbageCollectionData,
+    IGarbageCollectionSummaryDetails,
     IInboundSignalMessage,
     InboundAttachMessage,
     ISummarizeResult,
@@ -34,9 +35,9 @@ import {
 import { ChildLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { BlobCacheStorageService, buildSnapshotTree } from "@fluidframework/driver-utils";
-import { assert, Lazy } from "@fluidframework/common-utils";
+import { assert, Lazy, LazyPromise } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
-import { GCDataBuilder, getChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
+import { GCDataBuilder, getChildNodesGCDetails, getChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime } from "./containerRuntime";
 import {
@@ -78,10 +79,24 @@ export class DataStores implements IDisposable {
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
         private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
+        getBaseSummaryGCDetails: () => Promise<IGarbageCollectionSummaryDetails | undefined>,
         private readonly dataStoreChanged: (id: string) => void,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
         this.logger = ChildLogger.create(baseLogger);
+
+        // Get the GC details from the base summary we loaded from and generate a map of data store id to its
+        // GC details.
+        const baseDataStoresGCDetailsP = new LazyPromise(async () => {
+            const baseGCDetails = await getBaseSummaryGCDetails();
+            return baseGCDetails ? getChildNodesGCDetails(baseGCDetails) : undefined;
+        });
+        // Get the base summary GC details for the data store with the given id.
+        const getDataStoreBaseGCDetails = async (dataStoreId: string) => {
+            const baseGCDetails = await baseDataStoresGCDetailsP;
+            return baseGCDetails?.get(dataStoreId);
+        };
+
         // Extract stores stored inside the snapshot
         const fluidDataStores = new Map<string, ISnapshotTree>();
 
@@ -105,6 +120,7 @@ export class DataStores implements IDisposable {
                 dataStoreContext = new RemotedFluidDataStoreContext(
                     key,
                     value,
+                    async () => getDataStoreBaseGCDetails(key),
                     this.runtime,
                     this.runtime.storage,
                     this.runtime.scope,
@@ -173,6 +189,8 @@ export class DataStores implements IDisposable {
         const remotedFluidDataStoreContext = new RemotedFluidDataStoreContext(
             attachMessage.id,
             snapshotTree,
+            // New data stores begin with empty GC details since GC hasn't run on them yet.
+            async () => { return {}; },
             this.runtime,
             new BlobCacheStorageService(this.runtime.storage, flatBlobs),
             this.runtime.scope,
@@ -441,10 +459,8 @@ export class DataStores implements IDisposable {
      * @returns the statistics of the used state of the data stores.
      */
     public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats {
-        // Remove this node's route ("/") and update data stores' used routes.
-        const dsUsedRoutes = usedRoutes.filter((id: string) => { return id !== "/"; });
         // Get a map of data store ids to routes used in it.
-        const usedDataStoreRoutes = getChildNodesUsedRoutes(dsUsedRoutes);
+        const usedDataStoreRoutes = getChildNodesUsedRoutes(usedRoutes);
 
         // Verify that the used routes are correct.
         for (const [id] of usedDataStoreRoutes) {

@@ -16,13 +16,12 @@ import {
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import {
     ISummaryTree,
-    SummaryObject,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { channelsTreeName, IGarbageCollectionSummaryDetails } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionState } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
 import { loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSummarizerClient";
 
@@ -30,8 +29,7 @@ import { loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSumma
  * Validates that the unreferenced timestamp is correctly set in the summary tree of unreferenced data stores. Also,
  * the timestamp is removed when an unreferenced data store becomes referenced again.
  */
-// REVIEW: Enable full compat after runtime version >= 0.48.0
-describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
+describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
@@ -93,9 +91,11 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
     }
 
     /**
-     * Generate and submit a summary. Return the data store channels summary tree.
+     * Submits a summary and returns the unreferenced timestamp for all the nodes in the container. If a node is
+     * referenced, the ureferenced timestamp is undefined.
+     * @returns a map of nodeId to its unreferenced timestamp.
      */
-    async function getChannelsSummary(
+    async function getUnreferencedTimestamps(
         summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
     ) {
         const summaryResult = await submitAndAckSummary(provider, summarizerClient, logger, true /* fullTree */);
@@ -106,34 +106,16 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             `Actual: ${latestSummaryContext?.referenceSequenceNumber}.`,
         );
         assert(latestUploadedSummary !== undefined, "Did not get a summary");
-        return (latestUploadedSummary.tree[channelsTreeName] as ISummaryTree)?.tree ?? latestUploadedSummary.tree;
-    }
 
-    /**
-     * Returns the unreferenced timestamp for the data store with the given id. If the data store is referenced, the
-     * ureferenced timestamp is undefined.
-     * If channelsSummary parameter is passed, get the unreferenced timestamp off of it. If it is undefined, generate
-     * and submit a summary, and get the data store channels summary tree first.
-     */
-    async function getDataStoreUnreferencedTimestamp(
-        summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
-        dataStoreId: string,
-        channelsSummary?: { [path: string]: SummaryObject },
-    ): Promise<number | undefined> {
-        const channelsTree = channelsSummary ?? await getChannelsSummary(summarizerClient);
-        for (const [ id, summaryObject ] of Object.entries(channelsTree)) {
-            if (id === dataStoreId) {
-                assert(
-                    summaryObject.type === SummaryType.Tree,
-                    `Data store ${id}'s entry is not a tree`,
-                );
-                const gcBlob = summaryObject.tree.gc;
-                assert(gcBlob?.type === SummaryType.Blob, `Data store ${id} does not have GC blob`);
-                const gcSummaryDetails = JSON.parse(gcBlob.content as string) as IGarbageCollectionSummaryDetails;
-                return gcSummaryDetails.unrefTimestamp;
-            }
+        const rootGCBlob = latestUploadedSummary.tree.gc;
+        assert(rootGCBlob?.type === SummaryType.Blob, `GC blob not available`);
+
+        const gcState = JSON.parse(rootGCBlob.content as string) as IGarbageCollectionState;
+        const nodeTimestamps: Map<string, number | undefined> = new Map();
+        for (const [nodeId, nodeData] of Object.entries(gcState.gcNodes)) {
+            nodeTimestamps.set(nodeId.slice(1), nodeData.unreferencedTimestampMs);
         }
-        throw new Error(`Summary does not contain entry for data store ${dataStoreId}`);
+        return nodeTimestamps;
     }
 
     beforeEach(async () => {
@@ -161,31 +143,35 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         const summarizerClient = await getNewSummarizer();
 
         // Create a new data store and mark it as referenced by storing its handle in a referenced DDS.
-        const newDataStore = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
-        mainDataStore._root.set("newDataStore", newDataStore.handle);
+        const dataStoreA = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
+        mainDataStore._root.set("dataStoreA", dataStoreA.handle);
 
         // Validate that the new data store does not have unreferenced timestamp.
-        const unrefTimestamp1 = await getDataStoreUnreferencedTimestamp(summarizerClient, newDataStore.id);
-        assert(unrefTimestamp1 === undefined, `new data store should not have unreferenced timestamp`);
+        const timestamps1 = await getUnreferencedTimestamps(summarizerClient);
+        const dsATimestamp1 = timestamps1.get(dataStoreA.id);
+        assert(dsATimestamp1 === undefined, `new data store should not have unreferenced timestamp`);
 
         // Mark the data store as unreferenced by deleting its handle from the DDS and validate that it now has an
         // unreferenced timestamp.
-        mainDataStore._root.delete("newDataStore");
-        const unrefTimestamp2 = await getDataStoreUnreferencedTimestamp(summarizerClient, newDataStore.id);
-        assert(unrefTimestamp2 !== undefined, `data store should have unreferenced timestamp after being unreferenced`);
+        mainDataStore._root.delete("dataStoreA");
+        const timestamps2 = await getUnreferencedTimestamps(summarizerClient);
+        const dsATimestamp2 = timestamps2.get(dataStoreA.id);
+        assert(dsATimestamp2 !== undefined, `data store should have unreferenced timestamp after being unreferenced`);
 
         // Perform some operations and generate another summary. Validate that the data store still has the same
         // unreferenced timestamp.
         mainDataStore._root.set("key", "value");
-        const unrefTimestamp3 = await getDataStoreUnreferencedTimestamp(summarizerClient, newDataStore.id);
-        assert(unrefTimestamp3 !== undefined, `data store should still have unreferenced timestamp`);
-        assert.strictEqual(unrefTimestamp2, unrefTimestamp3, "unreferenced timestamp should not have changed");
+        const timestamps3 = await getUnreferencedTimestamps(summarizerClient);
+        const dsATimestamp3 = timestamps3.get(dataStoreA.id);
+        assert(dsATimestamp3 !== undefined, `data store should still have unreferenced timestamp`);
+        assert.strictEqual(dsATimestamp2, dsATimestamp3, "unreferenced timestamp should not have changed");
 
         // Mark the data store as referenced again and validate that the unreferenced timestamp is removed.
-        mainDataStore._root.set("newDataStore", newDataStore.handle);
+        mainDataStore._root.set("dataStoreA", dataStoreA.handle);
         // Validate that the data store does not have unreferenced timestamp after being referenced.
-        const unrefTimestamp4 = await getDataStoreUnreferencedTimestamp(summarizerClient, newDataStore.id);
-        assert(unrefTimestamp4 === undefined, `data store should not have unreferenced timestamp anymore`);
+        const timestamps4 = await getUnreferencedTimestamps(summarizerClient);
+        const dsATimestamp4 = timestamps4.get(dataStoreA.id);
+        assert(dsATimestamp4 === undefined, `data store should not have unreferenced timestamp anymore`);
 
     // This test has increased timeout because it waits for multiple summaries to be uploaded to server. It then also
     // waits for those summaries to be ack'd. This may take a while.
@@ -195,31 +181,33 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         const summarizerClient1 = await getNewSummarizer();
 
         // Create a new data store and mark it as referenced by storing its handle in a referenced DDS.
-        const newDataStore = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
-        mainDataStore._root.set("newDataStore", newDataStore.handle);
+        const dataStoreA = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
+        mainDataStore._root.set("dataStoreA", dataStoreA.handle);
 
         // Validate that the new data store does not have unreferenced timestamp.
-        const unrefTimestamp1 = await getDataStoreUnreferencedTimestamp(summarizerClient1, newDataStore.id);
-        assert(unrefTimestamp1 === undefined, `new data store should not have unreferenced timestamp`);
+        const timestamps1 = await getUnreferencedTimestamps(summarizerClient1);
+        const dsATimestamp1 = timestamps1.get(dataStoreA.id);
+        assert(dsATimestamp1 === undefined, `new data store should not have unreferenced timestamp`);
 
         // Mark the data store as unreferenced by deleting its handle from the DDS and validate that it now has an
         // unreferenced timestamp.
-        mainDataStore._root.delete("newDataStore");
-        const unrefTimestamp2 = await getDataStoreUnreferencedTimestamp(summarizerClient1, newDataStore.id);
-        assert(unrefTimestamp2 !== undefined, `new data store should have unreferenced timestamp`);
+        mainDataStore._root.delete("dataStoreA");
+        const timestamps2 = await getUnreferencedTimestamps(summarizerClient1);
+        const dsATimestamp2 = timestamps2.get(dataStoreA.id);
+        assert(dsATimestamp2 !== undefined, `new data store should have unreferenced timestamp`);
 
         // Load a new summarizer from the last summary and validate that the unreferenced timestamp from the summary is
         // used for the data store.
         assert(latestAckedSummary !== undefined, "Summary ack isn't available as expected");
         const summarizerClient2 = await getNewSummarizer(latestAckedSummary.summaryAck.contents.handle);
-        const unrefTimestamp3 =
-            await getDataStoreUnreferencedTimestamp(summarizerClient2, newDataStore.id);
-        assert(unrefTimestamp3 !== undefined, `new data store should still have unreferenced timestamp`);
-        assert.strictEqual(unrefTimestamp2, unrefTimestamp3, "The unreferenced timestamp should not have changed");
+        const timestamps3 = await getUnreferencedTimestamps(summarizerClient2);
+        const dsATimestamp3 = timestamps3.get(dataStoreA.id);
+        assert(dsATimestamp3 !== undefined, `new data store should still have unreferenced timestamp`);
+        assert.strictEqual(dsATimestamp2, dsATimestamp3, "The unreferenced timestamp should not have changed");
 
     // This test has increased timeout because it waits for multiple summaries to be uploaded to server. It then also
     // waits for those summaries to be ack'd. This may take a while.
-    }).timeout(20000);
+    }).timeout(1000000);
 
     /**
      * This scenario is currently broken. Re-enable test once the following item is completed -
@@ -230,26 +218,28 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         const summarizerClient = await getNewSummarizer();
 
         // Create a new data store and mark it as referenced by storing its handle in a referenced DDS.
-        const newDataStore = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
-        mainDataStore._root.set("newDataStore", newDataStore.handle);
+        const dataStoreA = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
+        mainDataStore._root.set("dataStoreA", dataStoreA.handle);
         await provider.ensureSynchronized();
 
         // Mark the data store as unreferenced by deleting its handle from the DDS and validate that it now has an
         // unreferenced timestamp.
-        mainDataStore._root.delete("newDataStore");
-        const unrefTimestamp1 = await getDataStoreUnreferencedTimestamp(summarizerClient, newDataStore.id);
-        assert(unrefTimestamp1 !== undefined, `data store should have unreferenced timestamp after being unreferenced`);
+        mainDataStore._root.delete("dataStoreA");
+        const timestamps1 = await getUnreferencedTimestamps(summarizerClient);
+        const dsATimestamp1 = timestamps1.get(dataStoreA.id);
+        assert(dsATimestamp1 !== undefined, `data store should have unreferenced timestamp after being unreferenced`);
 
         // Store the data store's handle in the referenced DDS again and the delete it again. The data store will
         // transition from unreferened -> referenced -> unreferenced before the next summary happens. The data store
         // will still be unreferenced but the unreferenced timestamp should update.
-        mainDataStore._root.set("newDataStore", newDataStore.handle);
+        mainDataStore._root.set("dataStoreA", dataStoreA.handle);
         await provider.ensureSynchronized();
-        mainDataStore._root.delete("newDataStore");
+        mainDataStore._root.delete("dataStoreA");
 
-        const unrefTimestamp2 = await getDataStoreUnreferencedTimestamp(summarizerClient, newDataStore.id);
-        assert(unrefTimestamp2 !== undefined, `data store should still have unreferenced timestamp`);
-        assert(unrefTimestamp2 > unrefTimestamp1, `new timestamp should be greater that the previous one`);
+        const timestamps2 = await getUnreferencedTimestamps(summarizerClient);
+        const dsATimestamp2 = timestamps2.get(dataStoreA.id);
+        assert(dsATimestamp2 !== undefined, `data store should still have unreferenced timestamp`);
+        assert(dsATimestamp2 > dsATimestamp1, `new timestamp should be greater that the previous one`);
     // This test has increased timeout because it waits for multiple summaries to be uploaded to server. It then also
     // waits for those summaries to be ack'd. This may take a while.
     }).timeout(20000);
@@ -285,11 +275,11 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         dataStoreA._root.delete("dataStoreB");
 
         // Validate that both B and C are both marked unreferenced at the same time.
-        const channelsSummary1 = await getChannelsSummary(summarizerClient);
-        const dsBTime1 = await getDataStoreUnreferencedTimestamp(summarizerClient, dataStoreB.id, channelsSummary1);
-        assert(dsBTime1 !== undefined, `data store B should have unreferenced timestamp after being unreferenced`);
-        const dsCTime1 = await getDataStoreUnreferencedTimestamp(summarizerClient, dataStoreC.id, channelsSummary1);
-        assert(dsBTime1 === dsCTime1, `data stores B and C should have the same unreferenced time`);
+        const timestamps1 = await getUnreferencedTimestamps(summarizerClient);
+        const dsBTimestamp1 = timestamps1.get(dataStoreB.id);
+        const dsCTimestamp1 = timestamps1.get(dataStoreC.id);
+        assert(dsBTimestamp1 !== undefined, `data store B should have unreferenced timestamp after being unreferenced`);
+        assert(dsBTimestamp1 === dsCTimestamp1, `data stores B and C should have the same unreferenced time`);
 
         // Now update the references via ops as follows:
         // 1. Add reference from A -> B
@@ -301,12 +291,12 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         dataStoreA._root.delete("dataStoreB");
 
         // Validate that both B and C's unreferenced timestamps are updated and are the same.
-        const channelsSummary2 = await getChannelsSummary(summarizerClient);
-        const dsBTime2 = await getDataStoreUnreferencedTimestamp(summarizerClient, dataStoreB.id, channelsSummary2);
-        assert(dsBTime2 !== undefined, `data store B should still have unreferenced timestamp`);
-        assert(dsBTime2 > dsBTime1, `The unreferenced timestamp should have been updated`);
-        const dsCTime2 = await getDataStoreUnreferencedTimestamp(summarizerClient, dataStoreC.id, channelsSummary2);
-        assert(dsBTime2 === dsCTime2, `data stores B and C should have the same unreferenced time`);
+        const timestamps2 = await getUnreferencedTimestamps(summarizerClient);
+        const dsBTimestamp2 = timestamps2.get(dataStoreB.id);
+        const dsCTimestamp2 = timestamps2.get(dataStoreC.id);
+        assert(dsBTimestamp2 !== undefined, `data store B should still have unreferenced timestamp`);
+        assert(dsBTimestamp2 > dsBTimestamp1, `The unreferenced timestamp should have been updated`);
+        assert(dsBTimestamp2 === dsCTimestamp2, `data stores B and C should have the same unreferenced time`);
     // This test has increased timeout because it waits for multiple summaries to be uploaded to server. It then also
     // waits for those summaries to be ack'd. This may take a while.
     }).timeout(20000);

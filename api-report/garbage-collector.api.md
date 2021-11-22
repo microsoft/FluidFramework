@@ -5,6 +5,7 @@
 ```ts
 
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IGarbageCollectionSummaryDetails } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 
 // @public
@@ -27,7 +28,7 @@ export class GCDataBuilder implements IGarbageCollectionData {
 }
 
 // @public
-export function getChildNodesGCData(gcData: IGarbageCollectionData): Map<string, IGarbageCollectionData>;
+export function getChildNodesGCDetails(gcDetails: IGarbageCollectionSummaryDetails): Map<string, IGarbageCollectionSummaryDetails>;
 
 // @public
 export function getChildNodesUsedRoutes(usedRoutes: string[]): Map<string, string[]>;
