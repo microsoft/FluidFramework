@@ -8,11 +8,10 @@
   "author": "Microsoft and contributors",
   "main": "dist/index.js",
   "module": "lib/index.js",
-  "types": "src/index.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
     "dist/**/*",
-    "lib/**/*",
-    "src/index.d.ts"
+    "lib/**/*"
   ],
   "scripts": {
     "build": "npm run build:compile",
