@@ -1091,12 +1091,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.logger.sendTelemetryEvent({
             eventName: "ContainerLoadStats",
-            containerLoadDataStoreCount: this.dataStores.containerLoadDataStoreCount,
-            referencedDataStoreCount: this.dataStores.referencedDataStoreCount,
-            createContainerRuntimeVersion: this.createContainerMetadata.createContainerRuntimeVersion,
-            createContainerTimestamp: this.createContainerMetadata.createContainerTimestamp,
-            summaryCount: this.createContainerMetadata.summaryCount,
-            summaryFormatVersion: metadata?.summaryFormatVersion,
+            ...this.formMetadata(),
         });
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
