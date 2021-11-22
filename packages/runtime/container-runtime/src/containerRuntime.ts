@@ -923,7 +923,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          * time when a node becomes unreferenced.
          * For now, we use the timestamp of the last op for gcTimestamp. However, there can be cases where
          * we don't have an op (on demand summaries for instance). In those cases, we will use the timestamp
-         * of this client's connection - https://github.com/microsoft/FluidFramework/issues/7152.
+         * of this client's connection - https://github.com/microsoft/FluidFramework/issues/8375.
          */
         const getCurrentTimestamp = () => {
             return this.deltaManager.lastMessage?.timestamp ?? performance.now();
