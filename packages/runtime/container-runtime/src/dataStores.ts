@@ -202,7 +202,7 @@ export class DataStores implements IDisposable {
         Promise.resolve().then(async () => remotedFluidDataStoreContext.realize());
     }
 
-    public processAliasMessage(message: ISequencedDocumentMessage): IDataStoreAliasMapping {
+    public processAliasMessage(message: ISequencedDocumentMessage): IDataStoreAliasMapping | undefined {
         const aliasMessage = message.contents as IDataStoreAliasMessage;
 
         this.buildAliasMap();
@@ -217,8 +217,7 @@ export class DataStores implements IDisposable {
 
         const currentId = this.aliasMap.get(aliasMessage.id);
         if (currentId === undefined) {
-            const request = { url: aliasMessage.id };
-            throw responseToException(create404Response(request), request);
+            return undefined;
         }
 
         this.aliasMap.set(aliasMessage.alias, currentId);

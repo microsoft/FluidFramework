@@ -1506,7 +1506,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         localOpMetadata: unknown,
         local: boolean,
     ) {
-        type PendingAliasResolve = (value: IDataStoreAliasMapping) => void;
+        type PendingAliasResolve = (value: IDataStoreAliasMapping | undefined) => void;
         const resolve = localOpMetadata as PendingAliasResolve;
 
         const aliasResult = this.dataStores.processAliasMessage(message);
@@ -1618,7 +1618,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return new DataStore(await this.createDataStoreCore(pkg, false /* isRoot */, internalId), internalId, this);
     }
 
-    private async createDataStoreCore(pkg: string | string[], isRoot: boolean, id: string, props?: any) {
+    private async createDataStoreCore(
+        pkg: string | string[],
+        isRoot: boolean,
+        id: string,
+        props?: any,
+    ): Promise<IFluidDataStoreChannel> {
         const fluidDataStore = await this._createDataStore(pkg, isRoot, id, props);
         if (isRoot) {
             fluidDataStore.bindToContext();
