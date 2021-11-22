@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, IsoBuffer } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import {
     IFluidHandle,
     IFluidSerializer,
@@ -25,18 +25,7 @@ import {
     serializeAsMinSupportedVersion,
 } from "./snapshotChunks";
 
-// first three are index entry
-export interface SnapChunk {
-    /**
-     * Offset from beginning of segments.
-     */
-    position: number;
-    lengthBytes: number;
-    sequenceLength: number;
-    buffer?: IsoBuffer;
-}
-
-export interface SnapshotHeader {
+interface SnapshotHeader {
     chunkCount?: number;
     segmentsTotalLength: number;
     indexOffset?: number;
@@ -50,7 +39,7 @@ export interface SnapshotHeader {
 export class SnapshotLegacy {
     public static readonly header = "header";
     public static readonly body = "body";
-    public static readonly catchupOps = "catchupOps";
+    private static readonly catchupOps = "catchupOps";
 
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
     // Please note that this number has no direct relationship to anything other than size of raw text (characters).
@@ -60,13 +49,11 @@ export class SnapshotLegacy {
     // for very chunky text, blob size can easily be 4x-8x of that number.
     public static readonly sizeOfFirstChunk: number = 10000;
 
-    header: SnapshotHeader | undefined;
-    seq: number | undefined;
-    buffer: IsoBuffer | undefined;
-    pendingChunk: SnapChunk | undefined;
-    segments: IJSONSegment[] | undefined;
-    segmentLengths: number[] | undefined;
-    logger: ITelemetryLogger;
+    private header: SnapshotHeader | undefined;
+    private seq: number | undefined;
+    private segments: IJSONSegment[] | undefined;
+    private segmentLengths: number[] | undefined;
+    private readonly logger: ITelemetryLogger;
     private readonly chunkSize: number;
 
     constructor(public mergeTree: MergeTree, logger: ITelemetryLogger, public filename?: string,
@@ -75,7 +62,7 @@ export class SnapshotLegacy {
         this.chunkSize = mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotLegacy.sizeOfFirstChunk;
     }
 
-    getSeqLengthSegs(
+    private getSeqLengthSegs(
         allSegments: IJSONSegment[],
         allLengths: number[],
         approxSequenceLength: number,

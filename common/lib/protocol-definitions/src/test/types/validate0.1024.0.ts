@@ -133,13 +133,14 @@ use_old_InterfaceDeclaration_IAttachment(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "InterfaceDeclaration_IBlob": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IBlob():
     old.IBlob;
 declare function use_current_InterfaceDeclaration_IBlob(
     use: current.IBlob);
 use_current_InterfaceDeclaration_IBlob(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IBlob());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
@@ -409,13 +410,14 @@ use_current_InterfaceDeclaration_IDocumentAttributes(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "InterfaceDeclaration_IDocumentAttributes": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IDocumentAttributes():
     current.IDocumentAttributes;
 declare function use_old_InterfaceDeclaration_IDocumentAttributes(
     use: old.IDocumentAttributes);
 use_old_InterfaceDeclaration_IDocumentAttributes(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentAttributes());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -661,13 +663,14 @@ use_old_InterfaceDeclaration_IQueueMessage(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "InterfaceDeclaration_IQuorum": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IQuorum():
     old.IQuorum;
 declare function use_current_InterfaceDeclaration_IQuorum(
     use: current.IQuorum);
 use_current_InterfaceDeclaration_IQuorum(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IQuorum());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
@@ -1333,13 +1336,14 @@ use_old_InterfaceDeclaration_ITrace(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "InterfaceDeclaration_ITree": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_ITree():
     old.ITree;
 declare function use_current_InterfaceDeclaration_ITree(
     use: current.ITree);
 use_current_InterfaceDeclaration_ITree(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITree());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
@@ -1357,13 +1361,14 @@ use_old_InterfaceDeclaration_ITree(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "TypeAliasDeclaration_ITreeEntry": {"forwardCompat": false}
+*/
 declare function get_old_TypeAliasDeclaration_ITreeEntry():
     old.ITreeEntry;
 declare function use_current_TypeAliasDeclaration_ITreeEntry(
     use: current.ITreeEntry);
 use_current_TypeAliasDeclaration_ITreeEntry(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_ITreeEntry());
-*/
 
 /*
 * Validate back compat by using current type in place of old type

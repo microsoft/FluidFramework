@@ -127,7 +127,7 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
     /**
      * Disconnects the given delta connection
      */
-    dispose(): void {
+    public dispose(): void {
         this._disposed = true;
         this.internal.dispose();
     }
