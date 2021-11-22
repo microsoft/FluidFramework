@@ -91,7 +91,7 @@ export namespace TypeIdHelper {
  * @param in_typeid - The typeid to process
  * @returns  Returns the typeid without context, the context and if we have an enum type
  */
-    export function extractContext(in_typeid: string): ExtractedContext {
+    export function extractContext(in_typeid: string | undefined): ExtractedContext {
         const bracketIndex = in_typeid.indexOf("<");
         if (bracketIndex !== -1 &&
             in_typeid[in_typeid.length - 1] === ">") {
@@ -168,7 +168,7 @@ export namespace TypeIdHelper {
      * @param in_typeid - The typeid to check
      * @returns Is this a reference property typeid?
      */
-    export function isReferenceTypeId(in_typeid: string): boolean { // in_enum
+    export function isReferenceTypeId(in_typeid: string | undefined ): boolean { // in_enum
         return in_typeid === "Reference" ||
             (in_typeid.substr(0, 10) === "Reference<" && in_typeid.substr(-1) === ">");
     }
