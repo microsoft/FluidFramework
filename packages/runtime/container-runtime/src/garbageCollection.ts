@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
+import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { IGCResult, runGarbageCollection } from "@fluidframework/garbage-collector";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -106,6 +106,7 @@ class UnreferencedStateTracker {
     // Keeps track of all inactive events that are logged. This is used to limit the log generation for each event to 1
     // so that it is not noisy.
     private readonly inactiveEventsLogged: Set<string> = new Set();
+    private readonly timer: Timer | undefined;
 
     constructor(
         public readonly unrefencedTimestampMs: number,
@@ -116,8 +117,15 @@ class UnreferencedStateTracker {
         if (inactiveTimeoutMs <= 0) {
             this.inactive = true;
         } else {
-            setTimeout(() => { this.inactive = true; }, inactiveTimeoutMs);
+            this.timer = new Timer(inactiveTimeoutMs, () => { this.inactive = true; });
+            this.timer.start();
         }
+    }
+
+    /** Stop tracking this node. Reset the unreferenced timer, if any, and reset inactive state. */
+    public stopTracking() {
+        this.timer?.clear();
+        this.inactive = false;
     }
 
     /** Logs an error with the given properties if the node  is inactive. */
@@ -499,6 +507,9 @@ export class GarbageCollector implements IGarbageCollector {
                     this.deleteTimeoutMs,
                     nodeId,
                 );
+                // Stop tracking so as to clear out any running timers.
+                nodeStateTracker.stopTracking();
+                // Delete the node as we don't need to track it any more.
                 this.unreferencedNodesState.delete(nodeId);
             }
         }
