@@ -15,7 +15,7 @@ import {
     ITaggedTelemetryPropertyType,
     TelemetryEventCategory,
 } from "@fluidframework/common-definitions";
-import { BaseTelemetryNullLogger, performance, TypedEventTransform } from "@fluidframework/common-utils";
+import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 import {
     isILoggingError,
     extractLogSafeErrorProperties,
@@ -107,7 +107,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     public constructor(
         protected readonly namespace?: string,
-        protected readonly properties: ITelemetryLoggerPropertyBags = {}) {
+        protected readonly properties?: ITelemetryLoggerPropertyBags) {
     }
 
     /**
@@ -173,12 +173,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         };
 
         this.sendTelemetryEventCore(perfEvent, error);
-    }
-
-    public addGlobalProps(propBags: ITelemetryLoggerPropertyBags) {
-        // fallback to just adding locally
-        this.properties.all = { ...this.properties?.all, ...propBags.all };
-        this.properties.error = { ...this.properties?.error, ...propBags.error };
     }
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
@@ -358,12 +352,10 @@ export class ChildLogger extends TelemetryLogger {
 
         const rootLogger = new ChildLoggerRoot(baseLogger);
         rootLogger.globalProperties.all.layerVersions = namedLayerVersion;
-        const childLogger = new ChildLogger(
+        return new ChildLogger(
             rootLogger,
             namespace,
             properties);
-
-        childLogger.addGlobalProps(globalProperties);
     }
 
     private constructor(
@@ -372,13 +364,6 @@ export class ChildLogger extends TelemetryLogger {
         properties?: ITelemetryLoggerPropertyBags,
     ) {
         super(namespace, properties);
-    }
-
-    protected addGlobalProps(propBags: ITelemetryLoggerPropertyBags) {
-        const fake: ChildLogger = this.rootLogger as unknown as ChildLogger;
-        if (fake.addGlobalProps !== undefined) {
-            fake.addGlobalProps({});
-        }
     }
 
     /**
