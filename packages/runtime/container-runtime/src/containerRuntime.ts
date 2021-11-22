@@ -842,6 +842,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private readonly createContainerMetadata: ICreateContainerMetadata;
+    private summaryCount: number;
 
     private constructor(
         private readonly context: IContainerContext,
@@ -866,14 +867,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.createContainerMetadata = {
                 createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
                 createContainerTimestamp: metadata?.createContainerTimestamp,
-                summaryCount: metadata?.summaryCount ?? 0,
             };
+            this.summaryCount = metadata?.summaryCount ?? 0;
         } else {
             this.createContainerMetadata = {
                 createContainerRuntimeVersion: pkgVersion,
                 createContainerTimestamp: performance.now(),
-                summaryCount: 0,
             };
+            this.summaryCount = 0;
         }
 
         // Default to false (enabled).
@@ -1091,8 +1092,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.logger.sendTelemetryEvent({
             eventName: "ContainerLoadStats",
-            //...this.formMetadata(),
+            ...this.createContainerMetadata,
             ...this.dataStores.containerLoadStats,
+            summaryCount: this.summaryCount,
+            summaryFormatVersion: metadata?.summaryFormatVersion,
+            disableIsolatedChannels: metadata?.disableIsolatedChannels,
+            gcVersion: metadata?.gcFeature,
         });
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
@@ -1225,6 +1230,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // The last message processed at the time of summary. If there are no messages, nothing has changed from
             // the base summary we loaded from. So, use the message from its metadata blob.
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.baseSummaryMessage,
+            summaryCount: this.summaryCount,
         };
     }
 
@@ -1789,7 +1795,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
         // increment summary count
-        this.createContainerMetadata.summaryCount++;
+        this.summaryCount++;
 
         const { fullTree, refreshLatestAck, summaryLogger } = options;
         if (refreshLatestAck) {

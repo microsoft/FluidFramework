@@ -134,7 +134,7 @@ export class DataStores implements IDisposable {
         this.containerLoadStats = {
             containerLoadDataStoreCount: fluidDataStores.size,
             referencedDataStoreCount: fluidDataStores.size - unreferencedDataStoreCount,
-        }
+        };
     }
 
     public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {

@@ -83,6 +83,8 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata {
     readonly disableIsolatedChannels?: true;
     /** 0 to disable GC, > 0 to enable GC, undefined defaults to disabled. */
     readonly gcFeature?: GCVersion;
+    /** Counter of the last summary happened, increments every time we summarize */
+    summaryCount?: number;
 }
 
 export interface ICreateContainerMetadata {
@@ -90,8 +92,6 @@ export interface ICreateContainerMetadata {
     createContainerRuntimeVersion?: string;
     /** Timestamp of the container when it was first created */
     createContainerTimestamp?: number;
-    /** Counter of the last summary happened, increments every time we summarize */
-    summaryCount?: number;
 }
 
 /** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
