@@ -227,8 +227,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             versions: protocolVersions,
             nonce: uuid(),
             epoch: epochTracker.fluidEpoch,
-            relayUserAgent: client.details.environment !== undefined ?
-                `${client.details.environment};driverVersion:${pkgVersion}` : `driverVersion:${pkgVersion}`,
+            relayUserAgent: [client.details.environment, ` driverVersion:${pkgVersion}`].join(";"),
         };
 
         // Reference to this client supporting get_ops flow.
