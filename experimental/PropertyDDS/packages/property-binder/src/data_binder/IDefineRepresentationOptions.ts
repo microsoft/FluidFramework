@@ -21,7 +21,7 @@ export type representationGenerator =
  *   defineRepresentations are done with the same generator function, this can vary.
  * @param userData - The userData provided to {@link DataBinder.defineRepresentation} when the runtime representation
  *   was first defined.
- * @return The runtime representation for this object. There is no form imposed on this object.
+ * @returns The runtime representation for this object. There is no form imposed on this object.
  *
  * @public
  */
@@ -68,6 +68,11 @@ export type representationDestroyer =
  * Options for {@link DataBinder.defineRepresentation}
  */
 export interface IDefineRepresentationOptions {
+  /**
+   * Optional property, when set to true it creates a single and stateless representation instance instance.
+   */
+  stateless?: boolean;
+
   /**
    * Optional callback called immediately after the generator result is added to the databinder.
    * This permits a runtime representation to be initialized in two stages in cases where it is

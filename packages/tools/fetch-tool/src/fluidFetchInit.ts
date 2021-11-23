@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/test-client-utils";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { configurableUrlResolver } from "@fluidframework/driver-utils";
-import { FluidAppOdspUrlResolver } from "@fluid-internal/fluidapp-odsp-urlresolver";
+import { FluidAppOdspUrlResolver } from "@fluid-tools/fluidapp-odsp-urlresolver";
 import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-doclib-utils";
 import * as odsp from "@fluidframework/odsp-driver";
 import { IOdspResolvedUrl, OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions";

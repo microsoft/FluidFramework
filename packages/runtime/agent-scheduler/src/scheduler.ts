@@ -8,7 +8,11 @@ import {
     IFluidHandle,
     IRequest,
 } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
+import {
+    FluidDataStoreRuntime,
+    FluidObjectHandle,
+    ISharedObjectRegistry,
+} from "@fluidframework/datastore";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
@@ -18,13 +22,14 @@ import {
     IFluidDataStoreFactory,
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;
 
-class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements IAgentScheduler {
+export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements IAgentScheduler {
     public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext, existing: boolean) {
         let root: ISharedMap;
         let consensusRegisterCollection: ConsensusRegisterCollection<string | null>;
@@ -72,11 +77,19 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
     // It's subset of this.locallyRunnableTasks
     private runningTasks = new Set<string>();
 
+    private readonly _handle: IFluidHandle<this>;
+
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly context: IFluidDataStoreContext,
-        private readonly consensusRegisterCollection: ConsensusRegisterCollection<string | null>) {
+        private readonly consensusRegisterCollection: ConsensusRegisterCollection<string | null>,
+    ) {
         super();
+        this._handle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
+    }
+
+    public get handle() {
+        return this._handle;
     }
 
     public async register(...taskUrls: string[]): Promise<void> {
@@ -379,6 +392,12 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 
     public static get registryEntry(): NamedFluidDataStoreRegistryEntry {
         return [this.type, Promise.resolve(new AgentSchedulerFactory())];
+    }
+
+    public static async createChildInstance(parentContext: IFluidDataStoreContext): Promise<AgentScheduler> {
+        const packagePath = [...parentContext.packagePath, AgentSchedulerFactory.type];
+        const router = await parentContext.containerRuntime.createDataStore(packagePath);
+        return requestFluidObject<AgentScheduler>(router, "/");
     }
 
     public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {

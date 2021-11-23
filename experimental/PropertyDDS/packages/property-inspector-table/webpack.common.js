@@ -19,10 +19,10 @@ module.exports = () => ({
         test: /\.svg$/,
         use: [
           {
-            loader: 'svg-sprite-loader'
+            loader: require.resolve('svg-sprite-loader')
           },
           {
-            loader: 'svgo-loader',
+            loader: require.resolve('svgo-loader'),
             options: require('./svgo.plugins.js')
           }
         ]

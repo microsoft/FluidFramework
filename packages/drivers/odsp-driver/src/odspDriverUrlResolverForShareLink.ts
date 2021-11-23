@@ -22,8 +22,7 @@ import {
     encodeOdspFluidDataStoreLocator,
     locatorQueryParamName,
 } from "./odspFluidFileLink";
-import { OdspDocumentInfo, OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic";
-import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
+import { OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic";
 import { createOdspUrl } from "./createOdspUrl";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import { getOdspResolvedUrl, createOdspLogger } from "./odspUtils";
@@ -75,18 +74,6 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
                 tokenFetcher: this.toInstrumentedTokenFetcher(this.logger, shareLinkFetcherProps.tokenFetcher),
             };
         }
-    }
-
-    /**
-     * @deprecated - use createOdspCreateContainerRequest
-     */
-    public createCreateNewRequest(
-        siteUrl: string,
-        driveId: string,
-        filePath: string,
-        fileName: string,
-    ) {
-        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     }
 
     /**
@@ -145,9 +132,8 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             // We need to remove the nav param if set by host when setting the sharelink as otherwise the shareLinkId
             // when redeeming the share link during the redeem fallback for trees latest call becomes greater than
             // the eligible length.
-            odspResolvedUrl.sharingLinkToRedeem = this.removeNavParam(request.url);
             odspResolvedUrl.shareLinkInfo = Object.assign(odspResolvedUrl.shareLinkInfo || {},
-                {sharingLinkToRedeem: odspResolvedUrl.sharingLinkToRedeem});
+                {sharingLinkToRedeem: this.removeNavParam(request.url)});
         }
         if (odspResolvedUrl.itemId) {
             // Kick start the sharing link request if we don't have it already as a performance optimization.
@@ -203,12 +189,8 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             resolvedUrl,
             this.shareLinkFetcherProps.identityType,
             this.logger,
-        ).then((fileLink) => {
-            if (!fileLink) {
-                throw new Error("Failed to get share link");
-            }
-            return fileLink;
-        }).catch((error) => {
+        ).catch((error) => {
+            // This should imply that error is a non-retriable error.
             this.logger.sendErrorEvent({ eventName: "FluidFileUrlError" }, error);
             this.sharingLinkCache.remove(key);
             throw error;
@@ -254,7 +236,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     /**
      * Crafts a supported document/driver URL
      */
-    public static createDocumentUrl(baseUrl: string, driverInfo: OdspDocumentInfo) {
+    public static createDocumentUrl(baseUrl: string, driverInfo: OdspFluidDataStoreLocator) {
         const url = new URL(baseUrl);
 
         storeLocatorInOdspUrl(url, driverInfo);

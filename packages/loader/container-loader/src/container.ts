@@ -175,7 +175,7 @@ export async function waitContainerToCatchUp(container: Container) {
         throw new Error("Container is closed");
     }
 
-    return new Promise<boolean>((accept, reject) => {
+    return new Promise<boolean>((resolve, reject) => {
         const deltaManager = container.deltaManager;
 
         container.on("closed", reject);
@@ -189,12 +189,12 @@ export async function waitContainerToCatchUp(container: Container) {
             assert(deltaManager.lastSequenceNumber <= connectionOpSeqNumber,
                 0x266 /* "lastKnownSeqNumber should never be below last processed sequence number" */);
             if (deltaManager.lastSequenceNumber === connectionOpSeqNumber) {
-                accept(hasCheckpointSequenceNumber);
+                resolve(hasCheckpointSequenceNumber);
                 return;
             }
             const callbackOps = (message: ISequencedDocumentMessage) => {
                 if (connectionOpSeqNumber <= message.sequenceNumber) {
-                    accept(hasCheckpointSequenceNumber);
+                    resolve(hasCheckpointSequenceNumber);
                     deltaManager.off("op", callbackOps);
                 }
             };
@@ -672,12 +672,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 switch (event) {
                     case dirtyContainerEvent:
                         if (this._dirtyContainer) {
-                            listener(this._dirtyContainer);
+                            listener(dirtyContainerEvent);
                         }
                         break;
                     case savedContainerEvent:
                         if (!this._dirtyContainer) {
-                            listener(this._dirtyContainer);
+                            listener(savedContainerEvent);
                         }
                         break;
                     case connectedEventName:
@@ -1284,7 +1284,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async createDetached(source: IFluidCodeDetails) {
         const attributes: IDocumentAttributes = {
-            branch: "",
             sequenceNumber: detachedContainerRefSeqNumber,
             term: 1,
             minimumSequenceNumber: 0,
@@ -1377,7 +1376,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     ): Promise<IDocumentAttributes> {
         if (tree === undefined) {
             return {
-                branch: this.id,
                 minimumSequenceNumber: 0,
                 sequenceNumber: 0,
                 term: 1,
@@ -1487,7 +1485,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Save attributes for the document
         const documentAttributes: IDocumentAttributes = {
-            branch: this.id,
             minimumSequenceNumber: this.protocolHandler.minimumSequenceNumber,
             sequenceNumber: this.protocolHandler.sequenceNumber,
             term: this.protocolHandler.term,
@@ -1542,7 +1539,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (this.clientDetailsOverride !== undefined) {
             merge(client.details, this.clientDetailsOverride);
         }
-
+        client.details.environment = [client.details.environment, ` loaderVersion:${pkgVersion}`].join(";");
         return client;
     }
 

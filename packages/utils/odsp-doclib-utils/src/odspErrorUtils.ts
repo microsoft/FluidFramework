@@ -208,7 +208,7 @@ export function createOdspNetworkError(
             break;
         case fetchIncorrectResponse:
             // Note that getWithRetryForTokenRefresh will retry it once, then it becomes non-retryable error
-            error = new RetryableError(
+            error = new NonRetryableError(
                 fluidErrorCode, errorMessage, DriverErrorType.incorrectServerResponse, { statusCode });
             break;
         case fetchTimeoutStatusCode:

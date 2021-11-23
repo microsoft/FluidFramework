@@ -6,7 +6,7 @@
 import * as Comlink from "comlink";
 import { fluidExport as TodoContainer } from "@fluid-example/todo";
 import { getTinyliciousContainer } from "@fluid-experimental/get-container";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { InsecureTinyliciousUrlResolver } from "@fluidframework/tinylicious-driver";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
@@ -85,7 +85,7 @@ async function getFluidObjectAndRender(container: IContainer, div: HTMLDivElemen
     if (response.status !== 200 || response.mimeType !== "fluid/object") {
         return undefined;
     }
-    const fluidObject = response.value as IFluidObject;
+    const fluidObject: FluidObject = response.value;
 
     // Render the Fluid object with an HTMLViewAdapter to abstract the UI framework used by the Fluid object
     const view = new HTMLViewAdapter(fluidObject);
