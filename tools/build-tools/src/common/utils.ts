@@ -54,6 +54,10 @@ export interface ExecAsyncResult {
 }
 
 export async function execAsync(command: string, options: child_process.ExecOptions, pipeStdIn?: string): Promise<ExecAsyncResult> {
+    if(options.cwd?.includes("datastore-definitions"))
+    {
+        command += " -- --inspect-brk"
+    }
     return new Promise((resolve, reject) => {
         const p = child_process.exec(command, options, (error, stdout, stderr) => {
             resolve({ error, stdout, stderr });
