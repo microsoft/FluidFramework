@@ -37,7 +37,7 @@
     "@fluidframework/aqueduct": "^0.53.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/container-runtime-definitions": "^0.53.0",
-    "@fluidframework/core-interfaces": "^0.41.0-0",
+    "@fluidframework/core-interfaces": "^0.41.0",
     "@fluidframework/runtime-utils": "^0.53.0",
     "css-loader": "^1.0.0",
     "react": "^16.10.2",
