@@ -44,7 +44,7 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
     /**
      * @deprecated - This returns the absolute path.
      */
-     public get path() {
+    public get path() {
         return this.absolutePath;
     }
 
