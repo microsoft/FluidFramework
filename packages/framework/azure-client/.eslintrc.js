@@ -10,8 +10,5 @@ module.exports = {
     "parserOptions": {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
-    "rules": {
-        "@typescript-eslint/no-non-null-assertion": "off",
-        "no-null/no-null": "off",
-    }
+    "rules": {}
 }
