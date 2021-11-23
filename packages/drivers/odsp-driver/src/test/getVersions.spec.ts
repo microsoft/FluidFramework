@@ -21,7 +21,7 @@ import { INewFileInfo, ISnapshotContents } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
 import { getHashedDocumentId } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
-import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
+import { defaultCacheExpiryTimeoutMs, OdspDocumentStorageService } from "../odspDocumentStorageManager";
 import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache(2000);
@@ -83,8 +83,9 @@ describe("Tests for snapshot fetch", () => {
         fluidEpoch: "epoch1",
         version: persistedCacheValueVersion };
 
+    // Set the cacheEntryTime to anything greater than the current maxCacheAge
     const valueWithExpiredCache: IVersionedValueWithEpoch = {
-        value: { ...content, cacheEntryTime: Date.now() - 3 * 24 * 60 * 60 * 1000 },
+        value: { ...content, cacheEntryTime: Date.now() - defaultCacheExpiryTimeoutMs - 1000 },
         fluidEpoch: "epoch1",
         version: persistedCacheValueVersion };
 
@@ -186,9 +187,9 @@ describe("Tests for snapshot fetch", () => {
         let isCaught = false;
         try {
             await mockFetchSingle(
-            async () => service.getVersions(null,1),
-            // 404 response expected so network fetch throws
-            notFound,
+                async () => service.getVersions(null,1),
+                // 404 response expected so network fetch throws
+                notFound,
             );
         } catch (error) {
             isCaught = true;
@@ -222,9 +223,9 @@ describe("Tests for snapshot fetch", () => {
 
         try {
             await mockFetchSingle(
-            async () => service.getVersions(null,1),
-            // 404 response expected so network fetch throws
-            notFound,
+                async () => service.getVersions(null,1),
+                // 404 response expected so network fetch throws
+                notFound,
             );
         } catch (error) {
             isCaught = true;

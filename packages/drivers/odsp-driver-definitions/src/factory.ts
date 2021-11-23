@@ -7,7 +7,6 @@ export interface ISnapshotOptions {
     blobs?: number;
     deltas?: number;
     channels?: number;
-
     /*
      * Maximum Data size (in bytes)
      * If specified, SPO will fail snapshot request with 413 error (see OdspErrorType.snapshotTooBig)
