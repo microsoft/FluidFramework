@@ -60,6 +60,7 @@ export interface IProvideContainerRuntime {
 }
 
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
+    /** @deprecated codeDetailsProposed no longer fires on the container runtime. */
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
     (
         event: "dirty" | "disconnected" | "dispose" | "saved" | "attached",
