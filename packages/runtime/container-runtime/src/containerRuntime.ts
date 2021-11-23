@@ -730,14 +730,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             storage,
         );
 
-        // logging hardware telemetry
-        logger.sendTelemetryEvent({
-            eventName:"hardware",
-            deviceMemory: Object.hasOwnProperty.call(window?.navigator, "deviceMemory")
-            // eslint-disable-next-line @typescript-eslint/dot-notation
-                ? window?.navigator["deviceMemory"] : undefined,
-            hardwareConcurrency: window?.navigator.hardwareConcurrency,
-        });
         return runtime;
     }
 
@@ -1147,6 +1139,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (context.pendingLocalState !== undefined) {
             this.deltaManager.on("op", this.onOp);
         }
+
+        // logging hardware telemetry
+        let deviceMemory;
+        let hardwareConcurrency;
+        if (typeof navigator !== "undefined") {
+            deviceMemory = Object.hasOwnProperty.call(navigator, "deviceMemory")
+            // eslint-disable-next-line @typescript-eslint/dot-notation
+                ? navigator["deviceMemory"] : undefined;
+            hardwareConcurrency = navigator.hardwareConcurrency;
+        } else {
+            deviceMemory = undefined;
+        }
+        logger.sendTelemetryEvent({
+            eventName:"hardware",
+            deviceMemory,
+            hardwareConcurrency,
+        });
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
