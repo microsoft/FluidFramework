@@ -37,7 +37,6 @@ const odspSnapshotOptions: OptionsMatrix<ISnapshotOptions> = {
     blobs: numberCases,
     channels: numberCases,
     deltas: numberCases,
-    maxSessionActiveTime: numberCases,
     mds: numberCases,
     timeout: numberCases,
 };

@@ -136,8 +136,6 @@ export interface ISnapshotOptions {
     // (undocumented)
     deltas?: number;
     // (undocumented)
-    maxSessionActiveTime?: number;
-    // (undocumented)
     mds?: number;
     // (undocumented)
     timeout?: number;
