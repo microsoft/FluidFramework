@@ -429,7 +429,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                     const maxCacheAge = policyMaxCacheTime === undefined || policyMaxCacheTime > twoDays ? twoDays : policyMaxCacheTime;
                                     if(age > maxCacheAge) {
                                         await this.epochTracker.removeEntries();
-                                        this.logger.sendTelemetryEvent({ eventName: "CacheExpired", duration: age });
+                                        this.logger.sendTelemetryEvent({ eventName: "odspVersionsCacheExpired", duration: age, maxCacheAge });
                                         return undefined;
                                     }
                                 }
@@ -440,7 +440,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     // Setup the network snapshot call
                     const networkSnapshotP = this.fetchSnapshot(hostSnapshotOptions);
 
-                    // Either retrieve the both the network and cache snapshots concurrently and pick the first to return
+                    // Based on the concurrentSnapshotFetch policy:
+                    // Either retrieve both the network and cache snapshots concurrently and pick the first to return,
                     // or grab the cache value and then the network value if the cache value returns undefined.
                     let method: string;
                     if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
@@ -489,9 +490,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 {end: true, cancel: "error"},
             );
 
-            // Note: There is no getVersion in this class. There is a getVersion call in another class
-            //       that does however call this getVersions method.
-            // Successful call, redirect future calls to getVersion only!
+            // Successful call, make network calls only
             this.firstVersionCall = false;
 
             this._snapshotSequenceNumber = odspSnapshotCacheValue.sequenceNumber;

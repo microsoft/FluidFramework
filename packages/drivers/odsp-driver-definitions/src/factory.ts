@@ -9,14 +9,6 @@ export interface ISnapshotOptions {
     channels?: number;
 
     /*
-     * Maximum time before the cache is expired (in milliseconds)
-     * The hard limit is 2 * 24 * 60 * 60 * 1000 or 2 days, any values greater will be defaulted to 2 days.
-     * Leaving this value undefined will leave cache expiry at the max. This hard limit is set for garbage
-     * collection purposes.
-     */
-    maxSessionActiveTime?: number;
-
-    /*
      * Maximum Data size (in bytes)
      * If specified, SPO will fail snapshot request with 413 error (see OdspErrorType.snapshotTooBig)
      * if snapshot is bigger in size than specified limit.
