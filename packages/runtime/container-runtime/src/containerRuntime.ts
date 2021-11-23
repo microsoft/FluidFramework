@@ -920,13 +920,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
                 createContainerTimestamp: metadata?.createContainerTimestamp,
             };
-            this.summaryCount = metadata?.summaryCount ?? 0;
+            this.summaryCount = metadata?.summaryCount;
         } else {
             this.createContainerMetadata = {
                 createContainerRuntimeVersion: pkgVersion,
                 createContainerTimestamp: performance.now(),
             };
-            this.summaryCount = 0;
         }
 
         // Default to false (enabled).
@@ -1860,7 +1859,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
         // increment summary count
-        this.summaryCount++;
+        if (this.summaryCount !== undefined) {
+            this.summaryCount++;
+        } else {
+            this.summaryCount = 1;
+        }
 
         const { fullTree, refreshLatestAck, summaryLogger } = options;
         if (refreshLatestAck) {
