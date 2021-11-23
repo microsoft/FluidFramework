@@ -7,6 +7,7 @@
 import { BaseSegment } from '@fluidframework/merge-tree';
 import { Client } from '@fluidframework/merge-tree';
 import { Deferred } from '@fluidframework/common-utils';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -663,7 +664,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     static create(runtime: IFluidDataStoreRuntime, id?: string): SparseMatrix;
     static getFactory(): IChannelFactory;
     // (undocumented)
-    getItem(row: number, col: number): Jsonable<string | number | boolean | IFluidHandle<IFluidObject & IFluidLoadable>>;
+    getItem(row: number, col: number): Jsonable<string | number | boolean | IFluidHandle<IFluidObject & FluidObject & IFluidLoadable>>;
     // (undocumented)
     getPositionProperties(row: number, col: number): PropertySet;
     // (undocumented)
