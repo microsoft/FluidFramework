@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails, IFluidObject, IFluidPackage } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, FluidObject, IFluidPackage } from "@fluidframework/core-interfaces";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader";
@@ -19,7 +19,7 @@ async function getFluidObjectAndRenderCore(loader: Loader, url: string, div: HTM
         return;
     }
 
-    const fluidObject = response.value as IFluidObject;
+    const fluidObject: FluidObject<IFluidHTMLView> = response.value;
     // Try to render the Fluid object if it is a view
     const view: IFluidHTMLView | undefined = fluidObject.IFluidHTMLView;
     if (view !== undefined) {

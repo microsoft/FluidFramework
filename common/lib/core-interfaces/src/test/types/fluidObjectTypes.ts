@@ -2,11 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable unicorn/filename-case */
-// eslint-disable-next-line import/no-extraneous-dependencies
-import {expectError} from "tsd";
-import { IFluidLoadable, IProvideFluidLoadable, FluidObject, FluidObjectKeys, IFluidObject } from "../dist";
-
+import { IFluidLoadable, IProvideFluidLoadable, FluidObject, FluidObjectKeys, IFluidObject } from "../../";
 
 declare function getFluidObject(): FluidObject;
 
@@ -18,6 +14,7 @@ declare function useProviderKey<T,TKey extends FluidObjectKeys<T> = FluidObjectK
 
 declare function useLoadable(params: FluidObject<IFluidLoadable> | undefined): void;
 
+declare function use(obj: any);
 // test implicit conversions between FluidObject and a FluidObject with a provides interface
 {
     const provider: FluidObject<IProvideFluidLoadable> = getFluidObject();
@@ -27,8 +24,9 @@ declare function useLoadable(params: FluidObject<IFluidLoadable> | undefined): v
     useProvider(provider.IFluidLoadable);
     useLoadable(provider);
     useLoadable(provider.IFluidLoadable);
-    expectError(provider.handle);
-    provider.IFluidLoadable?.handle;
+    // @ts-expect-error provider shouldn't have any non-provider properties
+    use(provider.handle);
+    use(provider.IFluidLoadable?.handle);
     const unknown: FluidObject | undefined = provider.IFluidLoadable;
     useFluidObject(unknown);
     useProvider(unknown);
@@ -45,8 +43,9 @@ declare function useLoadable(params: FluidObject<IFluidLoadable> | undefined): v
     useProvider(foo.IFluidLoadable);
     useLoadable(foo);
     useLoadable(foo.IFluidLoadable);
-    expectError(foo.handle);
-    foo.IFluidLoadable?.handle;
+    // @ts-expect-error provider shouldn't have any non-provider properties
+    use(foo.handle);
+    use(foo.IFluidLoadable?.handle);
     const unknown: FluidObject | undefined = foo.IFluidLoadable;
     useFluidObject(unknown);
     useProvider(unknown);
@@ -59,12 +58,12 @@ declare function useLoadable(params: FluidObject<IFluidLoadable> | undefined): v
     useProviderKey<IProvideFluidLoadable>(IFluidLoadable);
     useProviderKey<IFluidLoadable>(IFluidLoadable);
     const loadableKey: keyof IFluidLoadable = "handle";
-    expectError(useProviderKey<IFluidLoadable>(loadableKey));
+    // @ts-expect-error provider shouldn't have any non-provider properties
+    useProviderKey<IFluidLoadable>(loadableKey);
 }
 
 // test implicit conversions between FluidObject and a FluidObject with a partial provider interface
 {
-
     interface IProvideFoo{
         IFoo: IFoo;
     }
@@ -79,7 +78,8 @@ declare function useLoadable(params: FluidObject<IFluidLoadable> | undefined): v
     useProvider(foo.IFoo);
     foo.IFoo?.doFoo();
     const fooKey: keyof IFoo = "doFoo";
-    expectError(useProviderKey<IFoo>(fooKey));
+    // @ts-expect-error provider shouldn't have any non-provider properties
+    useProviderKey<IFoo>(fooKey);
     const unknown: FluidObject | undefined = foo.IFoo;
     useFluidObject(unknown);
     useProvider(unknown);
@@ -92,8 +92,8 @@ declare function getIFluidObject(): IFluidObject;
 {
     const fluidObject: FluidObject = getIFluidObject();
     const legacy: IFluidObject = getFluidObject();
-    useLoadable(fluidObject)
-    useLoadable(legacy)
+    useLoadable(fluidObject);
+    useLoadable(legacy);
     useFluidObject(fluidObject);
     useFluidObject(legacy);
     useProvider(legacy);

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 /* globals sinon */
-import { DataBinding } from '../../src/data_binder/data_binding';
+import { DataBinding } from '../../src/data_binder/dataBinding';
 
 // Define the DataBinding classes. Must be done here due to the inheritance
 

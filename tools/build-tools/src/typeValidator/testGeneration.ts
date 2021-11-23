@@ -55,28 +55,17 @@ import * as current from "${indexPath}/index";
             testString.push(`* Validate forward compat by using old type in place of current type`);
             testString.push(`* If breaking change required, add in package.json under typeValidation.broken.${oldProjectData.packageDetails.version}:`);
             testString.push(`* "${getFullTypeName(currentType)}": {"forwardCompat": false}`);
-            const forwarCompatCase = buildTestCase(oldType, currentType);
-            if(brokenData?.forwardCompat !== false){
-                testString.push("*/");
-                testString.push(... forwarCompatCase);
-            }else{
-                testString.push(... forwarCompatCase);
-                testString.push("*/");
-            }
+            testString.push("*/");
+            testString.push(...  buildTestCase(oldType, currentType, brokenData?.forwardCompat ?? true));
+
             testString.push("");
 
             testString.push(`/*`)
             testString.push(`* Validate back compat by using current type in place of old type`);
             testString.push(`* If breaking change required, add in package.json under typeValidation.broken.${oldProjectData.packageDetails.version}:`);
             testString.push(`* "${getFullTypeName(currentType)}": {"backCompat": false}`);
-            const backCompatCase = buildTestCase(currentType, oldType);
-            if(brokenData?.backCompat !== false){
-                testString.push("*/");
-                testString.push(... backCompatCase)
-            }else{
-                testString.push(... backCompatCase);
-                testString.push("*/");
-            }
+            testString.push("*/");
+            testString.push(... buildTestCase(currentType, oldType, brokenData?.backCompat ?? true));
             testString.push("");
         }
         const testPath =`${packageDetails.packageDir}/src/test/types`;
@@ -95,13 +84,17 @@ interface TestCaseTypeData extends TypeData{
     prefix: "old" | "current"
 }
 
-function buildTestCase(getAsType:TestCaseTypeData, useType:TestCaseTypeData){
-    const getSig =`get_${getAsType.prefix}_${getFullTypeName(getAsType)}`;
-    const useSig =`use_${useType.prefix}_${getFullTypeName(useType)}`;
+function buildTestCase(getAsType:TestCaseTypeData, useType:TestCaseTypeData, isCompatible: boolean){
+    const getSig =`get_${getAsType.prefix}_${getFullTypeName(getAsType).replace(".","_")}`;
+    const useSig =`use_${useType.prefix}_${getFullTypeName(useType).replace(".","_")}`;
     const testString: string[] =[];
     testString.push(`declare function ${getSig}():\n    ${toTypeString(getAsType.prefix, getAsType)};`);
     testString.push(`declare function ${useSig}(\n    use: ${toTypeString(useType.prefix, useType)});`);
-    testString.push(`${useSig}(\n    ${getSig}());`)
+    testString.push(`${useSig}(`);
+    if(!isCompatible){
+        testString.push(`    // @ts-expect-error compatibility expected to be broken`);
+    }
+    testString.push(`    ${getSig}());`)
     return testString
 }
 

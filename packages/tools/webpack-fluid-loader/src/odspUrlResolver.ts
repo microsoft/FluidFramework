@@ -9,7 +9,7 @@ import {
     IOdspAuthRequestInfo,
     getDriveItemByRootFileName,
 } from "@fluidframework/odsp-doclib-utils";
-import { OdspDriverUrlResolver, createOdspUrl } from "@fluidframework/odsp-driver";
+import { OdspDriverUrlResolver, createOdspUrl, createOdspCreateContainerRequest } from "@fluidframework/odsp-driver";
 
 export class OdspUrlResolver implements IUrlResolver {
     private readonly driverUrlResolver = new OdspDriverUrlResolver();
@@ -66,7 +66,7 @@ export class OdspUrlResolver implements IUrlResolver {
             filePath,
             this.authRequestInfo,
             false);
-        return this.driverUrlResolver.createCreateNewRequest(
+        return createOdspCreateContainerRequest(
             `https://${this.server}`, driveItem.driveId, filePath, `${fileName}.fluid`);
     }
 }
