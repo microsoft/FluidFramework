@@ -31,10 +31,10 @@ export function applyOverrides<T>(options: OptionsMatrix<T>, optionsOverrides: P
         for(const key of Object.keys(optionsOverrides)) {
             const override = optionsOverrides[key];
             if(override !== undefined) {
-                if(Array.isArray(override)) {
+                if(!Array.isArray(override)) {
                     realOptions[key] =  override;
                 }else{
-                    console.error(`Override for ${key} is not array: ${JSON.stringify(optionsOverrides)}`);
+                    throw new Error(`Override for ${key} is not array: ${JSON.stringify(optionsOverrides)}`);
                 }
             }
         }
@@ -43,7 +43,7 @@ export function applyOverrides<T>(options: OptionsMatrix<T>, optionsOverrides: P
 }
 
 export const generateLoaderOptions =
-    (seed: number,  overrides: Partial<OptionsMatrix<ILoaderOptions>> | undefined): ILoaderOptions[]=>{
+    (seed: number,  overrides: Partial<OptionsMatrix<ILoaderOptions>> | undefined): ILoaderOptions[] => {
     return generatePairwiseOptions<ILoaderOptions>(
         applyOverrides(loaderOptionsMatrix, overrides),
         seed);
