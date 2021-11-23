@@ -24,7 +24,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 ## Create the project
 
-1. Open a Command Prompt and navigate to the parent folder where you want to create the project; e.g., `c:\My Fluid Projects`.
+1. Open a Command Prompt and navigate to the parent folder where you want to create the project, e.g., `c:\My Fluid Projects`.
 1. Run the following command at the prompt. (Note that the CLI is np**x**, not npm. It was installed when you installed Node.js.)
 
     ```dotnetcli
@@ -122,7 +122,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 1. Replace `TODO 4` with the following code. Note about this code:
     - By setting an empty dependency array at the end of the `useEffect`, it is ensured that this function only gets called once.
-    - Since `setFluidSharedObjects` is a state-changing method, it will cause the React `App` component to immediately rerender.
+    - Since `setSharedString` is a state-changing method, it will cause the React `App` component to immediately rerender.
 
     ```js
     React.useEffect(() => {
@@ -158,7 +158,7 @@ if (sharedString) {
 ```
 ### Create CollaborativeTextArea component
 
-`CollaborativeTextArea` is a React component which uses a `SharedStringHelper` object to control the text of a HTML `textarea` element. Follow the below steps to create this component.
+`CollaborativeTextArea` is a React component which uses a `SharedStringHelper` object to control the text of an HTML `textarea` element. Follow the below steps to create this component.
 
 1. Create a new file `CollaborativeTextArea.js` inside of the `\src` directory.
 1. Add the following import statements and declare the `CollaborativeTextArea` component:
