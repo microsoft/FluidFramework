@@ -198,7 +198,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
-    updateUsedRoutes(usedRoutes: string[]): IUsedStateStats;
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     }
@@ -378,7 +378,7 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 // @public
 export interface IGarbageCollectionRuntime {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
-    updateUsedRoutes(usedRoutes: string[]): IUsedStateStats;
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
 }
 
 // @public (undocumented)

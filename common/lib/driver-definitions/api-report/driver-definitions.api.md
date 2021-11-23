@@ -82,7 +82,8 @@ export interface IDeltasFetchResult {
 // @public
 export interface IDeltaStorageService {
     get(tenantId: string, id: string, from: number, // inclusive
-    to: number): Promise<IDeltasFetchResult>;
+    to: number, // exclusive
+    fetchReason?: string): Promise<IDeltasFetchResult>;
 }
 
 // @public (undocumented)
@@ -122,7 +123,7 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 
 // @public
 export interface IDocumentDeltaStorageService {
-    fetchMessages(from: number, to: number | undefined, abortSignal?: AbortSignal, cachedOnly?: boolean): IStream<ISequencedDocumentMessage[]>;
+    fetchMessages(from: number, to: number | undefined, abortSignal?: AbortSignal, cachedOnly?: boolean, fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
 }
 
 // @public (undocumented)

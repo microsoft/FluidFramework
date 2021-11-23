@@ -7,7 +7,7 @@
  *
  * A few helper functions to make sure that an entry exists/gets deleted in a nested hierarchy of JS objects
  */
- import _ from 'underscore';
+ import _ from 'lodash';
 
  /**
   * Inserts an object into a nested Object hierarchy. If an entry already exists, it will be overwritten.
@@ -21,7 +21,7 @@
   * @package
   * @hidden
   */
- function insertInNestedObjects(in_object: object, in_path?: string, in_newEntry?: any): boolean {
+ function insertInNestedObjects(in_object: object, ...args: [in_path: string, in_newEntry: any]): boolean {
    let currentObject = in_object;
 
    // Insert all intermediate steps as needed
@@ -51,7 +51,7 @@
   * @package
   * @hidden
   */
- function existsInNestedObjects(in_object: object, in_path?: string): boolean {
+ function existsInNestedObjects(in_object: object, ...args: [in_path: string]): boolean {
    let currentObject = in_object;
 
    // traverse all intermediate steps as needed
@@ -70,14 +70,14 @@
   * Returns an entry from a nested hierarchy of objects
   *
   * @param  in_object  - The object in which we search for the entry
-  * @param  path       - The path within the hierarchy
+  * @param  _path       - The path within the hierarchy
   *
   * @returns The entry at the given path in a hierarchy, or undefined if none
   * @alias getInNestedObjects
   * @package
   * @hidden
   */
- function getInNestedObjects(in_object: object, path: string): object | undefined {
+ function getInNestedObjects(in_object: any, _path?: any): any | undefined {
    let currentObject = in_object;
 
    // traverse all intermediate steps as needed
@@ -104,7 +104,7 @@
   * @package
   * @hidden
   */
-  function getOrInsertDefaultInNestedObjects(this: any, in_object: object, in_path?: string, in_default?: any): object | undefined {
+  function getOrInsertDefaultInNestedObjects<T=object>(this: any, in_object: T, ...args: [in_path?: string, in_default?: any]): T {
    let currentObject = in_object;
 
    // traverse all intermediate steps as needed
@@ -132,7 +132,7 @@
   * @package
   * @hidden
   */
- function deleteInNestedObjects(in_object: object, in_path?: string) {
+ function deleteInNestedObjects(in_object: object, ...args: [in_path: string]) {
    let currentObject = in_object;
 
    // traverse all intermediate steps as needed

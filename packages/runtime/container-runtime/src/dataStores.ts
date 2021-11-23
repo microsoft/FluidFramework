@@ -77,6 +77,7 @@ export class DataStores implements IDisposable {
         private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
         private readonly aliasMap: Map<string, string>,
+        private readonly dataStoreChanged: (id: string) => void,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
         this.logger = ChildLogger.create(baseLogger);
@@ -220,6 +221,7 @@ export class DataStores implements IDisposable {
             return undefined;
         }
 
+        this.dataStoreChanged(currentId);
         this.aliasMap.set(aliasMessage.alias, currentId);
         this.contexts.get(currentId)?.setRoot();
 
@@ -315,6 +317,9 @@ export class DataStores implements IDisposable {
         const context = this.contexts.get(envelope.address);
         assert(!!context, 0x162 /* "There should be a store context for the op" */);
         context.process(transformed, local, localMessageMetadata);
+
+        // Notify that a data store changed. This is used to detect if a deleted data store is being used.
+        this.dataStoreChanged(envelope.address);
     }
 
     public async getDataStore(id: string, wait: boolean): Promise<FluidDataStoreContext> {
@@ -508,8 +513,10 @@ export class DataStores implements IDisposable {
      * @returns the statistics of the used state of the data stores.
      */
     public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats {
+        // Remove this node's route ("/") and update data stores' used routes.
+        const dsUsedRoutes = usedRoutes.filter((id: string) => { return id !== "/"; });
         // Get a map of data store ids to routes used in it.
-        const usedDataStoreRoutes = getChildNodesUsedRoutes(usedRoutes);
+        const usedDataStoreRoutes = getChildNodesUsedRoutes(dsUsedRoutes);
 
         // Verify that the used routes are correct.
         for (const [id] of usedDataStoreRoutes) {

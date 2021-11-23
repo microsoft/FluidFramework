@@ -13,12 +13,12 @@
  * we plan to get rid of modificationSet mid-term, it makes no sense to try and fix those.
  *
  */
-import _ from 'underscore';
-import { DataBinder } from '../../src/data_binder/data_binder';
+import _ from 'lodash';
+import { DataBinder } from '../../src/data_binder/dataBinder';
 import {
   onValuesChanged, onPropertyChanged, onPathChanged, DataBinding
-} from '../../src/data_binder/data_binding';
-import { unregisterAllOnPathListeners } from '../../src/data_binder/internal_utils';
+} from '../../src/data_binder/dataBinding';
+import { unregisterAllOnPathListeners } from '../../src/data_binder/internalUtils';
 import {
   registerTestTemplates, ParentTemplate, ChildTemplate, ReferenceParentTemplate,
   PrimitiveChildrenTemplate, NodeContainerTemplate, ArrayContainerTemplate,
@@ -30,11 +30,11 @@ import {
   ParentDataBinding, ChildDataBinding, PrimitiveChildrenDataBinding, InheritedChildDataBinding,
   DerivedDataBinding, DerivedDerivedDataBinding
 } from './testDataBindings';
-import { catchConsoleErrors } from './catch_console_errors';
+import { catchConsoleErrors } from './catchConsoleError';
 import { RESOLVE_NO_LEAFS } from '../../src/internal/constants';
 import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
-import { ModificationContext } from '../../src/data_binder/modification_context';
-import { MockSharedPropertyTree } from './mock_shared_property_tree';
+import { ModificationContext } from '../../src/data_binder/modificationContext';
+import { MockSharedPropertyTree } from './mockSharedPropertyTree';
 
 // Create a mock THREE.Object3D
 class Vector3 {

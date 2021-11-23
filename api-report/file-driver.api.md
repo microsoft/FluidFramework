@@ -169,8 +169,6 @@ export class ReplayFileDeltaConnection extends TypedEventEmitter<IDocumentDeltaC
     get claims(): ITokenClaims;
     // (undocumented)
     get clientId(): string;
-    // (undocumented)
-    close(): void;
     static create(documentDeltaStorageService: FileDeltaStorageService): Promise<ReplayFileDeltaConnection>;
     // (undocumented)
     details: IConnected;
