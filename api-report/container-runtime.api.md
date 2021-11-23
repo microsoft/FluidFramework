@@ -119,8 +119,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     getAudience(): IAudience;
     // (undocumented)
-    getCodeDetails(): IFluidCodeDetails | undefined;
-    // (undocumented)
     protected getDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
@@ -129,6 +127,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getQuorum(): IQuorum;
     // (undocumented)
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
+    // (undocumented)
+    getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
     // (undocumented)
     get IContainerRuntime(): this;
     // (undocumented)

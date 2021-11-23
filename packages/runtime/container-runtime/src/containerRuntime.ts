@@ -1624,7 +1624,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.quorum;
     }
 
-    public getCodeDetails(): IFluidCodeDetails | undefined {
+    public getSpecifiedCodeDetails(): IFluidCodeDetails | undefined {
         return (this.context.quorum.get("code") ?? this.context.quorum.get("code2")) as IFluidCodeDetails | undefined;
     }
 

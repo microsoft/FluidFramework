@@ -142,7 +142,7 @@ export interface IContainerContext extends IDisposable {
      * Direct access to Quorum proposals will be removed in an upcoming release, and in a further future release this
      * migration tool will be removed.
      */
-    getCodeDetails?(): IFluidCodeDetails | undefined;
+    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
     /** @deprecated - Use `taggedLogger` if present. Otherwise, be sure to handle tagged data

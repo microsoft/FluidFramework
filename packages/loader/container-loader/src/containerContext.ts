@@ -191,7 +191,7 @@ export class ContainerContext implements IContainerContext {
         this.attachListener();
     }
 
-    public getCodeDetails(): IFluidCodeDetails | undefined {
+    public getSpecifiedCodeDetails(): IFluidCodeDetails | undefined {
         return (this.quorum.get("code") ?? this.quorum.get("code2")) as IFluidCodeDetails | undefined;
     }
 
