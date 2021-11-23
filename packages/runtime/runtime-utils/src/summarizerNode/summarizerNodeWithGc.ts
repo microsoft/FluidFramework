@@ -4,9 +4,9 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
+import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { cloneGCData } from "@fluidframework/garbage-collector";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
     CreateChildSummarizerNodeParam,
     gcBlobKey,
@@ -26,8 +26,6 @@ import {
     ISummarizerNodeRootContract,
     SummaryNode,
 } from "./summarizerNodeUtils";
-
-const defaultMaxUnreferencedDurationMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export interface IRootSummarizerNodeWithGC extends ISummarizerNodeWithGC, ISummarizerNodeRootContract {}
 
@@ -75,21 +73,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     // If this node is marked as unreferenced, the time when it marked as such.
     private unreferencedTimestampMs: number | undefined;
 
-    // The max duration for which this node can be unreferenced before it is eligible for deletion.
-    private readonly maxUnreferencedDurationMs: number;
-
-    // The timer that runs when the node is marked unreferenced.
-    private readonly unreferencedTimer: Timer;
-
-    // Tracks whether this node is inactive after being unreferenced for maxUnreferencedDurationMs.
-    private inactive: boolean = false;
-
     // True if GC is disabled for this node. If so, do not track GC specific state for a summary.
     private readonly gcDisabled: boolean;
-
-    // Keeps track of whether we logged an use-after-free error. This is temporary since the error is too noisy.
-    // To be removed once this item is completed - https://github.com/microsoft/FluidFramework/issues/7895.
-    private useAfterFreeErrorLogged: boolean = false;
 
     /**
      * Do not call constructor directly.
@@ -118,15 +103,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         );
 
         this.gcDisabled = config.gcDisabled === true;
-        this.maxUnreferencedDurationMs = config.maxUnreferencedDurationMs ?? defaultMaxUnreferencedDurationMs;
 
         this.gcDetailsInInitialSummaryP = new LazyPromise(async () => {
             const gcSummaryDetails = await getInitialGCSummaryDetailsFn?.();
             return gcSummaryDetails ?? { usedRoutes: [] };
-        });
-
-        this.unreferencedTimer = new Timer(this.maxUnreferencedDurationMs, () => {
-            this.inactive = true;
         });
     }
 
@@ -334,7 +314,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
                 ...config,
                 // Propagate our gcDisabled state to the child if its not explicity specified in child's config.
                 gcDisabled: config.gcDisabled ?? this.gcDisabled,
-                maxUnreferencedDurationMs: config.maxUnreferencedDurationMs ?? this.maxUnreferencedDurationMs,
             },
             createDetails.changeSequenceNumber,
             createDetails.latestSummary,
@@ -382,82 +361,14 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         }
 
         if (this.isReferenced()) {
-            // If this node has been unreferenced for longer than maxUnreferencedDurationMs and is being referenced,
-            // log an error as this may mean the maxUnreferencedDurationMs is not long enough.
-            this.logErrorIfInactive("inactiveObjectRevived", gcTimestamp);
-
-            // Clear unreferenced / inactive state, if any.
-            this.inactive = false;
             this.unreferencedTimestampMs = undefined;
-            this.unreferencedTimer.clear();
             return;
         }
 
-        // This node is unreferenced. We need to check if this node is inative or if we need to start the unreferenced
-        // timer which would mark the node as inactive.
-
-        // If there is no timestamp when GC was run, we don't have enough information to determine whether this content
-        // should become inactive.
-        if (gcTimestamp === undefined) {
-            return;
-        }
-
-        // If unreferencedTimestampMs is not present, this node just became unreferenced. Update unreferencedTimestampMs
-        // and start the unreferenced timer.
-        // Note that it's possible this node has been unreferenced before but the unreferencedTimestampMs was not added.
-        // For example, older versions where this concept did not exist or if gcTimestamp wasn't available. In such
-        // cases, we track them as if the content just became unreferenced.
+        // If this node just became unreferenced, update its unreferencedTimestampMs.
         if (this.unreferencedTimestampMs === undefined) {
             this.unreferencedTimestampMs = gcTimestamp;
-            this.unreferencedTimer.start();
-            return;
         }
-
-        // If we are here, this node was unreferenced earlier.
-
-        // If it is already inactive or has an unreferenced timer running, there is no more work to be done.
-        if (this.inactive || this.unreferencedTimer.hasTimer) {
-            return;
-        }
-
-        // If it has been unreferenced longer than maxUnreferencedDurationMs, mark it as inactive. Otherwise, start the
-        // unreferenced timer for the duration left for it to reach maxUnreferencedDurationMs.
-        const currentUnreferencedDurationMs = gcTimestamp - this.unreferencedTimestampMs;
-        if (currentUnreferencedDurationMs >= this.maxUnreferencedDurationMs) {
-            this.inactive = true;
-        } else {
-            this.unreferencedTimer.start(this.maxUnreferencedDurationMs - currentUnreferencedDurationMs);
-        }
-    }
-
-    public recordChange(op: ISequencedDocumentMessage): void {
-        // If the node is changed after it is inactive, log an error as this may mean use-after-delete.
-        // Currently, we only log this error once per node per session as it's too noisy.
-        if (!this.useAfterFreeErrorLogged && this.logErrorIfInactive("inactiveObjectChanged")) {
-            this.useAfterFreeErrorLogged = true;
-        }
-        super.recordChange(op);
-    }
-
-    /**
-     * Logs an error event if the node is inactive. This is used to identify cases where an inactive object is used.
-     * @param eventName - The name of the event to log.
-     * @param currentTimestampMs - The current time stamp. Used to report how long the object has been inactive.
-     * @returns true if we logged an error, false otherwise.
-     */
-    private logErrorIfInactive(eventName: string, currentTimestampMs?: number): boolean {
-        if (this.inactive) {
-            assert(
-                this.unreferencedTimestampMs !== undefined,
-                0x271 /* "Node should not become inactive without setting unreferencedTimestampMs first" */);
-            this.defaultLogger.sendErrorEvent({
-                eventName,
-                unreferencedDuratonMs: (currentTimestampMs ?? Date.now()) - this.unreferencedTimestampMs,
-                maxUnreferencedDurationMs: this.maxUnreferencedDurationMs,
-            });
-            return true;
-        }
-        return false;
     }
 
     /**
