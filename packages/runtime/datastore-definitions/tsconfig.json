@@ -3,11 +3,12 @@
     "exclude": [
         "dist",
         "node_modules",
-        "test-d"
+        "src/test/**/*"
     ],
     "compilerOptions": {
         "rootDir": "./src",
-        "outDir": "./dist"
+        "outDir": "./dist",
+        "composite": true,
     },
     "include": [
         "src/**/*"
