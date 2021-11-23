@@ -71,7 +71,6 @@ export class PendingStateManager implements IDisposable {
     private readonly initialStates: Deque<IPendingState>;
     private readonly previousClientIds = new Set<string>();
     private readonly firstStashedCSN: number = -1;
-    private stashedCount = 0;
     private readonly disposeOnce = new Lazy<void>(() => {
         this.initialStates.clear();
         this.pendingStates.clear();
@@ -127,7 +126,6 @@ export class PendingStateManager implements IDisposable {
             // get stashed op count and client sequence number of first op
             const messages = initialState.pendingStates
                 .filter((state) => state.type === "message") as IPendingMessage[];
-            this.stashedCount = messages.length;
             this.firstStashedCSN = messages[0].clientSequenceNumber;
         }
     }
@@ -290,7 +288,6 @@ export class PendingStateManager implements IDisposable {
                 // if it's not a message just drop it and keep looking
                 if (nextState.type === "message") {
                     this.assertOpMatch(nextState, message, isOriginalClientId);
-                    --this.stashedCount;
                     return { localAck: true, localOpMetadata: nextState.localOpMetadata };
                 }
             }
@@ -454,7 +451,6 @@ export class PendingStateManager implements IDisposable {
         // This assert suggests we are about to send same ops twice, which will result in data loss.
         assert(this.clientId !== this.containerRuntime.clientId,
             0x173 /* "replayPendingStates called twice for same clientId!" */);
-        const prevClientId = this.clientId;
         this.clientId = this.containerRuntime.clientId;
 
         assert(this.initialStates.isEmpty(), 0x174 /* "initial states should be empty before replaying pending" */);
@@ -462,45 +458,6 @@ export class PendingStateManager implements IDisposable {
         let pendingStatesCount = this.pendingStates.length;
         if (pendingStatesCount === 0) {
             return;
-        }
-
-        if (!prevClientId && this.stashedCount > 0) {
-            // this is first connect, verify we are about to "resubmit" only stashed ops
-            assert(this.pendingStates.toArray().filter((s) => s.type === "message").length === this.stashedCount,
-                0x290 /* "unexpected message queued before first connect" */);
-
-            Array.from(this.previousClientIds).map((id) =>
-                assert(this.containerRuntime.getQuorum().getMember(id) === undefined,
-                    0x291 /* "client with stashed ops already connected" */));
-
-            // send rejoin op with stashed client ID if we have it
-            if (this.previousClientIds.size > 0) {
-                const clientId = Array.from(this.previousClientIds)[0];
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                this.pendingStates.unshift({
-                    type: "message",
-                    messageType: ContainerMessageType.Rejoin,
-                    content: { clientId },
-                } as IPendingMessage);
-                ++pendingStatesCount;
-            }
-        }
-
-        if (prevClientId) {
-            // add a rejoin op so future clients provided with our stashed pending ops can recognize them
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const firstState = this.pendingStates.peekFront()!;
-            if (firstState.type !== "message" || firstState.messageType !== ContainerMessageType.Rejoin) {
-                // if there is already a rejoin op in the queue, just resubmit same op under new client ID
-                // otherwise, add one to the queue
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                this.pendingStates.unshift({
-                    type: "message",
-                    messageType: ContainerMessageType.Rejoin,
-                    content: { clientId: prevClientId },
-                } as IPendingMessage);
-                ++pendingStatesCount;
-            }
         }
 
         // Reset the pending message count because all these messages will be removed from the queue.
