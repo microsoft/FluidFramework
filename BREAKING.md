@@ -10,6 +10,12 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.53 Breaking vhanges
+- [Remove path() from RemoteFluidObjectHandle](#Remove-path-from-RemoteFluidObjectHandle)
+
+### Remove `path()` from `RemoteFluidObjectHandle`
+Remove `path()` from `RemoteFluidObjectHandle` as it returns the absolute path. It can be accessed by `RemoteFluidObjectHandle.absolutePath`.
+
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
 - [`OdspDocumentInfo` type replaced with `OdspFluidDataStoreLocator` interface](#OdspDocumentInfo-type-replaced-with-OdspFluidDataStoreLocator-interface)
