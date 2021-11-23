@@ -425,8 +425,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                     // TODO: Currently there is a max of two days. Potentially remove this logic once proactive expiry exists.
                                     // Set the max age to 2 days, a network call to retrieve the snapshot will be made if undefined is returned.
                                     const twoDays = 2 * 24 * 60 * 60 * 1000;
-                                    const policyMaxCacheTime = hostSnapshotOptions?.maxSessionActiveTime;
-                                    const maxCacheAge = policyMaxCacheTime === undefined || policyMaxCacheTime > twoDays ? twoDays : policyMaxCacheTime;
+                                    const maxCacheAge = twoDays;
                                     if(age > maxCacheAge) {
                                         await this.epochTracker.removeEntries();
                                         this.logger.sendTelemetryEvent({ eventName: "odspVersionsCacheExpired", duration: age, maxCacheAge });
