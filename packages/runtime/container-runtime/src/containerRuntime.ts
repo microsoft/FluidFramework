@@ -894,7 +894,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private readonly createContainerMetadata: ICreateContainerMetadata;
-    private summaryCount: number;
+    private summaryCount: number | undefined;
 
     private constructor(
         private readonly context: IContainerContext,
