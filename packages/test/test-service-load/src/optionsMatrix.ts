@@ -31,7 +31,7 @@ export function applyOverrides<T>(options: OptionsMatrix<T>, optionsOverrides: P
         for(const key of Object.keys(optionsOverrides)) {
             const override = optionsOverrides[key];
             if(override !== undefined) {
-                if(!Array.isArray(override)) {
+                if(Array.isArray(override)) {
                     realOptions[key] =  override;
                 }else{
                     throw new Error(`Override for ${key} is not array: ${JSON.stringify(optionsOverrides)}`);
