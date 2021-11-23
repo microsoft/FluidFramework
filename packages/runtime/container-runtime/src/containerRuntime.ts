@@ -6,15 +6,16 @@
 import { EventEmitter } from "events";
 import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    FluidObject,
+    IFluidCodeDetails,
+    IFluidConfiguration,
+    IFluidHandle,
+    IFluidHandleContext,
     IFluidObject,
     IFluidRouter,
-    IFluidHandleContext,
     IFluidSerializer,
     IRequest,
     IResponse,
-    IFluidHandle,
-    IFluidConfiguration,
-    FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -1621,6 +1622,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public getQuorum(): IQuorum {
         return this.context.quorum;
+    }
+
+    public getCodeDetails(): IFluidCodeDetails | undefined {
+        return (this.context.quorum.get("code") ?? this.context.quorum.get("code2")) as IFluidCodeDetails | undefined;
     }
 
     public getAudience(): IAudience {

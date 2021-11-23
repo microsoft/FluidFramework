@@ -12,6 +12,7 @@ import {
     IRequest,
     IResponse,
     FluidObject,
+    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -134,6 +135,15 @@ export interface IContainerRuntimeBase extends
      * Returns the current quorum.
      */
     getQuorum(): IQuorum;
+
+    /**
+     * @deprecated This method is provided as a migration tool for customers currently reading the code details
+     * from within the Container by directly accessing the Quorum proposals.  The code details should not be accessed
+     * from within the Container as this requires coupling between the container contents and the code loader.
+     * Direct access to Quorum proposals will be removed in an upcoming release, and in a further future release this
+     * migration tool will be removed.
+     */
+    getCodeDetails?(): IFluidCodeDetails | undefined;
 
     /**
      * Returns the current audience.
