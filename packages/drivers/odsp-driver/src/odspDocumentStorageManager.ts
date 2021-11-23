@@ -436,14 +436,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                 return snapshotCachedEntry;
                         });
 
-                    // Setup the network snapshot call
-                    const networkSnapshotP = this.fetchSnapshot(hostSnapshotOptions);
-
                     // Based on the concurrentSnapshotFetch policy:
                     // Either retrieve both the network and cache snapshots concurrently and pick the first to return,
                     // or grab the cache value and then the network value if the cache value returns undefined.
                     let method: string;
                     if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
+                        const networkSnapshotP = this.fetchSnapshot(hostSnapshotOptions);
+
                         // Ensure that failures on both paths are ignored initially.
                         // I.e. if cache fails for some reason, we will proceed with network result.
                         // And vice versa - if (for example) client is offline and network request fails first, we
@@ -476,7 +475,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         method = retrievedSnapshot !== undefined ? "cache" : "network";
 
                         if (retrievedSnapshot === undefined) {
-                            retrievedSnapshot = await networkSnapshotP;
+                            retrievedSnapshot = await this.fetchSnapshot(hostSnapshotOptions);
                         }
                     }
                     if (method === "network") {
