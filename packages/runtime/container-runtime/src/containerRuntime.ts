@@ -913,8 +913,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         super();
         this.baseSummaryMessage = metadata?.message;
 
-        // If this is a new container, we initialize these values. If it's an existing container,
-        // these values would stay undefined
+        // If this is an existing container, we get values from metadata.
+        // otherwise, we initialize them.
         if (existing) {
             this.createContainerMetadata = {
                 createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,

@@ -116,7 +116,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         assert.strictEqual(containerStatsEvents[2].containerLoadDataStoreCount, 1, "data store count should be 1");
         assert.strictEqual(containerStatsEvents[2].referencedDataStoreCount, 1,
             "summarized data store count should be 1");
-        assert.strictEqual(containerStatsEvents[1].summaryCount, 0, "summary count should be 0");
+        assert.strictEqual(containerStatsEvents[1].summaryCount, undefined, "summary count should be 0");
         assert.strictEqual(containerStatsEvents[2].summaryCount, 1, "summary count should be 1");
 
         // close the current summarizer and start a new summarizer container
