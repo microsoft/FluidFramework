@@ -56,7 +56,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         private readonly forwardProducer: IProducer,
         private readonly reverseProducer: IProducer,
         private readonly serviceConfiguration: IServiceConfiguration,
-        private readonly globalDbMongoManager?: MongoManager) {
+        globalDbMongoManager?: MongoManager) {
         super();
     }
 
@@ -164,8 +164,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             this.reverseProducer,
             this.serviceConfiguration,
             sessionMetric,
-            sessionStartMetric,
-            this.globalDbMongoManager);
+            sessionStartMetric);
     }
 
     private logSessionFailureMetrics(

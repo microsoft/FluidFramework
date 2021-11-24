@@ -44,7 +44,6 @@ import {
     IUpdateDSNControlMessageContents,
     LambdaCloseType,
     LambdaName,
-    MongoManager,
 } from "@fluidframework/server-services-core";
 import {
     CommonProperties,
@@ -137,6 +136,7 @@ export interface IDeliLambdaEvents extends IEvent {
     (event: "opEvent",
         listener: (type: OpEventType, sequenceNumber: number, sequencedMessagesSinceLastOpEvent: number) => void);
     (event: "updatedDurableSequenceNumber", listener: (durableSequenceNumber: number) => void);
+    (event: "close", listener: (type: LambdaCloseType) => void);
 }
 
 export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements IPartitionLambda {
@@ -199,8 +199,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         private readonly reverseProducer: IProducer,
         private readonly serviceConfiguration: IServiceConfiguration,
         private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
-        private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
-        globalDbMongoManager?: MongoManager) {
+        private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined) {
         super();
 
         // Instantiate existing clients
@@ -257,6 +256,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     }
 
     public handler(rawMessage: IQueuedMessage) {
+        this.emit("close", LambdaCloseType.Stop);
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset <= this.logOffset) {
             this.updateCheckpointMessages(rawMessage);
