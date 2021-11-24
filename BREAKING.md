@@ -10,6 +10,24 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.53 Breaking changes
+- [`IContainer` interface updated to expose actively used `Container` public APIs](#IContainer-interface-updated-to-expose-actively-used-Container-public-APIs)
+
+### `IContainer` interface updated to expose actively used `Container` public APIs
+In order to have the `IContainer` interface be the active developer surface that is used when interacting with a `Container` instance, it has been updated to expose the APIs that are necessary for currently used behavior. The motivation here is to move away from using the `Container` class when only its type is required, and to use the `IContainer` interface instead.
+
+The following values have been added (NOTE: some of these are marked with an @alpha tag and may be replaced in the future with a breaking change as the `IContainer` interface is finalized):
+- `connectionState`
+- `connected`
+- `setAutoReconnect()` (**alpha**)
+- `resume()` (**alpha**)
+- `audience`
+- `clientId` (**alpha**)
+- `readOnlyInfo`
+- `forceReadonly()` (**alpha**)
+
+Additionally, `codeDetails` which was already deprecated before is now marked as optional and ready for removal after the next release.
+
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
 - [`OdspDocumentInfo` type replaced with `OdspFluidDataStoreLocator` interface](#OdspDocumentInfo-type-replaced-with-OdspFluidDataStoreLocator-interface)
