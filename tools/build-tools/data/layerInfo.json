@@ -187,7 +187,7 @@
                     "Routerlicious-Driver",
                     "Server-Libs",
                     "Server-Shared-Utils",
-                    "Test"
+                    "Test-Utils"
                 ]
             },
             "UberPackage": {
@@ -218,19 +218,20 @@
                 ]
             },
             "Tools": {
+                "dev": true,
                 "dot": false,
                 "dirs": [
                     "packages/tools/",
                     "tools/generator-fluid"
-                ],
-                "deps": [
-                    "Framework",
-                    "Routerlicious-Driver",
-                    "Other-Utils",
-                    "Tool-Utils"
                 ]
             },
-            "Test": {
+            "Tests": {
+                "dev": true,
+                "dirs": [
+                    "packages/test/"
+                ]
+            },
+            "Test-Utils": {
                 "dev": true,
                 "packages": [
                     "@fluid-internal/test-dds-utils",
@@ -238,9 +239,6 @@
                     "@fluidframework/test-client-utils",
                     "@fluidframework/test-runtime-utils",
                     "@fluid-tools/webpack-fluid-loader"
-                ],
-                "dirs": [
-                    "packages/test/"
                 ]
             }
         }
