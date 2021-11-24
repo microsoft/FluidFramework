@@ -1,5 +1,20 @@
 # Change Log
 
+## 15.4.1
+
+* improvement: extra merge health data
+  * Associated pull request: [36298](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/36298)
+  * Commit: [7335c6c623d1882fc819328a0c3f6e192a9d43c1](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/7335c6c623d1882fc819328a0c3f6e192a9d43c1)
+* fix: revert handles edits that conflict with current tree state
+  * Associated pull request: [36172](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/36172)
+  * Commit: [3d2d8827e7a2c553c22a88c0062e790a8710d8e0](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/3d2d8827e7a2c553c22a88c0062e790a8710d8e0)
+* merge: `releases/2021.11.3` into `master`
+  * Associated pull request: [36139](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/36139)
+  * Commit: [f56e3af9efcc7a2a2fc4f42ed7aa473c6458347c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f56e3af9efcc7a2a2fc4f42ed7aa473c6458347c)
+* build: Update Dependencies
+  * Associated pull request: [36135](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/36135)
+  * Commit: [a91c8170d24f4b603e88f82147be79b263167367](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/a91c8170d24f4b603e88f82147be79b263167367)
+
 ## 15.0.0
 
 * build: BREAKING CHANGE: update Fluid dependencies 0.49 -> 0.50
