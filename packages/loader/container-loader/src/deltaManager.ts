@@ -1025,7 +1025,8 @@ export class DeltaManager
                 from, // inclusive
                 to, // exclusive
                 controller.signal,
-                cacheOnly);
+                cacheOnly,
+                this.fetchReason);
 
             // eslint-disable-next-line no-constant-condition
             while (true) {
