@@ -438,6 +438,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return;
     }
 
+    public bindToContext(): void {
+        return;
+    }
+
     public bind(handle: IFluidHandle): void {
         return;
     }

@@ -157,9 +157,6 @@ class NoDeltaStream
     private _disposed = false;
     public get disposed() { return this._disposed; }
     public dispose() { this._disposed = true; }
-
-    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
-    public close(): void { this.dispose(); }
 }
 
 /**
@@ -405,6 +402,7 @@ export class DeltaManager
             return {
                 ...common,
                 connectionMode: this.connectionMode,
+                relayServiceAgent: this.connection.relayServiceAgent,
             };
         } else {
             return {
@@ -1027,7 +1025,8 @@ export class DeltaManager
                 from, // inclusive
                 to, // exclusive
                 controller.signal,
-                cacheOnly);
+                cacheOnly,
+                this.fetchReason);
 
             // eslint-disable-next-line no-constant-condition
             while (true) {
@@ -1236,6 +1235,9 @@ export class DeltaManager
             clientId: connection.clientId,
             mode: connection.mode,
         };
+        if (connection.relayServiceAgent !== undefined) {
+            this.connectionStateProps.relayServiceAgent = connection.relayServiceAgent;
+        }
         this._hasCheckpointSequenceNumber = false;
 
         // Some storages may provide checkpointSequenceNumber to identify how far client is behind.

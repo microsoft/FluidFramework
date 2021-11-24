@@ -48,7 +48,6 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
     };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
-            generateSummaries: true,
             initialSummarizerDelayMs: 10,
             summaryConfigOverrides,
         },

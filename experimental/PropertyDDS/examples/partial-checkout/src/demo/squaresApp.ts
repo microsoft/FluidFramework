@@ -6,11 +6,10 @@
 import {ContainerProperty, PropertyFactory} from "@fluid-experimental/property-properties";
 
 // import { IPropertyTree } from "../dataObject";
-import { FluidBinder } from "@fluid-experimental/property-binder";
+import { DataBinder } from "@fluid-experimental/property-binder";
 import _ from "lodash";
 import { SQUARES_DEMO_SCHEMAS } from "@fluid-experimental/schemas";
 import { assert } from "@fluidframework/common-utils";
-import { SharedPropertyTree } from "@fluid-experimental/property-dds";
 import { IPropertyTree } from "../dataObject";
 import { renderMoveButton } from "../view";
 import { SquaresBoard } from "./views/squaresBoard";
@@ -57,34 +56,33 @@ export function randomSquaresBoardGenerator(
 }
 
 export class SquaresApp {
-    constructor(public fluidBinder: FluidBinder, readonly container: HTMLElement, readonly pTree: IPropertyTree) {
-        this.fluidBinder = fluidBinder;
+    constructor(public dataBinder: DataBinder, readonly container: HTMLElement, readonly pTree: IPropertyTree) {
+        this.dataBinder = dataBinder;
     }
 
     init() {
         // Define a runtime representation for squaresBoard & square typeids.
-        this.fluidBinder.defineRepresentation("view", "autofluid:squaresBoard-1.0.0", (property) => {
+        this.dataBinder.defineRepresentation("view", "autofluid:squaresBoard-1.0.0", (property) => {
             const board =  new SquaresBoard([], this.container);
             // Rendering move button to move board's squares randomly
             renderMoveButton(
-                this.fluidBinder.getWorkspace() as unknown as SharedPropertyTree,
+                this.dataBinder.getPropertyTree()!,
                 board.wrapper,
                 property.getId() as string,
             );
             return board;
         });
 
-        // Note: FluidBinder will create the most specialized representation to a given a typeid.
-        this.fluidBinder.defineRepresentation("view", "autofluid:coloredSquare-1.0.0", (property) => {
+        // Note: DataBinder will create the most specialized representation to a given a typeid.
+        this.dataBinder.defineRepresentation("view", "autofluid:coloredSquare-1.0.0", (property) => {
             assert(property instanceof ContainerProperty, "Property should always be a ContainerProperty.");
 
             const values = property.getValues<any>();
             return new Square(values.position, values.color, (pos: IPoint2D) => {
                 property.get<ContainerProperty>("position")!.setValues(pos);
 
-                this.fluidBinder.requestChangesetPostProcessing(_.debounce(() => {
-                    // TODO: clean getWorkspace
-                    this.fluidBinder.getWorkspace()?.commit();
+                this.dataBinder.requestChangesetPostProcessing(_.debounce(() => {
+                    this.dataBinder.getPropertyTree()?.commit();
                 }, 20));
             },
                 values.length,
@@ -94,8 +92,8 @@ export class SquaresApp {
         });
 
         // Registering data bindings to specific typeids.
-        this.fluidBinder.register("view", "autofluid:squaresBoard-1.0.0", SquaresBoardBinding);
-        this.fluidBinder.register("view", "autofluid:coloredSquare-1.0.0", ColoredSquareBinding);
+        this.dataBinder.register("view", "autofluid:squaresBoard-1.0.0", SquaresBoardBinding);
+        this.dataBinder.register("view", "autofluid:coloredSquare-1.0.0", ColoredSquareBinding);
     }
 
     // Registering all schemas used to build the property tree in this demo.

@@ -9,19 +9,12 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IsoBuffer } from '@fluidframework/common-utils';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { Trace } from '@fluidframework/common-utils';
 
 // @public (undocumented)
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
-
-// @public (undocumented)
-export interface AugIntegerRangeNode {
-    // (undocumented)
-    minmax: IIntegerRange;
-}
 
 // @public (undocumented)
 export interface AugmentedIntervalNode {
@@ -328,8 +321,6 @@ export class Heap<T> {
     count(): number;
     // (undocumented)
     get(): T;
-    // (undocumented)
-    L: T[];
     // (undocumented)
     peek(): T;
 }
@@ -644,54 +635,10 @@ export interface InsertContext {
 }
 
 // @public (undocumented)
-export function integerRangeComparer(a: IIntegerRange, b: IIntegerRange): number;
-
-// @public (undocumented)
-export const integerRangeCopy: (r: IIntegerRange) => IIntegerRange;
-
-// @public (undocumented)
-export type IntegerRangeNode = RBNode<IIntegerRange, AugIntegerRangeNode>;
-
-// @public (undocumented)
-export function integerRangeOverlaps(a: IIntegerRange, b: IIntegerRange): boolean;
-
-// @public (undocumented)
 export const integerRangeToString: (range: IIntegerRange) => string;
 
 // @public (undocumented)
-export class IntegerRangeTree implements IRBAugmentation<IIntegerRange, AugIntegerRangeNode>, IRBMatcher<IIntegerRange, AugIntegerRangeNode> {
-    // (undocumented)
-    continueSubtree(node: IntegerRangeNode | undefined, key: IIntegerRange): boolean;
-    // (undocumented)
-    diag: boolean;
-    // (undocumented)
-    match(r: IIntegerRange): RBNode<IIntegerRange, AugIntegerRangeNode>[];
-    // (undocumented)
-    matchNode(node: IntegerRangeNode | undefined, key: IIntegerRange): boolean;
-    // (undocumented)
-    matchPos(pos: number): RBNode<IIntegerRange, AugIntegerRangeNode>[];
-    // (undocumented)
-    nodeToString(node: IntegerRangeNode | undefined): string;
-    // (undocumented)
-    put(r: IIntegerRange): void;
-    // (undocumented)
-    ranges: RedBlackTree<IIntegerRange, AugIntegerRangeNode>;
-    // (undocumented)
-    remove(r: IIntegerRange): void;
-    // (undocumented)
-    toString(): string;
-    // (undocumented)
-    update(node: IntegerRangeNode): void;
-}
-
-// @public
-export function integerRangeUnion(a: IIntegerRange, b: IIntegerRange): IIntegerRange;
-
-// @public (undocumented)
 export function internedSpaces(n: number): string;
-
-// @public (undocumented)
-export const intervalComparer: (a: IInterval, b: IInterval) => number;
 
 // @public (undocumented)
 export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
@@ -703,8 +650,6 @@ export type IntervalNode<T extends IInterval> = RBNode<T, AugmentedIntervalNode>
 export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, AugmentedIntervalNode>, IRBMatcher<T, AugmentedIntervalNode> {
     // (undocumented)
     continueSubtree(node: IntervalNode<T> | undefined, key: T): boolean;
-    // (undocumented)
-    diag: boolean;
     // (undocumented)
     intervals: RedBlackTree<T, AugmentedIntervalNode>;
     // (undocumented)
@@ -718,19 +663,11 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
     // (undocumented)
     matchNode(node: IntervalNode<T> | undefined, key: T): boolean;
     // (undocumented)
-    printTiming(): void;
-    // (undocumented)
     put(x: T, conflict?: IntervalConflictResolver<T>): void;
-    // (undocumented)
-    putCount: number;
-    // (undocumented)
-    putTime: number;
     // (undocumented)
     remove(x: T): void;
     // (undocumented)
     removeExisting(x: T): void;
-    // (undocumented)
-    timePut: boolean;
     // (undocumented)
     update(node: IntervalNode<T>): void;
 }
@@ -836,19 +773,12 @@ export interface KeyComparer<TKey> {
 }
 
 // @public (undocumented)
-export function LinearDictionary<TKey, TData>(compareKeys: KeyComparer<TKey>): SortedDictionary<TKey, TData>;
-
-// @public (undocumented)
 export class List<T> {
     constructor(isHead: boolean, data: T | undefined);
-    // (undocumented)
-    add(data: T): List<T>;
     // (undocumented)
     clear(): void;
     // (undocumented)
     count(): number;
-    // (undocumented)
-    data: T | undefined;
     // (undocumented)
     dequeue(): T | undefined;
     // (undocumented)
@@ -858,27 +788,15 @@ export class List<T> {
     // (undocumented)
     first(): T | undefined;
     // (undocumented)
-    insertAfter(data: T): List<T>;
-    // (undocumented)
-    insertBefore(data: T): List<T>;
-    // (undocumented)
-    insertEntry(entry: List<T>): List<T>;
-    // (undocumented)
-    insertEntryBefore(entry: List<T>): List<T>;
-    // (undocumented)
     isHead: boolean;
     // (undocumented)
     last(): T | undefined;
     // (undocumented)
     next: List<T>;
     // (undocumented)
-    popEntry(head: List<T>): List<T> | undefined;
-    // (undocumented)
     prev: List<T>;
     // (undocumented)
     push(data: T): void;
-    // (undocumented)
-    pushEntry(entry: List<T>): void;
     // (undocumented)
     some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T[];
     // (undocumented)
@@ -886,13 +804,7 @@ export class List<T> {
 }
 
 // @public (undocumented)
-export function ListMakeEntry<U>(data: U): List<U>;
-
-// @public (undocumented)
 export function ListMakeHead<U>(): List<U>;
-
-// @public (undocumented)
-export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined;
 
 // @public (undocumented)
 export function loadSegments(content: string, segLimit: number, markers?: boolean, withProps?: boolean): ISegment[];
@@ -956,8 +868,8 @@ export class LocalReferenceCollection {
         next(): IteratorResult<LocalReference>;
         [Symbol.iterator](): any;
     };
-    // Warning: (ae-forgotten-export) The symbol "IRefsAtOffest" needs to be exported by the entry point index.d.ts
-    constructor(segment: ISegment, initialRefsByfOffset?: (IRefsAtOffest | undefined)[]);
+    // Warning: (ae-forgotten-export) The symbol "IRefsAtOffset" needs to be exported by the entry point index.d.ts
+    constructor(segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
     // (undocumented)
     addAfterTombstones(...refs: Iterable<LocalReference>[]): void;
     // (undocumented)
@@ -1324,9 +1236,6 @@ export interface NodeAction<TClientData> {
 export const NonCollabClient = -2;
 
 // @public (undocumented)
-export const numberComparer: Comparer<number>;
-
-// @public (undocumented)
 export function ordinalToArray(ord: string): number[];
 
 // @public (undocumented)
@@ -1420,19 +1329,9 @@ export interface RBNodeActions<TKey, TData> {
 export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> {
     constructor(compareKeys: KeyComparer<TKey>, aug?: IRBAugmentation<TKey, TData> | undefined);
     // (undocumented)
-    aug?: IRBAugmentation<TKey, TData> | undefined;
-    // (undocumented)
-    balance(input: RBNode<TKey, TData>): RBNode<TKey, TData>;
-    // (undocumented)
     ceil(key: TKey): RBNode<TKey, TData> | undefined;
     // (undocumented)
-    compareKeys: KeyComparer<TKey>;
-    // (undocumented)
-    contains(key: TKey): RBNode<TKey, TData> | undefined;
-    // (undocumented)
     diag(): void;
-    // (undocumented)
-    flipColors(node: RBNode<TKey, TData>): void;
     // (undocumented)
     floor(key: TKey): RBNode<TKey, TData> | undefined;
     // (undocumented)
@@ -1440,15 +1339,9 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     // (undocumented)
     get(key: TKey): RBNode<TKey, TData> | undefined;
     // (undocumented)
-    height(): number;
-    // (undocumented)
     isEmpty(): boolean;
     // (undocumented)
-    isRed(node: RBNode<TKey, TData> | undefined): boolean;
-    // (undocumented)
     keys(): TKey[];
-    // (undocumented)
-    makeNode(key: TKey, data: TData, color: RBColor, size: number): RBNode<TKey, TData>;
     // (undocumented)
     map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum): void;
     // (undocumented)
@@ -1458,65 +1351,13 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     // (undocumented)
     min(): RBNode<TKey, TData> | undefined;
     // (undocumented)
-    moveRedLeft(node: RBNode<TKey, TData>): RBNode<TKey, TData>;
-    // (undocumented)
-    moveRedRight(node: RBNode<TKey, TData>): RBNode<TKey, TData>;
-    // (undocumented)
-    nodeCeil(node: RBNode<TKey, TData> | undefined, key: TKey): RBNode<TKey, TData> | undefined;
-    // (undocumented)
-    nodeFloor(node: RBNode<TKey, TData> | undefined, key: TKey): RBNode<TKey, TData> | undefined;
-    // (undocumented)
-    nodeGather(node: RBNode<TKey, TData> | undefined, results: RBNode<TKey, TData>[], key: TKey, matcher: IRBMatcher<TKey, TData>): void;
-    // (undocumented)
-    nodeGet(node: RBNode<TKey, TData> | undefined, key: TKey): RBNode<TKey, TData> | undefined;
-    // (undocumented)
-    nodeHeight(node: RBNode<TKey, TData> | undefined): number;
-    // (undocumented)
-    nodeMap<TAccum>(node: RBNode<TKey, TData> | undefined, action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey): boolean;
-    // (undocumented)
-    nodeMax(node: RBNode<TKey, TData>): RBNode<TKey, TData>;
-    // (undocumented)
-    nodeMin(node: RBNode<TKey, TData>): RBNode<TKey, TData>;
-    // (undocumented)
-    nodePut(node: RBNode<TKey, TData> | undefined, key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>): RBNode<TKey, TData>;
-    // (undocumented)
-    nodeRemove(node: RBNode<TKey, TData>, key: TKey): RBNode<TKey, TData> | undefined;
-    // (undocumented)
-    nodeRemoveMax(node: RBNode<TKey, TData>): RBNode<TKey, TData> | undefined;
-    // (undocumented)
-    nodeRemoveMin(node: RBNode<TKey, TData>): RBNode<TKey, TData> | undefined;
-    // (undocumented)
-    nodeSize(node: RBNode<TKey, TData> | undefined): number;
-    // (undocumented)
-    nodeWalk(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean;
-    // (undocumented)
-    nodeWalkBackward(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean;
-    // (undocumented)
-    nodeWalkExactMatchesBackward(node: RBNode<TKey, TData> | undefined, compareFn: (node: RBNode<TKey, TData>) => number, actionFn: (node: RBNode<TKey, TData>) => void, continueLeftFn: (cmp: number) => boolean, continueRightFn: (cmp: number) => boolean): void;
-    // (undocumented)
-    nodeWalkExactMatchesForward(node: RBNode<TKey, TData> | undefined, compareFn: (node: RBNode<TKey, TData>) => number, actionFn: (node: RBNode<TKey, TData>) => void, continueLeftFn: (number: number) => boolean, continueRightFn: (number: number) => boolean): void;
-    // (undocumented)
-    oppositeColor(c: RBColor): RBColor;
-    // (undocumented)
     put(key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>): void;
     // (undocumented)
     remove(key: TKey): void;
     // (undocumented)
     removeExisting(key: TKey): void;
     // (undocumented)
-    removeMax(): void;
-    // (undocumented)
-    removeMin(): void;
-    // (undocumented)
-    root: RBNode<TKey, TData> | undefined;
-    // (undocumented)
-    rotateLeft(node: RBNode<TKey, TData>): RBNode<TKey, TData>;
-    // (undocumented)
-    rotateRight(node: RBNode<TKey, TData>): RBNode<TKey, TData>;
-    // (undocumented)
     size(): number;
-    // (undocumented)
-    updateLocal(node: RBNode<TKey, TData>): void;
     walk(actions: RBNodeActions<TKey, TData>): void;
     // (undocumented)
     walkBackward(actions: RBNodeActions<TKey, TData>): void;
@@ -1652,80 +1493,24 @@ export class SegmentGroupCollection {
 }
 
 // @public (undocumented)
-export interface SnapChunk {
-    // (undocumented)
-    buffer?: IsoBuffer;
-    // (undocumented)
-    lengthBytes: number;
-    position: number;
-    // (undocumented)
-    sequenceLength: number;
-}
-
-// @public (undocumented)
-export interface SnapshotHeader {
-    // (undocumented)
-    chunkCount?: number;
-    // (undocumented)
-    indexOffset?: number;
-    // (undocumented)
-    minSeq?: number;
-    // (undocumented)
-    segmentsOffset?: number;
-    // (undocumented)
-    segmentsTotalLength: number;
-    // (undocumented)
-    seq: number;
-}
-
-// @public (undocumented)
 export class SnapshotLegacy {
     constructor(mergeTree: MergeTree, logger: ITelemetryLogger, filename?: string | undefined, onCompletion?: (() => void) | undefined);
     // (undocumented)
     static readonly body = "body";
-    // (undocumented)
-    buffer: IsoBuffer | undefined;
-    // (undocumented)
-    static readonly catchupOps = "catchupOps";
     emit(catchUpMsgs: ISequencedDocumentMessage[], serializer: IFluidSerializer, bind: IFluidHandle): ITree;
     // (undocumented)
     extractSync(): IJSONSegment[];
     // (undocumented)
     filename?: string | undefined;
-    // Warning: (ae-forgotten-export) The symbol "MergeTreeChunkLegacy" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    getSeqLengthSegs(allSegments: IJSONSegment[], allLengths: number[], approxSequenceLength: number, startIndex?: number): MergeTreeChunkLegacy;
     // (undocumented)
     static readonly header = "header";
-    // (undocumented)
-    header: SnapshotHeader | undefined;
-    // (undocumented)
-    logger: ITelemetryLogger;
     // (undocumented)
     mergeTree: MergeTree;
     // (undocumented)
     onCompletion?: (() => void) | undefined;
     // (undocumented)
-    pendingChunk: SnapChunk | undefined;
-    // (undocumented)
-    segmentLengths: number[] | undefined;
-    // (undocumented)
-    segments: IJSONSegment[] | undefined;
-    // (undocumented)
-    seq: number | undefined;
-    // (undocumented)
     static readonly sizeOfFirstChunk: number;
 }
-
-// @public (undocumented)
-export class SnapshotLoader {
-    constructor(runtime: IFluidDataStoreRuntime, client: Client, mergeTree: MergeTree, logger: ITelemetryLogger, serializer: IFluidSerializer);
-    // (undocumented)
-    initialize(services: IChannelStorageService): Promise<{
-        catchupOpsP: Promise<ISequencedDocumentMessage[]>;
-    }>;
-    }
 
 // @public (undocumented)
 export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
@@ -1838,13 +1623,6 @@ export const TreeMaintenanceSequenceNumber = -2;
 
 // @public (undocumented)
 export class TST<T> {
-    constructor();
-    // (undocumented)
-    collect(x: TSTNode<T> | undefined, prefix: TSTPrefix, q: string[]): void;
-    // (undocumented)
-    collectPairs(x: TSTNode<T> | undefined, prefix: TSTPrefix, q: TSTResult<T>[]): void;
-    // (undocumented)
-    contains(key: string): T | undefined;
     // (undocumented)
     get(key: string): T | undefined;
     // (undocumented)
@@ -1852,21 +1630,9 @@ export class TST<T> {
     // (undocumented)
     map(fn: (key: string, val: T) => void): void;
     // (undocumented)
-    mapNode(x: TSTNode<T> | undefined, prefix: TSTPrefix, fn: (key: string, val: T) => void): void;
-    // (undocumented)
-    match(pattern: string): string[];
-    // (undocumented)
     neighbors(text: string, distance?: number): ProxString<T>[];
     // (undocumented)
-    nodeGet(x: TSTNode<T> | undefined, key: string, d: number): TSTNode<T> | undefined;
-    // (undocumented)
-    nodeProximity(x: TSTNode<T> | undefined, prefix: TSTPrefix, d: number, pattern: string, distance: number, q: ProxString<T>[]): void;
-    // (undocumented)
-    nodePut(x: TSTNode<T> | undefined, key: string, val: T, d: number): TSTNode<T>;
-    // (undocumented)
     pairsWithPrefix(text: string): TSTResult<T>[];
-    // (undocumented)
-    patternCollect(x: TSTNode<T> | undefined, prefix: TSTPrefix, d: number, pattern: string, q: string[]): void;
     // (undocumented)
     put(key: string, val: T): void;
     // (undocumented)
@@ -1885,12 +1651,6 @@ export interface TSTNode<T> {
     right?: TSTNode<T>;
     // (undocumented)
     val?: T;
-}
-
-// @public (undocumented)
-export interface TSTPrefix {
-    // (undocumented)
-    text: string;
 }
 
 // @public (undocumented)
