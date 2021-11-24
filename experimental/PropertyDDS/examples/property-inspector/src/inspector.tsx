@@ -23,7 +23,7 @@ import { MuiThemeProvider } from "@material-ui/core/styles";
 
 import { PropertyProxy } from "@fluid-experimental/property-proxy";
 
-import { FluidBinder } from "@fluid-experimental/property-binder";
+import { DataBinder } from "@fluid-experimental/property-binder";
 import { SharedPropertyTree } from "@fluid-experimental/property-dds";
 import AutoSizer from "react-virtualized-auto-sizer";
 
@@ -112,13 +112,13 @@ export const InspectorApp = (props: any) => {
 };
 
 export function renderApp(propertyTree: SharedPropertyTree, element: HTMLElement) {
-    const fluidBinder = new FluidBinder();
+    const dataBinder = new DataBinder();
 
-    fluidBinder.attachTo(propertyTree);
+    dataBinder.attachTo(propertyTree);
 
     // Listening to any change the root path of the PropertyDDS, and rendering the latest state of the
     // inspector tree-table.
-    fluidBinder.registerOnPath("/", ["insert", "remove", "modify"], _.debounce(() => {
+    dataBinder.registerOnPath("/", ["insert", "remove", "modify"], _.debounce(() => {
         // Create an ES6 proxy for the DDS, this enables JS object interface for interacting with the DDS.
         // Note: This is what currently inspector table expect for "data" prop.
         const proxifiedDDS = PropertyProxy.proxify(propertyTree.root);

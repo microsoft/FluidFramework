@@ -124,7 +124,7 @@ class LayerNode extends BaseNode {
 };
 
 /** Used for traversing the layer dependency graph */
-type LayerDependencyNode = { node: LayerNode, childrenToVisit: (LayerNode | undefined)[], orderedChildren: LayerNode[] };
+type LayerDependencyNode = { node: LayerNode, orderedChildren: LayerNode[] };
 
 class GroupNode extends BaseNode {
     public layerNodes: LayerNode[] = [];
@@ -251,6 +251,8 @@ export class LayerGraph {
     private groupNodes: GroupNode[] = [];
     private layerNodeMap = new Map<string, LayerNode>();
     private packageNodeMap = new Map<string, PackageNode>();
+    /** List of all layers ordered such that all dependencies for a given layer appear earlier in the list */
+    private orderedLayers: LayerDependencyNode[] = [];
     private dirMapping: { [key: string]: LayerNode } = {};
 
     private createPackageNode(name: string, layer: LayerNode) {
@@ -266,6 +268,9 @@ export class LayerGraph {
     private constructor(root: string, layerInfo: ILayerInfoFile, packages: Packages) {
         this.initializeLayers(root, layerInfo);
         this.initializePackages(packages);
+
+        // Walk the layer dependency graph in order of least dependencies to build up orderedLayers and check for cycles
+        this.traverseLayerDependencyGraph();
     }
 
     private initializeLayers(root: string, layerInfo: ILayerInfoFile) {
@@ -287,6 +292,10 @@ export class LayerGraph {
                 }
                 if (layerInfo.packages) {
                     layerInfo.packages.forEach(pkg => this.createPackageNode(pkg, layerNode));
+                }
+
+                if (layerInfo.dev && layerInfo.deps) {
+                    throw new Error(`ERROR: dev layers should not specify allowed deps since verification is skipped for dev layers (${layerName})`);
                 }
             }
         }
@@ -310,6 +319,7 @@ export class LayerGraph {
             }
         }
     }
+
     private initializePackages(packages: Packages) {
         this.initializePackageMatching(packages);
         this.initializeDependencies();
@@ -407,47 +417,14 @@ export class LayerGraph {
         }
     }
 
-    /**
-     * The root is a layer with no unvisited child dependencies.
-     * We'll add it to orderedLayers, and remove it from all other layers'
-     * childrenToVisit, to uncover new roots and recurse.
-     * Nothing is returned, but orderedLayers grows with each recursive call.
-     */
-    private traverseSubgraph(
-        root: LayerDependencyNode,
-        allLayers: LayerDependencyNode[],
-        orderedLayers: LayerDependencyNode[],
-    ) {
-        // Prevent re-entrancy
-        if (orderedLayers.find((l) => l.node.name === root.node.name)) {
-            return;
-        }
-
-        orderedLayers.push(root);
-
-        // Move this root from childrenToVisit to orderedChildren if present
-        // This will create at least one new root (i.e. it has no unvisited dependencies)
-        allLayers
-            .forEach((l) => {
-                const foundIdx = l.childrenToVisit.findIndex((child) => child?.name === root.node.name);
-                if (foundIdx >= 0) {
-                    l.orderedChildren.push(l.childrenToVisit[foundIdx]!);
-                    l.childrenToVisit[foundIdx] = undefined;
-                }
-            });
-
-        // Recurse for every layer with no more unvisited dependencies itself (i.e. now a root itself)
-        allLayers
-            .filter((l) => l.childrenToVisit.every((c) => !c)) // Also accepts empty childrenToVisit
-            .forEach((newRoot) => this.traverseSubgraph(newRoot, allLayers, orderedLayers));
-    }
 
     /**
-     * Returns the list of all layers, ordered such that
-     * all dependencies for a given layer appear earlier in the list.
+     * Walk the layers in order such that a layer's dependencies are visited before that layer.
+     * In doing so, we can also validate that the layer dependency graph has no cycles.
      */
     private traverseLayerDependencyGraph() {
-        const layers: LayerDependencyNode[] = []
+        // Walk all packages, grouping by layers and which layers contain dependencies of that layer
+        const layers: (LayerDependencyNode & { childrenToVisit: LayerNode[] })[] = []
         for (const groupNode of this.groupNodes) {
             for (const layerNode of groupNode.layerNodes) {
                 const childLayers: Set<LayerNode> = new Set();
@@ -462,16 +439,43 @@ export class LayerGraph {
             }
         }
 
-        // We'll traverse in order of least dependencies so orderedLayers will reflect that ordering
-        const orderedLayers: LayerDependencyNode[] = [];
+        // Traverse the layers in order of least dependencies.
+        // OrderedLayers, and orderedChildren for each layer, will reflect that ordering
+        for(let
+            nextIndex = layers.findIndex((l) => l.childrenToVisit.length === 0);
+            nextIndex >= 0;
+            nextIndex = layers.findIndex((l) => l.childrenToVisit.length === 0)
+        ) {
+            // Move this childless child dependecy node to orderedLayers
+            const [childDepNode] = layers.splice(nextIndex, 1);
+            this.orderedLayers.push(childDepNode);
 
-        // Take any "roots" (layers with no child dependencies) and traverse those subgraphs,
-        // building up orderedLayers as we go
-        layers
-            .filter((l) => l.childrenToVisit.length === 0)
-            .forEach((root) => this.traverseSubgraph(root, layers, orderedLayers));
+            // Update all dependent layers. After this at least one layer will have no more children to visit.
+            layers.forEach((l) => {
+                const foundIdx = l.childrenToVisit.findIndex((child) => child.name === childDepNode.node.name);
+                if (foundIdx >= 0) {
+                    // Move this child node to orderedChildren for each dependent layer
+                    const [childNode] = l.childrenToVisit.splice(foundIdx, 1);
+                    l.orderedChildren.push(childNode);
+                }
+            });
+        }
 
-        return orderedLayers;
+        // When we exit the loop above, layers will be empty... unless the layer dependency graph has cycles.
+        // If that's the case, throw an error showing the remaining layers and dependencies to highlight the cycle.
+        if (layers.length > 0) {
+            const remainingLayers = layers.map((l) => `${l.node.name} --> ${l.childrenToVisit.map((c) => c?.name)}`);
+            const errorMessage = `
+ERROR: Circular dependency detected between layers!
+Please inspect these layers and their dependencies to find the cycle:
+
+${remainingLayers.join(newline)}
+
+Note that the dependency may not be explicit in the layer info JSON,
+and doesn't indicate a strict circular dependency between packages.
+But some packages in layer A depend on packages in layer B, and likewise some in B depend on some in A.`
+            throw new Error(errorMessage);
+        }
     }
 
     /**
@@ -480,7 +484,7 @@ export class LayerGraph {
     public generatePackageLayersMarkdown(repoRoot: string) {
         const lines: string[] = [];
         let packageCount: number = 0;
-        for (const layerDepNode of this.traverseLayerDependencyGraph()) {
+        for (const layerDepNode of this.orderedLayers) {
             const layerNode = layerDepNode.node;
             lines.push(`### ${layerNode.name}${newline}`);
             const packagesInCell: string[] = [];
@@ -517,7 +521,7 @@ ${lines.join(newline)}
         return packagesMdContents;
     }
 
-    public static load(root: string, packages: Packages, info?: string) {
+    public static load(root: string, packages: Packages, info?: string): LayerGraph {
         const layerInfoFile = require(info ?? path.join(__dirname, "..", "..", "data", "layerInfo.json"));
         return new LayerGraph(root, layerInfoFile, packages);
     }

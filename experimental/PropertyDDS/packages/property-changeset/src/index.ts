@@ -4,12 +4,14 @@
  */
 import { ChangeSet, SerializedChangeSet } from "./changeset";
 import { ArrayChangeSetIterator } from "./changeset_operations/arrayChangesetIterator";
-import { TypeIdHelper } from "./helpers/typeidHelper";
+import { ExtractedContext, TypeIdHelper } from "./helpers/typeidHelper";
 import { PathHelper } from "./pathHelper";
 import { rebaseToRemoteChanges } from "./rebase";
 import { TemplateSchema } from "./templateSchema";
 import { TemplateValidator } from "./templateValidator";
-import { Utils } from "./utils";
+import { Utils} from "./utils";
+
+const { TraversalContext } = Utils;
 
 export {
     TemplateSchema,
@@ -20,5 +22,7 @@ export {
     PathHelper,
     ArrayChangeSetIterator,
     rebaseToRemoteChanges,
-    SerializedChangeSet
+    SerializedChangeSet,
+    TraversalContext,
+    ExtractedContext
 };

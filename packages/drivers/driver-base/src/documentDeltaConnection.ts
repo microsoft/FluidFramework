@@ -329,9 +329,6 @@ export class DocumentDeltaConnection
             createGenericNetworkError("clientClosingConnection", undefined, true /* canRetry */));
     }
 
-    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
-    public close() { this.dispose(); }
-
     protected disposeCore(socketProtocolError: boolean, err: any) {
         // Can't check this.disposed here, as we get here on socket closure,
         // so _disposed & socket.connected might be not in sync while processing
@@ -539,6 +536,10 @@ export class DocumentDeltaConnection
         if (typeof error !== "object") {
             message = `${message}: ${error}`;
         } else if (error?.type === "TransportError") {
+            // JSON.stringify drops Error.message
+            if (error?.message !== undefined) {
+                message = `${message}: ${error.message}`;
+            }
             // Websocket errors reported by engine.io-client.
             // They are Error objects with description containing WS error and description = "TransportError"
             // Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,

@@ -16,38 +16,41 @@ import {
 // InsecureTokenProvider for basic scenarios or more robust, secure providers that fulfill the
 // ITokenProvider interface
 export class AzureUrlResolver implements IUrlResolver {
-    constructor(
-        private readonly tenantId: string,
-        private readonly orderer: string,
-        private readonly storage: string,
-    ) { }
+    constructor() {}
 
     public async resolve(request: IRequest): Promise<IFluidResolvedUrl> {
+        const { ordererUrl, storageUrl, tenantId, containerId } = decodeAzureUrl(
+            request.url,
+        );
         // determine whether the request is for creating of a new container.
         // such request has the `createNew` header set to true and doesn't have a container ID.
-        if (request.headers && request.headers[DriverHeader.createNew] === true) {
+        if (
+            request.headers &&
+            request.headers[DriverHeader.createNew] === true
+        ) {
             return {
                 endpoints: {
-                    deltaStorageUrl: `${this.orderer}/deltas/${this.tenantId}/new`,
-                    ordererUrl: this.orderer,
-                    storageUrl: `${this.storage}/repos/${this.tenantId}`,
+                    deltaStorageUrl: `${ordererUrl}/deltas/${tenantId}/new`,
+                    ordererUrl,
+                    storageUrl: `${storageUrl}/repos/${tenantId}`,
                 },
                 // id is a mandatory attribute, but it's ignored by the driver for new container requests.
                 id: "",
                 // tokens attribute is redundant as all tokens are generated via ITokenProvider
                 tokens: {},
                 type: "fluid",
-                url: `${this.orderer}/${this.tenantId}/new`,
+                url: `${ordererUrl}/${tenantId}/new`,
             };
         }
-        // for an existing container we'll parse the request URL to determine the document ID.
-        const containerId = request.url.split("/")[0];
-        const documentUrl = `${this.orderer}/${this.tenantId}/${containerId}`;
+        if (containerId === undefined) {
+            throw new Error("Azure URL did not contain containerId");
+        }
+        const documentUrl = `${ordererUrl}/${tenantId}/${containerId}`;
         return Promise.resolve({
             endpoints: {
-                deltaStorageUrl: `${this.orderer}/deltas/${this.tenantId}/${containerId}`,
-                ordererUrl: this.orderer,
-                storageUrl: `${this.storage}/repos/${this.tenantId}`,
+                deltaStorageUrl: `${ordererUrl}/deltas/${tenantId}/${containerId}`,
+                ordererUrl,
+                storageUrl: `${storageUrl}/repos/${tenantId}`,
             },
             id: containerId,
             tokens: {},
@@ -56,7 +59,10 @@ export class AzureUrlResolver implements IUrlResolver {
         });
     }
 
-    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl(
+        resolvedUrl: IResolvedUrl,
+        relativeUrl: string,
+    ): Promise<string> {
         if (resolvedUrl.type !== "fluid") {
             throw Error("Invalid Resolved Url");
         }
@@ -64,11 +70,50 @@ export class AzureUrlResolver implements IUrlResolver {
     }
 }
 
-export const createAzureCreateNewRequest = (): IRequest => (
-    {
-        url: "",
+function decodeAzureUrl(urlString: string): {
+    ordererUrl: string;
+    storageUrl: string;
+    tenantId: string;
+    containerId?: string,
+} {
+    const url = new URL(urlString);
+    const ordererUrl = url.origin;
+    const searchParams = url.searchParams;
+    const storageUrl = searchParams.get("storage");
+    // eslint-disable-next-line no-null/no-null
+    if (storageUrl === null) {
+        throw new Error("Azure URL did not contain a storage URL");
+    }
+    const tenantId = searchParams.get("tenantId");
+    // eslint-disable-next-line no-null/no-null
+    if (tenantId === null) {
+        throw new Error("Azure URL did not contain a tenant ID");
+    }
+    const storageUrlDecoded = decodeURIComponent(storageUrl);
+    const tenantIdDecoded = decodeURIComponent(tenantId);
+    const containerId = searchParams.get("containerId");
+    // eslint-disable-next-line no-null/no-null
+    const containerIdDecoded = containerId !== null ? decodeURIComponent(containerId) : undefined;
+    return {
+        ordererUrl,
+        storageUrl: storageUrlDecoded,
+        tenantId: tenantIdDecoded,
+        containerId: containerIdDecoded,
+    };
+}
+
+export const createAzureCreateNewRequest = (
+    ordererUrl: string,
+    storageUrl: string,
+    tenantId: string,
+): IRequest => {
+    const url = new URL(ordererUrl);
+    url.searchParams.append("storage", encodeURIComponent(storageUrl));
+    url.searchParams.append("tenantId", encodeURIComponent(tenantId));
+    return {
+        url: url.href,
         headers: {
             [DriverHeader.createNew]: true,
         },
-    }
-);
+    };
+};

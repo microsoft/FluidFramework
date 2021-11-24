@@ -6,6 +6,7 @@
 
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { EventEmitter } from 'events';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
@@ -34,6 +35,7 @@ import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
@@ -117,10 +119,13 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     close(error?: ICriticalContainerError): void;
     closeAndGetPendingLocalState(): string;
     readonly closed: boolean;
+    // @deprecated
     readonly codeDetails: IFluidCodeDetails | undefined;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    getLoadedCodeDetails?(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorum;
+    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     readonly isDirty: boolean;
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     request(request: IRequest): Promise<IResponse>;
@@ -166,7 +171,7 @@ export interface IContainerContext extends IDisposable {
     readonly quorum: IQuorum;
     // (undocumented)
     raiseContainerWarning(warning: ContainerWarning): void;
-    readonly scope: IFluidObject;
+    readonly scope: IFluidObject & FluidObject;
     // (undocumented)
     readonly serviceConfiguration: IClientConfiguration | undefined;
     // (undocumented)
@@ -284,7 +289,7 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "idle", listener: (count: number, duration: number) => void): any;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IDeltaSender: keyof IProvideDeltaSender;
 
 // @public
@@ -293,10 +298,12 @@ export interface IDeltaSender extends IProvideDeltaSender {
 }
 
 // @public
-export interface IErrorBase {
+export interface IErrorBase extends Partial<Error> {
     readonly errorType: string;
-    // (undocumented)
+    getTelemetryProperties?(): ITelemetryProperties;
     readonly message: string;
+    readonly name?: string;
+    readonly stack?: string;
 }
 
 // @public
@@ -324,13 +331,13 @@ export interface IFluidCodeResolver {
 // @public (undocumented)
 export interface IFluidModule {
     // (undocumented)
-    fluidExport: IFluidObject & Partial<Readonly<IProvideFluidCodeDetailsComparer>>;
+    fluidExport: IFluidObject & FluidObject<IRuntimeFactory & IProvideFluidCodeDetailsComparer>;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IFluidTokenProvider: keyof IProvideFluidTokenProvider;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IFluidTokenProvider extends IProvideFluidTokenProvider {
     // (undocumented)
     intelligence: {
@@ -353,7 +360,7 @@ export interface IHostLoader extends ILoader {
 }
 
 // @public
-export interface ILoader extends IFluidRouter {
+export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
     resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
 }
 
@@ -392,16 +399,22 @@ export interface IPendingLocalState {
     url: string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IProvideDeltaSender {
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly IDeltaSender: IDeltaSender;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IProvideFluidTokenProvider {
     // (undocumented)
     readonly IFluidTokenProvider: IFluidTokenProvider;
+}
+
+// @public (undocumented)
+export interface IProvideLoader {
+    // (undocumented)
+    readonly ILoader: ILoader;
 }
 
 // @public (undocumented)

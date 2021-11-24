@@ -148,7 +148,8 @@ export class Lumber<T extends string = LumberEventName> {
             this._exception = new Error(safeStringify(exception));
         }
 
-        this._durationInMs = this.properties.get("durationInMs") ?? performance.now() - this._startTime;
+        const durationOverwrite = parseFloat(this.properties.get("durationInMs"));
+        this._durationInMs = isNaN(durationOverwrite) ?  performance.now() - this._startTime : durationOverwrite;
 
         this._engineList.forEach((engine) => engine.emit(this));
         this._completed = true;
