@@ -5,9 +5,9 @@
 /**
  * @fileoverview Defines a helper class for wrapping the use of stateless data bindings
  */
-import { DataBinding } from '../data_binder/data_binding';
-import { ModificationContext } from '../data_binder/modification_context';
-import { RemovalContext } from '../data_binder/removal_context';
+import { DataBinding } from '../data_binder/dataBinding';
+import { ModificationContext } from '../data_binder/modificationContext';
+import { RemovalContext } from '../data_binder/removalContext';
 
 
 export interface StatelessParams {
@@ -21,8 +21,8 @@ export interface StatelessParams {
  * @private
  * @hidden
  */
-class StatelessDataBindingWrapper extends DataBinding {
-  private _singleton: any;
+export class StatelessDataBindingWrapper extends DataBinding {
+  _singleton: any;
 
   /**
    * Constructor
@@ -70,7 +70,7 @@ class StatelessDataBindingWrapper extends DataBinding {
 
   /**
    * Handler that is called when the entity is removed.
-   * This is called before any of the children's onRemove and onPreRemove handlers are called.
+* This is called before any of the children's onRemove and onPreRemove handlers are called.
    *
    * @param in_removalContext - The removal context
    */
@@ -88,5 +88,3 @@ class StatelessDataBindingWrapper extends DataBinding {
     this._singleton._internalOnRemove(this.getProperty(), in_removalContext);
   }
 }
-
-export default StatelessDataBindingWrapper;

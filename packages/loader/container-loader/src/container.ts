@@ -672,22 +672,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 switch (event) {
                     case dirtyContainerEvent:
                         if (this._dirtyContainer) {
-                            listener(dirtyContainerEvent);
+                            listener();
                         }
                         break;
                     case savedContainerEvent:
                         if (!this._dirtyContainer) {
-                            listener(savedContainerEvent);
+                            listener();
                         }
                         break;
                     case connectedEventName:
                          if (this.connected) {
-                            listener(event, this.clientId);
+                            listener(this.clientId);
                          }
                          break;
                     case disconnectedEventName:
                         if (!this.connected) {
-                            listener(event);
+                            listener();
                         }
                         break;
                     default:
@@ -1539,7 +1539,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (this.clientDetailsOverride !== undefined) {
             merge(client.details, this.clientDetailsOverride);
         }
-
+        client.details.environment = [client.details.environment, ` loaderVersion:${pkgVersion}`].join(";");
         return client;
     }
 

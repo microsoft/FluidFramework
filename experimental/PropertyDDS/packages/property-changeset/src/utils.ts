@@ -24,9 +24,6 @@ import { ArrayIteratorOperationTypes } from "./changeset_operations/operationTyp
 
 const { PROPERTY_PATH_DELIMITER, MSG } = constants;
 
-type OperationType = "modify" | "insert" | "remove";
-type PropertyContainerType = "array" | "map" | "set" | "root" | "NodeProperty" | "template";
-
 
 type NextFn = (err?: Error | null | undefined | string, result?: unknown) => void;
 
@@ -36,6 +33,8 @@ type NextFn = (err?: Error | null | undefined | string, result?: unknown) => voi
  * @class
 */
 export namespace Utils {
+    export type OperationType = "modify" | "insert" | "remove";
+    export type PropertyContainerType = "array" | "map" | "set" | "root" | "NodeProperty" | "template";
 
     interface TraversalOptions {
         /**
@@ -818,6 +817,13 @@ export namespace Utils {
         }
     };
 
+    interface TraversalContextParams {
+        fullPostPath?: string;
+        fullPath?: string;
+        propertyContainerType?: PropertyContainerType;
+        operationType?: OperationType;
+    }
+
     /**
      * Provides traversal information when parsing ChangeSets via the traverseChangeSetRecursively function.
      */
@@ -843,8 +849,8 @@ export namespace Utils {
         public _containerStack: string[];
         public _userStack: any[];
         public _operationType: OperationType;
-        constructor() {
-            this._fullPath = "";
+        constructor(params: TraversalContextParams = {}) {
+            this._fullPath = params.fullPath || "";
             this._lastSegment = "";
             this._lastSegmentString = "";
             this._typeid = undefined;
@@ -853,12 +859,12 @@ export namespace Utils {
             this._traversalStopped = false;
             this._nestedChangeSet = undefined;
             this._parentNestedChangeSet = undefined;
-            this._propertyContainerType = "root";
+            this._propertyContainerType = params.propertyContainerType || "root";
             this._arrayLocalIndex = undefined;
             this._arrayOperationIndex = undefined;
             this._arrayOperationOffset = undefined;
             this._arrayIteratorOffset = undefined;
-            this._fullPostPath = "";
+            this._fullPostPath = params.fullPostPath || "";
             this._stackDepth = 0;
             this._typeStack = [];
             this._parentStack = [];
@@ -866,7 +872,7 @@ export namespace Utils {
             this._userStack = [];
 
             // By default, operations are modify operations
-            this._operationType = "modify";
+            this._operationType = params.operationType || "modify";
         }
         /**
          * @returns Whether it's traversing or not
@@ -1203,9 +1209,7 @@ export namespace Utils {
      *
      * At least one of the pre- or post-order callbacks must be specified. Both may be specified as well.
      *
-     * @param {property-changeset.SerializedChangeset}     in_changeSet             - The ChangeSet to process
-
-     * @alias property-changeset.Utils.traverseChangeSetRecursively
+     * @param in_changeSet - The ChangeSet to process
      */
     export function traverseChangeSetRecursively(in_changeSet: SerializedChangeSet, in_params?: TraversalOptions) {
         ConsoleUtils.assert(in_params.preCallback || in_params.postCallback, MSG.MISSING_PRE_POST_CALLBACK);
@@ -1242,7 +1246,7 @@ export namespace Utils {
      * At least one of the pre- or post-order callbacks must be specified. Both may be specified as well.
      *
      * @param in_changeSet - The ChangeSet to process
-     * @param {function}  [in_finalizer]                  -                      A callback when traversal is completed
+     * @param in_finalizer - A callback when traversal is completed
      *
      */
     export function traverseChangeSetRecursivelyAsync(in_changeSet: SerializedChangeSet, in_params?: TraversalOptions, in_finalizer?: (any) => any) {
