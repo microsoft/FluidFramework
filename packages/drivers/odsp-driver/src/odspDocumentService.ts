@@ -6,7 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
 import {
-    ITelemetryLoggerWithConfig,
+    TelemetryLoggerWithConfig,
     mixinChildLoggerWithConfigProvider,
 } from "@fluidframework/telemetry-utils";
 import {
@@ -91,7 +91,7 @@ export class OdspDocumentService implements IDocumentService {
 
     private storageManager?: OdspDocumentStorageService;
 
-    private readonly logger: ITelemetryLoggerWithConfig;
+    private readonly logger: TelemetryLoggerWithConfig;
 
     private readonly joinSessionKey: string;
 
@@ -142,7 +142,7 @@ export class OdspDocumentService implements IDocumentService {
             });
 
         this.hostPolicy = hostPolicy;
-        this.hostPolicy.fetchBinarySnapshotFormat ??= this.logger.getConfig("binaryFormatSnapshot", "boolean");
+        this.hostPolicy.fetchBinarySnapshotFormat ??= this.logger.config.getConfig("binaryFormatSnapshot", "boolean");
         if (this.odspResolvedUrl.summarizer) {
             this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
         }

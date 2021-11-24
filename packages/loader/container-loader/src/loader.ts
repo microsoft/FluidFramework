@@ -28,11 +28,10 @@ import {
 import {
     ConfigProvider,
     DebugLogger,
-    ITelemetryLoggerWithConfig,
+    TelemetryLoggerWithConfig,
     mixinChildLoggerWithConfigProvider,
     mixinConfigProvider,
     PerformanceEvent,
-    tryCreateSessionStorageConfigProvider,
 } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
@@ -279,7 +278,7 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
 export class Loader implements IHostLoader {
     private readonly containers = new Map<string, Promise<Container>>();
     public readonly services: ILoaderServices;
-    private readonly logger: ITelemetryLoggerWithConfig;
+    private readonly logger: TelemetryLoggerWithConfig;
 
     constructor(loaderProps: ILoaderProps) {
         const scope = { ...loaderProps.scope as FluidObject<ILoader> };
@@ -289,7 +288,7 @@ export class Loader implements IHostLoader {
 
         const subLogger = mixinConfigProvider(
             DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all:{loaderId: uuid()} }),
-            new ConfigProvider([tryCreateSessionStorageConfigProvider(), loaderProps.logger], "Fluid"));
+            ConfigProvider.create("Fluid",[loaderProps.logger]));
 
         this.logger = mixinChildLoggerWithConfigProvider(subLogger, "Loader");
 

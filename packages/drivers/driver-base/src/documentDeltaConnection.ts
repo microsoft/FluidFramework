@@ -24,7 +24,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    ITelemetryLoggerWithConfig,
+    TelemetryLoggerWithConfig,
     mixinChildLoggerWithConfigProvider,
 } from "@fluidframework/telemetry-utils";
 
@@ -106,7 +106,7 @@ export class DocumentDeltaConnection
      * After disconnection, we flip this to prevent any stale messages from being emitted.
      */
     protected _disposed: boolean = false;
-    protected readonly logger: ITelemetryLoggerWithConfig;
+    protected readonly logger: TelemetryLoggerWithConfig;
     protected readonly isBatchManagerDisabled: boolean = false;
 
     public get details(): IConnected {
@@ -161,7 +161,7 @@ export class DocumentDeltaConnection
         });
 
         this.isBatchManagerDisabled =
-            this.logger.getConfig(batchManagerDisabledKey, "boolean") ?? false;
+            this.logger.config.getConfig(batchManagerDisabledKey, "boolean") ?? false;
     }
 
     /**

@@ -46,7 +46,7 @@ import {
     normalizeError,
     TaggedLoggerAdapter,
     mixinChildLoggerWithConfigProvider,
-    ITelemetryLoggerWithConfig,
+    TelemetryLoggerWithConfig,
 } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
@@ -812,7 +812,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public readonly IFluidHandleContext: IFluidHandleContext;
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
-    private readonly _logger: ITelemetryLoggerWithConfig;
+    private readonly _logger: TelemetryLoggerWithConfig;
     private readonly summarizerClientElection?: SummarizerClientElection;
     /**
      * summaryManager will only be created if this client is permitted to spawn a summarizing client
@@ -919,7 +919,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._logger = mixinChildLoggerWithConfigProvider(this.logger, "ContainerRuntime");
 
         this._flushMode =
-            this._logger.getConfig(turnBasedFlushModeKey, "boolean") ? FlushMode.TurnBased : FlushMode.Immediate;
+            this._logger.config.getConfig(turnBasedFlushModeKey, "boolean") ? FlushMode.TurnBased : FlushMode.Immediate;
 
         /**
          * Function that return the current server timestamp. This is used by the garbage collector to set the
@@ -1061,7 +1061,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 electedSummarizerData ?? this.context.deltaManager.lastSequenceNumber,
                 SummarizerClientElection.isClientEligible,
             );
-            const summarizerClientElectionEnabled = this._logger.getConfig("summarizerClientElection", "boolean") ??
+            const summarizerClientElectionEnabled =
+                this._logger.config.getConfig("summarizerClientElection", "boolean") ??
                 this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
             this.summarizerClientElection = new SummarizerClientElection(
                 orderedClientLogger,

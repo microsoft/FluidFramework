@@ -9,7 +9,7 @@ import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import {
-    ITelemetryLoggerWithConfig,
+    TelemetryLoggerWithConfig,
     mixinChildLoggerWithConfigProvider,
     PerformanceEvent,
  } from "@fluidframework/telemetry-utils";
@@ -35,7 +35,7 @@ import { getWithRetryForTokenRefresh } from "./odspUtils";
 export class OdspSummaryUploadManager {
     // Last proposed handle of the uploaded app summary.
     private lastSummaryProposalHandle: string | undefined;
-    private readonly logger: ITelemetryLoggerWithConfig;
+    private readonly logger: TelemetryLoggerWithConfig;
 
     constructor(
         private readonly snapshotUrl: string,
@@ -134,7 +134,7 @@ export class OdspSummaryUploadManager {
         tree: api.ISummaryTree,
         rootNodeName: string,
         path: string = "",
-        markUnreferencedNodes: boolean = this.logger.getConfig("FluidMarkUnreferencedNodes", "boolean") ?? true,
+        markUnreferencedNodes: boolean = this.logger.config.getConfig("FluidMarkUnreferencedNodes", "boolean") ?? true,
     ) {
         const snapshotTree: IOdspSummaryTree = {
             type: "tree",
