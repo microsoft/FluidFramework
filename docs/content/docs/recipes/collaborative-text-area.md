@@ -51,7 +51,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 1. Open the file `\src\App.tsx` in your code editor. Delete all the default `import` statements except the one that imports `App.css`. Then delete all the markup from the `return` statement. The file should look like the following:
 
-    ```js
+    ```ts
     import "./App.css";
 
     function App() {
@@ -65,7 +65,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 1. Add the following `import` statements. Note: `CollaborativeTextArea` will be defined later.
 
-    ```js
+    ```ts
     import React from "react";
     import { TinyliciousClient } from "@fluidframework/tinylicious-client";
     import { SharedString } from "fluid-framework";
@@ -77,7 +77,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 1. The Fluid runtime will bring changes made to the text from any client to the current client, but Fluid is agnostic about the UI framework. You can use a React hook to get the Fluid data from the SharedString object into the view layer (the React state). Add the following code below the `import` statements. This method is called when the application loads the first time, and the returned value is assigned to a React state property.
 
-    ```js
+    ```ts
       const useSharedString = (): SharedString => {
 
       const [sharedString, setSharedString] = React.useState();
@@ -94,7 +94,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 1. Replace `TODO 1` with the following code.
 
-    ```js
+    ```ts
       const client: TinyliciousClient = new TinyliciousClient();
       const containerSchema: ContainerSchema = {
         initialObjects: { sharedString: SharedString }
@@ -103,7 +103,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 1. Replace `TODO 2` with the following code. Note that `containerId` is being stored on the URL hash, and if there is no `containerId` a new container is created instead.
 
-    ```js
+    ```ts
       let container: IFluidContainer;
       const containerId = window.location.hash.substring(1);
       if (!containerId) {
@@ -125,7 +125,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 1. Replace `TODO 3` with the following code.
 
-    ```js
+    ```ts
     return container.initialObjects.sharedString as SharedString;
     ```
 
@@ -133,7 +133,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     - By setting an empty dependency array at the end of the `useEffect`, it is ensured that this function only gets called once.
     - Since `setSharedString` is a state-changing method, it will cause the React `App` component to immediately rerender.
 
-    ```js
+    ```ts
     React.useEffect(() => {
       getFluidData()
         .then(data => setSharedString(data));
@@ -142,7 +142,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 1. Finally, replace `TODO 5` with the following code.
 
-    ```js
+    ```ts
     return sharedString as SharedString;
     ```
 
@@ -152,7 +152,7 @@ Inside the `App()` function, add the following code. Note about this code:
 - The `sharedString` object returned from the code above is used to create a `SharedStringHelper` object, which is a class that provides helper APIs to interact with the `sharedString` object.
 - Next, the `SharedStringHelper` object is passed into the `CollaborativeTextArea` React component, which integrates `SharedString` with the default `textarea` HTML element to enable collaboration.
 
-```js
+```ts
 const sharedString = useSharedString();
 
 if (sharedString) {
@@ -169,10 +169,10 @@ if (sharedString) {
 
 `CollaborativeTextArea` is a React component which uses a `SharedStringHelper` object to control the text of an HTML `textarea` element. Follow the below steps to create this component.
 
-1. Create a new file `CollaborativeTextArea.js` inside of the `\src` directory.
+1. Create a new file `CollaborativeTextArea.tsx` inside of the `\src` directory.
 1. Add the following import statements and declare the `CollaborativeTextArea` component:
 
-    ```js
+    ```ts
     import React from "react";
     import { ISharedStringHelperTextChangedEventArgs, SharedStringHelper } from "@fluid-experimental/react-inputs";
 
@@ -186,13 +186,13 @@ if (sharedString) {
       // TODO 3: Set the selection in textarea element (update the UI)
       // TODO 4: Store current selection from the textarea element in the React ref
       // TODO 5: Detect changes in sharedStringHelper and update React/UI as necessary
-      // TODO 6: Create and configure a textarea element that will be used in App.js
+      // TODO 6: Create and configure a textarea element that will be used in App.tsx
     }
     ```
 
 1. Replace `TODO 1` with the following code. To learn more about `useRef`, check out the [React documentation](https://reactjs.org/docs/hooks-reference.html#useref).
 
-    ```js
+    ```ts
     const sharedStringHelper = props.sharedStringHelper;
 
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
@@ -204,7 +204,7 @@ if (sharedString) {
 
 1. Replace `TODO 2` with the following code. This function will be called when a change is made to the `textarea` element.
 
-    ```js
+    ```ts
     const handleChange = (ev: React.FormEvent<HTMLTextAreaElement>) => {
       // First get and stash the new textarea state
       if (!textareaRef.current) {
@@ -244,7 +244,7 @@ if (sharedString) {
 
 1. Replace `TODO 3` with the following code. This function sets the selection directly in the `textarea` element.
 
-    ```js
+    ```ts
     const setTextareaSelection = (newStart: number, newEnd: number) => {
       if (!textareaRef.current) {
         throw new Error("Trying to set selection without current textarea ref?");
@@ -258,7 +258,7 @@ if (sharedString) {
 
 1. Replace `TODO 4` with the following code. This function sets the selection from the `textarea` element and sets it in the React refs.
 
-    ```js
+    ```ts
     const storeSelectionInReact = () => {
       if (!textareaRef.current) {
         throw new Error("Trying to remember selection without current textarea ref?");
@@ -275,7 +275,7 @@ if (sharedString) {
 1. Replace `TODO 5` with the following code. Note about this code:
     - By setting the dependency array at the end of `useEffect` to include `sharedStringHelper`, it is ensured that this function is called each time the `sharedStringHelper` object is changed.
 
-    ```js
+    ```ts
     React.useEffect(() => {
       const handleTextChanged = (event: ISharedStringHelperTextChangedEventArgs) => {
         const newText = sharedStringHelper.getText();
@@ -297,7 +297,7 @@ if (sharedString) {
 
 1. Finally, replace `TODO 6` with the following code to create the `textarea` element.
 
-    ```js
+    ```ts
     return (
       <textarea
         rows={20}
