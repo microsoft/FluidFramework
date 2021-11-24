@@ -180,6 +180,26 @@
         "InterfaceDeclaration_ICodeLoader": {
           "backCompat": false
         }
+      },
+      "0.42.0": {
+        "InterfaceDeclaration_ILoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProxyLoaderFactory": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IHostLoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IContainerContext": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IContainer": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProvideLoader": {
+          "backCompat": false
+        }
       }
     }
   }

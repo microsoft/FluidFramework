@@ -219,13 +219,14 @@ use_current_InterfaceDeclaration_IContainer(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
 * "InterfaceDeclaration_IContainer": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IContainer():
     current.IContainer;
 declare function use_old_InterfaceDeclaration_IContainer(
     use: old.IContainer);
 use_old_InterfaceDeclaration_IContainer(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainer());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -703,13 +704,14 @@ use_current_InterfaceDeclaration_IHostLoader(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
 * "InterfaceDeclaration_IHostLoader": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IHostLoader():
     current.IHostLoader;
 declare function use_old_InterfaceDeclaration_IHostLoader(
     use: old.IHostLoader);
 use_old_InterfaceDeclaration_IHostLoader(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IHostLoader());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -727,13 +729,14 @@ use_current_InterfaceDeclaration_ILoader(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
 * "InterfaceDeclaration_ILoader": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_ILoader():
     current.ILoader;
 declare function use_old_InterfaceDeclaration_ILoader(
     use: old.ILoader);
 use_old_InterfaceDeclaration_ILoader(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILoader());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -897,13 +900,14 @@ use_current_InterfaceDeclaration_IProxyLoaderFactory(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
 * "InterfaceDeclaration_IProxyLoaderFactory": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IProxyLoaderFactory():
     current.IProxyLoaderFactory;
 declare function use_old_InterfaceDeclaration_IProxyLoaderFactory(
     use: old.IProxyLoaderFactory);
 use_old_InterfaceDeclaration_IProxyLoaderFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProxyLoaderFactory());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

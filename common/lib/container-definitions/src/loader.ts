@@ -94,6 +94,9 @@ export interface IContainerEvents extends IEvent {
     (event: "dirty" | "saved", listener: (dirty: boolean) => void);
 }
 
+/**
+ * Namespace for the different connection states a container can be in
+ */
 export namespace ConnectionState {
     /**
      * The document is no longer connected to the delta server

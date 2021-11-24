@@ -58,7 +58,7 @@ export enum BindState {
     NotBound = "NotBound"
 }
 
-// @public (undocumented)
+// @public
 export namespace ConnectionState {
     export type Connected = 2;
     export type Connecting = 1;
