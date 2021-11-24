@@ -256,7 +256,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     }
 
     public handler(rawMessage: IQueuedMessage) {
-        this.emit("close", LambdaCloseType.Stop);
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset <= this.logOffset) {
             this.updateCheckpointMessages(rawMessage);
@@ -418,6 +417,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         this.clearOpIdleTimer();
         this.clearOpMaxTimeTimer();
 
+        this.emit("close", closeType);
         this.removeAllListeners();
 
         if (this.serviceConfiguration.enableLumberjack) {
