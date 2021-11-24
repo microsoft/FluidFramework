@@ -115,6 +115,7 @@ import {
     electedSummarizerBlobName,
     extractSummaryMetadataMessage,
     IContainerRuntimeMetadata,
+    ICreateContainerMetadata,
     ISummaryMetadataMessage,
     metadataBlobName,
     wrapSummaryInChannelsTree,
@@ -892,6 +893,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._summarizer;
     }
 
+    private readonly createContainerMetadata: ICreateContainerMetadata;
+    private summaryCount: number | undefined;
+
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
@@ -907,8 +911,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private _storage?: IDocumentStorageService,
     ) {
         super();
-
         this.baseSummaryMessage = metadata?.message;
+
+        // If this is an existing container, we get values from metadata.
+        // otherwise, we initialize them.
+        if (existing) {
+            this.createContainerMetadata = {
+                createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
+                createContainerTimestamp: metadata?.createContainerTimestamp,
+            };
+            this.summaryCount = metadata?.summaryCount;
+        } else {
+            this.createContainerMetadata = {
+                createContainerRuntimeVersion: pkgVersion,
+                createContainerTimestamp: performance.now(),
+            };
+        }
 
         // Default to false (enabled).
         this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? false;
@@ -1140,6 +1158,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.deltaManager.on("op", this.onOp);
         }
 
+        this.logger.sendTelemetryEvent({
+            eventName: "ContainerLoadStats",
+            ...this.createContainerMetadata,
+            ...this.dataStores.containerLoadStats,
+            summaryCount: this.summaryCount,
+            summaryFormatVersion: metadata?.summaryFormatVersion,
+            disableIsolatedChannels: metadata?.disableIsolatedChannels,
+            gcVersion: metadata?.gcFeature,
+        });
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
@@ -1264,6 +1291,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private formMetadata(): IContainerRuntimeMetadata {
         return {
+            ...this.createContainerMetadata,
+            summaryCount: this.summaryCount,
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
             gcFeature: this.garbageCollector.gcSummaryFeatureVersion,
@@ -1890,6 +1919,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             let continueResult = checkContinue();
             if (!continueResult.continue) {
                 return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error: continueResult.error };
+            }
+
+            // increment summary count
+            if (this.summaryCount !== undefined) {
+                this.summaryCount++;
+            } else {
+                this.summaryCount = 1;
             }
 
             const trace = Trace.start();

@@ -29,9 +29,9 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/driver-definitions": "^0.42.0-0",
+    "@fluidframework/driver-definitions": "^0.43.0-0",
     "@fluidframework/driver-utils": "^0.53.0",
-    "@fluidframework/protocol-definitions": "^0.1026.0-0",
+    "@fluidframework/protocol-definitions": "^0.1026.0",
     "@fluidframework/replay-driver": "^0.53.0",
     "jsonschema": "^1.2.6"
   },
