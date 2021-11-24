@@ -10,23 +10,6 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
-## 0.53 Breaking changes
-- [Remove path() from RemoteFluidObjectHandle class](#Remove-path-from-RemoteFluidObjectHandle-class)
-
-### Remove `path()` from `RemoteFluidObjectHandle` class
-Remove `path()` from `RemoteFluidObjectHandle` which is part of `@fluidframework/runtime-utils` package. The alternative is to parse the handle whose url is the absolute path.
-
-```typescript
-    const serializer = new FluidSerializer(...);
-    const serializedHandle = JSON.stringify({
-        type: "",
-        url: "", // absolute path
-    });
-
-    const parsedHandle: RemoteFluidObjectHandle = serializer.parse(serializedHandle);
-    const path = parsedHandle.absolutePath;
-```
-
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
 - [`OdspDocumentInfo` type replaced with `OdspFluidDataStoreLocator` interface](#OdspDocumentInfo-type-replaced-with-OdspFluidDataStoreLocator-interface)
