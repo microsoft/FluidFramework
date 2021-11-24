@@ -226,6 +226,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
             this.batchSize,
             this.logger,
             abortSignal,
+            fetchReason,
         );
 
         return streamObserver(stream, (result) => {
