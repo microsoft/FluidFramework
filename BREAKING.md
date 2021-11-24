@@ -10,6 +10,12 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.53 Breaking changes
+- [readOnly and readOnlyPermissions removed from container-loader](#readOnly-and-readOnlyPermissions-removed-from-container-loader)
+
+### `readOnly` and `readOnlyPermissions` removed from `container-loader`
+The `readOnly` and `readOnlyPermissions` properties on `container-loader` was deprecated in 0.35, and has now been removed. To replace its functionality, use `readOnlyInfo` by accessing `readOnlyInfo.readonly` and `readOnlyInfo.permissions` respectively.
+
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
 - [`OdspDocumentInfo` type replaced with `OdspFluidDataStoreLocator` interface](#OdspDocumentInfo-type-replaced-with-OdspFluidDataStoreLocator-interface)
@@ -17,7 +23,6 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove `IOdspResolvedUrl.sharingLinkToRedeem` and use `IOdspResolvedUrl.shareLinkInfo` instead](#Remove-IOdspResolvedUrl.sharingLinkToRedeem-and-use-IOdspResolvedUrl.shareLinkInfo-instead)
 - [Replace `createCreateNewRequest` function with `createOdspCreateContainerRequest` function](#Replace-createCreateNewRequest-function-with-createOdspCreateContainerRequest-function)
 - [Deprecate IFluidObject and introduce FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject)
-- [readOnly and readOnlyPermissions removed from container-loader](#readOnly-and-readOnlyPermissions-removed-from-container-loader)
 
 ### `chaincodePackage` removed from `Container`
 The `chaincodePackage` property on `Container` was deprecated in 0.28, and has now been removed.  Two new APIs have been added to replace its functionality, `getSpecifiedCodeDetails()` and `getLoadedCodeDetails()`.  Use `getSpecifiedCodeDetails()` to get the code details currently specified for the `Container`, or `getLoadedCodeDetails()` to get the code details that were used to load the `Container`.
