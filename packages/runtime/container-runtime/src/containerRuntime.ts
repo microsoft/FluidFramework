@@ -1925,7 +1925,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (this.summaryCount !== undefined) {
                 this.summaryCount++;
             } else {
-            this.summaryCount = 1;
+                this.summaryCount = 1;
             }
 
             const trace = Trace.start();
