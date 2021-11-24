@@ -85,6 +85,8 @@ export interface MergeHealthStats {
 	 * * {@link MergeHealthStats.deletedSiblingBadRangeCount}
 	 * * {@link MergeHealthStats.updatedRangeInvertedCount}
 	 * * {@link MergeHealthStats.updatedRangeHasPlacesInDifferentTraitsCount}
+	 * * {@link MergeHealthStats.updatedRangeBadPlaceCount}
+	 * * {@link MergeHealthStats.updatedRangeNeverValidPlaceCount}
 	 *
 	 * then some failure scenarios are not being tracked adequately.
 	 */
@@ -126,6 +128,19 @@ export interface MergeHealthStats {
 	 * Such cases are also counted under {@link MergeHealthStats.badRangeCount}.
 	 */
 	updatedRangeHasPlacesInDifferentTraitsCount: number;
+
+	/**
+	 * Number of sequenced edits that failed to apply due to a range whose places were resolvable but bad.
+	 * This should not happen because place resolution is expected to either return a valid place or fail.
+	 * Such cases are also counted under {@link MergeHealthStats.badRangeCount}.
+	 */
+	updatedRangeBadPlaceCount: number;
+
+	/**
+	 * Number of sequenced edits that failed to apply due to a range whose places were not resolvable due to not being valid for any state.
+	 * Such cases are also counted under {@link MergeHealthStats.badRangeCount}.
+	 */
+	updatedRangeNeverValidPlaceCount: number;
 
 	/**
 	 * Number of sequenced edits that failed to apply due to a constraint violation.
@@ -263,6 +278,8 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 				deletedSiblingBadRangeCount: 0,
 				updatedRangeInvertedCount: 0,
 				updatedRangeHasPlacesInDifferentTraitsCount: 0,
+				updatedRangeBadPlaceCount: 0,
+				updatedRangeNeverValidPlaceCount: 0,
 
 				constraintViolationCount: 0,
 				rangeConstraintViolationCount: 0,
@@ -371,11 +388,21 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 								tally.updatedRangeInvertedCount += 1;
 							} else if (failure === RangeValidationResultKind.PlacesInDifferentTraits) {
 								tally.updatedRangeHasPlacesInDifferentTraitsCount += 1;
+							} else if (failure.kind === RangeValidationResultKind.BadPlace) {
+								// This should not happen because place resolution is expected to either return a valid place or fail.
+								tally.updatedRangeBadPlaceCount += 1;
 							}
-						} else if (
-							result.error.rangeFailure.placeFailure.kind === PlaceUpdateFailureKind.DeletedParent
-						) {
-							tally.deletedAncestorBadRangeCount += 1;
+						} else {
+							// result.error.rangeFailure.kind === RangeUpdateFailureKind.PlaceUpdateFailure
+							if (result.error.rangeFailure.placeFailure.kind === PlaceUpdateFailureKind.DeletedParent) {
+								tally.deletedAncestorBadRangeCount += 1;
+							} else if (
+								result.error.rangeFailure.placeFailure.kind ===
+								PlaceUpdateFailureKind.PlaceWasNeverValid
+							) {
+								// This should not happen because only valid changes should be sent for sequencing
+								tally.updatedRangeNeverValidPlaceCount += 1;
+							}
 						}
 						break;
 					}

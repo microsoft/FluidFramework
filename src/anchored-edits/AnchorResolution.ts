@@ -424,7 +424,7 @@ export function updateRelativePlaceAnchorForPath(
 			change: EvaluatedChange<AnchoredChangeInternal>
 		) => Result<PlaceAnchor, PlaceUpdateFailure>;
 	}
-): Result<PlaceAnchor, PlaceUpdateFailure> | undefined;
+): Result<PlaceAnchor, PlaceUpdateFailure>;
 
 export function updateRelativePlaceAnchorForPath(
 	place: RelativePlaceAnchor,
@@ -445,7 +445,7 @@ export function updateRelativePlaceAnchorForPath(
 		lastOffendingChangeFinder: findLastOffendingChange,
 		placeUpdatorForChange: updateRelativePlaceAnchorForChange,
 	}
-): Result<PlaceAnchor, PlaceUpdateFailure> | undefined {
+): Result<PlaceAnchor, PlaceUpdateFailure> {
 	const lastOffendingChange = lastOffendingChangeFinder(place, path);
 	if (lastOffendingChange === undefined) {
 		return Result.error({
