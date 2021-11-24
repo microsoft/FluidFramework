@@ -10,7 +10,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
-## 0.53 Breaking vhanges
+## 0.53 Breaking changes
 - [Remove path() from RemoteFluidObjectHandle](#Remove-path-from-RemoteFluidObjectHandle)
 
 ### Remove `path()` from `RemoteFluidObjectHandle`
