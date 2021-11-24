@@ -10,11 +10,11 @@ To jump ahead into the finished demo, check out the [SharedString example in our
 
 The following image shows a textarea open in four browsers. The same text is in all four.
 
-![Four browsers with the Timestamp app open in them one second after the button has been pushed.](https://fluidframework.blob.core.windows.net/static/images/collaborative_text_area_1.png)
+![Four browsers with the textarea open with the same text.](https://fluidframework.blob.core.windows.net/static/images/collaborative_text_area_1.png)
 
 The next image shows the same four clients after an edit was made in one of the browsers. Note that the text has updated in all four browsers.
 
-![Four browsers with the Timestamp app open in them one second after the button has been pushed.](https://fluidframework.blob.core.windows.net/static/images/collaborative_text_area_2.png)
+![Four browsers with the textarea open after an edit was made in one browser.](https://fluidframework.blob.core.windows.net/static/images/collaborative_text_area_2.png)
 
 {{< callout note >}}
 
@@ -24,11 +24,11 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 ## Create the project
 
-1. Open a Command Prompt and navigate to the parent folder where you want to create the project, e.g., `c:\My Fluid Projects`.
+1. Open a Command Prompt and navigate to the parent folder where you want to create the project, e.g., `C:\My Fluid Projects`.
 1. Run the following command at the prompt. (Note that the CLI is np**x**, not npm. It was installed when you installed Node.js.)
 
     ```dotnetcli
-    npx create-react-app collaborative-text-area-tutorial --use-npm
+    npx create-react-app collaborative-text-area-tutorial --template typescript
     ```
 
 1. The project is created in a subfolder named `collaborative-text-area-tutorial`. Navigate to it with the command `cd fluid-react-tutorial`.
@@ -36,19 +36,20 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     |Library |Description |
     |---|---|
-    | `fluid-framework`    |Contains the SharedMap and SharedString [distributed data structures]({{< relref "dds.md" >}}) that synchronize data across clients. *This object will hold the most recent timestamp update made by any client.*|
+    | `fluid-framework`    |Contains the SharedString [distributed data structure]({{< relref "dds.md" >}}) that synchronizes text across clients. *This object will hold the most recent text update made by any client.*|
     | `@fluidframework/tinylicious-client`   |Defines the connection to a Fluid server and defines the starting schema for the [Fluid container]({{< relref "containers.md" >}}).|
+    | `@fluid-experimental/react-inputs`   |Contains the SharedStringHelper class that helps provides a simple APIs to interact with the [SharedString]({{< relref "string.md" >}}) object.|
     {.table}
 
     Run the following command to install the libraries.
 
     ```dotnetcli
-    npm install @fluidframework/tinylicious-client fluid-framework
+    npm install @fluidframework/tinylicious-client @fluid-experimental/react-inputs fluid-framework
     ```
 
 ## Code the project
 
-1. Open the file `\src\App.js` in your code editor. Delete all the default `import` statements except the one that imports `App.css`. Then delete all the markup from the `return` statement. The file should look like the following:
+1. Open the file `\src\App.tsx` in your code editor. Delete all the default `import` statements except the one that imports `App.css`. Then delete all the markup from the `return` statement. The file should look like the following:
 
     ```js
     import "./App.css";
@@ -69,7 +70,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     import { TinyliciousClient } from "@fluidframework/tinylicious-client";
     import { SharedString } from "fluid-framework";
     import { CollaborativeTextArea } from "./CollaborativeTextArea";
-    import { SharedStringHelper } from "./SharedStringHelper";
+    import { SharedStringHelper } from "@fluid-experimental/react-inputs";
     ```
 
 ### Get Fluid Data
@@ -77,7 +78,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 1. The Fluid runtime will bring changes made to the text from any client to the current client, but Fluid is agnostic about the UI framework. You can use a React hook to get the Fluid data from the SharedString object into the view layer (the React state). Add the following code below the `import` statements. This method is called when the application loads the first time, and the returned value is assigned to a React state property.
 
     ```js
-    const useSharedString = () => {
+      const useSharedString = (): SharedString => {
 
       const [sharedString, setSharedString] = React.useState();
       const getFluidData = async () => {
@@ -94,8 +95,8 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 1. Replace `TODO 1` with the following code.
 
     ```js
-      const client = new TinyliciousClient();
-      const containerSchema = {
+      const client: TinyliciousClient = new TinyliciousClient();
+      const containerSchema: ContainerSchema = {
         initialObjects: { sharedString: SharedString }
       }
     ```
@@ -103,21 +104,29 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 1. Replace `TODO 2` with the following code. Note that `containerId` is being stored on the URL hash, and if there is no `containerId` a new container is created instead.
 
     ```js
-    let container;
-    const containerId = window.location.hash.substring(1);
-    if (!containerId) {
-      container = (await client.createContainer(containerSchema)).container;
-      const id = await container.attach();
-      window.location.hash = id;
-    } else {
-      container = (await client.getContainer(containerId, containerSchema)).container;
-    }
+      let container: IFluidContainer;
+      const containerId = window.location.hash.substring(1);
+      if (!containerId) {
+        container = (await client.createContainer(containerSchema)).container;
+        const id = await container.attach();
+        window.location.hash = id;
+      }
+      else {
+        container = (await client.getContainer(containerId, containerSchema)).container;
+        if (!container.connected) {
+          await new Promise<void>((resolve) => {
+            container.once("connected", () => {
+              resolve();
+            });
+          });
+        }
+      }
     ```
 
 1. Replace `TODO 3` with the following code.
 
     ```js
-    return container.initialObjects.sharedString;
+    return container.initialObjects.sharedString as SharedString;
     ```
 
 1. Replace `TODO 4` with the following code. Note about this code:
@@ -134,7 +143,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 1. Finally, replace `TODO 5` with the following code.
 
     ```js
-    return sharedString;
+    return sharedString as SharedString;
     ```
 
 ### Move the Fluid Data to the view
@@ -165,6 +174,11 @@ if (sharedString) {
 
     ```js
     import React from "react";
+    import { ISharedStringHelperTextChangedEventArgs, SharedStringHelper } from "@fluid-experimental/react-inputs";
+
+    interface ICollaborativeTextAreaProps {
+      sharedStringHelper: SharedStringHelper;
+    }
 
     export const CollaborativeTextArea = (props) => {
       // TODO 1: Setup React state and references
@@ -179,25 +193,26 @@ if (sharedString) {
 1. Replace `TODO 1` with the following code. To learn more about `useRef`, check out the [React documentation](https://reactjs.org/docs/hooks-reference.html#useref).
 
     ```js
-    const sharedStringHelper = props.sharedStringHelper;  // Instance of SharedStringHelper class
+    const sharedStringHelper = props.sharedStringHelper;
 
-    const textareaRef = React.useRef(null);  // Ref for HTML textarea element
-    const selectionStartRef = React.useRef(0);  // Ref for start of selected text
-    const selectionEndRef = React.useRef(0);  // Ref for end of selected text
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+    const selectionStartRef = React.useRef<number>(0);
+    const selectionEndRef = React.useRef<number>(0);
 
-    const [text, setText] = React.useState(sharedStringHelper.getText());  // Store textarea text in React state
+    const [text, setText] = React.useState<string>(sharedStringHelper.getText());
     ```
 
 1. Replace `TODO 2` with the following code. This function will be called when a change is made to the `textarea` element.
 
     ```js
-    const handleChange = (ev) => {
+    const handleChange = (ev: React.FormEvent<HTMLTextAreaElement>) => {
       // First get and stash the new textarea state
       if (!textareaRef.current) {
         throw new Error("Handling change without current textarea ref?");
       }
       const textareaElement = textareaRef.current;
       const newText = textareaElement.value;
+      // After a change to the textarea content we assume the selection is gone (just a caret)
       const newCaretPosition = textareaElement.selectionStart;
 
       // Next get and stash the old React state
@@ -230,11 +245,12 @@ if (sharedString) {
 1. Replace `TODO 3` with the following code. This function sets the selection directly in the `textarea` element.
 
     ```js
-    const setTextareaSelection = (newStart, newEnd) => {
+    const setTextareaSelection = (newStart: number, newEnd: number) => {
       if (!textareaRef.current) {
         throw new Error("Trying to set selection without current textarea ref?");
       }
       const textareaElement = textareaRef.current;
+
       textareaElement.selectionStart = newStart;
       textareaElement.selectionEnd = newEnd;
     };
@@ -261,7 +277,7 @@ if (sharedString) {
 
     ```js
     React.useEffect(() => {
-      const handleTextChanged = (event) => {
+      const handleTextChanged = (event: ISharedStringHelperTextChangedEventArgs) => {
         const newText = sharedStringHelper.getText();
         setText(newText);
         if (!event.isLocal) {
@@ -283,8 +299,8 @@ if (sharedString) {
 
     ```js
     return (
-    <textarea
-      rows={20}
+      <textarea
+        rows={20}
         cols={50}
         ref={textareaRef}
         onBeforeInput={storeSelectionInReact}
@@ -304,7 +320,7 @@ In the Command Prompt, run the following command to start the Fluid service. Not
 npx tinylicious
 ```
 
-Open a new Command Prompt and navigate to the root of the project; for example, `C:/My Fluid Projects/collaborative-text-area-tutorial`. Start the application server with the following command. The application opens in your browser. This may take a few minutes.
+Open a new Command Prompt and navigate to the root of the project; for example, `C:\My Fluid Projects\collaborative-text-area-tutorial`. Start the application server with the following command. The application opens in your browser. This may take a few minutes.
 
 ```dotnetcli
 npm run start
