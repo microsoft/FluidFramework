@@ -10,6 +10,12 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.53 Breaking changes
+- [readOnly and readOnlyPermissions removed from Container](#readOnly-and-readOnlyPermissions-removed-from-container)
+
+### `readOnly` and `readOnlyPermissions` removed from `Container`
+The `readOnly` and `readOnlyPermissions` properties from `Container` in `container-loader` was deprecated in 0.35, and has now been removed. To replace its functionality, use `readOnlyInfo` by accessing `readOnlyInfo.readonly` and `readOnlyInfo.permissions` respectively.
+
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
 - [`OdspDocumentInfo` type replaced with `OdspFluidDataStoreLocator` interface](#OdspDocumentInfo-type-replaced-with-OdspFluidDataStoreLocator-interface)

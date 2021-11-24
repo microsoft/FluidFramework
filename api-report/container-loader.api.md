@@ -93,12 +93,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     raiseContainerWarning(warning: ContainerWarning): void;
-    // @deprecated
-    get readonly(): boolean | undefined;
     // (undocumented)
+    /**
+      * Object defining the current readonly state of the Container.
+      * If the Container is readonly it also provides additional properties describing how it got to that state.
+     **/
     get readOnlyInfo(): ReadOnlyInfo;
-    // @deprecated
-    get readonlyPermissions(): boolean | undefined;
     static rehydrateDetachedFromSnapshot(loader: Loader, snapshot: string): Promise<Container>;
     // (undocumented)
     request(path: IRequest): Promise<IResponse>;
