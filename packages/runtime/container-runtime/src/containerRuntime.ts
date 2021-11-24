@@ -1173,7 +1173,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             hardwareConcurrency,
         });
 
-        // logging container load stats  
+        // logging container load stats
         this.logger.sendTelemetryEvent({
             eventName: "ContainerLoadStats",
             ...this.createContainerMetadata,
