@@ -1858,13 +1858,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param options - options controlling how the summary is generated or submitted
      */
     public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-        // increment summary count
-        if (this.summaryCount !== undefined) {
-            this.summaryCount++;
-        } else {
-            this.summaryCount = 1;
-        }
-
         const { fullTree, refreshLatestAck, summaryLogger } = options;
         if (refreshLatestAck) {
             const latestSummaryRefSeq = await this.refreshLatestSummaryAckFromServer(
@@ -1926,6 +1919,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             let continueResult = checkContinue();
             if (!continueResult.continue) {
                 return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error: continueResult.error };
+            }
+
+            // increment summary count
+            if (this.summaryCount !== undefined) {
+                this.summaryCount++;
+            } else {
+            this.summaryCount = 1;
             }
 
             const trace = Trace.start();
