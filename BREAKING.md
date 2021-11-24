@@ -11,9 +11,9 @@ There are a few steps you can take to write a good change note and avoid needing
 - Consider providing code examples as part of guidance for non-trivial changes.
 
 ## 0.53 Breaking changes
-- [Remove path() from RemoteFluidObjectHandle](#Remove-path-from-RemoteFluidObjectHandle)
+- [Remove path() from RemoteFluidObjectHandle class](#Remove-path-from-RemoteFluidObjectHandle-class)
 
-### Remove `path()` from `RemoteFluidObjectHandle`
+### Remove `path()` from `RemoteFluidObjectHandle` class
 Remove `path()` from `RemoteFluidObjectHandle` which is part of `@fluidframework/runtime-utils` package. The alternative is to parse the handle whose url is the absolute path.
 
 ```typescript
