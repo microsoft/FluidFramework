@@ -14,7 +14,18 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove path() from RemoteFluidObjectHandle](#Remove-path-from-RemoteFluidObjectHandle)
 
 ### Remove `path()` from `RemoteFluidObjectHandle`
-Remove `path()` from `RemoteFluidObjectHandle` as it returns the absolute path. It can be accessed by `RemoteFluidObjectHandle.absolutePath`.
+Remove `path()` from `RemoteFluidObjectHandle` which is part of `@fluidframework/runtime-utils` package. The alternative is to parse the handle whose url is the absolute path.
+
+```typescript
+    const serializer = new FluidSerializer(...);
+    const serializedHandle = JSON.stringify({
+        type: "",
+        url: "", // absolute path
+    });
+
+    const parsedHandle: RemoteFluidObjectHandle = serializer.parse(serializedHandle);
+    const path = parsedHandle.absolutePath;
+```
 
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
