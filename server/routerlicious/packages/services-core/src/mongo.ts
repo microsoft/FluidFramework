@@ -4,20 +4,8 @@
  */
 
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ICollection } from "./database";
+import { IDb, IDbFactory } from "./database";
 import { debug } from "./debug";
-
-export interface IDb {
-    close(): Promise<void>;
-
-    on(event: string, listener: (...args: any[]) => void);
-
-    collection<T>(name: string): ICollection<T>;
-}
-
-export interface IDbFactory {
-    connect(): Promise<IDb>;
-}
 
 /**
  * Helper class to manage access to a MongoDb database

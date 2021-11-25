@@ -145,7 +145,7 @@ export class MongoDb implements core.IDb {
         return this.client.close();
     }
 
-    public on(event: string, listener: (...args: any[]) => void) {
+    public on(event: core.IDbEvents, listener: (...args: any[]) => void) {
         this.client.on(event, listener);
     }
 
