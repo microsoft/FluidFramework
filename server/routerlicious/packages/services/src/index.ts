@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./dynamodb";
 export * from "./kafkaProducerFactory";
 export * from "./messageReceiver";
 export * from "./messageSender";

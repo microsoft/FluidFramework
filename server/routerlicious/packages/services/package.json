@@ -46,6 +46,8 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.39.0",
+    "@aws-sdk/lib-dynamodb": "^3.39.0",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/protocol-definitions": "^0.1026.0-0",
     "@fluidframework/server-services-client": "^0.1034.0",
@@ -58,8 +60,10 @@
     "@socket.io/redis-emitter": "^4.1.0",
     "amqplib": "^0.8.0",
     "axios": "^0.21.2",
+    "charwise": "^3.0.1",
     "debug": "^4.1.1",
     "ioredis": "^4.24.2",
+    "lodash": "^4.17.21",
     "lru-cache": "^6.0.0",
     "mongodb": "3.2.2",
     "nconf": "^0.11.0",
