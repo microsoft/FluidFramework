@@ -164,10 +164,6 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         this._dataArrayCreate(length);
     };
 
-
-    get _context() { return 'array'; }
-    _staticChildren = {};
-
     /**
      * Returns the path segment for a child
      *
@@ -1780,3 +1776,6 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         throw new Error(MSG.MODIFY_READ_ONLY);
     }
 }
+
+ArrayProperty.prototype._staticChildren = {};
+ArrayProperty.prototype._context = 'array';

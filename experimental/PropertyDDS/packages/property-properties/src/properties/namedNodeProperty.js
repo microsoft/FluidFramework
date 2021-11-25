@@ -56,3 +56,5 @@ export class NamedNodeProperty extends NodeProperty {
     getUrn = NamedProperty.prototype.getUrn;
 
 }
+
+NamedNodeProperty.prototype._typeid = 'NamedNodeProperty';

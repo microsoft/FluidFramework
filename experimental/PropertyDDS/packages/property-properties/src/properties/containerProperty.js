@@ -24,10 +24,14 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      * @protected
      */
     constructor(in_params) {
-        //super({ typeid: 'ContainerProperty', ...in_params });
         super( in_params );
-        this._dynamicChildren = {};
-        this._optionalChildren = {};
+        //this._dynamicChildren = {};
+        //this._optionalChildren = {};
+        if (in_params.optionalChildren) {
+            this._optionalChildren = {};
+            this._dynamicChildren = {};
+        }
+
     };
 
     /**
@@ -56,6 +60,10 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      * @private
      */
     _addOptionalChild(in_id, in_typeid) {
+        if (this._optionalChildren === ContainerProperty.prototype._optionalChildren) {
+            this._optionalChildren = {};
+            this._dynamicChildren = {};
+        }
         this._optionalChildren[in_id] = in_typeid;
     };
 
@@ -317,3 +325,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
     };
 
 }
+
+ContainerProperty.prototype._typeid = 'ContainerProperty';
+ContainerProperty.prototype._dynamicChildren = {};
+ContainerProperty.prototype._optionalChildren = {};

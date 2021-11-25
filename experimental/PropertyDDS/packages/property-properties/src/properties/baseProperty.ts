@@ -104,9 +104,10 @@ interface ISerializeOptions {
  */
 export abstract class BaseProperty {
     protected _id: string | undefined;
-    protected _isConstant: boolean = false;
+    protected _isConstant: boolean;
     protected _dirty: MODIFIED_STATE_FLAGS;
     protected _typeid: string;
+    protected _context: string;
     protected _parent: BaseProperty | undefined;
     protected _noDirtyInBase: boolean;
 
@@ -146,10 +147,6 @@ export abstract class BaseProperty {
     static MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS;
     static REFERENCE_RESOLUTION = REFERENCE_RESOLUTION;
     static PATH_TOKENS = PATH_TOKENS;
-
-    get _context() {
-        return 'single';
-    }
 
     /**
      * @returns The typeid of this property
@@ -1320,3 +1317,7 @@ export abstract class BaseProperty {
     }
 
 }
+
+(BaseProperty as any).prototype._isConstant = false;
+(BaseProperty as any).prototype._context = 'single';
+(BaseProperty as any).prototype._typeid = 'BaseProperty';

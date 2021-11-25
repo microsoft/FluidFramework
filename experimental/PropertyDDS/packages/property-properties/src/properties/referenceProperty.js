@@ -37,8 +37,6 @@ export class ReferenceProperty extends ValueProperty {
         this._data = '';
     };
 
-    _castFunctor = _castFunctors.String;
-
     /**
      * Evaluates Reference properties as primitives.
      * @return {boolean} true since Reference properties are primitives.
@@ -214,3 +212,5 @@ export class ReferenceProperty extends ValueProperty {
     }
 
 }
+ReferenceProperty.prototype._castFunctor = _castFunctors.String;
+ReferenceProperty.prototype._typeid = "Reference";

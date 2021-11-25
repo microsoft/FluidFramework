@@ -26,8 +26,8 @@ export class Float32Property extends ValueProperty {
         // default for this property type is '0'
         this._data = 0;
     };
-    _castFunctor = _castFunctors.Float32;
 }
+Float32Property.prototype._castFunctor = _castFunctors.Float32;
 
 /**
  * A primitive property for a 64 bit floating point value.
@@ -47,6 +47,5 @@ export class Float64Property extends ValueProperty {
         // default for this property type is '0'
         this._data = 0;
     };
-
-    _castFunctor = _castFunctors.Float64;
 }
+Float64Property.prototype._castFunctor = _castFunctors.Float64;

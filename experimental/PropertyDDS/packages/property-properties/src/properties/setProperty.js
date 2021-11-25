@@ -40,8 +40,6 @@ export class SetProperty extends IndexedCollectionBaseProperty {
         this._dynamicChildren = {};
     };
 
-
-    get _context() { return 'set'; }
     // A set property falls back to NamedProperty, if none is specified
 
     /**
@@ -353,3 +351,6 @@ export class SetProperty extends IndexedCollectionBaseProperty {
     };
 
 }
+
+SetProperty.prototype._typeid = 'NamedProperty';
+SetProperty.prototype._context = 'set';

@@ -252,3 +252,4 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
     };
 
 }
+ReferenceArrayProperty.prototype._typeid = 'Reference';

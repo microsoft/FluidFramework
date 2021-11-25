@@ -34,9 +34,6 @@ export class ValueMapProperty extends MapProperty {
         super(in_params);
     };
 
-    // The value map contains primitive types
-    _containsPrimitiveTypes = true;
-
     /**
      * Inserts a value into the map. Using insert with a key that already exists will throw an error.
      *
@@ -195,6 +192,8 @@ export class ValueMapProperty extends MapProperty {
     };
 
 }
+// The value map contains primitive types
+ValueMapProperty.prototype._containsPrimitiveTypes = true;
 
 /**
  * A ValueMapProperty which stores Float32 values
@@ -213,8 +212,9 @@ export class Float32MapProperty extends ValueMapProperty {
         super({ ...in_params, typeid: 'Float32' });
     }
 
-    _castFunctor = _castFunctors.Float32;
 }
+Float32MapProperty.prototype._typeid = 'Float32';
+Float32MapProperty.prototype._castFunctor = _castFunctors.Float32;
 
 /**
  * A ValueMapProperty which stores Float64 values
@@ -232,8 +232,9 @@ export class Float64MapProperty extends ValueMapProperty {
     constructor(in_params) {
         super({ ...in_params, typeid: 'Float64' });
     };
-    _castFunctor = _castFunctors.Float64;
 }
+Float64MapProperty.prototype._typeid = 'Float64';
+Float64MapProperty.prototype._castFunctor = _castFunctors.Float64;
 
 /**
  * A ValueMapProperty which stores Uint32 values
@@ -251,10 +252,9 @@ export class Uint32MapProperty extends ValueMapProperty {
     constructor(in_params) {
         super({ ...in_params, typeid: 'Uint32' });
     };
-
-    _castFunctor = _castFunctors.Uint32;
-
 }
+Uint32MapProperty.prototype._typeid = 'Uint32';
+Uint32MapProperty.prototype._castFunctor = _castFunctors.Uint32;
 
 /**
  * A ValueMapProperty which stores Uint16 values
@@ -272,9 +272,9 @@ export class Uint16MapProperty extends ValueMapProperty {
     constructor(in_params) {
         super({ ...in_params, typeid: 'Uint16' });
     };
-
-    _castFunctor = _castFunctors.Uint16;
 }
+Uint16MapProperty.prototype._typeid = 'Uint16';
+Uint16MapProperty.prototype._castFunctor = _castFunctors.Uint16;
 
 /**
  * A ValueMapProperty which stores Uint8 values
@@ -292,9 +292,9 @@ export class Uint8MapProperty extends ValueMapProperty {
     constructor(in_params) {
         super({ ...in_params, typeid: 'Uint8' });
     };
-
-    _castFunctor = _castFunctors.Uint8;
 }
+Uint8MapProperty.prototype._typeid = 'Uint8';
+Uint8MapProperty.prototype._castFunctor = _castFunctors.Uint8;
 
 /**
  * A ValueMapProperty which stores Int32 values
@@ -312,9 +312,9 @@ export class Int32MapProperty extends ValueMapProperty {
     constructor(in_params) {
         super({ ...in_params, typeid: 'Int32' });
     };
-
-    _castFunctor = _castFunctors.Int32;
 }
+Int32MapProperty.prototype._typeid = 'Int32';
+Int32MapProperty.prototype._castFunctor = _castFunctors.Int32;
 
 /**
  * An abstract base class for 64 bit integer map properties
@@ -405,9 +405,6 @@ export class Int64MapProperty extends Integer64MapProperty {
         super({ ...in_params, typeid: 'Int64', });
     };
 
-    _castFunctor = _castFunctors.Int64;
-
-
     /**
      * Specialized function to deserialize Int64 primitive types.
      * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
@@ -421,6 +418,8 @@ export class Int64MapProperty extends Integer64MapProperty {
     };
 
 }
+Int64MapProperty.prototype._typeid = 'Int64';
+Int64MapProperty.prototype._castFunctor = _castFunctors.Int64;
 
 /**
  * A ValueMapProperty which stores Uint64 Properties
@@ -439,8 +438,6 @@ export class Uint64MapProperty extends Integer64MapProperty {
         super({ ...in_params, typeid: 'Uint64' });
     };
 
-    _castFunctor = _castFunctors.Uint64;
-
     /**
      * Specialized function to deserialize Uint64 primitive types.
      * Some primitive types (e.g. Uint64, which is not natively supported by javascript) require
@@ -453,6 +450,8 @@ export class Uint64MapProperty extends Integer64MapProperty {
         return new Uint64(in_serializedObj[0], in_serializedObj[1]);
     };
 }
+Uint64MapProperty.prototype._typeid = 'Uint64';
+Uint64MapProperty.prototype._castFunctor = _castFunctors.Uint64;
 
 /**
  * A ValueMapProperty which stores Int16 values
@@ -469,9 +468,9 @@ export class Int16MapProperty extends ValueMapProperty {
     constructor(in_params) {
         super({ ...in_params, typeid: 'Int16' });
     };
-
-    _castFunctor = _castFunctors.Int16;
 }
+Int16MapProperty.prototype._typeid = 'Int16';
+Int16MapProperty.prototype._castFunctor = _castFunctors.Int16;
 
 /**
  * A ValueMapProperty which stores Int8 values
@@ -489,9 +488,9 @@ export class Int8MapProperty extends ValueMapProperty {
     constructor(in_params) {
         super({ ...in_params, typeid: 'Int8' });
     };
-
-    _castFunctor = _castFunctors.Int8;
 }
+Int8MapProperty.prototype._typeid = 'Int8';
+Int8MapProperty.prototype._castFunctor = _castFunctors.Int8;
 
 /**
  * A ValueMapProperty which stores string values
@@ -509,9 +508,9 @@ export class StringMapProperty extends ValueMapProperty {
     constructor(in_params) {
         super({ typeid: 'String', ...in_params, });
     };
-
-    _castFunctor = _castFunctors.String;
 }
+StringMapProperty.prototype._typeid = 'String';
+StringMapProperty.prototype._castFunctor = _castFunctors.String;
 
 /**
  * A ValueMapProperty which stores boolean values
@@ -529,6 +528,6 @@ export class BoolMapProperty extends ValueMapProperty {
     constructor(in_params) {
         super({ ...in_params, typeid: 'Bool' });
     };
-
-    _castFunctor = _castFunctors.Boolean;
 }
+BoolMapProperty.prototype._typeid = 'Bool';
+BoolMapProperty.prototype._castFunctor = _castFunctors.Boolean;

@@ -23,10 +23,7 @@ export class BoolProperty extends ValueProperty {
         // default for this property type is 'false'
         this._data = false;
     };
-
-    _castFunctor = _castFunctors.Boolean;
-
 }
 
-
-
+BoolProperty.prototype._typeid = 'Bool';
+BoolProperty.prototype._castFunctor = _castFunctors.Boolean;

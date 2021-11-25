@@ -195,3 +195,5 @@ export class ReferenceMapProperty extends StringMapProperty {
     };
 
 }
+
+ReferenceMapProperty.prototype._typeid = 'Reference';

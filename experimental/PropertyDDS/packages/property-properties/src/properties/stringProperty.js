@@ -62,10 +62,6 @@ export class StringProperty extends ValueArrayProperty {
         super({ ...in_params, typeid: 'String' });
     };
 
-
-    get _context() { return 'single'; }
-    get _noDirtyInBase() { return true; }
-
     /**
      * Get the string value
      * @return {string} the JavaScript string primitive value of this StringProperty
@@ -618,3 +614,7 @@ export class StringProperty extends ValueArrayProperty {
         this.setValue.call(this, val);
     }
 }
+
+StringProperty.prototype._typeid = 'String';
+StringProperty.prototype._context = 'single';
+StringProperty.prototype._noDirtyInBase = true;

@@ -1672,6 +1672,7 @@ class PropertyFactory {
                     if (optional) {
                         in_parent._addOptionalChild(id, typeid);
                         this._currentCreateCache.optionalChildren = this._currentCreateCache.optionalChildren || {};
+                        this._currentCreateCache.entry.optionalChildren = true;
                         this._currentCreateCache.optionalChildren[id] = typeid;
                     }
 

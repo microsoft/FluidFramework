@@ -214,3 +214,4 @@ export class EnumArrayProperty extends ValueArrayProperty {
     };
 
 }
+EnumArrayProperty.prototype._typeid = 'Enum';

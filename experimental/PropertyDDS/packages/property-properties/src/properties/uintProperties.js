@@ -26,9 +26,9 @@ export class Uint8Property extends ValueProperty {
         // default for this property type is '0'
         this._data = 0;
     };
-
-    _castFunctor = _castFunctors.Uint8;
 }
+Uint8Property.prototype._typeid = 'Uint8';
+Uint8Property.prototype._castFunctor = _castFunctors.Uint8;
 
 /**
  * A primitive property for an unsigned 16 bit integer value.
@@ -47,9 +47,9 @@ export class Uint16Property extends ValueProperty {
         // default for this property type is '0'
         this._data = 0;
     };
-
-    _castFunctor = _castFunctors.Uint16;
 }
+Uint16Property.prototype._typeid = 'Uint16';
+Uint16Property.prototype._castFunctor = _castFunctors.Uint16;
 
 /**
  * A primitive property for an unsigned 32 bit integer value.
@@ -68,6 +68,6 @@ export class Uint32Property extends ValueProperty {
         // default for this property type is '0'
         this._data = 0;
     };
-
-    _castFunctor = _castFunctors.Uint32;
 }
+Uint32Property.prototype._typeid = 'Uint32';
+Uint32Property.prototype._castFunctor = _castFunctors.Uint32;

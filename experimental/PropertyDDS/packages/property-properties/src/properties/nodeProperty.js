@@ -24,6 +24,7 @@ export class NodeProperty extends ContainerProperty {
      */
     constructor(in_params) {
         super( in_params );
+        this._dynamicChildren = {};
     };
 
     /**
@@ -37,3 +38,4 @@ export class NodeProperty extends ContainerProperty {
     _validateInsert(in_id, in_property) { };
 
 }
+NodeProperty.prototype._typeid = 'NodeProperty';

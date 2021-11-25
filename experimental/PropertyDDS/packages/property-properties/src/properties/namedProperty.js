@@ -68,3 +68,4 @@ export class NamedProperty extends ContainerProperty {
     };*/
 
 }
+NamedProperty.prototype._typeid = 'NamedProperty';
