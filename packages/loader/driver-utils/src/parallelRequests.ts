@@ -360,7 +360,8 @@ async function getSingleOpBatch(
     props: ITelemetryProperties,
     strongTo: boolean,
     logger: ITelemetryLogger,
-    signal?: AbortSignal):
+    signal?: AbortSignal,
+    fetchReason?: string):
         Promise<{ partial: boolean, cancel: boolean, payload: ISequencedDocumentMessage[] }>
 {
     let lastSuccessTime: number | undefined;
@@ -424,6 +425,7 @@ async function getSingleOpBatch(
                     retry,
                     duration: performance.now() - startTime,
                     retryAfter,
+                    fetchReason,
                 },
                 error);
 
@@ -451,6 +453,7 @@ export function requestOps(
     payloadSize: number,
     logger: ITelemetryLogger,
     signal?: AbortSignal,
+    fetchReason?: string,
 ): IStream<ISequencedDocumentMessage[]> {
     let requests = 0;
     let lastFetch: number | undefined;
@@ -465,6 +468,7 @@ export function requestOps(
     const telemetryEvent = PerformanceEvent.start(logger, {
         eventName: "GetDeltas",
         ...propsTotal,
+        fetchReason,
     });
 
     const manager = new ParallelRequests<ISequencedDocumentMessage>(
@@ -480,6 +484,7 @@ export function requestOps(
                 strongTo,
                 logger,
                 signal,
+                fetchReason,
             );
         },
         (deltas: ISequencedDocumentMessage[]) => {
