@@ -50,7 +50,7 @@ export interface IChannel extends IFluidLoadable {
      * other GC nodes.
      * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    getGCData(fullGC?: boolean): IGarbageCollectionData;
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
 }
 
 /**

@@ -70,7 +70,7 @@ class UnknownChannel implements IChannel {
 
     public connect(services: IChannelServices): void {}
 
-    public getGCData(): IGarbageCollectionData {
+    public async getGCData(): Promise<IGarbageCollectionData> {
         return { gcNodes: { "/": [] } };
     }
 }

@@ -253,7 +253,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * {@inheritDoc (ISharedObject:interface).getGCData}
      */
-    public getGCData(fullGC: boolean = false): IGarbageCollectionData {
+    public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
         // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created in
         // getGCDataCore) to serialize handles in this object's data.
         assert(!this._isSummarizing, 0x078 /* "Possible re-entrancy! Summary should not already be in progress." */);
@@ -261,7 +261,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
         let gcData: IGarbageCollectionData;
         try {
-            gcData = this.getGCDataCore();
+            gcData = await this.getGCDataCore();
             assert(this._isSummarizing, 0x079 /* "Possible re-entrancy! Summary should have been in progress." */);
         } finally {
             this._isSummarizing = false;
@@ -275,12 +275,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * other GC nodes.
      * Derived classes must override this to provide custom list of references to other GC nodes.
      */
-    protected getGCDataCore(): IGarbageCollectionData {
+    protected async getGCDataCore(): Promise<IGarbageCollectionData> {
         // We run the full summarize logic to get the list of outbound routes from this object. This is a little
         // expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
         // See: https://github.com/microsoft/FluidFramework/issues/4547
         const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
-        this.snapshotCore(serializer);
+        const capture = this.captureSummaryStateCore(serializer, false);
+        await this.summarizeStateCore(serializer, capture);
 
         // The GC data for this shared object contains a single GC node. The outbound routes of this node are the
         // routes of handles serialized during snapshot.

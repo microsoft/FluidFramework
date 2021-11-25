@@ -58,5 +58,5 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
      * other GC nodes.
      * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    getGCData(fullGC?: boolean): IGarbageCollectionData;
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
 }
