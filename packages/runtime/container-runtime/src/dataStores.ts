@@ -399,7 +399,8 @@ export class DataStores implements IDisposable {
         return summaryBuilder.getSummaryTree();
     }
 
-    public createSummary(): ISummaryTreeWithStats {
+    public async createSummary(): Promise<ISummaryTreeWithStats> {
+        const promises: Promise<void>[] = [];
         const builder = new SummaryTreeBuilder();
         // Attaching graph of some stores can cause other stores to get bound too.
         // So keep taking summary until no new stores get bound.
@@ -407,8 +408,8 @@ export class DataStores implements IDisposable {
         do {
             const builderTree = builder.summary.tree;
             notBoundContextsLength = this.contexts.notBoundLength();
-            // Iterate over each data store and ask it to snapshot
-            Array.from(this.contexts)
+            // Ask each data store to snapshot
+            promises.push(...Array.from(this.contexts)
                 .filter(([key, _]) =>
                     // Take summary of bounded data stores only, make sure we haven't summarized them already
                     // and no attach op has been fired for that data store because for loader versions <= 0.24
@@ -430,17 +431,19 @@ export class DataStores implements IDisposable {
                         dataStoreSummary = convertSnapshotTreeToSummaryTree(this.baseSnapshot.trees[key]);
                     }
                     builder.addWithStats(key, dataStoreSummary);
-                });
+                }));
         } while (notBoundContextsLength !== this.contexts.notBoundLength());
 
+        // Only await after collecting all promises to ensure state required for summary is captured synchronously.
+        await Promise.all(promises);
         return builder.getSummaryTree();
     }
 
     /**
      * Generates data used for garbage collection. It does the following:
      * 1. Calls into each child data store context to get its GC data.
-     * 2. Prefixs the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be
-     *    idenfied as belonging to the child.
+     * 2. Prefixes the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be
+     *    identified as belonging to the child.
      * 3. Adds a GC node for this channel to the nodes received from the children. All these nodes together represent
      *    the GC data of this channel.
      * @param fullGC - true to bypass optimizations and force full generation of GC data.

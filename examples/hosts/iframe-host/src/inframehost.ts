@@ -86,7 +86,7 @@ class ProxyRuntime implements IRuntime {
     async processSignal(message: any, local: boolean) {
     }
     // TODO: Issue-2109 Implement detach container api or put appropriate comment.
-    createSummary(): ISummaryTree {
+    async createSummary(): Promise<ISummaryTree> {
         throw new Error("Method not implemented.");
     }
     setAttachState(state: AttachState.Attaching | AttachState.Attached) {

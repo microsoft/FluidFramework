@@ -218,15 +218,36 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc (ISharedObject:interface).captureSummaryState}
      */
     public captureSummaryState(fullTree: boolean = false): any {
+        // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created below)
+        // to serialize handles in this object's data. The routes of these serialized handles are outbound routes
+        // to other Fluid objects.
+        assert(!this._isSummarizing, 0x076 /* "Possible re-entrancy! Summary should not already be in progress." */);
+        this._isSummarizing = true;
+
+        let state: any;
+        try {
+            state = this.captureSummaryStateCore(this._serializer, fullTree);
+        } finally {
+            if (state === undefined) {
+                this._isSummarizing = false;
+            }
+        }
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.captureSummaryStateCore(this._serializer, fullTree);
+        return state;
     }
 
     /**
      * {@inheritDoc (ISharedObject:interface).summarizeState}
      */
     public async summarizeState(capture): Promise<ISummaryTreeWithStats> {
-        return this.summarizeStateCore(this._serializer, capture);
+        assert(this._isSummarizing, 0x077 /* "Possible re-entrancy! Summary should have been in progress." */);
+        let summary: Promise<ISummaryTreeWithStats>;
+        try {
+            summary = this.summarizeStateCore(this._serializer, capture);
+        } finally {
+            this._isSummarizing = false;
+        }
+        return summary;
     }
 
     /**

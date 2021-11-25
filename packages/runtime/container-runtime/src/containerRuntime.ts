@@ -1591,12 +1591,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * using IDs generated locally. After attach, these IDs cannot be used, so this table maps the old local IDs to the
      * new storage IDs so requests can be redirected.
      */
-    public createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree {
+    public async createSummary(blobRedirectTable?: Map<string, string>): Promise<ISummaryTree> {
         if (blobRedirectTable) {
             this.blobManager.setRedirectTable(blobRedirectTable);
         }
 
-        const summarizeResult = this.dataStores.createSummary();
+        const summarizeResult = await this.dataStores.createSummary();
         if (!this.disableIsolatedChannels) {
             // Wrap data store summaries in .channels subtree.
             wrapSummaryInChannelsTree(summarizeResult);

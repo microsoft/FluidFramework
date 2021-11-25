@@ -220,7 +220,7 @@ export class ContainerContext implements IContainerContext {
      * using IDs generated locally. After attach, these IDs cannot be used, so this table maps the old local IDs to the
      * new storage IDs so requests can be redirected.
      */
-    public createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree {
+    public async createSummary(blobRedirectTable?: Map<string, string>): Promise<ISummaryTree> {
         return this.runtime.createSummary(blobRedirectTable);
     }
 

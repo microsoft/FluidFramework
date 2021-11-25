@@ -728,29 +728,31 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         const summaryBuilder = new SummaryTreeBuilder();
 
         // Craft the .attributes file for each shared object
-        for (const [contextId, context] of this.contexts) {
-            if (!(context instanceof LocalChannelContextBase)) {
-                throw new Error("Should only be called with local channel handles");
-            }
-
-            if (!this.notBoundedChannelContextSet.has(contextId)) {
-                let summaryTree: ISummaryTreeWithStats;
-                if (context.isLoaded) {
-                    const contextSummary = await context.getAttachSummary();
-                    assert(
-                        contextSummary.summary.type === SummaryType.Tree,
-                        0x180 /* "getAttachSummary should always return a tree" */);
-                    summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
-                } else {
-                    // If this channel is not yet loaded, then there should be no changes in the snapshot from which
-                    // it was created as it is detached container. So just use the previous snapshot.
-                    assert(!!this.dataStoreContext.baseSnapshot,
-                        0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */);
-                    summaryTree = convertSnapshotTreeToSummaryTree(this.dataStoreContext.baseSnapshot.trees[contextId]);
+        await Promise.all(Array.from(this.contexts)
+            .map(async ([contextId, context]) => {
+                if (!(context instanceof LocalChannelContextBase)) {
+                    throw new Error("Should only be called with local channel handles");
                 }
-                summaryBuilder.addWithStats(contextId, summaryTree);
-            }
-        }
+
+                if (!this.notBoundedChannelContextSet.has(contextId)) {
+                    let summaryTree: ISummaryTreeWithStats;
+                    if (context.isLoaded) {
+                        const contextSummary = await context.getAttachSummary();
+                        assert(
+                            contextSummary.summary.type === SummaryType.Tree,
+                            0x180 /* "getAttachSummary should always return a tree" */);
+                        summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
+                    } else {
+                        // If this channel is not yet loaded, then there should be no changes in the snapshot from which
+                        // it was created as it is detached container. So just use the previous snapshot.
+                        assert(!!this.dataStoreContext.baseSnapshot,
+                            0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */);
+                        summaryTree =
+                            convertSnapshotTreeToSummaryTree(this.dataStoreContext.baseSnapshot.trees[contextId]);
+                    }
+                    summaryBuilder.addWithStats(contextId, summaryTree);
+                }
+            }));
 
         return summaryBuilder.getSummaryTree();
     }

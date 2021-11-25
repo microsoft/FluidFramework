@@ -23,7 +23,7 @@ export interface IChannel extends IFluidLoadable {
      * Generates summary of the channel.
      * @returns A tree representing the summary of the channel.
      */
-    summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    // summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
 
     /**
      * Capture the current content of the channel to be used to generate a summary

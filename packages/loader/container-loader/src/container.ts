@@ -756,10 +756,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._attachState;
     }
 
-    public serialize(): string {
+    public async serialize(): Promise<string> {
         assert(this.attachState === AttachState.Detached, 0x0d3 /* "Should only be called in detached container" */);
 
-        const appSummary: ISummaryTree = this.context.createSummary();
+        const appSummary: ISummaryTree = await this.context.createSummary();
         const protocolSummary = this.captureProtocolSummary();
         const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
@@ -790,7 +790,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (!hasAttachmentBlobs) {
                 // Get the document state post attach - possibly can just call attach but we need to change the
                 // semantics around what the attach means as far as async code goes.
-                const appSummary: ISummaryTree = this.context.createSummary();
+                const appSummary: ISummaryTree = await this.context.createSummary();
                 const protocolSummary = this.captureProtocolSummary();
                 summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
@@ -841,7 +841,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 }
 
                 // take summary and upload
-                const appSummary: ISummaryTree = this.context.createSummary(redirectTable);
+                const appSummary: ISummaryTree = await this.context.createSummary(redirectTable);
                 const protocolSummary = this.captureProtocolSummary();
                 summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
