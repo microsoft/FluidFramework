@@ -27,7 +27,7 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     bindToContext(): void;
     captureSummaryState(fullTree?: boolean): any;
     connect(services: IChannelServices): void;
-    getGCData(fullGC?: boolean): IGarbageCollectionData;
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     isAttached(): boolean;
     summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
     summarizeState(capture: any): Promise<ISummaryTreeWithStats>;
@@ -62,8 +62,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     get connected(): boolean;
     protected didAttach(): void;
     protected dirty(): void;
-    getGCData(fullGC?: boolean): IGarbageCollectionData;
-    protected getGCDataCore(): IGarbageCollectionData;
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    protected getGCDataCore(): Promise<IGarbageCollectionData>;
     readonly handle: IFluidHandle;
     // (undocumented)
     get IChannel(): this;

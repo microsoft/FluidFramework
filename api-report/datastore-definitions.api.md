@@ -32,7 +32,7 @@ export interface IChannel extends IFluidLoadable {
     readonly attributes: IChannelAttributes;
     captureSummaryState(fullTree?: boolean): any;
     connect(services: IChannelServices): void;
-    getGCData(fullGC?: boolean): IGarbageCollectionData;
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     readonly id: string;
     isAttached(): boolean;
     // (undocumented)
