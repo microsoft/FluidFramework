@@ -19,7 +19,7 @@ export class BoolProperty extends ValueProperty {
      * @param in_params - the parameters
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Bool' });
+        super(in_params);
         // default for this property type is 'false'
         this._data = false;
     };

@@ -32,7 +32,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
      * @category Other Collections
      */
     constructor(in_params, in_scope) {
-        super({ typeid: 'NamedProperty', ...in_params });
+        super(in_params);
 
         this._scope = in_scope;
 

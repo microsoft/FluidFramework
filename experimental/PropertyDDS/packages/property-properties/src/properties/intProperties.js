@@ -31,7 +31,7 @@ export class Int8Property extends ValueProperty {
      * @category Value Properties
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Int8' });
+        super(in_params);
         // default for this property type is '0'
         this._data = 0;
     };
@@ -52,7 +52,7 @@ export class Int16Property extends ValueProperty {
      * @category Value Properties
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Int16' });
+        super(in_params);
         // default for this property type is '0'
         this._data = 0;
 
@@ -286,7 +286,7 @@ export class Int64Property extends Integer64Property {
      * @category Value Properties
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Int64' }, Int64);
+        super(in_params, Int64);
     };
 }
 Int64Property.prototype._typeid = 'Int64';
@@ -305,7 +305,7 @@ export class Uint64Property extends Integer64Property {
      * @category Value Properties
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Uint64' }, Uint64);
+        super(in_params, Uint64);
     };
 };
 Uint64Property.prototype._typeid = 'Uint64';

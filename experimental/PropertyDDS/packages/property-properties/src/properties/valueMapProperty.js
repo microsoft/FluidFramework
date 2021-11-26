@@ -209,7 +209,7 @@ export class Float32MapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Float32' });
+        super(in_params);
     }
 
 }
@@ -230,7 +230,7 @@ export class Float64MapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Float64' });
+        super(in_params);
     };
 }
 Float64MapProperty.prototype._typeid = 'Float64';
@@ -250,7 +250,7 @@ export class Uint32MapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Uint32' });
+        super(in_params);
     };
 }
 Uint32MapProperty.prototype._typeid = 'Uint32';
@@ -270,7 +270,7 @@ export class Uint16MapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Uint16' });
+        super(in_params);
     };
 }
 Uint16MapProperty.prototype._typeid = 'Uint16';
@@ -290,7 +290,7 @@ export class Uint8MapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Uint8' });
+        super(in_params);
     };
 }
 Uint8MapProperty.prototype._typeid = 'Uint8';
@@ -310,7 +310,7 @@ export class Int32MapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Int32' });
+        super(in_params);
     };
 }
 Int32MapProperty.prototype._typeid = 'Int32';
@@ -402,7 +402,7 @@ export class Int64MapProperty extends Integer64MapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Int64', });
+        super(in_params);
     };
 
     /**
@@ -435,7 +435,7 @@ export class Uint64MapProperty extends Integer64MapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Uint64' });
+        super(in_params);
     };
 
     /**
@@ -466,7 +466,7 @@ export class Int16MapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Int16' });
+        super(in_params);
     };
 }
 Int16MapProperty.prototype._typeid = 'Int16';
@@ -486,7 +486,7 @@ export class Int8MapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Int8' });
+        super(in_params);
     };
 }
 Int8MapProperty.prototype._typeid = 'Int8';
@@ -526,7 +526,7 @@ export class BoolMapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Bool' });
+        super(in_params);
     };
 }
 BoolMapProperty.prototype._typeid = 'Bool';
