@@ -984,7 +984,7 @@ class PropertyFactory {
             if (in_initialProperties !== undefined) {
                 this._setInitialValue(property, {
                     value: in_initialProperties
-                });
+                }, cacheFunctionEntry.anyConstantChildren);
             }
 
             return property;
@@ -993,7 +993,7 @@ class PropertyFactory {
         const scopeEntry = this._cachedTypeIds.get(in_typeid);
         const contextEntry = scopeEntry && scopeEntry.get(in_scope);
         const cacheEntry = contextEntry && contextEntry.get(context);
-
+        let anyConstantChildren = false;
 
         if (cacheEntry) {
             let rootProperty = undefined;
@@ -1021,15 +1021,23 @@ class PropertyFactory {
                       `${currentEntry.propertyVarname}._signalAllStaticMembersHaveBeenAdded(${JSON.stringify(in_scope)});\n`;
 
                     if (currentEntry.initialValue) {
-                        this._setInitialValue(currentEntry.property, currentEntry.initialValue);
+                        this._setInitialValue(currentEntry.property, currentEntry.initialValue, true);
                         creationFunctionSource +=
                           `this._setInitialValue(${currentEntry.propertyVarname},
-                                                 ${JSON.stringify(currentEntry.initialValue)});\n`;
+                                                 ${JSON.stringify(currentEntry.initialValue)},
+                                                 ${JSON.stringify(currentEntry.anyConstantChildren)});\n`;
                     }
                     if (currentEntry.constant) {
                         currentEntry.property._setAsConstant();
                         creationFunctionSource +=
                           `${currentEntry.propertyVarname}._setAsConstant();\n`;
+                        anyConstantChildren = true;
+
+                        let parentEntry = currentEntry.parentStackEntry;
+                        while (parentEntry && parentEntry.anyConstantChildren === false) {
+                            parentEntry.anyConstantChildren = true;
+                            parentEntry = parentEntry.parentStackEntry;
+                        }
                     }
                     continue;
                 }
@@ -1077,13 +1085,18 @@ class PropertyFactory {
                 }
 
                 if (currentEntry.entry.children) {
-                    creationStack.push({
+                    const parentStackEntry = {
                         signalChildrenFinished: true,
                         initialValue: currentEntry.entry.initialValue,
                         property,
                         constant: currentEntry.entry.constant,
-                        propertyVarname: currentPropertyVarName
-                    });
+                        propertyVarname: currentPropertyVarName,
+                        typeid: currentEntry.entry.typeid,
+                        context: currentEntry.entry.context,
+                        parentStackEntry: currentEntry.parentStackEntry,
+                        anyConstantChildren: false
+                    }
+                    creationStack.push(parentStackEntry);
 
                     for (let [id, child] of currentEntry.entry.children) {
                         creationStack.push({
@@ -1093,7 +1106,8 @@ class PropertyFactory {
                             entry: child,
                             signalParent: false,
                             setGuid: currentEntry.entry.assignGuid && id ===
-                            'guid'
+                            'guid',
+                            parentStackEntry
                         })
                     }
                 } else {
@@ -1101,11 +1115,18 @@ class PropertyFactory {
                         this._setInitialValue(property, currentEntry.entry.initialValue);
                         creationFunctionSource +=
                           `this._setInitialValue(${currentPropertyVarName},
-                                                 ${JSON.stringify(currentEntry.entry.initialValue)});\n`;
+                                                 ${JSON.stringify(currentEntry.entry.initialValue)},
+                                                 ${JSON.stringify(anyConstantChildren)});\n`;
                     }
                     if (currentEntry.entry.constant) {
                         property._setAsConstant();
                         creationFunctionSource += `${currentPropertyVarName}._setAsConstant();\n`
+                        anyConstantChildren = true;
+                        let parentEntry = currentEntry.parentStackEntry;
+                        while (parentEntry && parentEntry.anyConstantChildren === false) {
+                            parentEntry.anyConstantChildren = true;
+                            parentEntry = parentEntry.parentStackEntry;
+                        }
                     }
 
                     if (currentEntry.entry.signal) {
@@ -1114,16 +1135,14 @@ class PropertyFactory {
                             ${JSON.stringify(in_scope)}
                         );\n`
                     }
-                    /*property._signalAllStaticMembersHaveBeenAdded(in_scope);
-                    creationFunctionSource += `${currentPropertyVarName}._signalAllStaticMembersHaveBeenAdded(
-                        ${JSON.stringify(in_scope)}
-                    );\n`*/
                 }
             }
-
-            //console.log(creationFunction);
             creationFunctionSource += ` return ${resultVarName};`;
-            let creationFunction = new Function('parameters',' GuidUtils', creationFunctionSource).bind(this, parameters, GuidUtils);
+
+            let creationFunction = new Function('parameters',' GuidUtils', creationFunctionSource).bind(this,
+                parameters, GuidUtils);
+            creationFunction.anyConstantChildren = anyConstantChildren;
+
             rootProperty = creationFunction();
 
             let scopesFunction = this._cachedCreationFunctions.get(in_typeid);
@@ -1142,7 +1161,7 @@ class PropertyFactory {
             if (in_initialProperties !== undefined) {
                 this._setInitialValue(rootProperty, {
                     value: in_initialProperties
-                });
+                }, anyConstantChildren);
             }
             return rootProperty;
         }
@@ -1175,7 +1194,7 @@ class PropertyFactory {
         if (in_initialProperties !== undefined) {
             this._setInitialValue(property, {
                 value: in_initialProperties
-            });
+            }, true);
         }
 
         let scopes = this._cachedTypeIds.get(in_typeid);
@@ -1206,8 +1225,10 @@ class PropertyFactory {
      * @param {boolean} typed - Whether the value has a different type than the property (polymorphic).
      * @param {string} typeid - THe typeid of the property.
      */
-    _setInitialValue(property, valueParsed) {
-        property._unsetAsConstant();
+    _setInitialValue(property, valueParsed, unsetConstant) {
+        if (unsetConstant) {
+            property._unsetAsConstant();
+        }
         if (property instanceof ValueProperty || property instanceof StringProperty) {
             property.setValue(valueParsed.value);
         } else if (valueParsed.typed) {
@@ -1354,6 +1375,8 @@ class PropertyFactory {
         this._currentCreateCache.constructorFunction = ConstructorFunction;
         this._currentCreateCache.signal = true;
         this._currentCreateCache.entry = params;
+        this._currentCreateCache.context = 'single';
+        this._currentCreateCache.typeid = in_typeid;
 
         return new ConstructorFunction(params);
     };
@@ -1483,6 +1506,8 @@ class PropertyFactory {
                     this._currentCreateCache.constructorFunction = templateOrConstructor;
                     this._currentCreateCache.signal = false;
                     this._currentCreateCache.entry = in_propertiesEntry;
+                    this._currentCreateCache.context = in_propertiesEntry.context;
+                    this._currentCreateCache.typeid = in_propertiesEntry.typeid;
 
                     // If this is a primitive type, we create it via the registered constructor
                     var result = new templateOrConstructor(in_propertiesEntry); // eslint-disable-line new-cap
@@ -1544,6 +1569,8 @@ class PropertyFactory {
                         this._currentCreateCache.constructorFunction = constructorFunction;
                         this._currentCreateCache.signal = false;
                         this._currentCreateCache.entry = in_propertiesEntry;
+                        this._currentCreateCache.typeid = typeid;
+                        this._currentCreateCache.context = context;
 
                         result = new (constructorFunction)(in_propertiesEntry, in_scope);
                         return result;
@@ -1568,6 +1595,8 @@ class PropertyFactory {
                 this._currentCreateCache.constructorFunction = ContainerProperty;
                 this._currentCreateCache.entry = copiedProperty;
                 this._currentCreateCache.signal = false;
+                this._currentCreateCache.typeid = copiedProperty.typeid;
+                this._currentCreateCache.context = 'single';
             }
 
             // And then parse the entry like a template
@@ -1689,7 +1718,7 @@ class PropertyFactory {
                         const property = this._createFromPropertyDeclaration(properties[i], undefined, in_scope, false);
                         this._currentCreateCache = oldCreateCache;
 
-                        this._setInitialValue(property, valueParsed);
+                        this._setInitialValue(property, valueParsed, true);
                         if (optional) {
                             in_parent._insert(property.getId(), property, true);
                         } else {
@@ -1730,7 +1759,7 @@ class PropertyFactory {
                     this._currentCreateCache = oldCreateCache;
 
                     if (valueParsed.value) {
-                        this._setInitialValue(constant, valueParsed);
+                        this._setInitialValue(constant, valueParsed, true);
                         newChildEntry.initialValue = valueParsed;
                     }
 

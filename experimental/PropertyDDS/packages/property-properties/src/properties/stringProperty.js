@@ -613,6 +613,16 @@ export class StringProperty extends ValueArrayProperty {
     set value(val) {
         this.setValue.call(this, val);
     }
+
+    /** @inheritdoc */
+    _traverse(in_callback, in_pathFromTraversalStart) {
+        return undefined;
+    }
+
+    /** @inheritdoc */
+    _traverseStaticProperties(in_callback, in_pathFromTraversalStart) {
+        return undefined;
+    }
 }
 
 StringProperty.prototype._typeid = 'String';
