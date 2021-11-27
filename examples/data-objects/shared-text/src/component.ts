@@ -254,6 +254,7 @@ class TaskScheduler {
     public start() {
         const hostTokens =
             (this.componentContext.containerRuntime as FluidObject<IFluidTokenProvider>).IFluidTokenProvider;
+
         const intelTokens = hostTokens && hostTokens.intelligence
             ? hostTokens.intelligence.textAnalytics
             : undefined;
