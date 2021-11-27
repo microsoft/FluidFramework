@@ -426,7 +426,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @deprecated - use readOnlyInfo
      */
     public get readonly() {
-        return this._deltaManager.readonly;
+        return this._deltaManager.readOnlyInfo.readonly;
     }
 
     /**
@@ -436,7 +436,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @deprecated - use readOnlyInfo
      */
     public get readonlyPermissions() {
-        return this._deltaManager.readonlyPermissions;
+        const props = this._deltaManager.readOnlyInfo;
+        // Note that 'readonly' property could be undefined.
+        return props.readonly === true ? props.permissions : props.readonly;
     }
 
     public get readOnlyInfo(): ReadOnlyInfo {
@@ -956,13 +958,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
 
             // Ensure connection to web socket
-            this.connectToDeltaStream({ reason: "autoReconnect" }).catch((error) => {
-                // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
-                // So there shouldn't be a need to record error here.
-                // But we have number of cases where reconnects do not happen, and no errors are recorded, so
-                // adding this log point for easier diagnostics
-                this.logger.sendTelemetryEvent({ eventName: "setAutoReconnectError" }, error);
-            });
+            this.connectToDeltaStream({ reason: "autoReconnect" });
         }
     }
 
@@ -986,8 +982,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         // Ensure connection to web socket
-        // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
-        this.connectToDeltaStream(args).catch(() => { });
+        this.connectToDeltaStream(args);
     }
 
     /**
@@ -1142,7 +1137,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    private async connectToDeltaStream(args: IConnectionArgs) {
+    private connectToDeltaStream(args: IConnectionArgs) {
         this.recordConnectStartTime();
 
         // All agents need "write" access, including summarizer.
@@ -1150,7 +1145,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             args.mode = "write";
         }
 
-        return this._deltaManager.connect(args);
+        this._deltaManager.connect(args);
     }
 
     /**
@@ -1170,8 +1165,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         this.service = await this.serviceFactory.createDocumentService(this._resolvedUrl, this.subLogger);
 
-        let startConnectionP: Promise<IConnectionDetails> | undefined;
-
         // Ideally we always connect as "read" by default.
         // Currently that works with SPO & r11s, because we get "write" connection when connecting to non-existing file.
         // We should not rely on it by (one of them will address the issue, but we need to address both)
@@ -1186,8 +1179,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Start websocket connection as soon as possible. Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
         if (loadMode.deltaConnection === undefined) {
-            startConnectionP = this.connectToDeltaStream(connectionArgs);
-            startConnectionP.catch((error) => { });
+            this.connectToDeltaStream(connectionArgs);
         }
 
         await this.connectStorageService();
@@ -1579,17 +1571,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         deltaManager.inboundSignal.pause();
 
         deltaManager.on("connect", (details: IConnectionDetails, opsBehind?: number) => {
-            this.connectionStateHandler.receivedConnectEvent(
-                this._deltaManager.connectionMode,
-                details,
-            );
-
             // Back-compat for new client and old server.
             this._audience.clear();
 
             for (const priorClient of details.initialClients ?? []) {
                 this._audience.addMember(priorClient.clientId, priorClient.client);
             }
+
+            this.connectionStateHandler.receivedConnectEvent(
+                this._deltaManager.connectionMode,
+                details,
+            );
         });
 
         deltaManager.on("disconnect", (reason: string) => {
@@ -1682,7 +1674,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             online: OnlineStatus[isOnline()],
             lastVisible: this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
             checkpointSequenceNumber,
-            ...this._deltaManager.connectionProps(),
+            ...this._deltaManager.connectionProps,
         });
 
         if (value === ConnectionState.Connected) {

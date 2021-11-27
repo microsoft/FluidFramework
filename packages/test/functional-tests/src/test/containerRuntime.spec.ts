@@ -31,9 +31,11 @@ describe("Container Runtime", () => {
         let batchBegin: number = 0;
         let batchEnd: number = 0;
 
-        async function startDeltaManager() {
-            await deltaManager.connect({ reason: "test" });
-        }
+        const startDeltaManager = async () =>
+            new Promise((accept) => {
+                deltaManager.on("connected", accept);
+                deltaManager.connect({ reason: "test" });
+            });
 
         // Function to yield control in the Javascript event loop.
         async function yieldEventLoop(): Promise<void> {
