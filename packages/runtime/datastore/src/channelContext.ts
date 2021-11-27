@@ -77,7 +77,6 @@ export async function summarizeChannel(
 ): Promise<ISummaryTreeWithStats> {
     const state = channel.captureSummaryState(fullTree);
     const summarizeResult = await channel.summarizeState(state);
-    // const summarizeResult = channel.summarize(fullTree, trackState);
 
     // Add the channel attributes to the returned result.
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));

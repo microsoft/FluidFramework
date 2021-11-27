@@ -689,15 +689,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummaryTreeWithStats> {
         const summaryBuilder = new SummaryTreeBuilder();
 
-        // TODO: split this into two passes: one to capture state to be summarized.
-        //       then another to actually produce the summary async.
-
-        // prep
-
-        // synchronously gather all state capture
-
-        // asynchronously await all summaries from state capture
-
         // Iterate over each data store and ask it to summarize
         await Promise.all(Array.from(this.contexts)
             .filter(([contextId, _]) => {
