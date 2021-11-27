@@ -68,9 +68,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     private _isBoundToContext: boolean = false;
 
     /**
-     * True while we are summarizing this object's data.
+     * True while we are garbage collecting this object's data.
      */
-    private _isSummarizing: boolean = false;
+    private _isGCing: boolean = false;
 
     /**
      * Gets the connection state
@@ -82,13 +82,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     protected get serializer(): IFluidSerializer {
         /**
-         * During summarize, the SummarySerializer keeps track of IFluidHandles that are serialized. These handles
+         * During GC, the SummarySerializer keeps track of IFluidHandles that are serialized. These handles
          * represent references to other Fluid objects and are used for garbage collection.
          *
          * This is fine for now. However, if we implement delay loading in DDSs, they may load and de-serialize content
          * in summarize. When that happens, they may incorrectly hit this assert and we will have to change this.
          */
-        assert(!this._isSummarizing,
+        assert(!this._isGCing,
             0x075 /* "SummarySerializer should be used for serializing data during summary." */);
         return this._serializer;
     }
@@ -195,53 +195,32 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc (ISharedObject:interface).captureSummaryState}
      */
     public captureSummaryState(fullTree: boolean = false): any {
-        // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created below)
-        // to serialize handles in this object's data. The routes of these serialized handles are outbound routes
-        // to other Fluid objects.
-        assert(!this._isSummarizing, 0x076 /* "Possible re-entrancy! Summary should not already be in progress." */);
-        this._isSummarizing = true;
-
-        let state: any;
-        try {
-            state = this.captureSummaryStateCore(this._serializer, fullTree);
-        } finally {
-            if (state === undefined) {
-                this._isSummarizing = false;
-            }
-        }
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return state;
+        return this.captureSummaryStateCore(this._serializer, fullTree);
     }
 
     /**
      * {@inheritDoc (ISharedObject:interface).summarizeState}
      */
     public async summarizeState(capture): Promise<ISummaryTreeWithStats> {
-        assert(this._isSummarizing, 0x077 /* "Possible re-entrancy! Summary should have been in progress." */);
-        let summary: Promise<ISummaryTreeWithStats>;
-        try {
-            summary = this.summarizeStateCore(this._serializer, capture);
-        } finally {
-            this._isSummarizing = false;
-        }
-        return summary;
+        return this.summarizeStateCore(this._serializer, capture);
     }
 
     /**
      * {@inheritDoc (ISharedObject:interface).getGCData}
      */
     public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
-        // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created in
+        // Set _isGCing to true. This flag is used to ensure that we only use SummarySerializer (created in
         // getGCDataCore) to serialize handles in this object's data.
-        assert(!this._isSummarizing, 0x078 /* "Possible re-entrancy! Summary should not already be in progress." */);
-        this._isSummarizing = true;
+        assert(!this._isGCing, 0x078 /* "Possible re-entrancy! Summary should not already be in progress." */);
+        this._isGCing = true;
 
         let gcData: IGarbageCollectionData;
         try {
             gcData = await this.getGCDataCore();
-            assert(this._isSummarizing, 0x079 /* "Possible re-entrancy! Summary should have been in progress." */);
+            assert(this._isGCing, 0x079 /* "Possible re-entrancy! Summary should have been in progress." */);
         } finally {
-            this._isSummarizing = false;
+            this._isGCing = false;
         }
 
         return gcData;
@@ -254,7 +233,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     protected async getGCDataCore(): Promise<IGarbageCollectionData> {
         // We run the full summarize logic to get the list of outbound routes from this object. This is a little
-        // expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
+        // expensive but it's okay for now. It will be updated to not use full summarize and make it more efficient.
         // See: https://github.com/microsoft/FluidFramework/issues/4547
         const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
         const capture = this.captureSummaryStateCore(serializer, false);
