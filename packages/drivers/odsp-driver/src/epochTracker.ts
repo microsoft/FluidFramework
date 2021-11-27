@@ -18,7 +18,7 @@ import {
     IOdspError,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { PerformanceEvent, isValidLegacyError, isFluidError, normalizeError } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, isFluidError, normalizeError } from "@fluidframework/telemetry-utils";
 import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse } from "./odspUtils";
 import {
     IOdspCache,
@@ -167,7 +167,6 @@ export class EpochTracker implements IPersistedFileCache {
             throw error;
         }).catch((error) => {
             const fluidError = normalizeError(error, {props: {"X-RequestStats": clientCorelationId}});
-            // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw fluidError;
         });
     }
@@ -209,7 +208,6 @@ export class EpochTracker implements IPersistedFileCache {
             throw error;
         }).catch((error) => {
             const fluidError = normalizeError(error, {props: {"X-RequestStats": clientCorelationId}});
-            // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw fluidError;
         });
     }
@@ -287,7 +285,7 @@ export class EpochTracker implements IPersistedFileCache {
                 // This will only throw if it is an epoch error.
                 this.checkForEpochErrorCore(epochFromResponse);
             } catch (epochError) {
-                assert(isValidLegacyError(epochError),
+                assert(isFluidError(epochError),
                     0x21f /* "epochError expected to be thrown by throwOdspNetworkError and of known type" */);
                 epochError.addTelemetryProperties({
                     fromCache,
@@ -297,7 +295,6 @@ export class EpochTracker implements IPersistedFileCache {
                 this.logger.sendErrorEvent({ eventName: "fileOverwrittenInStorage" }, epochError);
                 // If the epoch mismatches, then clear all entries for such file entry from cache.
                 await this.removeEntries();
-                // eslint-disable-next-line @typescript-eslint/no-throw-literal
                 throw epochError;
             }
             // If it was categorized as epoch error but the epoch returned in response matches with the client epoch

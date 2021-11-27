@@ -7,7 +7,6 @@ import { assert } from "@fluidframework/common-utils";
 import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
 import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl, ShareLinkTypes, ShareLinkInfoType } from "@fluidframework/odsp-driver-definitions";
-import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { getOdspResolvedUrl } from "./odspUtils";
@@ -165,18 +164,6 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             containerPackageName,
             dataStorePath,
         });
-    }
-
-    /**
-     * @deprecated - use createOdspCreateContainerRequest
-     */
-    public createCreateNewRequest(
-        siteUrl: string,
-        driveId: string,
-        filePath: string,
-        fileName: string,
-    ): IRequest {
-        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     }
 }
 

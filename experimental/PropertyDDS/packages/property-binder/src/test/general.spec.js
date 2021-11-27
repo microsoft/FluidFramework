@@ -6,7 +6,7 @@
 
 import {
   catchConsoleErrors, hadConsoleError, clearConsoleError, countConsoleMessages, endCountConsoleMessages
-} from './catch_console_errors';
+} from './catchConsoleError';
 
 describe('General stuff', function() {
 

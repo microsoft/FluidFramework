@@ -41,7 +41,6 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
     };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
-            generateSummaries: true,
             initialSummarizerDelayMs: 10,
             summaryConfigOverrides,
         },

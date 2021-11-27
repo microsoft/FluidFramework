@@ -7,6 +7,7 @@
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
@@ -21,7 +22,6 @@ import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
 import { IFluidModule } from '@fluidframework/container-definitions';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
@@ -56,8 +56,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get attachState(): AttachState;
     get audience(): IAudience;
-    // @deprecated (undocumented)
-    get chaincodePackage(): IFluidCodeDetails | undefined;
     // (undocumented)
     get clientDetails(): IClientDetails;
     get clientId(): string | undefined;
@@ -67,7 +65,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     closeAndGetPendingLocalState(): string;
     // (undocumented)
     get closed(): boolean;
-    // (undocumented)
+    // @deprecated
     get codeDetails(): IFluidCodeDetails | undefined;
     // (undocumented)
     get connected(): boolean;
@@ -79,7 +77,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     forceReadonly(readonly: boolean): void;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    getLoadedCodeDetails(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorum;
+    getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
     // (undocumented)
     get id(): string;
     // (undocumented)
@@ -172,7 +172,7 @@ export interface ILoaderProps {
     readonly logger?: ITelemetryBaseLogger;
     readonly options?: ILoaderOptions;
     readonly proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
-    readonly scope?: IFluidObject;
+    readonly scope?: FluidObject;
     readonly urlResolver: IUrlResolver;
 }
 
@@ -183,7 +183,7 @@ export interface ILoaderServices {
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly options: ILoaderOptions;
     readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
-    readonly scope: IFluidObject;
+    readonly scope: FluidObject;
     readonly subLogger: ITelemetryLogger;
     readonly urlResolver: IUrlResolver;
 }

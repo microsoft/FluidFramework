@@ -6,6 +6,7 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
@@ -168,7 +169,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly options: ILoaderOptions;
     readonly packagePath: readonly string[];
     raiseContainerWarning(warning: ContainerWarning): void;
-    readonly scope: IFluidObject;
+    readonly scope: IFluidObject & FluidObject;
     setChannelDirty(address: string): void;
     // (undocumented)
     readonly storage: IDocumentStorageService;
@@ -298,7 +299,6 @@ export interface ISummarizerNodeConfig {
 // @public (undocumented)
 export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
     readonly gcDisabled?: boolean;
-    readonly maxUnreferencedDurationMs?: number;
 }
 
 // @public

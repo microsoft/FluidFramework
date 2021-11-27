@@ -29,7 +29,7 @@ import { ChildLogger } from "@fluidframework/telemetry-utils";
 const batchManagerDisabledKey = "FluidDisableBatchManager";
 
 // See #8129.
-// Need to move to common-utils.
+// Need to move to common-utils (tracked as #8165)
 // Borrowed from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#examples
 // Avoids runtime errors with circular references.
 // Not ideal, as will cut values that are not necessarily circular references.
@@ -334,9 +334,6 @@ export class DocumentDeltaConnection
             createGenericNetworkError("clientClosingConnection", undefined, true /* canRetry */));
     }
 
-    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
-    public close() { this.dispose(); }
-
     protected disposeCore(socketProtocolError: boolean, err: any) {
         // Can't check this.disposed here, as we get here on socket closure,
         // so _disposed & socket.connected might be not in sync while processing
@@ -379,6 +376,13 @@ export class DocumentDeltaConnection
 
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
+                try {
+                    const description = error?.description;
+                    if (description && typeof description === "object") {
+                        // That's a WebSocket. Clear it as we can't log it.
+                        description.target = undefined;
+                    }
+                } catch(_e) {}
                 fail(true, this.createErrorObject("connectError", error));
             });
 
@@ -537,6 +541,10 @@ export class DocumentDeltaConnection
         if (typeof error !== "object") {
             message = `${message}: ${error}`;
         } else if (error?.type === "TransportError") {
+            // JSON.stringify drops Error.message
+            if (error?.message !== undefined) {
+                message = `${message}: ${error.message}`;
+            }
             // Websocket errors reported by engine.io-client.
             // They are Error objects with description containing WS error and description = "TransportError"
             // Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,

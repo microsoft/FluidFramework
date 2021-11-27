@@ -4,7 +4,7 @@
  */
 
 import { Clicker } from "@fluid-example/clicker";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { TextBox } from "../TextBox";
 import { TextList } from "../TextList";
 import { TodoItem } from "./TodoItem";
@@ -16,7 +16,7 @@ export type TodoItemSupportedComponents = "todo" | "clicker" | "textBox" | "text
 
 interface ITodoItemInnerComponentBase {
     type: TodoItemSupportedComponents;
-    component: IFluidObject;
+    component: FluidObject;
 }
 
 interface ITodoItemInnerTodoComponent extends ITodoItemInnerComponentBase {

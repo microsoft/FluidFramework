@@ -121,8 +121,24 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 
     /**
      * The current code details for the container's runtime
+     * @deprecated use getSpecifiedCodeDetails for the code details currently specified for this container, or
+     * getLoadedCodeDetails for the code details that the container's context was loaded with.
+     * To be removed after getSpecifiedCodeDetails and getLoadedCodeDetails become ubiquitous.
      */
-    readonly codeDetails: IFluidCodeDetails | undefined
+    readonly codeDetails: IFluidCodeDetails | undefined;
+
+    /**
+     * Get the code details that are currently specified for the container.
+     * @returns The current code details if any are specified, undefined if none are specified.
+     */
+    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
+
+    /**
+     * Get the code details that were used to load the container.
+     * @returns The code details that were used to load the container if it is loaded, undefined if it is not yet
+     * loaded.
+     */
+    getLoadedCodeDetails?(): IFluidCodeDetails | undefined;
 
     /**
      * Returns true if the container has been closed, otherwise false
@@ -186,7 +202,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 /**
  * The Runtime's view of the Loader, used for loading Containers
  */
-export interface ILoader extends IFluidRouter {
+export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
     /**
      * Resolves the resource specified by the URL + headers contained in the request object
      * to the underlying container that will resolve the request.
@@ -337,7 +353,7 @@ export interface ILoaderHeader {
     [LoaderHeader.version]: string | undefined;
 }
 
-interface IProvideLoader {
+export interface IProvideLoader {
     readonly ILoader: ILoader;
 }
 
@@ -345,8 +361,12 @@ declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<ILoaderHeader> { }
 
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideLoader>> { }
+    export interface IFluidObject  {
+        /**
+         * @deprecated - use `FluidObject<ILoader>` instead
+         */
+        readonly ILoader?: ILoader;
+    }
 }
 
 export interface IPendingLocalState {
