@@ -31,12 +31,6 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     isAttached(): boolean;
 
     /**
-     * Generates summary of the shared object.
-     * @returns A tree representing the summary of the shared object.
-     */
-    summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
-
-    /**
      * Capture the current content of the channel to be used to generate a summary by summarizeState
      * @returns Current state sufficient to create a summary to be generated asynchronously
      */

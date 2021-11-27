@@ -191,29 +191,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         return this.services !== undefined && this.runtime.attachState !== AttachState.Detached;
     }
 
-    // TODO:get rid of this
-    /**
-     * {@inheritDoc (ISharedObject:interface).summarize}
-     */
-    public summarize(fullTree: boolean = false, trackState: boolean = false): ISummaryTreeWithStats {
-        // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created below)
-        // to serialize handles in this object's data. The routes of these serialized handles are outbound routes
-        // to other Fluid objects.
-        assert(!this._isSummarizing, 0x076 /* "Possible re-entrancy! Summary should not already be in progress." */);
-        this._isSummarizing = true;
-
-        let summaryTree: ISummaryTreeWithStats;
-        try {
-            const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
-            const snapshot = this.snapshotCore(serializer);
-            summaryTree = convertToSummaryTreeWithStats(snapshot, fullTree);
-            assert(this._isSummarizing, 0x077 /* "Possible re-entrancy! Summary should have been in progress." */);
-        } finally {
-            this._isSummarizing = false;
-        }
-        return summaryTree;
-    }
-
     /**
      * {@inheritDoc (ISharedObject:interface).captureSummaryState}
      */
