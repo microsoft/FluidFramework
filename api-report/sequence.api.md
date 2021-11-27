@@ -526,7 +526,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     };
     // (undocumented)
     getCurrentSeq(): number;
-    protected getGCDataCore(): IGarbageCollectionData;
+    protected getGCDataCore(): Promise<IGarbageCollectionData>;
     // (undocumented)
     getIntervalCollection(label: string): IntervalCollection<SequenceInterval>;
     getLength(): number;

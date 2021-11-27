@@ -56,7 +56,7 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     getCell(row: number, col: number): MatrixItem<T>;
     // (undocumented)
     static getFactory(): SharedMatrixFactory;
-    protected getGCDataCore(): IGarbageCollectionData;
+    protected getGCDataCore(): Promise<IGarbageCollectionData>;
     // (undocumented)
     id: string;
     // (undocumented)

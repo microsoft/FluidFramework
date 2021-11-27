@@ -429,11 +429,11 @@ async function attachContainer(
         document.body.prepend(attachDiv);
 
         let summaryNum = 1;
-        serializeButton.onclick = () => {
+        serializeButton.onclick = async () => {
             summaryList.hidden = false;
             rehydrateButton.hidden = false;
             attachDiv.append(rehydrateButton);
-            const summary = currentContainer.serialize();
+            const summary = await currentContainer.serialize();
             const listItem = document.createElement("option");
             listItem.innerText = `Summary_${summaryNum}`;
             summaryNum += 1;

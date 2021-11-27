@@ -108,7 +108,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     resume(): void;
     get scopes(): string[] | undefined;
     // (undocumented)
-    serialize(): string;
+    serialize(): Promise<string>;
     get serviceConfiguration(): IClientConfiguration | undefined;
     // (undocumented)
     setAutoReconnect(reconnect: boolean): void;

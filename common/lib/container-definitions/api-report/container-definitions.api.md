@@ -125,7 +125,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     request(request: IRequest): Promise<IResponse>;
     resolvedUrl: IResolvedUrl | undefined;
-    serialize(): string;
+    serialize(): Promise<string>;
 }
 
 // @public
@@ -424,7 +424,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 
 // @public
 export interface IRuntime extends IDisposable {
-    createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
+    createSummary(blobRedirectTable?: Map<string, string>): Promise<ISummaryTree>;
     getPendingLocalState(): unknown;
     process(message: ISequencedDocumentMessage, local: boolean, context: any): any;
     processSignal(message: any, local: boolean): any;

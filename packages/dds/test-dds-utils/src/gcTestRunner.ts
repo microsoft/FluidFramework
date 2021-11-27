@@ -25,8 +25,8 @@ export interface IGCTestProvider {
 export const runGCTests = (ctor: new () => IGCTestProvider) => {
     let provider: IGCTestProvider;
 
-    function validateGCData() {
-        const gcNodes = Object.entries(provider.sharedObject.getGCData().gcNodes);
+    async function validateGCData() {
+        const gcNodes = Object.entries((await provider.sharedObject.getGCData()).gcNodes);
         assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
 
         const [ id, outboundRoutes ] = gcNodes[0];
@@ -46,7 +46,7 @@ export const runGCTests = (ctor: new () => IGCTestProvider) => {
         await provider.addOutboundRoutes();
 
         // Verify the GC nodes returned by getGCData.
-        validateGCData();
+        await validateGCData();
     });
 
     it("can generate GC nodes when handles are deleted from data", async () => {
@@ -54,26 +54,26 @@ export const runGCTests = (ctor: new () => IGCTestProvider) => {
         await provider.addOutboundRoutes();
 
         // Verify the GC nodes returned by getGCData.
-        validateGCData();
+        await validateGCData();
 
         // Delete routes to Fluid objects from the shared object's data.
         await provider.deleteOutboundRoutes();
 
         // Verify that GC node's outbound routes are updated correctly.
-        validateGCData();
+        await validateGCData();
     });
 
     it("can generate GC nodes when handles are added to data", async () => {
         // Add outbound routes to Fluid object to the DDS' data.
         await provider.addOutboundRoutes();
 
-        validateGCData();
+        await validateGCData();
 
         // Add more routes to Fluid object to the shared object's data.
         await provider.addOutboundRoutes();
 
         // Verify that GC node's outbound routes are updated correctly.
-        validateGCData();
+        await validateGCData();
     });
 
     it("can generate GC nodes with nested handles in data", async () => {
@@ -81,6 +81,6 @@ export const runGCTests = (ctor: new () => IGCTestProvider) => {
         await provider.addNestedHandles();
 
         // Verify the GC nodes returned by getGCData.
-        validateGCData();
+        await validateGCData();
     });
 };

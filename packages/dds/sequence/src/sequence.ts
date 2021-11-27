@@ -458,7 +458,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     /**
      * Returns the GC data for this SharedMatrix. All the IFluidHandle's represent routes to other objects.
      */
-    protected getGCDataCore(): IGarbageCollectionData {
+    protected async getGCDataCore(): Promise<IGarbageCollectionData> {
         // Create a SummarySerializer and use it to serialize all the cells. It keeps track of all IFluidHandles that it
         // serializes.
         const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
