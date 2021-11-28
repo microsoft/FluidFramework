@@ -37,7 +37,7 @@ describe("Container Runtime", () => {
 
         const startDeltaManager = async () =>
             new Promise((accept) => {
-                deltaManager.on("connected", accept);
+                deltaManager.on("connect", accept);
                 deltaManager.connect({ reason: "test" });
             });
 

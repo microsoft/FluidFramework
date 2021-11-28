@@ -76,7 +76,10 @@ describe("Loader", () => {
                     processSignal() { },
                 });
 
-                await deltaManager.connect({ reason: "test" });
+                await new Promise((accept) => {
+                    deltaManager.on("connect", accept);
+                    deltaManager.connect({ reason: "test" });
+                });
             }
 
             // function to yield control in the Javascript event loop.
@@ -242,10 +245,10 @@ describe("Loader", () => {
 
                     assert.strictEqual(deltaManager.readOnlyInfo.readonly, false);
 
-                    deltaManager.forceReadonly(true);
+                    deltaManager.connectionManager.forceReadonly(true);
                     assert.strictEqual(deltaManager.readOnlyInfo.readonly, true);
 
-                    deltaManager.forceReadonly(false);
+                    deltaManager.connectionManager.forceReadonly(false);
                     assert.strictEqual(deltaManager.readOnlyInfo.readonly, false);
                 });
 
@@ -258,7 +261,7 @@ describe("Loader", () => {
                         runCount++;
                     });
 
-                    deltaManager.forceReadonly(true);
+                    deltaManager.connectionManager.forceReadonly(true);
                     assert.strictEqual(runCount, 1);
                 });
 
@@ -273,7 +276,7 @@ describe("Loader", () => {
                         assert.fail("Shouldn't be called");
                     });
 
-                    deltaManager.forceReadonly(true);
+                    deltaManager.connectionManager.forceReadonly(true);
                 });
             });
         });

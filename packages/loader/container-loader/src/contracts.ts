@@ -68,8 +68,6 @@ export interface IConnectionManager {
     // Contains details information, like sequence numbers at connection time, initial ops info, etc.
     readonly connectionVerboseProps: ITelemetryProperties;
 
-    setAutoReconnect(mode: ReconnectMode): void;
-    forceReadonly(readonly: boolean): void;
     prepareMesage(message: Omit<IDocumentMessage, "clientSequenceNumber">): IDocumentMessage | undefined;
     beforeProcessingOp(message: ISequencedDocumentMessage): void;
     submitSignal(content: any): void;

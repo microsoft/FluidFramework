@@ -453,7 +453,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Tracks host requiring read-only mode.
      */
     public forceReadonly(readonly: boolean) {
-        this._deltaManager.forceReadonly(readonly);
+        this._deltaManager.connectionManager.forceReadonly(readonly);
     }
 
     public get id(): string {
@@ -951,7 +951,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             duration,
         });
 
-        this._deltaManager.setAutoReconnect(mode);
+        this._deltaManager.connectionManager.setAutoReconnect(mode);
 
         // If container state is not attached and resumed, then don't connect to delta stream. Also don't set the
         // manual reconnection flag to true as we haven't made the initial connection yet.

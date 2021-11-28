@@ -529,8 +529,6 @@ export class ConnectionManager implements IConnectionManager {
         }
 
         this.setupNewSuccessfulConnection(connection, requestedMode);
-
-        this.deferredConnection.resolve(connection);
     }
 
     /**
@@ -592,11 +590,14 @@ export class ConnectionManager implements IConnectionManager {
      private setupNewSuccessfulConnection(connection: IDocumentDeltaConnection, requestedMode: ConnectionMode) {
         // Old connection should have been cleaned up before establishing a new one
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
-        assert(this.deferredConnection !== undefined || this.closed,
-            0x27f /* "reentrancy may result in incorrect behavior" */);
         assert(!connection.disposed, 0x28a /* "can't be disposed - Callers need to ensure that!" */);
 
-        this.deferredConnection = undefined;
+        if (this.deferredConnection !== undefined) {
+            this.deferredConnection.resolve(connection);
+            this.deferredConnection = undefined;
+        } else {
+            assert(this.closed, 0x27f /* "reentrancy may result in incorrect behavior" */);
+        }
         this.connection = connection;
 
         // Does information in scopes & mode matches?

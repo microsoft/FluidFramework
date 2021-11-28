@@ -50,7 +50,6 @@ import {
 import { DeltaQueue } from "./deltaQueue";
 import {
     IConnectionArgs,
-    ReconnectMode,
     IConnectionManagereFactoryArgs,
     IConnectionManager,
  } from "./contracts";
@@ -169,17 +168,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         return this._checkpointSequenceNumber !== undefined;
     }
 
-    // IDeltaManager
+    // Forwarding connection manager properties / IDeltaManager implementation
     public get maxMessageSize(): number { return this.connectionManager.maxMessageSize; }
     public get version() { return this.connectionManager.version; }
     public get serviceConfiguration() { return this.connectionManager.serviceConfiguration; }
     public get outbound() { return this.connectionManager.outbound; }
     public get readOnlyInfo() { return this.connectionManager.readOnlyInfo; }
     public get clientDetails() { return this.connectionManager.clientDetails; }
-
-    // Methods accessed by Container
-    public setAutoReconnect(mode: ReconnectMode) { return this.connectionManager.setAutoReconnect(mode); }
-    public forceReadonly(readonly: boolean) { return this.connectionManager.forceReadonly(readonly); }
 
     public submit(type: MessageType, contents: any, batch = false, metadata?: any) {
         // Start adding trace for the op.
