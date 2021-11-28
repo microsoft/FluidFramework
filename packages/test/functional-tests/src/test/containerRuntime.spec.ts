@@ -13,6 +13,10 @@ import {
 } from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import { DeltaManager } from "@fluidframework/container-loader/dist/deltaManager";
+// eslint-disable-next-line import/no-internal-modules
+import { IConnectionManagereFactoryArgs } from "@fluidframework/container-loader/dist/contracts";
+// eslint-disable-next-line import/no-internal-modules
+import { ConnectionManager } from "@fluidframework/container-loader/dist/connectionHandler";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
 import { ScheduleManager, DeltaScheduler } from "@fluidframework/container-runtime";
 
@@ -23,7 +27,7 @@ describe("Container Runtime", () => {
      * Non-batch messages are processed in multiple turns if they take longer than DeltaScheduler's processingTime.
      */
     describe("Async op processing", () => {
-        let deltaManager: DeltaManager;
+        let deltaManager: DeltaManager<ConnectionManager>;
         let scheduleManager: ScheduleManager;
         let deltaConnection: MockDocumentDeltaConnection;
         let seq: number;
@@ -88,12 +92,16 @@ describe("Container Runtime", () => {
             );
             const client: Partial<IClient> = { mode: "write", details: { capabilities: { interactive: true } } };
 
-            deltaManager = new DeltaManager(
+            deltaManager = new DeltaManager<ConnectionManager>(
                 () => service,
-                client as IClient,
                 DebugLogger.create("fluid:testDeltaManager"),
-                false,
                 () => false,
+                (props: IConnectionManagereFactoryArgs) => new ConnectionManager(
+                    () => service,
+                    client as IClient,
+                    false,
+                    DebugLogger.create("fluid:testConnectionManager"),
+                    props),
             );
 
             const emitter = new EventEmitter();

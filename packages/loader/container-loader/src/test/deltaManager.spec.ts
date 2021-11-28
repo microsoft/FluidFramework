@@ -12,12 +12,14 @@ import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframewor
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
 import { CollabWindowTracker } from "../collabWindowTracker";
+import { IConnectionManagereFactoryArgs } from "../contracts";
+import { ConnectionManager } from "../connectionHandler";
 
 describe("Loader", () => {
     describe("Container Loader", () => {
         describe("Delta Manager", () => {
             let clock: SinonFakeTimers;
-            let deltaManager: DeltaManager;
+            let deltaManager: DeltaManager<ConnectionManager>;
             let logger: ITelemetryLogger;
             let deltaConnection: MockDocumentDeltaConnection;
             let clientSeqNumber = 0;
@@ -46,12 +48,16 @@ describe("Loader", () => {
                 );
                 const client: Partial<IClient> = { mode: "write", details: { capabilities: { interactive: true } } };
 
-                deltaManager = new DeltaManager(
+                deltaManager = new DeltaManager<ConnectionManager>(
                     () => service,
-                    client as IClient,
                     logger,
-                    reconnectAllowed,
                     () => false,
+                    (props: IConnectionManagereFactoryArgs) => new ConnectionManager(
+                        () => service,
+                        client as IClient,
+                        reconnectAllowed,
+                        logger,
+                        props),
                 );
 
                 const tracker = new CollabWindowTracker(

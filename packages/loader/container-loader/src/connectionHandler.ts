@@ -55,6 +55,12 @@ import {
     GenericError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
+import {
+    IConnectionArgs,
+    ReconnectMode,
+    IConnectionManager,
+    IConnectionManagereFactoryArgs,
+} from "./contracts";
 
 const MaxReconnectDelayInMs = 8000;
 const InitialReconnectDelayInMs = 1000;
@@ -73,18 +79,6 @@ const createReconnectError = (fluidErrorCode: string, err: any) =>
         err,
         (errorMessage: string) => new GenericNetworkError(fluidErrorCode, errorMessage, true /* canRetry */),
     );
-
-export interface IConnectionArgs {
-    mode?: ConnectionMode;
-    fetchOpsFromStorage?: boolean;
-    reason: string;
-}
-
-export enum ReconnectMode {
-    Never = "Never",
-    Disabled = "Disabled",
-    Enabled = "Enabled",
-}
 
 /**
  * Implementation of IDocumentDeltaConnection that does not support submitting
@@ -131,7 +125,7 @@ class NoDeltaStream
     public dispose() { this._disposed = true; }
 }
 
-export class ConnectionManager {
+export class ConnectionManager implements IConnectionManager {
     // Connection mode used when reconnecting on error or disconnect.
     private readonly defaultReconnectionMode: ConnectionMode;
 
@@ -165,15 +159,14 @@ export class ConnectionManager {
 
     private connectFirstConnection = true;
 
-    private _connectionStateProps: Record<string, string | number> = {};
+    private _connectionVerboseProps: Record<string, string | number> = {};
 
     private closed = false;
 
     private readonly _outbound: DeltaQueue<IDocumentMessage[]>;
 
-    public get connectionStateProps() { return this._connectionStateProps; }
+    public get connectionVerboseProps() { return this._connectionVerboseProps; }
 
-    public get active(): boolean { return this._active(); }
     public readonly clientDetails: IClientDetails;
 
     /**
@@ -219,10 +212,6 @@ export class ConnectionManager {
         return this.connection?.claims.scopes;
     }
 
-    public get socketDocumentId(): string | undefined {
-        return this.connection?.claims.documentId;
-    }
-
     public get outbound(): IDeltaQueue<IDocumentMessage[]> {
         return this._outbound;
     }
@@ -236,6 +225,7 @@ export class ConnectionManager {
             return {
                 connectionMode: this.connectionMode,
                 relayServiceAgent: this.connection.relayServiceAgent,
+                socketDocumentId: this.connection?.claims.documentId,
             };
         } else {
             return {
@@ -296,20 +286,10 @@ export class ConnectionManager {
 
     constructor(
         private readonly serviceProvider: () => IDocumentService | undefined,
-        private readonly _active: () => boolean,
         private client: IClient,
         reconnectAllowed: boolean,
         private readonly logger: ITelemetryLogger,
-        private readonly enqueueMessages: (messages: ISequencedDocumentMessage[], reason: string) => void,
-        private readonly signalHandler: (message: ISignalMessage) => void,
-        private readonly emitDelayInfo: (delayMs: number, error: unknown) => void,
-        private readonly refreshDelayInfo: () => void,
-        private readonly closeHandler: (error: any) => void,
-        private readonly disconnectHandler: (reason: string) => void,
-        private readonly connectHandler: (connection: IConnectionDetails) => void,
-        private readonly pongHandler: (latency: number) => void,
-        private readonly readonlyChangeHandler: (readonly?: boolean) => void,
-
+        private readonly props: IConnectionManagereFactoryArgs,
     ) {
         this.clientDetails = this.client.details;
         this.defaultReconnectionMode = this.client.mode;
@@ -326,7 +306,7 @@ export class ConnectionManager {
             });
 
         this._outbound.on("error", (error) => {
-            this.closeHandler(normalizeError(error));
+            this.props.closeHandler(normalizeError(error));
         });
     }
 
@@ -413,7 +393,7 @@ export class ConnectionManager {
 
                 reconnect = this.disconnectFromDeltaStream("Force readonly");
             }
-            this.readonlyChangeHandler(this.readonly);
+            this.props.readonlyChangeHandler(this.readonly);
             if (reconnect) {
                 // reconnect if we disconnected from before.
                 this.triggerConnect({ reason: "forceReadonly", mode: "read", fetchOpsFromStorage: false });
@@ -425,13 +405,13 @@ export class ConnectionManager {
         const oldValue = this.readonly;
         this._readonlyPermissions = readonly;
         if (oldValue !== this.readonly) {
-            this.readonlyChangeHandler(this.readonly);
+            this.props.readonlyChangeHandler(this.readonly);
         }
     }
 
     public connect(args: IConnectionArgs) {
         this.connectCore(args).catch((error) => {
-            this.closeHandler(error);
+            this.props.closeHandler(error);
         });
     }
 
@@ -507,7 +487,7 @@ export class ConnectionManager {
                 // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                 if (!canRetryOnError(origError)) {
                     const error = normalizeError(origError);
-                    this.closeHandler(error);
+                    this.props.closeHandler(error);
                     throw error;
                 }
 
@@ -530,7 +510,7 @@ export class ConnectionManager {
                 delayMs = retryDelayFromError ?? Math.min(delayMs * 2, MaxReconnectDelayInMs);
 
                 if (retryDelayFromError !== undefined) {
-                    this.emitDelayInfo(retryDelayFromError, origError);
+                    this.props.emitDelayInfo(retryDelayFromError, origError);
                 }
                 await waitForConnectedState(delayMs);
             }
@@ -586,20 +566,20 @@ export class ConnectionManager {
 
         // Remove listeners first so we don't try to retrigger this flow accidentally through reconnectOnError
         connection.off("op", this.opHandler);
-        connection.off("signal", this.signalHandler);
+        connection.off("signal", this.props.signalHandler);
         connection.off("nack", this.nackHandler);
         connection.off("disconnect", this.disconnectHandlerInternal);
         connection.off("error", this.errorHandler);
-        connection.off("pong", this.pongHandler);
+        connection.off("pong", this.props.pongHandler);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this._outbound.pause();
         this._outbound.clear();
-        this.disconnectHandler(reason);
+        this.props.disconnectHandler(reason);
 
         connection.dispose();
 
-        this._connectionStateProps = {};
+        this._connectionVerboseProps = {};
 
         return true;
     }
@@ -632,7 +612,7 @@ export class ConnectionManager {
 
         this.set_readonlyPermissions(readonly);
 
-        this.refreshDelayInfo();
+        this.props.refreshDelayInfo();
 
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
@@ -643,11 +623,11 @@ export class ConnectionManager {
         this._outbound.resume();
 
         connection.on("op", this.opHandler);
-        connection.on("signal", this.signalHandler);
+        connection.on("signal", this.props.signalHandler);
         connection.on("nack", this.nackHandler);
         connection.on("disconnect", this.disconnectHandlerInternal);
         connection.on("error", this.errorHandler);
-        connection.on("pong", this.pongHandler);
+        connection.on("pong", this.props.pongHandler);
 
         // Initial messages are always sorted. However, due to early op handler installed by drivers and appending those
         // ops to initialMessages, resulting set is no longer sorted, which would result in client hitting storage to
@@ -658,18 +638,18 @@ export class ConnectionManager {
         // Some storages may provide checkpointSequenceNumber to identify how far client is behind.
         let checkpointSequenceNumber = connection.checkpointSequenceNumber;
 
-        this._connectionStateProps = {
+        this._connectionVerboseProps = {
             clientId: connection.clientId,
             mode: connection.mode,
         };
         if (connection.relayServiceAgent !== undefined) {
-            this._connectionStateProps.relayServiceAgent = connection.relayServiceAgent;
+            this._connectionVerboseProps.relayServiceAgent = connection.relayServiceAgent;
         }
         let last = -1;
         if (initialMessages.length !== 0) {
-            this._connectionStateProps.connectionInitialOpsFrom = initialMessages[0].sequenceNumber;
+            this._connectionVerboseProps.connectionInitialOpsFrom = initialMessages[0].sequenceNumber;
             last = initialMessages[initialMessages.length - 1].sequenceNumber;
-            this._connectionStateProps.connectionInitialOpsTo = last + 1;
+            this._connectionVerboseProps.connectionInitialOpsTo = last + 1;
             // Update knowledge of how far we are behind, before raising "connect" event
             // This is duplication of what enqueueMessages() does, but we have to raise event before we get there,
             // so duplicating update logic here as well.
@@ -678,19 +658,19 @@ export class ConnectionManager {
             }
         }
 
-        this.enqueueMessages(
+        this.props.enqueueMessages(
             initialMessages,
             this.connectFirstConnection ? "InitialOps" : "ReconnectOps");
 
         if (connection.initialSignals !== undefined) {
             for (const signal of connection.initialSignals) {
-                this.signalHandler(signal);
+                this.props.signalHandler(signal);
             }
         }
 
         const details = ConnectionManager.detailsFromConnection(connection);
         details.checkpointSequenceNumber = checkpointSequenceNumber;
-        this.connectHandler(details);
+        this.props.connectHandler(details);
 
         this.connectFirstConnection = false;
     }
@@ -739,7 +719,7 @@ export class ConnectionManager {
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
             // are very misleading, as first initial reaction - some logic is broken.
-            this.closeHandler(canRetry ? undefined : error);
+            this.props.closeHandler(canRetry ? undefined : error);
         }
 
         // If closed then we can't reconnect
@@ -749,7 +729,7 @@ export class ConnectionManager {
 
         const delayMs = error !== undefined ? getRetryDelayFromError(error) : undefined;
         if (delayMs !== undefined) {
-            this.emitDelayInfo(delayMs, error);
+            this.props.emitDelayInfo(delayMs, error);
             await waitForConnectedState(delayMs);
         }
 
@@ -773,7 +753,7 @@ export class ConnectionManager {
                 readonlyPermissions: this.readOnlyInfo.permissions,
                 storageOnly: this.readOnlyInfo.storageOnly,
             });
-            this.closeHandler(error);
+            this.props.closeHandler(error);
             return undefined;
         }
 
@@ -866,7 +846,7 @@ export class ConnectionManager {
 
     private readonly opHandler = (documentId: string, messagesArg: ISequencedDocumentMessage[]) => {
         const messages = Array.isArray(messagesArg) ? messagesArg : [messagesArg];
-        this.enqueueMessages(messages, "opHandler");
+        this.props.enqueueMessages(messages, "opHandler");
     };
 
     // Always connect in write mode after getting nacked.
@@ -875,7 +855,7 @@ export class ConnectionManager {
         // TODO: we should remove this check when service updates?
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (this._readonlyPermissions) {
-            this.closeHandler(createWriteError("writeOnReadOnlyDocument"));
+            this.props.closeHandler(createWriteError("writeOnReadOnlyDocument"));
         }
 
         // check message.content for Back-compat with old service.

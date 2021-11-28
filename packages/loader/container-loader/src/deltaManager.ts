@@ -33,7 +33,6 @@ import {
 } from "@fluidframework/driver-definitions";
 import { isSystemMessage } from "@fluidframework/protocol-base";
 import {
-    IClient,
     IDocumentMessage,
     ISequencedDocumentMessage,
     ISignalMessage,
@@ -49,10 +48,12 @@ import {
     DataCorruptionError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
-import { ConnectionManager, IConnectionArgs, ReconnectMode } from "./connectionHandler";
-
-// re-export
-export { IConnectionArgs, ReconnectMode};
+import {
+    IConnectionArgs,
+    ReconnectMode,
+    IConnectionManagereFactoryArgs,
+    IConnectionManager,
+ } from "./contracts";
 
 /**
  * Includes events emitted by the concrete implementation DeltaManager
@@ -67,15 +68,15 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
-export class DeltaManager
+export class DeltaManager<TConnectionManager extends IConnectionManager>
     extends TypedEventEmitter<IDeltaManagerInternalEvents>
     implements
     IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
     IEventProvider<IDeltaManagerInternalEvents>
 {
-    protected readonly connectionManager: ConnectionManager;
+    public readonly connectionManager: TConnectionManager;
 
-    public get active(): boolean { return this.connectionManager.active; }
+    public get active(): boolean { return this._active(); }
 
     public get disposed() { return this.closed; }
 
@@ -168,19 +169,18 @@ export class DeltaManager
         return this._checkpointSequenceNumber !== undefined;
     }
 
+    // IDeltaManager
     public get maxMessageSize(): number { return this.connectionManager.maxMessageSize; }
     public get version() { return this.connectionManager.version; }
     public get serviceConfiguration() { return this.connectionManager.serviceConfiguration; }
-    public get scopes() { return this.connectionManager.scopes; }
-    public get socketDocumentId() { return this.connectionManager.socketDocumentId; }
-    public get connectionMode() { return this.connectionManager.connectionMode; }
-    public shouldJoinWrite() { return this.connectionManager.shouldJoinWrite(); }
     public get outbound() { return this.connectionManager.outbound; }
     public get readOnlyInfo() { return this.connectionManager.readOnlyInfo; }
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
+    // Methods accessed by Container
     public setAutoReconnect(mode: ReconnectMode) { return this.connectionManager.setAutoReconnect(mode); }
     public forceReadonly(readonly: boolean) { return this.connectionManager.forceReadonly(readonly); }
+
     public submit(type: MessageType, contents: any, batch = false, metadata?: any) {
         // Start adding trace for the op.
         const traces: ITrace[] = [
@@ -231,12 +231,6 @@ export class DeltaManager
         this.messageBuffer = [];
     }
 
-    /**
-     * Automatic reconnecting enabled or disabled.
-     * If set to Never, then reconnecting will never be allowed.
-     */
-    public get reconnectMode() { return this.connectionManager.reconnectMode; }
-
     public get connectionProps(): ITelemetryProperties {
         return {
             sequenceNumber: this.lastSequenceNumber,
@@ -264,7 +258,7 @@ export class DeltaManager
             lastProcessedSequenceNumber: this.lastProcessedSequenceNumber, // same as above, but after processing
             lastObserved: this.lastObservedSeqNumber, // last sequence we ever saw; may have gaps with above.
             // connection info
-            ...this.connectionManager.connectionStateProps,
+            ...this.connectionManager.connectionVerboseProps,
             pendingOps: this.pending.length, // Do we have any pending ops?
             pendingFirst: pendingSorted[0]?.sequenceNumber, // is the first pending op the one that we are missing?
             haveHandler: this.handler !== undefined, // do we have handler installed?
@@ -275,28 +269,26 @@ export class DeltaManager
 
     constructor(
         private readonly serviceProvider: () => IDocumentService | undefined,
-        client: IClient,
         private readonly logger: ITelemetryLogger,
-        reconnectAllowed: boolean,
-        _active: () => boolean,
+        private readonly _active: () => boolean,
+        createConnectionManager: (props: IConnectionManagereFactoryArgs) => TConnectionManager,
     ) {
         super();
-        this.connectionManager = new ConnectionManager(
-            serviceProvider,
-            _active,
-            client,
-            reconnectAllowed,
-            logger,
-            (messages: ISequencedDocumentMessage[], reason: string) => this.enqueueMessages(messages, reason),
-            (message: ISignalMessage) => this._inboundSignal.push(message),
-            (delayMs: number, error: unknown) => this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
-            () => this.refreshDelayInfo(this.deltaStreamDelayId),
-            (error: any) => this.close(error),
-            (reason: string) => this.emit("disconnect", reason),
-            (connection: IConnectionDetails) => this.connectHandler(connection),
-            (latency: number) => this.emit("pong", latency),
-            (readonly?: boolean) => safeRaiseEvent(this, this.logger, "readonly", readonly),
-        );
+        const props: IConnectionManagereFactoryArgs = {
+            enqueueMessages:(messages: ISequencedDocumentMessage[], reason: string) =>
+                this.enqueueMessages(messages, reason),
+            signalHandler: (message: ISignalMessage) => this._inboundSignal.push(message),
+            emitDelayInfo: (delayMs: number, error: unknown) =>
+                this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
+            refreshDelayInfo: () => this.refreshDelayInfo(this.deltaStreamDelayId),
+            closeHandler: (error: any) => this.close(error),
+            disconnectHandler: (reason: string) => this.emit("disconnect", reason),
+            connectHandler: (connection: IConnectionDetails) => this.connectHandler(connection),
+            pongHandler: (latency: number) => this.emit("pong", latency),
+            readonlyChangeHandler: (readonly?: boolean) => safeRaiseEvent(this, this.logger, "readonly", readonly),
+        };
+
+        this.connectionManager = createConnectionManager(props);
 
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
@@ -328,7 +320,7 @@ export class DeltaManager
     }
 
     private connectHandler(connection: IConnectionDetails) {
-        const props = this.connectionManager.connectionStateProps;
+        const props = this.connectionManager.connectionVerboseProps;
         props.connectionLastQueuedSequenceNumber = this.lastQueuedSequenceNumber;
         props.connectionLastObservedSeqNumber = this.lastObservedSeqNumber;
 
@@ -482,7 +474,7 @@ export class DeltaManager
                     early: true,
                     from,
                     to,
-                    ...this.connectionManager.connectionStateProps,
+                    ...this.connectionManager.connectionVerboseProps,
                 });
                 return;
             }
@@ -698,7 +690,7 @@ export class DeltaManager
                     gap: gap > 0 ? gap : undefined,
                     firstMissing,
                     dmInitialSeqNumber: this.initialSequenceNumber,
-                    ...this.connectionManager.connectionStateProps,
+                    ...this.connectionManager.connectionVerboseProps,
                 });
             }
         }

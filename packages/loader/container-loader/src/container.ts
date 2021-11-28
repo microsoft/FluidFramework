@@ -96,7 +96,8 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
-import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
+import { IConnectionArgs, ReconnectMode, IConnectionManagereFactoryArgs } from "./contracts";
+import { DeltaManager } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
@@ -107,6 +108,7 @@ import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdap
 import { getSnapshotTreeFromSerializedContainer } from "./utils";
 import { QuorumProxy } from "./quorum";
 import { CollabWindowTracker } from "./collabWindowTracker";
+import { ConnectionManager } from "./connectionHandler";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -361,7 +363,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private readonly clientDetailsOverride: IClientDetails | undefined;
-    private readonly _deltaManager: DeltaManager;
+    private readonly _deltaManager: DeltaManager<ConnectionManager>;
     private service: IDocumentService | undefined;
     private readonly _audience: Audience;
 
@@ -401,6 +403,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.loader.services.options?.noopTimeFrequency,
         this.loader.services.options?.noopCountFrequency,
     );
+
+    private get connectionMode() { return this._deltaManager.connectionManager.connectionMode; }
 
     public get IFluidRouter(): IFluidRouter { return this; }
 
@@ -489,7 +493,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Set once this.connected is true, otherwise undefined
      */
     public get scopes(): string[] | undefined {
-        return this._deltaManager.scopes;
+        return this._deltaManager.connectionManager.scopes;
     }
 
     public get clientDetails(): IClientDetails {
@@ -612,7 +616,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 protocolHandler: () => this._protocolHandler,
                 logConnectionStateChangeTelemetry: (value, oldState, reason) =>
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
-                shouldClientJoinWrite: () => this._deltaManager.shouldJoinWrite(),
+                shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
                 logConnectionIssue: (eventName: string) => {
                     // We get here when socket does not receive any ops on "write" connection, including
@@ -930,7 +934,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Attempting to setAutoReconnect() a closed Container");
         }
         const mode = reconnect ? ReconnectMode.Enabled : ReconnectMode.Disabled;
-        const currentMode = this._deltaManager.reconnectMode;
+        const currentMode = this._deltaManager.connectionManager.reconnectMode;
 
         if (currentMode === mode) {
             return;
@@ -942,7 +946,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.logger.sendTelemetryEvent({
             eventName: reconnect ? "AutoReconnectEnabled" : "AutoReconnectDisabled",
-            connectionMode: this._deltaManager.connectionMode,
+            connectionMode: this.connectionMode,
             connectionState: ConnectionState[this.connectionState],
             duration,
         });
@@ -1543,7 +1547,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      */
     private activeConnection() {
         const active = this.connectionState === ConnectionState.Connected &&
-            this._deltaManager.connectionMode === "write";
+            this.connectionMode === "write";
 
         // Check for presence of current client in quorum for "write" connections - inactive clients
         // would get leave op after some long timeout (5 min) and that should automatically transition
@@ -1556,12 +1560,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private createDeltaManager() {
-        const deltaManager: DeltaManager = new DeltaManager(
-            () => this.service,
-            this.client,
+        const serviceProvider = () => this.service;
+        const deltaManager = new DeltaManager<ConnectionManager>(
+            serviceProvider,
             ChildLogger.create(this.subLogger, "DeltaManager"),
-            this._canReconnect,
             () => this.activeConnection(),
+            (props: IConnectionManagereFactoryArgs) => new ConnectionManager(
+                serviceProvider,
+                this.client,
+                this._canReconnect,
+                ChildLogger.create(this.subLogger, "ConnectionManager"),
+                props),
         );
 
         // Disable inbound queues as Container is not ready to accept any ops until we are fully loaded!
@@ -1579,7 +1588,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
 
             this.connectionStateHandler.receivedConnectEvent(
-                this._deltaManager.connectionMode,
+                this.connectionMode,
                 details,
             );
         });
@@ -1638,7 +1647,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         let checkpointSequenceNumber: number | undefined;
         let opsBehind: number | undefined;
         if (value === ConnectionState.Disconnected) {
-            autoReconnect = this._deltaManager.reconnectMode;
+            autoReconnect = this._deltaManager.connectionManager.reconnectMode;
         } else {
             if (value === ConnectionState.Connected) {
                 durationFromDisconnected = time - this.connectionTransitionTimes[ConnectionState.Disconnected];
@@ -1666,7 +1675,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             durationFromDisconnected,
             reason,
             connectionInitiationReason,
-            socketDocumentId: this._deltaManager.socketDocumentId,
             pendingClientId: this.connectionStateHandler.pendingClientId,
             clientId: this.clientId,
             autoReconnect,
@@ -1687,7 +1695,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const logOpsOnReconnect: boolean =
             this.connectionState === ConnectionState.Connected &&
             !this.firstConnection &&
-            this._deltaManager.connectionMode === "write";
+            this.connectionMode === "write";
         if (logOpsOnReconnect) {
             this.messageCountAfterDisconnection = 0;
         }
