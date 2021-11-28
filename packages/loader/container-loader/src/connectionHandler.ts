@@ -125,6 +125,11 @@ class NoDeltaStream
     public dispose() { this._disposed = true; }
 }
 
+/**
+ * Implementation of IConnectionManager, used by Container class
+ * Implements constant connectivity to relay service, by reconnecting in case of loast connection or error.
+ * Exposes various controls to influecen this process, including manual reconnects, forced read-only mode, etc.
+ */
 export class ConnectionManager implements IConnectionManager {
     // Connection mode used when reconnecting on error or disconnect.
     private readonly defaultReconnectionMode: ConnectionMode;
