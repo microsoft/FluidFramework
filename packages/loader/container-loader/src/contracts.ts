@@ -120,7 +120,7 @@ export interface IConnectionManagereFactoryArgs {
      * Called when connection manager experiences delay in connecting to relay service.
      * This can happen because client is offline, or service is busy and asks to not connect for some time.
      * Can be called many times while not connected.
-     * Situation is considered resolved when connection is established and connectHandler is called. 
+     * Situation is considered resolved when connection is established and connectHandler is called.
      */
     readonly reconnectionDelayHandler: (delayMs: number, error: unknown) => void,
 
