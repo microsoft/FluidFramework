@@ -315,9 +315,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             this.blobCache.setBlob(blobId, blob);
         }
 
-        if (!this.attributesBlobHandles.has(blobId)) {
-            return blob;
-        }
         return blob;
     }
 
