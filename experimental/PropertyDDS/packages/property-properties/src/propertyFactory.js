@@ -396,9 +396,6 @@ class PropertyFactory {
         /** Cache of constructor function that are auto-generated for typeids */
         this._typedPropertyConstructorCache = {};
 
-        /** A cache of the resulting data structure which will be created for this typeID */
-        this._cachedTypeIds = new Map();
-
         /** A cache of functions that create the properties */
         this._cachedCreationFunctions = new Map();
 
@@ -981,14 +978,7 @@ class PropertyFactory {
 
         if (!propertyCreationFunction) {
 
-            const scopeEntry = this._cachedTypeIds.get(in_typeid);
-            const contextEntry = scopeEntry && scopeEntry.get(in_scope);
-            let propertyDef = contextEntry && contextEntry.get(context);
-
-            if (!propertyDef) {
-                propertyDef = this._collectPropertyChildren(in_typeid, in_scope, context, in_optimizeConstants);
-            }
-
+            let propertyDef = this._collectPropertyChildren(in_typeid, in_scope, context, in_optimizeConstants);
             propertyCreationFunction = this._definePropertyCreationFunction(propertyDef, in_typeid, in_scope, context);
         }
 
@@ -1029,18 +1019,6 @@ class PropertyFactory {
             }, undefined, in_scope, true);
         }
 
-        let scopes = this._cachedTypeIds.get(in_typeid);
-        if (!scopes) {
-            scopes = new Map();
-            this._cachedTypeIds.set(in_typeid, scopes);
-        }
-        let contexts = scopes.get(in_scope);
-        if (!contexts) {
-            contexts = new Map();
-            scopes.set(in_scope, contexts);
-        }
-
-        contexts.set(in_context, createCache);
         this._currentCreateCache = lastCreateCache;
 
         return createCache;
@@ -1934,7 +1912,6 @@ class PropertyFactory {
         }
 
         // Remove from typeid creation cache
-        this._cachedTypeIds.delete(typeid);
         this._cachedCreationFunctions.delete(typeid);
 
         // And repeat the registration
