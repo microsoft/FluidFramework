@@ -13,7 +13,7 @@ import {
     ReadOnlyInfo,
     IConnectionDetails,
 } from "@fluidframework/container-definitions";
-import { assert, Deferred, performance, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     TelemetryLogger,
     normalizeError,
@@ -134,7 +134,7 @@ export class ConnectionManager implements IConnectionManager {
     // Connection mode used when reconnecting on error or disconnect.
     private readonly defaultReconnectionMode: ConnectionMode;
 
-    private deferredConnection: Deferred<IDocumentDeltaConnection> | undefined;
+    private pendingConnection = false;
     private connection: IDocumentDeltaConnection | undefined;
 
     // file ACL - whether user has only read-only access to a file
@@ -318,10 +318,7 @@ export class ConnectionManager implements IConnectionManager {
     public dispose(error: any) {
         this.closed = true;
 
-        if (this.deferredConnection !== undefined) {
-            this.deferredConnection.reject(error);
-            this.deferredConnection = undefined;
-        }
+        this.pendingConnection = false;
 
         // Ensure that things like triggerConnect() will short circuit
         this._reconnectMode = ReconnectMode.Never;
@@ -423,7 +420,7 @@ export class ConnectionManager implements IConnectionManager {
     private async connectCore(args: IConnectionArgs): Promise<void> {
         assert(!this.closed, 0x26a /* "not closed" */);
 
-        if (this.connection !== undefined || this.deferredConnection !== undefined) {
+        if (this.connection !== undefined || this.pendingConnection) {
             return;
         }
 
@@ -448,9 +445,9 @@ export class ConnectionManager implements IConnectionManager {
         if (docService.policies?.storageOnly === true) {
             connection = new NoDeltaStream();
             // to keep setupNewSuccessfulConnection happy
-            this.deferredConnection = new Deferred<IDocumentDeltaConnection>();
+            this.pendingConnection = true;
             this.setupNewSuccessfulConnection(connection, "read");
-            assert(this.deferredConnection === undefined, "logic error");
+            assert(!this.pendingConnection, "logic error");
             return;
         }
 
@@ -458,7 +455,7 @@ export class ConnectionManager implements IConnectionManager {
         // Set it upfront, such that if connection is established (NoDeltaConnection) or rejected (bug in
         // connectToDeltaStream() implementation - throwing exception vs. returning rejected promise) in
         // synchronous way, we have this.connectionP setup for all the code to assert correctness of the flow.
-        this.deferredConnection = new Deferred<IDocumentDeltaConnection>();
+        this.pendingConnection = true;
 
         let delayMs = InitialReconnectDelayInMs;
         let connectRepeatCount = 0;
@@ -561,7 +558,7 @@ export class ConnectionManager implements IConnectionManager {
             return false;
         }
 
-        assert(this.deferredConnection === undefined, 0x27b /* "reentrancy may result in incorrect behavior" */);
+        assert(!this.pendingConnection, 0x27b /* "reentrancy may result in incorrect behavior" */);
 
         const connection = this.connection;
         // Avoid any re-entrancy - clear object reference
@@ -597,9 +594,8 @@ export class ConnectionManager implements IConnectionManager {
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
         assert(!connection.disposed, 0x28a /* "can't be disposed - Callers need to ensure that!" */);
 
-        if (this.deferredConnection !== undefined) {
-            this.deferredConnection.resolve(connection);
-            this.deferredConnection = undefined;
+        if (this.pendingConnection) {
+            this.pendingConnection = false;
         } else {
             assert(this.closed, 0x27f /* "reentrancy may result in incorrect behavior" */);
         }
