@@ -1581,6 +1581,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         this.needsFlush = false;
+
+        // Did we disconnect in the middle of turn-based batch?
+        // If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
+        if (!this.canSendOps()) {
+            return;
+        }
+
         return this.deltaSender.flush();
     }
 

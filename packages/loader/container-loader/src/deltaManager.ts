@@ -291,7 +291,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
             refreshDelayInfo: () => this.refreshDelayInfo(this.deltaStreamDelayId),
             closeHandler: (error: any) => this.close(error),
-            disconnectHandler: (reason: string) => this.emit("disconnect", reason),
+            disconnectHandler: (reason: string) => this.disconnectHandler(reason),
             connectHandler: (connection: IConnectionDetails) => this.connectHandler(connection),
             pongHandler: (latency: number) => this.emit("pong", latency),
             readonlyChangeHandler: (readonly?: boolean) => safeRaiseEvent(this, this.logger, "readonly", readonly),
@@ -581,6 +581,21 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         if (this.throttlingIdSet.size === 0) {
             this.timeTillThrottling = 0;
         }
+    }
+
+    private disconnectHandler(reason: string) {
+        if (this.messageBuffer.length > 0) {
+            // Behavior is not well defined here RE batches across connections / disconnect.
+            // DeltaManager overall policy - drop all ops on disconnection and rely on
+            // container runtime to deal with resubmitting any ops that did not make it through.
+            // So drop them, but also raise error event to look into details.
+            this.logger.sendErrorEvent({
+                eventName: "OpenBatchOnDisconnect",
+                length: this.messageBuffer.length,
+            });
+            this.messageBuffer.length = 0;
+        }
+        this.emit("disconnect", reason);
     }
 
     /**
