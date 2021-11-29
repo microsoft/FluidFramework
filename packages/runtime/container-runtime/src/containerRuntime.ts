@@ -1135,7 +1135,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.deltaManager.on("readonly", (readonly: boolean) => {
             // we accumulate ops while being in read-only state.
             // once user gets write permissions and we have active connection, flush all pending ops.
-            assert(readonly === this.deltaManager.readonly, 0x124 /* "inconsistent readonly property/event state" */);
+            // eslint-disable-next-line max-len
+            assert(readonly === this.deltaManager.readOnlyInfo.readonly, 0x124 /* "inconsistent readonly property/event state" */);
 
             // We need to be very careful with when we (re)send pending ops, to ensure that we only send ops
             // when we either never send an op, or attempted to send it but we know for sure it was not
