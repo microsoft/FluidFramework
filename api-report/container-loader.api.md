@@ -94,10 +94,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     raiseContainerWarning(warning: ContainerWarning): void;
     // (undocumented)
-    /**
-      * Object defining the current readonly state of the Container.
-      * If the Container is readonly it also provides additional properties describing how it got to that state.
-     **/
     get readOnlyInfo(): ReadOnlyInfo;
     static rehydrateDetachedFromSnapshot(loader: Loader, snapshot: string): Promise<Container>;
     // (undocumented)
