@@ -977,195 +977,33 @@ class PropertyFactory {
 
         const scopeFunctionEntry = this._cachedCreationFunctions.get(in_typeid);
         const contextFunctionEntry = scopeFunctionEntry && scopeFunctionEntry.get(in_scope);
-        const cacheFunctionEntry = contextFunctionEntry && contextFunctionEntry.get(context);
-        if (cacheFunctionEntry) {
-            let property = cacheFunctionEntry();
+        let propertyCreationFunction = contextFunctionEntry && contextFunctionEntry.get(context);
 
-            if (in_initialProperties !== undefined) {
-                this._setInitialValue(property, {
-                    value: in_initialProperties
-                }, cacheFunctionEntry.anyConstantChildren);
+        if (!propertyCreationFunction) {
+
+            const scopeEntry = this._cachedTypeIds.get(in_typeid);
+            const contextEntry = scopeEntry && scopeEntry.get(in_scope);
+            let cacheEntry = contextEntry && contextEntry.get(context);
+
+            if (!cacheEntry) {
+                cacheEntry = this._collectPropertyChildren(in_typeid, in_scope, context, in_optimizeConstants);
             }
 
-            return property;
+            propertyCreationFunction = this._definePropertyCreationFunction(cacheEntry, in_typeid, in_scope, context);
         }
 
-        const scopeEntry = this._cachedTypeIds.get(in_typeid);
-        const contextEntry = scopeEntry && scopeEntry.get(in_scope);
-        const cacheEntry = contextEntry && contextEntry.get(context);
-        let anyConstantChildren = false;
+        let property = propertyCreationFunction();
 
-        if (cacheEntry) {
-            let rootProperty = undefined;
-
-            const creationStack = [{
-                id: undefined,
-                entry: cacheEntry,
-                parent:undefined
-            }];
-            let creationFunctionSource = "";
-            let currentParameterIndex = 0;
-            let parameters = [];
-            let currentPropertyNumber = 0;
-            let currentPropertyVarName = "";
-            let resultVarName;
-
-            while (creationStack.length > 0) {
-                const currentEntry = creationStack.pop();
-
-                // We have an entry on the stack that is just waiting for its children to finish, but has already
-                // been created
-                if (currentEntry.signalChildrenFinished) {
-                    currentEntry.property._signalAllStaticMembersHaveBeenAdded(in_scope);
-                    creationFunctionSource +=
-                      `${currentEntry.propertyVarname}._signalAllStaticMembersHaveBeenAdded(${JSON.stringify(in_scope)});\n`;
-
-                    if (currentEntry.initialValue) {
-                        this._setInitialValue(currentEntry.property, currentEntry.initialValue, true);
-                        creationFunctionSource +=
-                          `this._setInitialValue(${currentEntry.propertyVarname},
-                                                 ${JSON.stringify(currentEntry.initialValue)},
-                                                 ${JSON.stringify(currentEntry.anyConstantChildren)});\n`;
-                    }
-                    if (currentEntry.constant) {
-                        currentEntry.property._setAsConstant();
-                        creationFunctionSource +=
-                          `${currentEntry.propertyVarname}._setAsConstant();\n`;
-                        anyConstantChildren = true;
-
-                        let parentEntry = currentEntry.parentStackEntry;
-                        while (parentEntry && parentEntry.anyConstantChildren === false) {
-                            parentEntry.anyConstantChildren = true;
-                            parentEntry = parentEntry.parentStackEntry;
-                        }
-                    }
-                    continue;
-                }
-
-                currentPropertyNumber++;
-                currentPropertyVarName = `property${currentPropertyNumber}`;
-                creationFunctionSource +=
-                  `const ${currentPropertyVarName} =
-                    new parameters[${currentParameterIndex}](parameters[${currentParameterIndex + 1}]);\n`;
-                parameters.push(currentEntry.entry.constructorFunction);
-                parameters.push(currentEntry.entry.entry);
-                currentParameterIndex += 2;
-
-                let property = new (currentEntry.entry.constructorFunction)(currentEntry.entry.entry);
-                if (currentEntry.parent) {
-                    if (currentEntry.entry.optional) {
-                        currentEntry.parent._insert(property.getId(), property, true);
-                        creationFunctionSource += `${currentEntry.parentVarName}._insert(
-                            ${JSON.stringify(property.getId())}, ${currentPropertyVarName}, true
-                        );\n`
-                    } else {
-                        currentEntry.parent._append(property, currentEntry.entry.allowChildMerges);
-                        creationFunctionSource += `${currentEntry.parentVarName}._append(
-                            ${currentPropertyVarName}, ${currentEntry.entry.allowChildMerges}
-                        );\n`
-                    }
-                } else {
-                    rootProperty = property;
-                    resultVarName = currentPropertyVarName;
-                }
-
-                if (currentEntry.setGuid) {
-                    property.value = GuidUtils.generateGUID();
-                    creationFunctionSource += `${currentPropertyVarName}.value = GuidUtils.generateGUID();\n`
-                }
-
-                if (currentEntry.entry.optionalChildren) {
-                    for (let [id, typeid] of Object.entries(currentEntry.entry.optionalChildren)) {
-                        property._addOptionalChild(id, typeid);
-                        creationFunctionSource += `${currentPropertyVarName}._addOptionalChild(
-                            ${JSON.stringify(id)},
-                            ${JSON.stringify(typeid)}
-                        );\n`
-                    }
-                }
-
-                if (currentEntry.entry.children) {
-                    const parentStackEntry = {
-                        signalChildrenFinished: true,
-                        initialValue: currentEntry.entry.initialValue,
-                        property,
-                        constant: currentEntry.entry.constant,
-                        propertyVarname: currentPropertyVarName,
-                        typeid: currentEntry.entry.typeid,
-                        context: currentEntry.entry.context,
-                        parentStackEntry: currentEntry.parentStackEntry,
-                        anyConstantChildren: false
-                    }
-                    creationStack.push(parentStackEntry);
-
-                    for (let [id, child] of currentEntry.entry.children) {
-                        creationStack.push({
-                            parent: property,
-                            parentVarName: currentPropertyVarName,
-                            id: id,
-                            entry: child,
-                            signalParent: false,
-                            setGuid: currentEntry.entry.assignGuid && id ===
-                            'guid',
-                            parentStackEntry
-                        })
-                    }
-                } else {
-                    if (currentEntry.entry.initialValue) {
-                        this._setInitialValue(property, currentEntry.entry.initialValue);
-                        creationFunctionSource +=
-                          `this._setInitialValue(${currentPropertyVarName},
-                                                 ${JSON.stringify(currentEntry.entry.initialValue)},
-                                                 ${JSON.stringify(anyConstantChildren)});\n`;
-                    }
-                    if (currentEntry.entry.constant) {
-                        property._setAsConstant();
-                        creationFunctionSource += `${currentPropertyVarName}._setAsConstant();\n`
-                        anyConstantChildren = true;
-                        let parentEntry = currentEntry.parentStackEntry;
-                        while (parentEntry && parentEntry.anyConstantChildren === false) {
-                            parentEntry.anyConstantChildren = true;
-                            parentEntry = parentEntry.parentStackEntry;
-                        }
-                    }
-
-                    if (currentEntry.entry.signal) {
-                        property._signalAllStaticMembersHaveBeenAdded(in_scope);
-                        creationFunctionSource += `${currentPropertyVarName}._signalAllStaticMembersHaveBeenAdded(
-                            ${JSON.stringify(in_scope)}
-                        );\n`
-                    }
-                }
-            }
-            creationFunctionSource += ` return ${resultVarName};`;
-
-            let creationFunction = new Function('parameters',' GuidUtils', creationFunctionSource).bind(this,
-                parameters, GuidUtils);
-            creationFunction.anyConstantChildren = anyConstantChildren;
-
-            rootProperty = creationFunction();
-
-            let scopesFunction = this._cachedCreationFunctions.get(in_typeid);
-            if (!scopesFunction) {
-                scopesFunction = new Map();
-                this._cachedCreationFunctions.set(in_typeid, scopesFunction);
-            }
-            let contextsFunction = scopesFunction.get(in_scope);
-            if (!contextsFunction) {
-                contextsFunction = new Map();
-                scopesFunction.set(in_scope, contextsFunction);
-            }
-
-            contextsFunction.set(context, creationFunction);
-
-            if (in_initialProperties !== undefined) {
-                this._setInitialValue(rootProperty, {
-                    value: in_initialProperties
-                }, anyConstantChildren);
-            }
-            return rootProperty;
+        if (in_initialProperties !== undefined) {
+            this._setInitialValue(property, {
+                value: in_initialProperties
+            }, propertyCreationFunction.anyConstantChildren);
         }
 
+        return property;
+    };
+
+    _collectPropertyChildren(in_typeid, in_scope, in_context, in_optimizeConstants) {
         let createCache = {};
         const lastCreateCache = this._currentCreateCache;
         this._currentCreateCache = createCache;
@@ -1178,7 +1016,7 @@ class PropertyFactory {
 
             property = this._createFromPropertyDeclaration({
                 typeid: in_typeid,
-                context: context || 'single'
+                context: in_context || 'single'
             }, undefined, in_scope, evaluateConstants);
 
             if (isProperty) {
@@ -1187,14 +1025,8 @@ class PropertyFactory {
         } else {
             property = this._createFromPropertyDeclaration({
                 typeid: in_typeid,
-                context: context || 'single'
+                context: in_context || 'single'
             }, undefined, in_scope, true);
-        }
-
-        if (in_initialProperties !== undefined) {
-            this._setInitialValue(property, {
-                value: in_initialProperties
-            }, true);
         }
 
         let scopes = this._cachedTypeIds.get(in_typeid);
@@ -1208,12 +1040,176 @@ class PropertyFactory {
             scopes.set(in_scope, contexts);
         }
 
-        contexts.set(context, createCache);
+        contexts.set(in_context, createCache);
         this._currentCreateCache = lastCreateCache;
 
-        property = this._createProperty(in_typeid, context, in_initialProperties, in_scope, in_optimizeConstants);
-        return property;
-    };
+        return createCache;
+    }
+
+    _definePropertyCreationFunction(cacheEntry, in_typeid, in_scope, in_context) {
+        let rootProperty = undefined;
+
+        const creationStack = [{
+            id: undefined,
+            entry: cacheEntry,
+            parent:undefined
+        }];
+        let creationFunctionSource = "";
+        let currentParameterIndex = 0;
+        let parameters = [];
+        let currentPropertyNumber = 0;
+        let currentPropertyVarName = "";
+        let resultVarName;
+        let anyConstantChildren = false;
+
+        while (creationStack.length > 0) {
+            const currentEntry = creationStack.pop();
+
+            // We have an entry on the stack that is just waiting for its children to finish, but has already
+            // been created
+            if (currentEntry.signalChildrenFinished) {
+                currentEntry.property._signalAllStaticMembersHaveBeenAdded(in_scope);
+                creationFunctionSource +=
+                    `${currentEntry.propertyVarname}._signalAllStaticMembersHaveBeenAdded(${JSON.stringify(in_scope)});\n`;
+
+                if (currentEntry.initialValue) {
+                    this._setInitialValue(currentEntry.property, currentEntry.initialValue, true);
+                    creationFunctionSource +=
+                        `this._setInitialValue(${currentEntry.propertyVarname},
+                                                ${JSON.stringify(currentEntry.initialValue)},
+                                                ${JSON.stringify(currentEntry.anyConstantChildren)});\n`;
+                }
+                if (currentEntry.constant) {
+                    currentEntry.property._setAsConstant();
+                    creationFunctionSource +=
+                        `${currentEntry.propertyVarname}._setAsConstant();\n`;
+                    anyConstantChildren = true;
+
+                    let parentEntry = currentEntry.parentStackEntry;
+                    while (parentEntry && parentEntry.anyConstantChildren === false) {
+                        parentEntry.anyConstantChildren = true;
+                        parentEntry = parentEntry.parentStackEntry;
+                    }
+                }
+                continue;
+            }
+
+            currentPropertyNumber++;
+            currentPropertyVarName = `property${currentPropertyNumber}`;
+            creationFunctionSource +=
+                `const ${currentPropertyVarName} =
+                new parameters[${currentParameterIndex}](parameters[${currentParameterIndex + 1}]);\n`;
+            parameters.push(currentEntry.entry.constructorFunction);
+            parameters.push(currentEntry.entry.entry);
+            currentParameterIndex += 2;
+
+            let property = new (currentEntry.entry.constructorFunction)(currentEntry.entry.entry);
+            if (currentEntry.parent) {
+                if (currentEntry.entry.optional) {
+                    currentEntry.parent._insert(property.getId(), property, true);
+                    creationFunctionSource += `${currentEntry.parentVarName}._insert(
+                        ${JSON.stringify(property.getId())}, ${currentPropertyVarName}, true
+                    );\n`
+                } else {
+                    currentEntry.parent._append(property, currentEntry.entry.allowChildMerges);
+                    creationFunctionSource += `${currentEntry.parentVarName}._append(
+                        ${currentPropertyVarName}, ${currentEntry.entry.allowChildMerges}
+                    );\n`
+                }
+            } else {
+                rootProperty = property;
+                resultVarName = currentPropertyVarName;
+            }
+
+            if (currentEntry.setGuid) {
+                property.value = GuidUtils.generateGUID();
+                creationFunctionSource += `${currentPropertyVarName}.value = GuidUtils.generateGUID();\n`
+            }
+
+            if (currentEntry.entry.optionalChildren) {
+                for (let [id, typeid] of Object.entries(currentEntry.entry.optionalChildren)) {
+                    property._addOptionalChild(id, typeid);
+                    creationFunctionSource += `${currentPropertyVarName}._addOptionalChild(
+                        ${JSON.stringify(id)},
+                        ${JSON.stringify(typeid)}
+                    );\n`
+                }
+            }
+
+            if (currentEntry.entry.children) {
+                const parentStackEntry = {
+                    signalChildrenFinished: true,
+                    initialValue: currentEntry.entry.initialValue,
+                    property,
+                    constant: currentEntry.entry.constant,
+                    propertyVarname: currentPropertyVarName,
+                    typeid: currentEntry.entry.typeid,
+                    context: currentEntry.entry.context,
+                    parentStackEntry: currentEntry.parentStackEntry,
+                    anyConstantChildren: false
+                }
+                creationStack.push(parentStackEntry);
+
+                for (let [id, child] of currentEntry.entry.children) {
+                    creationStack.push({
+                        parent: property,
+                        parentVarName: currentPropertyVarName,
+                        id: id,
+                        entry: child,
+                        signalParent: false,
+                        setGuid: currentEntry.entry.assignGuid && id ===
+                        'guid',
+                        parentStackEntry
+                    })
+                }
+            } else {
+                if (currentEntry.entry.initialValue) {
+                    this._setInitialValue(property, currentEntry.entry.initialValue);
+                    creationFunctionSource +=
+                        `this._setInitialValue(${currentPropertyVarName},
+                                                ${JSON.stringify(currentEntry.entry.initialValue)},
+                                                ${JSON.stringify(anyConstantChildren)});\n`;
+                }
+                if (currentEntry.entry.constant) {
+                    property._setAsConstant();
+                    creationFunctionSource += `${currentPropertyVarName}._setAsConstant();\n`
+                    anyConstantChildren = true;
+                    let parentEntry = currentEntry.parentStackEntry;
+                    while (parentEntry && parentEntry.anyConstantChildren === false) {
+                        parentEntry.anyConstantChildren = true;
+                        parentEntry = parentEntry.parentStackEntry;
+                    }
+                }
+
+                if (currentEntry.entry.signal) {
+                    property._signalAllStaticMembersHaveBeenAdded(in_scope);
+                    creationFunctionSource += `${currentPropertyVarName}._signalAllStaticMembersHaveBeenAdded(
+                        ${JSON.stringify(in_scope)}
+                    );\n`
+                }
+            }
+        }
+        creationFunctionSource += ` return ${resultVarName};`;
+
+        let creationFunction = new Function('parameters',' GuidUtils', creationFunctionSource).bind(this,
+            parameters, GuidUtils);
+        creationFunction.anyConstantChildren = anyConstantChildren;
+
+        let scopesFunction = this._cachedCreationFunctions.get(in_typeid);
+        if (!scopesFunction) {
+            scopesFunction = new Map();
+            this._cachedCreationFunctions.set(in_typeid, scopesFunction);
+        }
+        let contextsFunction = scopesFunction.get(in_scope);
+        if (!contextsFunction) {
+            contextsFunction = new Map();
+            scopesFunction.set(in_scope, contextsFunction);
+        }
+
+        contextsFunction.set(in_context, creationFunction);
+
+        return creationFunction;
+    }
 
     /**
      * Sets a value to a property
