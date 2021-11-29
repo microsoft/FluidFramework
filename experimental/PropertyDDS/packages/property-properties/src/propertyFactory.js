@@ -1047,8 +1047,6 @@ class PropertyFactory {
     }
 
     _definePropertyCreationFunction(cacheEntry, in_typeid, in_scope, in_context) {
-        let rootProperty = undefined;
-
         const creationStack = [{
             id: undefined,
             entry: cacheEntry,
@@ -1068,19 +1066,16 @@ class PropertyFactory {
             // We have an entry on the stack that is just waiting for its children to finish, but has already
             // been created
             if (currentEntry.signalChildrenFinished) {
-                currentEntry.property._signalAllStaticMembersHaveBeenAdded(in_scope);
                 creationFunctionSource +=
                     `${currentEntry.propertyVarname}._signalAllStaticMembersHaveBeenAdded(${JSON.stringify(in_scope)});\n`;
 
                 if (currentEntry.initialValue) {
-                    this._setInitialValue(currentEntry.property, currentEntry.initialValue, true);
                     creationFunctionSource +=
                         `this._setInitialValue(${currentEntry.propertyVarname},
                                                 ${JSON.stringify(currentEntry.initialValue)},
                                                 ${JSON.stringify(currentEntry.anyConstantChildren)});\n`;
                 }
                 if (currentEntry.constant) {
-                    currentEntry.property._setAsConstant();
                     creationFunctionSource +=
                         `${currentEntry.propertyVarname}._setAsConstant();\n`;
                     anyConstantChildren = true;
@@ -1103,32 +1098,26 @@ class PropertyFactory {
             parameters.push(currentEntry.entry.entry);
             currentParameterIndex += 2;
 
-            let property = new (currentEntry.entry.constructorFunction)(currentEntry.entry.entry);
-            if (currentEntry.parent) {
+            if (currentEntry.parentVarName !== undefined) {
                 if (currentEntry.entry.optional) {
-                    currentEntry.parent._insert(property.getId(), property, true);
                     creationFunctionSource += `${currentEntry.parentVarName}._insert(
-                        ${JSON.stringify(property.getId())}, ${currentPropertyVarName}, true
+                        ${JSON.stringify(currentEntry.entry.entry.id)}, ${currentPropertyVarName}, true
                     );\n`
                 } else {
-                    currentEntry.parent._append(property, currentEntry.entry.allowChildMerges);
                     creationFunctionSource += `${currentEntry.parentVarName}._append(
                         ${currentPropertyVarName}, ${currentEntry.entry.allowChildMerges}
                     );\n`
                 }
             } else {
-                rootProperty = property;
                 resultVarName = currentPropertyVarName;
             }
 
             if (currentEntry.setGuid) {
-                property.value = GuidUtils.generateGUID();
                 creationFunctionSource += `${currentPropertyVarName}.value = GuidUtils.generateGUID();\n`
             }
 
             if (currentEntry.entry.optionalChildren) {
                 for (let [id, typeid] of Object.entries(currentEntry.entry.optionalChildren)) {
-                    property._addOptionalChild(id, typeid);
                     creationFunctionSource += `${currentPropertyVarName}._addOptionalChild(
                         ${JSON.stringify(id)},
                         ${JSON.stringify(typeid)}
@@ -1140,7 +1129,6 @@ class PropertyFactory {
                 const parentStackEntry = {
                     signalChildrenFinished: true,
                     initialValue: currentEntry.entry.initialValue,
-                    property,
                     constant: currentEntry.entry.constant,
                     propertyVarname: currentPropertyVarName,
                     typeid: currentEntry.entry.typeid,
@@ -1152,7 +1140,6 @@ class PropertyFactory {
 
                 for (let [id, child] of currentEntry.entry.children) {
                     creationStack.push({
-                        parent: property,
                         parentVarName: currentPropertyVarName,
                         id: id,
                         entry: child,
@@ -1164,14 +1151,12 @@ class PropertyFactory {
                 }
             } else {
                 if (currentEntry.entry.initialValue) {
-                    this._setInitialValue(property, currentEntry.entry.initialValue);
                     creationFunctionSource +=
                         `this._setInitialValue(${currentPropertyVarName},
                                                 ${JSON.stringify(currentEntry.entry.initialValue)},
                                                 ${JSON.stringify(anyConstantChildren)});\n`;
                 }
                 if (currentEntry.entry.constant) {
-                    property._setAsConstant();
                     creationFunctionSource += `${currentPropertyVarName}._setAsConstant();\n`
                     anyConstantChildren = true;
                     let parentEntry = currentEntry.parentStackEntry;
@@ -1182,7 +1167,6 @@ class PropertyFactory {
                 }
 
                 if (currentEntry.entry.signal) {
-                    property._signalAllStaticMembersHaveBeenAdded(in_scope);
                     creationFunctionSource += `${currentPropertyVarName}._signalAllStaticMembersHaveBeenAdded(
                         ${JSON.stringify(in_scope)}
                     );\n`
