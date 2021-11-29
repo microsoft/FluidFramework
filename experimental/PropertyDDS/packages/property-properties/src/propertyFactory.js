@@ -399,9 +399,6 @@ class PropertyFactory {
         /** A cache of functions that create the properties */
         this._cachedCreationFunctions = new Map();
 
-        /** This is used to collect all properties that have to be added to a specific typeid */
-        this._currentCreateCache = undefined;
-
         this._init();
     };
 
@@ -994,9 +991,7 @@ class PropertyFactory {
     };
 
     _collectPropertyChildren(in_typeid, in_scope, in_context, in_optimizeConstants) {
-        let createCache = {};
-        const lastCreateCache = this._currentCreateCache;
-        this._currentCreateCache = createCache;
+        let propertyDef = {};
         let property;
 
         if (in_optimizeConstants) {
@@ -1004,24 +999,22 @@ class PropertyFactory {
             var isProperty = templateOrProperty instanceof PropertyTemplateWrapper;
             var evaluateConstants = isProperty ? !templateOrProperty.hasConstantTree() : false;
 
-            property = this._createFromPropertyDeclaration({
+            property = this._createDefFromPropertyDeclaration({
                 typeid: in_typeid,
                 context: in_context || 'single'
-            }, undefined, in_scope, evaluateConstants);
+            }, undefined, in_scope, evaluateConstants, propertyDef);
 
             if (isProperty) {
                 templateOrProperty.loadConstants(property);
             }
         } else {
-            property = this._createFromPropertyDeclaration({
+            property = this._createDefFromPropertyDeclaration({
                 typeid: in_typeid,
                 context: in_context || 'single'
-            }, undefined, in_scope, true);
+            }, undefined, in_scope, true, propertyDef);
         }
 
-        this._currentCreateCache = lastCreateCache;
-
-        return createCache;
+        return propertyDef;
     }
 
     _definePropertyCreationFunction(propertyDef, in_typeid, in_scope, in_context) {
@@ -1291,7 +1284,7 @@ class PropertyFactory {
      * @private
      */
     _ensurePropertyParentExists(in_typeid, in_id, in_parent,
-        in_templateOrConstructor, in_scope) {
+        in_templateOrConstructor, in_scope, propertyDef) {
         // If we already have a parent, we just return it
         if (in_parent) {
             return in_parent;
@@ -1330,11 +1323,11 @@ class PropertyFactory {
         ConstructorFunction = this._getConstructorFunctionForTypeidAndID(
             'single', in_typeid, ConstructorFunction, in_id, in_scope);
 
-        this._currentCreateCache.constructorFunction = ConstructorFunction;
-        this._currentCreateCache.signal = true;
-        this._currentCreateCache.entry = params;
-        this._currentCreateCache.context = 'single';
-        this._currentCreateCache.typeid = in_typeid;
+        propertyDef.constructorFunction = ConstructorFunction;
+        propertyDef.signal = true;
+        propertyDef.entry = params;
+        propertyDef.context = 'single';
+        propertyDef.typeid = in_typeid;
 
         return new ConstructorFunction(params);
     };
@@ -1436,8 +1429,8 @@ class PropertyFactory {
      *
      * @return {property-properties.BaseProperty|undefined} the property instance
      */
-    _createFromPropertyDeclaration(
-        in_propertiesEntry, in_parent, in_scope, in_evaluateConstants) {
+    _createDefFromPropertyDeclaration(
+        in_propertiesEntry, in_parent, in_scope, in_evaluateConstants, propertyDef) {
 
         var context = in_propertiesEntry.context !== undefined ? in_propertiesEntry.context : 'single';
         var typeid = this._computeTypeid(in_propertiesEntry, in_parent, in_scope, context);
@@ -1461,11 +1454,11 @@ class PropertyFactory {
                             in_scope);
                     }
 
-                    this._currentCreateCache.constructorFunction = templateOrConstructor;
-                    this._currentCreateCache.signal = false;
-                    this._currentCreateCache.entry = in_propertiesEntry;
-                    this._currentCreateCache.context = in_propertiesEntry.context;
-                    this._currentCreateCache.typeid = in_propertiesEntry.typeid;
+                    propertyDef.constructorFunction = templateOrConstructor;
+                    propertyDef.signal = false;
+                    propertyDef.entry = in_propertiesEntry;
+                    propertyDef.context = in_propertiesEntry.context;
+                    propertyDef.typeid = in_propertiesEntry.typeid;
 
                     // If this is a primitive type, we create it via the registered constructor
                     var result = new templateOrConstructor(in_propertiesEntry); // eslint-disable-line new-cap
@@ -1482,11 +1475,12 @@ class PropertyFactory {
                             in_propertiesEntry.id,
                             in_parent,
                             templateOrConstructor,
-                            in_scope
+                            in_scope,
+                            propertyDef
                         );
 
                         this._parseTemplate(templateOrConstructor, parent, in_scope,
-                            !!(templateOrConstructor.inherits), in_evaluateConstants);
+                            !!(templateOrConstructor.inherits), in_evaluateConstants, propertyDef);
                     } else {
                         // If we have other contexts, we have to create the corresponding property object for that context
 
@@ -1524,11 +1518,11 @@ class PropertyFactory {
                                 throw new Error(MSG.UNKNOWN_CONTEXT_SPECIFIED + context);
                         }
 
-                        this._currentCreateCache.constructorFunction = constructorFunction;
-                        this._currentCreateCache.signal = false;
-                        this._currentCreateCache.entry = in_propertiesEntry;
-                        this._currentCreateCache.typeid = typeid;
-                        this._currentCreateCache.context = context;
+                        propertyDef.constructorFunction = constructorFunction;
+                        propertyDef.signal = false;
+                        propertyDef.entry = in_propertiesEntry;
+                        propertyDef.typeid = typeid;
+                        propertyDef.context = context;
 
                         result = new (constructorFunction)(in_propertiesEntry, in_scope);
                         return result;
@@ -1550,21 +1544,21 @@ class PropertyFactory {
                 // If this is a declaration which contains a properties list, we have to create a new container property for it
                 let copiedProperty = Object.assign({typeid: 'ContainerProperty'}, in_propertiesEntry);
                 parent = new ContainerProperty(copiedProperty);
-                this._currentCreateCache.constructorFunction = ContainerProperty;
-                this._currentCreateCache.entry = copiedProperty;
-                this._currentCreateCache.signal = false;
-                this._currentCreateCache.typeid = copiedProperty.typeid;
-                this._currentCreateCache.context = 'single';
+                propertyDef.constructorFunction = ContainerProperty;
+                propertyDef.entry = copiedProperty;
+                propertyDef.signal = false;
+                propertyDef.typeid = copiedProperty.typeid;
+                propertyDef.context = 'single';
             }
 
             // And then parse the entry like a template
-            this._parseTemplate(in_propertiesEntry, parent, in_scope, false, in_evaluateConstants);
+            this._parseTemplate(in_propertiesEntry, parent, in_scope, false, in_evaluateConstants, propertyDef);
         }
 
         // If this property inherits from NamedProperty we assign a random GUID
         if (typeid && this.inheritsFrom(typeid, 'NamedProperty', { scope: in_scope })) {
             parent.get('guid', { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER }).value = GuidUtils.generateGUID();
-            this._currentCreateCache.assignGuid = true;
+            propertyDef.assignGuid = true;
         }
 
         return parent;
@@ -1641,7 +1635,7 @@ class PropertyFactory {
      * @private
      */
     _parseTemplate(
-        in_template, in_parent, in_scope, in_allowChildMerges, in_evaluateConstants) {
+        in_template, in_parent, in_scope, in_allowChildMerges, in_evaluateConstants, propertyDef) {
 
         // Check if there are nested property arrays
         if (!(in_template.inherits && in_template.inherits.indexOf('Enum') !== -1)) {
@@ -1658,9 +1652,9 @@ class PropertyFactory {
 
                     if (optional) {
                         in_parent._addOptionalChild(id, typeid);
-                        this._currentCreateCache.optionalChildren = this._currentCreateCache.optionalChildren || {};
-                        this._currentCreateCache.entry.optionalChildren = true;
-                        this._currentCreateCache.optionalChildren[id] = typeid;
+                        propertyDef.optionalChildren = propertyDef.optionalChildren || {};
+                        propertyDef.entry.optionalChildren = true;
+                        propertyDef.optionalChildren[id] = typeid;
                     }
 
                     if (valueParsed.value) {
@@ -1669,12 +1663,10 @@ class PropertyFactory {
                             optional,
                             allowChildMerges: in_allowChildMerges
                         };
-                        this._currentCreateCache.children = this._currentCreateCache.children || [];
-                        this._currentCreateCache.children.unshift([properties[i].id, newChildEntry]);
-                        const oldCreateCache = this._currentCreateCache
-                        this._currentCreateCache = newChildEntry;
-                        const property = this._createFromPropertyDeclaration(properties[i], undefined, in_scope, false);
-                        this._currentCreateCache = oldCreateCache;
+                        propertyDef.children = propertyDef.children || [];
+                        propertyDef.children.unshift([properties[i].id, newChildEntry]);
+                        const property = this._createDefFromPropertyDeclaration(properties[i], undefined,
+                                                                                in_scope, false, newChildEntry);
 
                         this._setInitialValue(property, valueParsed, true);
                         if (optional) {
@@ -1686,12 +1678,10 @@ class PropertyFactory {
                         const newChildEntry = {
                             initialValue: undefined
                         };
-                        this._currentCreateCache.children = this._currentCreateCache.children || []
-                        this._currentCreateCache.children.unshift([properties[i].id, newChildEntry]);
-                        const oldCreateCache = this._currentCreateCache
-                        this._currentCreateCache = newChildEntry;
-                        const property = this._createFromPropertyDeclaration(properties[i], undefined, in_scope, false);
-                        this._currentCreateCache = oldCreateCache;
+                        propertyDef.children = propertyDef.children || []
+                        propertyDef.children.unshift([properties[i].id, newChildEntry]);
+                        const property = this._createDefFromPropertyDeclaration(properties[i], undefined,
+                                                                                in_scope, false, newChildEntry);
 
                         in_parent._append(property, in_allowChildMerges);
                     }
@@ -1708,13 +1698,11 @@ class PropertyFactory {
                         initialValue: undefined,
                         constant: true
                     };
-                    this._currentCreateCache.children = this._currentCreateCache.children || [];
-                    this._currentCreateCache.children.unshift([constants[i].id, newChildEntry]);
-                    const oldCreateCache = this._currentCreateCache
-                    this._currentCreateCache = newChildEntry;
+                    propertyDef.children = propertyDef.children || [];
+                    propertyDef.children.unshift([constants[i].id, newChildEntry]);
 
-                    const constant = this._createFromPropertyDeclaration(constants[i], undefined, in_scope, true);
-                    this._currentCreateCache = oldCreateCache;
+                    const constant = this._createDefFromPropertyDeclaration(constants[i], undefined, in_scope,
+                                                                            true, newChildEntry);
 
                     if (valueParsed.value) {
                         this._setInitialValue(constant, valueParsed, true);
