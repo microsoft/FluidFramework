@@ -176,6 +176,20 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get readOnlyInfo() { return this.connectionManager.readOnlyInfo; }
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
+    /**
+     * Tells if container is in read-only mode.
+     * Data stores should listen for "readonly" notifications and disallow user
+     * making changes to data stores.
+     * Readonly state can be because of no storage write permission,
+     * or due to host forcing readonly mode for container.
+     * It is undefined if we have not yet established websocket connection
+     * and do not know if user has write access to a file.
+     * @deprecated - use readOnlyInfo
+     */
+    public get readonly() {
+        return this.readOnlyInfo.readonly;
+    }
+
     public submit(type: MessageType, contents: any, batch = false, metadata?: any) {
         // Start adding trace for the op.
         const traces: ITrace[] = [
@@ -451,10 +465,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             this.deltaStorage = await docService.connectToDeltaStorage();
         }
 
-        assert(this.closeAbortController.signal.onabort === null, 0x1e8 /* "reentrancy" */);
-        const controller = new AbortController();
-        this.closeAbortController.signal.onabort = () => controller.abort();
-
         let cancelFetch: (op: ISequencedDocumentMessage) => boolean;
 
         if (to !== undefined) {
@@ -488,6 +498,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             cancelFetch = (op: ISequencedDocumentMessage) => op.sequenceNumber >= this.lastObservedSeqNumber;
         }
 
+        const controller = new AbortController();
         let opsFromFetch = false;
 
         const opListener = (op: ISequencedDocumentMessage) => {
@@ -501,9 +512,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             }
         };
 
-        this._inbound.on("push", opListener);
-
         try {
+            this._inbound.on("push", opListener);
+            assert(this.closeAbortController.signal.onabort === null, 0x1e8 /* "reentrancy" */);
+            this.closeAbortController.signal.onabort = () => controller.abort();
+
             const stream = this.deltaStorage.fetchMessages(
                 from, // inclusive
                 to, // exclusive
@@ -525,9 +538,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 }
             }
         } finally {
-            assert(!opsFromFetch, 0x289 /* "logic error" */);
             this.closeAbortController.signal.onabort = null;
             this._inbound.off("push", opListener);
+            assert(!opsFromFetch, 0x289 /* "logic error" */);
         }
     }
 
