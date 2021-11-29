@@ -159,7 +159,7 @@ export class SharedPropertyTree extends SharedObject {
 	}
 
 	private scopeFutureDeltasToPaths(paths?: string[]) {
-		const socket = (this.runtime.deltaManager as any).deltaManager.connection.socket;
+		const socket = (this.runtime.deltaManager as any).deltaManager.connectionManager.connection.socket;
 		socket.emit("partial_checkout", { paths });
 	}
 

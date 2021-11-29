@@ -328,13 +328,13 @@ export class ConnectionManager implements IConnectionManager {
 
         this._outbound.clear();
 
+        // This raises "disconnect" event if we have active connection.
+        this.disconnectFromDeltaStream(error !== undefined ? `${error.message}` : "Container closed");
+
         // Notify everyone we are in read-only state.
         // Useful for data stores in case we hit some critical error,
         // to switch to a mode where user edits are not accepted
         this.set_readonlyPermissions(true);
-
-        // This raises "disconnect" event if we have active connection.
-        this.disconnectFromDeltaStream(error !== undefined ? `${error.message}` : "Container closed");
     }
 
     /**
