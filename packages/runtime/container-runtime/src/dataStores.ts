@@ -67,6 +67,13 @@ export class DataStores implements IDisposable {
 
     private readonly disposeOnce = new Lazy<void>(() => this.contexts.dispose());
 
+    public readonly containerLoadStats: {
+        // number of dataStores during loadContainer
+        readonly containerLoadDataStoreCount: number;
+        // number of unreferenced dataStores during loadContainer
+        readonly referencedDataStoreCount: number;
+    };
+
     constructor(
         private readonly baseSnapshot: ISnapshotTree | undefined,
         private readonly runtime: ContainerRuntime,
@@ -125,11 +132,10 @@ export class DataStores implements IDisposable {
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
         }
-        this.logger.sendTelemetryEvent({
-            eventName: "ContainerLoadStats",
-            dataStoreCount: fluidDataStores.size,
+        this.containerLoadStats = {
+            containerLoadDataStoreCount: fluidDataStores.size,
             referencedDataStoreCount: fluidDataStores.size - unreferencedDataStoreCount,
-        });
+        };
     }
 
     public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {

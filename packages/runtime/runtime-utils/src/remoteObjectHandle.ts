@@ -41,13 +41,6 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
         assert(absolutePath.startsWith("/"), 0x19d /* "Handles should always have absolute paths" */);
     }
 
-    /**
-     * @deprecated - This returns the absolute path.
-     */
-    public get path() {
-        return this.absolutePath;
-    }
-
     public async get(): Promise<any> {
         if (this.objectP === undefined) {
             const request = { url: this.absolutePath };
