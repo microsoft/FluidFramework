@@ -35,7 +35,7 @@
   "dependencies": {
     "@fluid-example/todo": "^0.53.0",
     "@fluid-experimental/get-container": "^0.53.0",
-    "@fluidframework/container-definitions": "^0.42.0",
+    "@fluidframework/container-definitions": "^0.43.0-0",
     "@fluidframework/container-loader": "^0.53.0",
     "@fluidframework/container-runtime-definitions": "^0.53.0",
     "@fluidframework/core-interfaces": "^0.41.0",
