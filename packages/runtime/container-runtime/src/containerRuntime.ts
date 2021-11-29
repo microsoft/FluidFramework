@@ -1161,7 +1161,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // logging hardware telemetry
         let deviceMemory: number | undefined;
         let hardwareConcurrency;
-        if (typeof navigator === "object") {
+        if (this.checkNavigator()) {
             deviceMemory = (navigator as any)?.deviceMemory;
             hardwareConcurrency = navigator.hardwareConcurrency;
         }
@@ -1183,6 +1183,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
+    }
+
+    public checkNavigator(): boolean {
+        try {
+            return typeof navigator === "object" && navigator !== null;
+        } catch {
+            return false;
+        }
     }
 
     public dispose(error?: Error): void {
