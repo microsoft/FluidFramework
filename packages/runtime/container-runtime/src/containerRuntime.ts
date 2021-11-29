@@ -1162,9 +1162,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         let deviceMemory: number | undefined;
         let hardwareConcurrency;
         if (typeof navigator === "object") {
-            deviceMemory = Object.hasOwnProperty.call(navigator, "deviceMemory")
-            // eslint-disable-next-line @typescript-eslint/dot-notation
-                ? navigator["deviceMemory"] : undefined;
+            deviceMemory = (navigator as any)?.deviceMemory;
             hardwareConcurrency = navigator.hardwareConcurrency;
         }
         logger.sendTelemetryEvent({
