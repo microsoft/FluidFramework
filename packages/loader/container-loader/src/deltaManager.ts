@@ -38,6 +38,7 @@ import {
     ISignalMessage,
     MessageType,
     ITrace,
+    ConnectionMode,
 } from "@fluidframework/protocol-definitions";
 import {
     NonRetryableError,
@@ -49,10 +50,15 @@ import {
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 import {
-    IConnectionArgs,
     IConnectionManagereFactoryArgs,
     IConnectionManager,
  } from "./contracts";
+
+ export interface IConnectionArgs {
+    mode?: ConnectionMode;
+    fetchOpsFromStorage?: boolean;
+    reason: string;
+}
 
 /**
  * Includes events emitted by the concrete implementation DeltaManager
@@ -284,12 +290,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     ) {
         super();
         const props: IConnectionManagereFactoryArgs = {
-            enqueueMessages:(messages: ISequencedDocumentMessage[], reason: string) =>
+            incommingOpHandler:(messages: ISequencedDocumentMessage[], reason: string) =>
                 this.enqueueMessages(messages, reason),
             signalHandler: (message: ISignalMessage) => this._inboundSignal.push(message),
-            emitDelayInfo: (delayMs: number, error: unknown) =>
+            reconnectionDelayHandler: (delayMs: number, error: unknown) =>
                 this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
-            refreshDelayInfo: () => this.refreshDelayInfo(this.deltaStreamDelayId),
             closeHandler: (error: any) => this.close(error),
             disconnectHandler: (reason: string) => this.disconnectHandler(reason),
             connectHandler: (connection: IConnectionDetails) => this.connectHandler(connection),
@@ -329,6 +334,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     }
 
     private connectHandler(connection: IConnectionDetails) {
+        this.refreshDelayInfo(this.deltaStreamDelayId);
+
         const props = this.connectionManager.connectionVerboseProps;
         props.connectionLastQueuedSequenceNumber = this.lastQueuedSequenceNumber;
         props.connectionLastObservedSeqNumber = this.lastObservedSeqNumber;
@@ -447,7 +454,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             this.fetchMissingDeltas(args.reason);
         }
 
-        this.connectionManager.connect(args);
+        this.connectionManager.connect(args.mode);
     }
 
     private async getDeltas(
@@ -784,7 +791,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             message.contents = JSON.parse(message.contents);
         }
 
-        this.connectionManager.beforeProcessingOp(message);
+        this.connectionManager.beforeProcessingIncommingOp(message);
 
         // Add final ack trace.
         if (message.traces !== undefined && message.traces.length > 0) {

@@ -20,12 +20,6 @@ import {
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 
-export interface IConnectionArgs {
-    mode?: ConnectionMode;
-    fetchOpsFromStorage?: boolean;
-    reason: string;
-}
-
 export enum ReconnectMode {
     Never = "Never",
     Disabled = "Disabled",
@@ -68,26 +62,95 @@ export interface IConnectionManager {
     // Contains details information, like sequence numbers at connection time, initial ops info, etc.
     readonly connectionVerboseProps: ITelemetryProperties;
 
+    /**
+     * Prepares message to be sent. Fills in clientSequenceNumber.
+     * Called only when active connection is present.
+     */
     prepareMesage(message: Omit<IDocumentMessage, "clientSequenceNumber">): IDocumentMessage | undefined;
-    beforeProcessingOp(message: ISequencedDocumentMessage): void;
+
+    /**
+     * Called before incomming message is processed. Incomming messages can be comming from connection,
+     * but also could come from storage.
+     * This call allows connection manager to adjust knowledge about acked ops sent on previous connection.
+     * Can be called at any time, including when there is no active connection.
+     */
+    beforeProcessingIncommingOp(message: ISequencedDocumentMessage): void;
+
+    /**
+     * Submits signal to relay service.
+     * Called only when active connection is present.
+     */
     submitSignal(content: any): void;
+
+    /**
+     * Submits messages to relay service.
+     * Called only when active connection is present.
+     */
     sendMessages(messages: IDocumentMessage[]): void;
-    connect(args: IConnectionArgs): void;
+
+    /**
+     * Initiates connection to relay service (noop if already connected).
+     */
+    connect(connectionMode?: ConnectionMode): void;
+
+    /**
+     * Disposed connection manager
+     */
     dispose(error: any): void;
 }
 
 /**
- * Tis interface represents a set of callbacks provided by DeltaManager to IConnectionManager on its creation
+ * This interface represents a set of callbacks provided by DeltaManager to IConnectionManager on its creation
  * IConnectionManager instance will use them to communicate to DeltaManager abour various events.
  */
 export interface IConnectionManagereFactoryArgs {
-    readonly enqueueMessages: (messages: ISequencedDocumentMessage[], reason: string) => void,
+    /**
+     * Called by connection manager for each incomming op. Some ops maybe delivered before
+     * connectHandler is called (initial ops on socket connection)
+     */
+    readonly incommingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => void,
+
+    /**
+     * Called by connection manager for each incoming signals.
+     * Maybe called before connectHandler is called (initial signals on socket connection)
+     */
     readonly signalHandler: (message: ISignalMessage) => void,
-    readonly emitDelayInfo: (delayMs: number, error: unknown) => void,
-    readonly refreshDelayInfo: () => void,
+
+    /**
+     * Called when connection manager experiences delay in connecting to relay service.
+     * This can happen because client is offline, or service is busy and asks to not connect for some time.
+     * Can be called many times while not connected.
+     * Situation is considered resolved when connection is established and connectHandler is called. 
+     */
+    readonly reconnectionDelayHandler: (delayMs: number, error: unknown) => void,
+
+    /**
+     * Called by connection manager whwnever critical error happens and container should be closed.
+     * Expects dispose() call in respose to this call.
+     */
     readonly closeHandler: (error: any) => void,
+
+    /**
+     * Called whenever connection to relay service is lost.
+     */
     readonly disconnectHandler: (reason: string) => void,
+
+    /**
+     * Called whenever new connection to rely service is established
+     */
     readonly connectHandler: (connection: IConnectionDetails) => void,
+
+    /**
+     * Called whenever ping/pong messages are roundtripped on connection.
+     */
     readonly pongHandler: (latency: number) => void,
+
+    /**
+     * Called whenever connection type changes from writable to read-only or vice versa.
+     * Connection can be read-only if user has no edit permissions, or if container forced
+     * connection to be read-only.
+     * This should not be confused with "read" / "write"connection mode which is internal
+     * optimization.
+     */
     readonly readonlyChangeHandler: (readonly?: boolean) => void,
 }

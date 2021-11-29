@@ -96,8 +96,8 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
-import { IConnectionArgs, ReconnectMode, IConnectionManagereFactoryArgs } from "./contracts";
-import { DeltaManager } from "./deltaManager";
+import { ReconnectMode, IConnectionManagereFactoryArgs } from "./contracts";
+import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";

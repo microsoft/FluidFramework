@@ -56,7 +56,6 @@ import {
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 import {
-    IConnectionArgs,
     ReconnectMode,
     IConnectionManager,
     IConnectionManagereFactoryArgs,
@@ -398,7 +397,7 @@ export class ConnectionManager implements IConnectionManager {
             this.props.readonlyChangeHandler(this.readonly);
             if (reconnect) {
                 // reconnect if we disconnected from before.
-                this.triggerConnect({ reason: "forceReadonly", mode: "read", fetchOpsFromStorage: false });
+                this.triggerConnect("read");
             }
         }
     }
@@ -411,20 +410,20 @@ export class ConnectionManager implements IConnectionManager {
         }
     }
 
-    public connect(args: IConnectionArgs) {
-        this.connectCore(args).catch((error) => {
+    public connect(connectionMode?: ConnectionMode) {
+        this.connectCore(connectionMode).catch((error) => {
             this.props.closeHandler(error);
         });
     }
 
-    private async connectCore(args: IConnectionArgs): Promise<void> {
+    private async connectCore(connectionMode?: ConnectionMode): Promise<void> {
         assert(!this.closed, 0x26a /* "not closed" */);
 
         if (this.connection !== undefined || this.pendingConnection) {
             return;
         }
 
-        let requestedMode = args.mode ?? this.defaultReconnectionMode;
+        let requestedMode = connectionMode ?? this.defaultReconnectionMode;
 
         // if we have any non-acked ops from last connection, reconnect as "write".
         // without that we would connect in view-only mode, which will result in immediate
@@ -512,7 +511,7 @@ export class ConnectionManager implements IConnectionManager {
                 delayMs = retryDelayFromError ?? Math.min(delayMs * 2, MaxReconnectDelayInMs);
 
                 if (retryDelayFromError !== undefined) {
-                    this.props.emitDelayInfo(retryDelayFromError, origError);
+                    this.props.reconnectionDelayHandler(retryDelayFromError, origError);
                 }
                 await waitForConnectedState(delayMs);
             }
@@ -538,12 +537,12 @@ export class ConnectionManager implements IConnectionManager {
      * And report the error if it excape for any reason.
      * @param args - The connection arguments
      */
-     private triggerConnect(args: IConnectionArgs) {
+     private triggerConnect(connectionMode: ConnectionMode) {
         assert(this.connection === undefined, 0x239 /* "called only in disconnected state" */);
         if (this.reconnectMode !== ReconnectMode.Enabled) {
             return;
         }
-        this.connect(args);
+        this.connect(connectionMode);
     }
 
     /**
@@ -614,8 +613,6 @@ export class ConnectionManager implements IConnectionManager {
 
         this.set_readonlyPermissions(readonly);
 
-        this.props.refreshDelayInfo();
-
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
             this.disconnectFromDeltaStream(`Disconnect on close`);
@@ -653,14 +650,14 @@ export class ConnectionManager implements IConnectionManager {
             last = initialMessages[initialMessages.length - 1].sequenceNumber;
             this._connectionVerboseProps.connectionInitialOpsTo = last + 1;
             // Update knowledge of how far we are behind, before raising "connect" event
-            // This is duplication of what enqueueMessages() does, but we have to raise event before we get there,
+            // This is duplication of what incommingOpHandler() does, but we have to raise event before we get there,
             // so duplicating update logic here as well.
             if (checkpointSequenceNumber === undefined || checkpointSequenceNumber < last) {
                 checkpointSequenceNumber = last;
             }
         }
 
-        this.props.enqueueMessages(
+        this.props.incommingOpHandler(
             initialMessages,
             this.connectFirstConnection ? "InitialOps" : "ReconnectOps");
 
@@ -731,11 +728,11 @@ export class ConnectionManager implements IConnectionManager {
 
         const delayMs = error !== undefined ? getRetryDelayFromError(error) : undefined;
         if (delayMs !== undefined) {
-            this.props.emitDelayInfo(delayMs, error);
+            this.props.reconnectionDelayHandler(delayMs, error);
             await waitForConnectedState(delayMs);
         }
 
-        this.triggerConnect({ reason: "reconnect", mode: requestedMode, fetchOpsFromStorage: false });
+        this.triggerConnect(requestedMode);
     }
 
     /**
@@ -819,7 +816,7 @@ export class ConnectionManager implements IConnectionManager {
         this._outbound.push(messages);
     }
 
-    public beforeProcessingOp(message: ISequencedDocumentMessage) {
+    public beforeProcessingIncommingOp(message: ISequencedDocumentMessage) {
         // if we have connection, and message is local, then we better treat is as local!
         assert(this.clientId !== message.clientId || this.lastSubmittedClientId === message.clientId,
             0x0ee /* "Not accounting local messages correctly" */,
@@ -850,7 +847,7 @@ export class ConnectionManager implements IConnectionManager {
 
     private readonly opHandler = (documentId: string, messagesArg: ISequencedDocumentMessage[]) => {
         const messages = Array.isArray(messagesArg) ? messagesArg : [messagesArg];
-        this.props.enqueueMessages(messages, "opHandler");
+        this.props.incommingOpHandler(messages, "opHandler");
     };
 
     // Always connect in write mode after getting nacked.
