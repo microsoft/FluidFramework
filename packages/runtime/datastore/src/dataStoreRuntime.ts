@@ -917,12 +917,10 @@ export const mixinRequestHandler = (
 
 /**
  * Mixin class that adds await for DataObject to finish initialization before we proceed to summary.
- * @param handler - handler that returns info about blob to be added to summary.
- * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  */
 export const mixinSummaryHandler = (
-    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[], content: string } | undefined >,
+    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[], content: string }>,
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ) => class RuntimeWithSummarizerHandler extends Base {
         private addBlob(summary: ISummaryTreeWithStats, path: string[], content: string) {
@@ -951,9 +949,7 @@ export const mixinSummaryHandler = (
         async summarize(...args: any[]) {
             const summary = await super.summarize(...args);
             const content = await handler(this);
-            if (content !== undefined) {
-                this.addBlob(summary, content.path, content.content);
-            }
+            this.addBlob(summary, content.path, content.content);
             return summary;
         }
     } as typeof FluidDataStoreRuntime;
