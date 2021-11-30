@@ -26,6 +26,7 @@ import {
     IPersistedFileCache,
  } from "./odspCache";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
+import { defaultCacheExpiryTimeoutMs } from "./odspDocumentStorageManager";
 
 export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" |
     "treesLatest" | "uploadSummary" | "push" | "versions";
@@ -76,14 +77,32 @@ export class EpochTracker implements IPersistedFileCache {
     ): Promise<any> {
         try {
             const value: IVersionedValueWithEpoch = await this.cache.get(this.fileEntryFromEntry(entry));
+            // Version check
             if (value === undefined || value.version !== persistedCacheValueVersion) {
                 return undefined;
             }
+            // Epoch check
             assert(value.fluidEpoch !== undefined, 0x1dc /* "all entries have to have epoch" */);
             if (this._fluidEpoch === undefined) {
                 this.setEpoch(value.fluidEpoch, true, "cache");
             } else if (this._fluidEpoch !== value.fluidEpoch) {
                 return undefined;
+            }
+            // Cache expiry check
+            // Only expire the snapshot cache as the ops cache returns ops for a specific range, meaning old ops
+            // will not be retrieved unless they are the "newest" ops.
+            if (entry.type === snapshotKey) {
+                const cacheTime = value.value?.cacheEntryTime;
+                const currentTime = Date.now();
+                if (cacheTime === undefined || currentTime - cacheTime >= defaultCacheExpiryTimeoutMs) {
+                    this.logger.sendTelemetryEvent(
+                        {
+                            eventName: "odspVersionsCacheExpired",
+                            duration: currentTime - cacheTime,
+                            defaultCacheExpiryTimeoutMs,
+                        });
+                    return undefined;
+                }
             }
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return value.value;
@@ -95,6 +114,10 @@ export class EpochTracker implements IPersistedFileCache {
 
     public async put(entry: IEntry, value: any) {
         assert(this._fluidEpoch !== undefined, 0x1dd /* "no epoch" */);
+        // For snapshots, the value should have the cache entry time
+        if (entry.type === snapshotKey) {
+            value.cacheEntryTime = value.cacheEntryTime ?? Date.now();
+        }
         const data: IVersionedValueWithEpoch = {
             value,
             version: persistedCacheValueVersion,
