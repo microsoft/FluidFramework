@@ -112,8 +112,6 @@ export interface IConnectionDetails {
     existing: boolean;
     // (undocumented)
     initialClients: ISignalClient[];
-    // @deprecated (undocumented)
-    maxMessageSize: number;
     // (undocumented)
     mode: ConnectionMode;
     // (undocumented)
