@@ -585,6 +585,21 @@ export class ScheduleManager {
  */
 export const agentSchedulerId = "_scheduler";
 
+export function getDeviceSpec() {
+    try {
+        if (typeof navigator === "object" && navigator !== null) {
+            return {
+                deviceMemory: (navigator as any).deviceMemory,
+                hardwareConcurrency: navigator.hardwareConcurrency,
+            };
+        }
+    } catch {
+    }
+    return {
+        deviceMemory: undefined,
+        harwareConcurrency: undefined,
+    };
+}
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
@@ -1159,12 +1174,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         // logging hardware telemetry
-        let deviceMemory: number | undefined;
-        let hardwareConcurrency;
-        if (this.checkNavigator()) {
-            deviceMemory = (navigator as any)?.deviceMemory;
-            hardwareConcurrency = navigator.hardwareConcurrency;
-        }
+        const { deviceMemory, hardwareConcurrency } = getDeviceSpec();
         logger.sendTelemetryEvent({
             eventName:"DeviceSpec",
             deviceMemory,
@@ -1183,14 +1193,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
-    }
-
-    public checkNavigator(): boolean {
-        try {
-            return typeof navigator === "object" && navigator !== null;
-        } catch {
-            return false;
-        }
     }
 
     public dispose(error?: Error): void {
