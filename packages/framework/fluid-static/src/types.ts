@@ -45,22 +45,19 @@ export type SharedObjectClass<T extends IFluidLoadable>
  * An object with a constructor that will return an `IFluidLoadable`.
  * @typeParam T - The class of the loadable object
  */
-export type LoadableObjectCtor<T extends IFluidLoadable> = new(...args: any[]) => T;
+export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
 
-// builder?
-// context?
-// snapshot?
-// manager?
-// seed
-export interface IDataMigrator {
-    readonly snapshot: LoadableObjectRecord;
-    addObject(key: string, object: any/* LoadableObjectClass */, props: any): any;
-    dropObject(key: string): void;
-    // move/rename/update?
-    commit(): void;
-}
+/** Object factory */
+export type ObjectFactory = (objectType: LoadableObjectClass<any>, props?: any) => Promise<any>;
 
-export type DataMigrationRoutine = (migrator: IDataMigrator) => Promise<void>;
+/** Document version info */
+export type VersionInfo = never;
+
+/** Application provided callback to apply data changes necessary to for migration to the latest schema. */
+export type DataMigrationRoutine = (
+    snapshot: LoadableObjectRecord,
+    createObject: ObjectFactory
+) => Promise<LoadableObjectRecord | undefined>;
 
 /**
  * The ContainerSchema declares the Fluid objects that will be available in the container.  It includes both the

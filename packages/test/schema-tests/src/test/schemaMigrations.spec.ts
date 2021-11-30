@@ -4,35 +4,54 @@
  */
 
 import { strict as assert } from "assert";
-import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
+import { LoadableObjectRecord, ObjectFactory, SharedDirectory, SharedMap } from "fluid-framework";
 
 describe("Schema Migrations", () => {
     /**
      * Container-level object manipulations
      */
-    describe("Container-level Migrations", () => {
+    describe("Container-level migrations", () => {
+        let client: TinyliciousClient;
+        let containerId: string;
+
         beforeEach(async () => {
+            client = new TinyliciousClient();
+            const schema = {
+                initialObjects: {
+                    map: SharedMap,
+                },
+            };
+            const { container } = await client.createContainer(schema);
+            containerId = await container.attach();
+            container.dispose();
         });
 
         afterEach(() => {
         });
 
+        // no migrations
+        // no-op migration
         it("Add new object", async () => {
-            const client = new TinyliciousClient();
             const schema = {
                 initialObjects: {
-                    directory: SharedDirectory,
                     map: SharedMap,
+                    directory: SharedDirectory,
                 },
-                migrations: async () => {},
+                migrations: async (snapshot: LoadableObjectRecord, createObject: ObjectFactory) => {
+                    if ("directory" in snapshot === false) {
+                        const directory = await createObject(SharedDirectory);
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                        return { ...snapshot, directory};
+                    }
+                    return undefined;
+                },
             };
-            const { container } = await client.createContainer(schema);
-            const id = await container.attach();
 
-            await client.getContainer(id, schema);
+            const { container } = await client.getContainer(containerId, schema);
 
-            assert.strictEqual(1, 1, "Did not receive correct batchBegin event for the batch");
+            assert.ok(container);
+            assert.ok(container.initialObjects.directory);
         });
 
         // Basic scenarios:

@@ -3,7 +3,20 @@
  * Licensed under the MIT License.
  */
 import { IDirectory } from "@fluidframework/map";
-import { IDataMigrator, LoadableObjectRecord } from "./types";
+import { LoadableObjectRecord } from "./types";
+
+// builder?
+// context?
+// snapshot?
+// manager?
+// seed
+export interface IDataMigrator {
+    readonly snapshot: LoadableObjectRecord;
+    addObject(key: string, object: any/* LoadableObjectClass */, props: any): any;
+    dropObject(key: string): void;
+    // move/rename/update?
+    commit(): void;
+}
 
 export class DataMigrator implements IDataMigrator {
     private constructor(private readonly _initialObjects: LoadableObjectRecord) {}
@@ -29,7 +42,7 @@ export class DataMigrator implements IDataMigrator {
         return this._initialObjects;
     }
 
-    addObject(key: string, object: any, props: any) {
+    async addObject(key: string, object: any, props: any) {
         throw new Error("Method not implemented.");
     }
 

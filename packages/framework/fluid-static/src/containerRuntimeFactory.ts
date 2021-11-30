@@ -8,10 +8,9 @@ import {
     defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { ContainerSchema, LoadableObjectClassRecord } from "./types";
+import { ContainerSchema, LoadableObjectClass, LoadableObjectClassRecord, LoadableObjectRecord } from "./types";
 import { parseDataObjectsFromSharedObjects } from "./utils";
 import { RootDataObject, RootDataObjectProps } from "./rootDataObject";
-import { DataMigrator } from "./dataMigrator";
 
 export const rootDataStoreId = "rootDOId";
 
@@ -19,9 +18,10 @@ export const rootDataStoreId = "rootDOId";
  * The DOProviderContainerRuntimeFactory is container code that provides a single RootDataObject.  This data object is
  * dynamically customized (registry and initial objects) based on the schema provided to the container runtime factory.
  */
-
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
-    private readonly rootDataObjectFactory; // type is DataObjectFactory
+    private readonly rootDataObjectFactory:
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        DataObjectFactory<RootDataObject, {}, RootDataObjectProps>;
     private readonly initialObjects: LoadableObjectClassRecord;
     constructor(schema: ContainerSchema) {
         const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
@@ -29,20 +29,41 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
         const RootDOWithMigrations = class extends RootDataObject {
             protected async initializingFromExisting() {
                 if (typeof schema.migrations === "undefined") {
-                    // no-op if migration routines not provided with the schema
+                    // no-op when no migration routines provided with the schema
                     return;
                 }
-                const dir = this.root.getSubDirectory("initial-objects-key");
-                if (!dir) {
-                    return;
-                }
-                const migrator = await DataMigrator.create(dir);
-                if (typeof schema.migrations === "function") {
-                    await schema.migrations(migrator);
-                } else {
-                    for (const migration of schema.migrations) {
-                        await migration(migrator);
+
+                await this.loadInitialObjects();
+
+                const migrations = typeof schema.migrations === "function" ? [schema.migrations] : schema.migrations;
+
+                for (const migration of migrations) {
+                    const revision = await migration(
+                        this.initialObjects,
+                        async (objectClass) => { return this.create(objectClass); },
+                    );
+                    if (revision) {
+                        this.commitRevision(revision);
                     }
+                }
+            }
+
+            private commitRevision(revision: LoadableObjectRecord) {
+
+            }
+
+            async addObject(key: string, objectClass: LoadableObjectClass<any>, props: any) {
+                const obj = await this.create(objectClass);
+                this.initialObjectsDir.set(key, obj.handle);
+                Object.assign(this.initialObjects, { [key]: obj });
+            }
+
+            dropObject(key: string): void {
+                if (key in this.initialObjects) {
+                    this.initialObjectsDir.delete(key);
+                    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                    delete this.initialObjects[key];
+                    // delete or GC the object itself
                 }
             }
         };

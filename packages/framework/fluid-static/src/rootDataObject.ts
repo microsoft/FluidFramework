@@ -6,6 +6,7 @@ import {
     DataObject,
 } from "@fluidframework/aqueduct";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IDirectory } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     DataObjectClass,
@@ -25,7 +26,7 @@ export class RootDataObject extends DataObject<{}, RootDataObjectProps> {
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
 
-    private get initialObjectsDir() {
+    protected get initialObjectsDir(): IDirectory {
         const dir = this.root.getSubDirectory(this.initialObjectsDirKey);
         if (dir === undefined) {
             throw new Error("InitialObjects sub-directory was not initialized");
@@ -51,6 +52,10 @@ export class RootDataObject extends DataObject<{}, RootDataObjectProps> {
 
     protected async hasInitialized() {
         // We will always load the initial objects so they are available to the developer
+        await this.loadInitialObjects();
+    }
+
+    protected async loadInitialObjects() {
         const loadInitialObjectsP: Promise<void>[] = [];
         for (const [key, value] of Array.from(this.initialObjectsDir.entries())) {
             const loadDir = async () => {
