@@ -25,6 +25,8 @@ import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath } from "./urlUtils";
 import { InMemoryCache } from "./cache";
+import { AggregatePerformanceEvent } from "./telemetry";
+import { RouterliciousDriverPerformanceEventName } from ".";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -33,6 +35,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     aggregateBlobsSmallerThanBytes: undefined,
     enableWholeSummaryUpload: false,
     enableRestLess: false,
+    telemetryAggregation: undefined,
 };
 
 /**
@@ -44,6 +47,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     private readonly driverPolicies: IRouterliciousDriverPolicies;
     private readonly blobCache = new InMemoryCache<ArrayBufferLike>();
     private readonly snapshotTreeCache = new InMemoryCache<ISnapshotTree>();
+    private readonly aggregatePerformanceEvents:
+        Partial<Record<RouterliciousDriverPerformanceEventName, AggregatePerformanceEvent>> = {};
 
     constructor(
         private readonly tokenProvider: ITokenProvider,
@@ -53,6 +58,18 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             ...defaultRouterliciousDriverPolicies,
             ...driverPolicies,
         };
+        if (this.driverPolicies.telemetryAggregation !== undefined) {
+            Object.entries(this.driverPolicies.telemetryAggregation).forEach(([eventName, threshold]) => {
+                if (threshold !== undefined) {
+                    this.aggregatePerformanceEvents[eventName] = new AggregatePerformanceEvent(
+                        {
+                            eventName: `${eventName}_aggregate`,
+                        },
+                        threshold,
+                    );
+                }
+            });
+        }
     }
 
     public async createContainer(
@@ -160,6 +177,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             documentId,
             this.driverPolicies,
             this.blobCache,
-            this.snapshotTreeCache);
+            this.snapshotTreeCache,
+            this.aggregatePerformanceEvents);
     }
 }

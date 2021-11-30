@@ -18,6 +18,8 @@ import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper, RouterliciousStorageRestWrapper } from "./restWrapper";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache } from "./cache";
+import { AggregatePerformanceEvent } from "./telemetry";
+import { RouterliciousDriverPerformanceEventName } from ".";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -36,6 +38,8 @@ export class DocumentService implements api.IDocumentService {
         private readonly driverPolicies: IRouterliciousDriverPolicies,
         private readonly blobCache: ICache<ArrayBufferLike>,
         private readonly snapshotTreeCache: ICache<ISnapshotTree>,
+        private readonly aggregatePerformanceEvents:
+            Partial<Record<RouterliciousDriverPerformanceEventName, AggregatePerformanceEvent>>,
     ) {
     }
 
@@ -87,7 +91,8 @@ export class DocumentService implements api.IDocumentService {
             documentStorageServicePolicies,
             this.driverPolicies,
             this.blobCache,
-            this.snapshotTreeCache);
+            this.snapshotTreeCache,
+            this.aggregatePerformanceEvents);
         return this.documentStorageService;
     }
 

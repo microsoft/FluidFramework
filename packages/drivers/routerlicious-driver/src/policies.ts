@@ -3,6 +3,24 @@
  * Licensed under the MIT License.
  */
 
+export enum RouterliciousDriverPerformanceEventName {
+    getVersions = "getVersions",
+    readBlob = "readBlob",
+    // Shredded summaries
+    getSnapshotTree = "getSnapshotTree",
+    // Whole summaries
+    getWholeFlatSummaryTree = "getWholeFlatSummaryTree",
+}
+/**
+ * Number of [eventName] performance events to aggregate into 1 event.
+ * Setting as undefined will disable aggregation for [eventName] events.
+ * Example: { readBlob: 100 } will aggregate every 100 readBlob events into 1 event and log it.
+ */
+type ITelemetryAggregationPolicy = Partial<Record<RouterliciousDriverPerformanceEventName, number | undefined>>;
+
+/**
+ * Policies configurable by Routerlicious Driver consumer.
+ */
 export interface IRouterliciousDriverPolicies {
     /**
      * Enable prefetching entire snapshot tree into memory before it is loaded by the runtime.
@@ -37,4 +55,11 @@ export interface IRouterliciousDriverPolicies {
      * Default: false
      */
     enableRestLess: boolean;
+    /**
+     * Configure if/how performance telemetry events are aggregated. Useful for reducing telemetry noise.
+     * Do not use if per-event data examination is needed.
+     * Aggregated will be logged as total sums along with a total count.
+     * Default: undefined
+     */
+    telemetryAggregation: ITelemetryAggregationPolicy | undefined;
 }

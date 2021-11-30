@@ -17,10 +17,11 @@ import {
     GitManager,
 } from "@fluidframework/server-services-client";
 import { DocumentStorageServiceProxy, PrefetchDocumentStorageService } from "@fluidframework/driver-utils";
-import { IRouterliciousDriverPolicies } from "./policies";
+import { IRouterliciousDriverPolicies, RouterliciousDriverPerformanceEventName } from "./policies";
 import { ICache } from "./cache";
 import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService";
 import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService";
+import { AggregatePerformanceEvent } from "./telemetry";
 
 export class DocumentStorageService extends DocumentStorageServiceProxy {
     private _logTailSha: string | undefined = undefined;
@@ -36,7 +37,10 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
         policies: IDocumentStorageServicePolicies,
         driverPolicies?: IRouterliciousDriverPolicies,
         blobCache?: ICache<ArrayBufferLike>,
-        snapshotTreeCache?: ICache<ISnapshotTree>): IDocumentStorageService {
+        snapshotTreeCache?: ICache<ISnapshotTree>,
+        aggregatePerformancEvents?:
+            Partial<Record<RouterliciousDriverPerformanceEventName, AggregatePerformanceEvent>>,
+    ): IDocumentStorageService {
         const storageService = driverPolicies?.enableWholeSummaryUpload ?
             new WholeSummaryDocumentStorageService(
                 id,
@@ -54,6 +58,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
                 driverPolicies,
                 blobCache,
                 snapshotTreeCache,
+                aggregatePerformancEvents,
             );
         // TODO: worth prefetching latest summary making version + snapshot call with WholeSummary storage?
         if (!driverPolicies?.enableWholeSummaryUpload && policies.caching === LoaderCachingPolicy.Prefetch) {
@@ -69,7 +74,9 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
         policies: IDocumentStorageServicePolicies = {},
         driverPolicies?: IRouterliciousDriverPolicies,
         blobCache?: ICache<ArrayBufferLike>,
-        snapshotTreeCache?: ICache<ISnapshotTree>) {
+        snapshotTreeCache?: ICache<ISnapshotTree>,
+        aggregatePerformancEvents?:
+            Partial<Record<RouterliciousDriverPerformanceEventName, AggregatePerformanceEvent>>) {
         super(DocumentStorageService.loadInternalDocumentStorageService(
             id,
             manager,
@@ -78,6 +85,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
             driverPolicies,
             blobCache,
             snapshotTreeCache,
+            aggregatePerformancEvents,
         ));
     }
 

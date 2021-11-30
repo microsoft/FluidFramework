@@ -6,6 +6,7 @@
 import type { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     stringToBuffer,
+    TelemetryNullLogger,
     Uint8ArrayToString,
 } from "@fluidframework/common-utils";
 import {
@@ -29,9 +30,10 @@ import {
     SummaryTreeUploadManager,
 } from "@fluidframework/server-services-client";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IRouterliciousDriverPolicies } from "./policies";
+import { IRouterliciousDriverPolicies, RouterliciousDriverPerformanceEventName } from "./policies";
 import { ICache, InMemoryCache } from "./cache";
 import { RetriableGitManager } from "./retriableGitManager";
+import { AggregatePerformanceEvent } from "./telemetry";
 
 // eslint-disable-next-line no-new-func,@typescript-eslint/no-implied-eval
 const isNode = (new Function("try {return this===global;}catch(e){ return false;}"))();
@@ -49,8 +51,19 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
     private readonly snapshotTreeCache: ICache<ISnapshotTreeEx> | undefined;
     private readonly summaryUploadManager: ISummaryUploadManager;
 
+    // Aggregate events for reducing telemetry noise
+    private readonly getVersionsAggregateEvent: AggregatePerformanceEvent | undefined;
+    private readonly getSnapshotTreeAggregateEvent: AggregatePerformanceEvent | undefined;
+    private readonly readBlobAggregateEvent: AggregatePerformanceEvent | undefined;
+
+    private _disposed: boolean = false;
+
     public get repositoryUrl(): string {
         return "";
+    }
+
+    public get disposed() {
+        return this._disposed;
     }
 
     constructor(
@@ -60,7 +73,9 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
         public readonly policies: IDocumentStorageServicePolicies = {},
         driverPolicies?: IRouterliciousDriverPolicies,
         blobCache?: ICache<ArrayBufferLike>,
-        snapshotTreeCache?: ICache<ISnapshotTree>) {
+        snapshotTreeCache?: ICache<ISnapshotTree>,
+        aggregatePerformanceEvents?:
+            Partial<Record<RouterliciousDriverPerformanceEventName, AggregatePerformanceEvent>>) {
         this.summaryUploadManager = new SummaryTreeUploadManager(
                 new RetriableGitManager(manager, logger),
                 this.blobsShaCache,
@@ -70,18 +85,36 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
             this.blobCache = blobCache ?? new InMemoryCache();
             this.snapshotTreeCache = (snapshotTreeCache ?? new InMemoryCache()) as ICache<ISnapshotTreeEx>;
         }
+
+        this.getVersionsAggregateEvent =
+            aggregatePerformanceEvents?.[RouterliciousDriverPerformanceEventName.getVersions];
+        this.getSnapshotTreeAggregateEvent =
+            aggregatePerformanceEvents?.[RouterliciousDriverPerformanceEventName.getSnapshotTree];
+        this.readBlobAggregateEvent =
+            aggregatePerformanceEvents?.[RouterliciousDriverPerformanceEventName.readBlob];
+    }
+
+    public dispose() {
+        this.getVersionsAggregateEvent?.flush(this.logger);
+        this.getSnapshotTreeAggregateEvent?.flush(this.logger);
+        this.readBlobAggregateEvent?.flush(this.logger);
+        this._disposed = true;
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
         const id = versionId ? versionId : this.id;
         const commits = await PerformanceEvent.timedExecAsync(
-            this.logger,
+            this.getVersionsAggregateEvent ? new TelemetryNullLogger() : this.logger,
             {
-                eventName: "getVersions",
+                eventName: RouterliciousDriverPerformanceEventName.getVersions,
                 versionId: id,
                 count,
             },
-            async () =>  this.manager.getCommits(id, count),
+            async (event) =>  {
+                const response = await this.manager.getCommits(id, count);
+                this.getVersionsAggregateEvent?.push(this.logger, { duration: event.duration });
+                return response;
+            },
         );
         return commits.map((commit) => ({
             date: commit.commit.author.date,
@@ -107,15 +140,18 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
         }
 
         const rawTree = await PerformanceEvent.timedExecAsync(
-            this.logger,
+            // TODO: this would actually block cancel and error events from being logged
+            this.getSnapshotTreeAggregateEvent ? new TelemetryNullLogger() : this.logger,
             {
                 eventName: "getSnapshotTree",
                 treeId: requestVersion.treeId,
             },
             async (event) => {
                 const response = await this.manager.getTree(requestVersion!.treeId);
+                const extraProps = { size: response.tree.length };
+                this.getSnapshotTreeAggregateEvent?.push(this.logger, { ...extraProps, duration: event.duration });
                 event.end({
-                    size: response.tree.length,
+                    ...extraProps,
                 });
                 return response;
             },
@@ -132,15 +168,17 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
         }
 
         const value = await PerformanceEvent.timedExecAsync(
-            this.logger,
+            this.readBlobAggregateEvent ? new TelemetryNullLogger() : this.logger,
             {
                 eventName: "readBlob",
                 blobId,
             },
             async (event) => {
                 const response = await this.manager.getBlob(blobId);
+                const extraProps = { size: response.size };
+                this.readBlobAggregateEvent?.push(this.logger, { ...extraProps, duration: event.duration });
                 event.end({
-                    size: response.size,
+                    ...extraProps,
                 });
                 return response;
             },
