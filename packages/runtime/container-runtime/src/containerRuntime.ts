@@ -50,10 +50,6 @@ import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
 import { DataCorruptionError, GenericError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
 import {
-    BlobTreeEntry,
-    TreeTreeEntry,
-} from "@fluidframework/protocol-base";
-import {
     IClientDetails,
     IDocumentMessage,
     IQuorum,
@@ -97,6 +93,7 @@ import {
     exceptionToResponse,
     responseToException,
     seqFromTree,
+    convertSummaryTreeToITree,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -115,6 +112,7 @@ import {
     electedSummarizerBlobName,
     extractSummaryMetadataMessage,
     IContainerRuntimeMetadata,
+    ICreateContainerMetadata,
     ISummaryMetadataMessage,
     metadataBlobName,
     wrapSummaryInChannelsTree,
@@ -892,6 +890,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._summarizer;
     }
 
+    private readonly createContainerMetadata: ICreateContainerMetadata;
+    private summaryCount: number | undefined;
+
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
@@ -907,8 +908,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private _storage?: IDocumentStorageService,
     ) {
         super();
-
         this.baseSummaryMessage = metadata?.message;
+
+        // If this is an existing container, we get values from metadata.
+        // otherwise, we initialize them.
+        if (existing) {
+            this.createContainerMetadata = {
+                createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
+                createContainerTimestamp: metadata?.createContainerTimestamp,
+            };
+            this.summaryCount = metadata?.summaryCount;
+        } else {
+            this.createContainerMetadata = {
+                createContainerRuntimeVersion: pkgVersion,
+                createContainerTimestamp: performance.now(),
+            };
+        }
 
         // Default to false (enabled).
         this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? false;
@@ -921,10 +936,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
 
+        /**
+         * Function that return the current server timestamp. This is used by the garbage collector to set the
+         * time when a node becomes unreferenced.
+         * For now, we use the timestamp of the last op for gcTimestamp. However, there can be cases where
+         * we don't have an op (on demand summaries for instance). In those cases, we will use the timestamp
+         * of this client's connection - https://github.com/microsoft/FluidFramework/issues/8375.
+         */
+        const getCurrentTimestamp = () => {
+            return this.deltaManager.lastMessage?.timestamp ?? performance.now();
+        };
         this.garbageCollector = GarbageCollector.create(
             this,
             this.runtimeOptions.gcOptions,
             (unusedRoutes: string[]) => this.dataStores.deleteUnusedRoutes(unusedRoutes),
+            getCurrentTimestamp,
+            context.baseSnapshot,
+            async <T>(id: string) => readAndParse<T>(this.storage, id),
             this._logger,
             existing,
             metadata,
@@ -948,8 +976,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 throwOnFailure: true,
                 // If GC should not run, let the summarizer node know so that it does not track GC state.
                 gcDisabled: !this.garbageCollector.shouldRunGC,
-                // The max duration for which objects can be unreferenced before they are eligible for deletion.
-                maxUnreferencedDurationMs: this.runtimeOptions.gcOptions.maxUnreferencedDurationMs,
             },
         );
 
@@ -974,7 +1000,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     getInitialGCSummaryDetailsFn,
                 ),
             (id: string) => this.summarizerNode.deleteChild(id),
-            this._logger);
+            this._logger,
+            (id: string) => this.garbageCollector.nodeChanged(id),
+        );
 
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
@@ -1127,6 +1155,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.deltaManager.on("op", this.onOp);
         }
 
+        this.logger.sendTelemetryEvent({
+            eventName: "ContainerLoadStats",
+            ...this.createContainerMetadata,
+            ...this.dataStores.containerLoadStats,
+            summaryCount: this.summaryCount,
+            summaryFormatVersion: metadata?.summaryFormatVersion,
+            disableIsolatedChannels: metadata?.disableIsolatedChannels,
+            gcVersion: metadata?.gcFeature,
+        });
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
@@ -1251,6 +1288,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private formMetadata(): IContainerRuntimeMetadata {
         return {
+            ...this.createContainerMetadata,
+            summaryCount: this.summaryCount,
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
             gcFeature: this.garbageCollector.gcSummaryFeatureVersion,
@@ -1287,26 +1326,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @deprecated - Use summarize to get summary of the container runtime.
      */
     public async snapshot(): Promise<ITree> {
-        if (this.garbageCollector.shouldRunGC) {
-            await this.collectGarbage({ logger: this.logger, fullGC: true /* fullGC */ });
-        }
-
-        const root: ITree = { entries: [] };
-        const entries = await this.dataStores.snapshot();
-
-        if (this.disableIsolatedChannels) {
-            root.entries = root.entries.concat(entries);
-        } else {
-            root.entries.push(new TreeTreeEntry(channelsTreeName, { entries }));
-        }
-
-        root.entries.push(new BlobTreeEntry(metadataBlobName, JSON.stringify(this.formMetadata())));
-
-        if (this.chunkMap.size > 0) {
-            root.entries.push(new BlobTreeEntry(chunksBlobName, JSON.stringify([...this.chunkMap])));
-        }
-
-        return root;
+        const summaryResult = await this.summarize({
+            summaryLogger: this.logger,
+            fullTree: true,
+            trackState: false,
+            runGC: this.garbageCollector.shouldRunGC,
+            fullGC: true,
+        });
+        return convertSummaryTreeToITree(summaryResult.summary);
     }
 
     private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
@@ -1777,21 +1804,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Implementation of IGarbageCollectionRuntime::updateUsedRoutes.
      * After GC has run, called to notify this container's nodes of routes that are used in it.
      * @param usedRoutes - The routes that are used in all nodes in this Container.
+     * @param gcTimestamp - The time when GC was run that generated these used routes. If any node node becomes
+     * unreferenced as part of this GC run, this should be used to update the time when it happens.
      * @returns the statistics of the used state of the data stores.
      */
-    public updateUsedRoutes(usedRoutes: string[]): IUsedStateStats {
+    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats {
         // Update our summarizer node's used routes. Updating used routes in summarizer node before
         // summarizing is required and asserted by the the summarizer node. We are the root and are
         // always referenced, so the used routes is only self-route (empty string).
         this.summarizerNode.updateUsedRoutes([""]);
 
-        return this.dataStores.updateUsedRoutes(
-            usedRoutes,
-            // For now, we use the timestamp of the last op for gcTimestamp. However, there can be cases where
-            // we don't have an op (on demand summaries for instance). In those cases, we will use the timestamp
-            // of this client's connection - https://github.com/microsoft/FluidFramework/issues/7152.
-            this.deltaManager.lastMessage?.timestamp,
-        );
+        return this.dataStores.updateUsedRoutes(usedRoutes, gcTimestamp);
     }
 
     /**
@@ -1881,6 +1904,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             let continueResult = checkContinue();
             if (!continueResult.continue) {
                 return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error: continueResult.error };
+            }
+
+            // increment summary count
+            if (this.summaryCount !== undefined) {
+                this.summaryCount++;
+            } else {
+                this.summaryCount = 1;
             }
 
             const trace = Trace.start();
