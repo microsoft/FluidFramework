@@ -19,8 +19,6 @@ import { OdspErrorType, OdspError, IOdspError } from "@fluidframework/odsp-drive
 import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
 import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
 
-export const offlineFetchFailureStatusCode: number = 709;
-export const fetchFailureStatusCode: number = 710;
 // Status code for invalid file name error in odsp driver.
 export const invalidFileNameStatusCode: number = 711;
 // no response, or can't parse response
@@ -199,12 +197,6 @@ export function createOdspNetworkError(
         case 507:
             error = new NonRetryableError(
                 fluidErrorCode, errorMessage, OdspErrorType.outOfStorageError, { statusCode });
-            break;
-        case offlineFetchFailureStatusCode:
-            error = new RetryableError(fluidErrorCode, errorMessage, DriverErrorType.offlineError);
-            break;
-        case fetchFailureStatusCode:
-            error = new RetryableError(fluidErrorCode, errorMessage, DriverErrorType.fetchFailure);
             break;
         case fetchIncorrectResponse:
             // Note that getWithRetryForTokenRefresh will retry it once, then it becomes non-retryable error
