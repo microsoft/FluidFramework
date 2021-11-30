@@ -16,6 +16,7 @@ import {
     IFluidObject,
     IFluidRouter,
     IFluidCodeDetails,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -34,13 +35,27 @@ import {
  } from "@fluidframework/runtime-definitions";
 
 declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideContainerRuntime>> { }
+    export interface IFluidObject {
+        /**
+         * @deprecated - use `FluidObject<IContainerRuntime>` instead
+         */
+        readonly IContainerRuntime?: IContainerRuntime;
+
+     }
 }
 
+/**
+ * @deprecated - This will be removed in a later release.
+ */
 export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
 
+/**
+ * @deprecated - This will be removed in a later release.
+ */
 export interface IProvideContainerRuntime {
+    /**
+     * @deprecated - This will be removed in a later release.
+     */
     IContainerRuntime: IContainerRuntime;
 }
 
@@ -71,7 +86,7 @@ export interface IContainerRuntime extends
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     readonly flushMode: FlushMode;
-    readonly scope: IFluidObject;
+    readonly scope: IFluidObject & FluidObject;
     /**
      * Indicates the attachment state of the container to a host service.
      */

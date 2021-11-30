@@ -14,9 +14,10 @@ import {
     IResponse,
     IFluidHandle,
     IFluidCodeDetails,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
-import { IContainerContext } from "@fluidframework/container-definitions";
+import { IContainerContext, ILoader } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IDocumentFactory } from "@fluid-example/host-service-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -210,9 +211,8 @@ function initialize(
             console.log(`Error downloading document ${error}`);
         });
     }
-
-    const documentFactory: IDocumentFactory | undefined = context.scope ?
-        context.scope.IDocumentFactory : undefined;
+    const maybeFactory: FluidObject<IDocumentFactory> | undefined = context.scope as FluidObject;
+    const documentFactory: IDocumentFactory | undefined = maybeFactory?.IDocumentFactory;
     if (documentFactory) {
         createButton.classList.remove("hidden");
     } else {
@@ -275,13 +275,14 @@ function initialize(
             }
             typingDetails.classList.remove("hidden");
 
-            if (context.scope.ILoader === undefined) {
+            const scope: FluidObject<ILoader> = context.scope;
+            if (scope.ILoader === undefined) {
                 throw new Error("scope must contain ILoader");
             }
 
             // Start typing and register to update the UI
             const typeP = scribe.type(
-                context.scope.ILoader,
+                scope.ILoader,
                 url,
                 root,
                 runtime,

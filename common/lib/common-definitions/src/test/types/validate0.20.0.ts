@@ -193,13 +193,14 @@ use_current_InterfaceDeclaration_ITelemetryBaseEvent(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.20.0:
 * "InterfaceDeclaration_ITelemetryBaseEvent": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_ITelemetryBaseEvent():
     current.ITelemetryBaseEvent;
 declare function use_old_InterfaceDeclaration_ITelemetryBaseEvent(
     use: old.ITelemetryBaseEvent);
 use_old_InterfaceDeclaration_ITelemetryBaseEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryBaseEvent());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -241,13 +242,14 @@ use_current_InterfaceDeclaration_ITelemetryErrorEvent(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.20.0:
 * "InterfaceDeclaration_ITelemetryErrorEvent": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_ITelemetryErrorEvent():
     current.ITelemetryErrorEvent;
 declare function use_old_InterfaceDeclaration_ITelemetryErrorEvent(
     use: old.ITelemetryErrorEvent);
 use_old_InterfaceDeclaration_ITelemetryErrorEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryErrorEvent());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -265,13 +267,14 @@ use_current_InterfaceDeclaration_ITelemetryGenericEvent(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.20.0:
 * "InterfaceDeclaration_ITelemetryGenericEvent": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_ITelemetryGenericEvent():
     current.ITelemetryGenericEvent;
 declare function use_old_InterfaceDeclaration_ITelemetryGenericEvent(
     use: old.ITelemetryGenericEvent);
 use_old_InterfaceDeclaration_ITelemetryGenericEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryGenericEvent());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -313,13 +316,14 @@ use_current_InterfaceDeclaration_ITelemetryPerformanceEvent(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.20.0:
 * "InterfaceDeclaration_ITelemetryPerformanceEvent": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_ITelemetryPerformanceEvent():
     current.ITelemetryPerformanceEvent;
 declare function use_old_InterfaceDeclaration_ITelemetryPerformanceEvent(
     use: old.ITelemetryPerformanceEvent);
 use_old_InterfaceDeclaration_ITelemetryPerformanceEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryPerformanceEvent());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -337,13 +341,14 @@ use_current_InterfaceDeclaration_ITelemetryProperties(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.20.0:
 * "InterfaceDeclaration_ITelemetryProperties": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_ITelemetryProperties():
     current.ITelemetryProperties;
 declare function use_old_InterfaceDeclaration_ITelemetryProperties(
     use: old.ITelemetryProperties);
 use_old_InterfaceDeclaration_ITelemetryProperties(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryProperties());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

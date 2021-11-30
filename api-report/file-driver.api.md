@@ -90,6 +90,8 @@ export const FileSnapshotWriterClassFactory: <TBase extends ReaderConstructor>(B
         createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
         uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
         downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
+        readonly disposed?: boolean | undefined;
+        dispose?: ((error?: Error | undefined) => void) | undefined;
     };
 } & TBase;
 
@@ -131,6 +133,8 @@ export const FluidFetchReaderFileSnapshotWriter: {
         createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
         uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
         downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
+        readonly disposed?: boolean | undefined;
+        dispose?: ((error?: Error | undefined) => void) | undefined;
     };
 } & typeof FluidFetchReader;
 
@@ -165,8 +169,6 @@ export class ReplayFileDeltaConnection extends TypedEventEmitter<IDocumentDeltaC
     get claims(): ITokenClaims;
     // (undocumented)
     get clientId(): string;
-    // (undocumented)
-    close(): void;
     static create(documentDeltaStorageService: FileDeltaStorageService): Promise<ReplayFileDeltaConnection>;
     // (undocumented)
     details: IConnected;

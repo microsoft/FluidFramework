@@ -672,22 +672,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 switch (event) {
                     case dirtyContainerEvent:
                         if (this._dirtyContainer) {
-                            listener(dirtyContainerEvent);
+                            listener();
                         }
                         break;
                     case savedContainerEvent:
                         if (!this._dirtyContainer) {
-                            listener(savedContainerEvent);
+                            listener();
                         }
                         break;
                     case connectedEventName:
                          if (this.connected) {
-                            listener(event, this.clientId);
+                            listener(this.clientId);
                          }
                          break;
                     case disconnectedEventName:
                         if (!this.connected) {
-                            listener(event);
+                            listener();
                         }
                         break;
                     default:
@@ -1284,7 +1284,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async createDetached(source: IFluidCodeDetails) {
         const attributes: IDocumentAttributes = {
-            branch: "",
             sequenceNumber: detachedContainerRefSeqNumber,
             term: 1,
             minimumSequenceNumber: 0,
@@ -1377,7 +1376,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     ): Promise<IDocumentAttributes> {
         if (tree === undefined) {
             return {
-                branch: this.id,
                 minimumSequenceNumber: 0,
                 sequenceNumber: 0,
                 term: 1,
@@ -1487,7 +1485,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Save attributes for the document
         const documentAttributes: IDocumentAttributes = {
-            branch: this.id,
             minimumSequenceNumber: this.protocolHandler.minimumSequenceNumber,
             sequenceNumber: this.protocolHandler.sequenceNumber,
             term: this.protocolHandler.term,
@@ -1542,7 +1539,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (this.clientDetailsOverride !== undefined) {
             merge(client.details, this.clientDetailsOverride);
         }
-
+        client.details.environment = [client.details.environment, ` loaderVersion:${pkgVersion}`].join(";");
         return client;
     }
 
