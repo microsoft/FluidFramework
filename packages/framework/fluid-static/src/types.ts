@@ -47,13 +47,13 @@ export type SharedObjectClass<T extends IFluidLoadable>
  */
 export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
 
-/** Object factory */
+/** Object factory function allowing a data migration routing to instantiate new objects. */
 export type ObjectFactory = (objectType: LoadableObjectClass<any>, props?: any) => Promise<any>;
 
-/** Document version info */
+/** Document version info. The concrete shape of the version object is TBD */
 export type VersionInfo = never;
 
-/** Application provided callback to apply data changes necessary to for migration to the latest schema. */
+/** Application provided callback to apply data changes necessary for a migration to the next schema revision. */
 export type DataMigrationRoutine = (
     snapshot: LoadableObjectRecord,
     createObject: ObjectFactory
@@ -92,7 +92,7 @@ export interface ContainerSchema {
      */
     dynamicObjectTypes?: LoadableObjectClass<any>[];
 
-    /** Code-first data schema migration routines */
+    /** Optional code-first data schema migration routine(s) */
     migrations?: DataMigrationRoutine | DataMigrationRoutine[];
 }
 

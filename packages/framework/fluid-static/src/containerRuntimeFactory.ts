@@ -43,13 +43,21 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
                         async (objectClass) => { return this.create(objectClass); },
                     );
                     if (revision) {
-                        this.commitRevision(revision);
+                        await this.commitRevision(revision);
                     }
                 }
             }
 
-            private commitRevision(revision: LoadableObjectRecord) {
-
+            private async commitRevision(revision: LoadableObjectRecord) {
+                this.initialObjectsDir.clear();
+                for (const [key,value] of Object.entries(revision)) {
+                    this.initialObjectsDir.set(key, value.handle);
+                }
+                for (const prop of Object.getOwnPropertyNames(this.initialObjects)) {
+                    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                    delete this.initialObjects[prop];
+                }
+                await this.loadInitialObjects();
             }
 
             async addObject(key: string, objectClass: LoadableObjectClass<any>, props: any) {

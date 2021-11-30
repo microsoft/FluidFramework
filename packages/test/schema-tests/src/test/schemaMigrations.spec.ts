@@ -30,9 +30,36 @@ describe("Schema Migrations", () => {
         afterEach(() => {
         });
 
-        // no migrations
-        // no-op migration
-        it("Add new object", async () => {
+        it("No migrations", async () => {
+            const schema = {
+                initialObjects: {
+                    map: SharedMap,
+                },
+            };
+
+            const { container } = await client.getContainer(containerId, schema);
+
+            assert.ok(container);
+            assert.ok(container.initialObjects.map);
+        });
+
+        it("No-op migration", async () => {
+            const schema = {
+                initialObjects: {
+                    map: SharedMap,
+                },
+                migrations: async (snapshot: LoadableObjectRecord, createObject: ObjectFactory) => {
+                    return undefined;
+                },
+            };
+
+            const { container } = await client.getContainer(containerId, schema);
+
+            assert.ok(container);
+            assert.ok(container.initialObjects.map);
+        });
+
+        it("Add object", async () => {
             const schema = {
                 initialObjects: {
                     map: SharedMap,
@@ -41,7 +68,6 @@ describe("Schema Migrations", () => {
                 migrations: async (snapshot: LoadableObjectRecord, createObject: ObjectFactory) => {
                     if ("directory" in snapshot === false) {
                         const directory = await createObject(SharedDirectory);
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         return { ...snapshot, directory};
                     }
                     return undefined;
@@ -54,13 +80,19 @@ describe("Schema Migrations", () => {
             assert.ok(container.initialObjects.directory);
         });
 
-        // Basic scenarios:
-        // add/create object
-        // delete object
-        // update object
+        it("Delete object", async () => {});
+
+        it("Rename object", async () => {});
+
+        it("Update object", async () => {});
 
         // Advanced scenarios:
-        // split object
-        // merge objects
+        it("Move object", async () => {});
+
+        it("Split object", async () => {});
+
+        it("Merge objects", async () => {});
+
+        it("Chain migrations", async () => {});
     });
 });
