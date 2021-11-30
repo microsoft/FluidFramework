@@ -55,6 +55,7 @@ declare function get_current_InterfaceDeclaration_IContainerRuntime():
 declare function use_old_InterfaceDeclaration_IContainerRuntime(
     use: old.IContainerRuntime);
 use_old_InterfaceDeclaration_IContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntime());
 
 /*
@@ -79,6 +80,7 @@ declare function get_current_TypeAliasDeclaration_IContainerRuntimeBaseWithCombi
 declare function use_old_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents(
     use: old.IContainerRuntimeBaseWithCombinedEvents);
 use_old_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents());
 
 /*
@@ -127,4 +129,5 @@ declare function get_current_InterfaceDeclaration_IProvideContainerRuntime():
 declare function use_old_InterfaceDeclaration_IProvideContainerRuntime(
     use: old.IProvideContainerRuntime);
 use_old_InterfaceDeclaration_IProvideContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProvideContainerRuntime());
