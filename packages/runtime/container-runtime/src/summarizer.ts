@@ -251,7 +251,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             if (this._disposed) {
                 throw Error("Summarizer is already disposed.");
             }
-            if (this.runningSummarizer?.disposed !== false) {
+            if (this.runningSummarizer === undefined || this.runningSummarizer.disposed) {
                 this.runningSummarizer = undefined;
                 const runCoordinator: ICancellableSummarizerController =
                     await this.runCoordinatorCreateFn(this.runtime);
