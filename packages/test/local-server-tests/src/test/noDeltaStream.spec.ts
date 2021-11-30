@@ -112,7 +112,6 @@ describe("No Delta Stream", () => {
         assert.strictEqual(container.connected, true, "container.connected");
         assert.strictEqual(container.clientId, "storage-only client", "container.clientId");
         assert.strictEqual(container.readOnlyInfo.readonly, true, "container.readOnlyInfo.readonly");
-        assert.ok(container.readOnlyInfo.readonly, "container.storageOnly");
 
         const deltaManager = container.deltaManager;
         assert.strictEqual(deltaManager.active, false, "deltaManager.active");
