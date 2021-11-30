@@ -85,8 +85,8 @@ interface TestCaseTypeData extends TypeData{
 }
 
 function buildTestCase(getAsType:TestCaseTypeData, useType:TestCaseTypeData, isCompatible: boolean){
-    const getSig =`get_${getAsType.prefix}_${getFullTypeName(getAsType)}`;
-    const useSig =`use_${useType.prefix}_${getFullTypeName(useType)}`;
+    const getSig =`get_${getAsType.prefix}_${getFullTypeName(getAsType).replace(".","_")}`;
+    const useSig =`use_${useType.prefix}_${getFullTypeName(useType).replace(".","_")}`;
     const testString: string[] =[];
     testString.push(`declare function ${getSig}():\n    ${toTypeString(getAsType.prefix, getAsType)};`);
     testString.push(`declare function ${useSig}(\n    use: ${toTypeString(useType.prefix, useType)});`);
