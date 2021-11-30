@@ -129,6 +129,10 @@ export class DeltaManagerProxy
         return this.deltaManager.active;
     }
 
+    public get readonly(): boolean | undefined {
+        return this.deltaManager.readonly;
+    }
+
     public get readOnlyInfo(): ReadOnlyInfo {
         return this.deltaManager.readOnlyInfo;
     }

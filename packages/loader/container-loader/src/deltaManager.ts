@@ -337,6 +337,23 @@ export class DeltaManager
         return this.connection.mode;
     }
 
+    /**
+     * Tells if container is in read-only mode.
+     * Data stores should listen for "readonly" notifications and disallow user
+     * making changes to data stores.
+     * Readonly state can be because of no storage write permission,
+     * or due to host forcing readonly mode for container.
+     * It is undefined if we have not yet established websocket connection
+     * and do not know if user has write access to a file.
+     * @deprecated - use readOnlyInfo
+     */
+     public get readonly() {
+        if (this._forceReadonly) {
+            return true;
+        }
+        return this._readonlyPermissions;
+    }
+
     public get readOnlyInfo(): ReadOnlyInfo {
         const storageOnly = this.connection !== undefined && this.connection instanceof NoDeltaStream;
         if (storageOnly || this._forceReadonly || this._readonlyPermissions === true) {
