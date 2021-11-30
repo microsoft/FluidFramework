@@ -7,6 +7,7 @@ import { copyPropertyIfDefined, memoizeGetter } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
 import { ChangeNode, TraitMap } from './generic';
 import { TreeView } from './TreeView';
+import { TreeViewNode } from '.';
 
 /**
  * Converts a node in a tree view to an equivalent `ChangeNode`.
@@ -15,8 +16,7 @@ import { TreeView } from './TreeView';
  * @param lazyTraits - whether or not traits should be populated lazily.
  * If lazy, the subtrees under each trait will not be read until the trait is first accessed.
  */
-export function getChangeNodeFromView(view: TreeView, nodeId: NodeId, lazyTraits = false): ChangeNode {
-	const node = view.getViewNode(nodeId);
+export function getChangeNodeFromView(view: TreeView, node: TreeViewNode, lazyTraits = false): ChangeNode {
 	const nodeData = {
 		definition: node.definition,
 		identifier: node.identifier,
@@ -49,7 +49,9 @@ function makeTraits(
 		if (lazyTraits) {
 			Object.defineProperty(traitMap, label, {
 				get() {
-					const treeNodeTrait = trait.map((nodeId) => getChangeNodeFromView(view, nodeId, lazyTraits));
+					const treeNodeTrait = trait.map((node) =>
+						getChangeNodeFromView(view, view.getViewNode(node), lazyTraits)
+					);
 					return memoizeGetter(this as TraitMap<ChangeNode>, label, treeNodeTrait);
 				},
 				configurable: true,
@@ -57,7 +59,7 @@ function makeTraits(
 			});
 		} else {
 			Object.defineProperty(traitMap, label, {
-				value: trait.map((nodeId) => getChangeNodeFromView(view, nodeId, lazyTraits)),
+				value: trait.map((node) => getChangeNodeFromView(view, view.getViewNode(node), lazyTraits)),
 				enumerable: true,
 			});
 		}

@@ -329,7 +329,7 @@ export function validateStablePlace(view: TreeView, place: StablePlace): PlaceVa
 		}
 
 		// Detached nodes and the root are invalid anchors.
-		if (view.getTraitLabel(referenceSibling) === undefined) {
+		if (view.tryGetTraitLabel(referenceSibling) === undefined) {
 			return PlaceValidationResult.SiblingIsRootOrDetached;
 		}
 

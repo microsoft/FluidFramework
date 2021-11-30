@@ -5,8 +5,8 @@
 
 import { Definition, NodeId } from './Identifiers';
 import { ChangeNode, Payload, TraitMap, TreeNode } from './generic';
-import { TreeView } from './TreeView';
-import { memoizeGetter } from './Common';
+import { TreeView, TreeViewNode } from './TreeView';
+import { fail, memoizeGetter } from './Common';
 import { getChangeNodeFromView } from './TreeViewUtilities';
 
 /**
@@ -17,12 +17,12 @@ import { getChangeNodeFromView } from './TreeViewUtilities';
  */
 export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
 	private readonly view: TreeView;
-	private readonly nodeId: NodeId;
+	private readonly viewNode: TreeViewNode;
 
 	/** Construct a handle which references the node with the given id in the given `TreeView` */
 	public constructor(view: TreeView, nodeId: NodeId) {
 		this.view = view;
-		this.nodeId = nodeId;
+		this.viewNode = view.tryGetViewNode(nodeId) ?? fail('Failed to create handle: node is not present in view');
 	}
 
 	public get payload(): Payload | undefined {
@@ -61,7 +61,7 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
 	 * Get a `ChangeNode` for the tree view node that this handle references
 	 */
 	public get node(): ChangeNode {
-		return memoizeGetter(this, 'node', getChangeNodeFromView(this.view, this.nodeId, true));
+		return memoizeGetter(this, 'node', getChangeNodeFromView(this.view, this.viewNode, true));
 	}
 
 	/**
@@ -69,7 +69,7 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
 	 * demanded, i.e. will contain no lazy/virtualized subtrees.
 	 */
 	public demandTree(): ChangeNode {
-		return getChangeNodeFromView(this.view, this.nodeId, false);
+		return getChangeNodeFromView(this.view, this.viewNode, false);
 	}
 
 	public toString(): string {

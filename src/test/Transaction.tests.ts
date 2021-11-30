@@ -437,7 +437,7 @@ describe('Transaction', () => {
 			transaction.applyChange(ChangeInternal.build([newNode], 0 as DetachedSequenceId));
 			expect(transaction.status).equals(EditStatus.Applied);
 			expect(transaction.view.hasNode(identifier)).is.true;
-			expect(transaction.view.getParentViewNode(identifier)).is.undefined;
+			expect(transaction.view.tryGetParentViewNode(identifier)).is.undefined;
 			expect(transaction.view.getChangeNode(identifier)).deep.equals(newNode);
 		});
 		it("can be malformed if detached sequence id doesn't exist", () => {

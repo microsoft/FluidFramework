@@ -315,6 +315,13 @@ export class Forest {
 	}
 
 	/**
+	 * @returns true if the node associated with `id` exists in this forest, otherwise false
+	 */
+	public has(id: NodeId): boolean {
+		return this.nodes.has(id);
+	}
+
+	/**
 	 * @returns the node associated with `id`. Should not be used if there is no node with the provided id.
 	 */
 	public get(id: NodeId): ForestNode {

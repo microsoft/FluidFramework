@@ -45,8 +45,8 @@ describe('TreeView', () => {
 			const { view } = detachRange(startingView, StableRange.only(nodeA));
 			expect(view.size).to.equal(3);
 			expect(view.hasNode(nodeA.identifier)).to.be.true;
-			expect(view.getParentViewNode(nodeA.identifier)).to.be.undefined;
-			expect(view.getParentViewNode(nodeB.identifier)?.identifier).to.equal(tree.identifier);
+			expect(view.tryGetParentViewNode(nodeA.identifier)).to.be.undefined;
+			expect(view.tryGetParentViewNode(nodeB.identifier)?.identifier).to.equal(tree.identifier);
 			expect(view.getIndexInTrait(nodeB.identifier)).to.equal(0);
 		});
 		it('can detach an entire trait', () => {
@@ -55,21 +55,21 @@ describe('TreeView', () => {
 			expect(view.size).to.equal(3);
 			expect(view.hasNode(nodeA.identifier)).to.be.true;
 			expect(view.hasNode(nodeB.identifier)).to.be.true;
-			expect(view.getParentViewNode(nodeA.identifier)).to.be.undefined;
-			expect(view.getParentViewNode(nodeB.identifier)).to.be.undefined;
+			expect(view.tryGetParentViewNode(nodeA.identifier)).to.be.undefined;
+			expect(view.tryGetParentViewNode(nodeB.identifier)).to.be.undefined;
 		});
 		it('can insert a node', () => {
 			const newNode = makeEmptyNode();
 			let view = startingView.addNodes([{ ...newNode, traits: new Map() }]);
 			expect(view.size).to.equal(4);
 			expect(view.hasNode(newNode.identifier)).to.be.true;
-			expect(view.getParentViewNode(newNode.identifier)).to.be.undefined;
+			expect(view.tryGetParentViewNode(newNode.identifier)).to.be.undefined;
 			view = insertIntoTrait(
 				view,
 				[newNode.identifier],
 				StablePlace.atStartOf({ parent: tree.identifier, label })
 			);
-			expect(view.getParentViewNode(newNode.identifier)?.identifier).to.equal(tree.identifier);
+			expect(view.tryGetParentViewNode(newNode.identifier)?.identifier).to.equal(tree.identifier);
 			expect(view.getIndexInTrait(newNode.identifier)).to.equal(0);
 			expect(view.getIndexInTrait(nodeA.identifier)).to.equal(1);
 			expect(view.getIndexInTrait(nodeB.identifier)).to.equal(2);

@@ -87,6 +87,7 @@ export interface TreeViewRange {
 export abstract class TreeView {
 	public readonly root: NodeId;
 	protected readonly forest: Forest;
+	private readonly rootNode: TreeViewNode;
 
 	/**
 	 * A cache of node's index within their parent trait.
@@ -98,20 +99,12 @@ export abstract class TreeView {
 	protected constructor(root: NodeId, forest: Forest) {
 		this.root = root;
 		this.forest = forest;
-	}
-
-	/**
-	 * Constructs a `RevisionView` using the supplied tree.
-	 * @param root - the root of the tree to use as the contents of the `RevisionView`
-	 * @deprecated Expires 08-2021. Use `RevisionView.fromTree()` instead
-	 */
-	public static fromTree(root: ChangeNode, expensiveValidation = false): RevisionView {
-		return RevisionView.fromTree(root, expensiveValidation);
+		this.rootNode = this.getViewNode(root);
 	}
 
 	/** Return a tree of JSON-compatible `ChangeNode`s representing the current state of this view */
 	public getChangeNodeTree(): ChangeNode {
-		return getChangeNodeFromView(this, this.root);
+		return getChangeNodeFromView(this, this.rootNode);
 	}
 
 	/** @returns the number of nodes in this view */
@@ -121,15 +114,24 @@ export abstract class TreeView {
 
 	/** @returns true iff a node with the given id exists in this view */
 	public hasNode(id: NodeId): boolean {
-		return this.forest.tryGet(id) !== undefined;
+		return this.forest.has(id);
 	}
 
-	/** @returns a `ChangeNode` derived from the node in this view with the given id */
+	/** @returns a `ChangeNode` derived from the node in this view with the given id. Fails if the node does not exist in this view. */
 	public getChangeNode(id: NodeId): ChangeNode {
-		return getChangeNodeFromView(this, id);
+		return getChangeNodeFromView(this, this.getViewNode(id));
 	}
 
-	/** @returns the `ChangeNode`s derived from the nodes in this view with the given ids */
+	/** @returns a `ChangeNode` derived from the node in this view with the given id, or undefined if no such node exists */
+	public tryGetChangeNode(id: NodeId): ChangeNode | undefined {
+		const viewNode = this.tryGetViewNode(id);
+		return viewNode === undefined ? undefined : getChangeNodeFromView(this, viewNode);
+	}
+
+	/**
+	 * @returns the `ChangeNode`s derived from the nodes in this view with the given ids.
+	 * Fails if any of the nodes do not exist in this view
+	 */
 	public getChangeNodes(nodeIds: readonly NodeId[]): ChangeNode[] {
 		return nodeIds.map((id) => this.getChangeNode(id));
 	}
@@ -145,29 +147,45 @@ export abstract class TreeView {
 		return getIndex(place.side, this.getIndexInTrait(place.sibling));
 	}
 
-	/** @returns the node associated with the given id in this view */
+	/** @returns the node associated with the given id in this view. Fails if the node does not exist in this view. */
 	public getViewNode(id: NodeId): TreeViewNode {
 		return this.forest.get(id);
 	}
 
-	/** @returns the node associated with the given id in this view, or undefined if it does not exist */
+	/** @returns the node associated with the given id in this view, or undefined if the node does not exist in this view */
 	public tryGetViewNode(id: NodeId): TreeViewNode | undefined {
 		return this.forest.tryGet(id);
 	}
 
 	/**
-	 * @returns the label of the trait under which a node with the given id resides. Returns undefined if the node is not present or if the
-	 * given id belongs to the root node
+	 * @returns the label of the trait under which a node with the given id resides. Fails if the node does not exist in this view or if
+	 * it is the root node.
 	 */
-	public getTraitLabel(id: NodeId): TraitLabel | undefined {
+	public getTraitLabel(id: NodeId): TraitLabel {
+		return this.forest.getParent(id).traitParent;
+	}
+
+	/**
+	 * @returns the label of the trait under which a node with the given id resides, or undefined if the node is not present in this
+	 * view or if it is the root node
+	 */
+	public tryGetTraitLabel(id: NodeId): TraitLabel | undefined {
 		return this.forest.tryGetParent(id)?.traitParent;
 	}
 
 	/**
-	 * @returns the parent of the node with the given id. Returns undefined if the node does not exist in this view or if it does not have a
-	 * parent.
+	 * @returns the parent of the node with the given id. Fails if the node does not exist in this view or if it is the root node.
 	 */
-	public getParentViewNode(id: NodeId): TreeViewNode | undefined {
+	public getParentViewNode(id: NodeId): TreeViewNode {
+		const parentInfo = this.forest.getParent(id);
+		return this.getViewNode(parentInfo.parentId);
+	}
+
+	/**
+	 * @returns the parent of the node with the given id. Returns undefined if the node does not exist in this view or if it is the root
+	 * node.
+	 */
+	public tryGetParentViewNode(id: NodeId): TreeViewNode | undefined {
 		const parentInfo = this.forest.tryGetParent(id);
 		if (parentInfo === undefined) {
 			return undefined;
@@ -175,10 +193,27 @@ export abstract class TreeView {
 		return this.getViewNode(parentInfo.parentId);
 	}
 
-	/** @returns the trait location of the node with the given id. The node must exist in this view and must have a parent */
+	/**
+	 * @returns the trait location of the node with the given id. Fails if the node does not exist in this view or of it is the root
+	 * node
+	 */
 	public getTraitLocation(id: NodeId): TraitLocation {
 		const parentData = this.forest.getParent(id);
-		assert(parentData !== undefined, 'node must have parent');
+		return {
+			parent: parentData.parentId,
+			label: parentData.traitParent,
+		};
+	}
+
+	/**
+	 * @returns the trait location of the node with the given id, or undefined if the node does not exist in this view or if it is the root
+	 * node
+	 */
+	public tryGetTraitLocation(id: NodeId): TraitLocation | undefined {
+		const parentData = this.forest.tryGetParent(id);
+		if (parentData === undefined) {
+			return undefined;
+		}
 		return {
 			parent: parentData.parentId,
 			label: parentData.traitParent,
@@ -190,29 +225,49 @@ export abstract class TreeView {
 	 * parent.
 	 * Performance note: this is O(siblings in trait).
 	 */
-	public getIndexInTrait(node: NodeId): TraitNodeIndex {
-		if (this.traitIndicesCache === undefined) {
-			this.traitIndicesCache = new Map();
-		} else {
-			const cached = this.traitIndicesCache.get(node);
-			if (cached !== undefined) {
-				return cached;
-			}
+	public getIndexInTrait(id: NodeId): TraitNodeIndex {
+		const index = this.tryGetIndexInTrait(id);
+		return index ?? fail('ID does not exist in the forest.');
+	}
+
+	/**
+	 * @returns the index within the trait under which the node with the given id resides, or undefined if the node does not exist in this
+	 * view or does not have a parent.
+	 * Performance note: this is O(siblings in trait).
+	 */
+	public tryGetIndexInTrait(id: NodeId): TraitNodeIndex | undefined {
+		const cachedIndex = this.traitIndicesCache?.get(id);
+		if (cachedIndex !== undefined) {
+			return cachedIndex;
 		}
-		const parentData = this.forest.getParent(node);
-		const parent = this.forest.get(parentData.parentId);
-		const traitParent =
-			parent.traits.get(parentData.traitParent) ?? fail('invalid parentData: trait parent not found.');
-		let foundIndex = -1 as TraitNodeIndex;
-		for (let i = 0; i < traitParent.length; i++) {
-			const nodeInTrait = traitParent[i];
+
+		const parentData = this.forest.tryGetParent(id);
+		if (parentData === undefined) {
+			return undefined;
+		}
+
+		const parent = this.forest.tryGet(parentData.parentId);
+		if (parent === undefined) {
+			return undefined;
+		}
+
+		const trait = parent.traits.get(parentData.traitParent) ?? fail('inconsistent forest: trait parent not found');
+		let foundIndex: TraitNodeIndex | undefined;
+		if (trait.length === 0) {
+			return foundIndex;
+		}
+
+		this.traitIndicesCache ??= new Map();
+		for (let i = 0; i < trait.length; i++) {
+			const nodeInTrait = trait[i];
 			const index = i as TraitNodeIndex;
 			this.traitIndicesCache.set(nodeInTrait, index);
-			if (nodeInTrait === node) {
+			if (nodeInTrait === id) {
 				foundIndex = index;
 			}
 		}
-		return foundIndex !== -1 ? foundIndex : fail('invalidParentData: node not found in specified trait');
+
+		return foundIndex;
 	}
 
 	/**
@@ -228,7 +283,7 @@ export abstract class TreeView {
 	}
 
 	public [Symbol.iterator](): IterableIterator<TreeViewNode> {
-		return this.iterateNodeDescendants(this.root);
+		return this.iterateNodeDescendants(this.rootNode);
 	}
 
 	/** @returns true iff the given view is equal to this view */
@@ -247,12 +302,12 @@ export abstract class TreeView {
 		return false;
 	}
 
-	private *iterateNodeDescendants(nodeId: NodeId): IterableIterator<TreeViewNode> {
-		const node = this.getViewNode(nodeId);
+	private *iterateNodeDescendants(node: TreeViewNode): IterableIterator<TreeViewNode> {
 		yield node;
 		for (const trait of node.traits.values()) {
 			for (const childId of trait) {
-				yield* this.iterateNodeDescendants(childId);
+				const child = this.getViewNode(childId);
+				yield* this.iterateNodeDescendants(child);
 			}
 		}
 	}
