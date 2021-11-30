@@ -596,10 +596,7 @@ export function getDeviceSpec() {
         }
     } catch {
     }
-    return {
-        deviceMemory: undefined,
-        harwareConcurrency: undefined,
-    };
+    return {};
 }
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
@@ -1175,11 +1172,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         // logging hardware telemetry
-        const { deviceMemory, hardwareConcurrency } = getDeviceSpec();
         logger.sendTelemetryEvent({
             eventName:"DeviceSpec",
-            deviceMemory,
-            hardwareConcurrency,
+            ...getDeviceSpec(),
         });
 
         // logging container load stats
