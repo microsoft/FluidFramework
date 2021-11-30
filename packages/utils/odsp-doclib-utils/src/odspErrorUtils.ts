@@ -246,16 +246,15 @@ export function enrichOdspError(
  * Throws network error - an object with a bunch of network related properties
  */
 export function throwOdspNetworkError(
-    message: string,
+    fluidErrorCode: string,
     statusCode: number,
     response?: Response,
     responseText?: string,
     props?: ITelemetryProperties,
-    fluidErrorCode = "OdspFetchError",
 ): never {
     const networkError = createOdspNetworkError(
         fluidErrorCode,
-        response && response.statusText !== "" ? `${message} (${response.statusText})` : message,
+        response && response.statusText !== "" ? `${fluidErrorCode} (${response.statusText})` : fluidErrorCode,
         statusCode,
         response ? numberFromHeader(response.headers.get("retry-after")) : undefined, /* retryAfterSeconds */
         response,
