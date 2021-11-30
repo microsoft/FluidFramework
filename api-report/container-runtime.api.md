@@ -241,15 +241,6 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
     get IFluidDataStoreRegistry(): this;
     }
 
-// @public (undocumented)
-export function getDeviceSpec(): {
-    deviceMemory: any;
-    hardwareConcurrency: number;
-} | {
-    deviceMemory?: undefined;
-    hardwareConcurrency?: undefined;
-};
-
 // @public
 export interface IAckedSummary {
     // (undocumented)
