@@ -50,10 +50,6 @@ import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
 import { DataCorruptionError, GenericError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
 import {
-    BlobTreeEntry,
-    TreeTreeEntry,
-} from "@fluidframework/protocol-base";
-import {
     IClientDetails,
     IDocumentMessage,
     IQuorum,
@@ -97,6 +93,7 @@ import {
     exceptionToResponse,
     responseToException,
     seqFromTree,
+    convertSummaryTreeToITree,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -1329,26 +1326,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @deprecated - Use summarize to get summary of the container runtime.
      */
     public async snapshot(): Promise<ITree> {
-        if (this.garbageCollector.shouldRunGC) {
-            await this.collectGarbage({ logger: this.logger, fullGC: true /* fullGC */ });
-        }
-
-        const root: ITree = { entries: [] };
-        const entries = await this.dataStores.snapshot();
-
-        if (this.disableIsolatedChannels) {
-            root.entries = root.entries.concat(entries);
-        } else {
-            root.entries.push(new TreeTreeEntry(channelsTreeName, { entries }));
-        }
-
-        root.entries.push(new BlobTreeEntry(metadataBlobName, JSON.stringify(this.formMetadata())));
-
-        if (this.chunkMap.size > 0) {
-            root.entries.push(new BlobTreeEntry(chunksBlobName, JSON.stringify([...this.chunkMap])));
-        }
-
-        return root;
+        const summaryResult = await this.summarize({
+            summaryLogger: this.logger,
+            fullTree: true,
+            trackState: false,
+            runGC: this.garbageCollector.shouldRunGC,
+            fullGC: true,
+        });
+        return convertSummaryTreeToITree(summaryResult.summary);
     }
 
     private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
