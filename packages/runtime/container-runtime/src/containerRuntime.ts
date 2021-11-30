@@ -924,7 +924,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         } else {
             this.createContainerMetadata = {
                 createContainerRuntimeVersion: pkgVersion,
-                createContainerTimestamp: performance.now(),
+                createContainerTimestamp: Date.now(),
             };
         }
 
@@ -947,7 +947,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          * of this client's connection - https://github.com/microsoft/FluidFramework/issues/8375.
          */
         const getCurrentTimestamp = () => {
-            return this.deltaManager.lastMessage?.timestamp ?? performance.now();
+            return this.deltaManager.lastMessage?.timestamp ?? Date.now();
         };
         this.garbageCollector = GarbageCollector.create(
             this,
