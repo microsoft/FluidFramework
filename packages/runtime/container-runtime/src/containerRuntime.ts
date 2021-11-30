@@ -585,6 +585,7 @@ export class ScheduleManager {
  */
 export const agentSchedulerId = "_scheduler";
 
+// safely check navigator and get the hardware spec value
 export function getDeviceSpec() {
     try {
         if (typeof navigator === "object" && navigator !== null) {
