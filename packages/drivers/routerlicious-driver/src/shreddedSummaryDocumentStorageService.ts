@@ -6,7 +6,6 @@
 import type { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     stringToBuffer,
-    TelemetryNullLogger,
     Uint8ArrayToString,
 } from "@fluidframework/common-utils";
 import {
@@ -104,7 +103,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
         const id = versionId ? versionId : this.id;
         const commits = await PerformanceEvent.timedExecAsync(
-            this.getVersionsAggregateEvent ? new TelemetryNullLogger() : this.logger,
+            this.logger,
             {
                 eventName: RouterliciousDriverPerformanceEventName.getVersions,
                 versionId: id,
@@ -114,6 +113,10 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
                 const response = await this.manager.getCommits(id, count);
                 this.getVersionsAggregateEvent?.push(this.logger, { duration: event.duration });
                 return response;
+            },
+            {
+                end: this.getVersionsAggregateEvent === undefined || undefined,
+                cancel: "generic",
             },
         );
         return commits.map((commit) => ({
@@ -140,10 +143,9 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
         }
 
         const rawTree = await PerformanceEvent.timedExecAsync(
-            // TODO: this would actually block cancel and error events from being logged
-            this.getSnapshotTreeAggregateEvent ? new TelemetryNullLogger() : this.logger,
+            this.logger,
             {
-                eventName: "getSnapshotTree",
+                eventName: RouterliciousDriverPerformanceEventName.getSnapshotTree,
                 treeId: requestVersion.treeId,
             },
             async (event) => {
@@ -154,6 +156,10 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
                     ...extraProps,
                 });
                 return response;
+            },
+            {
+                end: this.getSnapshotTreeAggregateEvent === undefined || undefined,
+                cancel: "generic",
             },
         );
         const tree = buildHierarchy(rawTree, this.blobsShaCache, true);
@@ -168,9 +174,9 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
         }
 
         const value = await PerformanceEvent.timedExecAsync(
-            this.readBlobAggregateEvent ? new TelemetryNullLogger() : this.logger,
+            this.logger,
             {
-                eventName: "readBlob",
+                eventName: RouterliciousDriverPerformanceEventName.readBlob,
                 blobId,
             },
             async (event) => {
@@ -181,6 +187,10 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
                     ...extraProps,
                 });
                 return response;
+            },
+            {
+                end: this.readBlobAggregateEvent === undefined || undefined,
+                cancel: "generic",
             },
         );
         this.blobsShaCache.set(value.sha, "");
