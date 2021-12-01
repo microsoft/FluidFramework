@@ -15,6 +15,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove `getLegacyInterval()` and `delete()` from sequence dds](#Remove-getLegacyInterval-and-delete-from-sequence-dds)
 - [readOnly and readOnlyPermissions removed from Container](#readOnly-and-readOnlyPermissions-removed-from-container)
 - [Remove `loader` property from `MockFluidDataStoreContext` class](#Remove-loader-property-from-MockFluidDataStoreContext-class)
+- [maxMessageSize removed from IConnectionDetails and IDocumentDeltaConnection](#maxMessageSize-removed-from-IConnectionDetails-and-IDocumentDeltaConnection)
 - [Remove `IntervalCollection.getView()` from sequence dds](#Remove-IntervalCollection-getView-from-sequence-dds)
 
 ### `IContainer` interface updated to expose actively used `Container` public APIs
@@ -40,6 +41,9 @@ The `readOnly` and `readOnlyPermissions` properties from `Container` in `contain
 
 ### Remove `loader` property from `MockFluidDataStoreContext` class
 The `loader` property from `MockFluidDataStoreContext` class was deprecated in release 0.37 and is now removed. Refer the following deprecation warning: [Loader in data stores deprecated](#Loader-in-data-stores-deprecated)
+
+### `maxMessageSize` removed from `IConnectionDetails` and `IDocumentDeltaConnection`
+The `maxMessageSize` property from `IConnectionDetails` and `IDocumentDeltaConnection` was deprecated in 0.51, and has now been removed from the `container-definitions` and `driver-definitions` packages respectively. To replace its functionality, use `serviceConfiguration.maxMessageSize`.
 
 ### Remove `IntervalCollection.getView()` from sequence dds
 The `IntervalCollection.getView()` was removed.  If you were calling this API, you should instead refer to the `IntervalCollection` itself directly in places where you were using the view.
