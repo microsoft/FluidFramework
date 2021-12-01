@@ -53,7 +53,15 @@ export type ObjectFactory = (objectType: LoadableObjectClass<any>, props?: any) 
 /** Document version info. The concrete shape of the version object is TBD */
 export type VersionInfo = never;
 
-/** Application provided callback to apply data changes necessary for a migration to the next schema revision. */
+/**
+ * Application provided callback to apply data changes necessary to migrate to the next schema revision.
+ * The migration routine is responsible for inspecting data objects in the given container's snapshot,
+ * and, when needed, perform necessary data manipulation over the cloned snapshot and return it as
+ * a new revision.
+ * @param snapshot - blah
+ * @param createObject - blah
+ * @returns New data record.
+ */
 export type DataMigrationRoutine = (
     snapshot: LoadableObjectRecord,
     createObject: ObjectFactory

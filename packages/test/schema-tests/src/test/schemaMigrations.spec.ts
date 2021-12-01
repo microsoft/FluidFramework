@@ -14,10 +14,11 @@ describe("Schema Migrations", () => {
     describe("Container-level migrations", () => {
         let client: TinyliciousClient;
         let containerId: string;
-        // The container is created with an initial schema with one top-level object.
+        // The container is created with an initial schema with two top-level objects.
         const initialSchema = {
             initialObjects: {
                 myEntities: SharedMap,
+                myEntities2: SharedMap,
             },
         };
 
@@ -73,6 +74,7 @@ describe("Schema Migrations", () => {
             const newSchema = {
                 initialObjects: {
                     myEntities: SharedMap,
+                    // 👇 new container schema has an additional object specified 👇
                     myNewObject: SharedDirectory,
                 },
                 migrations: async () => {
@@ -96,7 +98,7 @@ describe("Schema Migrations", () => {
 
         it("Add object", async () => {
             // arrange
-            const schema = {
+            const newSchema = {
                 initialObjects: {
                     myEntities: SharedMap,
                     myNewObject: SharedDirectory,
@@ -113,16 +115,70 @@ describe("Schema Migrations", () => {
             };
 
             // act
-            const { container } = await client.getContainer(containerId, schema);
+            const { container } = await client.getContainer(containerId, newSchema);
 
             // assert
             assert.ok(container, "Container is not loaded correctly.");
             assert.ok(container.initialObjects.myNewObject, "New object should be created.");
         });
 
-        it("Delete object", async () => { });
+        it("Delete object", async () => {
+            // arrange
+            const newSchema = {
+                initialObjects: {
+                    myEntities: SharedMap,
+                },
+                migrations: async (snapshot: LoadableObjectRecord, createObject: ObjectFactory) => {
+                    if ("myEntities2" in snapshot) {
+                        const { myEntities2: deleted, ...properties } = snapshot;
+                        return properties;
+                    }
+                    // no change required
+                    return undefined;
+                },
+            };
 
-        it("Rename object", async () => { });
+            // act
+            const { container } = await client.getContainer(containerId, newSchema);
+
+            // assert
+            assert.ok(container, "Container is not loaded correctly.");
+            assert.ok(container.initialObjects.myEntities, "Initial object should be available.");
+            assert.equal(
+                typeof container.initialObjects.myEntities2,
+                "undefined",
+                "Deleted object should not exist in the container.",
+            );
+        });
+
+        it("Rename object", async () => {
+            // arrange
+            const newSchema = {
+                initialObjects: {
+                    myEntitiesRenamed: SharedMap,
+                },
+                migrations: async (snapshot: LoadableObjectRecord, createObject: ObjectFactory) => {
+                    if ("myEntities" in snapshot && "myEntitiesRenamed" in snapshot === false) {
+                        const { myEntities, ...properties } = snapshot;
+                        return { myEntitiesRenamed: myEntities, ...properties };
+                    }
+                    // no change required
+                    return undefined;
+                },
+            };
+
+            // act
+            const { container } = await client.getContainer(containerId, newSchema);
+
+            // assert
+            assert.ok(container, "Container is not loaded correctly.");
+            assert.ok(container.initialObjects.myEntitiesRenamed, "Renamed object should be available.");
+            assert.equal(
+                typeof container.initialObjects.myEntities,
+                "undefined",
+                "Initial object should not exist in the container.",
+            );
+        });
 
         it("Update object", async () => { });
 
@@ -135,7 +191,45 @@ describe("Schema Migrations", () => {
 
         it("Merge objects", async () => { });
 
-        it("Chain migrations", async () => { });
+        it("Chained migrations", async () => {
+            // arrange
+            const newSchema = {
+                initialObjects: {
+                    myEntitiesRenamed: SharedMap,
+                },
+                migrations: [
+                    async (snapshot: LoadableObjectRecord, createObject: ObjectFactory) => {
+                        if ("myNewObject" in snapshot === false) {
+                            // only create a new object when it doesn't exist
+                            const myNewObject = await createObject(SharedDirectory);
+                            return { ...snapshot, myNewObject };
+                        }
+                        // no change required
+                        return undefined;
+                    },
+                    async (snapshot: LoadableObjectRecord, createObject: ObjectFactory) => {
+                        if ("myEntities2" in snapshot) {
+                            const { myEntities2: deleted, ...properties } = snapshot;
+                            return properties;
+                        }
+                        // no change required
+                        return undefined;
+                    },
+                ],
+            };
+
+            // act
+            const { container } = await client.getContainer(containerId, newSchema);
+
+            // assert
+            assert.ok(container, "Container is not loaded correctly.");
+            assert.ok(container.initialObjects.myNewObject, "New object should be available.");
+            assert.equal(
+                typeof container.initialObjects.myEntities2,
+                "undefined",
+                "Deleted object should not exist in the container.",
+            );
+        });
 
         // #endregion
 
