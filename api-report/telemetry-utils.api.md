@@ -23,7 +23,7 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
 export class ChildLogger extends TelemetryLogger {
-    static create(baseLogger?: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags, globalProperties?: ITelemetryLoggerPropertyBags, layerVersion?: string): TelemetryLogger;
+    static create(baseLogger?: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags, globalProperties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     // (undocumented)
     protected get globalProperties(): Required<ITelemetryLoggerPropertyBags>;
     // Warning: (ae-forgotten-export) The symbol "ChildLoggerRoot" needs to be exported by the entry point index.d.ts
@@ -137,6 +137,8 @@ export function logIfFalse(condition: any, logger: ITelemetryBaseLogger, event: 
 // @public
 export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
     constructor();
+    // (undocumented)
+    assertEventsMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): void;
     // (undocumented)
     events: ITelemetryBaseEvent[];
     matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean;

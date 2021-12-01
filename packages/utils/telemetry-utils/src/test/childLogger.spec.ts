@@ -38,8 +38,10 @@ describe("ChildLogger", () => {
         loggerE.send({ category: "generic", eventName: "test1"});
         mockLogger.assertEventsMatch([{a:1, c:3, e:5}]);
 
+        ChildLogger.create(loggerE, "F", {}, { all: { a: 0, c: 0, e: 0 }});
+
         loggerA.send({ category: "generic", eventName: "test1"});
-        mockLogger.assertEventsMatch([{a:1, c:3, e:5}]);
+        mockLogger.assertEventsMatch([{a:0, c:0, e:0}]);
     });
     it("Properties & Getters Propagate",()=>{
         let sent = false;
