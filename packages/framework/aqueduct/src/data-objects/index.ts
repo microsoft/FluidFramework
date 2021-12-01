@@ -5,4 +5,4 @@
 
 export { DataObject } from "./dataObject";
 export { PureDataObject } from "./pureDataObject";
-export { DataObjectTypes, Default, IDataObjectProps } from "./types";
+export { DataObjectTypes, DataObjectType, IDataObjectProps } from "./types";

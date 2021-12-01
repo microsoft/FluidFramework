@@ -22,7 +22,7 @@ import { assert, EventForwarder } from "@fluidframework/common-utils";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { serviceRoutePathRoot } from "../container-services";
 import { defaultFluidObjectRequestHandler } from "../request-handlers";
-import { DataObjectTypes, Default, IDataObjectProps } from "./types";
+import { DataObjectTypes, DataObjectType, IDataObjectProps } from "./types";
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
@@ -32,7 +32,7 @@ import { DataObjectTypes, Default, IDataObjectProps } from "./types";
  * @typeParam I - The optional input types used to strongly type the data object
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
-    extends EventForwarder<Default<I>["Events"]>
+    extends EventForwarder<DataObjectType<I, "Events">>
     implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IFluidObject {
     private readonly innerHandle: IFluidHandle<this>;
     private _disposed = false;
@@ -56,9 +56,9 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
      */
     protected readonly providers:
         // eslint-disable-next-line @typescript-eslint/ban-types
-        AsyncFluidObjectProvider<FluidObjectKey<Default<I>["OptionalProviders"]>, FluidObjectKey<object>>;
+        AsyncFluidObjectProvider<FluidObjectKey<DataObjectType<I, "OptionalProviders">>, FluidObjectKey<object>>;
 
-    protected initProps?: Default<I>["State"];
+    protected initProps?: DataObjectType<I, "InitialState">;
 
     protected initializeP: Promise<void> | undefined;
 
@@ -151,7 +151,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
             await this.initializingFromExisting();
         } else {
             await this.initializingFirstTime(
-                this.context.createProps as Default<I>["State"] ?? this.initProps);
+                this.context.createProps as DataObjectType<I, "InitialState"> ?? this.initProps);
         }
         await this.hasInitialized();
     }
@@ -213,7 +213,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
      *
      * @param props - Optional props to be passed in on create
      */
-    protected async initializingFirstTime(props?: Default<I>["State"]): Promise<void> { }
+    protected async initializingFirstTime(props?: DataObjectType<I, "InitialState">): Promise<void> { }
 
     /**
      * Called every time but the first time the data store is initialized (creations

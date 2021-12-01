@@ -107,7 +107,7 @@ export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
 // @public (undocumented)
 export class RootDataObject extends DataObject<{
-    State: RootDataObjectProps;
+    InitialState: RootDataObjectProps;
 }> {
     // (undocumented)
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;

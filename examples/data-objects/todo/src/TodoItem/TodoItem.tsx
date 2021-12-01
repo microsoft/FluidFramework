@@ -37,7 +37,7 @@ const innerComponentKey = "innerId";
  * - Link to open component in separate tab
  * - Button to remove entry
  */
-export class TodoItem extends DataObject<{State: ITodoItemInitialState}> implements IFluidHTMLView {
+export class TodoItem extends DataObject<{InitialState: ITodoItemInitialState}> implements IFluidHTMLView {
     private text: SharedString;
     private innerIdCell: ISharedCell<{ type: TodoItemSupportedComponents, handle: IFluidHandle }>;
     private _absoluteUrl: string | undefined;
