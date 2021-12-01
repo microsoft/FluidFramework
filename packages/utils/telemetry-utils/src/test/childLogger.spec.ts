@@ -29,17 +29,17 @@ describe("ChildLogger", () => {
     it.only("layerVersions", () => {
         // Arrange
         const mockLogger = new MockLogger();
-        const loggerA = ChildLogger.create(mockLogger, "A", {}, { all: { a: 1 }}, "0.1");
+        const loggerA = ChildLogger.create(mockLogger, "A", {}, { all: { a: 1 }});
         const loggerB = new ForeignChildLoggerShim(loggerA as ChildLogger);
         const loggerC = ChildLogger.create(loggerB, "C", {}, { all: { c: 3 }});
        // const loggerD = new ForeignChildLoggerShim(loggerC as ChildLogger);
-        const loggerE = ChildLogger.create(loggerC, "E", {}, { all: { e: 5 }}, "0.5");
+        const loggerE = ChildLogger.create(loggerC, "E", {}, { all: { e: 5 }});
 
         loggerE.send({ category: "generic", eventName: "test1"});
-        mockLogger.assertEventsMatch([{layerVersions:"A:0.1, E:0.5"}]); // , "layerVersions not built properly");
+        mockLogger.assertEventsMatch([{a:1, c:3, e:5}]);
 
-        loggerA.send({ category: "generic", eventName: "test2"});
-        assert(mockLogger.matchEvents([{layerVersions:"A:0.1, E:0.5"}]), "layerVersions not propagated globally properly");
+        loggerA.send({ category: "generic", eventName: "test1"});
+        mockLogger.assertEventsMatch([{a:1, c:3, e:5}]);
     });
     it("Properties & Getters Propagate",()=>{
         let sent = false;
