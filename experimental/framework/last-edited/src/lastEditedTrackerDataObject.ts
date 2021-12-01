@@ -14,7 +14,7 @@ import { IProvideFluidLastEditedTracker } from "./interfaces";
  */
 export class LastEditedTrackerDataObject extends DataObject
     implements IProvideFluidLastEditedTracker {
-    private static readonly factory =
+    private static readonly factory: DataObjectFactory<LastEditedTrackerDataObject> =
         new DataObjectFactory(
             "@fluid-experimental/last-edited",
             LastEditedTrackerDataObject,
@@ -23,7 +23,7 @@ export class LastEditedTrackerDataObject extends DataObject
             undefined,
         );
 
-    public static getFactory() {
+    public static getFactory(): DataObjectFactory<LastEditedTrackerDataObject> {
         return LastEditedTrackerDataObject.factory;
     }
 
