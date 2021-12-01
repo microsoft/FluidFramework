@@ -19,43 +19,20 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { IDirectory } from "@fluidframework/map";
 import { assert, EventForwarder } from "@fluidframework/common-utils";
-import { IEvent } from "@fluidframework/common-definitions";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { serviceRoutePathRoot } from "../container-services";
 import { defaultFluidObjectRequestHandler } from "../request-handlers";
-
-export interface DataObjectTypes {
-    O?: FluidObject,
-    S?: any,
-    E?: IEvent
-}
-
-export type Default<T extends DataObjectTypes> = {
-    [P in keyof Required<DataObjectTypes>]:
-        T[P] extends Required<DataObjectTypes>[P]
-            ? T[P]
-            : Required<DataObjectTypes>[P]
-};
-
-export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
-    readonly runtime: IFluidDataStoreRuntime;
-    readonly context: IFluidDataStoreContext;
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    readonly providers: AsyncFluidObjectProvider<FluidObjectKey<Default<I>["O"]>, FluidObjectKey<object>>;
-    readonly initProps?: Default<I>["S"];
-}
+import { DataObjectTypes, Default, IDataObjectProps } from "./types";
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this data store directly unless
  * you are creating another base data store class
  *
- * @typeParam O - represents a type that will define optional providers that will be injected
- * @typeParam S - the initial state type that the produced data object may take during creation
- * @typeParam E - represents events that will be available in the EventForwarder
+ * @typeParam I - The optional input types used to strongly type the data object
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
-    extends EventForwarder<Default<I>["E"]>
+    extends EventForwarder<Default<I>["Events"]>
     implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IFluidObject {
     private readonly innerHandle: IFluidHandle<this>;
     private _disposed = false;
@@ -79,9 +56,9 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
      */
     protected readonly providers:
         // eslint-disable-next-line @typescript-eslint/ban-types
-        AsyncFluidObjectProvider<FluidObjectKey<Default<I>["O"]>, FluidObjectKey<object>>;
+        AsyncFluidObjectProvider<FluidObjectKey<Default<I>["OptionalProviders"]>, FluidObjectKey<object>>;
 
-    protected initProps?: Default<I>["S"];
+    protected initProps?: Default<I>["State"];
 
     protected initializeP: Promise<void> | undefined;
 
@@ -174,7 +151,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
             await this.initializingFromExisting();
         } else {
             await this.initializingFirstTime(
-                this.context.createProps as Default<I>["S"] ?? this.initProps);
+                this.context.createProps as Default<I>["State"] ?? this.initProps);
         }
         await this.hasInitialized();
     }
@@ -236,7 +213,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
      *
      * @param props - Optional props to be passed in on create
      */
-    protected async initializingFirstTime(props?: Default<I>["S"]): Promise<void> { }
+    protected async initializingFirstTime(props?: Default<I>["State"]): Promise<void> { }
 
     /**
      * Called every time but the first time the data store is initialized (creations

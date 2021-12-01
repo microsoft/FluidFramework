@@ -16,7 +16,7 @@ import { IFluidUserInformation } from "../interfaces";
  * Basic example that takes a container provider
  */
 export class ExampleUsingProviders
-    extends DataObject<{O: IFluidUserInformation}>
+    extends DataObject<{OptionalProviders: IFluidUserInformation}>
     implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 

@@ -25,9 +25,7 @@ import { PureDataObjectFactory } from "./pureDataObjectFactory";
  * ensuring relevant shared objects etc are available to the factory.
  *
  * @typeParam TObj - DataObject (concrete type)
- * @typeParam O - represents a type that will define optional providers that will be injected
- * @typeParam S - the initial state type that the produced data object may take during creation
- * @typeParam E - represents events that will be available in the EventForwarder
+ * @typeParam I - The input types for the DataObject
  */
 export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes>
     extends PureDataObjectFactory<TObj, I>
@@ -36,7 +34,7 @@ export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectT
         type: string,
         ctor: new (props: IDataObjectProps<I>) => TObj,
         sharedObjects: readonly IChannelFactory[] = [],
-        optionalProviders: FluidObjectSymbolProvider<Default<I>["O"]>,
+        optionalProviders: FluidObjectSymbolProvider<Default<I>["OptionalProviders"]>,
         registryEntries?: NamedFluidDataStoreRegistryEntries,
         runtimeFactory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
     ) {

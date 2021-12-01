@@ -25,7 +25,7 @@ export interface RootDataObjectProps {
     initialObjects: LoadableObjectClassRecord;
 }
 
-export class RootDataObject extends DataObject<{S: RootDataObjectProps}> {
+export class RootDataObject extends DataObject<{State: RootDataObjectProps}> {
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
 
