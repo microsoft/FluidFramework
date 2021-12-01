@@ -6,7 +6,6 @@
 import {
     DataObject,
     DataObjectFactory,
-    IDataObjectProps,
 } from "@fluidframework/aqueduct";
 import { SharedMap } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
@@ -20,10 +19,6 @@ export class ExampleUsingProviders
     extends DataObject<{O: IFluidUserInformation}>
     implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
-
-    constructor(props: IDataObjectProps<{O: IFluidUserInformation}>) {
-        super(props);
-    }
 
     private userInformation: IFluidUserInformation | undefined;
 
