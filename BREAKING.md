@@ -63,7 +63,7 @@ here are some examples:
 
 Above I've used DataObject, and DataObjectFactory however the same changes apply to PureDataObject and PureDataObjectFactory.
 
-To ease transition we've also added LegacyDataObject, LegacyPureDataObject, LegacyDataObjectFactory, and LegacyPureDataObjectFactory. These types have the same generic parameters as the types before this change, and can be used as a drop in replacement, but please move away from test types asap, as the will be removed in a following release.
+To ease transition we've also added LegacyDataObject, LegacyPureDataObject, LegacyDataObjectFactory, and LegacyPureDataObjectFactory. These types have the same generic parameters as the types before this change, and can be used as a drop in replacement, but please move away from these types asap, as they will be removed in a following release.
 
 ### Remove `loader` property from `MockFluidDataStoreContext` class
 The `loader` property from `MockFluidDataStoreContext` class was deprecated in release 0.37 and is now removed. Refer the following deprecation warning: [Loader in data stores deprecated](#Loader-in-data-stores-deprecated)
