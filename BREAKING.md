@@ -14,7 +14,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [`IContainer` interface updated to expose actively used `Container` public APIs](#IContainer-interface-updated-to-expose-actively-used-Container-public-APIs)
 - [Remove `getLegacyInterval()` and `delete()` from sequence dds](#Remove-getLegacyInterval-and-delete-from-sequence-dds)
 - [readOnly and readOnlyPermissions removed from Container](#readOnly-and-readOnlyPermissions-removed-from-container)
-- [maxMessageSize removed from driver-definitions and container-definitions](#maxMessageSize-removed-from-driver-definitions-and-container-definitions)
+- [maxMessageSize removed from IConnectionDetails and IDocumentDeltaConnection](#maxMessageSize-removed-from-IConnectionDetails-and-IDocumentDeltaConnection)
 
 ### `IContainer` interface updated to expose actively used `Container` public APIs
 In order to have the `IContainer` interface be the active developer surface that is used when interacting with a `Container` instance, it has been updated to expose the APIs that are necessary for currently used behavior. The motivation here is to move away from using the `Container` class when only its type is required, and to use the `IContainer` interface instead.
@@ -37,8 +37,8 @@ Additionally, `codeDetails` which was already deprecated before is now marked as
 ### `readOnly` and `readOnlyPermissions` removed from `Container`
 The `readOnly` and `readOnlyPermissions` properties from `Container` in `container-loader` was deprecated in 0.35, and has now been removed. To replace its functionality, use `readOnlyInfo` by accessing `readOnlyInfo.readonly` and `readOnlyInfo.permissions` respectively.
 
-### `maxMessageSize` removed from `container-definitions` and `driver-definitions`
-The `maxMessageSize` property from `container-definitions` and `driver-definitions` was deprecated in 0.51, and has now been removed. To replace its functionality, use `serviceConfiguration.maxMessageSize`.
+### `maxMessageSize` removed from `IConnectionDetails` and `IDocumentDeltaConnection`
+The `maxMessageSize` property from `IConnectionDetails` and `IDocumentDeltaConnection` was deprecated in 0.51, and has now been removed. To replace its functionality, use `serviceConfiguration.maxMessageSize`.
 
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
