@@ -10,7 +10,7 @@ import random from "random-js";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore";
@@ -268,13 +268,13 @@ function scheduleFaultInjection(
 }
 
 function scheduleContainerClose(
-    container: IContainer,
+    container: Container,
     runConfig: IRunConfig,
     faultInjectionMinMs: number,
     faultInjectionMaxMs: number) {
     new Promise<void>((res) => {
         // wait for the container to connect write
-        container.once("closed", ()=>res());
+        container.once("closed", res);
         if (!container.connected && !container.closed) {
             container.once("connected", () => {
                 res();
