@@ -101,6 +101,9 @@
         },
         "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_DriverPreCheckInfo": {
+          "backCompat": false
         }
       },
       "0.40.0": {
@@ -115,6 +118,9 @@
         },
         "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_DriverPreCheckInfo": {
+          "backCompat": false
         }
       },
       "0.41.0": {
@@ -128,6 +134,14 @@
           "backCompat": false
         },
         "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_DriverPreCheckInfo": {
+          "backCompat": false
+        }
+      },
+      "0.42.0": {
+        "InterfaceDeclaration_DriverPreCheckInfo": {
           "backCompat": false
         }
       }

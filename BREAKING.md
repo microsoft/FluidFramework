@@ -15,6 +15,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove `getLegacyInterval()` and `delete()` from sequence dds](#Remove-getLegacyInterval-and-delete-from-sequence-dds)
 - [readOnly and readOnlyPermissions removed from Container](#readOnly-and-readOnlyPermissions-removed-from-container)
 - [Remove `loader` property from `MockFluidDataStoreContext` class](#Remove-loader-property-from-MockFluidDataStoreContext-class)
+- [Remove `containerPath` property from `DriverPreCheckInfo` interface](#Remove-containerPath-property-from-DriverPreCheckInfo-interface)]
 
 ### `IContainer` interface updated to expose actively used `Container` public APIs
 In order to have the `IContainer` interface be the active developer surface that is used when interacting with a `Container` instance, it has been updated to expose the APIs that are necessary for currently used behavior. The motivation here is to move away from using the `Container` class when only its type is required, and to use the `IContainer` interface instead.
@@ -39,6 +40,9 @@ The `readOnly` and `readOnlyPermissions` properties from `Container` in `contain
 
 ### Remove `loader` property from `MockFluidDataStoreContext` class
 The `loader` property from `MockFluidDataStoreContext` class was deprecated in release 0.37 and is now removed. Refer the following deprecation warning: [Loader in data stores deprecated](#Loader-in-data-stores-deprecated)
+
+### Remove `containerPath` property from `DriverPreCheckInfo` interface
+The `containerPath` property from the `DriverPreCheckInfo` interface was deprecated in release 0.32 and is now removed. To replace its functionality, use `Loader.request().url`.
 
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)

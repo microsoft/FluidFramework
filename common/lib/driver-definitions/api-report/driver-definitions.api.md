@@ -58,8 +58,6 @@ export enum DriverHeader {
 // @public
 export interface DriverPreCheckInfo {
     codeDetailsHint?: string;
-    // @deprecated (undocumented)
-    containerPath: string;
     criticalBootDomains?: string[];
 }
 
