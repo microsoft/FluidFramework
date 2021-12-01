@@ -26,7 +26,6 @@ import {
     IPersistedFileCache,
  } from "./odspCache";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
-import { defaultCacheExpiryTimeoutMs } from "./odspDocumentStorageManager";
 
 export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" |
     "treesLatest" | "uploadSummary" | "push" | "versions";
@@ -34,6 +33,8 @@ export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "
 export type FetchTypeInternal = FetchType | "cache";
 
 export const Odsp409Error = "Odsp409Error";
+
+export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000;
 
 /**
  * This class is a wrapper around fetch calls. It adds epoch to the request made so that the
@@ -76,21 +77,23 @@ export class EpochTracker implements IPersistedFileCache {
         entry: IEntry,
     ): Promise<any> {
         try {
+            // Return undefined so that the ops/snapshots are grabbed from the server instead of the cache
             const value: IVersionedValueWithEpoch = await this.cache.get(this.fileEntryFromEntry(entry));
-            // Version check
+            // Version mismatch between what the runtime expects and what it recieved.
+            // The cached value should not be used
             if (value === undefined || value.version !== persistedCacheValueVersion) {
                 return undefined;
             }
-            // Epoch check
             assert(value.fluidEpoch !== undefined, 0x1dc /* "all entries have to have epoch" */);
             if (this._fluidEpoch === undefined) {
                 this.setEpoch(value.fluidEpoch, true, "cache");
+            // Epoch mismatch, the cached value is considerably different from what the current state of
+            // the runtime and should not be used
             } else if (this._fluidEpoch !== value.fluidEpoch) {
                 return undefined;
             }
-            // Cache expiry check
-            // Only expire the snapshot cache as the ops cache returns ops for a specific range, meaning old ops
-            // will not be retrieved unless they are the "newest" ops.
+            // Expire the cached snapshot if it's older than the defaultCacheExpiryTimeoutMs and immediately
+            // expire all old caches that do not have cacheEntryTime
             if (entry.type === snapshotKey) {
                 const cacheTime = value.value?.cacheEntryTime;
                 const currentTime = Date.now();
@@ -99,8 +102,9 @@ export class EpochTracker implements IPersistedFileCache {
                         {
                             eventName: "odspVersionsCacheExpired",
                             duration: currentTime - cacheTime,
-                            defaultCacheExpiryTimeoutMs,
+                            maxCacheAgeMs: defaultCacheExpiryTimeoutMs,
                         });
+                    await this.removeEntries();
                     return undefined;
                 }
             }
@@ -114,7 +118,8 @@ export class EpochTracker implements IPersistedFileCache {
 
     public async put(entry: IEntry, value: any) {
         assert(this._fluidEpoch !== undefined, 0x1dd /* "no epoch" */);
-        // For snapshots, the value should have the cache entry time
+        // For snapshots, the value should have the cacheEntryTime. This will be used to expire snapshots older
+        // than the defaultCacheExpiryTimeoutMs.
         if (entry.type === snapshotKey) {
             value.cacheEntryTime = value.cacheEntryTime ?? Date.now();
         }

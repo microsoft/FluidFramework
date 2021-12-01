@@ -9,7 +9,7 @@ import {
     IOdspResolvedUrl,
     ICacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { EpochTracker } from "../epochTracker";
+import { EpochTracker, defaultCacheExpiryTimeoutMs } from "../epochTracker";
 import {
     IOdspSnapshot,
     HostStoragePolicyInternal,
@@ -21,7 +21,7 @@ import { INewFileInfo, ISnapshotContents } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
 import { getHashedDocumentId } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
-import { defaultCacheExpiryTimeoutMs, OdspDocumentStorageService } from "../odspDocumentStorageManager";
+import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache(2000);
