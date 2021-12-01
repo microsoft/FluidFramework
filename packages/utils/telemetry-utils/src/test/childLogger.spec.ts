@@ -7,24 +7,39 @@
 
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { ChildLogger } from "../logger";
+import { ChildLogger, ITelemetryLoggerPropertyBags } from "../logger";
 import { MockLogger } from "../mockLogger";
+
+class ForeignChildLoggerShim implements ITelemetryBaseLogger { // Don't extend ChildLogger, to thwart the instanceof check
+    get globalProperties(): Required<ITelemetryLoggerPropertyBags> {
+        // sneak in and grab protected globalProperties
+        return (this.childLogger as any).globalProperties as Required<ITelemetryLoggerPropertyBags>;
+    }
+
+    public constructor(
+        private readonly childLogger: ChildLogger,
+    ) { }
+
+    public send(event: ITelemetryBaseEvent): void {
+        this.childLogger.send(event);
+    }
+}
 
 describe("ChildLogger", () => {
     it.only("layerVersions", () => {
         // Arrange
         const mockLogger = new MockLogger();
-        const loggerA = ChildLogger.create(mockLogger, "A", {}, {}, "0.1");
-        const loggerB = ChildLogger.create(loggerA, undefined, {}, {}, "0.2");
-        const loggerC = ChildLogger.create(loggerB, "C", {}, {});
-        const loggerD = ChildLogger.create(loggerC, "D", {}, {}, "0.4");
-        const loggerE = ChildLogger.create(loggerD, "E", {}, {}, "0.5");
+        const loggerA = ChildLogger.create(mockLogger, "A", {}, { all: { a: 1 }}, "0.1");
+        const loggerB = new ForeignChildLoggerShim(loggerA as ChildLogger);
+        const loggerC = ChildLogger.create(loggerB, "C", {}, { all: { c: 3 }});
+       // const loggerD = new ForeignChildLoggerShim(loggerC as ChildLogger);
+        const loggerE = ChildLogger.create(loggerC, "E", {}, { all: { e: 5 }}, "0.5");
 
         loggerE.send({ category: "generic", eventName: "test1"});
-        assert(mockLogger.matchEvents([{layerVersions:"A:0.1, D:0.4, E:0.5"}]), "layerVersions not built properly");
+        mockLogger.assertEventsMatch([{layerVersions:"A:0.1, E:0.5"}]); // , "layerVersions not built properly");
 
         loggerA.send({ category: "generic", eventName: "test2"});
-        assert(mockLogger.matchEvents([{layerVersions:"A:0.1, D:0.4, E:0.5"}]), "layerVersions not propagated globally properly");
+        assert(mockLogger.matchEvents([{layerVersions:"A:0.1, E:0.5"}]), "layerVersions not propagated globally properly");
     });
     it("Properties & Getters Propagate",()=>{
         let sent = false;

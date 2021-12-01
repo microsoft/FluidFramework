@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { assert } from "@fluidframework/common-utils";
 import { TelemetryLogger } from "./logger";
 
 /**
@@ -17,6 +18,20 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
 
     send(event: ITelemetryBaseEvent): void {
         this.events.push(event);
+    }
+
+    assertEventsMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]) {
+        const actualEvents = this.events;
+        if (this.matchEvents(expectedEvents)) {
+            return;
+        }
+
+        assert(false, `
+        expected:
+        ${JSON.stringify(expectedEvents)}
+
+        actual:
+        ${JSON.stringify(actualEvents)}`);
     }
 
     /**

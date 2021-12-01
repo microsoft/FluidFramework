@@ -257,23 +257,23 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 }
 
-function supportsGlobalProps(logger: any): logger is { globalProperties: Required<ITelemetryLoggerPropertyBags>} {
+function supportsGlobalProps(logger: any): logger is { globalProperties: Required<ITelemetryLoggerPropertyBags> } {
     const maybeGp: ITelemetryLoggerPropertyBags = logger?.globalProperties;
     return (typeof maybeGp?.all) === "object" &&
            (typeof maybeGp?.error) === "object";
 }
 
 class ChildLoggerRoot extends TelemetryLogger {
+    readonly fallbackGlobalProps: Required<ITelemetryLoggerPropertyBags> = { all: {}, error: {} };
     public get globalProperties(): Required<ITelemetryLoggerPropertyBags> {
         if (supportsGlobalProps(this.baseLogger)) {
             return this.baseLogger.globalProperties;
         }
-        return this._globalProperties;
+        return this.fallbackGlobalProps;
     }
 
     public constructor(
         private readonly baseLogger: ITelemetryBaseLogger = new BaseTelemetryNullLogger(),
-        readonly _globalProperties: Required<ITelemetryLoggerPropertyBags> = { all: {}, error: {} },
     ) {
         super();
     }
@@ -339,9 +339,6 @@ export class ChildLogger extends TelemetryLogger {
                 }
             }
 
-            // Allow global properties to be updated over time
-            Object.assign(baseLogger.globalProperties, globalProperties);
-
             // Concatenate next layer version to existing versions
             if (namedLayerVersion !== undefined) {
                 baseLogger.globalProperties.all.layerVersions =
@@ -358,23 +355,36 @@ export class ChildLogger extends TelemetryLogger {
                 baseLogger.rootLogger,
                 combinedNamespace,
                 combinedProperties,
+                globalProperties,
             );
         }
 
         const rootLogger = new ChildLoggerRoot(baseLogger);
-        rootLogger.globalProperties.all.layerVersions = namedLayerVersion;
+        // Concatenate next layer version to existing versions
+        if (namedLayerVersion !== undefined) {
+            rootLogger.globalProperties.all.layerVersions =
+                [rootLogger.globalProperties.all.layerVersions, namedLayerVersion].filter((lv) => !!lv).join(", ");
+        }
+
         return new ChildLogger(
             rootLogger,
             namespace,
-            properties);
+            properties,
+            globalProperties);
     }
 
     private constructor(
         protected readonly rootLogger: ChildLoggerRoot,
-        namespace?: string,
-        properties?: ITelemetryLoggerPropertyBags,
+        namespace: string | undefined,
+        properties: ITelemetryLoggerPropertyBags,
+        globalProperties: ITelemetryLoggerPropertyBags,
     ) {
         super(namespace, properties);
+
+        // Allow global properties to be updated over time
+        const globalProps = this.globalProperties;
+        Object.assign(globalProps.all, globalProperties.all);
+        Object.assign(globalProps.error, globalProperties.error);
     }
 
     /**
