@@ -279,7 +279,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         onClosed(err);
                     });
             }),
-            { start: true, end: true, cancel: "error" },
+            { start: true, end: true, cancel: "generic" },
         );
     }
 
@@ -410,33 +410,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public get loadedFromVersion(): IVersion | undefined {
         return this._loadedFromVersion;
-    }
-
-    /**
-     * Tells if container is in read-only mode.
-     * Data stores should listen for "readonly" notifications and disallow user making changes to data stores.
-     * Readonly state can be because of no storage write permission,
-     * or due to host forcing readonly mode for container.
-     *
-     * We do not differentiate here between no write access to storage vs. host disallowing changes to container -
-     * in all cases container runtime and data stores should respect readonly state and not allow local changes.
-     *
-     * It is undefined if we have not yet established websocket connection
-     * and do not know if user has write access to a file.
-     * @deprecated - use readOnlyInfo
-     */
-    public get readonly() {
-        return this._deltaManager.readonly;
-    }
-
-    /**
-     * Tells if user has no write permissions for file in storage
-     * It is undefined if we have not yet established websocket connection
-     * and do not know if user has write access to a file.
-     * @deprecated - use readOnlyInfo
-     */
-    public get readonlyPermissions() {
-        return this._deltaManager.readonlyPermissions;
     }
 
     public get readOnlyInfo(): ReadOnlyInfo {
@@ -672,22 +645,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 switch (event) {
                     case dirtyContainerEvent:
                         if (this._dirtyContainer) {
-                            listener(dirtyContainerEvent);
+                            listener();
                         }
                         break;
                     case savedContainerEvent:
                         if (!this._dirtyContainer) {
-                            listener(savedContainerEvent);
+                            listener();
                         }
                         break;
                     case connectedEventName:
                          if (this.connected) {
-                            listener(event, this.clientId);
+                            listener(this.clientId);
                          }
                          break;
                     case disconnectedEventName:
                         if (!this.connected) {
-                            listener(event);
+                            listener();
                         }
                         break;
                     default:
@@ -1284,7 +1257,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async createDetached(source: IFluidCodeDetails) {
         const attributes: IDocumentAttributes = {
-            branch: "",
             sequenceNumber: detachedContainerRefSeqNumber,
             term: 1,
             minimumSequenceNumber: 0,
@@ -1377,7 +1349,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     ): Promise<IDocumentAttributes> {
         if (tree === undefined) {
             return {
-                branch: this.id,
                 minimumSequenceNumber: 0,
                 sequenceNumber: 0,
                 term: 1,
@@ -1487,7 +1458,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Save attributes for the document
         const documentAttributes: IDocumentAttributes = {
-            branch: this.id,
             minimumSequenceNumber: this.protocolHandler.minimumSequenceNumber,
             sequenceNumber: this.protocolHandler.sequenceNumber,
             term: this.protocolHandler.term,
@@ -1542,7 +1512,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (this.clientDetailsOverride !== undefined) {
             merge(client.details, this.clientDetailsOverride);
         }
-
+        client.details.environment = [client.details.environment, ` loaderVersion:${pkgVersion}`].join(";");
         return client;
     }
 

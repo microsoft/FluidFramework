@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 /* globals expect, should  */
-import { DataBinder } from '../../src/data_binder/data_binder';
+import { DataBinder } from '../../src/data_binder/dataBinder';
 
 import {
   catchConsoleErrors
-} from './catch_console_errors';
+} from './catchConsoleError';
 
 import {
   registerTestTemplates, ChildTemplate, PrimitiveChildrenTemplate, ReferenceParentTemplate, ArrayContainerTemplate,
@@ -19,7 +19,7 @@ import * as _ from 'underscore';
 import { PropertyElement } from '../../src/internal/propertyElement';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 import { RESOLVE_NEVER, RESOLVE_NO_LEAFS, RESOLVE_ALWAYS } from '../../src/internal/constants';
-import { MockSharedPropertyTree } from './mock_shared_property_tree';
+import { MockSharedPropertyTree } from './mockSharedPropertyTree';
 
 describe('Property element', function() {
 

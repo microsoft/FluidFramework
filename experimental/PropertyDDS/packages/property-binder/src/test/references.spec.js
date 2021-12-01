@@ -10,12 +10,12 @@
 /* eslint-disable require-jsdoc */
 /* eslint max-nested-callbacks: ["warn", 5] */
 
-import _ from 'underscore';
-import { DataBinder } from '../../src/data_binder/data_binder';
+import _ from 'lodash';
+import { DataBinder } from '../../src/data_binder/dataBinder';
 import {
   DataBinding
-} from '../../src/data_binder/data_binding';
-import { ModificationContext } from '../../src/data_binder/modification_context';
+} from '../../src/data_binder/dataBinding';
+import { ModificationContext } from '../../src/data_binder/modificationContext';
 import {
   registerTestTemplates, ParentTemplate, ChildTemplate,
   PrimitiveChildrenTemplate, ArrayContainerTemplate,
@@ -29,10 +29,10 @@ import {
   PrimitiveChildrenDataBinding,
   InheritedChildDataBinding
 } from './testDataBindings';
-import { catchConsoleErrors } from './catch_console_errors';
-import { unregisterAllOnPathListeners } from '../../src/data_binder/internal_utils';
+import { catchConsoleErrors } from './catchConsoleError';
+import { unregisterAllOnPathListeners } from '../../src/data_binder/internalUtils';
 import { RESOLVE_NO_LEAFS, RESOLVE_NEVER } from '../../src/internal/constants';
-import { MockSharedPropertyTree } from './mock_shared_property_tree';
+import { MockSharedPropertyTree } from './mockSharedPropertyTree';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 
 describe('DataBinder', function() {

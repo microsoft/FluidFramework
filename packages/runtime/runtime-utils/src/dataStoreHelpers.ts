@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
+    FluidObject,
     IFluidObject,
     IFluidRouter,
     IRequest,
@@ -62,7 +63,7 @@ export function responseToException(response: IResponse, request: IRequest): Err
     return responseErr;
 }
 
-export async function requestFluidObject<T = IFluidObject>(
+export async function requestFluidObject<T = IFluidObject & FluidObject>(
     router: IFluidRouter, url: string | IRequest): Promise<T> {
     const request = typeof url === "string" ? { url } : url;
     const response = await router.request(request);

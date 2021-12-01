@@ -41,6 +41,7 @@ export class OdspDeltaStorageService {
         from: number,
         to: number,
         telemetryProps: ITelemetryProperties,
+        fetchReason?: string,
     ): Promise<IDeltasFetchResult> {
         return getWithRetryForTokenRefresh(async (options) => {
             // Note - this call ends up in getSocketStorageDiscovery() and can refresh token
@@ -52,6 +53,9 @@ export class OdspDeltaStorageService {
             let postBody = `--${formBoundary}\r\n`;
             postBody += `Authorization: Bearer ${storageToken}\r\n`;
             postBody += `X-HTTP-Method-Override: GET\r\n`;
+            if (fetchReason !== undefined) {
+                postBody += `fetchReason: ${fetchReason}\r\n`;
+            }
 
             postBody += `_post: 1\r\n`;
             postBody += `\r\n--${formBoundary}--`;
@@ -123,7 +127,8 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
         private readonly getFromStorage: (
             from: number,
             to: number,
-            telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>,
+            telemetryProps: ITelemetryProperties,
+            fetchReason?: string) => Promise<IDeltasFetchResult>,
         private readonly getCached: (from: number, to: number) => Promise<ISequencedDocumentMessage[]>,
         private readonly requestFromSocket: (from: number, to: number) => void,
         private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
@@ -151,7 +156,8 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
         fromTotal: number,
         toTotal: number | undefined,
         abortSignal?: AbortSignal,
-        cachedOnly?: boolean)
+        cachedOnly?: boolean,
+        fetchReason?: string)
     {
         // We do not control what's in the cache. Current API assumes that fetchMessages() keeps banging on
         // storage / cache until it gets ops it needs. This would result in deadlock if fixed range is asked from
@@ -198,7 +204,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
                 return { messages: [], partialResult: false };
             }
 
-            const ops = await this.getFromStorage(from, to, telemetryProps);
+            const ops = await this.getFromStorage(from, to, telemetryProps, fetchReason);
             this.validateMessages("storage", ops.messages, from);
             opsFromStorage += ops.messages.length;
             this.opsReceived(ops.messages);
@@ -220,6 +226,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
             this.batchSize,
             this.logger,
             abortSignal,
+            fetchReason,
         );
 
         return streamObserver(stream, (result) => {

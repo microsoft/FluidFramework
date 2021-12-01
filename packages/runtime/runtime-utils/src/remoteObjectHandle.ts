@@ -5,11 +5,12 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    IFluidObject,
     IFluidHandle,
     IFluidHandleContext,
     IRequest,
     IResponse,
+    FluidObject,
+    IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import { create404Response, exceptionToResponse, responseToException } from "./dataStoreHelpers";
 
@@ -26,7 +27,7 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
     public get IFluidHandle() { return this; }
 
     public readonly isAttached = true;
-    private objectP: Promise<IFluidObject> | undefined;
+    private objectP: Promise<FluidObject> | undefined;
 
     /**
      * Creates a new RemoteFluidObjectHandle when parsing an IFluidHandle.
@@ -40,20 +41,14 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
         assert(absolutePath.startsWith("/"), 0x19d /* "Handles should always have absolute paths" */);
     }
 
-    /**
-     * @deprecated - This returns the absolute path.
-     */
-    public get path() {
-        return this.absolutePath;
-    }
-
     public async get(): Promise<any> {
         if (this.objectP === undefined) {
             const request = { url: this.absolutePath };
             this.objectP = this.routeContext.resolveHandle(request)
-                .then<IFluidObject>((response) => {
+                .then<FluidObject>((response) => {
                     if (response.mimeType === "fluid/object") {
-                        return response.value as IFluidObject;
+                        const fluidObject: FluidObject = response.value;
+                        return fluidObject;
                     }
                     throw responseToException(response, request);
                 });
@@ -71,7 +66,7 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
 
     public async request(request: IRequest): Promise<IResponse> {
         try {
-            const object = await this.get() as IFluidObject;
+            const object: FluidObject<IFluidRouter> = await this.get();
             const router = object.IFluidRouter;
 
             return router !== undefined

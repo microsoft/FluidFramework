@@ -6,6 +6,7 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { FluidSerializer } from '@fluidframework/runtime-utils';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
@@ -125,7 +126,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
 }
 
 // @public (undocumented)
-export class FluidObjectHandle<T extends IFluidObject = IFluidObject> implements IFluidHandle {
+export class FluidObjectHandle<T extends FluidObject = IFluidObject> implements IFluidHandle {
     constructor(value: T, path: string, routeContext: IFluidHandleContext);
     // (undocumented)
     readonly absolutePath: string;
@@ -160,7 +161,7 @@ export const mixinRequestHandler: (requestHandler: (request: IRequest, runtime: 
 export const mixinSummaryHandler: (handler: (runtime: FluidDataStoreRuntime) => Promise<{
     path: string[];
     content: string;
-}>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;
+} | undefined>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;
 
 
 // (No @packageDocumentation comment for this package)

@@ -234,13 +234,13 @@ describe("Loader", () => {
                 it("Should override readonly", async () => {
                     await startDeltaManager();
 
-                    assert.strictEqual(deltaManager.readonly, false);
+                    assert.strictEqual(deltaManager.readOnlyInfo.readonly, false);
 
                     deltaManager.forceReadonly(true);
-                    assert.strictEqual(deltaManager.readonly, true);
+                    assert.strictEqual(deltaManager.readOnlyInfo.readonly, true);
 
                     deltaManager.forceReadonly(false);
-                    assert.strictEqual(deltaManager.readonly, false);
+                    assert.strictEqual(deltaManager.readOnlyInfo.readonly, false);
                 });
 
                 it("Should raise readonly event when container was not readonly", async () => {
@@ -260,8 +260,8 @@ describe("Loader", () => {
                     await startDeltaManager(false /* startDeltaManager */);
 
                     // Closing underlying connection makes container readonly
-                    deltaConnection.close();
-                    assert.strictEqual(deltaManager.readonly, true);
+                    deltaConnection.dispose();
+                    assert.strictEqual(deltaManager.readOnlyInfo.readonly, true);
 
                     deltaManager.on("readonly", () => {
                         assert.fail("Shouldn't be called");

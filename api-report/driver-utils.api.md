@@ -332,7 +332,7 @@ export function readAndParseFromBlobs<T>(blobs: {
 }, id: string): T;
 
 // @public (undocumented)
-export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLogger, signal?: AbortSignal): IStream<ISequencedDocumentMessage[]>;
+export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLogger, signal?: AbortSignal, fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
 
 // @public (undocumented)
 export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
