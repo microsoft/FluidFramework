@@ -582,6 +582,19 @@ export class ScheduleManager {
  */
 export const agentSchedulerId = "_scheduler";
 
+// safely check navigator and get the hardware spec value
+export function getDeviceSpec() {
+    try {
+        if (typeof navigator === "object" && navigator !== null) {
+            return {
+                deviceMemory: (navigator as any).deviceMemory,
+                hardwareConcurrency: navigator.hardwareConcurrency,
+            };
+        }
+    } catch {
+    }
+    return {};
+}
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
@@ -921,7 +934,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         } else {
             this.createContainerMetadata = {
                 createContainerRuntimeVersion: pkgVersion,
-                createContainerTimestamp: performance.now(),
+                createContainerTimestamp: Date.now(),
             };
         }
 
@@ -944,7 +957,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          * of this client's connection - https://github.com/microsoft/FluidFramework/issues/8375.
          */
         const getCurrentTimestamp = () => {
-            return this.deltaManager.lastMessage?.timestamp ?? performance.now();
+            return this.deltaManager.lastMessage?.timestamp ?? Date.now();
         };
         this.garbageCollector = GarbageCollector.create(
             this,
@@ -1156,6 +1169,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.deltaManager.on("op", this.onOp);
         }
 
+        // logging hardware telemetry
+        logger.sendTelemetryEvent({
+            eventName:"DeviceSpec",
+            ...getDeviceSpec(),
+        });
+
+        // logging container load stats
         this.logger.sendTelemetryEvent({
             eventName: "ContainerLoadStats",
             ...this.createContainerMetadata,
@@ -1165,6 +1185,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             disableIsolatedChannels: metadata?.disableIsolatedChannels,
             gcVersion: metadata?.gcFeature,
         });
+
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 

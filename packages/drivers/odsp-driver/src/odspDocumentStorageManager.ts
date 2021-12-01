@@ -483,7 +483,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     event.end({ ...props, method });
                     return retrievedSnapshot;
                 },
-                {end: true, cancel: "error"},
             );
 
             // Successful call, make network calls only
