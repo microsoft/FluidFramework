@@ -17,6 +17,7 @@ import { ITelemetryGenericEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITelemetryPerformanceEvent } from '@fluidframework/common-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import { Lazy } from '@fluidframework/common-utils';
 import { TelemetryEventCategory } from '@fluidframework/common-definitions';
 import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
@@ -27,6 +28,52 @@ export class ChildLogger extends TelemetryLogger {
     protected readonly baseLogger: ITelemetryBaseLogger;
     static create(baseLogger?: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     send(event: ITelemetryBaseEvent): void;
+}
+
+// Warning: (ae-incompatible-release-tags) The symbol "ConfigProvider" is marked as @public, but its signature references "IConfigProvider" which is marked as @alpha
+//
+// @public (undocumented)
+export class ConfigProvider implements IConfigProvider {
+    // Warning: (ae-incompatible-release-tags) The symbol "create" is marked as @public, but its signature references "IConfigProviderBase" which is marked as @alpha
+    //
+    // (undocumented)
+    static create(namespace: string | undefined, orderedBaseProviders: (IConfigProviderBase | ITelemetryBaseLogger | undefined)[]): IConfigProvider;
+    // (undocumented)
+    getBoolean(name: string, defaultValue?: boolean): boolean | undefined;
+    // (undocumented)
+    getBooleanArray(name: string, defaultValue?: boolean[]): boolean[] | undefined;
+    // (undocumented)
+    getNumber(name: string, defaultValue?: number): number | undefined;
+    // (undocumented)
+    getNumberArray(name: string, defaultValue?: number[]): number[] | undefined;
+    // (undocumented)
+    getRawConfig(name: string): ConfigTypes;
+    // (undocumented)
+    getString(name: string, defaultValue?: string): string | undefined;
+    // (undocumented)
+    getStringArray(name: string, defaultValue?: string[]): string[] | undefined;
+    }
+
+// @public (undocumented)
+export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
+
+// @alpha (undocumented)
+export type ConfigTypeStrings = keyof ConfigTypeStringToType;
+
+// @alpha (undocumented)
+export interface ConfigTypeStringToType {
+    // (undocumented)
+    ["boolean[]"]: boolean[];
+    // (undocumented)
+    ["number[]"]: number[];
+    // (undocumented)
+    ["string[]"]: string[];
+    // (undocumented)
+    boolean: boolean;
+    // (undocumented)
+    number: number;
+    // (undocumented)
+    string: string;
 }
 
 // @public (undocumented)
@@ -65,6 +112,28 @@ export const hasErrorInstanceId: (x: any) => x is {
     errorInstanceId: string;
 };
 
+// @alpha (undocumented)
+export interface IConfigProvider extends IConfigProviderBase {
+    // (undocumented)
+    getBoolean(name: string, defaultValue?: boolean): boolean | undefined;
+    // (undocumented)
+    getBooleanArray(name: string, defaultValue?: boolean[]): boolean[] | undefined;
+    // (undocumented)
+    getNumber(name: string, defaultValue?: number): number | undefined;
+    // (undocumented)
+    getNumberArray(name: string, defaultValue?: number[]): number[] | undefined;
+    // (undocumented)
+    getString(name: string, defaultValue?: string): string | undefined;
+    // (undocumented)
+    getStringArray(name: string, defaultValue?: string[]): string[] | undefined;
+}
+
+// @alpha (undocumented)
+export interface IConfigProviderBase {
+    // (undocumented)
+    getRawConfig(name: string): ConfigTypes;
+}
+
 // @public
 export interface IFluidErrorAnnotations {
     props?: ITelemetryProperties;
@@ -81,6 +150,11 @@ export interface IFluidErrorBase extends Error {
     readonly name: string;
     readonly stack?: string;
 }
+
+// Warning: (ae-incompatible-release-tags) The symbol "inMemoryConfigProvider" is marked as @public, but its signature references "IConfigProviderBase" which is marked as @alpha
+//
+// @public (undocumented)
+export const inMemoryConfigProvider: (storage: Storage) => Lazy<IConfigProviderBase | undefined>;
 
 // @public
 export interface IPerformanceEventMarkers {
@@ -129,6 +203,15 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
 
 // @public
 export function logIfFalse(condition: any, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
+
+// @alpha (undocumented)
+export function mixinChildLoggerWithConfigProvider(logger: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLoggerWithConfig;
+
+// Warning: (ae-incompatible-release-tags) The symbol "mixinConfigProvider" is marked as @public, but its signature references "IConfigProvider" which is marked as @alpha
+// Warning: (ae-incompatible-release-tags) The symbol "mixinConfigProvider" is marked as @public, but its signature references "TelemetryLoggerWithConfig" which is marked as @alpha
+//
+// @public (undocumented)
+export function mixinConfigProvider<T extends ITelemetryBaseLogger>(logger: T, config: IConfigProvider): TelemetryLoggerWithConfig<T>;
 
 // @public
 export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
@@ -220,6 +303,11 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         category: TelemetryEventCategory;
     }, error?: any): void;
 }
+
+// @alpha (undocumented)
+export type TelemetryLoggerWithConfig<T extends ITelemetryBaseLogger = ITelemetryLogger> = T & {
+    readonly config: IConfigProvider;
+};
 
 // @public
 export class TelemetryUTLogger implements ITelemetryLogger {

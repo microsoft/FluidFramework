@@ -212,6 +212,10 @@ export class ConfigProvider implements IConfigProvider {
             return undefined;
         }
 
+        if (converter === "string" && cacheValue[converter] === undefined) {
+            return JSON.stringify(cacheValue.raw) as ConfigTypeStringToType[T];
+        }
+
         if (converter in cacheValue) {
             return cacheValue[converter] as ConfigTypeStringToType[T];
         }
