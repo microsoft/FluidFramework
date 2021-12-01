@@ -28,6 +28,7 @@ import {
 import {
     ConfigProvider,
     DebugLogger,
+    inMemoryConfigProvider,
     TelemetryLoggerWithConfig,
     mixinChildLoggerWithConfigProvider,
     mixinConfigProvider,
@@ -221,7 +222,7 @@ export interface ILoaderServices {
     readonly urlResolver: IUrlResolver;
     /**
      * The document service factory take the Fluid url provided
-     * by the resolved url and constucts all the necessary services
+     * by the resolved url and constructs all the necessary services
      * for communication with the container's server.
      */
     readonly documentServiceFactory: IDocumentServiceFactory;
@@ -288,7 +289,7 @@ export class Loader implements IHostLoader {
 
         const subLogger = mixinConfigProvider(
             DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all:{loaderId: uuid()} }),
-            ConfigProvider.create("Fluid",[loaderProps.logger]));
+            ConfigProvider.create("Fluid",[inMemoryConfigProvider(sessionStorage), loaderProps.logger]));
 
         this.logger = mixinChildLoggerWithConfigProvider(subLogger, "Loader");
 
