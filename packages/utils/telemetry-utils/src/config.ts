@@ -16,10 +16,7 @@ export interface IConfigProviderBase {
     getRawConfig(name: string): ConfigTypes;
 }
 
-/**
- * @alpha
- */
-export interface ConfigTypeStringToType {
+interface ConfigTypeStringToType {
     number: number;
     string: string;
     boolean: boolean;
@@ -28,10 +25,7 @@ export interface ConfigTypeStringToType {
     ["boolean[]"]: boolean[];
 }
 
-/**
- * @alpha
- */
-export type ConfigTypeStrings = keyof ConfigTypeStringToType;
+type ConfigTypeStrings = keyof ConfigTypeStringToType;
 
 /**
  * @alpha
