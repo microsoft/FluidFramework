@@ -20,6 +20,7 @@ describe("Hardware Stats",  () => {
         deltaManager: new MockDeltaManager(),
         quorum: new MockQuorum(),
         logger: mockLogger,
+        clientDetails: { capabilities: { interactive: true } },
     };
 
     const getDeviceSpecEvents = (): ITelemetryBaseEvent[] =>
@@ -42,6 +43,7 @@ describe("Hardware Stats",  () => {
             deltaManager: new MockDeltaManager(),
             quorum: new MockQuorum(),
             logger: mockLogger,
+            clientDetails: { capabilities: { interactive: true } },
         };
     });
 

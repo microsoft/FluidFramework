@@ -8,6 +8,8 @@ export {
     IChunkedOp,
     ContainerRuntimeMessage,
     IGCRuntimeOptions,
+    ISummarizerRequestOptions,
+    formRequestSummarizerFn,
     ISummaryRuntimeOptions,
     IContainerRuntimeOptions,
     isRuntimeMessage,
