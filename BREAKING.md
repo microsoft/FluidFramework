@@ -42,7 +42,7 @@ The `readOnly` and `readOnlyPermissions` properties from `Container` in `contain
 The `loader` property from `MockFluidDataStoreContext` class was deprecated in release 0.37 and is now removed. Refer the following deprecation warning: [Loader in data stores deprecated](#Loader-in-data-stores-deprecated)
 
 ### Remove `IntervalCollection.getView()` from sequence dds
-The `IntervalCollection.getView()` was deprecated and no longer reference anywhere.
+The `IntervalCollection.getView()` was removed.  If you were calling this API, you should instead refer to the `IntervalCollection` itself directly in places where you were using the view.
 
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
