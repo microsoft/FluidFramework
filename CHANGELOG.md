@@ -1,5 +1,14 @@
 # Change Log
 
+## 16.0.1
+
+* build: update deps (except typescript)
+  * Associated pull request: [36388](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/36388)
+  * Commit: [9aa33dab9dfd517f8500ffb17d788a5efddd7317](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/9aa33dab9dfd517f8500ffb17d788a5efddd7317)
+* refactor: BREAKING CHANGE: clean up TreeView API
+  * Associated pull request: [36177](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/36177)
+  * Commit: [c1701820afa61b58b4c71fcc194ebe2db2a41ee2](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c1701820afa61b58b4c71fcc194ebe2db2a41ee2)
+
 ## 15.4.1
 
 * improvement: extra merge health data
