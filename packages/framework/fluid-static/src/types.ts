@@ -47,7 +47,7 @@ export type SharedObjectClass<T extends IFluidLoadable>
  */
 export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
 
-/** Object factory function allowing a data migration routing to instantiate new objects. */
+/** Object factory function allowing a data migration routine to instantiate new objects. */
 export type ObjectFactory = (objectType: LoadableObjectClass<any>, props?: any) => Promise<any>;
 
 /** Document version info. The concrete shape of the version object is TBD */

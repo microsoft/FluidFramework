@@ -14,85 +14,137 @@ describe("Schema Migrations", () => {
     describe("Container-level migrations", () => {
         let client: TinyliciousClient;
         let containerId: string;
+        // The container is created with an initial schema with one top-level object.
+        const initialSchema = {
+            initialObjects: {
+                myEntities: SharedMap,
+            },
+        };
 
         beforeEach(async () => {
+            // Test suite requires a live instance of the tinylicious server.
             client = new TinyliciousClient();
-            const schema = {
-                initialObjects: {
-                    map: SharedMap,
-                },
-            };
-            const { container } = await client.createContainer(schema);
+            // Create a container with the initial schema.
+            const { container } = await client.createContainer(initialSchema);
             containerId = await container.attach();
+            // Close the container immediately after attaching it to the storage.
             container.dispose();
         });
 
         afterEach(() => {
         });
 
-        it("No migrations", async () => {
-            const schema = {
+        // #region Core scenarios
+
+        /** Back-compat scenario. Open a container with the same schema. */
+        it("No migrations - no changes in schema", async () => {
+            // Act
+            const { container } = await client.getContainer(containerId, initialSchema);
+
+            // Assert
+            assert.ok(container, "Container is not loaded correctly.");
+            assert.ok(container.initialObjects.myEntities, "Initial object should be available.");
+        });
+
+        it("No migrations - new schema revision", async () => {
+            // arrange
+            const newSchema = {
                 initialObjects: {
-                    map: SharedMap,
+                    myEntities: SharedMap,
+                    myNewObject: SharedDirectory,
                 },
             };
 
-            const { container } = await client.getContainer(containerId, schema);
+            // act
+            const { container } = await client.getContainer(containerId, newSchema);
 
-            assert.ok(container);
-            assert.ok(container.initialObjects.map);
+            // assert
+            assert.ok(container, "Container is not loaded correctly.");
+            assert.ok(container.initialObjects.myEntities, "Initial object should be available.");
+            assert.equal(
+                typeof container.initialObjects.myNewObject,
+                "undefined",
+                "New object should not be created in existing container.",
+            );
         });
 
         it("No-op migration", async () => {
-            const schema = {
+            // arrange
+            const newSchema = {
                 initialObjects: {
-                    map: SharedMap,
+                    myEntities: SharedMap,
+                    myNewObject: SharedDirectory,
                 },
-                migrations: async (snapshot: LoadableObjectRecord, createObject: ObjectFactory) => {
+                migrations: async () => {
+                    // the provided migration routine doesn't alter container objects
                     return undefined;
                 },
             };
 
-            const { container } = await client.getContainer(containerId, schema);
+            // act
+            const { container } = await client.getContainer(containerId, newSchema);
 
-            assert.ok(container);
-            assert.ok(container.initialObjects.map);
+            // assert
+            assert.ok(container, "Container is not loaded correctly.");
+            assert.ok(container.initialObjects.myEntities, "Initial object should be available.");
+            assert.equal(
+                typeof container.initialObjects.myNewObject,
+                "undefined",
+                "New object should not be created in existing container.",
+            );
         });
 
         it("Add object", async () => {
+            // arrange
             const schema = {
                 initialObjects: {
-                    map: SharedMap,
-                    directory: SharedDirectory,
+                    myEntities: SharedMap,
+                    myNewObject: SharedDirectory,
                 },
                 migrations: async (snapshot: LoadableObjectRecord, createObject: ObjectFactory) => {
-                    if ("directory" in snapshot === false) {
-                        const directory = await createObject(SharedDirectory);
-                        return { ...snapshot, directory};
+                    if ("myNewObject" in snapshot === false) {
+                        // only create a new object when it doesn't exist
+                        const myNewObject = await createObject(SharedDirectory);
+                        return { ...snapshot, myNewObject };
                     }
+                    // no change required
                     return undefined;
                 },
             };
 
+            // act
             const { container } = await client.getContainer(containerId, schema);
 
-            assert.ok(container);
-            assert.ok(container.initialObjects.directory);
+            // assert
+            assert.ok(container, "Container is not loaded correctly.");
+            assert.ok(container.initialObjects.myNewObject, "New object should be created.");
         });
 
-        it("Delete object", async () => {});
+        it("Delete object", async () => { });
 
-        it("Rename object", async () => {});
+        it("Rename object", async () => { });
 
-        it("Update object", async () => {});
+        it("Update object", async () => { });
 
-        // Advanced scenarios:
-        it("Move object", async () => {});
+        // #endregion
 
-        it("Split object", async () => {});
+        // #region Advanced scenarios
+        it("Move object", async () => { });
 
-        it("Merge objects", async () => {});
+        it("Split object", async () => { });
 
-        it("Chain migrations", async () => {});
+        it("Merge objects", async () => { });
+
+        it("Chain migrations", async () => { });
+
+        // #endregion
+
+        // #region Data object scenarios
+
+        it("Create custom data object", async () => {
+            // variations with or without schema
+        });
+
+        // #endregion
     });
 });
