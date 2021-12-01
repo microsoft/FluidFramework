@@ -315,9 +315,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             this.blobCache.setBlob(blobId, blob);
         }
 
-        if (!this.attributesBlobHandles.has(blobId)) {
-            return blob;
-        }
         return blob;
     }
 
@@ -486,7 +483,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     event.end({ ...props, method });
                     return retrievedSnapshot;
                 },
-                {end: true, cancel: "error"},
             );
 
             // Successful call, make network calls only

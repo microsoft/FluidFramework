@@ -61,14 +61,6 @@ export function configureLogging(configOrPath: nconf.Provider | string) {
         }
     }
 
-    // Forward all debug library logs through winston
-    (debug as any).log = (msg, ...args) => winston.info(msg, ...args);
-    // Override the default log format to not include the timestamp since winston will do this for us
-    (debug as any).formatArgs = function(args) {
-        const name = this.namespace;
-        args[0] = `${name} ${args[0]}`;
-    };
-
     const genevaConfig = config.get("lumberjack");
     const engineList =
         genevaConfig && genevaConfig.engineList ?
@@ -81,4 +73,15 @@ export function configureLogging(configOrPath: nconf.Provider | string) {
         undefined;
 
     Lumberjack.setup(engineList, schemaValidatorList);
+
+    // Forward all debug library logs through winston and Lumberjack
+    (debug as any).log = function(msg, ...args) {
+        winston.info(msg, ...args);
+        Lumberjack.info(msg, { args: JSON.stringify(args) });
+    };
+    // Override the default log format to not include the timestamp since winston and Lumberjack will do this for us
+    (debug as any).formatArgs = function(args) {
+        const name = this.namespace;
+        args[0] = `${name} ${args[0]}`;
+    };
 }

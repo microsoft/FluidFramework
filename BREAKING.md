@@ -12,6 +12,9 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ## 0.53 Breaking changes
 - [`IContainer` interface updated to expose actively used `Container` public APIs](#IContainer-interface-updated-to-expose-actively-used-Container-public-APIs)
+- [Remove `getLegacyInterval()` and `delete()` from sequence dds](#Remove-getLegacyInterval-and-delete-from-sequence-dds)
+- [readOnly and readOnlyPermissions removed from Container](#readOnly-and-readOnlyPermissions-removed-from-container)
+- [Remove `loader` property from `MockFluidDataStoreContext` class](#Remove-loader-property-from-MockFluidDataStoreContext-class)
 
 ### `IContainer` interface updated to expose actively used `Container` public APIs
 In order to have the `IContainer` interface be the active developer surface that is used when interacting with a `Container` instance, it has been updated to expose the APIs that are necessary for currently used behavior. The motivation here is to move away from using the `Container` class when only its type is required, and to use the `IContainer` interface instead.
@@ -27,6 +30,15 @@ The following values have been added (NOTE: some of these are marked with an @al
 - `forceReadonly()` (**alpha**)
 
 Additionally, `codeDetails` which was already deprecated before is now marked as optional and ready for removal after the next release.
+
+### Remove `getLegacyInterval()` and `delete()` from sequence dds
+`getLegacyInterval()` was only being used by the deprecated `IntervalCollection.delete()`. The alternative to `IntervalCollection.delete()` is `IntervalCollection.removeIntervalById()`.
+
+### `readOnly` and `readOnlyPermissions` removed from `Container`
+The `readOnly` and `readOnlyPermissions` properties from `Container` in `container-loader` was deprecated in 0.35, and has now been removed. To replace its functionality, use `readOnlyInfo` by accessing `readOnlyInfo.readonly` and `readOnlyInfo.permissions` respectively.
+
+### Remove `loader` property from `MockFluidDataStoreContext` class
+The `loader` property from `MockFluidDataStoreContext` class was deprecated in release 0.37 and is now removed. Refer the following deprecation warning: [Loader in data stores deprecated](#Loader-in-data-stores-deprecated)
 
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)

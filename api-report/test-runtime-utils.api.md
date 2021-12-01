@@ -308,8 +308,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     IFluidHandleContext: IFluidHandleContext;
     // (undocumented)
     isLocalDataStore: boolean;
-    // @deprecated (undocumented)
-    loader: ILoader;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
