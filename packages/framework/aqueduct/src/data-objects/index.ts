@@ -7,4 +7,6 @@ export { DataObject } from "./dataObject";
 export {
     IDataObjectProps,
     PureDataObject,
+    Default,
+    DataObjectTypes,
 } from "./pureDataObject";

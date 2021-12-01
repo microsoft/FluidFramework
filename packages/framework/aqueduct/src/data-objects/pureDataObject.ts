@@ -24,13 +24,25 @@ import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { serviceRoutePathRoot } from "../container-services";
 import { defaultFluidObjectRequestHandler } from "../request-handlers";
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-export interface IDataObjectProps<O = object, S = undefined> {
+export interface DataObjectTypes {
+    O?: FluidObject,
+    S?: any,
+    E?: IEvent
+}
+
+export type Default<T extends DataObjectTypes> = {
+    [P in keyof Required<DataObjectTypes>]:
+        T[P] extends Required<DataObjectTypes>[P]
+            ? T[P]
+            : Required<DataObjectTypes>[P]
+};
+
+export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
     readonly runtime: IFluidDataStoreRuntime;
     readonly context: IFluidDataStoreContext;
     // eslint-disable-next-line @typescript-eslint/ban-types
-    readonly providers: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<object>>;
-    readonly initProps?: S;
+    readonly providers: AsyncFluidObjectProvider<FluidObjectKey<Default<I>["O"]>, FluidObjectKey<object>>;
+    readonly initProps?: Default<I>["S"];
 }
 
 /**
@@ -42,9 +54,8 @@ export interface IDataObjectProps<O = object, S = undefined> {
  * @typeParam S - the initial state type that the produced data object may take during creation
  * @typeParam E - represents events that will be available in the EventForwarder
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export abstract class PureDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
-    extends EventForwarder<E>
+export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
+    extends EventForwarder<Default<I>["E"]>
     implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IFluidObject {
     private readonly innerHandle: IFluidHandle<this>;
     private _disposed = false;
@@ -66,10 +77,11 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
      *
      * To define providers set IFluidObject interfaces in the generic O type for your data store
      */
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    protected readonly providers: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<object>>;
+    protected readonly providers:
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        AsyncFluidObjectProvider<FluidObjectKey<Default<I>["O"]>, FluidObjectKey<object>>;
 
-    protected initProps?: S;
+    protected initProps?: Default<I>["S"];
 
     protected initializeP: Promise<void> | undefined;
 
@@ -92,7 +104,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
         return obj;
     }
 
-    public constructor(props: IDataObjectProps<O, S>) {
+    public constructor(props: IDataObjectProps<I>) {
         super();
         this.runtime = props.runtime;
         this.context = props.context;
@@ -161,7 +173,8 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
                 0x0be /* "Trying to initialize from existing while initProps is set!" */);
             await this.initializingFromExisting();
         } else {
-            await this.initializingFirstTime(this.context.createProps as S ?? this.initProps);
+            await this.initializingFirstTime(
+                this.context.createProps as Default<I>["S"] ?? this.initProps);
         }
         await this.hasInitialized();
     }
@@ -223,7 +236,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
      *
      * @param props - Optional props to be passed in on create
      */
-    protected async initializingFirstTime(props?: S): Promise<void> { }
+    protected async initializingFirstTime(props?: Default<I>["S"]): Promise<void> { }
 
     /**
      * Called every time but the first time the data store is initialized (creations

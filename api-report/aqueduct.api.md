@@ -84,7 +84,7 @@ export type ContainerServiceRegistryEntries = Iterable<[
 ]>;
 
 // @public
-export abstract class DataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent> extends PureDataObject<O, S, E> {
+export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
     // (undocumented)
     protected getUninitializedErrorString(item: string): string;
     initializeInternal(existing: boolean): Promise<void>;
@@ -94,9 +94,24 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
     }
 
 // @public
-export class DataObjectFactory<TObj extends DataObject<O, S, E>, O, S, E extends IEvent = IEvent> extends PureDataObjectFactory<TObj, O, S, E> {
-    constructor(type: string, ctor: new (props: IDataObjectProps<O, S>) => TObj, sharedObjects: readonly IChannelFactory[] | undefined, optionalProviders: FluidObjectSymbolProvider<O>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime);
+export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
+    constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory[] | undefined, optionalProviders: FluidObjectSymbolProvider<Default<I>["O"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime);
 }
+
+// @public (undocumented)
+export interface DataObjectTypes {
+    // (undocumented)
+    E?: IEvent;
+    // (undocumented)
+    O?: FluidObject;
+    // (undocumented)
+    S?: any;
+}
+
+// @public (undocumented)
+export type Default<T extends DataObjectTypes> = {
+    [P in keyof Required<DataObjectTypes>]: T[P] extends Required<DataObjectTypes>[P] ? T[P] : Required<DataObjectTypes>[P];
+};
 
 // @public
 export function defaultFluidObjectRequestHandler(fluidObject: FluidObject, request: IRequest): IResponse;
@@ -117,13 +132,13 @@ export function getObjectFromContainer<T = IFluidObject & FluidObject>(path: str
 export function getObjectWithIdFromContainer<T = IFluidObject & FluidObject>(id: string, container: IContainer): Promise<T>;
 
 // @public (undocumented)
-export interface IDataObjectProps<O = object, S = undefined> {
+export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
     // (undocumented)
     readonly context: IFluidDataStoreContext;
     // (undocumented)
-    readonly initProps?: S;
+    readonly initProps?: Default<I>["S"];
     // (undocumented)
-    readonly providers: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<object>>;
+    readonly providers: AsyncFluidObjectProvider<FluidObjectKey<Default<I>["O"]>, FluidObjectKey<object>>;
     // (undocumented)
     readonly runtime: IFluidDataStoreRuntime;
 }
@@ -138,15 +153,15 @@ export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
 export const mountableViewRequestHandler: (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse>;
 
 // @public
-export abstract class PureDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent> extends EventForwarder<E> implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IFluidObject {
-    constructor(props: IDataObjectProps<O, S>);
+export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends EventForwarder<Default<I>["E"]> implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IFluidObject {
+    constructor(props: IDataObjectProps<I>);
     protected readonly context: IFluidDataStoreContext;
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
     finishInitialization(existing: boolean): Promise<void>;
     // (undocumented)
-    static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject<object, undefined, IEvent>>;
+    static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject<DataObjectTypes>>;
     getFluidObjectFromDirectory<T extends IFluidObject & FluidObject & IFluidLoadable>(key: string, directory: IDirectory, getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IFluidHandle | undefined): Promise<T | undefined>;
     protected getService<T extends IFluidObject & FluidObject>(id: string): Promise<T>;
     get handle(): IFluidHandle<this>;
@@ -162,12 +177,12 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
     initializeInternal(existing: boolean): Promise<void>;
     // (undocumented)
     protected initializeP: Promise<void> | undefined;
-    protected initializingFirstTime(props?: S): Promise<void>;
+    protected initializingFirstTime(props?: Default<I>["S"]): Promise<void>;
     protected initializingFromExisting(): Promise<void>;
     // (undocumented)
-    protected initProps?: S;
+    protected initProps?: Default<I>["S"];
     protected preInitialize(): Promise<void>;
-    protected readonly providers: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<object>>;
+    protected readonly providers: AsyncFluidObjectProvider<FluidObjectKey<Default<I>["O"]>, FluidObjectKey<object>>;
     request(req: IRequest): Promise<IResponse>;
     // @deprecated (undocumented)
     protected requestFluidObject_UNSAFE<T extends IFluidObject>(id: string): Promise<T>;
@@ -175,16 +190,16 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
 }
 
 // @public
-export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E extends IEvent = IEvent> implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>, IRootDataObjectFactory {
-    constructor(type: string, ctor: new (props: IDataObjectProps<O, S>) => TObj, sharedObjects: readonly IChannelFactory[], optionalProviders: FluidObjectSymbolProvider<O>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeClass?: typeof FluidDataStoreRuntime);
-    createChildInstance(parentContext: IFluidDataStoreContext, initialState?: S): Promise<TObj>;
-    createInstance(runtime: IContainerRuntimeBase, initialState?: S): Promise<TObj>;
+export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>, IRootDataObjectFactory {
+    constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory[], optionalProviders: FluidObjectSymbolProvider<Default<I>["O"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeClass?: typeof FluidDataStoreRuntime);
+    createChildInstance(parentContext: IFluidDataStoreContext, initialState?: Default<I>["S"]): Promise<TObj>;
+    createInstance(runtime: IContainerRuntimeBase, initialState?: Default<I>["S"]): Promise<TObj>;
     // (undocumented)
-    protected createInstanceCore(context: IFluidDataStoreContextDetached, initialState?: S): Promise<TObj>;
+    protected createInstanceCore(context: IFluidDataStoreContextDetached, initialState?: Default<I>["S"]): Promise<TObj>;
     // (undocumented)
-    protected createNonRootInstanceCore(containerRuntime: IContainerRuntimeBase, packagePath: Readonly<string[]>, initialState?: S): Promise<TObj>;
-    createPeerInstance(peerContext: IFluidDataStoreContext, initialState?: S): Promise<TObj>;
-    createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime, initialState?: S): Promise<TObj>;
+    protected createNonRootInstanceCore(containerRuntime: IContainerRuntimeBase, packagePath: Readonly<string[]>, initialState?: Default<I>["S"]): Promise<TObj>;
+    createPeerInstance(peerContext: IFluidDataStoreContext, initialState?: Default<I>["S"]): Promise<TObj>;
+    createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime, initialState?: Default<I>["S"]): Promise<TObj>;
     // (undocumented)
     get IFluidDataStoreFactory(): this;
     // (undocumented)

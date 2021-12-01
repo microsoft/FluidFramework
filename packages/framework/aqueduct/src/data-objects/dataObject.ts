@@ -4,14 +4,12 @@
  */
 
 import {
-    IFluidObject,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
 import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
-import { IEvent } from "@fluidframework/common-definitions";
-import { PureDataObject } from "./pureDataObject";
+import { PureDataObject, DataObjectTypes } from "./pureDataObject";
 
 /**
  * DataObject is a base data store that is primed with a root directory. It
@@ -25,9 +23,7 @@ import { PureDataObject } from "./pureDataObject";
  * @typeParam S - the initial state type that the produced data object may take during creation
  * @typeParam E - represents events that will be available in the EventForwarder
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export abstract class DataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
-    extends PureDataObject<O, S, E>
+export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I>
 {
     private internalRoot: ISharedDirectory | undefined;
     private readonly rootDirectoryId = "root";

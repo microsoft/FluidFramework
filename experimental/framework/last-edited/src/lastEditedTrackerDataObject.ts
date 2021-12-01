@@ -4,7 +4,6 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
 import { LastEditedTracker } from "./lastEditedTracker";
@@ -16,7 +15,7 @@ import { IProvideFluidLastEditedTracker } from "./interfaces";
 export class LastEditedTrackerDataObject extends DataObject
     implements IProvideFluidLastEditedTracker {
     private static readonly factory =
-        new DataObjectFactory<LastEditedTrackerDataObject, undefined, undefined, IEvent>(
+        new DataObjectFactory(
             "@fluid-experimental/last-edited",
             LastEditedTrackerDataObject,
             [SharedSummaryBlock.getFactory()],

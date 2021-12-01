@@ -7,7 +7,6 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import React from "react";
@@ -40,7 +39,7 @@ export class Bubblebench extends DataObject implements IFluidHTMLView {
  * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
-export const BubblebenchInstantiationFactory = new DataObjectFactory<Bubblebench, undefined, undefined, IEvent>(
+export const BubblebenchInstantiationFactory = new DataObjectFactory(
     Bubblebench.Name,
     Bubblebench,
     [],

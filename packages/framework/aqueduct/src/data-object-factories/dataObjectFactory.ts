@@ -9,7 +9,6 @@ import {
     SharedDirectory,
     SharedMap,
 } from "@fluidframework/map";
-import { IEvent } from "@fluidframework/common-definitions";
 import {
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
@@ -17,7 +16,7 @@ import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { FluidObjectSymbolProvider } from "@fluidframework/synthesize";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 
-import { DataObject, IDataObjectProps } from "../data-objects";
+import { DataObject, DataObjectTypes, Default, IDataObjectProps  } from "../data-objects";
 import { PureDataObjectFactory } from "./pureDataObjectFactory";
 
 /**
@@ -30,14 +29,14 @@ import { PureDataObjectFactory } from "./pureDataObjectFactory";
  * @typeParam S - the initial state type that the produced data object may take during creation
  * @typeParam E - represents events that will be available in the EventForwarder
  */
-export class DataObjectFactory<TObj extends DataObject<O, S, E>, O, S, E extends IEvent = IEvent>
-    extends PureDataObjectFactory<TObj, O, S, E>
+export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes>
+    extends PureDataObjectFactory<TObj, I>
 {
     constructor(
         type: string,
-        ctor: new (props: IDataObjectProps<O, S>) => TObj,
+        ctor: new (props: IDataObjectProps<I>) => TObj,
         sharedObjects: readonly IChannelFactory[] = [],
-        optionalProviders: FluidObjectSymbolProvider<O>,
+        optionalProviders: FluidObjectSymbolProvider<Default<I>["O"]>,
         registryEntries?: NamedFluidDataStoreRegistryEntries,
         runtimeFactory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
     ) {
