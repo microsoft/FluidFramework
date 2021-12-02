@@ -57,25 +57,6 @@ export class ConfigProvider implements IConfigProvider {
 // @public (undocumented)
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
-// @alpha (undocumented)
-export type ConfigTypeStrings = keyof ConfigTypeStringToType;
-
-// @alpha (undocumented)
-export interface ConfigTypeStringToType {
-    // (undocumented)
-    ["boolean[]"]: boolean[];
-    // (undocumented)
-    ["number[]"]: number[];
-    // (undocumented)
-    ["string[]"]: string[];
-    // (undocumented)
-    boolean: boolean;
-    // (undocumented)
-    number: number;
-    // (undocumented)
-    string: string;
-}
-
 // @public (undocumented)
 export const connectedEventName = "connected";
 
@@ -154,7 +135,7 @@ export interface IFluidErrorBase extends Error {
 // Warning: (ae-incompatible-release-tags) The symbol "inMemoryConfigProvider" is marked as @public, but its signature references "IConfigProviderBase" which is marked as @alpha
 //
 // @public (undocumented)
-export const inMemoryConfigProvider: (storage: Storage) => Lazy<IConfigProviderBase | undefined>;
+export const inMemoryConfigProvider: (storage: Storage, namespaceOverride?: string | undefined) => Lazy<IConfigProviderBase | undefined>;
 
 // @public
 export interface IPerformanceEventMarkers {
