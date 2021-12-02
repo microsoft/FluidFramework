@@ -1379,7 +1379,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
         }
 
-        this.garbageCollector.addGCStateToSummary(summaryTree);
+        this.garbageCollector.addGCTreeToSummary(summaryTree);
     }
 
     private replayPendingStates() {

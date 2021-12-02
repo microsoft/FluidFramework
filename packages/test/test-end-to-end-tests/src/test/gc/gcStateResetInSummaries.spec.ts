@@ -9,6 +9,7 @@ import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
     ContainerRuntime,
+    gcTreeKey,
     IAckedSummary,
     IContainerRuntimeOptions,
     SummaryCollection,
@@ -18,12 +19,12 @@ import {
     ISummaryTree,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { channelsTreeName, IGarbageCollectionState } from "@fluidframework/runtime-definitions";
+import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
-import { loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSummarizerClient";
+import { getGCStateFromSummary, loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSummarizerClient";
 
 /**
  * Validates that when GC is disabled on a document that had run GC previously, the GC state is removed from summary
@@ -131,11 +132,9 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
         unreferencedDataStoreId?: string,
     ) {
         const channelsTree = await getSummaryChannelsTree(summarizerClient);
+        assert(latestUploadedSummary !== undefined, "Did not get a summary");
 
-        const rootGCBlob = latestUploadedSummary?.tree.gc;
-        assert(rootGCBlob?.type === SummaryType.Blob, `GC blob must be present in summary if GC ran.`);
-
-        const gcState = JSON.parse(rootGCBlob.content as string) as IGarbageCollectionState;
+        const gcState = getGCStateFromSummary(latestUploadedSummary);
         for (const [nodeId, nodeData] of Object.entries(gcState.gcNodes)) {
             // All nodes belonging to the data store with id unreferencedDataStoreId should have unreferenced timestamp.
             // All other nodes should not have unreferenced timestamp.
@@ -175,10 +174,9 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
         summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
     ) {
         const channelsTree = await getSummaryChannelsTree(summarizerClient);
-
         assert(latestUploadedSummary !== undefined, "Did not get a summary");
-        const rootGCBlob = latestUploadedSummary.tree.gc;
-        assert(rootGCBlob === undefined, `GC blob should not be present in summary if GC did not run.`);
+        const gcSummaryTree = latestUploadedSummary.tree[gcTreeKey];
+        assert(gcSummaryTree === undefined, `GC tree should not be present in summary if GC did not run.`);
 
         for (const [ id, summaryObject ] of Object.entries(channelsTree)) {
             // Filter out non data store entries.

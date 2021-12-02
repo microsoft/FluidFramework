@@ -5,11 +5,15 @@
 ```ts
 
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IGarbageCollectionState } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionSummaryDetails } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 
 // @public
 export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData;
+
+// @public
+export function concatGarbageCollectionState(destGCState: IGarbageCollectionState, srcGCState: IGarbageCollectionState): void;
 
 // @public (undocumented)
 export class GCDataBuilder implements IGarbageCollectionData {

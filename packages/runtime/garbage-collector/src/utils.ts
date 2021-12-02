@@ -4,7 +4,11 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IGarbageCollectionData, IGarbageCollectionSummaryDetails } from "@fluidframework/runtime-definitions";
+import {
+    IGarbageCollectionData,
+    IGarbageCollectionState,
+    IGarbageCollectionSummaryDetails,
+} from "@fluidframework/runtime-definitions";
 
 /**
  * Helper function that clones the GC data.
@@ -26,7 +30,7 @@ export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionD
  * @param gcDetails - The GC deails of a node.
  * @returns A map of GC details of each children of the the given node.
  */
-export function getChildNodesGCDetails(gcDetails: IGarbageCollectionSummaryDetails) {
+ export function getChildNodesGCDetails(gcDetails: IGarbageCollectionSummaryDetails) {
     const childGCDetailsMap: Map<string, IGarbageCollectionSummaryDetails> = new Map();
 
     // If GC data is not available, bail out.
@@ -115,6 +119,22 @@ export function removeRouteFromAllNodes(gcNodes: { [ id: string ]: string[] }, o
         if (index > -1) {
             outboundRoutes.splice(index, 1);
         }
+    }
+}
+
+/**
+ * Concatinates the GC nodes in srcGCState to destGCState.
+ */
+export function concatGarbageCollectionState(
+    destGCState: IGarbageCollectionState,
+    srcGCState: IGarbageCollectionState,
+) {
+    for (const [nodeId, nodeData] of Object.entries(srcGCState.gcNodes)) {
+        assert(destGCState.gcNodes[nodeId] === undefined, "Unexpected duplicate GC node");
+        destGCState.gcNodes[nodeId] = {
+            outboundRoutes: Array.from(nodeData.outboundRoutes),
+            unreferencedTimestampMs: nodeData.unreferencedTimestampMs,
+        };
     }
 }
 

@@ -14,7 +14,6 @@ import {
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
-    gcBlobKey,
     IFluidDataStoreChannel,
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
@@ -528,7 +527,6 @@ describe("Data Store Context Tests", () => {
                 const snapshotTree: ISnapshotTree = {
                     blobs: {
                         [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
-                        [gcBlobKey]: "gcDetails",
                     },
                     commits: {},
                     trees: {},
@@ -570,7 +568,6 @@ describe("Data Store Context Tests", () => {
                     id: "dummy",
                     blobs: {
                         [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
-                        [gcBlobKey]: "gcDetails",
                     },
                     commits: {},
                     trees: {},

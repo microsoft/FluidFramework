@@ -99,7 +99,6 @@ export class DataStores implements IDisposable {
 
         // Extract stores stored inside the snapshot
         const fluidDataStores = new Map<string, ISnapshotTree>();
-
         if (baseSnapshot) {
             for (const [key, value] of Object.entries(baseSnapshot.trees)) {
                 fluidDataStores.set(key, value);

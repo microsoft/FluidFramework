@@ -14,16 +14,12 @@ import {
     SummaryCollection,
 } from "@fluidframework/container-runtime";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
-import {
-    ISummaryTree,
-    SummaryType,
-} from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionState } from "@fluidframework/runtime-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
-import { loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSummarizerClient";
+import { loadSummarizer, TestDataObject, submitAndAckSummary, getGCStateFromSummary } from "./mockSummarizerClient";
 
 /**
  * Validates that the unreferenced timestamp is correctly set in the summary tree of unreferenced data stores. Also,
@@ -107,10 +103,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         );
         assert(latestUploadedSummary !== undefined, "Did not get a summary");
 
-        const rootGCBlob = latestUploadedSummary.tree.gc;
-        assert(rootGCBlob?.type === SummaryType.Blob, `GC blob not available`);
-
-        const gcState = JSON.parse(rootGCBlob.content as string) as IGarbageCollectionState;
+        const gcState = getGCStateFromSummary(latestUploadedSummary);
         const nodeTimestamps: Map<string, number | undefined> = new Map();
         for (const [nodeId, nodeData] of Object.entries(gcState.gcNodes)) {
             nodeTimestamps.set(nodeId.slice(1), nodeData.unreferencedTimestampMs);

@@ -671,7 +671,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     constructor(
         id: string,
         private readonly initSnapshotValue: ISnapshotTree | string | undefined,
-        public readonly getBaseSummaryGCDetails: () => Promise<IGarbageCollectionSummaryDetails | undefined>,
+        private readonly getBaseSummaryGCDetails: () => Promise<IGarbageCollectionSummaryDetails | undefined>,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: FluidObject,
