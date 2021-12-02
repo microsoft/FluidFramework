@@ -155,20 +155,20 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const redisClientForJwtCache = new Redis(redisOptions2);
         const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
 
+        const bufferMaxEntries = config.get("mongo:bufferMaxEntries") as number | undefined;
         // Database connection for global db if enabled
         let globalDbMongoManager;
         const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
         if (globalDbEnabled) {
             const globalDbMongoUrl = config.get("mongo:globalDbEndpoint") as string;
-            const globalDbMongoFactory = new services.MongoDbFactory(globalDbMongoUrl);
-            globalDbMongoManager = new core.MongoManager(globalDbMongoFactory);
+            const globalDbMongoFactory = new services.MongoDbFactory(globalDbMongoUrl, bufferMaxEntries);
+            globalDbMongoManager = new core.MongoManager(globalDbMongoFactory, false);
         }
 
         // Database connection for operations db
         const operationsDbMongoUrl = config.get("mongo:operationsDbEndpoint") as string;
-        const bufferMaxEntries = config.get("mongo:bufferMaxEntries") as number | undefined;
         const operationsDbMongoFactory = new services.MongoDbFactory(operationsDbMongoUrl, bufferMaxEntries);
-        const operationsDbMongoManager = new core.MongoManager(operationsDbMongoFactory);
+        const operationsDbMongoManager = new core.MongoManager(operationsDbMongoFactory, false);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
         // Create the index on the documents collection

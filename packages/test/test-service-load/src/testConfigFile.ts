@@ -4,6 +4,9 @@
  */
 
 import { ILoaderOptions } from "@fluidframework/container-definitions";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { OptionsMatrix } from "@fluidframework/test-pairwise-generator";
 
 /** Type modeling the structure of the testConfig.json file */
 export interface ITestConfig {
@@ -33,5 +36,13 @@ export interface ILoadTestConfig {
      */
     detachedBlobCount?: number,
 
-    loaderOptions?: Partial<ILoaderOptions>;
+    /**
+     * Override loader options to force a specific value
+     */
+    optionOverrides?: Record<TestDriverTypes, OptionOverride | undefined>;
+}
+
+export interface OptionOverride{
+    loader?: Partial<OptionsMatrix<ILoaderOptions>>,
+    container?: Partial<OptionsMatrix<IContainerRuntimeOptions>>
 }

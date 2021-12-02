@@ -5,14 +5,12 @@
 
 import { ITelemetryProperties, ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definitions";
-import { isOnline, OnlineStatus } from "@fluidframework/driver-utils";
+import { isOnline, OnlineStatus, RetryableError } from "@fluidframework/driver-utils";
 import { assert, performance } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ChildLogger, PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
 import {
     fetchIncorrectResponse,
-    offlineFetchFailureStatusCode,
-    fetchFailureStatusCode,
     fetchTimeoutStatusCode,
     throwOdspNetworkError,
     getSPOAndGraphRequestIdsFromResponse,
@@ -142,11 +140,11 @@ export async function fetchHelper(
         // It could container PII, like URI in message itself, or token in properties.
         // It is also non-serializable object due to circular references.
         //
-        const failureCode = online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode;
-        throwOdspNetworkError(
-            `odspFetchThrewError [${failureCode}]`,
-            failureCode,
-        );
+        if (online === OnlineStatus.Offline) {
+            throw new RetryableError("OdspFetchOffline", `Offline: ${errorText}`, DriverErrorType.offlineError);
+        } else {
+            throw new RetryableError("OdspFetchError", `Fetch error: ${errorText}`, DriverErrorType.fetchFailure);
+        }
     });
 }
 

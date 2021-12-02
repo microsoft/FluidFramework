@@ -122,6 +122,12 @@
         },
         "InterfaceDeclaration_IThrottlingWarning": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IDeltaManager": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IConnectionDetails": {
+          "backCompat": false
         }
       },
       "0.40.0": {
@@ -143,6 +149,79 @@
         },
         "InterfaceDeclaration_IRuntimeFactory": {
           "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ILoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProxyLoaderFactory": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IHostLoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IContainer": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDeltaManager": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IConnectionDetails": {
+          "backCompat": false
+        }
+      },
+      "0.41.0": {
+        "InterfaceDeclaration_ILoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProxyLoaderFactory": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IHostLoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IFluidModule": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IContainerContext": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IContainer": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ICodeLoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDeltaManager": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IConnectionDetails": {
+          "backCompat": false
+        }
+      },
+      "0.42.0": {
+        "InterfaceDeclaration_ILoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProxyLoaderFactory": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IHostLoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IContainerContext": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IContainer": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProvideLoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDeltaManager": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IConnectionDetails": {
           "backCompat": false
         }
       }
