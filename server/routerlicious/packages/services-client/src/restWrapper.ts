@@ -7,6 +7,7 @@ import * as querystring from "querystring";
 import { AxiosError, AxiosInstance, AxiosRequestConfig, default as Axios } from "axios";
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
+import { throwR11sServiceNetworkError }  from "./error";
 
 export abstract class RestWrapper {
     constructor(
@@ -126,6 +127,11 @@ export class BasicRestWrapper extends RestWrapper {
             this.axios.request<T>(options)
                 .then((response) => { resolve(response.data); })
                 .catch((error: AxiosError) => {
+                    if (error?.response?.status === statusCode) {
+                        // Axios misinterpreted as error, return as successful response
+                        resolve(error?.response?.data);
+                    }
+
                     if (error && error.config) {
                         // eslint-disable-next-line max-len
                         debug(`[${error.config.method}] request to [${error.config.url}] failed with [${error.code}] [${error.message}]`);
@@ -147,10 +153,8 @@ export class BasicRestWrapper extends RestWrapper {
                         this.request<T>(retryConfig, statusCode, false)
                             .then(resolve)
                             .catch(reject);
-                    } else if (error.response && error.response.status !== statusCode) {
-                        reject(error.response.status);
                     } else {
-                        reject(error);
+                        throwR11sServiceNetworkError(error?.message, error?.response.status);
                     }
                 });
         });
