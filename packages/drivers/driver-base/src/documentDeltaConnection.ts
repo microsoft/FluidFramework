@@ -160,8 +160,7 @@ export class DocumentDeltaConnection
             }
         });
 
-        this.isBatchManagerDisabled =
-            this.logger.config.getConfig(batchManagerDisabledKey, "boolean") ?? false;
+        this.isBatchManagerDisabled = this.logger.config.getBoolean(batchManagerDisabledKey, false) === true;
     }
 
     /**

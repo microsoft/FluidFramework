@@ -251,10 +251,10 @@ export class GarbageCollector implements IGarbageCollector {
         if (existing) {
             prevSummaryGCVersion = getGCVersion(metadata);
             // Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
-            // other exsiting documents, GC is enabled.
+            // other existing documents, GC is enabled.
             this.gcEnabled = prevSummaryGCVersion > 0;
         } else {
-            // For new documents, GC has to be exlicitly enabled via the gcAllowed flag in GC options.
+            // For new documents, GC has to be explicitly enabled via the gcAllowed flag in GC options.
             this.gcEnabled = gcOptions.gcAllowed === true;
         }
         // For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
@@ -262,7 +262,7 @@ export class GarbageCollector implements IGarbageCollector {
         this.latestSummaryGCVersion = prevSummaryGCVersion ?? this.currentGCVersion;
 
         // Whether GC should run or not. Can override with localStorage flag.
-        this.shouldRunGC = this.logger.config.getConfig(runGCKey, "boolean") ?? (
+        this.shouldRunGC = this.logger.config.getBoolean(runGCKey) ?? (
             // GC must be enabled for the document.
             this.gcEnabled
             // GC must not be disabled via GC options.
@@ -272,10 +272,10 @@ export class GarbageCollector implements IGarbageCollector {
         // Whether GC sweep phase should run or not. If this is false, only GC mark phase is run. Can override with
         // localStorage flag.
         this.shouldRunSweep = this.shouldRunGC &&
-            (this.logger.config.getConfig(runSweepKey, "boolean") ?? gcOptions.runSweep === true);
+            (this.logger.config.getBoolean(runSweepKey) ?? gcOptions.runSweep === true);
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
-        this.testMode = this.logger.config.getConfig(gcTestModeKey, "boolean") ?? gcOptions.runGCInTestMode === true;
+        this.testMode = this.logger.config.getBoolean(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
 
         // Get the GC state from the GC blob in the base snapshot. Use LazyPromise because we only want to do
         // this once since it involves fetching blobs from storage which is expensive.

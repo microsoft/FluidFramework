@@ -142,7 +142,7 @@ export class OdspDocumentService implements IDocumentService {
             });
 
         this.hostPolicy = hostPolicy;
-        this.hostPolicy.fetchBinarySnapshotFormat ??= this.logger.config.getConfig("binaryFormatSnapshot", "boolean");
+        this.hostPolicy.fetchBinarySnapshotFormat ??= this.logger.config.getBoolean("binaryFormatSnapshot");
         if (this.odspResolvedUrl.summarizer) {
             this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
         }
