@@ -919,7 +919,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._logger = mixinChildLoggerWithConfigProvider(this.logger, "ContainerRuntime");
 
         this._flushMode =
-            this._logger.config.getConfig(turnBasedFlushModeKey, "boolean") ? FlushMode.TurnBased : FlushMode.Immediate;
+            this._logger.config.getBoolean(turnBasedFlushModeKey) === true ? FlushMode.TurnBased : FlushMode.Immediate;
 
         /**
          * Function that return the current server timestamp. This is used by the garbage collector to set the
@@ -1062,7 +1062,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 SummarizerClientElection.isClientEligible,
             );
             const summarizerClientElectionEnabled =
-                this._logger.config.getConfig("summarizerClientElection", "boolean") ??
+                this._logger.config.getBoolean("summarizerClientElection") ??
                 this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
             this.summarizerClientElection = new SummarizerClientElection(
                 orderedClientLogger,
