@@ -12,6 +12,9 @@ import { ITree } from '@fluidframework/protocol-definitions';
 export const gcBlobKey = "gc";
 
 // @public (undocumented)
+export const gcBlobPrefix = "__gc";
+
+// @public (undocumented)
 export const getMicrosoftConfiguration: () => IClientConfig;
 
 // @public

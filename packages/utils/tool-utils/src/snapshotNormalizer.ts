@@ -11,6 +11,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 export const gcBlobKey = "gc";
+export const gcBlobPrefix = "__gc";
 // A list of runtime blob paths whose contents should be normalized.
 const runtimeBlobsToNormalize = [ gcBlobKey ];
 
@@ -76,7 +77,7 @@ function getDeepSortedObject(obj: any): any {
  */
 function getNormalizedBlobContent(blobContent: string, blobName: string): string {
     let content = blobContent;
-    if (blobName === gcBlobKey) {
+    if (blobName.startsWith(gcBlobPrefix)) {
         // GC blobs may contain `unreferencedTimestampMs` for node that became unreferenced. This is the timestamp
         // of the last op processed or current timestamp and can differ between clients depending on when GC was run.
         // So, remove it for the purposes of comparing snapshots.
@@ -119,8 +120,8 @@ export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormali
         switch (entry.type) {
             case TreeEntry.Blob: {
                 let contents = entry.value.contents;
-                // If this blob has to be normalized, parse and sort the blob contents first.
-                if (blobsToNormalize.includes(entry.path)) {
+                // If this blob has to be normalized or it's a GC blob, parse and sort the blob contents first.
+                if (blobsToNormalize.includes(entry.path) || entry.path.startsWith(gcBlobPrefix)) {
                     contents = getNormalizedBlobContent(contents, entry.path);
                 }
                 normalizedEntries.push(new BlobTreeEntry(entry.path, contents));
