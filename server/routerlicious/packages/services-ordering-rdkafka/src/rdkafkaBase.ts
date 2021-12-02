@@ -12,6 +12,7 @@ export interface IKafkaBaseOptions {
     numberOfPartitions: number;
     replicationFactor: number;
     sslCACertFilePath?: string;
+    restartOnKafkaErrorCodes?: number[]
 }
 
 export interface IKafkaEndpoints {
@@ -22,6 +23,7 @@ export interface IKafkaEndpoints {
 export abstract class RdkafkaBase extends EventEmitter {
     protected readonly kafka: typeof kafkaTypes;
     protected readonly sslOptions?: kafkaTypes.ConsumerGlobalConfig;
+    protected defaultRestartOnKafkaErrorCodes: number[] = [];
     private readonly options: IKafkaBaseOptions;
 
     constructor(
@@ -67,8 +69,15 @@ export abstract class RdkafkaBase extends EventEmitter {
             };
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.initialize();
+        console.log(
+            `[DEBUG RdKafkaBase] defaultRestartOnKafkaErrorCodes 1:
+            ${JSON.stringify(this.defaultRestartOnKafkaErrorCodes)}`);
+
+        setTimeout(() => void this.initialize(), 1);
+
+        console.log(
+            `[DEBUG RdKafkaBase] defaultRestartOnKafkaErrorCodes 2:
+            ${JSON.stringify(this.defaultRestartOnKafkaErrorCodes)}`);
     }
 
     protected abstract connect(): void;
@@ -77,7 +86,8 @@ export abstract class RdkafkaBase extends EventEmitter {
         try {
             await this.ensureTopics();
         } catch (ex) {
-            this.emit("error", ex);
+            console.log(`[DEBUG DEBUG] Ensure topics throwing error, will emit: ${JSON.stringify(ex)}`);
+            this.error(ex);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.initialize();
@@ -106,7 +116,7 @@ export abstract class RdkafkaBase extends EventEmitter {
         return new Promise<void>((resolve, reject) => {
             adminClient.createTopic(newTopic, 10000, (err) => {
                 adminClient.disconnect();
-
+                console.log(`[DEBUG DEBUG] Ensure topics failed, error: ${JSON.stringify(err)}`);
                 if (err && err.code !== this.kafka.CODES.ERRORS.ERR_TOPIC_ALREADY_EXISTS) {
                     reject(err);
                 } else {
@@ -116,11 +126,31 @@ export abstract class RdkafkaBase extends EventEmitter {
         });
     }
 
-    protected error(error: any, restartOnError: boolean = false) {
+    protected error(error: any, forceRestartOnError: boolean = false) {
+        let restartOnKafkaError = false;
+
+        console.log(`[DEBUG DEBUG] error info: ${JSON.stringify(error)}`);
+        console.log(`[DEBUG DEBUG] error stack: ${new Error().stack}`);
+
+        const errorCodesToCauseRestart = this.options.restartOnKafkaErrorCodes ?? this.defaultRestartOnKafkaErrorCodes;
+
+        if (RdkafkaBase.isObject(error)
+            && errorCodesToCauseRestart.includes((error as kafkaTypes.LibrdKafkaError).code)) {
+            console.log("[DEBUG DEBUG] Setting restartOnKafkaError as true");
+            restartOnKafkaError = true;
+        } else {
+            console.log("[DEBUG DEBUG] Not changing restartOnKafkaError. It is false");
+        }
+
         const errorData: IContextErrorData = {
-            restart: restartOnError,
+            restart: forceRestartOnError || restartOnKafkaError,
         };
 
         this.emit("error", error, errorData);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    private static isObject(value: any): value is object {
+        return value !== null && typeof (value) === "object";
     }
 }

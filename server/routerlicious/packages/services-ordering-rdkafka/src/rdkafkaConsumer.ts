@@ -42,6 +42,15 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		options?: Partial<IKafkaConsumerOptions>) {
 		super(endpoints, clientId, topic, options);
 
+        this.defaultRestartOnKafkaErrorCodes = [
+            this.kafka.CODES.ERRORS.ERR__TRANSPORT,
+            this.kafka.CODES.ERRORS.ERR__MSG_TIMED_OUT,
+            this.kafka.CODES.ERRORS.ERR__ALL_BROKERS_DOWN,
+            this.kafka.CODES.ERRORS.ERR__TIMED_OUT,
+            this.kafka.CODES.ERRORS.ERR__SSL,
+            this.kafka.CODES.ERRORS.ERR_COORDINATOR_LOAD_IN_PROGRESS,
+        ];
+
 		this.consumerOptions = {
 			...options,
 			consumeTimeout: options?.consumeTimeout ?? 1000,
@@ -51,6 +60,8 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			automaticConsume: options?.automaticConsume ?? true,
 			maxConsumerCommitRetries: options?.maxConsumerCommitRetries ?? 10,
 		};
+
+        console.log(`[DEBUG] RdKafkaBase consumerOptions: ${JSON.stringify(this.consumerOptions)}`);
 	}
 
 	/**
@@ -117,7 +128,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		consumer.on("connection.failure", async (error) => {
 			await this.close(true);
-
+            console.log(`[DEBUG DEBUG] connection.failure error info: ${JSON.stringify(error)}`);
 			this.error(error);
 
 			this.connect();
@@ -236,10 +247,12 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		});
 
 		consumer.on("rebalance.error", (error) => {
+            console.log(`[DEBUG DEBUG] rebalance.error error info: ${JSON.stringify(error)}`);
 			this.error(error);
 		});
 
 		consumer.on("event.error", (error) => {
+            console.log(`[DEBUG DEBUG] event.error error info: ${JSON.stringify(error)}`);
 			this.error(error);
 		});
 

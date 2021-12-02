@@ -41,11 +41,22 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		options?: Partial<IKafkaProducerOptions>) {
 		super(endpoints, clientId, topic, options);
 
+        this.defaultRestartOnKafkaErrorCodes = [
+            this.kafka.CODES.ERRORS.ERR__TRANSPORT,
+            this.kafka.CODES.ERRORS.ERR__UNKNOWN_PARTITION,
+            this.kafka.CODES.ERRORS.ERR__ALL_BROKERS_DOWN,
+            this.kafka.CODES.ERRORS.ERR__SSL,
+            this.kafka.CODES.ERRORS.ERR_UNKNOWN_TOPIC_OR_PART,
+            this.kafka.CODES.ERRORS.ERR_UNKNOWN_MEMBER_ID,
+        ];
+
 		this.producerOptions = {
 			...options,
 			enableIdempotence: options?.enableIdempotence ?? false,
 			pollIntervalMs: options?.pollIntervalMs ?? 10,
 		};
+
+        console.log(`[DEBUG] RdKafkaBase producerOptions: ${JSON.stringify(this.producerOptions)}`);
 	}
 
 	/**
@@ -99,11 +110,13 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		});
 
 		producer.on("connection.failure", (error) => {
+            console.log(`[DEBUG PRODUCER] connection.failure error info: ${JSON.stringify(error)}`);
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.handleError(error);
 		});
 
 		producer.on("event.error", (error) => {
+            console.log(`[DEBUG PRODUCER] event.error error info: ${JSON.stringify(error)}`);
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.handleError(error);
 		});
@@ -286,10 +299,11 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	 * Handles an error that requires a reconnect to Kafka
 	 */
 	private async handleError(error: any) {
-		await this.close(true);
+		console.log(`[DEBUG PRODUCER] error info: ${JSON.stringify(error)}`);
+        await this.close(true);
 
 		this.error(error);
-
+        console.log(`[DEBUG PRODUCER] finished calling base error(). error info: ${JSON.stringify(error)}`);
 		this.connect();
 	}
 }
