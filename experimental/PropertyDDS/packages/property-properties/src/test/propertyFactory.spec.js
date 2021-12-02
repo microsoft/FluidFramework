@@ -2363,6 +2363,10 @@ describe('PropertyFactory', function () {
             expect(instance.get('set').getAsArray().length).to.equal(2);
             expect(instance.get('set').getAsArray()[0].get('string').getValue()).to.equal('I am a string 1');
             expect(instance.get('set').getAsArray()[1].get('string').getValue()).to.equal('I am a string 2');
+
+            // All instances should share the same constant objects
+            var instance2 = PropertyFactory.create('SimpleTest:ConstantSet-1.0.0');
+            expect(instance.get('set') === instance2.get('set')).to.be.true;
         });
 
         it('should support primitive map constants', function () {

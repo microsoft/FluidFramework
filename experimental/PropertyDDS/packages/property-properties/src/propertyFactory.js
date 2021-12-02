@@ -25,7 +25,8 @@ const { MSG } = constants;
 const {
     TypeIdHelper,
     TemplateValidator,
-    PathHelper
+    PathHelper,
+    ChangeSet
 } = require('@fluid-experimental/property-changeset');
 
 const { PropertyTemplate } = require('./propertyTemplate');
@@ -398,6 +399,14 @@ class PropertyFactory {
 
         /** A cache of functions that create the properties */
         this._cachedCreationFunctions = new Map();
+
+        /** Usually we will  use the precompiled creation functions, but those all share the same constant properties.
+         *  Since it is allowed to overwrite constants via default values, we have to explicitly instantiate new
+         *  property instances for constants. Since the constants themselves may contain nested property instances,
+         *  we use this flag to indicate that for all nested properties, we do not want to use the precompiled
+         *  instantiation functions.
+         */
+        this._forceInstantion = false;
 
         this._init();
     };
@@ -948,14 +957,11 @@ class PropertyFactory {
      *                               Accepted values are "single" (default), "array", "map" and "set".
      * @param {object|undefined} in_initialProperties A set of initial values for the PropertySet being created
      * @param {string|undefined} in_scope - The scope in which the property typeid is defined
-     * @param {boolean|undefined} in_optimizeConstants - set true if constant optimization should occur
-     * @throws if the property does not have a unique id.
-     * @throws if the property has a typeid that is not registered.
      * @return {property-properties.BaseProperty|undefined} the property instance
      * @private
      */
     _createProperty(
-        in_typeid, in_context, in_initialProperties, in_scope, in_optimizeConstants) {
+        in_typeid, in_context, in_initialProperties, in_scope) {
 
         const ifNotSingleOrUndefined = (in_context || 'single') !== 'single';
         ConsoleUtils.assert(ifNotSingleOrUndefined || _.isString(in_typeid), MSG.UNKNOWN_TYPEID_SPECIFIED + in_typeid);
@@ -969,67 +975,75 @@ class PropertyFactory {
             }
         }
 
-        const scopeFunctionEntry = this._cachedCreationFunctions.get(in_typeid);
-        const contextFunctionEntry = scopeFunctionEntry && scopeFunctionEntry.get(in_scope);
-        let propertyCreationFunction = contextFunctionEntry && contextFunctionEntry.get(context);
+        let propertyCreationFunction = undefined;
 
-        if (!propertyCreationFunction) {
-
-            let propertyDef = this._collectPropertyChildren(in_typeid, in_scope, context, in_optimizeConstants);
-            propertyCreationFunction = this._definePropertyCreationFunction(propertyDef, in_typeid, in_scope, context);
+        if (!this._forceInstantion) {
+            // Check, whether we already have a property creation function for this property
+            // in the cache
+            const scopeFunctionEntry = this._cachedCreationFunctions.get(in_typeid);
+            const contextFunctionEntry = scopeFunctionEntry && scopeFunctionEntry.get(in_scope);
+            propertyCreationFunction = contextFunctionEntry && contextFunctionEntry.get(context);
         }
 
-        let property = propertyCreationFunction();
+        // If we don't have a cached function or are requested to explicitly instantiate the property
+        // we have to first create a property definition by recursively traversing all templates
+        let propertyDef;
+        if (!propertyCreationFunction) {
+            propertyDef = {};
+            this._createDefFromPropertyDeclaration({
+                typeid: in_typeid,
+                context: context || 'single'
+            }, in_scope, propertyDef);
+        }
 
-        if (in_initialProperties !== undefined) {
-            this._setInitialValue(property, {
+        let property;
+        if (!this._forceInstantion) {
+            // If we don't yet have a creation function, we will create one here
+            propertyCreationFunction = propertyCreationFunction ||
+                                       this._definePropertyCreationFunction(propertyDef, in_typeid, in_scope, context);
+
+            // Create the property by invoking the precompiled creation function
+            property = propertyCreationFunction();
+
+            // If initial properties have been provided, we will assign them to the
+            // default initialized property
+            if (in_initialProperties !== undefined) {
+                this._setInitialValue(property, {
+                    value: in_initialProperties
+                }, false);
+            }
+        } else {
+            // Directly instantiate the property from the definition (without using) a precompield function
+            property = this._instantiatePropertyDef(propertyDef, in_scope, in_initialProperties && {
                 value: in_initialProperties
-            }, propertyCreationFunction.anyConstantChildren);
+            });
         }
 
         return property;
     };
 
-    _collectPropertyChildren(in_typeid, in_scope, in_context, in_optimizeConstants) {
-        let propertyDef = {};
-        let property;
+    /**
+     * Creates an instance of the property described in the property definition.
+     *
+     * Note: this function won't create any constant children, it is only used to
+     *       instantiate nested constant properties and those will be set to constant
+     *       after their instantiation.
+     *
+     * @param {Object} propertyDef - The property defintion for the property to create
+     * @param {String} in_scope - The scope for the property to create
+     * @param {String} in_initialProperties - The initial values for the property
+     *
+     * @returns {BaseProperty} An instance of the property
+     */
+    _instantiatePropertyDef(propertyDef, in_scope, in_initialProperties) {
+        let rootProperty = undefined;
 
-        if (in_optimizeConstants) {
-            var templateOrProperty = this._getWrapper(in_typeid, undefined, in_scope);
-            var isProperty = templateOrProperty instanceof PropertyTemplateWrapper;
-            var evaluateConstants = isProperty ? !templateOrProperty.hasConstantTree() : false;
-
-            property = this._createDefFromPropertyDeclaration({
-                typeid: in_typeid,
-                context: in_context || 'single'
-            }, undefined, in_scope, evaluateConstants, propertyDef);
-
-            if (isProperty) {
-                templateOrProperty.loadConstants(property);
-            }
-        } else {
-            property = this._createDefFromPropertyDeclaration({
-                typeid: in_typeid,
-                context: in_context || 'single'
-            }, undefined, in_scope, true, propertyDef);
-        }
-
-        return propertyDef;
-    }
-
-    _definePropertyCreationFunction(propertyDef, in_typeid, in_scope, in_context) {
+        // This stack is used to recursively iterate over the property definition
         const creationStack = [{
             id: undefined,
-            def: propertyDef,
+            entry: propertyDef,
             parent:undefined
         }];
-        let creationFunctionSource = "";
-        let currentParameterIndex = 0;
-        let parameters = [];
-        let currentPropertyNumber = 0;
-        let currentPropertyVarName = "";
-        let resultVarName;
-        let anyConstantChildren = false;
 
         while (creationStack.length > 0) {
             const currentEntry = creationStack.pop();
@@ -1037,119 +1051,310 @@ class PropertyFactory {
             // We have an entry on the stack that is just waiting for its children to finish, but has already
             // been created
             if (currentEntry.signalChildrenFinished) {
-                creationFunctionSource +=
-                    `${currentEntry.propertyVarname}._signalAllStaticMembersHaveBeenAdded(${JSON.stringify(in_scope)});\n`;
+                currentEntry.property._signalAllStaticMembersHaveBeenAdded(in_scope);
 
                 if (currentEntry.initialValue) {
-                    creationFunctionSource +=
-                        `this._setInitialValue(${currentEntry.propertyVarname},
-                                                ${JSON.stringify(currentEntry.initialValue)},
-                                                ${JSON.stringify(currentEntry.anyConstantChildren)});\n`;
-                }
-                if (currentEntry.constant) {
-                    creationFunctionSource +=
-                        `${currentEntry.propertyVarname}._setAsConstant();\n`;
-                    anyConstantChildren = true;
-
-                    let parentEntry = currentEntry.parentStackEntry;
-                    while (parentEntry && parentEntry.anyConstantChildren === false) {
-                        parentEntry.anyConstantChildren = true;
-                        parentEntry = parentEntry.parentStackEntry;
-                    }
+                    this._setInitialValue(currentEntry.property, currentEntry.initialValue, true);
                 }
                 continue;
             }
 
-            currentPropertyNumber++;
-            currentPropertyVarName = `property${currentPropertyNumber}`;
-            creationFunctionSource +=
-                `const ${currentPropertyVarName} =
-                new parameters[${currentParameterIndex}](parameters[${currentParameterIndex + 1}]);\n`;
-            parameters.push(currentEntry.def.constructorFunction);
-            parameters.push(currentEntry.def.entry);
-            currentParameterIndex += 2;
+            // Create the property instance
+            let property = new (currentEntry.entry.constructorFunction)(currentEntry.entry.entry);
 
-            if (currentEntry.parentVarName !== undefined) {
-                if (currentEntry.def.optional) {
-                    creationFunctionSource += `${currentEntry.parentVarName}._insert(
-                        ${JSON.stringify(currentEntry.def.entry.id)}, ${currentPropertyVarName}, true
-                    );\n`
+            // Insert / append the property to the parent
+            if (currentEntry.parent) {
+                if (currentEntry.entry.optional) {
+                    currentEntry.parent._insert(property.getId(), property, true);
                 } else {
-                    creationFunctionSource += `${currentEntry.parentVarName}._append(
-                        ${currentPropertyVarName}, ${currentEntry.def.allowChildMerges}
-                    );\n`
+                    currentEntry.parent._append(property, currentEntry.entry.allowChildMerges);
                 }
             } else {
-                resultVarName = currentPropertyVarName;
+                // If we are at the root, we store the property object to return it later
+                rootProperty = property;
             }
 
+            // For named properties we have to assign a GUID (note: all constant properties in
+            // a template will share this GUID)
             if (currentEntry.setGuid) {
-                creationFunctionSource += `${currentPropertyVarName}.value = GuidUtils.generateGUID();\n`
+                property.value = GuidUtils.generateGUID();
             }
 
-            if (currentEntry.def.optionalChildren) {
-                for (let [id, typeid] of Object.entries(currentEntry.def.optionalChildren)) {
-                    creationFunctionSource += `${currentPropertyVarName}._addOptionalChild(
-                        ${JSON.stringify(id)},
-                        ${JSON.stringify(typeid)}
-                    );\n`
+            // Assign optional children
+            if (currentEntry.entry.optionalChildren) {
+                for (let [id, typeid] of Object.entries(currentEntry.entry.optionalChildren)) {
+                    property._addOptionalChild(id, typeid);
                 }
             }
 
-            if (currentEntry.def.children) {
+            // Recursively process all children of this entry
+            if (currentEntry.entry.children) {
+                // Create an entry on the stack, which is later needed,
+                // to signal that all child properties have been added
                 const parentStackEntry = {
                     signalChildrenFinished: true,
-                    initialValue: currentEntry.def.initialValue,
-                    constant: currentEntry.def.constant,
-                    propertyVarname: currentPropertyVarName,
-                    typeid: currentEntry.def.typeid,
-                    context: currentEntry.def.context,
-                    parentStackEntry: currentEntry.parentStackEntry,
-                    anyConstantChildren: false
+                    initialValue: currentEntry.entry.initialValue,
+                    property
                 }
                 creationStack.push(parentStackEntry);
 
-                for (let [id, child] of currentEntry.def.children) {
+                for (let [id, child] of currentEntry.entry.children) {
                     creationStack.push({
-                        parentVarName: currentPropertyVarName,
+                        parent: property,
                         id: id,
-                        def: child,
-                        signalParent: false,
-                        setGuid: currentEntry.def.assignGuid && id ===
-                        'guid',
-                        parentStackEntry
+                        entry: child,
+                        setGuid: currentEntry.entry.assignGuid && id ===
+                        'guid'
                     })
                 }
             } else {
-                if (currentEntry.def.initialValue) {
-                    creationFunctionSource +=
-                        `this._setInitialValue(${currentPropertyVarName},
-                                                ${JSON.stringify(currentEntry.def.initialValue)},
-                                                ${JSON.stringify(anyConstantChildren)});\n`;
-                }
-                if (currentEntry.def.constant) {
-                    creationFunctionSource += `${currentPropertyVarName}._setAsConstant();\n`
-                    anyConstantChildren = true;
-                    let parentEntry = currentEntry.parentStackEntry;
-                    while (parentEntry && parentEntry.anyConstantChildren === false) {
-                        parentEntry.anyConstantChildren = true;
-                        parentEntry = parentEntry.parentStackEntry;
-                    }
+                // If there are nor children, we directly assign the initial value and
+                // signal that the property has completely been initialized
+                if (currentEntry.entry.initialValue) {
+                    this._setInitialValue(property, currentEntry.entry.initialValue, true);
                 }
 
-                if (currentEntry.def.signal) {
-                    creationFunctionSource += `${currentPropertyVarName}._signalAllStaticMembersHaveBeenAdded(
-                        ${JSON.stringify(in_scope)}
-                    );\n`
+                if (currentEntry.entry.signal) {
+                    property._signalAllStaticMembersHaveBeenAdded(in_scope);
                 }
             }
         }
+
+        if (in_initialProperties !== undefined) {
+            this._setInitialValue(rootProperty, in_initialProperties, true);
+        }
+
+        return rootProperty;
+    }
+
+    /**
+     * Creates a javascript function that instantiates the requested property
+     *
+     * @param {Object} propertyDef - The property defintion for the property for which the function is created
+     * @param {String} in_typeid - The typeid for the property for which the function is created
+     * @param {String} in_scope - The scope for the property for which the function is created
+     * @param {String} in_context - The context for the property for which the function is created
+     *
+     * @returns {Function} A function that creates an instance of the property
+     */
+    _definePropertyCreationFunction(propertyDef, in_typeid, in_scope, in_context) {
+
+        // This stack is used to recursively iterate over the property definition
+        const creationStack = [{
+            id: null,
+            def: propertyDef,
+            parent:undefined
+        }];
+
+        let creationFunctionSource = "";
+        let currentParameterIndex = 0;
+        let parameters = [];
+        let currentPropertyNumber = 0;
+        let currentPropertyVarName = "";
+        let resultVarName;
+
+        while (creationStack.length > 0) {
+            const currentEntry = creationStack.pop();
+
+            // We have an entry on the stack that is just waiting for its children to finish, but has already
+            // been created
+            if (currentEntry.signalChildrenFinished) {
+                // Add the signalling function
+                creationFunctionSource +=
+                    `${currentEntry.propertyVarname}._signalAllStaticMembersHaveBeenAdded(${JSON.stringify(in_scope)});\n`;
+                continue;
+            }
+
+            // Determine the initial value for this property
+            let initialValue = currentEntry.def.initialValue !== undefined ?
+                    currentEntry.def.initialValue :
+                    undefined;
+
+            if (currentEntry.def.entry.id) {
+                let parentEntry = currentEntry.parentStackEntry;
+                let path = [currentEntry.def.entry.id];
+
+                // We have to walk the whole parent chain and extract for
+                // each parent the initial values. Entries further up in the
+                // chain can overwrite entries further down
+                while (parentEntry) {
+                    if (parentEntry.initialValue) {
+
+                        // Extract changes to be applied to this property
+                        let filteredChangeSet = parentEntry.initialValue.value;
+                        for (let i = 0; i < path.length; i++) {
+                            filteredChangeSet = filteredChangeSet && filteredChangeSet[path[i]];
+                        }
+
+                        // Update the initial value with the extract changeset
+                        if (_.isObject(filteredChangeSet)) {
+                            if (initialValue === undefined) {
+                                initialValue = {
+                                    typed: false,
+                                    value: filteredChangeSet
+                                };
+                            } else if (_.isObject(initialValue)) {
+                                Object.assign(initialValue.value, filteredChangeSet);
+                            } else {
+                                throw new Error('Invalid default values specified');
+                            }
+                        } else if (filteredChangeSet !== undefined) {
+                            if (initialValue === undefined) {
+                                initialValue = {
+                                    value: undefined,
+                                    typed: false
+                                }
+                            }
+                            initialValue.value = filteredChangeSet;
+                        }
+                    }
+                    if (parentEntry.id !== null) {
+                        path.unshift(parentEntry.id);
+                    }
+                    parentEntry = parentEntry.parentStackEntry;
+                }
+            }
+
+
+            if (currentEntry.def.constant) {
+                // If we have a constant property, we create a concrete property object instance and share it
+                // among all instances of the parent property
+                let instantiatedChild;
+                try {
+                    // Usually we would use the precompiled creation functions, but those all share
+                    // the same constant properties. Since it is allowed to overwrite constants via
+                    // default values, we have to explicitly instantiate new property instances for
+                    // constants. Since the constants themselves may contain nested property instances,
+                    // we use this flag to indicate that for all nested properties, we do not want to use
+                    // the precompiled instantiation functions.
+                    this._forceInstantion = true;
+                    instantiatedChild =
+                        this._instantiatePropertyDef(currentEntry.def, in_scope, currentEntry.def.initialValue);
+                } finally {
+                    this._forceInstantion = false;
+                }
+                instantiatedChild._setAsConstant();
+
+                // Add a reference to the newly instantiate constant property to the parameters and add
+                // a command to add it into the tree
+                parameters.push(instantiatedChild);
+                creationFunctionSource += `${currentEntry.parentVarName}._append(
+                    parameters[${currentParameterIndex}], ${currentEntry.def.allowChildMerges}
+                );\n`
+                currentParameterIndex += 1;
+            } else {
+
+
+                // Put the constructor function and the description of the property into the
+                // parameters array
+                parameters.push(currentEntry.def.constructorFunction);
+                parameters.push(currentEntry.def.entry);
+
+                // and add the instantiation call to the generated function
+                currentPropertyNumber++;
+                currentPropertyVarName = `property${currentPropertyNumber}`;
+                creationFunctionSource +=
+                    `const ${currentPropertyVarName} =
+                    new parameters[${currentParameterIndex}](parameters[${currentParameterIndex + 1}]);\n`;
+                currentParameterIndex += 2;
+
+                // Insert / append the property to the parent
+                if (currentEntry.parentVarName !== undefined) {
+                    if (currentEntry.def.optional) {
+                        creationFunctionSource += `${currentEntry.parentVarName}._insert(
+                            ${JSON.stringify(currentEntry.def.entry.id)}, ${currentPropertyVarName}, true
+                        );\n`
+                    } else {
+                        creationFunctionSource += `${currentEntry.parentVarName}._append(
+                            ${currentPropertyVarName}, ${currentEntry.def.allowChildMerges}
+                        );\n`
+                    }
+                } else {
+                    resultVarName = currentPropertyVarName;
+                }
+
+                // For named properties we have to add a calll to assign a GUID to the function
+                if (currentEntry.setGuid) {
+                    creationFunctionSource += `${currentPropertyVarName}.value = GuidUtils.generateGUID();\n`
+                }
+
+                // And if there are any optional children, we add them here (should this be further optimized? I
+                // propbably would not have to be done on every instantiation, those could be stored in the prototype)
+                if (currentEntry.def.optionalChildren) {
+                    for (let [id, typeid] of Object.entries(currentEntry.def.optionalChildren)) {
+                        creationFunctionSource += `${currentPropertyVarName}._addOptionalChild(
+                            ${JSON.stringify(id)},
+                            ${JSON.stringify(typeid)}
+                        );\n`
+                    }
+                }
+
+                // Recursively process all children of this entry
+                if (currentEntry.def.children) {
+                // Create an entry on the stack, which is later needed,
+                // to signal that all child properties have been added
+                    const parentStackEntry = {
+                        signalChildrenFinished: true,
+                        initialValue: currentEntry.def.initialValue,
+                        propertyVarname: currentPropertyVarName,
+                        parentStackEntry: currentEntry.parentStackEntry,
+                        id: currentEntry.id,
+                    };
+                    creationStack.push(parentStackEntry);
+
+                    // Recursively add all children to the stack
+                    for (let [id, child] of currentEntry.def.children) {
+                        creationStack.push({
+                            parentVarName: currentPropertyVarName,
+                            id: id,
+                            def: child,
+                            signalParent: false,
+                            setGuid: currentEntry.def.assignGuid && id === 'guid',
+                            parentStackEntry
+                        });
+                    }
+                } else {
+                    // This is a leaf property, so if there is a default value
+                    // we directly assign it here
+                    if (initialValue !== undefined) {
+                        if (!_.isObject(initialValue.value)) {
+                            // We have a primitive property and thus direclty invoke the setValue function
+                            creationFunctionSource +=
+                                `${currentPropertyVarName}.setValue(${JSON.stringify(initialValue.value)});\n`
+                        } else {
+                            // For non primitive properties, we currently use the member on the property factory,
+                            // probably we could further optimize this to directly call the correct function on the
+                            // property
+                            creationFunctionSource +=
+                                `this._setInitialValue(${currentPropertyVarName},
+                                                        ${JSON.stringify(initialValue)},
+                                                        false);\n`;
+                        }
+                    }
+
+                    // If this property is constant, we assign the constant flag
+                    if (currentEntry.def.constant) {
+                        creationFunctionSource += `${currentPropertyVarName}._setAsConstant();\n`
+                    }
+
+                    // If necessary, signal that the propert has been fully initialized (is this ever needed?)
+                    if (currentEntry.def.signal) {
+                        creationFunctionSource += `${currentPropertyVarName}._signalAllStaticMembersHaveBeenAdded(
+                            ${JSON.stringify(in_scope)}
+                        );\n`
+                    }
+                }
+            }
+        }
+
+        // Add the return statement at the end of the function
         creationFunctionSource += ` return ${resultVarName};`;
 
+        // Finally, create the actual JS function with the source we compiled above
         let creationFunction = new Function('parameters',' GuidUtils', creationFunctionSource).bind(this,
             parameters, GuidUtils);
-        creationFunction.anyConstantChildren = anyConstantChildren;
 
+        // Add the created function to the cache
         let scopesFunction = this._cachedCreationFunctions.get(in_typeid);
         if (!scopesFunction) {
             scopesFunction = new Map();
@@ -1160,7 +1365,6 @@ class PropertyFactory {
             contextsFunction = new Map();
             scopesFunction.set(in_scope, contextsFunction);
         }
-
         contextsFunction.set(in_context, creationFunction);
 
         return creationFunction;
@@ -1202,14 +1406,11 @@ class PropertyFactory {
      *                               Accepted values are "single" (default), "array", "map" and "set".
      * @param {object=} in_initialProperties A set of initial values for the PropertySet being created
      * @param {object=} in_options Additional options
-     * @param {property-properties.Workspace} [in_options.workspace] A checked out workspace to check against. If supplied,
-     *  the function will check against the schemas that have been registered within the workspace
-     * @throws if the property does not have a unique id.
-     * @throws if the property has a typeid that is not registered.
+     *
      * @return {property-properties.BaseProperty|undefined} the property instance
      */
     create(in_typeid, in_context, in_initialProperties) {
-        return this._createProperty(in_typeid, in_context, in_initialProperties, null, true);
+        return this._createProperty(in_typeid, in_context, in_initialProperties, null);
     };
 
     /**
@@ -1269,13 +1470,11 @@ class PropertyFactory {
     };
 
     /**
-     * Creates a property object that serves as parent for the template with the given typeid, when none has yet
-     * been created,
+     * Creates a property defintion for a non-collection property with the entry and constructor function assigned
+     * Children will be added later by parseTemplate.
      *
      * @param {string}                               in_typeid - The type unique identifier
      * @param {string}                               in_id     - The id of the property to create
-     * @param {property-properties.BaseProperty} in_parent - The parent property object. If
-     *                                                           it exists it will be returned
      * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_templateOrConstructor -
      *        the Template/Property for this in_typeid
      * @param {string|undefined} in_scope - The scope in which the property typeid is defined
@@ -1283,12 +1482,9 @@ class PropertyFactory {
      * @return {property-properties.BaseProperty} The property that serves as parent for the properties in the template
      * @private
      */
-    _ensurePropertyParentExists(in_typeid, in_id, in_parent,
+    _createNonCollectionPropertyDef(in_typeid, in_id,
         in_templateOrConstructor, in_scope, propertyDef) {
-        // If we already have a parent, we just return it
-        if (in_parent) {
-            return in_parent;
-        }
+
         let ConstructorFunction;
         const params = {
             typeid: in_typeid,
@@ -1328,8 +1524,6 @@ class PropertyFactory {
         propertyDef.entry = params;
         propertyDef.context = 'single';
         propertyDef.typeid = in_typeid;
-
-        return new ConstructorFunction(params);
     };
 
     /**
@@ -1387,14 +1581,12 @@ class PropertyFactory {
      * @param {string=}                     [in_propertiesEntry.context]    - Context in which the property is created
      * @param {Object=}                     [in_propertiesEntry.properties] - Context in which the property is created
      * @param {number}                      [in_propertiesEntry.length]     - The length of an array property
-     * @param {property-properties.BaseProperty}  in_parent                      - The parent property which will be used as
-     *                                                                        the root to construct the property template
      * @param {string} in_scope - The scope in which the property typeid is defined
      * @param {string} context - The context of the property
      *
      * @return {string} The typeid.
      */
-    _computeTypeid(in_propertiesEntry, in_parent, in_scope, context) {
+    _computeTypeid(in_propertiesEntry, in_scope, context) {
         var typeid = in_propertiesEntry.typeid;
         if (context === 'single') {
             var valueParsed = this._parseTypedValue(in_propertiesEntry, in_scope, context);
@@ -1414,7 +1606,7 @@ class PropertyFactory {
     };
 
     /**
-     * Create an instance of the given property from an entry in the properties list.
+     * Creates a propertyDef for the given properties entry
      *
      * @param {Object}                       in_propertiesEntry             - Describes the property object to create
      * @param {string=}                     [in_propertiesEntry.id]         - The name of the property
@@ -1422,21 +1614,18 @@ class PropertyFactory {
      * @param {string=}                     [in_propertiesEntry.context]    - Context in which the property is created
      * @param {Object=}                     [in_propertiesEntry.properties] - Context in which the property is created
      * @param {number}                      [in_propertiesEntry.length]     - The length of an array property
-     * @param {property-properties.BaseProperty}  in_parent                      - The parent property which will be used as
-     *                                                                        the root to construct the property template
-     * @param {string} [in_scope] - The scope in which the property typeid is defined
-     * @param {boolean} [in_evaluateConstants] - If constants need to be traversed and created
+     * @param {string}                       in_scope                       - The scope in which the property
+     *                                                                        typeid is defined
+     * @param {Object}                       out_propertyDef                - The created property definition
      *
      * @return {property-properties.BaseProperty|undefined} the property instance
      */
-    _createDefFromPropertyDeclaration(
-        in_propertiesEntry, in_parent, in_scope, in_evaluateConstants, propertyDef) {
+    _createDefFromPropertyDeclaration(in_propertiesEntry, in_scope, out_propertyDef) {
 
         var context = in_propertiesEntry.context !== undefined ? in_propertiesEntry.context : 'single';
-        var typeid = this._computeTypeid(in_propertiesEntry, in_parent, in_scope, context);
+        var typeid = this._computeTypeid(in_propertiesEntry, in_scope, context);
         var referenceTarget = typeid === 'Reference' ?
             TypeIdHelper.extractReferenceTargetTypeIdFromReference(in_propertiesEntry.typeid) : undefined;
-        var parent = undefined;
 
         if (typeid) {
             if (this._isRegisteredTypeid(typeid, in_scope) &&
@@ -1454,11 +1643,11 @@ class PropertyFactory {
                             in_scope);
                     }
 
-                    propertyDef.constructorFunction = templateOrConstructor;
-                    propertyDef.signal = false;
-                    propertyDef.entry = in_propertiesEntry;
-                    propertyDef.context = in_propertiesEntry.context;
-                    propertyDef.typeid = in_propertiesEntry.typeid;
+                    out_propertyDef.constructorFunction = templateOrConstructor;
+                    out_propertyDef.signal = false;
+                    out_propertyDef.entry = in_propertiesEntry;
+                    out_propertyDef.context = in_propertiesEntry.context;
+                    out_propertyDef.typeid = in_propertiesEntry.typeid;
 
                     // If this is a primitive type, we create it via the registered constructor
                     var result = new templateOrConstructor(in_propertiesEntry); // eslint-disable-line new-cap
@@ -1470,17 +1659,16 @@ class PropertyFactory {
                         // If we have a template in a single context, we create it directly here
 
                         // Create the base object
-                        parent = this._ensurePropertyParentExists(
+                        this._createNonCollectionPropertyDef(
                             typeid,
                             in_propertiesEntry.id,
-                            in_parent,
                             templateOrConstructor,
                             in_scope,
-                            propertyDef
+                            out_propertyDef
                         );
 
-                        this._parseTemplate(templateOrConstructor, parent, in_scope,
-                            !!(templateOrConstructor.inherits), in_evaluateConstants, propertyDef);
+                        this._parseTemplate(templateOrConstructor, in_scope,
+                            !!(templateOrConstructor.inherits), out_propertyDef);
                     } else {
                         // If we have other contexts, we have to create the corresponding property object for that context
 
@@ -1518,14 +1706,11 @@ class PropertyFactory {
                                 throw new Error(MSG.UNKNOWN_CONTEXT_SPECIFIED + context);
                         }
 
-                        propertyDef.constructorFunction = constructorFunction;
-                        propertyDef.signal = false;
-                        propertyDef.entry = in_propertiesEntry;
-                        propertyDef.typeid = typeid;
-                        propertyDef.context = context;
-
-                        result = new (constructorFunction)(in_propertiesEntry, in_scope);
-                        return result;
+                        out_propertyDef.constructorFunction = constructorFunction;
+                        out_propertyDef.signal = false;
+                        out_propertyDef.entry = in_propertiesEntry;
+                        out_propertyDef.typeid = typeid;
+                        out_propertyDef.context = context;
                     }
                 }
             } else {
@@ -1540,28 +1725,22 @@ class PropertyFactory {
                 in_propertiesEntry.properties = [];
             }
 
-            if (!parent) {
-                // If this is a declaration which contains a properties list, we have to create a new container property for it
-                let copiedProperty = Object.assign({typeid: 'ContainerProperty'}, in_propertiesEntry);
-                parent = new ContainerProperty(copiedProperty);
-                propertyDef.constructorFunction = ContainerProperty;
-                propertyDef.entry = copiedProperty;
-                propertyDef.signal = false;
-                propertyDef.typeid = copiedProperty.typeid;
-                propertyDef.context = 'single';
-            }
+            // If this is a declaration which contains a properties list, we have to create a new container property for it
+            let copiedPropertyEntry = Object.assign({typeid: 'ContainerProperty'}, in_propertiesEntry);
+            out_propertyDef.constructorFunction = ContainerProperty;
+            out_propertyDef.entry = copiedPropertyEntry;
+            out_propertyDef.signal = false;
+            out_propertyDef.typeid = copiedPropertyEntry.typeid;
+            out_propertyDef.context = 'single';
 
             // And then parse the entry like a template
-            this._parseTemplate(in_propertiesEntry, parent, in_scope, false, in_evaluateConstants, propertyDef);
+            this._parseTemplate(in_propertiesEntry, in_scope, false, out_propertyDef);
         }
 
         // If this property inherits from NamedProperty we assign a random GUID
         if (typeid && this.inheritsFrom(typeid, 'NamedProperty', { scope: in_scope })) {
-            parent.get('guid', { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER }).value = GuidUtils.generateGUID();
-            propertyDef.assignGuid = true;
+            out_propertyDef.assignGuid = true;
         }
-
-        return parent;
     };
 
     /**
@@ -1624,18 +1803,16 @@ class PropertyFactory {
     };
 
     /**
-     * Parse a given property template appending its property and constant objects to the given property parent object
+     * Parse a given property template appending its property and constant objects to the given propertyDef
      *
      * @param {property-properties.PropertyTemplate} in_template - template for the property
-     * @param {property-properties.BaseProperty}     in_parent   - the parent
      * @param {string} in_scope - The scope in which in_template is defined in
      * @param {boolean} in_allowChildMerges - Whether merging of children (nested properties) is allowed.
      *                                        This is used for extending inherited properties.
-     * @param {boolean} [in_evaluateConstants] - If constants need to be traversed and created
+     * @param {Object} out_propertyDef - The created property definition
      * @private
      */
-    _parseTemplate(
-        in_template, in_parent, in_scope, in_allowChildMerges, in_evaluateConstants, propertyDef) {
+    _parseTemplate(in_template, in_scope, in_allowChildMerges, propertyDef) {
 
         // Check if there are nested property arrays
         if (!(in_template.inherits && in_template.inherits.indexOf('Enum') !== -1)) {
@@ -1651,7 +1828,6 @@ class PropertyFactory {
                     const valueParsed = this._parseTypedValue(properties[i], in_scope, context);
 
                     if (optional) {
-                        in_parent._addOptionalChild(id, typeid);
                         propertyDef.optionalChildren = propertyDef.optionalChildren || {};
                         propertyDef.entry.optionalChildren = true;
                         propertyDef.optionalChildren[id] = typeid;
@@ -1665,30 +1841,22 @@ class PropertyFactory {
                         };
                         propertyDef.children = propertyDef.children || [];
                         propertyDef.children.unshift([properties[i].id, newChildEntry]);
-                        const property = this._createDefFromPropertyDeclaration(properties[i], undefined,
-                                                                                in_scope, false, newChildEntry);
-
-                        this._setInitialValue(property, valueParsed, true);
-                        if (optional) {
-                            in_parent._insert(property.getId(), property, true);
-                        } else {
-                            in_parent._append(property, in_allowChildMerges);
-                        }
+                        const property = this._createDefFromPropertyDeclaration(properties[i],
+                                                                                in_scope, newChildEntry);
                     } else if (!optional) {
                         const newChildEntry = {
                             initialValue: undefined
                         };
                         propertyDef.children = propertyDef.children || []
                         propertyDef.children.unshift([properties[i].id, newChildEntry]);
-                        const property = this._createDefFromPropertyDeclaration(properties[i], undefined,
-                                                                                in_scope, false, newChildEntry);
+                        const property = this._createDefFromPropertyDeclaration(properties[i],
+                                                                                in_scope, newChildEntry);
 
-                        in_parent._append(property, in_allowChildMerges);
                     }
                 }
             }
 
-            if (in_evaluateConstants && in_template.constants) {
+            if (in_template.constants) {
                 const constants = in_template.constants;
                 for (let i = 0; i < constants.length; i++) {
                     const context = constants[i].context || 'single';
@@ -1701,16 +1869,11 @@ class PropertyFactory {
                     propertyDef.children = propertyDef.children || [];
                     propertyDef.children.unshift([constants[i].id, newChildEntry]);
 
-                    const constant = this._createDefFromPropertyDeclaration(constants[i], undefined, in_scope,
-                                                                            true, newChildEntry);
+                    this._createDefFromPropertyDeclaration(constants[i], in_scope, newChildEntry);
 
                     if (valueParsed.value) {
-                        this._setInitialValue(constant, valueParsed, true);
                         newChildEntry.initialValue = valueParsed;
                     }
-
-                    constant._setAsConstant();
-                    in_parent._append(constant, false);
                 }
             }
         }
