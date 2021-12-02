@@ -200,6 +200,7 @@ declare function get_current_InterfaceDeclaration_IDocumentDeltaConnection():
 declare function use_old_InterfaceDeclaration_IDocumentDeltaConnection(
     use: old.IDocumentDeltaConnection);
 use_old_InterfaceDeclaration_IDocumentDeltaConnection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentDeltaConnection());
 
 /*
@@ -272,6 +273,7 @@ declare function get_current_InterfaceDeclaration_IDocumentService():
 declare function use_old_InterfaceDeclaration_IDocumentService(
     use: old.IDocumentService);
 use_old_InterfaceDeclaration_IDocumentService(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentService());
 
 /*
@@ -296,6 +298,7 @@ declare function get_current_InterfaceDeclaration_IDocumentServiceFactory():
 declare function use_old_InterfaceDeclaration_IDocumentServiceFactory(
     use: old.IDocumentServiceFactory);
 use_old_InterfaceDeclaration_IDocumentServiceFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentServiceFactory());
 
 /*
