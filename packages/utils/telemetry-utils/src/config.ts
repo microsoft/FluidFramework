@@ -101,7 +101,7 @@ function stronglyTypedParse(input: any): stronglyTypedValue | undefined {
 
 export const inMemoryConfigProvider = (storage?: Storage, namespaceOverride?: string) =>
     new Lazy<IConfigProviderBase | undefined>(() => {
-        if (sessionStorage !== undefined && sessionStorage !== null) {
+        if (storage !== undefined && storage !== null) {
             return ({
                 getRawConfig: (name: string) => {
                     try {
