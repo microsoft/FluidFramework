@@ -99,14 +99,16 @@ function stronglyTypedParse(input: any): stronglyTypedValue | undefined {
     return defaultReturn;
 }
 
-export const inMemoryConfigProvider = (storage: Storage) => new Lazy<IConfigProviderBase | undefined>(() => ({
-    getRawConfig: (name: string) => {
-        try {
-            return stronglyTypedParse(storage.getItem(name) ?? undefined)?.value;
-        } catch { }
-        return undefined;
-    },
-}));
+export const inMemoryConfigProvider = (storage: Storage, namespaceOverride?: string) =>
+    new Lazy<IConfigProviderBase | undefined>(() => ({
+        getRawConfig: (name: string) => {
+            try {
+                const key = namespaceOverride === undefined ? name : `${namespaceOverride}.${name}`;
+                return stronglyTypedParse(storage.getItem(key) ?? undefined)?.value;
+            } catch { }
+            return undefined;
+        },
+    }));
 
 interface ConfigCacheEntry extends Partial<ConfigTypeStringToType> {
     readonly raw: ConfigTypes;

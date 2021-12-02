@@ -182,31 +182,37 @@ describe("Config", () => {
             "Priority.number": "1",
             "Priority.string": "string1",
             "Priority.boolean": "true",
+            "Priority.featureEnabled": "true",
+            "BreakGlass.Priority.featureEnabled": "false",
         };
         const settings2 = {
             "Priority.number": "2",
             "Priority.string": "string2",
             "Priority.boolean": "false",
             "Priority.number2": "3",
+            "Priority.featureEnabled": "true",
         };
         const settings3 = {
             "Priority.number2": "4",
             "Priority.number3": "4",
+            "Priority.featureEnabled": "true",
         };
 
         const config1 = ConfigProvider.create(
             "Priority",
             [
+                inMemoryConfigProvider(getMockStore(settings1), "BreakGlass").value,
                 inMemoryConfigProvider(getMockStore(settings1)).value,
                 inMemoryConfigProvider(getMockStore(settings2)).value,
                 inMemoryConfigProvider(getMockStore(settings3)).value,
             ]);
 
-        assert.equal(config1.getNumber("number"), 1); // from settings1
+        assert.equal(config1.getNumber("number", 2), 1); // from settings1
         assert.equal(config1.getString("string"), "string1"); // from settings1
         assert.equal(config1.getBoolean("boolean", true), true); // from settings1
         assert.equal(config1.getNumber("number2"), 3); // from settings2
         assert.equal(config1.getNumber("number3"), 4); // from settings3
+        assert.equal(config1.getBoolean("featureEnabled"), false); // from settings1.BreakGlass
 
         const config2 = ConfigProvider.create(
             "Priority",
@@ -214,6 +220,7 @@ describe("Config", () => {
                 inMemoryConfigProvider(getMockStore(settings3)).value,
                 inMemoryConfigProvider(getMockStore(settings2)).value,
                 inMemoryConfigProvider(getMockStore(settings1)).value,
+                inMemoryConfigProvider(getMockStore(settings1), "BreakGlass").value,
             ]);
 
         assert.equal(config2.getNumber("number"), 2); // from settings2
@@ -221,5 +228,6 @@ describe("Config", () => {
         assert.equal(config2.getBoolean("boolean", false), false); // from settings2
         assert.equal(config2.getNumber("number2"), 4); // from settings3
         assert.equal(config2.getNumber("number3"), 4); // from settings3
+        assert.equal(config1.getBoolean("featureEnabled"), false); // from settings1.BreakGlass
     });
 });
