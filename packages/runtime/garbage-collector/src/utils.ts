@@ -123,7 +123,8 @@ export function removeRouteFromAllNodes(gcNodes: { [ id: string ]: string[] }, o
 }
 
 /**
- * Concatenates the GC nodes in srcGCState to destGCState.
+ * Concatenates the given GC states by copying the GC nodes in srcGCState to destGCState. All nodes in srcGCState
+ * should be unique and not be present in destGCState.
  */
 export function concatGarbageCollectionState(
     destGCState: IGarbageCollectionState,
