@@ -27,7 +27,7 @@ export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionD
 
 /**
  * Helper function that generates the GC details of the children of a given node's GC details.
- * @param gcDetails - The GC deails of a node.
+ * @param gcDetails - The GC details of a node.
  * @returns A map of GC details of each children of the the given node.
  */
  export function getChildNodesGCDetails(gcDetails: IGarbageCollectionSummaryDetails) {
@@ -123,7 +123,7 @@ export function removeRouteFromAllNodes(gcNodes: { [ id: string ]: string[] }, o
 }
 
 /**
- * Concatinates the GC nodes in srcGCState to destGCState.
+ * Concatenates the GC nodes in srcGCState to destGCState.
  */
 export function concatGarbageCollectionState(
     destGCState: IGarbageCollectionState,
