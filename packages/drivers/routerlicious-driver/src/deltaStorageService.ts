@@ -36,6 +36,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
         to: number | undefined,
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
+        fetchReason?: string,
     ): IStream<ISequencedDocumentMessage[]>
     {
         if (cachedOnly) {
@@ -51,6 +52,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
             MaxBatchDeltas,
             new TelemetryNullLogger(),
             abortSignal,
+            fetchReason,
         );
     }
 

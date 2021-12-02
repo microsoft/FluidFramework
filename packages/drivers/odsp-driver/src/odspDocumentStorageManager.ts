@@ -313,9 +313,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             this.blobCache.setBlob(blobId, blob);
         }
 
-        if (!this.attributesBlobHandles.has(blobId)) {
-            return blob;
-        }
         return blob;
     }
 
@@ -406,22 +403,31 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 { eventName: "ObtainSnapshot" },
                 async (event: PerformanceEvent) => {
                     const props = {};
-                    let cachedSnapshot: ISnapshotContents | undefined;
+                    let retrievedSnapshot: ISnapshotContents | undefined;
+                    // Here's the logic to grab the persistent cache snapshot implemented by the host
+                    // Epoch tracker is responsible for communicating with the persistent cache, handling epochs and cache versions
                     const cachedSnapshotP: Promise<ISnapshotContents | undefined> =
                         this.epochTracker.get(createCacheSnapshotKey(this.odspResolvedUrl))
-                            .then((snapshotCachedEntry: ISnapshotCachedEntry) => {
+                            .then(async (snapshotCachedEntry: ISnapshotCachedEntry) => {
                                 if (snapshotCachedEntry !== undefined) {
                                     // If the cached entry does not contain the entry time, then assign it a default of 30 days old.
-                                    // eslint-disable-next-line @typescript-eslint/dot-notation
-                                    props["cacheEntryAge"] = Date.now() - (snapshotCachedEntry.cacheEntryTime ??
+                                    const age = Date.now() - (snapshotCachedEntry.cacheEntryTime ??
                                         (Date.now() - 30 * 24 * 60 * 60 * 1000));
+
+                                    // Record the cache age
+                                    // eslint-disable-next-line @typescript-eslint/dot-notation
+                                    props["cacheEntryAge"] = age;
                                 }
+
                                 return snapshotCachedEntry;
                         });
 
+                    // Based on the concurrentSnapshotFetch policy:
+                    // Either retrieve both the network and cache snapshots concurrently and pick the first to return,
+                    // or grab the cache value and then the network value if the cache value returns undefined.
                     let method: string;
                     if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
-                        const snapshotP = this.fetchSnapshot(hostSnapshotOptions);
+                        const networkSnapshotP = this.fetchSnapshot(hostSnapshotOptions);
 
                         // Ensure that failures on both paths are ignored initially.
                         // I.e. if cache fails for some reason, we will proceed with network result.
@@ -429,20 +435,20 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         // do want to attempt to succeed with cached data!
                         const promiseRaceWinner = await promiseRaceWithWinner([
                             cachedSnapshotP.catch(() => undefined),
-                            snapshotP.catch(() => undefined),
+                            networkSnapshotP.catch(() => undefined),
                         ]);
-                        cachedSnapshot = promiseRaceWinner.value;
+                        retrievedSnapshot = promiseRaceWinner.value;
                         method = promiseRaceWinner.index === 0 ? "cache" : "network";
 
-                        if (cachedSnapshot === undefined) {
+                        if (retrievedSnapshot === undefined) {
                             // if network failed -> wait for cache ( then return network failure)
                             // If cache returned empty or failed -> wait for network (success of failure)
                             if (promiseRaceWinner.index === 1) {
-                                cachedSnapshot = await cachedSnapshotP;
+                                retrievedSnapshot = await cachedSnapshotP;
                                 method = "cache";
                             }
-                            if (cachedSnapshot === undefined) {
-                                cachedSnapshot = await snapshotP;
+                            if (retrievedSnapshot === undefined) {
+                                retrievedSnapshot = await networkSnapshotP;
                                 method = "network";
                             }
                         }
@@ -450,12 +456,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         // Note: There's a race condition here - another caller may come past the undefined check
                         // while the first caller is awaiting later async code in this block.
 
-                        cachedSnapshot = await cachedSnapshotP;
+                        retrievedSnapshot = await cachedSnapshotP;
 
-                        method = cachedSnapshot !== undefined ? "cache" : "network";
+                        method = retrievedSnapshot !== undefined ? "cache" : "network";
 
-                        if (cachedSnapshot === undefined) {
-                            cachedSnapshot = await this.fetchSnapshot(hostSnapshotOptions);
+                        if (retrievedSnapshot === undefined) {
+                            retrievedSnapshot = await this.fetchSnapshot(hostSnapshotOptions);
                         }
                     }
                     if (method === "network") {
@@ -463,12 +469,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         props["cacheEntryAge"] = undefined;
                     }
                     event.end({ ...props, method });
-                    return cachedSnapshot;
+                    return retrievedSnapshot;
                 },
-                {end: true, cancel: "error"},
             );
 
-            // Successful call, redirect future calls to getVersion only!
+            // Successful call, make network calls only
             this.firstVersionCall = false;
 
             this._snapshotSequenceNumber = odspSnapshotCacheValue.sequenceNumber;

@@ -696,7 +696,7 @@ export class PendingStateManager implements IDisposable {
         localOpMetadata: unknown;
     };
     replayPendingStates(): void;
-    }
+}
 
 // @public
 export class ScheduleManager {

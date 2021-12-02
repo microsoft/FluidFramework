@@ -130,17 +130,37 @@ export function normalizeError(
     return fluidError;
 }
 
-export function generateStack(): string | undefined {
-    // Some browsers will populate stack right away, others require throwing Error
-    let stack = new Error("<<generated stack>>").stack;
-    if (!stack) {
-        try {
-            throw new Error("<<generated stack>>");
-        } catch (e) {
-            stack = e.stack;
-        }
+let stackPopulatedOnCreation: boolean | undefined;
+
+/**
+ * The purpose of this function is to provide ability to capture stack context quickly.
+ * Accessing new Error().stack is slow, and the slowest part is accessing stack property itself.
+ * There are scenarios where we generate error with stack, but error is handled in most cases and
+ * stack property is not accessed.
+ * For such cases it's better to not read stack property right away, but rather delay it until / if it's needed
+ * Some browsers will populate stack right away, others require throwing Error, so we do auto-detection on the fly.
+ * @returns Error object that has stack populated.
+ */
+ export function generateErrorWithStack(): Error {
+    const err = new Error("<<generated stack>>");
+
+    if (stackPopulatedOnCreation === undefined) {
+        stackPopulatedOnCreation = (err.stack !== undefined);
     }
-    return stack;
+
+    if (stackPopulatedOnCreation) {
+        return err;
+    }
+
+    try {
+        throw err;
+    } catch (e) {
+        return e as Error;
+    }
+}
+
+export function generateStack(): string | undefined {
+    return generateErrorWithStack().stack;
 }
 
 /**

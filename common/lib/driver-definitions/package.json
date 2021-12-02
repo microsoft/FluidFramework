@@ -35,8 +35,8 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.0",
-    "@fluidframework/core-interfaces": "^0.41.0-0",
-    "@fluidframework/protocol-definitions": "^0.1026.0-0"
+    "@fluidframework/core-interfaces": "^0.41.0",
+    "@fluidframework/protocol-definitions": "^0.1026.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
@@ -128,6 +128,17 @@
           "backCompat": false
         },
         "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
+          "backCompat": false
+        }
+      },
+      "0.42.0": {
+        "InterfaceDeclaration_IDocumentDeltaConnection": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentService": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentServiceFactory": {
           "backCompat": false
         }
       }

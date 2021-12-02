@@ -7,7 +7,6 @@ import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import {
     IFluidReducerProps,
     IViewState,
@@ -139,7 +138,7 @@ export class ClickerReducer extends SyncedDataObject {
 
 // ----- FACTORY SETUP -----
 export const ClickerReducerInstantiationFactory =
-    new DataObjectFactory<ClickerReducer, unknown, unknown, IEvent>(
+    new DataObjectFactory(
         "clicker-reducer",
         ClickerReducer,
         [SharedCounter.getFactory()],
