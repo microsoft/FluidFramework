@@ -38,7 +38,7 @@ describe("Config", () => {
         };
     });
 
-    it("Test mixin namespaces", () => {
+    it("Mixin namespaces", () => {
         const settings = {
             "Fluid.number": "1",
             "Fluid.First.number": "2",
@@ -67,7 +67,7 @@ describe("Config", () => {
         assert.deepEqual(mockStore.getOps(), Object.keys(settings));
     });
 
-    it("Test proper typing - storage provider", () => {
+    it("Typing - storage provider", () => {
         const settings = {
             "Fluid.number": "1",
             "Fluid.badNumber": "{1}",
@@ -107,7 +107,7 @@ describe("Config", () => {
         assert.equal(config.getBooleanArray("BadBooleanArray"), undefined);
     });
 
-    it("Test proper typing - custom provider", () => {
+    it("Typing - custom provider", () => {
         const settings = {
             "Fluid.number": 1,
             "Fluid.sortOfNumber": "1",
@@ -153,7 +153,7 @@ describe("Config", () => {
         assert.equal(config.getBooleanArray("badBooleanArray2"), undefined);
     });
 
-    it("Test fallback", () => {
+    it("Fallbacks", () => {
         const settings = {
             "BadConfig.number": "{1}",
             "BadConfig.boolean": "truthy",
@@ -177,7 +177,14 @@ describe("Config", () => {
         assert.deepEqual(config.getBooleanArray("does not exist", [true, false]), [true, false]);
     });
 
-    it("Test config priority", () => {
+    it("Void provider", () => {
+        const config = ConfigProvider.create("Void", [inMemoryConfigProvider().value]);
+        assert.equal(config.getNumber("number", 0), 0);
+        assert.equal(config.getNumber("does not exist", 1), 1);
+        assert.equal(config.getBoolean("boolean", true), true);
+    });
+
+    it("Config priority", () => {
         const settings1 = {
             "Priority.number": "1",
             "Priority.string": "string1",

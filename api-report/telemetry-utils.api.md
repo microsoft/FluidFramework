@@ -138,7 +138,7 @@ export interface IFluidErrorBase extends Error {
 // Warning: (ae-incompatible-release-tags) The symbol "inMemoryConfigProvider" is marked as @public, but its signature references "IConfigProviderBase" which is marked as @alpha
 //
 // @public (undocumented)
-export const inMemoryConfigProvider: (storage: Storage, namespaceOverride?: string | undefined) => Lazy<IConfigProviderBase | undefined>;
+export const inMemoryConfigProvider: (storage?: Storage | undefined, namespaceOverride?: string | undefined) => Lazy<IConfigProviderBase | undefined>;
 
 // @public
 export interface IPerformanceEventMarkers {
@@ -245,6 +245,11 @@ export function raiseConnectedEvent(logger: ITelemetryLogger, emitter: EventEmit
 
 // @public (undocumented)
 export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLogger, event: string, ...args: any[]): void;
+
+// Warning: (ae-incompatible-release-tags) The symbol "sessionStorageConfigProvider" is marked as @public, but its signature references "IConfigProviderBase" which is marked as @alpha
+//
+// @public (undocumented)
+export const sessionStorageConfigProvider: (namespaceOverride?: string | undefined) => Lazy<IConfigProviderBase | undefined>;
 
 // @public
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {

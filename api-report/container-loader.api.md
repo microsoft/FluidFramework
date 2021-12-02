@@ -157,7 +157,7 @@ export interface IFluidModuleWithDetails {
 // @public (undocumented)
 export interface ILoaderOptions extends ILoaderOptions_2 {
     // (undocumented)
-    summarizeProtocolTree?: true | string;
+    summarizeProtocolTree?: true;
 }
 
 // @public

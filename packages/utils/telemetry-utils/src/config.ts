@@ -99,6 +99,15 @@ function stronglyTypedParse(input: any): stronglyTypedValue | undefined {
     return defaultReturn;
 }
 
+const safeLocalStorage = (): Storage | undefined => {
+    try {
+        return sessionStorage !== null ? sessionStorage : undefined;
+    } catch { return undefined; }
+};
+
+export const sessionStorageConfigProvider = (namespaceOverride?: string) =>
+    inMemoryConfigProvider(safeLocalStorage(), namespaceOverride);
+
 export const inMemoryConfigProvider = (storage?: Storage, namespaceOverride?: string) =>
     new Lazy<IConfigProviderBase | undefined>(() => {
         if (storage !== undefined && storage !== null) {
