@@ -16,6 +16,36 @@ export interface IConfigProviderBase {
     getRawConfig(name: string): ConfigTypes;
 }
 
+/**
+ * @alpha
+ */
+ export interface IConfigProvider extends IConfigProviderBase {
+    getBoolean(name: string, defaultValue?: boolean): boolean | undefined;
+    getNumber(name: string, defaultValue?: number): number | undefined;
+    getString(name: string, defaultValue?: string): string | undefined;
+    getBooleanArray(name: string, defaultValue?: boolean[]): boolean[] | undefined;
+    getNumberArray(name: string, defaultValue?: number[]): number[] | undefined;
+    getStringArray(name: string, defaultValue?: string[]): string[] | undefined;
+}
+
+export const sessionStorageConfigProvider = (namespaceOverride?: string) =>
+    inMemoryConfigProvider(safeLocalStorage(), namespaceOverride);
+
+export const inMemoryConfigProvider = (storage?: Storage, namespaceOverride?: string) =>
+    new Lazy<IConfigProviderBase | undefined>(() => {
+        if (storage !== undefined && storage !== null) {
+            return ({
+                getRawConfig: (name: string) => {
+                    try {
+                        const key = namespaceOverride === undefined ? name : `${namespaceOverride}.${name}`;
+                        return stronglyTypedParse(storage.getItem(key) ?? undefined)?.value;
+                    } catch { }
+                    return undefined;
+                },
+            });
+        }
+    });
+
 interface ConfigTypeStringToType {
     number: number;
     string: string;
@@ -26,19 +56,6 @@ interface ConfigTypeStringToType {
 }
 
 type ConfigTypeStrings = keyof ConfigTypeStringToType;
-
-/**
- * @alpha
- */
-export interface IConfigProvider extends IConfigProviderBase {
-    getBoolean(name: string, defaultValue?: boolean): boolean | undefined;
-    getNumber(name: string, defaultValue?: number): number | undefined;
-    getString(name: string, defaultValue?: string): string | undefined;
-    getBooleanArray(name: string, defaultValue?: boolean[]): boolean[] | undefined;
-    getNumberArray(name: string, defaultValue?: number[]): number[] | undefined;
-    getStringArray(name: string, defaultValue?: string[]): string[] | undefined;
-}
-
 type PrimitiveTypeStrings = "number" | "string" | "boolean";
 
 function isPrimitiveType(type: string): type is PrimitiveTypeStrings {
@@ -105,28 +122,11 @@ const safeLocalStorage = (): Storage | undefined => {
     } catch { return undefined; }
 };
 
-export const sessionStorageConfigProvider = (namespaceOverride?: string) =>
-    inMemoryConfigProvider(safeLocalStorage(), namespaceOverride);
-
-export const inMemoryConfigProvider = (storage?: Storage, namespaceOverride?: string) =>
-    new Lazy<IConfigProviderBase | undefined>(() => {
-        if (storage !== undefined && storage !== null) {
-            return ({
-                getRawConfig: (name: string) => {
-                    try {
-                        const key = namespaceOverride === undefined ? name : `${namespaceOverride}.${name}`;
-                        return stronglyTypedParse(storage.getItem(key) ?? undefined)?.value;
-                    } catch { }
-                    return undefined;
-                },
-            });
-        }
-    });
-
 interface ConfigCacheEntry extends Partial<ConfigTypeStringToType> {
     readonly raw: ConfigTypes;
     readonly name: string;
 }
+
 export class ConfigProvider implements IConfigProvider {
     private readonly configCache = new Map<string, ConfigCacheEntry>();
     private readonly orderedBaseProviders: (IConfigProviderBase | undefined)[];
