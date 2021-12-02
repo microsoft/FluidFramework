@@ -237,4 +237,84 @@ describe("Config", () => {
         assert.equal(config2.getNumber("number3"), 4); // from settings3
         assert.equal(config1.getBoolean("featureEnabled"), false); // from settings1.BreakGlass
     });
+
+    // #region SettingsProvider
+
+    type SettingType = string | boolean | number | (string | boolean | number)[] | null;
+
+    interface ProvideSettingsProvider {
+        readonly SettingsProvider: SettingsProvider;
+    }
+
+    interface SettingsProvider extends ProvideSettingsProvider {
+        /**
+         * Used to get the setting value for the specified setting.
+         * Providing a default in case setting is not available or not defined.
+         */
+        getSetting<T extends SettingType>(settingName: string, defaultValue: T, namespace?: string): T;
+    }
+
+    class HybridSettingsProvider implements SettingsProvider, IConfigProviderBase {
+        constructor(private readonly store: Record<string, SettingType | ConfigTypes>) { }
+
+        getRawConfig(name: string): ConfigTypes {
+            // The point here is to use `getSetting`
+            const val = this.getSetting(name, null);
+            return val === null ? undefined : val;
+        }
+
+        getSetting<T extends SettingType>(settingName: string, defaultValue: T, namespace?: string): T {
+            const key = namespace === undefined ? settingName : `${namespace}.${settingName}`;
+            return this.store[key] as T ?? defaultValue;
+        }
+
+        SettingsProvider: SettingsProvider = this;
+    }
+
+    it("Typing - SettingsProvider", () => {
+        const settings = {
+            "Fluid.number": 1,
+            "Fluid.sortOfNumber": "1",
+            "Fluid.badNumber": "{1}",
+            "Fluid.stringThatLooksLikeANumber": "1",
+            "Fluid.stringThatLooksLikeABoolean": "true",
+            "Fluid.string": "string",
+            "Fluid.badString": [],
+            "Fluid.boolean": "true",
+            "Fluid.badBoolean": "truthy",
+            "Fluid.numberArray": `[1, 2, 3]`,
+            "Fluid.badNumberArray": ["one", "two", "three"],
+            "Fluid.stringArray": `["1", "2", "3"]`,
+            "Fluid.badStringArray": "1",
+            "Fluid.booleanArray": [true, false, true],
+            "Fluid.badBooleanArray": [1, 2, 3],
+            "Fluid.badBooleanArray2": ["true", "false", "true"],
+        };
+
+        const config = ConfigProvider.create("Fluid", [new HybridSettingsProvider(settings)]);
+
+        assert.equal(config.getNumber("number"), 1);
+        assert.equal(config.getNumber("sortOfNumber"), 1);
+        assert.equal(config.getNumber("badNumber"), undefined);
+
+        assert.equal(config.getString("stringThatLooksLikeANumber"), "1");
+        assert.equal(config.getString("stringThatLooksLikeABoolean"), "true");
+        assert.equal(config.getString("string"), "string");
+        assert.equal(config.getString("badString"), undefined);
+
+        assert.equal(config.getBoolean("boolean"), true);
+        assert.equal(config.getBoolean("badBoolean"), undefined);
+
+        assert.deepEqual(config.getNumberArray("numberArray"), [1, 2, 3]);
+        assert.equal(config.getNumberArray("badNumberArray"), undefined);
+
+        assert.deepEqual(config.getStringArray("stringArray"), ["1", "2", "3"]);
+        assert.equal(config.getStringArray("badStringArray"), undefined);
+
+        assert.deepEqual(config.getBooleanArray("booleanArray"), [true, false, true]);
+        assert.equal(config.getBooleanArray("badBooleanArray"), undefined);
+        assert.equal(config.getBooleanArray("badBooleanArray2"), undefined);
+    });
+
+    // #endregion IFluidRouter
 });
