@@ -236,7 +236,7 @@ export class ScribeLambda implements IPartitionLambda {
                                     const nackMessage = summaryResponse.message as ISummaryNack;
                                     await this.sendSummaryNack(nackMessage);
                                     const errorMsg = `Client summary failure @${value.operation.sequenceNumber}. `
-                                        + `Error: ${nackMessage.message ?? nackMessage.errorMessage}`;
+                                        + `Error: ${nackMessage.message ?? nackMessage.message}`;
                                     this.context.log?.error(
                                         errorMsg,
                                         {

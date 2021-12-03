@@ -349,7 +349,7 @@ export class SummaryGenerator {
                 // back-compat: cast needed until dep on protocol-definitions version bump
                 assert(ackNackOp.type === MessageType.SummaryNack, 0x274 /* "type check" */);
                 const summaryNack = ackNackOp.contents as { message?: string; retryAfter?: number; };
-                const message = summaryNack.message ?? ackNackOp.contents.errorMessage;
+                const message = summaryNack.message ?? ackNackOp.contents.message;
                 const retryAfterSeconds = summaryNack?.retryAfter;
 
                 const error = new LoggingError(`summaryNack: ${message}`, { retryAfterSeconds });
