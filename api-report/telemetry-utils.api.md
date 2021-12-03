@@ -30,12 +30,8 @@ export class ChildLogger extends TelemetryLogger {
     send(event: ITelemetryBaseEvent): void;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "ConfigProvider" is marked as @public, but its signature references "IConfigProvider" which is marked as @alpha
-//
-// @public (undocumented)
+// @public
 export class ConfigProvider implements IConfigProvider {
-    // Warning: (ae-incompatible-release-tags) The symbol "create" is marked as @public, but its signature references "IConfigProviderBase" which is marked as @alpha
-    //
     // (undocumented)
     static create(namespace: string | undefined, orderedBaseProviders: (IConfigProviderBase | ITelemetryBaseLogger | undefined)[]): IConfigProvider;
     // (undocumented)
@@ -96,7 +92,7 @@ export const hasErrorInstanceId: (x: any) => x is {
     errorInstanceId: string;
 };
 
-// @alpha (undocumented)
+// @public
 export interface IConfigProvider extends IConfigProviderBase {
     // (undocumented)
     getBoolean(name: string, defaultValue?: boolean): boolean | undefined;
@@ -112,7 +108,7 @@ export interface IConfigProvider extends IConfigProviderBase {
     getStringArray(name: string, defaultValue?: string[]): string[] | undefined;
 }
 
-// @alpha (undocumented)
+// @public
 export interface IConfigProviderBase {
     // (undocumented)
     getRawConfig(name: string): ConfigTypes;
@@ -135,9 +131,7 @@ export interface IFluidErrorBase extends Error {
     readonly stack?: string;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "inMemoryConfigProvider" is marked as @public, but its signature references "IConfigProviderBase" which is marked as @alpha
-//
-// @public (undocumented)
+// @public
 export const inMemoryConfigProvider: (storage?: Storage | undefined, namespaceOverride?: string | undefined) => Lazy<IConfigProviderBase | undefined>;
 
 // @public
@@ -188,13 +182,10 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
 // @public
 export function logIfFalse(condition: any, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
 
-// @alpha (undocumented)
+// @public
 export function mixinChildLoggerWithConfigProvider(logger: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLoggerWithConfig;
 
-// Warning: (ae-incompatible-release-tags) The symbol "mixinConfigProvider" is marked as @public, but its signature references "IConfigProvider" which is marked as @alpha
-// Warning: (ae-incompatible-release-tags) The symbol "mixinConfigProvider" is marked as @public, but its signature references "TelemetryLoggerWithConfig" which is marked as @alpha
-//
-// @public (undocumented)
+// @public
 export function mixinConfigProvider<T extends ITelemetryBaseLogger>(logger: T, config: IConfigProvider): TelemetryLoggerWithConfig<T>;
 
 // @public
@@ -246,9 +237,7 @@ export function raiseConnectedEvent(logger: ITelemetryLogger, emitter: EventEmit
 // @public (undocumented)
 export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLogger, event: string, ...args: any[]): void;
 
-// Warning: (ae-incompatible-release-tags) The symbol "sessionStorageConfigProvider" is marked as @public, but its signature references "IConfigProviderBase" which is marked as @alpha
-//
-// @public (undocumented)
+// @public
 export const sessionStorageConfigProvider: (namespaceOverride?: string | undefined) => Lazy<IConfigProviderBase | undefined>;
 
 // @public
@@ -293,7 +282,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }, error?: any): void;
 }
 
-// @alpha (undocumented)
+// @public
 export type TelemetryLoggerWithConfig<T extends ITelemetryBaseLogger = ITelemetryLogger> = T & {
     readonly config: IConfigProvider;
 };

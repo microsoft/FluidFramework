@@ -10,14 +10,14 @@ import { ChildLogger, ITelemetryLoggerPropertyBags } from "./logger";
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
 /**
- * @alpha
+ * Base interface for providing configurations to enable/disable/control features
  */
 export interface IConfigProviderBase {
     getRawConfig(name: string): ConfigTypes;
 }
 
 /**
- * @alpha
+ * Explicitly typed interface for reading configurations
  */
  export interface IConfigProvider extends IConfigProviderBase {
     getBoolean(name: string, defaultValue?: boolean): boolean | undefined;
@@ -28,23 +28,39 @@ export interface IConfigProviderBase {
     getStringArray(name: string, defaultValue?: string[]): string[] | undefined;
 }
 
-export const sessionStorageConfigProvider = (namespaceOverride?: string) =>
-    inMemoryConfigProvider(safeLocalStorage(), namespaceOverride);
+/**
+ * Creates a base configuration provider based on `localStorage`
+ *
+ * @param namespaceOverride - (optional) if provided, will be prepended to the fully qualified config key name
+ * @returns A lazy initialized base configuration provider with `localStorage` as the underlying config store
+ */
+export const sessionStorageConfigProvider =
+    (namespaceOverride?: string): Lazy<IConfigProviderBase | undefined> =>
+        inMemoryConfigProvider(safeLocalStorage(), namespaceOverride);
 
-export const inMemoryConfigProvider = (storage?: Storage, namespaceOverride?: string) =>
-    new Lazy<IConfigProviderBase | undefined>(() => {
-        if (storage !== undefined && storage !== null) {
-            return ({
-                getRawConfig: (name: string) => {
-                    try {
-                        const key = namespaceOverride === undefined ? name : `${namespaceOverride}.${name}`;
-                        return stronglyTypedParse(storage.getItem(key) ?? undefined)?.value;
-                    } catch { }
-                    return undefined;
-                },
-            });
-        }
-    });
+/**
+ * Creates a base configuration provider based on the supplied `Storage` instance
+ *
+ * @param storage - instance of `Storage` to be used as storage media for the config
+ * @param namespaceOverride - (optional) if provided, will be prepended to the fully qualified config key name
+ * @returns A lazy initialized base configuration provider with
+ * the supplied `Storage` instance as the underlying config store
+ */
+export const inMemoryConfigProvider =
+    (storage?: Storage, namespaceOverride?: string): Lazy<IConfigProviderBase | undefined> =>
+        new Lazy<IConfigProviderBase | undefined>(() => {
+            if (storage !== undefined && storage !== null) {
+                return ({
+                    getRawConfig: (name: string) => {
+                        try {
+                            const key = namespaceOverride === undefined ? name : `${namespaceOverride}.${name}`;
+                            return stronglyTypedParse(storage.getItem(key) ?? undefined)?.value;
+                        } catch { }
+                        return undefined;
+                    },
+                });
+            }
+        });
 
 interface ConfigTypeStringToType {
     number: number;
@@ -127,6 +143,9 @@ interface ConfigCacheEntry extends Partial<ConfigTypeStringToType> {
     readonly name: string;
 }
 
+/**
+ * Implementation of {@link IConfigProvider} which contains nested {@link IConfigProviderBase} instances
+ */
 export class ConfigProvider implements IConfigProvider {
     private readonly configCache = new Map<string, ConfigCacheEntry>();
     private readonly orderedBaseProviders: (IConfigProviderBase | undefined)[];
@@ -262,13 +281,19 @@ export class ConfigProvider implements IConfigProvider {
 }
 
 /**
- * @alpha
+ * A type containing both a telemetry logger and a configuration provider
  */
 export type TelemetryLoggerWithConfig<T extends ITelemetryBaseLogger = ITelemetryLogger> =
     T & { readonly config: IConfigProvider };
 
 /**
- * @alpha
+ * Creates a child mixin containing both a telemetry logger and a configuration provider
+ * based on the parent logger
+ *
+ * @param logger - instance of the logger
+ * @param namespace - namespace. It will be prepended to both logging event names and config key names
+ * @param properties - logger properties
+ * @returns A mixin containing both a telemetry logger and a configuration provider
  */
 export function mixinChildLoggerWithConfigProvider(
     logger: ITelemetryBaseLogger,
@@ -282,6 +307,13 @@ export function mixinChildLoggerWithConfigProvider(
 
 type loggerWithConfigBuilder<T extends ITelemetryBaseLogger> = T & { config?: IConfigProvider };
 
+/**
+ * Attaches a config provider to a telemetry logger
+ *
+ * @param logger - instance of the logger
+ * @param config - instance of the config provider
+ * @returns A mixin containing both a telemetry logger and a configuration provider
+ */
 export function mixinConfigProvider<T extends ITelemetryBaseLogger>(
     logger: T,
     config: IConfigProvider,

@@ -33,6 +33,7 @@ import {
     mixinChildLoggerWithConfigProvider,
     mixinConfigProvider,
     PerformanceEvent,
+    IConfigProviderBase,
 } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
@@ -210,7 +211,13 @@ export interface ILoaderProps {
      * Blobs storage for detached containers.
      */
     readonly detachedBlobStorage?: IDetachedBlobStorage;
+
+    /**
+     * The configuration provider which may be used to control features.
+     */
+    readonly configProvider?: IConfigProviderBase;
 }
+
 /**
  * Services and properties used by and exposed by the loader
  */
@@ -289,8 +296,12 @@ export class Loader implements IHostLoader {
         }
 
         const subLogger = mixinConfigProvider(
-            DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all:{loaderId: uuid()} }),
-            ConfigProvider.create("Fluid",[sessionStorageConfigProvider().value, loaderProps.logger]));
+            DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all: { loaderId: uuid() } }),
+            ConfigProvider.create(
+                "Fluid",
+                [sessionStorageConfigProvider("FluidHot").value, // Global override for all configs
+                loaderProps.configProvider,
+                loaderProps.logger]));
 
         this.logger = mixinChildLoggerWithConfigProvider(subLogger, "Loader");
 
