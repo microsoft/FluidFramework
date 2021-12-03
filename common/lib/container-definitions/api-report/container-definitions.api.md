@@ -112,8 +112,6 @@ export interface IConnectionDetails {
     existing: boolean;
     // (undocumented)
     initialClients: ISignalClient[];
-    // @deprecated (undocumented)
-    maxMessageSize: number;
     // (undocumented)
     mode: ConnectionMode;
     // (undocumented)
@@ -179,6 +177,8 @@ export interface IContainerContext extends IDisposable {
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
     getLoadedFromVersion(): IVersion | undefined;
+    // @deprecated (undocumented)
+    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     // (undocumented)
     readonly id: string;
     // (undocumented)

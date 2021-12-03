@@ -6,15 +6,15 @@
 import { EventEmitter } from "events";
 import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    FluidObject,
+    IFluidConfiguration,
+    IFluidHandle,
+    IFluidHandleContext,
     IFluidObject,
     IFluidRouter,
-    IFluidHandleContext,
     IFluidSerializer,
     IRequest,
     IResponse,
-    IFluidHandle,
-    IFluidConfiguration,
-    FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -1041,12 +1041,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.context.quorum.on("removeMember", (clientId: string) => {
             this.clearPartialChunks(clientId);
-        });
-
-        this.context.quorum.on("addProposal", (proposal) => {
-            if (proposal.key === "code" || proposal.key === "code2") {
-                this.emit("codeDetailsProposed", proposal.value, proposal);
-            }
         });
 
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);

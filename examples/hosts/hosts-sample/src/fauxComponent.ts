@@ -17,7 +17,7 @@ class FauxComponent extends DataObject implements IFluidHTMLView {
     private _componentEl: HTMLElement | undefined;
     public static readonly Factory = new DataObjectFactory(
         "FauxComponent",
-        FauxComponent as any,
+        FauxComponent,
         [],
         {},
         [],

@@ -122,6 +122,12 @@
         },
         "InterfaceDeclaration_IThrottlingWarning": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IDeltaManager": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IConnectionDetails": {
+          "backCompat": false
         }
       },
       "0.40.0": {
@@ -156,6 +162,12 @@
         },
         "InterfaceDeclaration_IContainer": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IDeltaManager": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IConnectionDetails": {
+          "backCompat": false
         }
       },
       "0.41.0": {
@@ -179,6 +191,12 @@
         },
         "InterfaceDeclaration_ICodeLoader": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IDeltaManager": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IConnectionDetails": {
+          "backCompat": false
         }
       },
       "0.42.0": {
@@ -198,6 +216,12 @@
           "backCompat": false
         },
         "InterfaceDeclaration_IProvideLoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDeltaManager": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IConnectionDetails": {
           "backCompat": false
         }
       }
