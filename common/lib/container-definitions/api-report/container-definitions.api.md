@@ -157,6 +157,8 @@ export interface IContainerContext extends IDisposable {
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
     getLoadedFromVersion(): IVersion | undefined;
+    // @deprecated (undocumented)
+    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     // (undocumented)
     readonly id: string;
     // (undocumented)

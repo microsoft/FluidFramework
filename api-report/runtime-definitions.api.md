@@ -15,7 +15,6 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
-import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
@@ -89,8 +88,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
     getQuorum(): IQuorum;
-    // @deprecated (undocumented)
-    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;

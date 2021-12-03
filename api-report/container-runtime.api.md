@@ -22,7 +22,6 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
-import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
 import { IFluidConfiguration } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
@@ -127,8 +126,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getQuorum(): IQuorum;
     // (undocumented)
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
-    // (undocumented)
-    getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
     // (undocumented)
     get IContainerRuntime(): this;
     // (undocumented)
