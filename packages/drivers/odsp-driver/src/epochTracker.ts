@@ -166,7 +166,7 @@ export class EpochTracker implements IPersistedFileCache {
             await this.checkForEpochError(error, epochFromResponse, fetchType);
             throw error;
         }).catch((error) => {
-            const fluidError = normalizeError(error, { props: { odspRequestStats: clientCorrelationId}});
+            const fluidError = normalizeError(error, { props: { requestStatsHeader: clientCorrelationId}});
             throw fluidError;
         });
     }
@@ -207,7 +207,7 @@ export class EpochTracker implements IPersistedFileCache {
             await this.checkForEpochError(error, epochFromResponse, fetchType);
             throw error;
         }).catch((error) => {
-            const fluidError = normalizeError(error, { props: { odspRequestStats: clientCorrelationId }});
+            const fluidError = normalizeError(error, { props: { requestStatsHeader: clientCorrelationId }});
             throw fluidError;
         });
     }
