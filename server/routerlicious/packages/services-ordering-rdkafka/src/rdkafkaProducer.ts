@@ -295,9 +295,10 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	 * Handles an error that requires a reconnect to Kafka
 	 */
 	private async handleError(error: any) {
-        await this.close(true);
+		await this.close(true);
 
 		this.error(error);
+
 		this.connect();
 	}
 }

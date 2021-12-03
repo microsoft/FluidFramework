@@ -106,6 +106,7 @@ export abstract class RdkafkaBase extends EventEmitter {
         return new Promise<void>((resolve, reject) => {
             adminClient.createTopic(newTopic, 10000, (err) => {
                 adminClient.disconnect();
+
                 if (err && err.code !== this.kafka.CODES.ERRORS.ERR_TOPIC_ALREADY_EXISTS) {
                     reject(err);
                 } else {

@@ -126,6 +126,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		consumer.on("connection.failure", async (error) => {
 			await this.close(true);
+
 			this.error(error);
 
 			this.connect();
