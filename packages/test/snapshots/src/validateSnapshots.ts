@@ -5,6 +5,7 @@
 
 import fs from "fs";
 import { assert } from "@fluidframework/common-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { FileStorageDocumentName } from "@fluidframework/file-driver";
 import { ISequencedDocumentMessage, TreeEntry } from "@fluidframework/protocol-definitions";
@@ -63,7 +64,7 @@ export async function validateSnapshots(
         const snapshotFileName = file.name.split(".")[0];
         const srcContent = fs.readFileSync(`${srcDir}/${file.name}`, "utf-8");
         // eslint-disable-next-line prefer-const
-        let container: Container;
+        let container: IContainer;
         // This function will be called by the storage service when the container is snapshotted. When that happens,
         // validate that snapshot with the destination snapshot.
         const onSnapshotCb =
@@ -78,7 +79,7 @@ export async function validateSnapshots(
             new StaticStorageDocumentServiceFactory(storage),
             FileStorageDocumentName,
         );
-        await container.snapshot(file.name, true /* fullTree */);
+        await (container as Container).snapshot(file.name, true /* fullTree */);
     }
 
     if (errors.length !== 0) {

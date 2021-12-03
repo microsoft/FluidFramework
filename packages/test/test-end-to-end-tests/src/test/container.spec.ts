@@ -239,7 +239,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             return service;
         };
         const container = await loadContainer({ documentServiceFactory: mockFactory });
-        container.on("error", () => {
+        container.on("closed", () => {
             assert.ok(false, "Error event should not be raised.");
         });
         assert.strictEqual(container.connectionState, ConnectionState.Connecting,

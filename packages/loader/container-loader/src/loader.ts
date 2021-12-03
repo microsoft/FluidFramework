@@ -294,7 +294,7 @@ export class Loader implements IHostLoader {
 
     public get IFluidRouter(): IFluidRouter { return this; }
 
-    public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container> {
+    public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer> {
         const container = await Container.createDetached(
             this,
             codeDetails,
@@ -313,11 +313,11 @@ export class Loader implements IHostLoader {
         return container;
     }
 
-    public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<Container> {
+    public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer> {
         return Container.rehydrateDetachedFromSnapshot(this, snapshot);
     }
 
-    public async resolve(request: IRequest, pendingLocalState?: string): Promise<Container> {
+    public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
         const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
         return PerformanceEvent.timedExecAsync(this.logger, { eventName }, async () => {
             const resolved = await this.resolveCore(

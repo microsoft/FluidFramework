@@ -138,7 +138,7 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
     });
 
     const container = await loader.createDetachedContainer(codeDetails);
-    container.on("error", (error) => {
+    container.on("closed", (error) => {
         console.log(error);
         process.exit(-1);
     });

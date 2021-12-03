@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ConnectionState, Loader } from "@fluidframework/container-loader";
+import { ConnectionState, Container, Loader } from "@fluidframework/container-loader";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import {
     ITestContainerConfig,
@@ -32,7 +32,7 @@ import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -84,7 +84,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
     });
 
     it("Create detached container", async () => {
-        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+        const container = (await loader.createDetachedContainer(provider.defaultCodeDetails)) as Container;
         assert.strictEqual(container.attachState, AttachState.Detached, "Container should be detached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
@@ -112,9 +112,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         assert.strictEqual(container.attachState, AttachState.Attached, "Container should be attached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
-        assert.ok(container.id, "No container ID");
+        const containerId = (container.resolvedUrl as IFluidResolvedUrl).id;
+        assert.ok(container, "No container ID");
         if (provider.driver.type === "local") {
-            assert.strictEqual(container.id, provider.documentId, "Doc id is not matching!!");
+            assert.strictEqual(containerId, provider.documentId, "Doc id is not matching!!");
         }
     });
 
@@ -598,9 +599,10 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         assert.strictEqual(container.attachState, AttachState.Attached, "Container should be attached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
-        assert.ok(container.id, "No container ID");
+        const containerId = (container.resolvedUrl as IFluidResolvedUrl).id;
+        assert.ok(containerId, "No container ID");
         if (provider.driver.type === "local") {
-            assert.strictEqual(container.id, provider.documentId, "Doc id is not matching!!");
+            assert.strictEqual(containerId, provider.documentId, "Doc id is not matching!!");
         }
         assert.strictEqual(retryTimes, 0, "Should not succeed at first time");
     }).timeout(5000);

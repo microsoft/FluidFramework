@@ -35,6 +35,7 @@ import {
     ISnapshotTreeWithBlobContents,
     // eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-loader/dist/utils";
+import { IContainer } from "@fluidframework/container-definitions";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -145,7 +146,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
     };
 
     const getSnapshotTreeFromSerializedSnapshot = (
-        container: Container,
+        container: IContainer,
     ) => {
         return getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
     };
@@ -359,7 +360,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
                 await createDetachedContainerAndGetRootDataStore();
 
             const snapshotTree = container.serialize();
-            assert(container.storage !== undefined, "Storage should be present in detached container");
+            assert((container as Container).storage !== undefined, "Storage should be present in detached container");
             const response = await container.request({ url: "/" });
             const defaultDataStore = response.value as TestFluidObject;
             assert(defaultDataStore.context.storage !== undefined,
@@ -369,7 +370,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             assert(success1 === false, "Snapshot fetch should not be allowed in detached data store");
 
             const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
-            assert(container2.storage !== undefined, "Storage should be present in rehydrated container");
+            assert((container2 as Container).storage !== undefined,
+                "Storage should be present in rehydrated container");
             const response2 = await container2.request({ url: "/" });
             const defaultDataStore2 = response2.value as TestFluidObject;
             assert(defaultDataStore2.context.storage !== undefined,
