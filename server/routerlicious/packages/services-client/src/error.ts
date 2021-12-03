@@ -4,7 +4,7 @@
  */
 
 export class NetworkError extends Error { // Do we need other classes as well, or just using the canRetry and
-    constructor(                          // isFatal is enough?
+    constructor(                          // isFatal is enough? -> LETS CREATE OTHER CLASSES
         /**
          * HTTP status code that describes the error.
          */
@@ -34,9 +34,9 @@ export function createR11sServiceNetworkError(
         }
         case 401:
         case 403:
-            return new NetworkError(statusCode, false, false, errorMessage); // Should this be fatal?
+            return new NetworkError(statusCode, false, false, errorMessage);
         case 404:
-            return new NetworkError(statusCode, false, true, errorMessage);
+            return new NetworkError(statusCode, false, false, errorMessage);
         case 429:
         case 500: // Why is 500 retryable in the driver errorUtils? Should it be retriable here too?
             return new NetworkError(statusCode, true, false, errorMessage, retryAfterMs);

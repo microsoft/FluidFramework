@@ -8,6 +8,7 @@ import { AxiosError, AxiosInstance, AxiosRequestConfig, default as Axios } from 
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 import { throwR11sServiceNetworkError }  from "./error";
+import { createR11sServiceNetworkError } from ".";
 
 export abstract class RestWrapper {
     constructor(
@@ -154,7 +155,7 @@ export class BasicRestWrapper extends RestWrapper {
                             .then(resolve)
                             .catch(reject);
                     } else {
-                        throwR11sServiceNetworkError(error?.message, error?.response.status);
+                        reject(createR11sServiceNetworkError(error?.message, error?.response.status));
                     }
                 });
         });
