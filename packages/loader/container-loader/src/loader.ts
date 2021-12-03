@@ -41,6 +41,7 @@ import {
 } from "@fluidframework/driver-utils";
 import { Container } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
+import { pkgVersion } from "./packageVersion";
 
 function canUseCache(request: IRequest): boolean {
     if (request.headers === undefined) {
@@ -279,13 +280,17 @@ export class Loader implements IHostLoader {
         if (loaderProps.options?.provideScopeLoader !== false) {
             scope.ILoader = this;
         }
+        const telemetryProps = {
+            loaderId: uuid(),
+            loaderVersion: pkgVersion,
+        };
         this.services = {
             urlResolver: createCachedResolver(MultiUrlResolver.create(loaderProps.urlResolver)),
             documentServiceFactory: MultiDocumentServiceFactory.create(loaderProps.documentServiceFactory),
             codeLoader: loaderProps.codeLoader,
             options: loaderProps.options ?? {},
             scope,
-            subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all:{loaderId: uuid()} }),
+            subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all: telemetryProps }),
             proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
             detachedBlobStorage: loaderProps.detachedBlobStorage,
         };
