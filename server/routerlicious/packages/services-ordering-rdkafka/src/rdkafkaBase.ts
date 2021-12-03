@@ -12,7 +12,7 @@ export interface IKafkaBaseOptions {
     numberOfPartitions: number;
     replicationFactor: number;
     sslCACertFilePath?: string;
-    restartOnKafkaErrorCodes?: number[]
+    restartOnKafkaErrorCodes?: number[];
 }
 
 export interface IKafkaEndpoints {
