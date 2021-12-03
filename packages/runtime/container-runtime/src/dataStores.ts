@@ -47,6 +47,7 @@ import {
     LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
+import { IDataStoreAliasMapping, IDataStoreAliasMessage } from "./dataStore";
 import { IUsedStateStats } from "./garbageCollection";
 
  /**
@@ -78,6 +79,7 @@ export class DataStores implements IDisposable {
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
         private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
+        private readonly aliasMap: Map<string, string>,
         private readonly dataStoreChanged: (id: string) => void,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
@@ -126,12 +128,17 @@ export class DataStores implements IDisposable {
                     undefined,
                 );
             }
+
             this.contexts.addBoundOrRemoted(dataStoreContext);
         }
         this.containerLoadStats = {
             containerLoadDataStoreCount: fluidDataStores.size,
             referencedDataStoreCount: fluidDataStores.size - unreferencedDataStoreCount,
         };
+    }
+
+    public aliases(): ReadonlyMap<string, string> {
+        return this.aliasMap;
     }
 
     public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
@@ -191,12 +198,40 @@ export class DataStores implements IDisposable {
                 }),
             pkg);
 
-        // Resolve pending gets and store off any new ones
         this.contexts.addBoundOrRemoted(remotedFluidDataStoreContext);
 
         // Equivalent of nextTick() - Prefetch once all current ops have completed
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         Promise.resolve().then(async () => remotedFluidDataStoreContext.realize());
+    }
+
+    public processAliasMessage(message: ISequencedDocumentMessage): IDataStoreAliasMapping | undefined {
+        const aliasMessage = message.contents as IDataStoreAliasMessage;
+
+        this.buildAliasMap();
+        const existingMapping = this.aliasMap.get(aliasMessage.alias);
+        if (existingMapping !== undefined) {
+            return {
+                suppliedInternalId: aliasMessage.id,
+                alias: aliasMessage.alias,
+                aliasedInternalId: existingMapping,
+            };
+        }
+
+        const currentId = this.aliasMap.get(aliasMessage.id);
+        if (currentId === undefined) {
+            return undefined;
+        }
+
+        this.dataStoreChanged(currentId);
+        this.aliasMap.set(aliasMessage.alias, currentId);
+        this.contexts.get(currentId)?.setRoot();
+
+        return {
+            suppliedInternalId: aliasMessage.id,
+            alias: aliasMessage.alias,
+            aliasedInternalId: aliasMessage.id,
+        };
     }
 
     public bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
@@ -290,8 +325,9 @@ export class DataStores implements IDisposable {
     }
 
     public async getDataStore(id: string, wait: boolean): Promise<FluidDataStoreContext> {
-        const context = await this.contexts.getBoundOrRemoted(id, wait);
+        const internalId = this.aliasMap.get(id) ?? id;
 
+        const context = await this.contexts.getBoundOrRemoted(internalId, wait);
         if (context === undefined) {
             // The requested data store does not exits. Throw a 404 response exception.
             const request = { url: id };
@@ -407,8 +443,8 @@ export class DataStores implements IDisposable {
     /**
      * Generates data used for garbage collection. It does the following:
      * 1. Calls into each child data store context to get its GC data.
-     * 2. Prefixs the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be
-     *    idenfied as belonging to the child.
+     * 2. Prefixes the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be
+     *    identified as belonging to the child.
      * 3. Adds a GC node for this channel to the nodes received from the children. All these nodes together represent
      *    the GC data of this channel.
      * @param fullGC - true to bypass optimizations and force full generation of GC data.
@@ -492,6 +528,21 @@ export class DataStores implements IDisposable {
             }
         }
         return outboundRoutes;
+    }
+
+    /**
+     * This method should be replaced by smearing these map inserts across
+     * all 'add datastore' operations. Its purpose for now is to not create
+     * an alias blob unless we process an alias message.
+     */
+    private buildAliasMap() {
+        for (const [id, _] of this.contexts) {
+            if (this.aliasMap.has(id)) {
+                continue;
+            }
+
+            this.aliasMap.set(id, id);
+        }
     }
 }
 

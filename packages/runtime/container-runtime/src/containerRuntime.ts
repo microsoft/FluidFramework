@@ -107,6 +107,7 @@ import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo } from "./blobManager";
 import { DataStores, getSummaryForDatastores } from "./dataStores";
 import {
+    aliasBlobName,
     blobsTreeName,
     chunksBlobName,
     electedSummarizerBlobName,
@@ -133,6 +134,7 @@ import {
 } from "./summarizerTypes";
 import { formExponentialFn, Throttler } from "./throttler";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
+import { IDataStoreAliasMapping } from "./dataStore";
 import {
     GarbageCollector,
     IGarbageCollectionRuntime,
@@ -156,6 +158,9 @@ export enum ContainerMessageType {
 
     // Ties our new clientId to our old one on reconnect
     Rejoin = "rejoin",
+
+    // Sets the alias of a root data store
+    AssignAlias = "assignAlias",
 }
 
 export interface IChunkedOp {
@@ -287,6 +292,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
         case ContainerMessageType.FluidDataStoreOp:
         case ContainerMessageType.ChunkedOp:
         case ContainerMessageType.Attach:
+        case ContainerMessageType.AssignAlias:
         case ContainerMessageType.BlobAttach:
         case ContainerMessageType.Rejoin:
         case MessageType.Operation:
@@ -689,6 +695,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
         const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
         const electedSummarizerData = await tryFetchBlob<ISerializedElection>(electedSummarizerBlobName);
+        const aliases = await tryFetchBlob<[string, string][]>(aliasBlobName) ?? [];
+
         const loadExisting = existing === true || context.existing === true;
 
         // read snapshot blobs needed for BlobManager to load
@@ -728,6 +736,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             metadata,
             electedSummarizerData,
             chunks,
+            aliases,
             {
                 summaryOptions,
                 gcOptions,
@@ -912,6 +921,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         metadata: IContainerRuntimeMetadata | undefined,
         electedSummarizerData: ISerializedElection | undefined,
         chunks: [string, string[]][],
+        dataStoreAliasMap: [string, string][],
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
         private readonly containerScope: FluidObject,
         public readonly logger: ITelemetryLogger,
@@ -1014,6 +1024,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 ),
             (id: string) => this.summarizerNode.deleteChild(id),
             this._logger,
+            new Map<string, string>(dataStoreAliasMap),
             (id: string) => this.garbageCollector.nodeChanged(id),
         );
 
@@ -1354,9 +1365,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
+
         if (this.chunkMap.size > 0) {
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
+        }
+
+        const dataStoreAliases = this.dataStores.aliases();
+        if (dataStoreAliases.size > 0) {
+            addBlobToSummary(summaryTree, aliasBlobName, JSON.stringify([...dataStoreAliases]));
         }
 
         if (this.summarizerClientElection) {
@@ -1431,6 +1448,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return this.dataStores.applyStashedOp(op);
             case ContainerMessageType.Attach:
                 return this.dataStores.applyStashedAttachOp(op as unknown as IAttachMessage);
+            case ContainerMessageType.AssignAlias:
             case ContainerMessageType.BlobAttach:
                 return;
             case ContainerMessageType.ChunkedOp:
@@ -1499,6 +1517,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 case ContainerMessageType.Attach:
                     this.dataStores.processAttachMessage(message, local || localAck);
                     break;
+                case ContainerMessageType.AssignAlias:
+                    this.processAliasMessage(message, localOpMetadata, local);
+                    break;
                 case ContainerMessageType.FluidDataStoreOp:
                     // if localAck === true, treat this as a local op because it's one we sent on a previous container
                     this.dataStores.processFluidDataStoreOp(message, local || localAck, localOpMetadata);
@@ -1515,6 +1536,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         } catch (e) {
             this.scheduleManager.afterOpProcessing(e, message);
             throw e;
+        }
+    }
+
+    private processAliasMessage(
+        message: ISequencedDocumentMessage,
+        localOpMetadata: unknown,
+        local: boolean,
+    ) {
+        type PendingAliasResolve = (value: IDataStoreAliasMapping | undefined) => void;
+        const resolve = localOpMetadata as PendingAliasResolve;
+
+        const aliasResult = this.dataStores.processAliasMessage(message);
+        if (local) {
+            resolve(aliasResult);
         }
     }
 
@@ -1698,6 +1733,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return false;
             }
         }
+
+        // [TODO:andre4i]: Figure out if ContainerMessageType.AssignAlias is needed here
         return true;
     }
 
@@ -1834,7 +1871,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * Runs garbage collection and udpates the reference / used state of the nodes in the container.
+     * Runs garbage collection and updates the reference / used state of the nodes in the container.
      * @returns the statistics of the garbage collection run.
      */
     public async collectGarbage(
@@ -2258,6 +2295,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.dataStores.resubmitDataStoreOp(content, localOpMetadata);
                 break;
             case ContainerMessageType.Attach:
+            case ContainerMessageType.AssignAlias:
                 this.submit(type, content, localOpMetadata);
                 break;
             case ContainerMessageType.ChunkedOp:

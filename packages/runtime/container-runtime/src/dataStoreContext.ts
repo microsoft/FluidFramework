@@ -491,7 +491,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     /**
      * Updates the used routes of the channel and its child contexts. The channel must be loaded before calling this.
-     * It is called in these two scenarions:
+     * It is called in these two scenarios:
      * 1. When the used routes of the data store is updated and the data store is loaded.
      * 2. When the data store is realized. This updates the channel's used routes as per last GC run.
      */
@@ -575,7 +575,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         try
         {
             assert(!this.detachedRuntimeCreation, 0x148 /* "Detached runtime creation on runtime bind" */);
-            assert(this.channelDeferred !== undefined, 0x149 /* "Undefined channel defferal" */);
+            assert(this.channelDeferred !== undefined, 0x149 /* "Undefined channel deferral" */);
             assert(this.pkg !== undefined, 0x14a /* "Undefined package path" */);
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -627,6 +627,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
+    public abstract setRoot(): void;
+
     public abstract getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
@@ -672,6 +674,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 }
 
 export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
+    private isRootDataStore: boolean | undefined;
+
     constructor(
         id: string,
         private readonly initSnapshotValue: ISnapshotTree | string | undefined,
@@ -742,7 +746,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
              * data stores in older documents are not garbage collected incorrectly. This may lead to additional
              * roots in the document but they won't break.
              */
-            isRootDataStore = attributes.isRootDataStore ?? true;
+            isRootDataStore = this.isRootDataStore === true || (attributes.isRootDataStore ?? true);
 
             if (hasIsolatedChannels(attributes)) {
                 tree = tree.trees[channelsTreeName];
@@ -782,6 +786,10 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 
     public generateAttachMessage(): IAttachMessage {
         throw new Error("Cannot attach remote store");
+    }
+
+    public setRoot(): void {
+        this.isRootDataStore = true;
     }
 }
 
@@ -882,7 +890,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
                 // If there is no isRootDataStore in the attributes blob, set it to true. This ensures that data
                 // stores in older documents are not garbage collected incorrectly. This may lead to additional
                 // roots in the document but they won't break.
-                this.isRootDataStore = attributes.isRootDataStore ?? true;
+                this.isRootDataStore = this.isRootDataStore || (attributes.isRootDataStore ?? true);
             }
         }
         assert(this.pkg !== undefined, 0x152 /* "pkg should be available in local data store" */);
@@ -899,6 +907,10 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
         // Local data store does not have initial summary.
         return {};
+    }
+
+    public setRoot(): void {
+        this.isRootDataStore = true;
     }
 }
 
