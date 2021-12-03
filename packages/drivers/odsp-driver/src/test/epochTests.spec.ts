@@ -134,7 +134,7 @@ describe("Tests for Epoch Tracker", () => {
         assert.strictEqual(success, false, "Fetching should fail!!");
     });
 
-    it("Check client corelationID on error in unsuccessful fetch case", async () => {
+    it("Check client correlationID on error in unsuccessful fetch case", async () => {
         let success: boolean = true;
         const cacheEntry1: IEntry = {
             key:"key1",
@@ -151,12 +151,12 @@ describe("Tests for Epoch Tracker", () => {
                 { "x-fluid-epoch": "epoch2" });
         } catch (error) {
             success = false;
-            assert(error["X-RequestStats"] !== undefined, "CorelationId should be present");
+            assert(error["X-RequestStats"] !== undefined, "CorrelationId should be present");
         }
         assert.strictEqual(success, false, "Fetching should fail!!");
     });
 
-    it("Check client corelationID on spoCommonHeaders in successful fetch case", async () => {
+    it("Check client correlationID on spoCommonHeaders in successful fetch case", async () => {
         const cacheEntry1: IEntry = {
             key:"key1",
             type: "snapshot",
@@ -169,7 +169,7 @@ describe("Tests for Epoch Tracker", () => {
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
                 {},
                 { "x-fluid-epoch": "epoch1" });
-        assert(response.commonSpoHeaders["X-RequestStats"] !== undefined, "CorelationId should be present");
+        assert(response.commonSpoHeaders["X-RequestStats"] !== undefined, "CorrelationId should be present");
     });
 
     it("Epoch error should not occur if response does not contain epoch", async () => {
