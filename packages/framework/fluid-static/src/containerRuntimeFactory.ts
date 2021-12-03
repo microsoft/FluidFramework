@@ -8,9 +8,10 @@ import {
     defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { ContainerSchema, LoadableObjectClass, LoadableObjectClassRecord, LoadableObjectRecord } from "./types";
+import { ContainerSchema, LoadableObjectClassRecord } from "./types";
 import { parseDataObjectsFromSharedObjects } from "./utils";
 import { RootDataObject, RootDataObjectProps } from "./rootDataObject";
+import { withSchema } from "./schema";
 
 export const rootDataStoreId = "rootDOId";
 
@@ -26,55 +27,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
     constructor(schema: ContainerSchema) {
         const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 
-        const RootDOWithMigrations = class extends RootDataObject {
-            protected async initializingFromExisting() {
-                if (typeof schema.migrations === "undefined") {
-                    // no-op when no migration routines provided with the schema
-                    return;
-                }
-
-                await this.loadInitialObjects();
-
-                const migrations = typeof schema.migrations === "function" ? [schema.migrations] : schema.migrations;
-
-                for (const migration of migrations) {
-                    const revision = await migration(
-                        this.initialObjects,
-                        async (objectClass) => { return this.create(objectClass); },
-                    );
-                    if (revision) {
-                        await this.commitRevision(revision);
-                    }
-                }
-            }
-
-            private async commitRevision(revision: LoadableObjectRecord) {
-                this.initialObjectsDir.clear();
-                for (const [key,value] of Object.entries(revision)) {
-                    this.initialObjectsDir.set(key, value.handle);
-                }
-                for (const prop of Object.getOwnPropertyNames(this.initialObjects)) {
-                    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-                    delete this.initialObjects[prop];
-                }
-                await this.loadInitialObjects();
-            }
-
-            async addObject(key: string, objectClass: LoadableObjectClass<any>, props: any) {
-                const obj = await this.create(objectClass);
-                this.initialObjectsDir.set(key, obj.handle);
-                Object.assign(this.initialObjects, { [key]: obj });
-            }
-
-            dropObject(key: string): void {
-                if (key in this.initialObjects) {
-                    this.initialObjectsDir.delete(key);
-                    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-                    delete this.initialObjects[key];
-                    // delete or GC the object itself
-                }
-            }
-        };
+        const RootDOWithMigrations = withSchema(schema);
 
         const rootDataObjectFactory =
             // eslint-disable-next-line @typescript-eslint/ban-types

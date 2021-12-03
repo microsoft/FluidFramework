@@ -4,8 +4,14 @@
  */
 
 import { strict as assert } from "assert";
+import {
+    LoadableObjectRecord,
+    ObjectFactory,
+    SharedDirectory,
+    SharedMap,
+} from "fluid-framework";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
-import { LoadableObjectRecord, ObjectFactory, SharedDirectory, SharedMap } from "fluid-framework";
+import { TestDataObject } from "./testDataObject";
 
 describe("Schema Migrations", () => {
     /**
@@ -180,12 +186,66 @@ describe("Schema Migrations", () => {
             );
         });
 
-        it("Update object", async () => { });
+        it("Update object", async () => {
+            // arrange
+            const newSchema = {
+                initialObjects: {
+                    myEntities: SharedMap,
+                },
+                migrations: async (snapshot: LoadableObjectRecord) => {
+                    const entities = snapshot.myEntities as SharedMap;
+                    if (!entities.has("newKey")) {
+                        entities.set("newKey", "defaultValue");
+                        return snapshot;
+                    }
+                    return undefined;
+                },
+            };
+
+            // act
+            const { container } = await client.getContainer(containerId, newSchema);
+
+            // assert
+            assert.ok(container, "Container is not loaded correctly.");
+            assert.ok(container.initialObjects.myEntities, "Initial object should be available.");
+            const myEntities = container.initialObjects.myEntities as SharedMap;
+            assert.equal(myEntities.get("newKey"), "defaultValue", "New key should be added.");
+        });
 
         // #endregion
 
         // #region Advanced scenarios
-        it("Move object", async () => { });
+        it("Move object", async () => {
+            // arrange
+            const newSchema = {
+                initialObjects: {
+                    myEntities: SharedMap,
+                },
+                migrations: async (snapshot: LoadableObjectRecord, createObject: ObjectFactory) => {
+                    if ("myEntities2" in snapshot) {
+                        const { myEntities, myEntities2, ...properties } = snapshot;
+                        (myEntities as SharedMap).set("newKey", myEntities2.handle);
+                        return { myEntities, ...properties };
+                    }
+                    // no change required
+                    return undefined;
+                },
+            };
+
+            // act
+            const { container } = await client.getContainer(containerId, newSchema);
+
+            // assert
+            assert.ok(container, "Container is not loaded correctly.");
+            assert.ok(container.initialObjects.myEntities, "Initial object should be available.");
+            const entities = container.initialObjects.myEntities as SharedMap;
+            assert.ok(entities.has("newKey"), "New key should be added.");
+            assert.equal(
+                typeof container.initialObjects.myEntities2,
+                "undefined",
+                "Initial object should move into myEntities map.",
+            );
+        });
 
         it("Split object", async () => { });
 
@@ -236,7 +296,31 @@ describe("Schema Migrations", () => {
         // #region Data object scenarios
 
         it("Create custom data object", async () => {
-            // variations with or without schema
+            // arrange
+            const newSchema = {
+                initialObjects: {
+                    myEntities: SharedMap,
+                    myNewDataObject: TestDataObject,
+                },
+                migrations: async (snapshot: LoadableObjectRecord, createObject: ObjectFactory) => {
+                    if ("myNewDataObject" in snapshot === false) {
+                        // only create a new object when it doesn't exist
+                        const myNewDataObject = await createObject(TestDataObject, 42);
+                        return { ...snapshot, myNewDataObject };
+                    }
+                    // no change required
+                    return undefined;
+                },
+            };
+
+            // act
+            const { container } = await client.getContainer(containerId, newSchema);
+
+            // assert
+            assert.ok(container, "Container is not loaded correctly.");
+            const newObject = container.initialObjects.myNewDataObject as TestDataObject;
+            assert.ok(newObject, "New object should be created.");
+            assert.equal(newObject.value, 42, "Initial value should be set in migration routine.");
         });
 
         // #endregion

@@ -52,6 +52,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "@fluidframework/aqueduct": "^0.52.0",
     "@fluidframework/azure-client": "^0.52.0",
     "@fluidframework/tinylicious-client": "^0.52.0",
     "fluid-framework": "^0.52.0"
