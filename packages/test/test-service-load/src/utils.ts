@@ -8,7 +8,7 @@ import fs from "fs";
 import random from "random-js";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
-import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
+import { Container, IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
@@ -138,7 +138,7 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
     });
 
     const container = await loader.createDetachedContainer(codeDetails);
-    container.on("closed", (error) => {
+    (container as Container).on("closed", (error) => {
         console.log(error);
         process.exit(-1);
     });
