@@ -55,8 +55,6 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			enableIdempotence: options?.enableIdempotence ?? false,
 			pollIntervalMs: options?.pollIntervalMs ?? 10,
 		};
-
-        console.log(`[DEBUG] RdKafkaBase producerOptions: ${JSON.stringify(this.producerOptions)}`);
 	}
 
 	/**
@@ -110,13 +108,11 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		});
 
 		producer.on("connection.failure", (error) => {
-            console.log(`[DEBUG PRODUCER] connection.failure error info: ${JSON.stringify(error)}`);
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.handleError(error);
 		});
 
 		producer.on("event.error", (error) => {
-            console.log(`[DEBUG PRODUCER] event.error error info: ${JSON.stringify(error)}`);
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.handleError(error);
 		});
@@ -299,11 +295,9 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	 * Handles an error that requires a reconnect to Kafka
 	 */
 	private async handleError(error: any) {
-		console.log(`[DEBUG PRODUCER] error info: ${JSON.stringify(error)}`);
         await this.close(true);
 
 		this.error(error);
-        console.log(`[DEBUG PRODUCER] finished calling base error(). error info: ${JSON.stringify(error)}`);
 		this.connect();
 	}
 }

@@ -69,24 +69,16 @@ export abstract class RdkafkaBase extends EventEmitter {
             };
         }
 
-        console.log(
-            `[DEBUG RdKafkaBase] defaultRestartOnKafkaErrorCodes 1:
-            ${JSON.stringify(this.defaultRestartOnKafkaErrorCodes)}`);
-
         setTimeout(() => void this.initialize(), 1);
     }
 
     protected abstract connect(): void;
 
     private async initialize() {
-        console.log(
-            `[DEBUG RdKafkaBase] defaultRestartOnKafkaErrorCodes inside initialize:
-            ${JSON.stringify(this.defaultRestartOnKafkaErrorCodes)}`);
         try {
             await this.ensureTopics();
             this.connect();
         } catch (ex) {
-            console.log(`[DEBUG DEBUG] Ensure topics throwing error, will emit: ${JSON.stringify(ex)}`);
             this.error(ex);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -114,7 +106,6 @@ export abstract class RdkafkaBase extends EventEmitter {
         return new Promise<void>((resolve, reject) => {
             adminClient.createTopic(newTopic, 10000, (err) => {
                 adminClient.disconnect();
-                console.log(`[DEBUG DEBUG] Ensure topics failed, error: ${JSON.stringify(err)}`);
                 if (err && err.code !== this.kafka.CODES.ERRORS.ERR_TOPIC_ALREADY_EXISTS) {
                     reject(err);
                 } else {
@@ -125,23 +116,16 @@ export abstract class RdkafkaBase extends EventEmitter {
     }
 
     protected error(error: any, forceRestartOnError: boolean = false) {
-        let restartOnKafkaError = false;
-
-        console.log(`[DEBUG DEBUG] error info: ${JSON.stringify(error)}`);
-        console.log(`[DEBUG DEBUG] error stack: ${new Error().stack}`);
-
+        let restartKafkaBasedOnErrorCode = false;
         const errorCodesToCauseRestart = this.options.restartOnKafkaErrorCodes ?? this.defaultRestartOnKafkaErrorCodes;
 
         if (RdkafkaBase.isObject(error)
             && errorCodesToCauseRestart.includes((error as kafkaTypes.LibrdKafkaError).code)) {
-            console.log("[DEBUG DEBUG] Setting restartOnKafkaError as true");
-            restartOnKafkaError = true;
-        } else {
-            console.log("[DEBUG DEBUG] Not changing restartOnKafkaError. It is false");
+                restartKafkaBasedOnErrorCode = true;
         }
 
         const errorData: IContextErrorData = {
-            restart: forceRestartOnError || restartOnKafkaError,
+            restart: forceRestartOnError || restartKafkaBasedOnErrorCode,
         };
 
         this.emit("error", error, errorData);
