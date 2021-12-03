@@ -49,6 +49,15 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		options?: Partial<IKafkaConsumerOptions>) {
 		super(endpoints, clientId, topic, options);
 
+        this.defaultRestartOnKafkaErrorCodes = [
+            this.kafka.CODES.ERRORS.ERR__TRANSPORT,
+            this.kafka.CODES.ERRORS.ERR__MSG_TIMED_OUT,
+            this.kafka.CODES.ERRORS.ERR__ALL_BROKERS_DOWN,
+            this.kafka.CODES.ERRORS.ERR__TIMED_OUT,
+            this.kafka.CODES.ERRORS.ERR__SSL,
+            this.kafka.CODES.ERRORS.ERR_COORDINATOR_LOAD_IN_PROGRESS,
+        ];
+
 		this.consumerOptions = {
 			...options,
 			consumeTimeout: options?.consumeTimeout ?? 1000,
