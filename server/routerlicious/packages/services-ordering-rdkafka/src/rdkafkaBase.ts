@@ -74,17 +74,17 @@ export abstract class RdkafkaBase extends EventEmitter {
             ${JSON.stringify(this.defaultRestartOnKafkaErrorCodes)}`);
 
         setTimeout(() => void this.initialize(), 1);
-
-        console.log(
-            `[DEBUG RdKafkaBase] defaultRestartOnKafkaErrorCodes 2:
-            ${JSON.stringify(this.defaultRestartOnKafkaErrorCodes)}`);
     }
 
     protected abstract connect(): void;
 
     private async initialize() {
+        console.log(
+            `[DEBUG RdKafkaBase] defaultRestartOnKafkaErrorCodes inside initialize:
+            ${JSON.stringify(this.defaultRestartOnKafkaErrorCodes)}`);
         try {
             await this.ensureTopics();
+            this.connect();
         } catch (ex) {
             console.log(`[DEBUG DEBUG] Ensure topics throwing error, will emit: ${JSON.stringify(ex)}`);
             this.error(ex);
@@ -94,8 +94,6 @@ export abstract class RdkafkaBase extends EventEmitter {
 
             return;
         }
-
-        this.connect();
     }
 
     protected async ensureTopics() {
