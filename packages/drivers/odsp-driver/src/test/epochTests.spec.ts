@@ -151,7 +151,7 @@ describe("Tests for Epoch Tracker", () => {
                 { "x-fluid-epoch": "epoch2" });
         } catch (error) {
             success = false;
-            assert(error.requestStatsHeader !== undefined, "CorrelationId should be present");
+            assert(error.XRequestStatsHeader !== undefined, "CorrelationId should be present");
         }
         assert.strictEqual(success, false, "Fetching should fail!!");
     });
