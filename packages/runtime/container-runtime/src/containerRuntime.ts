@@ -140,6 +140,7 @@ import {
     IGCStats,
     IUsedStateStats,
 } from "./garbageCollection";
+import { gcTreeKey } from ".";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -1379,7 +1380,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
         }
 
-        this.garbageCollector.addGCTreeToSummary(summaryTree);
+        const gcSummary = this.garbageCollector.summarize();
+        if (gcSummary !== undefined) {
+            addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
+        }
     }
 
     private replayPendingStates() {

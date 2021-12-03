@@ -16,7 +16,6 @@ import {
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import {
-    addTreeToSummary,
     ReadAndParseBlob,
     RefreshSummaryResult,
     SummaryTreeBuilder,
@@ -88,8 +87,8 @@ export interface IGarbageCollector {
     collectGarbage(
         options: { logger?: ITelemetryLogger, runGC?: boolean, runSweep?: boolean, fullGC?: boolean },
     ): Promise<IGCStats>;
-    /** Adds the current GC state as a tree to the summary. */
-    addGCTreeToSummary(summaryTree: ISummaryTreeWithStats): void;
+    /** Summarizes the GC data and returns it as a summary tree. */
+    summarize(): ISummaryTreeWithStats | undefined;
     /** Returns the GC details in base summary that is used to initialize nodes in the container with GC state. */
     getBaseSummaryGCDetails(): Promise<IGarbageCollectionSummaryDetails>;
     /** Called when the latest summary of the system has been refreshed. */
@@ -437,16 +436,18 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Adds the most recent GC state to the summary in a tree.
+     * Summarizes the GC data and returns it as a summary tree.
+     * We current write the entire GC state in a single blob. This can be modified later to write multiple
+     * blobs. All the blob keys should start with `gcBlobPrefix`.
      */
-    public addGCTreeToSummary(summaryTree: ISummaryTreeWithStats) {
-        if (this.shouldRunGC && this.currentGCState !== undefined) {
-            const builder = new SummaryTreeBuilder();
-            // We current write the entire GC state in a single blob. This can be modified later to write  multiple
-            // blobs. All the blob keys should start with `gcBlobPrefix`.
-            builder.addBlob(`${gcBlobPrefix}_blob`, JSON.stringify(this.currentGCState));
-            addTreeToSummary(summaryTree, gcTreeKey, builder.getSummaryTree());
+     public summarize(): ISummaryTreeWithStats | undefined {
+        if (!this.shouldRunGC || this.currentGCState === undefined) {
+            return;
         }
+
+        const builder = new SummaryTreeBuilder();
+        builder.addBlob(`${gcBlobPrefix}_root`, JSON.stringify(this.currentGCState));
+        return builder.getSummaryTree();
     }
 
     /**
