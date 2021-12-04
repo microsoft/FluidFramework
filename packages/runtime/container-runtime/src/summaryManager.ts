@@ -7,7 +7,7 @@ import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidfra
 import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { FluidObject, IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
-import { LoaderHeader } from "@fluidframework/container-definitions";
+import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { DriverHeader, DriverErrorType } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { createSummarizingWarning } from "./summarizer";
@@ -380,14 +380,14 @@ export interface ISummarizerRequestOptions {
 
 /**
  * Forms a function that will request a Summarizer.
- * @param loaderRouter - the loader acting as an IFluidRouter
+ * @param loader - the loader acting as an IFluidRouter
  * @param lastSequenceNumber - the last sequence number (e.g., from DeltaManager)
  * @param cache - use cache to retrieve summarizer
  * @param summarizingClient - is summarizer client
  * @param reconnect - can reconnect on connection loss
  */
 export const formRequestSummarizerFn = (
-    loaderRouter: IFluidRouter,
+    loader: ILoader,
     lastSequenceNumber: number,
     { cache, reconnect, summarizingClient }: ISummarizerRequestOptions,
 ) => async () => {
@@ -403,10 +403,15 @@ export const formRequestSummarizerFn = (
             [LoaderHeader.reconnect]: reconnect,
             [LoaderHeader.sequenceNumber]: lastSequenceNumber,
         },
-        url: "/_summarizer",
+        url: "/",
     };
 
-    const fluidObject = await requestFluidObject<FluidObject<ISummarizer>>(loaderRouter, request);
+    const container: IFluidRouter & {getEntrypoint?(): Promise<FluidObject>} = await loader.resolve(request);
+    const fluidObject: FluidObject<ISummarizer> =
+        container.getEntrypoint !== undefined
+            ? await container.getEntrypoint()
+            : await requestFluidObject<FluidObject<ISummarizer>>(container, {url:"/summarizer"});
+
     const summarizer = fluidObject.ISummarizer;
 
     if (!summarizer) {

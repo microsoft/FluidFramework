@@ -116,7 +116,11 @@ export function mixinDataStoreWithAnyChannel(
             sharedObjectRegistry: ISharedObjectRegistry,
             existing: boolean,
         ) {
-            super(dataStoreContext, new ObjectRegistryWithUnknownChannels(sharedObjectRegistry), existing);
+            super(
+                dataStoreContext,
+                new ObjectRegistryWithUnknownChannels(sharedObjectRegistry),
+                existing,
+                async ()=>({}));
         }
     } as typeof FluidDataStoreRuntime;
 }

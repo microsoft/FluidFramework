@@ -9,6 +9,7 @@ import {
     IFluidSerializer,
     IFluidRouter,
     IFluidHandle,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -122,4 +123,6 @@ export interface IFluidDataStoreRuntime extends
      * @deprecated Warnings are being deprecated
      */
     raiseContainerWarning(warning: ContainerWarning): void;
+
+    getEntrypoint?(): Promise<FluidObject>;
 }

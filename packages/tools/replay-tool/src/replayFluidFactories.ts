@@ -92,6 +92,7 @@ export class ReplayDataStoreFactory implements IFluidDataStoreFactory, Partial<I
                 SharedIntervalCollection.getFactory(),
             ].map((factory) => [factory.type, factory])),
             true /* existing */,
+            async ()=>Promise.resolve({}),
         );
     }
 }

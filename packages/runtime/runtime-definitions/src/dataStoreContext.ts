@@ -83,6 +83,8 @@ export interface IContainerRuntimeBase extends
      */
     setFlushMode(mode: FlushMode): void;
 
+    getEntrypoint?(): Promise<FluidObject>;
+
     /**
      * Executes a request against the container runtime
      */
@@ -225,6 +227,8 @@ export interface IFluidDataStoreChannel extends
     reSubmit(type: string, content: any, localOpMetadata: unknown);
 
     applyStashedOp(content: any): Promise<unknown>;
+
+    getEntrypoint?(): Promise<FluidObject>;
 }
 
 export type CreateChildSummarizerNodeFn = (
@@ -234,7 +238,6 @@ export type CreateChildSummarizerNodeFn = (
 ) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
-    // eslint-disable-next-line @typescript-eslint/unified-signatures
     (event: "attaching" | "attached", listener: () => void);
 }
 

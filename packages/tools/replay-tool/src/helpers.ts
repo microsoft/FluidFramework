@@ -17,7 +17,6 @@ import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
 import { ReplayDataStoreFactory, ReplayRuntimeFactory } from "./replayFluidFactories";
 import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
-import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
 
 /**
  * Helper function that normalizes the snapshot trees in the given file snapshot.
@@ -87,7 +86,7 @@ export async function loadContainer(
         new Map<string, IResolvedUrl>([[resolved.url, resolved]]),
     );
 
-    const dataStoreFactory = new ReplayDataStoreFactory(mixinDataStoreWithAnyChannel());
+    const dataStoreFactory = new ReplayDataStoreFactory();
     // List of data store registries in container runtime.
     const dataStoreRegistries = new Map([
         ["_scheduler", Promise.resolve(dataStoreFactory)],

@@ -5,6 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    FluidObject,
     IFluidHandle,
     IFluidHandleContext,
     IRequest,
@@ -99,6 +100,7 @@ export class FluidDataStoreRuntime extends
 TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
 IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     /**
+     * @deprecated - unused
      * Loads the data store runtime
      * @param context - The data store context
      * @param sharedObjectRegistry - The registry of shared objects used by this data store
@@ -109,7 +111,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
     ): FluidDataStoreRuntime {
-        return new FluidDataStoreRuntime(context, sharedObjectRegistry, existing);
+        return new FluidDataStoreRuntime(context, sharedObjectRegistry, existing, async ()=>Promise.resolve({}));
     }
 
     public get IFluidRouter() { return this; }
@@ -186,10 +188,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     // This is used to initialize the context with data from the previous summary.
     private readonly initialChannelGCDataP: LazyPromise<Map<string, IGarbageCollectionData>>;
 
+    private readonly entrypoint: LazyPromise<FluidObject>;
+
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
+        createEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
     ) {
         super();
 
@@ -296,6 +301,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         if (existing) {
             this.deferredAttached.resolve();
         }
+
+        this.entrypoint = new LazyPromise<FluidObject>(async ()=>createEntryPoint(this));
     }
 
     public dispose(): void {
@@ -310,6 +317,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     public async resolveHandle(request: IRequest): Promise<IResponse> {
         return this.request(request);
+    }
+
+    public async getEntrypoint(): Promise<FluidObject> {
+        return this.entrypoint;
     }
 
     public async request(request: IRequest): Promise<IResponse> {

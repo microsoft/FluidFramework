@@ -288,6 +288,7 @@ export function instantiateDataStore(context: IFluidDataStoreContext, existing: 
             SharedNumberSequence.getFactory(),
         ].map((factory) => [factory.type, factory])),
         existing,
+        async () => routerP,
     );
     const routerP = SharedTextRunner.load(runtime, context, existing);
 

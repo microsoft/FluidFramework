@@ -363,20 +363,22 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
 }
 
 class AgentSchedulerRuntime extends FluidDataStoreRuntime {
-    private readonly agentSchedulerP: Promise<AgentScheduler>;
     constructor(
         dataStoreContext: IFluidDataStoreContext,
         sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
     ) {
-        super(dataStoreContext, sharedObjectRegistry, existing);
-        this.agentSchedulerP = AgentScheduler.load(this, dataStoreContext, existing);
+        super(
+            dataStoreContext,
+            sharedObjectRegistry,
+            existing,
+            async ()=> AgentScheduler.load(this, dataStoreContext, existing));
     }
     public async request(request: IRequest) {
         const response = await super.request(request);
         if (response.status === 404) {
             if (request.url === "" || request.url === "/") {
-                const agentScheduler = await this.agentSchedulerP;
+                const agentScheduler = await this.getEntrypoint();
                 return { status: 200, mimeType: "fluid/object", value: agentScheduler };
             }
         }

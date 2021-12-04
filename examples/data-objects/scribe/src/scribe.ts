@@ -495,6 +495,7 @@ class ScribeFactory extends RuntimeFactoryHelper implements IFluidDataStoreFacto
                 SharedMap.getFactory(),
             ].map((factory) => [factory.type, factory])),
             existing,
+            async () => routerP,
         );
         const routerP = Scribe.load(runtime, context, existing);
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject, IFluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidObject, IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry, mixinRequestHandler } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
@@ -18,7 +18,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { LazyPromise } from "@fluidframework/common-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { createResponseError, requestFluidObject } from "@fluidframework/runtime-utils";
 import { LazyLoadedDataObject } from "./lazyLoadedDataObject";
 
 export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> implements IFluidDataStoreFactory {
@@ -52,17 +52,19 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         existing: boolean,
     ): Promise<FluidDataStoreRuntime> {
         const runtimeClass = mixinRequestHandler(
-            async (request: IRequest) => {
-                const router = await instance;
-                return router.request(request);
+            async (request: IRequest, rt) => {
+                const router: FluidObject<IFluidRouter> = await runtime.getEntrypoint();
+                if(router.IFluidRouter === undefined) {
+                    return createResponseError(500, "NotIFluidRouter", request);
+                }
+                return router.IFluidRouter.request(request);
             });
 
-        const runtime = new runtimeClass(context, this.ISharedObjectRegistry, existing);
-
-        // Note this may synchronously return an instance or a deferred LazyPromise,
-        // depending of if a new store is being created or an existing store
-        // is being loaded.
-        const instance = this.instantiate(context, runtime, existing);
+        const runtime = new runtimeClass(
+            context,
+            this.ISharedObjectRegistry,
+            existing,
+            async (rt)=> this.instantiate(context, rt, existing));
 
         return runtime;
     }

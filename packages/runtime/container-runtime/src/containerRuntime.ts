@@ -38,6 +38,7 @@ import {
     TypedEventEmitter,
     unreachableCase,
     performance,
+    LazyPromise,
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
@@ -372,7 +373,7 @@ class ScheduleManagerCore {
 
     /**
      * The only public function in this class - called when we processed an op,
-     * to make decision if op processing should be paused or not afer that.
+     * to make decision if op processing should be paused or not after that.
      */
      public afterOpProcessing(sequenceNumber: number) {
         assert(!this.localPaused, 0x294 /* "can't have op processing paused if we are processing an op" */);
@@ -618,6 +619,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public readonly runtimeVersion: string = pkgVersion;
 
     /**
+     * @deprecated
      * Load the stores from a snapshot and returns the runtime.
      * @param context - Context of the container.
      * @param registryEntries - Mapping to the stores.
@@ -625,7 +627,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param runtimeOptions - Additional options to be passed to the runtime
      * @param existing - (optional) When loading from an existing snapshot. Precedes context.existing if provided
      */
-    public static async load(
+     public static async load(
         context: IContainerContext,
         registryEntries: NamedFluidDataStoreRegistryEntries,
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
@@ -633,6 +635,50 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         containerScope: FluidObject = context.scope,
         existing?: boolean,
     ): Promise<ContainerRuntime> {
+        const createEntrypoint = async (runtime: IContainerRuntime) => {
+            const router: IFluidRouter = {
+                get IFluidRouter() {return this;},
+                async request(request: IRequest): Promise<IResponse> {
+                    try{
+                        if(requestHandler) {
+                            return requestHandler(request, runtime);
+                        }
+                        return create404Response(request);
+                    } catch (error) {
+                        return exceptionToResponse(error);
+                    }
+                },
+            };
+            return router;
+        };
+
+        return this.loadFromProps({
+            context,
+            registryEntries,
+            createEntrypoint,
+            runtimeOptions,
+            containerScope,
+
+        });
+    }
+
+    /**
+     * Load the stores from a snapshot and returns the runtime.
+     * @param context - Context of the container.
+     * @param registryEntries - Mapping to the stores.
+     * @param requestHandler - Request handlers for the container runtime
+     * @param runtimeOptions - Additional options to be passed to the runtime
+     * @param existing - (optional) When loading from an existing snapshot. Precedes context.existing if provided
+     */
+    public static async loadFromProps(props: {
+        context: IContainerContext;
+        registryEntries: NamedFluidDataStoreRegistryEntries;
+        createEntrypoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+        runtimeOptions?: IContainerRuntimeOptions;
+        containerScope?: FluidObject;
+    },
+    ): Promise<ContainerRuntime> {
+        const {context, registryEntries} = props;
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         const passLogger = context.taggedLogger  ?? new TaggedLoggerAdapter(context.logger);
         const logger = ChildLogger.create(passLogger, undefined, {
@@ -645,7 +691,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryOptions = {},
             gcOptions = {},
             loadSequenceNumberVerification = "close",
-        } = runtimeOptions;
+        } = props.runtimeOptions ?? {};
 
         // We pack at data store level only. If isolated channels are disabled,
         // then there are no .channel layers, we pack at level 1, otherwise we pack at level 2
@@ -689,7 +735,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
         const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
         const electedSummarizerData = await tryFetchBlob<ISerializedElection>(electedSummarizerBlobName);
-        const loadExisting = existing === true || context.existing === true;
+        const loadExisting = context.attachState !== AttachState.Attached;
 
         // read snapshot blobs needed for BlobManager to load
         const blobManagerSnapshot = await BlobManager.load(
@@ -733,11 +779,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 gcOptions,
                 loadSequenceNumberVerification,
             },
-            containerScope,
+            props.containerScope ?? context.scope,
             logger,
             loadExisting,
             blobManagerSnapshot,
-            requestHandler,
+            props.createEntrypoint,
             storage,
         );
 
@@ -906,6 +952,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly createContainerMetadata: ICreateContainerMetadata;
     private summaryCount: number | undefined;
 
+    private readonly entrypoint: LazyPromise<FluidObject>;
+
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
@@ -917,7 +965,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         public readonly logger: ITelemetryLogger,
         existing: boolean,
         blobManagerSnapshot: IBlobManagerLoadInfo,
-        private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
+        createEntrypoint: (runtime: IContainerRuntime) => Promise<FluidObject>,
         private _storage?: IDocumentStorageService,
     ) {
         super();
@@ -1136,6 +1184,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
+        this.entrypoint = new LazyPromise<FluidObject>(async ()=>{
+            // we always create the entrypoint for consistency is call
+            // patterns
+            const entrypoint = await createEntrypoint(this);
+            // but if we are the summarizer, we don't expose the true
+            // entrypoint, we only expose the summarizer itself
+            if(this.context.clientDetails.type === summarizerClientType) {
+                return this.summarizer;
+            }else{
+                return entrypoint;
+            }
+        });
+
         this.deltaManager.on("readonly", (readonly: boolean) => {
             // we accumulate ops while being in read-only state.
             // once user gets write permissions and we have active connection, flush all pending ops.
@@ -1222,6 +1283,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.configuration;
     }
 
+    public async getEntrypoint(): Promise<FluidObject> {
+        return this.entrypoint;
+    }
+
     /**
      * Notifies this object about the request made to the container.
      * @param request - Request made to the handler.
@@ -1231,18 +1296,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const parser = RequestParser.create(request);
             const id = parser.pathParts[0];
 
-            if (id === "_summarizer" && parser.pathParts.length === 1) {
-                if (this._summarizer !== undefined) {
-                    return {
-                        status: 200,
-                        mimeType: "fluid/object",
-                        value: this.summarizer,
-                    };
+            if(this.context.clientDetails.type === summarizerClientType) {
+                if (id === "_summarizer" && parser.pathParts.length === 1) {
+                    if (this._summarizer !== undefined) {
+                        return {
+                            status: 200,
+                            mimeType: "fluid/object",
+                            value: this.summarizer,
+                        };
+                    }
                 }
                 return create404Response(request);
             }
-            if (this.requestHandler !== undefined) {
-                return this.requestHandler(parser, this);
+
+            const router: FluidObject<IFluidRouter> = await this.getEntrypoint();
+            if (router.IFluidRouter !== undefined) {
+                return router.IFluidRouter.request(parser);
             }
 
             return create404Response(request);
@@ -1535,13 +1604,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dataStores.processSignal(envelope.address, transformed, local);
     }
 
-    public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
+    public async getRootDataStore(id: string, wait = true):
+        Promise<IFluidRouter & Pick<IFluidDataStoreChannel, "getEntrypoint">> {
         const context = await this.dataStores.getDataStore(id, wait);
         assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
         return context.realize();
     }
 
-    protected async getDataStore(id: string, wait = true): Promise<IFluidRouter> {
+    protected async getDataStore(id: string, wait = true):
+        Promise<IFluidRouter& Pick<IFluidDataStoreChannel, "getEntrypoint">> {
         return (await this.dataStores.getDataStore(id, wait)).realize();
     }
 

@@ -73,18 +73,23 @@ async function createDataObject<TObj extends PureDataObject,I extends DataObject
         context,
         sharedObjectRegistry,
         existing,
+        async ()=>{
+            // Create object right away.
+            // This allows object to register various callbacks with runtime before runtime
+            // becomes globally available. But it's not full initialization - constructor can't
+            // access DDSs or other services of runtime as objects are not fully initialized.
+            // In order to use object, we need to go through full initialization by calling finishInitialization().
+            const scope: FluidObject<IFluidDependencySynthesizer> = context.scope;
+            const dependencyContainer = new DependencyContainer(scope.IFluidDependencySynthesizer);
+            const providers =
+                dependencyContainer.synthesize<DataObjectType<I, "OptionalProviders">>(optionalProviders, {});
+            const instance: TObj =  new ctor({ runtime, context, providers, initProps });
+
+            await instance.finishInitialization(existing);
+
+            return instance;
+        },
     );
-
-    // Create object right away.
-    // This allows object to register various callbacks with runtime before runtime
-    // becomes globally available. But it's not full initialization - constructor can't
-    // access DDSs or other services of runtime as objects are not fully initialized.
-    // In order to use object, we need to go through full initialization by calling finishInitialization().
-    const scope: FluidObject<IFluidDependencySynthesizer> = context.scope;
-    const dependencyContainer = new DependencyContainer(scope.IFluidDependencySynthesizer);
-    const providers = dependencyContainer.synthesize<DataObjectType<I, "OptionalProviders">>(optionalProviders, {});
-    const instance = new ctor({ runtime, context, providers, initProps });
-
     // if it's a newly created object, we need to wait for it to finish initialization
     // as that results in creation of DDSs, before it gets attached, providing atomic
     // guarantee of creation.
@@ -95,10 +100,10 @@ async function createDataObject<TObj extends PureDataObject,I extends DataObject
     // In the future, we should address it by using relative paths for handles and be able to resolve
     // local DDSs while data store is not fully initialized.
     if (!existing) {
-        await instance.finishInitialization(existing);
+        await runtime.getEntrypoint();
     }
 
-    return { instance, runtime };
+    return runtime;
 }
 
 /**
@@ -154,7 +159,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
      * @param context - data store context used to load a data store runtime
      */
     public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
-        const { runtime } = await createDataObject(
+        const runtime  = await createDataObject(
             this.ctor,
             context,
             this.sharedObjectRegistry,
@@ -258,7 +263,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
         context: IFluidDataStoreContextDetached,
         initialState?: DataObjectType<I, "InitialState">,
     ): Promise<TObj> {
-        const { instance, runtime } = await createDataObject(
+        const runtime = await createDataObject(
             this.ctor,
             context,
             this.sharedObjectRegistry,
@@ -269,7 +274,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
 
         await context.attachRuntime(this, runtime);
 
-        return instance;
+        return runtime.getEntrypoint?.() as unknown as TObj;
     }
 }
 

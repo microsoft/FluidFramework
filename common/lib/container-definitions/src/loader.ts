@@ -10,6 +10,7 @@ import {
     IFluidCodeDetails,
     IFluidPackage,
     IProvideFluidCodeDetailsComparer,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IClientDetails,
@@ -218,6 +219,8 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * @param relativeUrl - A container-relative request URL
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+
+    getEntrypoint?(): Promise<FluidObject>;
 
     /**
      * Issue a request against the container for a resource.

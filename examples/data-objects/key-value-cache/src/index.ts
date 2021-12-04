@@ -114,6 +114,7 @@ export class KeyValueFactoryComponent
                 SharedMap.getFactory(),
             ].map((factory) => [factory.type, factory])),
             existing,
+            async ()=>routerP,
         );
         const routerP = KeyValue.load(runtime, context, existing);
 

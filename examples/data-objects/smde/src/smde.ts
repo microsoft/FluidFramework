@@ -228,6 +228,7 @@ class SmdeFactory implements IFluidDataStoreFactory {
                 SharedString.getFactory(),
             ].map((factory) => [factory.type, factory])),
             existing,
+            async () => routerP,
         );
         const routerP = Smde.load(runtime, context, existing);
 

@@ -10,6 +10,7 @@ import {
 } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    FluidObject,
     IFluidHandle,
     IFluidHandleContext,
     IRequest,
@@ -496,6 +497,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter
 
     public async resolveHandle(request: IRequest): Promise<IResponse> {
         return this.request(request);
+    }
+
+    public async getEntrypoint(): Promise<FluidObject> {
+        return null;
     }
 
     public async request(request: IRequest): Promise<IResponse> {

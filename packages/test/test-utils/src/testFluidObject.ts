@@ -165,7 +165,8 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
                 return router.request(request);
             });
 
-        const runtime = new runtimeClass(context, dataTypes, existing);
+        const runtime = new runtimeClass(
+            context, dataTypes, existing, async () => routerP);
         const routerP = TestFluidObject.load(
             runtime,
             runtime,
