@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
 import {
     IFluidDataStoreRuntime,
@@ -115,12 +115,14 @@ export function mixinDataStoreWithAnyChannel(
             dataStoreContext: IFluidDataStoreContext,
             sharedObjectRegistry: ISharedObjectRegistry,
             existing: boolean,
+            createEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
+
         ) {
             super(
                 dataStoreContext,
                 new ObjectRegistryWithUnknownChannels(sharedObjectRegistry),
                 existing,
-                async ()=>({}));
+                createEntryPoint);
         }
     } as typeof FluidDataStoreRuntime;
 }
