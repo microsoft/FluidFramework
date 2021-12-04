@@ -11,9 +11,7 @@ export {
     waitContainerToCatchUp,
 } from "./container";
 export {
-    ICodeDetailsLoader,
     IDetachedBlobStorage,
-    IFluidModuleWithDetails,
     ILoaderOptions,
     ILoaderProps,
     ILoaderServices,
