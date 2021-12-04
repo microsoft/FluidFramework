@@ -5,11 +5,8 @@
 
 import {
     IFluidHandleContext,
-    IRequest,
-    IResponse,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
-import { create404Response } from "@fluidframework/runtime-utils";
 import { ISharedObject } from "./types";
 
 /**
@@ -49,14 +46,5 @@ export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
     public attachGraph(): void {
         this.value.bindToContext();
         super.attachGraph();
-    }
-
-    /**
-     * Returns 404.
-     * @param request - The request to make
-     * @returns A 404 error
-     */
-    public async request(request: IRequest): Promise<IResponse> {
-        return create404Response(request);
     }
 }
