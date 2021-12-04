@@ -77,6 +77,7 @@ export class RootDataObject extends DataObject<{}, RootDataObjectProps> {
 
     public async create<T extends IFluidLoadable>(
         objectClass: LoadableObjectClass<T>,
+        props?: any,
     ): Promise<T> {
         if (isDataObjectClass(objectClass)) {
             return this.createDataObject<T>(objectClass);

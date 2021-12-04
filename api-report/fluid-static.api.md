@@ -111,12 +111,12 @@ export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) 
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
 // @public
-export type ObjectFactory = (objectType: LoadableObjectClass<any>, props?: any) => Promise<any>;
+export type ObjectFactory = (objectType: LoadableObjectClass<any>, props?: any) => Promise<IFluidLoadable>;
 
 // @public (undocumented)
 export class RootDataObject extends DataObject<{}, RootDataObjectProps> {
     // (undocumented)
-    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>, props?: any): Promise<T>;
     // (undocumented)
     protected hasInitialized(): Promise<void>;
     // (undocumented)

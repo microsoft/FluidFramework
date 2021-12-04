@@ -21,7 +21,7 @@ export const withSchema = (schema: ContainerSchema): typeof RootDataObject => {
             for (const migration of migrations) {
                 const revision = await migration(
                     this.initialObjects,
-                    async (objectClass) => { return this.create(objectClass); },
+                    async (objectClass, props) => { return this.create(objectClass, props); },
                 );
                 if (revision) {
                     await this.commitRevision(revision);

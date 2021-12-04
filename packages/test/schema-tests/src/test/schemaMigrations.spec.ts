@@ -5,6 +5,8 @@
 
 import { strict as assert } from "assert";
 import {
+    ContainerSchema,
+    IFluidContainer,
     LoadableObjectRecord,
     ObjectFactory,
     SharedDirectory,
@@ -12,6 +14,16 @@ import {
 } from "fluid-framework";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 import { TestDataObject } from "./testDataObject";
+
+const verifyContainerSchema = (container: IFluidContainer, schema: ContainerSchema) => {
+    const initialObjects = container.initialObjects;
+    for (const schemaKey of Object.keys(schema.initialObjects)) {
+        assert.ok(schemaKey in initialObjects, `Object ${schemaKey} defined in schema is not found in container`);
+    }
+    for (const objectKey of Object.keys(initialObjects)) {
+        assert.ok(objectKey in schema.initialObjects, `Container object ${objectKey} is not defined in schema`);
+    }
+};
 
 describe("Schema Migrations", () => {
     /**
@@ -34,6 +46,7 @@ describe("Schema Migrations", () => {
             // Create a container with the initial schema.
             const { container } = await client.createContainer(initialSchema);
             containerId = await container.attach();
+            verifyContainerSchema(container, initialSchema);
             // Close the container immediately after attaching it to the storage.
             container.dispose();
         });
@@ -41,16 +54,21 @@ describe("Schema Migrations", () => {
         afterEach(() => {
         });
 
+        const loadAndVerifyContainer = async (schema: ContainerSchema) => {
+            const { container } = await client.getContainer(containerId, schema);
+            assert.ok(container, "Container is not loaded correctly.");
+            return container;
+        };
+
         // #region Core scenarios
 
         /** Back-compat scenario. Open a container with the same schema. */
         it("No migrations - no changes in schema", async () => {
-            // Act
-            const { container } = await client.getContainer(containerId, initialSchema);
+            // act
+            const container = await loadAndVerifyContainer(initialSchema);
 
-            // Assert
-            assert.ok(container, "Container is not loaded correctly.");
-            assert.ok(container.initialObjects.myEntities, "Initial object should be available.");
+            // assert
+            verifyContainerSchema(container, initialSchema);
         });
 
         it("No migrations - new schema revision", async () => {
@@ -58,21 +76,16 @@ describe("Schema Migrations", () => {
             const newSchema = {
                 initialObjects: {
                     myEntities: SharedMap,
+                    // schema modifications below
                     myNewObject: SharedDirectory,
                 },
             };
 
             // act
-            const { container } = await client.getContainer(containerId, newSchema);
+            const container = await loadAndVerifyContainer(newSchema);
 
             // assert
-            assert.ok(container, "Container is not loaded correctly.");
-            assert.ok(container.initialObjects.myEntities, "Initial object should be available.");
-            assert.equal(
-                typeof container.initialObjects.myNewObject,
-                "undefined",
-                "New object should not be created in existing container.",
-            );
+            verifyContainerSchema(container, initialSchema);
         });
 
         it("No-op migration", async () => {
@@ -80,6 +93,7 @@ describe("Schema Migrations", () => {
             const newSchema = {
                 initialObjects: {
                     myEntities: SharedMap,
+                    myEntities2: SharedMap,
                     // 👇 new container schema has an additional object specified 👇
                     myNewObject: SharedDirectory,
                 },
@@ -90,16 +104,10 @@ describe("Schema Migrations", () => {
             };
 
             // act
-            const { container } = await client.getContainer(containerId, newSchema);
+            const container = await loadAndVerifyContainer(newSchema);
 
             // assert
-            assert.ok(container, "Container is not loaded correctly.");
-            assert.ok(container.initialObjects.myEntities, "Initial object should be available.");
-            assert.equal(
-                typeof container.initialObjects.myNewObject,
-                "undefined",
-                "New object should not be created in existing container.",
-            );
+            verifyContainerSchema(container, initialSchema);
         });
 
         it("Add object", async () => {
@@ -107,6 +115,7 @@ describe("Schema Migrations", () => {
             const newSchema = {
                 initialObjects: {
                     myEntities: SharedMap,
+                    myEntities2: SharedMap,
                     myNewObject: SharedDirectory,
                 },
                 migrations: async (snapshot: LoadableObjectRecord, createObject: ObjectFactory) => {
@@ -121,11 +130,10 @@ describe("Schema Migrations", () => {
             };
 
             // act
-            const { container } = await client.getContainer(containerId, newSchema);
+            const container = await loadAndVerifyContainer(newSchema);
 
             // assert
-            assert.ok(container, "Container is not loaded correctly.");
-            assert.ok(container.initialObjects.myNewObject, "New object should be created.");
+            verifyContainerSchema(container, newSchema);
         });
 
         it("Delete object", async () => {
@@ -145,16 +153,10 @@ describe("Schema Migrations", () => {
             };
 
             // act
-            const { container } = await client.getContainer(containerId, newSchema);
+            const container = await loadAndVerifyContainer(newSchema);
 
             // assert
-            assert.ok(container, "Container is not loaded correctly.");
-            assert.ok(container.initialObjects.myEntities, "Initial object should be available.");
-            assert.equal(
-                typeof container.initialObjects.myEntities2,
-                "undefined",
-                "Deleted object should not exist in the container.",
-            );
+            verifyContainerSchema(container, newSchema);
         });
 
         it("Rename object", async () => {
@@ -162,6 +164,7 @@ describe("Schema Migrations", () => {
             const newSchema = {
                 initialObjects: {
                     myEntitiesRenamed: SharedMap,
+                    myEntities2: SharedMap,
                 },
                 migrations: async (snapshot: LoadableObjectRecord, createObject: ObjectFactory) => {
                     if ("myEntities" in snapshot && "myEntitiesRenamed" in snapshot === false) {
@@ -174,23 +177,18 @@ describe("Schema Migrations", () => {
             };
 
             // act
-            const { container } = await client.getContainer(containerId, newSchema);
+            const container = await loadAndVerifyContainer(newSchema);
 
             // assert
-            assert.ok(container, "Container is not loaded correctly.");
-            assert.ok(container.initialObjects.myEntitiesRenamed, "Renamed object should be available.");
-            assert.equal(
-                typeof container.initialObjects.myEntities,
-                "undefined",
-                "Initial object should not exist in the container.",
-            );
+            verifyContainerSchema(container, newSchema);
         });
 
-        it("Update object", async () => {
+        it("Update object - seed data", async () => {
             // arrange
             const newSchema = {
                 initialObjects: {
                     myEntities: SharedMap,
+                    myEntities2: SharedMap,
                 },
                 migrations: async (snapshot: LoadableObjectRecord) => {
                     const entities = snapshot.myEntities as SharedMap;
@@ -203,11 +201,10 @@ describe("Schema Migrations", () => {
             };
 
             // act
-            const { container } = await client.getContainer(containerId, newSchema);
+            const container = await loadAndVerifyContainer(newSchema);
 
             // assert
-            assert.ok(container, "Container is not loaded correctly.");
-            assert.ok(container.initialObjects.myEntities, "Initial object should be available.");
+            verifyContainerSchema(container, newSchema);
             const myEntities = container.initialObjects.myEntities as SharedMap;
             assert.equal(myEntities.get("newKey"), "defaultValue", "New key should be added.");
         });
@@ -233,29 +230,28 @@ describe("Schema Migrations", () => {
             };
 
             // act
-            const { container } = await client.getContainer(containerId, newSchema);
+            const container = await loadAndVerifyContainer(newSchema);
 
             // assert
-            assert.ok(container, "Container is not loaded correctly.");
-            assert.ok(container.initialObjects.myEntities, "Initial object should be available.");
+            verifyContainerSchema(container, newSchema);
             const entities = container.initialObjects.myEntities as SharedMap;
             assert.ok(entities.has("newKey"), "New key should be added.");
-            assert.equal(
-                typeof container.initialObjects.myEntities2,
-                "undefined",
-                "Initial object should move into myEntities map.",
-            );
         });
 
-        it("Split object", async () => { });
+        it("Split object", async () => {
+            assert.fail("TBD");
+        });
 
-        it("Merge objects", async () => { });
+        it("Merge objects", async () => {
+            assert.fail("TBD");
+        });
 
         it("Chained migrations", async () => {
             // arrange
             const newSchema = {
                 initialObjects: {
-                    myEntitiesRenamed: SharedMap,
+                    myEntities: SharedMap,
+                    myNewObject: SharedMap,
                 },
                 migrations: [
                     async (snapshot: LoadableObjectRecord, createObject: ObjectFactory) => {
@@ -279,27 +275,22 @@ describe("Schema Migrations", () => {
             };
 
             // act
-            const { container } = await client.getContainer(containerId, newSchema);
+            const container = await loadAndVerifyContainer(newSchema);
 
             // assert
-            assert.ok(container, "Container is not loaded correctly.");
-            assert.ok(container.initialObjects.myNewObject, "New object should be available.");
-            assert.equal(
-                typeof container.initialObjects.myEntities2,
-                "undefined",
-                "Deleted object should not exist in the container.",
-            );
+            verifyContainerSchema(container, newSchema);
         });
 
         // #endregion
 
         // #region Data object scenarios
 
-        it("Create custom data object", async () => {
+        it("Add data object", async () => {
             // arrange
             const newSchema = {
                 initialObjects: {
                     myEntities: SharedMap,
+                    myEntities2: SharedMap,
                     myNewDataObject: TestDataObject,
                 },
                 migrations: async (snapshot: LoadableObjectRecord, createObject: ObjectFactory) => {
@@ -314,13 +305,79 @@ describe("Schema Migrations", () => {
             };
 
             // act
-            const { container } = await client.getContainer(containerId, newSchema);
+            const container = await loadAndVerifyContainer(newSchema);
 
             // assert
-            assert.ok(container, "Container is not loaded correctly.");
+            verifyContainerSchema(container, newSchema);
             const newObject = container.initialObjects.myNewDataObject as TestDataObject;
-            assert.ok(newObject, "New object should be created.");
+            assert.ok(newObject, "New data object should be created.");
             assert.equal(newObject.value, 42, "Initial value should be set in migration routine.");
+        });
+
+        it("Add dynamic object", async () => {
+            // arrange
+            const newSchema = {
+                initialObjects: {
+                    myEntities: SharedMap,
+                    myEntities2: SharedMap,
+                },
+                dynamicObjectTypes: [TestDataObject],
+                migrations: async (snapshot: LoadableObjectRecord, createObject: ObjectFactory) => {
+                    const entities = snapshot.myEntities as SharedMap;
+                    if ("myNewDynamicObject" in entities === false) {
+                        // only create a new object when it doesn't exist
+                        const myNewDynamicObject = await createObject(TestDataObject, 42);
+                        entities.set("myNewDynamicObject", myNewDynamicObject.handle);
+                        return { ...snapshot };
+                    }
+                    // no change required
+                    return undefined;
+                },
+            };
+
+            // act
+            const container = await loadAndVerifyContainer(newSchema);
+
+            // assert
+            verifyContainerSchema(container, newSchema);
+            const myEntities = container.initialObjects.myEntities as SharedMap;
+            assert.ok(myEntities.has("myNewDynamicObject"), "The new dynamic object should be persisted.");
+            assert.ok(myEntities.get("myNewDynamicObject"), "It should be a valid object handle");
+        });
+
+        it("Delete data object", async () => {
+            const createSchema = {
+                initialObjects: {
+                    myEntities: SharedMap,
+                    myDataObject: TestDataObject,
+                },
+            };
+            // arrange
+            const { container: createContainer } = await client.createContainer(createSchema);
+            containerId = await createContainer.attach();
+            verifyContainerSchema(createContainer, createSchema);
+            createContainer.dispose();
+
+            const newSchema: ContainerSchema = {
+                initialObjects: {
+                    myEntities: SharedMap,
+                },
+                dynamicObjectTypes: [TestDataObject],
+                migrations: async (snapshot: LoadableObjectRecord) => {
+                    if ("myDataObject" in snapshot) {
+                        const { myDataObject: deleted, ...properties } = snapshot;
+                        return properties;
+                    }
+                    // no change required
+                    return undefined;
+                },
+            };
+
+            // act
+            const container = await loadAndVerifyContainer(newSchema);
+
+            // assert
+            verifyContainerSchema(container, newSchema);
         });
 
         // #endregion
