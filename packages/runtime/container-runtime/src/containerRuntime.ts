@@ -25,6 +25,7 @@ import {
     ContainerWarning,
     ICriticalContainerError,
     AttachState,
+    ILoader,
     ILoaderOptions,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
@@ -1132,16 +1133,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 cache: false,
                 reconnect: false,
                 summarizingClient: true,
+                url: "/",
             };
+            const requestLoader = this.context.loader;
+            const requestSeq = this.context.deltaManager.lastSequenceNumber;
             this.summaryManager = new SummaryManager(
                 this.summarizerClientElection,
                 this, // IConnectedState
                 this.summaryCollection,
                 this.logger,
-                formRequestSummarizerFn(
-                    this.context.loader,
-                    this.context.deltaManager.lastSequenceNumber,
-                    requestOptions),
+                async () => requestSummarizer(requestLoader, requestSeq, requestOptions),
                 new Throttler(
                     60 * 1000, // 60 sec delay window
                     30 * 1000, // 30 sec max delay
@@ -1241,13 +1242,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public get IFluidConfiguration(): IFluidConfiguration {
         return this.context.configuration;
-    }
-
-    public formRequestSummarizerFn(requestOptions: ISummarizerRequestOptions) {
-        return formRequestSummarizerFn(
-            this.context.loader,
-            this.deltaManager.lastSequenceNumber,
-            requestOptions);
     }
 
     /**
@@ -2460,21 +2454,21 @@ export interface ISummarizerRequestOptions {
     cache: boolean,
     reconnect: boolean,
     summarizingClient: boolean,
+    url: string,
 }
 
 /**
- * Forms a function that will request a Summarizer.
- * @param loaderRouter - the loader acting as an IFluidRouter
+ * Requests a Summarizer.
+ * @param loader - the loader that resolves the request
  * @param lastSequenceNumber - the last sequence number (e.g., from DeltaManager)
  * @param cache - use cache to retrieve summarizer
  * @param summarizingClient - is summarizer client
  * @param reconnect - can reconnect on connection loss
  */
-export const formRequestSummarizerFn = (
-    loaderRouter: IFluidRouter,
+export async function requestSummarizer(
+    loader: ILoader,
     lastSequenceNumber: number,
-    { cache, reconnect, summarizingClient }: ISummarizerRequestOptions,
-) => async () => {
+    { cache, reconnect, summarizingClient, url }: ISummarizerRequestOptions): Promise<ISummarizer> {
     const request: IRequest = {
         headers: {
             [LoaderHeader.cache]: cache,
@@ -2486,15 +2480,14 @@ export const formRequestSummarizerFn = (
             [LoaderHeader.reconnect]: reconnect,
             [LoaderHeader.sequenceNumber]: lastSequenceNumber,
         },
-        url: "/_summarizer",
+        url,
     };
 
-    const fluidObject = await requestFluidObject<FluidObject<ISummarizer>>(loaderRouter, request);
-    const summarizer = fluidObject.ISummarizer;
-
-    if (!summarizer) {
+    const resolvedContainer = await loader.resolve(request);
+    const fluidObject =
+        await requestFluidObject<FluidObject<ISummarizer>>(resolvedContainer, { url: "_summarizer" });
+    if (fluidObject.ISummarizer === undefined) {
         throw new Error("Fluid object does not implement ISummarizer");
     }
-
-    return summarizer;
-};
+    return fluidObject.ISummarizer;
+}

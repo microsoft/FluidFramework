@@ -33,6 +33,7 @@ import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IFluidTokenProvider } from '@fluidframework/container-definitions';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -114,8 +115,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     flush(): void;
     // (undocumented)
     get flushMode(): FlushMode;
-    // (undocumented)
-    formRequestSummarizerFn(requestOptions: ISummarizerRequestOptions): () => Promise<ISummarizer>;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
@@ -244,9 +243,6 @@ export const gcBlobPrefix = "__gc";
 
 // @public (undocumented)
 export const gcTreeKey = "gc";
-
-// @public
-export const formRequestSummarizerFn: (loaderRouter: IFluidRouter, lastSequenceNumber: number, { cache, reconnect, summarizingClient }: ISummarizerRequestOptions) => () => Promise<ISummarizer>;
 
 // @public
 export interface IAckedSummary {
@@ -537,6 +533,8 @@ export interface ISummarizerRequestOptions {
     reconnect: boolean;
     // (undocumented)
     summarizingClient: boolean;
+    // (undocumented)
+    url: string;
 }
 
 // @public (undocumented)
@@ -673,6 +671,9 @@ export class PendingStateManager implements IDisposable {
     };
     replayPendingStates(): void;
 }
+
+// @public
+export function requestSummarizer(loader: ILoader, lastSequenceNumber: number, { cache, reconnect, summarizingClient, url }: ISummarizerRequestOptions): Promise<ISummarizer>;
 
 // @public
 export class ScheduleManager {

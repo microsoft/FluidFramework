@@ -8,8 +8,10 @@ import { assert, bufferToString, TelemetryNullLogger } from "@fluidframework/com
 import { IContainer } from "@fluidframework/container-definitions";
 import {
     ContainerRuntime,
+    ISummarizer,
+    ISummarizerRequestOptions,
     ISummaryRuntimeOptions,
-    ISummarizerRequestOptions } from "@fluidframework/container-runtime";
+    requestSummarizer} from "@fluidframework/container-runtime";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
@@ -17,7 +19,7 @@ import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedObjectSequence } from "@fluidframework/sequence";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { createLoader, ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 
 const defaultDataStoreId = "default";
 
@@ -56,12 +58,43 @@ async function createContainer(
     return provider.createContainer(runtimeFactory);
 }
 
+async function createSummarizer(
+    provider: ITestObjectProvider,
+    lastSequenceNumber: number,
+    options: ISummarizerRequestOptions): Promise<ISummarizer> {
+    const loader = createLoader(
+        [[provider.defaultCodeDetails, provider.createFluidEntryPoint(testContainerConfig)]],
+        provider.documentServiceFactory,
+        provider.urlResolver,
+    );
+
+    const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+    await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+    const absoluteUrl = await container.getAbsoluteUrl("");
+    if (absoluteUrl === undefined) {
+        throw new Error("URL could not be resolved");
+    }
+    options.url = absoluteUrl;
+    return requestSummarizer(loader, lastSequenceNumber, options);
+}
+
 function readBlobContent(content: ISummaryBlob["content"]): unknown {
     const json = typeof content === "string" ? content : bufferToString(content, "utf8");
     return JSON.parse(json);
 }
 
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
+const maxOps = 10;
+const testContainerConfig: ITestContainerConfig = {
+    runtimeOptions: {
+        // strictly control summarization
+        summaryOptions: {
+            disableSummaries: true,
+            initialSummarizerDelayMs: 0,
+            summaryConfigOverrides: { maxOps },
+        },
+    },
+};
 
 let summarizer;
 
@@ -73,20 +106,13 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
     });
 
     it("On demand summaries", async () => {
-        const container = await createContainer(provider, { disableIsolatedChannels: false });
-        const defaultDataStore = await requestFluidObject<TestDataObject>(container, defaultDataStoreId);
-        const containerRuntime = defaultDataStore.getContext().containerRuntime as ContainerRuntime;
-
-        await provider.ensureSynchronized();
-
-        const requestOptions: ISummarizerRequestOptions =
-        {
+        const options: ISummarizerRequestOptions = {
             cache: false,
             reconnect: false,
             summarizingClient: true,
+            url: "",
         };
-        const requestSummarizerFn = containerRuntime.formRequestSummarizerFn(requestOptions);
-        summarizer = await requestSummarizerFn();
+        summarizer = await createSummarizer(provider, 0, options);
 
         let result = await summarizer.summarizeOnDemand({ reason: "test" });
         assert(result.alreadyRunning === undefined, "Summarizer should not be running");
