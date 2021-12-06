@@ -4,12 +4,7 @@
  */
 
 import { assert, Uint8ArrayToString } from "@fluidframework/common-utils";
-import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
-import {
-    fetchIncorrectResponse,
-    invalidFileNameStatusCode,
-    throwOdspNetworkError,
-} from "@fluidframework/odsp-doclib-utils";
+import { getDocAttributesFromProtocolSummary, NonRetryableError } from "@fluidframework/driver-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { SummaryType, ISummaryTree, ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -18,7 +13,9 @@ import {
     IFileEntry,
     InstrumentedStorageTokenFetcher,
     IOdspResolvedUrl,
+    OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
     IOdspSummaryTree,
     OdspSummaryTreeValue,
@@ -61,7 +58,8 @@ export async function createNewFluidFile(
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
-        throwOdspNetworkError("invalidFilename", invalidFileNameStatusCode);
+        throw new NonRetryableError(
+            "CreateNewInvalidFilename", "Invalid filename", OdspErrorType.invalidFileNameError);
     }
 
     let itemId: string;
@@ -123,7 +121,7 @@ export async function createNewEmptyFluidFile(
 
         return PerformanceEvent.timedExecAsync(
             logger,
-            { eventName: "createNewEmptyFile" },
+            { eventName: "CreateNewEmptyFile" },
             async (event) => {
                 const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                 headers["Content-Type"] = "application/json";
@@ -144,7 +142,10 @@ export async function createNewEmptyFluidFile(
 
                 const content = fetchResponse.content;
                 if (!content || !content.id) {
-                    throwOdspNetworkError("couldNotParseItemFromVroomResponse", fetchIncorrectResponse);
+                    throw new NonRetryableError(
+                        "CreateEmptyFileNoItemId",
+                        "ODSP CreateFile call returned no item ID",
+                        DriverErrorType.incorrectServerResponse);
                 }
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
@@ -178,7 +179,7 @@ export async function createNewFluidFileFromSummary(
 
         return PerformanceEvent.timedExecAsync(
             logger,
-            { eventName: "createNewFile" },
+            { eventName: "CreateNewFile" },
             async (event) => {
                 const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                 headers["Content-Type"] = "application/json";
@@ -199,7 +200,10 @@ export async function createNewFluidFileFromSummary(
 
                 const content = fetchResponse.content;
                 if (!content || !content.itemId) {
-                    throwOdspNetworkError("couldNotParseItemFromVroomResponse", fetchIncorrectResponse);
+                    throw new NonRetryableError(
+                        "CreateFileNoItemId",
+                        "ODSP CreateFile call returned no item ID",
+                        DriverErrorType.incorrectServerResponse);
                 }
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
