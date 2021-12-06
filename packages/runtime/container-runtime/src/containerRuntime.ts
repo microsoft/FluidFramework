@@ -973,14 +973,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             metadata,
         );
 
-        if(this.runtimeOptions.gcOptions?.gcAllowed && !this.runtimeOptions.gcOptions?.disableGC) {
-            const defaultContainerRuntimeExpiryMs = 30 * 24 * 60 * 60 * 1000;
-
-            setTimeout(() => {
-                this.expire();
-            }, defaultContainerRuntimeExpiryMs);
-        }
-
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         this.summarizerNode = createRootSummarizerNodeWithGC(
             ChildLogger.create(this.logger, "SummarizerNode"),
@@ -1668,10 +1660,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.dataStores._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot).realize();
     }
 
-    private expire() {
-        this.expired = true;
-    }
-
     private canSendOps() {
         return this.connected && !this.deltaManager.readonly && !this.expired;
     }
@@ -1845,6 +1833,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summarizerNode.updateUsedRoutes([""]);
 
         return this.dataStores.updateUsedRoutes(usedRoutes, gcTimestamp);
+    }
+
+    /**
+     * Implementation of IGarbageCollectionRuntime::updateUsedRoutes.
+     */
+    public setReadOnly() {
+        this.expired = true;
     }
 
     /**

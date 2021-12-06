@@ -39,6 +39,7 @@ describe("Garabge Collection Tests", () => {
     const gcRuntime: IGarbageCollectionRuntime = {
         getGCData,
         updateUsedRoutes,
+        setReadOnly(): void {},
     };
 
     // Waits for > deleteTimeoutMs. To be called to make sure that any unreferenced nodes have been deleted.

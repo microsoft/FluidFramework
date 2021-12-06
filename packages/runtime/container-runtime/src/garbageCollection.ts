@@ -57,6 +57,8 @@ export interface IGarbageCollectionRuntime {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     /** After GC has run, called to notify the runtime of routes that are used in it. */
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
+    /** Prevents the container from sending new ops */
+    setReadOnly(): void;
 }
 
 /** Defines the contract for the garbage collector. */
@@ -342,6 +344,14 @@ export class GarbageCollector implements IGarbageCollector {
             }
             this.currentGCState = { gcNodes };
         });
+
+        if(this.shouldRunGC) {
+            const defaultContainerRuntimeExpiryMs = 30 * 24 * 60 * 60 * 1000;
+
+            setTimeout(() => {
+                this.provider.setReadOnly();
+            }, defaultContainerRuntimeExpiryMs);
+        }
     }
 
     /**
