@@ -130,6 +130,17 @@
         "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
           "backCompat": false
         }
+      },
+      "0.42.0": {
+        "InterfaceDeclaration_IDocumentDeltaConnection": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentService": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentServiceFactory": {
+          "backCompat": false
+        }
       }
     }
   }

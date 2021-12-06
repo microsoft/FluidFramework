@@ -8,6 +8,7 @@ import {
     IPartitionLambdaFactory,
     IResources,
     IResourcesFactory,
+    ZookeeperClientConstructor,
 } from "@fluidframework/server-services-core";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
@@ -35,7 +36,10 @@ export class RdkafkaResources implements IRdkafkaResources {
 }
 
 export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResources> {
-    constructor(private readonly name: string, private readonly lambdaModule: string) {
+    constructor(
+        private readonly name: string,
+        private readonly lambdaModule: string,
+        private readonly zookeeperClientConstructor: ZookeeperClientConstructor) {
     }
 
     public async create(config: Provider): Promise<RdkafkaResources> {
@@ -65,7 +69,7 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
         const endpoints = {
             kafka: kafkaEndpoint ? kafkaEndpoint.split(",") : [],
             zooKeeper: zookeeperEndpoint ? zookeeperEndpoint.split(",") : [],
-         };
+        };
 
         const consumer = new RdkafkaConsumer(
             endpoints,
@@ -80,6 +84,7 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
                 consumeTimeout,
                 maxConsumerCommitRetries,
                 sslCACertFilePath,
+                zooKeeperClientConstructor: this.zookeeperClientConstructor,
             },
         );
 

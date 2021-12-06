@@ -50,18 +50,20 @@ describe("Tests for Epoch Tracker", () => {
             type: "snapshot",
             file: { docId: hashedDocumentId, resolvedUrl } };
         const cacheEntry2: ICacheEntry = { ... cacheEntry1, key: "key2" };
+        const cacheValue1 = { val: "val1", cacheEntryTime: Date.now() };
+        const cacheValue2 = { val: "val2", cacheEntryTime: Date.now() };
         const value1: IVersionedValueWithEpoch =
-            {value: "val1", fluidEpoch: "epoch1", version: persistedCacheValueVersion };
+            {value: cacheValue1, fluidEpoch: "epoch1", version: persistedCacheValueVersion };
         const value2 =
-            {value: "val2", fluidEpoch: "epoch1", version: "non-existing version" };
+            {value: cacheValue2, fluidEpoch: "epoch1", version: "non-existing version" };
         await localCache.put(cacheEntry1, value1);
         await localCache.put(cacheEntry2, value2);
         // This will set the initial epoch value in epoch tracker.
-        assert(await epochTracker.get(cacheEntry1) === "val1", "Entry 1 should continue to exist");
+        assert(await epochTracker.get(cacheEntry1) === cacheValue1, "Entry 1 should continue to exist");
         // This should not fail, just return nothing!
         await epochTracker.get(cacheEntry2);
         // Make sure nothing changed as result of reading data.
-        assert(await epochTracker.get(cacheEntry1) === "val1", "Entry 1 should continue to exist");
+        assert(await epochTracker.get(cacheEntry1) === cacheValue1, "Entry 1 should continue to exist");
         assert(await epochTracker.get(cacheEntry2) === undefined, "Entry 2 should not exist");
     });
 
@@ -71,18 +73,20 @@ describe("Tests for Epoch Tracker", () => {
             type: "snapshot",
             file: { docId: hashedDocumentId, resolvedUrl } };
         const cacheEntry2: ICacheEntry = { ... cacheEntry1, key: "key2" };
+        const cacheValue1 = { val: "val1", cacheEntryTime: Date.now() };
+        const cacheValue2 = { val: "val2", cacheEntryTime: Date.now() };
         const value1: IVersionedValueWithEpoch =
-            {value: "val1", fluidEpoch: "epoch1", version: persistedCacheValueVersion };
+            {value: cacheValue1, fluidEpoch: "epoch1", version: persistedCacheValueVersion };
         const value2: IVersionedValueWithEpoch =
-            {value: "val2", fluidEpoch: "epoch2", version: persistedCacheValueVersion };
+            {value: cacheValue2, fluidEpoch: "epoch2", version: persistedCacheValueVersion };
         await localCache.put(cacheEntry1, value1);
         await localCache.put(cacheEntry2, value2);
         // This will set the initial epoch value in epoch tracker.
-        assert(await epochTracker.get(cacheEntry1) === "val1", "Entry 1 should continue to exist");
+        assert(await epochTracker.get(cacheEntry1) === cacheValue1, "Entry 1 should continue to exist");
         // This should not fail, just return nothing!
         await epochTracker.get(cacheEntry2);
         // Make sure nothing changed as result of reading data.
-        assert(await epochTracker.get(cacheEntry1) === "val1", "Entry 1 should continue to exist");
+        assert(await epochTracker.get(cacheEntry1) === cacheValue1, "Entry 1 should continue to exist");
         assert(await epochTracker.get(cacheEntry2) === undefined, "Entry 2 should not exist");
     });
 
@@ -93,7 +97,7 @@ describe("Tests for Epoch Tracker", () => {
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
-        await epochTracker.put(cacheEntry1, "val1");
+        await epochTracker.put(cacheEntry1, { val: "val1" });
         // This will set the initial epoch value in epoch tracker.
         await epochTracker.get(cacheEntry1);
         try {
@@ -117,7 +121,7 @@ describe("Tests for Epoch Tracker", () => {
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
-        await epochTracker.put(cacheEntry1, "val1");
+        await epochTracker.put(cacheEntry1, { val: "val1" });
             // This will set the initial epoch value in epoch tracker.
         await epochTracker.get(cacheEntry1);
         try {
@@ -134,14 +138,14 @@ describe("Tests for Epoch Tracker", () => {
         assert.strictEqual(success, false, "Fetching should fail!!");
     });
 
-    it("Check client corelationID on error in unsuccessful fetch case", async () => {
+    it("Check client correlationID on error in unsuccessful fetch case", async () => {
         let success: boolean = true;
         const cacheEntry1: IEntry = {
             key:"key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
-        await epochTracker.put(cacheEntry1, "val1");
+        await epochTracker.put(cacheEntry1, { val: "val1" });
         // This will set the initial epoch value in epoch tracker.
         await epochTracker.get(cacheEntry1);
         try {
@@ -151,25 +155,25 @@ describe("Tests for Epoch Tracker", () => {
                 { "x-fluid-epoch": "epoch2" });
         } catch (error) {
             success = false;
-            assert(error["X-RequestStats"] !== undefined, "CorelationId should be present");
+            assert(error.XRequestStatsHeader !== undefined, "CorrelationId should be present");
         }
         assert.strictEqual(success, false, "Fetching should fail!!");
     });
 
-    it("Check client corelationID on spoCommonHeaders in successful fetch case", async () => {
+    it("Check client correlationID on spoCommonHeaders in successful fetch case", async () => {
         const cacheEntry1: IEntry = {
             key:"key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
-        await epochTracker.put(cacheEntry1, "val1");
+        await epochTracker.put(cacheEntry1, { val: "val1" });
         // This will set the initial epoch value in epoch tracker.
         await epochTracker.get(cacheEntry1);
         const response = await mockFetchOk(
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
                 {},
                 { "x-fluid-epoch": "epoch1" });
-        assert(response.commonSpoHeaders["X-RequestStats"] !== undefined, "CorelationId should be present");
+        assert(response.commonSpoHeaders["X-RequestStats"] !== undefined, "CorrelationId should be present");
     });
 
     it("Epoch error should not occur if response does not contain epoch", async () => {
@@ -179,7 +183,7 @@ describe("Tests for Epoch Tracker", () => {
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
-        await epochTracker.put(cacheEntry1, "val1");
+        await epochTracker.put(cacheEntry1, { val: "val1" });
         // This will set the initial epoch value in epoch tracker.
         await epochTracker.get(cacheEntry1);
         try {
@@ -189,7 +193,7 @@ describe("Tests for Epoch Tracker", () => {
         }
         assert.strictEqual(success, true, "Fetching should succeed!!");
         assert.strictEqual(
-            await epochTracker.get(cacheEntry1),
+            (await epochTracker.get(cacheEntry1)).val,
             "val1",
             "Entry in cache should be present");
     });
@@ -201,7 +205,7 @@ describe("Tests for Epoch Tracker", () => {
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
-        await epochTracker.put(cacheEntry1, "val1");
+        await epochTracker.put(cacheEntry1, { val: "val1" });
         // This will set the initial epoch value in epoch tracker.
         await epochTracker.get(cacheEntry1);
         try {
@@ -214,7 +218,7 @@ describe("Tests for Epoch Tracker", () => {
         }
         assert.strictEqual(success, true, "Fetching should succeed!!");
         assert.strictEqual(
-            await epochTracker.get(cacheEntry1),
+            (await epochTracker.get(cacheEntry1)).val,
             "val1", "Entry in cache should be present");
     });
 
@@ -225,7 +229,7 @@ describe("Tests for Epoch Tracker", () => {
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
-        await epochTracker.put(cacheEntry1, "val1");
+        await epochTracker.put(cacheEntry1, { val: "val1" });
         // This will set the initial epoch value in epoch tracker.
         await epochTracker.get(cacheEntry1);
         try {
@@ -238,7 +242,7 @@ describe("Tests for Epoch Tracker", () => {
         }
         assert.strictEqual(success, false, "Fetching should not succeed!!");
         assert.strictEqual(
-            await epochTracker.get(cacheEntry1),
+            (await epochTracker.get(cacheEntry1)).val,
             "val1",
             "Entry in cache should be present because it was not epoch 409");
     });
@@ -250,7 +254,7 @@ describe("Tests for Epoch Tracker", () => {
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
-        await epochTracker.put(cacheEntry1, "val1");
+        await epochTracker.put(cacheEntry1, { val: "val1" });
         // This will set the initial epoch value in epoch tracker.
         await epochTracker.get(cacheEntry1);
         try {

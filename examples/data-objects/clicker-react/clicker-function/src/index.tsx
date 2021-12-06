@@ -7,7 +7,6 @@ import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import {
     setSyncedObjectConfig,
     useSyncedObject,
@@ -59,7 +58,7 @@ export class ClickerFunction extends SyncedDataObject {
 
 // ----- FACTORY SETUP -----
 export const ClickerFunctionInstantiationFactory =
-    new DataObjectFactory<ClickerFunction, unknown, unknown, IEvent>(
+    new DataObjectFactory(
         "clicker-function",
         ClickerFunction,
         [],

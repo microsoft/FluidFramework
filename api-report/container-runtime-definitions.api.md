@@ -67,7 +67,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase & IE
 
 // @public (undocumented)
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
-    // (undocumented)
+    // @deprecated (undocumented)
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void): any;
     // (undocumented)
     (event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void): any;

@@ -1152,22 +1152,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         });
     }
 
-    /**
-     * @deprecated IntervalCollectionView has been removed. Refer to IntervalCollection directly.
-     */
-    public async getView(onDeserialize?: DeserializeCallback): Promise<IntervalCollection<TInterval>> {
-        if (!this.attached) {
-            return Promise.reject(new Error("attachSequence must be called prior to retrieving the view"));
-        }
-
-        // Attach custom deserializers if specified
-        if (onDeserialize) {
-            this.attachDeserializer(onDeserialize);
-        }
-
-        return this;
-    }
-
     public addInternal(
         serializedInterval: ISerializedInterval,
         local: boolean,

@@ -7,7 +7,6 @@ import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import {
     SyncedDataObject,
     setSyncedCounterConfig,
@@ -55,7 +54,7 @@ export class ClickerWithHook extends SyncedDataObject {
 
 // ----- FACTORY SETUP -----
 export const ClickerWithHookInstantiationFactory =
-    new DataObjectFactory<ClickerWithHook, unknown, unknown, IEvent>(
+    new DataObjectFactory(
         "clicker-with-hook",
         ClickerWithHook,
         [SharedCounter.getFactory()],
