@@ -15,11 +15,11 @@ import {
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
     GarbageCollector,
+    gcBlobPrefix,
     gcTreeKey,
     IGarbageCollectionRuntime,
     IGarbageCollector,
 } from "../garbageCollection";
-import { gcBlobPrefix } from "..";
 
 describe("Garbage Collection Tests", () => {
     // Nodes in the reference graph.

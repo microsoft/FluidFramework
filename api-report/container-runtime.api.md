@@ -34,7 +34,6 @@ import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { IFluidTokenProvider } from '@fluidframework/container-definitions';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { IGarbageCollectionSummaryDetails } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorum } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -42,7 +41,6 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryAck } from '@fluidframework/protocol-definitions';
 import { ISummaryConfiguration } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
@@ -55,8 +53,6 @@ import { ITree } from '@fluidframework/protocol-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
-import { ReadAndParseBlob } from '@fluidframework/runtime-utils';
-import { RefreshSummaryResult } from '@fluidframework/runtime-utils';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
@@ -245,29 +241,6 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
     get IFluidDataStoreRegistry(): this;
     }
 
-// @public
-export class GarbageCollector implements IGarbageCollector {
-    protected constructor(provider: IGarbageCollectionRuntime, gcOptions: IGCRuntimeOptions,
-    deleteUnusedRoutes: (unusedRoutes: string[]) => void,
-    getCurrentTimestampMs: () => number, baseSnapshot: ISnapshotTree | undefined, readAndParseBlob: ReadAndParseBlob, baseLogger: ITelemetryLogger, existing: boolean, metadata?: IContainerRuntimeMetadata);
-    addGCTreeToSummary(summaryTree: ISummaryTreeWithStats): void;
-    collectGarbage(options: {
-        logger?: ITelemetryLogger;
-        runSweep?: boolean;
-        fullGC?: boolean;
-    }): Promise<IGCStats>;
-    // Warning: (ae-forgotten-export) The symbol "IContainerRuntimeMetadata" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    static create(provider: IGarbageCollectionRuntime, gcOptions: IGCRuntimeOptions, deleteUnusedRoutes: (unusedRoutes: string[]) => void, getCurrentTimestampMs: () => number, baseSnapshot: ISnapshotTree | undefined, readAndParseBlob: ReadAndParseBlob, baseLogger: ITelemetryLogger, existing: boolean, metadata?: IContainerRuntimeMetadata): IGarbageCollector;
-    get gcSummaryFeatureVersion(): number;
-    getBaseSummaryGCDetails(): Promise<IGarbageCollectionSummaryDetails>;
-    get hasGCVersionChanged(): boolean;
-    latestSummaryStateRefreshed(result: RefreshSummaryResult, readAndParseBlob: ReadAndParseBlob): Promise<void>;
-    nodeChanged(id: string): void;
-    readonly shouldRunGC: boolean;
-    }
-
 // @public (undocumented)
 export const gcBlobPrefix = "__gc";
 
@@ -371,23 +344,6 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 export interface IGarbageCollectionRuntime {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
-}
-
-// @public
-export interface IGarbageCollector {
-    addGCTreeToSummary(summaryTree: ISummaryTreeWithStats): void;
-    collectGarbage(options: {
-        logger?: ITelemetryLogger;
-        runGC?: boolean;
-        runSweep?: boolean;
-        fullGC?: boolean;
-    }): Promise<IGCStats>;
-    readonly gcSummaryFeatureVersion: number;
-    getBaseSummaryGCDetails(): Promise<IGarbageCollectionSummaryDetails>;
-    readonly hasGCVersionChanged: boolean;
-    latestSummaryStateRefreshed(result: RefreshSummaryResult, readAndParseBlob: ReadAndParseBlob): Promise<void>;
-    nodeChanged(id: string): void;
-    readonly shouldRunGC: boolean;
 }
 
 // @public (undocumented)

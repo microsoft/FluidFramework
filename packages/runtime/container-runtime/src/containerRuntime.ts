@@ -135,12 +135,12 @@ import { formExponentialFn, Throttler } from "./throttler";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import {
     GarbageCollector,
+    gcTreeKey,
     IGarbageCollectionRuntime,
     IGarbageCollector,
     IGCStats,
     IUsedStateStats,
 } from "./garbageCollection";
-import { gcTreeKey } from ".";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
