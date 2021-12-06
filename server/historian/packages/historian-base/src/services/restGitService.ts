@@ -379,24 +379,24 @@ export class RestGitService {
 
     private async get<T>(url: string): Promise<T> {
         return this.restWrapper.get<T>(url)
-            .catch(getRequestErrorTranslator(url, "GET"));
+            .catch(getRequestErrorTranslator(url, "GET", this.lumberProperties));
     }
 
     private async post<T>(url: string, requestBody: any): Promise<T> {
         return this.restWrapper.post<T>(url, requestBody, undefined, {
             "Content-Type": "application/json",
-        }).catch(getRequestErrorTranslator(url, "POST"));
+        }).catch(getRequestErrorTranslator(url, "POST", this.lumberProperties));
     }
 
     private async delete<T>(url: string, headers?: any): Promise<T> {
         return this.restWrapper.delete<T>(url, undefined, headers)
-            .catch(getRequestErrorTranslator(url, "DELETE"));
+            .catch(getRequestErrorTranslator(url, "DELETE", this.lumberProperties));
     }
 
     private async patch<T>(url: string, requestBody: any): Promise<T> {
         return this.restWrapper.patch<T>(url, requestBody, undefined, {
             "Content-Type": "application/json",
-        }).catch(getRequestErrorTranslator(url, "PATCH"));
+        }).catch(getRequestErrorTranslator(url, "PATCH", this.lumberProperties));
     }
 
     /**
