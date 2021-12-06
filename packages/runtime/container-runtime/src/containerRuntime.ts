@@ -866,6 +866,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
+    private expired = false;
+
     private dirtyContainer = false;
     private emitDirtyDocumentEvent = true;
     /**
@@ -970,6 +972,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             existing,
             metadata,
         );
+
+        if(this.runtimeOptions.gcOptions?.gcAllowed && !this.runtimeOptions.gcOptions?.disableGC) {
+            const defaultContainerRuntimeExpiryMs = 30 * 24 * 60 * 60 * 1000;
+
+            setTimeout(() => {
+                this.expire();
+            }, defaultContainerRuntimeExpiryMs);
+        }
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         this.summarizerNode = createRootSummarizerNodeWithGC(
@@ -1658,8 +1668,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.dataStores._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot).realize();
     }
 
+    private expire() {
+        this.expired = true;
+    }
+
     private canSendOps() {
-        return this.connected && !this.deltaManager.readonly;
+        return this.connected && !this.deltaManager.readonly && !this.expired;
     }
 
     public getQuorum(): IQuorum {
