@@ -691,6 +691,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
                 this._protocolHandler?.close();
 
+                this.connectionStateHandler.dispose();
+
                 this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
                 assert(this.connectionState === ConnectionState.Disconnected,
