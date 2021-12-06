@@ -52,18 +52,13 @@ export function getTenantIdFromRequest(params: Params) {
 }
 
 export function getDocumentIdFromRequest(tenantId: string, authorization: string) {
-    if (!tenantId || tenantId === "-" || !authorization) {
+    try {
+        const token = parseToken(tenantId, authorization);
+        const decoded = jwt.decode(token) as ITokenClaims;
+        return decoded.documentId;
+    } catch (err) {
         return "-";
     }
-
-    const token = parseToken(tenantId, authorization);
-    const decoded = jwt.decode(token) as ITokenClaims;
-
-    if (!decoded) {
-        return "-";
-    }
-
-    return decoded.documentId;
 }
 
 export function parseToken(tenantId: string, authorization: string): string {
