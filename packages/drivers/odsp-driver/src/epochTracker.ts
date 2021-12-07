@@ -293,7 +293,10 @@ export class EpochTracker implements IPersistedFileCache {
         fetchType: FetchTypeInternal,
         fromCache: boolean = false,
     ) {
-        this.checkForEpochErrorCore(epochFromResponse);
+        const error = this.checkForEpochErrorCore(epochFromResponse);
+        if (error !== undefined) {
+            throw error;
+        }
         if (epochFromResponse !== undefined) {
             if (this._fluidEpoch === undefined) {
                 this.setEpoch(epochFromResponse, fromCache, fetchType);
@@ -308,10 +311,8 @@ export class EpochTracker implements IPersistedFileCache {
         fromCache: boolean = false,
     ) {
         if (isFluidError(error) && error.errorType === DriverErrorType.fileOverwrittenInStorage) {
-            try {
-                // This will only throw if it is an epoch error.
-                this.checkForEpochErrorCore(epochFromResponse);
-            } catch (epochError) {
+            const epochError = this.checkForEpochErrorCore(epochFromResponse);
+            if (epochError !== undefined) {
                 assert(isFluidError(epochError),
                     0x21f /* "epochError expected to be thrown by throwOdspNetworkError and of known type" */);
                 epochError.addTelemetryProperties({
@@ -338,7 +339,7 @@ export class EpochTracker implements IPersistedFileCache {
         if (this.fluidEpoch && epochFromResponse && (this.fluidEpoch !== epochFromResponse)) {
             // This is similar in nature to how fluidEpochMismatchError (409) is handled.
             // Difference - client detected mismatch, instead of server detecting it.
-            throw new NonRetryableError("epochMismatch", "Epoch mismatch", DriverErrorType.fileOverwrittenInStorage);
+            return new NonRetryableError("epochMismatch", "Epoch mismatch", DriverErrorType.fileOverwrittenInStorage);
         }
     }
 
