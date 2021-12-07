@@ -744,9 +744,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return runtime;
     }
 
-    public get id(): string {
-        return this.context.id;
-    }
+    // public get id(): string {
+    //     return this.context.id;
+    // }
 
     public get options(): ILoaderOptions {
         return this.context.options;
@@ -2303,7 +2303,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @returns downloaded snapshot's reference sequence number
      */
     private async refreshLatestSummaryAckFromServer(summaryLogger: ITelemetryLogger): Promise<number> {
-        const snapshot = await this.fetchSnapshotFromStorage(this.id, summaryLogger, {
+        const snapshot = await this.fetchSnapshotFromStorage(null, summaryLogger, {
             eventName: "RefreshLatestSummaryGetSnapshot",
             fetchLatest: true,
         });
@@ -2325,7 +2325,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return snapshotRefSeq;
     }
 
-    private async fetchSnapshotFromStorage(versionId: string, logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
+    private async fetchSnapshotFromStorage(
+        versionId: string | null, logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
         return PerformanceEvent.timedExecAsync(logger, event, async (perfEvent) => {
             const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
             const trace = Trace.start();

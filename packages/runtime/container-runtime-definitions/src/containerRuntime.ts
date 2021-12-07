@@ -79,7 +79,7 @@ export interface IContainerRuntime extends
     IProvideContainerRuntime,
     IProvideFluidDataStoreRegistry,
     IContainerRuntimeBaseWithCombinedEvents {
-    readonly id: string;
+    // readonly id: string;
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;

@@ -48,8 +48,6 @@ export interface IContainerRuntime extends IProvideContainerRuntime, IProvideFlu
     readonly flushMode: FlushMode;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
-    // (undocumented)
-    readonly id: string;
     readonly isDirty: boolean;
     // (undocumented)
     readonly options: ILoaderOptions;

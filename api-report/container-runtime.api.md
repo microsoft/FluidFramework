@@ -129,8 +129,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get IContainerRuntime(): this;
     // (undocumented)
-    get id(): string;
-    // (undocumented)
     get IFluidConfiguration(): IFluidConfiguration;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
