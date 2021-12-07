@@ -19,6 +19,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [maxMessageSize removed from IConnectionDetails and IDocumentDeltaConnection](#maxMessageSize-removed-from-IConnectionDetails-and-IDocumentDeltaConnection)
 - [Remove `IntervalCollection.getView()` from sequence dds](#Remove-IntervalCollectiongetView-from-sequence-dds)
 - [Moved `ICodeDetailsLoader` and `IFluidModuleWithDetails` interface to `@fluidframework/container-definitions`](#Moved-ICodeDetailsLoader-and-IFluidModuleWithDetails-interface-to-fluidframeworkcontainer-definitions)
+- [ISequencedDocumentMessage arg removed from SharedMap and SharedDirectory events](#ISequencedDocumentMessage-arg-removed-from-SharedMap-and-SharedDirectory-events)
 
 ### `IContainer` interface updated to expose actively used `Container` public APIs
 In order to have the `IContainer` interface be the active developer surface that is used when interacting with a `Container` instance, it has been updated to expose the APIs that are necessary for currently used behavior. The motivation here is to move away from using the `Container` class when only its type is required, and to use the `IContainer` interface instead.
@@ -77,6 +78,9 @@ The `IntervalCollection.getView()` was removed.  If you were calling this API, y
 
 ### Moved `ICodeDetailsLoader` and `IFluidModuleWithDetails` interface to `@fluidframework/container-definitions`
 The `ICodeDetailsLoader` and `IFluidModuleWithDetails` interface are deprecated in `@fluidframework/container-loader` and moved to `@fluidframework/container-definitions`. The `ICodeDetailsLoader` interface should be imported from `@fluidframework/container-definition` package. The `ICodeDetailsLoader` and `IFluidModuleWithDetails` from `@fluidframework/container-loader` will be removed from `@fluidframework/container-loader` in further releases.
+
+### `ISequencedDocumentMessage` arg removed from `SharedMap` and `SharedDirectory` events
+The `ISequencedDocumentMessage` argument in events emitted from `SharedMap` and `SharedDirectory` (the `"valueChanged"` and `"clear"` events) has been removed.  It is not recommended to access the protocol layer directly.  Note that if you were leveraging the `this` argument of these events, you will need to update your event listeners due to the arity change.
 
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
