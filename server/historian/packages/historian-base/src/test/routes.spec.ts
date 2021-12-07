@@ -26,7 +26,7 @@ const defaultProvider = new nconf.Provider({}).defaults({
         enableTokenExpiration: true,
     },
     logger: {
-        morganFormat: "dev",
+        morganFormat: "json",
     },
 });
 const defaultTenantService = new TestTenantService();
