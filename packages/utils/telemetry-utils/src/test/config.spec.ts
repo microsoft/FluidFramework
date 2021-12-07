@@ -316,5 +316,5 @@ describe("Config", () => {
         assert.equal(config.getBooleanArray("badBooleanArray2"), undefined);
     });
 
-    // #endregion IFluidRouter
+    // #endregion SettingsProvider
 });
