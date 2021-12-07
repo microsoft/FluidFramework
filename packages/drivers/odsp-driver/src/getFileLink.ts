@@ -175,7 +175,7 @@ async function getFileItemLite(
                 if (!isFileItemLite(responseJson)) {
                     // This will retry once in getWithRetryForTokenRefresh
                     throw new NonRetryableError(
-                        "malformedGetFileItemLiteResponse",
+                        "getFileItemLiteMalformedResponse",
                         "Malformed getFileItemLite response",
                         DriverErrorType.incorrectServerResponse);
                 }
