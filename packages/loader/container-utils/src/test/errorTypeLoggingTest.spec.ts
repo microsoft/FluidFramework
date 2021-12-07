@@ -72,9 +72,9 @@ describe("Check if the errorType field matches after sending/receiving via Conta
             assert(mockLogger.matchEvents([{
                 eventName: "A",
                 category: "error",
-                message: "dataCorruptionError",
+                message: "message",
                 errorType: ContainerErrorType.dataCorruptionError,
-                error: "dataCorruptionError",
+                error: "message",
                 clientId: "clientId",
                 sequenceNumber: 0,
                 message1: "message1",
