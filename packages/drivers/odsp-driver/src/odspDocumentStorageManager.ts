@@ -516,7 +516,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             if (!Array.isArray(versionsResponse.value)) {
                 throw new NonRetryableError(
                     "getVersionsReturnedNonArrayResponse",
-                    "Incorrect response from getVersions()",
+                    "Incorrect response from /versions endpoint",
                     DriverErrorType.genericNetworkError);
             }
             return versionsResponse.value.map((version) => {
