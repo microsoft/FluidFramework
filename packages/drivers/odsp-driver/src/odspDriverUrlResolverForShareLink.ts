@@ -165,7 +165,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
                     if (tokenResponse === null) {
                         throw new NonRetryableError(
                             "shareLinkTokenIsNull",
-                            "Token is null",
+                            "Token callback returned null",
                             OdspErrorType.fetchTokenError);
                     }
                     event.end({ fromCache: isTokenFromCache(tokenResponse) });

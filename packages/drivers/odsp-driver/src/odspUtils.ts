@@ -128,9 +128,11 @@ export async function fetchHelper(
         if (errorText === "TypeError: Failed to fetch") {
             online = OnlineStatus.Offline;
         }
+        // This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
         if (error.name === "AbortError") {
             throw new RetryableError("fetchAbort", "Fetch Timeout (AbortError)", OdspErrorType.fetchTimeout);
         }
+        // TCP/IP timeout
         if (errorText.indexOf("ETIMEDOUT") !== -1) {
             throw new RetryableError("fetchETimedout", "Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout);
         }
@@ -182,15 +184,6 @@ export async function fetchAndParseAsJSONHelper<T>(
     let text: string | undefined;
     try {
         text = await content.text();
-
-        commonSpoHeaders.bodySize = text.length;
-        const res = {
-            headers,
-            content: JSON.parse(text),
-            commonSpoHeaders,
-            duration,
-        };
-        return res;
     } catch (e) {
         // JSON.parse() can fail and message would container full request URI, including
         // tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
@@ -204,6 +197,15 @@ export async function fetchAndParseAsJSONHelper<T>(
             text,
         );
     }
+
+    commonSpoHeaders.bodySize = text.length;
+    const res = {
+        headers,
+        content: JSON.parse(text),
+        commonSpoHeaders,
+        duration,
+    };
+    return res;
 }
 
 export interface INewFileInfo {

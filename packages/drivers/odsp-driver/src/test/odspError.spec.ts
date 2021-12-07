@@ -145,7 +145,7 @@ describe("Odsp Error", () => {
         assert.equal(res, 1, "did not successfully retried with new token");
     });
 
-    it("Other errors - no retries", async () => {
+    it("404 errors - no retries", async () => {
         const res = getWithRetryForTokenRefresh(async (options) => {
             if (options.refresh) {
                 return 1;
