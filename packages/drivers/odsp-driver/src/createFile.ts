@@ -201,7 +201,7 @@ export async function createNewFluidFileFromSummary(
                 const content = fetchResponse.content;
                 if (!content || !content.itemId) {
                     throw new NonRetryableError(
-                        "CreateFileNoItemId",
+                        "createFileNoItemId",
                         "ODSP CreateFile call returned no item ID",
                         DriverErrorType.incorrectServerResponse);
                 }
