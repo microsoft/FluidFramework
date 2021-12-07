@@ -43,6 +43,7 @@ import {
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
     FluidDataStoreRegistryEntry,
+    gcBlobKey,
     IAttachMessage,
     IFluidDataStoreChannel,
     IFluidDataStoreContext,
@@ -185,6 +186,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     protected get disableIsolatedChannels(): boolean {
         return this._containerRuntime.disableIsolatedChannels;
+    }
+
+    /** We should GC blobs in the summary only if the container runtime is not writing the GC tree. */
+    protected get shouldWriteGCBlob(): boolean {
+        return !this._containerRuntime.shouldWriteGCTree;
     }
 
     protected registry: IFluidDataStoreRegistry | undefined;
@@ -414,6 +420,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
         const attributes = createAttributes(pkg, isRootDataStore, this.disableIsolatedChannels);
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
+
+        if (this.shouldWriteGCBlob) {
+            // Add GC details to the summary.
+            addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(this.summarizerNode.getGCSummaryDetails()));
+        }
 
         // If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob
         // size in the summary stats with the blobs size of this data store.
@@ -837,6 +848,11 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             this.disableIsolatedChannels,
         );
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
+
+        if (this.shouldWriteGCBlob) {
+            // Add GC details to the summary.
+            addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(this.summarizerNode.getGCSummaryDetails()));
+        }
 
         // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
         const snapshot = convertSummaryTreeToITree(summarizeResult.summary);

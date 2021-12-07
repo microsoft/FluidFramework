@@ -11,7 +11,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 export const gcBlobKey = "gc";
-export const gcBlobPrefix = "__gc";
 // A list of runtime blob paths whose contents should be normalized.
 const runtimeBlobsToNormalize = [ gcBlobKey ];
 
@@ -77,15 +76,13 @@ function getDeepSortedObject(obj: any): any {
  */
 function getNormalizedBlobContent(blobContent: string, blobName: string): string {
     let content = blobContent;
-    if (blobName.startsWith(gcBlobPrefix)) {
-        // GC blobs may contain `unreferencedTimestampMs` for node that became unreferenced. This is the timestamp
-        // of the last op processed or current timestamp and can differ between clients depending on when GC was run.
-        // So, remove it for the purposes of comparing snapshots.
-        const gcState = JSON.parse(content);
-        for (const [, data] of Object.entries(gcState.gcNodes)) {
-            delete (data as any).unreferencedTimestampMs;
-        }
-        content = JSON.stringify(gcState);
+    if (blobName === gcBlobKey) {
+        // GC blobs may contain "unrefTimestamp" - The time the corresponding object became unreferenced. This is the
+        // timestamp of the last op processed and can differ between clients depending on when GC was run. It will be
+        // undefined if no ops were processed before running GC. So, remove it for the purposes of comparing snapshots.
+        const gcDetails = JSON.parse(content);
+        delete gcDetails.unrefTimestamp;
+        content = JSON.stringify(gcDetails);
     }
 
     // Deep sort the content if it's parseable.
@@ -120,8 +117,8 @@ export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormali
         switch (entry.type) {
             case TreeEntry.Blob: {
                 let contents = entry.value.contents;
-                // If this blob has to be normalized or it's a GC blob, parse and sort the blob contents first.
-                if (blobsToNormalize.includes(entry.path) || entry.path.startsWith(gcBlobPrefix)) {
+                // If this blob has to be normalized, parse and sort the blob contents first.
+                if (blobsToNormalize.includes(entry.path)) {
                     contents = getNormalizedBlobContent(contents, entry.path);
                 }
                 normalizedEntries.push(new BlobTreeEntry(entry.path, contents));

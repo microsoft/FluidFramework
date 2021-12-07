@@ -32,7 +32,7 @@ import { getGCStateFromSummary, loadSummarizer, TestDataObject, submitAndAckSumm
  * This validates scenarios where due to some bug the GC state in summary is incorrect and we need to quickly recover
  * documents. Disabling GC will ensure that we are not deleting / marking things unreferenced incorrectly.
  */
-describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
+ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
@@ -65,7 +65,7 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
             ],
             undefined,
             undefined,
-            { ...defaultRuntimeOptions, gcOptions: { gcAllowed } },
+            { ...defaultRuntimeOptions, gcOptions: { gcAllowed, writeDataAtRoot: true } },
         );
         return provider.createContainer(runtimeFactory);
     };
@@ -79,7 +79,7 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
             ],
             undefined,
             undefined,
-            { ...defaultRuntimeOptions, gcOptions: { gcAllowed, disableGC } },
+            { ...defaultRuntimeOptions, gcOptions: { gcAllowed, disableGC, writeDataAtRoot: true } },
         );
         return loadSummarizer(
             provider, runtimeFactory, mainContainer.deltaManager.lastSequenceNumber, summaryVersion);

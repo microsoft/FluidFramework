@@ -887,6 +887,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly dataStores: DataStores;
 
     /**
+     * True, if we should write the GC tree.
+     * False, if data stores should write GC blobs in their summary tree.
+     */
+    public get shouldWriteGCTree(): boolean {
+        return this.garbageCollector.shouldWriteGCTree;
+    }
+
+    /**
      * True if generating summaries with isolated channels is
      * explicitly disabled. This only affects how summaries are written,
      * and is the single source of truth for this container.
@@ -1380,9 +1388,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
         }
 
-        const gcSummary = this.garbageCollector.summarize();
-        if (gcSummary !== undefined) {
-            addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
+        if (this.shouldWriteGCTree) {
+            const gcSummary = this.garbageCollector.summarize();
+            if (gcSummary !== undefined) {
+                addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
+            }
         }
     }
 

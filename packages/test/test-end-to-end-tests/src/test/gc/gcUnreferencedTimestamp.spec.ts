@@ -35,7 +35,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: { disableSummaries: true },
-        gcOptions: { gcAllowed: true },
+        gcOptions: { gcAllowed: true, writeDataAtRoot: true },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         dataObjectFactory,
@@ -200,7 +200,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 
     // This test has increased timeout because it waits for multiple summaries to be uploaded to server. It then also
     // waits for those summaries to be ack'd. This may take a while.
-    }).timeout(1000000);
+    }).timeout(20000);
 
     /**
      * This scenario is currently broken. Re-enable test once the following item is completed -
@@ -251,7 +251,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
      * This scenario is currently broken. Re-enable test once the following item is completed -
      * https://github.com/microsoft/FluidFramework/issues/7924
     */
-    it.skip(`updates unreferenced timestamp when data store has outboung referenes, and transitions between ` +
+    it.skip(`updates unreferenced timestamp when data store has outbound references, and transitions between ` +
        `unreferenced -> referenced -> unreferenced between summaries`, async () => {
         const summarizerClient = await getNewSummarizer();
         const dataStoreA = mainDataStore;

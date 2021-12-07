@@ -83,6 +83,8 @@ export interface IGarbageCollector {
     readonly gcSummaryFeatureVersion: number;
     /** Tells whether the GC version has changed compared to the version in the latest summary. */
     readonly hasGCVersionChanged: boolean;
+    /** Tells whether GC data should be written to the root of the summary tree. */
+    readonly shouldWriteGCTree: boolean;
     /** Run garbage collection and update the reference / used state of the system. */
     collectGarbage(
         options: { logger?: ITelemetryLogger, runGC?: boolean, runSweep?: boolean, fullGC?: boolean },
@@ -210,6 +212,17 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly testMode: boolean;
     private readonly logger: ITelemetryLogger;
 
+    /**
+     * Tells whether the GC data should be written to the root of the summary tree. We do this under 2 conditions:
+     * 1. If `writeDataAtRoot` GC option is enabled.
+     * 2. If the base summary has the GC data written at the root. This is to support forward compatibility where when
+     *    we start writing the GC data at root, older versions can detect that and write at root too.
+     */
+    private _shouldWriteGCTree: boolean = false;
+    public get shouldWriteGCTree(): boolean {
+        return this._shouldWriteGCTree;
+    }
+
     // The current GC version that this container is running.
     private readonly currentGCVersion = GCVersion;
     // This is the version of GC data in the latest summary being tracked.
@@ -276,6 +289,10 @@ export class GarbageCollector implements IGarbageCollector {
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
         this.testMode = getLocalStorageFeatureGate(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
 
+        // If `writeDataAtRoot` GC option is true, we should write the GC data into the root of the summary tree. This
+        // GC option is used for testing only. It will be removed once we start writing GC data into root by default.
+        this._shouldWriteGCTree = this.gcOptions.writeDataAtRoot;
+
         // Get the GC state from the GC blob in the base snapshot. Use LazyPromise because we only want to do
         // this once since it involves fetching blobs from storage which is expensive.
         const baseSummaryStateP = new LazyPromise<IGarbageCollectionState>(async () => {
@@ -286,6 +303,8 @@ export class GarbageCollector implements IGarbageCollector {
             // For newer documents, GC data should be present in the GC tree in the root of the snapshot.
             const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
             if (gcSnapshotTree !== undefined) {
+                // forward-compat - If a newer version has written the GC tree, we should also do the same.
+                this._shouldWriteGCTree = true;
                 return getGCStateFromSnapshot(gcSnapshotTree, readAndParseBlob);
             }
 
