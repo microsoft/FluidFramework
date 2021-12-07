@@ -973,6 +973,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             metadata,
         );
 
+        const shouldRunExpiry = this.runtimeOptions.gcOptions?.gcAllowed
+        && !this.runtimeOptions.gcOptions?.disableGC
+        && !this.runtimeOptions.gcOptions?.runSweep;
+
+        if(shouldRunExpiry) {
+            const defaultContainerRuntimeExpiryMs = 30 * 24 * 60 * 60 * 1000;
+            const expiryMs = this.runtimeOptions.gcOptions?.testMode ? 0 : defaultContainerRuntimeExpiryMs;
+            setTimeout(() => {
+                this.setReadOnly();
+            }, expiryMs);
+        }
+
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         this.summarizerNode = createRootSummarizerNodeWithGC(
             ChildLogger.create(this.logger, "SummarizerNode"),
