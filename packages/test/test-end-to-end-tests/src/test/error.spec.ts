@@ -5,11 +5,10 @@
 
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { Container, ILoaderProps, Loader } from "@fluidframework/container-loader";
-import { IDocumentServiceFactory, DriverErrorType } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
-import { isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
+import { isILoggingError, normalizeError, normalizeErrorType } from "@fluidframework/telemetry-utils";
 import {
     LocalCodeLoader,
     LoaderContainerTracker,
@@ -83,10 +82,8 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
             await loadContainer({ documentServiceFactory: mockFactory });
             assert.fail("Error expected");
         } catch (error) {
-            assert(
-                [DriverErrorType.genericNetworkError, ContainerErrorType.genericError].includes(error.errorType),
-                `${error.errorType} should be genericError or genericNetworkError`,
-            );
+            assert(error.errorType === normalizeErrorType,
+                `${error.errorType} should be normalized error type`);
         }
     });
 

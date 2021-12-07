@@ -17,6 +17,11 @@ import {
     isValidLegacyError,
 } from "./fluidErrorBase";
 
+/**
+ * errorType used by normalizeError() for unknown errors
+ */
+export const normalizeErrorType = "<unknown>";
+
 /** @returns true if value is an object but neither null nor an array */
 const isRegularObject = (value: any): boolean => {
     return value !== null && !Array.isArray(value) && typeof value === "object";
@@ -113,7 +118,7 @@ export function normalizeError(
     // We have to construct a new Fluid Error, copying safe properties over
     const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
     const fluidError: IFluidErrorBase = new SimpleFluidError({
-        errorType: "<unknown>",
+        errorType: normalizeErrorType,
         fluidErrorCode,
         message,
         stack,

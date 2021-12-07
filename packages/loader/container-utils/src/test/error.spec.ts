@@ -6,7 +6,7 @@
 /* eslint-disable max-len */
 
 import { strict as assert } from "assert";
-import { isILoggingError, LoggingError, normalizeError } from "@fluidframework/telemetry-utils";
+import { isILoggingError, LoggingError, normalizeError, normalizeErrorType } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { CreateProcessingError, GenericError } from "../error";
 
@@ -22,7 +22,7 @@ describe("Errors", () => {
             const originalError: any = { hello: "world" };
             const testError = CreateContainerErrorViaNormalize(originalError, { foo: "bar" });
 
-            assert(testError.errorType === "<unknown>");
+            assert(testError.errorType === normalizeErrorType);
             assert(testError !== originalError);
             assert((testError as any).hello === undefined);
             assert(isILoggingError(testError));
@@ -32,7 +32,7 @@ describe("Errors", () => {
             const originalError = "womp womp";
             const testError = CreateContainerErrorViaNormalize(originalError, { foo: "bar" });
 
-            assert(testError.errorType === "<unknown>");
+            assert(testError.errorType === normalizeErrorType);
             assert(testError.message === "womp womp");
             assert(isILoggingError(testError));
             assert(testError.getTelemetryProperties().foo === "bar");
@@ -42,14 +42,14 @@ describe("Errors", () => {
             const originalError = { errorType: "someErrorType" }; // missing message and telemetry prop functions
             const testError = CreateContainerErrorViaNormalize(originalError);
 
-            assert(testError.errorType === "<unknown>");
+            assert(testError.errorType === normalizeErrorType);
             assert(testError !== originalError);
         });
         it("Should ignore non-string errorType", () => {
             const originalError = { errorType: 3 };
             const testError = CreateContainerErrorViaNormalize(originalError);
 
-            assert(testError.errorType === "<unknown>");
+            assert(testError.errorType === normalizeErrorType);
         });
         it("Should not expose original error props for telemetry besides message", () => {
             const originalError: any = { hello: "world", message: "super important" };
@@ -69,7 +69,7 @@ describe("Errors", () => {
             const loggingError = new LoggingError("hello", { foo: "bar" });
             const testError = CreateContainerErrorViaNormalize(loggingError);
 
-            assert(testError.errorType === "<unknown>");
+            assert(testError.errorType === normalizeErrorType);
             assert(isILoggingError(testError));
             assert(testError.getTelemetryProperties().foo === undefined, "telemetryProps shouldn't be copied when wrapping");
             assert(testError as any !== loggingError);
@@ -107,7 +107,7 @@ describe("Errors", () => {
             const coercedError = CreateProcessingError(originalError, "someCodepath", undefined);
 
             assert(coercedError as any === originalError);
-            assert(coercedError.errorType === "<unknown>");
+            assert(coercedError.errorType === normalizeErrorType);
             assert(coercedError.fluidErrorCode === "");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
         });
@@ -133,7 +133,7 @@ describe("Errors", () => {
 
             assert(coercedError as any !== originalError);
             assert((coercedError as any).dataProcessingError === 1);
-            assert(coercedError.errorType === "<unknown>");
+            assert(coercedError.errorType === normalizeErrorType);
             assert(coercedError.fluidErrorCode === "someCodepath");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().fluidErrorCode === "someCodepath");
@@ -149,7 +149,7 @@ describe("Errors", () => {
 
             assert(coercedError as any !== originalError);
             assert((coercedError as any).dataProcessingError === 1);
-            assert(coercedError.errorType === "<unknown>");
+            assert(coercedError.errorType === normalizeErrorType);
             assert(coercedError.fluidErrorCode === "someCodepath");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().fluidErrorCode === "someCodepath");
@@ -179,7 +179,7 @@ describe("Errors", () => {
                     (error) =>
                         typeof error.message === "string" &&
                         error.fluidErrorCode === "someCodepath" &&
-                        error.errorType === "<unknown>" &&
+                        error.errorType === normalizeErrorType &&
                         error.getTelemetryProperties().dataProcessingError === 1 &&
                         error.getTelemetryProperties().fluidErrorCode === "someCodepath" &&
                         error.getTelemetryProperties().untrustedOrigin === 1),
@@ -201,7 +201,7 @@ describe("Errors", () => {
             const coercedError = CreateProcessingError(originalMessage, "someCodepath", undefined);
 
             assert(coercedError.message === originalMessage);
-            assert(coercedError.errorType === "<unknown>");
+            assert(coercedError.errorType === normalizeErrorType);
             assert(coercedError.fluidErrorCode === "someCodepath");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().fluidErrorCode === "someCodepath");
@@ -214,7 +214,7 @@ describe("Errors", () => {
             const coercedError = CreateProcessingError(originalError, "someCodepath", undefined);
 
             assert(coercedError.message === originalError.message);
-            assert(coercedError.errorType === "<unknown>");
+            assert(coercedError.errorType === normalizeErrorType);
             assert(coercedError.fluidErrorCode === "someCodepath");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().fluidErrorCode === "someCodepath");

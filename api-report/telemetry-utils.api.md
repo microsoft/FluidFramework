@@ -157,6 +157,9 @@ export class MultiSinkLogger extends TelemetryLogger {
 export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations, fluidErrorCode?: string): IFluidErrorBase;
 
 // @public
+export const normalizeErrorType = "<unknown>";
+
+// @public
 export class PerformanceEvent {
     protected constructor(logger: ITelemetryLogger, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers);
     // (undocumented)

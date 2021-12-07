@@ -8,7 +8,6 @@ import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import {
     IGenericError,
     IPendingLocalState,
-    ContainerErrorType,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
 import {
@@ -39,6 +38,7 @@ import {
     TestDataObjectType,
     describeNoCompat,
 } from "@fluidframework/test-version-utils";
+import { normalizeErrorType } from "@fluidframework/telemetry-utils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
@@ -119,7 +119,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             await loadContainer({ documentServiceFactory: mockFactory });
             assert.fail("Error expected");
         } catch (error) {
-            assert.strictEqual(error.errorType, ContainerErrorType.genericError, "Error should be a general error");
+            assert.strictEqual(error.errorType, normalizeErrorType, "Error should be a general error");
             const genericError = error as IGenericError;
             assert.equal(genericError.message, "expectedFailure", "Expected the injected error message");
             success = false;
@@ -143,7 +143,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             await waitContainerToCatchUp(container2);
             assert.fail("Error expected");
         } catch (error) {
-            assert.strictEqual(error.errorType, ContainerErrorType.genericError, "Error should be a general error");
+            assert.strictEqual(error.errorType, normalizeErrorType, "Error should be a general error");
             const genericError = error as IGenericError;
             assert.equal(genericError.message, "expectedFailure", "Expected the injected error message");
             success = false;

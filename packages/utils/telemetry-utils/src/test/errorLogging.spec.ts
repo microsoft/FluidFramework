@@ -10,7 +10,15 @@ import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger";
-import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, IFluidErrorAnnotations, wrapError, wrapErrorAndLog } from "../errorLogging";
+import {
+    LoggingError,
+    isTaggedTelemetryPropertyValue,
+    normalizeError,
+    IFluidErrorAnnotations,
+    wrapError,
+    wrapErrorAndLog,
+    normalizeErrorType,
+} from "../errorLogging";
 import { IFluidErrorBase } from "../fluidErrorBase";
 import { MockLogger } from "../mockLogger";
 
@@ -448,7 +456,7 @@ describe("normalizeError", () => {
             stack: "cool stack trace",
         });
         const typicalOutput = (message: string, stackHint: "<<natural stack>>" | "<<stack from input>>") => new TestFluidError({
-            errorType: "<unknown>",
+            errorType: normalizeErrorType,
             fluidErrorCode: "fluidErrorCodeNormalize",
             message,
             stack: stackHint,
