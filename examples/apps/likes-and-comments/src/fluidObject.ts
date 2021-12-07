@@ -6,7 +6,6 @@
 import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import {
     SyncedDataObject,
     setSyncedCounterConfig,
@@ -23,7 +22,7 @@ export class LikesAndComments extends SyncedDataObject {
     public static get Name() { return "LikesAndComments"; }
 
     public static readonly factory =
-        new DataObjectFactory<LikesAndComments, unknown, unknown, IEvent>(
+        new DataObjectFactory(
             LikesAndComments.name,
             LikesAndComments,
             [

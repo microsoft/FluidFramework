@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {expectError} from 'tsd';
-import { Jsonable } from '../dist/jsonable';
+import { Jsonable } from "../..";
 
-declare function foo<T>(a: Jsonable<T>): void;
+declare function foo<T>(jsonable: Jsonable<T>): void;
 
 // --- ideally wouldn't work but do as we don't know how to just exclude classes
 
@@ -15,9 +14,9 @@ class Z {
     public a = "a";
 }
 
-foo<Z>(new Z())
+foo<Z>(new Z());
 
-//test class with getter
+// test class with getter
 class getter {
     public get baz(): number {
         return 0;
@@ -32,6 +31,7 @@ foo(new getter());
 foo(1);
 foo("");
 foo(undefined);
+// eslint-disable-next-line no-null/no-null
 foo(null);
 foo(true);
 foo([]);
@@ -45,7 +45,7 @@ interface IA {
     a: "a";
 }
 declare const a: IA;
-foo(a)
+foo(a);
 
 // test simple indexed interface
 interface IA2 {
@@ -62,25 +62,24 @@ foo(a3);
 interface A5 {
     a: "a",
     b: "b",
-};
+}
 declare const a5: A5;
 foo(a5);
 
 // test interface with optional property
 interface A6 {
     a?: "a",
-};
+}
 declare const a6: A6;
 foo(a6);
 
 // test simple type
-type A7 = {
+interface A7 {
     a: "a",
-};
+}
 
 declare const a7: A7;
 foo(a7);
-
 
 // test nested interface
 interface IBN {
@@ -97,7 +96,7 @@ const nested: INested = {
     b: {
         b2:"foo",
     },
-}
+};
 foo(nested);
 
 // --- should not work
@@ -108,38 +107,40 @@ interface IA11 {
     foo: () => void;
 }
 declare const a11: IA11;
-expectError(foo(a11));
-
+// @ts-expect-error should not be jsonable
+foo(a11);
 
 // test interface with optional method
 interface A12 {
     foo?: () => void,
-};
+}
 declare const a12: A12;
-expectError(foo(a12));
+// @ts-expect-error should not be jsonable
+foo(a12);
 
 // test type with method
-type A13 = {
+interface A13 {
     foo: () => void,
-};
+}
 declare const a13: A13;
-expectError(foo(a13));
+// @ts-expect-error should not be jsonable
+foo(a13);
 
 // test type with primative and object with classes union
 interface IA14 {
     a: number | Date;
 }
 declare const a14: IA14;
-expectError(foo(a14));
+// @ts-expect-error should not be jsonable
+foo(a14);
 
-//test class with function
+// test class with function
 class bar {
     public baz() {
     }
 }
-
-expectError(foo(new bar()));
-
+// @ts-expect-error should not be jsonable
+foo(new bar());
 
 // test class with complex property
 interface MapProp{
@@ -147,24 +148,27 @@ interface MapProp{
 }
 const mt: MapProp = {
     m: new Map(),
-}
-expectError(foo(mt));
+};
+// @ts-expect-error should not be jsonable
+foo(mt);
 
-//test nested interface with complex property
+// test nested interface with complex property
 interface NestedMapProp{
     n: MapProp;
 }
 const nmt: NestedMapProp = {
     n: mt,
 };
-expectError(foo(nmt));
+// @ts-expect-error should not be jsonable
+foo(nmt);
 
 // test class with symbol indexer for property
 const sym = Symbol.for("test");
 interface ISymbol{
-    [sym]:string,
+    [sym]: string,
 }
-const isym: ISymbol ={
+const isym: ISymbol = {
     [sym]:"foo",
-}
-expectError(foo(isym));
+};
+// @ts-expect-error should not be jsonable
+foo(isym);

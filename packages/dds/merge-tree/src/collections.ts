@@ -3,42 +3,39 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq, object-shorthand */
+/* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq */
 /* eslint-disable no-bitwise */
 
 /* Remove once strictNullCheck is enabled */
 
-import { Trace } from "@fluidframework/common-utils";
 import {
     ConflictAction,
     IIntegerRange,
     KeyComparer,
-    Property,
     PropertyAction,
     SortedDictionary,
 } from "./base";
-import { internedSpaces } from "./mergeTree";
 
 export class Stack<T> {
-    items: T[] = [];
-    push(val: T) {
+    public items: T[] = [];
+    public push(val: T) {
         this.items.push(val);
     }
 
-    empty() {
+    public empty() {
         return this.items.length === 0;
     }
 
-    top(): T | undefined {
+    public top(): T | undefined {
         return this.items[this.items.length - 1];
     }
 
-    pop(): T | undefined {
+    public pop(): T | undefined {
         return this.items.pop();
     }
 }
 
-export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined {
+function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined {
     if (entry === undefined) {
         return undefined;
     }
@@ -52,7 +49,7 @@ export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined {
     return (entry);
 }
 
-export function ListMakeEntry<U>(data: U): List<U> {
+function ListMakeEntry<U>(data: U): List<U> {
     return new List<U>(false, data);
 }
 
@@ -61,22 +58,22 @@ export function ListMakeHead<U>(): List<U> {
 }
 
 export class List<T> {
-    next: List<T>;
-    prev: List<T>;
+    public next: List<T>;
+    public prev: List<T>;
 
-    constructor(public isHead: boolean, public data: T | undefined) {
+    constructor(public isHead: boolean, private data: T | undefined) {
         this.prev = this;
         this.next = this;
     }
 
-    clear(): void {
+    public clear(): void {
         if (this.isHead) {
             this.prev = this;
             this.next = this;
         }
     }
 
-    add(data: T): List<T> {
+    private add(data: T): List<T> {
         const entry = ListMakeEntry(data);
         this.prev.next = entry;
         entry.next = this;
@@ -85,7 +82,7 @@ export class List<T> {
         return (entry);
     }
 
-    dequeue(): T | undefined {
+    public dequeue(): T | undefined {
         if (!this.empty()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const removedEntry = ListRemoveEntry(this.next)!;
@@ -93,18 +90,18 @@ export class List<T> {
         }
     }
 
-    enqueue(data: T): List<T> {
+    public enqueue(data: T): List<T> {
         return this.add(data);
     }
 
-    walk(fn: (data: T, l: List<T>) => void): void {
+    public walk(fn: (data: T, l: List<T>) => void): void {
         for (let entry = this.next; !(entry.isHead); entry = entry.next) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             fn(entry.data!, entry);
         }
     }
 
-    some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T[] {
+    public some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T[] {
         const rtn: T[] = [];
         const start = rev ? this.prev : this.next;
         for (let entry = start; !(entry.isHead); entry = rev ? entry.prev : entry.next) {
@@ -122,7 +119,7 @@ export class List<T> {
         return rtn;
     }
 
-    count(): number {
+    public count(): number {
         let entry: List<T>;
         let i: number;
 
@@ -133,31 +130,23 @@ export class List<T> {
         return (i);
     }
 
-    first(): T | undefined {
+    public first(): T | undefined {
         if (!this.empty()) {
             return (this.next.data);
         }
     }
 
-    last(): T | undefined {
+    public last(): T | undefined {
         if (!this.empty()) {
             return (this.prev.data);
         }
     }
 
-    empty(): boolean {
+    public empty(): boolean {
         return (this.next === this);
     }
 
-    pushEntry(entry: List<T>): void {
-        entry.isHead = false;
-        entry.next = this.next;
-        entry.prev = this;
-        this.next = entry;
-        entry.next.prev = entry;
-    }
-
-    push(data: T): void {
+    public push(data: T): void {
         const entry = ListMakeEntry(data);
         entry.data = data;
         entry.isHead = false;
@@ -166,46 +155,6 @@ export class List<T> {
         this.next = entry;
         entry.next.prev = entry;
     }
-
-    popEntry(head: List<T>): List<T> | undefined {
-        if (this.next.isHead) {
-            return undefined;
-        }
-        else {
-            return ListRemoveEntry(this.next);
-        }
-    }
-
-    insertEntry(entry: List<T>): List<T> {
-        entry.isHead = false;
-        this.prev.next = entry;
-        entry.next = this;
-        entry.prev = this.prev;
-        this.prev = entry;
-        return entry;
-    }
-
-    insertAfter(data: T): List<T> {
-        const entry: List<T> = ListMakeEntry(data);
-        entry.next = this.next;
-        entry.prev = this;
-        this.next = entry;
-        entry.next.prev = entry;
-        return (entry);
-    }
-
-    insertBefore(data: T): List<T> {
-        const entry = ListMakeEntry(data);
-        return this.insertEntryBefore(entry);
-    }
-
-    insertEntryBefore(entry: List<T>): List<T> {
-        this.prev.next = entry;
-        entry.next = this;
-        entry.prev = this.prev;
-        this.prev = entry;
-        return (entry);
-    }
 }
 
 export interface Comparer<T> {
@@ -213,14 +162,9 @@ export interface Comparer<T> {
     min: T;
 }
 
-export const numberComparer: Comparer<number> = {
-    min: Number.MIN_VALUE,
-    compare: (a, b) => a - b,
-};
-
 export class Heap<T> {
-    L: T[];
-    count() {
+    private L: T[];
+    public count() {
         return this.L.length - 1;
     }
     constructor(a: T[], public comp: Comparer<T>) {
@@ -229,11 +173,11 @@ export class Heap<T> {
             this.add(a[i]);
         }
     }
-    peek() {
+    public peek() {
         return this.L[1];
     }
 
-    get() {
+    public get() {
         const x = this.L[1];
         this.L[1] = this.L[this.count()];
         this.L.pop();
@@ -241,7 +185,7 @@ export class Heap<T> {
         return x;
     }
 
-    add(x: T) {
+    public add(x: T) {
         this.L.push(x);
         this.fixup(this.count());
     }
@@ -272,98 +216,6 @@ export class Heap<T> {
             _k = j;
         }
     }
-}
-
-// For testing
-export function LinearDictionary<TKey, TData>(compareKeys: KeyComparer<TKey>): SortedDictionary<TKey, TData> {
-    const props: Property<TKey, TData>[] = [];
-    const compareProps = (a: Property<TKey, TData>, b: Property<TKey, TData>) => compareKeys(a.key, b.key);
-    function diag() {
-        console.log(`size is ${props.length}`);
-    }
-    function mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
-        let _start = start;
-        let _end = end;
-
-        if (props.length !== 0) { return; }
-
-        if (_start === undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            _start = min()!.key;
-        }
-        if (_end === undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            _end = max()!.key;
-        }
-        for (let i = 0, len = props.length; i < len; i++) {
-            if (compareKeys(_start, props[i].key) <= 0) {
-                const ecmp = compareKeys(_end, props[i].key);
-                if (ecmp < 0) {
-                    break;
-                }
-                if (!action(props[i], accum)) {
-                    break;
-                }
-            }
-        }
-    }
-
-    function map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum) {
-        mapRange(action, accum);
-    }
-
-    function min() {
-        if (props.length > 0) {
-            return props[0];
-        }
-    }
-    function max() {
-        if (props.length > 0) {
-            return props[props.length - 1];
-        }
-    }
-
-    function get(key: TKey) {
-        for (let i = 0, len = props.length; i < len; i++) {
-            if (props[i].key == key) {
-                return props[i];
-            }
-        }
-    }
-
-    function put(key: TKey, data: TData) {
-        if (key !== undefined) {
-            if (data === undefined) {
-                remove(key);
-            }
-            else {
-                props.push({ key, data });
-                props.sort(compareProps); // Go to insertion sort if too slow
-            }
-        }
-    }
-    function remove(key: TKey) {
-        if (key !== undefined) {
-            for (let i = 0, len = props.length; i < len; i++) {
-                if (props[i].key == key) {
-                    props[i] = props[len - 1];
-                    props.length--;
-                    props.sort(compareProps);
-                    break;
-                }
-            }
-        }
-    }
-    return {
-        min: min,
-        max: max,
-        map: map,
-        mapRange: mapRange,
-        remove: remove,
-        get: get,
-        put: put,
-        diag: diag,
-    };
 }
 
 export const enum RBColor {
@@ -397,34 +249,36 @@ export interface RBNodeActions<TKey, TData> {
 }
 
 export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> {
-    root: RBNode<TKey, TData> | undefined;
-    constructor(public compareKeys: KeyComparer<TKey>, public aug?: IRBAugmentation<TKey, TData>) {
+    private root: RBNode<TKey, TData> | undefined;
 
-    }
+    constructor(
+        private readonly compareKeys: KeyComparer<TKey>,
+        private readonly aug?: IRBAugmentation<TKey, TData>,
+    ) { }
 
-    makeNode(key: TKey, data: TData, color: RBColor, size: number) {
+    private makeNode(key: TKey, data: TData, color: RBColor, size: number) {
         return <RBNode<TKey, TData>>{ key, data, color, size };
     }
 
-    isRed(node: RBNode<TKey, TData> | undefined) {
+    private isRed(node: RBNode<TKey, TData> | undefined) {
         return !!node && (node.color == RBColor.RED);
     }
 
-    nodeSize(node: RBNode<TKey, TData> | undefined) {
+    private nodeSize(node: RBNode<TKey, TData> | undefined) {
         return node ? node.size : 0;
     }
-    size() {
+    public size() {
         return this.nodeSize(this.root);
     }
-    isEmpty() {
+    public isEmpty() {
         return !this.root;
     }
-    get(key: TKey) {
+    public get(key: TKey) {
         if (key !== undefined) {
             return this.nodeGet(this.root, key);
         }
     }
-    nodeGet(node: RBNode<TKey, TData> | undefined, key: TKey) {
+    private nodeGet(node: RBNode<TKey, TData> | undefined, key: TKey) {
         let _node = node;
         while (_node) {
             const cmp = this.compareKeys(key, _node.key);
@@ -439,11 +293,11 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
             }
         }
     }
-    contains(key: TKey) {
+    private contains(key: TKey) {
         return this.get(key);
     }
 
-    gather(key: TKey, matcher: IRBMatcher<TKey, TData>) {
+    public gather(key: TKey, matcher: IRBMatcher<TKey, TData>) {
         const results = [] as RBNode<TKey, TData>[];
         if (key !== undefined) {
             this.nodeGather(this.root, results, key, matcher);
@@ -451,7 +305,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return results;
     }
 
-    nodeGather(
+    private nodeGather(
         node: RBNode<TKey, TData> | undefined,
         results: RBNode<TKey, TData>[],
         key: TKey,
@@ -469,7 +323,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    walkExactMatchesForward(
+    public walkExactMatchesForward(
         compareFn: (node: RBNode<TKey, TData>) => number,
         actionFn: (node: RBNode<TKey, TData>) => void,
         continueLeftFn: (number: number) => boolean,
@@ -477,7 +331,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         this.nodeWalkExactMatchesForward(this.root, compareFn, actionFn, continueLeftFn, continueRightFn);
     }
 
-    nodeWalkExactMatchesForward(
+    private nodeWalkExactMatchesForward(
         node: RBNode<TKey, TData> | undefined,
         compareFn: (node: RBNode<TKey, TData>) => number,
         actionFn: (node: RBNode<TKey, TData>) => void,
@@ -498,7 +352,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    walkExactMatchesBackward(
+    public walkExactMatchesBackward(
         compareFn: (node: RBNode<TKey, TData>) => number,
         actionFn: (node: RBNode<TKey, TData>) => void,
         continueLeftFn: (number: number) => boolean,
@@ -506,7 +360,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         this.nodeWalkExactMatchesBackward(this.root, compareFn, actionFn, continueLeftFn, continueRightFn);
     }
 
-    nodeWalkExactMatchesBackward(
+    private nodeWalkExactMatchesBackward(
         node: RBNode<TKey, TData> | undefined,
         compareFn: (node: RBNode<TKey, TData>) => number,
         actionFn: (node: RBNode<TKey, TData>) => void,
@@ -527,7 +381,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    put(key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>) {
+    public put(key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>) {
         if (key !== undefined) {
             if (data === undefined) {
                 this.remove(key);
@@ -539,7 +393,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    nodePut(
+    private nodePut(
         node: RBNode<TKey, TData> | undefined,
         key: TKey, data: TData,
         conflict?: ConflictAction<TKey, TData>,
@@ -590,7 +444,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    updateLocal(node: RBNode<TKey, TData>) {
+    private updateLocal(node: RBNode<TKey, TData>) {
         if (this.aug) {
             if (this.isRed(node.left)) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -604,20 +458,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    removeMin() {
-        if (this.root) {
-            if ((!this.isRed(this.root.left)) && (!this.isRed(this.root.right))) {
-                this.root.color = RBColor.RED;
-            }
-
-            this.root = this.nodeRemoveMin(this.root);
-            if (this.root) {
-                this.root.color = RBColor.BLACK;
-            }
-        }
-        // TODO: error on empty
-    }
-    nodeRemoveMin(node: RBNode<TKey, TData>) {
+    private nodeRemoveMin(node: RBNode<TKey, TData>) {
         let _node = node;
         if (_node.left) {
             if ((!this.isRed(_node.left)) && (!this.isRed(_node.left.left))) {
@@ -630,42 +471,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    removeMax() {
-        if (this.root) {
-            if ((!this.isRed(this.root.left)) && (!this.isRed(this.root.right))) {
-                this.root.color = RBColor.RED;
-            }
-
-            this.root = this.nodeRemoveMax(this.root);
-            if (this.root) {
-                this.root.color = RBColor.BLACK;
-            }
-        }
-        // TODO: error on empty
-    }
-
-    nodeRemoveMax(node: RBNode<TKey, TData>) {
-        let _node = node;
-
-        if (this.isRed(_node.left)) {
-            _node = this.rotateRight(_node);
-        }
-
-        if (!_node.right) {
-            return undefined;
-        }
-
-        if ((!this.isRed(_node.right)) && (!this.isRed(_node.right.left))) {
-            _node = this.moveRedRight(_node);
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        _node.right = this.nodeRemoveMax(_node.right!);
-
-        return this.balance(_node);
-    }
-
-    remove(key: TKey) {
+    public remove(key: TKey) {
         if (key !== undefined) {
             if (!this.contains(key)) {
                 return;
@@ -676,7 +482,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         // TODO: error on undefined key
     }
 
-    removeExisting(key: TKey) {
+    public removeExisting(key: TKey) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         if ((!this.isRed(this.root!.left)) && (!this.isRed(this.root!.right))) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -687,7 +493,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         this.root = this.nodeRemove(this.root!, key);
     }
 
-    nodeRemove(node: RBNode<TKey, TData>, key: TKey) {
+    private nodeRemove(node: RBNode<TKey, TData>, key: TKey) {
         let _node = node;
         if (this.compareKeys(key, _node.key) < 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -723,10 +529,10 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
         return this.balance(_node);
     }
-    height() {
+    private height() {
         return this.nodeHeight(this.root);
     }
-    nodeHeight(node: RBNode<TKey, TData> | undefined): number {
+    private nodeHeight(node: RBNode<TKey, TData> | undefined): number {
         if (node === undefined) {
             return -1;
         }
@@ -735,13 +541,13 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    floor(key: TKey) {
+    public floor(key: TKey) {
         if (!this.isEmpty()) {
             return this.nodeFloor(this.root, key);
         }
     }
 
-    nodeFloor(node: RBNode<TKey, TData> | undefined, key: TKey): RBNode<TKey, TData> | undefined {
+    private nodeFloor(node: RBNode<TKey, TData> | undefined, key: TKey): RBNode<TKey, TData> | undefined {
         if (node) {
             const cmp = this.compareKeys(key, node.key);
             if (cmp == 0) {
@@ -762,13 +568,13 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    ceil(key: TKey) {
+    public ceil(key: TKey) {
         if (!this.isEmpty()) {
             return this.nodeCeil(this.root, key);
         }
     }
 
-    nodeCeil(node: RBNode<TKey, TData> | undefined, key: TKey): RBNode<TKey, TData> | undefined {
+    private nodeCeil(node: RBNode<TKey, TData> | undefined, key: TKey): RBNode<TKey, TData> | undefined {
         if (node) {
             const cmp = this.compareKeys(key, node.key);
             if (cmp == 0) {
@@ -789,13 +595,13 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    min() {
+    public min() {
         if (this.root) {
             return this.nodeMin(this.root);
         }
     }
 
-    nodeMin(node: RBNode<TKey, TData>): RBNode<TKey, TData> {
+    private nodeMin(node: RBNode<TKey, TData>): RBNode<TKey, TData> {
         if (!node.left) {
             return node;
         }
@@ -804,13 +610,13 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    max() {
+    public max() {
         if (this.root) {
             return this.nodeMax(this.root);
         }
     }
 
-    nodeMax(node: RBNode<TKey, TData>): RBNode<TKey, TData> {
+    private nodeMax(node: RBNode<TKey, TData>): RBNode<TKey, TData> {
         if (!node.right) {
             return node;
         }
@@ -819,7 +625,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
-    rotateRight(node: RBNode<TKey, TData>) {
+    private rotateRight(node: RBNode<TKey, TData>) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const leftChild = node.left!;
         node.left = leftChild.right;
@@ -835,7 +641,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return leftChild;
     }
 
-    rotateLeft(node: RBNode<TKey, TData>) {
+    private rotateLeft(node: RBNode<TKey, TData>) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const rightChild = node.right!;
         node.right = rightChild.left;
@@ -851,11 +657,11 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return rightChild;
     }
 
-    oppositeColor(c: RBColor) {
+    private oppositeColor(c: RBColor) {
         return (c == RBColor.BLACK) ? RBColor.RED : RBColor.BLACK;
     }
 
-    flipColors(node: RBNode<TKey, TData>) {
+    private flipColors(node: RBNode<TKey, TData>) {
         node.color = this.oppositeColor(node.color);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         node.left!.color = this.oppositeColor(node.left!.color);
@@ -863,7 +669,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         node.right!.color = this.oppositeColor(node.right!.color);
     }
 
-    moveRedLeft(node: RBNode<TKey, TData>) {
+    private moveRedLeft(node: RBNode<TKey, TData>) {
         let _node = node;
         this.flipColors(_node);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -876,7 +682,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return _node;
     }
 
-    moveRedRight(node: RBNode<TKey, TData>) {
+    private moveRedRight(node: RBNode<TKey, TData>) {
         let _node = node;
         this.flipColors(_node);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -887,7 +693,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return _node;
     }
 
-    balance(input: RBNode<TKey, TData>) {
+    private balance(input: RBNode<TKey, TData>) {
         let node: RBNode<TKey, TData> | undefined = input;
         if (this.isRed(node.right)) {
             node = this.rotateLeft(node);
@@ -906,16 +712,16 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return node;
     }
 
-    mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
+    public mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
         this.nodeMap(this.root, action, start, end);
     }
 
-    map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum) {
+    public map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum) {
         // TODO: optimize to avoid comparisons
         this.nodeMap(this.root, action, accum);
     }
 
-    keys() {
+    public keys() {
         const keyList = <TKey[]>[];
         const actions = <RBNodeActions<TKey, TData>>{
             showStructure: true,
@@ -933,15 +739,15 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
      * false, traversal is halted.
      * @param action - action to apply to each node
      */
-    walk(actions: RBNodeActions<TKey, TData>) {
+    public walk(actions: RBNodeActions<TKey, TData>) {
         this.nodeWalk(this.root, actions);
     }
 
-    walkBackward(actions: RBNodeActions<TKey, TData>) {
+    public walkBackward(actions: RBNodeActions<TKey, TData>) {
         this.nodeWalkBackward(this.root, actions);
     }
 
-    nodeWalk(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean {
+    private nodeWalk(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean {
         let go = true;
         if (node) {
             if (actions.pre) {
@@ -969,7 +775,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return go;
     }
 
-    nodeWalkBackward(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean {
+    private nodeWalkBackward(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean {
         let go = true;
         if (node) {
             if (actions.pre) {
@@ -997,7 +803,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return go;
     }
 
-    nodeMap<TAccum>(
+    private nodeMap<TAccum>(
         node: RBNode<TKey, TData> | undefined,
         action: PropertyAction<TKey, TData>,
         accum?: TAccum,
@@ -1030,129 +836,16 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
         return go;
     }
-    diag() {
+    public diag() {
         console.log(`Height is ${this.height()}`);
     }
-}
-
-export interface AugIntegerRangeNode {
-    minmax: IIntegerRange;
 }
 
 export interface AugmentedIntervalNode {
     minmax: IInterval;
 }
-/**
- * Union of two ranges; assumes for both ranges start \<= end.
- * @param a - A range
- * @param b - A range
- */
-export function integerRangeUnion(a: IIntegerRange, b: IIntegerRange) {
-    return <IIntegerRange>{
-        start: Math.min(a.start, b.start),
-        end: Math.max(a.end, b.end),
-    };
-}
-
-export function integerRangeOverlaps(a: IIntegerRange, b: IIntegerRange) {
-    return (a.start < b.end) && (a.end > b.start);
-}
-
-export function integerRangeComparer(a: IIntegerRange, b: IIntegerRange) {
-    if (a.start === b.start) {
-        return a.end - b.end;
-    } else {
-        return a.start - b.start;
-    }
-}
-
-export const integerRangeCopy = (r: IIntegerRange) => <IIntegerRange>{ start: r.start, end: r.end };
 
 export const integerRangeToString = (range: IIntegerRange) => `[${range.start},${range.end})`;
-
-export type IntegerRangeNode = RBNode<IIntegerRange, AugIntegerRangeNode>;
-
-// TODO: handle duplicate keys
-
-export class IntegerRangeTree implements IRBAugmentation<IIntegerRange, AugIntegerRangeNode>,
-    IRBMatcher<IIntegerRange, AugIntegerRangeNode> {
-    ranges = new RedBlackTree<IIntegerRange, AugIntegerRangeNode>(integerRangeComparer, this);
-    diag = false;
-
-    remove(r: IIntegerRange) {
-        this.ranges.remove(r);
-    }
-
-    put(r: IIntegerRange) {
-        this.ranges.put(r, { minmax: integerRangeCopy(r) });
-    }
-
-    toString() {
-        return this.nodeToString(this.ranges.root);
-    }
-
-    nodeToString(node: IntegerRangeNode | undefined) {
-        let buf = "";
-        let indentAmt = 0;
-        const actions = {
-            pre: (n: IntegerRangeNode) => {
-                let red = "";
-                if (n.color === RBColor.RED) {
-                    red = "R ";
-                }
-                buf += internedSpaces(indentAmt);
-                buf += `${red}key: ${integerRangeToString(n.key)} minmax: ${integerRangeToString(n.data.minmax)}\n`;
-                indentAmt += 2;
-                return true;
-            },
-            post: (n: IntegerRangeNode) => {
-                indentAmt -= 2;
-                return true;
-            },
-            showStructure: true,
-        };
-        this.ranges.nodeWalk(node, actions);
-        return buf;
-    }
-
-    matchPos(pos: number) {
-        return this.match({ start: pos, end: pos + 1 });
-    }
-
-    match(r: IIntegerRange) {
-        return this.ranges.gather(r, this);
-    }
-
-    matchNode(node: IntegerRangeNode | undefined, key: IIntegerRange) {
-        return !!node && integerRangeOverlaps(node.key, key);
-    }
-
-    continueSubtree(node: IntegerRangeNode | undefined, key: IIntegerRange) {
-        const cont = !!node && integerRangeOverlaps(node.data.minmax, key);
-        if (this.diag && (!cont)) {
-            if (node) {
-                console.log(`skipping subtree of size ${node.size} key ${integerRangeToString(key)}`);
-                console.log(this.nodeToString(node));
-            }
-        }
-        return cont;
-    }
-
-    update(node: IntegerRangeNode) {
-        if (node.left && node.right) {
-            node.data.minmax = integerRangeUnion(node.key,
-                integerRangeUnion(node.left.data.minmax, node.right.data.minmax));
-        } else {
-            if (node.left) {
-                node.data.minmax = integerRangeUnion(node.key, node.left.data.minmax);
-            } else if (node.right) {
-                node.data.minmax = integerRangeUnion(node.key, node.right.data.minmax);
-            } else {
-                node.data.minmax = integerRangeCopy(node.key);
-            }
-        }
-    }
-}
 
 export interface IInterval {
     clone(): IInterval;
@@ -1164,31 +857,23 @@ export interface IInterval {
     union(b: IInterval): IInterval;
 }
 
-export const intervalComparer = (a: IInterval, b: IInterval) => a.compare(b);
+const intervalComparer = (a: IInterval, b: IInterval) => a.compare(b);
 export type IntervalNode<T extends IInterval> = RBNode<T, AugmentedIntervalNode>;
 export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
 
 export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, AugmentedIntervalNode>,
     IRBMatcher<T, AugmentedIntervalNode> {
-    intervals = new RedBlackTree<T, AugmentedIntervalNode>(intervalComparer, this);
-    diag = false;
-    timePut = false;
-    putTime = 0;
-    putCount = 0;
+    public intervals = new RedBlackTree<T, AugmentedIntervalNode>(intervalComparer, this);
 
-    printTiming() {
-        console.log(`put total = ${this.putTime} avg=${(this.putTime / this.putCount).toFixed(2)}`);
-    }
-
-    remove(x: T) {
+    public remove(x: T) {
         this.intervals.remove(x);
     }
 
-    removeExisting(x: T) {
+    public removeExisting(x: T) {
         this.intervals.removeExisting(x);
     }
 
-    put(x: T, conflict?: IntervalConflictResolver<T>) {
+    public put(x: T, conflict?: IntervalConflictResolver<T>) {
         let rbConflict: ConflictAction<T, AugmentedIntervalNode> | undefined;
         if (conflict) {
             rbConflict = (key: T, currentKey: T) => {
@@ -1198,17 +883,10 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
                 };
             };
         }
-        if (this.timePut) {
-            const trace = Trace.start();
-            this.intervals.put(x, { minmax: x.clone() }, rbConflict);
-            this.putTime += trace.trace().duration * 1000;
-            this.putCount++;
-        } else {
-            this.intervals.put(x, { minmax: x.clone() }, rbConflict);
-        }
+        this.intervals.put(x, { minmax: x.clone() }, rbConflict);
     }
 
-    map(fn: (x: T) => void) {
+    public map(fn: (x: T) => void) {
         const actions = <RBNodeActions<T, AugmentedIntervalNode>>{
             infix: (node) => {
                 fn(node.key);
@@ -1219,7 +897,7 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
         this.intervals.walk(actions);
     }
 
-    mapUntil(fn: (X: T) => boolean) {
+    public mapUntil(fn: (X: T) => boolean) {
         const actions = <RBNodeActions<T, AugmentedIntervalNode>>{
             infix: (node) => {
                 return fn(node.key);
@@ -1229,7 +907,7 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
         this.intervals.walk(actions);
     }
 
-    mapBackward(fn: (x: T) => void) {
+    public mapBackward(fn: (x: T) => void) {
         const actions = <RBNodeActions<T, AugmentedIntervalNode>>{
             infix: (node) => {
                 fn(node.key);
@@ -1240,27 +918,20 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
         this.intervals.walkBackward(actions);
     }
 
-   // TODO: toString()
-    match(x: T) {
+    // TODO: toString()
+    public match(x: T) {
         return this.intervals.gather(x, this);
     }
 
-    matchNode(node: IntervalNode<T> | undefined, key: T) {
+    public matchNode(node: IntervalNode<T> | undefined, key: T) {
         return !!node && node.key.overlaps(key);
     }
 
-    continueSubtree(node: IntervalNode<T> | undefined, key: T) {
-        const cont = !!node && node.data.minmax.overlaps(key);
-        if (this.diag && (!cont)) {
-            if (node) {
-                console.log(`skipping subtree of size ${node.size} key ${key.toString()}`);
-                // console.log(this.nodeToString(node));
-            }
-        }
-        return cont;
+    public continueSubtree(node: IntervalNode<T> | undefined, key: T) {
+        return !!node && node.data.minmax.overlaps(key);
     }
 
-    update(node: IntervalNode<T>) {
+    public update(node: IntervalNode<T>) {
         if (node.left && node.right) {
             node.data.minmax = node.key.union(
                 node.left.data.minmax.union(node.right.data.minmax));
@@ -1289,7 +960,7 @@ export interface TSTNode<T> {
     val?: T;
 }
 
-export interface TSTPrefix {
+interface TSTPrefix {
     text: string;
 }
 
@@ -1303,19 +974,15 @@ export class TST<T> {
     private n = 0;
     private root: TSTNode<T> | undefined;
 
-    constructor() {
-
-    }
-
-    size() {
+    public size() {
         return this.n;
     }
 
-    contains(key: string) {
+    private contains(key: string) {
         return this.get(key);
     }
 
-    get(key: string) {
+    public get(key: string) {
         const x = this.nodeGet(this.root, key, 0);
         if (x === undefined) {
             return undefined;
@@ -1323,7 +990,7 @@ export class TST<T> {
         return x.val;
     }
 
-    nodeGet(x: TSTNode<T> | undefined, key: string, d: number): TSTNode<T> | undefined {
+    private nodeGet(x: TSTNode<T> | undefined, key: string, d: number): TSTNode<T> | undefined {
         if (x === undefined) {
             return undefined;
         }
@@ -1340,7 +1007,7 @@ export class TST<T> {
         else { return x; }
     }
 
-    put(key: string, val: T) {
+    public put(key: string, val: T) {
         if (!this.contains(key)) {
             this.n++;
         }
@@ -1348,7 +1015,7 @@ export class TST<T> {
         // console.log(`put ${key}`);
     }
 
-    nodePut(x: TSTNode<T> | undefined, key: string, val: T, d: number) {
+    private nodePut(x: TSTNode<T> | undefined, key: string, val: T, d: number) {
         let _x = x;
         const c = key.charAt(d);
         if (_x === undefined) {
@@ -1369,14 +1036,14 @@ export class TST<T> {
         return _x;
     }
 
-    neighbors(text: string, distance = 2) {
+    public neighbors(text: string, distance = 2) {
         let q = <ProxString<T>[]>[];
         this.nodeProximity(this.root, { text: "" }, 0, text, distance, q);
         q = q.filter((value) => (value.text.length > 0));
         return q;
     }
 
-    keysWithPrefix(text: string) {
+    public keysWithPrefix(text: string) {
         const q = <string[]>[];
         const x = this.nodeGet(this.root, text, 0);
         if (x === undefined) {
@@ -1389,7 +1056,7 @@ export class TST<T> {
         return q;
     }
 
-    collect(x: TSTNode<T> | undefined, prefix: TSTPrefix, q: string[]) {
+    private collect(x: TSTNode<T> | undefined, prefix: TSTPrefix, q: string[]) {
         if (x === undefined) {
             return;
         }
@@ -1401,7 +1068,7 @@ export class TST<T> {
         this.collect(x.right, prefix, q);
     }
 
-    mapNode(x: TSTNode<T> | undefined, prefix: TSTPrefix, fn: (key: string, val: T) => void) {
+    private mapNode(x: TSTNode<T> | undefined, prefix: TSTPrefix, fn: (key: string, val: T) => void) {
         if (x === undefined) {
             return;
         }
@@ -1414,11 +1081,11 @@ export class TST<T> {
         this.mapNode(x.right, prefix, fn);
     }
 
-    map(fn: (key: string, val: T) => void) {
+    public map(fn: (key: string, val: T) => void) {
         this.mapNode(this.root, { text: "" }, fn);
     }
 
-    pairsWithPrefix(text: string) {
+    public pairsWithPrefix(text: string) {
         const q = <TSTResult<T>[]>[];
         const x = this.nodeGet(this.root, text, 0);
         if (x === undefined) {
@@ -1431,7 +1098,7 @@ export class TST<T> {
         return q;
     }
 
-    collectPairs(x: TSTNode<T> | undefined, prefix: TSTPrefix, q: TSTResult<T>[]) {
+    private collectPairs(x: TSTNode<T> | undefined, prefix: TSTPrefix, q: TSTResult<T>[]) {
         if (x === undefined) {
             return;
         }
@@ -1443,29 +1110,7 @@ export class TST<T> {
         this.collectPairs(x.right, prefix, q);
     }
 
-    patternCollect(x: TSTNode<T> | undefined, prefix: TSTPrefix, d: number, pattern: string, q: string[]) {
-        if (x === undefined) {
-            return;
-        }
-        const c = pattern.charAt(d);
-        if ((c === ".") || (c < x.c)) {
-            this.patternCollect(x.left, prefix, d, pattern, q);
-        }
-        else if ((c === ".") || (c === x.c)) {
-            if ((d === (pattern.length - 1)) && (x.val !== undefined)) {
-                q.push(prefix.text + x.c);
-            }
-            else if (d < (pattern.length - 1)) {
-                this.patternCollect(x.mid, { text: prefix.text + x.c },
-                    d + 1, pattern, q);
-            }
-        }
-        if ((c === ".") || (c > x.c)) {
-            this.patternCollect(x.right, prefix, d, pattern, q);
-        }
-    }
-
-    nodeProximity(
+    private nodeProximity(
         x: TSTNode<T> | undefined,
         prefix: TSTPrefix,
         d: number,
@@ -1499,11 +1144,5 @@ export class TST<T> {
         if ((distance > 0) || (c > x.c)) {
             this.nodeProximity(x.right, prefix, d, pattern, distance, q);
         }
-    }
-
-    match(pattern: string) {
-        const q = <string[]>[];
-        this.patternCollect(this.root, { text: "" }, 0, pattern, q);
-        return q;
     }
 }

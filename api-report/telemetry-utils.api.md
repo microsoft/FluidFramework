@@ -57,6 +57,9 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
     stack?: string | undefined;
 };
 
+// @public
+export function generateErrorWithStack(): Error;
+
 // @public (undocumented)
 export function generateStack(): string | undefined;
 

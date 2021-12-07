@@ -65,7 +65,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
             type: snapshotKey,
             key:"key1",
         };
-        await epochTracker.put(cacheEntry1, "val1");
+        await epochTracker.put(cacheEntry1, { val: "val1" });
 
         // We will trigger a successful call to return the value set in the cache after the failed joinSession call
         epochCallback.setCallback(async () => epochTracker.get(cacheEntry1));
@@ -83,7 +83,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
             type: snapshotKey,
             key:"key1",
         };
-        await epochTracker.put(cacheEntry1, "val1");
+        await epochTracker.put(cacheEntry1, { val: "val1" });
 
         // We will trigger a successful call to return the value set in the cache after the failed joinSession call
         epochCallback.setCallback(async () => {

@@ -4,7 +4,6 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
 import { CellRange } from "./cellrange";
@@ -22,12 +21,10 @@ export interface ITableSliceConfig {
     maxCol: number;
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITable {
+export class TableSlice extends DataObject<{InitialState: ITableSliceConfig}> implements ITable {
     public static getFactory() { return TableSlice.factory; }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    private static readonly factory = new DataObjectFactory<TableSlice, object, ITableSliceConfig, IEvent>(
+    private static readonly factory = new DataObjectFactory(
         TableSliceType,
         TableSlice,
         [],

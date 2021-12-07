@@ -110,7 +110,7 @@ Consensus data structures have one or both of these characteristics:
 These DDSes are **not** optimistic. Before a change to a consensus data structure is confirmed, the connected clients
 must acknowledge the change.
 
-- [TaskManager][] -- Tracks queues of clients that want to exclusively run a task.
+- [TaskManager]({{< relref "task-manager.md" >}}) -- Tracks queues of clients that want to exclusively run a task.
 
 ### Consensus scenarios
 

@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { SemverMap } from '../internal/semvermap';
-import { getLocalOrRemoteSchema } from './internal_utils';
+import { SemverMap, UpgradeType } from '../internal/semvermap';
+import { getLocalOrRemoteSchema } from './internalUtils';
 import { TypeIdHelper } from '@fluid-experimental/property-changeset';
+import { DataBindingDefinition } from './dataBinder';
+import { SharedPropertyTree } from '@fluid-experimental/property-dds';
 
 /**
  * A DataBindingRegistry allows one to register and create representations.  The type of the representation is
@@ -17,7 +19,7 @@ import { TypeIdHelper } from '@fluid-experimental/property-changeset';
  * representing data bindings.
  * @hidden
  */
-class DataBindingRegistry {
+export class DataBindingRegistry {
 
   private _applicableBindingCache = new Map<string, any>();
   private _bindingTypeMap = new Map<string, SemverMap>();
@@ -29,14 +31,14 @@ class DataBindingRegistry {
    * be created in the same order in which they have been registered. The same DataBindingObject may be registered
    * multiple times and there are no checks to prevent this
    *
-   * @param {string} bindingType The type of the representation.  (ex. 'VIEW', 'DRAW', 'UI', etc.)
-   * @param {string} typeid The id to use for this registration, usually the type id of the objects being represented
+   * @param bindingType - The type of the representation.  (ex. 'VIEW', 'DRAW', 'UI', etc.)
+   * @param typeid - The id to use for this registration, usually the type id of the objects being represented
    *                    (like a PropertySet template id).
-   * @param {UpgradeType} upgradeType what semver range this data binding applies to.
-   * @param {Object} dataBindingObject The Data Binding and its associated metadata.
+   * @param upgradeType - What semver range this data binding applies to.
+   * @param dataBindingObject - The Data Binding and its associated metadata.
    * @public
    */
-  public register(bindingType, typeid, upgradeType, dataBindingObject) {
+  public register(bindingType: string, typeid: string, upgradeType: UpgradeType, dataBindingObject: DataBindingDefinition) {
     // Clear our cache
     this._applicableBindingCache = new Map<string, any>();
 
@@ -51,12 +53,12 @@ class DataBindingRegistry {
   /**
    * Unregisters a Data Binding.
    *
-   * @param {string} bindingType   - The type of the representation.
-   * @param {string} typeid       - The registration id.
-   * @return {boolean} True if the representation was successfully removed
+   * @param bindingType - The type of the representation.
+   * @param typeid - The registration id.
+   * @returns True if the representation was successfully removed
    * @public
    */
-  public unregister(bindingType, typeid) {
+  public unregister(bindingType: string, typeid: string): boolean {
     // Clear our cache
     this._applicableBindingCache = new Map<string, any>();
 
@@ -72,12 +74,12 @@ class DataBindingRegistry {
   }
 
   /**
-   * @param {string} bindingType The type of the representation.
-   * @param {string} typeid The registration id.
-   * @return {boolean} true if there is a precise rule for this bindingtype/typeid pair
+   * @param bindingType - The type of the representation.
+   * @param typeid - The registration id.
+   * @returns true if there is a precise rule for this bindingtype/typeid pair
    * @public
    */
-  public has(bindingType, typeid) {
+  public has(bindingType: string, typeid: string): boolean {
     const rules = this._bindingTypeMap.get(bindingType);
     if (!rules) {
       return false;
@@ -88,16 +90,16 @@ class DataBindingRegistry {
   /**
    * Return all the bindings that apply to this type
    *
-   * @param {String} in_typeId - the type for which we want binding definitions
-   * @param {string} [in_requestedBindingType] - a specific binding type to filter for, all are returned if no type
+   * @param in_typeId - the type for which we want binding definitions
+   * @param in_requestedBindingType - a specific binding type to filter for, all are returned if no type
    *   provided
-   * @param {Workspace} [in_workspace] - the current workspace, if present
+   * @param in_propertyTree - the current Property Tree, if present
    *
-   * @return {Array.<Object>} array of applicable bindings
+   * @returns Array of applicable bindings
    *
    * @private
    */
-  public getApplicableBindingDefinitions(in_typeId, in_requestedBindingType, in_workspace) {
+  public getApplicableBindingDefinitions(in_typeId: string, in_requestedBindingType?: string, in_propertyTree?: SharedPropertyTree): any[] {
     const key = in_typeId + '.' + in_requestedBindingType; // in_requestedBindingType may be undefined; it's ok
     let lookup = this._applicableBindingCache[key];
     if (!lookup) {
@@ -106,7 +108,7 @@ class DataBindingRegistry {
       this._bindingTypeMap.forEach((rules, bindingType) => {
         if (!in_requestedBindingType || bindingType === in_requestedBindingType) {
           try {
-            const definition = this.getRegisteredDefinition(in_typeId, bindingType, in_workspace);
+            const definition = this.getRegisteredDefinition(in_typeId, bindingType, in_propertyTree);
             if (definition) {
               applicableBindings.push(definition);
             }
@@ -124,12 +126,12 @@ class DataBindingRegistry {
    * Given a typeid and binding type, the function returns the most appropriate databinding definition, taking
    * inheritance into account.
    *
-   * @param {string} in_typeid - The typeid of the property to query for
-   * @param {string} in_bindingType - The registered DataBinding must have this binding type to be considered.
-   * @param {Workspace} [in_workspace] - the current workspace, if present
-   * @return {Object|null} The definition a registered template or null if no template is found.
+   * @param in_typeid - The typeid of the property to query for
+   * @param in_bindingType - The registered DataBinding must have this binding type to be considered.
+   * @param in_propertyTree - the current property Tree, if present
+   * @returns  The definition a registered template or null if no template is found.
    */
-  public getRegisteredDefinition(in_typeid, in_bindingType, in_workspace) {
+  public getRegisteredDefinition(in_typeid: string, in_bindingType: string, in_propertyTree?: SharedPropertyTree): object | null {
     const rules = this._bindingTypeMap.get(in_bindingType);
     if (!rules) {
       return null;
@@ -156,7 +158,7 @@ class DataBindingRegistry {
 
       // Push any parent templates on to the queue
       const newInheritedTemplates = TypeIdHelper.isReferenceTypeId(currentTypeid) ? undefined :
-        getLocalOrRemoteSchema(currentTypeid, in_workspace);
+        getLocalOrRemoteSchema(currentTypeid);
       if (newInheritedTemplates && newInheritedTemplates.inherits) {
         typeidQueue = typeidQueue.concat(newInheritedTemplates.inherits);
       }
@@ -194,5 +196,3 @@ class DataBindingRegistry {
   }
 
 }
-
-export { DataBindingRegistry };

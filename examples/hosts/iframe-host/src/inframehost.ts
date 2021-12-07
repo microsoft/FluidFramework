@@ -13,7 +13,7 @@ import {
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { Loader, Container } from "@fluidframework/container-loader";
-import { IRequest, IResponse, IFluidObject } from "@fluidframework/core-interfaces";
+import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import {
     MultiDocumentServiceFactory,
@@ -60,7 +60,7 @@ export interface IFrameOuterHostConfig {
 
     // A Fluid object that gives host provided capabilities/configurations
     // to the Fluid object in the container(such as auth).
-    scope?: IFluidObject;
+    scope?: FluidObject;
 
     proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
 }

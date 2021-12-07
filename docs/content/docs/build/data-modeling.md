@@ -74,7 +74,7 @@ With `initialObjects`, you're telling Fluid both the type of the object *and* th
 object. This is statically defined, so Fluid can create the object for you and ensure it's always available via the key
 your code defined.
 
-On the other hand, with dynamic objects, you're telling Fluid what object types it can create, but that's all. When your code creates a dynamic object using `container.create`, that objects is in-memory only. If you want to load that shared object again later, your code must store a reference to it within another shared object. In a
+On the other hand, with dynamic objects, you're telling Fluid what object types it can create, but that's all. When your code creates a dynamic object using `container.create`, that object is in-memory only. If you want to load that shared object again later, your code must store a reference to it within another shared object. In a
 sense, you're defining the "key" to access that data again later, just as you did with `initialObjects`, but you define
 it dynamically at runtime.
 

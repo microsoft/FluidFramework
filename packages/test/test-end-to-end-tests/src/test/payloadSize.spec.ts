@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ITestFluidObject,
@@ -17,6 +17,7 @@ import {
     DataObjectFactoryType,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
 
 const map1Id = "map1Key";
 const registry: ChannelFactoryRegistry = [
@@ -27,6 +28,20 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
+const getMockStore = ((settings: Record<string, string>): Storage => {
+    return {
+        getItem: (key: string): string | null => settings[key],
+        length: Object.keys(settings).length,
+        clear: () => { },
+        key: (_index: number): string | null => undefined,
+        removeItem: (_key: string) => { },
+        setItem: (_key: string, _value: string) => { },
+    };
+});
+
+const settings: Record<string, string> = {};
+global.localStorage = getMockStore(settings);
+
 // This test, ran against real services, should serve as a canary for socket.io
 //  or other communication level limitations between clients with regards
 // to the op size or total payload size
@@ -36,6 +51,7 @@ describeNoCompat("Payload size", (getTestObjectProvider) => {
         provider = getTestObjectProvider();
     });
 
+    let container1: IContainer;
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
     let dataObject1map1: SharedMap;
@@ -53,7 +69,7 @@ describeNoCompat("Payload size", (getTestObjectProvider) => {
 
     beforeEach(async () => {
         // Create a Container for the first client.
-        const container1 = await provider.makeTestContainer(testContainerConfig);
+        container1 = await provider.makeTestContainer(testContainerConfig);
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
         dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
@@ -69,6 +85,18 @@ describeNoCompat("Payload size", (getTestObjectProvider) => {
     });
 
     const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
+    const setMapKeys = (containerRuntime: IContainerRuntimeBase, count: number, item: string): void => {
+        containerRuntime.orderSequentially(() => {
+            for (let i = 0; i < count; i++) {
+                dataObject1map1.set(`key${i}`, item);
+            }
+        });
+    };
+
+    const anyDataCorruption = async (container: IContainer) =>
+        new Promise<boolean>((res) => container.once("closed", (error) => {
+            res(error?.errorType === ContainerErrorType.dataCorruptionError);
+        }));
 
     it("Can send 60 messages of 16k", async () => {
         const largeString = generateStringOfSize(16 * 1000);
@@ -79,11 +107,32 @@ describeNoCompat("Payload size", (getTestObjectProvider) => {
         // that the message is stringified again. This will also explain
         // why the size varies slightly based on the string content
         // of the message.
-        dataObject1.context.containerRuntime.orderSequentially(() => {
-            for (let i = 0; i < messageCount; i++) {
-                dataObject1map1.set(`key${i}`, largeString);
-            }
-        });
+        setMapKeys(dataObject1.context.containerRuntime, messageCount, largeString);
+
+        // Wait for the ops to get processed by both the containers.
+        await provider.ensureSynchronized();
+
+        for (let i = 0; i < messageCount; i++) {
+            const value = dataObject2map1.get(`key${i}`);
+            assert.strictEqual(value, largeString, `Wrong value for key${i}`);
+        }
+    });
+
+    it("Cannot send large batches with feature gate enabled", async () => {
+        settings.FluidEnablePayloadSizeLimit = "1";
+        const largeString = generateStringOfSize(16 * 1000);
+        const messageCount = 100;
+        setMapKeys(dataObject1.context.containerRuntime, messageCount, largeString);
+
+        // Wait for the ops to get processed by both the containers.
+        await anyDataCorruption(container1);
+    });
+
+    it("Can send large batches with feature gate disabled", async () => {
+        settings.FluidEnablePayloadSizeLimit = "";
+        const largeString = generateStringOfSize(16 * 1000);
+        const messageCount = 100;
+        setMapKeys(dataObject1.context.containerRuntime, messageCount, largeString);
 
         // Wait for the ops to get processed by both the containers.
         await provider.ensureSynchronized();

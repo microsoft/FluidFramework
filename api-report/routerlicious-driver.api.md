@@ -49,7 +49,7 @@ export class DeltaStorageService implements IDeltaStorageService {
 export class DocumentDeltaStorageService implements IDocumentDeltaStorageService {
     constructor(tenantId: string, id: string, storageService: IDeltaStorageService, documentStorageService: DocumentStorageService);
     // (undocumented)
-    fetchMessages(from: number, to: number | undefined, abortSignal?: AbortSignal, cachedOnly?: boolean): IStream<ISequencedDocumentMessage[]>;
+    fetchMessages(from: number, to: number | undefined, abortSignal?: AbortSignal, cachedOnly?: boolean, fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
     }
 
 // @public

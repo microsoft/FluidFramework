@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
+    FluidObject,
     IFluidObject,
     IFluidRouter,
     IRequest,
@@ -15,24 +16,13 @@ import {
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
+import { generateErrorWithStack } from "@fluidframework/telemetry-utils";
 
 interface IResponseException extends Error {
     errorFromRequestFluidObject: true;
     message: string;
     code: number;
-    stack: string;
-}
-
-export function getStack() {
-    const err = new Error();
-    if (err.stack !== undefined) {
-        return err.stack;
-    }
-    try {
-        throw err;
-    } catch (err2) {
-        return (err2 as Error).stack;
-    }
+    stack?: string;
 }
 
 export function exceptionToResponse(err: any): IResponse {
@@ -44,34 +34,36 @@ export function exceptionToResponse(err: any): IResponse {
             mimeType: "text/plain",
             status: responseErr.code,
             value: responseErr.message,
-            stack: responseErr.stack ?? getStack(),
+            get stack() { return responseErr.stack; },
         };
     }
+
+    // Capture error objects, not stack itself, as stack retrieval is very expensive operation, so we delay it
+    const errWithStack = generateErrorWithStack();
+
     return {
         mimeType: "text/plain",
         status,
         value: `${err}`,
-        stack: getStack(),
+        get stack() { return ((err?.stack) as (string|undefined)) ?? errWithStack.stack; },
     };
 }
 
-export function responseToException(response: IResponse, request: IRequest) {
+export function responseToException(response: IResponse, request: IRequest): Error {
     const message = response.value;
-    const err = new Error(message);
-    const responseErr = err as any as IResponseException;
-    responseErr.errorFromRequestFluidObject = true;
-    responseErr.message = message;
-    responseErr.code = response.status;
-    if (response.stack !== undefined) {
-        try {
-            // not clear if all browsers allow overwriting stack
-            responseErr.stack = response.stack;
-        } catch (err2) {}
-    }
-    return err;
+    const errWithStack = generateErrorWithStack();
+    const responseErr: Error & IResponseException = {
+        errorFromRequestFluidObject: true,
+        message,
+        name: "Error",
+        code: response.status,
+        get stack() { return response.stack ?? errWithStack.stack; },
+    };
+
+    return responseErr;
 }
 
-export async function requestFluidObject<T = IFluidObject>(
+export async function requestFluidObject<T = IFluidObject & FluidObject>(
     router: IFluidRouter, url: string | IRequest): Promise<T> {
     const request = typeof url === "string" ? { url } : url;
     const response = await router.request(request);
@@ -90,11 +82,15 @@ export function createResponseError(status: number, value: string, request: IReq
     assert(status !== 200, 0x19b /* "Cannot not create response error on 200 status" */);
     // Omit query string which could contain personal data (aka "PII")
     const urlNoQuery = request.url?.split("?")[0];
+
+    // Capture error objects, not stack itself, as stack retrieval is very expensive operation, so we delay it
+    const errWithStack = generateErrorWithStack();
+
     return {
         mimeType: "text/plain",
         status,
         value: urlNoQuery === undefined ? value : `${value}: ${urlNoQuery}`,
-        stack: getStack(),
+        get stack() { return errWithStack.stack; },
     };
 }
 

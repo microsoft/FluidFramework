@@ -6,6 +6,7 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
@@ -26,7 +27,7 @@ import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IContainerRuntime: keyof IProvideContainerRuntime;
 
 // @public (undocumented)
@@ -56,7 +57,7 @@ export interface IContainerRuntime extends IProvideContainerRuntime, IProvideFlu
     raiseContainerWarning(warning: ContainerWarning): void;
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    readonly scope: IFluidObject;
+    readonly scope: IFluidObject & FluidObject;
     // (undocumented)
     readonly storage: IDocumentStorageService;
 }
@@ -66,7 +67,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase & IE
 
 // @public (undocumented)
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
-    // (undocumented)
+    // @deprecated (undocumented)
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void): any;
     // (undocumented)
     (event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void): any;
@@ -76,9 +77,9 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     (event: "localHelp", listener: (message: IHelpMessage) => void): any;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IProvideContainerRuntime {
-    // (undocumented)
+    // @deprecated (undocumented)
     IContainerRuntime: IContainerRuntime;
 }
 

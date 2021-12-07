@@ -29,7 +29,7 @@ import { MessageSizeValidator } from "./messageSizeValidator";
 // Local storage key to disable the BatchManager
 const batchManagerDisabledKey = "FluidDisableBatchManager";
 // Local storage key to enable message size tracking
-const messageSizeTrackingEnabledKey = "FluidEnableMessageSizeTracking";
+const limitPayloadSizeKey = "FluidEnablePayloadSizeLimit";
 
 // See #8129.
 // Need to move to common-utils (tracked as #8165)
@@ -111,7 +111,7 @@ export class DocumentDeltaConnection
     private messageSizeValidator: MessageSizeValidator | undefined;
     // Close to 1MB with a small buffer to allow for redundant string escaping during transfer
     private readonly maxPayloadSizeInBytes = 900000;
-    private readonly isMessageSizeTrackingEnabled: boolean = false;
+    private readonly shouldLimitPayloadSize: boolean = false;
 
     public get details(): IConnected {
         if (!this._details) {
@@ -165,7 +165,7 @@ export class DocumentDeltaConnection
         });
 
         this.isBatchManagerDisabled = DocumentDeltaConnection.booleanFeature(batchManagerDisabledKey);
-        this.isMessageSizeTrackingEnabled = DocumentDeltaConnection.booleanFeature(messageSizeTrackingEnabledKey);
+        this.shouldLimitPayloadSize = DocumentDeltaConnection.booleanFeature(limitPayloadSizeKey);
     }
 
     /**
@@ -288,8 +288,9 @@ export class DocumentDeltaConnection
     }
 
     protected emitMessages(type: string, messages: IDocumentMessage[][]) {
-        // Only send telemetry for now
-        this.messageSizeValidator?.validate(messages);
+        if (this.messageSizeValidator && !this.messageSizeValidator.validate(messages)) {
+            throw new Error("PayloadTooLarge");
+        }
 
         // Although the implementation here disconnects the socket and does not reuse it, other subclasses
         // (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
@@ -303,7 +304,7 @@ export class DocumentDeltaConnection
         try {
             return localStorage !== undefined
                 && typeof localStorage === "object"
-                && localStorage.getItem(batchManagerDisabledKey) === "1";
+                && localStorage.getItem(key) === "1";
         } catch (e) { }
         return false;
     }
@@ -344,9 +345,6 @@ export class DocumentDeltaConnection
             false, // socketProtocolError
             createGenericNetworkError("clientClosingConnection", undefined, true /* canRetry */));
     }
-
-    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
-    public close() { this.dispose(); }
 
     protected disposeCore(socketProtocolError: boolean, err: any) {
         // Can't check this.disposed here, as we get here on socket closure,
@@ -484,7 +482,7 @@ export class DocumentDeltaConnection
             }, timeout + 2000);
         });
 
-        if (this.isMessageSizeTrackingEnabled) {
+        if (this.shouldLimitPayloadSize) {
             this.messageSizeValidator = new MessageSizeValidator(
                 this.maxMessageSize + 1,
                 this.maxPayloadSizeInBytes,
@@ -561,6 +559,10 @@ export class DocumentDeltaConnection
         if (typeof error !== "object") {
             message = `${message}: ${error}`;
         } else if (error?.type === "TransportError") {
+            // JSON.stringify drops Error.message
+            if (error?.message !== undefined) {
+                message = `${message}: ${error.message}`;
+            }
             // Websocket errors reported by engine.io-client.
             // They are Error objects with description containing WS error and description = "TransportError"
             // Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,

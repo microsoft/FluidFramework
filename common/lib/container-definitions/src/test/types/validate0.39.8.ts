@@ -73,13 +73,14 @@ use_current_EnumDeclaration_ContainerErrorType(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "EnumDeclaration_ContainerErrorType": {"backCompat": false}
+*/
 declare function get_current_EnumDeclaration_ContainerErrorType():
     current.ContainerErrorType;
 declare function use_old_EnumDeclaration_ContainerErrorType(
     use: old.ContainerErrorType);
 use_old_EnumDeclaration_ContainerErrorType(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_ContainerErrorType());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -157,25 +158,27 @@ use_old_InterfaceDeclaration_ICodeAllowList(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_ICodeLoader": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_ICodeLoader():
     old.ICodeLoader;
 declare function use_current_InterfaceDeclaration_ICodeLoader(
     use: current.ICodeLoader);
 use_current_InterfaceDeclaration_ICodeLoader(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ICodeLoader());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_ICodeLoader": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_ICodeLoader():
     current.ICodeLoader;
 declare function use_old_InterfaceDeclaration_ICodeLoader(
     use: old.ICodeLoader);
 use_old_InterfaceDeclaration_ICodeLoader(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ICodeLoader());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -199,55 +202,60 @@ declare function get_current_InterfaceDeclaration_IConnectionDetails():
 declare function use_old_InterfaceDeclaration_IConnectionDetails(
     use: old.IConnectionDetails);
 use_old_InterfaceDeclaration_IConnectionDetails(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnectionDetails());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IContainer": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IContainer():
     old.IContainer;
 declare function use_current_InterfaceDeclaration_IContainer(
     use: current.IContainer);
 use_current_InterfaceDeclaration_IContainer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainer());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IContainer": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IContainer():
     current.IContainer;
 declare function use_old_InterfaceDeclaration_IContainer(
     use: old.IContainer);
 use_old_InterfaceDeclaration_IContainer(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainer());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IContainerContext": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IContainerContext():
     old.IContainerContext;
 declare function use_current_InterfaceDeclaration_IContainerContext(
     use: current.IContainerContext);
 use_current_InterfaceDeclaration_IContainerContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerContext());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IContainerContext": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IContainerContext():
     current.IContainerContext;
 declare function use_old_InterfaceDeclaration_IContainerContext(
     use: old.IContainerContext);
 use_old_InterfaceDeclaration_IContainerContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerContext());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -367,6 +375,7 @@ declare function get_current_InterfaceDeclaration_IDeltaManager():
 declare function use_old_InterfaceDeclaration_IDeltaManager(
     use: old.IDeltaManager<any,any>);
 use_old_InterfaceDeclaration_IDeltaManager(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDeltaManager());
 
 /*
@@ -589,25 +598,27 @@ use_old_InterfaceDeclaration_IFluidCodeResolver(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IFluidModule": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IFluidModule():
     old.IFluidModule;
 declare function use_current_InterfaceDeclaration_IFluidModule(
     use: current.IFluidModule);
 use_current_InterfaceDeclaration_IFluidModule(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidModule());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IFluidModule": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IFluidModule():
     current.IFluidModule;
 declare function use_old_InterfaceDeclaration_IFluidModule(
     use: old.IFluidModule);
 use_old_InterfaceDeclaration_IFluidModule(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidModule());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -673,73 +684,79 @@ use_current_InterfaceDeclaration_IGenericError(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IGenericError": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IGenericError():
     current.IGenericError;
 declare function use_old_InterfaceDeclaration_IGenericError(
     use: old.IGenericError);
 use_old_InterfaceDeclaration_IGenericError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGenericError());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IHostLoader": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IHostLoader():
     old.IHostLoader;
 declare function use_current_InterfaceDeclaration_IHostLoader(
     use: current.IHostLoader);
 use_current_InterfaceDeclaration_IHostLoader(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IHostLoader());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IHostLoader": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IHostLoader():
     current.IHostLoader;
 declare function use_old_InterfaceDeclaration_IHostLoader(
     use: old.IHostLoader);
 use_old_InterfaceDeclaration_IHostLoader(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IHostLoader());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_ILoader": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_ILoader():
     old.ILoader;
 declare function use_current_InterfaceDeclaration_ILoader(
     use: current.ILoader);
 use_current_InterfaceDeclaration_ILoader(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ILoader());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_ILoader": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_ILoader():
     current.ILoader;
 declare function use_old_InterfaceDeclaration_ILoader(
     use: old.ILoader);
 use_old_InterfaceDeclaration_ILoader(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILoader());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_ILoaderHeader": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_ILoaderHeader():
     old.ILoaderHeader;
 declare function use_current_InterfaceDeclaration_ILoaderHeader(
     use: current.ILoaderHeader);
 use_current_InterfaceDeclaration_ILoaderHeader(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ILoaderHeader());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
@@ -853,49 +870,53 @@ use_old_InterfaceDeclaration_IProvideFluidTokenProvider(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IProvideRuntimeFactory": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IProvideRuntimeFactory():
     old.IProvideRuntimeFactory;
 declare function use_current_InterfaceDeclaration_IProvideRuntimeFactory(
     use: current.IProvideRuntimeFactory);
 use_current_InterfaceDeclaration_IProvideRuntimeFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideRuntimeFactory());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IProvideRuntimeFactory": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IProvideRuntimeFactory():
     current.IProvideRuntimeFactory;
 declare function use_old_InterfaceDeclaration_IProvideRuntimeFactory(
     use: old.IProvideRuntimeFactory);
 use_old_InterfaceDeclaration_IProvideRuntimeFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProvideRuntimeFactory());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IProxyLoaderFactory": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IProxyLoaderFactory():
     old.IProxyLoaderFactory;
 declare function use_current_InterfaceDeclaration_IProxyLoaderFactory(
     use: current.IProxyLoaderFactory);
 use_current_InterfaceDeclaration_IProxyLoaderFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProxyLoaderFactory());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IProxyLoaderFactory": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IProxyLoaderFactory():
     current.IProxyLoaderFactory;
 declare function use_old_InterfaceDeclaration_IProxyLoaderFactory(
     use: old.IProxyLoaderFactory);
 use_old_InterfaceDeclaration_IProxyLoaderFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProxyLoaderFactory());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -925,25 +946,27 @@ use_old_InterfaceDeclaration_IResolvedFluidCodeDetails(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IRuntime": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IRuntime():
     old.IRuntime;
 declare function use_current_InterfaceDeclaration_IRuntime(
     use: current.IRuntime);
 use_current_InterfaceDeclaration_IRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRuntime());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IRuntime": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IRuntime():
     current.IRuntime;
 declare function use_old_InterfaceDeclaration_IRuntime(
     use: old.IRuntime);
 use_old_InterfaceDeclaration_IRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IRuntime());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -973,25 +996,27 @@ use_old_VariableDeclaration_IRuntimeFactory(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IRuntimeFactory": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IRuntimeFactory():
     old.IRuntimeFactory;
 declare function use_current_InterfaceDeclaration_IRuntimeFactory(
     use: current.IRuntimeFactory);
 use_current_InterfaceDeclaration_IRuntimeFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRuntimeFactory());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IRuntimeFactory": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IRuntimeFactory():
     current.IRuntimeFactory;
 declare function use_old_InterfaceDeclaration_IRuntimeFactory(
     use: old.IRuntimeFactory);
 use_old_InterfaceDeclaration_IRuntimeFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IRuntimeFactory());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1033,13 +1058,14 @@ use_current_InterfaceDeclaration_IThrottlingWarning(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IThrottlingWarning": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_IThrottlingWarning():
     current.IThrottlingWarning;
 declare function use_old_InterfaceDeclaration_IThrottlingWarning(
     use: old.IThrottlingWarning);
 use_old_InterfaceDeclaration_IThrottlingWarning(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IThrottlingWarning());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -57,10 +57,10 @@ async function start(): Promise<void> {
     );
 
     // Render the actual sample
-    const fluidBinder = renderApp(propertyTree, content);
+    const dataBinder = renderApp(propertyTree, content);
 
     // Render property inspector
-    renderInspector(fluidBinder, propertyTree);
+    renderInspector(dataBinder, propertyTree);
 
     // Reload the page on any further hash changes, e.g. in case you want to paste in a different document ID.
     window.addEventListener("hashchange", () => {

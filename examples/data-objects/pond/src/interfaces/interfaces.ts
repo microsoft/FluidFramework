@@ -4,8 +4,12 @@
  */
 
 declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideFluidUserInformation>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvideFluidUserInformation>> {
+        /**
+         * @deprecated - Use  `FluidObject<IFluidUserInformation>` instead
+        */
+        readonly IFluidUserInformation?: IFluidUserInformation
+     }
 }
 
 export const IFluidUserInformation: keyof IProvideFluidUserInformation = "IFluidUserInformation";

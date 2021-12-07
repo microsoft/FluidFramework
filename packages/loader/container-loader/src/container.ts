@@ -175,7 +175,7 @@ export async function waitContainerToCatchUp(container: Container) {
         throw new Error("Container is closed");
     }
 
-    return new Promise<boolean>((accept, reject) => {
+    return new Promise<boolean>((resolve, reject) => {
         const deltaManager = container.deltaManager;
 
         container.on("closed", reject);
@@ -189,12 +189,12 @@ export async function waitContainerToCatchUp(container: Container) {
             assert(deltaManager.lastSequenceNumber <= connectionOpSeqNumber,
                 0x266 /* "lastKnownSeqNumber should never be below last processed sequence number" */);
             if (deltaManager.lastSequenceNumber === connectionOpSeqNumber) {
-                accept(hasCheckpointSequenceNumber);
+                resolve(hasCheckpointSequenceNumber);
                 return;
             }
             const callbackOps = (message: ISequencedDocumentMessage) => {
                 if (connectionOpSeqNumber <= message.sequenceNumber) {
-                    accept(hasCheckpointSequenceNumber);
+                    resolve(hasCheckpointSequenceNumber);
                     deltaManager.off("op", callbackOps);
                 }
             };
@@ -279,7 +279,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         onClosed(err);
                     });
             }),
-            { start: true, end: true, cancel: "error" },
+            { start: true, end: true, cancel: "generic" },
         );
     }
 
@@ -412,33 +412,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._loadedFromVersion;
     }
 
-    /**
-     * Tells if container is in read-only mode.
-     * Data stores should listen for "readonly" notifications and disallow user making changes to data stores.
-     * Readonly state can be because of no storage write permission,
-     * or due to host forcing readonly mode for container.
-     *
-     * We do not differentiate here between no write access to storage vs. host disallowing changes to container -
-     * in all cases container runtime and data stores should respect readonly state and not allow local changes.
-     *
-     * It is undefined if we have not yet established websocket connection
-     * and do not know if user has write access to a file.
-     * @deprecated - use readOnlyInfo
-     */
-    public get readonly() {
-        return this._deltaManager.readonly;
-    }
-
-    /**
-     * Tells if user has no write permissions for file in storage
-     * It is undefined if we have not yet established websocket connection
-     * and do not know if user has write access to a file.
-     * @deprecated - use readOnlyInfo
-     */
-    public get readonlyPermissions() {
-        return this._deltaManager.readonlyPermissions;
-    }
-
     public get readOnlyInfo(): ReadOnlyInfo {
         return this._deltaManager.readOnlyInfo;
     }
@@ -495,14 +468,30 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
-     * @deprecated use codeDetails
+     * The current code details for the container's runtime
+     * @deprecated use getSpecifiedCodeDetails for the code details currently specified for this container, or
+     * getLoadedCodeDetails for the code details that the container's context was loaded with.
+     * To be removed after getSpecifiedCodeDetails and getLoadedCodeDetails become ubiquitous.
      */
-    public get chaincodePackage(): IFluidCodeDetails | undefined {
-        return this.codeDetails;
-    }
-
     public get codeDetails(): IFluidCodeDetails | undefined {
         return this._context?.codeDetails ?? this.getCodeDetailsFromQuorum();
+    }
+
+    /**
+     * Get the code details that are currently specified for the container.
+     * @returns The current code details if any are specified, undefined if none are specified.
+     */
+    public getSpecifiedCodeDetails(): IFluidCodeDetails | undefined {
+        return this.getCodeDetailsFromQuorum();
+    }
+
+    /**
+     * Get the code details that were used to load the container.
+     * @returns The code details that were used to load the container if it is loaded, undefined if it is not yet
+     * loaded.
+     */
+    public getLoadedCodeDetails(): IFluidCodeDetails | undefined {
+        return this._context?.codeDetails;
     }
 
     /**
@@ -560,7 +549,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {
                 all: {
                     clientType, // Differentiating summarizer container from main container
-                    loaderVersion: pkgVersion,
                     containerId: uuid(),
                     docId: () => this.id,
                     containerAttachState: () => this._attachState,
@@ -656,22 +644,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 switch (event) {
                     case dirtyContainerEvent:
                         if (this._dirtyContainer) {
-                            listener(this._dirtyContainer);
+                            listener();
                         }
                         break;
                     case savedContainerEvent:
                         if (!this._dirtyContainer) {
-                            listener(this._dirtyContainer);
+                            listener();
                         }
                         break;
                     case connectedEventName:
                          if (this.connected) {
-                            listener(event, this.clientId);
+                            listener(this.clientId);
                          }
                          break;
                     case disconnectedEventName:
                         if (!this.connected) {
-                            listener(event);
+                            listener();
                         }
                         break;
                     default:
@@ -1268,7 +1256,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async createDetached(source: IFluidCodeDetails) {
         const attributes: IDocumentAttributes = {
-            branch: "",
             sequenceNumber: detachedContainerRefSeqNumber,
             term: 1,
             minimumSequenceNumber: 0,
@@ -1361,7 +1348,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     ): Promise<IDocumentAttributes> {
         if (tree === undefined) {
             return {
-                branch: this.id,
                 minimumSequenceNumber: 0,
                 sequenceNumber: 0,
                 term: 1,
@@ -1471,7 +1457,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Save attributes for the document
         const documentAttributes: IDocumentAttributes = {
-            branch: this.id,
             minimumSequenceNumber: this.protocolHandler.minimumSequenceNumber,
             sequenceNumber: this.protocolHandler.sequenceNumber,
             term: this.protocolHandler.term,
@@ -1526,7 +1511,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (this.clientDetailsOverride !== undefined) {
             merge(client.details, this.clientDetailsOverride);
         }
-
+        client.details.environment = [client.details.environment, ` loaderVersion:${pkgVersion}`].join(";");
         return client;
     }
 

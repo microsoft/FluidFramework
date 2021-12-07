@@ -65,14 +65,14 @@ describe("Container Runtime", () => {
 
         // Function to process an inbound op. It adds delay to simluate time taken in processing an op.
         function processOp(message: ISequencedDocumentMessage) {
-            scheduleManager.beginOperation(message);
+            scheduleManager.beforeOpProcessing(message);
 
             // Add delay such that each op takes greater than the DeltaScheduler's processing time to process.
             const processingDelay = DeltaScheduler.processingTime + 10;
             const startTime = Date.now();
             while (Date.now() - startTime < processingDelay) { }
 
-            scheduleManager.endOperation(undefined, message);
+            scheduleManager.afterOpProcessing(undefined, message);
         }
 
         beforeEach(async () => {

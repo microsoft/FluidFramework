@@ -4,23 +4,45 @@
  */
 
 import {
-    IProvideFluidConfiguration,
-    IProvideFluidLoadable,
-    IProvideFluidRunnable,
+    IFluidConfiguration,
+    IFluidLoadable,
+    IFluidRunnable,
 } from "./fluidLoadable";
-import { IProvideFluidRouter } from "./fluidRouter";
-import { IProvideFluidHandle, IProvideFluidHandleContext } from "./handles";
-import { IProvideFluidSerializer } from "./serializer";
+import { IFluidRouter } from "./fluidRouter";
+import { IFluidHandle, IFluidHandleContext } from "./handles";
+import { IFluidSerializer } from "./serializer";
 
-/* eslint-disable @typescript-eslint/no-empty-interface */
-export interface IFluidObject extends
-    Readonly<Partial<
-        IProvideFluidLoadable
-        & IProvideFluidRunnable
-        & IProvideFluidRouter
-        & IProvideFluidHandleContext
-        & IProvideFluidConfiguration
-        & IProvideFluidHandle
-        & IProvideFluidSerializer>> {
+/**
+ * @deprecated Use `FluidObject` or the interface directly instead
+ */
+export interface IFluidObject {
+
+    /**
+     * @deprecated - use `FluidObject<IFluidLoadable>` instead
+     */
+    readonly IFluidLoadable?: IFluidLoadable;
+    /**
+     * @deprecated - use `FluidObject<IFluidRunnable>` instead
+     */
+    readonly IFluidRunnable?: IFluidRunnable
+    /**
+     * @deprecated - use `FluidObject<IFluidRouter>` instead
+     */
+    readonly IFluidRouter?: IFluidRouter;
+    /**
+     * @deprecated - use `FluidObject<IFluidHandleContext>` instead
+     */
+    readonly IFluidHandleContext?: IFluidHandleContext;
+    /**
+     * @deprecated - use `FluidObject<IFluidConfiguration>` instead
+     */
+    readonly IFluidConfiguration?: IFluidConfiguration;
+    /**
+     * @deprecated - use `FluidObject<IFluidHandle>` instead
+     */
+    readonly IFluidHandle?: IFluidHandle;
+    /**
+     * @deprecated - use `FluidObject<IFluidSerializer>` instead
+     */
+    readonly IFluidSerializer?: IFluidSerializer;
 }
-/* eslint-enable @typescript-eslint/no-empty-interface */

@@ -41,6 +41,15 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		options?: Partial<IKafkaProducerOptions>) {
 		super(endpoints, clientId, topic, options);
 
+        this.defaultRestartOnKafkaErrorCodes = [
+            this.kafka.CODES.ERRORS.ERR__TRANSPORT,
+            this.kafka.CODES.ERRORS.ERR__UNKNOWN_PARTITION,
+            this.kafka.CODES.ERRORS.ERR__ALL_BROKERS_DOWN,
+            this.kafka.CODES.ERRORS.ERR__SSL,
+            this.kafka.CODES.ERRORS.ERR_UNKNOWN_TOPIC_OR_PART,
+            this.kafka.CODES.ERRORS.ERR_UNKNOWN_MEMBER_ID,
+        ];
+
 		this.producerOptions = {
 			...options,
 			enableIdempotence: options?.enableIdempotence ?? false,
