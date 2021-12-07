@@ -110,9 +110,9 @@ export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents &
 // @public
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     // (undocumented)
-    (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, op: ISequencedDocumentMessage | null, target: IEventThisPlaceHolder) => void): any;
+    (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
-    (event: "clear", listener: (local: boolean, op: ISequencedDocumentMessage | null, target: IEventThisPlaceHolder) => void): any;
+    (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
 // @public
@@ -125,9 +125,9 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
 // @public
 export interface ISharedMapEvents extends ISharedObjectEvents {
     // (undocumented)
-    (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, op: ISequencedDocumentMessage | null, target: IEventThisPlaceHolder) => void): any;
+    (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
-    (event: "clear", listener: (local: boolean, op: ISequencedDocumentMessage | null, target: IEventThisPlaceHolder) => void): any;
+    (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
 // @public
