@@ -22,7 +22,7 @@ import { TestDataObject } from "./mockSummarizerClient";
  * Basically, for data stores that are unreferenced in the base snapshot that a container loads from, we return a
  * failure (404) when they are requested with "externalRequest" flag in the request header.
  */
- describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
+ describeNoCompat("GC ContainerRuntime Expiry", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
@@ -68,7 +68,7 @@ import { TestDataObject } from "./mockSummarizerClient";
         await provider.ensureSynchronized();
     });
 
-    it("should fail requests with externalRequest flag for unreferenced data stores", async () => {
+    it("datastore should not be able to make changes", async () => {
         mainDataStore1._root.set("test", "value");
         await provider.ensureSynchronized();
         (containerRuntime as any).setReadOnly();
