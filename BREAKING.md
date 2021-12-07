@@ -18,6 +18,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove `loader` property from `MockFluidDataStoreContext` class](#Remove-loader-property-from-MockFluidDataStoreContext-class)
 - [maxMessageSize removed from IConnectionDetails and IDocumentDeltaConnection](#maxMessageSize-removed-from-IConnectionDetails-and-IDocumentDeltaConnection)
 - [Remove `IntervalCollection.getView()` from sequence dds](#Remove-IntervalCollectiongetView-from-sequence-dds)
+- [Moved `ICodeDetailsLoader` and `IFluidModuleWithDetails` interface to `@fluidframework/container-definitions`](#Moved-ICodeDetailsLoader-and-IFluidModuleWithDetails-interface-to-fluidframeworkcontainer-definitions)
 - [Removed `errorMessage` property from `ISummaryNack` interface](#Removed-errorMessage-property-from-ISummaryNack-interface)
 
 ### `IContainer` interface updated to expose actively used `Container` public APIs
@@ -74,6 +75,9 @@ The `maxMessageSize` property from `IConnectionDetails` and `IDocumentDeltaConne
 
 ### Remove `IntervalCollection.getView()` from sequence dds
 The `IntervalCollection.getView()` was removed.  If you were calling this API, you should instead refer to the `IntervalCollection` itself directly in places where you were using the view.
+
+### Moved `ICodeDetailsLoader` and `IFluidModuleWithDetails` interface to `@fluidframework/container-definitions`
+The `ICodeDetailsLoader` and `IFluidModuleWithDetails` interface are deprecated in `@fluidframework/container-loader` and moved to `@fluidframework/container-definitions`. The `ICodeDetailsLoader` interface should be imported from `@fluidframework/container-definition` package. The `ICodeDetailsLoader` and `IFluidModuleWithDetails` from `@fluidframework/container-loader` will be removed from `@fluidframework/container-loader` in further releases.
 
 ### Removed `errorMessage` property from `ISummaryNack` interface
 The `errorMessage` property from the `ISummaryNack` interface was deprecated in 0.43, and has now been removed from the `protocol-definitions` package. To replace its functionality, use the `message` property.

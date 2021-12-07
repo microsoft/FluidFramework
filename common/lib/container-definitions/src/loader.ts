@@ -39,6 +39,35 @@ export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer> {
 }
 
 /**
+ * Encapsulates a module entry point with corresponding code details.
+ */
+export interface IFluidModuleWithDetails {
+    /** Fluid code module that implements the runtime factory needed to instantiate the container runtime. */
+    module: IFluidModule;
+    /**
+     * Code details associated with the module. Represents a document schema this module supports.
+     * If the code loader implements the {@link @fluidframework/core-interfaces#IFluidCodeDetailsComparer} interface,
+     * it'll be called to determine whether the module code details satisfy the new code proposal in the quorum.
+     */
+    details: IFluidCodeDetails;
+}
+
+/**
+ * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
+ * a package name and package version range.
+ */
+export interface ICodeDetailsLoader
+ extends Partial<IProvideFluidCodeDetailsComparer> {
+ /**
+  * Load the code module (package) that is capable to interact with the document.
+  *
+  * @param source - Code proposal that articulates the current schema the document is written in.
+  * @returns - Code module entry point along with the code details associated with it.
+  */
+ load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
+}
+
+/**
 * The interface returned from a IFluidCodeResolver which represents IFluidCodeDetails
  * that have been resolved and are ready to load
  */

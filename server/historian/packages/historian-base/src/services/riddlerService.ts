@@ -69,7 +69,7 @@ export class RiddlerService implements ITenantService {
         }
         const tenantUrl = `/api/tenants/${tenantId}`;
         const details = await this.restWrapper.get<ITenantConfig>(tenantUrl, { includeDisabledTenant })
-            .catch(getRequestErrorTranslator(tenantUrl, "GET"));
+            .catch(getRequestErrorTranslator(tenantUrl, "GET", lumberProperties));
         this.cache.set(tenantId, JSON.stringify(details)).catch((error) => {
             winston.error(`Error caching tenant details to redis`, error);
             Lumberjack.error(
@@ -101,7 +101,7 @@ export class RiddlerService implements ITenantService {
 
         const tokenValidationUrl = `/api/tenants/${tenantId}/validate`;
         await this.restWrapper.post(tokenValidationUrl, { token }, { includeDisabledTenant })
-            .catch(getRequestErrorTranslator(tokenValidationUrl, "POST"));
+            .catch(getRequestErrorTranslator(tokenValidationUrl, "POST", lumberProperties));
 
         // TODO: ensure token expiration validity as well using `validateTokenClaimsExpiration` from `services-client`
         let tokenLifetimeInSec = getTokenLifetimeInSec(token);
