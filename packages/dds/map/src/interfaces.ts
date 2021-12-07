@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
@@ -146,12 +145,10 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
         changed: IDirectoryValueChanged,
         local: boolean,
-        op: ISequencedDocumentMessage | null,
         target: IEventThisPlaceHolder,
     ) => void);
     (event: "clear", listener: (
         local: boolean,
-        op: ISequencedDocumentMessage | null,
         target: IEventThisPlaceHolder,
     ) => void);
 }
@@ -249,11 +246,9 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
         changed: IValueChanged,
         local: boolean,
-        op: ISequencedDocumentMessage | null,
         target: IEventThisPlaceHolder) => void);
     (event: "clear", listener: (
         local: boolean,
-        op: ISequencedDocumentMessage | null,
         target: IEventThisPlaceHolder
     ) => void);
 }
