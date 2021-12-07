@@ -11,7 +11,7 @@ import { v4 as uuid } from "uuid";
  * Generates a JWT token to authorize routerlicious. This function uses a browser friendly auth library (jsrsasign)
  * and should only be used in client context.
  * If a token ever needs to be generated on the client side, it should re-use this function. If it needs to be used on
- * the service side,  please use the copy available in "@fluidframework/server-services-client" in order to avoid
+ * the service side,  please use the copy available in the server-services-client package in order to avoid
  * interdependencies between service and client packages
  */
 export function generateToken(
