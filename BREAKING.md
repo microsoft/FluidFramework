@@ -81,15 +81,15 @@ The `ICodeDetailsLoader` and `IFluidModuleWithDetails` interface are deprecated 
 
 ### Moved `@fluidframework/core-interface#fluidPackage.ts` to `@fluidframework/container-definition#fluidPackage.ts`
 Moved the following interfaces and const from `@fluidframework/core-interface` to `@fluidframework/container-definitions`:
-1. `IFluidPackageEnvironment`
-2. `IFluidPackage`
-3. `isFluidPackage`
-4. `IFluidCodeDetailsConfig`
-5. `IFluidCodeDetailsConfig`
-6. `IFluidCodeDetails`
-7. `IFluidCodeDetailsComparer`
-8. `IProvideFluidCodeDetailsComparer`
-9. `IFluidCodeDetailsComparer`
+- `IFluidPackageEnvironment`
+- `IFluidPackage`
+- `isFluidPackage`
+- `IFluidCodeDetailsConfig`
+- `IFluidCodeDetailsConfig`
+- `IFluidCodeDetails`
+- `IFluidCodeDetailsComparer`
+- `IProvideFluidCodeDetailsComparer`
+- `IFluidCodeDetailsComparer`
 
 They are deprecated from `@fluidframework/core-interface` and would be removed in future release. Please import them from `@fluidframework/container-definitions`.
 
