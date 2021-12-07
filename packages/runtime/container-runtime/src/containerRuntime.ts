@@ -1365,7 +1365,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
-
         if (this.chunkMap.size > 0) {
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
@@ -1733,7 +1732,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return false;
             }
         }
-
         return true;
     }
 
