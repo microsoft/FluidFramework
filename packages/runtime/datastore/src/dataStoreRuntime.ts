@@ -80,6 +80,7 @@ import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import { LocalChannelContext, LocalChannelContextBase, RehydratedLocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
+import { FluidObjectHandle } from "./fluidHandle";
 
 export enum DataStoreMessageType {
     // Creates a new channel
@@ -115,6 +116,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public get IFluidRouter() { return this; }
+    public get IFluidHandle() {return this.innerHandle;}
 
     public get connected(): boolean {
         return this.dataStoreContext.connected;
@@ -188,7 +190,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     // This is used to initialize the context with data from the previous summary.
     private readonly initialChannelGCDataP: LazyPromise<Map<string, IGarbageCollectionData>>;
 
-    private readonly entrypoint: LazyPromise<FluidObject>;
+    private readonly innerHandle: IFluidHandle;
 
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -302,7 +304,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.deferredAttached.resolve();
         }
 
-        this.entrypoint = new LazyPromise<FluidObject>(async ()=>createEntryPoint(this));
+        this.innerHandle = new FluidObjectHandle(
+            new LazyPromise(async () => createEntryPoint(this)),
+            "",
+            this.objectsRoutingContext,
+            );
     }
 
     public dispose(): void {
@@ -319,8 +325,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this.request(request);
     }
 
-    public async getEntrypoint(): Promise<FluidObject> {
-        return this.entrypoint;
+    public async get(): Promise<FluidObject> {
+        return this.innerHandle;
     }
 
     public async request(request: IRequest): Promise<IResponse> {

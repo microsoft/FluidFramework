@@ -53,7 +53,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
     ): Promise<FluidDataStoreRuntime> {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest, rt) => {
-                const router: FluidObject<IFluidRouter> = await runtime.getEntrypoint();
+                const router: FluidObject<IFluidRouter> = await runtime.IFluidHandle.get();
                 if(router.IFluidRouter === undefined) {
                     return createResponseError(500, "NotIFluidRouter", request);
                 }

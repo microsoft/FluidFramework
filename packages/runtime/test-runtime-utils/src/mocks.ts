@@ -10,9 +10,9 @@ import {
 } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    FluidObject,
     IFluidHandle,
     IFluidHandleContext,
+    IProvideFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -51,6 +51,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
+import { MockHandle } from "./mockHandle";
 
 /**
  * Mock implementation of IDeltaConnection for testing
@@ -372,13 +373,14 @@ export class MockQuorum implements IQuorum, EventEmitter {
  * Mock implementation of IRuntime for testing that does nothing
  */
 export class MockFluidDataStoreRuntime extends EventEmitter
-    implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
+    implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext, IProvideFluidHandle {
     public get IFluidHandleContext(): IFluidHandleContext { return this; }
     public get rootRoutingContext(): IFluidHandleContext { return this; }
     public get channelsRoutingContext(): IFluidHandleContext { return this; }
     public get objectsRoutingContext(): IFluidHandleContext { return this; }
 
     public get IFluidRouter() { return this; }
+    public IFluidHandle = new MockHandle(null, "", "");
 
     public readonly IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
 
@@ -497,10 +499,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
 
     public async resolveHandle(request: IRequest): Promise<IResponse> {
         return this.request(request);
-    }
-
-    public async getEntrypoint(): Promise<FluidObject> {
-        return null;
     }
 
     public async request(request: IRequest): Promise<IResponse> {

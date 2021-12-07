@@ -9,7 +9,7 @@ import {
     IFluidSerializer,
     IFluidRouter,
     IFluidHandle,
-    FluidObject,
+    IProvideFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -28,7 +28,6 @@ import { IChannel } from ".";
 
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
     (
-        // eslint-disable-next-line @typescript-eslint/unified-signatures
         event: "disconnected" | "dispose" | "attaching" | "attached",
         listener: () => void,
     );
@@ -42,6 +41,7 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
  */
 export interface IFluidDataStoreRuntime extends
     IFluidRouter,
+    IProvideFluidHandle,
     IEventProvider<IFluidDataStoreRuntimeEvents>,
     IDisposable,
     Partial<IProvideFluidDataStoreRegistry> {
@@ -123,6 +123,4 @@ export interface IFluidDataStoreRuntime extends
      * @deprecated Warnings are being deprecated
      */
     raiseContainerWarning(warning: ContainerWarning): void;
-
-    getEntrypoint?(): Promise<FluidObject>;
 }

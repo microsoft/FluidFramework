@@ -100,7 +100,7 @@ async function createDataObject<TObj extends PureDataObject,I extends DataObject
     // In the future, we should address it by using relative paths for handles and be able to resolve
     // local DDSs while data store is not fully initialized.
     if (!existing) {
-        await runtime.getEntrypoint();
+        await runtime.IFluidHandle.get();
     }
 
     return runtime;
@@ -274,7 +274,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
 
         await context.attachRuntime(this, runtime);
 
-        return runtime.getEntrypoint?.() as unknown as TObj;
+        return runtime.IFluidHandle.get() as unknown as TObj;
     }
 }
 

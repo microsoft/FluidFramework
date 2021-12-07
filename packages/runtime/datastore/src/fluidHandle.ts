@@ -31,7 +31,7 @@ export class FluidObjectHandle<T extends FluidObject = IFluidObject> implements 
      * @param routeContext - The parent IFluidHandleContext that has a route to this handle.
      */
     constructor(
-        protected readonly value: T,
+        private readonly value: T | Promise<T>,
         public readonly path: string,
         public readonly routeContext: IFluidHandleContext,
     ) {

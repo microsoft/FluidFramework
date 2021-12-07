@@ -22,21 +22,21 @@ export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
      * Whether services have been attached for the associated shared object.
      */
     public get isAttached(): boolean {
-        return this.value.isAttached();
+        return this.sharedObject.isAttached();
     }
 
     /**
      * Creates a new SharedObjectHandle.
-     * @param value - The shared object this handle is for.
+     * @param sharedObject - The shared object this handle is for.
      * @param path - The id of the shared object. It is also the path to this object relative to the routeContext.
      * @param routeContext - The parent IFluidHandleContext that has a route to this handle.
      */
     constructor(
-        value: ISharedObject,
+        private readonly sharedObject: ISharedObject,
         path: string,
         routeContext: IFluidHandleContext,
     ) {
-        super(value, path, routeContext);
+        super(sharedObject, path, routeContext);
     }
 
     /**
@@ -44,7 +44,7 @@ export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
      * When attaching the handle, it registers the associated shared object.
      */
     public attachGraph(): void {
-        this.value.bindToContext();
+        this.sharedObject.bindToContext();
         super.attachGraph();
     }
 }

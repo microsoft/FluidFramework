@@ -378,7 +378,7 @@ class AgentSchedulerRuntime extends FluidDataStoreRuntime {
         const response = await super.request(request);
         if (response.status === 404) {
             if (request.url === "" || request.url === "/") {
-                const agentScheduler = await this.getEntrypoint();
+                const agentScheduler = await this.IFluidHandle.get();
                 return { status: 200, mimeType: "fluid/object", value: agentScheduler };
             }
         }
