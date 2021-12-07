@@ -279,7 +279,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         onClosed(err);
                     });
             }),
-            { start: true, end: true, cancel: "error" },
+            { start: true, end: true, cancel: "generic" },
         );
     }
 
@@ -410,33 +410,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public get loadedFromVersion(): IVersion | undefined {
         return this._loadedFromVersion;
-    }
-
-    /**
-     * Tells if container is in read-only mode.
-     * Data stores should listen for "readonly" notifications and disallow user making changes to data stores.
-     * Readonly state can be because of no storage write permission,
-     * or due to host forcing readonly mode for container.
-     *
-     * We do not differentiate here between no write access to storage vs. host disallowing changes to container -
-     * in all cases container runtime and data stores should respect readonly state and not allow local changes.
-     *
-     * It is undefined if we have not yet established websocket connection
-     * and do not know if user has write access to a file.
-     * @deprecated - use readOnlyInfo
-     */
-    public get readonly() {
-        return this._deltaManager.readonly;
-    }
-
-    /**
-     * Tells if user has no write permissions for file in storage
-     * It is undefined if we have not yet established websocket connection
-     * and do not know if user has write access to a file.
-     * @deprecated - use readOnlyInfo
-     */
-    public get readonlyPermissions() {
-        return this._deltaManager.readonlyPermissions;
     }
 
     public get readOnlyInfo(): ReadOnlyInfo {
@@ -576,7 +549,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {
                 all: {
                     clientType, // Differentiating summarizer container from main container
-                    loaderVersion: pkgVersion,
                     containerId: uuid(),
                     docId: () => this.id,
                     containerAttachState: () => this._attachState,
@@ -672,22 +644,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 switch (event) {
                     case dirtyContainerEvent:
                         if (this._dirtyContainer) {
-                            listener(dirtyContainerEvent);
+                            listener();
                         }
                         break;
                     case savedContainerEvent:
                         if (!this._dirtyContainer) {
-                            listener(savedContainerEvent);
+                            listener();
                         }
                         break;
                     case connectedEventName:
                          if (this.connected) {
-                            listener(event, this.clientId);
+                            listener(this.clientId);
                          }
                          break;
                     case disconnectedEventName:
                         if (!this.connected) {
-                            listener(event);
+                            listener();
                         }
                         break;
                     default:
@@ -1550,17 +1522,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * If it's not true, runtime is not in position to send ops.
      */
     private activeConnection() {
-        const active = this.connectionState === ConnectionState.Connected &&
+        return this.connectionState === ConnectionState.Connected &&
             this._deltaManager.connectionMode === "write";
-
-        // Check for presence of current client in quorum for "write" connections - inactive clients
-        // would get leave op after some long timeout (5 min) and that should automatically transition
-        // state to "read" mode.
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        assert(!active || this.getQuorum().getMember(this.clientId!) !== undefined,
-            0x276 /* "active connection not present in quorum" */);
-
-        return active;
     }
 
     private createDeltaManager() {

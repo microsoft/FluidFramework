@@ -490,7 +490,7 @@ export interface ISummarizeOptions {
 export const ISummarizer: keyof IProvideSummarizer;
 
 // @public (undocumented)
-export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidLoadable, Partial<IProvideSummarizer> {
+export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer> {
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     // (undocumented)
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
@@ -655,7 +655,7 @@ export class PendingStateManager implements IDisposable {
         localOpMetadata: unknown;
     };
     replayPendingStates(): void;
-    }
+}
 
 // @public
 export class ScheduleManager {
@@ -682,11 +682,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     // (undocumented)
     get IFluidLoadable(): this;
     // (undocumented)
-    get IFluidRouter(): this;
-    // (undocumented)
     get ISummarizer(): this;
-    // (undocumented)
-    request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
     stop(reason: SummarizerStopReason): void;

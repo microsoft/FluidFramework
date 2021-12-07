@@ -8,7 +8,6 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import { ClickerInstantiationFactory, Clicker, ClickerReactView } from "@fluid-example/clicker";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
@@ -54,8 +53,7 @@ export class SimpleFluidObjectEmbed extends DataObject implements IFluidHTMLView
 }
 
 export const SimpleFluidObjectEmbedInstantiationFactory =
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    new DataObjectFactory<SimpleFluidObjectEmbed, undefined, undefined, IEvent>(
+    new DataObjectFactory(
         simpleFluidObjectEmbedName,
         SimpleFluidObjectEmbed,
         [],

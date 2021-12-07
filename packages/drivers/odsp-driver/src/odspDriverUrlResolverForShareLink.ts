@@ -132,8 +132,9 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             // We need to remove the nav param if set by host when setting the sharelink as otherwise the shareLinkId
             // when redeeming the share link during the redeem fallback for trees latest call becomes greater than
             // the eligible length.
+            odspResolvedUrl.sharingLinkToRedeem = this.removeNavParam(request.url);
             odspResolvedUrl.shareLinkInfo = Object.assign(odspResolvedUrl.shareLinkInfo || {},
-                {sharingLinkToRedeem: this.removeNavParam(request.url)});
+                {sharingLinkToRedeem: odspResolvedUrl.sharingLinkToRedeem});
         }
         if (odspResolvedUrl.itemId) {
             // Kick start the sharing link request if we don't have it already as a performance optimization.

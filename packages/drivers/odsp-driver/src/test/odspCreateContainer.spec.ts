@@ -8,7 +8,6 @@ import { DriverErrorType, IDocumentService } from "@fluidframework/driver-defini
 import { IRequest } from "@fluidframework/core-interfaces";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { fetchIncorrectResponse } from "@fluidframework/odsp-doclib-utils";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
@@ -133,7 +132,7 @@ describe("Odsp Create Container Test", () => {
                 ],
             );
         } catch (error) {
-            assert.strictEqual(error.statusCode, fetchIncorrectResponse, "Wrong error code");
+            assert.strictEqual(error.statusCode, undefined, "Wrong error code");
             assert.strictEqual(error.errorType, DriverErrorType.incorrectServerResponse,
                 "Error type should be correct");
             assert.strictEqual(error.message, "couldNotParseItemFromVroomResponse", "Message should be correct");

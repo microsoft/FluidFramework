@@ -95,8 +95,6 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
     initialClients: ISignalClient[];
     initialMessages: ISequencedDocumentMessage[];
     initialSignals: ISignalMessage[];
-    // @deprecated
-    maxMessageSize: number;
     mode: ConnectionMode;
     relayServiceAgent?: string;
     serviceConfiguration: IClientConfiguration;
