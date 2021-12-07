@@ -8,7 +8,6 @@ import { Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger, IFluidErrorBase, LoggingError, wrapErrorAndLog } from "@fluidframework/telemetry-utils";
 import {
-
     IFluidHandleContext,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
