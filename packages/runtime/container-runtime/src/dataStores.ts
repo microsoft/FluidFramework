@@ -37,7 +37,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { BlobCacheStorageService, buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy, LazyPromise } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
-import { GCDataBuilder, getChildNodesGCDetails, getChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
+import { GCDataBuilder, getChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime } from "./containerRuntime";
 import {
@@ -79,22 +79,19 @@ export class DataStores implements IDisposable {
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
         private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
-        getBaseSummaryGCDetails: () => Promise<IGarbageCollectionSummaryDetails | undefined>,
+        getDataStoreBaseGCDetails: () => Promise<Map<string, IGarbageCollectionSummaryDetails>>,
         private readonly dataStoreChanged: (id: string) => void,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
         this.logger = ChildLogger.create(baseLogger);
 
-        // Get the GC details from the base summary we loaded from and generate a map of data store id to its
-        // GC details.
         const baseDataStoresGCDetailsP = new LazyPromise(async () => {
-            const baseGCDetails = await getBaseSummaryGCDetails();
-            return baseGCDetails ? getChildNodesGCDetails(baseGCDetails) : undefined;
+            return getDataStoreBaseGCDetails();
         });
-        // Get the base summary GC details for the data store with the given id.
-        const getDataStoreBaseGCDetails = async (dataStoreId: string) => {
+        // Returns the base summary GC details for the data store with the given id.
+        const dataStoreBaseGCDetails = async (dataStoreId: string) => {
             const baseGCDetails = await baseDataStoresGCDetailsP;
-            return baseGCDetails?.get(dataStoreId);
+            return baseGCDetails.get(dataStoreId);
         };
 
         // Extract stores stored inside the snapshot
@@ -119,7 +116,7 @@ export class DataStores implements IDisposable {
                 dataStoreContext = new RemotedFluidDataStoreContext(
                     key,
                     value,
-                    async () => getDataStoreBaseGCDetails(key),
+                    async () => dataStoreBaseGCDetails(key),
                     this.runtime,
                     this.runtime.storage,
                     this.runtime.scope,
