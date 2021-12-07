@@ -510,7 +510,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             if (!versionsResponse) {
                 throw new NonRetryableError(
                     "getVersionsReturnedNoResponse",
-                    "No response from getVersions()",
+                    "No response from /versions endpoint",
                     DriverErrorType.genericNetworkError);
             }
             if (!Array.isArray(versionsResponse.value)) {
