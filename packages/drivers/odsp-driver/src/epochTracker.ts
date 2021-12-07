@@ -171,9 +171,9 @@ export class EpochTracker implements IPersistedFileCache {
         fetchType: FetchType,
         addInBody: boolean = false,
     ): Promise<IOdspResponse<T>> {
-        const clientCorelationId = this.formatClientCorelationId();
+        const clientCorrelationId = this.formatClientCorrelationId();
         // Add epoch in fetch request.
-        this.addEpochInRequest(fetchOptions, addInBody, clientCorelationId);
+        this.addEpochInRequest(fetchOptions, addInBody, clientCorrelationId);
         let epochFromResponse: string | undefined;
         return this.rateLimiter.schedule(
             async () => fetchAndParseAsJSONHelper<T>(url, fetchOptions),
@@ -182,7 +182,7 @@ export class EpochTracker implements IPersistedFileCache {
             this.validateEpochFromResponse(epochFromResponse, fetchType);
             response.commonSpoHeaders = {
                 ...response.commonSpoHeaders,
-                "X-RequestStats": clientCorelationId,
+                "X-RequestStats": clientCorrelationId,
             };
             return response;
         }).catch(async (error) => {
@@ -194,7 +194,7 @@ export class EpochTracker implements IPersistedFileCache {
             await this.checkForEpochError(error, epochFromResponse, fetchType);
             throw error;
         }).catch((error) => {
-            const fluidError = normalizeError(error, {props: {"X-RequestStats": clientCorelationId}});
+            const fluidError = normalizeError(error, { props: { XRequestStatsHeader: clientCorrelationId }});
             throw fluidError;
         });
     }
@@ -212,9 +212,9 @@ export class EpochTracker implements IPersistedFileCache {
         fetchType: FetchType,
         addInBody: boolean = false,
     ) {
-        const clientCorelationId = this.formatClientCorelationId();
+        const clientCorrelationId = this.formatClientCorrelationId();
         // Add epoch in fetch request.
-        this.addEpochInRequest(fetchOptions, addInBody, clientCorelationId);
+        this.addEpochInRequest(fetchOptions, addInBody, clientCorrelationId);
         let epochFromResponse: string | undefined;
         return this.rateLimiter.schedule(
             async () => fetchArray(url, fetchOptions),
@@ -223,7 +223,7 @@ export class EpochTracker implements IPersistedFileCache {
             this.validateEpochFromResponse(epochFromResponse, fetchType);
             response.commonSpoHeaders = {
                 ...response.commonSpoHeaders,
-                "X-RequestStats": clientCorelationId,
+                "X-RequestStats": clientCorrelationId,
             };
             return response;
         }).catch(async (error) => {
@@ -235,7 +235,7 @@ export class EpochTracker implements IPersistedFileCache {
             await this.checkForEpochError(error, epochFromResponse, fetchType);
             throw error;
         }).catch((error) => {
-            const fluidError = normalizeError(error, {props: {"X-RequestStats": clientCorelationId}});
+            const fluidError = normalizeError(error, { props: { XRequestStatsHeader: clientCorrelationId }});
             throw fluidError;
         });
     }
@@ -243,11 +243,11 @@ export class EpochTracker implements IPersistedFileCache {
     private addEpochInRequest(
         fetchOptions: RequestInit,
         addInBody: boolean,
-        clientCorelationId: string,
+        clientCorrelationId: string,
     ) {
         if (addInBody) {
             const headers: {[key: string]: string} = {};
-            headers["X-RequestStats"] = clientCorelationId;
+            headers["X-RequestStats"] = clientCorrelationId;
             if (this.fluidEpoch !== undefined) {
                 headers["x-fluid-epoch"] = this.fluidEpoch;
             }
@@ -260,7 +260,7 @@ export class EpochTracker implements IPersistedFileCache {
                 assert(fetchOptions.headers !== undefined, 0x282 /* "Headers should be present now" */);
                 fetchOptions.headers[key] = val;
             };
-            addHeader("X-RequestStats", clientCorelationId);
+            addHeader("X-RequestStats", clientCorrelationId);
             if (this.fluidEpoch !== undefined) {
                 addHeader("x-fluid-epoch", this.fluidEpoch);
             }
@@ -285,7 +285,7 @@ export class EpochTracker implements IPersistedFileCache {
         fetchOptions.body = formParams.join("\r\n");
     }
 
-    private formatClientCorelationId() {
+    private formatClientCorrelationId() {
         return `driverId=${this.driverId}, RequestNumber=${this.networkCallNumber++}`;
     }
 
