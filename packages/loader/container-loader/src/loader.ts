@@ -9,6 +9,7 @@ import {
     FluidObject,
     IFluidCodeDetails,
     IFluidRouter,
+    IProvideFluidCodeDetailsComparer,
     IRequest,
     IRequestHeader,
     IResponse,
@@ -16,7 +17,7 @@ import {
 import {
     ICodeLoader,
     IContainer,
-    ICodeDetailsLoader,
+    IFluidModule,
     IHostLoader,
     ILoader,
     IPendingLocalState,
@@ -121,6 +122,40 @@ function createCachedResolver(resolver: IUrlResolver) {
 
 export interface ILoaderOptions extends ILoaderOptions1{
     summarizeProtocolTree?: true,
+}
+
+/**
+ * @deprecated IFluidModuleWithDetails interface is moved to
+ * {@link @fluidframework/container-definition#IFluidModuleWithDetails}
+ * to have all the code loading modules in one package. #8193
+ * Encapsulates a module entry point with corresponding code details.
+ */
+ export interface IFluidModuleWithDetails {
+    /** Fluid code module that implements the runtime factory needed to instantiate the container runtime. */
+    module: IFluidModule;
+    /**
+     * Code details associated with the module. Represents a document schema this module supports.
+     * If the code loader implements the {@link @fluidframework/core-interfaces#IFluidCodeDetailsComparer} interface,
+     * it'll be called to determine whether the module code details satisfy the new code proposal in the quorum.
+     */
+    details: IFluidCodeDetails;
+}
+
+/**
+ * @deprecated ICodeDetailsLoader interface is moved to {@link @fluidframework/container-definition#ICodeDetailsLoader}
+ * to have code loading modules in one package. #8193
+ * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
+ * a package name and package version range.
+ */
+export interface ICodeDetailsLoader
+   extends Partial<IProvideFluidCodeDetailsComparer> {
+   /**
+    * Load the code module (package) that is capable to interact with the document.
+    *
+    * @param source - Code proposal that articulates the current schema the document is written in.
+    * @returns - Code module entry point along with the code details associated with it.
+    */
+   load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
 /**
