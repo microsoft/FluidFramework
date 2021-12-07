@@ -12,6 +12,7 @@ export interface IKafkaBaseOptions {
     numberOfPartitions: number;
     replicationFactor: number;
     sslCACertFilePath?: string;
+    restartOnKafkaErrorCodes?: number[];
 }
 
 export interface IKafkaEndpoints {
@@ -22,6 +23,7 @@ export interface IKafkaEndpoints {
 export abstract class RdkafkaBase extends EventEmitter {
     protected readonly kafka: typeof kafkaTypes;
     protected readonly sslOptions?: kafkaTypes.ConsumerGlobalConfig;
+    protected defaultRestartOnKafkaErrorCodes: number[] = [];
     private readonly options: IKafkaBaseOptions;
 
     constructor(
@@ -67,8 +69,7 @@ export abstract class RdkafkaBase extends EventEmitter {
             };
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.initialize();
+        setTimeout(() => void this.initialize(), 1);
     }
 
     protected abstract connect(): void;
@@ -76,16 +77,15 @@ export abstract class RdkafkaBase extends EventEmitter {
     private async initialize() {
         try {
             await this.ensureTopics();
+            this.connect();
         } catch (ex) {
-            this.emit("error", ex);
+            this.error(ex);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.initialize();
 
             return;
         }
-
-        this.connect();
     }
 
     protected async ensureTopics() {
@@ -116,11 +116,24 @@ export abstract class RdkafkaBase extends EventEmitter {
         });
     }
 
-    protected error(error: any, restartOnError: boolean = false) {
+    protected error(error: any, forceRestartOnError: boolean = false) {
+        let restartKafkaBasedOnErrorCode = false;
+        const errorCodesToCauseRestart = this.options.restartOnKafkaErrorCodes ?? this.defaultRestartOnKafkaErrorCodes;
+
+        if (RdkafkaBase.isObject(error)
+            && errorCodesToCauseRestart.includes((error as kafkaTypes.LibrdKafkaError).code)) {
+                restartKafkaBasedOnErrorCode = true;
+        }
+
         const errorData: IContextErrorData = {
-            restart: restartOnError,
+            restart: forceRestartOnError || restartKafkaBasedOnErrorCode,
         };
 
         this.emit("error", error, errorData);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    private static isObject(value: any): value is object {
+        return value !== null && typeof (value) === "object";
     }
 }

@@ -96,6 +96,11 @@ export interface ICodeAllowList {
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
+// @public
+export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
+    load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
+}
+
 // @public @deprecated
 export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModule>;
@@ -354,6 +359,12 @@ export interface IFluidCodeResolver {
 export interface IFluidModule {
     // (undocumented)
     fluidExport: IFluidObject & FluidObject<IRuntimeFactory & IProvideFluidCodeDetailsComparer>;
+}
+
+// @public
+export interface IFluidModuleWithDetails {
+    details: IFluidCodeDetails;
+    module: IFluidModule;
 }
 
 // @public @deprecated (undocumented)
