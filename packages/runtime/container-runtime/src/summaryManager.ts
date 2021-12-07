@@ -6,14 +6,19 @@
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { DriverHeader, DriverErrorType } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { createSummarizingWarning } from "./summarizer";
 import { ISummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
 import { IThrottler } from "./throttler";
-import { ISummarizer, ISummarizerOptions, ISummarizingWarning, SummarizerStopReason } from "./summarizerTypes";
+import {
+    ISummarizer,
+    ISummarizerOptions,
+    ISummarizingWarning,
+    SummarizerStopReason,
+} from "./summarizerTypes";
 import { SummaryCollection } from "./summaryCollection";
 
 const defaultInitialDelayMs = 5000;
@@ -401,7 +406,7 @@ export const formRequestSummarizerFn = (
         url: "/_summarizer",
     };
 
-    const fluidObject = await requestFluidObject(loaderRouter, request);
+    const fluidObject = await requestFluidObject<FluidObject<ISummarizer>>(loaderRouter, request);
     const summarizer = fluidObject.ISummarizer;
 
     if (!summarizer) {

@@ -6,8 +6,9 @@
 /**
  * @fileoverview Context which describes a remove operation.
  */
-import { BaseContext } from './base_context';
-import { DataBinding } from './data_binding'; /* eslint-disable-line no-unused-vars */
+import { BaseContext } from './baseContext';
+import { DataBinding } from './dataBinding';
+import { NodeType } from './dataBindingTree';
 
 /**
  * Context which describes a remove operation
@@ -15,12 +16,14 @@ import { DataBinding } from './data_binding'; /* eslint-disable-line no-unused-v
  * @alias RemovalContext
  * @public
  */
-class RemovalContext extends BaseContext {
+export class RemovalContext extends BaseContext {
+  private _subTree: NodeType;
+
   /**
-   * @param {DataBindingTree} in_subTree - The entity tree that was removed by this operation
-   * @param {DataBinding} in_baseDataBinding - The base data binding to which this event has been bound
-   * @param {string} in_path - The full path to the property that is removed
-   * @param {Boolean} in_simulated - if true, the modification is being done due to removing a binding
+   * @param in_subTree - The entity tree that was removed by this operation
+   * @param in_baseDataBinding - The base data binding to which this event has been bound
+   * @param in_path - The full path to the property that is removed
+   * @param in_simulated - if true, the modification is being done due to removing a binding
    *   for properties that are still in the workspace, i.e., we are simulating the removal of the property.
    *
    * @constructor
@@ -28,7 +31,7 @@ class RemovalContext extends BaseContext {
    * @hidden
    * @package
    */
-  constructor(in_subTree, in_baseDataBinding, in_path, in_simulated = false) {
+  constructor(in_subTree: NodeType, in_baseDataBinding?: DataBinding, in_path?: string, in_simulated: boolean = false) {
     super('remove', '', in_path, in_baseDataBinding, undefined, in_simulated);
     this._subTree = in_subTree;
   }
@@ -38,29 +41,29 @@ class RemovalContext extends BaseContext {
    * Bindings that correspond to that type are returned, otherwise Bindings which have the same type as the
    * Binding that triggered the event of this this RemovalContext are returned.
    *
-   * @param {string} in_bindingType - The requested bindingType. If none has been given, data bindings with the same
+   * @param in_bindingType - The requested bindingType. If none has been given, data bindings with the same
    *     bindingType as the DataBinding that triggered this removal context.
-   * @return {DataBinding|undefined} A data binding (defined for the given bindingType
+   * @returns A data binding (defined for the given bindingType
    *     or the one associated with the data binding) or undefined if no binding is present.
    * @public
    */
-  getDataBinding(in_bindingType = '') {
+  getDataBinding(in_bindingType: string = ''): DataBinding | undefined {
     var originalDataBindingType = this._baseDataBinding ? this._baseDataBinding.getDataBindingType() : undefined;
-    return this._subTree.getDataBindingByType(in_bindingType || originalDataBindingType) || undefined;
+    return this._subTree!.getDataBindingByType(in_bindingType || originalDataBindingType!) || undefined;
   }
 
   /**
    * clones the context object
    *
-   * @return {RemovalContext} the cloned context
+   * @returns the cloned context
    * @package
    * @hidden
    */
-  _clone() {
+  _clone(): RemovalContext {
     return new RemovalContext(
       this._subTree,
-      this._baseDataBinding,
-      this._path,
+      this._baseDataBinding!,
+      this._path!,
       this._simulated);
   }
 
@@ -70,11 +73,10 @@ class RemovalContext extends BaseContext {
    * removed no longer exists in the in-memory representation of the PropertyTree. As such, this callback can only
    * return undefined.
    *
-   * @return {undefined} Will always return undefined.
+   * @returns Will always return undefined.
    */
-  getProperty() {
+  getProperty(): undefined {
     return undefined;
   }
 }
 
-export { RemovalContext};

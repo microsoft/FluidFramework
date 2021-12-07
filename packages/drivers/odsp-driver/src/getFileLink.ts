@@ -70,7 +70,7 @@ export async function getFileLink(
         } while (!success);
 
         // We are guaranteed to run the getFileLinkCore at least once with successful result (which must be a string)
-        assert(result !== undefined, "Unexpected undefined result from getFileLinkCore");
+        assert(result !== undefined, 0x292 /* "Unexpected undefined result from getFileLinkCore" */);
         return result;
     };
     const fileLink = valueGenerator();

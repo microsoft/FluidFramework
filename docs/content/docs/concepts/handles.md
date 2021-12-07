@@ -7,10 +7,10 @@ aliases:
   - "/docs/deep/handles/"
 ---
 
-A Fluid handle is an object that holds a reference to a collaborative object, such as a [DataObject][] or a distributed
+A Fluid handle is an object that holds a reference to a collaborative object, such as a [DataObject]({{< relref "glossary.md#data-object" >}}) or a distributed
 data structure (DDS).
 
-The primary use case for handles in the Fluid Framework is for storing a [DataObject][], or a DDS, into another DDS.
+The primary use case for handles in the Fluid Framework is for storing a DDS or DataObject into another DDS.
 This section covers how to consume and use Fluid handles.
 
 ## Why use Fluid handles?

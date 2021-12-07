@@ -80,7 +80,6 @@ export class TestClient extends Client {
     declare public mergeTree: MergeTree;
 
     public readonly checkQ: List<string> = ListMakeHead<string>();
-    // eslint-disable-next-line max-len
     protected readonly q: List<ISequencedDocumentMessage> = ListMakeHead<ISequencedDocumentMessage>();
 
     private readonly textHelper: MergeTreeTextHelper;

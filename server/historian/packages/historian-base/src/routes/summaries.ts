@@ -11,6 +11,7 @@ import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
 import { ICache, ITenantService } from "../services";
+import { parseToken } from "../utils";
 import * as utils from "./utils";
 
 export function create(
@@ -56,7 +57,7 @@ export function create(
             true);
         const deletionPs = [service.deleteSummary(softDelete)];
         if (!softDelete) {
-            deletionPs.push(tenantService.deleteFromCache(tenantId, utils.parseToken(tenantId, authorization)));
+            deletionPs.push(tenantService.deleteFromCache(tenantId, parseToken(tenantId, authorization)));
         }
         return Promise.all(deletionPs);
     }

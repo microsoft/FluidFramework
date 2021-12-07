@@ -18,14 +18,15 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: false
-    - uses: actions/setup-node@v2-beta
+    - uses: actions/setup-node@v2
       with:
-        node-version: "12"
+        node-version: "14"
+        cache: "npm"
+        cache-dependency-path: docs/package-lock.json
     - name: Build site artifact
       run: |
         npm ci
-        npm run download
-        npm run build
+        npm run ci:build
     - name: Upload site artifact
       uses: actions/upload-artifact@v2
       with:
@@ -33,7 +34,7 @@ jobs:
         path: docs/public
         retention-days: 3
 
-  broken_link_check_internal:
+  broken_link_check:
     runs-on: ubuntu-latest
     name: 🔗 Broken Link Check
     needs: build_site
@@ -41,9 +42,14 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: false
-    - uses: actions/setup-node@v2-beta
+    - uses: actions/setup-node@v2
       with:
-        node-version: "12"
+        node-version: "14"
+        cache: "npm"
+        cache-dependency-path: docs/package-lock.json
+    - name: Create results folder
+      run: mkdir -p ./results
+
     - name: Download site artifact
       uses: actions/download-artifact@v2
       with:
@@ -55,22 +61,21 @@ jobs:
         npm ci
     - name: Start server in background
       run: pm2 start $GITHUB_WORKSPACE/docs/serve.js
-    - name: Check internal links
+    - name: Check for broken links
       id: linkcheck
       continue-on-error: true
-      run: npm run linkcheck
+      run: |
+        set -o pipefail
+        npm run linkcheck | tee ./results/linkcheck-output.txt
 
     - name: Save PR number
-      run: |
-        mkdir -p ./results
-        echo ${{ github.event.number }} > ./results/pr
+      run: echo ${{ github.event.number }} > ./results/pr
     - name: Save linkcheck report
-      # if: ${{ success() && steps.linkcheck.outcome == 'success' }}
       run: |
-        cat $GITHUB_WORKSPACE/.github/workflows/data/linkcheck-${{ steps.linkcheck.outcome }}.md > ./results/linkcheck
-    # - if: ${{ failure() || steps.linkcheck.outcome != 'success' }}
-    #   run: |
-    #     echo ${{ github.event.number }} > ./results/linkcheck
+        cat "$GITHUB_WORKSPACE/.github/workflows/data/linkcheck-${{ steps.linkcheck.outcome }}.md" | tee ./results/linkcheck
+        echo -e "\n#### linkcheck output\n\n\`\`\`" | tee -a ./results/linkcheck
+        cat ./results/linkcheck-output.txt | tee -a ./results/linkcheck
+        echo -e "\n\`\`\`" | tee -a ./results/linkcheck
     - name: Upload results artifact
       uses: actions/upload-artifact@v2
       with:

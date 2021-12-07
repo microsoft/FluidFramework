@@ -8,7 +8,6 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import { IValueChanged } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
@@ -72,7 +71,7 @@ export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLVie
 
     public get IFluidHTMLView() { return this; }
 
-    public static readonly factory = new DataObjectFactory<DiceRoller, undefined, undefined, IEvent>
+    public static readonly factory = new DataObjectFactory
     (
         DiceRoller.Name,
         DiceRoller,

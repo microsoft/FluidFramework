@@ -1551,59 +1551,6 @@ export class DocumentTree {
     }
 }
 
-const docRanges = <MergeTree.IIntegerRange[]>[
-    { start: 0, end: 20 },
-    { start: 8, end: 12 },
-    { start: 8, end: 14 },
-    { start: 20, end: 24 },
-    { start: 11, end: 15 },
-    { start: 16, end: 33 },
-    { start: 19, end: 24 },
-    { start: 22, end: 80 },
-    { start: 25, end: 29 },
-    { start: 30, end: 32 },
-    { start: 41, end: 49 },
-    { start: 41, end: 49 },
-    { start: 41, end: 49 },
-    { start: 51, end: 69 },
-    { start: 55, end: 58 },
-    { start: 60, end: 71 },
-    { start: 81, end: 99 },
-    { start: 85, end: 105 },
-    { start: 9, end: 34 },
-];
-
-const testRanges = <MergeTree.IIntegerRange[]>[
-    { start: 9, end: 20 },
-    { start: 8, end: 10 },
-    { start: 82, end: 110 },
-    { start: 54, end: 56 },
-    { start: 57, end: 57 },
-    { start: 58, end: 58 },
-    { start: 22, end: 48 },
-    { start: 3, end: 11 },
-    { start: 43, end: 58 },
-    { start: 19, end: 31 },
-];
-
-function testRangeTree() {
-    const rangeTree = new MergeTree.IntegerRangeTree();
-    for (const docRange of docRanges) {
-        rangeTree.put(docRange);
-    }
-    console.log(rangeTree.toString());
-    function matchRange(r: MergeTree.IIntegerRange) {
-        console.log(`match range ${MergeTree.integerRangeToString(r)}`);
-        const results = rangeTree.match(r);
-        for (const result of results) {
-            console.log(MergeTree.integerRangeToString(result.key));
-        }
-    }
-    for (const testRange of testRanges) {
-        matchRange(testRange);
-    }
-}
-
 export function intervalTest() {
     const mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
@@ -1679,7 +1626,6 @@ export function tstSimpleCmd() {
     }
 }
 
-const rangeTreeTest = false;
 const testPropCopy = false;
 const docTree = false;
 const chktst = false;
@@ -1699,10 +1645,6 @@ if (ivalTest) {
 
 if (tstTest) {
     tstSimpleCmd();
-}
-
-if (rangeTreeTest) {
-    testRangeTree();
 }
 
 if (chktst) {
