@@ -7,8 +7,8 @@ import { AsyncLocalStorage } from "async_hooks";
 import { Response } from "express";
 import * as jwt from "jsonwebtoken";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
-import { NetworkError } from "@fluidframework/server-services-client";
 import { ICache, ITenantService, RestGitService, ITenantCustomDataExternal } from "../services";
+import { parseToken } from "../utils";
 
 /**
  * Helper function to handle a promise that should be returned to the user
@@ -57,28 +57,6 @@ export async function createGitService(
          asyncLocalStorage);
 
     return service;
-}
-
-export function parseToken(tenantId: string, authorization: string): string {
-    let token: string;
-    if (authorization) {
-        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
-        const base64TokenMatch = authorization.match(/Basic (.+)/);
-        if (!base64TokenMatch) {
-            throw new NetworkError(403, "Malformed authorization token");
-        }
-        const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
-
-        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
-        const tokenMatch = encoded.match(/(.+):(.+)/);
-        if (!tokenMatch || tenantId !== tokenMatch[1]) {
-            throw new NetworkError(403, "Malformed authorization token");
-        }
-
-        token = tokenMatch[2];
-    }
-
-    return token;
 }
 
 /**
