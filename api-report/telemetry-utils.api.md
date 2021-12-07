@@ -154,7 +154,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 }
 
 // @public
-export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;
+export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations, fluidErrorCode?: string): IFluidErrorBase;
 
 // @public
 export class PerformanceEvent {

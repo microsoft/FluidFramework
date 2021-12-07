@@ -59,6 +59,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
         it("Send and receive a DataCorruptionError.", () => {
             const testError = new DataCorruptionError(
                 "dataCorruptionError",
+                "message",
                 {
                     clientId: "clientId",
                     sequenceNumber: 0,

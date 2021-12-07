@@ -14,29 +14,17 @@ import { IThrottlingWarning } from '@fluidframework/container-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
 // @public
-export const CreateProcessingError: typeof DataProcessingError.wrapIfUnrecognized;
+export function CreateProcessingError(originalError: any, fluidErrorCode: string, message?: ISequencedDocumentMessage): IFluidErrorBase;
 
 // @public (undocumented)
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
-    constructor(fluidErrorCode: string, props: ITelemetryProperties);
+    constructor(fluidErrorCode: string, message: string, props: ITelemetryProperties);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
     readonly errorType = ContainerErrorType.dataCorruptionError;
     // (undocumented)
     readonly fluidErrorCode: string;
-}
-
-// @public (undocumented)
-export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
-    constructor(errorMessage: string, fluidErrorCode: string, props?: ITelemetryProperties);
-    // (undocumented)
-    readonly canRetry = false;
-    // (undocumented)
-    readonly errorType = ContainerErrorType.dataProcessingError;
-    // (undocumented)
-    readonly fluidErrorCode: string;
-    static wrapIfUnrecognized(originalError: any, dataProcessingCodepath: string, message?: ISequencedDocumentMessage): IFluidErrorBase;
 }
 
 // @public (undocumented)

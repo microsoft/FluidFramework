@@ -1594,19 +1594,17 @@ export class DeltaManager
 
         // Watch the minimum sequence number and be ready to update as needed
         if (this.minSequenceNumber > message.minimumSequenceNumber) {
-            throw new DataCorruptionError("msnMovesBackwards", {
-                ...extractLogSafeMessageProperties(message),
-                clientId: this.connection?.clientId,
-            });
+            throw new DataCorruptionError(
+                "msnMovesBackwards",
+                "Protocol error: MSN moved backward",
+                {
+                    ...extractLogSafeMessageProperties(message),
+                    clientId: this.connection?.clientId,
+                });
         }
         this.minSequenceNumber = message.minimumSequenceNumber;
 
-        if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
-            throw new DataCorruptionError("nonSequentialSequenceNumber", {
-                ...extractLogSafeMessageProperties(message),
-                clientId: this.connection?.clientId,
-            });
-        }
+        assert(message.sequenceNumber === this.lastProcessedSequenceNumber + 1, "non sequential sequence numbers");
         this.lastProcessedSequenceNumber = message.sequenceNumber;
 
         // a bunch of code assumes that this is true

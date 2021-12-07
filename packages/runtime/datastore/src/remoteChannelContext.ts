@@ -167,42 +167,51 @@ export class RemoteChannelContext implements IChannelContext {
         if (attributes === undefined) {
             if (this.attachMessageType === undefined) {
                 // TODO: dataStoreId may require a different tag from PackageData #7488
-                throw new DataCorruptionError("channelTypeNotAvailable", {
-                    channelId: this.id,
-                    dataStoreId: {
-                        value: this.dataStoreContext.id,
-                        tag: TelemetryDataTag.PackageData,
-                    },
-                    dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
-                });
+                throw new DataCorruptionError(
+                    "channelTypeNotAvailable",
+                    "There is no DDS type info in channel snapshot",
+                    {
+                        channelId: this.id,
+                        dataStoreId: {
+                            value: this.dataStoreContext.id,
+                            tag: TelemetryDataTag.PackageData,
+                        },
+                        dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+                    });
             }
             factory = this.registry.get(this.attachMessageType);
             if (factory === undefined) {
                 // TODO: dataStoreId may require a different tag from PackageData #7488
-                throw new DataCorruptionError("channelFactoryNotRegisteredForAttachMessageType", {
-                    channelId: this.id,
-                    dataStoreId: {
-                        value: this.dataStoreContext.id,
-                        tag: TelemetryDataTag.PackageData,
-                    },
-                    dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
-                    channelFactoryType: this.attachMessageType,
-                });
+                throw new DataCorruptionError(
+                    "channelFactoryNotRegisteredForAttachMessageType",
+                    "DDS factory type not registered",
+                    {
+                        channelId: this.id,
+                        dataStoreId: {
+                            value: this.dataStoreContext.id,
+                            tag: TelemetryDataTag.PackageData,
+                        },
+                        dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+                        channelFactoryType: this.attachMessageType,
+                    });
             }
             attributes = factory.attributes;
         } else {
             factory = this.registry.get(attributes.type);
             if (factory === undefined) {
                 // TODO: dataStoreId may require a different tag from PackageData #7488
-                throw new DataCorruptionError("channelFactoryNotRegisteredForGivenType", {
-                    channelId: this.id,
-                    dataStoreId: {
-                        value: this.dataStoreContext.id,
-                        tag: TelemetryDataTag.PackageData,
-                    },
-                    dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
-                    channelFactoryType: attributes.type,
-                });
+                throw new DataCorruptionError(
+                    "channelFactoryNotRegisteredForGivenType",
+                    "DDS factory type not registered",
+                    {
+                        channelId: this.id,
+                        dataStoreId: {
+                            value: this.dataStoreContext.id,
+                            tag: TelemetryDataTag.PackageData,
+                        },
+                        dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+                        channelFactoryType: attributes.type,
+                    });
             }
         }
 

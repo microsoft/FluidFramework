@@ -97,6 +97,7 @@ function patchWithErrorCode(
 export function normalizeError(
     error: unknown,
     annotations: IFluidErrorAnnotations = {},
+    fluidErrorCode = "", // Issue #8472: should be required
 ): IFluidErrorBase {
     // Back-compat, while IFluidErrorBase is rolled out
     if (isValidLegacyError(error)) {
@@ -112,8 +113,8 @@ export function normalizeError(
     // We have to construct a new Fluid Error, copying safe properties over
     const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
     const fluidError: IFluidErrorBase = new SimpleFluidError({
-        errorType: "genericError", // Match Container/Driver generic error type
-        fluidErrorCode: "",
+        errorType: "<unknown>",
+        fluidErrorCode,
         message,
         stack,
     });
@@ -188,6 +189,8 @@ export function generateStack(): string | undefined {
 
     if (hasErrorInstanceId(innerError)) {
         newError.addTelemetryProperties({ innerErrorInstanceId: innerError.errorInstanceId });
+    } else {
+        newError.addTelemetryProperties({ untrustedOrigin: 1}); // To match normalizeError
     }
 
     return newError;
@@ -200,13 +203,10 @@ export function wrapErrorAndLog<T extends IFluidErrorBase>(
     logger: ITelemetryLogger,
 ) {
     const newError = wrapError(innerError, newErrorFn);
-    const wrappedByErrorInstanceId = hasErrorInstanceId(newError)
-        ? newError.errorInstanceId
-        : undefined;
 
     logger.sendTelemetryEvent({
         eventName: "WrapError",
-        wrappedByErrorInstanceId,
+        wrappedByErrorInstanceId: newError.errorInstanceId,
     }, innerError);
 
     return newError;

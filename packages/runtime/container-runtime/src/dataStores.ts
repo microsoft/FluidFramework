@@ -150,6 +150,7 @@ export class DataStores implements IDisposable {
             // TODO: dataStoreId may require a different tag from PackageData #7488
             const error = new DataCorruptionError(
                 "duplicateDataStoreCreatedWithExistingId",
+                "Race condition: Duplicate data store IDs",
                 {
                     ...extractSafePropertiesFromMessage(message),
                     dataStoreId: {

@@ -11,10 +11,8 @@ import {
 } from "@fluidframework/container-definitions";
 import {
     LoggingError,
-    isValidLegacyError,
     IFluidErrorBase,
     normalizeError,
-    wrapError,
     wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
@@ -92,57 +90,10 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
 
     constructor(
         readonly fluidErrorCode: string,
+        message: string,
         props: ITelemetryProperties,
     ) {
-        super(fluidErrorCode, { ...props, dataProcessingError: 1 });
-    }
-}
-
-export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
-    readonly errorType = ContainerErrorType.dataProcessingError;
-    readonly canRetry = false;
-
-    constructor(
-        errorMessage: string,
-        readonly fluidErrorCode: string,
-        props?: ITelemetryProperties,
-    ) {
-        super(errorMessage, props);
-    }
-
-    /**
-     * Conditionally coerce the throwable input into a DataProcessingError.
-     * @param originalError - Throwable input to be converted.
-     * @param message - Sequenced message (op) to include info about via telemetry props
-     * @param dataProcessingCodepath - which codepath failed while processing data.
-     * @returns Either a new DataProcessingError, or (if wrapping is deemed unnecessary) the given error
-     */
-    static wrapIfUnrecognized(
-        originalError: any,
-        dataProcessingCodepath: string,
-        message?: ISequencedDocumentMessage,
-    ): IFluidErrorBase {
-        const newErrorFn = (errMsg: string) => {
-            const dpe = new DataProcessingError(errMsg, "" /* fluidErrorCode */);
-            dpe.addTelemetryProperties({ untrustedOrigin: 1}); // To match normalizeError
-            return dpe;
-        };
-
-        // Don't coerce if already has an errorType, to distinguish unknown errors from
-        // errors that we raised which we already can interpret apart from this classification
-        const error = isValidLegacyError(originalError) // also accepts valid Fluid Error
-            ? normalizeError(originalError)
-            : wrapError(originalError, newErrorFn);
-
-        error.addTelemetryProperties({
-            dataProcessingError: 1,
-            dataProcessingCodepath,
-        });
-        if (message !== undefined) {
-            error.addTelemetryProperties(extractSafePropertiesFromMessage(message));
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return error;
+        super(message, { ...props, dataProcessingError: 1 });
     }
 }
 
@@ -158,4 +109,19 @@ export const extractSafePropertiesFromMessage = (message: ISequencedDocumentMess
 /**
  * Conditionally coerce the throwable input into a DataProcessingError.
  */
- export const CreateProcessingError = DataProcessingError.wrapIfUnrecognized;
+ export function CreateProcessingError(
+    originalError: any,
+    fluidErrorCode: string,
+    message?: ISequencedDocumentMessage): IFluidErrorBase
+{
+    const error = normalizeError(originalError, undefined, fluidErrorCode);
+
+    error.addTelemetryProperties({
+        dataProcessingError: 1,
+    });
+    if (message !== undefined) {
+        error.addTelemetryProperties(extractSafePropertiesFromMessage(message));
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return error;
+}

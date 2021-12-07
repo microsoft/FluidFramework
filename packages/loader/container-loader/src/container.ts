@@ -1740,6 +1740,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (errorCode !== undefined) {
                 const error = new DataCorruptionError(
                     errorCode,
+                    "Message from client not in quorum",
                     extractSafePropertiesFromMessage(message));
                 this.close(normalizeError(error));
             }

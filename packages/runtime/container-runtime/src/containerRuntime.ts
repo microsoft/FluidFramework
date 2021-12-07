@@ -464,6 +464,7 @@ class ScheduleManagerCore {
                 // "Batch not closed, yet message from another client!"
                 throw new DataCorruptionError(
                     "OpBatchIncomplete",
+                    "Protocol error: different client IDs in a batch!",
                     {
                         batchClientId: this.currentBatchClientId,
                         ...extractSafePropertiesFromMessage(message),
@@ -711,6 +712,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // "Load from summary, runtime metadata sequenceNumber !== initialSequenceNumber"
                 const error = new DataCorruptionError(
                     "SummaryMetadataMismatch",
+                    "Summary reference sequence number does not match summary metadata information",
                     { runtimeSequenceNumber, protocolSequenceNumber },
                 );
 
