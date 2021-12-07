@@ -12,7 +12,7 @@ import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { TestDataObject } from "./mockSummarizerClient";
 
@@ -22,7 +22,7 @@ import { TestDataObject } from "./mockSummarizerClient";
  * Basically, for data stores that are unreferenced in the base snapshot that a container loads from, we return a
  * failure (404) when they are requested with "externalRequest" flag in the request header.
  */
-describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
+ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
@@ -71,7 +71,7 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
     it("should fail requests with externalRequest flag for unreferenced data stores", async () => {
         mainDataStore1._root.set("test", "value");
         await provider.ensureSynchronized();
-        containerRuntime.setReadOnly();
+        (containerRuntime as any).setReadOnly();
         mainDataStore1._root.set("test", "value2");
         await containerRuntime.summarize({
             runGC: true,
