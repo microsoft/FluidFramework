@@ -233,37 +233,6 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
 }
 
 /**
- * Walk an object's enumerable properties to find those fit for telemetry.
- */
-function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryProperties {
-    const props: ITelemetryProperties = {};
-    for (const key of Object.keys(obj)) {
-        if (keysToOmit.has(key)) {
-            continue;
-        }
-        const val = obj[key];
-        switch (typeof val) {
-            case "string":
-            case "number":
-            case "boolean":
-            case "undefined":
-                props[key] = val;
-                break;
-            default: {
-                if (isTaggedTelemetryPropertyValue(val)) {
-                    props[key] = val;
-                } else {
-                    // We don't support logging arbitrary objects
-                    props[key] = "REDACTED (arbitrary object)";
-                }
-                break;
-            }
-        }
-    }
-    return props;
-}
-
-/**
  * Base class for "trusted" errors we create, whose properties can generally be logged to telemetry safely.
  * All properties set on the object, or passed in (via the constructor or getTelemetryProperties),
  * will be logged in accordance with their tag, if present.
@@ -305,13 +274,37 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
      * Get all properties fit to be logged to telemetry for this error
      */
     public getTelemetryProperties(): ITelemetryProperties {
-        const taggableProps = getValidTelemetryProps(this, this.omitPropsFromLogging);
         // Include non-enumerable props inherited from Error that are not returned by getValidTelemetryProps
-        return  {
-            ...taggableProps,
+        const taggableProps: ITelemetryProperties = {
             stack: this.stack,
             message: this.message,
         };
+
+        for (const key of Object.keys(this)) {
+            if (this.omitPropsFromLogging.has(key)) {
+                continue;
+            }
+            const val = this[key];
+            switch (typeof val) {
+                case "string":
+                case "number":
+                case "boolean":
+                case "undefined":
+                    taggableProps[key] = val;
+                    break;
+                default: {
+                    if (isTaggedTelemetryPropertyValue(val)) {
+                        taggableProps[key] = val;
+                    } else {
+                        // We don't support logging arbitrary objects
+                        taggableProps[key] = "REDACTED (arbitrary object)";
+                    }
+                    break;
+                }
+            }
+        }
+
+        return taggableProps;
     }
 }
 

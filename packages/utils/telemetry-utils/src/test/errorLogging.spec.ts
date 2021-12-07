@@ -324,7 +324,6 @@ describe("Error Logging", () => {
 
 class TestFluidError implements IFluidErrorBase {
     readonly atpStub: sinon.SinonStub;
-    expectedTelemetryProps: ITelemetryProperties;
 
     readonly errorType: string;
     readonly fluidErrorCode: string;
@@ -341,11 +340,19 @@ class TestFluidError implements IFluidErrorBase {
         this.errorInstanceId = uuid();
 
         this.atpStub = sinon.stub(this, "addTelemetryProperties");
-        this.expectedTelemetryProps = { ...errorProps };
+        this.addTelemetryProperties(errorProps);
     }
 
     getTelemetryProperties(): ITelemetryProperties {
-        throw new Error("Not Implemented");
+        const props = {};
+        for (const key of Object.keys(this)) {
+            if (["atpStub", "name"].indexOf(key) !== -1) {
+                continue;
+            }
+            const val = this[key];
+            props[key] = val;
+        }
+        return props;
     }
 
     addTelemetryProperties(props: ITelemetryProperties) {
@@ -360,7 +367,7 @@ class TestFluidError implements IFluidErrorBase {
     }
 
     withExpectedTelemetryProps(props: ITelemetryProperties) {
-        Object.assign(this.expectedTelemetryProps, props);
+        Object.assign(this, props);
         return this;
     }
 }
@@ -441,11 +448,11 @@ describe("normalizeError", () => {
             stack: "cool stack trace",
         });
         const typicalOutput = (message: string, stackHint: "<<natural stack>>" | "<<stack from input>>") => new TestFluidError({
-            errorType: "genericError",
-            fluidErrorCode: "",
+            errorType: "<unknown>",
+            fluidErrorCode: "fluidErrorCodeNormalize",
             message,
             stack: stackHint,
-        }).withExpectedTelemetryProps({ untrustedOrigin: 1 });
+        }).withExpectedTelemetryProps({ untrustedOrigin: 1, typeofError: "object" });
         const untrustedInputs: { [label: string]: () => { input: any, expectedOutput: TestFluidError }} = {
             "Fluid Error minus errorType": () => ({
                 input: sampleFluidError().withoutProperty("errorType"),
@@ -559,7 +566,7 @@ describe("normalizeError", () => {
                 expected.withExpectedTelemetryProps({ stack: inputStack });
             }
 
-            assert.deepStrictEqual(actual.getTelemetryProperties(), expected.expectedTelemetryProps, "telemetry props should match");
+            assert.deepStrictEqual(actual.getTelemetryProperties(), expected.getTelemetryProperties(), "telemetry props should match");
         }
         for (const annotationCase of Object.keys(annotationCases)) {
             const annotations = annotationCases[annotationCase];
@@ -570,7 +577,7 @@ describe("normalizeError", () => {
                     const { input, expectedOutput } = getTestCase();
 
                     // Act
-                    const normalized = normalizeError(input, annotations);
+                    const normalized = normalizeError(input, annotations, "fluidErrorCodeNormalize");
 
                     // Assert
                     assert.notEqual(input, normalized, "input should have yielded a new error object");
