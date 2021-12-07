@@ -7,8 +7,7 @@ import * as querystring from "querystring";
 import { AxiosError, AxiosInstance, AxiosRequestConfig, default as Axios } from "axios";
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
-import { throwR11sServiceNetworkError }  from "./error";
-import { createR11sServiceNetworkError } from ".";
+import { createR11sServiceNetworkError }  from "./error";
 
 export abstract class RestWrapper {
     constructor(

@@ -3,12 +3,21 @@
  * Licensed under the MIT License.
  */
 
+export enum NetworkErrorType {
+    GenericNetworkError = "GenericNetworkError",
+    AuthorizationError = "AuthorizationError",
+    ThrottlingError = "ThrottlingError",
+    NonRetryableError = "NonRetryableError",
+    FatalError = "FatalError",
+}
+
 export class NetworkError extends Error { // Do we need other classes as well, or just using the canRetry and
     constructor(                          // isFatal is enough? -> LETS CREATE OTHER CLASSES
         /**
          * HTTP status code that describes the error.
          */
         public readonly code: number,
+        public readonly errorType: NetworkErrorType,
         public readonly canRetry: boolean,
         public readonly isFatal: boolean,
         message: string,
@@ -30,22 +39,48 @@ export function createR11sServiceNetworkError(
             // a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
             // error message, "Network Error". "Network Error" can be retried, and is not fatal.
             const canRetry = errorMessage === "Network Error";
-            return new NetworkError(-1, canRetry, false, errorMessage, canRetry ? retryAfterMs : undefined);
+            return new NetworkError(
+                -1,
+                NetworkErrorType.GenericNetworkError,
+                canRetry,
+                false,
+                errorMessage,
+                canRetry ? retryAfterMs : undefined);
         }
         case 401:
         case 403:
-            return new NetworkError(statusCode, false, false, errorMessage);
+            return new NetworkError(statusCode, NetworkErrorType.AuthorizationError, false, false, errorMessage);
         case 404:
-            return new NetworkError(statusCode, false, false, errorMessage);
+            return new NetworkError(statusCode, NetworkErrorType.NonRetryableError, false, false, errorMessage);
         case 429:
-        case 500: // Why is 500 retryable in the driver errorUtils? Should it be retriable here too?
-            return new NetworkError(statusCode, true, false, errorMessage, retryAfterMs);
-        case 700:
-            // Represents failures that happen across Fluid server microservices that cannot be retried,
-            // but that do not represent a fatal failure from the point of view of the document/session.
-            return new NetworkError(statusCode, false, false, errorMessage);
+            return new NetworkError(
+                statusCode,
+                NetworkErrorType.ThrottlingError,
+                true,
+                false,
+                errorMessage,
+                retryAfterMs);
+        case 422:
+            return new NetworkError(
+                statusCode,
+                NetworkErrorType.NonRetryableError,
+                false,
+                false,
+                errorMessage,
+                retryAfterMs);
+        case 500:
+            return new NetworkError(
+                statusCode,
+                NetworkErrorType.FatalError,
+                false,
+                true,
+                errorMessage,
+                retryAfterMs);
+        case 502:
+        case 503:
+            return new NetworkError(statusCode, NetworkErrorType.GenericNetworkError, true, false, errorMessage);
         default:
-            return new NetworkError(statusCode, false, true, errorMessage);
+            return new NetworkError(statusCode, NetworkErrorType.FatalError, false, true, errorMessage);
     }
 }
 

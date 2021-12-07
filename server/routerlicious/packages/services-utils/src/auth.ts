@@ -9,7 +9,11 @@ import { Params } from "express-serve-static-core";
 import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import * as jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
-import { NetworkError, validateTokenClaimsExpiration } from "@fluidframework/server-services-client";
+import {
+    NetworkError,
+    throwR11sServiceNetworkError,
+    validateTokenClaimsExpiration,
+} from "@fluidframework/server-services-client";
 import type { ICache, ITenantManager } from "@fluidframework/server-services-core";
 import type { RequestHandler } from "express";
 import type { Provider } from "nconf";
@@ -26,19 +30,19 @@ export function validateTokenClaims(
     requireDocumentId = true): ITokenClaims {
     const claims = jwt.decode(token) as ITokenClaims;
     if (!claims) {
-        throw new NetworkError(403, "Missing token claims.");
+        throwR11sServiceNetworkError("Missing token claims.", 403);
     }
 
     if (claims.tenantId !== tenantId) {
-        throw new NetworkError(403, "TenantId in token claims does not match request.");
+        throwR11sServiceNetworkError("TenantId in token claims does not match request.", 403);
     }
 
     if (requireDocumentId && claims.documentId !== documentId) {
-        throw new NetworkError(403, "DocumentId in token claims does not match request.");
+        throwR11sServiceNetworkError("DocumentId in token claims does not match request.", 403);
     }
 
     if (claims.scopes === undefined || claims.scopes.length === 0) {
-        throw new NetworkError(403, "Missing scopes in token claims.");
+        throwR11sServiceNetworkError("Missing scopes in token claims.", 403);
     }
 
     return claims;

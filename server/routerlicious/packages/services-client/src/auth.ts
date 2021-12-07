@@ -7,7 +7,7 @@ import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definit
 import { KJUR as jsrsasign } from "jsrsasign";
 import jwtDecode from "jwt-decode";
 import { v4 as uuid } from "uuid";
-import { NetworkError } from "./error";
+import { throwR11sServiceNetworkError } from "./error";
 
 /**
  * Validates a JWT token to authorize routerlicious.
@@ -21,11 +21,11 @@ export function validateTokenClaims(
     const claims = jwtDecode<ITokenClaims>(token);
 
     if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
-        throw new NetworkError(403, "DocumentId and/or TenantId in token claims do not match requested resource");
+        throwR11sServiceNetworkError("DocumentId and/or TenantId in token claims do not match requested resource", 403);
     }
 
     if (claims.scopes === undefined || claims.scopes.length === 0) {
-        throw new NetworkError(403, "Missing scopes in token claims");
+        throwR11sServiceNetworkError("Missing scopes in token claims", 403);
     }
 
     return claims;
@@ -38,11 +38,11 @@ export function validateTokenClaims(
  */
 export function validateTokenClaimsExpiration(claims: ITokenClaims, maxTokenLifetimeSec: number): number {
     if (!claims.exp || !claims.iat || claims.exp - claims.iat > maxTokenLifetimeSec) {
-        throw new NetworkError(403, "Invalid token expiry");
+        throwR11sServiceNetworkError("Invalid token expiry", 403);
     }
     const lifeTimeMSec = (claims.exp * 1000) - (new Date()).getTime();
     if (lifeTimeMSec < 0) {
-        throw new NetworkError(401, "Expired token");
+        throwR11sServiceNetworkError("Expired token", 401);
     }
     return lifeTimeMSec;
 }

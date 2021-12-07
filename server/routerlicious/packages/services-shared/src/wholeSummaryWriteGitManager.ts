@@ -12,7 +12,7 @@ import {
     IWholeSummaryTree,
     IWholeSummaryTreeHandleEntry,
     IWholeSummaryTreeValueEntry,
-    NetworkError,
+    throwR11sServiceNetworkError,
     WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
 
@@ -39,7 +39,7 @@ function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry)
             unreferenced: (entry as IWholeSummaryTreeValueEntry).unreferenced,
         };
     }
-    throw new NetworkError(400, `Unknown entry type: ${entry.type}`);
+    throwR11sServiceNetworkError(`Unknown entry type: ${entry.type}`, 400);
 }
 
 export class WholeSummaryWriteGitManager {
@@ -94,7 +94,7 @@ export class WholeSummaryWriteGitManager {
             case SummaryType.Handle:
                 return (wholeSummaryTreeEntry as IWholeSummaryTreeHandleEntry).id;
             default:
-                throw new NetworkError(501, "Not Implemented");
+                throwR11sServiceNetworkError("Not Implemented", 501);
         }
     }
 
