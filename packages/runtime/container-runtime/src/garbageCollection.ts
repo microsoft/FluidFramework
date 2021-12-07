@@ -344,14 +344,6 @@ export class GarbageCollector implements IGarbageCollector {
             }
             this.currentGCState = { gcNodes };
         });
-
-        if(this.shouldRunGC) {
-            const defaultContainerRuntimeExpiryMs = 30 * 24 * 60 * 60 * 1000;
-
-            setTimeout(() => {
-                this.provider.setReadOnly();
-            }, defaultContainerRuntimeExpiryMs);
-        }
     }
 
     /**
