@@ -122,12 +122,9 @@ export function normalizeError(
     fluidError.addTelemetryProperties({
         ...annotations.props,
         untrustedOrigin: 1, // This will let us filter to errors not originated by our own code
+        typeofError: typeof(error),
     });
 
-    if (typeof(error) !== "object") {
-        // This is only interesting for non-objects
-        fluidError.addTelemetryProperties({ typeofError: typeof(error) });
-    }
     return fluidError;
 }
 
@@ -173,7 +170,7 @@ export function generateStack(): string | undefined {
  * @returns A new error object "wrapping" the given error
  */
  export function wrapError<T extends IFluidErrorBase>(
-    innerError: unknown,
+    innerError: any,
     newErrorFn: (message: string) => T,
 ): T {
     const {
@@ -191,6 +188,13 @@ export function generateStack(): string | undefined {
         newError.addTelemetryProperties({ innerErrorInstanceId: innerError.errorInstanceId });
     } else {
         newError.addTelemetryProperties({ untrustedOrigin: 1}); // To match normalizeError
+    }
+
+    // Preserve fluidErrorCode if it exists.
+    // Note that addTelemetryProperties() will not overwrite property if it exsits.
+    // Should be consolidated above via isFluidError() check once isValidLegacyError / patchWithErrorCode are deprecated
+    if (typeof(innerError?.fluidErrorCode) === "string") {
+        (newError as any).fluidErrorCode = innerError?.fluidErrorCode;
     }
 
     return newError;

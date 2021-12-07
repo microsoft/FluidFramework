@@ -252,7 +252,7 @@ export class ThresholdCounter {
     }
 
 // @public
-export function wrapError<T extends IFluidErrorBase>(innerError: unknown, newErrorFn: (message: string) => T): T;
+export function wrapError<T extends IFluidErrorBase>(innerError: any, newErrorFn: (message: string) => T): T;
 
 // @public
 export function wrapErrorAndLog<T extends IFluidErrorBase>(innerError: unknown, newErrorFn: (message: string) => T, logger: ITelemetryLogger): T;
