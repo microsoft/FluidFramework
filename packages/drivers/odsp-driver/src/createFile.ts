@@ -59,7 +59,7 @@ export async function createNewFluidFile(
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
         throw new NonRetryableError(
-            "CreateNewInvalidFilename", "Invalid filename", OdspErrorType.invalidFileNameError);
+            "createNewInvalidFilename", "Invalid filename", OdspErrorType.invalidFileNameError);
     }
 
     let itemId: string;
@@ -121,7 +121,7 @@ export async function createNewEmptyFluidFile(
 
         return PerformanceEvent.timedExecAsync(
             logger,
-            { eventName: "CreateNewEmptyFile" },
+            { eventName: "createNewEmptyFile" },
             async (event) => {
                 const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                 headers["Content-Type"] = "application/json";
@@ -179,7 +179,7 @@ export async function createNewFluidFileFromSummary(
 
         return PerformanceEvent.timedExecAsync(
             logger,
-            { eventName: "CreateNewFile" },
+            { eventName: "createNewFile" },
             async (event) => {
                 const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                 headers["Content-Type"] = "application/json";

@@ -248,7 +248,7 @@ export function throwOdspNetworkError(
         responseText,
         props);
 
-    networkError.addTelemetryProperties({ odspError: true, spoError: true });
+    networkError.addTelemetryProperties({ odspError: true, storageServiceError: true });
 
     // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw networkError;

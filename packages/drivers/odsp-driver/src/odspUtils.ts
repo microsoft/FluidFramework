@@ -179,10 +179,6 @@ export async function fetchAndParseAsJSONHelper<T>(
     requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<T>> {
     const { content, headers, commonSpoHeaders, duration } = await fetchHelper(requestInfo, requestInit);
-    // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including
-    // tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
-    // (many ops) almost always ends up with this error - I'd guess 1% of op request end up here... It always
-    // succeeds on retry.
     let text: string | undefined;
     try {
         text = await content.text();
@@ -196,12 +192,16 @@ export async function fetchAndParseAsJSONHelper<T>(
         };
         return res;
     } catch (e) {
+        // JSON.parse() can fail and message would container full request URI, including
+        // tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
+        // (many ops) almost always ends up with this error - I'd guess 1% of op request end up here... It always
+        // succeeds on retry.
+        // So do not log error object itself.
         throwOdspNetworkError(
             "errorWhileParsingFetchResponse",
             fetchIncorrectResponse,
             content, // response
             text,
-            { error: Object(e) },
         );
     }
 }

@@ -17,7 +17,7 @@ export function errorObjectFromSocketError(socketError: IOdspSocketError, handle
         socketError.code,
         socketError.retryAfter);
 
-    error.addTelemetryProperties({ odspError: true, odspRelayServiceError: true });
+    error.addTelemetryProperties({ odspError: true, relayServiceError: true });
 
     return error;
 }
