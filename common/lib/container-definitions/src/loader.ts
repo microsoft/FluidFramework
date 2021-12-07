@@ -41,7 +41,7 @@ export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer> {
 /**
  * Encapsulates a module entry point with corresponding code details.
  */
- export interface IFluidModuleWithDetails {
+export interface IFluidModuleWithDetails {
     /** Fluid code module that implements the runtime factory needed to instantiate the container runtime. */
     module: IFluidModule;
     /**

@@ -130,7 +130,7 @@ export interface ILoaderOptions extends ILoaderOptions1{
  * to have all the code loading modules in one package. #8193
  * Encapsulates a module entry point with corresponding code details.
  */
- export interface IFluidModuleWithDetails {
+export interface IFluidModuleWithDetails {
     /** Fluid code module that implements the runtime factory needed to instantiate the container runtime. */
     module: IFluidModule;
     /**
@@ -147,7 +147,7 @@ export interface ILoaderOptions extends ILoaderOptions1{
  * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
  * a package name and package version range.
  */
- export interface ICodeDetailsLoader
+export interface ICodeDetailsLoader
  extends Partial<IProvideFluidCodeDetailsComparer> {
  /**
   * Load the code module (package) that is capable to interact with the document.
