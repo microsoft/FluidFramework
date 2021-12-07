@@ -397,6 +397,7 @@ export class DeltaManager
         } else {
             return {
                 ...common,
+                // last connection mode right before disconnect
                 lastConnectionMode: this.client.mode,
                 // Report how many ops this client sent in last disconnected session
                 sentOps: this.clientSequenceNumber,
