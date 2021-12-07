@@ -4,7 +4,7 @@
  */
 
 export interface IDataStoreAliasMessage {
-    readonly id: string;
+    readonly internalId: string;
     readonly alias: string;
 }
 

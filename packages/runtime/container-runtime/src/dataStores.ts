@@ -128,7 +128,6 @@ export class DataStores implements IDisposable {
                     undefined,
                 );
             }
-
             this.contexts.addBoundOrRemoted(dataStoreContext);
         }
         this.containerLoadStats = {
@@ -212,13 +211,13 @@ export class DataStores implements IDisposable {
         const existingMapping = this.aliasMap.get(aliasMessage.alias);
         if (existingMapping !== undefined) {
             return {
-                suppliedInternalId: aliasMessage.id,
+                suppliedInternalId: aliasMessage.internalId,
                 alias: aliasMessage.alias,
                 aliasedInternalId: existingMapping,
             };
         }
 
-        const currentId = this.aliasMap.get(aliasMessage.id);
+        const currentId = this.aliasMap.get(aliasMessage.internalId);
         if (currentId === undefined) {
             return undefined;
         }
@@ -228,9 +227,9 @@ export class DataStores implements IDisposable {
         this.contexts.get(currentId)?.setRoot();
 
         return {
-            suppliedInternalId: aliasMessage.id,
+            suppliedInternalId: aliasMessage.internalId,
             alias: aliasMessage.alias,
-            aliasedInternalId: aliasMessage.id,
+            aliasedInternalId: aliasMessage.internalId,
         };
     }
 

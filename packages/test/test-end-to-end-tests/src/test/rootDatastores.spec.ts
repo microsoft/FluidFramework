@@ -88,7 +88,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     const trySetAlias = async (runtime: ContainerRuntime, datastore: IFluidRouter, alias: string) => {
         const channel = datastore as IFluidDataStoreChannel;
         const message = {
-            id: channel.id,
+            internalId: channel.id,
             alias,
         };
 

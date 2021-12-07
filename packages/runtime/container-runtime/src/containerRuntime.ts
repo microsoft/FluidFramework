@@ -1734,7 +1734,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        // [TODO:andre4i]: Figure out if ContainerMessageType.AssignAlias is needed here
         return true;
     }
 
