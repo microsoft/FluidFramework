@@ -56,7 +56,7 @@ export interface IFluidModuleWithDetails {
  * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
  * a package name and package version range.
  */
- export interface ICodeDetailsLoader
+export interface ICodeDetailsLoader
  extends Partial<IProvideFluidCodeDetailsComparer> {
  /**
   * Load the code module (package) that is capable to interact with the document.
