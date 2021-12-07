@@ -91,6 +91,10 @@ export class ContainerContext implements IContainerContext {
 
     public readonly taggedLogger: ITelemetryLogger;
 
+    public setReadOnly(): void {
+        this.container.forceReadonly(true);
+    }
+
     /**
      * Subtlety: returns this.taggedLogger since vanilla this.logger is now deprecated. See IContainerContext for more
      * details.
