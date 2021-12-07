@@ -18,6 +18,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove `loader` property from `MockFluidDataStoreContext` class](#Remove-loader-property-from-MockFluidDataStoreContext-class)
 - [maxMessageSize removed from IConnectionDetails and IDocumentDeltaConnection](#maxMessageSize-removed-from-IConnectionDetails-and-IDocumentDeltaConnection)
 - [Remove `IntervalCollection.getView()` from sequence dds](#Remove-IntervalCollectiongetView-from-sequence-dds)
+- [Move `ICodeDetailsLoader` and `IFluidModuleWithDetails` interface from `@fluidframework/container-loader` to `@fluidframework/container-definitions`](#Move-ICodeDetailsLoader-and-IFluidModuleWithDetails-interface-from-fluidframeworkcontainer-loader-to-fluidframeworkcontainer-definitions)
 
 ### `IContainer` interface updated to expose actively used `Container` public APIs
 In order to have the `IContainer` interface be the active developer surface that is used when interacting with a `Container` instance, it has been updated to expose the APIs that are necessary for currently used behavior. The motivation here is to move away from using the `Container` class when only its type is required, and to use the `IContainer` interface instead.
@@ -73,6 +74,9 @@ The `maxMessageSize` property from `IConnectionDetails` and `IDocumentDeltaConne
 
 ### Remove `IntervalCollection.getView()` from sequence dds
 The `IntervalCollection.getView()` was removed.  If you were calling this API, you should instead refer to the `IntervalCollection` itself directly in places where you were using the view.
+
+### Move `ICodeDetailsLoader` and `IFluidModuleWithDetails` interface from `@fluidframework/container-loader` to `@fluidframework/container-definitions`
+The `ICodeDetailsLoader` and `IFluidModuleWithDetails` interface are moved from `@fluidframework/container-loader` to `@fluidframework/container-defintions`. The ICodeDetailsLoader interface would be imported from `@fluidframework/container-definition` package.
 
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
