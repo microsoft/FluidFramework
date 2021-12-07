@@ -152,8 +152,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     CreateForwardIteratorWithEndPosition(endPosition: number): IntervalCollectionIterator<TInterval>;
     // (undocumented)
     CreateForwardIteratorWithStartPosition(startPosition: number): IntervalCollectionIterator<TInterval>;
-    // @deprecated (undocumented)
-    delete(start: number, end: number): void;
     // (undocumented)
     deleteInterval(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
     // (undocumented)
@@ -162,8 +160,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
     // (undocumented)
     getIntervalById(id: string): TInterval;
-    // @deprecated (undocumented)
-    getView(onDeserialize?: DeserializeCallback): Promise<IntervalCollection<TInterval>>;
     // (undocumented)
     map(fn: (interval: TInterval) => void): void;
     // (undocumented)

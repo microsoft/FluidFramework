@@ -202,6 +202,7 @@ declare function get_current_InterfaceDeclaration_IConnectionDetails():
 declare function use_old_InterfaceDeclaration_IConnectionDetails(
     use: old.IConnectionDetails);
 use_old_InterfaceDeclaration_IConnectionDetails(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnectionDetails());
 
 /*
@@ -374,6 +375,7 @@ declare function get_current_InterfaceDeclaration_IDeltaManager():
 declare function use_old_InterfaceDeclaration_IDeltaManager(
     use: old.IDeltaManager<any,any>);
 use_old_InterfaceDeclaration_IDeltaManager(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDeltaManager());
 
 /*

@@ -59,6 +59,16 @@ export enum BindState {
 }
 
 // @public
+export namespace ConnectionState {
+    export type Connected = 2;
+    export type Connecting = 1;
+    export type Disconnected = 0;
+}
+
+// @public
+export type ConnectionState = ConnectionState.Disconnected | ConnectionState.Connecting | ConnectionState.Connected;
+
+// @public
 export enum ContainerErrorType {
     dataCorruptionError = "dataCorruptionError",
     dataProcessingError = "dataProcessingError",
@@ -102,8 +112,6 @@ export interface IConnectionDetails {
     existing: boolean;
     // (undocumented)
     initialClients: ISignalClient[];
-    // @deprecated (undocumented)
-    maxMessageSize: number;
     // (undocumented)
     mode: ConnectionMode;
     // (undocumented)
@@ -116,21 +124,33 @@ export interface IConnectionDetails {
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
     attach(request: IRequest): Promise<void>;
     readonly attachState: AttachState;
+    readonly audience?: IAudience;
+    // @alpha
+    readonly clientId?: string | undefined;
     close(error?: ICriticalContainerError): void;
     closeAndGetPendingLocalState(): string;
     readonly closed: boolean;
     // @deprecated
-    readonly codeDetails: IFluidCodeDetails | undefined;
+    readonly codeDetails?: IFluidCodeDetails | undefined;
+    readonly connected?: boolean;
+    readonly connectionState?: ConnectionState;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    // @alpha
+    forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getLoadedCodeDetails?(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorum;
     getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     readonly isDirty: boolean;
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
+    readonly readOnlyInfo?: ReadOnlyInfo;
     request(request: IRequest): Promise<IResponse>;
     resolvedUrl: IResolvedUrl | undefined;
+    // @alpha
+    resume?(): void;
     serialize(): Promise<string>;
+    // @alpha
+    setAutoReconnect?(reconnect: boolean): void;
 }
 
 // @public
@@ -157,6 +177,8 @@ export interface IContainerContext extends IDisposable {
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
     getLoadedFromVersion(): IVersion | undefined;
+    // @deprecated (undocumented)
+    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     // (undocumented)
     readonly id: string;
     // (undocumented)

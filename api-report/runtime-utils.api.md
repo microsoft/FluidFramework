@@ -109,9 +109,6 @@ export function getBlobSize(content: ISummaryBlob["content"]): number;
 export function getNormalizedObjectStoragePathParts(path: string): string[];
 
 // @public (undocumented)
-export function getStack(): string | undefined;
-
-// @public (undocumented)
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {
 }
 

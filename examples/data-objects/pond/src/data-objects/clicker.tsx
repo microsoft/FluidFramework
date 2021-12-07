@@ -10,7 +10,6 @@ import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
-import { IEvent } from "@fluidframework/common-definitions";
 
 const storedMapKey = "storedMap";
 const counter1Key = "counter";
@@ -73,7 +72,7 @@ export class Clicker extends DataObject implements IFluidHTMLView {
 
     public static getFactory() { return Clicker.factory; }
 
-    private static readonly factory = new DataObjectFactory<Clicker, undefined, undefined, IEvent>(
+    private static readonly factory = new DataObjectFactory(
         Clicker.ComponentName,
         Clicker,
         [

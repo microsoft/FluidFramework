@@ -151,8 +151,6 @@ class BlobCache {
     }
 }
 
-export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000;
-
 export class OdspDocumentStorageService implements IDocumentStorageService {
     readonly policies = {
         // By default, ODSP tells the container not to prefetch/cache.
@@ -315,9 +313,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             this.blobCache.setBlob(blobId, blob);
         }
 
-        if (!this.attributesBlobHandles.has(blobId)) {
-            return blob;
-        }
         return blob;
     }
 
@@ -422,16 +417,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                     // Record the cache age
                                     // eslint-disable-next-line @typescript-eslint/dot-notation
                                     props["cacheEntryAge"] = age;
-
-                                    // TODO: Refactor this logic (maybe move to a separate function)
-                                    // TODO: Currently there is a max of two days. Potentially remove this logic once proactive expiry exists.
-                                    // Set the max age to 2 days, a network call to retrieve the snapshot will be made if undefined is returned.
-                                    const maxCacheAge = defaultCacheExpiryTimeoutMs;
-                                    if (age > maxCacheAge) {
-                                        await this.epochTracker.removeEntries();
-                                        this.logger.sendTelemetryEvent({ eventName: "odspVersionsCacheExpired", duration: age, maxCacheAge });
-                                        return undefined;
-                                    }
                                 }
 
                                 return snapshotCachedEntry;
@@ -486,7 +471,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     event.end({ ...props, method });
                     return retrievedSnapshot;
                 },
-                {end: true, cancel: "error"},
             );
 
             // Successful call, make network calls only

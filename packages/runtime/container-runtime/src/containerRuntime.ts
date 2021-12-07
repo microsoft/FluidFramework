@@ -6,15 +6,15 @@
 import { EventEmitter } from "events";
 import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    FluidObject,
+    IFluidConfiguration,
+    IFluidHandle,
+    IFluidHandleContext,
     IFluidObject,
     IFluidRouter,
-    IFluidHandleContext,
     IFluidSerializer,
     IRequest,
     IResponse,
-    IFluidHandle,
-    IFluidConfiguration,
-    FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -49,10 +49,6 @@ import {
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
 import { DataCorruptionError, GenericError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
-import {
-    BlobTreeEntry,
-    TreeTreeEntry,
-} from "@fluidframework/protocol-base";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -97,6 +93,7 @@ import {
     exceptionToResponse,
     responseToException,
     seqFromTree,
+    convertSummaryTreeToITree,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -585,6 +582,19 @@ export class ScheduleManager {
  */
 export const agentSchedulerId = "_scheduler";
 
+// safely check navigator and get the hardware spec value
+export function getDeviceSpec() {
+    try {
+        if (typeof navigator === "object" && navigator !== null) {
+            return {
+                deviceMemory: (navigator as any).deviceMemory,
+                hardwareConcurrency: navigator.hardwareConcurrency,
+            };
+        }
+    } catch {
+    }
+    return {};
+}
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
@@ -924,7 +934,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         } else {
             this.createContainerMetadata = {
                 createContainerRuntimeVersion: pkgVersion,
-                createContainerTimestamp: performance.now(),
+                createContainerTimestamp: Date.now(),
             };
         }
 
@@ -947,7 +957,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          * of this client's connection - https://github.com/microsoft/FluidFramework/issues/8375.
          */
         const getCurrentTimestamp = () => {
-            return this.deltaManager.lastMessage?.timestamp ?? performance.now();
+            return this.deltaManager.lastMessage?.timestamp ?? Date.now();
         };
         this.garbageCollector = GarbageCollector.create(
             this,
@@ -1031,12 +1041,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.context.quorum.on("removeMember", (clientId: string) => {
             this.clearPartialChunks(clientId);
-        });
-
-        this.context.quorum.on("addProposal", (proposal) => {
-            if (proposal.key === "code" || proposal.key === "code2") {
-                this.emit("codeDetailsProposed", proposal.value, proposal);
-            }
         });
 
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
@@ -1135,7 +1139,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.deltaManager.on("readonly", (readonly: boolean) => {
             // we accumulate ops while being in read-only state.
             // once user gets write permissions and we have active connection, flush all pending ops.
-            assert(readonly === this.deltaManager.readonly, 0x124 /* "inconsistent readonly property/event state" */);
+            // eslint-disable-next-line max-len
+            assert(readonly === this.deltaManager.readOnlyInfo.readonly, 0x124 /* "inconsistent readonly property/event state" */);
 
             // We need to be very careful with when we (re)send pending ops, to ensure that we only send ops
             // when we either never send an op, or attempted to send it but we know for sure it was not
@@ -1158,6 +1163,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.deltaManager.on("op", this.onOp);
         }
 
+        // logging hardware telemetry
+        logger.sendTelemetryEvent({
+            eventName:"DeviceSpec",
+            ...getDeviceSpec(),
+        });
+
+        // logging container load stats
         this.logger.sendTelemetryEvent({
             eventName: "ContainerLoadStats",
             ...this.createContainerMetadata,
@@ -1167,6 +1179,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             disableIsolatedChannels: metadata?.disableIsolatedChannels,
             gcVersion: metadata?.gcFeature,
         });
+
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
@@ -1329,26 +1342,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @deprecated - Use summarize to get summary of the container runtime.
      */
     public async snapshot(): Promise<ITree> {
-        if (this.garbageCollector.shouldRunGC) {
-            await this.collectGarbage({ logger: this.logger, fullGC: true /* fullGC */ });
-        }
-
-        const root: ITree = { entries: [] };
-        const entries = await this.dataStores.snapshot();
-
-        if (this.disableIsolatedChannels) {
-            root.entries = root.entries.concat(entries);
-        } else {
-            root.entries.push(new TreeTreeEntry(channelsTreeName, { entries }));
-        }
-
-        root.entries.push(new BlobTreeEntry(metadataBlobName, JSON.stringify(this.formMetadata())));
-
-        if (this.chunkMap.size > 0) {
-            root.entries.push(new BlobTreeEntry(chunksBlobName, JSON.stringify([...this.chunkMap])));
-        }
-
-        return root;
+        const summaryResult = await this.summarize({
+            summaryLogger: this.logger,
+            fullTree: true,
+            trackState: false,
+            runGC: this.garbageCollector.shouldRunGC,
+            fullGC: true,
+        });
+        return convertSummaryTreeToITree(summaryResult.summary);
     }
 
     private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {

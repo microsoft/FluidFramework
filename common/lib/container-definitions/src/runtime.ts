@@ -5,11 +5,12 @@
 
 import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
-    IFluidObject,
+    FluidObject,
+    IFluidCodeDetails,
     IFluidConfiguration,
+    IFluidObject,
     IRequest,
     IResponse,
-    FluidObject,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -134,6 +135,14 @@ export interface IContainerContext extends IDisposable {
     readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly quorum: IQuorum;
+    /**
+     * @deprecated This method is provided as a migration tool for customers currently reading the code details
+     * from within the Container by directly accessing the Quorum proposals.  The code details should not be accessed
+     * from within the Container as this requires coupling between the container contents and the code loader.
+     * Direct access to Quorum proposals will be removed in an upcoming release, and in a further future release this
+     * migration tool will be removed.
+     */
+    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
     /** @deprecated - Use `taggedLogger` if present. Otherwise, be sure to handle tagged data

@@ -115,12 +115,17 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
 export async function initialize(testDriver: ITestDriver, seed: number, testConfig: ILoadTestConfig, verbose: boolean) {
     const randEng = random.engines.mt19937();
     randEng.seed(seed);
-    const options = random.pick(randEng, generateLoaderOptions(seed));
+    const loaderOptions = random.pick(
+        randEng,
+        generateLoaderOptions(seed, testConfig.optionOverrides?.[testDriver.type]?.loader));
+    const containerOptions = random.pick(
+        randEng,
+        generateRuntimeOptions(seed, testConfig.optionOverrides?.[testDriver.type]?.container));
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
-        codeLoader: createCodeLoader(random.pick(randEng, generateRuntimeOptions(seed))),
+        codeLoader: createCodeLoader(containerOptions),
         logger: ChildLogger.create(await loggerP, undefined,
             {
                 all: {
@@ -128,7 +133,7 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
                     driverEndpointName: testDriver.endpointName,
                 },
             }),
-        options,
+        options: loaderOptions,
         detachedBlobStorage: new MockDetachedBlobStorage(),
     });
 

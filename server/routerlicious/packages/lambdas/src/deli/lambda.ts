@@ -136,6 +136,7 @@ export interface IDeliLambdaEvents extends IEvent {
     (event: "opEvent",
         listener: (type: OpEventType, sequenceNumber: number, sequencedMessagesSinceLastOpEvent: number) => void);
     (event: "updatedDurableSequenceNumber", listener: (durableSequenceNumber: number) => void);
+    (event: "close", listener: (type: LambdaCloseType) => void);
 }
 
 export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements IPartitionLambda {
@@ -416,6 +417,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         this.clearOpIdleTimer();
         this.clearOpMaxTimeTimer();
 
+        this.emit("close", closeType);
         this.removeAllListeners();
 
         if (this.serviceConfiguration.enableLumberjack) {

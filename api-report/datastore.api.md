@@ -161,7 +161,7 @@ export const mixinRequestHandler: (requestHandler: (request: IRequest, runtime: 
 export const mixinSummaryHandler: (handler: (runtime: FluidDataStoreRuntime) => Promise<{
     path: string[];
     content: string;
-}>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;
+} | undefined>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;
 
 
 // (No @packageDocumentation comment for this package)
