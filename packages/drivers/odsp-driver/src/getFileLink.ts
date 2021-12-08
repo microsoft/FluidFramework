@@ -5,9 +5,9 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, delay } from "@fluidframework/common-utils";
-import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
+import { canRetryOnError, getRetryDelayFromError, NonRetryableError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { fetchIncorrectResponse, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
     IOdspUrlParts,
     OdspResourceTokenFetchOptions,
@@ -120,7 +120,10 @@ async function getFileLinkCore(
                 const directUrl = sharingInfo?.d?.directUrl;
                 if (typeof directUrl !== "string") {
                     // This will retry once in getWithRetryForTokenRefresh
-                    throwOdspNetworkError("malformedGetSharingInformationResponse", fetchIncorrectResponse);
+                    throw new NonRetryableError(
+                        "getFileLinkCoreMalformedResponse",
+                        "Malformed GetSharingInformation response",
+                        DriverErrorType.incorrectServerResponse);
                 }
                 return directUrl;
             });
@@ -171,7 +174,10 @@ async function getFileItemLite(
                 const responseJson = await response.content.json();
                 if (!isFileItemLite(responseJson)) {
                     // This will retry once in getWithRetryForTokenRefresh
-                    throwOdspNetworkError("malformedGetFileItemLiteResponse", fetchIncorrectResponse);
+                    throw new NonRetryableError(
+                        "getFileItemLiteMalformedResponse",
+                        "Malformed getFileItemLite response",
+                        DriverErrorType.incorrectServerResponse);
                 }
                 return responseJson;
             });

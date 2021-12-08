@@ -12,7 +12,6 @@ import {
     IFluidHandleContext,
     IFluidObject,
     IFluidRouter,
-    IFluidSerializer,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -86,7 +85,6 @@ import {
     addTreeToSummary,
     convertToSummaryTree,
     createRootSummarizerNodeWithGC,
-    FluidSerializer,
     IRootSummarizerNodeWithGC,
     RequestParser,
     create404Response,
@@ -135,6 +133,7 @@ import { formExponentialFn, Throttler } from "./throttler";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import {
     GarbageCollector,
+    gcTreeKey,
     IGarbageCollectionRuntime,
     IGarbageCollector,
     IGCStats,
@@ -816,9 +815,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.attachState;
     }
 
-    // Back compat: 0.28, can be removed in 0.29
-    public readonly IFluidSerializer: IFluidSerializer;
-
     public readonly IFluidHandleContext: IFluidHandleContext;
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
@@ -886,6 +882,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly dataStores: DataStores;
 
     /**
+     * True, if GC data should be written at root of the summary tree.
+     * False, if data stores should write GC blobs in their summary tree.
+     */
+    public get writeGCDataAtRoot(): boolean {
+        return this.garbageCollector.writeDataAtRoot;
+    }
+
+    /**
      * True if generating summaries with isolated channels is
      * explicitly disabled. This only affects how summaries are written,
      * and is the single source of truth for this container.
@@ -945,7 +949,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.chunkMap = new Map<string, string[]>(chunks);
 
         this.IFluidHandleContext = new ContainerFluidHandleContext("", this);
-        this.IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
 
         this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
 
@@ -1014,6 +1017,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 ),
             (id: string) => this.summarizerNode.deleteChild(id),
             this._logger,
+            async () => this.garbageCollector.getDataStoreBaseGCDetails(),
             (id: string) => this.garbageCollector.nodeChanged(id),
         );
 
@@ -1370,6 +1374,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (snapshot.entries.length !== 0) {
             const blobsTree = convertToSummaryTree(snapshot, false);
             addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
+        }
+
+        if (this.writeGCDataAtRoot) {
+            const gcSummary = this.garbageCollector.summarize();
+            if (gcSummary !== undefined) {
+                addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
+            }
         }
     }
 

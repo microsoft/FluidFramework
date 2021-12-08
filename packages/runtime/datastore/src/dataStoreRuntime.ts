@@ -69,11 +69,9 @@ import {
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import {
-    cloneGCData,
     GCDataBuilder,
-    getChildNodesGCData,
-    getChildNodesUsedRoutes,
-    removeRouteFromAllNodes,
+    unpackChildNodesGCDetails,
+    unpackChildNodesUsedRoutes,
 } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
@@ -145,6 +143,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
+    // Back compat: deprecated in 0.53, can be removed in versions >= 0.55.
     public get IFluidSerializer() { return this.serializer; }
 
     public get IFluidHandleContext() { return this; }
@@ -178,13 +177,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly audience: IAudience;
     public readonly logger: ITelemetryLogger;
 
-    // A map of child channel context ids to the context's used routes in the initial summary of this data store. This
-    // is used to initialize the context with data from the previous summary.
-    private readonly initialChannelUsedRoutesP: LazyPromise<Map<string, string[]>>;
-
-    // A map of child channel context ids to the channel context's GC data in the initial summary of this data store.
-    // This is used to initialize the context with data from the previous summary.
-    private readonly initialChannelGCDataP: LazyPromise<Map<string, IGarbageCollectionData>>;
+    // A map of child channel context ids to the their GC details in the initial summary of this data store.
+    // This is used to initialize the channel context with data from the base summary.
+    private readonly initialChannelsGCDetailsP: LazyPromise<Map<string, IGarbageCollectionSummaryDetails>>;
 
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -208,29 +203,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         const tree = dataStoreContext.baseSnapshot;
 
-        this.initialChannelUsedRoutesP = new LazyPromise(async () => {
+        this.initialChannelsGCDetailsP = new LazyPromise(async () => {
             const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails();
-            if (gcDetailsInInitialSummary?.usedRoutes !== undefined) {
-                // Remove the route to this data store, if it exists.
-                const usedRoutes = gcDetailsInInitialSummary.usedRoutes.filter(
-                    (id: string) => { return id !== "/" && id !== ""; },
-                );
-                return getChildNodesUsedRoutes(usedRoutes);
-            }
-            return new Map();
-        });
-
-        this.initialChannelGCDataP = new LazyPromise(async () => {
-            const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails();
-            if (gcDetailsInInitialSummary?.gcData !== undefined) {
-                const gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
-                // Remove GC node for this data store, if any.
-                delete gcData.gcNodes["/"];
-                // Remove the back route to this data store that was added when generating each child's GC nodes.
-                removeRouteFromAllNodes(gcData.gcNodes, this.absolutePath);
-                return getChildNodesGCData(gcData);
-            }
-            return new Map();
+            return unpackChildNodesGCDetails(gcDetailsInInitialSummary);
         });
 
         // Must always receive the data store type inside of the attributes
@@ -644,7 +619,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      */
     public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         // Get a map of channel ids to routes used in it.
-        const usedContextRoutes = getChildNodesUsedRoutes(usedRoutes);
+        const usedContextRoutes = unpackChildNodesUsedRoutes(usedRoutes);
 
         // Verify that the used routes are correct.
         for (const [id] of usedContextRoutes) {
@@ -665,20 +640,17 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * @returns the requested channel's GC details in the initial summary.
      */
     private async getChannelInitialGCDetails(channelId: string): Promise<IGarbageCollectionSummaryDetails> {
-        const channelInitialUsedRoutes = await this.initialChannelUsedRoutesP;
-        const channelInitialGCData = await this.initialChannelGCDataP;
-
-        let channelUsedRoutes = channelInitialUsedRoutes.get(channelId);
-        // Currently, channel context's are always considered used. So, it there is no used route for it, we still
-        // need to mark it as used. Add self-route (empty string) to the channel context's used routes.
-        if (channelUsedRoutes === undefined || channelUsedRoutes.length === 0) {
-            channelUsedRoutes = [""];
+        let channelInitialGCDetails = (await this.initialChannelsGCDetailsP).get(channelId);
+        if (channelInitialGCDetails === undefined) {
+            channelInitialGCDetails = {};
         }
 
-        return {
-            usedRoutes: channelUsedRoutes,
-            gcData: channelInitialGCData.get(channelId),
-        };
+        // Currently, channel context's are always considered used. So, it there are no used routes for it, we still
+        // need to mark it as used. Add self-route (empty string) to the channel context's used routes.
+        if (channelInitialGCDetails.usedRoutes === undefined || channelInitialGCDetails.usedRoutes.length === 0) {
+            channelInitialGCDetails.usedRoutes = [""];
+        }
+        return channelInitialGCDetails;
     }
 
     /**

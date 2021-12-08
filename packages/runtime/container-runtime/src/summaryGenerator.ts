@@ -346,10 +346,9 @@ export class SummaryGenerator {
                 }});
             } else {
                 // Check for retryDelay in summaryNack response.
-                // back-compat: cast needed until dep on protocol-definitions version bump
                 assert(ackNackOp.type === MessageType.SummaryNack, 0x274 /* "type check" */);
-                const summaryNack = ackNackOp.contents as { message?: string; retryAfter?: number; };
-                const message = summaryNack.message ?? ackNackOp.contents.errorMessage;
+                const summaryNack = ackNackOp.contents;
+                const message = summaryNack?.message;
                 const retryAfterSeconds = summaryNack?.retryAfter;
 
                 const error = new LoggingError(`summaryNack: ${message}`, { retryAfterSeconds });

@@ -61,7 +61,7 @@ describe("Map", () => {
                 dummyMap.on("op", (arg1, arg2, arg3) => {
                     assert.fail("shouldn't receive an op event");
                 });
-                dummyMap.on("valueChanged", (changed, local, op, target) => {
+                dummyMap.on("valueChanged", (changed, local, target) => {
                     assert.equal(valueChangedExpected, true, "valueChange event not expected");
                     valueChangedExpected = false;
 
@@ -69,15 +69,13 @@ describe("Map", () => {
                     assert.equal(changed.previousValue, previousValue);
 
                     assert.equal(local, true, "local should be true for local action for valueChanged event");
-                    assert.equal(op, undefined, "op should be undefined for local actions for valueChanged event");
                     assert.equal(target, dummyMap, "target should be the map for valueChanged event");
                 });
-                dummyMap.on("clear", (local, op, target) => {
+                dummyMap.on("clear", (local, target) => {
                     assert.equal(clearExpected, true, "clear event not expected");
                     clearExpected = false;
 
                     assert.equal(local, true, "local should be true for local action  for clear event");
-                    assert.equal(op, undefined, "op should be undefined for local actions for clear event");
                     assert.equal(target, dummyMap, "target should be the map for clear event");
                 });
                 dummyMap.on("error", (error) => {

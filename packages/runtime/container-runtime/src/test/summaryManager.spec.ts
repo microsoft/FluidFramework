@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import sinon from "sinon";
 import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
-import { IFluidHandle, IFluidLoadable, IFluidRouter } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
     IConnectedEvents,
@@ -100,9 +100,7 @@ describe("Summary Manager", () => {
 
         public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = () => this.notImplemented();
         public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = () => this.notImplemented();
-        public readonly request: ISummarizer["request"] = () => this.notImplemented();
         public get IFluidLoadable(): IFluidLoadable { return this.notImplemented(); }
-        public get IFluidRouter(): IFluidRouter { return this.notImplemented(); }
         public get handle(): IFluidHandle { return this.notImplemented(); }
     }
 

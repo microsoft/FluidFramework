@@ -107,7 +107,7 @@ export interface IFluidDataStoreRuntime extends IFluidRouter, IEventProvider<IFl
     readonly id: string;
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly IFluidSerializer: IFluidSerializer;
     // (undocumented)
     readonly logger: ITelemetryLogger;

@@ -93,6 +93,8 @@ const createReconnectError = (fluidErrorCode: string, err: any) =>
         (errorMessage: string) => new GenericNetworkError(fluidErrorCode, errorMessage, err?.canRetry === true),
     );
 
+const fatalConnectErrorProp = { fatalConnectError: true };
+
 export interface IConnectionArgs {
     mode?: ConnectionMode;
     fetchOpsFromStorage?: boolean;
@@ -331,7 +333,7 @@ export class DeltaManager
     public get connectionMode(): ConnectionMode {
         assert(!this.downgradedConnection || this.connection?.mode === "write",
             0x277 /* "Did we forget to reset downgradedConnection on new connection?" */);
-        if (this.connection === undefined || this.downgradedConnection) {
+        if (this.connection === undefined) {
             return "read";
         }
         return this.connection.mode;
@@ -704,9 +706,7 @@ export class DeltaManager
         }
 
         const docService = this.serviceProvider();
-        if (docService === undefined) {
-            throw new Error("Container is not attached");
-        }
+        assert(docService !== undefined, 0x2a7 /* "Container is not attached" */);
 
         if (docService.policies?.storageOnly === true) {
             const connection = new NoDeltaStream();
@@ -749,7 +749,7 @@ export class DeltaManager
 
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(origError)) {
-                        const error = normalizeError(origError);
+                        const error = normalizeError(origError, { props: fatalConnectErrorProp });
                         this.close(error);
                         throw error;
                     }
@@ -808,9 +808,11 @@ export class DeltaManager
         const cleanupAndReject = (error) => {
             this.connectionP = undefined;
             this.removeListener("closed", cleanupAndReject);
+
             // This error came from some logic error in this file. Fail-fast to learn and fix the issue faster
-            this.close(error);
-            deferred.reject(error);
+            const normalizedError = normalizeError(error, { props: fatalConnectErrorProp });
+            this.close(normalizedError);
+            deferred.reject(normalizedError);
         };
         this.on("closed", cleanupAndReject);
 
@@ -872,7 +874,7 @@ export class DeltaManager
         // Note that we also want nacks to be rare and be treated as catastrophic failures.
         // Be careful with reentrancy though - disconnected event should not be be raised in the
         // middle of the current workflow, but rather on clean stack!
-        if (this.connectionMode === "read") {
+        if (this.connectionMode === "read" || this.downgradedConnection) {
             if (!this.pendingReconnect) {
                 this.pendingReconnect = true;
                 Promise.resolve().then(async () => {
@@ -1047,8 +1049,12 @@ export class DeltaManager
 
         this.closeAbortController.abort();
 
+        const disconnectReason = error !== undefined
+            ? `Closing DeltaManager (${error.message})`
+            : "Closing DeltaManager";
+
         // This raises "disconnect" event if we have active connection.
-        this.disconnectFromDeltaStream(error !== undefined ? `${error.message}` : "Container closed");
+        this.disconnectFromDeltaStream(disconnectReason);
 
         this._inbound.clear();
         this._outbound.clear();
@@ -1189,7 +1195,7 @@ export class DeltaManager
 
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
-            this.disconnectFromDeltaStream(`Disconnect on close`);
+            this.disconnectFromDeltaStream("DeltaManager already closed");
             return;
         }
 
@@ -1359,11 +1365,13 @@ export class DeltaManager
         const canRetry = error !== undefined ? canRetryOnError(error) : true;
 
         // If reconnection is not an option, close the DeltaManager
-        if (this.reconnectMode === ReconnectMode.Never || !canRetry) {
+        if (!canRetry) {
+            this.close(normalizeError(error, { props: fatalConnectErrorProp }));
+        } else if (this.reconnectMode === ReconnectMode.Never) {
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
             // are very misleading, as first initial reaction - some logic is broken.
-            this.close(canRetry ? undefined : error);
+            this.close();
         }
 
         // If closed then we can't reconnect
@@ -1571,8 +1579,6 @@ export class DeltaManager
                 // We have been kicked out from quorum
                 this.logger.sendPerformanceEvent({ eventName: "ReadConnectionTransition" });
                 this.downgradedConnection = true;
-                assert(this.connectionMode === "read",
-                    0x27c /* "effective connectionMode should be 'read' after downgrade" */);
             }
         }
 

@@ -31,7 +31,6 @@ import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { IFluidTokenProvider } from '@fluidframework/container-definitions';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
@@ -139,8 +138,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get IFluidRouter(): this;
     // (undocumented)
-    readonly IFluidSerializer: IFluidSerializer;
-    // (undocumented)
     get IFluidTokenProvider(): IFluidTokenProvider | undefined;
     get isDirty(): boolean;
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean): Promise<ContainerRuntime>;
@@ -197,7 +194,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
-    }
+    get writeGCDataAtRoot(): boolean;
+}
 
 // @public (undocumented)
 export interface ContainerRuntimeMessage {
@@ -240,6 +238,12 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
     // (undocumented)
     get IFluidDataStoreRegistry(): this;
     }
+
+// @public (undocumented)
+export const gcBlobPrefix = "__gc";
+
+// @public (undocumented)
+export const gcTreeKey = "gc";
 
 // @public
 export interface IAckedSummary {
@@ -490,7 +494,7 @@ export interface ISummarizeOptions {
 export const ISummarizer: keyof IProvideSummarizer;
 
 // @public (undocumented)
-export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidLoadable, Partial<IProvideSummarizer> {
+export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer> {
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     // (undocumented)
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
@@ -682,11 +686,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     // (undocumented)
     get IFluidLoadable(): this;
     // (undocumented)
-    get IFluidRouter(): this;
-    // (undocumented)
     get ISummarizer(): this;
-    // (undocumented)
-    request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
     stop(reason: SummarizerStopReason): void;
