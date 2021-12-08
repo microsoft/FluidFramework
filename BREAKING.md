@@ -22,6 +22,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Removed `errorMessage` property from `ISummaryNack` interface](#Removed-errorMessage-property-from-ISummaryNack-interface)
 - [ISequencedDocumentMessage arg removed from SharedMap and SharedDirectory events](#ISequencedDocumentMessage-arg-removed-from-SharedMap-and-SharedDirectory-events)
 - [Moved `@fluidframework/core-interface#fluidPackage.ts` to `@fluidframework/container-definition#fluidPackage.ts`](#Moved-fluidframeworkcore-interfacefluidPackagets-to-fluidframeworkcontainer-definitionfluidPackagets)
+- [Deprecated `IFluidSerializer` in `IFluidDataStoreRuntime`](#Deprecated-IFluidSerializer-in-IFluidDataStoreRuntime)
 
 ### `IContainer` interface updated to expose actively used `Container` public APIs
 In order to have the `IContainer` interface be the active developer surface that is used when interacting with a `Container` instance, it has been updated to expose the APIs that are necessary for currently used behavior. The motivation here is to move away from using the `Container` class when only its type is required, and to use the `IContainer` interface instead.
@@ -100,6 +101,9 @@ Moved the following interfaces and const from `@fluidframework/core-interface` t
 - `IFluidCodeDetailsComparer`
 
 They are deprecated from `@fluidframework/core-interface` and would be removed in future release. Please import them from `@fluidframework/container-definitions`.
+
+### Deprecated `IFluidSerializer` in `IFluidDataStoreRuntime`
+`IFluidSerializer` should only be used by DDSs to serialize data and they should use the one created by `SharedObject`.
 
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
