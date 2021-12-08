@@ -653,31 +653,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return intervals.map((interval) => interval.serialize(client));
     }
-
-    /**
-     * @deprecated This method only exists to support the deprecated IntervalCollection.delete(start, end).
-     */
-    public getLegacyInterval(start: number, end: number): TInterval | undefined {
-        const transientInterval: TInterval = this.helpers.create(
-            "transient",
-            start,
-            end,
-            this.client,
-            IntervalType.Transient,
-        );
-
-        let result: TInterval;
-        this.mapUntil((interval: TInterval): boolean => {
-            if (interval.compareStart(transientInterval) === 0 &&
-                interval.compareEnd(transientInterval) === 0 &&
-                interval.getIntervalId()?.startsWith(LocalIntervalCollection.legacyIdPrefix)) {
-                result = interval;
-                return false;
-            }
-            return true;
-        });
-        return result;
-    }
 }
 
 const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInterval): number => a.end.compare(b.end);
@@ -960,23 +935,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return interval;
     }
 
-    /**
-     * @deprecated delete by start/end position is deprecated. Use removeIntervalById.
-     */
-    public delete(
-        start: number,
-        end: number,
-    ) {
-        if (!this.attached) {
-            throw new Error("attach must be called prior to deleting intervals");
-        }
-
-        const interval = this.localCollection.getLegacyInterval(start, end);
-        if (interval) {
-            this.deleteExistingInterval(interval, true, undefined);
-        }
-    }
-
     private deleteExistingInterval(interval: TInterval, local: boolean, op: ISequencedDocumentMessage) {
         // The given interval is known to exist in the collection.
         this.localCollection.removeExistingInterval(interval);
@@ -1192,22 +1150,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         this.localCollection.map((interval) => {
             this.onDeserialize(interval);
         });
-    }
-
-    /**
-     * @deprecated IntervalCollectionView has been removed. Refer to IntervalCollection directly.
-     */
-    public async getView(onDeserialize?: DeserializeCallback): Promise<IntervalCollection<TInterval>> {
-        if (!this.attached) {
-            return Promise.reject(new Error("attachSequence must be called prior to retrieving the view"));
-        }
-
-        // Attach custom deserializers if specified
-        if (onDeserialize) {
-            this.attachDeserializer(onDeserialize);
-        }
-
-        return this;
     }
 
     public addInternal(

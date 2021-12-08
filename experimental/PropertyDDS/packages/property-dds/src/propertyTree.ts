@@ -462,8 +462,7 @@ export class SharedPropertyTree extends SharedObject {
 		const handleTableChunk = await storage.readBlob("properties");
 		const utf8 = bufferToString(handleTableChunk, "utf8");
 
-		const serializer = runtime.IFluidSerializer;
-		const snapshot: ISnapshot = serializer !== undefined ? serializer.parse(utf8) : JSON.parse(utf8);
+		const snapshot: ISnapshot = this.serializer.parse(utf8);
 		this.useMH = snapshot.useMH;
 
 		try {

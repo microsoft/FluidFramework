@@ -93,12 +93,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     raiseContainerWarning(warning: ContainerWarning): void;
-    // @deprecated
-    get readonly(): boolean | undefined;
     // (undocumented)
     get readOnlyInfo(): ReadOnlyInfo;
-    // @deprecated
-    get readonlyPermissions(): boolean | undefined;
     static rehydrateDetachedFromSnapshot(loader: Loader, snapshot: string): Promise<Container>;
     // (undocumented)
     request(path: IRequest): Promise<IResponse>;
@@ -122,7 +118,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     static version: string;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
@@ -152,7 +148,7 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
     getBlobIds(): string[];
 };
 
-// @public
+// @public @deprecated (undocumented)
 export interface IFluidModuleWithDetails {
     details: IFluidCodeDetails;
     module: IFluidModule;

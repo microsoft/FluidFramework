@@ -8,8 +8,6 @@ import { DataCorruptionError, extractSafePropertiesFromMessage } from "@fluidfra
 import {
     ISequencedDocumentMessage,
     ISnapshotTree,
-    ITreeEntry,
-    SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
     channelsTreeName,
@@ -28,7 +26,6 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
      convertSnapshotTreeToSummaryTree,
-     convertSummaryTreeToITree,
      convertToSummaryTree,
      create404Response,
      responseToException,
@@ -39,7 +36,6 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { BlobCacheStorageService, buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
-import { TreeTreeEntry } from "@fluidframework/protocol-base";
 import { GCDataBuilder, getChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime } from "./containerRuntime";
@@ -347,44 +343,6 @@ export class DataStores implements IDisposable {
                 context.emit(eventName);
             }
         }
-    }
-
-    /**
-     * Notifies this object to take the snapshot of the container.
-     * @deprecated - Use summarize to get summary of the container runtime.
-     */
-    public async snapshot(): Promise<ITreeEntry[]> {
-        // Iterate over each store and ask it to snapshot
-        const fluidDataStoreSnapshotsP = Array.from(this.contexts).map(async ([fluidDataStoreId, value]) => {
-            const summaryTree = await value.summarize(true /* fullTree */, false /* trackState */);
-            assert(
-                summaryTree.summary.type === SummaryType.Tree,
-                0x164 /* "summarize should always return a tree when fullTree is true" */);
-            // back-compat summary - Remove this once snapshot is removed.
-            const snapshot = convertSummaryTreeToITree(summaryTree.summary);
-
-            // If ID exists then previous commit is still valid
-            return {
-                fluidDataStoreId,
-                snapshot,
-            };
-        });
-
-        const entries: ITreeEntry[] = [];
-
-        // Add in module references to the store snapshots
-        const fluidDataStoreSnapshots = await Promise.all(fluidDataStoreSnapshotsP);
-
-        // Sort for better diffing of snapshots (in replay tool, used to find bugs in snapshotting logic)
-        fluidDataStoreSnapshots.sort((a, b) => a?.fluidDataStoreId.localeCompare(b.fluidDataStoreId));
-
-        for (const fluidDataStoreSnapshot of fluidDataStoreSnapshots) {
-            entries.push(new TreeTreeEntry(
-                fluidDataStoreSnapshot.fluidDataStoreId,
-                fluidDataStoreSnapshot.snapshot,
-            ));
-        }
-        return entries;
     }
 
     public get size(): number {

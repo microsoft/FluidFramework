@@ -7,7 +7,6 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 
 const imageGalleryName = "@fluid-example/image-gallery";
 
@@ -67,7 +66,7 @@ export class ImageGalleryModel extends DataObject {
     }
 }
 
-export const ImageGalleryInstantiationFactory = new DataObjectFactory<ImageGalleryModel, undefined, undefined, IEvent>
+export const ImageGalleryInstantiationFactory = new DataObjectFactory
 (
     imageGalleryName,
     ImageGalleryModel,

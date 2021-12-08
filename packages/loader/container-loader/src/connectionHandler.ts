@@ -65,6 +65,8 @@ const MaxReconnectDelayInMs = 8000;
 const InitialReconnectDelayInMs = 1000;
 const DefaultChunkSize = 16 * 1024;
 
+const fatalConnectErrorProp = { fatalConnectError: true };
+
 function getNackReconnectInfo(nackContent: INackContent) {
     const message = `Nack (${nackContent.type}): ${nackContent.message}`;
     const canRetry = nackContent.code !== 403;
@@ -179,7 +181,7 @@ export class ConnectionManager implements IConnectionManager {
      public get connectionMode(): ConnectionMode {
         assert(!this.downgradedConnection || this.connection?.mode === "write",
             0x277 /* "Did we forget to reset downgradedConnection on new connection?" */);
-        if (this.connection === undefined || this.downgradedConnection) {
+        if (this.connection === undefined) {
             return "read";
         }
         return this.connection.mode;
@@ -324,8 +326,12 @@ export class ConnectionManager implements IConnectionManager {
 
         this._outbound.clear();
 
+        const disconnectReason = error !== undefined
+            ? `Closing DeltaManager (${error.message})`
+            : "Closing DeltaManager";
+
         // This raises "disconnect" event if we have active connection.
-        this.disconnectFromDeltaStream(error !== undefined ? `${error.message}` : "Container closed");
+        this.disconnectFromDeltaStream(disconnectReason);
 
         // Notify everyone we are in read-only state.
         // Useful for data stores in case we hit some critical error,
@@ -412,7 +418,8 @@ export class ConnectionManager implements IConnectionManager {
 
     public connect(connectionMode?: ConnectionMode) {
         this.connectCore(connectionMode).catch((error) => {
-            this.props.closeHandler(error);
+            const normalizedError = normalizeError(error, { props: fatalConnectErrorProp });
+            this.props.closeHandler(normalizedError);
         });
     }
 
@@ -487,7 +494,7 @@ export class ConnectionManager implements IConnectionManager {
 
                 // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                 if (!canRetryOnError(origError)) {
-                    const error = normalizeError(origError);
+                    const error = normalizeError(origError, { props: fatalConnectErrorProp });
                     this.props.closeHandler(error);
                     throw error;
                 }
@@ -615,7 +622,7 @@ export class ConnectionManager implements IConnectionManager {
 
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
-            this.disconnectFromDeltaStream(`Disconnect on close`);
+            this.disconnectFromDeltaStream(`ConnectionManager already closed`);
             return;
         }
 
@@ -714,11 +721,13 @@ export class ConnectionManager implements IConnectionManager {
         const canRetry = error !== undefined ? canRetryOnError(error) : true;
 
         // If reconnection is not an option, close the DeltaManager
-        if (this.reconnectMode === ReconnectMode.Never || !canRetry) {
+        if (!canRetry) {
+            this.props.closeHandler(normalizeError(error, { props: fatalConnectErrorProp }));
+        } else if (this.reconnectMode === ReconnectMode.Never) {
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
             // are very misleading, as first initial reaction - some logic is broken.
-            this.props.closeHandler(canRetry ? undefined : error);
+            this.props.closeHandler();
         }
 
         // If closed then we can't reconnect
@@ -787,7 +796,7 @@ export class ConnectionManager implements IConnectionManager {
         // Note that we also want nacks to be rare and be treated as catastrophic failures.
         // Be careful with reentrancy though - disconnected event should not be be raised in the
         // middle of the current workflow, but rather on clean stack!
-        if (this.connectionMode === "read") {
+        if (this.connectionMode === "read" || this.downgradedConnection) {
             if (!this.pendingReconnect) {
                 this.pendingReconnect = true;
                 Promise.resolve().then(async () => {
@@ -831,8 +840,6 @@ export class ConnectionManager implements IConnectionManager {
                 // We have been kicked out from quorum
                 this.logger.sendPerformanceEvent({ eventName: "ReadConnectionTransition" });
                 this.downgradedConnection = true;
-                assert(this.connectionMode === "read",
-                    0x27c /* "effective connectionMode should be 'read' after downgrade" */);
             }
         }
     }

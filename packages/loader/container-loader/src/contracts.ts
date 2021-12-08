@@ -128,7 +128,7 @@ export interface IConnectionManagerFactoryArgs {
      * Called by connection manager whwnever critical error happens and container should be closed.
      * Expects dispose() call in respose to this call.
      */
-    readonly closeHandler: (error: any) => void,
+    readonly closeHandler: (error?: any) => void,
 
     /**
      * Called whenever connection to relay service is lost.

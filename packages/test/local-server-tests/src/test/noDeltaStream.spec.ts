@@ -92,7 +92,7 @@ describe("No Delta Stream", () => {
         const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 
         assert.strictEqual(container.deltaManager.active, false, "active");
-        assert.strictEqual(container.deltaManager.readonly, false, "readonly");
+        assert.strictEqual(container.deltaManager.readOnlyInfo.readonly, false, "readonly");
 
         assert.strictEqual(dataObject.runtime.connected, true, "connected");
         assert.notStrictEqual(dataObject.runtime.clientId, undefined, "clientId");
@@ -111,13 +111,10 @@ describe("No Delta Stream", () => {
 
         assert.strictEqual(container.connected, true, "container.connected");
         assert.strictEqual(container.clientId, "storage-only client", "container.clientId");
-        assert.strictEqual(container.readonly, true, "container.readonly");
-        assert.strictEqual(container.readonlyPermissions, true, "container.readonlyPermissions");
-        assert.ok(container.readOnlyInfo.readonly, "container.storageOnly");
+        assert.strictEqual(container.readOnlyInfo.readonly, true, "container.readOnlyInfo.readonly");
 
         const deltaManager = container.deltaManager;
         assert.strictEqual(deltaManager.active, false, "deltaManager.active");
-        assert.strictEqual(deltaManager.readonly, true, "deltaManager.readonly");
         assert.ok(deltaManager.readOnlyInfo.readonly, "deltaManager.readOnlyInfo.readonly");
         assert.ok(deltaManager.readOnlyInfo.permissions, "deltaManager.readOnlyInfo.permissions");
         assert.ok(deltaManager.readOnlyInfo.storageOnly, "deltaManager.readOnlyInfo.storageOnly");
@@ -164,13 +161,11 @@ describe("No Delta Stream", () => {
 
         assert.strictEqual(container.connected, true, "container.connected");
         assert.strictEqual(container.clientId, "storage-only client", "container.clientId");
-        assert.strictEqual(container.readonly, true, "container.readonly");
-        assert.strictEqual(container.readonlyPermissions, true, "container.readonlyPermissions");
+        assert.strictEqual(container.readOnlyInfo.readonly, true, "container.readOnlyInfo.readonly");
         assert.ok(container.readOnlyInfo.readonly, "container.storageOnly");
 
         const deltaManager = container.deltaManager;
         assert.strictEqual(deltaManager.active, false, "deltaManager.active");
-        assert.strictEqual(deltaManager.readonly, true, "deltaManager.readonly");
         assert.ok(deltaManager.readOnlyInfo.readonly, "deltaManager.readOnlyInfo.readonly");
         assert.ok(deltaManager.readOnlyInfo.permissions, "deltaManager.readOnlyInfo.permissions");
         assert.ok(deltaManager.readOnlyInfo.storageOnly, "deltaManager.readOnlyInfo.storageOnly");

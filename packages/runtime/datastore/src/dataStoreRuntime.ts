@@ -145,6 +145,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
+    // Back compat: deprecated in 0.53, can be removed in versions >= 0.55.
     public get IFluidSerializer() { return this.serializer; }
 
     public get IFluidHandleContext() { return this; }
@@ -917,10 +918,12 @@ export const mixinRequestHandler = (
 
 /**
  * Mixin class that adds await for DataObject to finish initialization before we proceed to summary.
+ * @param handler - handler that returns info about blob to be added to summary.
+ * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  */
 export const mixinSummaryHandler = (
-    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[], content: string }>,
+    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[], content: string } | undefined >,
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ) => class RuntimeWithSummarizerHandler extends Base {
         private addBlob(summary: ISummaryTreeWithStats, path: string[], content: string) {
@@ -949,7 +952,9 @@ export const mixinSummaryHandler = (
         async summarize(...args: any[]) {
             const summary = await super.summarize(...args);
             const content = await handler(this);
-            this.addBlob(summary, content.path, content.content);
+            if (content !== undefined) {
+                this.addBlob(summary, content.path, content.content);
+            }
             return summary;
         }
     } as typeof FluidDataStoreRuntime;

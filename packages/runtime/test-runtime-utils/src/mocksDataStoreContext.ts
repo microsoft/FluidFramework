@@ -13,7 +13,6 @@ import {
     IAudience,
     IDeltaManager,
     ContainerWarning,
-    ILoader,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -52,11 +51,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     public IFluidDataStoreRegistry: IFluidDataStoreRegistry;
     public IFluidHandleContext: IFluidHandleContext;
 
-    /**
-     * @deprecated 0.37 Containers created using a loader will make automatically it
-     * available through scope instead
-     */
-    public loader: ILoader;
     /**
      * Indicates the attachment state of the data store to a host service.
      */

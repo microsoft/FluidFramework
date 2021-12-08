@@ -77,10 +77,21 @@
         },
         "InterfaceDeclaration_IDocumentAttributes": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_ISummaryNack": {
+          "backCompat": false
         }
       },
       "0.1025.1": {
         "InterfaceDeclaration_IDocumentAttributes": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISummaryNack": {
+          "backCompat": false
+        }
+      },
+      "0.1026.0": {
+        "InterfaceDeclaration_ISummaryNack": {
           "backCompat": false
         }
       }
