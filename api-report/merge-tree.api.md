@@ -1010,19 +1010,13 @@ export class MergeTree {
     // (undocumented)
     blockClone(block: IMergeBlock, segments?: ISegment[]): MergeBlock;
     // (undocumented)
-    blockUpdateActions: BlockUpdateActions;
-    // (undocumented)
-    static readonly blockUpdateMarkers = true;
-    // (undocumented)
     clone(): void;
     // (undocumented)
     cloneSegments(refSeq: number, clientId: number, start?: number, end?: number): ISegment[];
     // (undocumented)
-    collabWindow: CollaborationWindow;
+    readonly collabWindow: CollaborationWindow;
     // (undocumented)
-    static diagInsertTie: boolean;
-    // (undocumented)
-    static diagOverlappingRemove: boolean;
+    static readonly diagOverlappingRemove = false;
     // (undocumented)
     findHistorialPosition(pos: number, fromSeq: number, toSeq: number, clientId: number): number;
     // (undocumented)
@@ -1058,11 +1052,7 @@ export class MergeTree {
     // (undocumented)
     getStats(): MergeTreeStats;
     // (undocumented)
-    idToSegment: MapLike<ISegment>;
-    // (undocumented)
     incrementalBlockMap<TContext>(stateStack: Stack<IncrementalMapState<TContext>>): void;
-    // (undocumented)
-    static initBlockUpdateActions: BlockUpdateActions;
     // (undocumented)
     insertAtReferencePosition(referencePosition: ReferencePosition, insertSegment: ISegment, opArgs: IMergeTreeDeltaOpArgs): void;
     // (undocumented)
@@ -1079,29 +1069,21 @@ export class MergeTree {
     // (undocumented)
     markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number, overwrite: boolean | undefined, opArgs: IMergeTreeDeltaOpArgs): void;
     // (undocumented)
-    maxOrdTime: number;
-    // (undocumented)
     mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
     // (undocumented)
     mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
-    // (undocumented)
-    minSeqListeners: Heap<MinListener> | undefined;
     // (undocumented)
     nodeToString(block: IMergeBlock, strbuf: string, indentCount?: number): string;
     // (undocumented)
     options?: PropertySet | undefined;
     // (undocumented)
-    static options: {
+    static readonly options: {
         incrementalUpdate: boolean;
         insertAfterRemovedSegs: boolean;
         measureOrdinalTime: boolean;
         measureWindowTime: boolean;
         zamboniSegments: boolean;
     };
-    // (undocumented)
-    ordTime: number;
-    // (undocumented)
-    packTime: number;
     // (undocumented)
     pendingSegments: List<SegmentGroup> | undefined;
     posFromRelativePos(relativePos: IRelativePosition, refseq?: number, clientId?: number): number;
@@ -1115,38 +1097,16 @@ export class MergeTree {
     // (undocumented)
     root: IMergeBlock;
     // (undocumented)
-    segmentsToScour: Heap<LRUSegment> | undefined;
-    // (undocumented)
     setMinSeq(minSeq: number): void;
-    // (undocumented)
-    static skipLeftShift: boolean;
     // (undocumented)
     startCollaboration(localClientId: number, minSeq: number, currentSeq: number): void;
     // (undocumented)
-    static TextSegmentGranularity: number;
-    // (undocumented)
-    static theUnfinishedNode: IMergeBlock;
-    // (undocumented)
     toString(): string;
     // (undocumented)
-    static traceAppend: boolean;
-    // (undocumented)
-    static traceGatherText: boolean;
-    // (undocumented)
-    static traceIncrTraversal: boolean;
-    // (undocumented)
-    static traceOrdinals: boolean;
-    // (undocumented)
-    static traceTraversal: boolean;
-    // (undocumented)
-    static traceZRemove: boolean;
+    static readonly traceGatherText = false;
     // (undocumented)
     walkAllSegments<TClientData>(block: IMergeBlock, action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): boolean;
-    // (undocumented)
-    windowTime: number;
-    // (undocumented)
-    static zamboniSegmentsMaxCount: number;
-}
+    }
 
 // @public (undocumented)
 export type MergeTreeDeltaCallback = (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs) => void;
