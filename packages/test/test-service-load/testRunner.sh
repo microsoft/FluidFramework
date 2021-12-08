@@ -7,13 +7,18 @@ do
 	sleep 5s
 done
 sleep 2s
-cp /fluid-config-store/$FLUID_TEST_UID/${HOSTNAME}_PodConfig.json /app/packages/test/test-service-load/testUserConfig.json
+cp /fluid-config-store/$FLUID_TEST_UID/${HOSTNAME}_PodConfig.json ./testUserConfig.json
+
 rampupTimeInSeconds=`jq .rampup /app/packages/test/test-service-load/testUserConfig.json`
 echo "Sleeping for: $rampupTimeInSeconds";
 sleep $rampupTimeInSeconds
-FLUID_TEST_UID=$FLUID_TEST_UID node ./dist/nodeStressTestMultiUser.js -p $TEST_PROFILE > testscenario.logs 2>&1 &
+
+credentials=`jq -c '.credentials|to_entries|first as $x | { ($x.key): ($x.value) }' ./testUserConfig.json`
+export login__odsp__test__accounts=$credentials
+node ./dist/nodeStressTest.js -p $TEST_PROFILE -c ./testUserConfig.json > testscenario.logs 2>&1
+
+echo "Test complete just keeping pod alive."
 while true;
 do
-	echo "Test is running on pod: $HOSTNAME";
-	sleep 3600s;
+    sleep 3600s;
 done
