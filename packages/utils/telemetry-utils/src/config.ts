@@ -161,10 +161,8 @@ export class ConfigProvider implements IConfigProvider {
                 if (isConfigProviderBase(maybeProvider)) {
                     filteredProviders.push(maybeProvider);
                 } else {
-                    const maybeLwc: ITelemetryBaseLogger & Partial<MonitoringContext<ITelemetryBaseLogger>> =
-                        maybeProvider;
-                    if (isConfigProviderBase(maybeLwc.config)) {
-                        filteredProviders.push(maybeLwc.config);
+                    if (isMonitoringContext(maybeProvider)) {
+                        filteredProviders.push(maybeProvider.config);
                     }
                 }
             }
@@ -319,17 +317,30 @@ export function mixinMonitoringContext<T extends ITelemetryBaseLogger>(
     logger: T,
     config: IConfigProvider,
 ): MonitoringContext<T> {
-    const mixin: Partial<MonitoringContext<T>> & T = logger;
+    const mc: Partial<MonitoringContext<T>> & T = logger;
 
-    if (mixin.config !== undefined) {
+    if (mc.config !== undefined) {
         throw new Error("Logger Is already config provider");
     }
-    mixin.config = config;
-    mixin.logger = logger;
-    return mixin as MonitoringContext<T>;
+    /**
+     * this is the tricky bit we use for now to smuggle monitoring context around.
+     * To the logger we mixin both config and  itself, so mc.logger === logger as it is self-referential.
+     * We then expose it as a Monitoring context, so via types we hide the outer logger methods.
+     * To layers that expect just a logger we can pass mc.logger, but this is still a MonitoringContext
+     * so if a deeper layer then converts that logger to a monitoring context it can find the smuggled properties
+     * of the MontoringContext and get the config provider.
+     */
+    mc.config = config;
+    mc.logger = logger;
+    return mc as MonitoringContext<T>;
 }
 
-function isConfigProviderBase<T>(obj: T): obj is T & IConfigProviderBase {
-    const maybeConfig: Partial<IConfigProviderBase> = obj;
+function isMonitoringContext(obj: unknown): obj is MonitoringContext {
+    const maybeConfig = obj as Partial<MonitoringContext> | undefined;
+    return isConfigProviderBase(maybeConfig?.config) && maybeConfig?.logger !== undefined;
+}
+
+function isConfigProviderBase(obj: unknown): obj is IConfigProviderBase {
+    const maybeConfig = obj as Partial<IConfigProviderBase> | undefined;
     return maybeConfig?.getRawConfig !== undefined;
 }
