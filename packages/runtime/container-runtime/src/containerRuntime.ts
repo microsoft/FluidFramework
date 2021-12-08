@@ -12,7 +12,6 @@ import {
     IFluidHandleContext,
     IFluidObject,
     IFluidRouter,
-    IFluidSerializer,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -86,7 +85,6 @@ import {
     addTreeToSummary,
     convertToSummaryTree,
     createRootSummarizerNodeWithGC,
-    FluidSerializer,
     IRootSummarizerNodeWithGC,
     RequestParser,
     create404Response,
@@ -816,9 +814,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.attachState;
     }
 
-    // Back compat: 0.28, can be removed in 0.29
-    public readonly IFluidSerializer: IFluidSerializer;
-
     public readonly IFluidHandleContext: IFluidHandleContext;
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
@@ -945,7 +940,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.chunkMap = new Map<string, string[]>(chunks);
 
         this.IFluidHandleContext = new ContainerFluidHandleContext("", this);
-        this.IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
 
         this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
 
