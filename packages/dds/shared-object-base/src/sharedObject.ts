@@ -5,7 +5,7 @@
 
 import { v4 as uuid } from "uuid";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
@@ -114,7 +114,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         protected runtime: IFluidDataStoreRuntime,
         public readonly attributes: IChannelAttributes)
     {
-        super((event: string | symbol, e: any) => this.eventListenerErrorHandler(event, e));
+        super((event: EventEmitterEventType, e: any) => this.eventListenerErrorHandler(event, e));
 
         this.handle = new SharedObjectHandle(
             this,
@@ -162,11 +162,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * DDS state does not match what user sees. Because of it DDS moves to "corrupted state" and does not
      * allow processing of ops or local changes, which very quickly results in container closure.
      */
-    private eventListenerErrorHandler(event: string | symbol, e: any) {
+    private eventListenerErrorHandler(event: EventEmitterEventType, e: any) {
         const error = DataProcessingError.wrapIfUnrecognized(
             e,
-            "SharedObjectEventListenerException",
-            undefined); // message
+            "SharedObjectEventListenerException");
         error.addTelemetryProperties({ emittedEventName: String(event) });
 
         this.closeWithError(error);
