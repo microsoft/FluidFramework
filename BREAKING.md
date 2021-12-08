@@ -10,6 +10,12 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.54 Breaking changes
+- [Removed `readAndParseFromBlobs` from `driver-utils`](#Removed-readAndParseFromBlobs-from-driver-utils)
+
+### Removed `readAndParseFromBlobs` from `driver-utils`
+The `readAndParseFromBlobs` function from `driver-utils` was deprecated in 0.44, and has now been removed from the `driver-utils` package.
+
 ## 0.53 Breaking changes
 - [`IContainer` interface updated to expose actively used `Container` public APIs](#IContainer-interface-updated-to-expose-actively-used-Container-public-APIs)
 - [Remove `getLegacyInterval()` and `delete()` from sequence dds](#Remove-getLegacyInterval-and-delete-from-sequence-dds)
@@ -23,7 +29,6 @@ There are a few steps you can take to write a good change note and avoid needing
 - [ISequencedDocumentMessage arg removed from SharedMap and SharedDirectory events](#ISequencedDocumentMessage-arg-removed-from-SharedMap-and-SharedDirectory-events)
 - [Moved `@fluidframework/core-interface#fluidPackage.ts` to `@fluidframework/container-definition#fluidPackage.ts`](#Moved-fluidframeworkcore-interfacefluidPackagets-to-fluidframeworkcontainer-definitionfluidPackagets)
 - [Deprecated `IFluidSerializer` in `IFluidDataStoreRuntime`](#Deprecated-IFluidSerializer-in-IFluidDataStoreRuntime)
-- [Removed `readAndParseFromBlobs` from `driver-utils`](#Removed-readAndParseFromBlobs-from-driver-utils)
 
 ### `IContainer` interface updated to expose actively used `Container` public APIs
 In order to have the `IContainer` interface be the active developer surface that is used when interacting with a `Container` instance, it has been updated to expose the APIs that are necessary for currently used behavior. The motivation here is to move away from using the `Container` class when only its type is required, and to use the `IContainer` interface instead.
@@ -105,9 +110,6 @@ They are deprecated from `@fluidframework/core-interface` and would be removed i
 
 ### Deprecated `IFluidSerializer` in `IFluidDataStoreRuntime`
 `IFluidSerializer` should only be used by DDSs to serialize data and they should use the one created by `SharedObject`.
-
-### Removed `readAndParseFromBlobs` from `driver-utils`
-The `readAndParseFromBlobs` function from `driver-utils` was deprecated in 0.44, and has now been removed from the `driver-utils` package.
 
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
