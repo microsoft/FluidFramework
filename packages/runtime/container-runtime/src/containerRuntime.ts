@@ -1196,7 +1196,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private setReadOnly(): void {
-        (this.context as any).setReadonly();
+        (this.context as any).setReadOnly();
     }
 
     public dispose(error?: Error): void {
