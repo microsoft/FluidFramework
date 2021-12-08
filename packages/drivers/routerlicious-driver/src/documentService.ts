@@ -49,6 +49,10 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document storage service for routerlicious driver.
      */
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
+        if (this.documentStorageService !== undefined) {
+            return this.documentStorageService;
+        }
+
         if (this.gitUrl === undefined) {
             return new NullBlobStorageService();
         }
@@ -93,6 +97,7 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta storage service for routerlicious driver.
      */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
+        await this.connectToStorage();
         assert(!!this.documentStorageService, 0x0b1 /* "Storage service not initialized" */);
 
         const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);

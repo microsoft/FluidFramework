@@ -20,7 +20,8 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IDeltaManager } from "./deltas";
+import { IAudience } from "./audience";
+import { IDeltaManager, ReadOnlyInfo } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { IFluidModule } from "./fluidModule";
 import { AttachState } from "./runtime";
@@ -35,6 +36,35 @@ export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer> {
      * Loads the package specified by code details and returns a promise to its entry point exports.
      */
     load(source: IFluidCodeDetails): Promise<IFluidModule>;
+}
+
+/**
+ * Encapsulates a module entry point with corresponding code details.
+ */
+export interface IFluidModuleWithDetails {
+    /** Fluid code module that implements the runtime factory needed to instantiate the container runtime. */
+    module: IFluidModule;
+    /**
+     * Code details associated with the module. Represents a document schema this module supports.
+     * If the code loader implements the {@link @fluidframework/core-interfaces#IFluidCodeDetailsComparer} interface,
+     * it'll be called to determine whether the module code details satisfy the new code proposal in the quorum.
+     */
+    details: IFluidCodeDetails;
+}
+
+/**
+ * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
+ * a package name and package version range.
+ */
+export interface ICodeDetailsLoader
+ extends Partial<IProvideFluidCodeDetailsComparer> {
+ /**
+  * Load the code module (package) that is capable to interact with the document.
+  *
+  * @param source - Code proposal that articulates the current schema the document is written in.
+  * @returns - Code module entry point along with the code details associated with it.
+  */
+ load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
 /**
@@ -94,6 +124,31 @@ export interface IContainerEvents extends IEvent {
 }
 
 /**
+ * Namespace for the different connection states a container can be in
+ */
+export namespace ConnectionState {
+    /**
+     * The document is no longer connected to the delta server
+     */
+    export type Disconnected = 0;
+
+    /**
+     * The document has an inbound connection but is still pending for outbound deltas
+     */
+    export type Connecting = 1;
+
+    /**
+     * The document is fully connected
+     */
+     export type Connected = 2;
+}
+
+/**
+ * Type defining the different states of connectivity a container can be in
+ */
+export type ConnectionState = ConnectionState.Disconnected | ConnectionState.Connecting | ConnectionState.Connected;
+
+/**
  * The Host's view of the Container and its connection to storage
  */
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
@@ -124,8 +179,9 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * @deprecated use getSpecifiedCodeDetails for the code details currently specified for this container, or
      * getLoadedCodeDetails for the code details that the container's context was loaded with.
      * To be removed after getSpecifiedCodeDetails and getLoadedCodeDetails become ubiquitous.
+     * This is now marked as optional and due to be removed in next release.
      */
-    readonly codeDetails: IFluidCodeDetails | undefined;
+    readonly codeDetails?: IFluidCodeDetails | undefined;
 
     /**
      * Get the code details that are currently specified for the container.
@@ -197,12 +253,69 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * @param request - The request to be issued against the container
      */
     request(request: IRequest): Promise<IResponse>;
+
+    /**
+     * Provides the current connected state of the container
+     */
+    readonly connectionState?: ConnectionState;
+
+    /**
+     * Boolean indicating whether the container is currently connected or not
+     */
+    readonly connected?: boolean;
+
+    /**
+     * Dictates whether or not the current container will automatically attempt to reconnect to the delta stream
+     * after receiving a disconnect event
+     * @param reconnect - Boolean indicating if reconnect should automatically occur
+     * @alpha
+     */
+    setAutoReconnect?(reconnect: boolean): void;
+
+    /**
+     * Have the container attempt to resume processing ops
+     * @alpha
+     */
+    resume?(): void;
+
+    /**
+     * The audience information for all clients currently associated with the document in the current session
+     */
+    readonly audience?: IAudience;
+
+    /**
+     * The server provided ID of the client.
+     * Set once this.connected is true, otherwise undefined
+     * @alpha
+     */
+    readonly clientId?: string | undefined;
+
+    /**
+     * Tells if container is in read-only mode.
+     * Data stores should listen for "readonly" notifications and disallow user making changes to data stores.
+     * Readonly state can be because of no storage write permission,
+     * or due to host forcing readonly mode for container.
+     *
+     * We do not differentiate here between no write access to storage vs. host disallowing changes to container -
+     * in all cases container runtime and data stores should respect readonly state and not allow local changes.
+     *
+     * It is undefined if we have not yet established websocket connection
+     * and do not know if user has write access to a file.
+     */
+    readonly readOnlyInfo?: ReadOnlyInfo;
+
+    /**
+     * Allows the host to have the container force to be in read-only mode
+     * @param readonly - Boolean that toggles if read-only policies will be enforced
+     * @alpha
+     */
+    forceReadonly?(readonly: boolean);
 }
 
 /**
  * The Runtime's view of the Loader, used for loading Containers
  */
-export interface ILoader extends IFluidRouter {
+export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
     /**
      * Resolves the resource specified by the URL + headers contained in the request object
      * to the underlying container that will resolve the request.
@@ -353,7 +466,7 @@ export interface ILoaderHeader {
     [LoaderHeader.version]: string | undefined;
 }
 
-interface IProvideLoader {
+export interface IProvideLoader {
     readonly ILoader: ILoader;
 }
 
@@ -361,8 +474,12 @@ declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<ILoaderHeader> { }
 
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideLoader>> { }
+    export interface IFluidObject  {
+        /**
+         * @deprecated - use `FluidObject<ILoader>` instead
+         */
+        readonly ILoader?: ILoader;
+    }
 }
 
 export interface IPendingLocalState {

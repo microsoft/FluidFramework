@@ -2,12 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DataObject } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectTypes } from "@fluidframework/aqueduct";
 import {
-    IFluidObject,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { IEvent } from "@fluidframework/common-definitions";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
@@ -31,12 +29,7 @@ import {
  * and assures that the syncedState will be initialized according the config by the time the view
  * is rendered.
  */
-export abstract class SyncedDataObject<
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    P extends IFluidObject = object,
-    S = undefined,
-    E extends IEvent = IEvent
-    > extends DataObject<P, S, E> {
+export abstract class SyncedDataObject<I extends DataObjectTypes = DataObjectTypes> extends DataObject<I> {
     private readonly syncedStateConfig: SyncedStateConfig = new Map();
     private readonly fluidObjectMap: FluidObjectMap = new Map();
     private readonly syncedStateDirectoryId = "syncedState";
@@ -103,7 +96,6 @@ export abstract class SyncedDataObject<
      * @param key - The syncedStateId that maps to the view that will be using these definitions
      * @param value - The config value containing the syncedStateId and the fluidToView and viewToFluid maps
      */
-    // eslint-disable-next-line @typescript-eslint/no-shadow
     public setConfig<S>(key: string, value: ISyncedStateConfig<S, S>) {
         this.syncedStateConfig.set(key, value);
     }

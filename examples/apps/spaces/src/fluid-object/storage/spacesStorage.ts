@@ -8,7 +8,6 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import { Layout } from "react-grid-layout";
 import { v4 as uuid } from "uuid";
@@ -57,7 +56,7 @@ export class SpacesStorage extends DataObject implements ISpacesStorage<ISpacesI
     public static get ComponentName() { return "@fluid-example/spaces-storage"; }
 
     private static readonly factory =
-        new DataObjectFactory<SpacesStorage, undefined, undefined, IEvent>(
+        new DataObjectFactory(
             SpacesStorage.ComponentName,
             SpacesStorage,
             [],

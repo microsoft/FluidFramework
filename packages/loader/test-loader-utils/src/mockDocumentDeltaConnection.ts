@@ -82,9 +82,6 @@ export class MockDocumentDeltaConnection
         this.emit("disconnect", error?.message ?? "mock close() called");
     }
 
-    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
-    public close(error?: Error): void { this.dispose(error); }
-
     // Mock methods for raising events
     public emitOp(documentId: string, messages: Partial<ISequencedDocumentMessage>[]) {
         this.emit("op", documentId, messages);

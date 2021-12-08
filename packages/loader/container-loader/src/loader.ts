@@ -6,8 +6,8 @@
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    FluidObject,
     IFluidCodeDetails,
-    IFluidObject,
     IFluidRouter,
     IProvideFluidCodeDetailsComparer,
     IRequest,
@@ -41,6 +41,7 @@ import {
 } from "@fluidframework/driver-utils";
 import { Container } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
+import { pkgVersion } from "./packageVersion";
 
 function canUseCache(request: IRequest): boolean {
     if (request.headers === undefined) {
@@ -124,32 +125,37 @@ export interface ILoaderOptions extends ILoaderOptions1{
 }
 
 /**
+ * @deprecated IFluidModuleWithDetails interface is moved to
+ * {@link @fluidframework/container-definition#IFluidModuleWithDetails}
+ * to have all the code loading modules in one package. #8193
  * Encapsulates a module entry point with corresponding code details.
  */
- export interface IFluidModuleWithDetails {
-     /** Fluid code module that implements the runtime factory needed to instantiate the container runtime. */
-     module: IFluidModule;
-     /**
-      * Code details associated with the module. Represents a document schema this module supports.
-      * If the code loader implements the {@link @fluidframework/core-interfaces#IFluidCodeDetailsComparer} interface,
-      * it'll be called to determine whether the module code details satisfy the new code proposal in the quorum.
-      */
-     details: IFluidCodeDetails;
- }
+export interface IFluidModuleWithDetails {
+    /** Fluid code module that implements the runtime factory needed to instantiate the container runtime. */
+    module: IFluidModule;
+    /**
+     * Code details associated with the module. Represents a document schema this module supports.
+     * If the code loader implements the {@link @fluidframework/core-interfaces#IFluidCodeDetailsComparer} interface,
+     * it'll be called to determine whether the module code details satisfy the new code proposal in the quorum.
+     */
+    details: IFluidCodeDetails;
+}
 
 /**
+ * @deprecated ICodeDetailsLoader interface is moved to {@link @fluidframework/container-definition#ICodeDetailsLoader}
+ * to have code loading modules in one package. #8193
  * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
  * a package name and package version range.
  */
 export interface ICodeDetailsLoader
-    extends Partial<IProvideFluidCodeDetailsComparer> {
-    /**
-     * Load the code module (package) that is capable to interact with the document.
-     *
-     * @param source - Code proposal that articulates the current schema the document is written in.
-     * @returns - Code module entry point along with the code details associated with it.
-     */
-    load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
+ extends Partial<IProvideFluidCodeDetailsComparer> {
+ /**
+  * Load the code module (package) that is capable to interact with the document.
+  *
+  * @param source - Code proposal that articulates the current schema the document is written in.
+  * @returns - Code module entry point along with the code details associated with it.
+  */
+ load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
 /**
@@ -184,7 +190,7 @@ export interface ILoaderProps {
      * Scope is provided to all container and is a set of shared
      * services for container's to integrate with their host environment.
      */
-    readonly scope?: IFluidObject;
+    readonly scope?: FluidObject;
 
     /**
      * Proxy loader factories for loading containers via proxy in other contexts,
@@ -235,7 +241,7 @@ export interface ILoaderServices {
      * Scope is provided to all container and is a set of shared
      * services for container's to integrate with their host environment.
      */
-    readonly scope: IFluidObject;
+    readonly scope: FluidObject;
 
     /**
      * Proxy loader factories for loading containers via proxy in other contexts,
@@ -275,18 +281,21 @@ export class Loader implements IHostLoader {
     private readonly logger: ITelemetryLogger;
 
     constructor(loaderProps: ILoaderProps) {
-        const scope = { ...loaderProps.scope };
+        const scope = { ...loaderProps.scope as FluidObject<ILoader> };
         if (loaderProps.options?.provideScopeLoader !== false) {
             scope.ILoader = this;
         }
-
+        const telemetryProps = {
+            loaderId: uuid(),
+            loaderVersion: pkgVersion,
+        };
         this.services = {
             urlResolver: createCachedResolver(MultiUrlResolver.create(loaderProps.urlResolver)),
             documentServiceFactory: MultiDocumentServiceFactory.create(loaderProps.documentServiceFactory),
             codeLoader: loaderProps.codeLoader,
             options: loaderProps.options ?? {},
             scope,
-            subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all:{loaderId: uuid()} }),
+            subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all: telemetryProps }),
             proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
             detachedBlobStorage: loaderProps.detachedBlobStorage,
         };

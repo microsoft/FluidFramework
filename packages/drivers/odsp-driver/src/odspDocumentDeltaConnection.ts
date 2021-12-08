@@ -20,6 +20,7 @@ import { v4 as uuid } from "uuid";
 import { IOdspSocketError, IGetOpsResponse, IFlushOpsResponse } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { errorObjectFromSocketError } from "./odspError";
+import { pkgVersion } from "./packageVersion";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
@@ -226,6 +227,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             versions: protocolVersions,
             nonce: uuid(),
             epoch: epochTracker.fluidEpoch,
+            relayUserAgent: [client.details.environment, ` driverVersion:${pkgVersion}`].join(";"),
         };
 
         // Reference to this client supporting get_ops flow.

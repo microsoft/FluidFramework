@@ -5,6 +5,7 @@
 
 import { KafkaResources, KafkaResourcesFactory } from "@fluidframework/server-services-ordering-kafkanode";
 import { RdkafkaResourcesFactory } from "@fluidframework/server-services-ordering-rdkafka";
+import { ZookeeperClient } from "@fluidframework/server-services-ordering-zookeeper";
 import { IResourcesFactory } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 
@@ -25,7 +26,7 @@ export class OrderingResourcesFactory implements IResourcesFactory<KafkaResource
                 break;
 
             case "rdkafka":
-                resourcesFactory = new RdkafkaResourcesFactory(this.name, this.lambdaModule);
+                resourcesFactory = new RdkafkaResourcesFactory(this.name, this.lambdaModule, ZookeeperClient);
                 break;
 
             default:

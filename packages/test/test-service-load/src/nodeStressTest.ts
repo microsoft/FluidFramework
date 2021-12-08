@@ -4,10 +4,37 @@
  */
 
 import child_process from "child_process";
+import fs from "fs";
 import commander from "commander";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { createTestDriver, getProfile, initialize, safeExit } from "./utils";
+
+interface ITestUserConfig {
+    /* Credentials' key/value description:
+     * Key    : Username for the client
+     * Value  : Password specific to that username
+     */
+    credentials: Record<string, string>;
+}
+
+async function getTestUsers(credFile?: string) {
+    if (credFile === undefined || credFile.length === 0) {
+        return undefined;
+    }
+
+    let config: ITestUserConfig;
+    try {
+        config = JSON.parse(fs.readFileSync(credFile, "utf8"));
+        return config;
+    } catch (e) {
+        console.error(`Failed to read ${credFile}`);
+        console.error(e);
+        return undefined;
+    }
+}
+
+const createLoginEnv = (userName: string, password: string) => `{"${userName}": "${password}"}`;
 
 async function main() {
     commander
@@ -15,6 +42,7 @@ async function main() {
         .requiredOption("-d, --driver <driver>", "Which test driver info to use", "odsp")
         .requiredOption("-p, --profile <profile>", "Which test profile to use from testConfig.json", "ci")
         .option("-id, --testId <testId>", "Load an existing data store rather than creating new")
+        .option("-c, --credFile <filePath>", "Filename containing user credentialss for test")
         .option("-s, --seed <number>", "Seed for this run")
         .option("-dbg, --debug", "Debug child processes via --inspect-brk")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
@@ -30,6 +58,7 @@ async function main() {
     const verbose: true | undefined = commander.verbose;
     const seed: number | undefined = commander.seed;
     const browserAuth: true | undefined = commander.browserAuth;
+    const credFile: string | undefined = commander.credFile;
 
     const profile = getProfile(profileArg);
 
@@ -37,9 +66,11 @@ async function main() {
         process.env.DEBUG = log;
     }
 
+    const testUsers = await getTestUsers(credFile);
+
     await orchestratorProcess(
             driver,
-            { ...profile, name: profileArg },
+            { ...profile, name: profileArg, testUsers },
             { testId, debug, verbose, seed, browserAuth });
 }
 /**
@@ -47,7 +78,7 @@ async function main() {
  */
 async function orchestratorProcess(
     driver: TestDriverTypes,
-    profile: ILoadTestConfig & { name: string },
+    profile: ILoadTestConfig & { name: string, testUsers?: ITestUserConfig },
     args: { testId?: string, debug?: true, verbose?: true, seed?: number, browserAuth?: true },
 ) {
     const seed = args.seed ?? Date.now();
@@ -83,21 +114,31 @@ async function orchestratorProcess(
             const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
             childArgs.unshift(`--inspect-brk=${debugPort}`);
         }
-        if(args.verbose === true) {
+        if (args.verbose === true) {
             childArgs.push("--verbose");
         }
 
         runnerArgs.push(childArgs);
     }
     console.log(runnerArgs[0].join(" "));
-    try{
-        await Promise.all(runnerArgs.map(async (childArgs)=>{
-            const process = child_process.spawn(
+    try {
+        const usernames = profile.testUsers !== undefined ? Object.keys(profile.testUsers.credentials) : undefined;
+        await Promise.all(runnerArgs.map(async (childArgs, index) => {
+            const username = usernames !== undefined ? usernames[index % usernames.length] : undefined;
+            const password = username !== undefined ? profile.testUsers?.credentials[username] : undefined;
+            const envVar = { ...process.env };
+            if (username !== undefined && password !== undefined) {
+                envVar.login__odsp__test__accounts = createLoginEnv(username, password);
+            }
+            const runnerProcess = child_process.spawn(
                 "node",
                 childArgs,
-                { stdio: "inherit" },
+                {
+                    stdio: "inherit",
+                    env: envVar,
+                },
             );
-            return new Promise((resolve) => process.once("close", resolve));
+            return new Promise((resolve) => runnerProcess.once("close", resolve));
         }));
     } finally{
         await safeExit(0, url);

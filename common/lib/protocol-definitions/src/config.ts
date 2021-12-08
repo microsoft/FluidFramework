@@ -5,9 +5,11 @@
 
 // Summary algorithm configuration
 // A summary will occur either if
-// * idleTime(ms) have passed without activity with pending ops to summarize
-// * maxTime(ms) have passed with pending ops to summarize
+// * idleTime(ms) have passed without activity with pending ops to summarize, or
+// * maxTime(ms) have passed with pending ops to summarize, or
 // * maxOps are waiting to summarize
+// AND
+// * disableSummaries !== true
 export interface ISummaryConfiguration {
     idleTime: number;
 
@@ -16,6 +18,8 @@ export interface ISummaryConfiguration {
     maxOps: number;
 
     maxAckWaitTime: number;
+
+    disableSummaries?: boolean;
 }
 
 /**

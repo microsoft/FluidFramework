@@ -82,7 +82,8 @@ export interface IDeltasFetchResult {
 // @public
 export interface IDeltaStorageService {
     get(tenantId: string, id: string, from: number, // inclusive
-    to: number): Promise<IDeltasFetchResult>;
+    to: number, // exclusive
+    fetchReason?: string): Promise<IDeltasFetchResult>;
 }
 
 // @public (undocumented)
@@ -90,15 +91,12 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
     checkpointSequenceNumber?: number;
     claims: ITokenClaims;
     clientId: string;
-    // @deprecated
-    close(): void;
     existing: boolean;
     initialClients: ISignalClient[];
     initialMessages: ISequencedDocumentMessage[];
     initialSignals: ISignalMessage[];
-    // @deprecated
-    maxMessageSize: number;
     mode: ConnectionMode;
+    relayServiceAgent?: string;
     serviceConfiguration: IClientConfiguration;
     submit(messages: IDocumentMessage[]): void;
     submitSignal(message: any): void;
@@ -123,7 +121,7 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 
 // @public
 export interface IDocumentDeltaStorageService {
-    fetchMessages(from: number, to: number | undefined, abortSignal?: AbortSignal, cachedOnly?: boolean): IStream<ISequencedDocumentMessage[]>;
+    fetchMessages(from: number, to: number | undefined, abortSignal?: AbortSignal, cachedOnly?: boolean, fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
 }
 
 // @public (undocumented)

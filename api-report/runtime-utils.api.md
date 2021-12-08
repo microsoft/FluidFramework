@@ -4,6 +4,7 @@
 
 ```ts
 
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
@@ -108,9 +109,6 @@ export function getBlobSize(content: ISummaryBlob["content"]): number;
 export function getNormalizedObjectStoragePathParts(path: string): string[];
 
 // @public (undocumented)
-export function getStack(): string | undefined;
-
-// @public (undocumented)
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {
 }
 
@@ -166,7 +164,7 @@ export type RefreshSummaryResult = {
 };
 
 // @public (undocumented)
-export function requestFluidObject<T = IFluidObject>(router: IFluidRouter, url: string | IRequest): Promise<T>;
+export function requestFluidObject<T = IFluidObject & FluidObject>(router: IFluidRouter, url: string | IRequest): Promise<T>;
 
 // @public
 export class RequestParser implements IRequest {

@@ -60,6 +60,7 @@ export class ConnectionStateHandler {
             // Default is 90 sec for which we are going to wait for its own "leave" message.
             this.handler.maxClientLeaveWaitTime ?? 90000,
             () => {
+                assert(!this.connected, "Connected when timeout waiting for leave from previous session fired!");
                 this.applyForConnectedState("timeout");
             },
         );
@@ -87,6 +88,11 @@ export class ConnectionStateHandler {
     private stopJoinOpTimer() {
         assert(this.joinOpTimer.hasTimer, 0x235 /* "no joinOpTimer" */);
         this.joinOpTimer.clear();
+    }
+
+    public dispose() {
+        assert(!this.joinOpTimer.hasTimer, "join timer");
+        this.prevClientLeftTimer.clear();
     }
 
     public receivedAddMemberEvent(clientId: string) {
@@ -128,6 +134,7 @@ export class ConnectionStateHandler {
             // Adding this event temporarily so that we can get help debugging if something goes wrong.
             this.logger.sendTelemetryEvent({
                 eventName: "connectedStateRejected",
+                category: source === "timeout" ? "error" : "generic",
                 source,
                 pendingClientId: this.pendingClientId,
                 clientId: this.clientId,
@@ -168,7 +175,7 @@ export class ConnectionStateHandler {
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         this._pendingClientId = details.clientId;
 
-        // Report telemetry after we set client id!
+        // Report telemetry after we set client id, but before transitioning to Connected state below!
         this.handler.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
 
         const protocolHandler = this.handler.protocolHandler();
@@ -180,6 +187,7 @@ export class ConnectionStateHandler {
         if ((protocolHandler !== undefined && protocolHandler.quorum.getMember(details.clientId) !== undefined)
             || connectionMode === "read"
         ) {
+            assert(!this.prevClientLeftTimer.hasTimer, "there should be no timer for 'read' connections");
             this.setConnectionState(ConnectionState.Connected);
         } else if (connectionMode === "write") {
             this.startJoinOpTimer();
@@ -235,9 +243,10 @@ export class ConnectionStateHandler {
             }
         }
 
-        this.handler.connectionStateChanged();
-
-        // Report telemetry after we set client id!
+        // Report transition before we propagate event across layers
         this.handler.logConnectionStateChangeTelemetry(this._connectionState, oldState, reason);
+
+        // Propagate event across layers
+        this.handler.connectionStateChanged();
     }
 }

@@ -7,7 +7,6 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
 
@@ -73,7 +72,7 @@ export class DdsCollection extends DataObject {
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
  export const DdsCollectionFactory =
-    new DataObjectFactory<DdsCollection, undefined, undefined, IEvent> (
+    new DataObjectFactory (
         DdsCollectionName,
         DdsCollection,
         [

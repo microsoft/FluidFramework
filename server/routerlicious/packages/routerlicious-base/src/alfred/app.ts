@@ -47,8 +47,9 @@ export function create(
     singleUseTokenCache: ICache,
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
-    mongoManager: MongoManager,
-    producer: IProducer) {
+    operationsDbMongoManager: MongoManager,
+    producer: IProducer,
+    globalDbMongoManager?: MongoManager) {
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");
 
@@ -76,6 +77,7 @@ export function create(
         app.use(morgan((tokens, req, res) => {
             const messageMetaData = {
                 method: tokens.method(req, res),
+                pathCategory: `${req.baseUrl}${req.route ? req.route.path : "PATH_UNAVAILABLE"}`,
                 url: tokens.url(req, res),
                 status: tokens.status(req, res),
                 contentLength: tokens.res(req, res, "content-length"),
@@ -105,10 +107,11 @@ export function create(
         tenantManager,
         throttler,
         singleUseTokenCache,
-        mongoManager,
+        operationsDbMongoManager,
         storage,
         producer,
-        appTenants);
+        appTenants,
+        globalDbMongoManager);
 
     app.use("/public", cors(), express.static(path.join(__dirname, "../../public")));
     app.use(routes.api);

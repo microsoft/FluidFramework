@@ -93,6 +93,8 @@ const createReconnectError = (fluidErrorCode: string, err: any) =>
         (errorMessage: string) => new GenericNetworkError(fluidErrorCode, errorMessage, true /* canRetry */),
     );
 
+const fatalConnectErrorProp = { fatalConnectError: true };
+
 export interface IConnectionArgs {
     mode?: ConnectionMode;
     fetchOpsFromStorage?: boolean;
@@ -157,9 +159,6 @@ class NoDeltaStream
     private _disposed = false;
     public get disposed() { return this._disposed; }
     public dispose() { this._disposed = true; }
-
-    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
-    public close(): void { this.dispose(); }
 }
 
 /**
@@ -334,7 +333,7 @@ export class DeltaManager
     public get connectionMode(): ConnectionMode {
         assert(!this.downgradedConnection || this.connection?.mode === "write",
             0x277 /* "Did we forget to reset downgradedConnection on new connection?" */);
-        if (this.connection === undefined || this.downgradedConnection) {
+        if (this.connection === undefined) {
             return "read";
         }
         return this.connection.mode;
@@ -350,20 +349,10 @@ export class DeltaManager
      * and do not know if user has write access to a file.
      * @deprecated - use readOnlyInfo
      */
-    public get readonly() {
+     public get readonly() {
         if (this._forceReadonly) {
             return true;
         }
-        return this._readonlyPermissions;
-    }
-
-    /**
-     * Tells if user has no write permissions for file in storage
-     * It is undefined if we have not yet established websocket connection
-     * and do not know if user has write access to a file.
-     * @deprecated - use readOnlyInfo
-     */
-    public get readonlyPermissions() {
         return this._readonlyPermissions;
     }
 
@@ -405,6 +394,7 @@ export class DeltaManager
             return {
                 ...common,
                 connectionMode: this.connectionMode,
+                relayServiceAgent: this.connection.relayServiceAgent,
             };
         } else {
             return {
@@ -455,15 +445,15 @@ export class DeltaManager
                 value: readonly,
             });
         }
-        const oldValue = this.readonly;
+        const oldValue = this.readOnlyInfo.readonly;
         this._forceReadonly = readonly;
 
-        if (oldValue !== this.readonly) {
+        if (oldValue !== this.readOnlyInfo.readonly) {
             assert(this._reconnectMode !== ReconnectMode.Never,
                 0x279 /* "API is not supported for non-connecting or closed container" */);
 
             let reconnect = false;
-            if (this.readonly === true) {
+            if (this.readOnlyInfo.readonly === true) {
                 // If we switch to readonly while connected, we should disconnect first
                 // See comment in the "readonly" event handler to deltaManager set up by
                 // the ContainerRuntime constructor
@@ -476,7 +466,7 @@ export class DeltaManager
 
                 reconnect = this.disconnectFromDeltaStream("Force readonly");
             }
-            safeRaiseEvent(this, this.logger, "readonly", this.readonly);
+            safeRaiseEvent(this, this.logger, "readonly", this.readOnlyInfo.readonly);
             if (reconnect) {
                 // reconnect if we disconnected from before.
                 this.triggerConnect({ reason: "forceReadonly", mode: "read", fetchOpsFromStorage: false });
@@ -514,10 +504,10 @@ export class DeltaManager
     }
 
     private set_readonlyPermissions(readonly: boolean) {
-        const oldValue = this.readonly;
+        const oldValue = this.readOnlyInfo.readonly;
         this._readonlyPermissions = readonly;
-        if (oldValue !== this.readonly) {
-            safeRaiseEvent(this, this.logger, "readonly", this.readonly);
+        if (oldValue !== this.readOnlyInfo.readonly) {
+            safeRaiseEvent(this, this.logger, "readonly", this.readOnlyInfo.readonly);
         }
     }
 
@@ -716,9 +706,7 @@ export class DeltaManager
         }
 
         const docService = this.serviceProvider();
-        if (docService === undefined) {
-            throw new Error("Container is not attached");
-        }
+        assert(docService !== undefined, "Container is not attached");
 
         if (docService.policies?.storageOnly === true) {
             const connection = new NoDeltaStream();
@@ -733,6 +721,7 @@ export class DeltaManager
             let delayMs = InitialReconnectDelayInMs;
             let connectRepeatCount = 0;
             const connectStartTime = performance.now();
+            let lastError: any;
 
             // This loop will keep trying to connect until successful, with a delay between each iteration.
             while (connection === undefined) {
@@ -760,7 +749,7 @@ export class DeltaManager
 
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(origError)) {
-                        const error = normalizeError(origError);
+                        const error = normalizeError(origError, { props: fatalConnectErrorProp });
                         this.close(error);
                         throw error;
                     }
@@ -773,9 +762,12 @@ export class DeltaManager
                             {
                                 delay: delayMs, // milliseconds
                                 eventName: "DeltaConnectionFailureToConnect",
+                                duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
                             },
                             origError);
                     }
+
+                    lastError = origError;
 
                     const retryDelayFromError = getRetryDelayFromError(origError);
                     delayMs = retryDelayFromError ?? Math.min(delayMs * 2, MaxReconnectDelayInMs);
@@ -789,11 +781,14 @@ export class DeltaManager
 
             // If we retried more than once, log an event about how long it took
             if (connectRepeatCount > 1) {
-                this.logger.sendTelemetryEvent({
-                    attempts: connectRepeatCount,
-                    duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
-                    eventName: "MultipleDeltaConnectionFailures",
-                });
+                this.logger.sendTelemetryEvent(
+                    {
+                        eventName: "MultipleDeltaConnectionFailures",
+                        attempts: connectRepeatCount,
+                        duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+                    },
+                    lastError,
+                );
             }
 
             this.setupNewSuccessfulConnection(connection, requestedMode);
@@ -813,9 +808,11 @@ export class DeltaManager
         const cleanupAndReject = (error) => {
             this.connectionP = undefined;
             this.removeListener("closed", cleanupAndReject);
+
             // This error came from some logic error in this file. Fail-fast to learn and fix the issue faster
-            this.close(error);
-            deferred.reject(error);
+            const normalizedError = normalizeError(error, { props: fatalConnectErrorProp });
+            this.close(normalizedError);
+            deferred.reject(normalizedError);
         };
         this.on("closed", cleanupAndReject);
 
@@ -853,7 +850,7 @@ export class DeltaManager
         // const serializedContent = JSON.stringify(this.messageBuffer);
         // const maxOpSize = this.context.deltaManager.maxMessageSize;
 
-        if (this.readonly === true) {
+        if (this.readOnlyInfo.readonly === true) {
             assert(this.readOnlyInfo.readonly === true, 0x1f0 /* "Unexpected mismatch in readonly" */);
             const error = new GenericError("deltaManagerReadonlySubmit", undefined /* error */, {
                 readonly: this.readOnlyInfo.readonly,
@@ -881,7 +878,7 @@ export class DeltaManager
         // Note that we also want nacks to be rare and be treated as catastrophic failures.
         // Be careful with reentrancy though - disconnected event should not be be raised in the
         // middle of the current workflow, but rather on clean stack!
-        if (this.connectionMode === "read") {
+        if (this.connectionMode === "read" || this.downgradedConnection) {
             if (!this.pendingReconnect) {
                 this.pendingReconnect = true;
                 Promise.resolve().then(async () => {
@@ -1020,7 +1017,8 @@ export class DeltaManager
                 from, // inclusive
                 to, // exclusive
                 controller.signal,
-                cacheOnly);
+                cacheOnly,
+                this.fetchReason);
 
             // eslint-disable-next-line no-constant-condition
             while (true) {
@@ -1055,8 +1053,12 @@ export class DeltaManager
 
         this.closeAbortController.abort();
 
+        const disconnectReason = error !== undefined
+            ? `Closing DeltaManager (${error.message})`
+            : "Closing DeltaManager";
+
         // This raises "disconnect" event if we have active connection.
-        this.disconnectFromDeltaStream(error !== undefined ? `${error.message}` : "Container closed");
+        this.disconnectFromDeltaStream(disconnectReason);
 
         this._inbound.clear();
         this._outbound.clear();
@@ -1154,10 +1156,6 @@ export class DeltaManager
     };
 
     private readonly errorHandler = (error) => {
-        // Observation based on early pre-production telemetry:
-        // We are getting transport errors from WebSocket here, right before or after "disconnect".
-        // This happens only in Firefox.
-        logNetworkFailure(this.logger, { eventName: "DeltaConnectionError" }, error);
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.reconnectOnError(
             this.defaultReconnectionMode,
@@ -1201,7 +1199,7 @@ export class DeltaManager
 
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
-            this.disconnectFromDeltaStream(`Disconnect on close`);
+            this.disconnectFromDeltaStream("DeltaManager already closed");
             return;
         }
 
@@ -1233,6 +1231,9 @@ export class DeltaManager
             clientId: connection.clientId,
             mode: connection.mode,
         };
+        if (connection.relayServiceAgent !== undefined) {
+            this.connectionStateProps.relayServiceAgent = connection.relayServiceAgent;
+        }
         this._hasCheckpointSequenceNumber = false;
 
         // Some storages may provide checkpointSequenceNumber to identify how far client is behind.
@@ -1322,14 +1323,7 @@ export class DeltaManager
         this._outbound.clear();
         this.emit("disconnect", reason);
 
-        // back-compat: added in 0.45. Make it unconditional (i.e. use connection.dispose()) in some future.
-        const disposable = connection as Partial<IDisposable>;
-
-        if (disposable.dispose !== undefined) {
-            disposable.dispose();
-        } else {
-            connection.close();
-        }
+        connection.dispose();
 
         this.connectionStateProps = {};
 
@@ -1375,11 +1369,13 @@ export class DeltaManager
         const canRetry = error !== undefined ? canRetryOnError(error) : true;
 
         // If reconnection is not an option, close the DeltaManager
-        if (this.reconnectMode === ReconnectMode.Never || !canRetry) {
+        if (!canRetry) {
+            this.close(normalizeError(error, { props: fatalConnectErrorProp }));
+        } else if (this.reconnectMode === ReconnectMode.Never) {
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
             // are very misleading, as first initial reaction - some logic is broken.
-            this.close(canRetry ? undefined : error);
+            this.close();
         }
 
         // If closed then we can't reconnect
@@ -1587,8 +1583,6 @@ export class DeltaManager
                 // We have been kicked out from quorum
                 this.logger.sendPerformanceEvent({ eventName: "ReadConnectionTransition" });
                 this.downgradedConnection = true;
-                assert(this.connectionMode === "read",
-                    0x27c /* "effective connectionMode should be 'read' after downgrade" */);
             }
         }
 

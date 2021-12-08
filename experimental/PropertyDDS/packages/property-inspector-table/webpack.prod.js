@@ -127,7 +127,7 @@ const CommonWebpackLibTSConfig = function (args) {
           test: /\.[tj]sx?$/,
           exclude: [/node_modules/, /\.min\.js$/],
           use: {
-            loader: 'babel-loader',
+            loader: require.resolve('babel-loader'),
             options: {
               babelrc: false,
               presets: [

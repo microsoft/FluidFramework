@@ -29,8 +29,7 @@ export interface IClickerEvents extends IEvent {
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export class Clicker extends DataObject<object, undefined, IClickerEvents> {
+export class Clicker extends DataObject<{Events: IClickerEvents}> {
     private _counter: SharedCounter | undefined;
     private _taskManager: TaskManager | undefined;
 
@@ -137,8 +136,7 @@ export class ClickerReactView extends React.Component<ClickerProps, ClickerState
 
 // ----- FACTORY SETUP -----
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-export const ClickerInstantiationFactory = new DataObjectFactory<Clicker, object, undefined, IClickerEvents>(
+export const ClickerInstantiationFactory = new DataObjectFactory(
     ClickerName,
     Clicker,
     [SharedCounter.getFactory(), TaskManager.getFactory()],

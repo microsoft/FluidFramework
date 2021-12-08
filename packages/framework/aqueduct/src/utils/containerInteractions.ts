@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidObject } from "@fluidframework/core-interfaces";
 import { IContainer } from "@fluidframework/container-definitions";
 
 /**
@@ -13,7 +13,7 @@ import { IContainer } from "@fluidframework/container-definitions";
  *
  * @param container - Container you're attempting to get the object from
  */
-export async function getDefaultObjectFromContainer<T = IFluidObject>(container: IContainer): Promise<T> {
+export async function getDefaultObjectFromContainer<T = IFluidObject & FluidObject>(container: IContainer): Promise<T> {
     const url = "/";
     const response = await container.request({ url });
 
@@ -37,7 +37,8 @@ export async function getDefaultObjectFromContainer<T = IFluidObject>(container:
  * @param id - Unique id of the FluidObject
  * @param container - Container you're attempting to get the object from
  */
-export async function getObjectWithIdFromContainer<T = IFluidObject>(id: string, container: IContainer): Promise<T> {
+export async function getObjectWithIdFromContainer<T = IFluidObject & FluidObject>(
+    id: string, container: IContainer): Promise<T> {
     const url = `/${id}`;
     const response = await container.request({ url });
 
@@ -61,7 +62,8 @@ export async function getObjectWithIdFromContainer<T = IFluidObject>(id: string,
  * @param path - Unique path/url of the FluidObject
  * @param container - Container you're attempting to get the object from
  */
-export async function getObjectFromContainer<T = IFluidObject>(path: string, container: IContainer): Promise<T> {
+export async function getObjectFromContainer<T = IFluidObject & FluidObject>(
+    path: string, container: IContainer): Promise<T> {
     const response = await container.request({ url: path });
 
     if (response.status !== 200 || response.mimeType !== "fluid/object") {
