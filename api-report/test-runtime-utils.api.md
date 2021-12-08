@@ -71,7 +71,7 @@ export class InsecureTokenProvider implements ITokenProvider {
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
-    fetchStorageToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
+    fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
     }
 
 // @public

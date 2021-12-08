@@ -36,7 +36,7 @@ export class InsecureTokenProvider implements ITokenProvider {
         };
     }
 
-    public async fetchStorageToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {
+    public async fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
         return {
             fromCache: true,
             jwt: generateToken(
