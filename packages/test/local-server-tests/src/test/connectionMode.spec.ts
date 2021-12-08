@@ -127,9 +127,9 @@ describe("Logging Last Connection Mode ", () => {
         assert(disconnectedEvents !== undefined, "no disconnected events were logged");
 
         // checking telemetry has the right connection mode
-        assert.strictEqual(connectedEvents[0].connectionMode, disconnectedEvents[0].lastConnectionMode,
+        assert.strictEqual(connectedEvents[0].connectionMode, disconnectedEvents[0].connectionMode,
              "mismatch in connection mode during first disconnect");
-        assert.strictEqual(connectedEvents[1].connectionMode, disconnectedEvents[1].lastConnectionMode,
+        assert.strictEqual(connectedEvents[1].connectionMode, disconnectedEvents[1].connectionMode,
             "mismatch in connection mode during second disconnect");
     });
 });

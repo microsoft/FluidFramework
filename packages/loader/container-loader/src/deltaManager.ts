@@ -190,6 +190,9 @@ export class DeltaManager
     // Connection mode used when reconnecting on error or disconnect.
     private readonly defaultReconnectionMode: ConnectionMode;
 
+    // tracks connection mode before disconnect
+    private lastConnectionMode: ConnectionMode;
+
     private pending: ISequencedDocumentMessage[] = [];
     private fetchReason: string | undefined;
 
@@ -387,18 +390,17 @@ export class DeltaManager
     public connectionProps(): ITelemetryProperties {
         const common = {
             sequenceNumber: this.lastSequenceNumber,
+            connectionMode: this.lastConnectionMode,
         };
         if (this.connection !== undefined) {
+            this.lastConnectionMode = this.connectionMode;
             return {
                 ...common,
-                connectionMode: this.connectionMode,
                 relayServiceAgent: this.connection.relayServiceAgent,
             };
         } else {
             return {
                 ...common,
-                // last connection mode right before disconnect
-                lastConnectionMode: this.client.mode,
                 // Report how many ops this client sent in last disconnected session
                 sentOps: this.clientSequenceNumber,
             };
@@ -522,6 +524,7 @@ export class DeltaManager
 
         this.clientDetails = this.client.details;
         this.defaultReconnectionMode = this.client.mode;
+        this.lastConnectionMode = this.client.mode;
         this._reconnectMode = reconnectAllowed ? ReconnectMode.Enabled : ReconnectMode.Never;
 
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
