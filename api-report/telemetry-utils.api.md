@@ -183,10 +183,10 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
 export function logIfFalse(condition: any, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
 
 // @public
-export function mixinChildLoggerWithConfigProvider(logger: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLoggerWithConfig;
+export function mixinChildLoggerWithMonitoringContext(logger: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags): MonitoringContext;
 
 // @public
-export function mixinConfigProvider<T extends ITelemetryBaseLogger>(logger: T, config: IConfigProvider): TelemetryLoggerWithConfig<T>;
+export function mixinMonitoringContext<T extends ITelemetryBaseLogger>(logger: T, config: IConfigProvider): MonitoringContext<T>;
 
 // @public
 export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
@@ -197,6 +197,14 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
     matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean;
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
+}
+
+// @public
+export interface MonitoringContext<T extends ITelemetryBaseLogger = ITelemetryLogger> {
+    // (undocumented)
+    config: IConfigProvider;
+    // (undocumented)
+    logger: T;
 }
 
 // @public
@@ -281,11 +289,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         category: TelemetryEventCategory;
     }, error?: any): void;
 }
-
-// @public
-export type TelemetryLoggerWithConfig<T extends ITelemetryBaseLogger = ITelemetryLogger> = T & {
-    readonly config: IConfigProvider;
-};
 
 // @public
 export class TelemetryUTLogger implements ITelemetryLogger {

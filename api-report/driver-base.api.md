@@ -19,7 +19,7 @@ import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
-import { TelemetryLoggerWithConfig } from '@fluidframework/telemetry-utils';
+import { MonitoringContext } from '@fluidframework/telemetry-utils';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
@@ -62,9 +62,9 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     get initialSignals(): ISignalMessage[];
     // (undocumented)
     protected readonly isBatchManagerDisabled: boolean;
-    // (undocumented)
-    protected readonly logger: TelemetryLoggerWithConfig;
     get maxMessageSize(): number;
+    // (undocumented)
+    protected readonly mc: MonitoringContext;
     get mode(): ConnectionMode;
     // (undocumented)
     protected readonly queuedMessages: ISequencedDocumentMessage[];
