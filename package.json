@@ -63,7 +63,7 @@
 		"@fluidframework/test-drivers": "^0.50.1",
 		"@fluidframework/test-runtime-utils": "^0.50.1",
 		"@fluidframework/test-utils": "^0.50.1",
-		"@microsoft/api-extractor": "^7.18.19",
+		"@microsoft/api-extractor": "^7.18.21",
 		"@types/lru-cache": "^5.1.1",
 		"@types/socket.io-client": "^1.4.36",
 		"@typescript-eslint/parser": "^4.33.0",
@@ -75,7 +75,7 @@
 		"mocha": "^9.1.3",
 		"nyc": "^15.1.0",
 		"prando": "^6.0.1",
-		"prettier": "^2.5.0",
+		"prettier": "^2.5.1",
 		"rimraf": "^3.0.2",
 		"typescript": "^4.4.4"
 	},
