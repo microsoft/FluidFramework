@@ -145,6 +145,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
+    // Back compat: deprecated in 0.53, can be removed in versions >= 0.55.
     public get IFluidSerializer() { return this.serializer; }
 
     public get IFluidHandleContext() { return this; }
