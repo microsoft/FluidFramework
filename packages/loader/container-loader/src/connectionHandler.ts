@@ -442,9 +442,7 @@ export class ConnectionManager implements IConnectionManager {
         }
 
         const docService = this.serviceProvider();
-        if (docService === undefined) {
-            throw new Error("Container is not attached");
-        }
+        assert(docService !== undefined, 0x2a7 /* "Container is not attached" */);
 
         let connection: IDocumentDeltaConnection | undefined;
 
