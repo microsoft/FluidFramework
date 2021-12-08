@@ -26,7 +26,7 @@ import {
     Uint8ArrayToString,
  } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { mixinChildLoggerWithConfigProvider } from "@fluidframework/telemetry-utils";
+import { mixinChildLoggerWithMonitoringContext } from "@fluidframework/telemetry-utils";
 
 /*
  * Work around for bufferToString having a bug - it can't consume IsoBuffer!
@@ -171,7 +171,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         if (storage instanceof BlobAggregationStorage) {
             return storage;
         }
-        const configLogger = mixinChildLoggerWithConfigProvider(logger);
+        const configLogger = mixinChildLoggerWithMonitoringContext(logger);
         const realAllowPackaging = configLogger.config.getBoolean("FluidAggregateBlobs") ?? allowPacking ?? false;
         // Always create BlobAggregationStorage even if storage is not asking for packing.
         // This is mostly to avoid cases where future changes in policy would result in inability to

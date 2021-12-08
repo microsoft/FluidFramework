@@ -13,8 +13,8 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { ReadAndParseBlob, RefreshSummaryResult } from "@fluidframework/runtime-utils";
 import {
-    TelemetryLoggerWithConfig,
-    mixinChildLoggerWithConfigProvider,
+    MonitoringContext,
+    mixinChildLoggerWithMonitoringContext,
     PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 
@@ -211,7 +211,7 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly gcEnabled: boolean;
     private readonly shouldRunSweep: boolean;
     private readonly testMode: boolean;
-    private readonly logger: TelemetryLoggerWithConfig;
+    private readonly mc: MonitoringContext;
 
     // The current GC version that this container is running.
     private readonly currentGCVersion = GCVersion;
@@ -241,7 +241,7 @@ export class GarbageCollector implements IGarbageCollector {
         existing: boolean,
         metadata?: IContainerRuntimeMetadata,
     ) {
-        this.logger = mixinChildLoggerWithConfigProvider(baseLogger, "GarbageCollector");
+        this.mc = mixinChildLoggerWithMonitoringContext(baseLogger, "GarbageCollector");
 
         this.deleteTimeoutMs = this.gcOptions.deleteTimeoutMs ?? defaultDeleteTimeoutMs;
 
@@ -262,7 +262,7 @@ export class GarbageCollector implements IGarbageCollector {
         this.latestSummaryGCVersion = prevSummaryGCVersion ?? this.currentGCVersion;
 
         // Whether GC should run or not. Can override with localStorage flag.
-        this.shouldRunGC = this.logger.config.getBoolean(runGCKey) ?? (
+        this.shouldRunGC = this.mc.config.getBoolean(runGCKey) ?? (
             // GC must be enabled for the document.
             this.gcEnabled
             // GC must not be disabled via GC options.
@@ -272,10 +272,10 @@ export class GarbageCollector implements IGarbageCollector {
         // Whether GC sweep phase should run or not. If this is false, only GC mark phase is run. Can override with
         // localStorage flag.
         this.shouldRunSweep = this.shouldRunGC &&
-            (this.logger.config.getBoolean(runSweepKey) ?? gcOptions.runSweep === true);
+            (this.mc.config.getBoolean(runSweepKey) ?? gcOptions.runSweep === true);
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
-        this.testMode = this.logger.config.getBoolean(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
+        this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
 
         // Get the GC state from the GC blob in the base snapshot. Use LazyPromise because we only want to do
         // this once since it involves fetching blobs from storage which is expensive.
@@ -362,7 +362,7 @@ export class GarbageCollector implements IGarbageCollector {
         },
     ): Promise<IGCStats> {
         const {
-            logger = this.logger,
+            logger = this.mc.logger,
             runSweep = this.shouldRunSweep,
             fullGC = this.gcOptions.runFullGC === true || this.hasGCVersionChanged,
         } = options;
@@ -443,7 +443,7 @@ export class GarbageCollector implements IGarbageCollector {
         // Prefix "/" if needed to make it relative to the root.
         const nodeId = id.startsWith("/") ? id : `/${id}`;
         this.unreferencedNodesState.get(nodeId)?.logIfInactive(
-            this.logger,
+            this.mc.logger,
             "inactiveObjectChanged",
             this.getCurrentTimestampMs(),
             this.deleteTimeoutMs,
@@ -504,7 +504,7 @@ export class GarbageCollector implements IGarbageCollector {
                 // If this node has been unreferenced for longer than deleteTimeoutMs and is being referenced,
                 // log an error as this may mean the deleteTimeoutMs is not long enough.
                 nodeStateTracker.logIfInactive(
-                    this.logger,
+                    this.mc.logger,
                     "inactiveObjectRevived",
                     currentTimestampMs,
                     this.deleteTimeoutMs,

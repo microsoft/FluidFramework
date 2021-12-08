@@ -161,7 +161,8 @@ export class ConfigProvider implements IConfigProvider {
                 if (isConfigProviderBase(maybeProvider)) {
                     filteredProviders.push(maybeProvider);
                 } else {
-                    const maybeLwc: loggerWithConfigBuilder<ITelemetryBaseLogger> = maybeProvider;
+                    const maybeLwc: ITelemetryBaseLogger & Partial<MonitoringContext<ITelemetryBaseLogger>> =
+                        maybeProvider;
                     if (isConfigProviderBase(maybeLwc.config)) {
                         filteredProviders.push(maybeLwc.config);
                     }
@@ -283,8 +284,10 @@ export class ConfigProvider implements IConfigProvider {
 /**
  * A type containing both a telemetry logger and a configuration provider
  */
-export type TelemetryLoggerWithConfig<T extends ITelemetryBaseLogger = ITelemetryLogger> =
-    T & { readonly config: IConfigProvider };
+export interface MonitoringContext<T extends ITelemetryBaseLogger = ITelemetryLogger> {
+    logger: T;
+    config: IConfigProvider;
+}
 
 /**
  * Creates a child mixin containing both a telemetry logger and a configuration provider
@@ -295,17 +298,15 @@ export type TelemetryLoggerWithConfig<T extends ITelemetryBaseLogger = ITelemetr
  * @param properties - logger properties
  * @returns A mixin containing both a telemetry logger and a configuration provider
  */
-export function mixinChildLoggerWithConfigProvider(
+export function mixinChildLoggerWithMonitoringContext(
     logger: ITelemetryBaseLogger,
     namespace?: string,
     properties?: ITelemetryLoggerPropertyBags,
-): TelemetryLoggerWithConfig {
+): MonitoringContext {
     const config = ConfigProvider.create(namespace, [logger]);
     const childLogger = ChildLogger.create(logger, namespace, properties);
-    return mixinConfigProvider(childLogger, config);
+    return mixinMonitoringContext(childLogger, config);
 }
-
-type loggerWithConfigBuilder<T extends ITelemetryBaseLogger> = T & { config?: IConfigProvider };
 
 /**
  * Attaches a config provider to a telemetry logger
@@ -314,17 +315,18 @@ type loggerWithConfigBuilder<T extends ITelemetryBaseLogger> = T & { config?: IC
  * @param config - instance of the config provider
  * @returns A mixin containing both a telemetry logger and a configuration provider
  */
-export function mixinConfigProvider<T extends ITelemetryBaseLogger>(
+export function mixinMonitoringContext<T extends ITelemetryBaseLogger>(
     logger: T,
     config: IConfigProvider,
-): TelemetryLoggerWithConfig<T> {
-    const mixin: loggerWithConfigBuilder<T> = logger;
+): MonitoringContext<T> {
+    const mixin: Partial<MonitoringContext<T>> & T = logger;
 
     if (mixin.config !== undefined) {
         throw new Error("Logger Is already config provider");
     }
     mixin.config = config;
-    return mixin as TelemetryLoggerWithConfig<T>;
+    mixin.logger = logger;
+    return mixin as MonitoringContext<T>;
 }
 
 function isConfigProviderBase<T>(obj: T): obj is T & IConfigProviderBase {

@@ -29,9 +29,9 @@ import {
     ConfigProvider,
     DebugLogger,
     sessionStorageConfigProvider,
-    TelemetryLoggerWithConfig,
-    mixinChildLoggerWithConfigProvider,
-    mixinConfigProvider,
+    MonitoringContext,
+    mixinChildLoggerWithMonitoringContext,
+    mixinMonitoringContext,
     PerformanceEvent,
     IConfigProviderBase,
 } from "@fluidframework/telemetry-utils";
@@ -292,7 +292,7 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
 export class Loader implements IHostLoader {
     private readonly containers = new Map<string, Promise<Container>>();
     public readonly services: ILoaderServices;
-    private readonly logger: TelemetryLoggerWithConfig;
+    private readonly mc: MonitoringContext;
 
     constructor(loaderProps: ILoaderProps) {
         const scope = { ...loaderProps.scope as FluidObject<ILoader> };
@@ -300,7 +300,7 @@ export class Loader implements IHostLoader {
             scope.ILoader = this;
         }
 
-        const subLogger = mixinConfigProvider(
+        const subMc = mixinMonitoringContext(
             DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all: { loaderId: uuid() } }),
             ConfigProvider.create(
                 "Fluid",
@@ -308,7 +308,7 @@ export class Loader implements IHostLoader {
                 loaderProps.configProvider,
                 loaderProps.logger]));
 
-        this.logger = mixinChildLoggerWithConfigProvider(subLogger, "Loader");
+        this.mc = mixinChildLoggerWithMonitoringContext(subMc.logger, "Loader");
 
         const telemetryProps = {
             loaderId: uuid(),
@@ -353,7 +353,7 @@ export class Loader implements IHostLoader {
 
     public async resolve(request: IRequest, pendingLocalState?: string): Promise<Container> {
         const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
-        return PerformanceEvent.timedExecAsync(this.logger, { eventName }, async () => {
+        return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName }, async () => {
             const resolved = await this.resolveCore(
                 request,
                 pendingLocalState !== undefined ? JSON.parse(pendingLocalState) : undefined,
@@ -363,7 +363,7 @@ export class Loader implements IHostLoader {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
+        return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName: "Request" }, async () => {
             const resolved = await this.resolveCore(request);
             return resolved.container.request({
                 ...request,

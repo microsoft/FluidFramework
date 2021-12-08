@@ -9,8 +9,8 @@ import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import {
-    TelemetryLoggerWithConfig,
-    mixinChildLoggerWithConfigProvider,
+    MonitoringContext,
+    mixinChildLoggerWithMonitoringContext,
     PerformanceEvent,
  } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -35,7 +35,7 @@ import { getWithRetryForTokenRefresh } from "./odspUtils";
 export class OdspSummaryUploadManager {
     // Last proposed handle of the uploaded app summary.
     private lastSummaryProposalHandle: string | undefined;
-    private readonly logger: TelemetryLoggerWithConfig;
+    private readonly mc: MonitoringContext;
 
     constructor(
         private readonly snapshotUrl: string,
@@ -43,14 +43,14 @@ export class OdspSummaryUploadManager {
         logger: ITelemetryLogger,
         private readonly epochTracker: EpochTracker,
     ) {
-        this.logger = mixinChildLoggerWithConfigProvider(logger);
+        this.mc = mixinChildLoggerWithMonitoringContext(logger);
     }
 
     public async writeSummaryTree(tree: api.ISummaryTree, context: ISummaryContext) {
         // If the last proposed handle is not the proposed handle of the acked summary(could happen when the last summary get nacked),
         // then re-initialize the caches with the previous ones else just update the previous caches with the caches from acked summary.
         if (context.proposalHandle !== this.lastSummaryProposalHandle) {
-            this.logger.sendTelemetryEvent({
+            this.mc.logger.sendTelemetryEvent({
                 eventName: "LastSummaryProposedHandleMismatch",
                 ackedSummaryProposedHandle: context.proposalHandle,
                 lastSummaryProposalHandle: this.lastSummaryProposalHandle,
@@ -96,7 +96,7 @@ export class OdspSummaryUploadManager {
 
             const postBody = JSON.stringify(snapshot);
 
-            return PerformanceEvent.timedExecAsync(this.logger,
+            return PerformanceEvent.timedExecAsync(this.mc.logger,
                 {
                     eventName: "uploadSummary",
                     attempt: options.refresh ? 2 : 1,
@@ -134,7 +134,7 @@ export class OdspSummaryUploadManager {
         tree: api.ISummaryTree,
         rootNodeName: string,
         path: string = "",
-        markUnreferencedNodes: boolean = this.logger.config.getBoolean("FluidMarkUnreferencedNodes") ?? true,
+        markUnreferencedNodes: boolean = this.mc.config.getBoolean("FluidMarkUnreferencedNodes") ?? true,
     ) {
         const snapshotTree: IOdspSummaryTree = {
             type: "tree",

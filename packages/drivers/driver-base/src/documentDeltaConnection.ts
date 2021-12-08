@@ -24,8 +24,8 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    TelemetryLoggerWithConfig,
-    mixinChildLoggerWithConfigProvider,
+    mixinChildLoggerWithMonitoringContext,
+    MonitoringContext,
 } from "@fluidframework/telemetry-utils";
 
 // Local storage key to disable the BatchManager
@@ -106,7 +106,7 @@ export class DocumentDeltaConnection
      * After disconnection, we flip this to prevent any stale messages from being emitted.
      */
     protected _disposed: boolean = false;
-    protected readonly logger: TelemetryLoggerWithConfig;
+    protected readonly mc: MonitoringContext;
     protected readonly isBatchManagerDisabled: boolean = false;
 
     public get details(): IConnected {
@@ -127,7 +127,7 @@ export class DocumentDeltaConnection
     ) {
         super();
 
-        this.logger = mixinChildLoggerWithConfigProvider(logger, "DeltaConnection");
+        this.mc = mixinChildLoggerWithMonitoringContext(logger, "DeltaConnection");
 
         this.submitManager = new BatchManager<IDocumentMessage[]>(
             (submitType, work) => this.emitMessages(submitType, work));
@@ -160,7 +160,7 @@ export class DocumentDeltaConnection
             }
         });
 
-        this.isBatchManagerDisabled = this.logger.config.getBoolean(batchManagerDisabledKey, false) === true;
+        this.isBatchManagerDisabled = this.mc.config.getBoolean(batchManagerDisabledKey, false) === true;
     }
 
     /**
