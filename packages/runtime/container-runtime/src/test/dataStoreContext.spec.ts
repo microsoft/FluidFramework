@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
@@ -27,7 +26,6 @@ import {
     CreateSummarizerNodeSource,
     channelsTreeName,
 } from "@fluidframework/runtime-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
 import { stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
@@ -297,7 +295,6 @@ describe("Data Store Context Tests", () => {
         const storage: Partial<IDocumentStorageService> = {};
         let scope: FluidObject;
         let summarizerNode: IRootSummarizerNodeWithGC;
-        const logger: ITelemetryLogger = new MockLogger();
 
         function mockContainerRuntime(disableIsolatedChannels = true): ContainerRuntime {
             const factory: { [key: string]: any } = {};
@@ -310,7 +307,7 @@ describe("Data Store Context Tests", () => {
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             return {
-                logger,
+                logger: new TelemetryNullLogger(),
                 disableIsolatedChannels,
                 IFluidDataStoreRegistry: registry,
                 on: (event, listener) => { },
