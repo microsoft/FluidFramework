@@ -185,6 +185,16 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject3, alias));
         });
 
+        it("Assign an alias which has previously been assigned as id by the legacy API, " +
+        "different containers", async () => {
+            await createRootDataStore(dataObject1, alias);
+            const ds2 = await createRootDataStore(dataObject2, "2");
+            const aliasResult2 = await trySetAlias(runtimeOf(dataObject1), ds2, alias);
+            assert(!aliasResult2);
+
+            assert.ok(await getRootDataStore(dataObject2, alias));
+        });
+
         it("Assign multiple data stores to the same alias, first write wins, " +
         "different containers from snapshot", async () => {
             // andre4i: Move this into test utils or something. Same as for other

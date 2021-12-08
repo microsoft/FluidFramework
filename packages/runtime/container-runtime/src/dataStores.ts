@@ -207,7 +207,6 @@ export class DataStores implements IDisposable {
     public processAliasMessage(message: ISequencedDocumentMessage): IDataStoreAliasMapping | undefined {
         const aliasMessage = message.contents as IDataStoreAliasMessage;
 
-        this.buildAliasMap();
         const existingMapping = this.aliasMap.get(aliasMessage.alias);
         if (existingMapping !== undefined) {
             return {
@@ -217,13 +216,24 @@ export class DataStores implements IDisposable {
             };
         }
 
+        // Unlikely scenario, but we may have an alias OP with the alias value
+        // equal to the id of an older named data store
+        const maybeContextWithAliasAsId = this.contexts.get(aliasMessage.alias);
+        if (maybeContextWithAliasAsId !== undefined) {
+            return {
+                suppliedInternalId: aliasMessage.internalId,
+                alias: aliasMessage.alias,
+                aliasedInternalId: maybeContextWithAliasAsId.id,
+            };
+        }
+
         const currentContext = this.contexts.get(aliasMessage.internalId);
         if (currentContext === undefined) {
             return undefined;
         }
 
-        this.aliasMap.set(aliasMessage.alias, currentId);
-        this.contexts.get(currentId)?.setRoot();
+        this.aliasMap.set(aliasMessage.alias, currentContext.id);
+        currentContext.setRoot();
 
         return {
             suppliedInternalId: aliasMessage.internalId,
@@ -526,21 +536,6 @@ export class DataStores implements IDisposable {
             }
         }
         return outboundRoutes;
-    }
-
-    /**
-     * This method should be replaced by smearing these map inserts across
-     * all 'add datastore' operations. Its purpose for now is to not create
-     * an alias blob unless we process an alias message.
-     */
-    private buildAliasMap() {
-        for (const [id, _] of this.contexts) {
-            if (this.aliasMap.has(id)) {
-                continue;
-            }
-
-            this.aliasMap.set(id, id);
-        }
     }
 }
 
