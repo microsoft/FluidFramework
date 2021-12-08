@@ -706,7 +706,7 @@ export class DeltaManager
         }
 
         const docService = this.serviceProvider();
-        assert(docService !== undefined, "Container is not attached");
+        assert(docService !== undefined, 0x2a7 /* "Container is not attached" */);
 
         if (docService.policies?.storageOnly === true) {
             const connection = new NoDeltaStream();
