@@ -1,5 +1,11 @@
 # Change Log
 
+## 16.2.1
+
+* build: update deps (except typescript)
+  * Associated pull request: [36560](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/36560)
+  * Commit: [e6179bda79e437a180305af57b58c82e6cecf958](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/e6179bda79e437a180305af57b58c82e6cecf958)
+
 ## 16.0.1
 
 * build: update deps (except typescript)
