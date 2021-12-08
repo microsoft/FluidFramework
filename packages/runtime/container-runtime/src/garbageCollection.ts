@@ -284,7 +284,8 @@ export class GarbageCollector implements IGarbageCollector {
 
             // Get GC blobs from each data store's summary tree. Get them and consolidate into IGCState format.
             const dataStoreSnaphotTree = getSummaryForDatastores(baseSnapshot, metadata);
-            assert(dataStoreSnaphotTree !== undefined, 0x2a8 /* "Expected data store snapshot tree in base snapshot" */);
+            assert(dataStoreSnaphotTree !== undefined,
+                0x2a8 /* "Expected data store snapshot tree in base snapshot" */);
             for (const [dsId, dsSnapshotTree] of Object.entries(dataStoreSnaphotTree.trees)) {
                 const blobId = dsSnapshotTree.blobs[gcBlobName];
                 if (blobId === undefined) {
@@ -303,7 +304,8 @@ export class GarbageCollector implements IGarbageCollector {
                     const rootId = id === "/" ? dsRootId : `${dsRootId}${id}`;
                     gcState.gcNodes[rootId] = { outboundRoutes: Array.from(outboundRoutes) };
                 }
-                assert(gcState.gcNodes[dsRootId] !== undefined, 0x2a9 /* `GC nodes for data store ${dsId} not in GC blob` */);
+                assert(gcState.gcNodes[dsRootId] !== undefined,
+                    0x2a9 /* `GC nodes for data store ${dsId} not in GC blob` */);
                 gcState.gcNodes[dsRootId].unreferencedTimestampMs = gcSummaryDetails.unrefTimestamp;
             }
             return gcState;
