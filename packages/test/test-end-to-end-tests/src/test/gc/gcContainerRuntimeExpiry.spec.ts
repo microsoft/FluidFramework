@@ -50,8 +50,10 @@ import { TestDataObject } from "./mockSummarizerClient";
     );
 
     let container1: IContainer;
+    let container2: IContainer;
     let containerRuntime: ContainerRuntime;
     let mainDataStore1: TestDataObject;
+    let mainDataStore2: TestDataObject;
 
     const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory);
 
@@ -60,15 +62,17 @@ import { TestDataObject } from "./mockSummarizerClient";
 
         // Create a Container for the first client.
         container1 = await createContainer();
+        container2 = await createContainer();
 
         // Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
         // re-sent. Do it here so that the extra events don't mess with rest of the test.
         mainDataStore1 = await requestFluidObject<TestDataObject>(container1, "/");
+        mainDataStore2 = await requestFluidObject<TestDataObject>(container2, "/");
         containerRuntime = mainDataStore1.containerRuntime;
         await provider.ensureSynchronized();
     });
 
-    it("datastore should not be able to make changes", async () => {
+    it("datastore should not be able to send ops", async () => {
         mainDataStore1._root.set("test", "value");
         await provider.ensureSynchronized();
         (containerRuntime as any).setReadOnly();
@@ -79,6 +83,6 @@ import { TestDataObject } from "./mockSummarizerClient";
             trackState: false,
             summaryLogger: new TelemetryNullLogger(),
         });
-        assert(mainDataStore1._root.get("test") === "value", "mainDataStore1 should be readonly!.");
+        assert(mainDataStore2._root.get("test") === "value", "mainDataStore1 should be readonly!.");
     });
 });
