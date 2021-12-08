@@ -304,7 +304,7 @@ export class Loader implements IHostLoader {
             DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all: { loaderId: uuid() } }),
             ConfigProvider.create(
                 "Fluid",
-                [sessionStorageConfigProvider("FluidHot").value, // Global override for all configs
+                [sessionStorageConfigProvider("Fluid").value, // Global override for all configs
                 loaderProps.configProvider,
                 loaderProps.logger]));
 
