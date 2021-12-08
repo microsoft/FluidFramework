@@ -1117,13 +1117,13 @@ export class MergeTree {
         return block;
     }
 
-    clone() {
+    public clone() {
         const b = new MergeTree(this.options);
         // For now assume that b will not collaborate
         b.root = b.blockClone(this.root);
     }
 
-    blockClone(block: IMergeBlock, segments?: ISegment[]) {
+    public blockClone(block: IMergeBlock, segments?: ISegment[]) {
         const bBlock = this.makeBlock(block.childCount);
         for (let i = 0; i < block.childCount; i++) {
             const child = block.children[i];
@@ -1147,7 +1147,7 @@ export class MergeTree {
         return b;
     }
 
-    localNetLength(segment: ISegment) {
+    public localNetLength(segment: ISegment) {
         const removalInfo = this.getRemovalInfo(segment);
         if (removalInfo.removedSeq !== undefined) {
             return 0;
@@ -1157,7 +1157,7 @@ export class MergeTree {
     }
 
     // TODO: remove id when segment removed
-    mapIdToSegment(id: string, segment: ISegment) {
+    public mapIdToSegment(id: string, segment: ISegment) {
         this.idToSegment[id] = segment;
     }
 
@@ -1227,7 +1227,7 @@ export class MergeTree {
     /* eslint-enable max-len */
 
     // For now assume min starts at zero
-    startCollaboration(localClientId: number, minSeq: number, currentSeq: number) {
+    public startCollaboration(localClientId: number, minSeq: number, currentSeq: number) {
         this.collabWindow.clientId = localClientId;
         this.collabWindow.minSeq = minSeq;
         this.collabWindow.collaborating = true;
@@ -1450,11 +1450,11 @@ export class MergeTree {
         }
     }
 
-    getCollabWindow() {
+    public getCollabWindow() {
         return this.collabWindow;
     }
 
-    getStats() {
+    public getStats() {
         const nodeGetStats = (block: IMergeBlock): MergeTreeStats => {
             const stats: MergeTreeStats = {
                 maxHeight: 0,
@@ -1506,11 +1506,11 @@ export class MergeTree {
         return rootStats;
     }
 
-    findHistorialPosition(pos: number, fromSeq: number, toSeq: number, clientId: number) {
+    public findHistorialPosition(pos: number, fromSeq: number, toSeq: number, clientId: number) {
         return this.findHistorialPositionFromClient(pos, fromSeq, toSeq, clientId);
     }
 
-    findHistorialPositionFromClient(pos: number, fromSeq: number, toSeq: number, clientId: number) {
+    private findHistorialPositionFromClient(pos: number, fromSeq: number, toSeq: number, clientId: number) {
         assert(fromSeq < toSeq, 0x04a /* "Invalid range for historical position search!" */);
         if (pos < this.getLength(fromSeq, clientId)) {
             assert(toSeq <= this.collabWindow.currentSeq,
@@ -1528,7 +1528,7 @@ export class MergeTree {
         }
     }
 
-    findHistorialRangeFromClient(
+    public findHistorialRangeFromClient(
         rangeStart: number,
         rangeEnd: number,
         fromSeq: number,
@@ -1561,11 +1561,11 @@ export class MergeTree {
         return ranges;
     }
 
-    findHistorialRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, clientId: number) {
+    public findHistorialRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, clientId: number) {
         return this.findHistorialRangeFromClient(rangeStart, rangeEnd, fromSeq, toSeq, clientId);
     }
 
-    getLength(refSeq: number, clientId: number) {
+    public getLength(refSeq: number, clientId: number) {
         return this.blockLength(this.root, refSeq, clientId);
     }
 
@@ -1574,7 +1574,7 @@ export class MergeTree {
      */
     public get length() { return this.root.cachedLength; }
 
-    getPosition(node: MergeNode, refSeq: number, clientId: number) {
+    public getPosition(node: MergeNode, refSeq: number, clientId: number) {
         let totalOffset = 0;
         let parent = node.parent;
         let prevParent: IMergeBlock | undefined;
@@ -1593,26 +1593,7 @@ export class MergeTree {
         return totalOffset;
     }
 
-    cloneSegments(refSeq: number, clientId: number, start = 0, end?: number) {
-        let _end = end;
-        const gatherSegment = (
-            segment: ISegment, pos: number, refSeq: number, clientId: number, start: number,
-            end: number, accumSegments: SegmentAccumulator) => {
-            accumSegments.segments.push(segment.clone());
-            return true;
-        };
-
-        if (_end === undefined) {
-            _end = this.blockLength(this.root, refSeq, clientId);
-        }
-        const accum: SegmentAccumulator = {
-            segments: [],
-        };
-        this.mapRange<SegmentAccumulator>({ leaf: gatherSegment }, refSeq, clientId, accum, start, _end);
-        return accum.segments;
-    }
-
-    getContainingSegment<T extends ISegment>(pos: number, refSeq: number, clientId: number) {
+    public getContainingSegment<T extends ISegment>(pos: number, refSeq: number, clientId: number) {
         let segment: T | undefined;
         let offset: number | undefined;
 

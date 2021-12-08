@@ -1012,15 +1012,11 @@ export class MergeTree {
     // (undocumented)
     clone(): void;
     // (undocumented)
-    cloneSegments(refSeq: number, clientId: number, start?: number, end?: number): ISegment[];
-    // (undocumented)
     readonly collabWindow: CollaborationWindow;
     // (undocumented)
     static readonly diagOverlappingRemove = false;
     // (undocumented)
     findHistorialPosition(pos: number, fromSeq: number, toSeq: number, clientId: number): number;
-    // (undocumented)
-    findHistorialPositionFromClient(pos: number, fromSeq: number, toSeq: number, clientId: number): number;
     // (undocumented)
     findHistorialRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, clientId: number): IIntegerRange[];
     // (undocumented)
