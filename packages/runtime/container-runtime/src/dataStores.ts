@@ -37,7 +37,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { BlobCacheStorageService, buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy, LazyPromise } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
-import { GCDataBuilder, getChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
+import { GCDataBuilder, unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime } from "./containerRuntime";
 import {
@@ -456,7 +456,7 @@ export class DataStores implements IDisposable {
      */
     public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats {
         // Get a map of data store ids to routes used in it.
-        const usedDataStoreRoutes = getChildNodesUsedRoutes(usedRoutes);
+        const usedDataStoreRoutes = unpackChildNodesUsedRoutes(usedRoutes);
 
         // Verify that the used routes are correct.
         for (const [id] of usedDataStoreRoutes) {

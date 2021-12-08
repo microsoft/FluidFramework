@@ -15,7 +15,7 @@ import {
     neverCancelledSummaryToken,
 } from "@fluidframework/container-runtime";
 import { DriverHeader } from "@fluidframework/driver-definitions";
-import { concatGarbageCollectionState } from "@fluidframework/garbage-collector";
+import { concatGarbageCollectionStates } from "@fluidframework/garbage-collector";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -107,7 +107,7 @@ export function getGCStateFromSummary(summary: ISummaryTree): IGarbageCollection
     const rootGCTree = summary.tree[gcTreeKey];
     assert(rootGCTree?.type === SummaryType.Tree, `GC tree not available`);
 
-    const rootGCState: IGarbageCollectionState = { gcNodes: {} };
+    let rootGCState: IGarbageCollectionState = { gcNodes: {} };
     for (const key of Object.keys(rootGCTree.tree)) {
         // Skip blobs that do not stsart with the GC prefix.
         if (!key.startsWith(gcBlobPrefix)) {
@@ -118,7 +118,7 @@ export function getGCStateFromSummary(summary: ISummaryTree): IGarbageCollection
         assert(gcBlob?.type === SummaryType.Blob, `GC blob not available`);
         const gcState = JSON.parse(gcBlob.content as string) as IGarbageCollectionState;
         // Merge the GC state of this blob into the root GC state.
-        concatGarbageCollectionState(rootGCState, gcState);
+        rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
     }
     return rootGCState;
 }

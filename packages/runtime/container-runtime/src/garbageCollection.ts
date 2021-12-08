@@ -6,8 +6,8 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import {
-    concatGarbageCollectionState,
-    getChildNodesGCDetails,
+    concatGarbageCollectionStates,
+    unpackChildNodesGCDetails,
     IGCResult,
     runGarbageCollection,
 } from "@fluidframework/garbage-collector";
@@ -91,7 +91,7 @@ export interface IGarbageCollector {
     /** Tells whether the GC version has changed compared to the version in the latest summary. */
     readonly hasGCVersionChanged: boolean;
     /** Tells whether GC data should be written to the root of the summary tree. */
-    readonly shouldWriteGCTree: boolean;
+    readonly writeDataAtRoot: boolean;
     /** Run garbage collection and update the reference / used state of the system. */
     collectGarbage(
         options: { logger?: ITelemetryLogger, runGC?: boolean, runSweep?: boolean, fullGC?: boolean },
@@ -225,9 +225,9 @@ export class GarbageCollector implements IGarbageCollector {
      * 2. If the base summary has the GC data written at the root. This is to support forward compatibility where when
      *    we start writing the GC data at root, older versions can detect that and write at root too.
      */
-    private _shouldWriteGCTree: boolean = false;
-    public get shouldWriteGCTree(): boolean {
-        return this._shouldWriteGCTree;
+    private _writeDataAtRoot: boolean = false;
+    public get writeDataAtRoot(): boolean {
+        return this._writeDataAtRoot;
     }
 
     // The current GC version that this container is running.
@@ -298,7 +298,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // If `writeDataAtRoot` GC option is true, we should write the GC data into the root of the summary tree. This
         // GC option is used for testing only. It will be removed once we start writing GC data into root by default.
-        this._shouldWriteGCTree = this.gcOptions.writeDataAtRoot === true;
+        this._writeDataAtRoot = this.gcOptions.writeDataAtRoot === true;
 
         // Get the GC state from the GC blob in the base snapshot. Use LazyPromise because we only want to do
         // this once since it involves fetching blobs from storage which is expensive.
@@ -310,8 +310,8 @@ export class GarbageCollector implements IGarbageCollector {
             // For newer documents, GC data should be present in the GC tree in the root of the snapshot.
             const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
             if (gcSnapshotTree !== undefined) {
-                // forward-compat - If a newer version has written the GC tree, we should also do the same.
-                this._shouldWriteGCTree = true;
+                // forward-compat - If a newer version has written the GC tree at root, we should also do the same.
+                this._writeDataAtRoot = true;
                 return getGCStateFromSnapshot(gcSnapshotTree, readAndParseBlob);
             }
 
@@ -401,7 +401,7 @@ export class GarbageCollector implements IGarbageCollector {
                 this.logger,
             ).referencedNodeIds;
 
-            const dataStoreGCDetailsMap = getChildNodesGCDetails({ gcData: { gcNodes }, usedRoutes });
+            const dataStoreGCDetailsMap = unpackChildNodesGCDetails({ gcData: { gcNodes }, usedRoutes });
             // Currently, the data stores write the GC data. So, we need to update it's base GC details with the
             // unreferenced timestamp. Once we start writing the GC data here, we won't need to do this anymore.
             for (const [nodeId, nodeData] of Object.entries(baseState.gcNodes)) {
@@ -619,7 +619,7 @@ async function getGCStateFromSnapshot(
     gcSnapshotTree: ISnapshotTree,
     readAndParseBlob: ReadAndParseBlob,
 ): Promise<IGarbageCollectionState> {
-    const rootGCState: IGarbageCollectionState = { gcNodes: {} };
+    let rootGCState: IGarbageCollectionState = { gcNodes: {} };
     for (const key of Object.keys(gcSnapshotTree.blobs)) {
         // Skip blobs that do not stsart with the GC prefix.
         if (!key.startsWith(gcBlobPrefix)) {
@@ -633,7 +633,7 @@ async function getGCStateFromSnapshot(
         const gcState = await readAndParseBlob<IGarbageCollectionState>(blobId);
         assert(gcState !== undefined, "GC blob missing from snapshot");
         // Merge the GC state of this blob into the root GC state.
-        concatGarbageCollectionState(rootGCState, gcState);
+        rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
     }
     return rootGCState;
 }

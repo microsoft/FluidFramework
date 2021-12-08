@@ -70,8 +70,8 @@ import {
 } from "@fluidframework/datastore-definitions";
 import {
     GCDataBuilder,
-    getChildNodesGCDetails,
-    getChildNodesUsedRoutes,
+    unpackChildNodesGCDetails,
+    unpackChildNodesUsedRoutes,
 } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
@@ -204,7 +204,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         this.initialChannelsGCDetailsP = new LazyPromise(async () => {
             const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails();
-            return getChildNodesGCDetails(gcDetailsInInitialSummary);
+            return unpackChildNodesGCDetails(gcDetailsInInitialSummary);
         });
 
         // Must always receive the data store type inside of the attributes
@@ -618,7 +618,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      */
     public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         // Get a map of channel ids to routes used in it.
-        const usedContextRoutes = getChildNodesUsedRoutes(usedRoutes);
+        const usedContextRoutes = unpackChildNodesUsedRoutes(usedRoutes);
 
         // Verify that the used routes are correct.
         for (const [id] of usedContextRoutes) {

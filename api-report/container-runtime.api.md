@@ -171,7 +171,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
     setFlushMode(mode: FlushMode): void;
-    get shouldWriteGCTree(): boolean;
     // @deprecated
     snapshot(): Promise<ITree>;
     // (undocumented)
@@ -198,7 +197,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
-    }
+    get writeGCDataAtRoot(): boolean;
+}
 
 // @public (undocumented)
 export interface ContainerRuntimeMessage {

@@ -13,7 +13,7 @@ import { ITelemetryLogger } from '@fluidframework/common-definitions';
 export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData;
 
 // @public
-export function concatGarbageCollectionState(destGCState: IGarbageCollectionState, srcGCState: IGarbageCollectionState): void;
+export function concatGarbageCollectionStates(gcState1: IGarbageCollectionState, gcState2: IGarbageCollectionState): IGarbageCollectionState;
 
 // @public (undocumented)
 export class GCDataBuilder implements IGarbageCollectionData {
@@ -32,12 +32,6 @@ export class GCDataBuilder implements IGarbageCollectionData {
 }
 
 // @public
-export function getChildNodesGCDetails(gcDetails: IGarbageCollectionSummaryDetails): Map<string, IGarbageCollectionSummaryDetails>;
-
-// @public
-export function getChildNodesUsedRoutes(usedRoutes: string[]): Map<string, string[]>;
-
-// @public
 export interface IGCResult {
     deletedNodeIds: string[];
     referencedNodeIds: string[];
@@ -52,6 +46,12 @@ export function removeRouteFromAllNodes(gcNodes: {
 export function runGarbageCollection(referenceGraph: {
     [id: string]: string[];
 }, rootIds: string[], logger: ITelemetryLogger): IGCResult;
+
+// @public
+export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionSummaryDetails): Map<string, IGarbageCollectionSummaryDetails>;
+
+// @public
+export function unpackChildNodesUsedRoutes(usedRoutes: string[]): Map<string, string[]>;
 
 
 // (No @packageDocumentation comment for this package)

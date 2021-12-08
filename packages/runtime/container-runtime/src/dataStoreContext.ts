@@ -188,9 +188,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.disableIsolatedChannels;
     }
 
-    /** We should GC blobs in the summary only if the container runtime is not writing the GC tree. */
-    protected get shouldWriteGCBlob(): boolean {
-        return !this._containerRuntime.shouldWriteGCTree;
+    /** Tells whether GC data will be written at the root of the summary tree. If so, data store should not write it. */
+    protected get writeGCDataAtRoot(): boolean {
+        return this._containerRuntime.writeGCDataAtRoot;
     }
 
     protected registry: IFluidDataStoreRegistry | undefined;
@@ -421,8 +421,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         const attributes = createAttributes(pkg, isRootDataStore, this.disableIsolatedChannels);
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
-        if (this.shouldWriteGCBlob) {
-            // Add GC details to the summary.
+        // Add GC data to the summary if it's not written at the root.
+        if (!this.writeGCDataAtRoot) {
             addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(this.summarizerNode.getGCSummaryDetails()));
         }
 
@@ -849,8 +849,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         );
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
-        if (this.shouldWriteGCBlob) {
-            // Add GC details to the summary.
+        // Add GC data to the summary if it's not written at the root.
+        if (!this.writeGCDataAtRoot) {
             addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(this.summarizerNode.getGCSummaryDetails()));
         }
 

@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import {
     IGarbageCollectionData,
+    IGarbageCollectionNodeData,
     IGarbageCollectionState,
     IGarbageCollectionSummaryDetails,
 } from "@fluidframework/runtime-definitions";
@@ -26,11 +27,11 @@ export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionD
 }
 
 /**
- * Helper function that generates the GC details of the children of a given node's GC details.
+ * Helper function that unpacks the GC details of the children from a given node's GC details.
  * @param gcDetails - The GC details of a node.
  * @returns A map of GC details of each children of the the given node.
  */
- export function getChildNodesGCDetails(gcDetails: IGarbageCollectionSummaryDetails) {
+ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionSummaryDetails) {
     const childGCDetailsMap: Map<string, IGarbageCollectionSummaryDetails> = new Map();
 
     // If GC data is not available, bail out.
@@ -85,11 +86,11 @@ export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionD
 }
 
 /**
- * Helper function that generates the used routes of children from a given node's used routes.
+ * Helper function that unpacks the used routes of children from a given node's used routes.
  * @param usedRoutes - The used routes of a node.
  * @returns A map of used routes of each children of the the given node.
  */
-export function getChildNodesUsedRoutes(usedRoutes: string[]) {
+export function unpackChildNodesUsedRoutes(usedRoutes: string[]) {
     // Remove the node's self used route, if any, and generate the children used routes.
     const filteredUsedRoutes = usedRoutes.filter((route) => route !== "" && route !== "/");
     const childUsedRoutesMap: Map<string, string[]> = new Map();
@@ -123,20 +124,42 @@ export function removeRouteFromAllNodes(gcNodes: { [ id: string ]: string[] }, o
 }
 
 /**
- * Concatenates the given GC states by copying the GC nodes in srcGCState to destGCState. All nodes in srcGCState
- * should be unique and not be present in destGCState.
+ * Concatenates the given GC states and returns the concatenated GC state.
  */
-export function concatGarbageCollectionState(
-    destGCState: IGarbageCollectionState,
-    srcGCState: IGarbageCollectionState,
-) {
-    for (const [nodeId, nodeData] of Object.entries(srcGCState.gcNodes)) {
-        assert(destGCState.gcNodes[nodeId] === undefined, "Unexpected duplicate GC node");
-        destGCState.gcNodes[nodeId] = {
+export function concatGarbageCollectionStates(
+    gcState1: IGarbageCollectionState,
+    gcState2: IGarbageCollectionState,
+): IGarbageCollectionState {
+    const combinedGCNodes: { [ id: string ]: IGarbageCollectionNodeData } = {};
+    for (const [nodeId, nodeData] of Object.entries(gcState1.gcNodes)) {
+        combinedGCNodes[nodeId] = {
             outboundRoutes: Array.from(nodeData.outboundRoutes),
             unreferencedTimestampMs: nodeData.unreferencedTimestampMs,
         };
     }
+
+    for (const [nodeId, nodeData] of Object.entries(gcState2.gcNodes)) {
+        let combinedNodedata = combinedGCNodes[nodeId];
+        if (combinedNodedata === undefined) {
+            combinedNodedata = {
+                outboundRoutes: Array.from(nodeData.outboundRoutes),
+                unreferencedTimestampMs: nodeData.unreferencedTimestampMs,
+            };
+        } else {
+            // Validate that same node doesn't have different unreferenced timestamp.
+            if (nodeData.unreferencedTimestampMs !== undefined
+                && combinedNodedata.unreferencedTimestampMs !== undefined) {
+                assert(nodeData.unreferencedTimestampMs === combinedNodedata.unreferencedTimestampMs,
+                    "Two entries for the same GC node with different unreferenced timestamp");
+            }
+            combinedNodedata = {
+                outboundRoutes: [ ...new Set([ ...nodeData.outboundRoutes, ...combinedNodedata.outboundRoutes ]) ],
+                unreferencedTimestampMs: nodeData.unreferencedTimestampMs ?? combinedNodedata.unreferencedTimestampMs,
+            };
+        }
+        combinedGCNodes[nodeId] = combinedNodedata;
+    }
+    return { gcNodes: combinedGCNodes };
 }
 
 export class GCDataBuilder implements IGarbageCollectionData {
