@@ -217,12 +217,11 @@ export class DataStores implements IDisposable {
             };
         }
 
-        const currentId = this.aliasMap.get(aliasMessage.internalId);
-        if (currentId === undefined) {
+        const currentContext = this.contexts.get(aliasMessage.internalId);
+        if (currentContext === undefined) {
             return undefined;
         }
 
-        this.dataStoreChanged(currentId);
         this.aliasMap.set(aliasMessage.alias, currentId);
         this.contexts.get(currentId)?.setRoot();
 
