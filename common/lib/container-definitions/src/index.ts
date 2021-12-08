@@ -10,5 +10,6 @@ export * from "./deltas";
 export * from "./error";
 export * from "./loader";
 export * from "./fluidModule";
+export * from "./fluidPackage";
 export * from "./proxyLoader";
 export * from "./runtime";

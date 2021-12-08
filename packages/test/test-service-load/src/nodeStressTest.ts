@@ -25,14 +25,7 @@ async function getTestUsers(credFile?: string) {
 
     let config: ITestUserConfig;
     try {
-        config = JSON.parse(await new Promise<string>((resolve, reject) =>
-            fs.readFile("./testUserConfig.json", "utf8", (err, data) => {
-                if (!err) {
-                    resolve(data);
-                } else {
-                    reject(err);
-                }
-            })));
+        config = JSON.parse(fs.readFileSync(credFile, "utf8"));
         return config;
     } catch (e) {
         console.error(`Failed to read ${credFile}`);
