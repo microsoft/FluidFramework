@@ -691,6 +691,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
                 this._protocolHandler?.close();
 
+                this.connectionStateHandler.dispose();
+
                 this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
                 assert(this.connectionState === ConnectionState.Disconnected,
@@ -1522,17 +1524,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * If it's not true, runtime is not in position to send ops.
      */
     private activeConnection() {
-        const active = this.connectionState === ConnectionState.Connected &&
+        return this.connectionState === ConnectionState.Connected &&
             this._deltaManager.connectionMode === "write";
-
-        // Check for presence of current client in quorum for "write" connections - inactive clients
-        // would get leave op after some long timeout (5 min) and that should automatically transition
-        // state to "read" mode.
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        assert(!active || this.getQuorum().getMember(this.clientId!) !== undefined,
-            0x276 /* "active connection not present in quorum" */);
-
-        return active;
     }
 
     private createDeltaManager() {

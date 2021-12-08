@@ -13,7 +13,7 @@ data:
     {
         "logger": {
             "colorize": false,
-            "morganFormat": "short",
+            "morganFormat": "json",
             "json": false,
             "level": "verbose",
             "timestamp": false

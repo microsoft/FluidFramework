@@ -53,6 +53,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "@fluidframework/azure-service-utils": "^0.53.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.43.0-0",
@@ -66,7 +67,6 @@
     "@fluidframework/runtime-utils": "^0.53.0",
     "@fluidframework/telemetry-utils": "^0.53.0",
     "axios": "^0.21.2",
-    "jsrsasign": "^10.2.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
@@ -74,7 +74,6 @@
     "@fluidframework/eslint-config-fluid": "^0.24.0",
     "@fluidframework/mocha-test-setup": "^0.53.0",
     "@microsoft/api-extractor": "^7.16.1",
-    "@types/jsrsasign": "^8.0.8",
     "@types/mocha": "^8.2.2",
     "@types/node": "^12.19.0",
     "@types/uuid": "^8.3.0",

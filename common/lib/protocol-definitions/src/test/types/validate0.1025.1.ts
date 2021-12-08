@@ -1256,6 +1256,7 @@ declare function get_current_InterfaceDeclaration_ISummaryNack():
 declare function use_old_InterfaceDeclaration_ISummaryNack(
     use: old.ISummaryNack);
 use_old_InterfaceDeclaration_ISummaryNack(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummaryNack());
 
 /*
