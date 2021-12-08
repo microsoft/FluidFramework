@@ -749,7 +749,7 @@ export class DeltaManager
 
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(origError)) {
-                        const error = normalizeError(origError, { props: {...fatalConnectErrorProp} });
+                        const error = normalizeError(origError, { props: fatalConnectErrorProp });
                         this.close(error);
                         throw error;
                     }
@@ -810,7 +810,7 @@ export class DeltaManager
             this.removeListener("closed", cleanupAndReject);
 
             // This error came from some logic error in this file. Fail-fast to learn and fix the issue faster
-            const normalizedError = normalizeError(error, { props: {...fatalConnectErrorProp}});
+            const normalizedError = normalizeError(error, { props: fatalConnectErrorProp });
             this.close(normalizedError);
             deferred.reject(normalizedError);
         };
@@ -1199,7 +1199,7 @@ export class DeltaManager
 
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
-            this.disconnectFromDeltaStream("Disconnect new connection since closed");
+            this.disconnectFromDeltaStream("DeltaManager already closed");
             return;
         }
 
@@ -1370,7 +1370,7 @@ export class DeltaManager
 
         // If reconnection is not an option, close the DeltaManager
         if (!canRetry) {
-            this.close(normalizeError(error, { props: {...fatalConnectErrorProp}}));
+            this.close(normalizeError(error, { props: fatalConnectErrorProp }));
         } else if (this.reconnectMode === ReconnectMode.Never) {
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and

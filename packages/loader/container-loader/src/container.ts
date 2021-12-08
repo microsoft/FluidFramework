@@ -293,9 +293,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const container = new Container(
             loader,
             {});
-        container._lifecycleState = "loading";
-        await container.createDetached(codeDetails);
-        return container;
+
+        return PerformanceEvent.timedExecAsync(
+            container.logger,
+            { eventName: "CreateDetached" },
+            async (_event) => {
+                container._lifecycleState = "loading";
+                await container.createDetached(codeDetails);
+                return container;
+            },
+            { start: true, end: true, cancel: "generic" });
     }
 
     /**
@@ -309,10 +316,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const container = new Container(
             loader,
             {});
-        const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
-        container._lifecycleState = "loading";
-        await container.rehydrateDetachedFromSnapshot(deserializedSummary);
-        return container;
+        return PerformanceEvent.timedExecAsync(
+            container.logger,
+            { eventName: "RehydrateDetachedFromSnapshot" },
+            async (_event) => {
+                const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
+                container._lifecycleState = "loading";
+                await container.rehydrateDetachedFromSnapshot(deserializedSummary);
+                return container;
+            },
+            { start: true, end: true, cancel: "generic" });
     }
 
     public subLogger: TelemetryLogger;
