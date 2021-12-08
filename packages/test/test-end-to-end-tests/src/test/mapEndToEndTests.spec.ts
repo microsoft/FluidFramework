@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Container } from "@fluidframework/container-loader";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { MessageType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ITestObjectProvider,
@@ -125,31 +124,22 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
         let user1ValueChangedCount: number = 0;
         let user2ValueChangedCount: number = 0;
         let user3ValueChangedCount: number = 0;
-        sharedMap1.on("valueChanged", (changed, local, msg) => {
+        sharedMap1.on("valueChanged", (changed, local) => {
             if (!local) {
-                assert(msg);
-                if (msg.type === MessageType.Operation) {
-                    assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 1");
-                    user1ValueChangedCount = user1ValueChangedCount + 1;
-                }
+                assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 1");
+                user1ValueChangedCount = user1ValueChangedCount + 1;
             }
         });
-        sharedMap2.on("valueChanged", (changed, local, msg) => {
+        sharedMap2.on("valueChanged", (changed, local) => {
             if (!local) {
-                assert(msg);
-                if (msg.type === MessageType.Operation) {
-                    assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 2");
-                    user2ValueChangedCount = user2ValueChangedCount + 1;
-                }
+                assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 2");
+                user2ValueChangedCount = user2ValueChangedCount + 1;
             }
         });
-        sharedMap3.on("valueChanged", (changed, local, msg) => {
+        sharedMap3.on("valueChanged", (changed, local) => {
             if (!local) {
-                assert(msg);
-                if (msg.type === MessageType.Operation) {
-                    assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 3");
-                    user3ValueChangedCount = user3ValueChangedCount + 1;
-                }
+                assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 3");
+                user3ValueChangedCount = user3ValueChangedCount + 1;
             }
         });
 

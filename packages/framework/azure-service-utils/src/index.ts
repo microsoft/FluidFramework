@@ -10,4 +10,4 @@
  */
 
 export { ScopeType } from "@fluidframework/protocol-definitions";
-export { generateToken } from "@fluidframework/server-services-client";
+export { generateToken } from "./generateToken";

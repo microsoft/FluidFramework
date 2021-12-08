@@ -331,7 +331,7 @@ export class DeltaManager
     public get connectionMode(): ConnectionMode {
         assert(!this.downgradedConnection || this.connection?.mode === "write",
             0x277 /* "Did we forget to reset downgradedConnection on new connection?" */);
-        if (this.connection === undefined || this.downgradedConnection) {
+        if (this.connection === undefined) {
             return "read";
         }
         return this.connection.mode;
@@ -876,7 +876,7 @@ export class DeltaManager
         // Note that we also want nacks to be rare and be treated as catastrophic failures.
         // Be careful with reentrancy though - disconnected event should not be be raised in the
         // middle of the current workflow, but rather on clean stack!
-        if (this.connectionMode === "read") {
+        if (this.connectionMode === "read" || this.downgradedConnection) {
             if (!this.pendingReconnect) {
                 this.pendingReconnect = true;
                 Promise.resolve().then(async () => {
@@ -1575,8 +1575,6 @@ export class DeltaManager
                 // We have been kicked out from quorum
                 this.logger.sendPerformanceEvent({ eventName: "ReadConnectionTransition" });
                 this.downgradedConnection = true;
-                assert(this.connectionMode === "read",
-                    0x27c /* "effective connectionMode should be 'read' after downgrade" */);
             }
         }
 
