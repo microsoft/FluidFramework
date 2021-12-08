@@ -17,7 +17,7 @@ import {
     DataObjectFactoryType,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import { GenericNetworkError } from "@fluidframework/driver-utils";
 
 const map1Id = "map1Key";
@@ -93,9 +93,10 @@ describeNoCompat("Payload size", (getTestObjectProvider) => {
                 dataObject1map1.set(`key${i}`, item);
             }
         });
-    };;
+    };
 
     it("Can send 60 messages of 16k", async () => {
+        // Total payload size: 16 * 1000 * 60 = 960000
         const largeString = generateStringOfSize(16 * 1000);
         const messageCount = 60;
         // The limit is from socket.io seems to be 1MB
@@ -117,9 +118,9 @@ describeNoCompat("Payload size", (getTestObjectProvider) => {
 
     it("Cannot send large batches with feature gate enabled", async () => {
         settings.FluidEnablePayloadSizeLimit = "1";
-        settings.FluidDisableBatchManager = "1";
+        // Total payload size: 16 * 1000 * 57 = 912000, limit is 900000
         const largeString = generateStringOfSize(16 * 1000);
-        const messageCount = 100;
+        const messageCount = 57;
         const containerClosedByLargePayload = new Promise<boolean>((res) => container1.once("closed", (error) => {
             res(error instanceof GenericNetworkError &&
                 error.fluidErrorCode === "dmDocumentDeltaConnectionError");
