@@ -704,7 +704,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         if (typeof this.initSnapshotValue === "string") {
             const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
             tree = await this.storage.getSnapshotTree(commit) ?? undefined;
-            this.logger.sendTelemetryEvent({ eventName: "LegacyDataStoreSnapshot", reason: "snapshotAsString" });
+            this.logger.sendErrorEvent({ eventName: "LegacyDataStoreSnapshot", reason: "snapshotAsString" });
         } else {
             tree = this.initSnapshotValue;
         }
@@ -713,7 +713,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         if (tree) {
             const loadedSummary = await this.summarizerNode.loadBaseSummary(tree, localReadAndParse);
             if (loadedSummary.outstandingOps.length > 0) {
-                this.logger.sendTelemetryEvent({ eventName: "LegacyDataStoreSnapshot", reason: "outstandingOps" });
+                this.logger.sendErrorEvent({ eventName: "LegacyDataStoreSnapshot", reason: "outstandingOps" });
             }
             tree = loadedSummary.baseSummary;
             // Prepend outstanding ops to pending queue of ops to process.
@@ -731,7 +731,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             // For snapshotFormatVersion = "0.1" (1) or above, pkg is jsonified, otherwise it is just a string.
             const formatVersion = getAttributesFormatVersion(attributes);
             if (formatVersion < 1) {
-                this.logger.sendTelemetryEvent({ eventName: "LegacyDataStoreSnapshot", reason: "formatVersion < 1" });
+                this.logger.sendErrorEvent({ eventName: "LegacyDataStoreSnapshot", reason: "formatVersion < 1" });
                 if (attributes.pkg.startsWith("[\"") && attributes.pkg.endsWith("\"]")) {
                     pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
                 } else {
