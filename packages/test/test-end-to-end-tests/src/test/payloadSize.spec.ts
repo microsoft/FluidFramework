@@ -17,7 +17,7 @@ import {
     DataObjectFactoryType,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 
 const map1Id = "map1Key";
 const registry: ChannelFactoryRegistry = [
@@ -28,12 +28,13 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const getMockStore = ((settings: Record<string, string>): Storage => {
+const getMockStore = ((store: Record<string, string>): Storage => {
     return {
-        getItem: (key: string): string | null => settings[key],
-        length: Object.keys(settings).length,
+        getItem: (key: string): string | null => store[key],
+        length: Object.keys(store).length,
         clear: () => { },
-        key: (_index: number): string | null => undefined,
+        // eslint-disable-next-line no-null/no-null
+        key: (_index: number): string | null => null,
         removeItem: (_key: string) => { },
         setItem: (_key: string, _value: string) => { },
     };
@@ -93,11 +94,6 @@ describeNoCompat("Payload size", (getTestObjectProvider) => {
         });
     };
 
-    const anyDataCorruption = async (container: IContainer) =>
-        new Promise<boolean>((res) => container.once("closed", (error) => {
-            res(error?.errorType === ContainerErrorType.dataCorruptionError);
-        }));
-
     it("Can send 60 messages of 16k", async () => {
         const largeString = generateStringOfSize(16 * 1000);
         const messageCount = 60;
@@ -122,10 +118,14 @@ describeNoCompat("Payload size", (getTestObjectProvider) => {
         settings.FluidEnablePayloadSizeLimit = "1";
         const largeString = generateStringOfSize(16 * 1000);
         const messageCount = 100;
-        setMapKeys(dataObject1.context.containerRuntime, messageCount, largeString);
+        let error: Error | undefined;
+        try {
+            setMapKeys(dataObject1.context.containerRuntime, messageCount, largeString);
+        } catch (err) {
+            error = err as Error;
+        }
 
-        // Wait for the ops to get processed by both the containers.
-        await anyDataCorruption(container1);
+        assert(error);
     });
 
     it("Can send large batches with feature gate disabled", async () => {
