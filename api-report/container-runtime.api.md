@@ -196,7 +196,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
-    }
+    get writeGCDataAtRoot(): boolean;
+}
 
 // @public (undocumented)
 export interface ContainerRuntimeMessage {
@@ -239,6 +240,12 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
     // (undocumented)
     get IFluidDataStoreRegistry(): this;
     }
+
+// @public (undocumented)
+export const gcBlobPrefix = "__gc";
+
+// @public (undocumented)
+export const gcTreeKey = "gc";
 
 // @public
 export interface IAckedSummary {
