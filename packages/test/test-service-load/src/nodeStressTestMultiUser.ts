@@ -22,22 +22,19 @@ interface ITestUserConfig {
     docUrl: string;
 }
 
-async function getTestUsers() {
+async function getTestUsers(credFile?: string) {
+    if (credFile === undefined || credFile.length === 0) {
+        return undefined;
+    }
+
     let config: ITestUserConfig;
     try {
-        config = JSON.parse(await new Promise<string>((resolve, reject) =>
-            fs.readFile("./testUserConfig.json", "utf8", (err, data) => {
-                if (!err) {
-                    resolve(data);
-                } else {
-                    reject(err);
-                }
-            })));
+        config = JSON.parse(fs.readFileSync(credFile, "utf8"));
         return config;
     } catch (e) {
-        console.error("Failed to read testUserConfig.json");
+        console.error(`Failed to read ${credFile}`);
         console.error(e);
-        process.exit(-1);
+        return undefined;
     }
 }
 
@@ -49,6 +46,7 @@ async function main() {
         .requiredOption("-d, --driver <driver>", "Which test driver info to use", "odsp")
         .requiredOption("-p, --profile <profile>", "Which test profile to use from testConfig.json", "ci")
         .option("-id, --testId <testId>", "Load an existing data store rather than creating new")
+        .option("-c, --credFile <filePath>", "Filename containing user credentialss for test")
         .option("-s, --seed <number>", "Seed for this run")
         .option("-dbg, --debug", "Debug child processes via --inspect-brk")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
@@ -64,6 +62,7 @@ async function main() {
     const verbose: true | undefined = commander.verbose;
     const seed: number | undefined = commander.seed;
     const browserAuth: true | undefined = commander.browserAuth;
+    const credFile: string | undefined = commander.credFile;
 
     const profile = getProfile(profileArg);
 
@@ -71,7 +70,7 @@ async function main() {
         process.env.DEBUG = log;
     }
 
-    const testUsers = await getTestUsers();
+    const testUsers = await getTestUsers(credFile);
 
     await orchestratorProcess(
         driver,
@@ -83,7 +82,7 @@ async function main() {
  */
 async function orchestratorProcess(
     driver: TestDriverTypes,
-    profile: ILoadTestConfig & { name: string, testUsers: ITestUserConfig },
+    profile: ILoadTestConfig & { name: string, testUsers?: ITestUserConfig },
     args: { testId?: string, debug?: true, verbose?: true, seed?: number, browserAuth?: true },
 ) {
     const telemetryClient = new AppInsightsLogger();
@@ -91,13 +90,15 @@ async function orchestratorProcess(
     const seed = args.seed ?? Date.now();
     const seedArg = `0x${seed.toString(16)}`;
 
-    const userNames = Object.keys(profile.testUsers.credentials);
+    if (profile.testUsers !== undefined) {
+        const userNames = Object.keys(profile.testUsers.credentials);
 
-    {
-        const userIndex = Math.floor(Math.random() * userNames.length);
-        const userName = userNames[userIndex];
-        const password = profile.testUsers.credentials[userName];
-        process.env.login__odsp__test__accounts = createLoginEnv(userName, password);
+        {
+            const userIndex = Math.floor(Math.random() * userNames.length);
+            const userName = userNames[userIndex];
+            const password = profile.testUsers.credentials[userName];
+            process.env.login__odsp__test__accounts = createLoginEnv(userName, password);
+        }
     }
 
     const testDriver = await createTestDriver(
@@ -106,7 +107,7 @@ async function orchestratorProcess(
         undefined,
         args.browserAuth);
     let url = "";
-    if (profile.testUsers.docUrl !== undefined && profile.testUsers.docUrl) {
+    if (profile.testUsers?.docUrl !== undefined && profile.testUsers.docUrl) {
         // if docUrl is found from config file then reuse this document
         url = profile.testUsers.docUrl;
     } else {
@@ -166,58 +167,61 @@ async function orchestratorProcess(
     }, 20000);
 
     try {
-        const startIndex = Math.floor(Math.random() * userNames.length);
+        const usernames = profile.testUsers !== undefined ? Object.keys(profile.testUsers.credentials) : [];
+        const startIndex = Math.floor(Math.random() * usernames.length);
         await Promise.all(runnerArgs.map(async (childArgs, index) => {
             await new Promise<void>((resolve) => setTimeout(resolve, 5000 + Math.random() * 10000));
 
-            const userName = userNames[(index + startIndex) % userNames.length];
-            const password: string = profile.testUsers.credentials[userName];
-
-            const childProcess = child_process.spawn(
+            const username = usernames !== undefined ? usernames[(index + startIndex) % usernames.length] : undefined;
+            const password = username !== undefined ? profile.testUsers?.credentials[username] : undefined;
+            const envVar = { ...process.env };
+            if (username !== undefined && password !== undefined) {
+                envVar.login__odsp__test__accounts = createLoginEnv(username, password);
+            }
+            const runnerProcess = child_process.spawn(
                 "node",
                 childArgs,
                 {
-                    env: {
-                        ...process.env,
-                        login__odsp__test__accounts: createLoginEnv(userName, password),
-                    },
-                });
+                    stdio: "inherit",
+                    env: envVar,
+                },
+            );
 
             telemetryClient.trackMetric({
                 name: `Runner Started`,
                 value: 1,
                 properties: {
-                    userName,
+                    username,
                     runId: index,
                 },
             });
 
-            childProcess.once("error", (e) => {
+            runnerProcess.once("error", (e) => {
                 telemetryClient.trackMetric({
                     name: `Runner Start Error`,
                     value: 1,
                     properties: {
-                        userName,
+                        username,
                         runId: index,
                         error: e,
                     },
                 });
             });
 
-            childProcess.once("exit", (code) => {
+            runnerProcess.once("exit", (code) => {
                 telemetryClient.trackMetric({
                     name: `Runner Exited`,
                     value: 1,
                     properties: {
-                        userName,
+                        username,
                         runId: index,
                         exitCode: code,
                     },
                 });
             });
 
-            setIoEvents(childProcess, telemetryClient, index, userName);
-            return new Promise((resolve) => childProcess.once("close", resolve));
+            setIoEvents(runnerProcess, telemetryClient, index, username);
+            return new Promise((resolve) => runnerProcess.once("close", resolve));
         }));
     } catch (e) {
         telemetryClient.trackMetric({
