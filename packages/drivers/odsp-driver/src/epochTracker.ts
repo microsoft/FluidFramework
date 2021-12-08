@@ -6,8 +6,7 @@
 import { v4 as uuid } from "uuid";
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { fluidEpochMismatchError, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
-import { ThrottlingError, RateLimiter } from "@fluidframework/driver-utils";
+import { ThrottlingError, RateLimiter, NonRetryableError } from "@fluidframework/driver-utils";
 import { IConnected } from "@fluidframework/protocol-definitions";
 import {
     snapshotKey,
@@ -294,7 +293,10 @@ export class EpochTracker implements IPersistedFileCache {
         fetchType: FetchTypeInternal,
         fromCache: boolean = false,
     ) {
-        this.checkForEpochErrorCore(epochFromResponse);
+        const error = this.checkForEpochErrorCore(epochFromResponse);
+        if (error !== undefined) {
+            throw error;
+        }
         if (epochFromResponse !== undefined) {
             if (this._fluidEpoch === undefined) {
                 this.setEpoch(epochFromResponse, fromCache, fetchType);
@@ -309,10 +311,8 @@ export class EpochTracker implements IPersistedFileCache {
         fromCache: boolean = false,
     ) {
         if (isFluidError(error) && error.errorType === DriverErrorType.fileOverwrittenInStorage) {
-            try {
-                // This will only throw if it is an epoch error.
-                this.checkForEpochErrorCore(epochFromResponse);
-            } catch (epochError) {
+            const epochError = this.checkForEpochErrorCore(epochFromResponse);
+            if (epochError !== undefined) {
                 assert(isFluidError(epochError),
                     0x21f /* "epochError expected to be thrown by throwOdspNetworkError and of known type" */);
                 epochError.addTelemetryProperties({
@@ -337,7 +337,9 @@ export class EpochTracker implements IPersistedFileCache {
         // initializes this value. Sometimes response does not contain epoch as it is still in
         // implementation phase at server side. In that case also, don't compare it with our epoch value.
         if (this.fluidEpoch && epochFromResponse && (this.fluidEpoch !== epochFromResponse)) {
-            throwOdspNetworkError("epochMismatch", fluidEpochMismatchError);
+            // This is similar in nature to how fluidEpochMismatchError (409) is handled.
+            // Difference - client detected mismatch, instead of server detecting it.
+            return new NonRetryableError("epochMismatch", "Epoch mismatch", DriverErrorType.fileOverwrittenInStorage);
         }
     }
 
