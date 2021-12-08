@@ -506,7 +506,7 @@ export class StringMapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super({ typeid: 'String', ...in_params, });
+        super(in_params);
     };
 }
 StringMapProperty.prototype._typeid = 'String';

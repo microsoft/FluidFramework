@@ -628,3 +628,4 @@ export class BoolArrayProperty extends ValueArrayProperty {
         }
     };
 }
+BoolArrayProperty.prototype._typeid = 'Bool';

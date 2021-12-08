@@ -29,7 +29,7 @@ export class ReferenceMapProperty extends StringMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super({ typeid: 'Reference', ...in_params });
+        super(in_params);
     };
 
     /**

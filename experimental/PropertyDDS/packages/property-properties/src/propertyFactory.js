@@ -1108,7 +1108,7 @@ class PropertyFactory {
                     })
                 }
             } else {
-                // If there are nor children, we directly assign the initial value and
+                // If there are no children, we directly assign the initial value and
                 // signal that the property has completely been initialized
                 if (currentEntry.entry.initialValue) {
                     this._setInitialValue(property, currentEntry.entry.initialValue, true);
@@ -1470,7 +1470,7 @@ class PropertyFactory {
     };
 
     /**
-     * Creates a property defintion for a non-collection property with the entry and constructor function assigned
+     * Creates a property definition for a non-collection property with the entry and constructor function assigned
      * Children will be added later by parseTemplate.
      *
      * @param {string}                               in_typeid - The type unique identifier
@@ -1617,8 +1617,6 @@ class PropertyFactory {
      * @param {string}                       in_scope                       - The scope in which the property
      *                                                                        typeid is defined
      * @param {Object}                       out_propertyDef                - The created property definition
-     *
-     * @return {property-properties.BaseProperty|undefined} the property instance
      */
     _createDefFromPropertyDeclaration(in_propertiesEntry, in_scope, out_propertyDef) {
 
@@ -1675,7 +1673,6 @@ class PropertyFactory {
                         // check if a specialized collection is needed
                         var isEnum = this.inheritsFrom(typeid, 'Enum', { scope: in_scope });
 
-                        var result;
                         var constructorFunction;
                         switch (context) {
                             case 'array':
@@ -1841,16 +1838,16 @@ class PropertyFactory {
                         };
                         propertyDef.children = propertyDef.children || [];
                         propertyDef.children.unshift([properties[i].id, newChildEntry]);
-                        const property = this._createDefFromPropertyDeclaration(properties[i],
-                                                                                in_scope, newChildEntry);
+                        this._createDefFromPropertyDeclaration(properties[i],
+                                                               in_scope, newChildEntry);
                     } else if (!optional) {
                         const newChildEntry = {
                             initialValue: undefined
                         };
                         propertyDef.children = propertyDef.children || []
                         propertyDef.children.unshift([properties[i].id, newChildEntry]);
-                        const property = this._createDefFromPropertyDeclaration(properties[i],
-                                                                                in_scope, newChildEntry);
+                        this._createDefFromPropertyDeclaration(properties[i],
+                                                               in_scope, newChildEntry);
 
                     }
                 }

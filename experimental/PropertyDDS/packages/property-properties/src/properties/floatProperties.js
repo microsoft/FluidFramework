@@ -23,11 +23,13 @@ export class Float32Property extends ValueProperty {
      */
     constructor(in_params) {
         super(in_params);
+
         // default for this property type is '0'
         this._data = 0;
     };
 }
 Float32Property.prototype._castFunctor = _castFunctors.Float32;
+Float32Property.prototype._typeid = 'Float32';
 
 /**
  * A primitive property for a 64 bit floating point value.
@@ -49,3 +51,4 @@ export class Float64Property extends ValueProperty {
     };
 }
 Float64Property.prototype._castFunctor = _castFunctors.Float64;
+Float64Property.prototype._typeid = 'Float64';

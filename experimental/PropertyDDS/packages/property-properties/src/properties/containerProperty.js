@@ -25,8 +25,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      */
     constructor(in_params) {
         super( in_params );
-        //this._dynamicChildren = {};
-        //this._optionalChildren = {};
+
         if (in_params.optionalChildren) {
             this._optionalChildren = {};
             this._dynamicChildren = {};

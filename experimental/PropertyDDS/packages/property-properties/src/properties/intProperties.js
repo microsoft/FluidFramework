@@ -74,7 +74,7 @@ export class Int32Property extends ValueProperty {
      * @category Value Properties
      */
     constructor(in_params) {
-        super({ typeid: 'Int32', ...in_params });
+        super(in_params);
         // default for this property type is '0'
         this._data = 0;
 
