@@ -60,7 +60,7 @@ export class ConnectionStateHandler {
             // Default is 90 sec for which we are going to wait for its own "leave" message.
             this.handler.maxClientLeaveWaitTime ?? 90000,
             () => {
-                assert(!this.connected, 0x2a4 /* "Connected when timeout waiting for leave from previous session fired!" */);
+                assert(!this.connected, 0x2ac /* "Connected when timeout waiting for leave from previous session fired!" */);
                 this.applyForConnectedState("timeout");
             },
         );
