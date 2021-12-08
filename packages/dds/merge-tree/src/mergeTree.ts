@@ -490,24 +490,21 @@ function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode) {
 }
 
 export abstract class BaseSegment extends MergeNode implements ISegment {
-    constructor() {
-        super();
-    }
     public clientId: number = LocalClientId;
     public seq: number = UniversalSequenceNumber;
-    removedSeq?: number;
-    removedClientId?: number;
-    removedClientOverlap?: number[];
-    readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
-    readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
-    propertyManager?: PropertiesManager;
-    properties?: PropertySet;
-    localRefs?: LocalReferenceCollection;
-    abstract readonly type: string;
-    localSeq?: number;
-    localRemovedSeq?: number;
+    public removedSeq?: number;
+    public removedClientId?: number;
+    public removedClientOverlap?: number[];
+    public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
+    public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
+    public propertyManager?: PropertiesManager;
+    public properties?: PropertySet;
+    public localRefs?: LocalReferenceCollection;
+    public abstract readonly type: string;
+    public localSeq?: number;
+    public localRemovedSeq?: number;
 
-    addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow) {
+    public addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow) {
         if (!this.propertyManager) {
             this.propertyManager = new PropertiesManager();
         }
@@ -523,15 +520,15 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         );
     }
 
-    hasProperty(key: string): boolean {
+    public hasProperty(key: string): boolean {
         return !!this.properties && (this.properties[key] !== undefined);
     }
 
-    isLeaf() {
+    public isLeaf() {
         return true;
     }
 
-    cloneInto(b: ISegment) {
+    protected cloneInto(b: ISegment) {
         b.clientId = this.clientId;
         // TODO: deep clone properties
         b.properties = clone(this.properties);

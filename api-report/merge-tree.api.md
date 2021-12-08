@@ -24,7 +24,6 @@ export interface AugmentedIntervalNode {
 
 // @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
-    constructor();
     // (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean;
     // (undocumented)
@@ -40,7 +39,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     abstract clone(): ISegment;
     // (undocumented)
-    cloneInto(b: ISegment): void;
+    protected cloneInto(b: ISegment): void;
     // (undocumented)
     protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
     // (undocumented)
