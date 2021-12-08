@@ -123,8 +123,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public get clientDetails(): IClientDetails {
-        // back-compat 0.38 - clientDetails is added to IFluidDataStoreContext in 0.38.
-        return this.dataStoreContext.clientDetails ?? this.dataStoreContext.containerRuntime.clientDetails;
+        return this.dataStoreContext.clientDetails;
     }
 
     public get isAttached(): boolean {
@@ -140,8 +139,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public get routeContext(): IFluidHandleContext {
-        // back-compat 0.38 - IFluidHandleContext is added to IFluidDataStoreContext in 0.38.
-        return this.dataStoreContext.IFluidHandleContext ?? this.dataStoreContext.containerRuntime.IFluidHandleContext;
+        return this.dataStoreContext.IFluidHandleContext;
     }
 
     private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
@@ -194,9 +192,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         super();
 
         this.logger = ChildLogger.create(
-            // back-compat 0.38 - logger is added to IFluidDataStoreContext in 0.38.
-            dataStoreContext.logger ?? dataStoreContext.containerRuntime.logger,
-            undefined,
+            dataStoreContext.logger,
+            "FluidDataStoreRuntime",
             {all:{ dataStoreId: uuid() }},
         );
 

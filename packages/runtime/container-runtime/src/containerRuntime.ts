@@ -610,13 +610,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public get IContainerRuntime() { return this; }
     public get IFluidRouter() { return this; }
 
-    // back-compat: Used by loader in <= 0.35
-    /**
-     * @internal
-     * @deprecated Back-compat only. Used by the loader in versions earlier than 0.35.
-     */
-    public readonly runtimeVersion: string = pkgVersion;
-
     /**
      * Load the stores from a snapshot and returns the runtime.
      * @param context - Context of the container.
@@ -2082,10 +2075,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dirtyContainer = dirty;
         if (this.emitDirtyDocumentEvent) {
             this.emit(dirty ? "dirty" : "saved");
-            // back-compat: Loader API added in 0.35 only
-            if (this.context.updateDirtyContainerState !== undefined) {
-                this.context.updateDirtyContainerState(dirty);
-            }
+            this.context.updateDirtyContainerState(dirty);
         }
     }
 
