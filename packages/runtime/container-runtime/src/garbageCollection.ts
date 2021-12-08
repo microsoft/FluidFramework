@@ -633,7 +633,7 @@ async function getGCStateFromSnapshot(
             continue;
         }
         const gcState = await readAndParseBlob<IGarbageCollectionState>(blobId);
-        assert(gcState !== undefined, "GC blob missing from snapshot");
+        assert(gcState !== undefined, 0x2ad /* "GC blob missing from snapshot" */);
         // Merge the GC state of this blob into the root GC state.
         rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
     }
