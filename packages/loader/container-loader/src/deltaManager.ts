@@ -645,7 +645,7 @@ export class DeltaManager
 
     /**
      * Start the connection. Any error should result in container being close.
-     * And report the error if it excape for any reason.
+     * And report the error if it escape for any reason.
      * @param args - The connection arguments
      */
     private triggerConnect(args: IConnectionArgs) {
