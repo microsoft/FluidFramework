@@ -36,7 +36,7 @@ export interface IConfigProviderBase {
  */
 export const sessionStorageConfigProvider =
     (namespaceOverride?: string): Lazy<IConfigProviderBase | undefined> =>
-        inMemoryConfigProvider(safeLocalStorage(), namespaceOverride);
+        inMemoryConfigProvider(safeSessionStorage(), namespaceOverride);
 
 /**
  * Creates a base configuration provider based on the supplied `Storage` instance
@@ -132,7 +132,7 @@ function stronglyTypedParse(input: any): stronglyTypedValue | undefined {
     return defaultReturn;
 }
 
-const safeLocalStorage = (): Storage | undefined => {
+const safeSessionStorage = (): Storage | undefined => {
     try {
         return sessionStorage !== null ? sessionStorage : undefined;
     } catch { return undefined; }
