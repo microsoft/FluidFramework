@@ -96,7 +96,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
-import { ReconnectMode, IConnectionManagereFactoryArgs } from "./contracts";
+import { ReconnectMode, IConnectionManagerFactoryArgs } from "./contracts";
 import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
@@ -1565,7 +1565,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             serviceProvider,
             ChildLogger.create(this.subLogger, "DeltaManager"),
             () => this.activeConnection(),
-            (props: IConnectionManagereFactoryArgs) => new ConnectionManager(
+            (props: IConnectionManagerFactoryArgs) => new ConnectionManager(
                 serviceProvider,
                 this.client,
                 this._canReconnect,

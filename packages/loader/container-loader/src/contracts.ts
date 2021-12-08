@@ -66,7 +66,7 @@ export interface IConnectionManager {
      * Prepares message to be sent. Fills in clientSequenceNumber.
      * Called only when active connection is present.
      */
-    prepareMesage(message: Omit<IDocumentMessage, "clientSequenceNumber">): IDocumentMessage | undefined;
+    prepareMessageToSend(message: Omit<IDocumentMessage, "clientSequenceNumber">): IDocumentMessage | undefined;
 
     /**
      * Called before incomming message is processed. Incomming messages can be comming from connection,
@@ -74,7 +74,7 @@ export interface IConnectionManager {
      * This call allows connection manager to adjust knowledge about acked ops sent on previous connection.
      * Can be called at any time, including when there is no active connection.
      */
-    beforeProcessingIncommingOp(message: ISequencedDocumentMessage): void;
+    beforeProcessingIncomingOp(message: ISequencedDocumentMessage): void;
 
     /**
      * Submits signal to relay service.
@@ -103,12 +103,12 @@ export interface IConnectionManager {
  * This interface represents a set of callbacks provided by DeltaManager to IConnectionManager on its creation
  * IConnectionManager instance will use them to communicate to DeltaManager abour various events.
  */
-export interface IConnectionManagereFactoryArgs {
+export interface IConnectionManagerFactoryArgs {
     /**
      * Called by connection manager for each incomming op. Some ops maybe delivered before
      * connectHandler is called (initial ops on socket connection)
      */
-    readonly incommingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => void,
+    readonly incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => void,
 
     /**
      * Called by connection manager for each incoming signals.

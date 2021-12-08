@@ -58,7 +58,7 @@ import { DeltaQueue } from "./deltaQueue";
 import {
     ReconnectMode,
     IConnectionManager,
-    IConnectionManagereFactoryArgs,
+    IConnectionManagerFactoryArgs,
 } from "./contracts";
 
 const MaxReconnectDelayInMs = 8000;
@@ -293,7 +293,7 @@ export class ConnectionManager implements IConnectionManager {
         private client: IClient,
         reconnectAllowed: boolean,
         private readonly logger: ITelemetryLogger,
-        private readonly props: IConnectionManagereFactoryArgs,
+        private readonly props: IConnectionManagerFactoryArgs,
     ) {
         this.clientDetails = this.client.details;
         this.defaultReconnectionMode = this.client.mode;
@@ -650,14 +650,14 @@ export class ConnectionManager implements IConnectionManager {
             last = initialMessages[initialMessages.length - 1].sequenceNumber;
             this._connectionVerboseProps.connectionInitialOpsTo = last + 1;
             // Update knowledge of how far we are behind, before raising "connect" event
-            // This is duplication of what incommingOpHandler() does, but we have to raise event before we get there,
+            // This is duplication of what incomingOpHandler() does, but we have to raise event before we get there,
             // so duplicating update logic here as well.
             if (checkpointSequenceNumber === undefined || checkpointSequenceNumber < last) {
                 checkpointSequenceNumber = last;
             }
         }
 
-        this.props.incommingOpHandler(
+        this.props.incomingOpHandler(
             initialMessages,
             this.connectFirstConnection ? "InitialOps" : "ReconnectOps");
 
@@ -735,15 +735,7 @@ export class ConnectionManager implements IConnectionManager {
         this.triggerConnect(requestedMode);
     }
 
-    /**
-     * Submits the given delta returning the client sequence number for the message. Contents is the actual
-     * contents of the message. appData is optional metadata that can be attached to the op by the app.
-     *
-     * If batch is set to true then the submit will be batched - and as a result guaranteed to be ordered sequentially
-     * in the global sequencing space. The batch will be flushed either when flush is called or when a non-batched
-     * op is submitted.
-     */
-    public prepareMesage(message: Omit<IDocumentMessage, "clientSequenceNumber">): IDocumentMessage | undefined {
+    public prepareMessageToSend(message: Omit<IDocumentMessage, "clientSequenceNumber">): IDocumentMessage | undefined {
         if (this.readonly === true) {
             assert(this.readOnlyInfo.readonly === true, 0x1f0 /* "Unexpected mismatch in readonly" */);
             const error = new GenericError("deltaManagerReadonlySubmit", undefined /* error */, {
@@ -816,7 +808,7 @@ export class ConnectionManager implements IConnectionManager {
         this._outbound.push(messages);
     }
 
-    public beforeProcessingIncommingOp(message: ISequencedDocumentMessage) {
+    public beforeProcessingIncomingOp(message: ISequencedDocumentMessage) {
         // if we have connection, and message is local, then we better treat is as local!
         assert(this.clientId !== message.clientId || this.lastSubmittedClientId === message.clientId,
             0x0ee /* "Not accounting local messages correctly" */,
@@ -847,7 +839,7 @@ export class ConnectionManager implements IConnectionManager {
 
     private readonly opHandler = (documentId: string, messagesArg: ISequencedDocumentMessage[]) => {
         const messages = Array.isArray(messagesArg) ? messagesArg : [messagesArg];
-        this.props.incommingOpHandler(messages, "opHandler");
+        this.props.incomingOpHandler(messages, "opHandler");
     };
 
     // Always connect in write mode after getting nacked.

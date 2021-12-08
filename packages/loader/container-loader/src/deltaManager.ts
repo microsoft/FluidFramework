@@ -50,7 +50,7 @@ import {
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 import {
-    IConnectionManagereFactoryArgs,
+    IConnectionManagerFactoryArgs,
     IConnectionManager,
  } from "./contracts";
 
@@ -217,7 +217,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             this.flush();
         }
 
-        const message = this.connectionManager.prepareMesage(messagePartial);
+        const message = this.connectionManager.prepareMessageToSend(messagePartial);
         if (message === undefined) {
             return -1;
         }
@@ -286,11 +286,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         private readonly serviceProvider: () => IDocumentService | undefined,
         private readonly logger: ITelemetryLogger,
         private readonly _active: () => boolean,
-        createConnectionManager: (props: IConnectionManagereFactoryArgs) => TConnectionManager,
+        createConnectionManager: (props: IConnectionManagerFactoryArgs) => TConnectionManager,
     ) {
         super();
-        const props: IConnectionManagereFactoryArgs = {
-            incommingOpHandler:(messages: ISequencedDocumentMessage[], reason: string) =>
+        const props: IConnectionManagerFactoryArgs = {
+            incomingOpHandler:(messages: ISequencedDocumentMessage[], reason: string) =>
                 this.enqueueMessages(messages, reason),
             signalHandler: (message: ISignalMessage) => this._inboundSignal.push(message),
             reconnectionDelayHandler: (delayMs: number, error: unknown) =>
@@ -791,7 +791,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             message.contents = JSON.parse(message.contents);
         }
 
-        this.connectionManager.beforeProcessingIncommingOp(message);
+        this.connectionManager.beforeProcessingIncomingOp(message);
 
         // Add final ack trace.
         if (message.traces !== undefined && message.traces.length > 0) {

@@ -14,7 +14,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { DeltaManager } from "@fluidframework/container-loader/dist/deltaManager";
 // eslint-disable-next-line import/no-internal-modules
-import { IConnectionManagereFactoryArgs } from "@fluidframework/container-loader/dist/contracts";
+import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/dist/contracts";
 // eslint-disable-next-line import/no-internal-modules
 import { ConnectionManager } from "@fluidframework/container-loader/dist/connectionHandler";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
@@ -96,7 +96,7 @@ describe("Container Runtime", () => {
                 () => service,
                 DebugLogger.create("fluid:testDeltaManager"),
                 () => false,
-                (props: IConnectionManagereFactoryArgs) => new ConnectionManager(
+                (props: IConnectionManagerFactoryArgs) => new ConnectionManager(
                     () => service,
                     client as IClient,
                     false,

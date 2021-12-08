@@ -12,7 +12,7 @@ import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframewor
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
 import { CollabWindowTracker } from "../collabWindowTracker";
-import { IConnectionManagereFactoryArgs } from "../contracts";
+import { IConnectionManagerFactoryArgs } from "../contracts";
 import { ConnectionManager } from "../connectionHandler";
 
 describe("Loader", () => {
@@ -52,7 +52,7 @@ describe("Loader", () => {
                     () => service,
                     logger,
                     () => false,
-                    (props: IConnectionManagereFactoryArgs) => new ConnectionManager(
+                    (props: IConnectionManagerFactoryArgs) => new ConnectionManager(
                         () => service,
                         client as IClient,
                         reconnectAllowed,
