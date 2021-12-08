@@ -319,7 +319,8 @@ export class GarbageCollector implements IGarbageCollector {
             // consolidate into IGarbageCollectionState format.
             const gcState: IGarbageCollectionState = { gcNodes: { "/": { outboundRoutes: [] } } };
             const dataStoreSnaphotTree = getSummaryForDatastores(baseSnapshot, metadata);
-            assert(dataStoreSnaphotTree !== undefined, "Expected data store snapshot tree in base snapshot");
+            assert(dataStoreSnaphotTree !== undefined,
+                0x2a8 /* "Expected data store snapshot tree in base snapshot" */);
             for (const [dsId, dsSnapshotTree] of Object.entries(dataStoreSnaphotTree.trees)) {
                 const blobId = dsSnapshotTree.blobs[gcBlobKey];
                 if (blobId === undefined) {
@@ -348,7 +349,8 @@ export class GarbageCollector implements IGarbageCollector {
                     const rootId = id === "/" ? dsRootId : `${dsRootId}${id}`;
                     gcState.gcNodes[rootId] = { outboundRoutes: Array.from(outboundRoutes) };
                 }
-                assert(gcState.gcNodes[dsRootId] !== undefined, `GC nodes for data store ${dsId} not in GC blob`);
+                assert(gcState.gcNodes[dsRootId] !== undefined,
+                    0x2a9 /* `GC nodes for data store ${dsId} not in GC blob` */);
                 gcState.gcNodes[dsRootId].unreferencedTimestampMs = gcSummaryDetails.unrefTimestamp;
             }
             return gcState;
@@ -571,7 +573,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Iterate through the deleted nodes and start tracking if they became unreferenced in this run.
         for (const nodeId of gcResult.deletedNodeIds) {
-            assert(this.currentGCState.gcNodes[nodeId] !== undefined, "Unexpected node when running GC");
+            assert(this.currentGCState.gcNodes[nodeId] !== undefined, 0x2aa /* "Unexpected node when running GC" */);
 
             // The time when the node became unreferenced. This is added to the current GC state.
             let unreferencedTimestampMs: number = currentTimestampMs;
@@ -590,7 +592,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Iterate through the referenced nodes and stop tracking if they were unreferenced before.
         for (const nodeId of gcResult.referencedNodeIds) {
-            assert(this.currentGCState.gcNodes[nodeId] !== undefined, "Unexpected node when running GC");
+            assert(this.currentGCState.gcNodes[nodeId] !== undefined, 0x2ab /* "Unexpected node when running GC" */);
             const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
             if (nodeStateTracker !== undefined) {
                 // If this node has been unreferenced for longer than deleteTimeoutMs and is being referenced,
