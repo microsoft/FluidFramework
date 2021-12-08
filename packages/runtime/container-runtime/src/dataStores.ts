@@ -47,7 +47,7 @@ import {
     LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
-import { IDataStoreAliasMapping, IDataStoreAliasMessage } from "./dataStore";
+import { IDataStoreAliasMapping, IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { IUsedStateStats } from "./garbageCollection";
 
  /**
@@ -206,6 +206,18 @@ export class DataStores implements IDisposable {
 
     public processAliasMessage(message: ISequencedDocumentMessage): IDataStoreAliasMapping | undefined {
         const aliasMessage = message.contents as IDataStoreAliasMessage;
+        if (!isDataStoreAliasMessage(aliasMessage)) {
+            throw new DataCorruptionError(
+                "malformedDataStoreAliasMessage",
+                {
+                    ...extractSafePropertiesFromMessage(message),
+                    dataStoreId: {
+                        value: aliasMessage.internalId,
+                        tag: TelemetryDataTag.PackageData,
+                    },
+                },
+            );
+        }
 
         const existingMapping = this.aliasMap.get(aliasMessage.alias);
         if (existingMapping !== undefined) {

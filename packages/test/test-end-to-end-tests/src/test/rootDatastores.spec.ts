@@ -85,6 +85,14 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     const getRootDataStore = async (dataObject: ITestFluidObject, id: string) =>
         runtimeOf(dataObject).getRootDataStore(id);
 
+    const sendAliasMessage = async (runtime: ContainerRuntime, message: any) =>
+        new Promise<IDataStoreAliasMapping>((resolve, reject) => {
+            runtime.once("dispose", () => reject(new Error("Runtime disposed")));
+            // Temporary solution to be able to submit generic container runtime ops
+            // until we add this alias op to the API surface
+            (runtime as any).submit(ContainerMessageType.AssignAlias, message, resolve);
+        }).catch(() => undefined);
+
     const trySetAlias = async (runtime: ContainerRuntime, datastore: IFluidRouter, alias: string) => {
         const channel = datastore as IFluidDataStoreChannel;
         const message = {
@@ -92,14 +100,12 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             alias,
         };
 
-        const aliasResult = await new Promise<IDataStoreAliasMapping>((resolve) => {
-            // Temporary solution to be able to submit generic container runtime ops
-            // until we add this alias op to the API surface
-            (runtime as any).submit(ContainerMessageType.AssignAlias, message, resolve);
-        }).catch(() => undefined);
-
+        const aliasResult = await sendAliasMessage(runtime, message);
         return aliasResult !== undefined && aliasResult.aliasedInternalId === aliasResult.suppliedInternalId;
     };
+
+    const sendMalformedMessage = async (runtime: ContainerRuntime, alias: string) =>
+        sendAliasMessage(runtime, { notAnAlias: alias });
 
     describe("Name conflict expected failures", () => {
         beforeEach(async () => setupContainers(testContainerConfig));
@@ -168,6 +174,13 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
             const aliasResult = await trySetAlias(runtimeOf(dataObject1), ds, alias);
             assert(aliasResult);
+        });
+
+        it("Sending a bad alias message breaks the container", async () => {
+            const dataCorruption = anyDataCorruption([container1]);
+            await sendMalformedMessage(runtimeOf(dataObject1), alias);
+
+            assert(await dataCorruption);
         });
 
         it("Assign multiple data stores to the same alias, first write wins, different containers", async () => {

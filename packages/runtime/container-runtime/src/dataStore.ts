@@ -13,3 +13,7 @@ export interface IDataStoreAliasMapping {
     readonly alias: string;
     readonly aliasedInternalId: string;
 }
+
+export const isDataStoreAliasMessage = (maybeDataStoreAliasMessage: IDataStoreAliasMessage) => {
+    return maybeDataStoreAliasMessage.internalId !== undefined && maybeDataStoreAliasMessage.alias !== undefined;
+};
