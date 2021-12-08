@@ -90,7 +90,7 @@ function getNackReconnectInfo(nackContent: INackContent) {
 const createReconnectError = (fluidErrorCode: string, err: any) =>
     wrapError(
         err,
-        (errorMessage: string) => new GenericNetworkError(fluidErrorCode, errorMessage, true /* canRetry */),
+        (errorMessage: string) => new GenericNetworkError(fluidErrorCode, errorMessage, err?.canRetry === true),
     );
 
 export interface IConnectionArgs {

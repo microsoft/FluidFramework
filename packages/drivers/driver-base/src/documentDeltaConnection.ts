@@ -9,7 +9,7 @@ import {
     IDocumentDeltaConnectionEvents,
     DriverError,
 } from "@fluidframework/driver-definitions";
-import { createGenericNetworkError } from "@fluidframework/driver-utils";
+import { createGenericNetworkError, createWriteError } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
     IClientConfiguration,
@@ -288,8 +288,9 @@ export class DocumentDeltaConnection
     }
 
     protected emitMessages(type: string, messages: IDocumentMessage[][]) {
-        if (this.messageSizeValidator && !this.messageSizeValidator.validate(messages)) {
-            throw new Error("PayloadTooLarge");
+        if (this.messageSizeValidator && !this.messageSizeValidator.isPayloadValid(messages)) {
+            this.emit("error", createWriteError("Payload too large"));
+            return;
         }
 
         // Although the implementation here disconnects the socket and does not reuse it, other subclasses

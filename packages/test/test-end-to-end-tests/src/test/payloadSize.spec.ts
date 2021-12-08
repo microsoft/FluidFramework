@@ -17,7 +17,8 @@ import {
     DataObjectFactoryType,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
+import { GenericNetworkError } from "@fluidframework/driver-utils";
 
 const map1Id = "map1Key";
 const registry: ChannelFactoryRegistry = [
@@ -92,7 +93,7 @@ describeNoCompat("Payload size", (getTestObjectProvider) => {
                 dataObject1map1.set(`key${i}`, item);
             }
         });
-    };
+    };;
 
     it("Can send 60 messages of 16k", async () => {
         const largeString = generateStringOfSize(16 * 1000);
@@ -116,16 +117,16 @@ describeNoCompat("Payload size", (getTestObjectProvider) => {
 
     it("Cannot send large batches with feature gate enabled", async () => {
         settings.FluidEnablePayloadSizeLimit = "1";
+        settings.FluidDisableBatchManager = "1";
         const largeString = generateStringOfSize(16 * 1000);
         const messageCount = 100;
-        let error: Error | undefined;
-        try {
-            setMapKeys(dataObject1.context.containerRuntime, messageCount, largeString);
-        } catch (err) {
-            error = err as Error;
-        }
+        const containerClosedByLargePayload = new Promise<boolean>((res) => container1.once("closed", (error) => {
+            res(error instanceof GenericNetworkError &&
+                error.fluidErrorCode === "dmDocumentDeltaConnectionError");
+        }));
+        setMapKeys(dataObject1.context.containerRuntime, messageCount, largeString);
 
-        assert(error);
+        assert(await containerClosedByLargePayload);
     });
 
     it("Can send large batches with feature gate disabled", async () => {

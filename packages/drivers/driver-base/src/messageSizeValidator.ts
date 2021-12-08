@@ -48,7 +48,7 @@ export class MessageSizeValidator {
         this.messageSizeCounter.send(this.messageSizeEvent, messageSizeInBytes, { max: this.maxMessageSizeInBytes });
     }
 
-    public validate(messages: IDocumentMessage[][]): boolean {
+    public isPayloadValid(messages: IDocumentMessage[][]): boolean {
         let payloadSizeInBytes = 0;
         let allMessagesUnderLimit = true;
 

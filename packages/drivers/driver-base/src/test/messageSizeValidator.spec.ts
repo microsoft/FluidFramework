@@ -37,7 +37,7 @@ describe("Message size validation", () => {
     });
 
     it("Should fail when message size is max", () => {
-        assert(!validator.validate([[generateMessageOfSize(maxMessageSizeInBytes)]]));
+        assert(!validator.isPayloadValid([[generateMessageOfSize(maxMessageSizeInBytes)]]));
         assert(logger.matchEvents([{
             eventName: "OpSizeLimitExceeded",
             category: "performance",
@@ -47,13 +47,13 @@ describe("Message size validation", () => {
     });
 
     it("Should succeed when payload is lower than 25% of max", () => {
-        assert(validator.validate([[generateMessageOfSize(maxMessageSizeInBytes - 1)]]));
+        assert(validator.isPayloadValid([[generateMessageOfSize(maxMessageSizeInBytes - 1)]]));
         assert(logger.matchEvents([]));
     });
 
     it("Should succeed when payload is lower than 50% of max", async () => {
         const size = 26 * (maxMessageSizeInBytes - 1);
-        assert(validator.validate([Array(26).fill(generateMessageOfSize(maxMessageSizeInBytes - 1))]));
+        assert(validator.isPayloadValid([Array(26).fill(generateMessageOfSize(maxMessageSizeInBytes - 1))]));
         assert(logger.matchEvents([{
             eventName: "OpsPayloadSize25PcOfMax",
             category: "performance",
@@ -64,7 +64,7 @@ describe("Message size validation", () => {
 
     it("Should succeed when payload is between 50% and 100% of max", () => {
         const size = 51 * (maxMessageSizeInBytes - 1);
-        assert(validator.validate([Array(51).fill(generateMessageOfSize(maxMessageSizeInBytes - 1))]));
+        assert(validator.isPayloadValid([Array(51).fill(generateMessageOfSize(maxMessageSizeInBytes - 1))]));
         assert(logger.matchEvents([{
             eventName: "OpsPayloadSize50PcOfMax",
             category: "performance",
@@ -75,7 +75,7 @@ describe("Message size validation", () => {
 
     it("Should fail when payload size is higher than max", () => {
         const size = 101 * (maxMessageSizeInBytes - 1);
-        assert(!validator.validate([Array(101).fill(generateMessageOfSize(maxMessageSizeInBytes - 1))]));
+        assert(!validator.isPayloadValid([Array(101).fill(generateMessageOfSize(maxMessageSizeInBytes - 1))]));
         assert(logger.matchEvents([{
             eventName: "OpsPayloadSizeLimitExceeded",
             category: "performance",
@@ -86,7 +86,7 @@ describe("Message size validation", () => {
 
     it("Should fail when payload size is higher than max and message is larger than max", () => {
         const size = 100 * (maxMessageSizeInBytes);
-        assert(!validator.validate([Array(100).fill(generateMessageOfSize(maxMessageSizeInBytes))]));
+        assert(!validator.isPayloadValid([Array(100).fill(generateMessageOfSize(maxMessageSizeInBytes))]));
         assert(logger.matchEvents([{
             eventName: "OpSizeLimitExceeded",
             category: "performance",
