@@ -1053,8 +1053,12 @@ export class DeltaManager
 
         this.closeAbortController.abort();
 
+        const disconnectReason = error !== undefined
+            ? `Container closed (${error.message})`
+            : "Container closed";
+
         // This raises "disconnect" event if we have active connection.
-        this.disconnectFromDeltaStream("Container closed", error);
+        this.disconnectFromDeltaStream(disconnectReason);
 
         this._inbound.clear();
         this._outbound.clear();
@@ -1136,7 +1140,6 @@ export class DeltaManager
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.reconnectOnError(
             "write",
-            "deltaConnectionNackReceived",
             reconnectInfo,
         );
     };
@@ -1148,7 +1151,6 @@ export class DeltaManager
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.reconnectOnError(
             this.defaultReconnectionMode,
-            "deltaConnectionDisconnectReceived",
             createReconnectError("dmDocumentDeltaConnectionDisconnected", disconnectReason),
         );
     };
@@ -1157,7 +1159,6 @@ export class DeltaManager
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.reconnectOnError(
             this.defaultReconnectionMode,
-            "deltaConnectionErrorReceived",
             createReconnectError("dmDocumentDeltaConnectionError", error),
         );
     };
@@ -1295,7 +1296,7 @@ export class DeltaManager
      * Disconnect the current connection.
      * @param reason - Text description of disconnect reason to emit with disconnect event
      */
-    private disconnectFromDeltaStream(reason: string, error?: unknown) {
+    private disconnectFromDeltaStream(reason: string) {
         this.pendingReconnect = false;
         this.downgradedConnection = false;
 
@@ -1320,7 +1321,7 @@ export class DeltaManager
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this._outbound.pause();
         this._outbound.clear();
-        this.emit("disconnect", reason, error);
+        this.emit("disconnect", reason);
 
         connection.dispose();
 
@@ -1338,19 +1339,18 @@ export class DeltaManager
      */
     private async reconnectOnError(
         requestedMode: ConnectionMode,
-        disconnectMessage: string,
         error: DriverError,
     ) {
         return this.reconnectOnErrorCore(
             requestedMode,
-            disconnectMessage,
+            error.message,
             error);
     }
 
     /**
      * Disconnect the current connection and reconnect.
+     * @param connection - The connection that wants to reconnect - no-op if it's different from this.connection
      * @param requestedMode - Read or write
-     * @param disconnectMessage - The reason for reconnecting
      * @param error - Error reconnect information including whether or not to reconnect
      * @returns A promise that resolves when the connection is reestablished or we stop trying
      */
