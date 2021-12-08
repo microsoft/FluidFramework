@@ -14,6 +14,9 @@ export interface IDataStoreAliasMapping {
     readonly aliasedInternalId: string;
 }
 
-export const isDataStoreAliasMessage = (maybeDataStoreAliasMessage: IDataStoreAliasMessage) => {
-    return maybeDataStoreAliasMessage.internalId !== undefined && maybeDataStoreAliasMessage.alias !== undefined;
+export const isDataStoreAliasMessage = (
+    maybeDataStoreAliasMessage: any,
+): maybeDataStoreAliasMessage is IDataStoreAliasMessage => {
+    return typeof maybeDataStoreAliasMessage?.internalId === "string"
+        && typeof maybeDataStoreAliasMessage?.alias === "string";
 };

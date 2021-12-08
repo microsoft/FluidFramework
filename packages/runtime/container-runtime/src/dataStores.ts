@@ -211,10 +211,6 @@ export class DataStores implements IDisposable {
                 "malformedDataStoreAliasMessage",
                 {
                     ...extractSafePropertiesFromMessage(message),
-                    dataStoreId: {
-                        value: aliasMessage.internalId,
-                        tag: TelemetryDataTag.PackageData,
-                    },
                 },
             );
         }
