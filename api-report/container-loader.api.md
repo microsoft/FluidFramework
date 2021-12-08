@@ -119,7 +119,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     static version: string;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
@@ -149,7 +149,7 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
     getBlobIds(): string[];
 };
 
-// @public
+// @public @deprecated (undocumented)
 export interface IFluidModuleWithDetails {
     details: IFluidCodeDetails;
     module: IFluidModule;

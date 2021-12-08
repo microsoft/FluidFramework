@@ -8,8 +8,6 @@ import { Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger, IFluidErrorBase, LoggingError, wrapErrorAndLog } from "@fluidframework/telemetry-utils";
 import {
-    IRequest,
-    IResponse,
     IFluidHandleContext,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
@@ -17,7 +15,6 @@ import {
     ISequencedDocumentMessage,
     ISummaryConfiguration,
 } from "@fluidframework/protocol-definitions";
-import { create404Response } from "@fluidframework/runtime-utils";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
 import { SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
@@ -63,7 +60,6 @@ export const createSummarizingWarning =
  */
 export class Summarizer extends EventEmitter implements ISummarizer {
     public get IFluidLoadable() { return this; }
-    public get IFluidRouter() { return this; }
     public get ISummarizer() { return this; }
 
     private readonly logger: ITelemetryLogger;
@@ -119,17 +115,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
      */
     public stop(reason: SummarizerStopReason) {
         this.stopDeferred.resolve(reason);
-    }
-
-    public async request(request: IRequest): Promise<IResponse> {
-        if (request.url === "/" || request.url === "") {
-            return {
-                mimeType: "fluid/object",
-                status: 200,
-                value: this,
-            };
-        }
-        return create404Response(request);
     }
 
     private async runCore(
