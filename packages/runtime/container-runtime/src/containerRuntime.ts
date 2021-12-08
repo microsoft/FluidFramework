@@ -742,9 +742,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return runtime;
     }
 
-    // public get id(): string {
-    //     return this.context.id;
-    // }
+    /**
+    * @deprecated - This will be removed in a later release.
+    */
+    public get id(): string {
+        return this.context.id;
+    }
 
     public get options(): ILoaderOptions {
         return this.context.options;
