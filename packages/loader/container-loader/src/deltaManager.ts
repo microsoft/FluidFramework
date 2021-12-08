@@ -1054,8 +1054,8 @@ export class DeltaManager
         this.closeAbortController.abort();
 
         const disconnectReason = error !== undefined
-            ? `Container closed (${error.message})`
-            : "Container closed";
+            ? `Closing DeltaManager (${error.message})`
+            : "Closing DeltaManager";
 
         // This raises "disconnect" event if we have active connection.
         this.disconnectFromDeltaStream(disconnectReason);
