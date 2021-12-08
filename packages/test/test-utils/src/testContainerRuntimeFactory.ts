@@ -7,7 +7,7 @@ import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { innerRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
+import { rootDataStoreRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
@@ -49,7 +49,7 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
             const builder = new RuntimeRequestHandlerBuilder();
             builder.pushHandler(
                 defaultRouteRequestHandler("default"),
-                innerRequestHandler);
+                rootDataStoreRequestHandler);
 
             const runtime: ContainerRuntime = await containerRuntimeCtor.load(
                 context,

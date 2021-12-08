@@ -14,7 +14,6 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
 import {
-    innerRequestHandler,
     createFluidObjectResponse,
     rootDataStoreRequestHandler,
 } from "../requestHandlers";
@@ -63,12 +62,12 @@ async function assertRejected(p: Promise<IResponse | undefined>) {
 }
 
 describe("RequestParser", () => {
-    describe("innerRequestHandler", () => {
+    describe("rootDataStoreRequestHandler", () => {
         const runtime = new MockRuntime() as any as IContainerRuntime;
 
         it("Empty request", async () => {
             const requestParser = RequestParser.create({ url: "/" });
-            const response = await innerRequestHandler(
+            const response = await rootDataStoreRequestHandler(
                 requestParser,
                 runtime);
             assert.equal(response.status, 404);
@@ -76,7 +75,7 @@ describe("RequestParser", () => {
 
         it("Data store request without wait", async () => {
             const requestParser = RequestParser.create({ url: "/nonExistingUri" });
-            const responseP = innerRequestHandler(
+            const responseP = rootDataStoreRequestHandler(
                 requestParser,
                 runtime);
             await assertRejected(responseP);
@@ -84,7 +83,7 @@ describe("RequestParser", () => {
 
         it("Data store request with wait", async () => {
             const requestParser = RequestParser.create({ url: "/nonExistingUri", headers: { wait: true } });
-            const responseP = innerRequestHandler(
+            const responseP = rootDataStoreRequestHandler(
                 requestParser,
                 runtime);
             await assertRejected(responseP);
@@ -92,14 +91,14 @@ describe("RequestParser", () => {
 
         it("Data store request with sub route", async () => {
             const requestParser = RequestParser.create({ url: "/objectId/route", headers: { wait: true } });
-            const response = await innerRequestHandler(requestParser, runtime);
+            const response = await rootDataStoreRequestHandler(requestParser, runtime);
             assert.equal(response.status, 200);
             assert.equal(response.value.route, "/route");
         });
 
         it("Data store request with non-existing sub route", async () => {
             const requestParser = RequestParser.create({ url: "/objectId/doesNotExist", headers: { wait: true } });
-            const responseP = innerRequestHandler(requestParser, runtime);
+            const responseP = rootDataStoreRequestHandler(requestParser, runtime);
             await assertRejected(responseP);
         });
     });

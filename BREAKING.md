@@ -23,6 +23,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [ISequencedDocumentMessage arg removed from SharedMap and SharedDirectory events](#ISequencedDocumentMessage-arg-removed-from-SharedMap-and-SharedDirectory-events)
 - [Moved `@fluidframework/core-interface#fluidPackage.ts` to `@fluidframework/container-definition#fluidPackage.ts`](#Moved-fluidframeworkcore-interfacefluidPackagets-to-fluidframeworkcontainer-definitionfluidPackagets)
 - [Deprecated `IFluidSerializer` in `IFluidDataStoreRuntime`](#Deprecated-IFluidSerializer-in-IFluidDataStoreRuntime)
+- [Replace `innerRequestHandler` with `rootDataStoreRequestHandler`](#Replace-innerRequestHandler-with-rootDataStoreRequestHandler)
 
 ### `IContainer` interface updated to expose actively used `Container` public APIs
 In order to have the `IContainer` interface be the active developer surface that is used when interacting with a `Container` instance, it has been updated to expose the APIs that are necessary for currently used behavior. The motivation here is to move away from using the `Container` class when only its type is required, and to use the `IContainer` interface instead.
@@ -104,6 +105,9 @@ They are deprecated from `@fluidframework/core-interface` and would be removed i
 
 ### Deprecated `IFluidSerializer` in `IFluidDataStoreRuntime`
 `IFluidSerializer` should only be used by DDSs to serialize data and they should use the one created by `SharedObject`.
+
+### Replace `innerRequestHandler` with `rootDataStoreRequestHandler`
+`innerRequestHandler` is removed from `@fluidframework/request-handlers` package and replaced with `rootDataStoreRequestHandler`.If a container wants to permit requests for specific data stores, they can add `rootDataStoreRequestHandler` to the list of request handlers they pass to the runtime factory. This will restore the ability to request root data stores. This will only work for root data stores, and if support is required for requesting non-root data stores and/or for legacy document support, a request handler can be created of their own that calls `runtime.IFluidHandleContext.resolveHandle(request)` just like `innerRequestHandler` used to do.
 
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)

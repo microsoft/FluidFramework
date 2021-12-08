@@ -30,7 +30,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import {
-    innerRequestHandler,
+    rootDataStoreRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
@@ -472,7 +472,7 @@ class ScribeFactory extends RuntimeFactoryHelper implements IFluidDataStoreFacto
             this.registry,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
-                innerRequestHandler,
+                rootDataStoreRequestHandler,
             ),
             undefined, // runtimeOptions
             undefined, // containerScope
