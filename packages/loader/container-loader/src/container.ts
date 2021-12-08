@@ -51,7 +51,7 @@ import {
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
     runWithRetry,
-    canRetryOnError,
+    isFluidResolvedUrl,
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
@@ -293,9 +293,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const container = new Container(
             loader,
             {});
-        container._lifecycleState = "loading";
-        await container.createDetached(codeDetails);
-        return container;
+
+        return PerformanceEvent.timedExecAsync(
+            container.logger,
+            { eventName: "CreateDetached" },
+            async (_event) => {
+                container._lifecycleState = "loading";
+                await container.createDetached(codeDetails);
+                return container;
+            },
+            { start: true, end: true, cancel: "generic" });
     }
 
     /**
@@ -309,10 +316,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const container = new Container(
             loader,
             {});
-        const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
-        container._lifecycleState = "loading";
-        await container.rehydrateDetachedFromSnapshot(deserializedSummary);
-        return container;
+        return PerformanceEvent.timedExecAsync(
+            container.logger,
+            { eventName: "RehydrateDetachedFromSnapshot" },
+            async (_event) => {
+                const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
+                container._lifecycleState = "loading";
+                await container.rehydrateDetachedFromSnapshot(deserializedSummary);
+                return container;
+            },
+            { start: true, end: true, cancel: "generic" });
     }
 
     public subLogger: TelemetryLogger;
@@ -760,113 +773,113 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async attach(request: IRequest): Promise<void> {
-        if (this._lifecycleState !== "loaded") {
-            throw new UsageError(`containerNotValidForAttach [${this._lifecycleState}]`);
-        }
-
-        // If container is already attached or attach is in progress, throw an error.
-        assert(this._attachState === AttachState.Detached && !this.attachStarted,
-            0x205 /* "attach() called more than once" */);
-        this.attachStarted = true;
-
-        // If attachment blobs were uploaded in detached state we will go through a different attach flow
-        const hasAttachmentBlobs = this.loader.services.detachedBlobStorage !== undefined
-            && this.loader.services.detachedBlobStorage.size > 0;
-
-        try {
-            assert(this.deltaManager.inbound.length === 0, 0x0d6 /* "Inbound queue should be empty when attaching" */);
-
-            let summary: ISummaryTree;
-            if (!hasAttachmentBlobs) {
-                // Get the document state post attach - possibly can just call attach but we need to change the
-                // semantics around what the attach means as far as async code goes.
-                const appSummary: ISummaryTree = this.context.createSummary();
-                const protocolSummary = this.captureProtocolSummary();
-                summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
-
-                // Set the state as attaching as we are starting the process of attaching container.
-                // This should be fired after taking the summary because it is the place where we are
-                // starting to attach the container to storage.
-                // Also, this should only be fired in detached container.
-                this._attachState = AttachState.Attaching;
-                this.context.notifyAttaching();
+        await PerformanceEvent.timedExecAsync(this.logger, { eventName: "Attach" }, async () => {
+            if (this._lifecycleState !== "loaded") {
+                throw new UsageError(`containerNotValidForAttach [${this._lifecycleState}]`);
             }
 
-            // Actually go and create the resolved document
-            const createNewResolvedUrl = await this.urlResolver.resolve(request);
-            ensureFluidResolvedUrl(createNewResolvedUrl);
-            if (this.service === undefined) {
-                this.service = await runWithRetry(
-                    async () => this.serviceFactory.createContainer(
-                        summary,
-                        createNewResolvedUrl,
-                        this.subLogger,
-                    ),
-                    "containerAttach",
-                    this.logger,
-                    {}, // progress
-                );
-            }
-            const resolvedUrl = this.service.resolvedUrl;
-            ensureFluidResolvedUrl(resolvedUrl);
-            this._resolvedUrl = resolvedUrl;
-            await this.connectStorageService();
+            // If container is already attached or attach is in progress, throw an error.
+            assert(this._attachState === AttachState.Detached && !this.attachStarted,
+                0x205 /* "attach() called more than once" */);
+            this.attachStarted = true;
 
-            if (hasAttachmentBlobs) {
-                // upload blobs to storage
-                assert(!!this.loader.services.detachedBlobStorage, 0x24e /* "assertion for type narrowing" */);
+            // If attachment blobs were uploaded in detached state we will go through a different attach flow
+            const hasAttachmentBlobs = this.loader.services.detachedBlobStorage !== undefined
+                && this.loader.services.detachedBlobStorage.size > 0;
 
-                // build a table mapping IDs assigned locally to IDs assigned by storage and pass it to runtime to
-                // support blob handles that only know about the local IDs
-                const redirectTable = new Map<string, string>();
-                // if new blobs are added while uploading, upload them too
-                while (redirectTable.size < this.loader.services.detachedBlobStorage.size) {
-                    const newIds = this.loader.services.detachedBlobStorage.getBlobIds().filter(
-                        (id) => !redirectTable.has(id));
-                    for (const id of newIds) {
-                        const blob = await this.loader.services.detachedBlobStorage.readBlob(id);
-                        const response = await this.storageService.createBlob(blob);
-                        redirectTable.set(id, response.id);
-                    }
+            try {
+                assert(this.deltaManager.inbound.length === 0,
+                    0x0d6 /* "Inbound queue should be empty when attaching" */);
+
+                let summary: ISummaryTree;
+                if (!hasAttachmentBlobs) {
+                    // Get the document state post attach - possibly can just call attach but we need to change the
+                    // semantics around what the attach means as far as async code goes.
+                    const appSummary: ISummaryTree = this.context.createSummary();
+                    const protocolSummary = this.captureProtocolSummary();
+                    summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+
+                    // Set the state as attaching as we are starting the process of attaching container.
+                    // This should be fired after taking the summary because it is the place where we are
+                    // starting to attach the container to storage.
+                    // Also, this should only be fired in detached container.
+                    this._attachState = AttachState.Attaching;
+                    this.context.notifyAttaching();
                 }
 
-                // take summary and upload
-                const appSummary: ISummaryTree = this.context.createSummary(redirectTable);
-                const protocolSummary = this.captureProtocolSummary();
-                summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
-
-                this._attachState = AttachState.Attaching;
-                this.context.notifyAttaching();
-
-                await this.storageService.uploadSummaryWithContext(summary, {
-                    referenceSequenceNumber: 0,
-                    ackHandle: undefined,
-                    proposalHandle: undefined,
-                });
-            }
-
-            this._attachState = AttachState.Attached;
-            this.emit("attached");
-
-            // Propagate current connection state through the system.
-            this.propagateConnectionState();
-            if (!this.closed) {
-                this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
-            }
-        } catch(error) {
-            // we should retry upon any retriable errors, so we shouldn't see them here
-            assert(!canRetryOnError(error), 0x24f /* "retriable error thrown from attach()" */);
-
-            // add resolved URL on error object so that host has the ability to find this document and delete it
-            const newError = normalizeError(error);
-            const resolvedUrl = this.resolvedUrl;
-            if (resolvedUrl) {
+                // Actually go and create the resolved document
+                const createNewResolvedUrl = await this.urlResolver.resolve(request);
+                ensureFluidResolvedUrl(createNewResolvedUrl);
+                if (this.service === undefined) {
+                    this.service = await runWithRetry(
+                        async () => this.serviceFactory.createContainer(
+                            summary,
+                            createNewResolvedUrl,
+                            this.subLogger,
+                        ),
+                        "containerAttach",
+                        this.logger,
+                        {}, // progress
+                    );
+                }
+                const resolvedUrl = this.service.resolvedUrl;
                 ensureFluidResolvedUrl(resolvedUrl);
-                newError.addTelemetryProperties({ resolvedUrl: resolvedUrl.url });
+                this._resolvedUrl = resolvedUrl;
+                await this.connectStorageService();
+
+                if (hasAttachmentBlobs) {
+                    // upload blobs to storage
+                    assert(!!this.loader.services.detachedBlobStorage, 0x24e /* "assertion for type narrowing" */);
+
+                    // build a table mapping IDs assigned locally to IDs assigned by storage and pass it to runtime to
+                    // support blob handles that only know about the local IDs
+                    const redirectTable = new Map<string, string>();
+                    // if new blobs are added while uploading, upload them too
+                    while (redirectTable.size < this.loader.services.detachedBlobStorage.size) {
+                        const newIds = this.loader.services.detachedBlobStorage.getBlobIds().filter(
+                            (id) => !redirectTable.has(id));
+                        for (const id of newIds) {
+                            const blob = await this.loader.services.detachedBlobStorage.readBlob(id);
+                            const response = await this.storageService.createBlob(blob);
+                            redirectTable.set(id, response.id);
+                        }
+                    }
+
+                    // take summary and upload
+                    const appSummary: ISummaryTree = this.context.createSummary(redirectTable);
+                    const protocolSummary = this.captureProtocolSummary();
+                    summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+
+                    this._attachState = AttachState.Attaching;
+                    this.context.notifyAttaching();
+
+                    await this.storageService.uploadSummaryWithContext(summary, {
+                        referenceSequenceNumber: 0,
+                        ackHandle: undefined,
+                        proposalHandle: undefined,
+                    });
+                }
+
+                this._attachState = AttachState.Attached;
+                this.emit("attached");
+
+                // Propagate current connection state through the system.
+                this.propagateConnectionState();
+                if (!this.closed) {
+                    this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
+                }
+            } catch(error) {
+                // add resolved URL on error object so that host has the ability to find this document and delete it
+                const newError = normalizeError(error);
+                const resolvedUrl = this.resolvedUrl;
+                if (isFluidResolvedUrl(resolvedUrl)) {
+                    newError.addTelemetryProperties({ resolvedUrl: resolvedUrl.url });
+                }
+                this.close(newError);
+                throw newError;
             }
-            this.close(newError);
-            throw newError;
-        }
+        },
+        { start: true, end: true, cancel: "generic" });
     }
 
     public async request(path: IRequest): Promise<IResponse> {
