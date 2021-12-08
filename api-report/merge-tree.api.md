@@ -1042,8 +1042,6 @@ export class MergeTree {
     // (undocumented)
     getPosition(node: MergeNode, refSeq: number, clientId: number): number;
     // (undocumented)
-    getRemovalInfo(segment: ISegment): IRemovalInfo;
-    // (undocumented)
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
     getStats(): MergeTreeStats;
