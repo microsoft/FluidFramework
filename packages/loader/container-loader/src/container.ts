@@ -108,7 +108,7 @@ import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdap
 import { getSnapshotTreeFromSerializedContainer } from "./utils";
 import { QuorumProxy } from "./quorum";
 import { CollabWindowTracker } from "./collabWindowTracker";
-import { ConnectionManager } from "./connectionHandler";
+import { ConnectionManager } from "./connectionManager";
 
 const detachedContainerRefSeqNumber = 0;
 

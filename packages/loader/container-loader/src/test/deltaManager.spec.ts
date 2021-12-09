@@ -13,7 +13,7 @@ import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
 import { CollabWindowTracker } from "../collabWindowTracker";
 import { IConnectionManagerFactoryArgs } from "../contracts";
-import { ConnectionManager } from "../connectionHandler";
+import { ConnectionManager } from "../connectionManager";
 
 describe("Loader", () => {
     describe("Container Loader", () => {

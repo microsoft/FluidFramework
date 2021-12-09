@@ -16,7 +16,7 @@ import { DeltaManager } from "@fluidframework/container-loader/dist/deltaManager
 // eslint-disable-next-line import/no-internal-modules
 import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/dist/contracts";
 // eslint-disable-next-line import/no-internal-modules
-import { ConnectionManager } from "@fluidframework/container-loader/dist/connectionHandler";
+import { ConnectionManager } from "@fluidframework/container-loader/dist/connectionManager";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
 import { ScheduleManager, DeltaScheduler } from "@fluidframework/container-runtime";
 
