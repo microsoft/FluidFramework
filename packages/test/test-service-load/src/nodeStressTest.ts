@@ -8,9 +8,9 @@ import fs from "fs";
 import commander from "commander";
 import * as ps from "ps-node";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
-import { createTestDriver, getProfile, initialize, safeExit } from "./utils";
-import { AppInsightsLogger } from "./appinsightslogger";
+import { createTestDriver, getProfile, initialize, loggerP, safeExit } from "./utils";
 
 interface ITestUserConfig {
     /* Credentials' key/value description:
@@ -52,6 +52,7 @@ async function main() {
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .option("-v, --verbose", "Enables verbose logging")
         .option("-b, --browserAuth", "Enables browser auth which may require a user to open a url in a browser.")
+        .option("-m, --enableMetrics", "Enable capturing client & ops metrics")
         .parse(process.argv);
 
     const driver: TestDriverTypes = commander.driver;
@@ -63,6 +64,7 @@ async function main() {
     const seed: number | undefined = commander.seed;
     const browserAuth: true | undefined = commander.browserAuth;
     const credFile: string | undefined = commander.credFile;
+    const enableMetrics: boolean = commander.enableMetrics ?? false;
 
     const profile = getProfile(profileArg);
 
@@ -75,20 +77,21 @@ async function main() {
     await orchestratorProcess(
         driver,
         { ...profile, name: profileArg, testUsers },
-        { testId, debug, verbose, seed, browserAuth });
+        { testId, debug, verbose, seed, browserAuth, enableMetrics });
 }
+
 /**
  * Implementation of the orchestrator process. Returns the return code to exit the process with.
  */
 async function orchestratorProcess(
     driver: TestDriverTypes,
     profile: ILoadTestConfig & { name: string, testUsers?: ITestUserConfig },
-    args: { testId?: string, debug?: true, verbose?: true, seed?: number, browserAuth?: true },
+    args: { testId?: string, debug?: true, verbose?: true, seed?: number, browserAuth?: true,
+        enableMetrics?: boolean },
 ) {
-    const telemetryClient = new AppInsightsLogger();
-
     const seed = args.seed ?? Date.now();
     const seedArg = `0x${seed.toString(16)}`;
+    const logger = await loggerP;
 
     const testDriver = await createTestDriver(
         driver,
@@ -106,17 +109,10 @@ async function orchestratorProcess(
             : await initialize(testDriver, seed, profile, args.verbose === true);
     }
 
-    telemetryClient.setCommonProperty("url", url);
-
     const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
     console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
     console.log(`Selected test profile: ${profile.name}`);
     console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
-
-    telemetryClient.trackMetric({
-        name: `Orchestrator Started`,
-        value: 1,
-    });
 
     const runnerArgs: string[][] = [];
     for (let i = 0; i < profile.numClients; i++) {
@@ -135,25 +131,30 @@ async function orchestratorProcess(
         if (args.verbose === true) {
             childArgs.push("--verbose");
         }
+        if (args.enableMetrics === true) {
+            childArgs.push("--enableOpsMetrics");
+        }
 
         runnerArgs.push(childArgs);
     }
     console.log(runnerArgs.join("\n"));
 
-    setInterval(() => {
-        ps.lookup({
-            command: "node",
-            ppid: process.pid,
-        }, (err, results) => {
-            if (err !== undefined) {
-                telemetryClient.trackMetric({
-                    name: "Runner Processes",
-                    value: results.length,
-                });
-                console.log(`Runner Processes: ${results.length}`);
-            }
-        });
-    }, 20000);
+    if (args.enableMetrics === true) {
+        setInterval(() => {
+            ps.lookup({
+                command: "node",
+                ppid: process.pid,
+            }, (err, results) => {
+                if (err !== undefined) {
+                    logger.send({
+                        category: "metric",
+                        eventName: "Runner Processes",
+                        value: results.length,
+                    });
+                }
+            });
+        }, 20000);
+    }
 
     try {
         const usernames = profile.testUsers !== undefined ? Object.keys(profile.testUsers.credentials) : [];
@@ -176,76 +177,66 @@ async function orchestratorProcess(
                 },
             );
 
-            telemetryClient.trackMetric({
-                name: `Runner Started`,
-                value: 1,
-                properties: {
-                    username,
-                    runId: index,
-                },
-            });
+            if (args.enableMetrics === true) {
+                setupTelemetry(runnerProcess, logger, index, username);
+            }
 
-            runnerProcess.once("error", (e) => {
-                telemetryClient.trackMetric({
-                    name: `Runner Start Error`,
-                    value: 1,
-                    properties: {
-                        username,
-                        runId: index,
-                        error: e,
-                    },
-                });
-            });
-
-            runnerProcess.once("exit", (code) => {
-                telemetryClient.trackMetric({
-                    name: `Runner Exited`,
-                    value: 1,
-                    properties: {
-                        username,
-                        runId: index,
-                        exitCode: code,
-                    },
-                });
-            });
-
-            setIoEvents(runnerProcess, telemetryClient, index, username);
             return new Promise((resolve) => runnerProcess.once("close", resolve));
         }));
-    } catch (e) {
-        telemetryClient.trackMetric({
-            name: `Orchestrator Error`,
-            value: 1,
-            properties: {
-                error: e,
-            },
-        });
     } finally {
-        telemetryClient.trackMetric({
-            name: `Orchestrator Exited`,
-            value: 1,
-        });
-        await telemetryClient.flush();
+        if (logger !== undefined) {
+            await logger.flush();
+        }
         await safeExit(0, url);
     }
 }
 
-function setIoEvents(
+function setupTelemetry(
     process: child_process.ChildProcess,
-    telemetryClient: AppInsightsLogger,
+    logger: ITelemetryLogger,
     runId: number,
-    userName?: string) {
+    username?: string) {
+    logger.send({
+        category: "metric",
+        eventName: "Runner Started",
+        value: 1,
+        username,
+        runId,
+    });
+
+    process.once("error", (e) => {
+        logger.send({
+            category: "metric",
+            eventName: "Runner Start Error",
+            value: 1,
+            username,
+            runId,
+            error: e.message,
+        });
+    });
+
+    process.once("exit", (code) => {
+        logger.send({
+            category: "metric",
+            eventName: "Runner Exited",
+            value: 1,
+            username,
+            runId,
+            exitCode: code ?? 0,
+        });
+    });
+
     let stdOutLine = 0;
     process.stdout?.on("data", (chunk) => {
         const data = String(chunk);
         console.log(data);
         if (data.replace(/\./g, "").length > 0) {
-            telemetryClient.send({
+            logger.send({
                 eventName: "Runner Console",
                 category: "generic",
                 lineNo: stdOutLine,
                 runId,
-                userName,
+                username,
                 data,
             });
             stdOutLine++;
@@ -256,12 +247,12 @@ function setIoEvents(
     process.stderr?.on("data", (chunk) => {
         const data = String(chunk);
         console.log(data);
-        telemetryClient.send({
+        logger.send({
             eventName: "Runner Error",
             category: "error",
             lineNo: stdErrLine,
             runId,
-            userName,
+            username,
             data,
             error: data.split("\n")[0],
         });
