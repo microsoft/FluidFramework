@@ -5,7 +5,6 @@
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Lazy } from "@fluidframework/common-utils";
 import { DebugLogger } from "./debugLogger";
-import { ChildLogger, ITelemetryLoggerPropertyBags } from "./logger";
 
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
@@ -20,47 +19,47 @@ export interface IConfigProviderBase {
  * Explicitly typed interface for reading configurations
  */
  export interface IConfigProvider extends IConfigProviderBase {
-    getBoolean(name: string, defaultValue?: boolean): boolean | undefined;
-    getNumber(name: string, defaultValue?: number): number | undefined;
-    getString(name: string, defaultValue?: string): string | undefined;
-    getBooleanArray(name: string, defaultValue?: boolean[]): boolean[] | undefined;
-    getNumberArray(name: string, defaultValue?: number[]): number[] | undefined;
-    getStringArray(name: string, defaultValue?: string[]): string[] | undefined;
+    getBoolean<TD extends boolean | undefined>(name: string, defaultValue: TD): TD | boolean;
+    getNumber<TD extends number | undefined>(name: string, defaultValue: TD): TD | number;
+    getString<TD extends string | undefined>(name: string, defaultValue: TD): TD | string;
+    getBooleanArray<TD extends boolean[] | undefined>(name: string, defaultValue: TD): TD | boolean[];
+    getNumberArray<TD extends number[] | undefined>(name: string, defaultValue: TD): TD | number[];
+    getStringArray<TD extends string[] | undefined>(name: string, defaultValue: TD): TD | string[];
 }
 
 /**
  * Creates a base configuration provider based on `localStorage`
  *
- * @param namespaceOverride - (optional) if provided, will be prepended to the fully qualified config key name
  * @returns A lazy initialized base configuration provider with `localStorage` as the underlying config store
  */
 export const sessionStorageConfigProvider =
-    (namespaceOverride?: string): Lazy<IConfigProviderBase | undefined> =>
-        inMemoryConfigProvider(safeSessionStorage(), namespaceOverride);
+    new Lazy<IConfigProviderBase>(() =>inMemoryConfigProvider(safeSessionStorage()));
+
+const NullConfigProvider: IConfigProviderBase = {
+    getRawConfig: ()=>undefined,
+};
 
 /**
  * Creates a base configuration provider based on the supplied `Storage` instance
  *
  * @param storage - instance of `Storage` to be used as storage media for the config
- * @param namespaceOverride - (optional) if provided, will be prepended to the fully qualified config key name
  * @returns A lazy initialized base configuration provider with
  * the supplied `Storage` instance as the underlying config store
  */
 export const inMemoryConfigProvider =
-    (storage?: Storage, namespaceOverride?: string): Lazy<IConfigProviderBase | undefined> =>
-        new Lazy<IConfigProviderBase | undefined>(() => {
-            if (storage !== undefined && storage !== null) {
-                return ({
-                    getRawConfig: (name: string) => {
-                        try {
-                            const key = namespaceOverride === undefined ? name : `${namespaceOverride}.${name}`;
-                            return stronglyTypedParse(storage.getItem(key) ?? undefined)?.value;
-                        } catch { }
-                        return undefined;
-                    },
-                });
-            }
-        });
+    (storage: Storage | undefined): IConfigProviderBase =>{
+    if (storage !== undefined && storage !== null) {
+        return ConfigProvider.create([{
+            getRawConfig: (name: string) => {
+                try {
+                    return stronglyTypedParse(storage.getItem(name) ?? undefined)?.value;
+                } catch { }
+                return undefined;
+            },
+        }]);
+    }
+    return NullConfigProvider;
+};
 
 interface ConfigTypeStringToType {
     number: number;
@@ -149,11 +148,9 @@ interface ConfigCacheEntry extends Partial<ConfigTypeStringToType> {
 export class ConfigProvider implements IConfigProvider {
     private readonly configCache = new Map<string, ConfigCacheEntry>();
     private readonly orderedBaseProviders: (IConfigProviderBase | undefined)[];
-    private readonly namespace: string | undefined;
     private static readonly logger = DebugLogger.create("fluid:telemetry:configProvider");
 
-    static create(namespace: string | undefined,
-        orderedBaseProviders: (IConfigProviderBase | ITelemetryBaseLogger | undefined)[],
+    static create(orderedBaseProviders: (IConfigProviderBase | ITelemetryBaseLogger | undefined)[],
     ): IConfigProvider {
         const filteredProviders: (IConfigProviderBase | undefined)[] = [];
         for (const maybeProvider of orderedBaseProviders) {
@@ -161,17 +158,16 @@ export class ConfigProvider implements IConfigProvider {
                 if (isConfigProviderBase(maybeProvider)) {
                     filteredProviders.push(maybeProvider);
                 } else {
-                    if (isMonitoringContext(maybeProvider)) {
+                    if (loggerIsMonitoringContext(maybeProvider)) {
                         filteredProviders.push(maybeProvider.config);
                     }
                 }
             }
         }
-        return new ConfigProvider(namespace, filteredProviders);
+        return new ConfigProvider(filteredProviders);
     }
 
     private constructor(
-        namespace: string | undefined,
         orderedBaseProviders: (IConfigProviderBase | undefined)[],
     ) {
         this.orderedBaseProviders = [];
@@ -185,43 +181,29 @@ export class ConfigProvider implements IConfigProvider {
             ) {
                 knownProviders.add(baseProvider);
                 if (baseProvider instanceof ConfigProvider) {
-                    // we build up the namespace. so take the namespace of the highest
-                    // base provider, and append ours below if specified
-                    if (this.namespace === undefined) {
-                        this.namespace = baseProvider.namespace;
-                    }
                     candidateProviders.push(...baseProvider.orderedBaseProviders);
                 } else {
                     this.orderedBaseProviders.push(baseProvider);
                 }
             }
         }
-        if (namespace !== undefined) {
-            this.namespace = this.namespace === undefined ? namespace : `${this.namespace}.${namespace}`;
-        }
     }
-
-    getBoolean(name: string, defaultValue?: boolean): boolean | undefined {
+    getBoolean<TD extends boolean | undefined>(name: string, defaultValue: TD): TD | boolean {
         return this.getConfig(name, "boolean") ?? defaultValue;
     }
-
-    getNumber(name: string, defaultValue?: number): number | undefined {
+    getNumber<TD extends number | undefined>(name: string, defaultValue: TD): TD | number {
         return this.getConfig(name, "number") ?? defaultValue;
     }
-
-    getString(name: string, defaultValue?: string): string | undefined {
+    getString<TD extends string | undefined>(name: string, defaultValue: TD): TD | string {
         return this.getConfig(name, "string") ?? defaultValue;
     }
-
-    getBooleanArray(name: string, defaultValue?: boolean[]): boolean[] | undefined {
+    getBooleanArray<TD extends boolean[] | undefined>(name: string, defaultValue: TD): TD | boolean[] {
         return this.getConfig(name, "boolean[]") ?? defaultValue;
     }
-
-    getNumberArray(name: string, defaultValue?: number[]): number[] | undefined {
+    getNumberArray<TD extends number[] | undefined>(name: string, defaultValue: TD): TD | number[] {
         return this.getConfig(name, "number[]") ?? defaultValue;
     }
-
-    getStringArray(name: string, defaultValue?: string[]): string[] | undefined {
+    getStringArray<TD extends string[] | undefined>(name: string, defaultValue: TD): TD | string[] {
         return this.getConfig(name, "string[]") ?? defaultValue;
     }
 
@@ -258,24 +240,23 @@ export class ConfigProvider implements IConfigProvider {
     }
 
     private getCacheEntry(name: string): ConfigCacheEntry | undefined {
-        const namespacedName = this.namespace ? `${this.namespace}.${name}` : name;
-        if (!this.configCache.has(namespacedName)) {
+        if (!this.configCache.has(name)) {
             for (const provider of this.orderedBaseProviders) {
-                const parsed = stronglyTypedParse(provider?.getRawConfig(namespacedName));
+                const parsed = stronglyTypedParse(provider?.getRawConfig(name));
                 if (parsed !== undefined) {
                     const entry: ConfigCacheEntry = {
                         raw: parsed.value,
                         name,
                         [parsed.type]: parsed.value,
                     };
-                    this.configCache.set(namespacedName, entry);
+                    this.configCache.set(name, entry);
                     return entry;
                 }
             }
             // configs are immutable, if the first lookup returned no results, all lookups should
-            this.configCache.set(namespacedName, { raw: undefined, name: namespacedName });
+            this.configCache.set(name, { raw: undefined, name });
         }
-        return this.configCache.get(namespacedName);
+        return this.configCache.get(name);
     }
 }
 
@@ -287,40 +268,24 @@ export interface MonitoringContext<T extends ITelemetryBaseLogger = ITelemetryLo
     config: IConfigProvider;
 }
 
-/**
- * Creates a child mixin containing both a telemetry logger and a configuration provider
- * based on the parent logger
- *
- * @param logger - instance of the logger
- * @param namespace - namespace. It will be prepended to both logging event names and config key names
- * @param properties - logger properties
- * @returns A mixin containing both a telemetry logger and a configuration provider
- */
-export function mixinChildLoggerWithMonitoringContext(
-    logger: ITelemetryBaseLogger,
-    namespace?: string,
-    properties?: ITelemetryLoggerPropertyBags,
-): MonitoringContext {
-    const config = ConfigProvider.create(namespace, [logger]);
-    const childLogger = ChildLogger.create(logger, namespace, properties);
-    return mixinMonitoringContext(childLogger, config);
+export function loggerIsMonitoringContext<T extends ITelemetryBaseLogger = ITelemetryLogger>(
+    obj: T): obj is T & MonitoringContext<T> {
+    const maybeConfig = obj as Partial<MonitoringContext<T>> | undefined;
+    return isConfigProviderBase(maybeConfig?.config) && maybeConfig?.logger !== undefined;
 }
 
-/**
- * Attaches a config provider to a telemetry logger
- *
- * @param logger - instance of the logger
- * @param config - instance of the config provider
- * @returns A mixin containing both a telemetry logger and a configuration provider
- */
-export function mixinMonitoringContext<T extends ITelemetryBaseLogger>(
-    logger: T,
-    config: IConfigProvider,
-): MonitoringContext<T> {
-    const mc: Partial<MonitoringContext<T>> & T = logger;
+export function loggerToMonitoringContext<T extends ITelemetryBaseLogger = ITelemetryLogger>(
+    logger: T): MonitoringContext<T> {
+    if(loggerIsMonitoringContext(logger)) {
+        return logger;
+    }
+    return mixinMonitoringContext(logger, ConfigProvider.create([sessionStorageConfigProvider.value]));
+}
 
-    if (mc.config !== undefined) {
-        throw new Error("Logger Is already config provider");
+export function mixinMonitoringContext<T extends ITelemetryBaseLogger = ITelemetryLogger>(
+    logger: T, config: IConfigProvider) {
+    if (loggerIsMonitoringContext(logger)) {
+        throw new Error("Logger is already a monitoring context");
     }
     /**
      * this is the tricky bit we use for now to smuggle monitoring context around.
@@ -330,14 +295,10 @@ export function mixinMonitoringContext<T extends ITelemetryBaseLogger>(
      * so if a deeper layer then converts that logger to a monitoring context it can find the smuggled properties
      * of the MontoringContext and get the config provider.
      */
+     const mc: T & Partial<MonitoringContext<T>> = logger;
     mc.config = config;
     mc.logger = logger;
     return mc as MonitoringContext<T>;
-}
-
-function isMonitoringContext(obj: unknown): obj is MonitoringContext {
-    const maybeConfig = obj as Partial<MonitoringContext> | undefined;
-    return isConfigProviderBase(maybeConfig?.config) && maybeConfig?.logger !== undefined;
 }
 
 function isConfigProviderBase(obj: unknown): obj is IConfigProviderBase {

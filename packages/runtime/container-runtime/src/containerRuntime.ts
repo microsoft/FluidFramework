@@ -44,8 +44,8 @@ import {
     PerformanceEvent,
     normalizeError,
     TaggedLoggerAdapter,
-    mixinChildLoggerWithMonitoringContext,
     MonitoringContext,
+    loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
@@ -940,10 +940,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.IFluidHandleContext = new ContainerFluidHandleContext("", this);
 
-        this.mc = mixinChildLoggerWithMonitoringContext(this.logger, "ContainerRuntime");
+        this.mc = loggerToMonitoringContext(
+            ChildLogger.create(this.logger, "ContainerRuntime"));
 
         this._flushMode =
-            this.mc.config.getBoolean(turnBasedFlushModeKey) === true
+            this.mc.config.getBoolean(turnBasedFlushModeKey, false)
             ? FlushMode.TurnBased : FlushMode.Immediate;
 
         /**
@@ -1082,8 +1083,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 SummarizerClientElection.isClientEligible,
             );
             const summarizerClientElectionEnabled =
-                this.mc.config.getBoolean("summarizerClientElection") ??
-                this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
+                this.mc.config.getBoolean("summarizerClientElection",
+                this.runtimeOptions.summaryOptions?.summarizerClientElection === true);
+
             this.summarizerClientElection = new SummarizerClientElection(
                 orderedClientLogger,
                 this.summaryCollection,

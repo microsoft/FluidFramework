@@ -26,14 +26,15 @@ import {
     LoaderHeader,
 } from "@fluidframework/container-definitions";
 import {
+    ChildLogger,
     ConfigProvider,
     DebugLogger,
-    sessionStorageConfigProvider,
-    MonitoringContext,
-    mixinChildLoggerWithMonitoringContext,
-    mixinMonitoringContext,
-    PerformanceEvent,
     IConfigProviderBase,
+    loggerToMonitoringContext,
+    mixinMonitoringContext,
+    MonitoringContext,
+    PerformanceEvent,
+    sessionStorageConfigProvider,
 } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
@@ -179,7 +180,7 @@ export interface ILoaderProps {
     readonly urlResolver: IUrlResolver;
     /**
      * The document service factory take the Fluid url provided
-     * by the resolved url and constructs all the necessary services
+     * by the resolved url and constucts all the necessary services
      * for communication with the container's server.
      */
     readonly documentServiceFactory: IDocumentServiceFactory;
@@ -220,7 +221,7 @@ export interface ILoaderProps {
     /**
      * The configuration provider which may be used to control features.
      */
-    readonly configProvider?: IConfigProviderBase;
+     readonly configProvider?: IConfigProviderBase;
 }
 
 /**
@@ -235,7 +236,7 @@ export interface ILoaderServices {
     readonly urlResolver: IUrlResolver;
     /**
      * The document service factory take the Fluid url provided
-     * by the resolved url and constructs all the necessary services
+     * by the resolved url and constucts all the necessary services
      * for communication with the container's server.
      */
     readonly documentServiceFactory: IDocumentServiceFactory;
@@ -299,31 +300,31 @@ export class Loader implements IHostLoader {
         if (loaderProps.options?.provideScopeLoader !== false) {
             scope.ILoader = this;
         }
-
-        const subMc = mixinMonitoringContext(
-            DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all: { loaderId: uuid() } }),
-            ConfigProvider.create(
-                "Fluid",
-                [sessionStorageConfigProvider("Fluid").value, // Global override for all configs
-                loaderProps.configProvider,
-                loaderProps.logger]));
-
-        this.mc = mixinChildLoggerWithMonitoringContext(subMc.logger, "Loader");
-
         const telemetryProps = {
             loaderId: uuid(),
             loaderVersion: pkgVersion,
         };
+
+        const subMc = mixinMonitoringContext(
+            DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all: telemetryProps }),
+            ConfigProvider.create(
+                [
+                    sessionStorageConfigProvider.value,
+                    loaderProps.configProvider,
+                ]));
+
         this.services = {
             urlResolver: createCachedResolver(MultiUrlResolver.create(loaderProps.urlResolver)),
             documentServiceFactory: MultiDocumentServiceFactory.create(loaderProps.documentServiceFactory),
             codeLoader: loaderProps.codeLoader,
             options: loaderProps.options ?? {},
             scope,
-            subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all: telemetryProps }),
+            subLogger: subMc.logger,
             proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
             detachedBlobStorage: loaderProps.detachedBlobStorage,
         };
+        this.mc = loggerToMonitoringContext(
+            ChildLogger.create(this.services.subLogger, "Loader"));
     }
 
     public get IFluidRouter(): IFluidRouter { return this; }
@@ -390,7 +391,7 @@ export class Loader implements IHostLoader {
                     this.containers.delete(key);
                 });
             }
-        }).catch(() => {});
+        }).catch((error) => {});
     }
 
     private async resolveCore(
@@ -441,7 +442,7 @@ export class Loader implements IHostLoader {
         }
 
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
-            await new Promise<void>((resolve) => {
+            await new Promise<void>((resolve, reject) => {
                 function opHandler(message: ISequencedDocumentMessage) {
                     if (message.sequenceNumber > fromSequenceNumber) {
                         resolve();

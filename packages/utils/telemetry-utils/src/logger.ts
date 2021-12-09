@@ -17,6 +17,11 @@ import {
 } from "@fluidframework/common-definitions";
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 import {
+    ConfigProvider,
+    loggerIsMonitoringContext,
+    mixinMonitoringContext,
+} from "./config";
+import {
     isILoggingError,
     extractLogSafeErrorProperties,
     generateStack,
@@ -313,9 +318,16 @@ export class ChildLogger extends TelemetryLogger {
 
     private constructor(
         protected readonly baseLogger: ITelemetryBaseLogger,
-        namespace?: string,
-        properties?: ITelemetryLoggerPropertyBags) {
+        namespace: string | undefined,
+        properties: ITelemetryLoggerPropertyBags | undefined) {
         super(namespace, properties);
+
+        // propagate the monitoring context
+        if(loggerIsMonitoringContext(baseLogger)) {
+            mixinMonitoringContext(
+                this,
+                ConfigProvider.create([baseLogger.config]));
+        }
     }
 
     /**

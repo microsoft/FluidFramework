@@ -6,7 +6,8 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
 import {
-    mixinChildLoggerWithMonitoringContext,
+    ChildLogger,
+    loggerToMonitoringContext,
     MonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import {
@@ -42,8 +43,6 @@ import { isOdcOrigin } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OpsCache } from "./opsCaching";
 import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter";
-
-// Gate that when set to "1", instructs to fetch the binary format snapshot from the spo.
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -133,17 +132,17 @@ export class OdspDocumentService implements IDocumentService {
         };
 
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
-        this.mc = mixinChildLoggerWithMonitoringContext(
-            logger,
+        this.mc = loggerToMonitoringContext(
+            ChildLogger.create(logger,
             undefined,
             {
                 all: {
                     odc: isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin),
                 },
-            });
+            }));
 
         this.hostPolicy = hostPolicy;
-        this.hostPolicy.fetchBinarySnapshotFormat ??= this.mc.config.getBoolean("binaryFormatSnapshot");
+        this.hostPolicy.fetchBinarySnapshotFormat ??= this.mc.config.getBoolean("binaryFormatSnapshot", undefined);
         if (this.odspResolvedUrl.summarizer) {
             this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
         }

@@ -10,9 +10,9 @@ import {
     ConfigTypes,
     IConfigProviderBase,
     inMemoryConfigProvider,
-    mixinChildLoggerWithMonitoringContext,
-    mixinMonitoringContext,
+    loggerToMonitoringContext,
 } from "../config";
+import { ChildLogger } from "../logger";
 
 describe("Config", () => {
     const mockLogger = new MockLogger();
@@ -48,15 +48,15 @@ describe("Config", () => {
             "Fluid.Second.Unit.number": "6",
         };
         const mockStore = getMockStore(settings);
-        const fluid = mixinMonitoringContext(
+        const fluid = loggerToMonitoringContext(
             mockLogger,
-            ConfigProvider.create("Fluid", [inMemoryConfigProvider(mockStore).value, mockLogger]));
-        const first = mixinChildLoggerWithMonitoringContext(fluid.logger, "First");
-        const firstUnit = mixinChildLoggerWithMonitoringContext(first.logger, "Unit");
-        const firstUnitTest = mixinChildLoggerWithMonitoringContext(firstUnit.logger, "Test");
+            ConfigProvider.create([inMemoryConfigProvider(mockStore), mockLogger]));
+        const first = ChildLogger.create(fluid.logger, "First");
+        const firstUnit = ChildLogger.create(first.logger, "Unit");
+        const firstUnitTest = ChildLogger.create(firstUnit.logger, "Test");
 
-        const second = mixinChildLoggerWithMonitoringContext(fluid.logger, "Second");
-        const secondUnit = mixinChildLoggerWithMonitoringContext(second.logger, "Unit");
+        const second = ChildLogger.create(fluid.logger, "Second");
+        const secondUnit = ChildLogger.create(second.logger, "Unit");
 
         assert.equal(fluid.config.getNumber("number"), 1);
         assert.equal(first.config.getNumber("number"), 2);

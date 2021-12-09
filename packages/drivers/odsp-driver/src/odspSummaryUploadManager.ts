@@ -3,17 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
-import {
-    MonitoringContext,
-    mixinChildLoggerWithMonitoringContext,
-    PerformanceEvent,
- } from "@fluidframework/telemetry-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { loggerToMonitoringContext, MonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IOdspSummaryPayload,
     IWriteSummaryResponse,
@@ -43,7 +39,7 @@ export class OdspSummaryUploadManager {
         logger: ITelemetryLogger,
         private readonly epochTracker: EpochTracker,
     ) {
-        this.mc = mixinChildLoggerWithMonitoringContext(logger);
+        this.mc = loggerToMonitoringContext(logger);
     }
 
     public async writeSummaryTree(tree: api.ISummaryTree, context: ISummaryContext) {
@@ -134,7 +130,7 @@ export class OdspSummaryUploadManager {
         tree: api.ISummaryTree,
         rootNodeName: string,
         path: string = "",
-        markUnreferencedNodes: boolean = this.mc.config.getBoolean("FluidMarkUnreferencedNodes") ?? true,
+        markUnreferencedNodes: boolean = this.mc.config.getBoolean("FluidMarkUnreferencedNodes", true),
     ) {
         const snapshotTree: IOdspSummaryTree = {
             type: "tree",

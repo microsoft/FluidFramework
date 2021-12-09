@@ -23,10 +23,7 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import {
-    mixinChildLoggerWithMonitoringContext,
-    MonitoringContext,
-} from "@fluidframework/telemetry-utils";
+import { ChildLogger, loggerToMonitoringContext, MonitoringContext } from "@fluidframework/telemetry-utils";
 
 // Local storage key to disable the BatchManager
 const batchManagerDisabledKey = "FluidDisableBatchManager";
@@ -127,7 +124,8 @@ export class DocumentDeltaConnection
     ) {
         super();
 
-        this.mc = mixinChildLoggerWithMonitoringContext(logger, "DeltaConnection");
+        this.mc = loggerToMonitoringContext(
+            ChildLogger.create(logger, "DeltaConnection"));
 
         this.submitManager = new BatchManager<IDocumentMessage[]>(
             (submitType, work) => this.emitMessages(submitType, work));

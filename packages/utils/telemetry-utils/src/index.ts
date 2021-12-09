@@ -11,4 +11,14 @@ export * from "./logger";
 export * from "./mockLogger";
 export * from "./thresholdCounter";
 export * from "./utils";
-export * from "./config";
+export {
+    ConfigProvider,
+    MonitoringContext,
+    IConfigProviderBase,
+    sessionStorageConfigProvider,
+    inMemoryConfigProvider,
+    mixinMonitoringContext,
+    IConfigProvider,
+    ConfigTypes,
+    loggerToMonitoringContext,
+} from "./config";
