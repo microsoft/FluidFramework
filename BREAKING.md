@@ -23,6 +23,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [ISequencedDocumentMessage arg removed from SharedMap and SharedDirectory events](#ISequencedDocumentMessage-arg-removed-from-SharedMap-and-SharedDirectory-events)
 - [Moved `@fluidframework/core-interface#fluidPackage.ts` to `@fluidframework/container-definition#fluidPackage.ts`](#Moved-fluidframeworkcore-interfacefluidPackagets-to-fluidframeworkcontainer-definitionfluidPackagets)
 - [Deprecated `IFluidSerializer` in `IFluidDataStoreRuntime`](#Deprecated-IFluidSerializer-in-IFluidDataStoreRuntime)
+- [Errors thrown to DDS event handlers](#Errors-thrown-to-DDS-event-handlers)
 - [Replace `innerRequestHandler` with `rootDataStoreRequestHandler`](#Replace-innerRequestHandler-with-rootDataStoreRequestHandler)
 
 ### `IContainer` interface updated to expose actively used `Container` public APIs
@@ -105,6 +106,12 @@ They are deprecated from `@fluidframework/core-interface` and would be removed i
 
 ### Deprecated `IFluidSerializer` in `IFluidDataStoreRuntime`
 `IFluidSerializer` should only be used by DDSs to serialize data and they should use the one created by `SharedObject`.
+
+### Errors thrown to DDS event handlers
+Before this release, exceptions thrown from DDS event handlers resulted in Fluid Framework reporting non-error telemetry event and moving forward as if nothing happened. Starting with this release, such exceptions will result in critical error, i.e. container will be closed with such error and hosting app will be notified via Container's "closed" event. This will either happen immediately (if exception was thrown while processing remote op), or on later usage (if exception was thrown on local change). DDS will go into "broken" state and will keep throwing error on amy attempt to make local changes.
+This process is supposed to be a catch-call case for cases where listeners did not do due diligence or have no better way to handle their errors.
+If possible, it's recommended for DDS event listeners to not throw exceptions, but rather handle them appropriately without involving DDS itself.
+The purpose of this change to ensure that data model stays always synchronized with data projection that event listeners are building. If event listener is not able to fully / correctly process change event, that likely means data synchronization is broken and it's not safe to continue (and potentially, corrupt document).
 
 ### Replace `innerRequestHandler` with `rootDataStoreRequestHandler`
 `innerRequestHandler` is removed from `@fluidframework/request-handlers` package and replaced with `rootDataStoreRequestHandler`.If a container wants to permit requests for specific data stores, they can add `rootDataStoreRequestHandler` to the list of request handlers they pass to the runtime factory. This will restore the ability to request root data stores. This will only work for root data stores, and if support is required for requesting non-root data stores and/or for legacy document support, a request handler can be created of their own that calls `runtime.IFluidHandleContext.resolveHandle(request)` just like `innerRequestHandler` used to do.
