@@ -5,7 +5,7 @@
 
 import { IContainer, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { Container, IDetachedBlobStorage, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
+import { IDetachedBlobStorage, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails, IRequestHeader } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
@@ -285,10 +285,10 @@ export class TestObjectProvider {
 
     /**
      * Load a container using a default document id and code details.
-     * Container loaded is automatically added to the OpProcessingController to manage op flow
+     * IContainer loaded is automatically added to the OpProcessingController to manage op flow
      * @param testContainerConfig - optional configuring the test Container
      */
-    public async loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<Container> {
+    public async loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer> {
         const loader = this.makeTestLoader(testContainerConfig);
         const container = await loader.resolve({ url: await this.driver.createContainerUrl(this.documentId) });
         await waitContainerToCatchUp(container);
