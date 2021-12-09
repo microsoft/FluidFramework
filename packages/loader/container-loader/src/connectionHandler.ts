@@ -132,16 +132,16 @@ class NoDeltaStream
  * Exposes various controls to influecen this process, including manual reconnects, forced read-only mode, etc.
  */
 export class ConnectionManager implements IConnectionManager {
-    // Connection mode used when reconnecting on error or disconnect.
+    /** Connection mode used when reconnecting on error or disconnect. */
     private readonly defaultReconnectionMode: ConnectionMode;
 
     private pendingConnection = false;
     private connection: IDocumentDeltaConnection | undefined;
 
-    // file ACL - whether user has only read-only access to a file
+    /** file ACL - whether user has only read-only access to a file */
     private _readonlyPermissions: boolean | undefined;
 
-    // tracks host requiring read-only mode.
+    /** tracks host requiring read-only mode. */
     private _forceReadonly = false;
 
     /**
@@ -149,18 +149,18 @@ export class ConnectionManager implements IConnectionManager {
      */
     private _reconnectMode: ReconnectMode;
 
-    // True if there is pending (async) reconnection from "read" to "write"
+    /** True if there is pending (async) reconnection from "read" to "write" */
     private pendingReconnect = false;
 
-    // downgrade "write" connection to "read"
+    /** downgrade "write" connection to "read" */
     private downgradedConnection = false;
 
     private clientSequenceNumber = 0;
     private clientSequenceNumberObserved = 0;
-    // Counts the number of noops sent by the client which may not be acked.
+    /** Counts the number of noops sent by the client which may not be acked. */
     private trailingNoopCount = 0;
 
-    // track clientId used last time when we sent any ops
+    /** track clientId used last time when we sent any ops */
     private lastSubmittedClientId: string | undefined;
 
     private connectFirstConnection = true;
@@ -317,6 +317,9 @@ export class ConnectionManager implements IConnectionManager {
     }
 
     public dispose(error: any) {
+        if (this.closed) {
+            return;
+        }
         this.closed = true;
 
         this.pendingConnection = false;
@@ -455,10 +458,7 @@ export class ConnectionManager implements IConnectionManager {
             return;
         }
 
-        // This promise settles as soon as we know the outcome of the connection attempt
-        // Set it upfront, such that if connection is established (NoDeltaConnection) or rejected (bug in
-        // connectToDeltaStream() implementation - throwing exception vs. returning rejected promise) in
-        // synchronous way, we have this.connectionP setup for all the code to assert correctness of the flow.
+        // this.pendingConnection resets to false as soon as we know the outcome of the connection attempt
         this.pendingConnection = true;
 
         let delayMs = InitialReconnectDelayInMs;
@@ -620,7 +620,7 @@ export class ConnectionManager implements IConnectionManager {
 
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
-            this.disconnectFromDeltaStream(`ConnectionManager already closed`);
+            this.disconnectFromDeltaStream("ConnectionManager already closed");
             return;
         }
 
