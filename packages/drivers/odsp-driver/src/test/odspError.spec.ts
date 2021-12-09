@@ -9,10 +9,9 @@ import { strict as assert } from "assert";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
     createOdspNetworkError,
-    fetchIncorrectResponse,
-    invalidFileNameStatusCode,
     throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
+import { NonRetryableError } from "@fluidframework/driver-utils";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
 import { IOdspSocketError } from "../contracts";
 import { getWithRetryForTokenRefresh } from "../odspUtils";
@@ -126,21 +125,10 @@ describe("Odsp Error", () => {
             if (options.refresh) {
                 return 1;
             } else {
-                throwOdspNetworkError("some error", 401);
+                throwOdspNetworkError("some error", 401, testResponse);
             }
         });
         assert.equal(res, 1, "did not successfully retried with new token");
-    });
-
-    it("invalid file name - no retry", async () => {
-        const res = getWithRetryForTokenRefresh(async (options) => {
-            if (options.refresh) {
-                return 1;
-            } else {
-                throwOdspNetworkError("some error", invalidFileNameStatusCode);
-            }
-        });
-        await assert.rejects(res, "Invalid file name should not result in retry!");
     });
 
     it("fetch incorrect response retries", async () => {
@@ -148,18 +136,21 @@ describe("Odsp Error", () => {
             if (options.refresh) {
                 return 1;
             } else {
-                throwOdspNetworkError("some error", fetchIncorrectResponse);
+                throw new NonRetryableError(
+                    "code",
+                    "some message",
+                    DriverErrorType.incorrectServerResponse);
             }
         });
         assert.equal(res, 1, "did not successfully retried with new token");
     });
 
-    it("Other errors - no retries", async () => {
+    it("404 errors - no retries", async () => {
         const res = getWithRetryForTokenRefresh(async (options) => {
             if (options.refresh) {
                 return 1;
             } else {
-                throwOdspNetworkError("some error", invalidFileNameStatusCode);
+                throwOdspNetworkError("some error", 404, testResponse);
             }
         });
         await assert.rejects(res, "Other errors should not result in retries!");

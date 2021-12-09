@@ -16,9 +16,9 @@ import { v4 as uuid } from "uuid";
  */
 export function generateToken(
     tenantId: string,
-    documentId: string,
     key: string,
     scopes: ScopeType[],
+    documentId?: string,
     user?: IUser,
     lifetime: number = 60 * 60,
     ver: string = "1.0"): string {
