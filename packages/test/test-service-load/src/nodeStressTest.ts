@@ -5,10 +5,12 @@
 
 import child_process from "child_process";
 import fs from "fs";
+import ps from "ps-node";
 import commander from "commander";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
-import { createTestDriver, getProfile, initialize, safeExit } from "./utils";
+import { createTestDriver, getProfile, initialize, loggerP, safeExit } from "./utils";
 
 interface ITestUserConfig {
     /* Credentials' key/value description:
@@ -48,6 +50,7 @@ async function main() {
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .option("-v, --verbose", "Enables verbose logging")
         .option("-b, --browserAuth", "Enables browser auth which may require a user to open a url in a browser.")
+        .option("-m, --enableMetrics", "Enable capturing client & ops metrics")
         .parse(process.argv);
 
     const driver: TestDriverTypes = commander.driver;
@@ -59,6 +62,7 @@ async function main() {
     const seed: number | undefined = commander.seed;
     const browserAuth: true | undefined = commander.browserAuth;
     const credFile: string | undefined = commander.credFile;
+    const enableMetrics: boolean = commander.enableMetrics ?? false;
 
     const profile = getProfile(profileArg);
 
@@ -69,20 +73,23 @@ async function main() {
     const testUsers = await getTestUsers(credFile);
 
     await orchestratorProcess(
-            driver,
-            { ...profile, name: profileArg, testUsers },
-            { testId, debug, verbose, seed, browserAuth });
+        driver,
+        { ...profile, name: profileArg, testUsers },
+        { testId, debug, verbose, seed, browserAuth, enableMetrics });
 }
+
 /**
  * Implementation of the orchestrator process. Returns the return code to exit the process with.
  */
 async function orchestratorProcess(
     driver: TestDriverTypes,
     profile: ILoadTestConfig & { name: string, testUsers?: ITestUserConfig },
-    args: { testId?: string, debug?: true, verbose?: true, seed?: number, browserAuth?: true },
+    args: { testId?: string, debug?: true, verbose?: true, seed?: number, browserAuth?: true,
+        enableMetrics?: boolean },
 ) {
     const seed = args.seed ?? Date.now();
     const seedArg = `0x${seed.toString(16)}`;
+    const logger = await loggerP;
 
     const testDriver = await createTestDriver(
         driver,
@@ -117,10 +124,31 @@ async function orchestratorProcess(
         if (args.verbose === true) {
             childArgs.push("--verbose");
         }
+        if (args.enableMetrics === true) {
+            childArgs.push("--enableOpsMetrics");
+        }
 
         runnerArgs.push(childArgs);
     }
-    console.log(runnerArgs[0].join(" "));
+    console.log(runnerArgs.join("\n"));
+
+    if (args.enableMetrics === true) {
+        setInterval(() => {
+            ps.lookup({
+                command: "node",
+                ppid: process.pid,
+            }, (err, results) => {
+                if (err !== undefined) {
+                    logger.send({
+                        category: "metric",
+                        eventName: "Runner Processes",
+                        value: results.length,
+                    });
+                }
+            });
+        }, 20000);
+    }
+
     try {
         const usernames = profile.testUsers !== undefined ? Object.keys(profile.testUsers.credentials) : undefined;
         await Promise.all(runnerArgs.map(async (childArgs, index) => {
@@ -138,11 +166,91 @@ async function orchestratorProcess(
                     env: envVar,
                 },
             );
+
+            if (args.enableMetrics === true) {
+                setupTelemetry(runnerProcess, logger, index, username);
+            }
+
             return new Promise((resolve) => runnerProcess.once("close", resolve));
         }));
-    } finally{
+    } finally {
+        if (logger !== undefined) {
+            await logger.flush();
+        }
         await safeExit(0, url);
     }
+}
+
+/**
+ * Setup event and metrics telemetry to be sent to loggers.
+ */
+function setupTelemetry(
+    process: child_process.ChildProcess,
+    logger: ITelemetryLogger,
+    runId: number,
+    username?: string) {
+    logger.send({
+        category: "metric",
+        eventName: "Runner Started",
+        value: 1,
+        username,
+        runId,
+    });
+
+    process.once("error", (e) => {
+        logger.send({
+            category: "metric",
+            eventName: "Runner Start Error",
+            value: 1,
+            username,
+            runId,
+            error: e.message,
+        });
+    });
+
+    process.once("exit", (code) => {
+        logger.send({
+            category: "metric",
+            eventName: "Runner Exited",
+            value: 1,
+            username,
+            runId,
+            exitCode: code ?? 0,
+        });
+    });
+
+    let stdOutLine = 0;
+    process.stdout?.on("data", (chunk) => {
+        const data = String(chunk);
+        console.log(data);
+        if (data.replace(/\./g, "").length > 0) {
+            logger.send({
+                eventName: "Runner Console",
+                category: "generic",
+                lineNo: stdOutLine,
+                runId,
+                username,
+                data,
+            });
+            stdOutLine++;
+        }
+    });
+
+    let stdErrLine = 0;
+    process.stderr?.on("data", (chunk) => {
+        const data = String(chunk);
+        console.log(data);
+        logger.send({
+            eventName: "Runner Error",
+            category: "error",
+            lineNo: stdErrLine,
+            runId,
+            username,
+            data,
+            error: data.split("\n")[0],
+        });
+        stdErrLine++;
+    });
 }
 
 main().catch(

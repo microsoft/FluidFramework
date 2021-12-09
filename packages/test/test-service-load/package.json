@@ -84,6 +84,7 @@
     "@fluidframework/test-utils": "^0.54.0",
     "@fluidframework/tool-utils": "^0.54.0",
     "commander": "^5.1.0",
+    "ps-node": "^0.1.6",
     "random-js": "^1.0.8"
   },
   "devDependencies": {
