@@ -54,7 +54,7 @@ import {
     IConnectionManager,
  } from "./contracts";
 
- export interface IConnectionArgs {
+export interface IConnectionArgs {
     mode?: ConnectionMode;
     fetchOpsFromStorage?: boolean;
     reason: string;
