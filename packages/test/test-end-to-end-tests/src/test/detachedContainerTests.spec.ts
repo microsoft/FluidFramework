@@ -102,7 +102,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
             "Loaded package should be same as provided");
         }
         assert.strictEqual(
-            (container.resolvedUrl as IFluidResolvedUrl).id,
+            (container as Container).id,
             "",
             "Detached container's id should be empty string",
         );
