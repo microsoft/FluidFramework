@@ -137,8 +137,8 @@ async function orchestratorProcess(
             ps.lookup({
                 command: "node",
                 ppid: process.pid,
-            }, (err, results) => {
-                if (err !== undefined) {
+            }, (_, results) => {
+                if (results !== undefined) {
                     logger.send({
                         category: "metric",
                         eventName: "Runner Processes",
