@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { IContainer, IDeltaQueue, IHostLoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
@@ -258,9 +259,15 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 return true;
             }
             // Note that in read only mode, the op won't be submitted
-            const deltaManager = (container.deltaManager as any);
+            let deltaManager = (container.deltaManager as any);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const { trailingNoOps } = this.containers.get(container)!;
+            // Back-compat: clientSequenceNumber & clientSequenceNumberObserved moved to ConnectionManager in 0.53
+            if (!("clientSequenceNumber" in deltaManager)) {
+                deltaManager = deltaManager.connectionManager;
+            }
+            assert("clientSequenceNumber" in deltaManager, "no clientSequenceNumber");
+            assert("clientSequenceNumberObserved" in deltaManager, "no clientSequenceNumber");
             return deltaManager.clientSequenceNumber ===
                 (deltaManager.clientSequenceNumberObserved as number) + trailingNoOps;
         });
