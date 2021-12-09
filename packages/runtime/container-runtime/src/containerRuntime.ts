@@ -973,10 +973,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         if(shouldRunExpiry) {
             const defaultContainerRuntimeExpiryMs = 30 * 24 * 60 * 60 * 1000;
-            const expiryMs = this.runtimeOptions.gcOptions?.testMode ? 0 : defaultContainerRuntimeExpiryMs;
-            setTimeout(() => {
-                this.setReadOnly();
-            }, expiryMs);
+            const setReadOnlyCall = () => this.setReadOnly();
+            setTimeout(() => setReadOnlyCall, defaultContainerRuntimeExpiryMs);
         }
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
@@ -1844,7 +1842,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * Implementation of IGarbageCollectionRuntime::updateUsedRoutes.
      */
-    public setReadOnly() {
+    public setReadOnly(): void {
         this.expired = true;
     }
 

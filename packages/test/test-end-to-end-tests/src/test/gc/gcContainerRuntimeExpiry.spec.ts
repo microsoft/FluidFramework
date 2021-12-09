@@ -8,7 +8,6 @@ import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
@@ -62,27 +61,36 @@ import { TestDataObject } from "./mockSummarizerClient";
 
         // Create a Container for the first client.
         container1 = await createContainer();
-        container2 = await createContainer();
 
         // Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
         // re-sent. Do it here so that the extra events don't mess with rest of the test.
         mainDataStore1 = await requestFluidObject<TestDataObject>(container1, "/");
-        mainDataStore2 = await requestFluidObject<TestDataObject>(container2, "/");
         containerRuntime = mainDataStore1.containerRuntime;
         await provider.ensureSynchronized();
     });
 
     it("datastore should not be able to send ops", async () => {
+        let dirtyEventCount = 0;
+        let submitOpsEventCount = 0;
+        containerRuntime.on("dirty", () => {
+            dirtyEventCount++;
+        });
+        container1.deltaManager.on("submitOp", () => {
+            submitOpsEventCount++;
+        });
+
         mainDataStore1._root.set("test", "value");
+        await provider.ensureSynchronized();
+        container2 = await provider.loadContainer(runtimeFactory);
+        mainDataStore2 = await requestFluidObject<TestDataObject>(container2, "/");
         await provider.ensureSynchronized();
         (containerRuntime as any).setReadOnly();
         mainDataStore1._root.set("test", "value2");
-        await containerRuntime.summarize({
-            runGC: true,
-            fullTree: true,
-            trackState: false,
-            summaryLogger: new TelemetryNullLogger(),
-        });
-        assert(mainDataStore2._root.get("test") === "value", "mainDataStore1 should be readonly!.");
+        await provider.opProcessingController.processOutgoing(container1);
+        const actual = mainDataStore2._root.get("test");
+        const expected = "value";
+        assert(actual === expected, `mainDataStore1 should be readonly! Actual: ${actual} vs expected: ${expected}.`);
+        assert(dirtyEventCount === submitOpsEventCount + 1,
+            `Container should be dirty! Actual: ${dirtyEventCount} vs expected: ${submitOpsEventCount + 1}.`);
     });
 });
