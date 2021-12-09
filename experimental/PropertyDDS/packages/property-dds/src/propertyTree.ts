@@ -159,7 +159,7 @@ export class SharedPropertyTree extends SharedObject {
 	}
 
 	private scopeFutureDeltasToPaths(paths?: string[]) {
-		const socket = (this.runtime.deltaManager as any).deltaManager.connection.socket;
+		const socket = (this.runtime.deltaManager as any).deltaManager.connectionManager.connection.socket;
 		socket.emit("partial_checkout", { paths });
 	}
 
@@ -462,8 +462,7 @@ export class SharedPropertyTree extends SharedObject {
 		const handleTableChunk = await storage.readBlob("properties");
 		const utf8 = bufferToString(handleTableChunk, "utf8");
 
-		const serializer = runtime.IFluidSerializer;
-		const snapshot: ISnapshot = serializer !== undefined ? serializer.parse(utf8) : JSON.parse(utf8);
+		const snapshot: ISnapshot = this.serializer.parse(utf8);
 		this.useMH = snapshot.useMH;
 
 		try {

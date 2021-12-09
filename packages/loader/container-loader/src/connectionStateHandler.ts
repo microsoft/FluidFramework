@@ -60,7 +60,8 @@ export class ConnectionStateHandler {
             // Default is 90 sec for which we are going to wait for its own "leave" message.
             this.handler.maxClientLeaveWaitTime ?? 90000,
             () => {
-                assert(!this.connected, "Connected when timeout waiting for leave from previous session fired!");
+                assert(!this.connected,
+                    0x2ac /* "Connected when timeout waiting for leave from previous session fired!" */);
                 this.applyForConnectedState("timeout");
             },
         );
@@ -91,7 +92,7 @@ export class ConnectionStateHandler {
     }
 
     public dispose() {
-        assert(!this.joinOpTimer.hasTimer, "join timer");
+        assert(!this.joinOpTimer.hasTimer, 0x2a5 /* "join timer" */);
         this.prevClientLeftTimer.clear();
     }
 
@@ -187,7 +188,7 @@ export class ConnectionStateHandler {
         if ((protocolHandler !== undefined && protocolHandler.quorum.getMember(details.clientId) !== undefined)
             || connectionMode === "read"
         ) {
-            assert(!this.prevClientLeftTimer.hasTimer, "there should be no timer for 'read' connections");
+            assert(!this.prevClientLeftTimer.hasTimer, 0x2a6 /* "there should be no timer for 'read' connections" */);
             this.setConnectionState(ConnectionState.Connected);
         } else if (connectionMode === "write") {
             this.startJoinOpTimer();

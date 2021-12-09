@@ -57,6 +57,8 @@ export abstract class ServiceAudience<M extends IMember = IMember>
         this.emit("membersChanged");
       }
     });
+
+    this.container.on("connected", () => this.emit("membersChanged"));
   }
 
   protected abstract createServiceMember(audienceMember: IClient): M;
