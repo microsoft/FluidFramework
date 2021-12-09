@@ -12,9 +12,17 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ## 0.54 Breaking changes
 - [Removed `readAndParseFromBlobs` from `driver-utils`](#Removed-readAndParseFromBlobs-from-driver-utils)
+- [Removed `innerRequestHandler`](#Removed-innerRequestHandler)
 
 ### Removed `readAndParseFromBlobs` from `driver-utils`
 The `readAndParseFromBlobs` function from `driver-utils` was deprecated in 0.44, and has now been removed from the `driver-utils` package.
+
+### Removed `innerRequestHandler`
+`innerRequestHandler` is removed from `@fluidframework/request-handlers` package, and its usage is removed from `BaseContainerRuntimeFactory` and `ContainerRuntimeFactoryWithDefaultDataStore`.  If you are using these container runtime factories, attempting to access internal data stores via `request()` will result in 404 responses.
+
+If you rely on `request()` access to internal root data stores, you can add `rootDataStoreRequestHandler` to your list of request handlers on the runtime factory.
+
+It is not recommended to provide `request()` access to non-root data stores, but if you currently rely on this functionality you can add a custom request handler that calls `runtime.IFluidHandleContext.resolveHandle(request)` just like `innerRequestHandler` used to do.
 
 ## 0.53 Breaking changes
 - [`IContainer` interface updated to expose actively used `Container` public APIs](#IContainer-interface-updated-to-expose-actively-used-Container-public-APIs)
@@ -30,7 +38,6 @@ The `readAndParseFromBlobs` function from `driver-utils` was deprecated in 0.44,
 - [Moved `@fluidframework/core-interface#fluidPackage.ts` to `@fluidframework/container-definition#fluidPackage.ts`](#Moved-fluidframeworkcore-interfacefluidPackagets-to-fluidframeworkcontainer-definitionfluidPackagets)
 - [Deprecated `IFluidSerializer` in `IFluidDataStoreRuntime`](#Deprecated-IFluidSerializer-in-IFluidDataStoreRuntime)
 - [Errors thrown to DDS event handlers](#Errors-thrown-to-DDS-event-handlers)
-- [Replace `innerRequestHandler` with `rootDataStoreRequestHandler`](#Replace-innerRequestHandler-with-rootDataStoreRequestHandler)
 
 ### `IContainer` interface updated to expose actively used `Container` public APIs
 In order to have the `IContainer` interface be the active developer surface that is used when interacting with a `Container` instance, it has been updated to expose the APIs that are necessary for currently used behavior. The motivation here is to move away from using the `Container` class when only its type is required, and to use the `IContainer` interface instead.
@@ -118,9 +125,6 @@ Before this release, exceptions thrown from DDS event handlers resulted in Fluid
 This process is supposed to be a catch-call case for cases where listeners did not do due diligence or have no better way to handle their errors.
 If possible, it's recommended for DDS event listeners to not throw exceptions, but rather handle them appropriately without involving DDS itself.
 The purpose of this change to ensure that data model stays always synchronized with data projection that event listeners are building. If event listener is not able to fully / correctly process change event, that likely means data synchronization is broken and it's not safe to continue (and potentially, corrupt document).
-
-### Replace `innerRequestHandler` with `rootDataStoreRequestHandler`
-`innerRequestHandler` is removed from `@fluidframework/request-handlers` package and replaced with `rootDataStoreRequestHandler`.If a container wants to permit requests for specific data stores, they can add `rootDataStoreRequestHandler` to the list of request handlers they pass to the runtime factory. This will restore the ability to request root data stores. This will only work for root data stores, and if support is required for requesting non-root data stores and/or for legacy document support, a request handler can be created of their own that calls `runtime.IFluidHandleContext.resolveHandle(request)` just like `innerRequestHandler` used to do.
 
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)

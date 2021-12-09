@@ -48,8 +48,7 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
         ): Promise<IRuntime & IContainerRuntime> {
             const builder = new RuntimeRequestHandlerBuilder();
             builder.pushHandler(
-                defaultRouteRequestHandler("default"),
-                rootDataStoreRequestHandler);
+                defaultRouteRequestHandler("default"));
 
             const runtime: ContainerRuntime = await containerRuntimeCtor.load(
                 context,

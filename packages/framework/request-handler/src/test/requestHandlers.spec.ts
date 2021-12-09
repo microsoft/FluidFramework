@@ -102,45 +102,4 @@ describe("RequestParser", () => {
             await assertRejected(responseP);
         });
     });
-
-    describe("rootDataStoreRequestHandler", () => {
-        const runtime = new MockRuntime() as any as IContainerRuntime;
-
-        it("Empty request", async () => {
-            const requestParser = RequestParser.create({ url: "/" });
-            const response = await rootDataStoreRequestHandler(
-                requestParser,
-                runtime);
-            assert.equal(response.status, 404);
-        });
-
-        it("Data store request without wait", async () => {
-            const requestParser = RequestParser.create({ url: "/nonExistingUri" });
-            const responseP = rootDataStoreRequestHandler(
-                requestParser,
-                runtime);
-            await assertRejected(responseP);
-        });
-
-        it("Data store request with wait", async () => {
-            const requestParser = RequestParser.create({ url: "/nonExistingUri", headers: { wait: true } });
-            const responseP = rootDataStoreRequestHandler(
-                requestParser,
-                runtime);
-            await assertRejected(responseP);
-        });
-
-        it("Data store request with sub route", async () => {
-            const requestParser = RequestParser.create({ url: "/objectId/route", headers: { wait: true } });
-            const response = await rootDataStoreRequestHandler(requestParser, runtime);
-            assert.equal(response.status, 200);
-            assert.equal(response.value.route, "/route");
-        });
-
-        it("Data store request with non-existing sub route", async () => {
-            const requestParser = RequestParser.create({ url: "/objectId/doesNotExist", headers: { wait: true } });
-            const responseP = rootDataStoreRequestHandler(requestParser, runtime);
-            await assertRejected(responseP);
-        });
-    });
 });
