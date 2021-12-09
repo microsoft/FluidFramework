@@ -7,7 +7,6 @@ import child_process from "child_process";
 import fs from "fs";
 import ps from "ps-node";
 import commander from "commander";
-import * as ps from "ps-node";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
@@ -145,8 +144,8 @@ async function orchestratorProcess(
             ps.lookup({
                 command: "node",
                 ppid: process.pid,
-            }, (err, results) => {
-                if (err !== undefined) {
+            }, (_, results) => {
+                if (results !== undefined) {
                     logger.send({
                         category: "metric",
                         eventName: "Runner Processes",
