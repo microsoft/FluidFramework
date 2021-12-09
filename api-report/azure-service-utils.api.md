@@ -4,7 +4,6 @@
 
 ```ts
 
-import { generateToken } from '@fluidframework/server-services-client';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 
 // @public
