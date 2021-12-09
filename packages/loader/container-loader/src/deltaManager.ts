@@ -87,9 +87,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     public get IDeltaSender() { return this; }
 
-    // tracks connection mode before disconnect
-    private lastConnectionMode: ConnectionMode;
-  
     private pending: ISequencedDocumentMessage[] = [];
     private fetchReason: string | undefined;
 
@@ -207,7 +204,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 service: "client",
                 timestamp: Date.now(),
             }];
-      
+
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
             contents: JSON.stringify(contents),
             metadata,
@@ -254,29 +251,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             sequenceNumber: this.lastSequenceNumber,
             ...this.connectionManager.connectionProps,
         };
-    }
-  /**
-     * Returns set of props that can be logged in telemetry that provide some insights / statistics
-     * about current or last connection (if there is no connection at the moment)
-    */
-    public connectionProps(): ITelemetryProperties {
-        const common = {
-            sequenceNumber: this.lastSequenceNumber,
-            connectionMode: this.lastConnectionMode,
-        };
-        if (this.connection !== undefined) {
-            this.lastConnectionMode = this.connectionMode;
-            return {
-                ...common,
-                relayServiceAgent: this.connection.relayServiceAgent,
-            };
-        } else {
-            return {
-                ...common,
-                // Report how many ops this client sent in last disconnected session
-                sentOps: this.clientSequenceNumber,
-            };
-        }
     }
 
     /**
@@ -328,7 +302,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             readonlyChangeHandler: (readonly?: boolean) => safeRaiseEvent(this, this.logger, "readonly", readonly),
         };
 
-        this.lastConnectionMode = this.client.mode;
         this.connectionManager = createConnectionManager(props);
 
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(

@@ -167,6 +167,8 @@ export class ConnectionManager implements IConnectionManager {
 
     private _connectionVerboseProps: Record<string, string | number> = {};
 
+    private _connectionProps: ITelemetryProperties = { connectionMode: undefined };
+
     private closed = false;
 
     private readonly _outbound: DeltaQueue<IDocumentMessage[]>;
@@ -229,12 +231,12 @@ export class ConnectionManager implements IConnectionManager {
      public get connectionProps(): ITelemetryProperties {
         if (this.connection !== undefined) {
             return {
-                connectionMode: this.connectionMode,
-                relayServiceAgent: this.connection.relayServiceAgent,
+                ...this._connectionProps,
                 socketDocumentId: this.connection?.claims.documentId,
             };
         } else {
             return {
+                ...this._connectionProps,
                 // Report how many ops this client sent in last disconnected session
                 sentOps: this.clientSequenceNumber,
             };
@@ -646,9 +648,13 @@ export class ConnectionManager implements IConnectionManager {
             clientId: connection.clientId,
             mode: connection.mode,
         };
+
         if (connection.relayServiceAgent !== undefined) {
             this._connectionVerboseProps.relayServiceAgent = connection.relayServiceAgent;
+            this._connectionProps.relayServiceAgent = connection.relayServiceAgent;
         }
+        this._connectionProps.connectionMode = connection.mode;
+
         let last = -1;
         if (initialMessages.length !== 0) {
             this._connectionVerboseProps.connectionInitialOpsFrom = initialMessages[0].sequenceNumber;
