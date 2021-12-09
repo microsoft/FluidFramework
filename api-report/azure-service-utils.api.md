@@ -4,6 +4,7 @@
 
 ```ts
 
+import { IUser } from '@fluidframework/protocol-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 
 // @public
