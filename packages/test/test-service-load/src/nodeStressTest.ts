@@ -5,6 +5,7 @@
 
 import child_process from "child_process";
 import fs from "fs";
+import ps from "ps-node";
 import commander from "commander";
 import * as ps from "ps-node";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
@@ -191,6 +192,9 @@ async function orchestratorProcess(
     }
 }
 
+/**
+ * Setup event and metrics telemetry to be sent to loggers.
+ */
 function setupTelemetry(
     process: child_process.ChildProcess,
     logger: ITelemetryLogger,
