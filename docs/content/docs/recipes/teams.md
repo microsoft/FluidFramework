@@ -267,7 +267,7 @@ Now follow the [instructions to upload the application to a Teams Tab](https://d
 
 {{< callout warning >}}
 
-Hostnames with `ngrok`'s free tunnels are not preserved. Each run will generate a different URL. This means that anytime a new `ngrok` tunnel is created, the older container will no longer be accessible. For production scenarios, please visit [the section below](#using-azureClient-with-azure-fluid-relay)
+Hostnames with `ngrok`'s free tunnels are not preserved. Each run will generate a different URL. This means that anytime a new `ngrok` tunnel is created, the older container will no longer be accessible. For production scenarios, please visit [the section below](#using-azureclient-with-azure-fluid-relay)
 
 {{< /callout >}}
 

@@ -161,8 +161,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
     get reSubmitFn(): (type: ContainerMessageType, content: any, localOpMetadata: unknown, opMetadata: Record<string, unknown> | undefined) => void;
-    // @internal @deprecated (undocumented)
-    readonly runtimeVersion: string;
     // (undocumented)
     get scope(): IFluidObject & FluidObject;
     // (undocumented)
@@ -197,7 +195,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
-    }
+    get writeGCDataAtRoot(): boolean;
+}
 
 // @public (undocumented)
 export interface ContainerRuntimeMessage {
@@ -240,6 +239,12 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
     // (undocumented)
     get IFluidDataStoreRegistry(): this;
     }
+
+// @public (undocumented)
+export const gcBlobPrefix = "__gc";
+
+// @public (undocumented)
+export const gcTreeKey = "gc";
 
 // @public
 export interface IAckedSummary {

@@ -19,18 +19,18 @@ export class InsecureTokenProvider implements ITokenProvider {
 
     }
 
-    public async fetchOrdererToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
+    public async fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {
         return {
             fromCache: true,
             jwt:  generateToken(
                 tenantId,
-                documentId,
                 this.tenantKey,
                 [
                     ScopeType.DocRead,
                     ScopeType.DocWrite,
                     ScopeType.SummaryWrite,
                 ],
+                documentId,
                 this.user,
             ),
         };
@@ -41,13 +41,13 @@ export class InsecureTokenProvider implements ITokenProvider {
             fromCache: true,
             jwt: generateToken(
                 tenantId,
-                documentId,
                 this.tenantKey,
                 [
                     ScopeType.DocRead,
                     ScopeType.DocWrite,
                     ScopeType.SummaryWrite,
                 ],
+                documentId,
                 this.user,
             ),
         };

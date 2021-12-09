@@ -133,6 +133,7 @@ import { formExponentialFn, Throttler } from "./throttler";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import {
     GarbageCollector,
+    gcTreeKey,
     IGarbageCollectionRuntime,
     IGarbageCollector,
     IGCStats,
@@ -608,13 +609,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public get IContainerRuntime() { return this; }
     public get IFluidRouter() { return this; }
 
-    // back-compat: Used by loader in <= 0.35
-    /**
-     * @internal
-     * @deprecated Back-compat only. Used by the loader in versions earlier than 0.35.
-     */
-    public readonly runtimeVersion: string = pkgVersion;
-
     /**
      * Load the stores from a snapshot and returns the runtime.
      * @param context - Context of the container.
@@ -884,6 +878,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly dataStores: DataStores;
 
     /**
+     * True, if GC data should be written at root of the summary tree.
+     * False, if data stores should write GC blobs in their summary tree.
+     */
+    public get writeGCDataAtRoot(): boolean {
+        return this.garbageCollector.writeDataAtRoot;
+    }
+
+    /**
      * True if generating summaries with isolated channels is
      * explicitly disabled. This only affects how summaries are written,
      * and is the single source of truth for this container.
@@ -1011,6 +1013,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 ),
             (id: string) => this.summarizerNode.deleteChild(id),
             this._logger,
+            async () => this.garbageCollector.getDataStoreBaseGCDetails(),
             (id: string) => this.garbageCollector.nodeChanged(id),
         );
 
@@ -1136,8 +1139,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.deltaManager.on("readonly", (readonly: boolean) => {
             // we accumulate ops while being in read-only state.
             // once user gets write permissions and we have active connection, flush all pending ops.
-            // eslint-disable-next-line max-len
-            assert(readonly === this.deltaManager.readOnlyInfo.readonly, 0x124 /* "inconsistent readonly property/event state" */);
+            assert(readonly === this.deltaManager.readOnlyInfo.readonly,
+                0x124 /* "inconsistent readonly property/event state" */);
 
             // We need to be very careful with when we (re)send pending ops, to ensure that we only send ops
             // when we either never send an op, or attempted to send it but we know for sure it was not
@@ -1368,6 +1371,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const blobsTree = convertToSummaryTree(snapshot, false);
             addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
         }
+
+        if (this.writeGCDataAtRoot) {
+            const gcSummary = this.garbageCollector.summarize();
+            if (gcSummary !== undefined) {
+                addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
+            }
+        }
     }
 
     private replayPendingStates() {
@@ -1578,6 +1588,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         this.needsFlush = false;
+
+        // Did we disconnect in the middle of turn-based batch?
+        // If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
+        if (!this.canSendOps()) {
+            return;
+        }
+
         return this.deltaSender.flush();
     }
 
@@ -2079,10 +2096,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dirtyContainer = dirty;
         if (this.emitDirtyDocumentEvent) {
             this.emit(dirty ? "dirty" : "saved");
-            // back-compat: Loader API added in 0.35 only
-            if (this.context.updateDirtyContainerState !== undefined) {
-                this.context.updateDirtyContainerState(dirty);
-            }
+            this.context.updateDirtyContainerState(dirty);
         }
     }
 
