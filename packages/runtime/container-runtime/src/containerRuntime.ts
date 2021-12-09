@@ -1136,8 +1136,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.deltaManager.on("readonly", (readonly: boolean) => {
             // we accumulate ops while being in read-only state.
             // once user gets write permissions and we have active connection, flush all pending ops.
-            // eslint-disable-next-line max-len
-            assert(readonly === this.deltaManager.readOnlyInfo.readonly, 0x124 /* "inconsistent readonly property/event state" */);
+            assert(readonly === this.deltaManager.readOnlyInfo.readonly,
+                0x124 /* "inconsistent readonly property/event state" */);
 
             // We need to be very careful with when we (re)send pending ops, to ensure that we only send ops
             // when we either never send an op, or attempted to send it but we know for sure it was not
@@ -1585,6 +1585,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         this.needsFlush = false;
+
+        // Did we disconnect in the middle of turn-based batch?
+        // If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
+        if (!this.canSendOps()) {
+            return;
+        }
+
         return this.deltaSender.flush();
     }
 
