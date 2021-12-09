@@ -68,7 +68,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     private _isBoundToContext: boolean = false;
 
     /**
-     * True while we are garbage collecting this object's data.
+     * True while we are garbage collecting this object's data to prevent use of regular serializer.
      */
     private _isGCing: boolean = false;
 
@@ -82,8 +82,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     protected get serializer(): IFluidSerializer {
         /**
-         * During GC, the SummarySerializer keeps track of IFluidHandles that are serialized. These handles
-         * represent references to other Fluid objects and are used for garbage collection.
+         * During GC, the summarization process is called with the SummarySerializer that keeps track of IFluidHandles
+         * that are serialized. These handles represent references to other Fluid objects.
          *
          * This is fine for now. However, if we implement delay loading in DDSs, they may load and de-serialize content
          * in summarize. When that happens, they may incorrectly hit this assert and we will have to change this.
@@ -212,6 +212,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
         // Set _isGCing to true. This flag is used to ensure that we only use SummarySerializer (created in
         // getGCDataCore) to serialize handles in this object's data.
+        // Assertions for re-entrancy are only to ensure _isGCing value is correct. If we want to support re-entrancy
+        // in the future, it can be changed to a count of GC calls in progress.
         assert(!this._isGCing, 0x078 /* "Possible re-entrancy! Summary should not already be in progress." */);
         this._isGCing = true;
 
