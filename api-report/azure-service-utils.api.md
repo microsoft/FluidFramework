@@ -7,12 +7,8 @@
 import { generateToken } from '@fluidframework/server-services-client';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 
-<<<<<<< HEAD
-export { generateToken }
-=======
 // @public
 export function generateToken(tenantId: string, key: string, scopes: ScopeType[], documentId?: string, user?: IUser, lifetime?: number, ver?: string): string;
->>>>>>> main
 
 export { ScopeType }
 

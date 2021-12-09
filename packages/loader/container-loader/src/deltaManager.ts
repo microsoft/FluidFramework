@@ -433,59 +433,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         assert(this.fetchReason !== undefined || this.pending.length === 0, 0x269 /* "pending ops are not dropped" */);
     }
 
-<<<<<<< HEAD
-    private static detailsFromConnection(connection: IDocumentDeltaConnection): IConnectionDetails {
-        return {
-            claims: connection.claims,
-            clientId: connection.clientId,
-            existing: connection.existing,
-            checkpointSequenceNumber: connection.checkpointSequenceNumber,
-            get initialClients() { return connection.initialClients; },
-            maxMessageSize: connection.serviceConfiguration.maxMessageSize,
-            mode: connection.mode,
-            serviceConfiguration: connection.serviceConfiguration,
-            version: connection.version,
-        };
-    }
-
-    public async connect(args: IConnectionArgs): Promise<IConnectionDetails> {
-        const connection = await this.connectCore(args);
-        return DeltaManager.detailsFromConnection(connection);
-    }
-
-    /**
-     * Start the connection. Any error should result in container being close.
-     * And report the error if it escape for any reason.
-     * @param args - The connection arguments
-     */
-    private triggerConnect(args: IConnectionArgs) {
-        assert(this.connection === undefined, 0x239 /* "called only in disconnected state" */);
-        if (this.reconnectMode !== ReconnectMode.Enabled) {
-            return;
-        }
-        this.connectCore(args).catch((err) => {
-            // Errors are raised as "error" event and close container.
-            // Have a catch-all case in case we missed something
-            if (!this.closed) {
-                this.logger.sendErrorEvent({ eventName: "ConnectException" }, err);
-            }
-        });
-    }
-
-    private async connectCore(args: IConnectionArgs): Promise<IDocumentDeltaConnection> {
-        assert(!this.closed, 0x26a /* "not closed" */);
-
-        if (this.connection !== undefined) {
-            return this.connection;
-        }
-
-        if (this.connectionP !== undefined) {
-            return this.connectionP;
-        }
-
-=======
     public connect(args: IConnectionArgs) {
->>>>>>> main
         const fetchOpsFromStorage = args.fetchOpsFromStorage ?? true;
         logIfFalse(
             this.handler !== undefined || !fetchOpsFromStorage,
