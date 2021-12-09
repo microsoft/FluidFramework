@@ -38,25 +38,26 @@ export enum ContainerErrorType {
 /**
  * Base interface for all errors and warnings at container level
  */
-export interface IErrorBase extends Partial<Error> {
-    /** errorType is a union of error types from
-     * - container
-     * - runtime
-     * - drivers
-     */
-    readonly errorType: string;
-
+export interface IErrorBase extends Error {
     /**
      * See Error.message
      * Privacy Note - This is a freeform string that we may not control in all cases (e.g. a dependency throws an error)
      * If there are known cases where this contains privacy-sensitive data it will be tagged and included in the result
      * of getTelemetryProperties. When logging, consider fetching it that way rather than straight from this field.
      */
-    readonly message: string;
-    /** See Error.name */
-    readonly name?: string;
-    /** See Error.stack */
-    readonly stack?: string;
+     readonly message: string;
+     /** See Error.name */
+     readonly name: string;
+     /** See Error.stack */
+     readonly stack?: string;
+
+     /** errorType is a union of error types from
+     * - container
+     * - runtime
+     * - drivers
+     */
+    readonly errorType: string;
+
     /**
      * Returns all properties of this error object that are either safe to log
      * or explicitly tagged as containing privacy-sensitive data.
