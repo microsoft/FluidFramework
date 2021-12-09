@@ -19,6 +19,7 @@ import {
     waitContainerToCatchUp,
 } from "@fluidframework/container-loader";
 import {
+    IDocumentDeltaConnection,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
 } from "@fluidframework/driver-definitions";
@@ -39,6 +40,7 @@ import {
     TestDataObjectType,
     describeNoCompat,
 } from "@fluidframework/test-version-utils";
+import { IClient } from "@fluidframework/protocol-definitions";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
@@ -96,6 +98,22 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         );
     }
 
+    const mockDocumentServiceFactory = (
+        connectToDeltaStream: (client: IClient) => Promise<IDocumentDeltaConnection>,
+    ): IDocumentServiceFactory => {
+        const documentServiceFactory = provider.documentServiceFactory;
+        const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
+        // Issue typescript-eslint/typescript-eslint #1256
+        mockFactory.createDocumentService = async (resolvedUrl) => {
+            const service = await documentServiceFactory.createDocumentService(resolvedUrl);
+            // Issue typescript-eslint/typescript-eslint #1256
+            service.connectToDeltaStream = connectToDeltaStream;
+            return service;
+        };
+
+        return mockFactory;
+    };
+
     it("Load container successfully", async () => {
         const container = await loadContainer();
         assert.strictEqual(container.id, "containerTest", "Container's id should be set");
@@ -106,17 +124,10 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     it("Load container unsuccessfully", async () => {
         let success: boolean = true;
         try {
-            const documentServiceFactory = provider.documentServiceFactory;
-            const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
-            // Issue typescript-eslint/typescript-eslint #1256
-            mockFactory.createDocumentService = async (resolvedUrl) => {
-                const service = await documentServiceFactory.createDocumentService(resolvedUrl);
-                // Issue typescript-eslint/typescript-eslint #1256
-                service.connectToStorage = async () => Promise.reject(new Error("expectedFailure"));
-                return service;
-            };
-
-            await loadContainer({ documentServiceFactory: mockFactory });
+            await loadContainer({
+                documentServiceFactory: mockDocumentServiceFactory(
+                    async () => Promise.reject(new Error("expectedFailure"))),
+            });
             assert.fail("Error expected");
         } catch (error) {
             assert.strictEqual(error.errorType, ContainerErrorType.genericError, "Error should be a general error");
@@ -130,16 +141,10 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     it("Load container with error", async () => {
         let success: boolean = true;
         try {
-            const documentServiceFactory = provider.documentServiceFactory;
-            const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
-            // Issue typescript-eslint/typescript-eslint #1256
-            mockFactory.createDocumentService = async (resolvedUrl) => {
-                const service = await documentServiceFactory.createDocumentService(resolvedUrl);
-                // Issue typescript-eslint/typescript-eslint #1256
-                service.connectToDeltaStorage = async () => Promise.reject(new Error("expectedFailure"));
-                return service;
-            };
-            const container2 = await loadContainer({ documentServiceFactory: mockFactory });
+            const container2 = await loadContainer({
+                documentServiceFactory: mockDocumentServiceFactory(
+                    async () => Promise.reject(new Error("expectedFailure"))),
+            });
             await waitContainerToCatchUp(container2);
             assert.fail("Error expected");
         } catch (error) {
@@ -155,17 +160,9 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         const deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
-        const documentServiceFactory = provider.documentServiceFactory;
-        const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
-        // Issue typescript-eslint/typescript-eslint #1256
-        mockFactory.createDocumentService = async (resolvedUrl) => {
-            const service = await documentServiceFactory.createDocumentService(resolvedUrl);
-            // Issue typescript-eslint/typescript-eslint #1256
-            service.connectToDeltaStream = async () => deltaConnection;
-            return service;
-        };
-
-        const container = await loadContainer({ documentServiceFactory: mockFactory });
+        const container = await loadContainer({
+            documentServiceFactory: mockDocumentServiceFactory(async () => deltaConnection),
+        });
         assert.strictEqual(container.connectionState, ConnectionState.Connecting,
             "Container should be in Connecting state");
         // Note: this will create infinite loop of reconnects as every reconnect would bring closed connection.
@@ -181,26 +178,49 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             await Promise.resolve();
             assert.deepEqual(disconnectedEventArgs, []);
         } finally {
+            container.close();
+        }
+    });
+
+    it("Raise retriable connection error event", async () => {
+        const deltaConnection = new MockDocumentDeltaConnection(
+            "test",
+        );
+        const container = await loadContainer({
+            documentServiceFactory: mockDocumentServiceFactory(async () => deltaConnection),
+        });
+        let errorRaised = false;
+        container.on("error", () => {
+            errorRaised = true;
+        });
+        assert.strictEqual(container.connectionState, ConnectionState.Connecting,
+            "Container should be in Connecting state");
+        const err = {
+            message: "Test error",
+            canRetry: true,
+        };
+        // Note: this will create infinite loop of reconnects as every reconnect would bring closed connection.
+        // Only closing container will break that cycle.
+        deltaConnection.emitError(err);
+        try {
+            assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
+                "Container should be in Disconnected state");
+            assert.strictEqual(container.closed, false, "Container should not be closed");
+            assert.strictEqual(errorRaised, false, "Error event should not be raised.");
+        } finally {
             deltaConnection.removeAllListeners();
             container.close();
         }
     });
 
-    it("Raise connection error event", async () => {
+    it("Raise non-retriable connection error event", async () => {
         const deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
-        const documentServiceFactory = provider.documentServiceFactory;
-        const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
-        // Issue typescript-eslint/typescript-eslint #1256
-        mockFactory.createDocumentService = async (resolvedUrl) => {
-            const service = await documentServiceFactory.createDocumentService(resolvedUrl);
-            // Issue typescript-eslint/typescript-eslint #1256
-            service.connectToDeltaStream = async () => deltaConnection;
-            return service;
-        };
+        const container = await loadContainer({
+            documentServiceFactory: mockDocumentServiceFactory(async () => deltaConnection),
+        });
         let errorRaised = false;
-        const container = await loadContainer({ documentServiceFactory: mockFactory });
         container.on("error", () => {
             errorRaised = true;
         });
@@ -210,15 +230,12 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             message: "Test error",
             canRetry: false,
         };
-        // Note: this will create infinite loop of reconnects as every reconnect would bring closed connection.
-        // Only closing container will break that cycle.
         deltaConnection.emitError(err);
         try {
             assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
                 "Container should be in Disconnected state");
-            // All errors on socket are not critical!
-            assert.strictEqual(container.closed, false, "Container should not be closed");
-            assert.strictEqual(errorRaised, false, "Error event should not be raised.");
+            assert(container.closed, "Container should be closed");
+            assert(!errorRaised,  "Error event should be raised.");
         } finally {
             deltaConnection.removeAllListeners();
             container.close();
@@ -229,16 +246,9 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         const deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
-        const documentServiceFactory = provider.documentServiceFactory;
-        const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
-        // Issue typescript-eslint/typescript-eslint #1256
-        mockFactory.createDocumentService = async (resolvedUrl) => {
-            const service = await documentServiceFactory.createDocumentService(resolvedUrl);
-            // Issue typescript-eslint/typescript-eslint #1256
-            service.connectToDeltaStream = async () => deltaConnection;
-            return service;
-        };
-        const container = await loadContainer({ documentServiceFactory: mockFactory });
+        const container = await loadContainer({
+            documentServiceFactory: mockDocumentServiceFactory(async () => deltaConnection),
+        });
         container.on("error", () => {
             assert.ok(false, "Error event should not be raised.");
         });
@@ -248,7 +258,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
             "Container should be in Disconnected state");
         assert.strictEqual(container.closed, true, "Container should be closed");
-        deltaConnection.removeAllListeners();
     });
 
     it("Delta manager receives readonly event when calling container.forceReadonly()", async () => {

@@ -90,7 +90,11 @@ function getNackReconnectInfo(nackContent: INackContent) {
 const createReconnectError = (fluidErrorCode: string, err: any) =>
     wrapError(
         err,
-        (errorMessage: string) => new GenericNetworkError(fluidErrorCode, errorMessage, err?.canRetry === true),
+        (errorMessage: string) => new GenericNetworkError(
+            fluidErrorCode,
+            errorMessage,
+            err?.canRetry === true || err?.canRetry === undefined, // unless explicitly specified, this will retry
+        ),
     );
 
 const fatalConnectErrorProp = { fatalConnectError: true };
