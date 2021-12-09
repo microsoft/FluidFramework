@@ -108,7 +108,7 @@ async function start() {
     }
 
     // Wait for connection so that proposals can be sent.
-    // TODO: Remove null check after next release
+    // TODO: Remove null check after next release #8523
     if (container !== undefined && container.connected !== undefined && !container.connected) {
         await new Promise<void>((resolve, reject) => {
             // the promise resolves when the connected event fires.
