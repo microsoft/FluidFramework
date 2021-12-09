@@ -34,7 +34,7 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
         };
     }
 
-    private async getToken(tenantId: string, documentId: string | undefined): Promise<string> {
+    private async getToken(tenantId: string, documentId?: string): Promise<string> {
         const response = await axios.get(this.azFunctionUrl, {
             params: {
                 tenantId,

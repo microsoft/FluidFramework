@@ -7,7 +7,7 @@ import { PromiseCache } from "@fluidframework/common-utils";
 import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { NonRetryableError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IOdspResolvedUrl,
@@ -15,6 +15,7 @@ import {
     isTokenFromCache,
     OdspResourceTokenFetchOptions,
     TokenFetcher,
+    OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
 import {
     getLocatorFromOdspUrl,
@@ -162,7 +163,10 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
                 { eventName: "GetSharingLinkToken" },
                 async (event) => tokenFetcher(options).then((tokenResponse) => {
                     if (tokenResponse === null) {
-                        throwOdspNetworkError("shareLinkTokenIsNull", fetchTokenErrorCode);
+                        throw new NonRetryableError(
+                            "shareLinkTokenIsNull",
+                            "Token callback returned null",
+                            OdspErrorType.fetchTokenError);
                     }
                     event.end({ fromCache: isTokenFromCache(tokenResponse) });
                     return tokenResponse;

@@ -18,6 +18,12 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove `loader` property from `MockFluidDataStoreContext` class](#Remove-loader-property-from-MockFluidDataStoreContext-class)
 - [maxMessageSize removed from IConnectionDetails and IDocumentDeltaConnection](#maxMessageSize-removed-from-IConnectionDetails-and-IDocumentDeltaConnection)
 - [Remove `IntervalCollection.getView()` from sequence dds](#Remove-IntervalCollectiongetView-from-sequence-dds)
+- [Moved `ICodeDetailsLoader` and `IFluidModuleWithDetails` interface to `@fluidframework/container-definitions`](#Moved-ICodeDetailsLoader-and-IFluidModuleWithDetails-interface-to-fluidframeworkcontainer-definitions)
+- [Removed `errorMessage` property from `ISummaryNack` interface](#Removed-errorMessage-property-from-ISummaryNack-interface)
+- [ISequencedDocumentMessage arg removed from SharedMap and SharedDirectory events](#ISequencedDocumentMessage-arg-removed-from-SharedMap-and-SharedDirectory-events)
+- [Moved `@fluidframework/core-interface#fluidPackage.ts` to `@fluidframework/container-definition#fluidPackage.ts`](#Moved-fluidframeworkcore-interfacefluidPackagets-to-fluidframeworkcontainer-definitionfluidPackagets)
+- [Deprecated `IFluidSerializer` in `IFluidDataStoreRuntime`](#Deprecated-IFluidSerializer-in-IFluidDataStoreRuntime)
+- [Errors thrown to DDS event handlers](#Errors-thrown-to-DDS-event-handlers)
 
 ### `IContainer` interface updated to expose actively used `Container` public APIs
 In order to have the `IContainer` interface be the active developer surface that is used when interacting with a `Container` instance, it has been updated to expose the APIs that are necessary for currently used behavior. The motivation here is to move away from using the `Container` class when only its type is required, and to use the `IContainer` interface instead.
@@ -73,6 +79,38 @@ The `maxMessageSize` property from `IConnectionDetails` and `IDocumentDeltaConne
 
 ### Remove `IntervalCollection.getView()` from sequence dds
 The `IntervalCollection.getView()` was removed.  If you were calling this API, you should instead refer to the `IntervalCollection` itself directly in places where you were using the view.
+
+### Moved `ICodeDetailsLoader` and `IFluidModuleWithDetails` interface to `@fluidframework/container-definitions`
+The `ICodeDetailsLoader` and `IFluidModuleWithDetails` interface are deprecated in `@fluidframework/container-loader` and moved to `@fluidframework/container-definitions`. The `ICodeDetailsLoader` interface should be imported from `@fluidframework/container-definition` package. The `ICodeDetailsLoader` and `IFluidModuleWithDetails` from `@fluidframework/container-loader` will be removed from `@fluidframework/container-loader` in further releases.
+
+### Removed `errorMessage` property from `ISummaryNack` interface
+The `errorMessage` property from the `ISummaryNack` interface was deprecated in 0.43, and has now been removed from the `protocol-definitions` package. To replace its functionality, use the `message` property.
+
+### `ISequencedDocumentMessage` arg removed from `SharedMap` and `SharedDirectory` events
+The `ISequencedDocumentMessage` argument in events emitted from `SharedMap` and `SharedDirectory` (the `"valueChanged"` and `"clear"` events) has been removed.  It is not recommended to access the protocol layer directly.  Note that if you were leveraging the `this` argument of these events, you will need to update your event listeners due to the arity change.
+
+### Moved `@fluidframework/core-interface#fluidPackage.ts` to `@fluidframework/container-definition#fluidPackage.ts`
+Moved the following interfaces and const from `@fluidframework/core-interface` to `@fluidframework/container-definitions`:
+- `IFluidPackageEnvironment`
+- `IFluidPackage`
+- `isFluidPackage`
+- `IFluidCodeDetailsConfig`
+- `IFluidCodeDetailsConfig`
+- `IFluidCodeDetails`
+- `IFluidCodeDetailsComparer`
+- `IProvideFluidCodeDetailsComparer`
+- `IFluidCodeDetailsComparer`
+
+They are deprecated from `@fluidframework/core-interface` and would be removed in future release. Please import them from `@fluidframework/container-definitions`.
+
+### Deprecated `IFluidSerializer` in `IFluidDataStoreRuntime`
+`IFluidSerializer` should only be used by DDSs to serialize data and they should use the one created by `SharedObject`.
+
+### Errors thrown to DDS event handlers
+Before this release, exceptions thrown from DDS event handlers resulted in Fluid Framework reporting non-error telemetry event and moving forward as if nothing happened. Starting with this release, such exceptions will result in critical error, i.e. container will be closed with such error and hosting app will be notified via Container's "closed" event. This will either happen immediately (if exception was thrown while processing remote op), or on later usage (if exception was thrown on local change). DDS will go into "broken" state and will keep throwing error on amy attempt to make local changes.
+This process is supposed to be a catch-call case for cases where listeners did not do due diligence or have no better way to handle their errors.
+If possible, it's recommended for DDS event listeners to not throw exceptions, but rather handle them appropriately without involving DDS itself.
+The purpose of this change to ensure that data model stays always synchronized with data projection that event listeners are building. If event listener is not able to fully / correctly process change event, that likely means data synchronization is broken and it's not safe to continue (and potentially, corrupt document).
 
 ## 0.52 Breaking changes
 - [chaincodePackage removed from Container](#chaincodePackage-removed-from-Container)
