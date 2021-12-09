@@ -247,7 +247,7 @@ export class TestObjectProvider {
     }
 
     public async loadContainer(entryPoint: fluidEntryPoint, options?: ITestLoaderOptions,
-        requestHeader?: IRequestHeader) {
+        requestHeader?: IRequestHeader): Promise<IContainer> {
         const loader = this.createLoader([[defaultCodeDetails, entryPoint]], options);
         return loader.resolve({ url: await this.driver.createContainerUrl(this.documentId), headers: requestHeader });
     }
