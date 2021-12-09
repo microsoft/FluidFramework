@@ -84,9 +84,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         /**
          * During GC, the summarization process is called with the SummarySerializer that keeps track of IFluidHandles
          * that are serialized. These handles represent references to other Fluid objects.
-         *
-         * This is fine for now. However, if we implement delay loading in DDSs, they may load and de-serialize content
-         * in summarize. When that happens, they may incorrectly hit this assert and we will have to change this.
          */
         assert(!this._isGCing,
             0x075 /* "SummarySerializer should be used for serializing data during summary." */);
