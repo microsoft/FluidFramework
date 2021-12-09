@@ -5,17 +5,14 @@
 
 import { ITelemetryProperties, ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definitions";
-import { isOnline, OnlineStatus, RetryableError } from "@fluidframework/driver-utils";
+import { isOnline, OnlineStatus, RetryableError, NonRetryableError } from "@fluidframework/driver-utils";
 import { assert, performance } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ChildLogger, PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
 import {
     fetchIncorrectResponse,
-    fetchTimeoutStatusCode,
     throwOdspNetworkError,
     getSPOAndGraphRequestIdsFromResponse,
-    fetchTokenErrorCode,
-    createOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
 import {
     IOdspResolvedUrl,
@@ -80,7 +77,7 @@ export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOp
             case DriverErrorType.authorizationError:
                 return get({ ...options, claims: e.claims, tenantId: e.tenantId });
 
-            case DriverErrorType.incorrectServerResponse: // fetchIncorrectResponse - some error on the wire, retry once
+            case DriverErrorType.incorrectServerResponse: // some error on the wire, retry once
             case OdspErrorType.fetchTokenError: // If the token was null, then retry once.
                 return get(options);
 
@@ -105,7 +102,10 @@ export async function fetchHelper(
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
-            throwOdspNetworkError("odspFetchErrorNoResponse", fetchIncorrectResponse);
+            throw new NonRetryableError(
+                "odspFetchErrorNoResponse",
+                "No response from fetch call",
+                DriverErrorType.incorrectServerResponse);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
@@ -128,11 +128,13 @@ export async function fetchHelper(
         if (errorText === "TypeError: Failed to fetch") {
             online = OnlineStatus.Offline;
         }
+        // This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
         if (error.name === "AbortError") {
-            throwOdspNetworkError("timeoutDuringFetch", fetchTimeoutStatusCode);
+            throw new RetryableError("fetchAbort", "Fetch Timeout (AbortError)", OdspErrorType.fetchTimeout);
         }
+        // TCP/IP timeout
         if (errorText.indexOf("ETIMEDOUT") !== -1) {
-            throwOdspNetworkError("timeoutDuringFetch(ETIMEDOUT)", fetchTimeoutStatusCode);
+            throw new RetryableError("fetchETimedout", "Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout);
         }
 
         //
@@ -179,30 +181,31 @@ export async function fetchAndParseAsJSONHelper<T>(
     requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<T>> {
     const { content, headers, commonSpoHeaders, duration } = await fetchHelper(requestInfo, requestInit);
-    // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including
-    // tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
-    // (many ops) almost always ends up with this error - I'd guess 1% of op request end up here... It always
-    // succeeds on retry.
+    let text: string | undefined;
     try {
-        const text = await content.text();
-
-        commonSpoHeaders.bodySize = text.length;
-        const res = {
-            headers,
-            content: JSON.parse(text),
-            commonSpoHeaders,
-            duration,
-        };
-        return res;
+        text = await content.text();
     } catch (e) {
+        // JSON.parse() can fail and message would container full request URI, including
+        // tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
+        // (many ops) almost always ends up with this error - I'd guess 1% of op request end up here... It always
+        // succeeds on retry.
+        // So do not log error object itself.
         throwOdspNetworkError(
             "errorWhileParsingFetchResponse",
             fetchIncorrectResponse,
-            content,
-            undefined,
-            { error: Object(e) },
+            content, // response
+            text,
         );
     }
+
+    commonSpoHeaders.bodySize = text.length;
+    const res = {
+        headers,
+        content: JSON.parse(text),
+        commonSpoHeaders,
+        duration,
+    };
+    return res;
 }
 
 export interface INewFileInfo {
@@ -291,13 +294,21 @@ export function toInstrumentedOdspTokenFetcher(
                     event.end({ fromCache: isTokenFromCache(tokenResponse), isNull: token === null });
                 }
                 if (token === null && throwOnNullToken) {
-                    throwOdspNetworkError("tokenIsNull", fetchTokenErrorCode, undefined, undefined, { method: name });
+                    throw new NonRetryableError(
+                        "storageTokenIsNull",
+                        `Token is null for ${name} call`,
+                        OdspErrorType.fetchTokenError,
+                        { method: name });
                 }
                 return token;
             }, (error) => {
                 const tokenError = wrapError(
                     error,
-                    (errorMessage) => createOdspNetworkError("tokenFetcherFailed", errorMessage, fetchTokenErrorCode));
+                    (errorMessage) => new NonRetryableError(
+                        "tokenFetcherFailed",
+                        errorMessage,
+                        OdspErrorType.fetchTokenError,
+                        { method: name }));
                 throw tokenError;
             }),
             { cancel: "generic" });

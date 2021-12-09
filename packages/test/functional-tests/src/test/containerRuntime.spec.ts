@@ -13,6 +13,10 @@ import {
 } from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import { DeltaManager } from "@fluidframework/container-loader/dist/deltaManager";
+// eslint-disable-next-line import/no-internal-modules
+import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/dist/contracts";
+// eslint-disable-next-line import/no-internal-modules
+import { ConnectionManager } from "@fluidframework/container-loader/dist/connectionManager";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
 import { ScheduleManager, DeltaScheduler } from "@fluidframework/container-runtime";
 
@@ -23,7 +27,7 @@ describe("Container Runtime", () => {
      * Non-batch messages are processed in multiple turns if they take longer than DeltaScheduler's processingTime.
      */
     describe("Async op processing", () => {
-        let deltaManager: DeltaManager;
+        let deltaManager: DeltaManager<ConnectionManager>;
         let scheduleManager: ScheduleManager;
         let deltaConnection: MockDocumentDeltaConnection;
         let seq: number;
@@ -31,9 +35,11 @@ describe("Container Runtime", () => {
         let batchBegin: number = 0;
         let batchEnd: number = 0;
 
-        async function startDeltaManager() {
-            await deltaManager.connect({ reason: "test" });
-        }
+        const startDeltaManager = async () =>
+            new Promise((accept) => {
+                deltaManager.on("connect", accept);
+                deltaManager.connect({ reason: "test" });
+            });
 
         // Function to yield control in the Javascript event loop.
         async function yieldEventLoop(): Promise<void> {
@@ -86,12 +92,16 @@ describe("Container Runtime", () => {
             );
             const client: Partial<IClient> = { mode: "write", details: { capabilities: { interactive: true } } };
 
-            deltaManager = new DeltaManager(
+            deltaManager = new DeltaManager<ConnectionManager>(
                 () => service,
-                client as IClient,
                 DebugLogger.create("fluid:testDeltaManager"),
-                false,
                 () => false,
+                (props: IConnectionManagerFactoryArgs) => new ConnectionManager(
+                    () => service,
+                    client as IClient,
+                    false,
+                    DebugLogger.create("fluid:testConnectionManager"),
+                    props),
             );
 
             const emitter = new EventEmitter();

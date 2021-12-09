@@ -9,7 +9,6 @@ import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import {
-    IFluidRouter,
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
@@ -296,7 +295,7 @@ export interface ISummarizerEvents extends IEvent {
 }
 
 export interface ISummarizer extends
-    IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidLoadable, Partial<IProvideSummarizer>{
+    IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer>{
     stop(reason: SummarizerStopReason): void;
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
 
