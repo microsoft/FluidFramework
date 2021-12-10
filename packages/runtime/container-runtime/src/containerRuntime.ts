@@ -944,7 +944,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             ChildLogger.create(this.logger, "ContainerRuntime"));
 
         this._flushMode =
-            this.mc.config.getBoolean(turnBasedFlushModeKey, false)
+            this.mc.config.getBoolean(turnBasedFlushModeKey) ?? false
             ? FlushMode.TurnBased : FlushMode.Immediate;
 
         /**
@@ -1083,8 +1083,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 SummarizerClientElection.isClientEligible,
             );
             const summarizerClientElectionEnabled =
-                this.mc.config.getBoolean("summarizerClientElection",
-                this.runtimeOptions.summaryOptions?.summarizerClientElection === true);
+                this.mc.config.getBoolean("summarizerClientElection") ??
+                this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
 
             this.summarizerClientElection = new SummarizerClientElection(
                 orderedClientLogger,

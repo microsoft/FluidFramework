@@ -33,21 +33,21 @@ export class ChildLogger extends TelemetryLogger {
 // @public
 export class ConfigProvider implements IConfigProvider {
     // (undocumented)
-    static create(namespace: string | undefined, orderedBaseProviders: (IConfigProviderBase | ITelemetryBaseLogger | undefined)[]): IConfigProvider;
+    static create(orderedBaseProviders: (IConfigProviderBase | ITelemetryBaseLogger | undefined)[]): IConfigProvider;
     // (undocumented)
-    getBoolean(name: string, defaultValue?: boolean): boolean | undefined;
+    getBoolean(name: string): boolean | undefined;
     // (undocumented)
-    getBooleanArray(name: string, defaultValue?: boolean[]): boolean[] | undefined;
+    getBooleanArray(name: string): boolean[] | undefined;
     // (undocumented)
-    getNumber(name: string, defaultValue?: number): number | undefined;
+    getNumber(name: string): number | undefined;
     // (undocumented)
-    getNumberArray(name: string, defaultValue?: number[]): number[] | undefined;
+    getNumberArray(name: string): number[] | undefined;
     // (undocumented)
     getRawConfig(name: string): ConfigTypes;
     // (undocumented)
-    getString(name: string, defaultValue?: string): string | undefined;
+    getString(name: string): string | undefined;
     // (undocumented)
-    getStringArray(name: string, defaultValue?: string[]): string[] | undefined;
+    getStringArray(name: string): string[] | undefined;
     }
 
 // @public (undocumented)
@@ -95,17 +95,17 @@ export const hasErrorInstanceId: (x: any) => x is {
 // @public
 export interface IConfigProvider extends IConfigProviderBase {
     // (undocumented)
-    getBoolean(name: string, defaultValue?: boolean): boolean | undefined;
+    getBoolean(name: string): boolean | undefined;
     // (undocumented)
-    getBooleanArray(name: string, defaultValue?: boolean[]): boolean[] | undefined;
+    getBooleanArray(name: string): boolean[] | undefined;
     // (undocumented)
-    getNumber(name: string, defaultValue?: number): number | undefined;
+    getNumber(name: string): number | undefined;
     // (undocumented)
-    getNumberArray(name: string, defaultValue?: number[]): number[] | undefined;
+    getNumberArray(name: string): number[] | undefined;
     // (undocumented)
-    getString(name: string, defaultValue?: string): string | undefined;
+    getString(name: string): string | undefined;
     // (undocumented)
-    getStringArray(name: string, defaultValue?: string[]): string[] | undefined;
+    getStringArray(name: string): string[] | undefined;
 }
 
 // @public
@@ -130,9 +130,6 @@ export interface IFluidErrorBase extends Error {
     readonly name: string;
     readonly stack?: string;
 }
-
-// @public
-export const inMemoryConfigProvider: (storage?: Storage | undefined, namespaceOverride?: string | undefined) => Lazy<IConfigProviderBase | undefined>;
 
 // @public
 export interface IPerformanceEventMarkers {
@@ -170,6 +167,9 @@ export interface ITelemetryLoggerPropertyBags {
     error?: ITelemetryLoggerPropertyBag;
 }
 
+// @public (undocumented)
+export function loggerToMonitoringContext<T extends ITelemetryBaseLogger = ITelemetryLogger>(logger: T): MonitoringContext<T>;
+
 // @public
 export class LoggingError extends Error implements ILoggingError, Pick<IFluidErrorBase, "errorInstanceId"> {
     constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
@@ -182,11 +182,8 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
 // @public
 export function logIfFalse(condition: any, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
 
-// @public
-export function mixinChildLoggerWithMonitoringContext(logger: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags): MonitoringContext;
-
-// @public
-export function mixinMonitoringContext<T extends ITelemetryBaseLogger>(logger: T, config: IConfigProvider): MonitoringContext<T>;
+// @public (undocumented)
+export function mixinMonitoringContext<T extends ITelemetryBaseLogger = ITelemetryLogger>(logger: T, config: IConfigProvider): MonitoringContext<T>;
 
 // @public
 export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
@@ -246,7 +243,7 @@ export function raiseConnectedEvent(logger: ITelemetryLogger, emitter: EventEmit
 export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLogger, event: string, ...args: any[]): void;
 
 // @public
-export const sessionStorageConfigProvider: (namespaceOverride?: string | undefined) => Lazy<IConfigProviderBase | undefined>;
+export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
 // @public
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {

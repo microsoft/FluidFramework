@@ -130,7 +130,7 @@ export class OdspSummaryUploadManager {
         tree: api.ISummaryTree,
         rootNodeName: string,
         path: string = "",
-        markUnreferencedNodes: boolean = this.mc.config.getBoolean("FluidMarkUnreferencedNodes", true),
+        markUnreferencedNodes: boolean = this.mc.config.getBoolean("FluidMarkUnreferencedNodes") ?? true,
     ) {
         const snapshotTree: IOdspSummaryTree = {
             type: "tree",

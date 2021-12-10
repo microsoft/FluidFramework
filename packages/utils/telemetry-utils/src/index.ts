@@ -16,7 +16,6 @@ export {
     MonitoringContext,
     IConfigProviderBase,
     sessionStorageConfigProvider,
-    inMemoryConfigProvider,
     mixinMonitoringContext,
     IConfigProvider,
     ConfigTypes,

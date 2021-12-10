@@ -286,20 +286,20 @@ export class GarbageCollector implements IGarbageCollector {
         this.latestSummaryGCVersion = prevSummaryGCVersion ?? this.currentGCVersion;
 
         // Whether GC should run or not. Can override with localStorage flag.
-        this.shouldRunGC = this.mc.config.getBoolean(runGCKey, (
+        this.shouldRunGC = this.mc.config.getBoolean(runGCKey) ?? (
             // GC must be enabled for the document.
             this.gcEnabled
             // GC must not be disabled via GC options.
             && !gcOptions.disableGC
-        ));
+        );
 
         // Whether GC sweep phase should run or not. If this is false, only GC mark phase is run. Can override with
         // localStorage flag.
         this.shouldRunSweep = this.shouldRunGC &&
-            (this.mc.config.getBoolean(runSweepKey, gcOptions.runSweep === true));
+            (this.mc.config.getBoolean(runSweepKey) ?? gcOptions.runSweep === true);
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
-        this.testMode = this.mc.config.getBoolean(gcTestModeKey, gcOptions.runGCInTestMode === true);
+        this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
 
         // If `writeDataAtRoot` GC option is true, we should write the GC data into the root of the summary tree. This
         // GC option is used for testing only. It will be removed once we start writing GC data into root by default.

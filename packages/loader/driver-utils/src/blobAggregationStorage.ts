@@ -172,7 +172,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
             return storage;
         }
         const mc = loggerToMonitoringContext(logger);
-        const realAllowPackaging = mc.config.getBoolean("FluidAggregateBlobs", allowPacking ?? false);
+        const realAllowPackaging = mc.config.getBoolean("FluidAggregateBlobs") ??  allowPacking ?? false;
 
         // Always create BlobAggregationStorage even if storage is not asking for packing.
         // This is mostly to avoid cases where future changes in policy would result in inability to

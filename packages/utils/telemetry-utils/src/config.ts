@@ -19,12 +19,12 @@ export interface IConfigProviderBase {
  * Explicitly typed interface for reading configurations
  */
  export interface IConfigProvider extends IConfigProviderBase {
-    getBoolean<TD extends boolean | undefined>(name: string, defaultValue: TD): TD | boolean;
-    getNumber<TD extends number | undefined>(name: string, defaultValue: TD): TD | number;
-    getString<TD extends string | undefined>(name: string, defaultValue: TD): TD | string;
-    getBooleanArray<TD extends boolean[] | undefined>(name: string, defaultValue: TD): TD | boolean[];
-    getNumberArray<TD extends number[] | undefined>(name: string, defaultValue: TD): TD | number[];
-    getStringArray<TD extends string[] | undefined>(name: string, defaultValue: TD): TD | string[];
+    getBoolean(name: string): boolean | undefined;
+    getNumber(name: string): number | undefined;
+    getString(name: string): string | undefined;
+    getBooleanArray(name: string): boolean[] | undefined;
+    getNumberArray(name: string): number[] | undefined;
+    getStringArray(name: string): string[] | undefined;
 }
 
 /**
@@ -188,23 +188,23 @@ export class ConfigProvider implements IConfigProvider {
             }
         }
     }
-    getBoolean<TD extends boolean | undefined>(name: string, defaultValue: TD): TD | boolean {
-        return this.getConfig(name, "boolean") ?? defaultValue;
+    getBoolean(name: string): boolean | undefined {
+        return this.getConfig(name, "boolean");
     }
-    getNumber<TD extends number | undefined>(name: string, defaultValue: TD): TD | number {
-        return this.getConfig(name, "number") ?? defaultValue;
+    getNumber(name: string): number | undefined {
+        return this.getConfig(name, "number");
     }
-    getString<TD extends string | undefined>(name: string, defaultValue: TD): TD | string {
-        return this.getConfig(name, "string") ?? defaultValue;
+    getString(name: string): string | undefined {
+        return this.getConfig(name, "string");
     }
-    getBooleanArray<TD extends boolean[] | undefined>(name: string, defaultValue: TD): TD | boolean[] {
-        return this.getConfig(name, "boolean[]") ?? defaultValue;
+    getBooleanArray(name: string): boolean[] | undefined {
+        return this.getConfig(name, "boolean[]");
     }
-    getNumberArray<TD extends number[] | undefined>(name: string, defaultValue: TD): TD | number[] {
-        return this.getConfig(name, "number[]") ?? defaultValue;
+    getNumberArray(name: string): number[] | undefined {
+        return this.getConfig(name, "number[]");
     }
-    getStringArray<TD extends string[] | undefined>(name: string, defaultValue: TD): TD | string[] {
-        return this.getConfig(name, "string[]") ?? defaultValue;
+    getStringArray(name: string): string[] | undefined {
+        return this.getConfig(name, "string[]");
     }
 
     getRawConfig(name: string): ConfigTypes {
