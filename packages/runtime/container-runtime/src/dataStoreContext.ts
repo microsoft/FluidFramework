@@ -634,6 +634,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
+    /**
+     * @deprecated - Sets the datastore as root, for aliasing purposes
+     * This method should not be used outside of the aliasing context.
+     * It will be removed, as the source of truth for this flag will be the aliasing blob.
+     */
     public abstract setRoot(): void;
 
     public abstract getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
