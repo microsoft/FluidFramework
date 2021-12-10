@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-tools/fluidapp-odsp-urlresolver";
-export const pkgVersion = "0.53.0";
+export const pkgVersion = "0.53.1";
