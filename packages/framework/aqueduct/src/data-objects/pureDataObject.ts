@@ -76,10 +76,10 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
     /**
-     * @deprecated - use runtime.getEntrypoint() instead
+     * @deprecated - use runtime.IFluidHandle.get() instead
      */
     public static async getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject> {
-        const obj = await runtime.IFluidHandle.get();
+        const obj = await runtime.IFluidHandle?.get();
         assert(obj instanceof PureDataObject, 0x0bc /* "Runtime has no DataObject!" */);
         await obj.finishInitialization(true);
         return obj;

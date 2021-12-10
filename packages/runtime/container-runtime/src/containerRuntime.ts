@@ -1609,14 +1609,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async getRootDataStore(id: string, wait = true):
-        Promise<IFluidRouter & IProvideFluidHandle> {
+        Promise<IFluidRouter & Partial<IProvideFluidHandle>> {
         const context = await this.dataStores.getDataStore(id, wait);
         assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
         return context.realize();
     }
 
     protected async getDataStore(id: string, wait = true):
-        Promise<IFluidRouter & IProvideFluidHandle> {
+        Promise<IFluidRouter & Partial<IProvideFluidHandle>> {
         return (await this.dataStores.getDataStore(id, wait)).realize();
     }
 

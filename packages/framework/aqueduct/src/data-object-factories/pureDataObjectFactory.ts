@@ -29,6 +29,7 @@ import {
 } from "@fluidframework/synthesize";
 
 import { IEvent } from "@fluidframework/common-definitions";
+import { createResponseError } from "@fluidframework/runtime-utils";
 import {
     IDataObjectProps,
     PureDataObject,
@@ -63,9 +64,14 @@ async function createDataObject<TObj extends PureDataObject,I extends DataObject
 
     // request mixin in
     runtimeClass = mixinRequestHandler(
-        async (request: IRequest, runtimeArg: FluidDataStoreRuntime) =>
-            (await PureDataObject.getDataObject(runtimeArg)).request(request),
-            runtimeClass);
+        async (request: IRequest, runtimeArg: FluidDataStoreRuntime) =>{
+            const router: FluidObject<IFluidRouter> = await runtimeArg.IFluidHandle.get();
+            if(router.IFluidRouter) {
+                return router.IFluidRouter.request(request);
+            }
+            return createResponseError(500, "NotIFluidRouter", request);
+        },
+        runtimeClass);
 
     // Create a new runtime for our data store
     // The runtime is what Fluid uses to create DDS' and route to your data store

@@ -41,7 +41,7 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
  */
 export interface IFluidDataStoreRuntime extends
     IFluidRouter,
-    IProvideFluidHandle,
+    Partial<IProvideFluidHandle>,
     IEventProvider<IFluidDataStoreRuntimeEvents>,
     IDisposable,
     Partial<IProvideFluidDataStoreRegistry> {

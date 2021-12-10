@@ -152,7 +152,7 @@ export interface IContainerRuntimeBase extends
  */
 export interface IFluidDataStoreChannel extends
     IFluidRouter,
-    IProvideFluidHandle,
+    Partial<IProvideFluidHandle>,
     IDisposable {
 
     readonly id: string;
