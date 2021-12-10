@@ -4,10 +4,11 @@
  */
 
 import * as querystring from "querystring";
+import safeStringify from "json-stringify-safe";
 import { AxiosError, AxiosInstance, AxiosRequestConfig, default as Axios } from "axios";
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
-import { createFluidServiceNetworkError, INetworkErrorDetails, NetworkError }  from "./error";
+import { createFluidServiceNetworkError, INetworkErrorDetails }  from "./error";
 
 export abstract class RestWrapper {
     constructor(
@@ -134,7 +135,7 @@ export class BasicRestWrapper extends RestWrapper {
 
                     if (error && error.config) {
                         // eslint-disable-next-line max-len
-                        debug(`[${error.config.method}] request to [${error.config.baseURL ?? ""}${error.config.url ?? ""}] failed with [${error.response?.status}] [${error.response?.data}]`);
+                        debug(`[${error.config.method}] request to [${error.config.baseURL ?? ""}${error.config.url ?? ""}] failed with [${error.response?.status}] [${safeStringify(error.response?.data, undefined, 2)}]`);
                     } else {
                         debug(`request to ${options.url} failed ${error ? error.message : ""}`);
                     }
@@ -154,18 +155,19 @@ export class BasicRestWrapper extends RestWrapper {
                             .then(resolve)
                             .catch(reject);
                     } else {
-                        if (error?.response?.status) {
+                        // From https://axios-http.com/docs/handling_errors
+                        if (error?.response) {
+                            // The request was made and the server responded with a status code
+                            // that falls out of the range of 2xx
                             reject(createFluidServiceNetworkError(error?.response?.status, error?.response?.data));
-                        } else if (error?.message === "Network Error") {
-                            // If a service is temporarily down or a browser resource limit is reached, Axios will throw
-                            // a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
-                            // error message, "Network Error". "Network Error" can be retried, and is not fatal.
-                            reject(new NetworkError(
-                                -1, /* code */
-                                "Network Error", /* message */
-                                true, /* canRetry */
-                                false /* isFatal */));
+                        } else if (error?.request) {
+                            // The request was made but no response was received. That can happen if a service is
+                            // temporarily down or inaccessible due to network failures. We leverage that here detect
+                            // network failures and transform them into a NetworkError with code 502, which can be
+                            // retried and is not fatal.
+                            reject(createFluidServiceNetworkError(502, "Network Error"));
                         } else {
+                            // Something happened in setting up the request that triggered an Error
                             const details: INetworkErrorDetails = {
                                 canRetry: false,
                                 isFatal: false,

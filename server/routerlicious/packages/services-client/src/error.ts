@@ -99,8 +99,7 @@ export class NetworkError extends Error {
  * @param statusCode - HTTP status code that describes the error.
  * @param errorData - Optional additional data associated with the error. Can either be a simple string representing
  *  the message, or an {@link INetworkErrorDetails} object.
- * @returns A simple string conveying the message if no other details are included in this {@link NetworkError},
- * or a {@link INetworkErrorDetails} object otherwise.
+ * @returns A {@link NetworkError} instance properly configured according to the parameters provided.
  * @public
  */
 export function createFluidServiceNetworkError(
