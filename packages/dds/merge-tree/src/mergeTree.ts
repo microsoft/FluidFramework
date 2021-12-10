@@ -390,20 +390,20 @@ export function ordinalToArray(ord: string) {
 // `MaxNodesInBlock`.  (i.e., `MaxNodesInBlock` contains 1 extra slot for temporary storage to
 // facilitate splits.)
 export const MaxNodesInBlock = 8;
+const traceOrdinals = false;
 
 export class MergeBlock extends MergeNode implements IMergeBlock {
-    static traceOrdinals = false;
-    children: IMergeNode[];
-    constructor(public childCount: number) {
+    public children: IMergeNode[];
+    public constructor(public childCount: number) {
         super();
         this.children = new Array<IMergeNode>(MaxNodesInBlock);
     }
 
-    hierBlock(): HierMergeBlock | undefined {
+    public hierBlock(): HierMergeBlock | undefined {
         return undefined;
     }
 
-    setOrdinal(child: IMergeNode, index: number) {
+    public setOrdinal(child: IMergeNode, index: number) {
         let childCount = this.childCount;
         if (childCount === 8) {
             childCount = 7;
@@ -419,7 +419,7 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
             localOrdinal = prevOrdCode + ordinalWidth;
         }
         child.ordinal = this.ordinal + String.fromCharCode(localOrdinal);
-        if (MergeBlock.traceOrdinals) {
+        if (traceOrdinals) {
             // eslint-disable-next-line max-len
             console.log(`so: prnt chld prev ${ordinalToArray(this.ordinal)} ${ordinalToArray(child.ordinal)} ${(index > 0) ? ordinalToArray(this.children[index - 1].ordinal) : "NA"}`);
         }
@@ -435,7 +435,7 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
         }
     }
 
-    assignChild(child: IMergeNode, index: number, updateOrdinal = true) {
+    public assignChild(child: IMergeNode, index: number, updateOrdinal = true) {
         child.parent = this;
         child.index = index;
         if (updateOrdinal) {
@@ -446,9 +446,9 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
 }
 
 class HierMergeBlock extends MergeBlock implements IMergeBlock {
-    rightmostTiles: MapLike<ReferencePosition>;
-    leftmostTiles: MapLike<ReferencePosition>;
-    rangeStacks: MapLike<Stack<ReferencePosition>>;
+    public rightmostTiles: MapLike<ReferencePosition>;
+    public leftmostTiles: MapLike<ReferencePosition>;
+    public rangeStacks: MapLike<Stack<ReferencePosition>>;
 
     constructor(childCount: number) {
         super(childCount);
@@ -457,16 +457,16 @@ class HierMergeBlock extends MergeBlock implements IMergeBlock {
         this.rangeStacks = createMap<Stack<ReferencePosition>>();
     }
 
-    addNodeReferences(mergeTree: MergeTree, node: IMergeNode) {
+    public addNodeReferences(mergeTree: MergeTree, node: IMergeNode) {
         addNodeReferences(mergeTree, node, this.rightmostTiles, this.leftmostTiles,
             this.rangeStacks);
     }
 
-    hierBlock() {
+    public hierBlock() {
         return this;
     }
 
-    hierToString(indentCount: number) {
+    public hierToString(indentCount: number) {
         let strbuf = "";
         // eslint-disable-next-line guard-for-in, no-restricted-syntax
         for (const key in this.rangeStacks) {
