@@ -7,7 +7,7 @@ import * as querystring from "querystring";
 import { AxiosError, AxiosInstance, AxiosRequestConfig, default as Axios } from "axios";
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
-import { createFluidServiceNetworkError, INetworkErrorDetails }  from "./error";
+import { createFluidServiceNetworkError, INetworkErrorDetails, NetworkError }  from "./error";
 
 export abstract class RestWrapper {
     constructor(
@@ -160,12 +160,11 @@ export class BasicRestWrapper extends RestWrapper {
                             // If a service is temporarily down or a browser resource limit is reached, Axios will throw
                             // a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
                             // error message, "Network Error". "Network Error" can be retried, and is not fatal.
-                            const details: INetworkErrorDetails = {
-                                canRetry: true,
-                                isFatal: false,
-                                message: "Network Error",
-                            };
-                            reject(createFluidServiceNetworkError(-1, details));
+                            reject(new NetworkError(
+                                -1, /* code */
+                                "Network Error", /* message */
+                                true, /* canRetry */
+                                false /* isFatal */));
                         } else {
                             const details: INetworkErrorDetails = {
                                 canRetry: false,
