@@ -155,9 +155,11 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
 
         // Database connection
-        const mongoUrl = config.get("mongo:endpoint") as string;
-        const bufferMaxEntries = config.get("mongo:bufferMaxEntries") as number | undefined;
-        const mongoFactory = new services.MongoDbFactory(mongoUrl, bufferMaxEntries);
+        const dynamoTableName = config.get("dynamo:table") as string;
+        const dynamoRegion = config.get("dynamo:region") as string;
+        const dynamoEndpoint = config.get("dynamo:endpoint") as string;
+        const mongoFactory = new services.DynamoDbFactory(dynamoEndpoint, dynamoRegion, dynamoTableName);
+        // const mongoFactory = new services.MongoDbFactory(mongoUrl, bufferMaxEntries);
         const mongoManager = new core.MongoManager(mongoFactory);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
 

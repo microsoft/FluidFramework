@@ -10,13 +10,14 @@ import { deleteSummarizedOps, executeOnInterval, FluidServiceErrorCode } from "@
 import { Provider } from "nconf";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
-    const mongoUrl = config.get("mongo:endpoint") as string;
+    const dynamoTableName = config.get("dynamo:table") as string;
+    const dynamoRegion = config.get("dynamo:region") as string;
+    const dynamoEndpoint = config.get("dynamo:endpoint") as string;
     const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
     const createCosmosDBIndexes = config.get("mongo:createCosmosDBIndexes") as boolean;
-    const bufferMaxEntries = config.get("mongo:bufferMaxEntries") as number | undefined;
-    const mongoFactory = new services.MongoDbFactory(mongoUrl, bufferMaxEntries);
+    const mongoFactory = new services.DynamoDbFactory(dynamoEndpoint, dynamoRegion, dynamoTableName);
     const softDeletionRetentionPeriodMs = config.get("mongo:softDeletionRetentionPeriodMs") as number;
     const offlineWindowMs = config.get("mongo:offlineWindowMs") as number;
     const softDeletionEnabled = config.get("mongo:softDeletionEnabled") as boolean;
@@ -48,7 +49,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
 
     if (mongoExpireAfterSeconds > 0) {
         if (createCosmosDBIndexes) {
-            await opCollection.createTTLIndex({_ts:1}, mongoExpireAfterSeconds);
+            await opCollection.createTTLIndex({ _ts: 1 }, mongoExpireAfterSeconds);
         } else {
             await opCollection.createTTLIndex(
                 {

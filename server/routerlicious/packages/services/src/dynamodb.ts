@@ -35,7 +35,9 @@ export interface IDynamoDBCollectionOptions {
     range_index?: string,
     limit?: number
 }
-
+export interface IDynamoDBOptions {
+    table_name: string,
+}
 export class DynamoDBCollection<T> implements core.ICollection<T> {
     constructor(private readonly client: DynamoDBDocument, private readonly options: IDynamoDBCollectionOptions) {
 
@@ -331,7 +333,7 @@ export class DynamoDBCollection<T> implements core.ICollection<T> {
 }
 
 export class DynamoDB extends EventEmitter implements core.IDb {
-    constructor(private readonly client: DynamoDBDocument) {
+    constructor(private readonly client: DynamoDBDocument, private readonly options: IDynamoDBOptions) {
         // e.g https://mongodb.github.io/node-mongodb-native/4.1/classes/MongoClient.html#on event keys
         super();
     }
@@ -342,7 +344,7 @@ export class DynamoDB extends EventEmitter implements core.IDb {
     }
 
     public collection<T>(name: string): core.ICollection<T> {
-        return new DynamoDBCollection<T>(this.client, DynamoDB.getCollectionIndexes(name));
+        return new DynamoDBCollection<T>(this.client, this.getCollectionIndexes(name));
     }
     /**
      * Returns predefined options for querying specific collections in dynamodb, consisting of partition / range keys
@@ -350,11 +352,11 @@ export class DynamoDB extends EventEmitter implements core.IDb {
      * @param name
      * @returns
      */
-    static getCollectionIndexes(name: string): IDynamoDBCollectionOptions {
+    private getCollectionIndexes(name: string): IDynamoDBCollectionOptions {
         switch (name) {
             case "deltas":
                 return {
-                    table_name: "tinylicious_test",
+                    table_name: this.options.table_name,
                     partition_index: {
                         prefix: "DELTAS",
                         index: ["tenantId", "documentId"],
@@ -364,7 +366,7 @@ export class DynamoDB extends EventEmitter implements core.IDb {
                 };
             case "rawdeltas":
                 return {
-                    table_name: "tinylicious_test",
+                    table_name: this.options.table_name,
                     partition_index: {
                         prefix: "RAWDELTAS",
                         index: ["tenantId", "documentId"],
@@ -374,7 +376,7 @@ export class DynamoDB extends EventEmitter implements core.IDb {
                 };
             case "documents":
                 return {
-                    table_name: "tinylicious_test",
+                    table_name: this.options.table_name,
                     partition_index: {
                         prefix: "DOCUMENTS",
                         index: ["tenantId", "documentId"],
@@ -382,7 +384,7 @@ export class DynamoDB extends EventEmitter implements core.IDb {
                 };
             case "nodes":
                 return {
-                    table_name: "tinylicious_test",
+                    table_name: this.options.table_name,
                     partition_index: {
                         prefix: "NODES",
                         index: ["_id"],
@@ -390,7 +392,7 @@ export class DynamoDB extends EventEmitter implements core.IDb {
                 };
             case "scribeDeltas":
                 return {
-                    table_name: "tinylicious_test",
+                    table_name: this.options.table_name,
                     partition_index: {
                         prefix: "SCRIBEDELTAS",
                         index: ["tenantId", "documentId"],
@@ -400,7 +402,7 @@ export class DynamoDB extends EventEmitter implements core.IDb {
                 };
             case "content":
                 return {
-                    table_name: "tinylicious_test",
+                    table_name: this.options.table_name,
                     partition_index: {
                         prefix: "CONTENT",
                         index: ["tenantId", "documentId"],
@@ -410,7 +412,7 @@ export class DynamoDB extends EventEmitter implements core.IDb {
                 };
             case "tenants":
                 return {
-                    table_name: "tinylicious_test",
+                    table_name: this.options.table_name,
                     partition_index: {
                         prefix: "TENANTS",
                         index: ["_id"],
@@ -418,7 +420,7 @@ export class DynamoDB extends EventEmitter implements core.IDb {
                 };
             case "reservations":
                 return {
-                    table_name: "tinylicious_test",
+                    table_name: this.options.table_name,
                     partition_index: {
                         prefix: "TENANTS",
                         index: ["_id"],
@@ -433,7 +435,8 @@ export class DynamoDB extends EventEmitter implements core.IDb {
 }
 
 export class DynamoDbFactory implements core.IDbFactory {
-    constructor(private readonly endpoint: string, private readonly region: string) {
+    constructor(private readonly endpoint: string,
+        private readonly region: string, private readonly table_name: string) {
 
     }
 
@@ -457,6 +460,6 @@ export class DynamoDbFactory implements core.IDbFactory {
         const client = new DynamoDBClient(options);
         const document = DynamoDBDocument.from(client, config);
 
-        return new DynamoDB(document);
+        return new DynamoDB(document, { table_name: this.table_name });
     }
 }
