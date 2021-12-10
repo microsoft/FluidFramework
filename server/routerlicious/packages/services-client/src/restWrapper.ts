@@ -134,7 +134,7 @@ export class BasicRestWrapper extends RestWrapper {
 
                     if (error && error.config) {
                         // eslint-disable-next-line max-len
-                        debug(`[${error.config.method}] request to [${error.config.url}] failed with [${error.code ?? error?.response?.status}] [${error.message}]`);
+                        debug(`[${error.config.method}] request to [${error.config.baseURL ?? ""}${error.config.url ?? ""}] failed with [${error.response?.status}] [${error.response?.data}]`);
                     } else {
                         debug(`request to ${options.url} failed ${error ? error.message : ""}`);
                     }

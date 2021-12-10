@@ -10,8 +10,8 @@ export interface INetworkErrorDetails {
     retryAfter?: number;
 }
 
-export class NetworkError extends Error { // Do we need other classes as well, or just using the canRetry and
-    constructor(                          // isFatal is enough? -> LETS CREATE OTHER CLASSES
+export class NetworkError extends Error {
+    constructor(
         /**
          * HTTP status code that describes the error.
          */

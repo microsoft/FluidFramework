@@ -9,10 +9,7 @@ import { Params } from "express-serve-static-core";
 import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import * as jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
-import {
-    NetworkError,
-    validateTokenClaimsExpiration,
-} from "@fluidframework/server-services-client";
+import { NetworkError, validateTokenClaimsExpiration } from "@fluidframework/server-services-client";
 import type { ICache, ITenantManager } from "@fluidframework/server-services-core";
 import type { RequestHandler } from "express";
 import type { Provider } from "nconf";
