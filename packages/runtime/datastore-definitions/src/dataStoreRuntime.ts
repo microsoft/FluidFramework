@@ -48,6 +48,9 @@ export interface IFluidDataStoreRuntime extends
 
     readonly id: string;
 
+    /**
+     * @deprecated - FluidSerializer is not required as DDSs are the only ones that serialize data.
+     */
     readonly IFluidSerializer: IFluidSerializer;
 
     readonly IFluidHandleContext: IFluidHandleContext;

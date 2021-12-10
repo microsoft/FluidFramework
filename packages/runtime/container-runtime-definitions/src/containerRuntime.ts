@@ -15,7 +15,6 @@ import {
     IResponse,
     IFluidObject,
     IFluidRouter,
-    IFluidCodeDetails,
     FluidObject,
     IProvideFluidHandle,
 } from "@fluidframework/core-interfaces";
@@ -24,7 +23,6 @@ import {
     IClientDetails,
     IDocumentMessage,
     IHelpMessage,
-    IPendingProposal,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -61,8 +59,6 @@ export interface IProvideContainerRuntime {
 }
 
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
-    /** @deprecated codeDetailsProposed no longer fires on the container runtime. */
-    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
     (
         event: "dirty" | "disconnected" | "dispose" | "saved" | "attached",
         listener: () => void);
@@ -71,7 +67,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 }
 
 export type IContainerRuntimeBaseWithCombinedEvents =
-    IContainerRuntimeBase &  IEventProvider<IContainerRuntimeEvents>;
+    IContainerRuntimeBase & IEventProvider<IContainerRuntimeEvents>;
 
 /*
  * Represents the runtime of the container. Contains helper functions/state of the container.

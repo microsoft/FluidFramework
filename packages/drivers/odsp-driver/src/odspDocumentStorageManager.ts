@@ -17,9 +17,9 @@ import {
     ISummaryContext,
     IDocumentStorageService,
     LoaderCachingPolicy,
+    DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { RateLimiter } from "@fluidframework/driver-utils";
-import { throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { RateLimiter, NonRetryableError } from "@fluidframework/driver-utils";
 import {
     IOdspResolvedUrl,
     ISnapshotOptions,
@@ -508,10 +508,16 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             );
             const versionsResponse = response.content;
             if (!versionsResponse) {
-                throwOdspNetworkError("getVersionsReturnedNoResponse", 400);
+                throw new NonRetryableError(
+                    "getVersionsReturnedNoResponse",
+                    "No response from /versions endpoint",
+                    DriverErrorType.genericNetworkError);
             }
             if (!Array.isArray(versionsResponse.value)) {
-                throwOdspNetworkError("getVersionsReturnedNonArrayResponse", 400);
+                throw new NonRetryableError(
+                    "getVersionsReturnedNonArrayResponse",
+                    "Incorrect response from /versions endpoint",
+                    DriverErrorType.genericNetworkError);
             }
             return versionsResponse.value.map((version) => {
                 // Parse the date from the message
@@ -683,19 +689,28 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private checkSnapshotUrl() {
         if (!this.snapshotUrl) {
-            throwOdspNetworkError("methodNotSupportedBecauseNoSnapshotUrlWasProvided", 400);
+            throw new NonRetryableError(
+                "noSnapshotUrlProvided",
+                "Method failed because no snapshot url was available",
+                DriverErrorType.genericError);
         }
     }
 
     private checkAttachmentPOSTUrl() {
         if (!this.attachmentPOSTUrl) {
-            throwOdspNetworkError("methodNotSupportedBecauseNoAttachmentPOSTUrlWasProvided", 400);
+            throw new NonRetryableError(
+                "noAttachmentPOSTUrlProvided",
+                "Method failed because no attachment POST url was available",
+                DriverErrorType.genericError);
         }
     }
 
     private checkAttachmentGETUrl() {
         if (!this.attachmentGETUrl) {
-            throwOdspNetworkError("methodNotSupportedBecauseNoAttachmentGETUrlWasProvided", 400);
+            throw new NonRetryableError(
+                "noAttachmentGETUrlWasProvided",
+                "Method failed because no attachment GET url was available",
+                DriverErrorType.genericError);
         }
     }
 
