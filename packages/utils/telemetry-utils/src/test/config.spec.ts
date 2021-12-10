@@ -4,18 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { MockLogger } from "../mockLogger";
 import {
     ConfigProvider,
     ConfigTypes,
     IConfigProviderBase,
     inMemoryConfigProvider,
-    loggerToMonitoringContext,
 } from "../config";
-import { ChildLogger } from "../logger";
 
 describe("Config", () => {
-    const mockLogger = new MockLogger();
     const getMockStore = ((settings: Record<string, string>): Storage => {
         const ops: string[] = [];
         return {
@@ -38,132 +34,103 @@ describe("Config", () => {
         };
     });
 
-    it("Mixin namespaces", () => {
-        const settings = {
-            "Fluid.number": "1",
-            "Fluid.First.number": "2",
-            "Fluid.First.Unit.number": "3",
-            "Fluid.First.Unit.Test.number": "4",
-            "Fluid.Second.number": "5",
-            "Fluid.Second.Unit.number": "6",
-        };
-        const mockStore = getMockStore(settings);
-        const fluid = loggerToMonitoringContext(
-            mockLogger,
-            ConfigProvider.create([inMemoryConfigProvider(mockStore), mockLogger]));
-        const first = ChildLogger.create(fluid.logger, "First");
-        const firstUnit = ChildLogger.create(first.logger, "Unit");
-        const firstUnitTest = ChildLogger.create(firstUnit.logger, "Test");
-
-        const second = ChildLogger.create(fluid.logger, "Second");
-        const secondUnit = ChildLogger.create(second.logger, "Unit");
-
-        assert.equal(fluid.config.getNumber("number"), 1);
-        assert.equal(first.config.getNumber("number"), 2);
-        assert.equal(firstUnit.config.getNumber("number"), 3);
-        assert.equal(firstUnitTest.config.getNumber("number"), 4);
-        assert.equal(second.config.getNumber("number"), 5);
-        assert.equal(secondUnit.config.getNumber("number"), 6);
-        assert.deepEqual(mockStore.getOps(), Object.keys(settings));
-    });
-
     it("Typing - storage provider", () => {
         const settings = {
-            "Fluid.number": "1",
-            "Fluid.badNumber": "{1}",
-            "Fluid.stringThatLooksLikeANumber": "1",
-            "Fluid.stringThatLooksLikeABoolean": "true",
-            "Fluid.string": "string",
-            "Fluid.boolean": "true",
-            "Fluid.badBoolean": "truthy",
-            "Fluid.numberArray": `[1, 2, 3]`,
-            "Fluid.badNumberArray": `["one", "two", "three"]`,
-            "Fluid.stringArray": `["1", "2", "3"]`,
-            "Fluid.badStringArray": "1",
-            "Fluid.booleanArray": "[true, false, true]",
-            "Fluid.BadBooleanArray": "[true, 1, true]",
+            number: "1",
+            badNumber: "{1}",
+            stringThatLooksLikeANumber: "1",
+            stringThatLooksLikeABoolean: "true",
+            string: "string",
+            boolean: "true",
+            badBoolean: "truthy",
+            numberArray: `[1, 2, 3]`,
+            badNumberArray: `["one", "two", "three"]`,
+            stringArray: `["1", "2", "3"]`,
+            badStringArray: "1",
+            booleanArray: "[true, false, true]",
+            BadBooleanArray: "[true, 1, true]",
         };
 
         const mockStore = getMockStore(settings);
-        const config = ConfigProvider.create("Fluid", [inMemoryConfigProvider(mockStore).value]);
+        const config = ConfigProvider.create([inMemoryConfigProvider(mockStore)]);
 
-        assert.equal(config.getNumber("number"), 1);
-        assert.equal(config.getNumber("badNumber"), undefined);
+        assert.equal(config.getNumber("number", undefined), 1);
+        assert.equal(config.getNumber("badNumber", undefined), undefined);
 
-        assert.equal(config.getString("stringThatLooksLikeANumber"), "1");
-        assert.equal(config.getString("stringThatLooksLikeABoolean"), "true");
-        assert.equal(config.getString("string"), "string");
+        assert.equal(config.getString("stringThatLooksLikeANumber", undefined), "1");
+        assert.equal(config.getString("stringThatLooksLikeABoolean", undefined), "true");
+        assert.equal(config.getString("string", undefined), "string");
 
-        assert.equal(config.getBoolean("boolean"), true);
-        assert.equal(config.getBoolean("badBoolean"), undefined);
+        assert.equal(config.getBoolean("boolean", undefined), true);
+        assert.equal(config.getBoolean("badBoolean", undefined), undefined);
 
-        assert.deepEqual(config.getNumberArray("numberArray"), [1, 2, 3]);
-        assert.equal(config.getNumberArray("badNumberArray"), undefined);
+        assert.deepEqual(config.getNumberArray("numberArray", undefined), [1, 2, 3]);
+        assert.equal(config.getNumberArray("badNumberArray", undefined), undefined);
 
-        assert.deepEqual(config.getStringArray("stringArray"), ["1", "2", "3"]);
-        assert.equal(config.getStringArray("badStringArray"), undefined);
+        assert.deepEqual(config.getStringArray("stringArray", undefined), ["1", "2", "3"]);
+        assert.equal(config.getStringArray("badStringArray", undefined), undefined);
 
-        assert.deepEqual(config.getBooleanArray("booleanArray"), [true, false, true]);
-        assert.equal(config.getBooleanArray("BadBooleanArray"), undefined);
+        assert.deepEqual(config.getBooleanArray("booleanArray", undefined), [true, false, true]);
+        assert.equal(config.getBooleanArray("BadBooleanArray", undefined), undefined);
     });
 
     it("Typing - custom provider", () => {
         const settings = {
-            "Fluid.number": 1,
-            "Fluid.sortOfNumber": "1",
-            "Fluid.badNumber": "{1}",
-            "Fluid.stringThatLooksLikeANumber": "1",
-            "Fluid.stringThatLooksLikeABoolean": "true",
-            "Fluid.string": "string",
-            "Fluid.badString": [],
-            "Fluid.boolean": "true",
-            "Fluid.badBoolean": "truthy",
-            "Fluid.numberArray": `[1, 2, 3]`,
-            "Fluid.badNumberArray": ["one", "two", "three"],
-            "Fluid.stringArray": `["1", "2", "3"]`,
-            "Fluid.badStringArray": "1",
-            "Fluid.booleanArray": [true, false, true],
-            "Fluid.badBooleanArray": [1, 2, 3],
-            "Fluid.badBooleanArray2": ["true", "false", "true"],
+            number: 1,
+            sortOfNumber: "1",
+            badNumber: "{1}",
+            stringThatLooksLikeANumber: "1",
+            stringThatLooksLikeABoolean: "true",
+            string: "string",
+            badString: [],
+            boolean: "true",
+            badBoolean: "truthy",
+            numberArray: `[1, 2, 3]`,
+            badNumberArray: ["one", "two", "three"],
+            stringArray: `["1", "2", "3"]`,
+            badStringArray: "1",
+            booleanArray: [true, false, true],
+            badBooleanArray: [1, 2, 3],
+            badBooleanArray2: ["true", "false", "true"],
         };
 
         const mockStore = untypedProvider(settings);
-        const config = ConfigProvider.create("Fluid", [mockStore]);
+        const config = ConfigProvider.create([mockStore]);
 
-        assert.equal(config.getNumber("number"), 1);
-        assert.equal(config.getNumber("sortOfNumber"), 1);
-        assert.equal(config.getNumber("badNumber"), undefined);
+        assert.equal(config.getNumber("number", undefined), 1);
+        assert.equal(config.getNumber("sortOfNumber", undefined), 1);
+        assert.equal(config.getNumber("badNumber", undefined), undefined);
 
-        assert.equal(config.getString("stringThatLooksLikeANumber"), "1");
-        assert.equal(config.getString("stringThatLooksLikeABoolean"), "true");
-        assert.equal(config.getString("string"), "string");
-        assert.equal(config.getString("badString"), undefined);
+        assert.equal(config.getString("stringThatLooksLikeANumber", undefined), "1");
+        assert.equal(config.getString("stringThatLooksLikeABoolean", undefined), "true");
+        assert.equal(config.getString("string", undefined), "string");
+        assert.equal(config.getString("badString", undefined), undefined);
 
-        assert.equal(config.getBoolean("boolean"), true);
-        assert.equal(config.getBoolean("badBoolean"), undefined);
+        assert.equal(config.getBoolean("boolean", undefined), true);
+        assert.equal(config.getBoolean("badBoolean", undefined), undefined);
 
-        assert.deepEqual(config.getNumberArray("numberArray"), [1, 2, 3]);
-        assert.equal(config.getNumberArray("badNumberArray"), undefined);
+        assert.deepEqual(config.getNumberArray("numberArray", undefined), [1, 2, 3]);
+        assert.equal(config.getNumberArray("badNumberArray", undefined), undefined);
 
-        assert.deepEqual(config.getStringArray("stringArray"), ["1", "2", "3"]);
-        assert.equal(config.getStringArray("badStringArray"), undefined);
+        assert.deepEqual(config.getStringArray("stringArray", undefined), ["1", "2", "3"]);
+        assert.equal(config.getStringArray("badStringArray", undefined), undefined);
 
-        assert.deepEqual(config.getBooleanArray("booleanArray"), [true, false, true]);
-        assert.equal(config.getBooleanArray("badBooleanArray"), undefined);
-        assert.equal(config.getBooleanArray("badBooleanArray2"), undefined);
+        assert.deepEqual(config.getBooleanArray("booleanArray", undefined), [true, false, true]);
+        assert.equal(config.getBooleanArray("badBooleanArray", undefined), undefined);
+        assert.equal(config.getBooleanArray("badBooleanArray2", undefined), undefined);
     });
 
     it("Fallbacks", () => {
         const settings = {
-            "BadConfig.number": "{1}",
-            "BadConfig.boolean": "truthy",
-            "BadConfig.numberArray": `["one", "two", "three"]`,
-            "BadConfig.stringArray": "1",
-            "BadConfig.booleanArray": "[true, 1, true]",
+            number: "{1}",
+            boolean: "truthy",
+            numberArray: `["one", "two", "three"]`,
+            stringArray: "1",
+            booleanArray: "[true, 1, true]",
         };
 
         const mockStore = getMockStore(settings);
-        const config = ConfigProvider.create("BadConfig", [inMemoryConfigProvider(mockStore).value]);
+        const config = ConfigProvider.create([inMemoryConfigProvider(mockStore)]);
 
         assert.equal(config.getNumber("number", 0), 0);
         assert.equal(config.getNumber("does not exist", 1), 1);
@@ -178,7 +145,7 @@ describe("Config", () => {
     });
 
     it("Void provider", () => {
-        const config = ConfigProvider.create("Void", [inMemoryConfigProvider().value]);
+        const config = ConfigProvider.create([inMemoryConfigProvider(undefined)]);
         assert.equal(config.getNumber("number", 0), 0);
         assert.equal(config.getNumber("does not exist", 1), 1);
         assert.equal(config.getBoolean("boolean", true), true);
@@ -186,56 +153,53 @@ describe("Config", () => {
 
     it("Config priority", () => {
         const settings1 = {
-            "Priority.number": "1",
-            "Priority.string": "string1",
-            "Priority.boolean": "true",
-            "Priority.featureEnabled": "true",
-            "BreakGlass.Priority.featureEnabled": "false",
+            number: "1",
+            string: "string1",
+            boolean: "true",
+            featureEnabled: "false",
         };
         const settings2 = {
-            "Priority.number": "2",
-            "Priority.string": "string2",
-            "Priority.boolean": "false",
-            "Priority.number2": "3",
-            "Priority.featureEnabled": "true",
+            number: "2",
+            string: "string2",
+            boolean: "false",
+            number2: "3",
+            featureEnabled: "true",
         };
         const settings3 = {
-            "Priority.number2": "4",
-            "Priority.number3": "4",
-            "Priority.featureEnabled": "true",
+            number2: "4",
+            number3: "4",
+            featureEnabled: "true",
         };
 
         const config1 = ConfigProvider.create(
-            "Priority",
             [
-                inMemoryConfigProvider(getMockStore(settings1), "BreakGlass").value,
-                inMemoryConfigProvider(getMockStore(settings1)).value,
-                inMemoryConfigProvider(getMockStore(settings2)).value,
-                inMemoryConfigProvider(getMockStore(settings3)).value,
+                inMemoryConfigProvider(getMockStore(settings1)),
+                inMemoryConfigProvider(getMockStore(settings1)),
+                inMemoryConfigProvider(getMockStore(settings2)),
+                inMemoryConfigProvider(getMockStore(settings3)),
             ]);
 
         assert.equal(config1.getNumber("number", 2), 1); // from settings1
-        assert.equal(config1.getString("string"), "string1"); // from settings1
+        assert.equal(config1.getString("string", undefined), "string1"); // from settings1
         assert.equal(config1.getBoolean("boolean", true), true); // from settings1
-        assert.equal(config1.getNumber("number2"), 3); // from settings2
-        assert.equal(config1.getNumber("number3"), 4); // from settings3
-        assert.equal(config1.getBoolean("featureEnabled"), false); // from settings1.BreakGlass
+        assert.equal(config1.getNumber("number2", undefined), 3); // from settings2
+        assert.equal(config1.getNumber("number3", undefined), 4); // from settings3
+        assert.equal(config1.getBoolean("featureEnabled", undefined), false); // from settings1.BreakGlass
 
         const config2 = ConfigProvider.create(
-            "Priority",
             [
-                inMemoryConfigProvider(getMockStore(settings3)).value,
-                inMemoryConfigProvider(getMockStore(settings2)).value,
-                inMemoryConfigProvider(getMockStore(settings1)).value,
-                inMemoryConfigProvider(getMockStore(settings1), "BreakGlass").value,
+                inMemoryConfigProvider(getMockStore(settings3)),
+                inMemoryConfigProvider(getMockStore(settings2)),
+                inMemoryConfigProvider(getMockStore(settings1)),
+                inMemoryConfigProvider(getMockStore(settings1)),
             ]);
 
-        assert.equal(config2.getNumber("number"), 2); // from settings2
-        assert.equal(config2.getString("string"), "string2"); // from settings2
+        assert.equal(config2.getNumber("number", undefined), 2); // from settings2
+        assert.equal(config2.getString("string", undefined), "string2"); // from settings2
         assert.equal(config2.getBoolean("boolean", false), false); // from settings2
-        assert.equal(config2.getNumber("number2"), 4); // from settings3
-        assert.equal(config2.getNumber("number3"), 4); // from settings3
-        assert.equal(config1.getBoolean("featureEnabled"), false); // from settings1.BreakGlass
+        assert.equal(config2.getNumber("number2", undefined), 4); // from settings3
+        assert.equal(config2.getNumber("number3", undefined), 4); // from settings3
+        assert.equal(config1.getBoolean("featureEnabled", undefined), false); // from settings1.BreakGlass
     });
 
     // #region SettingsProvider
@@ -273,47 +237,47 @@ describe("Config", () => {
 
     it("Typing - SettingsProvider", () => {
         const settings = {
-            "Fluid.number": 1,
-            "Fluid.sortOfNumber": "1",
-            "Fluid.badNumber": "{1}",
-            "Fluid.stringThatLooksLikeANumber": "1",
-            "Fluid.stringThatLooksLikeABoolean": "true",
-            "Fluid.string": "string",
-            "Fluid.badString": [],
-            "Fluid.boolean": "true",
-            "Fluid.badBoolean": "truthy",
-            "Fluid.numberArray": `[1, 2, 3]`,
-            "Fluid.badNumberArray": ["one", "two", "three"],
-            "Fluid.stringArray": `["1", "2", "3"]`,
-            "Fluid.badStringArray": "1",
-            "Fluid.booleanArray": [true, false, true],
-            "Fluid.badBooleanArray": [1, 2, 3],
-            "Fluid.badBooleanArray2": ["true", "false", "true"],
+            number: 1,
+            sortOfNumber: "1",
+            badNumber: "{1}",
+            stringThatLooksLikeANumber: "1",
+            stringThatLooksLikeABoolean: "true",
+            string: "string",
+            badString: [],
+            boolean: "true",
+            badBoolean: "truthy",
+            numberArray: `[1, 2, 3]`,
+            badNumberArray: ["one", "two", "three"],
+            stringArray: `["1", "2", "3"]`,
+            badStringArray: "1",
+            booleanArray: [true, false, true],
+            badBooleanArray: [1, 2, 3],
+            badBooleanArray2: ["true", "false", "true"],
         };
 
-        const config = ConfigProvider.create("Fluid", [new HybridSettingsProvider(settings)]);
+        const config = ConfigProvider.create([new HybridSettingsProvider(settings)]);
 
-        assert.equal(config.getNumber("number"), 1);
-        assert.equal(config.getNumber("sortOfNumber"), 1);
-        assert.equal(config.getNumber("badNumber"), undefined);
+        assert.equal(config.getNumber("number", undefined), 1);
+        assert.equal(config.getNumber("sortOfNumber", undefined), 1);
+        assert.equal(config.getNumber("badNumber", undefined), undefined);
 
-        assert.equal(config.getString("stringThatLooksLikeANumber"), "1");
-        assert.equal(config.getString("stringThatLooksLikeABoolean"), "true");
-        assert.equal(config.getString("string"), "string");
-        assert.equal(config.getString("badString"), undefined);
+        assert.equal(config.getString("stringThatLooksLikeANumber", undefined), "1");
+        assert.equal(config.getString("stringThatLooksLikeABoolean", undefined), "true");
+        assert.equal(config.getString("string", undefined), "string");
+        assert.equal(config.getString("badString", undefined), undefined);
 
-        assert.equal(config.getBoolean("boolean"), true);
-        assert.equal(config.getBoolean("badBoolean"), undefined);
+        assert.equal(config.getBoolean("boolean", undefined), true);
+        assert.equal(config.getBoolean("badBoolean", undefined), undefined);
 
-        assert.deepEqual(config.getNumberArray("numberArray"), [1, 2, 3]);
-        assert.equal(config.getNumberArray("badNumberArray"), undefined);
+        assert.deepEqual(config.getNumberArray("numberArray", undefined), [1, 2, 3]);
+        assert.equal(config.getNumberArray("badNumberArray", undefined), undefined);
 
-        assert.deepEqual(config.getStringArray("stringArray"), ["1", "2", "3"]);
-        assert.equal(config.getStringArray("badStringArray"), undefined);
+        assert.deepEqual(config.getStringArray("stringArray", undefined), ["1", "2", "3"]);
+        assert.equal(config.getStringArray("badStringArray", undefined), undefined);
 
-        assert.deepEqual(config.getBooleanArray("booleanArray"), [true, false, true]);
-        assert.equal(config.getBooleanArray("badBooleanArray"), undefined);
-        assert.equal(config.getBooleanArray("badBooleanArray2"), undefined);
+        assert.deepEqual(config.getBooleanArray("booleanArray", undefined), [true, false, true]);
+        assert.equal(config.getBooleanArray("badBooleanArray", undefined), undefined);
+        assert.equal(config.getBooleanArray("badBooleanArray2", undefined), undefined);
     });
 
     // #endregion SettingsProvider
