@@ -114,7 +114,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public get IFluidRouter() { return this; }
-    public get IFluidHandle() {return this.innerHandle;}
+    public get IFluidHandle(): IFluidHandle {return this.innerHandle;}
 
     public get connected(): boolean {
         return this.dataStoreContext.connected;
@@ -295,10 +295,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     public async resolveHandle(request: IRequest): Promise<IResponse> {
         return this.request(request);
-    }
-
-    public async get(): Promise<FluidObject> {
-        return this.innerHandle;
     }
 
     public async request(request: IRequest): Promise<IResponse> {

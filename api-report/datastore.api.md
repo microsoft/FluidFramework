@@ -42,7 +42,7 @@ export enum DataStoreMessageType {
 
 // @public
 export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
-    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean);
+    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, initializeEntrypoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
     // (undocumented)
     get absolutePath(): string;
     // (undocumented)
@@ -72,6 +72,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
+    get(): Promise<FluidObject>;
+    // (undocumented)
     getAttachSummary(): ISummaryTreeWithStats;
     // (undocumented)
     getAudience(): IAudience;
@@ -83,6 +85,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     readonly id: string;
     // (undocumented)
+    get IFluidHandle(): IFluidHandle;
+    // (undocumented)
     get IFluidHandleContext(): this;
     // (undocumented)
     get IFluidRouter(): this;
@@ -90,6 +94,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get IFluidSerializer(): FluidSerializer;
     // (undocumented)
     get isAttached(): boolean;
+    // @deprecated (undocumented)
     static load(context: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean): FluidDataStoreRuntime;
     // (undocumented)
     readonly logger: ITelemetryLogger;
@@ -127,7 +132,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
 
 // @public (undocumented)
 export class FluidObjectHandle<T extends FluidObject = IFluidObject> implements IFluidHandle {
-    constructor(value: T, path: string, routeContext: IFluidHandleContext);
+    constructor(value: T | Promise<T>, path: string, routeContext: IFluidHandleContext);
     // (undocumented)
     readonly absolutePath: string;
     // (undocumented)
@@ -144,9 +149,7 @@ export class FluidObjectHandle<T extends FluidObject = IFluidObject> implements 
     readonly path: string;
     // (undocumented)
     readonly routeContext: IFluidHandleContext;
-    // (undocumented)
-    protected readonly value: T;
-}
+    }
 
 // @public (undocumented)
 export interface ISharedObjectRegistry {
