@@ -29,7 +29,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): PropertySet | undefined;
     // (undocumented)
-    addSerializedProps(jseg: IJSONSegment): void;
+    protected addSerializedProps(jseg: IJSONSegment): void;
     // (undocumented)
     abstract append(segment: ISegment): void;
     // (undocumented)

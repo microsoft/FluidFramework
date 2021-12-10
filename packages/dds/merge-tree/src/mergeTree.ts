@@ -538,17 +538,17 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         b.seq = this.seq;
     }
 
-    canAppend(segment: ISegment): boolean {
+    public canAppend(segment: ISegment): boolean {
         return false;
     }
 
-    addSerializedProps(jseg: IJSONSegment) {
+    protected addSerializedProps(jseg: IJSONSegment) {
         if (this.properties) {
             jseg.props = this.properties;
         }
     }
 
-    abstract toJSONObject(): any;
+    public abstract toJSONObject(): any;
 
     public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean {
         const currentSegmentGroup = this.segmentGroups.dequeue();
@@ -631,8 +631,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         }
     }
 
-    abstract clone(): ISegment;
-    abstract append(segment: ISegment): void;
+    public abstract clone(): ISegment;
+    public abstract append(segment: ISegment): void;
     protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
 }
 
