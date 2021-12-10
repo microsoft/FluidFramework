@@ -23,6 +23,7 @@ import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { createLoader, ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 
 const defaultDataStoreId = "default";
+let summarizer: ISummarizer;
 
 class TestDataObject extends DataObject {
     public static readonly dataObjectName = "TestDataObject";
@@ -30,6 +31,17 @@ class TestDataObject extends DataObject {
     public readonly getRuntime = () => this.runtime;
     public readonly getContext = () => this.context;
 }
+
+const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
+const maxOps = 10;
+const testContainerConfig: ITestContainerConfig = {
+    runtimeOptions: {
+        summaryOptions: {
+            initialSummarizerDelayMs: 0,
+            summaryConfigOverrides: { maxOps },
+        },
+    },
+};
 
 async function createContainer(
     provider: ITestObjectProvider,
@@ -82,21 +94,6 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
     return JSON.parse(json);
 }
 
-const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
-const maxOps = 10;
-const testContainerConfig: ITestContainerConfig = {
-    runtimeOptions: {
-        // strictly control summarization
-        summaryOptions: {
-            disableSummaries: true,
-            initialSummarizerDelayMs: 0,
-            summaryConfigOverrides: { maxOps },
-        },
-    },
-};
-
-let summarizer;
-
 // REVIEW: enable compat testing?
 describeNoCompat("Summaries", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -131,7 +128,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
         await flushPromises();
 
-        const seq: number = summarizer.runtime.deltaManager.lastSequenceNumber;
+        const seq: number = (summarizer as any).runtime.deltaManager.lastSequenceNumber;
         result = summarizer.summarizeOnDemand({ reason: "test" });
         startedResult = await result.summarizerStarted;
         assert(startedResult.success, "Summarizer should have successfully started");
@@ -211,8 +208,9 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
         await provider.ensureSynchronized();
 
-        const result = await summarizer.summarizeOnDemand({ reason: "test" });
-        assert(result.alreadyRunning === undefined, "Summarizer should not be running");
+        let result = summarizer.summarizeOnDemand({ reason: "test" });
+        const startResult = await result.summarizerStarted;
+        assert(startResult.success, "Summarizer should have started");
 
         const submitResult = await result.summarySubmitted;
 
@@ -232,7 +230,15 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
             summaryLogger: new TelemetryNullLogger(),
         });
 
-        await summarizer.closeOnDemandSummarizer();
+        summarizer.stop("summarizerClientDisconnected");
+        await flushPromises();
+
+        try {
+            result = summarizer.summarizeOnDemand({ reason: "test" });
+            assert(false, "summarizeOnDemand should not complete with disposed summarizer");
+        } catch(error) {
+            assert(error.errorType === "summarizingError", "Should throw a summarizer error");
+        }
 
         // Validate stats
         assert(stats.handleNodeCount === 0, "Expecting no handles for first summary.");

@@ -241,11 +241,6 @@ export class RunningSummarizer implements IDisposable {
         await this.summarizingLock;
     }
 
-    public async stopOnDemand() {
-        await this.waitStop(false);
-        this.stopSummarizerCallback("summarizerClientDisconnected");
-    }
-
     private async waitStart() {
         // Wait no longer than ack timeout for all pending
         const waitStartResult = await raceTimer(

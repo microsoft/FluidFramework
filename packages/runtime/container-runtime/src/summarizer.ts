@@ -271,18 +271,24 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             // Summarizer isn't running, so we need to start it, which is an async operation.
             // Manage the promise related to creating the cancellation token here.
             // The promises related to starting, summarizing,
-            // and submitting are communicate to the caller through the results builder.
+            // and submitting are communicated to the caller through the results builder.
             this.runningSummarizer = undefined;
             const coordinatorCreateP = this.runCoordinatorCreateFn(this.runtime);
 
             coordinatorCreateP.then((runCoordinator) => {
                 // Successully created the cancellation token. Start the summarizer.
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                const startP = this.start(this.runtime.clientId!,  runCoordinator, { disableHeuristics: true });
-                startP.then((runningSummarizer) => {
+                const startP = this.start(this.runtime.clientId!, runCoordinator, { disableHeuristics: true });
+                startP.then(async (runningSummarizer) => {
                     // Successfully started the summarizer. Run it.
                     builder.summarizerStarted.resolve({ success: true, data: undefined });
                     runningSummarizer.summarizeOnDemand(builder, ...args);
+                    // Wait for a command to stop or loss of connectivity before tearing down the summarizer and client.
+                    const stopReason = await Promise.race([this.stopDeferred.promise, runCoordinator.waitCancelled]);
+                    await runningSummarizer.waitStop(false);
+                    runCoordinator.stop(stopReason);
+                    this.dispose();
+                    this.runtime.closeFn();
                 }).catch((reason) => {
                     builder.fail("Failed to start summarizer", reason);
                 });
@@ -296,19 +302,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             throw SummarizingWarning.wrap(error, "summarizerRun", false /* logged */, this.logger);
         }
     };
-
-    /**
-     * Stops the RunningSummarizer and disposes the Summarizer.
-     * Intended to be used to dispose a Summarizer created via requestOnDemandSummarizer.
-     * @returns void
-     */
-    public async closeOnDemandSummarizer() {
-        if (this._disposed) {
-            return;
-        }
-        await this.runningSummarizer?.stopOnDemand();
-        this.runtime.closeFn();
-    }
 
     public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
         if (this._disposed || this.runningSummarizer === undefined || this.runningSummarizer.disposed) {
