@@ -15,7 +15,6 @@ import {
 import { IFileSnapshot } from "@fluidframework/replay-driver";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { ReplayDataStoreFactory, ReplayRuntimeFactory } from "./replayFluidFactories";
 import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
 import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
@@ -88,7 +87,7 @@ export async function loadContainer(
         new Map<string, IResolvedUrl>([[resolved.url, resolved]]),
     );
 
-    const dataStoreFactory = new ReplayDataStoreFactory(mixinDataStoreWithAnyChannel(FluidDataStoreRuntime));
+    const dataStoreFactory = new ReplayDataStoreFactory(mixinDataStoreWithAnyChannel());
     // List of data store registries in container runtime.
     const dataStoreRegistries = new Map([
         ["_scheduler", Promise.resolve(dataStoreFactory)],
