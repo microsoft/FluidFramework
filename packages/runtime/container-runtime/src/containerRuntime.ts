@@ -1133,16 +1133,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 cache: false,
                 reconnect: false,
                 summarizingClient: true,
-                url: "/",
             };
-            const requestLoader = this.context.loader;
-            const requestSeq = this.context.deltaManager.lastSequenceNumber;
             this.summaryManager = new SummaryManager(
                 this.summarizerClientElection,
                 this, // IConnectedState
                 this.summaryCollection,
                 this.logger,
-                async () => requestSummarizer(requestLoader, requestSeq, requestOptions),
+                formRequestSummarizerFn(this.context.loader, requestOptions),
                 new Throttler(
                     60 * 1000, // 60 sec delay window
                     30 * 1000, // 30 sec max delay
@@ -2399,7 +2396,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.pendingStateManager.getLocalState();
     }
 
-    public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = async (...args) => {
+    public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
         if (this.clientDetails.type === summarizerClientType) {
             return this.summarizer.summarizeOnDemand(...args);
         } else if (this.summaryManager !== undefined) {
@@ -2454,21 +2451,21 @@ export interface ISummarizerRequestOptions {
     cache: boolean,
     reconnect: boolean,
     summarizingClient: boolean,
-    url: string,
 }
 
 /**
- * Requests a Summarizer.
- * @param loader - the loader that resolves the request
+ * Forms a function that will request a Summarizer.
+ * @param loaderRouter - the loader acting as an IFluidRouter
  * @param lastSequenceNumber - the last sequence number (e.g., from DeltaManager)
  * @param cache - use cache to retrieve summarizer
  * @param summarizingClient - is summarizer client
  * @param reconnect - can reconnect on connection loss
  */
-export async function requestSummarizer(
-    loader: ILoader,
-    lastSequenceNumber: number,
-    { cache, reconnect, summarizingClient, url }: ISummarizerRequestOptions): Promise<ISummarizer> {
+export const formRequestSummarizerFn = (
+    loaderRouter: IFluidRouter,
+    options: ISummarizerRequestOptions,
+) => async () => {
+    const { cache, reconnect, summarizingClient } = options;
     const request: IRequest = {
         headers: {
             [LoaderHeader.cache]: cache,
@@ -2478,7 +2475,42 @@ export async function requestSummarizer(
             },
             [DriverHeader.summarizingClient]: summarizingClient,
             [LoaderHeader.reconnect]: reconnect,
-            [LoaderHeader.sequenceNumber]: lastSequenceNumber,
+        },
+        url: "/_summarizer",
+    };
+
+    const fluidObject = await requestFluidObject<FluidObject<ISummarizer>>(loaderRouter, request);
+    const summarizer = fluidObject.ISummarizer;
+
+    if (!summarizer) {
+        return Promise.reject(new Error("Fluid object does not implement ISummarizer"));
+    }
+
+    return summarizer;
+};
+
+/**
+ * Requests a Summarizer for the purpose of performing on-demand summary.
+ * @param loader - the loader that resolves the request
+ * @param url - the URL used to resolve the container
+ * @param options - options used to resolve the container
+ * @param reconnect - can reconnect on connection loss
+ * @param summarizingClient - is summarizer client
+ */
+export async function requestOnDemandSummarizer(
+    loader: ILoader,
+    url: string,
+    options: ISummarizerRequestOptions): Promise<ISummarizer> {
+    const { cache, reconnect, summarizingClient } = options;
+    const request: IRequest = {
+        headers: {
+            [LoaderHeader.cache]: cache,
+            [LoaderHeader.clientDetails]: {
+                capabilities: { interactive: false },
+                type: summarizerClientType,
+            },
+            [DriverHeader.summarizingClient]: summarizingClient,
+            [LoaderHeader.reconnect]: reconnect,
         },
         url,
     };

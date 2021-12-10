@@ -9,9 +9,10 @@ import { IContainer } from "@fluidframework/container-definitions";
 import {
     ContainerRuntime,
     ISummarizer,
+    IOnDemandSummarizeResults,
     ISummarizerRequestOptions,
     ISummaryRuntimeOptions,
-    requestSummarizer} from "@fluidframework/container-runtime";
+    requestOnDemandSummarizer} from "@fluidframework/container-runtime";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
@@ -60,7 +61,6 @@ async function createContainer(
 
 async function createSummarizer(
     provider: ITestObjectProvider,
-    lastSequenceNumber: number,
     options: ISummarizerRequestOptions): Promise<ISummarizer> {
     const loader = createLoader(
         [[provider.defaultCodeDetails, provider.createFluidEntryPoint(testContainerConfig)]],
@@ -74,8 +74,7 @@ async function createSummarizer(
     if (absoluteUrl === undefined) {
         throw new Error("URL could not be resolved");
     }
-    options.url = absoluteUrl;
-    return requestSummarizer(loader, lastSequenceNumber, options);
+    return requestOnDemandSummarizer(loader, absoluteUrl, options);
 }
 
 function readBlobContent(content: ISummaryBlob["content"]): unknown {
@@ -110,12 +109,12 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
             cache: false,
             reconnect: false,
             summarizingClient: true,
-            url: "",
         };
-        summarizer = await createSummarizer(provider, 0, options);
+        summarizer = await createSummarizer(provider, options);
 
-        let result = await summarizer.summarizeOnDemand({ reason: "test" });
-        assert(result.alreadyRunning === undefined, "Summarizer should not be running");
+        let result: IOnDemandSummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });
+        let startedResult = await result.summarizerStarted;
+        assert(startedResult.success, "Summarizer should have successfully started");
 
         let submitResult = await result.summarySubmitted;
 
@@ -133,12 +132,14 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
         await flushPromises();
 
         const seq: number = summarizer.runtime.deltaManager.lastSequenceNumber;
-        result = await summarizer.summarizeOnDemand({ reason: "test" });
-        assert(result.alreadyRunning === undefined, "Summarizer should not be running");
+        result = summarizer.summarizeOnDemand({ reason: "test" });
+        startedResult = await result.summarizerStarted;
+        assert(startedResult.success, "Summarizer should have successfully started");
 
         submitResult = await result.summarySubmitted;
-
+        assert(submitResult.success, "Result should be complete on success");
         assert(submitResult.data.referenceSequenceNumber === seq, "ref seq num");
+        assert(submitResult.data.stage === "submit", "Should have been submitted");
         assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
 
         broadcastResult = await result.summaryOpBroadcasted;
@@ -231,7 +232,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
             summaryLogger: new TelemetryNullLogger(),
         });
 
-        await summarizer.stopOnDemand();
+        await summarizer.closeOnDemandSummarizer();
 
         // Validate stats
         assert(stats.handleNodeCount === 0, "Expecting no handles for first summary.");

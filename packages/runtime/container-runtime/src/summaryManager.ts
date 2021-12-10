@@ -345,7 +345,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         return startWithInitialDelay;
     }
 
-    public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = async (...args) => {
+    public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
         if (this.summarizer === undefined) {
             throw Error("No running summarizer client");
             // TODO: could spawn a summarizer client temporarily.

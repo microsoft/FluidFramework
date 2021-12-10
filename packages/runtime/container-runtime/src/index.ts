@@ -9,7 +9,7 @@ export {
     ContainerRuntimeMessage,
     IGCRuntimeOptions,
     ISummarizerRequestOptions,
-    requestSummarizer,
+    requestOnDemandSummarizer,
     ISummaryRuntimeOptions,
     IContainerRuntimeOptions,
     isRuntimeMessage,

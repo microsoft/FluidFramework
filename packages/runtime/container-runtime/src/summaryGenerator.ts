@@ -21,6 +21,7 @@ import {
     ISummarizeOptions,
     IBroadcastSummaryResult,
     ISummarizeResults,
+    IOnDemandSummarizeResults,
     ISummarizeHeuristicData,
     ISubmitSummaryOptions,
     SubmitSummaryResult,
@@ -145,6 +146,22 @@ export class SummarizeResultBuilder {
             summaryOpBroadcasted: this.summaryOpBroadcasted.promise,
             receivedSummaryAckOrNack: this.receivedSummaryAckOrNack.promise,
         } as const;
+    }
+}
+
+export class OnDemandSummarizeResultBuilder extends SummarizeResultBuilder {
+    public readonly summarizerStarted = new Deferred<SummarizeResultPart<undefined>>();
+
+    public fail(message: string, error: any, nackSummaryResult?: INackSummaryResult, retryAfterSeconds?: number) {
+        this.summarizerStarted.resolve({ success: false, data: undefined, message, error, retryAfterSeconds });
+        super.fail(message, error, nackSummaryResult, retryAfterSeconds);
+    }
+
+    public build(): IOnDemandSummarizeResults {
+        return {
+            ...super.build(),
+            summarizerStarted: this.summarizerStarted.promise,
+        };
     }
 }
 

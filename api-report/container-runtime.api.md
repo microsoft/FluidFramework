@@ -395,6 +395,11 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly reason: string;
 }
 
+// @public (undocumented)
+export interface IOnDemandSummarizeResults extends ISummarizeResults {
+    readonly summarizerStarted: Promise<SummarizeResultPart<undefined>>;
+}
+
 // @public
 export interface IPendingFlush {
     // (undocumented)
@@ -499,7 +504,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidLo
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
     // (undocumented)
     stop(reason: SummarizerStopReason): void;
-    summarizeOnDemand(options: IOnDemandSummarizeOptions): Promise<OnDemandSummarizeResult>;
+    summarizeOnDemand(options: IOnDemandSummarizeOptions): IOnDemandSummarizeResults;
 }
 
 // @public (undocumented)
@@ -533,8 +538,6 @@ export interface ISummarizerRequestOptions {
     reconnect: boolean;
     // (undocumented)
     summarizingClient: boolean;
-    // (undocumented)
-    url: string;
 }
 
 // @public (undocumented)
@@ -639,13 +642,6 @@ export interface IUsedStateStats {
 export const neverCancelledSummaryToken: ISummaryCancellationToken;
 
 // @public (undocumented)
-export type OnDemandSummarizeResult = (ISummarizeResults & {
-    readonly alreadyRunning?: undefined;
-}) | {
-    readonly alreadyRunning: Promise<void>;
-};
-
-// @public (undocumented)
 export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 // @public (undocumented)
@@ -673,7 +669,7 @@ export class PendingStateManager implements IDisposable {
 }
 
 // @public
-export function requestSummarizer(loader: ILoader, lastSequenceNumber: number, { cache, reconnect, summarizingClient, url }: ISummarizerRequestOptions): Promise<ISummarizer>;
+export function requestOnDemandSummarizer(loader: ILoader, url: string, options: ISummarizerRequestOptions): Promise<ISummarizer>;
 
 // @public
 export class ScheduleManager {
@@ -692,6 +688,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     constructor(url: string,
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
     internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
+    closeOnDemandSummarizer(): Promise<void>;
     dispose(): void;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
@@ -704,8 +701,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     // (undocumented)
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
     stop(reason: SummarizerStopReason): void;
-    // (undocumented)
-    stopOnDemand(): Promise<void>;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     // (undocumented)

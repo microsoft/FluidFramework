@@ -28,6 +28,7 @@ import {
     SummarizerStopReason,
 } from "./summarizerTypes";
 import { SummarizeHeuristicData } from "./summarizerHeuristics";
+import { OnDemandSummarizeResultBuilder } from "./summaryGenerator";
 import { IConnectableRuntime } from ".";
 
 const summarizingError = "summarizingError";
@@ -166,6 +167,15 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         return stopReason;
     }
 
+    /**
+     * Put the summarizer in a started state, including creating and initializing the RunningSummarizer.
+     * The start request can come either from the SummaryManager (in the auto-summarize case) or from the user
+     * (in the on-demand case).
+     * @param onBehalfOf - ID of the client that requested that the summarizer start
+     * @param runCoordinator - cancellation token
+     * @param options - options to forward to the RunningSummarizer
+     * @returns - Promise that is fulfilled when the RunningSummarizer is ready
+     */
     private async start(
         onBehalfOf: string,
         runCoordinator: ICancellableSummarizerController,
@@ -246,27 +256,53 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         }
     }
 
-    public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = async (...args) => {
+    public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
         try {
             if (this._disposed) {
                 throw Error("Summarizer is already disposed.");
             }
-            if (this.runningSummarizer === undefined || this.runningSummarizer.disposed) {
-                this.runningSummarizer = undefined;
-                const runCoordinator: ICancellableSummarizerController =
-                    await this.runCoordinatorCreateFn(this.runtime);
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                await this.start(this.runtime.clientId!, runCoordinator, { disableHeuristics: true });
+            const builder = new OnDemandSummarizeResultBuilder();
+            if (this.runningSummarizer && !this.runningSummarizer.disposed) {
+                // Summarizer is already running. Go ahead and start.
+                builder.summarizerStarted.resolve({ success: true, data: undefined });
+                return this.runningSummarizer.summarizeOnDemand(builder, ...args);
             }
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.runningSummarizer!.summarizeOnDemand(...args);
+
+            // Summarizer isn't running, so we need to start it, which is an async operation.
+            // Manage the promise related to creating the cancellation token here.
+            // The promises related to starting, summarizing,
+            // and submitting are communicate to the caller through the results builder.
+            this.runningSummarizer = undefined;
+            const coordinatorCreateP = this.runCoordinatorCreateFn(this.runtime);
+
+            coordinatorCreateP.then((runCoordinator) => {
+                // Successully created the cancellation token. Start the summarizer.
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const startP = this.start(this.runtime.clientId!,  runCoordinator, { disableHeuristics: true });
+                startP.then((runningSummarizer) => {
+                    // Successfully started the summarizer. Run it.
+                    builder.summarizerStarted.resolve({ success: true, data: undefined });
+                    runningSummarizer.summarizeOnDemand(builder, ...args);
+                }).catch((reason) => {
+                    builder.fail("Failed to start summarizer", reason);
+                });
+            }).catch((reason) => {
+                builder.fail("Failed to create cancellation token", reason);
+            });
+
+            return builder.build();
         }
         catch (error) {
             throw SummarizingWarning.wrap(error, "summarizerRun", false /* logged */, this.logger);
         }
     };
 
-    public async stopOnDemand() {
+    /**
+     * Stops the RunningSummarizer and disposes the Summarizer.
+     * Intended to be used to dispose a Summarizer created via requestOnDemandSummarizer.
+     * @returns void
+     */
+    public async closeOnDemandSummarizer() {
         if (this._disposed) {
             return;
         }
