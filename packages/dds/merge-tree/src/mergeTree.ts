@@ -1089,10 +1089,10 @@ export class MergeTree {
     public readonly collabWindow = new CollaborationWindow();
     public pendingSegments: List<SegmentGroup> | undefined;
     private segmentsToScour: Heap<LRUSegment> | undefined;
-    // TODO: change this to ES6 map; add remove on segment remove
+    // TODO: add remove on segment remove
     // for now assume only markers have ids and so point directly at the Segment
     // if we need to have pointers to non-markers, we can change to point at local refs
-    private readonly idToSegment = createMap<ISegment>();
+    private readonly idToSegment = new Map<string, ISegment>();
     private minSeqListeners: Heap<MinListener> | undefined;
     // For diagnostics
     public getLongClientId?: (id: number) => string;
@@ -1156,7 +1156,7 @@ export class MergeTree {
 
     // TODO: remove id when segment removed
     public mapIdToSegment(id: string, segment: ISegment) {
-        this.idToSegment[id] = segment;
+        this.idToSegment.set(id, segment);
     }
 
     private addNode(block: IMergeBlock, node: IMergeNode) {
@@ -1918,7 +1918,7 @@ export class MergeTree {
 
     // TODO: error checking
     public getMarkerFromId(id: string) {
-        return this.idToSegment[id];
+        return this.idToSegment.get(id);
     }
 
     /**

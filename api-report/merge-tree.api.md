@@ -134,7 +134,7 @@ export class Client {
     // (undocumented)
     getLongClientId(shortClientId: number): string;
     // (undocumented)
-    getMarkerFromId(id: string): ISegment;
+    getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getOrAddShortClientId(longClientId: string): number;
     getPosition(segment: ISegment): number;
@@ -979,8 +979,6 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
     hierBlock(): HierMergeBlock | undefined;
     // (undocumented)
     setOrdinal(child: IMergeNode, index: number): void;
-    // (undocumented)
-    static traceOrdinals: boolean;
 }
 
 // @public (undocumented)
@@ -1037,7 +1035,7 @@ export class MergeTree {
     // (undocumented)
     getLongClientId?: (id: number) => string;
     // (undocumented)
-    getMarkerFromId(id: string): ISegment;
+    getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getPosition(node: MergeNode, refSeq: number, clientId: number): number;
     // (undocumented)
