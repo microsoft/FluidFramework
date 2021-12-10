@@ -47,6 +47,9 @@ export function convertSummaryTreeToWholeSummaryTree(parentHandle: string | unde
 export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(flatSummary: IWholeFlatSummary): INormalizedWholeSummary;
 
 // @public (undocumented)
+export function createFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): NetworkError;
+
+// @public (undocumented)
 export const defaultHash = "00000000";
 
 // @public (undocumented)
@@ -305,6 +308,18 @@ export interface IHistorian extends IGitService {
     getHeader(sha: string): Promise<resources.IHeader>;
 }
 
+// @public (undocumented)
+export interface INetworkErrorDetails {
+    // (undocumented)
+    canRetry: boolean;
+    // (undocumented)
+    isFatal: boolean;
+    // (undocumented)
+    message?: string;
+    // (undocumented)
+    retryAfter?: number;
+}
+
 // @public
 export interface INormalizedWholeSummary {
     // (undocumented)
@@ -452,9 +467,17 @@ export interface IWriteSummaryResponse {
 
 // @public (undocumented)
 export class NetworkError extends Error {
-    constructor(
-    code: number, message: string);
+    constructor(// isFatal is enough? -> LETS CREATE OTHER CLASSES
+    code: number, message: string, canRetry?: boolean, isFatal?: boolean, retryAfterMs?: number);
+    // (undocumented)
+    readonly canRetry?: boolean;
     readonly code: number;
+    // (undocumented)
+    get details(): INetworkErrorDetails | string;
+    // (undocumented)
+    readonly isFatal?: boolean;
+    // (undocumented)
+    readonly retryAfterMs?: number;
 }
 
 // @public (undocumented)
@@ -506,6 +529,9 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
     // (undocumented)
     writeSummaryTree(summaryTree: ISummaryTree_2, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number): Promise<string>;
     }
+
+// @public (undocumented)
+export function throwFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): never;
 
 // @public
 export function validateTokenClaims(token: string, documentId: string, tenantId: string): ITokenClaims;

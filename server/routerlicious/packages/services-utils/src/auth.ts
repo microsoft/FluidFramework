@@ -11,7 +11,6 @@ import * as jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 import {
     NetworkError,
-    throwR11sServiceNetworkError,
     validateTokenClaimsExpiration,
 } from "@fluidframework/server-services-client";
 import type { ICache, ITenantManager } from "@fluidframework/server-services-core";
@@ -30,19 +29,19 @@ export function validateTokenClaims(
     requireDocumentId = true): ITokenClaims {
     const claims = jwt.decode(token) as ITokenClaims;
     if (!claims) {
-        throwR11sServiceNetworkError("Missing token claims.", 403);
+        throw new NetworkError(403, "Missing token claims.");
     }
 
     if (claims.tenantId !== tenantId) {
-        throwR11sServiceNetworkError("TenantId in token claims does not match request.", 403);
+        throw new NetworkError(403, "TenantId in token claims does not match request.");
     }
 
     if (requireDocumentId && claims.documentId !== documentId) {
-        throwR11sServiceNetworkError("DocumentId in token claims does not match request.", 403);
+        throw new NetworkError(403, "DocumentId in token claims does not match request.");
     }
 
     if (claims.scopes === undefined || claims.scopes.length === 0) {
-        throwR11sServiceNetworkError("Missing scopes in token claims.", 403);
+        throw new NetworkError(403, "Missing scopes in token claims.");
     }
 
     return claims;

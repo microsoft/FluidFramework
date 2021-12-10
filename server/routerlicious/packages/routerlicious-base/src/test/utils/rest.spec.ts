@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { createR11sServiceNetworkError } from "@fluidframework/server-services-client";
+import { NetworkError } from "@fluidframework/server-services-client";
 import assert from "assert";
 import { Response } from "express";
 import { handleResponse } from "../../utils";
@@ -48,7 +48,7 @@ describe("Routerlicious Base", () => {
             });
             it("handles NetworkError error", async () => {
                 const mockResponse = new MockResponse();
-                const responseError = createR11sServiceNetworkError("Not Found", 404);
+                const responseError = new NetworkError(404, "Not Found");
                 await handleResponse(Promise.reject(responseError), (mockResponse as unknown) as Response);
                 assert.strictEqual(mockResponse.statusCode, responseError.code);
                 assert.strictEqual(mockResponse.responseData, JSON.stringify(responseError.message));

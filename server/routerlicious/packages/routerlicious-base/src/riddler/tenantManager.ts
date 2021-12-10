@@ -12,7 +12,7 @@ import {
     MongoManager,
     ISecretManager,
 } from "@fluidframework/server-services-core";
-import { createR11sServiceNetworkError } from "@fluidframework/server-services-client";
+import { NetworkError } from "@fluidframework/server-services-client";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
@@ -68,8 +68,8 @@ export class TenantManager {
                 if (error) {
                     // When `exp` claim exists in token claims, jsonwebtoken verifies token expiration.
                     reject(error instanceof jwt.TokenExpiredError
-                        ? createR11sServiceNetworkError("Token expired.", 401)
-                        : createR11sServiceNetworkError("Invalid token.", 403));
+                        ? new NetworkError(401, "Token expired.")
+                        : new NetworkError(403, "Invalid token."));
                 } else {
                     resolve();
                 }

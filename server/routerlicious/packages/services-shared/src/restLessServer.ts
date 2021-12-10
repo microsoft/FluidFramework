@@ -5,7 +5,7 @@
 
 import type { IncomingMessage } from "http";
 import qs from "querystring";
-import { throwR11sServiceNetworkError, RestLessFieldNames } from "@fluidframework/server-services-client";
+import { NetworkError, RestLessFieldNames } from "@fluidframework/server-services-client";
 import formidable from "formidable";
 
 export const decodeHeader = (
@@ -86,13 +86,13 @@ export class RestLessServer {
                 try {
                     request.body = JSON.parse(request.body);
                 } catch (e) {
-                    throwR11sServiceNetworkError("Failed to parse json body", 400);
+                    throw new NetworkError(400, "Failed to parse json body");
                 }
             } else if (contentType.includes("application/x-www-form-urlencoded")) {
                 try {
                     request.body = qs.parse(request.body);
                 } catch (e) {
-                    throwR11sServiceNetworkError("Failed to parse urlencoded body", 400);
+                    throw new NetworkError(400, "Failed to parse urlencoded body");
                 }
             }
         }

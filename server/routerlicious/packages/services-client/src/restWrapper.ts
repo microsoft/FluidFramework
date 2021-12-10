@@ -7,7 +7,7 @@ import * as querystring from "querystring";
 import { AxiosError, AxiosInstance, AxiosRequestConfig, default as Axios } from "axios";
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
-import { createR11sServiceNetworkError }  from "./error";
+import { createFluidServiceNetworkError, INetworkErrorDetails }  from "./error";
 
 export abstract class RestWrapper {
     constructor(
@@ -134,7 +134,7 @@ export class BasicRestWrapper extends RestWrapper {
 
                     if (error && error.config) {
                         // eslint-disable-next-line max-len
-                        debug(`[${error.config.method}] request to [${error.config.url}] failed with [${error.code}] [${error.message}]`);
+                        debug(`[${error.config.method}] request to [${error.config.url}] failed with [${error.code ?? error?.response?.status}] [${error.message}]`);
                     } else {
                         debug(`request to ${options.url} failed ${error ? error.message : ""}`);
                     }
@@ -154,7 +154,26 @@ export class BasicRestWrapper extends RestWrapper {
                             .then(resolve)
                             .catch(reject);
                     } else {
-                        reject(createR11sServiceNetworkError(error?.message, error?.response.status));
+                        if (error?.response?.status) {
+                            reject(createFluidServiceNetworkError(error?.response?.status, error?.response?.data));
+                        } else if (error?.message === "Network Error") {
+                            // If a service is temporarily down or a browser resource limit is reached, Axios will throw
+                            // a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
+                            // error message, "Network Error". "Network Error" can be retried, and is not fatal.
+                            const details: INetworkErrorDetails = {
+                                canRetry: true,
+                                isFatal: false,
+                                message: "Network Error",
+                            };
+                            reject(createFluidServiceNetworkError(-1, details));
+                        } else {
+                            const details: INetworkErrorDetails = {
+                                canRetry: false,
+                                isFatal: false,
+                                message: error?.message ?? "Unknown Error",
+                            };
+                            reject(createFluidServiceNetworkError(500, details));
+                        }
                     }
                 });
         });
