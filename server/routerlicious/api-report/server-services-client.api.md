@@ -310,13 +310,9 @@ export interface IHistorian extends IGitService {
 
 // @public
 export interface INetworkErrorDetails {
-    // (undocumented)
-    canRetry: boolean;
-    // (undocumented)
-    isFatal: boolean;
-    // (undocumented)
+    canRetry?: boolean;
+    isFatal?: boolean;
     message?: string;
-    // (undocumented)
     retryAfter?: number;
 }
 

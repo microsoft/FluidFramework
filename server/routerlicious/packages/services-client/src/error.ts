@@ -7,14 +7,29 @@
  * Represents the details associated with a {@link NetworkError}.
  */
 export interface INetworkErrorDetails {
-    canRetry: boolean;
-    isFatal: boolean;
+    /**
+     * Indicates whether this is an error that can be retried. Refer to {@link NetworkError#canRetry}.
+     */
+    canRetry?: boolean;
+    /**
+     * Indicates whether this error is fatal. This generally indicates that the error causes
+     * negative, non-recoverable impact to the component/caller and cannot be ignored.
+     * Refer to {@link NetworkError#isFatal}.
+     */
+    isFatal?: boolean;
+    /**
+     * Represents the message associated with the error. Refer to {@link NetworkError#message}.
+     */
     message?: string;
+    /**
+     * Represents the time in milliseconds that should be waited before retrying.
+     * Refer to {@link NetworkError#retryAfterMs}.
+     */
     retryAfter?: number;
 }
 
 /**
- * Represents errors associated with network communication communication.
+ * Represents errors associated with network communication.
  *
  * @remarks
  * The Fluid Framework server implementation includes a collection of services that communicate with each other
@@ -36,11 +51,13 @@ export class NetworkError extends Error {
         message: string,
         /**
          * Optional boolean indicating whether this is an error that can be retried.
+         * Only relevant when {@link NetworkError#isFatal} is false.
          * @public
          */
         public readonly canRetry?: boolean,
         /**
-         * Optional boolean indicating whether this error is fatal.
+         * Optional boolean indicating whether this error is fatal. This generally indicates that the error causes
+         * negative, non-recoverable impact to the component/caller and cannot be ignored.
          * @public
          */
         public readonly isFatal?: boolean,
@@ -96,7 +113,7 @@ export function createFluidServiceNetworkError(
     let retryAfter: number | undefined;
 
     if (errorData && typeof errorData === "object") {
-        message = errorData.message;
+        message = errorData.message ?? "Unknown Error";
         canRetry = errorData.canRetry;
         isFatal = errorData.isFatal;
         retryAfter = errorData.retryAfter;
@@ -113,28 +130,28 @@ export function createFluidServiceNetworkError(
             return new NetworkError(
                 statusCode,
                 message,
-                false,
-                false);
+                false,  /* canRetry */
+                false); /* isFatal */
         case 422:
             return new NetworkError(
                 statusCode,
                 message,
-                canRetry ?? false,
-                isFatal ?? false,
+                canRetry ?? false, /* canRetry */
+                isFatal ?? false,  /* isFatal */
                 canRetry ? retryAfter : undefined);
         case 429:
             return new NetworkError(
                 statusCode,
                 message,
-                true,
-                false,
+                true, /* canRetry */
+                false, /* isFatal */
                 retryAfter);
         case 500: {
             return new NetworkError(
                 statusCode,
                 message,
-                canRetry ?? true,
-                isFatal ?? false,
+                canRetry ?? true, /* canRetry */
+                isFatal ?? false, /* isFatal */
                 canRetry ? retryAfter : undefined);
         }
         case 502:
@@ -143,15 +160,15 @@ export function createFluidServiceNetworkError(
             return new NetworkError(
                 statusCode,
                 message,
-                true,
-                false,
+                true,  /* canRetry */
+                false, /* isFatal */
                 retryAfter);
         default:
             return new NetworkError(
                 statusCode,
                 message,
-                false,
-                true);
+                false, /* canRetry */
+                true); /* isFatal */
     }
 }
 
