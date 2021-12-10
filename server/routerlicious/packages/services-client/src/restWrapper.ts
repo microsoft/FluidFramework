@@ -162,9 +162,9 @@ export class BasicRestWrapper extends RestWrapper {
                             reject(createFluidServiceNetworkError(error?.response?.status, error?.response?.data));
                         } else if (error?.request) {
                             // The request was made but no response was received. That can happen if a service is
-                            // temporarily down or inaccessible due to network failures. We leverage that here detect
-                            // network failures and transform them into a NetworkError with code 502, which can be
-                            // retried and is not fatal.
+                            // temporarily down or inaccessible due to network failures. We leverage that in here
+                            // to detect network failures and transform them into a NetworkError with code 502,
+                            // which can be retried and is not fatal.
                             reject(createFluidServiceNetworkError(
                                 502, `Network Error: ${error?.message ?? "undefined"}`));
                         } else {
