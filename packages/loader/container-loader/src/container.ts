@@ -171,7 +171,7 @@ export enum ConnectionState {
  *          false: storage does not provide indication of how far the client is. Container processed
  *          all the ops known to it, but it maybe still behind.
  */
-export async function waitContainerToCatchUp(container: Container) {
+export async function waitContainerToCatchUp(container: IContainer) {
     // Make sure we stop waiting if container is closed.
     if (container.closed) {
         throw new Error("Container is closed");
@@ -218,7 +218,9 @@ export async function waitContainerToCatchUp(container: Container) {
         };
         container.on(connectedEventName, callback);
 
-        container.resume();
+        // TODO: Remove null check after next release #8523
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        container.resume!();
     });
 }
 
