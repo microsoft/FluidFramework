@@ -31,3 +31,5 @@ RUN npm run postinstall
 RUN npm run build:ci
 
 WORKDIR /app/packages/test/test-service-load
+
+RUN npm link ../test-app-insights-logger/
