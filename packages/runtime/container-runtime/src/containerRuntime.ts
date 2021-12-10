@@ -1185,13 +1185,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // we always initialize the entrypoint for consistency is call
             // patterns
             const entrypoint = await initializeEntrypoint(this);
-            // but if we are the summarizer, we don't expose the true
-            // entrypoint, we only expose the summarizer itself
-            if(this.context.clientDetails.type === summarizerClientType) {
-                return this.summarizer;
-            }else{
-                return entrypoint;
-            }
+            Object.defineProperty(entrypoint, ISummarizer, {
+                get: ()=>this.summarizer,
+            });
+            return entrypoint;
         });
 
         this.deltaManager.on("readonly", (readonly: boolean) => {
@@ -1293,17 +1290,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const parser = RequestParser.create(request);
             const id = parser.pathParts[0];
 
-            if(this.context.clientDetails.type === summarizerClientType) {
-                if (id === "_summarizer" && parser.pathParts.length === 1) {
-                    if (this._summarizer !== undefined) {
-                        return {
-                            status: 200,
-                            mimeType: "fluid/object",
-                            value: this.summarizer,
-                        };
-                    }
+            if (id === "_summarizer" && parser.pathParts.length === 1) {
+                if (this._summarizer !== undefined) {
+                    return {
+                        status: 200,
+                        mimeType: "fluid/object",
+                        value: this.summarizer,
+                    };
                 }
-                return create404Response(request);
             }
 
             const router: FluidObject<IFluidRouter> = await this.getEntrypoint();
