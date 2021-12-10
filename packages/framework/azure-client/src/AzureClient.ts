@@ -2,12 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Container, Loader } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader";
 import {
     IDocumentServiceFactory,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
@@ -128,7 +128,7 @@ export class AzureClient {
         return { container: fluidContainer, services };
     }
 
-    private getContainerServices(container: Container): AzureContainerServices {
+    private getContainerServices(container: IContainer): AzureContainerServices {
         return {
             audience: new AzureAudience(container),
         };

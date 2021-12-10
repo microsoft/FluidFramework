@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { Container } from "@fluidframework/container-loader";
+import { IContainer } from "@fluidframework/container-definitions";
 import { getCodeDetailsFromQuorum, parsePackageDetails } from "./utils";
 
 /**
@@ -11,7 +11,7 @@ import { getCodeDetailsFromQuorum, parsePackageDetails } from "./utils";
  *
  * @param container - Loaded Fluid container
  */
-export const setupUI = (container: Container) => {
+export const setupUI = (container: IContainer) => {
     // Observe container events to detect when it gets forcefully closed.
     container.once("closed", (error) => {
         if (
