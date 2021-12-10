@@ -12,6 +12,7 @@ import {
     IFluidHandleContext,
     IFluidObject,
     IFluidRouter,
+    IProvideFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -627,7 +628,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         containerScope: FluidObject = context.scope,
         existing?: boolean,
     ): Promise<ContainerRuntime> {
-        const createEntrypoint = async (runtime: IContainerRuntime) => {
+        const initializeEntrypoint = async (runtime: IContainerRuntime) => {
             const router: IFluidRouter = {
                 get IFluidRouter() {return this;},
                 async request(request: IRequest): Promise<IResponse> {
@@ -647,10 +648,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.loadFromProps({
             context,
             registryEntries,
-            createEntrypoint,
+            initializeEntrypoint,
             runtimeOptions,
             containerScope,
-
         });
     }
 
@@ -665,7 +665,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public static async loadFromProps(props: {
         context: IContainerContext;
         registryEntries: NamedFluidDataStoreRegistryEntries;
-        createEntrypoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+        initializeEntrypoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
         runtimeOptions?: IContainerRuntimeOptions;
         containerScope?: FluidObject;
     },
@@ -775,7 +775,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             logger,
             loadExisting,
             blobManagerSnapshot,
-            props.createEntrypoint,
+            props.initializeEntrypoint,
             storage,
         );
 
@@ -962,7 +962,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         public readonly logger: ITelemetryLogger,
         existing: boolean,
         blobManagerSnapshot: IBlobManagerLoadInfo,
-        createEntrypoint: (runtime: IContainerRuntime) => Promise<FluidObject>,
+        initializeEntrypoint: (runtime: IContainerRuntime) => Promise<FluidObject>,
         private _storage?: IDocumentStorageService,
     ) {
         super();
@@ -1182,9 +1182,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         this.entrypoint = new LazyPromise<FluidObject>(async ()=>{
-            // we always create the entrypoint for consistency is call
+            // we always initialize the entrypoint for consistency is call
             // patterns
-            const entrypoint = await createEntrypoint(this);
+            const entrypoint = await initializeEntrypoint(this);
             // but if we are the summarizer, we don't expose the true
             // entrypoint, we only expose the summarizer itself
             if(this.context.clientDetails.type === summarizerClientType) {
@@ -1609,14 +1609,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async getRootDataStore(id: string, wait = true):
-        Promise<IFluidRouter & Pick<IFluidDataStoreChannel, "getEntrypoint">> {
+        Promise<IFluidRouter & IProvideFluidHandle> {
         const context = await this.dataStores.getDataStore(id, wait);
         assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
         return context.realize();
     }
 
     protected async getDataStore(id: string, wait = true):
-        Promise<IFluidRouter& Pick<IFluidDataStoreChannel, "getEntrypoint">> {
+        Promise<IFluidRouter & IProvideFluidHandle> {
         return (await this.dataStores.getDataStore(id, wait)).realize();
     }
 

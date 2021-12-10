@@ -189,7 +189,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
-        createEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
+        initializeEntrypoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
     ) {
         super();
 
@@ -277,7 +277,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
 
         this.innerHandle = new FluidObjectHandle(
-            new LazyPromise(async () => createEntryPoint(this)),
+            new LazyPromise(async () => initializeEntrypoint(this)),
             "",
             this.objectsRoutingContext,
             );

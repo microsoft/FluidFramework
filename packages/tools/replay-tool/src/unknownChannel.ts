@@ -115,14 +115,14 @@ export function mixinDataStoreWithAnyChannel(
             dataStoreContext: IFluidDataStoreContext,
             sharedObjectRegistry: ISharedObjectRegistry,
             existing: boolean,
-            createEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
+            initializeEntrypoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
 
         ) {
             super(
                 dataStoreContext,
                 new ObjectRegistryWithUnknownChannels(sharedObjectRegistry),
                 existing,
-                createEntryPoint);
+                initializeEntrypoint);
         }
     } as typeof FluidDataStoreRuntime;
 }
