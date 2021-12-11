@@ -261,6 +261,10 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             if (this._disposed) {
                 throw Error("Summarizer is already disposed.");
             }
+            if (this.runtime.summarizerClientId !== undefined &&
+                this.runtime.summarizerClientId !== this.runtime.clientId) {
+                throw Error("On-demand summary attempted while an elected summarizer is present");
+            }
             const builder = new OnDemandSummarizeResultBuilder();
             if (this.runningSummarizer && !this.runningSummarizer.disposed) {
                 // Summarizer is already running. Go ahead and start.

@@ -1071,41 +1071,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.runtimeOptions.summaryOptions.disableSummaries = true;
         }
 
-        if (this.context.clientDetails.type === summarizerClientType) {
-            this._summarizer = new Summarizer(
-                "/_summarizer",
-                this /* ISummarizerRuntime */,
-                () => this.summaryConfiguration,
-                this /* ISummarizerInternalsProvider */,
-                this.IFluidHandleContext,
-                this.summaryCollection,
-                async (runtime: IConnectableRuntime) => RunWhileConnectedCoordinator.create(runtime),
-            );
-        }
-        else if (this.summariesDisabled) {
+        if (this.summariesDisabled) {
             this._logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
-        } else if (SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)) {
-            // Only create a SummaryManager and SummarizerClientElection
-            // if summaries are enabled and we are not the summarizer client.
-            const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 7000;
-            const defaultAction = () => {
-                if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
-                    this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
-                    // unregister default to no log on every op after falling behind
-                    // and register summary ack handler to re-register this handler
-                    // after successful summary
-                    this.summaryCollection.once(MessageType.SummaryAck, () => {
-                        this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
-                        // we've caught up, so re-register the default action to monitor for
-                        // falling behind, and unregister ourself
-                        this.summaryCollection.on("default", defaultAction);
-                    });
-                    this.summaryCollection.off("default", defaultAction);
-                }
-            };
-
-            this.summaryCollection.on("default", defaultAction);
-                const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
+        }
+        else {
+            const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
             const orderedClientCollection = new OrderedClientCollection(
                 orderedClientLogger,
                 this.context.deltaManager,
@@ -1119,6 +1089,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             );
             const summarizerClientElectionEnabled = getLocalStorageFeatureGate("summarizerClientElection") ??
                 this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
+            const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 7000;
             this.summarizerClientElection = new SummarizerClientElection(
                 orderedClientLogger,
                 this.summaryCollection,
@@ -1127,32 +1098,65 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 summarizerClientElectionEnabled,
             );
 
-            // Create the SummaryManager and mark the initial state
-            const requestOptions: ISummarizerRequestOptions =
-            {
-                cache: false,
-                reconnect: false,
-                summarizingClient: true,
-            };
-            this.summaryManager = new SummaryManager(
-                this.summarizerClientElection,
-                this, // IConnectedState
-                this.summaryCollection,
-                this.logger,
-                formRequestSummarizerFn(this.context.loader, requestOptions),
-                new Throttler(
-                    60 * 1000, // 60 sec delay window
-                    30 * 1000, // 30 sec max delay
-                    // throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
-                    formExponentialFn({ coefficient: 20, initialDelay: 0 }),
-                ),
+            if (this.context.clientDetails.type === summarizerClientType) {
+                this._summarizer = new Summarizer(
+                    "/_summarizer",
+                    this /* ISummarizerRuntime */,
+                    () => this.summaryConfiguration,
+                    this /* ISummarizerInternalsProvider */,
+                    this.IFluidHandleContext,
+                    this.summaryCollection,
+                    async (runtime: IConnectableRuntime) => RunWhileConnectedCoordinator.create(runtime),
+                );
+            }
+            else if (SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)) {
+                // Only create a SummaryManager and SummarizerClientElection
+                // if summaries are enabled and we are not the summarizer client.
+                const defaultAction = () => {
+                    if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
+                        this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
+                        // unregister default to no log on every op after falling behind
+                        // and register summary ack handler to re-register this handler
+                        // after successful summary
+                        this.summaryCollection.once(MessageType.SummaryAck, () => {
+                            this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
+                            // we've caught up, so re-register the default action to monitor for
+                            // falling behind, and unregister ourself
+                            this.summaryCollection.on("default", defaultAction);
+                        });
+                        this.summaryCollection.off("default", defaultAction);
+                    }
+                };
+
+                this.summaryCollection.on("default", defaultAction);
+
+                // Create the SummaryManager and mark the initial state
+                const requestOptions: ISummarizerRequestOptions =
                 {
-                    initialDelayMs: this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
-                },
-                this.runtimeOptions.summaryOptions.summarizerOptions,
-            );
-            this.summaryManager.on("summarizerWarning", this.raiseContainerWarning);
-            this.summaryManager.start();
+                    cache: false,
+                    reconnect: false,
+                    summarizingClient: true,
+                };
+                this.summaryManager = new SummaryManager(
+                    this.summarizerClientElection,
+                    this, // IConnectedState
+                    this.summaryCollection,
+                    this.logger,
+                    formRequestSummarizerFn(this.context.loader, requestOptions),
+                    new Throttler(
+                        60 * 1000, // 60 sec delay window
+                        30 * 1000, // 30 sec max delay
+                        // throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
+                        formExponentialFn({ coefficient: 20, initialDelay: 0 }),
+                    ),
+                    {
+                        initialDelayMs: this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
+                    },
+                    this.runtimeOptions.summaryOptions.summarizerOptions,
+                );
+                this.summaryManager.on("summarizerWarning", this.raiseContainerWarning);
+                this.summaryManager.start();
+            }
         }
 
         this.deltaManager.on("readonly", (readonly: boolean) => {
