@@ -184,6 +184,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly initialChannelsGCDetailsP: LazyPromise<Map<string, IGarbageCollectionSummaryDetails>>;
 
     private readonly innerHandle: IFluidHandle;
+    private initialized: boolean;
 
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -275,9 +276,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         if (existing) {
             this.deferredAttached.resolve();
         }
-
+        this.initialized = existing;
         this.innerHandle = new FluidObjectHandle(
-            new LazyPromise(async () => initializeEntrypoint(this)),
+            new LazyPromise(async () => {
+                const obj = initializeEntrypoint(this);
+                this.initialized = true;
+                return obj;
+            }),
             "",
             this.objectsRoutingContext,
             );
@@ -401,6 +406,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         if (this.graphAttachState !== AttachState.Detached) {
             return;
         }
+        assert(this.initialized, "data store must be initialized before attach to graph");
+
         this.graphAttachState = AttachState.Attaching;
         if (this.boundhandles !== undefined) {
             this.boundhandles.forEach((handle) => {
