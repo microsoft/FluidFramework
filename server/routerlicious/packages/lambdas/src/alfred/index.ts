@@ -358,6 +358,7 @@ export function configureWebSocketServices(
                     mode: "write",
                     serviceConfiguration: {
                         blockSize: connection.serviceConfiguration.blockSize,
+                        maxMessageSize: connection.serviceConfiguration.maxMessageSize,
                         summary: connection.serviceConfiguration.summary,
                     },
                     initialClients: clients,
