@@ -46,6 +46,9 @@ export function convertSummaryTreeToWholeSummaryTree(parentHandle: string | unde
 // @public
 export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(flatSummary: IWholeFlatSummary): INormalizedWholeSummary;
 
+// @public
+export function createFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): NetworkError;
+
 // @public (undocumented)
 export const defaultHash = "00000000";
 
@@ -306,6 +309,14 @@ export interface IHistorian extends IGitService {
 }
 
 // @public
+export interface INetworkErrorDetails {
+    canRetry?: boolean;
+    isFatal?: boolean;
+    message?: string;
+    retryAfter?: number;
+}
+
+// @public
 export interface INormalizedWholeSummary {
     // (undocumented)
     blobs: Map<string, ArrayBuffer>;
@@ -450,11 +461,19 @@ export interface IWriteSummaryResponse {
     id: string;
 }
 
-// @public (undocumented)
+// @public
 export class NetworkError extends Error {
     constructor(
-    code: number, message: string);
+    code: number,
+    message: string,
+    canRetry?: boolean,
+    isFatal?: boolean,
+    retryAfterMs?: number);
+    readonly canRetry?: boolean;
     readonly code: number;
+    get details(): INetworkErrorDetails | string;
+    readonly isFatal?: boolean;
+    readonly retryAfterMs?: number;
 }
 
 // @public (undocumented)
@@ -506,6 +525,9 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
     // (undocumented)
     writeSummaryTree(summaryTree: ISummaryTree_2, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number): Promise<string>;
     }
+
+// @public
+export function throwFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): never;
 
 // @public
 export function validateTokenClaims(token: string, documentId: string, tenantId: string): ITokenClaims;
