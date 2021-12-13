@@ -7,6 +7,11 @@
         "timestamp": true,
         "label": "winston"
     },
+    "dynamo": {
+        "table": "routerlicious",
+        "region": "us-west-2",
+        "endpoint": "https://dynamodb.us-west-2.amazonaws.com"
+    },
     "mongo": {
         "endpoint": "mongodb://mongodb:27017",
         "expireAfterSeconds": -1,
