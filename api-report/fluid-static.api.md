@@ -6,11 +6,11 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
-import { Container } from '@fluidframework/container-loader';
 import { DataObject } from '@fluidframework/aqueduct';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
+import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
@@ -38,7 +38,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 
 // @public
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
-    constructor(container: Container, rootDataObject: RootDataObject);
+    constructor(container: IContainer, rootDataObject: RootDataObject);
     attach(): Promise<string>;
     get attachState(): AttachState;
     get connected(): boolean;
@@ -127,11 +127,11 @@ export interface RootDataObjectProps {
 
 // @public
 export abstract class ServiceAudience<M extends IMember = IMember> extends TypedEventEmitter<IServiceAudienceEvents<M>> implements IServiceAudience<M> {
-    constructor(container: Container);
+    constructor(container: IContainer);
     // (undocumented)
     protected readonly audience: IAudience;
     // (undocumented)
-    protected readonly container: Container;
+    protected readonly container: IContainer;
     // (undocumented)
     protected abstract createServiceMember(audienceMember: IClient): M;
     getMembers(): Map<string, M>;
