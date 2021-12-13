@@ -5,7 +5,6 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import {
     IFluidLastEditedTracker,
     IProvideFluidLastEditedTracker,
@@ -32,7 +31,7 @@ export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvid
     }
 
     private static readonly factory =
-        new DataObjectFactory<Anchor, undefined, undefined, IEvent>(
+        new DataObjectFactory(
             "anchor",
             Anchor,
             [],

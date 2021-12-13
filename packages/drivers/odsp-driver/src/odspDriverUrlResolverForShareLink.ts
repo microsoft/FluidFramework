@@ -7,7 +7,7 @@ import { PromiseCache } from "@fluidframework/common-utils";
 import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { NonRetryableError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IOdspResolvedUrl,
@@ -15,6 +15,7 @@ import {
     isTokenFromCache,
     OdspResourceTokenFetchOptions,
     TokenFetcher,
+    OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
 import {
     getLocatorFromOdspUrl,
@@ -23,7 +24,6 @@ import {
     locatorQueryParamName,
 } from "./odspFluidFileLink";
 import { OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic";
-import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import { getOdspResolvedUrl, createOdspLogger } from "./odspUtils";
@@ -75,18 +75,6 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
                 tokenFetcher: this.toInstrumentedTokenFetcher(this.logger, shareLinkFetcherProps.tokenFetcher),
             };
         }
-    }
-
-    /**
-     * @deprecated - use createOdspCreateContainerRequest
-     */
-    public createCreateNewRequest(
-        siteUrl: string,
-        driveId: string,
-        filePath: string,
-        fileName: string,
-    ) {
-        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     }
 
     /**
@@ -145,8 +133,9 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             // We need to remove the nav param if set by host when setting the sharelink as otherwise the shareLinkId
             // when redeeming the share link during the redeem fallback for trees latest call becomes greater than
             // the eligible length.
+            odspResolvedUrl.sharingLinkToRedeem = this.removeNavParam(request.url);
             odspResolvedUrl.shareLinkInfo = Object.assign(odspResolvedUrl.shareLinkInfo || {},
-                {sharingLinkToRedeem: this.removeNavParam(request.url)});
+                {sharingLinkToRedeem: odspResolvedUrl.sharingLinkToRedeem});
         }
         if (odspResolvedUrl.itemId) {
             // Kick start the sharing link request if we don't have it already as a performance optimization.
@@ -174,7 +163,10 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
                 { eventName: "GetSharingLinkToken" },
                 async (event) => tokenFetcher(options).then((tokenResponse) => {
                     if (tokenResponse === null) {
-                        throwOdspNetworkError("shareLinkTokenIsNull", fetchTokenErrorCode);
+                        throw new NonRetryableError(
+                            "shareLinkTokenIsNull",
+                            "Token callback returned null",
+                            OdspErrorType.fetchTokenError);
                     }
                     event.end({ fromCache: isTokenFromCache(tokenResponse) });
                     return tokenResponse;

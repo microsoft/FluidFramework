@@ -8,7 +8,6 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedDirectory } from "@fluidframework/map";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
@@ -105,7 +104,7 @@ export class Pond extends DataObject implements IFluidHTMLView {
 
     public static getFactory() { return Pond.factory; }
 
-    private static readonly factory = new DataObjectFactory<Pond, undefined, undefined, IEvent>(
+    private static readonly factory = new DataObjectFactory(
         PondName,
         Pond,
         [SharedDirectory.getFactory()],

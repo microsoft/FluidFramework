@@ -14,7 +14,7 @@ import { RedisOptions } from "ioredis";
 import * as winston from "winston";
 
 export async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
-    const mongoUrl = config.get("mongo:endpoint") as string;
+    const mongoUrl = config.get("mongo:operationsDbEndpoint") as string;
     const bufferMaxEntries = config.get("mongo:bufferMaxEntries") as number | undefined;
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
@@ -35,10 +35,18 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const authEndpoint = config.get("auth:endpoint");
     const tenantManager = new services.TenantManager(authEndpoint);
 
+    // Database connection for global db if enabled
+    let globalDbMongoManager;
+    const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
+    if (globalDbEnabled) {
+        const globalDbMongoUrl = config.get("mongo:globalDbEndpoint") as string;
+        const globalDbMongoFactory = new services.MongoDbFactory(globalDbMongoUrl, bufferMaxEntries);
+        globalDbMongoManager = new core.MongoManager(globalDbMongoFactory, false);
+    }
     // Connection to stored document details
-    const mongoFactory = new services.MongoDbFactory(mongoUrl, bufferMaxEntries);
-    const mongoManager = new core.MongoManager(mongoFactory, false);
-    const client = await mongoManager.getDatabase();
+    const operationsDbMongoFactory = new services.MongoDbFactory(mongoUrl, bufferMaxEntries);
+    const operationsDbMongoManager = new core.MongoManager(operationsDbMongoFactory, false);
+    const client = await operationsDbMongoManager.getDatabase();
     // eslint-disable-next-line @typescript-eslint/await-thenable
     const collection = await client.collection<core.IDocument>(documentsCollectionName);
 
@@ -94,12 +102,13 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     await broadcasterLambda.start();
 
     return new DeliLambdaFactory(
-        mongoManager,
+        operationsDbMongoManager,
         collection,
         tenantManager,
         combinedProducer,
         reverseProducer,
-        core.DefaultServiceConfiguration);
+        core.DefaultServiceConfiguration,
+        globalDbMongoManager);
 }
 
 export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {

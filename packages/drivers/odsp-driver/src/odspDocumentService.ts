@@ -14,8 +14,8 @@ import {
     IDocumentStorageService,
     IDocumentServicePolicies,
 } from "@fluidframework/driver-definitions";
-import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
-import { fetchTokenErrorCode, IFacetCodes, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { DeltaStreamConnectionForbiddenError, NonRetryableError } from "@fluidframework/driver-utils";
+import { IFacetCodes } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
     ISequencedDocumentMessage,
@@ -26,6 +26,7 @@ import {
     IEntry,
     HostStoragePolicy,
     InstrumentedStorageTokenFetcher,
+    OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
 import { HostStoragePolicyInternal, ISocketStorageDiscovery } from "./contracts";
 import { IOdspCache } from "./odspCache";
@@ -211,7 +212,7 @@ export class OdspDocumentService implements IDocumentService {
             this.logger,
             batchSize,
             concurrency,
-            async (from, to, telemetryProps) => service.get(from, to, telemetryProps),
+            async (from, to, telemetryProps, fetchReason) => service.get(from, to, telemetryProps, fetchReason),
             async (from, to) => {
                 const res = await this.opsCache?.get(from, to);
                 return res as ISequencedDocumentMessage[] ?? [];
@@ -270,7 +271,10 @@ export class OdspDocumentService implements IDocumentService {
 
             const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken || null);
             if (finalWebsocketToken === null) {
-                throwOdspNetworkError("pushTokenIsNull", fetchTokenErrorCode);
+                throw new NonRetryableError(
+                    "pushTokenIsNull",
+                    "Websocket token is null",
+                    OdspErrorType.fetchTokenError);
             }
             try {
                 const connection = await this.connectToDeltaStreamWithRetry(

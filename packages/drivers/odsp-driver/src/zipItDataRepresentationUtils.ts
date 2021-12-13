@@ -9,7 +9,8 @@
 */
 
 import { assert, IsoBuffer, Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
-import { createOdspNetworkError, fetchIncorrectResponse } from "@fluidframework/odsp-doclib-utils";
+import { NonRetryableError } from "@fluidframework/driver-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { ReadBuffer } from "./ReadBufferUtils";
 
 // eslint-disable-next-line max-len
@@ -477,18 +478,14 @@ function throwBufferParseException(
     expectedNodeType: NodeType,
     message: string,
 ): never {
-    const error = createOdspNetworkError(
+    throw new NonRetryableError(
         "bufferParsingException",
         message,
-        fetchIncorrectResponse,
-        undefined,
-        undefined,
-        undefined,
+        DriverErrorType.incorrectServerResponse,
         {
             nodeType: getNodeType(node),
             expectedNodeType,
         });
-    throw error;
 }
 
 function getNodeType(value: NodeTypes): NodeType {

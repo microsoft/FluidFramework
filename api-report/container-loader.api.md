@@ -7,6 +7,7 @@
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
@@ -21,7 +22,6 @@ import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
 import { IFluidModule } from '@fluidframework/container-definitions';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
@@ -93,12 +93,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     raiseContainerWarning(warning: ContainerWarning): void;
-    // @deprecated
-    get readonly(): boolean | undefined;
     // (undocumented)
     get readOnlyInfo(): ReadOnlyInfo;
-    // @deprecated
-    get readonlyPermissions(): boolean | undefined;
     static rehydrateDetachedFromSnapshot(loader: Loader, snapshot: string): Promise<Container>;
     // (undocumented)
     request(path: IRequest): Promise<IResponse>;
@@ -122,7 +118,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     static version: string;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
@@ -152,7 +148,7 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
     getBlobIds(): string[];
 };
 
-// @public
+// @public @deprecated (undocumented)
 export interface IFluidModuleWithDetails {
     details: IFluidCodeDetails;
     module: IFluidModule;
@@ -172,7 +168,7 @@ export interface ILoaderProps {
     readonly logger?: ITelemetryBaseLogger;
     readonly options?: ILoaderOptions;
     readonly proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
-    readonly scope?: IFluidObject;
+    readonly scope?: FluidObject;
     readonly urlResolver: IUrlResolver;
 }
 
@@ -183,7 +179,7 @@ export interface ILoaderServices {
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly options: ILoaderOptions;
     readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
-    readonly scope: IFluidObject;
+    readonly scope: FluidObject;
     readonly subLogger: ITelemetryLogger;
     readonly urlResolver: IUrlResolver;
 }
@@ -217,7 +213,7 @@ export class RelativeLoader implements ILoader {
 }
 
 // @public
-export function waitContainerToCatchUp(container: Container): Promise<boolean>;
+export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;
 
 
 // (No @packageDocumentation comment for this package)

@@ -90,7 +90,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
     protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
     summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
-}
+    }
 
 // @public
 export class SummarySerializer extends FluidSerializer {

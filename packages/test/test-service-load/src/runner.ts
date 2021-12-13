@@ -5,13 +5,13 @@
 
 import commander from "commander";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { Container, Loader } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader";
 import random from "random-js";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
-import { LoaderHeader } from "@fluidframework/container-definitions";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore";
 import { createCodeLoader, createTestDriver, getProfile, loggerP, safeExit } from "./utils";
@@ -133,8 +133,11 @@ async function runnerProcess(
     seed: number,
 ): Promise<number> {
     try {
-        const loaderOptions = generateLoaderOptions(seed);
-        const containerOptions = generateRuntimeOptions(seed);
+        const loaderOptions = generateLoaderOptions(
+            seed, runConfig.testConfig?.optionOverrides?.[driver]?.loader);
+
+        const containerOptions = generateRuntimeOptions(
+            seed, runConfig.testConfig?.optionOverrides?.[driver]?.container);
 
         const testDriver: ITestDriver = await createTestDriver(driver, seed, runConfig.runId);
         const baseLogger = await loggerP;
@@ -172,8 +175,10 @@ async function runnerProcess(
                 options: loaderOptions[runConfig.runId % containerOptions.length],
             });
 
-            const container = await loader.resolve({ url, headers });
-            container.resume();
+            const container: IContainer = await loader.resolve({ url, headers });
+            // TODO: Remove null check after next release #8523
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            container.resume!();
             const test = await requestFluidObject<ILoadTest>(container, "/");
 
             // Control fault injection period through config.
@@ -218,7 +223,7 @@ async function runnerProcess(
 
 function scheduleFaultInjection(
     ds: FaultInjectionDocumentServiceFactory,
-    container: Container,
+    container: IContainer,
     runConfig: IRunConfig,
     faultInjectionMinMs: number,
     faultInjectionMaxMs: number) {
@@ -226,7 +231,8 @@ function scheduleFaultInjection(
         const injectionTime = random.integer(faultInjectionMinMs, faultInjectionMaxMs)(runConfig.randEng);
         printStatus(runConfig, `fault injection in ${(injectionTime / 60000).toString().substring(0, 4)} min`);
         setTimeout(() => {
-            if (container.connected && container.resolvedUrl !== undefined) {
+            // TODO: Remove null check after next release #8523
+            if (container.connected !== undefined && container.connected && container.resolvedUrl !== undefined) {
                 const deltaConn =
                     ds.documentServices.get(container.resolvedUrl)?.documentDeltaConnection;
                 if (deltaConn !== undefined) {
@@ -249,7 +255,7 @@ function scheduleFaultInjection(
                         case 3:
                         case 4:
                         default: {
-                            deltaConn.injectNack(container.id, canRetry);
+                            deltaConn.injectNack((container.resolvedUrl as IFluidResolvedUrl).id, canRetry);
                             printStatus(runConfig, `nack injected canRetry:${canRetry}`);
                             break;
                         }
@@ -265,17 +271,18 @@ function scheduleFaultInjection(
 }
 
 function scheduleContainerClose(
-    container: Container,
+    container: IContainer,
     runConfig: IRunConfig,
     faultInjectionMinMs: number,
     faultInjectionMaxMs: number) {
     new Promise<void>((res) => {
         // wait for the container to connect write
-        container.once("closed", res);
-        if (!container.connected && !container.closed) {
+        container.once("closed", () => res);
+        // TODO: Remove null check after next release #8523
+        if (container.connected !== undefined && !container.connected && !container.closed) {
             container.once("connected", () => {
                 res();
-                container.off("closed", res);
+                container.off("closed", () => res);
             });
         }
     }).then(() => {

@@ -1,5 +1,3 @@
-### Broken link report ⚠
-
 🔗 Found some broken links! 💔
 
 Run a link check locally to find them. See

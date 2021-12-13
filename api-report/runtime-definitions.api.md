@@ -6,6 +6,7 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
@@ -119,6 +120,8 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     applyStashedOp(content: any): Promise<unknown>;
     attachGraph(): void;
     readonly attachState: AttachState;
+    // @deprecated (undocumented)
+    bindToContext(): void;
     getAttachSummary(): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
@@ -166,7 +169,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly options: ILoaderOptions;
     readonly packagePath: readonly string[];
     raiseContainerWarning(warning: ContainerWarning): void;
-    readonly scope: IFluidObject;
+    readonly scope: IFluidObject & FluidObject;
     setChannelDirty(address: string): void;
     // (undocumented)
     readonly storage: IDocumentStorageService;
@@ -209,6 +212,20 @@ export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry 
 export interface IGarbageCollectionData {
     gcNodes: {
         [id: string]: string[];
+    };
+}
+
+// @public
+export interface IGarbageCollectionNodeData {
+    outboundRoutes: string[];
+    unreferencedTimestampMs?: number;
+}
+
+// @public
+export interface IGarbageCollectionState {
+    // (undocumented)
+    gcNodes: {
+        [id: string]: IGarbageCollectionNodeData;
     };
 }
 
@@ -296,7 +313,6 @@ export interface ISummarizerNodeConfig {
 // @public (undocumented)
 export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
     readonly gcDisabled?: boolean;
-    readonly maxUnreferencedDurationMs?: number;
 }
 
 // @public
