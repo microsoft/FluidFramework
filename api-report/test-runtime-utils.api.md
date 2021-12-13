@@ -387,6 +387,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     getQuorum(): IQuorum;
     // (undocumented)
+    handle: MockHandle<any>;
+    // (undocumented)
     readonly id: string;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;

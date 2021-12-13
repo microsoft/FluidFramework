@@ -12,7 +12,6 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
     IFluidHandleContext,
-    IProvideFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -373,14 +372,14 @@ export class MockQuorum implements IQuorum, EventEmitter {
  * Mock implementation of IRuntime for testing that does nothing
  */
 export class MockFluidDataStoreRuntime extends EventEmitter
-    implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext, IProvideFluidHandle {
+    implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
     public get IFluidHandleContext(): IFluidHandleContext { return this; }
     public get rootRoutingContext(): IFluidHandleContext { return this; }
     public get channelsRoutingContext(): IFluidHandleContext { return this; }
     public get objectsRoutingContext(): IFluidHandleContext { return this; }
 
     public get IFluidRouter() { return this; }
-    public IFluidHandle = new MockHandle(null, "", "");
+    public handle = new MockHandle(null, "", "");
 
     public readonly IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
 

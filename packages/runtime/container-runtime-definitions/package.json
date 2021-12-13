@@ -86,11 +86,6 @@
         "InterfaceDeclaration_IContainerRuntime": {
           "backCompat": false
         }
-      },
-      "0.53.0":{
-        "InterfaceDeclaration_IContainerRuntime": {"forwardCompat": false},
-        "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {"forwardCompat": false},
-        "InterfaceDeclaration_IProvideContainerRuntime": {"forwardCompat": false}
       }
     }
   }
