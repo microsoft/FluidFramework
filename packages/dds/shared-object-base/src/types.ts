@@ -4,7 +4,7 @@
  */
 
 import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-import { IChannel, IChannelServices } from "@fluidframework/datastore-definitions";
+import { IChannel, IChannelServices, ISnaphost } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
@@ -31,15 +31,10 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     isAttached(): boolean;
 
     /**
-     * Capture the current content of the channel to be used to generate a summary by summarizeState
-     * @returns Current state sufficient to create a summary to be generated asynchronously
+     * Capture the current content of the channel to be used to generate a summary
+     * @returns Object containing captured state that exposes functionality over that state (e.g. produce summary)
      */
-    captureSummaryState(fullTree?: boolean): any;
-
-    /**
-     * Produce a summary from the previously captured state
-     */
-    summarizeState(capture: any): Promise<ISummaryTreeWithStats>;
+    captureState(): ISnaphost;
 
     /**
      * Enables the channel to send and receive ops.
