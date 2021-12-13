@@ -11,8 +11,9 @@ import {
     IRuntime,
     IProxyLoaderFactory,
     ILoaderOptions,
+    IContainer,
 } from "@fluidframework/container-definitions";
-import { Loader, Container } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import {
@@ -159,7 +160,7 @@ export class IFrameOuterHost {
      * provides only limited functionality.
      * @param request - The request to resolve on the internal loader
      */
-    public async loadContainer(request: IRequest): Promise<Container> {
+    public async loadContainer(request: IRequest): Promise<IContainer> {
         return this.loader.resolve(request);
     }
 }
