@@ -96,7 +96,7 @@ export function getRequestErrorTranslator(
     const standardLogErrorMessage = `[${method}] Request to [${url}] failed`;
     const requestErrorTranslator = (error: any): never => {
         if (typeof error === "object" && error instanceof Error && error.name === "NetworkError") {
-            // BasicRestWrapper throws NetworkErrors that decribe the error details associated with the network call.
+            // BasicRestWrapper throws NetworkErrors that describe the error details associated with the network call.
             // Here, we log information associated with the error for debugging purposes, and re-throw.
             const networkError = error as NetworkError;
             // eslint-disable-next-line max-len
