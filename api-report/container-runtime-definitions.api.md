@@ -21,7 +21,6 @@ import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHelpMessage } from '@fluidframework/protocol-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
-import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -39,14 +38,14 @@ export interface IContainerRuntime extends IProvideContainerRuntime, IProvideFlu
     // (undocumented)
     readonly connected: boolean;
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
-    createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter & Partial<IProvideFluidHandle>>;
+    createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     flush(): void;
     // (undocumented)
     readonly flushMode: FlushMode;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter & Partial<IProvideFluidHandle>>;
+    getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     // (undocumented)
     readonly id: string;
     readonly isDirty: boolean;

@@ -17,7 +17,6 @@ import {
     IFluidRouter,
     IFluidCodeDetails,
     isFluidCodeDetails,
-    FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -885,10 +884,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         },
         { start: true, end: true, cancel: "generic" });
-    }
-
-    public async getEntrypoint(): Promise<FluidObject> {
-        return this.context.getEntrypoint();
     }
 
     public async request(path: IRequest): Promise<IResponse> {

@@ -245,14 +245,6 @@ export class ContainerContext implements IContainerContext {
         this.runtime.processSignal(message, local);
     }
 
-    public async getEntrypoint(): Promise<FluidObject> {
-        const maybeEntrypoint: IRuntime & {getEntrypoint?(): Promise<FluidObject>} = this.runtime;
-        if(maybeEntrypoint.getEntrypoint === undefined) {
-            return maybeEntrypoint.request({url:"/"});
-        }
-        return maybeEntrypoint.getEntrypoint();
-    }
-
     public async request(path: IRequest): Promise<IResponse> {
         return this.runtime.request(path);
     }

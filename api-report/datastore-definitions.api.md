@@ -21,7 +21,6 @@ import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
-import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
 import { IQuorum } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
@@ -89,7 +88,7 @@ export interface IDeltaHandler {
 }
 
 // @public
-export interface IFluidDataStoreRuntime extends IFluidRouter, Partial<IProvideFluidHandle>, IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable, Partial<IProvideFluidDataStoreRegistry> {
+export interface IFluidDataStoreRuntime extends IFluidRouter, IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable, Partial<IProvideFluidDataStoreRegistry> {
     readonly attachState: AttachState;
     bindChannel(channel: IChannel): void;
     // (undocumented)

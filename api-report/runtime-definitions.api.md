@@ -19,7 +19,6 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
-import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorum } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -82,14 +81,12 @@ export interface IAttachMessage {
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents>, IProvideFluidHandleContext {
     // (undocumented)
     readonly clientDetails: IClientDetails;
-    createDataStore(pkg: string | string[]): Promise<IFluidRouter & Partial<IProvideFluidHandle>>;
+    createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
     // @internal @deprecated (undocumented)
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IFluidRouter & Partial<IProvideFluidHandle>>;
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IFluidRouter>;
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
-    // (undocumented)
-    getEntrypoint?(): Promise<FluidObject>;
     getQuorum(): IQuorum;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
@@ -118,7 +115,7 @@ export interface IEnvelope {
 }
 
 // @public
-export interface IFluidDataStoreChannel extends IFluidRouter, Partial<IProvideFluidHandle>, IDisposable {
+export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     attachGraph(): void;
@@ -126,8 +123,6 @@ export interface IFluidDataStoreChannel extends IFluidRouter, Partial<IProvideFl
     // @deprecated (undocumented)
     bindToContext(): void;
     getAttachSummary(): ISummaryTreeWithStats;
-    // (undocumented)
-    getEntrypoint?(): Promise<FluidObject>;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     readonly id: string;

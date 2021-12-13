@@ -34,7 +34,6 @@ import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IFluidTokenProvider } from '@fluidframework/container-definitions';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
-import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
 import { IQuorum } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -118,16 +117,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     getAudience(): IAudience;
     // (undocumented)
-    protected getDataStore(id: string, wait?: boolean): Promise<IFluidRouter & Partial<IProvideFluidHandle>>;
-    // (undocumented)
-    getEntrypoint(): Promise<FluidObject>;
+    protected getDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     getPendingLocalState(): IPendingLocalState | undefined;
     // (undocumented)
     getQuorum(): IQuorum;
     // (undocumented)
-    getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter & Partial<IProvideFluidHandle>>;
+    getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     // (undocumented)
     get IContainerRuntime(): this;
     // (undocumented)
@@ -143,15 +140,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get IFluidTokenProvider(): IFluidTokenProvider | undefined;
     get isDirty(): boolean;
-    // @deprecated (undocumented)
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean): Promise<ContainerRuntime>;
-    static loadFromProps(props: {
-        context: IContainerContext;
-        registryEntries: NamedFluidDataStoreRegistryEntries;
-        initializeEntrypoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
-        runtimeOptions?: IContainerRuntimeOptions;
-        containerScope?: FluidObject;
-    }): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)

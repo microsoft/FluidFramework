@@ -36,7 +36,6 @@ import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionSummaryDetails } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
-import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
 import { IQuorum } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -338,7 +337,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 }
 
 // @public
-export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext, IProvideFluidHandle {
+export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
     // (undocumented)
     get absolutePath(): string;
     // (undocumented)
@@ -389,8 +388,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     getQuorum(): IQuorum;
     // (undocumented)
     readonly id: string;
-    // (undocumented)
-    IFluidHandle: MockHandle<any>;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)
