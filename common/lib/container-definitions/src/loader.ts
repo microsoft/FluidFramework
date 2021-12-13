@@ -249,7 +249,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
-    getEntrypoint?(): Promise<FluidObject>;
 
     /**
      * Issue a request against the container for a resource.

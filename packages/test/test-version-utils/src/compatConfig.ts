@@ -239,7 +239,7 @@ export function describeFullCompat(
     name: string,
     tests: (provider: (resetAfterEach?: boolean) => ITestObjectProvider) => void,
 ) {
-    describeCompat(name, tests);
+    describeCompat(name, tests,  [CompatKind.None]);
 }
 
 /*

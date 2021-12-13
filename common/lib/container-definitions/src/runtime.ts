@@ -66,8 +66,6 @@ export enum BindState {
  */
 export interface IRuntime extends IDisposable {
 
-    getEntrypoint?(): Promise<FluidObject>;
-
     /**
      * Executes a request against the runtime
      */
