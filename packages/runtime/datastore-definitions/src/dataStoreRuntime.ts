@@ -7,9 +7,7 @@ import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidfra
 import {
     IFluidHandleContext,
     IFluidSerializer,
-    IFluidRouter,
     IFluidHandle,
-    IProvideFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -23,7 +21,11 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { IInboundSignalMessage, IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
+import {
+    IFluidDataStoreRuntimeEntrypoint,
+    IInboundSignalMessage,
+    IProvideFluidDataStoreRegistry,
+} from "@fluidframework/runtime-definitions";
 import { IChannel } from ".";
 
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
@@ -40,8 +42,7 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
  */
 export interface IFluidDataStoreRuntime extends
-    IFluidRouter,
-    Partial<IProvideFluidHandle>,
+    IFluidDataStoreRuntimeEntrypoint,
     IEventProvider<IFluidDataStoreRuntimeEvents>,
     IDisposable,
     Partial<IProvideFluidDataStoreRegistry> {

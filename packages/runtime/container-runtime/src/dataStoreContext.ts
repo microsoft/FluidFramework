@@ -333,7 +333,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.bindRuntime(channel);
         if(!existing) {
             // load the handle to initialize the object
-            await channel.IFluidHandle?.get();
+            await channel.handle?.get();
         }
     }
 
@@ -998,7 +998,7 @@ export class LocalDetachedFluidDataStoreContext
         super.bindRuntime(dataStoreRuntime);
 
          // load the handle to initialize the object
-        await dataStoreRuntime.IFluidHandle?.get();
+        await dataStoreRuntime.handle?.get();
 
         if (this.isRootDataStore) {
             dataStoreRuntime.bindToContext();

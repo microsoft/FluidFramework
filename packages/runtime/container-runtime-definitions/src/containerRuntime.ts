@@ -14,9 +14,7 @@ import {
     IRequest,
     IResponse,
     IFluidObject,
-    IFluidRouter,
     FluidObject,
-    IProvideFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -31,6 +29,7 @@ import {
     IContainerRuntimeBaseEvents,
     IFluidDataStoreContextDetached,
     IProvideFluidDataStoreRegistry,
+    IFluidDataStoreRuntimeEntrypoint,
  } from "@fluidframework/runtime-definitions";
 
 declare module "@fluidframework/core-interfaces" {
@@ -95,7 +94,7 @@ export interface IContainerRuntime extends
      * @param id - Id supplied during creating the data store.
      * @param wait - True if you want to wait for it.
      */
-    getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter & Partial<IProvideFluidHandle>>;
+    getRootDataStore(id: string, wait?: boolean): Promise<IFluidDataStoreRuntimeEntrypoint>;
 
     /**
      * Creates root data store in container. Such store is automatically bound to container, and thus is
@@ -108,7 +107,7 @@ export interface IContainerRuntime extends
      * it results in container corruption - loading this file after that will always result in error.
      */
     createRootDataStore(pkg: string | string[], rootDataStoreId: string):
-        Promise<IFluidRouter & Partial<IProvideFluidHandle>>;
+        Promise<IFluidDataStoreRuntimeEntrypoint>;
 
     /**
      * Creates detached data store context. Data store initialization is considered compete

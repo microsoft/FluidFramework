@@ -114,7 +114,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public get IFluidRouter() { return this; }
-    public get IFluidHandle(): IFluidHandle {return this.innerHandle;}
+    public get handle() {return this.innerHandle;}
 
     public get connected(): boolean {
         return this.dataStoreContext.connected;

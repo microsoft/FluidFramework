@@ -65,7 +65,7 @@ async function createDataObject<TObj extends PureDataObject,I extends DataObject
     // request mixin in
     runtimeClass = mixinRequestHandler(
         async (request: IRequest, runtimeArg: FluidDataStoreRuntime) =>{
-            const router: FluidObject<IFluidRouter> = await runtimeArg.IFluidHandle.get();
+            const router: FluidObject<IFluidRouter> = await runtimeArg.handle.get();
             if(router.IFluidRouter) {
                 return router.IFluidRouter.request(request);
             }
@@ -106,7 +106,7 @@ async function createDataObject<TObj extends PureDataObject,I extends DataObject
     // In the future, we should address it by using relative paths for handles and be able to resolve
     // local DDSs while data store is not fully initialized.
     if (!existing) {
-        await runtime.IFluidHandle.get();
+        await runtime.handle.get();
     }
 
     return runtime;
@@ -280,7 +280,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
 
         await context.attachRuntime(this, runtime);
 
-        return runtime.IFluidHandle.get() as unknown as TObj;
+        return runtime.handle.get() as unknown as TObj;
     }
 }
 

@@ -12,7 +12,6 @@ import {
     IRequest,
     IResponse,
     FluidObject,
-    IProvideFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -62,6 +61,10 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 }
 
+export interface IFluidDataStoreRuntimeEntrypoint extends IFluidRouter{
+    readonly handle?: IFluidHandle
+}
+
 /**
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
@@ -105,7 +108,7 @@ export interface IContainerRuntimeBase extends
         props?: any,
         id?: string,
         isRoot?: boolean,
-    ): Promise<IFluidRouter & Partial<IProvideFluidHandle>>;
+    ): Promise<IFluidDataStoreRuntimeEntrypoint>;
 
     /**
      * Creates data store. Returns router of data store. Data store is not bound to container,
@@ -114,7 +117,7 @@ export interface IContainerRuntimeBase extends
      * gets attached to storage) will result in this store being attached to storage.
      * @param pkg - Package name of the data store factory
      */
-    createDataStore(pkg: string | string[]): Promise<IFluidRouter & Partial<IProvideFluidHandle>>;
+    createDataStore(pkg: string | string[]): Promise<IFluidDataStoreRuntimeEntrypoint>;
 
     /**
      * Creates detached data store context. only after context.attachRuntime() is called,
@@ -149,8 +152,7 @@ export interface IContainerRuntimeBase extends
  * and connection state notifications
  */
 export interface IFluidDataStoreChannel extends
-    IFluidRouter,
-    Partial<IProvideFluidHandle>,
+    IFluidDataStoreRuntimeEntrypoint,
     IDisposable {
 
     readonly id: string;
