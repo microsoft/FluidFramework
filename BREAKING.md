@@ -14,17 +14,17 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Removed `readAndParseFromBlobs` from `driver-utils`](#Removed-readAndParseFromBlobs-from-driver-utils)
 - [Loader now returns `IContainer` instead of `Container`](#Loader-now-returns-IContainer-instead-of-Container)
 
+### Removed `readAndParseFromBlobs` from `driver-utils`
+The `readAndParseFromBlobs` function from `driver-utils` was deprecated in 0.44, and has now been removed from the `driver-utils` package.
+
 ### Loader now returns `IContainer` instead of `Container`
 
-The following public API functions on `Loader` now return `IContainer`:
+The following public API functions on `Loader`, from `"@fluidframework/container-loader"` package, now return `IContainer`:
 - `createDetachedContainer`
 - `rehydrateDetachedContainerFromSnapshot`
 - `resolve`
 
 All of the required functionality from a `Container` instance should be available on `IContainer`. If the function or property you require is not available, please file an issue on GitHub describing which function and what you are planning on using it for. They can still be used by casting the returned object to `Container`, i.e. `const container = await loader.resolve(request) as Container;`, however, this should be avoided whenever possible and the `IContainer` API should be used instead.
-
-### Removed `readAndParseFromBlobs` from `driver-utils`
-The `readAndParseFromBlobs` function from `driver-utils` was deprecated in 0.44, and has now been removed from the `driver-utils` package.
 
 ## 0.53 Breaking changes
 - [`IContainer` interface updated to expose actively used `Container` public APIs](#IContainer-interface-updated-to-expose-actively-used-Container-public-APIs)
