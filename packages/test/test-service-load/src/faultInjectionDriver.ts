@@ -20,7 +20,6 @@ import {
     IDocumentMessage,
     INack,
     NackErrorType,
-    ConnectionMode,
 } from "@fluidframework/protocol-definitions";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
@@ -99,7 +98,7 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
 
     public get claims() { return this.internal.claims; }
 
-    public get mode(): ConnectionMode { return this.internal.mode; }
+    public get mode() { return this.internal.mode; }
     public get existing() { return this.internal.existing; }
     public get maxMessageSize() { return this.internal.serviceConfiguration.maxMessageSize; }
     public get version() { return this.internal.version; }
