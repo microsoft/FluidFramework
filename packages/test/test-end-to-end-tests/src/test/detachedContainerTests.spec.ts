@@ -130,10 +130,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 
         // Create a sub dataStore of type TestFluidObject and verify that it is attached.
         const subDataStore = await createFluidObject(dataStore.context, "default");
-        dataStore.root.set("attachKey", subDataStore.IFluidHandle);
+        dataStore.root.set("attachKey", subDataStore.handle);
 
         const subDataStoreTestObj: FluidObject<ITestFluidObject> | undefined =
-            subDataStore.IFluidHandle?.get() as FluidObject | undefined;
+            subDataStore.handle?.get() as FluidObject | undefined;
 
         // Get the sub dataStore's root channel and verify that it is attached.
         const testChannel = await subDataStoreTestObj?.ITestFluidObject?.runtime.getChannel("root");
@@ -152,13 +152,13 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 
         // Create a sub dataStore of type TestFluidObject.
         const testDataStore = await createFluidObject(dataStore.context, "default");
-        dataStore.root.set("attachKey", testDataStore.IFluidHandle);
+        dataStore.root.set("attachKey", testDataStore.handle);
 
         // Now attach the container
         await container.attach(request);
 
         const testDataStoreObj: FluidObject<ITestFluidObject> | undefined =
-            testDataStore.IFluidHandle?.get() as FluidObject | undefined;
+            testDataStore.handle?.get() as FluidObject | undefined;
 
         assert(testDataStoreObj?.ITestFluidObject?.runtime.attachState !== AttachState.Detached,
             "DataStore should be attached!!");
@@ -180,7 +180,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 
         // Create a sub dataStore of type TestFluidObject.
         const subDataStore1 = await createFluidObject(dataStore.context, "default");
-        dataStore.root.set("attachKey", subDataStore1.IFluidHandle);
+        dataStore.root.set("attachKey", subDataStore1.handle);
 
         // Now attach the container and get the sub dataStore.
         await container.attach(request);
@@ -193,7 +193,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         const container2 = await loader2.resolve({ url: requestUrl2 });
 
         const subDataStore1TestObj: FluidObject<ITestFluidObject> | undefined =
-            subDataStore1.IFluidHandle?.get() as FluidObject | undefined;
+            subDataStore1.handle?.get() as FluidObject | undefined;
 
         // Get the sub dataStore and assert that it is attached.
         const response2 = await container2.request({ url: `/${subDataStore1TestObj?.ITestFluidObject?.context.id}` });
@@ -645,7 +645,7 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
 
         // Create a sub dataStore of type TestFluidObject.
         const subDataStore1 = await createFluidObject(dataStore.context, "default");
-        dataStore.root.set("attachKey", subDataStore1.IFluidHandle);
+        dataStore.root.set("attachKey", subDataStore1.handle);
 
         const summaryForAttach: ISummaryTree = JSON.parse(container.serialize());
         const resolvedUrl = await provider.urlResolver.resolve(request);
@@ -660,7 +660,7 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         // Get the root dataStore from the detached container.
         const response2 = await container2.request({ url: "/" });
         const dataStore2 = response2.value as ITestFluidObject;
-        assert.strictEqual(dataStore2.root.get("attachKey").absolutePath, subDataStore1?.IFluidHandle?.absolutePath,
+        assert.strictEqual(dataStore2.root.get("attachKey").absolutePath, subDataStore1?.handle?.absolutePath,
             "Stored handle should match!!");
     });
 });

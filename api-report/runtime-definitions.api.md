@@ -19,7 +19,6 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
-import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorum } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -82,9 +81,9 @@ export interface IAttachMessage {
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents>, IProvideFluidHandleContext {
     // (undocumented)
     readonly clientDetails: IClientDetails;
-    createDataStore(pkg: string | string[]): Promise<IFluidRouter & Partial<IProvideFluidHandle>>;
+    createDataStore(pkg: string | string[]): Promise<IFluidDataStoreRuntimeEntrypoint>;
     // @internal @deprecated (undocumented)
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IFluidRouter & Partial<IProvideFluidHandle>>;
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IFluidDataStoreRuntimeEntrypoint>;
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
@@ -116,7 +115,7 @@ export interface IEnvelope {
 }
 
 // @public
-export interface IFluidDataStoreChannel extends IFluidRouter, Partial<IProvideFluidHandle>, IDisposable {
+export interface IFluidDataStoreChannel extends IFluidDataStoreRuntimeEntrypoint, IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     attachGraph(): void;
@@ -207,6 +206,12 @@ export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry;
 export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
     // (undocumented)
     get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;
+}
+
+// @public (undocumented)
+export interface IFluidDataStoreRuntimeEntrypoint extends IFluidRouter {
+    // (undocumented)
+    readonly handle?: IFluidHandle;
 }
 
 // @public
