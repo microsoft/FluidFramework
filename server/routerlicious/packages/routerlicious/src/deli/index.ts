@@ -14,9 +14,6 @@ import { RedisOptions } from "ioredis";
 import * as winston from "winston";
 
 export async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
-    const dynamoTableName = config.get("dynamo:table") as string;
-    const dynamoRegion = config.get("dynamo:region") as string;
-    const dynamoEndpoint = config.get("dynamo:endpoint") as string;
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
     const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
@@ -37,9 +34,9 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const tenantManager = new services.TenantManager(authEndpoint);
 
     // Connection to stored document details
-    // const mongoFactory = new services.MongoDbFactory(mongoUrl, bufferMaxEntries);
-    const mongoFactory = new services.DynamoDbFactory(dynamoEndpoint, dynamoRegion, dynamoTableName);
-    const mongoManager = new core.MongoManager(mongoFactory, false);
+    const factory = await services.DbFactoryFactory.create(config);
+
+    const mongoManager = new core.MongoManager(factory, false);
     const client = await mongoManager.getDatabase();
     // eslint-disable-next-line @typescript-eslint/await-thenable
     const collection = await client.collection<core.IDocument>(documentsCollectionName);

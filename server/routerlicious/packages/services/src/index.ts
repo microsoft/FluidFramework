@@ -4,6 +4,7 @@
  */
 
 export * from "./dynamodb";
+export * from "./factory";
 export * from "./kafkaProducerFactory";
 export * from "./messageReceiver";
 export * from "./messageSender";

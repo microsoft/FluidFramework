@@ -5,7 +5,7 @@
 
 import { ScribeLambdaFactory } from "@fluidframework/server-lambdas";
 import { createDocumentRouter } from "@fluidframework/server-routerlicious-base";
-import { createProducer, DynamoDbFactory, TenantManager } from "@fluidframework/server-services";
+import { createProducer, DbFactoryFactory, TenantManager } from "@fluidframework/server-services";
 import {
     DefaultServiceConfiguration,
     IDocument,
@@ -16,11 +16,6 @@ import {
 import { Provider } from "nconf";
 
 export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFactory> {
-    // Access config values
-    const dynamoTableName = config.get("dynamo:table") as string;
-    const dynamoRegion = config.get("dynamo:region") as string;
-    const dynamoEndpoint = config.get("dynamo:endpoint") as string;
-
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
     const messagesCollectionName = config.get("mongo:collectionNames:scribeDeltas");
     const createCosmosDBIndexes = config.get("mongo:createCosmosDBIndexes");
@@ -41,8 +36,9 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     const tenantManager = new TenantManager(authEndpoint);
 
     // Access Mongo storage for pending summaries
-    const mongoFactory = new DynamoDbFactory(dynamoEndpoint, dynamoRegion, dynamoTableName);
-    const mongoManager = new MongoManager(mongoFactory, false);
+    const factory = await DbFactoryFactory.create(config);
+
+    const mongoManager = new MongoManager(factory, false);
     const client = await mongoManager.getDatabase();
 
     const [collection, scribeDeltas] = await Promise.all([

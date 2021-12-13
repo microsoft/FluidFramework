@@ -10,20 +10,18 @@ import { deleteSummarizedOps, executeOnInterval, FluidServiceErrorCode } from "@
 import { Provider } from "nconf";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
-    const dynamoTableName = config.get("dynamo:table") as string;
-    const dynamoRegion = config.get("dynamo:region") as string;
-    const dynamoEndpoint = config.get("dynamo:endpoint") as string;
     const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
     const createCosmosDBIndexes = config.get("mongo:createCosmosDBIndexes") as boolean;
-    const mongoFactory = new services.DynamoDbFactory(dynamoEndpoint, dynamoRegion, dynamoTableName);
+    const factory = await services.DbFactoryFactory.create(config);
+
     const softDeletionRetentionPeriodMs = config.get("mongo:softDeletionRetentionPeriodMs") as number;
     const offlineWindowMs = config.get("mongo:offlineWindowMs") as number;
     const softDeletionEnabled = config.get("mongo:softDeletionEnabled") as boolean;
     const permanentDeletionEnabled = config.get("mongo:permanentDeletionEnabled") as boolean;
     const deletionIntervalMs = config.get("mongo:deletionIntervalMs") as number;
-    const mongoManager = new MongoManager(mongoFactory, false);
+    const mongoManager = new MongoManager(factory, false);
 
     const db = await mongoManager.getDatabase();
     const documentsCollection: ICollection<IDocument> = db.collection(documentsCollectionName);

@@ -41,11 +41,9 @@ export class RiddlerResources implements IResources {
 export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResources> {
     public async create(config: Provider): Promise<RiddlerResources> {
         // Database connection
-        const dynamoTableName = config.get("dynamo:table") as string;
-        const dynamoRegion = config.get("dynamo:region") as string;
-        const dynamoEndpoint = config.get("dynamo:endpoint") as string;
-        const mongoFactory = new services.DynamoDbFactory(dynamoEndpoint, dynamoRegion, dynamoTableName);
-        const mongoManager = new MongoManager(mongoFactory);
+        const factory = await services.DbFactoryFactory.create(config);
+
+        const mongoManager = new MongoManager(factory);
         const tenantsCollectionName = config.get("mongo:collectionNames:tenants");
         const secretManager = new services.SecretManager();
 
