@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ITree } from "@fluidframework/protocol-definitions";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils";
-import { ISharedObjectSnaphost, SharedObjectBase } from "./sharedObjectBase";
+import { ISharedObjectStateHost, SharedObjectBase } from "./sharedObjectBase";
 import { ISharedObjectEvents } from "./types";
 
 /**
@@ -31,7 +31,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         super(id, runtime, attributes);
     }
 
-    protected captureStateCore(): ISharedObjectSnaphost {
+    protected captureStateCore(): ISharedObjectStateHost {
         const snapshot = this.snapshotCore(this.serializer);
         return { summarize: async (serializer: IFluidSerializer, fullTree: boolean = false) => {
             return convertToSummaryTreeWithStats(snapshot, fullTree);

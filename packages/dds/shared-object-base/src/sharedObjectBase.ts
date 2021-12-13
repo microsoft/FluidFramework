@@ -13,7 +13,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelServices,
-    ISnaphost,
+    IStateHost,
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
@@ -26,7 +26,7 @@ import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
 
-export interface ISharedObjectSnaphost {
+export interface ISharedObjectStateHost {
     /**
      * Produce a summary from the previously captured state of this object
      */
@@ -199,7 +199,7 @@ export abstract class SharedObjectBase<TEvent extends ISharedObjectEvents = ISha
     /**
      * {@inheritDoc (ISharedObject:interface).captureState}
      */
-    public captureState(): ISnaphost {
+    public captureState(): IStateHost {
         const state = this.captureStateCore();
         return { summarize: async (fullTree: boolean = false) => {
             return state.summarize(this._serializer, fullTree);
@@ -252,7 +252,7 @@ export abstract class SharedObjectBase<TEvent extends ISharedObjectEvents = ISha
      * Capture all the current state of this object,
      * which can be used to later generate a summary for the state when it was captured.
      */
-    protected abstract captureStateCore(): ISharedObjectSnaphost;
+    protected abstract captureStateCore(): ISharedObjectStateHost;
 
     /**
      * Allows the distributed data type to perform custom loading
