@@ -337,11 +337,11 @@ function scheduleContainerClose(
     });
 }
 
-async function setupOpsMetrics(container: Container, logger: ITelemetryLogger, progressIntervalMs: number) {
+async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, progressIntervalMs: number) {
     // Use map to cache userName instead of recomputing.
     const clientIdUserNameMap: { [clientId: string]: string } = {};
 
-    const getUserName = (userContainer: Container) => {
+    const getUserName = (userContainer: IContainer) => {
         const clientId = userContainer.clientId;
         if (clientId !== undefined && clientId.length > 0) {
             if (clientIdUserNameMap[clientId]) {
