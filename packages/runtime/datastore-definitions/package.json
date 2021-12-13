@@ -44,6 +44,7 @@
     "@fluidframework/build-tools": "^0.2.44827",
     "@fluidframework/datastore-definitions-0.51.1": "npm:@fluidframework/datastore-definitions@0.51.1",
     "@fluidframework/datastore-definitions-0.52.0": "npm:@fluidframework/datastore-definitions@0.52.0",
+    "@fluidframework/datastore-definitions-0.53.0": "npm:@fluidframework/datastore-definitions@0.53.0",
     "@fluidframework/eslint-config-fluid": "^0.24.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
@@ -62,7 +63,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.53.0",
+    "version": "0.54.0",
     "broken": {
       "0.51.1": {
         "InterfaceDeclaration_IChannel": {
@@ -74,6 +75,9 @@
         "InterfaceDeclaration_IFluidDataStoreRuntime": {
           "backCompat": false
         }
+      },
+      "0.53.0":{
+        "InterfaceDeclaration_IFluidDataStoreRuntime": {"forwardCompat": false}
       }
     }
   }
