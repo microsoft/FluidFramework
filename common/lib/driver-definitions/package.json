@@ -45,6 +45,7 @@
     "@fluidframework/driver-definitions-0.40.0": "npm:@fluidframework/driver-definitions@0.40.0",
     "@fluidframework/driver-definitions-0.41.0": "npm:@fluidframework/driver-definitions@0.41.0",
     "@fluidframework/driver-definitions-0.42.0": "npm:@fluidframework/driver-definitions@0.42.0",
+    "@fluidframework/driver-definitions-0.43.0": "npm:@fluidframework/driver-definitions@0.43.0",
     "@fluidframework/eslint-config-fluid": "^0.24.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
@@ -63,7 +64,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.43.0",
+    "version": "0.44.0",
     "broken": {
       "0.39.8": {
         "TypeAliasDeclaration_DriverError": {
@@ -101,6 +102,9 @@
         },
         "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_DriverPreCheckInfo": {
+          "backCompat": false
         }
       },
       "0.40.0": {
@@ -114,6 +118,9 @@
           "backCompat": false
         },
         "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_DriverPreCheckInfo": {
           "backCompat": false
         }
       },
@@ -129,6 +136,9 @@
         },
         "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_DriverPreCheckInfo": {
+          "backCompat": false
         }
       },
       "0.42.0": {
@@ -139,6 +149,14 @@
           "backCompat": false
         },
         "InterfaceDeclaration_IDocumentServiceFactory": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_DriverPreCheckInfo": {
+          "backCompat": false
+        }
+      },
+      "0.43.0": {
+        "InterfaceDeclaration_DriverPreCheckInfo": {
           "backCompat": false
         }
       }

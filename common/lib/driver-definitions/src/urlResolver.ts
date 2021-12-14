@@ -51,7 +51,7 @@ export interface DriverPreCheckInfo {
      * @deprecated - only needed as long as long as Loader.request() does not work as intended. When
      * Loader.request() caches and resolves pathing properly, this can be removed. #4489, #4491
      */
-    containerPath: string;
+    containerPath?: string;
 
     /**
      * A code details hint that can potentially be used to prefetch container code prior to having a snapshot.
