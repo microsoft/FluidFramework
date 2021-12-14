@@ -737,7 +737,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-    * @deprecated - This will be removed in a later release.
+    * @deprecated This will be removed in a later release. Deprecated in 0.53
     */
     public get id(): string {
         return this.context.id;

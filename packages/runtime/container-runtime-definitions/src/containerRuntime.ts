@@ -77,7 +77,7 @@ export interface IContainerRuntime extends
     IContainerRuntimeBaseWithCombinedEvents {
 
     /**
-    * @deprecated - This will be removed in a later release.
+    * @deprecated This will be removed in a later release. Deprecated in 0.53
     */
     readonly id: string;
     readonly options: ILoaderOptions;
