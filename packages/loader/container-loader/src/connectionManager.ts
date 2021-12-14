@@ -58,7 +58,6 @@ import {
     ReconnectMode,
     IConnectionManager,
     IConnectionManagerFactoryArgs,
-    IConnectionDetails,
 } from "./contracts";
 
 const MaxReconnectDelayInMs = 8000;
@@ -274,17 +273,6 @@ export class ConnectionManager implements IConnectionManager {
         }
 
         return { readonly: this._readonlyPermissions };
-    }
-
-    private static detailsFromConnection(connection: IDocumentDeltaConnection): IConnectionDetails {
-        return {
-            claims: connection.claims,
-            clientId: connection.clientId,
-            checkpointSequenceNumber: connection.checkpointSequenceNumber,
-            mode: connection.mode,
-            serviceConfiguration: connection.serviceConfiguration,
-            version: connection.version,
-        };
     }
 
     constructor(
@@ -673,9 +661,11 @@ export class ConnectionManager implements IConnectionManager {
             this.props.signalHandler({ clientId: null, content: { type: MessageType.ClientJoin, content }});
         }
 
-        const details = ConnectionManager.detailsFromConnection(connection);
-        details.checkpointSequenceNumber = checkpointSequenceNumber;
-        this.props.connectHandler(details);
+        this.props.connectHandler({
+            clientId: connection.clientId,
+            checkpointSequenceNumber,
+            mode: connection.mode,
+        });
 
         this.connectFirstConnection = false;
     }

@@ -6,18 +6,17 @@
 import { strict as assert } from "assert";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
-import { IClient, IClientConfiguration, ITokenClaims } from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ConnectionState } from "../container";
 import { ConnectionStateHandler } from "../connectionStateHandler";
-import { IConnectionDetails } from "../contracts";
 
 describe("ConnectionStateHandler Tests", () => {
     let clock: SinonFakeTimers;
     let connectionStateHandler: ConnectionStateHandler;
     let protocolHandler: ProtocolOpHandler;
     let shouldClientJoinWrite: boolean;
-    let connectionDetails: IConnectionDetails;
+    let connectionDetails: { clientId: string };
     let client: IClient;
     const expectedTimeout = 90000;
     const pendingClientId = "pendingClientId";
@@ -47,13 +46,6 @@ describe("ConnectionStateHandler Tests", () => {
         protocolHandler = new ProtocolOpHandler(0, 0, 1, [], [], [], (key, value) => 0, (seqNum) => undefined);
         connectionDetails = {
             clientId: pendingClientId,
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            claims: {} as ITokenClaims,
-            mode: "read",
-            version: "0.1",
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            serviceConfiguration: {} as IClientConfiguration,
-            checkpointSequenceNumber: undefined,
         };
         client = {
             mode: "read",

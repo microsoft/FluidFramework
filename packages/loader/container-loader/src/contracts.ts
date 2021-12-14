@@ -17,7 +17,6 @@ import {
     IClientConfiguration,
     IClientDetails,
     ISignalMessage,
-    ITokenClaims,
 } from "@fluidframework/protocol-definitions";
 
 export enum ReconnectMode {
@@ -31,10 +30,7 @@ export enum ReconnectMode {
  */
  export interface IConnectionDetails {
     clientId: string;
-    claims: ITokenClaims;
     mode: ConnectionMode;
-    version: string;
-    serviceConfiguration: IClientConfiguration;
     /**
      * Last known sequence number to ordering service at the time of connection
      * It may lap actual last sequence number (quite a bit, if container  is very active).
