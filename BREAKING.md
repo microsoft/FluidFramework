@@ -18,8 +18,8 @@ There are a few steps you can take to write a good change note and avoid needing
 The `readAndParseFromBlobs` function from `driver-utils` was deprecated in 0.44, and has now been removed from the `driver-utils` package.
 
 ### IDeltaManager cleanup
-A bunch of IDeltaManager properties are deprecated and will be removed in future releases. They expose internal mechanics that should not be relevant to container runtime layer.
-Plus "connect" event payload (first argument) changed from IConnectionDetails interface to { clientId: string }. IConnectionDetails is removed from public service.
+A number of IDeltaManager properties are deprecated and will be removed in future releases. They expose internal mechanics that should not be relevant to container runtime layer.
+"connect" event payload (first argument) changed from IConnectionDetails interface to { clientId: string }. IConnectionDetails is removed from public surface.
 
 ## 0.53 Breaking changes
 - [`IContainer` interface updated to expose actively used `Container` public APIs](#IContainer-interface-updated-to-expose-actively-used-Container-public-APIs)
