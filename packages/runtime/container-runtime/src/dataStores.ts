@@ -52,8 +52,14 @@ import { IUsedStateStats } from "./garbageCollection";
 
 type PendingAliasResolve = (value: boolean) => void;
 
+/**
+ * Interface for an op to be used for assigning an
+ * alias to a datastore
+ */
 interface IDataStoreAliasMessage {
+    /** The internal id of the datastore */
     readonly internalId: string;
+    /** The alias name to be assigned to the datastore */
     readonly alias: string;
 }
 
