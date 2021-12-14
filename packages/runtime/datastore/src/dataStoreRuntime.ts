@@ -62,6 +62,7 @@ import {
     create404Response,
     createResponseError,
     exceptionToResponse,
+    requestFluidObject,
 } from "@fluidframework/runtime-utils";
 import {
     IChannel,
@@ -110,7 +111,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
     ): FluidDataStoreRuntime {
-        return new FluidDataStoreRuntime(context, sharedObjectRegistry, existing, async ()=>Promise.resolve({}));
+        return new FluidDataStoreRuntime(
+            context,
+            sharedObjectRegistry,
+            existing,
+            async (rt)=>requestFluidObject(rt,"/"));
     }
 
     public get IFluidRouter() { return this; }
