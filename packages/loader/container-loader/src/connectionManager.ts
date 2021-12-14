@@ -167,7 +167,7 @@ export class ConnectionManager implements IConnectionManager {
 
     private _connectionVerboseProps: Record<string, string | number> = {};
 
-    private _connectionProps: ITelemetryProperties = { connectionMode: undefined };
+    private _connectionProps: ITelemetryProperties = {};
 
     private closed = false;
 
@@ -230,10 +230,7 @@ export class ConnectionManager implements IConnectionManager {
     */
      public get connectionProps(): ITelemetryProperties {
         if (this.connection !== undefined) {
-            return {
-                ...this._connectionProps,
-                socketDocumentId: this.connection?.claims.documentId,
-            };
+            return this._connectionProps;
         } else {
             return {
                 ...this._connectionProps,
@@ -648,10 +645,14 @@ export class ConnectionManager implements IConnectionManager {
             mode: connection.mode,
         };
 
+        // reset connection props
+        this._connectionProps = {};
+
         if (connection.relayServiceAgent !== undefined) {
             this._connectionVerboseProps.relayServiceAgent = connection.relayServiceAgent;
             this._connectionProps.relayServiceAgent = connection.relayServiceAgent;
         }
+        this._connectionProps.socketDocumentId = connection.claims.documentId;
         this._connectionProps.connectionMode = connection.mode;
 
         let last = -1;
