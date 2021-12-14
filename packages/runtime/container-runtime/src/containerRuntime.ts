@@ -967,6 +967,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             metadata,
         );
 
+        const shouldRunExpiry = this.runtimeOptions.gcOptions?.gcAllowed === true
+        && this.runtimeOptions.gcOptions?.disableGC !== true
+        && this.runtimeOptions.gcOptions?.runSweep === true;
+
+        if(shouldRunExpiry) {
+            const defaultContainerRuntimeExpiryMs = 30 * 24 * 60 * 60 * 1000;
+            const expiryMs = this.runtimeOptions.gcOptions?.testMode === true ?
+                0 : defaultContainerRuntimeExpiryMs;
+            const closeRuntime = () => this.closeFn({
+                errorType: "ClientSessionExpired",
+                message: `The client has reached the expiry time of ${expiryMs} ms.`,
+            });
+            setTimeout(() => closeRuntime(), expiryMs);
+        }
+
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         this.summarizerNode = createRootSummarizerNodeWithGC(
             ChildLogger.create(this.logger, "SummarizerNode"),
