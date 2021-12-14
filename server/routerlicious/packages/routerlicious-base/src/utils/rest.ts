@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { NetworkError } from "@fluidframework/server-services-client";
 import type { Response } from "express";
 
 /**
@@ -21,10 +22,11 @@ import type { Response } from "express";
             response.status(successStatus).json(result);
         },
         (error) => {
-            if (error?.name === "NetworkError") {
+            if (error instanceof Error && error?.name === "NetworkError") {
+                const networkError = error as NetworkError;
                 response
-                    .status(errorStatus ?? error.code ?? 400)
-                    .json(error.message ?? error);
+                    .status(errorStatus ?? networkError.code ?? 400)
+                    .json(networkError.details ?? error);
             } else {
                 response.status(errorStatus ?? 400).json(error?.message ?? error);
             }
