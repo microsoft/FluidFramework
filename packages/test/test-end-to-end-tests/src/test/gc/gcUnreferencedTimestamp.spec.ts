@@ -401,34 +401,34 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
          * that we can detect new root data stores and outbound references from them.
          */
         it(`Scenario 5 - Reference added via new root nodes and removed`, async () => {
-         const summarizerClient = await getNewSummarizer();
+            const summarizerClient = await getNewSummarizer();
 
-         // Create data store C and mark it referenced by storing its handle in data store A.
-         const dataStoreC = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
-         dataStoreA._root.set("dataStoreC", dataStoreC.handle);
+            // Create data store C and mark it referenced by storing its handle in data store A.
+            const dataStoreC = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
+            dataStoreA._root.set("dataStoreC", dataStoreC.handle);
 
-         // Remove the reference to C to make it unreferenced.
-         dataStoreA._root.delete("dataStoreC");
+            // Remove the reference to C to make it unreferenced.
+            dataStoreA._root.delete("dataStoreC");
 
-         // 1. Get summary 1 and validate that C is has unreferenced timestamp. E = [].
-         const timestamps1 = await getUnreferencedTimestamps(summarizerClient);
-         const dsCTime1 = timestamps1.get(dataStoreC.id);
-         assert(dsCTime1 !== undefined, `C should have unreferenced timestamp`);
+            // 1. Get summary 1 and validate that C is has unreferenced timestamp. E = [].
+            const timestamps1 = await getUnreferencedTimestamps(summarizerClient);
+            const dsCTime1 = timestamps1.get(dataStoreC.id);
+            assert(dsCTime1 !== undefined, `C should have unreferenced timestamp`);
 
-         // 2. Create data store B. E = [].
-         const dataStoreB = await dataObjectFactory.createRootInstance("dataStoreA", dataStoreA.containerRuntime);
+            // 2. Create data store B. E = [].
+            const dataStoreB = await dataObjectFactory.createRootInstance("dataStoreA", dataStoreA.containerRuntime);
 
-         // 4. Add reference from B to C. E = [A -> B, B -> C].
-         dataStoreB._root.set("dataStoreC", dataStoreC.handle);
+            // 4. Add reference from B to C. E = [A -> B, B -> C].
+            dataStoreB._root.set("dataStoreC", dataStoreC.handle);
 
-         // 5. Remove reference from B to C. E = [A -> B].
-         dataStoreB._root.delete("dataStoreC");
+            // 5. Remove reference from B to C. E = [A -> B].
+            dataStoreB._root.delete("dataStoreC");
 
-         // 6. Get summary 2 and validate that C's unreferenced timestamps updated. E = [A -> B].
-         const timestamps2 = await getUnreferencedTimestamps(summarizerClient);
-         const dsCTime2 = timestamps2.get(dataStoreC.id);
-         assertTestFails(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
-     }).timeout(20000);
+            // 6. Get summary 2 and validate that C's unreferenced timestamps updated. E = [A -> B].
+            const timestamps2 = await getUnreferencedTimestamps(summarizerClient);
+            const dsCTime2 = timestamps2.get(dataStoreC.id);
+            assertTestFails(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
+        }).timeout(20000);
 
         /**
          * Validates that we can detect references that were added via new data stores before they are referenced
@@ -536,7 +536,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
          * 3. Summary 2 at t2. V = [A*, B, C]. E = [B -> C]. B and C have unreferenced time t1.
          * Validates that the unreferenced time for B and C is still t1.
          */
-         it(`Scenario 8 - Reference added via unreferenced nodes`, async () => {
+        it(`Scenario 8 - Reference added via unreferenced nodes`, async () => {
             const summarizerClient = await getNewSummarizer();
 
             // Create data stores B and C and mark them referenced.
