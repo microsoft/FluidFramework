@@ -60,7 +60,7 @@ export const agentSchedulerId = "_scheduler";
 // @public (undocumented)
 export enum ContainerMessageType {
     // (undocumented)
-    AssignAlias = "assignAlias",
+    Alias = "alias",
     // (undocumented)
     Attach = "attach",
     // (undocumented)

@@ -50,26 +50,11 @@ import {
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 import { IUsedStateStats } from "./garbageCollection";
 
-type PendingAliasResolve = (value: IDataStoreAliasMapping | undefined) => void;
+type PendingAliasResolve = (value: boolean) => void;
 
 interface IDataStoreAliasMessage {
     readonly internalId: string;
     readonly alias: string;
-}
-
-/**
- * Interface to hold the result of an alias mapping operation.
- */
-interface IDataStoreAliasMapping {
-    /** The internal id of the datastore which was supplied in the operation */
-    readonly suppliedInternalId: string;
-    /** The alias name that was requested to be bound */
-    readonly alias: string;
-    /**
-     * The actual internal id of the datastore bound to the alias. If it's the same as suppliedInternalId
-     * the operation was successful.
-     */
-    readonly aliasedInternalId: string;
 }
 
 /**
@@ -274,40 +259,31 @@ export class DataStores implements IDisposable {
         }
     }
 
-    private processAliasMessageCore(aliasMessage: IDataStoreAliasMessage): IDataStoreAliasMapping | undefined {
+    private processAliasMessageCore(aliasMessage: IDataStoreAliasMessage): boolean {
         const existingMapping = this.aliasMap.get(aliasMessage.alias);
         if (existingMapping !== undefined) {
-            return {
-                suppliedInternalId: aliasMessage.internalId,
-                alias: aliasMessage.alias,
-                aliasedInternalId: existingMapping,
-            };
+            return false;
         }
 
         // Unlikely scenario, but we may have an alias OP with the alias value
         // equal to the id of an older named data store
         const maybeContextWithAliasAsId = this.contexts.get(aliasMessage.alias);
         if (maybeContextWithAliasAsId !== undefined) {
-            return {
-                suppliedInternalId: aliasMessage.internalId,
-                alias: aliasMessage.alias,
-                aliasedInternalId: maybeContextWithAliasAsId.id,
-            };
+            return false;
         }
 
         const currentContext = this.contexts.get(aliasMessage.internalId);
         if (currentContext === undefined) {
-            return undefined;
+            this.logger.sendTelemetryEvent({
+                eventName: "AliasFluidDataStoreNotFound",
+                fluidDataStoreId: aliasMessage.internalId,
+            });
+            return false;
         }
 
         this.aliasMap.set(aliasMessage.alias, currentContext.id);
         currentContext.setRoot();
-
-        return {
-            suppliedInternalId: aliasMessage.internalId,
-            alias: aliasMessage.alias,
-            aliasedInternalId: aliasMessage.internalId,
-        };
+        return true;
     }
 
     public bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {

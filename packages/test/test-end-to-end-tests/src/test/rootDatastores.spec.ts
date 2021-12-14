@@ -23,12 +23,6 @@ import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IFluidRouter } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 
-interface IDataStoreAliasMapping {
-    readonly suppliedInternalId: string;
-    readonly alias: string;
-    readonly aliasedInternalId: string;
-}
-
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
@@ -86,11 +80,11 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         runtimeOf(dataObject).getRootDataStore(id);
 
     const sendAliasMessage = async (runtime: ContainerRuntime, message: any) =>
-        new Promise<IDataStoreAliasMapping>((resolve, reject) => {
+        new Promise<boolean>((resolve, reject) => {
             runtime.once("dispose", () => reject(new Error("Runtime disposed")));
             // Temporary solution to be able to submit generic container runtime ops
             // until we add this alias op to the API surface
-            (runtime as any).submit(ContainerMessageType.AssignAlias, message, resolve);
+            (runtime as any).submit(ContainerMessageType.Alias, message, resolve);
         }).catch(() => undefined);
 
     const trySetAlias = async (runtime: ContainerRuntime, datastore: IFluidRouter, alias: string) => {
@@ -100,8 +94,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             alias,
         };
 
-        const aliasResult = await sendAliasMessage(runtime, message);
-        return aliasResult !== undefined && aliasResult.aliasedInternalId === aliasResult.suppliedInternalId;
+        return sendAliasMessage(runtime, message);
     };
 
     const sendMalformedMessage = async (runtime: ContainerRuntime, alias: string) =>
