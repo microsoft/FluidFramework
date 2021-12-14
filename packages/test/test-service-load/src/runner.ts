@@ -13,6 +13,7 @@ import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { assert } from "@fluidframework/common-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore";
 import { createCodeLoader, createTestDriver, getProfile, loggerP, safeExit } from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
@@ -41,6 +42,7 @@ async function main() {
         .requiredOption("-s, --seed <number>", "Seed for this runners random number generator")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .option("-v, --verbose", "Enables verbose logging")
+        .option("-m, --enableOpsMetrics", "Enable capturing ops metrics")
         .parse(process.argv);
 
     const driver: TestDriverTypes = commander.driver;
@@ -50,6 +52,7 @@ async function main() {
     const log: string | undefined = commander.log;
     const verbose: boolean = commander.verbose ?? false;
     const seed: number = commander.seed;
+    const enableOpsMetrics: boolean = commander.enableOpsMetrics ?? false;
 
     const profile = getProfile(profileArg);
 
@@ -85,7 +88,8 @@ async function main() {
             randEng,
         },
         url,
-        seed);
+        seed,
+        enableOpsMetrics);
 
     await safeExit(result, url, runId);
 }
@@ -131,7 +135,11 @@ async function runnerProcess(
     runConfig: IRunConfig,
     url: string,
     seed: number,
+    enableOpsMetrics: boolean,
 ): Promise<number> {
+    // Assigning no-op value due to linter.
+    let metricsCleanup: () => void = () => {};
+
     try {
         const loaderOptions = generateLoaderOptions(
             seed, runConfig.testConfig?.optionOverrides?.[driver]?.loader);
@@ -181,6 +189,10 @@ async function runnerProcess(
             container.resume!();
             const test = await requestFluidObject<ILoadTest>(container, "/");
 
+            if (enableOpsMetrics) {
+                metricsCleanup = await setupOpsMetrics(container, logger, runConfig.testConfig.progressIntervalMs);
+            }
+
             // Control fault injection period through config.
             // If undefined then no fault injection.
             const faultInjectionMinMs = runConfig.testConfig.faultInjectionMinMs;
@@ -205,11 +217,15 @@ async function runnerProcess(
                 reset = false;
                 printStatus(runConfig, done ? `finished` : "closed");
             } catch (error) {
-                logger.sendErrorEvent({ eventName: "RunnerFailed" }, error);
+                logger.sendErrorEvent({
+                    eventName: "RunnerFailed",
+                    testHarnessEvent: true,
+                }, error);
             } finally {
                 if (!container.closed) {
                     container.close();
                 }
+                metricsCleanup();
                 await baseLogger.flush({ url, runId: runConfig.runId });
             }
         }
@@ -322,6 +338,80 @@ function scheduleContainerClose(
             eventName: "ScheduleLeaveFailed", runId: runConfig.runId,
         }, e));
     });
+}
+
+async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, progressIntervalMs: number) {
+    // Use map to cache userName instead of recomputing.
+    const clientIdUserNameMap: { [clientId: string]: string } = {};
+
+    const getUserName = (userContainer: IContainer) => {
+        const clientId = userContainer.clientId;
+        if (clientId !== undefined && clientId.length > 0) {
+            if (clientIdUserNameMap[clientId]) {
+                return clientIdUserNameMap[clientId];
+            }
+
+            const userName: string | undefined = userContainer.getQuorum().getMember(clientId)?.client.user.id;
+            if (userName !== undefined && userName.length > 0) {
+                clientIdUserNameMap[clientId] = userName;
+                return userName;
+            }
+        } else {
+            return "Unknown";
+        }
+    };
+
+    let submitedOps = 0;
+    container.deltaManager.on("submitOp", (message) => {
+        if (message?.type === "op") {
+            submitedOps++;
+        }
+    });
+
+    let receivedOps = 0;
+    container.deltaManager.on("op", (message) => {
+        if (message?.type === "op") {
+            receivedOps++;
+        }
+    });
+
+    let t: NodeJS.Timeout | undefined;
+    const sendMetrics = () => {
+        if (submitedOps > 0) {
+            logger.send({
+                category: "metric",
+                eventName: "Fluid Operations Sent",
+                testHarnessEvent: true,
+                value: submitedOps,
+                clientId: container.clientId,
+                userName: getUserName(container),
+            });
+        }
+        if (receivedOps > 0) {
+            logger.send({
+                category: "metric",
+                eventName: "Fluid Operations Received",
+                testHarnessEvent: true,
+                value: receivedOps,
+                clientId: container.clientId,
+                userName: getUserName(container),
+            });
+        }
+
+        submitedOps = 0;
+        receivedOps = 0;
+
+        t = setTimeout(sendMetrics, progressIntervalMs);
+    };
+
+    sendMetrics();
+
+    return (): void => {
+        sendMetrics();
+        if (t) {
+            clearTimeout(t);
+        }
+    };
 }
 
 main()

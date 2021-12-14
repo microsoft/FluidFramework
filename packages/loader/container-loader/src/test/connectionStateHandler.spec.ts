@@ -53,7 +53,6 @@ describe("ConnectionStateHandler Tests", () => {
             mode: "read",
             version: "0.1",
             initialClients: [],
-            maxMessageSize: 1000,
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             serviceConfiguration: {} as IClientConfiguration,
             checkpointSequenceNumber: undefined,
