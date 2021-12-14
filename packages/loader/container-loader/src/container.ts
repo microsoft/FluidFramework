@@ -69,8 +69,6 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
-    ISignalClient,
-    ISignalMessage,
     ISnapshotTree,
     ITree,
     ITreeEntry,
@@ -82,6 +80,7 @@ import {
     SummaryType,
     ISummaryContent,
     IQuorumProposals,
+    ISignalClient,
 } from "@fluidframework/protocol-definitions";
 import {
     ChildLogger,
@@ -93,14 +92,18 @@ import {
     disconnectedEventName,
     normalizeError,
 } from "@fluidframework/telemetry-utils";
-import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
-import { ReconnectMode, IConnectionManagerFactoryArgs } from "./contracts";
+import {
+    ReconnectMode,
+    IConnectionManagerFactoryArgs,
+    ILocalSequencedClient,
+    SystemSignalType,
+} from "./contracts";
 import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
+import { ConnectionStateHandler } from "./connectionStateHandler";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
 import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
@@ -108,6 +111,7 @@ import { getSnapshotTreeFromSerializedContainer } from "./utils";
 import { QuorumProxy } from "./quorum";
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
+import { Audience } from "./audience";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -227,6 +231,38 @@ const getCodeProposal =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
+/**
+ * ProtocolHandler class
+ */
+class ProtocolHandler extends ProtocolOpHandler {
+    readonly audience = new Audience();
+
+    public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
+        // Check and report if we're getting messages from a clientId that we previously
+        // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
+        if (message.clientId != null) {
+            let errorCode: string | undefined;
+            const client: ILocalSequencedClient | undefined =
+                this.quorum.getMember(message.clientId);
+            if (client === undefined && message.type !== MessageType.ClientJoin) {
+                errorCode = "messageClientIdMissingFromQuorum";
+            } else if (client?.shouldHaveLeft === true && message.type !== MessageType.NoOp) {
+                errorCode = "messageClientIdShouldHaveLeft";
+            }
+            if (errorCode !== undefined) {
+                const error = new DataCorruptionError(
+                    errorCode,
+                    extractSafePropertiesFromMessage(message));
+                throw normalizeError(error);
+            }
+        }
+        return super.processMessage(message, local);
+    }
+}
+
+/**
+ * Container class
+ */
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
 
@@ -379,7 +415,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager<ConnectionManager>;
     private service: IDocumentService | undefined;
-    private readonly _audience: Audience;
 
     private _context: ContainerContext | undefined;
     private get context() {
@@ -388,7 +423,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         return this._context;
     }
-    private _protocolHandler: ProtocolOpHandler | undefined;
+    private _protocolHandler: ProtocolHandler | undefined;
     private get protocolHandler() {
         if (this._protocolHandler === undefined) {
             throw new Error("Attempted to access protocolHandler before it was defined");
@@ -516,7 +551,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Retrieves the audience associated with the document
      */
     public get audience(): IAudience {
-        return this._audience;
+        return this.protocolHandler.audience;
     }
 
     /**
@@ -546,7 +581,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 },
                 error);
             });
-        this._audience = new Audience();
 
         this.clientDetailsOverride = config.clientDetailsOverride;
         this._resolvedUrl = config.resolvedUrl;
@@ -597,7 +631,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.connectionStateHandler = new ConnectionStateHandler(
             {
-                protocolHandler: () => this._protocolHandler,
+                quorum: () => this.protocolHandler.quorum,
                 logConnectionStateChangeTelemetry: (value, oldState, reason) =>
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
@@ -1383,7 +1417,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
         snapshot: ISnapshotTree | undefined,
-    ): Promise<ProtocolOpHandler> {
+    ): Promise<ProtocolHandler> {
         let members: [string, ISequencedClient][] = [];
         let proposals: [number, ISequencedProposal, string[]][] = [];
         let values: [string, any][] = [];
@@ -1411,8 +1445,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         members: [string, ISequencedClient][],
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, any][],
-    ): Promise<ProtocolOpHandler> {
-        const protocol = new ProtocolOpHandler(
+    ): Promise<ProtocolHandler> {
+        const protocol = new ProtocolHandler(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
             attributes.term,
@@ -1567,7 +1601,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.manualReconnectInProgress = false;
             this.collabWindowTracker.stopSequenceNumberUpdate();
             this.connectionStateHandler.receivedDisconnectEvent(reason);
-            this._audience.clear();
         });
 
         deltaManager.on("throttled", (warning: IThrottlingWarning) => {
@@ -1596,7 +1629,34 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {
                 process: (message) => this.processRemoteMessage(message),
                 processSignal: (message) => {
-                    this.processSignal(message);
+                    if (message.clientId === null) {
+                        // System signal. Currently that only contains audience signals.
+                        const innerContent = message.content as { content: any; type: string };
+                        switch (innerContent.type) {
+                            case SystemSignalType.ClientJoin: {
+                                const newClient = innerContent.content as ISignalClient;
+                                this.protocolHandler.audience.addMember(newClient.clientId, newClient.client);
+                                break;
+                            }
+                            case SystemSignalType.ClientLeave: {
+                                const leftClientId = innerContent.content as string;
+                                this.protocolHandler.audience.removeMember(leftClientId);
+                                break;
+                            }
+                            case SystemSignalType.ClearClients: {
+                                this.protocolHandler.audience.clear();
+                                break;
+                            }
+                            default:
+                                this.logger.sendErrorEvent({
+                                    eventName: "UnknownSystemSignal",
+                                    type: innerContent.type,
+                                });
+                                break;
+                        }
+                    } else {
+                        this.context.processSignal(message, this.clientId === message.clientId);
+                    }
                 },
             },
             prefetchType);
@@ -1725,25 +1785,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
-        // Check and report if we're getting messages from a clientId that we previously
-        // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
-        if (message.clientId != null) {
-            let errorCode: string | undefined;
-            const client: ILocalSequencedClient | undefined =
-                this.getQuorum().getMember(message.clientId);
-            if (client === undefined && message.type !== MessageType.ClientJoin) {
-                errorCode = "messageClientIdMissingFromQuorum";
-            } else if (client?.shouldHaveLeft === true && message.type !== MessageType.NoOp) {
-                errorCode = "messageClientIdShouldHaveLeft";
-            }
-            if (errorCode !== undefined) {
-                const error = new DataCorruptionError(
-                    errorCode,
-                    extractSafePropertiesFromMessage(message));
-                this.close(normalizeError(error));
-            }
-        }
-
         const local = this.clientId === message.clientId;
 
         // Forward non system messages to the loaded runtime for processing
@@ -1762,23 +1803,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private submitSignal(message: any) {
         this._deltaManager.submitSignal(JSON.stringify(message));
-    }
-
-    private processSignal(message: ISignalMessage) {
-        // No clientId indicates a system signal message.
-        if (message.clientId === null) {
-            const innerContent = message.content as { content: any; type: string };
-            if (innerContent.type === MessageType.ClientJoin) {
-                const newClient = innerContent.content as ISignalClient;
-                this._audience.addMember(newClient.clientId, newClient.client);
-            } else if (innerContent.type === MessageType.ClientLeave) {
-                const leftClientId = innerContent.content as string;
-                this._audience.removeMember(leftClientId);
-            }
-        } else {
-            const local = this.clientId === message.clientId;
-            this.context.processSignal(message, local);
-        }
     }
 
     /**

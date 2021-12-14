@@ -4,24 +4,20 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ProtocolOpHandler } from "@fluidframework/protocol-base";
-import { ConnectionMode, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { ConnectionMode, IQuorum } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { ConnectionState } from "./container";
+import { ILocalSequencedClient } from "./contracts";
 
 export interface IConnectionStateHandler {
-    protocolHandler: () => ProtocolOpHandler | undefined,
+    quorum: () => IQuorum,
     logConnectionStateChangeTelemetry:
         (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
     shouldClientJoinWrite: () => boolean,
     maxClientLeaveWaitTime: number | undefined,
     logConnectionIssue: (eventName: string) => void,
     connectionStateChanged: () => void,
-}
-
-export interface ILocalSequencedClient extends ISequencedClient {
-    shouldHaveLeft?: boolean;
 }
 
 const JoinOpTimer = 45000;
@@ -118,14 +114,13 @@ export class ConnectionStateHandler {
     }
 
     private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout") {
-        const protocolHandler = this.handler.protocolHandler();
-        assert(protocolHandler !== undefined, 0x236 /* "In all cases it should be already installed" */);
+        const quorum = this.handler.quorum();
         // Move to connected state only if we are in Connecting state, we have seen our join op
         // and there is no timer running which means we are not waiting for previous client to leave
         // or timeout has occured while doing so.
         if (this.pendingClientId !== this.clientId
             && this.pendingClientId !== undefined
-            && protocolHandler.quorum.getMember(this.pendingClientId) !== undefined
+            && quorum.getMember(this.pendingClientId) !== undefined
             && !this.prevClientLeftTimer.hasTimer
         ) {
             this.waitEvent?.end({ source });
@@ -139,8 +134,8 @@ export class ConnectionStateHandler {
                 pendingClientId: this.pendingClientId,
                 clientId: this.clientId,
                 hasTimer: this.prevClientLeftTimer.hasTimer,
-                inQuorum: protocolHandler !== undefined && this.pendingClientId !== undefined
-                    && protocolHandler.quorum.getMember(this.pendingClientId) !== undefined,
+                inQuorum: this.pendingClientId !== undefined
+                    && quorum.getMember(this.pendingClientId) !== undefined,
             });
         }
     }
@@ -178,15 +173,13 @@ export class ConnectionStateHandler {
         // Report telemetry after we set client id, but before transitioning to Connected state below!
         this.handler.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
 
-        const protocolHandler = this.handler.protocolHandler();
+        const quorum = this.handler.quorum();
         // Check if we already processed our own join op through delta storage!
         // we are fetching ops from storage in parallel to connecting to ordering service
         // Given async processes, it's possible that we have already processed our own join message before
         // connection was fully established.
         // Note that we might be still initializing quorum - connection is established proactively on load!
-        if ((protocolHandler !== undefined && protocolHandler.quorum.getMember(details.clientId) !== undefined)
-            || connectionMode === "read"
-        ) {
+        if (quorum.getMember(details.clientId) !== undefined || connectionMode === "read") {
             assert(!this.prevClientLeftTimer.hasTimer, 0x2a6 /* "there should be no timer for 'read' connections" */);
             this.setConnectionState(ConnectionState.Connected);
         } else if (connectionMode === "write") {
@@ -205,7 +198,7 @@ export class ConnectionStateHandler {
 
         const oldState = this._connectionState;
         this._connectionState = value;
-        const quorum = this.handler.protocolHandler()?.quorum;
+        const quorum = this.handler.quorum();
         let client: ILocalSequencedClient | undefined;
         if (this._clientId !== undefined) {
             client = quorum?.getMember(this._clientId);

@@ -17,12 +17,30 @@ import {
     IClientConfiguration,
     IClientDetails,
     ISignalMessage,
+    ISequencedClient,
 } from "@fluidframework/protocol-definitions";
 
 export enum ReconnectMode {
     Never = "Never",
     Disabled = "Disabled",
     Enabled = "Enabled",
+}
+
+export interface ILocalSequencedClient extends ISequencedClient {
+    shouldHaveLeft?: boolean;
+}
+
+/**
+ * Needs to be moved to protocol-definitions, next to MessageType!
+ * And ideally update server code to use these definitions as well.
+ * */
+export enum SystemSignalType {
+    /** new client joined audience */
+    ClientJoin = "join",
+    /** client left audience */
+    ClientLeave = "leave",
+    /** clear all clients in audience */
+    ClearClients = "clear",
 }
 
 /**

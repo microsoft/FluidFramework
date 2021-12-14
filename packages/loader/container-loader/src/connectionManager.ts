@@ -58,6 +58,7 @@ import {
     ReconnectMode,
     IConnectionManager,
     IConnectionManagerFactoryArgs,
+    SystemSignalType,
 } from "./contracts";
 
 const MaxReconnectDelayInMs = 8000;
@@ -657,8 +658,9 @@ export class ConnectionManager implements IConnectionManager {
             }
         }
 
+        this.props.signalHandler({ clientId: null, content: { type: SystemSignalType.ClearClients } });
         for (const content of connection.initialClients ?? []) {
-            this.props.signalHandler({ clientId: null, content: { type: MessageType.ClientJoin, content }});
+            this.props.signalHandler({ clientId: null, content: { type: SystemSignalType.ClientJoin, content } });
         }
 
         this.props.connectHandler({
