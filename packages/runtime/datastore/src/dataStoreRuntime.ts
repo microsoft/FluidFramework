@@ -174,6 +174,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly quorum: IQuorum;
     private readonly audience: IAudience;
     public readonly logger: ITelemetryLogger;
+    private readonly runtimeLogger: ITelemetryLogger;
 
     // A map of child channel context ids to the their GC details in the initial summary of this data store.
     // This is used to initialize the channel context with data from the base summary.
@@ -188,9 +189,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         this.logger = ChildLogger.create(
             dataStoreContext.logger,
-            "FluidDataStoreRuntime",
+            undefined,
             {all:{ dataStoreId: uuid() }},
         );
+
+        this.runtimeLogger = ChildLogger.create(this.logger, "FluidDataStoreRuntime");
 
         this.id = dataStoreContext.id;
         this.options = dataStoreContext.options;
@@ -302,7 +305,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
                     return { mimeType: "fluid/object", status: 200, value: channel };
                 } catch (error) {
-                    this.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
+                    this.runtimeLogger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
 
                     return createResponseError(500, `Failed to get Channel: ${error}`, request);
                 }
@@ -444,7 +447,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             object.setConnectionState(connected, clientId);
         }
 
-        raiseConnectedEvent(this.logger, this, connected, clientId);
+        raiseConnectedEvent(this.runtimeLogger, this, connected, clientId);
     }
 
     public getQuorum(): IQuorum {

@@ -121,9 +121,12 @@ interface FluidDataStoreMessage {
 /**
  * Represents the context for the store. This context is passed to the store runtime.
  */
-export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidDataStoreContextEvents> implements
-    IFluidDataStoreContext,
-    IDisposable {
+export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidDataStoreContextEvents>
+    implements IFluidDataStoreContext, IDisposable
+{
+    public readonly logger: ITelemetryLogger;
+    private readonly contextLogger: ITelemetryLogger;
+
     public get packagePath(): readonly string[] {
         assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);
         return this.pkg;
@@ -139,10 +142,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public get clientDetails(): IClientDetails {
         return this._containerRuntime.clientDetails;
-    }
-
-    public get logger(): ITelemetryLogger {
-        return this._containerRuntime.logger;
     }
 
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -204,7 +203,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
-    private readonly subLogger: ITelemetryLogger;
     private readonly thresholdOpsCounter: ThresholdCounter;
     private static readonly pendingOpsCountThreshold = 1000;
 
@@ -225,6 +223,14 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         protected pkg?: readonly string[],
     ) {
         super();
+
+        this.logger = ChildLogger.create(
+            _containerRuntime.logger,
+            undefined,
+            { all: { fluidDataStoreId: { value: this.id, tag: "PackageData"} } });
+
+        this.contextLogger = ChildLogger.create(this.logger, "FluidDataStoreContext");
+        this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.contextLogger);
 
         // URIs use slashes as delimiters. Handles use URIs.
         // Thus having slashes in types almost guarantees trouble down the road!
@@ -249,9 +255,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
             async () => this.getInitialGCSummaryDetails(),
         );
-
-        this.subLogger = ChildLogger.create(this.logger, "FluidDataStoreContext");
-        this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.subLogger);
     }
 
     public dispose(): void {
@@ -281,7 +284,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
                 const errorWrapped = CreateProcessingError(error, "realizeFluidDataStoreContext");
                 errorWrapped.addTelemetryProperties({ fluidDataStoreId: { value: this.id, tag: "PackageData"} });
                 this.channelDeferred?.reject(errorWrapped);
-                this.logger.sendErrorEvent({ eventName: "RealizeError"}, errorWrapped);
+                this.contextLogger.sendErrorEvent({ eventName: "RealizeError"}, errorWrapped);
             });
         }
         return this.channelDeferred.promise;
@@ -617,8 +620,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.channelDeferred.resolve(this.channel);
         } catch (error) {
             this.channelDeferred?.reject(error);
-            this.logger.sendErrorEvent(
-                { eventName: "BindRuntimeError", fluidDataStoreId: { value: this.id, tag: "PackageData"} },
+            this.contextLogger.sendErrorEvent(
+                { eventName: "BindRuntimeError" },
                 error);
         }
     }
