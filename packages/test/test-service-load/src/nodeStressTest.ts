@@ -149,6 +149,7 @@ async function orchestratorProcess(
                     logger.send({
                         category: "metric",
                         eventName: "Runner Processes",
+                        testHarnessEvent: true,
                         value: results.length,
                     });
                 }
@@ -202,6 +203,7 @@ function setupTelemetry(
     logger.send({
         category: "metric",
         eventName: "Runner Started",
+        testHarnessEvent: true,
         value: 1,
         username,
         runId,
@@ -211,17 +213,25 @@ function setupTelemetry(
         logger.send({
             category: "metric",
             eventName: "Runner Start Error",
+            testHarnessEvent: true,
             value: 1,
             username,
             runId,
-            error: e.message,
         });
+        logger.sendErrorEvent({
+            eventName: "Runner Start Error",
+            testHarnessEvent: true,
+            username,
+            runId,
+        },
+        e);
     });
 
     process.once("exit", (code) => {
         logger.send({
             category: "metric",
             eventName: "Runner Exited",
+            testHarnessEvent: true,
             value: 1,
             username,
             runId,
@@ -236,6 +246,7 @@ function setupTelemetry(
         if (data.replace(/\./g, "").length > 0) {
             logger.send({
                 eventName: "Runner Console",
+                testHarnessEvent: true,
                 category: "generic",
                 lineNo: stdOutLine,
                 runId,
@@ -252,6 +263,7 @@ function setupTelemetry(
         console.log(data);
         logger.send({
             eventName: "Runner Error",
+            testHarnessEvent: true,
             category: "error",
             lineNo: stdErrLine,
             runId,
