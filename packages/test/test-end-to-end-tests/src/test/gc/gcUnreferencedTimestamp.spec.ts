@@ -229,7 +229,6 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             // Create data store B and mark it as referenced by storing its handle in A.
             const dataStoreB = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
             dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-            await provider.ensureSynchronized();
 
             // Remove the reference to B which marks is as unreferenced.
             dataStoreA._root.delete("dataStoreB");
@@ -241,7 +240,6 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 
             // 2. Add referenced from A to B. E = [A -> B].
             dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-            await provider.ensureSynchronized();
 
             // 3. Remove reference from A to B. E = [].
             dataStoreA._root.delete("dataStoreB");
@@ -270,7 +268,6 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             const dataStoreC = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
             dataStoreB._root.set("dataStoreC", dataStoreC.handle);
             dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-            await provider.ensureSynchronized();
 
             // Remove the reference to B which marks both B and C as unreferenced.
             dataStoreA._root.delete("dataStoreB");
@@ -284,7 +281,6 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 
             // 2. Add reference from A to B. E = [A -> B, B -> C].
             dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-            await provider.ensureSynchronized();
 
             // 3. Remove reference from B to C. E = [A -> B].
             dataStoreB._root.delete("dataStoreC");
@@ -319,7 +315,6 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             dataStoreB._root.set("dataStoreC", dataStoreC.handle);
             dataStoreC._root.set("dataStoreD", dataStoreD.handle);
             dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-            await provider.ensureSynchronized();
 
             // Remove the reference to B which marks B, C and D as unreferenced.
             dataStoreA._root.delete("dataStoreB");
@@ -335,7 +330,6 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 
             // 2. Add reference from A to B. E = [A -> B, B -> C, C -> D].
             dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-            await provider.ensureSynchronized();
 
             // 3. Remove reference from A to B. E = [B -> C, C -> D].
             dataStoreA._root.delete("dataStoreB");
@@ -366,7 +360,6 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             // Create data store C and mark it referenced by storing its handle in data store A.
             const dataStoreC = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
             dataStoreA._root.set("dataStoreC", dataStoreC.handle);
-            await provider.ensureSynchronized();
 
             // Remove the reference to C to make it unreferenced.
             dataStoreA._root.delete("dataStoreC");
@@ -384,7 +377,6 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 
             // 4. Add reference from B to C. E = [A -> B, B -> C].
             dataStoreB._root.set("dataStoreC", dataStoreC.handle);
-            await provider.ensureSynchronized();
 
             // 5. Remove reference from B to C. E = [A -> B].
             dataStoreB._root.delete("dataStoreC");
@@ -414,7 +406,6 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
          // Create data store C and mark it referenced by storing its handle in data store A.
          const dataStoreC = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
          dataStoreA._root.set("dataStoreC", dataStoreC.handle);
-         await provider.ensureSynchronized();
 
          // Remove the reference to C to make it unreferenced.
          dataStoreA._root.delete("dataStoreC");
@@ -429,7 +420,6 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 
          // 4. Add reference from B to C. E = [A -> B, B -> C].
          dataStoreB._root.set("dataStoreC", dataStoreC.handle);
-         await provider.ensureSynchronized();
 
          // 5. Remove reference from B to C. E = [A -> B].
          dataStoreB._root.delete("dataStoreC");
@@ -460,7 +450,6 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             // Create data store C and mark it referenced by storing its handle in data store A.
             const dataStoreC = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
             dataStoreA._root.set("dataStoreC", dataStoreC.handle);
-            await provider.ensureSynchronized();
 
             // Remove the reference to C to make it unreferenced.
             dataStoreA._root.delete("dataStoreC");
@@ -478,7 +467,6 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 
             // 4. Add reference from A to B. E = [A -> B, B -> C].
             dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-            await provider.ensureSynchronized();
 
             // 5. Remove reference from B to C. E = [A -> B].
             dataStoreB._root.delete("dataStoreC");
@@ -510,7 +498,6 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             // Create data store D and mark it referenced by storing its handle in data store A.
             const dataStoreD = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
             dataStoreA._root.set("dataStoreD", dataStoreD.handle);
-            await provider.ensureSynchronized();
 
             // Remove the reference to D which marks it as unreferenced.
             dataStoreA._root.delete("dataStoreD");
@@ -532,7 +519,6 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 
             // 5. Add reference from A to B. E = [A -> B, B -> C, C -> D].
             dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-            await provider.ensureSynchronized();
 
             // 6. Remove reference from C to D. E = [A -> B, B -> C].
             dataStoreC._root.delete("dataStoreD");
@@ -558,7 +544,6 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             const dataStoreC = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
             dataStoreA._root.set("dataStoreB", dataStoreB.handle);
             dataStoreA._root.set("dataStoreC", dataStoreC.handle);
-            await provider.ensureSynchronized();
 
             // Mark B and C as unreferenced for the first summary.
             dataStoreA._root.delete("dataStoreB");
@@ -573,7 +558,6 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 
             // 2. Add reference from B to C. E = [B -> C].
             dataStoreB._root.set("dataStoreC", dataStoreC.handle);
-            await provider.ensureSynchronized();
 
             // 3. Get summary 2 and validate that both B and C's unreferenced timestamps haven't changed. E = [B -> C].
             const timestamps2 = await getUnreferencedTimestamps(summarizerClient);
