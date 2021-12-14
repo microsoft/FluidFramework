@@ -20,7 +20,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IConnectionDetails,
     IContainer,
     IContainerEvents,
     IDeltaManager,
@@ -1557,14 +1556,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         deltaManager.inboundSignal.pause();
 
-        deltaManager.on("connect", (details: IConnectionDetails, opsBehind?: number) => {
-            // Back-compat for new client and old server.
-            this._audience.clear();
-
-            for (const priorClient of details.initialClients ?? []) {
-                this._audience.addMember(priorClient.clientId, priorClient.client);
-            }
-
+        deltaManager.on("connect", (details) => {
             this.connectionStateHandler.receivedConnectEvent(
                 this.connectionMode,
                 details,
@@ -1575,6 +1567,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.manualReconnectInProgress = false;
             this.collabWindowTracker.stopSequenceNumberUpdate();
             this.connectionStateHandler.receivedDisconnectEvent(reason);
+            this._audience.clear();
         });
 
         deltaManager.on("throttled", (warning: IThrottlingWarning) => {

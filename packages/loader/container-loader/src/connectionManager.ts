@@ -11,7 +11,6 @@ import {
 import {
     IDeltaQueue,
     ReadOnlyInfo,
-    IConnectionDetails,
 } from "@fluidframework/container-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
@@ -59,6 +58,7 @@ import {
     ReconnectMode,
     IConnectionManager,
     IConnectionManagerFactoryArgs,
+    IConnectionDetails,
 } from "./contracts";
 
 const MaxReconnectDelayInMs = 8000;
@@ -280,9 +280,7 @@ export class ConnectionManager implements IConnectionManager {
         return {
             claims: connection.claims,
             clientId: connection.clientId,
-            existing: connection.existing,
             checkpointSequenceNumber: connection.checkpointSequenceNumber,
-            get initialClients() { return connection.initialClients; },
             mode: connection.mode,
             serviceConfiguration: connection.serviceConfiguration,
             version: connection.version,
@@ -669,6 +667,10 @@ export class ConnectionManager implements IConnectionManager {
             for (const signal of connection.initialSignals) {
                 this.props.signalHandler(signal);
             }
+        }
+
+        for (const content of connection.initialClients ?? []) {
+            this.props.signalHandler({ clientId: null, content: { type: MessageType.ClientJoin, content }});
         }
 
         const details = ConnectionManager.detailsFromConnection(connection);

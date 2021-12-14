@@ -4,7 +4,6 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { ConnectionMode, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -163,7 +162,7 @@ export class ConnectionStateHandler {
 
     public receivedConnectEvent(
         connectionMode: ConnectionMode,
-        details: IConnectionDetails,
+        details: {clientId: string },
     ) {
         const oldState = this._connectionState;
         this._connectionState = ConnectionState.Connecting;

@@ -18,7 +18,6 @@ import {
     IDeltaQueue,
     ICriticalContainerError,
     IThrottlingWarning,
-    IConnectionDetails,
 } from "@fluidframework/container-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
@@ -52,6 +51,7 @@ import { DeltaQueue } from "./deltaQueue";
 import {
     IConnectionManagerFactoryArgs,
     IConnectionManager,
+    IConnectionDetails,
  } from "./contracts";
 
 export interface IConnectionArgs {
@@ -176,6 +176,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     // Forwarding connection manager properties / IDeltaManager implementation
     public get maxMessageSize(): number { return this.connectionManager.maxMessageSize; }
+
+    /** @deprecated Low level protocol should not be exposed to runtime */
     public get version() { return this.connectionManager.version; }
     public get serviceConfiguration() { return this.connectionManager.serviceConfiguration; }
     public get outbound() { return this.connectionManager.outbound; }
@@ -355,7 +357,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         this.emit(
             "connect",
-            connection,
+            { clientId: connection.clientId },
             checkpointSequenceNumber !== undefined ?
                 this.lastObservedSeqNumber - this.lastSequenceNumber : undefined);
 

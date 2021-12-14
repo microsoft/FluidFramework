@@ -76,9 +76,14 @@ export class DeltaQueueProxy<T> extends EventForwarder<IDeltaQueueEvents<T>> imp
  */
 export class DeltaManagerProxy
     extends EventForwarder<IDeltaManagerEvents>
-    implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
+    implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>
+{
     public readonly inbound: IDeltaQueue<ISequencedDocumentMessage>;
+
+    /** @deprecated - should not be exposed */
     public readonly outbound: IDeltaQueue<IDocumentMessage[]>;
+
+    /** @deprecated - should not be exposed */
     public readonly inboundSignal: IDeltaQueue<ISignalMessage>;
 
     public get IDeltaSender(): IDeltaSender {
@@ -105,6 +110,7 @@ export class DeltaManagerProxy
         return this.deltaManager.initialSequenceNumber;
     }
 
+    /** @deprecated - should not be exposed */
     public get hasCheckpointSequenceNumber() {
         return this.deltaManager.hasCheckpointSequenceNumber;
     }
@@ -113,6 +119,7 @@ export class DeltaManagerProxy
         return this.deltaManager.clientDetails;
     }
 
+    /** @deprecated Low level protocol should not be exposed to runtime */
     public get version(): string {
         return this.deltaManager.version;
     }
@@ -152,10 +159,12 @@ export class DeltaManagerProxy
         super.dispose();
     }
 
+    /** @deprecated Please use IContainerContext.closeFn */
     public close(): void {
         return this.deltaManager.close();
     }
 
+    /** @deprecated Please use IContainerContext.submitSignalFn */
     public submitSignal(content: any): void {
         return this.deltaManager.submitSignal(content);
     }

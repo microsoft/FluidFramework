@@ -7,10 +7,10 @@ import { strict as assert } from "assert";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IClient, IClientConfiguration, ITokenClaims } from "@fluidframework/protocol-definitions";
-import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ConnectionState } from "../container";
 import { ConnectionStateHandler } from "../connectionStateHandler";
+import { IConnectionDetails } from "../contracts";
 
 describe("ConnectionStateHandler Tests", () => {
     let clock: SinonFakeTimers;
@@ -49,10 +49,8 @@ describe("ConnectionStateHandler Tests", () => {
             clientId: pendingClientId,
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             claims: {} as ITokenClaims,
-            existing: true,
             mode: "read",
             version: "0.1",
-            initialClients: [],
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             serviceConfiguration: {} as IClientConfiguration,
             checkpointSequenceNumber: undefined,

@@ -5,36 +5,12 @@
 
 import { IDisposable, IEventProvider, IEvent, IErrorEvent } from "@fluidframework/common-definitions";
 import {
-    ConnectionMode,
     IClientConfiguration,
     IClientDetails,
     IDocumentMessage,
     ISequencedDocumentMessage,
-    ISignalClient,
     ISignalMessage,
-    ITokenClaims,
 } from "@fluidframework/protocol-definitions";
-
-/**
- * Contract representing the result of a newly established connection to the server for syncing deltas
- */
-export interface IConnectionDetails {
-    clientId: string;
-    claims: ITokenClaims;
-    existing: boolean;
-    mode: ConnectionMode;
-    version: string;
-    initialClients: ISignalClient[];
-    serviceConfiguration: IClientConfiguration;
-    /**
-     * Last known sequence number to ordering service at the time of connection
-     * It may lap actual last sequence number (quite a bit, if container  is very active).
-     * But it's best information for client to figure out how far it is behind, at least
-     * for "read" connections. "write" connections may use own "join" op to similar information,
-     * that is likely to be more up-to-date.
-     */
-    checkpointSequenceNumber: number | undefined;
-}
 
 /**
  * Interface used to define a strategy for handling incoming delta messages
@@ -94,7 +70,7 @@ export interface IDeltaManagerEvents extends IEvent {
      * The connect event fires once we've received the connect_document_success message from the
      * server.  This happens prior to the client's join message (if there is a join message).
      */
-    (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void);
+    (event: "connect", listener: (details: { clientId: string }, opsBehind?: number) => void);
     (event: "disconnect", listener: (reason: string) => void);
     (event: "readonly", listener: (readonly: boolean) => void);
 }
@@ -106,10 +82,10 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     /** The queue of inbound delta messages */
     readonly inbound: IDeltaQueue<T>;
 
-    /** The queue of outbound delta messages */
+    /** @deprecated in 0.54 - should not be exposed */
     readonly outbound: IDeltaQueue<U[]>;
 
-    /** The queue of inbound delta signals */
+    /** @deprecated in 0.54 - should not be exposed */
     readonly inboundSignal: IDeltaQueue<ISignalMessage>;
 
     /** The current minimum sequence number */
@@ -127,16 +103,13 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     /** The initial sequence number set when attaching the op handler */
     readonly initialSequenceNumber: number;
 
-    /**
-     * Tells if  current connection has checkpoint information.
-     * I.e. we know how far behind the client was at the time of establishing connection
-     */
+    /** @deprecated in 0.54 - should not be exposed */
     readonly hasCheckpointSequenceNumber: boolean;
 
     /** Details of client */
     readonly clientDetails: IClientDetails;
 
-    /** Protocol version being used to communicate with the service */
+    /** @deprecated in 0.54 - low level protocol should not be exposed to runtime */
     readonly version: string;
 
     /** Max message size allowed to the delta manager */
@@ -165,10 +138,10 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 
     readonly readOnlyInfo: ReadOnlyInfo;
 
-    /** Terminate the connection to storage */
+    /** @deprecated in 0.54 - please use IContainerContext.closeFn */
     close(): void;
 
-    /** Submit a signal to the service to be broadcast to other connected clients, but not persisted */
+    /** @deprecated in 0.54 - please use IContainerContext.submitSignalFn */
     submitSignal(content: any): void;
 }
 

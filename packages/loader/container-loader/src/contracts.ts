@@ -9,7 +9,6 @@ import {
 import {
     IDeltaQueue,
     ReadOnlyInfo,
-    IConnectionDetails,
 } from "@fluidframework/container-definitions";
 import {
     ConnectionMode,
@@ -18,6 +17,7 @@ import {
     IClientConfiguration,
     IClientDetails,
     ISignalMessage,
+    ITokenClaims,
 } from "@fluidframework/protocol-definitions";
 
 export enum ReconnectMode {
@@ -27,7 +27,26 @@ export enum ReconnectMode {
 }
 
 /**
- * Connection manager (implements this interface) is responsible for maintaining connection
+ * Contract representing the result of a newly established connection to the server for syncing deltas
+ */
+ export interface IConnectionDetails {
+    clientId: string;
+    claims: ITokenClaims;
+    mode: ConnectionMode;
+    version: string;
+    serviceConfiguration: IClientConfiguration;
+    /**
+     * Last known sequence number to ordering service at the time of connection
+     * It may lap actual last sequence number (quite a bit, if container  is very active).
+     * But it's best information for client to figure out how far it is behind, at least
+     * for "read" connections. "write" connections may use own "join" op to similar information,
+     * that is likely to be more up-to-date.
+     */
+    checkpointSequenceNumber: number | undefined;
+}
+
+/**
+* Connection manager (implements this interface) is responsible for maintaining connection
  * to relay service.
  */
 export interface IConnectionManager {
