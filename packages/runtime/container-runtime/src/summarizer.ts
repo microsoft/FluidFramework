@@ -190,8 +190,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         const stopReason = await stopP;
 
         // There are two possible approaches here:
-        // 1. Propagate cancellation from this.#stopDeferred to runCoordinator. This will ensure that we move to the exit
-        //    faster, including breaking out of the RunningSummarizer.trySummarize() faster.
+        // 1. Propagate cancellation from this.#stopDeferred to runCoordinator. This will ensure that we
+        //    move to the exit faster, including breaking out of the RunningSummarizer.trySummarize() faster.
         //    We could create new coordinator and pass it to waitStop() -> trySummarizeOnce("lastSummary") flow.
         //    The con of this approach is that we might cancel active summary, and lastSummary will fail because it
         //    did not wait for ack/nack from previous summary. Plus we disregard any 429 kind of info from service

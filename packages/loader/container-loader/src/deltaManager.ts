@@ -406,7 +406,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // We might have connection already and it might have called fetchMissingDeltas() from
         // setupNewSuccessfulConnection. But it should do nothing, because there is no way to fetch ops before
         // we know snapshot sequence number that is set in attachOpHandler. So all such calls should be noop.
-        assert(this.#fetchReason === undefined, 0x268 /* "There can't be pending fetch that early in boot sequence!" */);
+        assert(this.#fetchReason === undefined,
+            0x268 /* "There can't be pending fetch that early in boot sequence!" */);
 
         if (this.#closed) {
             return;
@@ -430,7 +431,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         }
 
         // Ensure there is no need to call this.processPendingOps() at the end of boot sequence
-        assert(this.#fetchReason !== undefined || this.#pending.length === 0, 0x269 /* "pending ops are not dropped" */);
+        assert(this.#fetchReason !== undefined || this.#pending.length === 0,
+            0x269 /* "pending ops are not dropped" */);
     }
 
     public connect(args: IConnectionArgs) {

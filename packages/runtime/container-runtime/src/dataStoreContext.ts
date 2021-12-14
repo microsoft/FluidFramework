@@ -251,7 +251,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         );
 
         this.#subLogger = ChildLogger.create(this.logger, "FluidDataStoreContext");
-        this.#thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.#subLogger);
+        this.#thresholdOpsCounter = new ThresholdCounter(
+            FluidDataStoreContext.pendingOpsCountThreshold, this.#subLogger);
     }
 
     public dispose(): void {

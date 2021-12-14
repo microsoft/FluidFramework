@@ -95,7 +95,8 @@ class Summary implements ISummary {
     }
 
     public broadcast(op: ISummaryOpMessage) {
-        assert(this.#state === SummaryState.Local, 0x175 /* "Can only broadcast if summarizer starts in local state" */);
+        assert(this.#state === SummaryState.Local,
+            0x175 /* "Can only broadcast if summarizer starts in local state" */);
         this.#summaryOp = op;
         this.#defSummaryOp.resolve();
         this.#state = SummaryState.Broadcast;

@@ -585,7 +585,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         } else {
             assert(message.type === MessageType.Operation, 0x073 /* "Sequence message not operation" */);
 
-            const handled = this.#intervalMapKernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
+            const handled = this.#intervalMapKernel.tryProcessMessage(
+                message.contents,
+                local,
+                message,
+                localOpMetadata);
 
             if (!handled) {
                 this.processMergeTreeMsg(message);

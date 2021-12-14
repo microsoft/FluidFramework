@@ -379,7 +379,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
             // If our data store is local then add the channel to the queue
             if (!this.#localChannelContextQueue.has(channel.id)) {
-                this.#localChannelContextQueue.set(channel.id, this.#contexts.get(channel.id) as LocalChannelContextBase);
+                this.#localChannelContextQueue.set(
+                    channel.id, this.#contexts.get(channel.id) as LocalChannelContextBase);
             }
         }
     }
@@ -480,7 +481,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         assert(!this.#contexts.has(id),
                         0x17d, /* `Unexpected attach channel OP,
                             is in pendingAttach set: ${this.#pendingAttach.has(id)},
-                            is local channel contexts: ${this.#contexts.get(id) instanceof LocalChannelContextBase}` */);
+                            is local channel contexts:
+                            ${this.#contexts.get(id) instanceof LocalChannelContextBase}` */);
 
                         const flatBlobs = new Map<string, ArrayBufferLike>();
                         const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);

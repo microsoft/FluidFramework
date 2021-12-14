@@ -93,7 +93,7 @@ export class SharedMatrix<T = any>
     readonly #cols: PermutationVector;   // Map logical col to storage handle (if any)
 
     #cells = new SparseArray2D<MatrixItem<T>>();     // Stores cell values.
-    pending = new SparseArray2D<number>();          // Tracks #pending writes.
+    #pending = new SparseArray2D<number>();          // Tracks #pending writes.
 
     constructor(runtime: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
@@ -280,7 +280,7 @@ export class SharedMatrix<T = any>
         };
 
         this.submitLocalMessage(op, metadata);
-        this.pending.setCell(rowHandle, colHandle, localSeq);
+        this.#pending.setCell(rowHandle, colHandle, localSeq);
     }
 
     private submitVectorMessage(
@@ -449,7 +449,7 @@ export class SharedMatrix<T = any>
                     SnapshotPath.cells,
                     [
                         this.#cells.snapshot(),
-                        this.pending.snapshot(),
+                        this.#pending.snapshot(),
                     ],
                     serializer),
             ],
@@ -587,7 +587,7 @@ export class SharedMatrix<T = any>
             const [cellData, pendingCliSeqData] = await deserializeBlob(storage, SnapshotPath.cells, this.serializer);
 
             this.#cells = SparseArray2D.load(cellData);
-            this.pending = SparseArray2D.load(pendingCliSeqData);
+            this.#pending = SparseArray2D.load(pendingCliSeqData);
         } catch (error) {
             this.logger.sendErrorEvent({ eventName: "MatrixLoadFailed" }, error);
         }
@@ -619,7 +619,7 @@ export class SharedMatrix<T = any>
                     // If this is the most recent write to the cell by the local client, remove our
                     // entry from 'pendingCliSeqs' to resume allowing remote writes.
                     if (this.isLatestPendingWrite(rowHandle, colHandle, localSeq)) {
-                        this.pending.setCell(rowHandle, colHandle, undefined);
+                        this.#pending.setCell(rowHandle, colHandle, undefined);
                     }
                 } else {
                     const rowClientId = this.#rows.getOrAddShortClientId(clientId);
@@ -638,7 +638,7 @@ export class SharedMatrix<T = any>
 
                             // If there is a pending (unACKed) local write to the same cell, skip the current op
                             // since it "happened before" the pending write.
-                            if (this.pending.getCell(rowHandle, colHandle) === undefined) {
+                            if (this.#pending.getCell(rowHandle, colHandle) === undefined) {
                                 const { value } = contents;
                                 this.#cells.setCell(rowHandle, colHandle, value);
 
@@ -675,14 +675,14 @@ export class SharedMatrix<T = any>
     readonly #onRowHandlesRecycled = (rowHandles: Handle[]) => {
         for (const rowHandle of rowHandles) {
             this.#cells.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
-            this.pending.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
+            this.#pending.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
         }
     };
 
     readonly #onColHandlesRecycled = (colHandles: Handle[]) => {
         for (const colHandle of colHandles) {
             this.#cells.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
-            this.pending.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
+            this.#pending.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
         }
     };
 
@@ -696,7 +696,7 @@ export class SharedMatrix<T = any>
      */
     private isLatestPendingWrite(rowHandle: Handle, colHandle: Handle, localSeq: number) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const pendingLocalSeq = this.pending.getCell(rowHandle, colHandle)!;
+        const pendingLocalSeq = this.#pending.getCell(rowHandle, colHandle)!;
 
         // Note while we're awaiting the ACK for a local set, it's possible for the row/col to be
         // locally removed and the row/col handles recycled.  If this happens, the pendingLocalSeq will
