@@ -14,8 +14,8 @@ export class VectorUndoProvider {
     // 'currentGroup' and 'currentOp' are used while applying an IRevertable.revert() to coalesce
     // the recorded into a single IRevertable / tracking group as they move between the undo <->
     // redo stacks.
-    private currentGroup?: TrackingGroup;
-    private currentOp?: MergeTreeDeltaType;
+    #currentGroup?: TrackingGroup;
+    #currentOp?: MergeTreeDeltaType;
 
     constructor(
         private readonly manager: IUndoConsumer,
@@ -38,25 +38,25 @@ export class VectorUndoProvider {
             // If we are in the process of reverting, the `IRevertible.revert()` will provide the tracking
             // group so that we can preserve the original segment ranges as a single op/group as we move
             // ops between the undo <-> redo stacks.
-            const trackingGroup = this.currentGroup ?? new TrackingGroup();
+            const trackingGroup = this.#currentGroup ?? new TrackingGroup();
             for (const range of ranges) {
                 trackingGroup.link(range.segment);
             }
 
             // For SharedMatrix, each IRevertibles always holds a single row/col operation.
             // Therefore, 'currentOp' must either be undefined or equal to the current op.
-            assert(this.currentOp === undefined || this.currentOp === operation,
+            assert(this.#currentOp === undefined || this.#currentOp === operation,
                 0x02a /* "On vector undo, unexpected 'currentOp' type/state!" */);
 
             switch (operation) {
                 case MergeTreeDeltaType.INSERT:
-                    if (this.currentOp !== MergeTreeDeltaType.INSERT) {
+                    if (this.#currentOp !== MergeTreeDeltaType.INSERT) {
                         this.pushRevertible(trackingGroup, this.undoInsert);
                     }
                     break;
 
                 case MergeTreeDeltaType.REMOVE: {
-                    if (this.currentOp !== MergeTreeDeltaType.REMOVE) {
+                    if (this.#currentOp !== MergeTreeDeltaType.REMOVE) {
                         this.pushRevertible(trackingGroup, this.undoRemove);
                     }
                     break;
@@ -69,8 +69,8 @@ export class VectorUndoProvider {
             // If we are in the process of reverting, set 'currentOp' to remind ourselves not to push
             // another revertible until `IRevertable.revert()` finishes the current op and clears this
             // field.
-            if (this.currentGroup !== undefined) {
-                this.currentOp = operation;
+            if (this.#currentGroup !== undefined) {
+                this.#currentOp = operation;
             }
         }
     }
@@ -78,10 +78,10 @@ export class VectorUndoProvider {
     private pushRevertible(trackingGroup: TrackingGroup, callback: (segment: PermutationSegment) => void) {
         const revertible = {
             revert: () => {
-                assert(this.currentGroup === undefined && this.currentOp === undefined,
+                assert(this.#currentGroup === undefined && this.#currentOp === undefined,
                     0x02b /* "Must not nest calls to IRevertible.revert()" */);
 
-                this.currentGroup = new TrackingGroup();
+                this.#currentGroup = new TrackingGroup();
 
                 try {
                     while (trackingGroup.size > 0) {
@@ -95,8 +95,8 @@ export class VectorUndoProvider {
                         callback(segment);
                     }
                 } finally {
-                    this.currentOp = undefined;
-                    this.currentGroup = undefined;
+                    this.#currentOp = undefined;
+                    this.#currentGroup = undefined;
                 }
             },
             discard: () => {

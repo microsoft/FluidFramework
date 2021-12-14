@@ -75,52 +75,52 @@ class Summary implements ISummary {
         return summary;
     }
 
-    private state = SummaryState.Local;
+    #state = SummaryState.Local;
 
-    private _summaryOp?: ISummaryOpMessage;
-    private _summaryAckNack?: ISummaryAckMessage | ISummaryNackMessage;
+    #summaryOp?: ISummaryOpMessage;
+    #summaryAckNack?: ISummaryAckMessage | ISummaryNackMessage;
 
-    private readonly defSummaryOp = new Deferred<void>();
-    private readonly defSummaryAck = new Deferred<void>();
+    readonly #defSummaryOp = new Deferred<void>();
+    readonly #defSummaryAck = new Deferred<void>();
 
-    public get summaryOp() { return this._summaryOp; }
-    public get summaryAckNack() { return this._summaryAckNack; }
+    public get summaryOp() { return this.#summaryOp; }
+    public get summaryAckNack() { return this.#summaryAckNack; }
 
     private constructor(
         public readonly clientId: string,
         public readonly clientSequenceNumber: number) { }
 
     public hasBeenAcked(): this is IAckedSummary {
-        return this.state === SummaryState.Acked;
+        return this.#state === SummaryState.Acked;
     }
 
     public broadcast(op: ISummaryOpMessage) {
-        assert(this.state === SummaryState.Local, 0x175 /* "Can only broadcast if summarizer starts in local state" */);
-        this._summaryOp = op;
-        this.defSummaryOp.resolve();
-        this.state = SummaryState.Broadcast;
+        assert(this.#state === SummaryState.Local, 0x175 /* "Can only broadcast if summarizer starts in local state" */);
+        this.#summaryOp = op;
+        this.#defSummaryOp.resolve();
+        this.#state = SummaryState.Broadcast;
         return true;
     }
 
     public ackNack(op: ISummaryAckMessage | ISummaryNackMessage) {
-        assert(this.state === SummaryState.Broadcast,
+        assert(this.#state === SummaryState.Broadcast,
             0x176 /* "Can only ack/nack if summarizer is in broadcasting state" */);
-        this._summaryAckNack = op;
-        this.defSummaryAck.resolve();
-        this.state = op.type === MessageType.SummaryAck ? SummaryState.Acked : SummaryState.Nacked;
+        this.#summaryAckNack = op;
+        this.#defSummaryAck.resolve();
+        this.#state = op.type === MessageType.SummaryAck ? SummaryState.Acked : SummaryState.Nacked;
         return true;
     }
 
     public async waitBroadcast(): Promise<ISummaryOpMessage> {
-        await this.defSummaryOp.promise;
+        await this.#defSummaryOp.promise;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this._summaryOp!;
+        return this.#summaryOp!;
     }
 
     public async waitAckNack(): Promise<ISummaryAckMessage | ISummaryNackMessage> {
-        await this.defSummaryAck.promise;
+        await this.#defSummaryAck.promise;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this._summaryAckNack!;
+        return this.#summaryAckNack!;
     }
 }
 
@@ -138,10 +138,10 @@ export interface IClientSummaryWatcher extends IDisposable {
  */
 class ClientSummaryWatcher implements IClientSummaryWatcher {
     // key: clientSeqNum
-    private readonly localSummaries = new Map<number, Summary>();
-    private _disposed = false;
+    readonly #localSummaries = new Map<number, Summary>();
+    #disposed = false;
 
-    public get disposed() { return this._disposed; }
+    public get disposed() { return this.#disposed; }
 
     public constructor(
         public readonly clientId: string,
@@ -153,10 +153,10 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
      * @param clientSequenceNumber - client sequence number of sent summary op
      */
     public watchSummary(clientSequenceNumber: number): ISummary {
-        let summary = this.localSummaries.get(clientSequenceNumber);
+        let summary = this.#localSummaries.get(clientSequenceNumber);
         if (!summary) {
             summary = Summary.createLocal(this.clientId, clientSequenceNumber);
-            this.localSummaries.set(summary.clientSequenceNumber, summary);
+            this.#localSummaries.set(summary.clientSequenceNumber, summary);
         }
         return summary;
     }
@@ -175,7 +175,7 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
      * @param clientSequenceNumber - client sequence number of sent summary op
      */
     public tryGetSummary(clientSequenceNumber: number) {
-        return this.localSummaries.get(clientSequenceNumber);
+        return this.#localSummaries.get(clientSequenceNumber);
     }
 
     /**
@@ -183,12 +183,12 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
      * @param summary - summary to start watching
      */
     public setSummary(summary: Summary) {
-        this.localSummaries.set(summary.clientSequenceNumber, summary);
+        this.#localSummaries.set(summary.clientSequenceNumber, summary);
     }
 
     public dispose() {
         this.summaryCollection.removeWatcher(this.clientId);
-        this._disposed = true;
+        this.#disposed = true;
     }
 }
 
@@ -205,17 +205,17 @@ export interface ISummaryCollectionOpEvents extends IEvent {
  */
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
     // key: clientId
-    private readonly summaryWatchers = new Map<string, ClientSummaryWatcher>();
+    readonly #summaryWatchers = new Map<string, ClientSummaryWatcher>();
     // key: summarySeqNum
-    private readonly pendingSummaries = new Map<number, Summary>();
-    private refreshWaitNextAck = new Deferred<void>();
+    readonly #pendingSummaries = new Map<number, Summary>();
+    #refreshWaitNextAck = new Deferred<void>();
 
-    private lastSummaryTimestamp: number | undefined;
-    private maxAckWaitTime: number | undefined;
-    private pendingAckTimerTimeoutCallback: (() => void) | undefined;
-    private lastAck: IAckedSummary | undefined;
+    #lastSummaryTimestamp: number | undefined;
+    #maxAckWaitTime: number | undefined;
+    #pendingAckTimerTimeoutCallback: (() => void) | undefined;
+    #lastAck: IAckedSummary | undefined;
 
-    public get latestAck(): IAckedSummary | undefined { return this.lastAck; }
+    public get latestAck(): IAckedSummary | undefined { return this.#lastAck; }
 
     public emit(event: OpActionEventName, ...args: Parameters<OpActionEventListener>): boolean {
         return super.emit(event, ...args);
@@ -223,7 +223,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 
     public get opsSinceLastAck() {
         return this.deltaManager.lastSequenceNumber -
-            (this.lastAck?.summaryAck.sequenceNumber ?? this.deltaManager.initialSequenceNumber);
+            (this.#lastAck?.summaryAck.sequenceNumber ?? this.deltaManager.initialSequenceNumber);
     }
 
     public addOpListener(listener: () => void) {
@@ -251,22 +251,22 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
      */
     public createWatcher(clientId: string): IClientSummaryWatcher {
         const watcher = new ClientSummaryWatcher(clientId, this);
-        this.summaryWatchers.set(clientId, watcher);
+        this.#summaryWatchers.set(clientId, watcher);
         return watcher;
     }
 
     public removeWatcher(clientId: string) {
-        this.summaryWatchers.delete(clientId);
+        this.#summaryWatchers.delete(clientId);
     }
 
     public setPendingAckTimerTimeoutCallback(maxAckWaitTime: number, timeoutCallback: () => void) {
-        this.maxAckWaitTime = maxAckWaitTime;
-        this.pendingAckTimerTimeoutCallback = timeoutCallback;
+        this.#maxAckWaitTime = maxAckWaitTime;
+        this.#pendingAckTimerTimeoutCallback = timeoutCallback;
     }
 
     public unsetPendingAckTimerTimeoutCallback() {
-        this.maxAckWaitTime = undefined;
-        this.pendingAckTimerTimeoutCallback = undefined;
+        this.#maxAckWaitTime = undefined;
+        this.#pendingAckTimerTimeoutCallback = undefined;
     }
 
     /**
@@ -274,12 +274,12 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
      * have been acked or nacked.
      */
     public async waitFlushed(): Promise<IAckedSummary | undefined> {
-        while (this.pendingSummaries.size > 0) {
+        while (this.#pendingSummaries.size > 0) {
             // eslint-disable-next-line @typescript-eslint/promise-function-async
-            const promises = Array.from(this.pendingSummaries, ([, summary]) => summary.waitAckNack());
+            const promises = Array.from(this.#pendingSummaries, ([, summary]) => summary.waitAckNack());
             await Promise.all(promises);
         }
-        return this.lastAck;
+        return this.#lastAck;
     }
 
     /**
@@ -289,10 +289,10 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
      * @returns The latest acked summary
      */
     public async waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary> {
-        while (!this.lastAck || this.lastAck.summaryOp.referenceSequenceNumber < referenceSequenceNumber) {
-            await this.refreshWaitNextAck.promise;
+        while (!this.#lastAck || this.#lastAck.summaryOp.referenceSequenceNumber < referenceSequenceNumber) {
+            await this.#refreshWaitNextAck.promise;
         }
-        return this.lastAck;
+        return this.#lastAck;
     }
 
     /**
@@ -318,11 +318,11 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
                 // the maxAckWaitTime, then we need to inform summarizer to not wait and summarize
                 // immediately as we have already waited for maxAckWaitTime.
                 const lastOpTimestamp = op.timestamp;
-                if (this.lastSummaryTimestamp !== undefined &&
-                    this.maxAckWaitTime !== undefined &&
-                    lastOpTimestamp - this.lastSummaryTimestamp >= this.maxAckWaitTime
+                if (this.#lastSummaryTimestamp !== undefined &&
+                    this.#maxAckWaitTime !== undefined &&
+                    lastOpTimestamp - this.#lastSummaryTimestamp >= this.#maxAckWaitTime
                 ) {
-                    this.pendingAckTimerTimeoutCallback?.();
+                    this.#pendingAckTimerTimeoutCallback?.();
                 }
                 this.emit("default", op);
 
@@ -335,7 +335,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
         let summary: Summary | undefined;
 
         // Check if summary already being watched, broadcast if so
-        const watcher = this.summaryWatchers.get(op.clientId);
+        const watcher = this.#summaryWatchers.get(op.clientId);
         if (watcher) {
             summary = watcher.tryGetSummary(op.clientSequenceNumber);
             if (summary) {
@@ -350,14 +350,14 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
                 watcher.setSummary(summary);
             }
         }
-        this.pendingSummaries.set(op.sequenceNumber, summary);
-        this.lastSummaryTimestamp = op.timestamp;
+        this.#pendingSummaries.set(op.sequenceNumber, summary);
+        this.#lastSummaryTimestamp = op.timestamp;
         this.emit(MessageType.Summarize, op);
     }
 
     private handleSummaryAck(op: ISummaryAckMessage) {
         const seq = op.contents.summaryProposal.summarySequenceNumber;
-        const summary = this.pendingSummaries.get(seq);
+        const summary = this.#pendingSummaries.get(seq);
         if (!summary || summary.summaryOp === undefined) {
             // Summary ack without an op should be rare. We could fetch the
             // reference sequence number from the snapshot, but instead we
@@ -380,26 +380,26 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
             return;
         }
         summary.ackNack(op);
-        this.pendingSummaries.delete(seq);
+        this.#pendingSummaries.delete(seq);
 
         // Track latest ack
-        if (!this.lastAck || seq > this.lastAck.summaryAck.contents.summaryProposal.summarySequenceNumber) {
-            this.lastAck = {
+        if (!this.#lastAck || seq > this.#lastAck.summaryAck.contents.summaryProposal.summarySequenceNumber) {
+            this.#lastAck = {
                 summaryOp: summary.summaryOp,
                 summaryAck: op,
             };
-            this.refreshWaitNextAck.resolve();
-            this.refreshWaitNextAck = new Deferred<void>();
+            this.#refreshWaitNextAck.resolve();
+            this.#refreshWaitNextAck = new Deferred<void>();
             this.emit(MessageType.SummaryAck, op);
         }
     }
 
     private handleSummaryNack(op: ISummaryNackMessage) {
         const seq = op.contents.summaryProposal.summarySequenceNumber;
-        const summary = this.pendingSummaries.get(seq);
+        const summary = this.#pendingSummaries.get(seq);
         if (summary) {
             summary.ackNack(op);
-            this.pendingSummaries.delete(seq);
+            this.#pendingSummaries.delete(seq);
             this.emit(MessageType.SummaryNack, op);
         }
     }

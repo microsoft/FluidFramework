@@ -9,13 +9,13 @@ export interface ICache<T> {
 }
 
 export class InMemoryCache<T> implements ICache<T> {
-    private readonly cache: Map<string, T> = new Map();
+    readonly #cache: Map<string, T> = new Map();
 
     public async get(key: string): Promise<T | undefined> {
-        return this.cache.get(key);
+        return this.#cache.get(key);
     }
 
     public async put(key: string, value: T): Promise<void> {
-        this.cache.set(key, value);
+        this.#cache.set(key, value);
     }
 }

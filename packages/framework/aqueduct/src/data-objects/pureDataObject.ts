@@ -35,8 +35,8 @@ import { DataObjectTypes, DataObjectType, IDataObjectProps } from "./types";
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
     extends EventForwarder<DataObjectType<I, "Events">>
     implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IFluidObject {
-    private readonly innerHandle: IFluidHandle<this>;
-    private _disposed = false;
+    readonly #innerHandle: IFluidHandle<this>;
+    #disposed = false;
 
     /**
      * This is your FluidDataStoreRuntime object
@@ -63,17 +63,17 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 
     protected initializeP: Promise<void> | undefined;
 
-    public get disposed() { return this._disposed; }
+    public get disposed() { return this.#disposed; }
 
     public get id() { return this.runtime.id; }
     public get IFluidRouter() { return this; }
     public get IFluidLoadable() { return this; }
-    public get IFluidHandle() { return this.innerHandle; }
+    public get IFluidHandle() { return this.#innerHandle; }
 
     /**
      * Handle to a data store
      */
-    public get handle(): IFluidHandle<this> { return this.innerHandle; }
+    public get handle(): IFluidHandle<this> { return this.#innerHandle; }
 
     public static async getDataObject(runtime: IFluidDataStoreRuntime) {
         const obj = (runtime as any)._dataObject as PureDataObject;
@@ -95,11 +95,11 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
         // Create a FluidObjectHandle with empty string as `path`. This is because reaching this PureDataObject is the
         // same as reaching its routeContext (FluidDataStoreRuntime) so there is so the relative path to it from the
         // routeContext is empty.
-        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
+        this.#innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
 
         // Container event handlers
         this.runtime.once("dispose", () => {
-            this._disposed = true;
+            this.#disposed = true;
             this.dispose();
         });
     }

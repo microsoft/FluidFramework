@@ -37,7 +37,7 @@ type PermutationSegmentSpec = [number, number];
 
 export class PermutationSegment extends BaseSegment {
     public static readonly typeString: string = "PermutationSegment";
-    private _start = Handle.unallocated;
+    #start = Handle.unallocated;
 
     public static fromJSONObject(spec: any) {
         const [length, start] = spec as PermutationSegmentSpec;
@@ -48,16 +48,16 @@ export class PermutationSegment extends BaseSegment {
 
     constructor(length: number, start = Handle.unallocated) {
         super();
-        this._start = start;
+        this.#start = start;
         this.cachedLength = length;
     }
 
-    public get start() { return this._start; }
+    public get start() { return this.#start; }
     public set start(value: Handle) {
-        assert(this._start === Handle.unallocated, 0x024 /* "Start of PermutationSegment already allocated!" */);
+        assert(this.#start === Handle.unallocated, 0x024 /* "Start of PermutationSegment already allocated!" */);
         assert(isHandleValid(value), 0x025 /* "Trying to set start of PermutationSegment to invalid handle!" */);
 
-        this._start = value;
+        this.#start = value;
     }
 
     /**
@@ -85,12 +85,12 @@ export class PermutationSegment extends BaseSegment {
         }
 
         // Move handle allocations from this segment to its replacement.
-        destination._start = this._start;
+        destination.#start = this.#start;
         this.reset();
     }
 
     public reset() {
-        this._start = Handle.unallocated;
+        this.#start = Handle.unallocated;
     }
 
     public toJSONObject() {
@@ -143,7 +143,7 @@ export class PermutationSegment extends BaseSegment {
 }
 
 export class PermutationVector extends Client {
-    private handleTable = new HandleTable<never>(); // Tracks available storage handles for rows.
+    #handleTable = new HandleTable<never>(); // Tracks available storage handles for rows.
     public readonly handleCache = new HandleCache(this);
     public undo: VectorUndoProvider | undefined;
 
@@ -161,8 +161,8 @@ export class PermutationVector extends Client {
             newMergeTreeSnapshotFormat: true,   // Temporarily force new snapshot format until it is the default.
         });                                     // (See https://github.com/microsoft/FluidFramework/issues/84)
 
-        this.mergeTreeDeltaCallback = this.onDelta;
-        this.mergeTreeMaintenanceCallback = this.onMaintenance;
+        this.mergeTreeDeltaCallback = this.#onDelta;
+        this.mergeTreeMaintenanceCallback = this.#onMaintenance;
     }
 
     public insert(start: number, length: number) {
@@ -201,7 +201,7 @@ export class PermutationVector extends Client {
         this.walkSegments(
             (segment) => {
                 const asPerm = segment as PermutationSegment;
-                asPerm.start = handle = this.handleTable.allocate();
+                asPerm.start = handle = this.#handleTable.allocate();
                 return true;
             },
             pos,
@@ -295,7 +295,7 @@ export class PermutationVector extends Client {
                     type: TreeEntry.Tree,
                     value: super.snapshot(runtime, handle, serializer, /* catchUpMsgs: */[]),
                 },
-                serializeBlob(handle, SnapshotPath.handleTable, this.handleTable.snapshot(), serializer),
+                serializeBlob(handle, SnapshotPath.handleTable, this.#handleTable.snapshot(), serializer),
             ],
         };
     }
@@ -307,12 +307,12 @@ export class PermutationVector extends Client {
     ) {
         const handleTableData = await deserializeBlob(storage, SnapshotPath.handleTable, serializer);
 
-        this.handleTable = HandleTable.load<never>(handleTableData);
+        this.#handleTable = HandleTable.load<never>(handleTableData);
 
         return super.load(runtime, new ObjectStoragePartition(storage, SnapshotPath.segments), serializer);
     }
 
-    private readonly onDelta = (
+    readonly #onDelta = (
         opArgs: IMergeTreeDeltaOpArgs,
         { operation, deltaSegments }: IMergeTreeDeltaCallbackArgs,
     ) => {
@@ -373,7 +373,7 @@ export class PermutationVector extends Client {
         }
     };
 
-    private readonly onMaintenance = (args: IMergeTreeMaintenanceCallbackArgs) => {
+    readonly #onMaintenance = (args: IMergeTreeMaintenanceCallbackArgs) => {
         if (args.operation === MergeTreeMaintenanceType.UNLINK) {
             let freed: number[] = [];
 
@@ -395,7 +395,7 @@ export class PermutationVector extends Client {
 
             // Now that the physical storage has been cleared, add the recycled handles back to the free pool.
             for (const handle of freed) {
-                this.handleTable.free(handle);
+                this.#handleTable.free(handle);
             }
         }
     };

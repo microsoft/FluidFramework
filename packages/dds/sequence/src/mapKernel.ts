@@ -149,39 +149,39 @@ export class MapKernel implements IValueTypeCreator {
      * The number of key/value pairs stored in the map.
      */
     public get size(): number {
-        return this.data.size;
+        return this.#data.size;
     }
 
     /**
      * Mapping of op types to message handlers.
      */
-    private readonly messageHandlers: ReadonlyMap<string, IMapMessageHandler> = new Map();
+    readonly #messageHandlers: ReadonlyMap<string, IMapMessageHandler> = new Map();
 
     /**
      * The in-memory data the map is storing.
      */
-    private readonly data = new Map<string, ILocalValue>();
+    readonly #data = new Map<string, ILocalValue>();
 
     /**
      * Keys that have been modified locally but not yet ack'd from the server.
      */
-    private readonly pendingKeys: Map<string, number> = new Map();
+    readonly #pendingKeys: Map<string, number> = new Map();
 
     /**
      * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
      */
-    private pendingMessageId: number = -1;
+    #pendingMessageId: number = -1;
 
     /**
      * If a clear has been performed locally but not yet ack'd from the server, then this stores the pending id
      * of that clear operation. Otherwise, is -1.
      */
-    private pendingClearMessageId: number = -1;
+    #pendingClearMessageId: number = -1;
 
     /**
      * Object to create encapsulations of the values stored in the map.
      */
-    private readonly localValueMaker: LocalValueMaker;
+    readonly #localValueMaker: LocalValueMaker;
 
     /**
      * Create a new shared map kernel.
@@ -200,10 +200,10 @@ export class MapKernel implements IValueTypeCreator {
         valueTypes: Readonly<IValueType<any>[]>,
         public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
-        this.localValueMaker = new LocalValueMaker(serializer);
-        this.messageHandlers = this.getMessageHandlers();
+        this.#localValueMaker = new LocalValueMaker(serializer);
+        this.#messageHandlers = this.getMessageHandlers();
         for (const type of valueTypes) {
-            this.localValueMaker.registerValueType(type);
+            this.#localValueMaker.registerValueType(type);
         }
     }
 
@@ -212,7 +212,7 @@ export class MapKernel implements IValueTypeCreator {
      * @returns The iterator
      */
     public keys(): IterableIterator<string> {
-        return this.data.keys();
+        return this.#data.keys();
     }
 
     /**
@@ -220,7 +220,7 @@ export class MapKernel implements IValueTypeCreator {
      * @returns The iterator
      */
     public entries(): IterableIterator<[string, any]> {
-        const localEntriesIterator = this.data.entries();
+        const localEntriesIterator = this.#data.entries();
         const iterator = {
             next(): IteratorResult<[string, any]> {
                 const nextVal = localEntriesIterator.next();
@@ -243,7 +243,7 @@ export class MapKernel implements IValueTypeCreator {
      * @returns The iterator
      */
     public values(): IterableIterator<any> {
-        const localValuesIterator = this.data.values();
+        const localValuesIterator = this.#data.values();
         const iterator = {
             next(): IteratorResult<any> {
                 const nextVal = localValuesIterator.next();
@@ -274,7 +274,7 @@ export class MapKernel implements IValueTypeCreator {
      * @param callbackFn - Callback function
      */
     public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void {
-        this.data.forEach((localValue, key, m) => {
+        this.#data.forEach((localValue, key, m) => {
             callbackFn(localValue.value, key, m);
         });
     }
@@ -283,12 +283,12 @@ export class MapKernel implements IValueTypeCreator {
      * {@inheritDoc ISharedMap.get}
      */
     public get<T = any>(key: string): T | undefined {
-        if (!this.data.has(key)) {
+        if (!this.#data.has(key)) {
             return undefined;
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const localValue = this.data.get(key)!;
+        const localValue = this.#data.get(key)!;
 
         return localValue.value as T;
     }
@@ -323,7 +323,7 @@ export class MapKernel implements IValueTypeCreator {
      * @returns True if the key exists, false otherwise
      */
     public has(key: string): boolean {
-        return this.data.has(key);
+        return this.#data.has(key);
     }
 
     /**
@@ -337,7 +337,7 @@ export class MapKernel implements IValueTypeCreator {
         }
 
         // Create a local value and serialize it.
-        const localValue = this.localValueMaker.fromInMemory(value);
+        const localValue = this.#localValueMaker.fromInMemory(value);
         const serializableValue = makeSerializable(
             localValue,
             this.serializer,
@@ -369,7 +369,7 @@ export class MapKernel implements IValueTypeCreator {
      */
     public createValueType(key: string, type: string, params: any) {
         // Create a local value and serialize it.
-        const localValue = this.localValueMaker.makeValueType(type, this.makeMapValueOpEmitter(key), params);
+        const localValue = this.#localValueMaker.makeValueType(type, this.makeMapValueOpEmitter(key), params);
 
         // TODO ideally we could use makeSerialized in this case as well. But the interval
         // collection has assumptions of attach being called prior. Given the IFluidSerializer it
@@ -452,7 +452,7 @@ export class MapKernel implements IValueTypeCreator {
      */
     public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
         const serializableMapData: IMapDataObjectSerialized = {};
-        this.data.forEach((localValue, key) => {
+        this.#data.forEach((localValue, key) => {
             serializableMapData[key] = localValue.makeSerialized(serializer, this.handle);
         });
         return serializableMapData;
@@ -460,7 +460,7 @@ export class MapKernel implements IValueTypeCreator {
 
     public getSerializableStorage(serializer: IFluidSerializer): IMapDataObjectSerializable {
         const serializableMapData: IMapDataObjectSerializable = {};
-        this.data.forEach((localValue, key) => {
+        this.#data.forEach((localValue, key) => {
             serializableMapData[key] = makeSerializable(localValue, serializer, this.handle);
         });
         return serializableMapData;
@@ -481,7 +481,7 @@ export class MapKernel implements IValueTypeCreator {
                 value: this.makeLocal(key, serializable),
             };
 
-            this.data.set(localValue.key, localValue.value);
+            this.#data.set(localValue.key, localValue.value);
         }
     }
 
@@ -499,9 +499,9 @@ export class MapKernel implements IValueTypeCreator {
      */
     public trySubmitMessage(op: any, localOpMetadata: unknown): boolean {
         const type: string = op.type;
-        if (this.messageHandlers.has(type)) {
+        if (this.#messageHandlers.has(type)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.messageHandlers.get(type)!.submit(op as IMapOperation, localOpMetadata);
+            this.#messageHandlers.get(type)!.submit(op as IMapOperation, localOpMetadata);
             return true;
         }
         return false;
@@ -509,9 +509,9 @@ export class MapKernel implements IValueTypeCreator {
 
     public tryGetStashedOpLocalMetadata(op: any): unknown {
         const type: string = op.type;
-        if (this.messageHandlers.has(type)) {
+        if (this.#messageHandlers.has(type)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.messageHandlers.get(type)!.getStashedOpLocalMetadata(op as IMapOperation);
+            return this.#messageHandlers.get(type)!.getStashedOpLocalMetadata(op as IMapOperation);
         }
         throw new Error("no apply stashed op handler");
     }
@@ -530,9 +530,9 @@ export class MapKernel implements IValueTypeCreator {
         message: ISequencedDocumentMessage | undefined,
         localOpMetadata: unknown,
     ): boolean {
-        if (this.messageHandlers.has(op.type)) {
+        if (this.#messageHandlers.has(op.type)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.messageHandlers
+            this.#messageHandlers
                 .get(op.type)!
                 .process(op, local, message, localOpMetadata);
             return true;
@@ -549,7 +549,7 @@ export class MapKernel implements IValueTypeCreator {
      */
     private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage | undefined): void {
         const previousValue = this.get(key);
-        this.data.set(key, value);
+        this.#data.set(key, value);
         const event: IValueChanged = { key, previousValue };
         this.eventEmitter.emit("valueChanged", event, local, op, this.eventEmitter);
     }
@@ -560,7 +560,7 @@ export class MapKernel implements IValueTypeCreator {
      * @param op - The message if from a remote clear, or null if from a local clear
      */
     private clearCore(local: boolean, op: ISequencedDocumentMessage | undefined): void {
-        this.data.clear();
+        this.#data.clear();
         this.eventEmitter.emit("clear", local, op, this.eventEmitter);
     }
 
@@ -573,7 +573,7 @@ export class MapKernel implements IValueTypeCreator {
      */
     private deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage | undefined): boolean {
         const previousValue = this.get(key);
-        const successfullyRemoved = this.data.delete(key);
+        const successfullyRemoved = this.#data.delete(key);
         if (successfullyRemoved) {
             const event: IValueChanged = { key, previousValue };
             this.eventEmitter.emit("valueChanged", event, local, op, this.eventEmitter);
@@ -588,13 +588,13 @@ export class MapKernel implements IValueTypeCreator {
         // Assuming the pendingKeys is small and the map is large
         // we will get the value for the pendingKeys and clear the map
         const temp = new Map<string, ILocalValue>();
-        this.pendingKeys.forEach((value, key) => {
+        this.#pendingKeys.forEach((value, key) => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            temp.set(key, this.data.get(key)!);
+            temp.set(key, this.#data.get(key)!);
         });
-        this.data.clear();
+        this.#data.clear();
         temp.forEach((value, key) => {
-            this.data.set(key, value);
+            this.#data.set(key, value);
         });
     }
 
@@ -610,9 +610,9 @@ export class MapKernel implements IValueTypeCreator {
      */
     private makeLocal(key: string, serializable: ISerializableValue): ILocalValue {
         if (serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared]) {
-            return this.localValueMaker.fromSerializable(serializable);
+            return this.#localValueMaker.fromSerializable(serializable);
         } else {
-            return this.localValueMaker.fromSerializableValueType(
+            return this.#localValueMaker.fromSerializableValueType(
                 serializable,
                 this.makeMapValueOpEmitter(key),
             );
@@ -634,25 +634,25 @@ export class MapKernel implements IValueTypeCreator {
         local: boolean,
         localOpMetadata: unknown,
     ): boolean {
-        if (this.pendingClearMessageId !== -1) {
+        if (this.#pendingClearMessageId !== -1) {
             if (local) {
-                assert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
+                assert(localOpMetadata !== undefined && localOpMetadata as number < this.#pendingClearMessageId,
                     0x1f1 /* "Received out of order op when there is an unackd clear message" */);
             }
             // If we have an unack'd clear, we can ignore all ops.
             return false;
         }
 
-        if (this.pendingKeys.has(op.key)) {
+        if (this.#pendingKeys.has(op.key)) {
             // Found an unack'd op. Clear it from the map if the pendingMessageId in the map matches this message's
             // and don't process the op.
             if (local) {
                 assert(localOpMetadata !== undefined,
                     0x1f2 /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
                 const pendingMessageId = localOpMetadata as number;
-                const pendingKeyMessageId = this.pendingKeys.get(op.key);
+                const pendingKeyMessageId = this.#pendingKeys.get(op.key);
                 if (pendingKeyMessageId === pendingMessageId) {
-                    this.pendingKeys.delete(op.key);
+                    this.#pendingKeys.delete(op.key);
                 }
             }
             return false;
@@ -676,12 +676,12 @@ export class MapKernel implements IValueTypeCreator {
                         assert(localOpMetadata !== undefined,
                             0x1f3 /* "pendingMessageId is missing from the local client's clear operation" */);
                         const pendingMessageId = localOpMetadata as number;
-                        if (this.pendingClearMessageId === pendingMessageId) {
-                            this.pendingClearMessageId = -1;
+                        if (this.#pendingClearMessageId === pendingMessageId) {
+                            this.#pendingClearMessageId = -1;
                         }
                         return;
                     }
-                    if (this.pendingKeys.size !== 0) {
+                    if (this.#pendingKeys.size !== 0) {
                         this.clearExceptPendingKeys();
                         return;
                     }
@@ -745,7 +745,7 @@ export class MapKernel implements IValueTypeCreator {
             {
                 process: (op: IMapValueTypeOperation, local, message, localOpMetadata) => {
                     // Local value might not exist if we deleted it
-                    const localValue = this.data.get(op.key) as ValueTypeLocalValue;
+                    const localValue = this.#data.get(op.key) as ValueTypeLocalValue;
                     if (!localValue) {
                         return;
                     }
@@ -771,8 +771,8 @@ export class MapKernel implements IValueTypeCreator {
     }
 
     private getMapClearMessageLocalMetadata(op: IMapClearOperation): number {
-        const pendingMessageId = ++this.pendingMessageId;
-        this.pendingClearMessageId = pendingMessageId;
+        const pendingMessageId = ++this.#pendingMessageId;
+        this.#pendingClearMessageId = pendingMessageId;
         return pendingMessageId;
     }
 
@@ -786,8 +786,8 @@ export class MapKernel implements IValueTypeCreator {
     }
 
     private getMapKeyMessageLocalMetadata(op: IMapKeyOperation): number {
-        const pendingMessageId = ++this.pendingMessageId;
-        this.pendingKeys.set(op.key, pendingMessageId);
+        const pendingMessageId = ++this.#pendingMessageId;
+        this.#pendingKeys.set(op.key, pendingMessageId);
         return pendingMessageId;
     }
 

@@ -22,27 +22,27 @@ import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager";
  */
 export class SharedSegmentSequenceUndoRedoHandler {
     // eslint-disable-next-line max-len
-    private readonly sequences = new Map<SharedSegmentSequence<ISegment>, SharedSegmentSequenceRevertible | undefined>();
+    readonly #sequences = new Map<SharedSegmentSequence<ISegment>, SharedSegmentSequenceRevertible | undefined>();
 
     constructor(private readonly stackManager: UndoRedoStackManager) {
-        this.stackManager.on("changePushed", () => this.sequences.clear());
+        this.stackManager.on("changePushed", () => this.#sequences.clear());
     }
 
     public attachSequence<T extends ISegment>(sequence: SharedSegmentSequence<T>) {
-        sequence.on("sequenceDelta", this.sequenceDeltaHandler);
+        sequence.on("sequenceDelta", this.#sequenceDeltaHandler);
     }
 
     public detachSequence<T extends ISegment>(sequence: SharedSegmentSequence<T>) {
-        sequence.removeListener("sequenceDelta", this.sequenceDeltaHandler);
+        sequence.removeListener("sequenceDelta", this.#sequenceDeltaHandler);
     }
 
-    private readonly sequenceDeltaHandler = (event: SequenceDeltaEvent, target: SharedSegmentSequence<ISegment>) => {
+    readonly #sequenceDeltaHandler = (event: SequenceDeltaEvent, target: SharedSegmentSequence<ISegment>) => {
         if (event.isLocal) {
-            let revertible = this.sequences.get(target);
+            let revertible = this.#sequences.get(target);
             if (revertible === undefined) {
                 revertible = new SharedSegmentSequenceRevertible(target);
                 this.stackManager.pushToCurrentOperation(revertible);
-                this.sequences.set(target, revertible);
+                this.#sequences.set(target, revertible);
             }
             revertible.add(event);
         }
@@ -59,17 +59,17 @@ interface ITrackedSharedSegmentSequenceRevertible {
  * Tracks a change on a shared segment sequence and allows reverting it
  */
 export class SharedSegmentSequenceRevertible implements IRevertible {
-    private readonly tracking: ITrackedSharedSegmentSequenceRevertible[];
+    readonly #tracking: ITrackedSharedSegmentSequenceRevertible[];
 
     constructor(
         public readonly sequence: SharedSegmentSequence<ISegment>,
     ) {
-        this.tracking = [];
+        this.#tracking = [];
     }
 
     public add(event: SequenceDeltaEvent) {
         if (event.ranges.length > 0) {
-            let current = this.tracking.length > 0 ? this.tracking[this.tracking.length - 1] : undefined;
+            let current = this.#tracking.length > 0 ? this.#tracking[this.#tracking.length - 1] : undefined;
             for (const range of event.ranges) {
                 if (current !== undefined
                     && current.operation === event.deltaOperation
@@ -83,15 +83,15 @@ export class SharedSegmentSequenceRevertible implements IRevertible {
                         propertyDelta: range.propertyDeltas,
                         operation: event.deltaOperation,
                     };
-                    this.tracking.push(current);
+                    this.#tracking.push(current);
                 }
             }
         }
     }
 
     public revert() {
-        while (this.tracking.length > 0) {
-            const tracked = this.tracking.pop();
+        while (this.#tracking.length > 0) {
+            const tracked = this.#tracking.pop();
             if (tracked !== undefined) {
                 while (tracked.trackingGroup.size > 0) {
                     const sg = tracked.trackingGroup.segments[0];
@@ -133,8 +133,8 @@ export class SharedSegmentSequenceRevertible implements IRevertible {
     }
 
     public discard() {
-        while (this.tracking.length > 0) {
-            const tracked = this.tracking.pop();
+        while (this.#tracking.length > 0) {
+            const tracked = this.#tracking.pop();
             if (tracked !== undefined) {
                 while (tracked.trackingGroup.size > 0) {
                     tracked.trackingGroup.unlink(tracked.trackingGroup.segments[0]);

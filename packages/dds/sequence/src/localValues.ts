@@ -158,7 +158,7 @@ export class LocalValueMaker {
     /**
      * The value types this maker is able to produce.
      */
-    private readonly valueTypes = new Map<string, IValueType<any>>();
+    readonly #valueTypes = new Map<string, IValueType<any>>();
 
     /**
      * Create a new LocalValueMaker.
@@ -173,7 +173,7 @@ export class LocalValueMaker {
      * @alpha
      */
     public registerValueType<T>(type: IValueType<T>) {
-        this.valueTypes.set(type.name, type);
+        this.#valueTypes.set(type.name, type);
     }
 
     /**
@@ -202,9 +202,9 @@ export class LocalValueMaker {
      * @param emitter - The value op emitter, if the serializable is a value type
      */
     public fromSerializableValueType(serializable: ISerializableValue, emitter: IValueOpEmitter): ILocalValue {
-        if (this.valueTypes.has(serializable.type)) {
+        if (this.#valueTypes.has(serializable.type)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const valueType = this.valueTypes.get(serializable.type)!;
+            const valueType = this.#valueTypes.get(serializable.type)!;
 
             serializable.value = parseHandles(serializable.value, this.serializer);
 
@@ -239,7 +239,7 @@ export class LocalValueMaker {
     public makeValueType(type: string, emitter: IValueOpEmitter, params: any): ILocalValue {
         const valueType = this.loadValueType(params, type, emitter);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return new ValueTypeLocalValue(valueType, this.valueTypes.get(type)!);
+        return new ValueTypeLocalValue(valueType, this.#valueTypes.get(type)!);
     }
 
     /**
@@ -251,7 +251,7 @@ export class LocalValueMaker {
      * @alpha
      */
     private loadValueType(params: any, type: string, emitter: IValueOpEmitter): any {
-        const valueType = this.valueTypes.get(type);
+        const valueType = this.#valueTypes.get(type);
         if (!valueType) {
             throw new Error(`Unknown type '${type}' specified`);
         }

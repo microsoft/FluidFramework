@@ -6,19 +6,19 @@
 import { assert } from "@fluidframework/common-utils";
 
 export class RateLimiter {
-    private readonly tasks: (() => void)[] = [];
+    readonly #tasks: (() => void)[] = [];
     constructor(private maxRequests: number) {
         assert(maxRequests > 0, 0x0ae /* "Tried to create rate limiter with 0 max requests!" */);
     }
 
     public get waitQueueLength(): number {
-        return this.tasks.length;
+        return this.#tasks.length;
     }
 
     // Run when one of the tasks finished running.
     // Release next task if we have one, or allow more tasks to run in future.
     protected readonly release = () => {
-        const task = this.tasks.shift();
+        const task = this.#tasks.shift();
         if (task !== undefined) {
             return task();
         }
@@ -32,7 +32,7 @@ export class RateLimiter {
         }
 
         return new Promise<void>((res) => {
-            this.tasks.push(res);
+            this.#tasks.push(res);
         });
     }
 

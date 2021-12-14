@@ -37,7 +37,7 @@ export class InnerDocumentService implements IDocumentService {
         );
     }
 
-    private readonly logger: MultiSinkLogger;
+    readonly #logger: MultiSinkLogger;
 
     private constructor(
         private readonly outerProxy: ICombinedDriver,
@@ -46,9 +46,9 @@ export class InnerDocumentService implements IDocumentService {
         logger?: ITelemetryBaseLogger)
     {
         // Use a combined logger with the provided and the outer proxy's
-        this.logger = new MultiSinkLogger("InnerIFrameDriver");
-        this.logger.addLogger(logger);
-        this.logger.addLogger(outerProxy.logger);
+        this.#logger = new MultiSinkLogger("InnerIFrameDriver");
+        this.#logger.addLogger(logger);
+        this.#logger.addLogger(outerProxy.logger);
     }
 
     public dispose() {}

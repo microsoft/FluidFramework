@@ -21,7 +21,7 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 const defaultStoreId = "" as const;
 
 export class RuntimeFactory extends RuntimeFactoryHelper {
-    private readonly registry: NamedFluidDataStoreRegistryEntries;
+    readonly #registry: NamedFluidDataStoreRegistryEntries;
 
     constructor(
         private readonly defaultStoreFactory: IFluidDataStoreFactory,
@@ -29,7 +29,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
     ) {
         super();
-        this.registry =
+        this.#registry =
             (storeFactories.includes(defaultStoreFactory)
                 ? storeFactories
                 : storeFactories.concat(defaultStoreFactory)
@@ -48,7 +48,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
     ): Promise<ContainerRuntime> {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
-            this.registry,
+            this.#registry,
             buildRuntimeRequestHandler(
                 ...this.requestHandlers,
                 innerRequestHandler),

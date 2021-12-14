@@ -42,10 +42,10 @@ export class TestFluidObject implements ITestFluidObject {
         return this;
     }
 
-    public get handle(): IFluidHandle<this> { return this.innerHandle; }
+    public get handle(): IFluidHandle<this> { return this.#innerHandle; }
 
     public root!: ISharedMap;
-    private readonly innerHandle: IFluidHandle<this>;
+    readonly #innerHandle: IFluidHandle<this>;
 
     /**
      * Creates a new TestFluidObject.
@@ -60,7 +60,7 @@ export class TestFluidObject implements ITestFluidObject {
         public readonly context: IFluidDataStoreContext,
         private readonly factoryEntriesMap: Map<string, IChannelFactory>,
     ) {
-        this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
+        this.#innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
     }
 
     /**

@@ -101,20 +101,20 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents>
     public readonly clientDetails: IClientDetails;
     public get IDeltaSender() { return this; }
 
-    private readonly _inbound: MockDeltaQueue<ISequencedDocumentMessage>;
-    private readonly _inboundSignal: MockDeltaQueue<ISignalMessage>;
-    private readonly _outbound: MockDeltaQueue<IDocumentMessage[]>;
+    readonly #inbound: MockDeltaQueue<ISequencedDocumentMessage>;
+    readonly #inboundSignal: MockDeltaQueue<ISignalMessage>;
+    readonly #outbound: MockDeltaQueue<IDocumentMessage[]>;
 
     public get inbound(): MockDeltaQueue<ISequencedDocumentMessage> {
-        return this._inbound;
+        return this.#inbound;
     }
 
     public get outbound(): MockDeltaQueue<IDocumentMessage[]> {
-        return this._outbound;
+        return this.#outbound;
     }
 
     public get inboundSignal(): MockDeltaQueue<ISignalMessage> {
-        return this._inboundSignal;
+        return this.#inboundSignal;
     }
     public minimumSequenceNumber = 0;
 
@@ -157,8 +157,8 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents>
     constructor() {
         super();
 
-        this._inbound = new MockDeltaQueue<ISequencedDocumentMessage>();
-        this._outbound = new MockDeltaQueue<IDocumentMessage[]>();
-        this._inboundSignal = new MockDeltaQueue<ISignalMessage>();
+        this.#inbound = new MockDeltaQueue<ISequencedDocumentMessage>();
+        this.#outbound = new MockDeltaQueue<IDocumentMessage[]>();
+        this.#inboundSignal = new MockDeltaQueue<ISignalMessage>();
     }
 }

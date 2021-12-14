@@ -78,19 +78,19 @@ export interface ISummaryManagerConfig {
  * stopping existing summarizer client.
  */
 export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> implements IDisposable {
-    private readonly logger: ITelemetryLogger;
-    private readonly opsToBypassInitialDelay: number;
-    private readonly initialDelayMs: number;
-    private latestClientId: string | undefined;
-    private state = SummaryManagerState.Off;
-    private summarizer?: ISummarizer;
-    private _disposed = false;
+    readonly #logger: ITelemetryLogger;
+    readonly #opsToBypassInitialDelay: number;
+    readonly #initialDelayMs: number;
+    #latestClientId: string | undefined;
+    #state = SummaryManagerState.Off;
+    #summarizer?: ISummarizer;
+    #disposed = false;
 
     public get disposed() {
-        return this._disposed;
+        return this.#disposed;
     }
 
-    public get currentState() { return this.state; }
+    public get currentState() { return this.#state; }
 
     constructor(
         private readonly clientElection: ISummarizerClientElection,
@@ -110,17 +110,17 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     ) {
         super();
 
-        this.logger = ChildLogger.create(
+        this.#logger = ChildLogger.create(
             parentLogger,
             "SummaryManager",
-            {all:{ clientId: () => this.latestClientId }});
+            {all:{ clientId: () => this.#latestClientId }});
 
-        this.connectedState.on("connected", this.handleConnected);
-        this.connectedState.on("disconnected", this.handleDisconnected);
-        this.latestClientId = this.connectedState.clientId;
+        this.connectedState.on("connected", this.#handleConnected);
+        this.connectedState.on("disconnected", this.#handleDisconnected);
+        this.#latestClientId = this.connectedState.clientId;
 
-        this.opsToBypassInitialDelay = opsToBypassInitialDelay;
-        this.initialDelayMs = initialDelayMs;
+        this.#opsToBypassInitialDelay = opsToBypassInitialDelay;
+        this.#initialDelayMs = initialDelayMs;
     }
 
     /**
@@ -128,20 +128,20 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
      * a window between construction and starting where the caller can attach listeners.
      */
     public start(): void {
-        this.clientElection.on("electedSummarizerChanged", this.refreshSummarizer);
-        this.refreshSummarizer();
+        this.clientElection.on("electedSummarizerChanged", this.#refreshSummarizer);
+        this.#refreshSummarizer();
     }
 
-    private readonly handleConnected = (clientId: string) => {
-        this.latestClientId = clientId;
+    readonly #handleConnected = (clientId: string) => {
+        this.#latestClientId = clientId;
         // If we have a summarizer, it should have been either cancelled on disconnected by now.
         // But because of lastSummary process, it can still hang around, so there is not much we can
         // check or assert.
-        this.refreshSummarizer();
+        this.#refreshSummarizer();
     };
 
-    private readonly handleDisconnected = () => {
-        this.refreshSummarizer();
+    readonly #handleDisconnected = () => {
+        this.#refreshSummarizer();
     };
 
     private getShouldSummarizeState(): ShouldSummarizeState {
@@ -156,11 +156,11 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         }
     }
 
-    private readonly refreshSummarizer = () => {
+    readonly #refreshSummarizer = () => {
         // Transition states depending on shouldSummarize, which is a calculated property
         // that is only true if this client is connected and is the elected summarizer.
         const shouldSummarizeState = this.getShouldSummarizeState();
-        switch (this.state) {
+        switch (this.#state) {
             case SummaryManagerState.Off: {
                 if (shouldSummarizeState.shouldSummarize) {
                     this.startSummarization();
@@ -190,10 +190,10 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     };
 
     private startSummarization() {
-        assert(this.state === SummaryManagerState.Off, 0x261 /* "Expected: off" */);
-        this.state = SummaryManagerState.Starting;
+        assert(this.#state === SummaryManagerState.Off, 0x261 /* "Expected: off" */);
+        this.#state = SummaryManagerState.Starting;
 
-        assert(this.summarizer === undefined, 0x262 /* "Old summarizer is still working!" */);
+        assert(this.#summarizer === undefined, 0x262 /* "Old summarizer is still working!" */);
 
         let reason = "unknown";
 
@@ -216,18 +216,18 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                 return;
             }
 
-            assert(this.state === SummaryManagerState.Starting, 0x263 /* "Expected: starting" */);
-            this.state = SummaryManagerState.Running;
+            assert(this.#state === SummaryManagerState.Starting, 0x263 /* "Expected: starting" */);
+            this.#state = SummaryManagerState.Running;
 
             summarizer.on("summarizingError",
                 (warning: ISummarizingWarning) => this.emit("summarizerWarning", warning));
-            this.summarizer = summarizer;
+            this.#summarizer = summarizer;
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const clientId = this.latestClientId!;
+            const clientId = this.#latestClientId!;
 
             reason = await PerformanceEvent.timedExecAsync(
-                this.logger,
+                this.#logger,
                 { eventName: "RunningSummarizer", attempt: this.startThrottler.numAttempts },
                 async () => summarizer.run(clientId, this.summarizerOptions),
             );
@@ -240,12 +240,12 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             // means it also lost connection), and error happened on load (we do not have summarizer).
             // We could add error.fluidErrorCode !== "containerClosedWithoutErrorDuringLoad" check to narrow it down,
             // but that does not seem to be necessary.
-            if (this.getShouldSummarizeState().shouldSummarize || this.summarizer !== undefined) {
+            if (this.getShouldSummarizeState().shouldSummarize || this.#summarizer !== undefined) {
                 // Report any failure as an error unless it was due to cancellation (like "disconnected" error)
                 // If failure happened on container load, we may not yet realized that socket disconnected, so check
                 // offlineError.
                 const category = error?.errorType === DriverErrorType.offlineError ? "generic" : "error";
-                this.logger.sendTelemetryEvent(
+                this.#logger.sendTelemetryEvent(
                     {
                         eventName: "SummarizerException",
                         category,
@@ -259,12 +259,12 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                 this.stop("summarizerException");
             }
         }).finally(() => {
-            assert(this.state !== SummaryManagerState.Off, 0x264 /* "Expected: Not Off" */);
-            this.state = SummaryManagerState.Off;
+            assert(this.#state !== SummaryManagerState.Off, 0x264 /* "Expected: Not Off" */);
+            this.#state = SummaryManagerState.Off;
 
-            this.summarizer = undefined;
+            this.#summarizer = undefined;
 
-            this.logger.sendTelemetryEvent({
+            this.#logger.sendTelemetryEvent({
                 eventName: "EndingSummarizer",
                 reason,
             });
@@ -276,13 +276,13 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 
     private stop(reason: SummarizerStopReason) {
-        assert(this.state === SummaryManagerState.Running || this.state === SummaryManagerState.Starting,
+        assert(this.#state === SummaryManagerState.Running || this.#state === SummaryManagerState.Starting,
             0x265 /* "Expected: Starting or Running" */);
-        this.state = SummaryManagerState.Stopping;
+        this.#state = SummaryManagerState.Stopping;
 
         // Stopping the running summarizer client should trigger a change
         // in states when the running summarizer closes
-        this.summarizer?.stop(reason);
+        this.#summarizer?.stop(reason);
     }
 
     /**
@@ -302,12 +302,12 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
 
         // We have been elected the summarizer. Some day we may be able to summarize with a live document but for
         // now we play it safe and launch a second copy.
-        this.logger.sendTelemetryEvent({
+        this.#logger.sendTelemetryEvent({
             eventName: "CreatingSummarizer",
             throttlerDelay: delayMs,
-            initialDelay: this.initialDelayMs,
+            initialDelay: this.#initialDelayMs,
             opsSinceLastAck: this.summaryCollection.opsSinceLastAck,
-            opsToBypassInitialDelay: this.opsToBypassInitialDelay,
+            opsToBypassInitialDelay: this.#opsToBypassInitialDelay,
         });
 
         // This delay helps ensure that last summarizer that might be left from previous client
@@ -320,9 +320,9 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         // It also helps with pure boot scenario (single client) to offset expensive work a bit out from
         // critical boot sequence.
         let startWithInitialDelay = false;
-        if (this.summaryCollection.opsSinceLastAck < this.opsToBypassInitialDelay) {
+        if (this.summaryCollection.opsSinceLastAck < this.#opsToBypassInitialDelay) {
             startWithInitialDelay = true;
-            delayMs = Math.max(delayMs, this.initialDelayMs);
+            delayMs = Math.max(delayMs, this.#initialDelayMs);
         }
 
         if (delayMs > 0) {
@@ -330,7 +330,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             let resolveOpPromiseFn;
             // Create a listener that will break the delay if we've exceeded the initial delay ops count.
             const opsListenerFn = () => {
-                if (this.summaryCollection.opsSinceLastAck >= this.opsToBypassInitialDelay) {
+                if (this.summaryCollection.opsSinceLastAck >= this.#opsToBypassInitialDelay) {
                     clearTimeout(timer);
                     resolveOpPromiseFn();
                 }
@@ -349,26 +349,26 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 
     public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
-        if (this.summarizer === undefined) {
+        if (this.#summarizer === undefined) {
             throw Error("No running summarizer client");
             // TODO: could spawn a summarizer client temporarily.
         }
-        return this.summarizer.summarizeOnDemand(...args);
+        return this.#summarizer.summarizeOnDemand(...args);
     };
 
     public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
-        if (this.summarizer === undefined) {
+        if (this.#summarizer === undefined) {
             throw Error("No running summarizer client");
             // TODO: could spawn a summarizer client temporarily.
         }
-        return this.summarizer.enqueueSummarize(...args);
+        return this.#summarizer.enqueueSummarize(...args);
     };
 
     public dispose() {
-        this.clientElection.off("electedSummarizerChanged", this.refreshSummarizer);
-        this.connectedState.off("connected", this.handleConnected);
-        this.connectedState.off("disconnected", this.handleDisconnected);
-        this._disposed = true;
+        this.clientElection.off("electedSummarizerChanged", this.#refreshSummarizer);
+        this.connectedState.off("connected", this.#handleConnected);
+        this.connectedState.off("disconnected", this.#handleDisconnected);
+        this.#disposed = true;
     }
 }
 

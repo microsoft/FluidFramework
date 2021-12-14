@@ -25,7 +25,7 @@ import { SnapshotV1 } from "./snapshotV1";
 import { SnapshotLegacy } from "./snapshotlegacy";
 
 export class SnapshotLoader {
-    private readonly logger: ITelemetryLogger;
+    readonly #logger: ITelemetryLogger;
 
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
@@ -33,7 +33,7 @@ export class SnapshotLoader {
         private readonly mergeTree: MergeTree,
         logger: ITelemetryLogger,
         private readonly serializer: IFluidSerializer) {
-        this.logger = ChildLogger.create(logger, "SnapshotLoader");
+        this.#logger = ChildLogger.create(logger, "SnapshotLoader");
     }
 
     public async initialize(
@@ -49,7 +49,7 @@ export class SnapshotLoader {
             this.loadBodyAndCatchupOps(headerLoadedP, services);
 
         catchupOpsP.catch(
-            (err)=>this.logger.sendErrorEvent({ eventName: "CatchupOpsLoadFailure" },err));
+            (err)=>this.#logger.sendErrorEvent({ eventName: "CatchupOpsLoadFailure" },err));
 
         await headerLoadedP;
 
@@ -83,7 +83,7 @@ export class SnapshotLoader {
         return [];
     }
 
-    private readonly specToSegment = (spec: IJSONSegment | IJSONSegmentWithMergeInfo) => {
+    readonly #specToSegment = (spec: IJSONSegment | IJSONSegmentWithMergeInfo) => {
         let seg: ISegment;
 
         if (hasMergeInfo(spec)) {
@@ -121,10 +121,10 @@ export class SnapshotLoader {
         const chunk = SnapshotV1.processChunk(
             SnapshotLegacy.header,
             header,
-            this.logger,
+            this.#logger,
             this.mergeTree.options,
             this.serializer);
-        const segs = chunk.segments.map(this.specToSegment);
+        const segs = chunk.segments.map(this.#specToSegment);
         this.mergeTree.reloadFromSegments(segs);
 
         if (chunk.headerMetadata === undefined) {
@@ -171,12 +171,12 @@ export class SnapshotLoader {
             const chunk = await SnapshotV1.loadChunk(
                 services,
                 chunk1.headerMetadata!.orderedChunkMetadata[chunkIndex].id,
-                this.logger,
+                this.#logger,
                 this.mergeTree.options,
                 this.serializer);
             lengthSofar += chunk.length;
             // Deserialize each chunk segment and append it to the end of the MergeTree.
-            segs.push(...chunk.segments.map(this.specToSegment));
+            segs.push(...chunk.segments.map(this.#specToSegment));
         }
         assert(
             lengthSofar === chunk1.headerMetadata!.totalLength,

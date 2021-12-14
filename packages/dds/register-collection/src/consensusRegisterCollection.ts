@@ -113,7 +113,7 @@ export class ConsensusRegisterCollection<T>
         return new ConsensusRegisterCollectionFactory();
     }
 
-    private readonly data = new Map<string, ILocalData<T>>();
+    readonly #data = new Map<string, ILocalData<T>>();
 
     /**
      * Constructs a new consensus register collection. If the object is non-local an id and service interfaces will
@@ -178,17 +178,17 @@ export class ConsensusRegisterCollection<T>
     }
 
     public readVersions(key: string): T[] | undefined {
-        const data = this.data.get(key);
+        const data = this.#data.get(key);
         return data?.versions.map((element: ILocalRegister<T>) => element.value.value);
     }
 
     public keys(): string[] {
-        return [...this.data.keys()];
+        return [...this.#data.keys()];
     }
 
     protected snapshotCore(serializer: IFluidSerializer): ITree {
         const dataObj: { [key: string]: ILocalData<T> } = {};
-        this.data.forEach((v, k) => { dataObj[k] = v; });
+        this.#data.forEach((v, k) => { dataObj[k] = v; });
 
         const tree: ITree = {
             entries: [
@@ -220,7 +220,7 @@ export class ConsensusRegisterCollection<T>
                 // eslint-disable-next-line max-len
                 0x06d /* "SharedObjects contained in ConsensusRegisterCollection can no longer be deserialized as of 0.17" */);
 
-            this.data.set(key, dataObj[key]);
+            this.#data.set(key, dataObj[key]);
         }
     }
 
@@ -266,7 +266,7 @@ export class ConsensusRegisterCollection<T>
     }
 
     private readAtomic(key: string): T | undefined {
-        const data = this.data.get(key);
+        const data = this.#data.get(key);
         return data?.atomic.value.value;
     }
 
@@ -285,7 +285,7 @@ export class ConsensusRegisterCollection<T>
         sequenceNumber: number,
         local: boolean,
     ): boolean {
-        let data = this.data.get(key);
+        let data = this.#data.get(key);
         // Atomic update if it's a new register or the write was not concurrent,
         // meaning our state was known to the remote client at the time of write
         const winner = data === undefined || refSeq >= data.atomic.sequenceNumber;
@@ -299,7 +299,7 @@ export class ConsensusRegisterCollection<T>
                     atomic: atomicUpdate,
                     versions: [], // we'll update versions next, leave it empty for now
                 };
-                this.data.set(key, data);
+                this.#data.set(key, data);
             } else {
                 data.atomic = atomicUpdate;
             }

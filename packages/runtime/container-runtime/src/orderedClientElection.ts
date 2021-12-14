@@ -76,22 +76,22 @@ export class OrderedClientCollection
     extends TypedEventEmitter<IOrderedClientCollectionEvents>
     implements IOrderedClientCollection {
     /** Collection of ALL clients currently in the quorum, with client ids as keys. */
-    private readonly clientMap = new Map<string, ILinkedClient>();
+    readonly #clientMap = new Map<string, ILinkedClient>();
     /** Placeholder head node of linked list, for simplified null checking. */
-    private readonly rootNode: IRootLinkNode = {
+    readonly #rootNode: IRootLinkNode = {
         sequenceNumber: -1,
         olderClient: undefined,
         youngerClient: undefined,
     };
     /** Pointer to end of linked list, for optimized client adds. */
-    private _youngestClient: LinkNode = this.rootNode;
-    private readonly logger: ITelemetryLogger;
+    #youngestClient: LinkNode = this.#rootNode;
+    readonly #logger: ITelemetryLogger;
 
     public get count() {
-        return this.clientMap.size;
+        return this.#clientMap.size;
     }
     public get oldestClient() {
-        return this.rootNode.youngerClient;
+        return this.#rootNode.youngerClient;
     }
 
     constructor(
@@ -100,7 +100,7 @@ export class OrderedClientCollection
         quorum: Pick<IQuorumClients, "getMembers" | "on">,
     ) {
         super();
-        this.logger = ChildLogger.create(logger, "OrderedClientCollection");
+        this.#logger = ChildLogger.create(logger, "OrderedClientCollection");
         const members = quorum.getMembers();
         for (const [clientId, client] of members) {
             this.addClient(clientId, client);
@@ -114,7 +114,7 @@ export class OrderedClientCollection
             const sequenceNumber = deltaManager.lastSequenceNumber;
             const removeClient = this.removeClient(clientId);
             if (removeClient === undefined) {
-                this.logger.sendErrorEvent({ eventName: "ClientNotFound", clientId, sequenceNumber });
+                this.#logger.sendErrorEvent({ eventName: "ClientNotFound", clientId, sequenceNumber });
             } else {
                 this.emit("removeClient", removeClient, sequenceNumber);
             }
@@ -125,7 +125,7 @@ export class OrderedClientCollection
         // Normal case is adding the latest client, which will bypass loop.
         // Find where it belongs otherwise (maybe possible during initial load?).
         assert(client.sequenceNumber > -1, 0x1f6 /* "Negative client sequence number not allowed" */);
-        let currClient = this._youngestClient;
+        let currClient = this.#youngestClient;
         while (currClient.sequenceNumber > client.sequenceNumber) {
             assert(currClient.olderClient !== undefined, 0x1f7 /* "Previous client should always be defined" */);
             // Note: If adding a client older than the elected client, it will not be automatically elected.
@@ -146,18 +146,18 @@ export class OrderedClientCollection
 
         if (newClient.youngerClient === undefined) {
             // Update linked list end pointer to youngest client.
-            this._youngestClient = newClient;
+            this.#youngestClient = newClient;
         } else {
             // Update next node to point back to this new node.
             newClient.youngerClient.olderClient = newClient;
         }
 
-        this.clientMap.set(clientId, newClient);
+        this.#clientMap.set(clientId, newClient);
         return newClient;
     }
 
     private removeClient(clientId: string): ITrackedClient | undefined {
-        const removeClient = this.clientMap.get(clientId);
+        const removeClient = this.#clientMap.get(clientId);
         if (removeClient === undefined) {
             return;
         }
@@ -167,20 +167,20 @@ export class OrderedClientCollection
 
         if (removeClient.youngerClient === undefined) {
             // Update linked list end pointer to youngest client.
-            this._youngestClient = removeClient.olderClient;
+            this.#youngestClient = removeClient.olderClient;
         } else {
             // Update next node to point back to previous node.
             removeClient.youngerClient.olderClient = removeClient.olderClient;
         }
 
-        this.clientMap.delete(clientId);
+        this.#clientMap.delete(clientId);
         return removeClient;
     }
 
     /** Returns an array of all clients being tracked in order from oldest to newest. */
     public getAllClients(): ILinkedClient[] {
         const result: ILinkedClient[] = [];
-        let currClient: LinkNode = this.rootNode;
+        let currClient: LinkNode = this.#rootNode;
         while (currClient.youngerClient !== undefined) {
             result.push(currClient.youngerClient);
             currClient = currClient.youngerClient;
@@ -239,18 +239,18 @@ export interface IOrderedClientElection extends IEventProvider<IOrderedClientEle
 export class OrderedClientElection
     extends TypedEventEmitter<IOrderedClientElectionEvents>
     implements IOrderedClientElection {
-    private _eligibleCount: number = 0;
-    private _electedClient: ILinkedClient | undefined;
-    private _electionSequenceNumber: number;
+    #eligibleCount: number = 0;
+    #electedClient: ILinkedClient | undefined;
+    #electionSequenceNumber: number;
 
     public get eligibleCount() {
-        return this._eligibleCount;
+        return this.#eligibleCount;
     }
     public get electedClient() {
-        return this._electedClient;
+        return this.#electedClient;
     }
     public get electionSequenceNumber() {
-        return this._electionSequenceNumber;
+        return this.#electionSequenceNumber;
     }
 
     constructor(
@@ -274,7 +274,7 @@ export class OrderedClientElection
         orderedClientCollection.on("removeClient", (client, seq) => this.removeClient(client, seq));
 
         if (typeof initialState === "number") {
-            this._electionSequenceNumber = initialState;
+            this.#electionSequenceNumber = initialState;
         } else {
             // Override the initially elected client with the initial state.
             if (initialClient?.clientId !== initialState.electedClientId) {
@@ -296,19 +296,19 @@ export class OrderedClientElection
                     electedClientId: initialClient?.clientId,
                 });
             }
-            this._electedClient = initialClient;
-            this._electionSequenceNumber = initialState.electionSequenceNumber;
+            this.#electedClient = initialClient;
+            this.#electionSequenceNumber = initialState.electionSequenceNumber;
         }
     }
 
     /** Tries changing the elected client, raising an event if it is different. */
     private tryElectingClient(client: ILinkedClient | undefined, sequenceNumber: number): void {
-        this._electionSequenceNumber = sequenceNumber;
-        if (this._electedClient === client) {
+        this.#electionSequenceNumber = sequenceNumber;
+        if (this.#electedClient === client) {
             return;
         }
-        const prevClient = this._electedClient;
-        this._electedClient = client;
+        const prevClient = this.#electedClient;
+        this.#electedClient = client;
         this.emit("election", client, sequenceNumber, prevClient);
     }
 
@@ -334,8 +334,8 @@ export class OrderedClientElection
      */
     private addClient(client: ILinkedClient, sequenceNumber: number): void {
         if (this.isEligibleFn(client)) {
-            this._eligibleCount++;
-            if (this._electedClient === undefined) {
+            this.#eligibleCount++;
+            if (this.#electedClient === undefined) {
                 // Automatically elect latest client
                 this.tryElectingClient(client, sequenceNumber);
             }
@@ -350,10 +350,10 @@ export class OrderedClientElection
      */
     private removeClient(client: ILinkedClient, sequenceNumber: number): void {
         if (this.isEligibleFn(client)) {
-            this._eligibleCount--;
-            if (this._electedClient === client) {
+            this.#eligibleCount--;
+            if (this.#electedClient === client) {
                 // Automatically shift to next oldest client
-                const nextClient = this.findFirstEligibleClient(this._electedClient.youngerClient);
+                const nextClient = this.findFirstEligibleClient(this.#electedClient.youngerClient);
                 this.tryElectingClient(nextClient, sequenceNumber);
             }
         }
@@ -364,7 +364,7 @@ export class OrderedClientElection
     }
 
     public incrementElectedClient(sequenceNumber: number): void {
-        const nextClient = this.findFirstEligibleClient(this._electedClient?.youngerClient);
+        const nextClient = this.findFirstEligibleClient(this.#electedClient?.youngerClient);
         this.tryElectingClient(nextClient, sequenceNumber);
     }
 
@@ -374,7 +374,7 @@ export class OrderedClientElection
     }
 
     public peekNextElectedClient(): ITrackedClient | undefined {
-        return this.findFirstEligibleClient(this._electedClient?.youngerClient);
+        return this.findFirstEligibleClient(this.#electedClient?.youngerClient);
     }
 
     public serialize(): ISerializedElection {

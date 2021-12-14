@@ -28,16 +28,16 @@ export interface ILocalSequencedClient extends ISequencedClient {
 const JoinOpTimer = 45000;
 
 export class ConnectionStateHandler {
-    private _connectionState = ConnectionState.Disconnected;
-    private _pendingClientId: string | undefined;
-    private _clientId: string | undefined;
-    private readonly prevClientLeftTimer: Timer;
-    private readonly joinOpTimer: Timer;
+    #connectionState = ConnectionState.Disconnected;
+    #pendingClientId: string | undefined;
+    #clientId: string | undefined;
+    readonly #prevClientLeftTimer: Timer;
+    readonly #joinOpTimer: Timer;
 
-    private waitEvent: PerformanceEvent | undefined;
+    #waitEvent: PerformanceEvent | undefined;
 
     public get connectionState(): ConnectionState {
-        return this._connectionState;
+        return this.#connectionState;
     }
 
     public get connected(): boolean {
@@ -45,18 +45,18 @@ export class ConnectionStateHandler {
     }
 
     public get clientId(): string | undefined {
-        return this._clientId;
+        return this.#clientId;
     }
 
     public get pendingClientId(): string | undefined {
-        return this._pendingClientId;
+        return this.#pendingClientId;
     }
 
     constructor(
         private readonly handler: IConnectionStateHandler,
         private readonly logger: ITelemetryLogger,
     ) {
-        this.prevClientLeftTimer = new Timer(
+        this.#prevClientLeftTimer = new Timer(
             // Default is 90 sec for which we are going to wait for its own "leave" message.
             this.handler.maxClientLeaveWaitTime ?? 90000,
             () => {
@@ -69,7 +69,7 @@ export class ConnectionStateHandler {
         // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
         // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
         // if retrying fixes the problem, we should not see these events.
-        this.joinOpTimer = new Timer(
+        this.#joinOpTimer = new Timer(
             JoinOpTimer,
             () => {
                 // I've observed timer firing within couple ms from disconnect event, looks like
@@ -82,24 +82,24 @@ export class ConnectionStateHandler {
     }
 
     private startJoinOpTimer() {
-        assert(!this.joinOpTimer.hasTimer, 0x234 /* "has joinOpTimer" */);
-        this.joinOpTimer.start();
+        assert(!this.#joinOpTimer.hasTimer, 0x234 /* "has joinOpTimer" */);
+        this.#joinOpTimer.start();
     }
 
     private stopJoinOpTimer() {
-        assert(this.joinOpTimer.hasTimer, 0x235 /* "no joinOpTimer" */);
-        this.joinOpTimer.clear();
+        assert(this.#joinOpTimer.hasTimer, 0x235 /* "no joinOpTimer" */);
+        this.#joinOpTimer.clear();
     }
 
     public dispose() {
-        assert(!this.joinOpTimer.hasTimer, 0x2a5 /* "join timer" */);
-        this.prevClientLeftTimer.clear();
+        assert(!this.#joinOpTimer.hasTimer, 0x2a5 /* "join timer" */);
+        this.#prevClientLeftTimer.clear();
     }
 
     public receivedAddMemberEvent(clientId: string) {
         // This is the only one that requires the pending client ID
         if (clientId === this.pendingClientId) {
-            if (this.joinOpTimer.hasTimer) {
+            if (this.#joinOpTimer.hasTimer) {
                 this.stopJoinOpTimer();
             } else {
                 // timer has already fired, meaning it took too long to get join on.
@@ -107,10 +107,10 @@ export class ConnectionStateHandler {
                 this.handler.logConnectionIssue("ReceivedJoinOp");
             }
             // Start the event in case we are waiting for leave or timeout.
-            if (this.prevClientLeftTimer.hasTimer) {
-                this.waitEvent = PerformanceEvent.start(this.logger, {
+            if (this.#prevClientLeftTimer.hasTimer) {
+                this.#waitEvent = PerformanceEvent.start(this.logger, {
                     eventName: "WaitBeforeClientLeave",
-                    waitOnClientId: this._clientId,
+                    waitOnClientId: this.#clientId,
                     hadOutstandingOps: this.handler.shouldClientJoinWrite(),
                 });
             }
@@ -127,9 +127,9 @@ export class ConnectionStateHandler {
         if (this.pendingClientId !== this.clientId
             && this.pendingClientId !== undefined
             && protocolHandler.quorum.getMember(this.pendingClientId) !== undefined
-            && !this.prevClientLeftTimer.hasTimer
+            && !this.#prevClientLeftTimer.hasTimer
         ) {
-            this.waitEvent?.end({ source });
+            this.#waitEvent?.end({ source });
             this.setConnectionState(ConnectionState.Connected);
         } else {
             // Adding this event temporarily so that we can get help debugging if something goes wrong.
@@ -139,7 +139,7 @@ export class ConnectionStateHandler {
                 source,
                 pendingClientId: this.pendingClientId,
                 clientId: this.clientId,
-                hasTimer: this.prevClientLeftTimer.hasTimer,
+                hasTimer: this.#prevClientLeftTimer.hasTimer,
                 inQuorum: protocolHandler !== undefined && this.pendingClientId !== undefined
                     && protocolHandler.quorum.getMember(this.pendingClientId) !== undefined,
             });
@@ -149,13 +149,13 @@ export class ConnectionStateHandler {
     public receivedRemoveMemberEvent(clientId: string) {
         // If the client which has left was us, then finish the timer.
         if (this.clientId === clientId) {
-            this.prevClientLeftTimer.clear();
+            this.#prevClientLeftTimer.clear();
             this.applyForConnectedState("removeMemberEvent");
         }
     }
 
     public receivedDisconnectEvent(reason: string) {
-        if (this.joinOpTimer.hasTimer) {
+        if (this.#joinOpTimer.hasTimer) {
             this.stopJoinOpTimer();
         }
         this.setConnectionState(ConnectionState.Disconnected, reason);
@@ -165,8 +165,8 @@ export class ConnectionStateHandler {
         connectionMode: ConnectionMode,
         details: IConnectionDetails,
     ) {
-        const oldState = this._connectionState;
-        this._connectionState = ConnectionState.Connecting;
+        const oldState = this.#connectionState;
+        this.#connectionState = ConnectionState.Connecting;
 
         // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
         // (have received the join message for the client ID)
@@ -174,7 +174,7 @@ export class ConnectionStateHandler {
         // ops sent by this client, so we should keep the old client id until we see our own client's
         // join message. after we see the join message for out new connection with our new client id,
         // we know there can no longer be outstanding ops that we sent with the previous client id.
-        this._pendingClientId = details.clientId;
+        this.#pendingClientId = details.clientId;
 
         // Report telemetry after we set client id, but before transitioning to Connected state below!
         this.handler.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
@@ -188,7 +188,7 @@ export class ConnectionStateHandler {
         if ((protocolHandler !== undefined && protocolHandler.quorum.getMember(details.clientId) !== undefined)
             || connectionMode === "read"
         ) {
-            assert(!this.prevClientLeftTimer.hasTimer, 0x2a6 /* "there should be no timer for 'read' connections" */);
+            assert(!this.#prevClientLeftTimer.hasTimer, 0x2a6 /* "there should be no timer for 'read' connections" */);
             this.setConnectionState(ConnectionState.Connected);
         } else if (connectionMode === "write") {
             this.startJoinOpTimer();
@@ -204,12 +204,12 @@ export class ConnectionStateHandler {
             return;
         }
 
-        const oldState = this._connectionState;
-        this._connectionState = value;
+        const oldState = this.#connectionState;
+        this.#connectionState = value;
         const quorum = this.handler.protocolHandler()?.quorum;
         let client: ILocalSequencedClient | undefined;
-        if (this._clientId !== undefined) {
-            client = quorum?.getMember(this._clientId);
+        if (this.#clientId !== undefined) {
+            client = quorum?.getMember(this.#clientId);
         }
         if (value === ConnectionState.Connected) {
             assert(oldState === ConnectionState.Connecting,
@@ -218,10 +218,10 @@ export class ConnectionStateHandler {
             if (client !== undefined) {
                 client.shouldHaveLeft = true;
             }
-            this._clientId = this.pendingClientId;
+            this.#clientId = this.pendingClientId;
         } else if (value === ConnectionState.Disconnected) {
             // Important as we process our own joinSession message through delta request
-            this._pendingClientId = undefined;
+            this.#pendingClientId = undefined;
             // Only wait for "leave" message if the connected client exists in the quorum because only the write
             // client will exist in the quorum and only for those clients we will receive "removeMember" event and
             // the client has some unacked ops.
@@ -230,22 +230,22 @@ export class ConnectionStateHandler {
             // don't want to reset the timer as we still want to wait on original client which started this timer.
             if (client !== undefined
                 && this.handler.shouldClientJoinWrite()
-                && this.prevClientLeftTimer.hasTimer === false
+                && this.#prevClientLeftTimer.hasTimer === false
             ) {
-                this.prevClientLeftTimer.restart();
+                this.#prevClientLeftTimer.restart();
             } else {
                 // Adding this event temporarily so that we can get help debugging if something goes wrong.
                 this.logger.sendTelemetryEvent({
                     eventName: "noWaitOnDisconnected",
                     inQuorum: client !== undefined,
-                    hasTimer: this.prevClientLeftTimer.hasTimer,
+                    hasTimer: this.#prevClientLeftTimer.hasTimer,
                     shouldClientJoinWrite: this.handler.shouldClientJoinWrite(),
                 });
             }
         }
 
         // Report transition before we propagate event across layers
-        this.handler.logConnectionStateChangeTelemetry(this._connectionState, oldState, reason);
+        this.handler.logConnectionStateChangeTelemetry(this.#connectionState, oldState, reason);
 
         // Propagate event across layers
         this.handler.connectionStateChanged();

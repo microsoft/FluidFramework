@@ -50,7 +50,7 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
  * This class contains the heuristics for when to summarize.
  */
 export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
-    private readonly idleTimer: Timer;
+    readonly #idleTimer: Timer;
 
     public constructor(
         private readonly heuristicData: ISummarizeHeuristicData,
@@ -58,7 +58,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         private readonly trySummarize: (reason: SummarizeReason) => void,
         private readonly minOpsForAttemptOnClose = 50,
     ) {
-        this.idleTimer = new Timer(
+        this.#idleTimer = new Timer(
             this.configuration.idleTime,
             () => this.trySummarize("idle"));
     }
@@ -71,13 +71,13 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         const timeSinceLastSummary = Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime;
         const opsSinceLastAck = this.opsSinceLastAck;
         if (timeSinceLastSummary > this.configuration.maxTime) {
-            this.idleTimer.clear();
+            this.#idleTimer.clear();
             this.trySummarize("maxTime");
         } else if (opsSinceLastAck > this.configuration.maxOps) {
-            this.idleTimer.clear();
+            this.#idleTimer.clear();
             this.trySummarize("maxOps");
         } else {
-            this.idleTimer.restart();
+            this.#idleTimer.restart();
         }
     }
 
@@ -87,6 +87,6 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
     }
 
     public dispose() {
-        this.idleTimer.clear();
+        this.#idleTimer.clear();
     }
 }

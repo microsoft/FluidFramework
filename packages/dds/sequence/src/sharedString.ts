@@ -83,11 +83,11 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         return this;
     }
 
-    private readonly mergeTreeTextHelper: MergeTreeTextHelper;
+    readonly #mergeTreeTextHelper: MergeTreeTextHelper;
 
     constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
         super(document, id, attributes, SharedStringFactory.segmentFromSpec);
-        this.mergeTreeTextHelper = this.client.createTextHelper();
+        this.#mergeTreeTextHelper = this.client.createTextHelper();
     }
 
     /**
@@ -227,7 +227,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
 
     public getTextAndMarkers(label: string) {
         const segmentWindow = this.client.getCollabWindow();
-        return this.mergeTreeTextHelper.getTextAndMarkers(segmentWindow.currentSeq, segmentWindow.clientId, label);
+        return this.#mergeTreeTextHelper.getTextAndMarkers(segmentWindow.currentSeq, segmentWindow.clientId, label);
     }
 
     /**
@@ -238,7 +238,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
      */
     public getText(start?: number, end?: number) {
         const segmentWindow = this.client.getCollabWindow();
-        return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "", start, end);
+        return this.#mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "", start, end);
     }
 
     /**
@@ -246,17 +246,17 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
      */
     public getTextWithPlaceholders() {
         const segmentWindow = this.client.getCollabWindow();
-        return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ");
+        return this.#mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ");
     }
 
     public getTextRangeWithPlaceholders(start: number, end: number) {
         const segmentWindow = this.client.getCollabWindow();
-        return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ", start, end);
+        return this.#mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ", start, end);
     }
 
     public getTextRangeWithMarkers(start: number, end: number) {
         const segmentWindow = this.client.getCollabWindow();
-        return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "*", start, end);
+        return this.#mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "*", start, end);
     }
 
     public getMarkerFromId(id: string): ISegment {

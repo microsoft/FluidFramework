@@ -16,31 +16,31 @@ import { ISegment } from "./mergeTree";
  * can be inserted into that order.
  */
 export class SortedSegmentSet<T extends ISegment | { readonly segment: ISegment } = ISegment> {
-    private readonly oridinalSortedItems: T[] = [];
+    readonly #oridinalSortedItems: T[] = [];
 
     public get size(): number {
-        return this.oridinalSortedItems.length;
+        return this.#oridinalSortedItems.length;
     }
 
     public get items(): readonly T[] {
-        return this.oridinalSortedItems;
+        return this.#oridinalSortedItems;
     }
 
     public addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => T) {
         const position = this.findOrdinalPosition(this.getOrdinal(newItem));
         if (position.exists) {
             if (update) {
-                update(this.oridinalSortedItems[position.index], newItem);
+                update(this.#oridinalSortedItems[position.index], newItem);
             }
         } else {
-            this.oridinalSortedItems.splice(position.index, 0, newItem);
+            this.#oridinalSortedItems.splice(position.index, 0, newItem);
         }
     }
 
     public remove(item: T): boolean {
         const position = this.findOrdinalPosition(this.getOrdinal(item));
         if (position.exists) {
-            this.oridinalSortedItems.splice(position.index, 1);
+            this.#oridinalSortedItems.splice(position.index, 1);
             return true;
         }
         return false;
@@ -62,19 +62,19 @@ export class SortedSegmentSet<T extends ISegment | { readonly segment: ISegment 
     }
 
     private findOrdinalPosition(ordinal: string, start?: number, end?: number): { exists: boolean, index: number } {
-        if (this.oridinalSortedItems.length === 0) {
+        if (this.#oridinalSortedItems.length === 0) {
             return { exists: false, index: 0 };
         }
         if (start === undefined || end === undefined) {
-            return this.findOrdinalPosition(ordinal, 0, this.oridinalSortedItems.length - 1);
+            return this.findOrdinalPosition(ordinal, 0, this.#oridinalSortedItems.length - 1);
         }
         const index = start + Math.floor((end - start) / 2);
-        if (this.getOrdinal(this.oridinalSortedItems[index]) > ordinal) {
+        if (this.getOrdinal(this.#oridinalSortedItems[index]) > ordinal) {
             if (start === index) {
                 return { exists: false, index };
             }
             return this.findOrdinalPosition(ordinal, start, index - 1);
-        } else if (this.getOrdinal(this.oridinalSortedItems[index]) < ordinal) {
+        } else if (this.getOrdinal(this.#oridinalSortedItems[index]) < ordinal) {
             if (index === end) {
                 return { exists: false, index: index + 1 };
             }

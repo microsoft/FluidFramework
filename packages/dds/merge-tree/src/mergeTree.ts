@@ -2021,7 +2021,7 @@ export class MergeTree {
         let startSeg = refSegment;
         // if the change isn't at a boundary, we need to split the segment
         if (refOffset !== 0 && refSegLen !== undefined && refSegLen !== 0) {
-            const splitSeg = this.splitLeafSegment(refSegment, refOffset);
+            const splitSeg = this.#splitLeafSegment(refSegment, refOffset);
             assert(!!splitSeg.next, 0x050 /* "Next segment changes are undefined!" */);
             this.insertChildNode(refSegment.parent!, splitSeg.next, refSegment.index + 1);
             rebalanceTree(splitSeg.next);
@@ -2208,7 +2208,7 @@ export class MergeTree {
             }
         }
     }
-    private readonly splitLeafSegment = (segment: ISegment | undefined, pos: number): ISegmentChanges => {
+    readonly #splitLeafSegment = (segment: ISegment | undefined, pos: number): ISegmentChanges => {
         if (!(pos > 0 && segment)) {
             return {};
         }
@@ -2227,7 +2227,7 @@ export class MergeTree {
 
     private ensureIntervalBoundary(pos: number, refSeq: number, clientId: number) {
         const splitNode = this.insertingWalk(this.root, pos, refSeq, clientId, TreeMaintenanceSequenceNumber,
-            { leaf: this.splitLeafSegment });
+            { leaf: this.#splitLeafSegment });
         this.updateRoot(splitNode);
     }
 

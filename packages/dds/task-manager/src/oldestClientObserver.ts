@@ -65,26 +65,26 @@ import { IOldestClientObservable, IOldestClientObserverEvents, IOldestClientObse
  */
 export class OldestClientObserver extends TypedEventEmitter<IOldestClientObserverEvents>
     implements IOldestClientObserver {
-    private readonly quorum: IQuorumClients;
-    private currentIsOldest: boolean = false;
+    readonly #quorum: IQuorumClients;
+    #currentIsOldest: boolean = false;
     constructor(private readonly observable: IOldestClientObservable) {
         super();
-        this.quorum = this.observable.getQuorum();
-        this.currentIsOldest = this.computeIsOldest();
-        this.quorum.on("addMember", this.updateOldest);
-        this.quorum.on("removeMember", this.updateOldest);
-        observable.on("connected", this.updateOldest);
-        observable.on("disconnected", this.updateOldest);
+        this.#quorum = this.observable.getQuorum();
+        this.#currentIsOldest = this.computeIsOldest();
+        this.#quorum.on("addMember", this.#updateOldest);
+        this.#quorum.on("removeMember", this.#updateOldest);
+        observable.on("connected", this.#updateOldest);
+        observable.on("disconnected", this.#updateOldest);
     }
 
     public isOldest(): boolean {
-        return this.currentIsOldest;
+        return this.#currentIsOldest;
     }
 
-    private readonly updateOldest = () => {
+    readonly #updateOldest = () => {
         const oldest = this.computeIsOldest();
-        if (this.currentIsOldest !== oldest) {
-            this.currentIsOldest = oldest;
+        if (this.#currentIsOldest !== oldest) {
+            this.#currentIsOldest = oldest;
             if (oldest) {
                 this.emit("becameOldest");
             } else {
@@ -106,13 +106,13 @@ export class OldestClientObserver extends TypedEventEmitter<IOldestClientObserve
 
         assert(this.observable.clientId !== undefined, 0x1da /* "Client id should be set if connected" */);
 
-        const selfSequencedClient = this.quorum.getMember(this.observable.clientId);
+        const selfSequencedClient = this.#quorum.getMember(this.observable.clientId);
         // When in readonly mode our clientId will not be present in the quorum.
         if (selfSequencedClient === undefined) {
             return false;
         }
 
-        const members = this.quorum.getMembers();
+        const members = this.#quorum.getMembers();
         for (const sequencedClient of members.values()) {
             if (sequencedClient.sequenceNumber < selfSequencedClient.sequenceNumber) {
                 return false;

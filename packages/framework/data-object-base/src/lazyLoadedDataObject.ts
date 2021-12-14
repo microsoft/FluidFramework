@@ -28,7 +28,7 @@ export abstract class LazyLoadedDataObject<
     TEvents extends IEvent = IEvent>
     extends EventForwarder<TEvents>
     implements IFluidLoadable, IProvideFluidHandle, IFluidRouter {
-    private _handle?: IFluidHandle<this>;
+    #handle?: IFluidHandle<this>;
 
     public get IFluidRouter() { return this; }
     public get IFluidLoadable() { return this; }
@@ -60,14 +60,14 @@ export abstract class LazyLoadedDataObject<
 
     public get handle(): IFluidHandle<this> {
         // Lazily create the FluidObjectHandle when requested.
-        if (!this._handle) {
-            this._handle = new FluidObjectHandle(
+        if (!this.#handle) {
+            this.#handle = new FluidObjectHandle(
                 this,
                 "",
                 this.runtime.objectsRoutingContext);
         }
 
-        return this._handle;
+        return this.#handle;
     }
 
     // #endregion IFluidLoadable

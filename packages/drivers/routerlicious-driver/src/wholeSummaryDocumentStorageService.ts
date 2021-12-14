@@ -34,8 +34,8 @@ import { ICache, InMemoryCache } from "./cache";
 const latestSnapshotId: string = "latest";
 
 export class WholeSummaryDocumentStorageService implements IDocumentStorageService {
-    private readonly summaryUploadManager: ISummaryUploadManager;
-    private firstVersionsCall: boolean = true;
+    readonly #summaryUploadManager: ISummaryUploadManager;
+    #firstVersionsCall: boolean = true;
 
     public get repositoryUrl(): string {
         return "";
@@ -48,7 +48,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         public readonly policies: IDocumentStorageServicePolicies = {},
         private readonly blobCache: ICache<ArrayBufferLike> = new InMemoryCache(),
         private readonly snapshotTreeCache: ICache<ISnapshotTree> = new InMemoryCache()) {
-        this.summaryUploadManager = new WholeSummaryUploadManager(manager);
+        this.#summaryUploadManager = new WholeSummaryUploadManager(manager);
     }
 
     public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
@@ -61,8 +61,8 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         }
         // If this is the first versions call for the document, we know we will want the latest summary.
         // Fetch latest summary, cache it, and return its id.
-        if (this.firstVersionsCall && count === 1) {
-            this.firstVersionsCall = false;
+        if (this.#firstVersionsCall && count === 1) {
+            this.#firstVersionsCall = false;
             return [{
                 id: (await this.fetchAndCacheSnapshotTree(latestSnapshotId)).id,
                 treeId: undefined!,
@@ -134,7 +134,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
             {
                 eventName: "uploadSummaryWithContext",
             },
-            async () => this.summaryUploadManager.writeSummaryTree(summary, context.ackHandle ?? "", "channel"),
+            async () => this.#summaryUploadManager.writeSummaryTree(summary, context.ackHandle ?? "", "channel"),
         );
         return summaryHandle;
     }

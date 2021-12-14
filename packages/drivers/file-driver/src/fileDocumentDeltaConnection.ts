@@ -44,7 +44,7 @@ const Claims: ITokenClaims = {
  * Replay service used to play ops using the delta connection.
  */
 export class Replayer {
-    private currentReplayOp = 0;
+    #currentReplayOp = 0;
 
     constructor(
         private readonly deltaConnection: ReplayFileDeltaConnection,
@@ -52,11 +52,11 @@ export class Replayer {
     }
 
     public get currentReplayedOp() {
-        return this.currentReplayOp;
+        return this.#currentReplayOp;
     }
 
     public set currentReplayedOp(op: number) {
-        this.currentReplayOp = op;
+        this.#currentReplayOp = op;
     }
 
     public get ops(): readonly Readonly<ISequencedDocumentMessage>[] {
@@ -71,17 +71,17 @@ export class Replayer {
         let totalReplayedOps = 0;
         let done: boolean;
         do {
-            const fetchToBatch = this.currentReplayOp + MaxBatchDeltas;
+            const fetchToBatch = this.#currentReplayOp + MaxBatchDeltas;
             const fetchTo = Math.min(fetchToBatch, replayTo);
 
-            const fetchedOps = this.documentStorageService.getFromWebSocket(this.currentReplayOp, fetchTo);
+            const fetchedOps = this.documentStorageService.getFromWebSocket(this.#currentReplayOp, fetchTo);
 
             if (fetchedOps.length <= 0) {
                 break;
             } else {
                 this.emit(fetchedOps);
                 totalReplayedOps += fetchedOps.length;
-                this.currentReplayOp += fetchedOps.length;
+                this.#currentReplayOp += fetchedOps.length;
                 done = this.isDoneFetch(replayTo);
             }
         } while (!done);
@@ -90,7 +90,7 @@ export class Replayer {
 
     private isDoneFetch(replayTo: number) {
         if (replayTo >= 0) {
-            return this.currentReplayOp >= replayTo;
+            return this.#currentReplayOp >= replayTo;
         }
         return false;
     }
@@ -144,17 +144,17 @@ export class ReplayFileDeltaConnection
     }
 
     public readonly maxMessageSize = ReplayMaxMessageSize;
-    private readonly replayer: Replayer;
+    readonly #replayer: Replayer;
 
     public constructor(public details: IConnected, documentDeltaStorageService: FileDeltaStorageService) {
         super();
-        this.replayer = new Replayer(
+        this.#replayer = new Replayer(
             this,
             documentDeltaStorageService);
     }
 
     public getReplayer() {
-        return this.replayer;
+        return this.#replayer;
     }
 
     public get clientId(): string {
@@ -202,7 +202,7 @@ export class ReplayFileDeltaConnection
     public async submitSignal(message: any) {
     }
 
-    private _disposed = false;
-    public get disposed() { return this._disposed; }
-    public dispose() { this._disposed = true; }
+    #disposed = false;
+    public get disposed() { return this.#disposed; }
+    public dispose() { this.#disposed = true; }
 }

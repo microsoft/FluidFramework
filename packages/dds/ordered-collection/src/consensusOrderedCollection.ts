@@ -100,7 +100,7 @@ export class ConsensusOrderedCollection<T = any>
     /**
      * The set of values that have been acquired but not yet completed or released
      */
-    private jobTracking: JobTrackingInfo<T> = new Map();
+    #jobTracking: JobTrackingInfo<T> = new Map();
 
     /**
      * Constructs a new consensus collection. If the object is non-local an id and service interfaces will
@@ -208,7 +208,7 @@ export class ConsensusOrderedCollection<T = any>
             path: snapshotFileNameTracking,
             type: TreeEntry.Blob,
             value: {
-                contents: this.serializeValue(Array.from(this.jobTracking.entries()), serializer),
+                contents: this.serializeValue(Array.from(this.#jobTracking.entries()), serializer),
                 encoding: "utf-8",
             },
         });
@@ -237,9 +237,9 @@ export class ConsensusOrderedCollection<T = any>
 
     protected completeCore(acquireId: string) {
         // Note: item may be no longer in jobTracking and returned back to queue!
-        const rec = this.jobTracking.get(acquireId);
+        const rec = this.#jobTracking.get(acquireId);
         if (rec !== undefined) {
-            this.jobTracking.delete(acquireId);
+            this.#jobTracking.delete(acquireId);
             this.emit("complete", rec.value);
         }
     }
@@ -263,9 +263,9 @@ export class ConsensusOrderedCollection<T = any>
 
     protected releaseCore(acquireId: string) {
         // Note: item may be no longer in jobTracking and returned back to queue!
-        const rec = this.jobTracking.get(acquireId);
+        const rec = this.#jobTracking.get(acquireId);
         if (rec !== undefined) {
-            this.jobTracking.delete(acquireId);
+            this.#jobTracking.delete(acquireId);
             this.data.add(rec.value);
             this.emit("add", rec.value, false /* newlyAdded */);
         }
@@ -275,11 +275,11 @@ export class ConsensusOrderedCollection<T = any>
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        assert(this.jobTracking.size === 0, 0x068 /* "On consensusOrderedCollection load, job tracking size > 0" */);
+        assert(this.#jobTracking.size === 0, 0x068 /* "On consensusOrderedCollection load, job tracking size > 0" */);
         const blob = await storage.readBlob(snapshotFileNameTracking);
         const rawContentTracking = bufferToString(blob, "utf8");
         const content = this.deserializeValue(rawContentTracking, this.serializer);
-        this.jobTracking = new Map(content) as JobTrackingInfo<T>;
+        this.#jobTracking = new Map(content) as JobTrackingInfo<T>;
 
         assert(this.data.size() === 0, 0x069 /* "On consensusOrderedCollection load, data size > 0" */);
         const blob2 = await storage.readBlob(snapshotFileNameData);
@@ -293,7 +293,7 @@ export class ConsensusOrderedCollection<T = any>
     }
 
     protected onDisconnect() {
-        for (const [, { value, clientId }] of this.jobTracking) {
+        for (const [, { value, clientId }] of this.#jobTracking) {
             if (clientId === this.runtime.clientId) {
                 this.emit("localRelease", value, false /* intentional */);
             }
@@ -359,7 +359,7 @@ export class ConsensusOrderedCollection<T = any>
             acquireId,
             value,
         };
-        this.jobTracking.set(value2.acquireId, { value, clientId });
+        this.#jobTracking.set(value2.acquireId, { value, clientId });
 
         this.emit("acquire", value, clientId);
         return value2;
@@ -379,9 +379,9 @@ export class ConsensusOrderedCollection<T = any>
 
     private removeClient(clientIdToRemove?: string) {
         const added: T[] = [];
-        for (const [acquireId, { value, clientId }] of this.jobTracking) {
+        for (const [acquireId, { value, clientId }] of this.#jobTracking) {
             if (clientId === clientIdToRemove) {
-                this.jobTracking.delete(acquireId);
+                this.#jobTracking.delete(acquireId);
                 this.data.add(value);
                 added.push(value);
             }

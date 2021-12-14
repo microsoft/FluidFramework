@@ -122,17 +122,17 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
     }
     public readonly type = RunSegment.typeString;
 
-    private tags: any[];
+    #tags: any[];
 
     constructor(public items: SparseMatrixItem[]) {
         super(items);
-        this.tags = new Array(items.length).fill(undefined);
+        this.#tags = new Array(items.length).fill(undefined);
     }
 
     public clone(start = 0, end?: number) {
         const b = new RunSegment(this.items.slice(start, end));
-        if (this.tags) {
-            b.tags = this.tags.slice(start, end);
+        if (this.#tags) {
+            b.#tags = this.#tags.slice(start, end);
         }
         this.cloneInto(b);
         return b;
@@ -142,9 +142,9 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
         super.append(segment);
 
         const asRun = segment as RunSegment;
-        if (asRun.tags) {
-            if (this.tags) {
-                this.tags.splice(this.items.length, 0, ...asRun.tags);
+        if (asRun.#tags) {
+            if (this.#tags) {
+                this.#tags.splice(this.items.length, 0, ...asRun.#tags);
             }
         }
 
@@ -154,17 +154,17 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
     // TODO: retain removed items for undo
     // returns true if entire run removed
     public removeRange(start: number, end: number) {
-        this.tags.splice(start, end - start);
+        this.#tags.splice(start, end - start);
         return super.removeRange(start, end);
     }
 
     public getTag(pos: number) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.tags[pos];
+        return this.#tags[pos];
     }
 
     public setTag(pos: number, tag: any) {
-        this.tags[pos] = tag;
+        this.#tags[pos] = tag;
     }
 
     protected createSplitSegmentAt(pos: number) {
@@ -174,8 +174,8 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
             this.cachedLength = this.items.length;
 
             const leafSegment = new RunSegment(remainingItems);
-            leafSegment.tags = this.tags.slice(pos);
-            this.tags.length = pos;
+            leafSegment.#tags = this.#tags.slice(pos);
+            this.#tags.length = pos;
 
             return leafSegment;
         }

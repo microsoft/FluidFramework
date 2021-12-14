@@ -55,26 +55,26 @@ class SummaryNodeWithGC extends SummaryNode {
  */
 export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
     // Tracks the work-in-progress used routes during summary.
-    private wipSerializedUsedRoutes: string | undefined;
+    #wipSerializedUsedRoutes: string | undefined;
 
     // This is the last known used routes of this node as seen by the server as part of a summary.
-    private referenceUsedRoutes: string[] | undefined;
+    #referenceUsedRoutes: string[] | undefined;
 
     // The GC details of this node in the initial summary.
-    private gcDetailsInInitialSummaryP: LazyPromise<IGarbageCollectionSummaryDetails> | undefined;
+    #gcDetailsInInitialSummaryP: LazyPromise<IGarbageCollectionSummaryDetails> | undefined;
 
-    private gcData: IGarbageCollectionData | undefined;
+    #gcData: IGarbageCollectionData | undefined;
 
     // Set used routes to have self route by default. This makes the node referenced by default. This is done to ensure
     // that this node is not marked as collected when running GC has been disabled. Once, the option to disable GC is
     // removed (from runGC flag in IContainerRuntimeOptions), this should be changed to be have no routes by default.
-    private usedRoutes: string[] = [""];
+    #usedRoutes: string[] = [""];
 
     // If this node is marked as unreferenced, the time when it marked as such.
-    private unreferencedTimestampMs: number | undefined;
+    #unreferencedTimestampMs: number | undefined;
 
     // True if GC is disabled for this node. If so, do not track GC specific state for a summary.
-    private readonly gcDisabled: boolean;
+    readonly #gcDisabled: boolean;
 
     /**
      * Do not call constructor directly.
@@ -102,9 +102,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             wipSummaryLogger,
         );
 
-        this.gcDisabled = config.gcDisabled === true;
+        this.#gcDisabled = config.gcDisabled === true;
 
-        this.gcDetailsInInitialSummaryP = new LazyPromise(async () => {
+        this.#gcDetailsInInitialSummaryP = new LazyPromise(async () => {
             const gcSummaryDetails = await getInitialGCSummaryDetailsFn?.();
             return gcSummaryDetails ?? { usedRoutes: [] };
         });
@@ -113,9 +113,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     // Returns the GC details that may be added to this node's summary.
     public getGCSummaryDetails(): IGarbageCollectionSummaryDetails {
         return {
-            gcData: this.gcData,
-            usedRoutes: this.usedRoutes,
-            unrefTimestamp: this.unreferencedTimestampMs,
+            gcData: this.#gcData,
+            usedRoutes: this.#usedRoutes,
+            unrefTimestamp: this.#unreferencedTimestampMs,
         };
     }
 
@@ -126,27 +126,27 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      * - gcData: The garbage collection data of this node that is required for running GC.
      */
     private async loadInitialGCSummaryDetails() {
-        if (this.gcDetailsInInitialSummaryP === undefined) {
+        if (this.#gcDetailsInInitialSummaryP === undefined) {
             return;
         }
 
-        const gcDetailsInInitialSummaryP = this.gcDetailsInInitialSummaryP;
-        this.gcDetailsInInitialSummaryP = undefined;
+        const gcDetailsInInitialSummaryP = this.#gcDetailsInInitialSummaryP;
+        this.#gcDetailsInInitialSummaryP = undefined;
 
         const gcDetailsInInitialSummary = await gcDetailsInInitialSummaryP;
         // If the GC details has GC data, initialize our GC data from it.
         if (gcDetailsInInitialSummary.gcData !== undefined) {
-            this.gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
+            this.#gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
         }
-        this.referenceUsedRoutes = gcDetailsInInitialSummary.usedRoutes;
-        this.unreferencedTimestampMs = gcDetailsInInitialSummary.unrefTimestamp;
+        this.#referenceUsedRoutes = gcDetailsInInitialSummary.usedRoutes;
+        this.#unreferencedTimestampMs = gcDetailsInInitialSummary.unrefTimestamp;
     }
 
     public async summarize(fullTree: boolean, trackState: boolean = true): Promise<ISummarizeResult> {
         // If GC is not disabled and we are tracking a summary, GC should have run and updated the used routes for this
         // summary by calling updateUsedRoutes which sets wipSerializedUsedRoutes.
-        if (!this.gcDisabled && this.isTrackingInProgress()) {
-            assert(this.wipSerializedUsedRoutes !== undefined,
+        if (!this.#gcDisabled && this.isTrackingInProgress()) {
+            assert(this.#wipSerializedUsedRoutes !== undefined,
                 0x1b1 /* "wip used routes should be set if tracking a summary" */);
         }
 
@@ -161,7 +161,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
     public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
-        assert(!this.gcDisabled, 0x1b2 /* "Getting GC data should not be called when GC is disabled!" */);
+        assert(!this.#gcDisabled, 0x1b2 /* "Getting GC data should not be called when GC is disabled!" */);
         assert(this.getGCDataFn !== undefined, 0x1b3 /* "GC data cannot be retrieved without getGCDataFn" */);
 
         // Load GC details from the initial summary, if not already loaded. If this is the first time this function is
@@ -171,12 +171,12 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // If there is no new data since last summary and we have GC data from the previous run, return it. We may not
         // have data from previous GC run for clients with older summary format before GC was added. They won't have
         // GC details in their initial summary.
-        if (!fullGC && !this.hasDataChanged() && this.gcData !== undefined) {
-            return cloneGCData(this.gcData);
+        if (!fullGC && !this.hasDataChanged() && this.#gcData !== undefined) {
+            return cloneGCData(this.#gcData);
         }
 
         const gcData = await this.getGCDataFn(fullGC);
-        this.gcData = cloneGCData(gcData);
+        this.#gcData = cloneGCData(gcData);
         return gcData;
     }
 
@@ -185,9 +185,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      */
     public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger) {
         // If GC is disabled, skip setting wip used routes since we should not track GC state.
-        if (!this.gcDisabled) {
+        if (!this.#gcDisabled) {
             assert(
-                this.wipSerializedUsedRoutes === undefined,
+                this.#wipSerializedUsedRoutes === undefined,
                 0x1b4 /* "We should not already be tracking used routes when to track a new summary" */);
         }
         super.startSummary(referenceSequenceNumber, summaryLogger);
@@ -204,15 +204,15 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     ) {
         let wipSerializedUsedRoutes: string | undefined;
         // If GC is disabled, don't set wip used routes.
-        if (!this.gcDisabled) {
-            wipSerializedUsedRoutes = this.wipSerializedUsedRoutes;
+        if (!this.#gcDisabled) {
+            wipSerializedUsedRoutes = this.#wipSerializedUsedRoutes;
             assert(wipSerializedUsedRoutes !== undefined, 0x1b5 /* "We should have been tracking used routes" */);
         }
 
         super.completeSummaryCore(proposalHandle, parentPath, parentSkipRecursion);
 
         // If GC is disabled, skip setting pending summary with GC state.
-        if (!this.gcDisabled) {
+        if (!this.#gcDisabled) {
             const summaryNode = this.pendingSummaries.get(proposalHandle);
             if (summaryNode !== undefined) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -226,7 +226,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      * Clears the work-in-progress state.
      */
     public clearSummary() {
-        this.wipSerializedUsedRoutes = undefined;
+        this.#wipSerializedUsedRoutes = undefined;
         super.clearSummary();
     }
 
@@ -239,10 +239,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         referenceSequenceNumber: number,
     ): void {
         // If GC is disabled, skip setting referenced used routes since we are not tracking GC state.
-        if (!this.gcDisabled) {
+        if (!this.#gcDisabled) {
             const summaryNode = this.pendingSummaries.get(proposalHandle) as SummaryNodeWithGC;
             if (summaryNode !== undefined) {
-                this.referenceUsedRoutes = JSON.parse(summaryNode.serializedUsedRoutes);
+                this.#referenceUsedRoutes = JSON.parse(summaryNode.serializedUsedRoutes);
             }
         }
 
@@ -262,7 +262,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         readAndParseBlob: ReadAndParseBlob,
     ): Promise<void> {
         // If GC is disabled, skip setting referenced used routes since we are not tracking GC state.
-        if (!this.gcDisabled) {
+        if (!this.#gcDisabled) {
             const gcDetailsBlob = snapshotTree.blobs[gcBlobKey];
             if (gcDetailsBlob !== undefined) {
                 const gcDetails = await readAndParseBlob<IGarbageCollectionSummaryDetails>(gcDetailsBlob);
@@ -272,7 +272,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
                     return;
                 }
 
-                this.referenceUsedRoutes = gcDetails.usedRoutes;
+                this.#referenceUsedRoutes = gcDetails.usedRoutes;
             }
         }
 
@@ -313,7 +313,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             {
                 ...config,
                 // Propagate our gcDisabled state to the child if its not explicity specified in child's config.
-                gcDisabled: config.gcDisabled ?? this.gcDisabled,
+                gcDisabled: config.gcDisabled ?? this.#gcDisabled,
             },
             createDetails.changeSequenceNumber,
             createDetails.latestSummary,
@@ -346,28 +346,28 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     public isReferenced(): boolean {
-        return this.usedRoutes.includes("") || this.usedRoutes.includes("/");
+        return this.#usedRoutes.includes("") || this.#usedRoutes.includes("/");
     }
 
     public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         // Sort the given routes before updating. This will ensure that the routes compared in hasUsedStateChanged()
         // are in the same order.
-        this.usedRoutes = usedRoutes.sort();
+        this.#usedRoutes = usedRoutes.sort();
 
         // If GC is not disabled and we are tracking a summary, update the work-in-progress used routes so that it can
         // be tracked for this summary.
-        if (!this.gcDisabled && this.isTrackingInProgress()) {
-            this.wipSerializedUsedRoutes = JSON.stringify(this.usedRoutes);
+        if (!this.#gcDisabled && this.isTrackingInProgress()) {
+            this.#wipSerializedUsedRoutes = JSON.stringify(this.#usedRoutes);
         }
 
         if (this.isReferenced()) {
-            this.unreferencedTimestampMs = undefined;
+            this.#unreferencedTimestampMs = undefined;
             return;
         }
 
         // If this node just became unreferenced, update its unreferencedTimestampMs.
-        if (this.unreferencedTimestampMs === undefined) {
-            this.unreferencedTimestampMs = gcTimestamp;
+        if (this.#unreferencedTimestampMs === undefined) {
+            this.#unreferencedTimestampMs = gcTimestamp;
         }
     }
 
@@ -392,12 +392,12 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      */
     private hasUsedStateChanged(): boolean {
         // If GC is disabled, we are not tracking used state, return false.
-        if (this.gcDisabled) {
+        if (this.#gcDisabled) {
             return false;
         }
 
-        return this.referenceUsedRoutes === undefined ||
-            JSON.stringify(this.usedRoutes) !== JSON.stringify(this.referenceUsedRoutes);
+        return this.#referenceUsedRoutes === undefined ||
+            JSON.stringify(this.#usedRoutes) !== JSON.stringify(this.#referenceUsedRoutes);
     }
 }
 

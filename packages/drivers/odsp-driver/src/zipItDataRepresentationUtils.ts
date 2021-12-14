@@ -260,15 +260,15 @@ export type NodeCoreTypes = "list" | "set";
  */
 export class NodeCore {
     // It is an array of nodes.
-    private readonly children: NodeTypes[] = [];
+    readonly #children: NodeTypes[] = [];
     public get nodes() {
-        return this.children;
+        return this.#children;
     }
 
     constructor(public type: NodeCoreTypes = "set") {}
 
     public [Symbol.iterator]() {
-        return this.children[Symbol.iterator]();
+        return this.#children[Symbol.iterator]();
     }
 
     public iteratePairs() {
@@ -276,50 +276,50 @@ export class NodeCore {
         return iteratePairs(iterate(this));
     }
 
-    public get length() { return this.children.length; }
+    public get length() { return this.#children.length; }
 
-    public get(index: number) { return this.children[index]; }
+    public get(index: number) { return this.#children[index]; }
 
     public getString(index: number): string {
-        const node = this.children[index];
+        const node = this.#children[index];
         assertBlobCoreInstance(node, "getString should return stringblob");
         return node.toString();
     }
 
     public getBlob(index: number): BlobCore {
-        const node = this.children[index];
+        const node = this.#children[index];
         assertBlobCoreInstance(node, "getBlob should return a blob");
         return node;
     }
 
     public getNode(index: number): NodeCore
     {
-        const node = this.children[index];
+        const node = this.#children[index];
         assertNodeCoreInstance(node, "getNode should return a node");
         return node;
     }
 
     public getNumber(index: number): number
     {
-        const node = this.children[index];
+        const node = this.#children[index];
         assertNumberInstance(node, "getNumber should return a number");
         return node;
     }
 
     public getBool(index: number): boolean {
-        const node = this.children[index];
+        const node = this.#children[index];
         assertBoolInstance(node, "getBool should return a boolean");
         return node;
     }
 
     public addNode(type?: NodeCoreTypes): NodeCore {
         const node = new NodeCore(type);
-        this.children.push(node);
+        this.#children.push(node);
         return node;
     }
 
     public addBlob(blob: Uint8Array, constString: boolean, useUtf8Code: boolean = false) {
-        this.children.push(new BlobDeepCopy(blob, constString, useUtf8Code));
+        this.#children.push(new BlobDeepCopy(blob, constString, useUtf8Code));
     }
 
     public addString(payload: string, constString: boolean) {
@@ -329,11 +329,11 @@ export class NodeCore {
     public addNumber(payload: number | undefined) {
         assert(Number.isInteger(payload), 0x231 /* "Number should be an integer" */);
         assert(payload !== undefined && payload >= 0, 0x232 /* "Payload should not be negative" */);
-        this.children.push(payload);
+        this.#children.push(payload);
     }
 
     public addBool(payload: boolean) {
-        this.children.push(payload);
+        this.#children.push(payload);
     }
 
     /**
@@ -348,7 +348,7 @@ export class NodeCore {
                 case MarkerCodesStart.list:
                 case MarkerCodesStart.set: {
                     childValue = new NodeCore(code === MarkerCodesStart.set ? "set" : "list");
-                    this.children.push(childValue);
+                    this.#children.push(childValue);
                     childValue.load(buffer, dictionary);
                     break;
                 }
@@ -366,7 +366,7 @@ export class NodeCore {
                 {
                     const stringId = buffer.read(getValueSafely(codeToBytesMap, code));
                     childValue = dictionary[stringId];
-                    this.children.push(childValue);
+                    this.#children.push(childValue);
                     break;
                 }
                 case MarkerCodes.StringEmpty:
@@ -380,14 +380,14 @@ export class NodeCore {
                 case MarkerCodes.BinarySingle64:
                 {
                     childValue = BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code), false);
-                    this.children.push(childValue);
+                    this.#children.push(childValue);
                     break;
                 }
                 // If integer is 0.
                 case MarkerCodes.Int0:
                 {
                     childValue = 0;
-                    this.children.push(childValue);
+                    this.#children.push(childValue);
                     break;
                 }
                 case MarkerCodes.UInt8:
@@ -400,14 +400,14 @@ export class NodeCore {
                 case MarkerCodes.Int64:
                 {
                     childValue = buffer.read(getValueSafely(codeToBytesMap, code));
-                    this.children.push(childValue);
+                    this.#children.push(childValue);
                     break;
                 }
                 case MarkerCodes.BoolTrue:
-                    this.children.push(true);
+                    this.#children.push(true);
                     break;
                 case MarkerCodes.BoolFalse:
-                    this.children.push(false);
+                    this.#children.push(false);
                     break;
                 case MarkerCodesEnd.list:
                 case MarkerCodesEnd.set:

@@ -276,9 +276,9 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
  * Manages Fluid resource loading
  */
 export class Loader implements IHostLoader {
-    private readonly containers = new Map<string, Promise<Container>>();
+    readonly #containers = new Map<string, Promise<Container>>();
     public readonly services: ILoaderServices;
-    private readonly logger: ITelemetryLogger;
+    readonly #logger: ITelemetryLogger;
 
     constructor(loaderProps: ILoaderProps) {
         const scope = { ...loaderProps.scope as FluidObject<ILoader> };
@@ -299,7 +299,7 @@ export class Loader implements IHostLoader {
             proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
             detachedBlobStorage: loaderProps.detachedBlobStorage,
         };
-        this.logger = ChildLogger.create(this.services.subLogger, "Loader");
+        this.#logger = ChildLogger.create(this.services.subLogger, "Loader");
     }
 
     public get IFluidRouter(): IFluidRouter { return this; }
@@ -329,7 +329,7 @@ export class Loader implements IHostLoader {
 
     public async resolve(request: IRequest, pendingLocalState?: string): Promise<Container> {
         const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
-        return PerformanceEvent.timedExecAsync(this.logger, { eventName }, async () => {
+        return PerformanceEvent.timedExecAsync(this.#logger, { eventName }, async () => {
             const resolved = await this.resolveCore(
                 request,
                 pendingLocalState !== undefined ? JSON.parse(pendingLocalState) : undefined,
@@ -339,7 +339,7 @@ export class Loader implements IHostLoader {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
+        return PerformanceEvent.timedExecAsync(this.#logger, { eventName: "Request" }, async () => {
             const resolved = await this.resolveCore(request);
             return resolved.container.request({
                 ...request,
@@ -356,14 +356,14 @@ export class Loader implements IHostLoader {
     }
 
     private addToContainerCache(key: string, containerP: Promise<Container>) {
-        this.containers.set(key, containerP);
+        this.#containers.set(key, containerP);
         containerP.then((container) => {
             // If the container is closed or becomes closed after we resolve it, remove it from the cache.
             if (container.closed) {
-                this.containers.delete(key);
+                this.#containers.delete(key);
             } else {
                 container.once("closed", () => {
-                    this.containers.delete(key);
+                    this.#containers.delete(key);
                 });
             }
         }).catch((error) => {});
@@ -397,7 +397,7 @@ export class Loader implements IHostLoader {
         let container: Container;
         if (shouldCache) {
             const key = this.getKeyForContainerCache(request, parsed);
-            const maybeContainer = await this.containers.get(key);
+            const maybeContainer = await this.#containers.get(key);
             if (maybeContainer !== undefined) {
                 container = maybeContainer;
             } else {

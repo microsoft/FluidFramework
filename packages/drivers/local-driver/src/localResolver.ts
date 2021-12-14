@@ -30,8 +30,8 @@ export function createLocalResolverCreateNewRequest(documentId: string): IReques
  * related local classes.
  */
 export class LocalResolver implements IUrlResolver {
-    private readonly tenantId = "tenantId";
-    private readonly tokenKey = "tokenKey";
+    readonly tenantId = "#tenantId";
+    readonly tokenKey = "#tokenKey";
 
     constructor() { }
 

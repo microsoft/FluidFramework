@@ -70,22 +70,22 @@ const cacheKeyToString = (key: IOdspTokenManagerCacheKey) => {
 };
 
 export class OdspTokenManager {
-    private readonly storageCache = new Map<string, IOdspTokens>();
-    private readonly pushCache = new Map<string, IOdspTokens>();
-    private readonly cacheMutex = new Mutex();
+    readonly #storageCache = new Map<string, IOdspTokens>();
+    readonly #pushCache = new Map<string, IOdspTokens>();
+    readonly #cacheMutex = new Mutex();
     constructor(
         private readonly tokenCache?: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens>,
     ) { }
 
     public async updateTokensCache(key: IOdspTokenManagerCacheKey, value: IOdspTokens) {
-        await this.cacheMutex.runExclusive(async () => {
+        await this.#cacheMutex.runExclusive(async () => {
             await this.updateTokensCacheWithoutLock(key, value);
         });
     }
 
     private async updateTokensCacheWithoutLock(key: IOdspTokenManagerCacheKey, value: IOdspTokens) {
         debug(`${cacheKeyToString(key)}: Saving tokens`);
-        const memoryCache = key.isPush ? this.pushCache : this.storageCache;
+        const memoryCache = key.isPush ? this.#pushCache : this.#storageCache;
         memoryCache.set(key.userOrServer, value);
         await this.tokenCache?.save(key, value);
     }
@@ -127,7 +127,7 @@ export class OdspTokenManager {
     private async getTokenFromCache(
         cacheKey: IOdspTokenManagerCacheKey,
     ) {
-        const memoryCache = cacheKey.isPush ? this.pushCache : this.storageCache;
+        const memoryCache = cacheKey.isPush ? this.#pushCache : this.#storageCache;
         const memoryToken = memoryCache.get(cacheKey.userOrServer);
         if (memoryToken) {
             debug(`${cacheKeyToString(cacheKey)}: Token found in memory `);
@@ -161,7 +161,7 @@ export class OdspTokenManager {
         const invokeGetTokensCore = async () => {
             // Don't solely rely on tokenCache lock, ensure serialized execution of
             // cache update to avoid multiple fetch.
-            return this.cacheMutex.runExclusive(async () => {
+            return this.#cacheMutex.runExclusive(async () => {
                 return this.getTokensCore(
                     isPush,
                     server,

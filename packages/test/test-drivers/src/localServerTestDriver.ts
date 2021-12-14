@@ -9,18 +9,18 @@ import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { LocalDriverApiType, LocalDriverApi } from "./localDriverApi";
 
 export class LocalServerTestDriver implements ITestDriver {
-    private readonly _server = LocalDeltaConnectionServer.create();
+    readonly #server = LocalDeltaConnectionServer.create();
 
     public readonly type = "local";
     public get version() { return this.api.version; }
-    public get server(): ILocalDeltaConnectionServer { return this._server; }
+    public get server(): ILocalDeltaConnectionServer { return this.#server; }
 
     constructor(private readonly api: LocalDriverApiType = LocalDriverApi) {
-        this._server = api.LocalDeltaConnectionServer.create();
+        this.#server = api.LocalDeltaConnectionServer.create();
     }
 
     createDocumentServiceFactory(): IDocumentServiceFactory {
-        return new this.api.LocalDocumentServiceFactory(this._server);
+        return new this.api.LocalDocumentServiceFactory(this.#server);
     }
     createUrlResolver(): IUrlResolver {
         return new this.api.LocalResolver();

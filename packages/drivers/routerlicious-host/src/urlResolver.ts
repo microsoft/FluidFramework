@@ -16,7 +16,7 @@ import {
 import { default as Axios, AxiosInstance } from "axios";
 
 export class ContainerUrlResolver implements IUrlResolver {
-    private readonly cache = new PromiseCache<string, IResolvedUrl>();
+    readonly #cache = new PromiseCache<string, IResolvedUrl>();
 
     constructor(
         private readonly baseUrl: string,
@@ -26,7 +26,7 @@ export class ContainerUrlResolver implements IUrlResolver {
     ) {
         if (cache !== undefined) {
             for (const [key, value] of cache) {
-                this.cache.addValue(key, value);
+                this.#cache.addValue(key, value);
             }
         }
     }
@@ -48,7 +48,7 @@ export class ContainerUrlResolver implements IUrlResolver {
             return resolvedUrl.data;
         };
 
-        return this.cache.addOrGet(request.url, fetchResolvedUrl);
+        return this.#cache.addOrGet(request.url, fetchResolvedUrl);
     }
 
     public async getAbsoluteUrl(

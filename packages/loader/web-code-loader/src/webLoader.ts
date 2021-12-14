@@ -15,8 +15,8 @@ import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { ScriptManager } from "./scriptManager";
 
 export class WebCodeLoader implements ICodeLoader {
-    private readonly loadedModules = new Map<string, Promise<IFluidModule> | IFluidModule>();
-    private readonly scriptManager = new ScriptManager();
+    readonly #loadedModules = new Map<string, Promise<IFluidModule> | IFluidModule>();
+    readonly #scriptManager = new ScriptManager();
 
     constructor(
         private readonly codeResolver: IFluidCodeResolver,
@@ -28,19 +28,19 @@ export class WebCodeLoader implements ICodeLoader {
     ): Promise<void> {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
         if (resolved.resolvedPackageCacheId !== undefined
-            && this.loadedModules.has(resolved.resolvedPackageCacheId)) {
+            && this.#loadedModules.has(resolved.resolvedPackageCacheId)) {
             return;
         }
         const fluidModule = maybeFluidModule ?? this.load(source);
         if (resolved.resolvedPackageCacheId !== undefined) {
-            this.loadedModules.set(resolved.resolvedPackageCacheId, fluidModule);
+            this.#loadedModules.set(resolved.resolvedPackageCacheId, fluidModule);
         }
     }
 
     public async preCache(source: IFluidCodeDetails) {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
         if (isFluidBrowserPackage(resolved.resolvedPackage)) {
-            return this.scriptManager.preCacheFiles(
+            return this.#scriptManager.preCacheFiles(
                 resolved.resolvedPackage.fluid.browser);
         }
     }
@@ -53,7 +53,7 @@ export class WebCodeLoader implements ICodeLoader {
     ): Promise<IFluidModule> {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
         if (resolved.resolvedPackageCacheId !== undefined) {
-            const maybePkg = this.loadedModules.get(resolved.resolvedPackageCacheId);
+            const maybePkg = this.#loadedModules.get(resolved.resolvedPackageCacheId);
             if (maybePkg !== undefined) {
                 return maybePkg;
             }
@@ -61,7 +61,7 @@ export class WebCodeLoader implements ICodeLoader {
 
         const fluidModuleP = this.loadModuleFromResolvedCodeDetails(resolved);
         if (resolved.resolvedPackageCacheId !== undefined) {
-            this.loadedModules.set(resolved.resolvedPackageCacheId, fluidModuleP);
+            this.#loadedModules.set(resolved.resolvedPackageCacheId, fluidModuleP);
         }
         return fluidModuleP;
     }
@@ -74,7 +74,7 @@ export class WebCodeLoader implements ICodeLoader {
             throw new Error(`Package ${resolved.resolvedPackage.name} not a Fluid module.`);
         }
 
-        const loadedScriptsP =  this.scriptManager.loadLibrary(
+        const loadedScriptsP =  this.#scriptManager.loadLibrary(
             resolved.resolvedPackage.fluid.browser.umd);
 
         let fluidModule: IFluidModule | undefined;

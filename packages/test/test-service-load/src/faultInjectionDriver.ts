@@ -23,18 +23,18 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
-    private  readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
+     readonly #documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
 
     public get protocolName() { return this.internal.protocolName; }
-    public get documentServices() { return this._documentServices; }
+    public get documentServices() { return this.#documentServices; }
 
     constructor(private readonly internal: IDocumentServiceFactory) { }
 
     async createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService> {
         const internal = await this.internal.createDocumentService(resolvedUrl, logger);
         const ds = new FaultInjectionDocumentService(internal);
-        assert(!this._documentServices.has(resolvedUrl), "one ds per resolved url instance");
-        this._documentServices.set(resolvedUrl, ds);
+        assert(!this.#documentServices.has(resolvedUrl), "one ds per resolved url instance");
+        this.#documentServices.set(resolvedUrl, ds);
         return ds;
     }
     async createContainer(
@@ -52,7 +52,7 @@ export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFac
 }
 
 export class FaultInjectionDocumentService implements IDocumentService {
-    private  _currentDeltaStream: FaultInjectionDocumentDeltaConnection | undefined;
+     #currentDeltaStream: FaultInjectionDocumentDeltaConnection | undefined;
 
     constructor(private readonly internal: IDocumentService) {
     }
@@ -60,7 +60,7 @@ export class FaultInjectionDocumentService implements IDocumentService {
     public get resolvedUrl() {return this.internal.resolvedUrl;}
     public get policies() {return this.internal.policies;}
     public get documentDeltaConnection() {
-        return this._currentDeltaStream;
+        return this.#currentDeltaStream;
     }
 
     public dispose(error?: any) {
@@ -77,22 +77,22 @@ export class FaultInjectionDocumentService implements IDocumentService {
 
     async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         assert(
-            this._currentDeltaStream?.disposed !== false,
+            this.#currentDeltaStream?.disposed !== false,
             "Document service factory should only have one open connection");
         const internal = await this.internal.connectToDeltaStream(client);
-        this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(internal);
-        return this._currentDeltaStream;
+        this.#currentDeltaStream = new FaultInjectionDocumentDeltaConnection(internal);
+        return this.#currentDeltaStream;
     }
 }
 
 export class FaultInjectionDocumentDeltaConnection
 extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
-    private _disposed: boolean = false;
+    #disposed: boolean = false;
     constructor(private readonly internal: IDocumentDeltaConnection) {
         super(internal);
     }
 
-    public get disposed() { return this._disposed; }
+    public get disposed() { return this.#disposed; }
 
     public get clientId() { return this.internal.clientId; }
 
@@ -127,7 +127,7 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
      * Disconnects the given delta connection
      */
     public dispose(): void {
-        this._disposed = true;
+        this.#disposed = true;
         this.internal.dispose();
     }
 

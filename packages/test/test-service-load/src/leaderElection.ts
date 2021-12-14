@@ -8,20 +8,20 @@ import { ISignalMessage } from "@fluidframework/protocol-definitions";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 
 export class LeaderElection {
-    private readonly beatInEveryNSecs: number = 1000; // 1 secs
-    private readonly leaderWait: number = 30000; // 30 secs
-    private lastPinged: number | undefined;
-    private readonly logger: TelemetryLogger;
-    private prevPing: number | undefined;
+    readonly #beatInEveryNSecs: number = 1000; // 1 secs
+    readonly #leaderWait: number = 30000; // 30 secs
+    #lastPinged: number | undefined;
+    readonly #logger: TelemetryLogger;
+    #prevPing: number | undefined;
 
     constructor(private readonly dataStoreRuntime: IFluidDataStoreRuntime) {
-        this.logger = ChildLogger.create(this.dataStoreRuntime.logger, "SignalLeaderElection");
+        this.#logger = ChildLogger.create(this.dataStoreRuntime.logger, "SignalLeaderElection");
     }
 
     public setupLeaderElection() {
         this.dataStoreRuntime.on("signal", (signal: ISignalMessage) => this.handleSignal(signal));
-        this.lastPinged = Date.now();
-        let interval = setInterval(() => this.runLeaderElection(), this.beatInEveryNSecs);
+        this.#lastPinged = Date.now();
+        let interval = setInterval(() => this.runLeaderElection(), this.#beatInEveryNSecs);
 
         this.dataStoreRuntime.once("dispose", () => {
             clearInterval(interval);
@@ -32,7 +32,7 @@ export class LeaderElection {
         });
 
         this.dataStoreRuntime.on("connected", () => {
-            interval = setInterval(() => this.runLeaderElection(), this.beatInEveryNSecs);
+            interval = setInterval(() => this.runLeaderElection(), this.#beatInEveryNSecs);
         });
     }
 
@@ -41,19 +41,19 @@ export class LeaderElection {
             this.dataStoreRuntime.submitSignal("leaderMessage", "leaderMessage");
             this.updateLastPinged();
         }else if(this.leaderId === undefined) {
-            this.logger.sendTelemetryEvent({
+            this.#logger.sendTelemetryEvent({
                 eventName: "LeaderUndefinedEventError",
                 testHarnessEvent: true,
             });
         }else {
             const current = Date.now();
-            if(this.lastPinged !== undefined && current - this.lastPinged > this.leaderWait) {
-                this.logger.sendTelemetryEvent({
+            if(this.#lastPinged !== undefined && current - this.#lastPinged > this.#leaderWait) {
+                this.#logger.sendTelemetryEvent({
                     eventName: "LeaderLostEventError",
                     testHarnessEvent: true,
                 });
-                this.prevPing = this.lastPinged;
-                this.lastPinged = undefined;
+                this.#prevPing = this.#lastPinged;
+                this.#lastPinged = undefined;
             }
         }
     }
@@ -62,7 +62,7 @@ export class LeaderElection {
         // eslint-disable-next-line no-null/no-null
         if(signal.clientId !== null && signal.content === "leaderMessage") {
             if(this.leaderId !== signal.clientId) {
-                this.logger.sendTelemetryEvent({
+                this.#logger.sendTelemetryEvent({
                     eventName: "UnexpectedLeaderEventWarning",
                     testHarnessEvent: true,
                 });
@@ -72,10 +72,10 @@ export class LeaderElection {
     }
 
     private updateLastPinged() {
-        this.lastPinged = Date.now();
-        if(this.lastPinged === undefined && this.prevPing !== undefined) {
-            const time = this.lastPinged - this.prevPing;
-            this.logger.sendTelemetryEvent({
+        this.#lastPinged = Date.now();
+        if(this.#lastPinged === undefined && this.#prevPing !== undefined) {
+            const time = this.#lastPinged - this.#prevPing;
+            this.#logger.sendTelemetryEvent({
                 eventName: "LeaderFound",
                 time,
                 testHarnessEvent: true,

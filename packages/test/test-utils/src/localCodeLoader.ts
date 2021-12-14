@@ -29,7 +29,7 @@ export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
  * On load, it retrieves the entry point matching the package name in the given code details.
  */
 export class LocalCodeLoader implements ICodeLoader {
-    private readonly fluidPackageCache = new Map<string, IFluidModule>();
+    readonly #fluidPackageCache = new Map<string, IFluidModule>();
 
     constructor(
         packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
@@ -72,7 +72,7 @@ export class LocalCodeLoader implements ICodeLoader {
                 }
             }
 
-            this.fluidPackageCache.set(pkgId, fluidModule);
+            this.#fluidPackageCache.set(pkgId, fluidModule);
         }
     }
 
@@ -95,7 +95,7 @@ export class LocalCodeLoader implements ICodeLoader {
             pkdId = `${source.package.name}@${source.package.version}`;
         }
 
-        const entryPoint = this.fluidPackageCache.get(pkdId);
+        const entryPoint = this.#fluidPackageCache.get(pkdId);
         if (entryPoint === undefined) {
             throw new Error(`Cannot find package ${pkdId}`);
         }

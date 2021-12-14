@@ -138,8 +138,8 @@ export class LocalReferenceCollection {
     }
 
     public hierRefCount: number = 0;
-    private readonly refsByOffset: (IRefsAtOffset | undefined)[];
-    private refCount: number = 0;
+    readonly #refsByOffset: (IRefsAtOffset | undefined)[];
+    #refCount: number = 0;
 
     constructor(
         private readonly segment: ISegment,
@@ -147,12 +147,12 @@ export class LocalReferenceCollection {
         // Since javascript arrays are sparse the above won't populate any of the
         // indicies, but it will ensure the length property of the array matches
         // the length of the segment.
-        this.refsByOffset = initialRefsByfOffset;
+        this.#refsByOffset = initialRefsByfOffset;
     }
 
     public [Symbol.iterator]() {
         const subiterators: IterableIterator<LocalReference>[] = [];
-        for (const refs of this.refsByOffset) {
+        for (const refs of this.#refsByOffset) {
             if (refs) {
                 if (refs.before) {
                     subiterators.push(refs.before[Symbol.iterator]());
@@ -187,7 +187,7 @@ export class LocalReferenceCollection {
     }
 
     public clear() {
-        this.refCount = 0;
+        this.#refCount = 0;
         this.hierRefCount = 0;
         const detachSegments = (refs: LocalReference[] | undefined) => {
             if (refs) {
@@ -198,25 +198,25 @@ export class LocalReferenceCollection {
                 });
             }
         };
-        for (let i = 0; i < this.refsByOffset.length; i++) {
-            const refsAtOffset = this.refsByOffset[i];
+        for (let i = 0; i < this.#refsByOffset.length; i++) {
+            const refsAtOffset = this.#refsByOffset[i];
             if (refsAtOffset) {
                 detachSegments(refsAtOffset.before);
                 detachSegments(refsAtOffset.at);
                 detachSegments(refsAtOffset.before);
-                this.refsByOffset[i] = undefined;
+                this.#refsByOffset[i] = undefined;
             }
         }
     }
 
     public get empty() {
-        return this.refCount === 0;
+        return this.#refCount === 0;
     }
 
     public addLocalRef(lref: LocalReference) {
-        const refsAtOffset = this.refsByOffset[lref.offset];
+        const refsAtOffset = this.#refsByOffset[lref.offset];
         if (refsAtOffset === undefined) {
-            this.refsByOffset[lref.offset] = {
+            this.#refsByOffset[lref.offset] = {
                 at: [lref],
             };
         } else {
@@ -227,7 +227,7 @@ export class LocalReferenceCollection {
         if (lref.hasRangeLabels() || lref.hasTileLabels()) {
             this.hierRefCount++;
         }
-        this.refCount++;
+        this.#refCount++;
     }
 
     public removeLocalRef(lref: LocalReference) {
@@ -239,12 +239,12 @@ export class LocalReferenceCollection {
                     if (lref.hasRangeLabels() || lref.hasTileLabels()) {
                         this.hierRefCount--;
                     }
-                    this.refCount--;
+                    this.#refCount--;
                     return lref;
                 }
             }
         };
-        const refAtOffset = this.refsByOffset[lref.offset];
+        const refAtOffset = this.#refsByOffset[lref.offset];
         if (refAtOffset !== undefined) {
             let ref = tryRemoveRef(refAtOffset.before);
             if (ref) {
@@ -276,14 +276,14 @@ export class LocalReferenceCollection {
             return;
         }
         this.hierRefCount += other.hierRefCount;
-        this.refCount += other.refCount;
+        this.#refCount += other.#refCount;
         other.hierRefCount = 0;
         for (const lref of other) {
             lref.segment = this.segment;
-            lref.offset += this.refsByOffset.length;
+            lref.offset += this.#refsByOffset.length;
         }
 
-        this.refsByOffset.push(...other.refsByOffset);
+        this.#refsByOffset.push(...other.#refsByOffset);
     }
 
     public split(offset: number, splitSeg: ISegment) {
@@ -291,7 +291,7 @@ export class LocalReferenceCollection {
             const localRefs =
                 new LocalReferenceCollection(
                     splitSeg,
-                    this.refsByOffset.splice(offset, this.refsByOffset.length - offset));
+                    this.#refsByOffset.splice(offset, this.#refsByOffset.length - offset));
 
             splitSeg.localRefs = localRefs;
             for (const lref of localRefs) {
@@ -301,8 +301,8 @@ export class LocalReferenceCollection {
                     this.hierRefCount--;
                     localRefs.hierRefCount++;
                 }
-                this.refCount--;
-                localRefs.refCount++;
+                this.#refCount--;
+                localRefs.#refCount++;
             }
         }
     }
@@ -320,19 +320,19 @@ export class LocalReferenceCollection {
                     if (lref.hasRangeLabels() || lref.hasTileLabels()) {
                         this.hierRefCount++;
                     }
-                    this.refCount++;
+                    this.#refCount++;
                 } else {
                     lref.segment = undefined;
                 }
             }
         }
         if (beforeRefs.length > 0) {
-            if (this.refsByOffset[0] === undefined) {
-                this.refsByOffset[0] = { before: beforeRefs };
-            } else if (this.refsByOffset[0].before === undefined) {
-                this.refsByOffset[0].before = beforeRefs;
+            if (this.#refsByOffset[0] === undefined) {
+                this.#refsByOffset[0] = { before: beforeRefs };
+            } else if (this.#refsByOffset[0].before === undefined) {
+                this.#refsByOffset[0].before = beforeRefs;
             } else {
-                this.refsByOffset[0].before.unshift(...beforeRefs);
+                this.#refsByOffset[0].before.unshift(...beforeRefs);
             }
         }
     }
@@ -350,16 +350,16 @@ export class LocalReferenceCollection {
                     if (lref.hasRangeLabels() || lref.hasTileLabels()) {
                         this.hierRefCount++;
                     }
-                    this.refCount++;
+                    this.#refCount++;
                 } else {
                     lref.segment = undefined;
                 }
             }
         }
         if (afterRefs.length > 0) {
-            const refsAtOffset = this.refsByOffset[this.segment.cachedLength - 1];
+            const refsAtOffset = this.#refsByOffset[this.segment.cachedLength - 1];
             if (refsAtOffset === undefined) {
-                this.refsByOffset[this.segment.cachedLength - 1] = { after: afterRefs };
+                this.#refsByOffset[this.segment.cachedLength - 1] = { after: afterRefs };
             } else if (refsAtOffset.after === undefined) {
                 refsAtOffset.after = afterRefs;
             } else {

@@ -30,42 +30,42 @@ export class InkData {
     /**
      * {@inheritDoc ISerializableInk.strokes}
      */
-    private strokes: IInkStroke[];
+    #strokes: IInkStroke[];
 
     /**
      * {@inheritDoc ISerializableInk.strokeIndex}
      */
-    private strokeIndex: { [key: string]: number };
+    #strokeIndex: { [key: string]: number };
 
     /**
      * Construct a new InkData.
      * @param snapshot - Existing data to initialize with
      */
     constructor(snapshot?: ISerializableInk) {
-        this.strokes = snapshot?.strokes ?? [];
-        this.strokeIndex = snapshot?.strokeIndex ?? {};
+        this.#strokes = snapshot?.strokes ?? [];
+        this.#strokeIndex = snapshot?.strokeIndex ?? {};
     }
 
     /**
      * {@inheritDoc IInk.getStrokes}
      */
     public getStrokes(): IInkStroke[] {
-        return this.strokes;
+        return this.#strokes;
     }
 
     /**
      * {@inheritDoc IInk.getStroke}
      */
     public getStroke(key: string): IInkStroke {
-        return this.strokes[this.strokeIndex[key]];
+        return this.#strokes[this.#strokeIndex[key]];
     }
 
     /**
      * Clear all stored data.
      */
     public clear(): void {
-        this.strokes = [];
-        this.strokeIndex = {};
+        this.#strokes = [];
+        this.#strokeIndex = {};
     }
 
     /**
@@ -73,8 +73,8 @@ export class InkData {
      * @param stroke - The stroke to add
      */
     public addStroke(stroke: IInkStroke): void {
-        this.strokes.push(stroke);
-        this.strokeIndex[stroke.id] = this.strokes.length - 1;
+        this.#strokes.push(stroke);
+        this.#strokeIndex[stroke.id] = this.#strokes.length - 1;
     }
 
     /**
@@ -83,8 +83,8 @@ export class InkData {
      */
     public getSerializable(): ISerializableInk {
         return {
-            strokes: this.strokes,
-            strokeIndex: this.strokeIndex,
+            strokes: this.#strokes,
+            strokeIndex: this.#strokeIndex,
         };
     }
 }

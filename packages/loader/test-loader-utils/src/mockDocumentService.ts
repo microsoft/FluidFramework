@@ -23,11 +23,11 @@ import { MockDocumentDeltaConnection } from "./mockDocumentDeltaConnection";
  * Mock Document Service for testing
  */
 export class MockDocumentService implements IDocumentService {
-    public get deltaStorageMessages() { return this._deltaStorageMessages; }
+    public get deltaStorageMessages() { return this.#deltaStorageMessages; }
 
-    private nextClientId: number = 0;
+    #nextClientId: number = 0;
 
-    private readonly _deltaStorageMessages: ISequencedDocumentMessage[] = [];
+    readonly #deltaStorageMessages: ISequencedDocumentMessage[] = [];
 
     constructor(
         private readonly deltaStorageFactory?: () => IDocumentDeltaStorageService,
@@ -52,6 +52,6 @@ export class MockDocumentService implements IDocumentService {
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         return this.deltaConnectionFactory !== undefined
             ? this.deltaConnectionFactory()
-            : new MockDocumentDeltaConnection(`mock_client_${this.nextClientId++}`);
+            : new MockDocumentDeltaConnection(`mock_client_${this.#nextClientId++}`);
     }
 }

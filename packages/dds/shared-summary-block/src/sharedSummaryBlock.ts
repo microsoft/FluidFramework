@@ -62,7 +62,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     /**
      * The data held by this object.
      */
-    private readonly data = new Map<string, Jsonable>();
+    readonly #data = new Map<string, Jsonable>();
 
     /**
      * Constructs a new SharedSummaryBlock. If the object is non-local, an id and service interfaces will
@@ -80,14 +80,14 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
      * {@inheritDoc ISharedSummaryBlock.get}
      */
     public get<T>(key: string): Jsonable<T> {
-        return this.data.get(key) as Jsonable<T>;
+        return this.#data.get(key) as Jsonable<T>;
     }
 
     /**
      * {@inheritDoc ISharedSummaryBlock.set}
      */
     public set<T>(key: string, value: Jsonable<T>): void {
-        this.data.set(key, value);
+        this.#data.set(key, value);
         // Set this object as dirty so that it is part of the next summary.
         this.dirty();
     }
@@ -97,7 +97,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
         const contentsBlob: ISharedSummaryBlockDataSerializable = {};
-        this.data.forEach((value, key) => {
+        this.#data.forEach((value, key) => {
             contentsBlob[key] = value;
         });
 
@@ -125,7 +125,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const contents = await readAndParse<ISharedSummaryBlockDataSerializable>(storage, snapshotFileName);
         for (const [key, value] of Object.entries(contents)) {
-            this.data.set(key, value);
+            this.#data.set(key, value);
         }
     }
 

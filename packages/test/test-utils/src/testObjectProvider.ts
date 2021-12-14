@@ -132,11 +132,11 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
  */
 export class TestObjectProvider {
-    private readonly _loaderContainerTracker = new LoaderContainerTracker();
-    private _documentServiceFactory: IDocumentServiceFactory | undefined;
-    private _urlResolver: IUrlResolver | undefined;
-    private _logger: ITelemetryBaseLogger | undefined;
-    private readonly _documentIdStrategy: IDocumentIdStrategy;
+    readonly #loaderContainerTracker = new LoaderContainerTracker();
+    #documentServiceFactory: IDocumentServiceFactory | undefined;
+    #urlResolver: IUrlResolver | undefined;
+    #logger: ITelemetryBaseLogger | undefined;
+    readonly #documentIdStrategy: IDocumentIdStrategy;
 
     /**
      * Manage objects for loading and creating container, including the driver, loader, and OpProcessingController
@@ -148,12 +148,12 @@ export class TestObjectProvider {
         public readonly driver: ITestDriver,
         public readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint,
     ) {
-        this._documentIdStrategy = getDocumentIdStrategy(driver.type);
+        this.#documentIdStrategy = getDocumentIdStrategy(driver.type);
     }
 
     get logger() {
-        if (this._logger === undefined) {
-            this._logger = ChildLogger.create(getTestLogger?.(), undefined,
+        if (this.#logger === undefined) {
+            this.#logger = ChildLogger.create(getTestLogger?.(), undefined,
                 {
                     all: {
                         driverType: this.driver.type,
@@ -163,25 +163,25 @@ export class TestObjectProvider {
                     },
                 });
         }
-        return this._logger;
+        return this.#logger;
     }
 
     get documentServiceFactory() {
-        if (!this._documentServiceFactory) {
-            this._documentServiceFactory = this.driver.createDocumentServiceFactory();
+        if (!this.#documentServiceFactory) {
+            this.#documentServiceFactory = this.driver.createDocumentServiceFactory();
         }
-        return this._documentServiceFactory;
+        return this.#documentServiceFactory;
     }
 
     get urlResolver() {
-        if (!this._urlResolver) {
-            this._urlResolver = this.driver.createUrlResolver();
+        if (!this.#urlResolver) {
+            this.#urlResolver = this.driver.createUrlResolver();
         }
-        return this._urlResolver;
+        return this.#urlResolver;
     }
 
     get documentId() {
-        return this._documentIdStrategy.get();
+        return this.#documentIdStrategy.get();
     }
 
     get defaultCodeDetails() {
@@ -189,7 +189,7 @@ export class TestObjectProvider {
     }
 
     get opProcessingController(): IOpProcessingController {
-        return this._loaderContainerTracker;
+        return this.#loaderContainerTracker;
     }
 
     /**
@@ -220,7 +220,7 @@ export class TestObjectProvider {
             options,
             detachedBlobStorage,
         });
-        this._loaderContainerTracker.add(loader);
+        this.#loaderContainerTracker.add(loader);
         return loader;
     }
 
@@ -242,7 +242,7 @@ export class TestObjectProvider {
         );
         // r11s driver will generate a new ID for the new container.
         // update the document ID with the actual ID of the attached container.
-        this._documentIdStrategy.update(container.resolvedUrl);
+        this.#documentIdStrategy.update(container.resolvedUrl);
         return container;
     }
 
@@ -279,7 +279,7 @@ export class TestObjectProvider {
                 this.driver.createCreateNewRequest(this.documentId));
         // r11s driver will generate a new ID for the new container.
         // update the document ID with the actual ID of the attached container.
-        this._documentIdStrategy.update(container.resolvedUrl);
+        this.#documentIdStrategy.update(container.resolvedUrl);
         return container;
     }
 
@@ -296,18 +296,18 @@ export class TestObjectProvider {
     }
 
     public reset() {
-        this._loaderContainerTracker.reset();
-        this._documentServiceFactory = undefined;
-        this._urlResolver = undefined;
-        this._documentIdStrategy.reset();
-        this._logger = undefined;
+        this.#loaderContainerTracker.reset();
+        this.#documentServiceFactory = undefined;
+        this.#urlResolver = undefined;
+        this.#documentIdStrategy.reset();
+        this.#logger = undefined;
     }
 
     public async ensureSynchronized() {
-        return this._loaderContainerTracker.ensureSynchronized();
+        return this.#loaderContainerTracker.ensureSynchronized();
     }
 
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
-        this._documentIdStrategy.update(resolvedUrl);
+        this.#documentIdStrategy.update(resolvedUrl);
     }
 }

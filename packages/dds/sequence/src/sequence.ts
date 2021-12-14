@@ -161,14 +161,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     // Deferred that triggers once the object is loaded
     protected loadedDeferred = new Deferred<void>();
     // cache out going ops created when parital loading
-    private readonly loadedDeferredOutgoingOps:
+    readonly #loadedDeferredOutgoingOps:
         [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] = [];
     // cache incoming ops that arrive when partial loading
-    private deferIncomingOps = true;
-    private readonly loadedDeferredIncomingOps: ISequencedDocumentMessage[] = [];
+    #deferIncomingOps = true;
+    readonly #loadedDeferredIncomingOps: ISequencedDocumentMessage[] = [];
 
-    private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
-    private readonly intervalMapKernel: MapKernel;
+    #messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
+    readonly #intervalMapKernel: MapKernel;
     constructor(
         private readonly dataStoreRuntime: IFluidDataStoreRuntime,
         public id: string,
@@ -222,7 +222,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
             }
         });
 
-        this.intervalMapKernel = new MapKernel(
+        this.#intervalMapKernel = new MapKernel(
             this.serializer,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
@@ -345,7 +345,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         // local ops until loading is complete, and then
         // they will be resent
         if (!this.loadedDeferred.isCompleted) {
-            this.loadedDeferredOutgoingOps.push([translated, metadata]);
+            this.#loadedDeferredOutgoingOps.push([translated, metadata]);
         } else {
             this.submitLocalMessage(translated, metadata);
         }
@@ -406,22 +406,22 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     public async waitIntervalCollection(
         label: string,
     ): Promise<IntervalCollection<SequenceInterval>> {
-        return this.intervalMapKernel.wait<IntervalCollection<SequenceInterval>>(
+        return this.#intervalMapKernel.wait<IntervalCollection<SequenceInterval>>(
             this.getIntervalCollectionPath(label));
     }
 
     // TODO: fix race condition on creation by putting type on every operation
     public getIntervalCollection(label: string): IntervalCollection<SequenceInterval> {
         const labelPath = this.getIntervalCollectionPath(label);
-        if (!this.intervalMapKernel.has(labelPath)) {
-            this.intervalMapKernel.createValueType(
+        if (!this.#intervalMapKernel.has(labelPath)) {
+            this.#intervalMapKernel.createValueType(
                 labelPath,
                 SequenceIntervalCollectionValueType.Name,
                 undefined);
         }
 
         const sharedCollection =
-            this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(labelPath);
+            this.#intervalMapKernel.get<IntervalCollection<SequenceInterval>>(labelPath);
         return sharedCollection;
     }
 
@@ -429,14 +429,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         const entries = [];
         // conditionally write the interval collection blob
         // only if it has entries
-        if (this.intervalMapKernel.size > 0) {
+        if (this.#intervalMapKernel.size > 0) {
             entries.push(
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
                     type: TreeEntry.Blob,
                     value: {
-                        contents: this.intervalMapKernel.serialize(serializer),
+                        contents: this.#intervalMapKernel.serialize(serializer),
                         encoding: "utf-8",
                     },
                 });
@@ -463,8 +463,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         // serializes.
         const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
 
-        if (this.intervalMapKernel.size > 0) {
-            this.intervalMapKernel.serialize(serializer);
+        if (this.#intervalMapKernel.size > 0) {
+            this.#intervalMapKernel.serialize(serializer);
         }
 
         this.client.serializeGCData(this.handle, serializer);
@@ -509,7 +509,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     protected onDisconnect() {}
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        if (!this.intervalMapKernel.trySubmitMessage(content, localOpMetadata)) {
+        if (!this.#intervalMapKernel.trySubmitMessage(content, localOpMetadata)) {
             this.submitSequenceMessage(
                 this.client.regeneratePendingOp(
                     content as IMergeTreeOp,
@@ -524,7 +524,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         if (await storage.contains(snapshotFileName)) {
             const blob = await storage.readBlob(snapshotFileName);
             const header = bufferToString(blob, "utf8");
-            this.intervalMapKernel.populate(header);
+            this.#intervalMapKernel.populate(header);
         }
 
         try {
@@ -579,13 +579,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         // if loading isn't complete, we need to cache all
         // incoming ops to be applied after loading is complete
-        if (this.deferIncomingOps) {
+        if (this.#deferIncomingOps) {
             assert(!local, 0x072 /* "Unexpected local op when loading not finished" */);
-            this.loadedDeferredIncomingOps.push(message);
+            this.#loadedDeferredIncomingOps.push(message);
         } else {
             assert(message.type === MessageType.Operation, 0x073 /* "Sequence message not operation" */);
 
-            const handled = this.intervalMapKernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
+            const handled = this.#intervalMapKernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
 
             if (!handled) {
                 this.processMergeTreeMsg(message);
@@ -594,7 +594,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     }
 
     protected registerCore() {
-        for (const value of this.intervalMapKernel.values()) {
+        for (const value of this.#intervalMapKernel.values()) {
             if (SharedObject.is(value)) {
                 value.bindToContext();
             }
@@ -623,9 +623,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
         this.processMinSequenceNumberChanged(minSeq);
 
-        this.messagesSinceMSNChange.forEach((m) => m.minimumSequenceNumber = minSeq);
+        this.#messagesSinceMSNChange.forEach((m) => m.minimumSequenceNumber = minSeq);
 
-        return this.client.snapshot(this.runtime, this.handle, serializer, this.messagesSinceMSNChange);
+        return this.client.snapshot(this.runtime, this.handle, serializer, this.#messagesSinceMSNChange);
     }
 
     private processMergeTreeMsg(
@@ -658,11 +658,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                 };
             }
 
-            this.messagesSinceMSNChange.push(stashMessage);
+            this.#messagesSinceMSNChange.push(stashMessage);
 
             // Do GC every once in a while...
-            if (this.messagesSinceMSNChange.length > 20
-                && this.messagesSinceMSNChange[20].sequenceNumber < message.minimumSequenceNumber) {
+            if (this.#messagesSinceMSNChange.length > 20
+                && this.#messagesSinceMSNChange[20].sequenceNumber < message.minimumSequenceNumber) {
                 this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
             }
         }
@@ -674,13 +674,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
     private processMinSequenceNumberChanged(minSeq: number) {
         let index = 0;
-        for (; index < this.messagesSinceMSNChange.length; index++) {
-            if (this.messagesSinceMSNChange[index].sequenceNumber > minSeq) {
+        for (; index < this.#messagesSinceMSNChange.length; index++) {
+            if (this.#messagesSinceMSNChange[index].sequenceNumber > minSeq) {
                 break;
             }
         }
         if (index !== 0) {
-            this.messagesSinceMSNChange = this.messagesSinceMSNChange.slice(index);
+            this.#messagesSinceMSNChange = this.#messagesSinceMSNChange.slice(index);
         }
     }
 
@@ -694,17 +694,17 @@ export abstract class SharedSegmentSequence<T extends ISegment>
             } else {
                 // it is important this series remains synchronous
                 // first we stop defering incoming ops, and apply then all
-                this.deferIncomingOps = false;
-                while (this.loadedDeferredIncomingOps.length > 0) {
-                    this.processCore(this.loadedDeferredIncomingOps.shift(), false, undefined);
+                this.#deferIncomingOps = false;
+                while (this.#loadedDeferredIncomingOps.length > 0) {
+                    this.processCore(this.#loadedDeferredIncomingOps.shift(), false, undefined);
                 }
                 // then resolve the loaded promise
                 // and resubmit all the outstanding ops, as the snapshot
                 // is fully loaded, and all outstanding ops are applied
                 this.loadedDeferred.resolve();
 
-                while (this.loadedDeferredOutgoingOps.length > 0) {
-                    const opData = this.loadedDeferredOutgoingOps.shift();
+                while (this.#loadedDeferredOutgoingOps.length > 0) {
+                    const opData = this.#loadedDeferredOutgoingOps.shift();
                     this.reSubmitCore(opData[0], opData[1]);
                 }
             }
@@ -713,16 +713,16 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
     private initializeIntervalCollections() {
         // Listen and initialize new SharedIntervalCollections
-        this.intervalMapKernel.eventEmitter.on("valueChanged", (ev: IValueChanged) => {
-            const intervalCollection = this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(ev.key);
+        this.#intervalMapKernel.eventEmitter.on("valueChanged", (ev: IValueChanged) => {
+            const intervalCollection = this.#intervalMapKernel.get<IntervalCollection<SequenceInterval>>(ev.key);
             if (!intervalCollection.attached) {
                 intervalCollection.attachGraph(this.client, ev.key);
             }
         });
 
         // Initialize existing SharedIntervalCollections
-        for (const key of this.intervalMapKernel.keys()) {
-            const intervalCollection = this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(key);
+        for (const key of this.#intervalMapKernel.keys()) {
+            const intervalCollection = this.#intervalMapKernel.get<IntervalCollection<SequenceInterval>>(key);
             intervalCollection.attachGraph(this.client, key);
         }
     }

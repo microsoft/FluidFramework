@@ -129,7 +129,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public get attachState(): AttachState {
-        return this._attachState;
+        return this.#attachState;
     }
 
     public get absolutePath(): string {
@@ -140,9 +140,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this.dataStoreContext.IFluidHandleContext;
     }
 
-    private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
+    readonly #serializer = new FluidSerializer(this.IFluidHandleContext);
     // Back compat: deprecated in 0.53, can be removed in versions >= 0.55.
-    public get IFluidSerializer() { return this.serializer; }
+    public get IFluidSerializer() { return this.#serializer; }
 
     public get IFluidHandleContext() { return this; }
 
@@ -150,34 +150,34 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public get channelsRoutingContext() { return this; }
     public get objectsRoutingContext() { return this; }
 
-    private _disposed = false;
-    public get disposed() { return this._disposed; }
+    #disposed = false;
+    public get disposed() { return this.#disposed; }
 
-    private readonly contexts = new Map<string, IChannelContext>();
-    private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
-    private readonly pendingAttach = new Map<string, IAttachMessage>();
+    readonly #contexts = new Map<string, IChannelContext>();
+    readonly #contextsDeferred = new Map<string, Deferred<IChannelContext>>();
+    readonly #pendingAttach = new Map<string, IAttachMessage>();
 
-    private bindState: BindState;
+    #bindState: BindState;
     // For new data stores, this is used to break the recursion while attaching the graph. The graph must be attached
     // before the data store can move to Attached state (see _attachState) and become live.
     // For existing data stores, the graph is always attached.
-    private graphAttachState: AttachState = AttachState.Detached;
-    private readonly deferredAttached = new Deferred<void>();
-    private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
-    private readonly notBoundedChannelContextSet = new Set<string>();
-    private boundhandles: Set<IFluidHandle> | undefined;
-    private _attachState: AttachState;
+    #graphAttachState: AttachState = AttachState.Detached;
+    readonly #deferredAttached = new Deferred<void>();
+    readonly #localChannelContextQueue = new Map<string, LocalChannelContextBase>();
+    readonly #notBoundedChannelContextSet = new Set<string>();
+    #boundhandles: Set<IFluidHandle> | undefined;
+    #attachState: AttachState;
 
     public readonly id: string;
     public readonly options: ILoaderOptions;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    private readonly quorum: IQuorum;
-    private readonly audience: IAudience;
+    readonly #quorum: IQuorum;
+    readonly #audience: IAudience;
     public readonly logger: ITelemetryLogger;
 
     // A map of child channel context ids to the their GC details in the initial summary of this data store.
     // This is used to initialize the channel context with data from the base summary.
-    private readonly initialChannelsGCDetailsP: LazyPromise<Map<string, IGarbageCollectionSummaryDetails>>;
+    readonly #initialChannelsGCDetailsP: LazyPromise<Map<string, IGarbageCollectionSummaryDetails>>;
 
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -195,12 +195,12 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.id = dataStoreContext.id;
         this.options = dataStoreContext.options;
         this.deltaManager = dataStoreContext.deltaManager;
-        this.quorum = dataStoreContext.getQuorum();
-        this.audience = dataStoreContext.getAudience();
+        this.#quorum = dataStoreContext.getQuorum();
+        this.#audience = dataStoreContext.getAudience();
 
         const tree = dataStoreContext.baseSnapshot;
 
-        this.initialChannelsGCDetailsP = new LazyPromise(async () => {
+        this.#initialChannelsGCDetailsP = new LazyPromise(async () => {
             const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails();
             return unpackChildNodesGCDetails(gcDetailsInInitialSummary);
         });
@@ -232,7 +232,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                     if (dataStoreContext.attachState !== AttachState.Detached) {
                         (channelContext as LocalChannelContextBase).markAttached();
                     } else {
-                        this.localChannelContextQueue.set(path, channelContext as LocalChannelContextBase);
+                        this.#localChannelContextQueue.set(path, channelContext as LocalChannelContextBase);
                     }
                 } else {
                     channelContext = new RemoteChannelContext(
@@ -254,27 +254,27 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
 
-                this.contexts.set(path, channelContext);
-                this.contextsDeferred.set(path, deferred);
+                this.#contexts.set(path, channelContext);
+                this.#contextsDeferred.set(path, deferred);
             });
         }
 
         this.attachListener();
         // If exists on storage or loaded from a snapshot, it should already be binded.
-        this.bindState = existing ? BindState.Bound : BindState.NotBound;
-        this._attachState = dataStoreContext.attachState;
+        this.#bindState = existing ? BindState.Bound : BindState.NotBound;
+        this.#attachState = dataStoreContext.attachState;
 
         // If it's existing we know it has been attached.
         if (existing) {
-            this.deferredAttached.resolve();
+            this.#deferredAttached.resolve();
         }
     }
 
     public dispose(): void {
-        if (this._disposed) {
+        if (this.#disposed) {
             return;
         }
-        this._disposed = true;
+        this.#disposed = true;
 
         this.emit("dispose");
         this.removeAllListeners();
@@ -294,10 +294,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             }
 
             // Check for a data type reference first
-            if (this.contextsDeferred.has(id) && parser.isLeaf(1)) {
+            if (this.#contextsDeferred.has(id) && parser.isLeaf(1)) {
                 try {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    const value = await this.contextsDeferred.get(id)!.promise;
+                    const value = await this.#contextsDeferred.get(id)!.promise;
                     const channel = await value.getChannel();
 
                     return { mimeType: "fluid/object", status: 200, value: channel };
@@ -321,12 +321,12 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         // TODO we don't assume any channels (even root) in the runtime. If you request a channel that doesn't exist
         // we will never resolve the promise. May want a flag to getChannel that doesn't wait for the promise if
         // it doesn't exist
-        if (!this.contextsDeferred.has(id)) {
-            this.contextsDeferred.set(id, new Deferred<IChannelContext>());
+        if (!this.#contextsDeferred.has(id)) {
+            this.#contextsDeferred.set(id, new Deferred<IChannelContext>());
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const context = await this.contextsDeferred.get(id)!.promise;
+        const context = await this.#contextsDeferred.get(id)!.promise;
         const channel = await context.getChannel();
 
         return channel;
@@ -335,8 +335,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public createChannel(id: string = uuid(), type: string): IChannel {
         this.verifyNotClosed();
 
-        assert(!this.contexts.has(id), 0x179 /* "createChannel() with existing ID" */);
-        this.notBoundedChannelContextSet.add(id);
+        assert(!this.#contexts.has(id), 0x179 /* "createChannel() with existing ID" */);
+        this.#notBoundedChannelContextSet.add(id);
         const context = new LocalChannelContext(
             id,
             this.sharedObjectRegistry,
@@ -346,15 +346,15 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.dataStoreContext.storage,
             (content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
             (address: string) => this.setChannelDirty(address));
-        this.contexts.set(id, context);
+        this.#contexts.set(id, context);
 
-        if (this.contextsDeferred.has(id)) {
+        if (this.#contextsDeferred.has(id)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.contextsDeferred.get(id)!.resolve(context);
+            this.#contextsDeferred.get(id)!.resolve(context);
         } else {
             const deferred = new Deferred<IChannelContext>();
             deferred.resolve(context);
-            this.contextsDeferred.set(id, deferred);
+            this.#contextsDeferred.set(id, deferred);
         }
 
         assert(!!context.channel, 0x17a /* "Channel should be loaded when created!!" */);
@@ -367,9 +367,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * @param channel - channel to be registered.
      */
     public bindChannel(channel: IChannel): void {
-        assert(this.notBoundedChannelContextSet.has(channel.id),
+        assert(this.#notBoundedChannelContextSet.has(channel.id),
         0x17b /* "Channel to be binded should be in not bounded set" */);
-        this.notBoundedChannelContextSet.delete(channel.id);
+        this.#notBoundedChannelContextSet.delete(channel.id);
         // If our data store is attached, then attach the channel.
         if (this.isAttached) {
             this.attachChannel(channel);
@@ -378,34 +378,34 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.bind(channel.handle);
 
             // If our data store is local then add the channel to the queue
-            if (!this.localChannelContextQueue.has(channel.id)) {
-                this.localChannelContextQueue.set(channel.id, this.contexts.get(channel.id) as LocalChannelContextBase);
+            if (!this.#localChannelContextQueue.has(channel.id)) {
+                this.#localChannelContextQueue.set(channel.id, this.#contexts.get(channel.id) as LocalChannelContextBase);
             }
         }
     }
 
     public attachGraph() {
-        if (this.graphAttachState !== AttachState.Detached) {
+        if (this.#graphAttachState !== AttachState.Detached) {
             return;
         }
-        this.graphAttachState = AttachState.Attaching;
-        if (this.boundhandles !== undefined) {
-            this.boundhandles.forEach((handle) => {
+        this.#graphAttachState = AttachState.Attaching;
+        if (this.#boundhandles !== undefined) {
+            this.#boundhandles.forEach((handle) => {
                 handle.attachGraph();
             });
-            this.boundhandles = undefined;
+            this.#boundhandles = undefined;
         }
 
         // Flush the queue to set any pre-existing channels to local
-        this.localChannelContextQueue.forEach((channel) => {
+        this.#localChannelContextQueue.forEach((channel) => {
             // When we are attaching the data store we don't need to send attach for the registered services.
             // This is because they will be captured as part of the Attach data store snapshot
             channel.markAttached();
         });
 
-        this.localChannelContextQueue.clear();
+        this.#localChannelContextQueue.clear();
         this.bindToContext();
-        this.graphAttachState = AttachState.Attached;
+        this.#graphAttachState = AttachState.Attached;
     }
 
     /**
@@ -415,32 +415,32 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * 2. Attaching the graph if the data store becomes attached.
      */
      public bindToContext() {
-        if (this.bindState !== BindState.NotBound) {
+        if (this.#bindState !== BindState.NotBound) {
             return;
         }
-        this.bindState = BindState.Binding;
+        this.#bindState = BindState.Binding;
         this.dataStoreContext.bindToContext();
-        this.bindState = BindState.Bound;
+        this.#bindState = BindState.Bound;
     }
 
     public bind(handle: IFluidHandle): void {
         // If the data store is already attached or its graph is already in attaching or attached state,
         // then attach the incoming handle too.
-        if (this.isAttached || this.graphAttachState !== AttachState.Detached) {
+        if (this.isAttached || this.#graphAttachState !== AttachState.Detached) {
             handle.attachGraph();
             return;
         }
-        if (this.boundhandles === undefined) {
-            this.boundhandles = new Set<IFluidHandle>();
+        if (this.#boundhandles === undefined) {
+            this.#boundhandles = new Set<IFluidHandle>();
         }
 
-        this.boundhandles.add(handle);
+        this.#boundhandles.add(handle);
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
-        for (const [, object] of this.contexts) {
+        for (const [, object] of this.#contexts) {
             object.setConnectionState(connected, clientId);
         }
 
@@ -448,11 +448,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public getQuorum(): IQuorum {
-        return this.quorum;
+        return this.#quorum;
     }
 
     public getAudience(): IAudience {
-        return this.audience;
+        return this.#audience;
     }
 
     public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
@@ -474,13 +474,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                     // If a non-local operation then go and create the object
                     // Otherwise mark it as officially attached.
                     if (local) {
-                        assert(this.pendingAttach.has(id), 0x17c /* "Unexpected attach (local) channel OP" */);
-                        this.pendingAttach.delete(id);
+                        assert(this.#pendingAttach.has(id), 0x17c /* "Unexpected attach (local) channel OP" */);
+                        this.#pendingAttach.delete(id);
                     } else {
-                        assert(!this.contexts.has(id),
+                        assert(!this.#contexts.has(id),
                         0x17d, /* `Unexpected attach channel OP,
-                            is in pendingAttach set: ${this.pendingAttach.has(id)},
-                            is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContextBase}` */);
+                            is in pendingAttach set: ${this.#pendingAttach.has(id)},
+                            is local channel contexts: ${this.#contexts.get(id) instanceof LocalChannelContextBase}` */);
 
                         const flatBlobs = new Map<string, ArrayBufferLike>();
                         const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
@@ -506,14 +506,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                             async () => this.getChannelInitialGCDetails(id),
                             attachMessage.type);
 
-                        this.contexts.set(id, remoteChannelContext);
-                        if (this.contextsDeferred.has(id)) {
+                        this.#contexts.set(id, remoteChannelContext);
+                        if (this.#contextsDeferred.has(id)) {
                             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                            this.contextsDeferred.get(id)!.resolve(remoteChannelContext);
+                            this.#contextsDeferred.get(id)!.resolve(remoteChannelContext);
                         } else {
                             const deferred = new Deferred<IChannelContext>();
                             deferred.resolve(remoteChannelContext);
-                            this.contextsDeferred.set(id, deferred);
+                            this.#contextsDeferred.set(id, deferred);
                         }
                     }
                     break;
@@ -539,13 +539,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return (
             // Added in createChannel
             // Removed when bindChannel is called
-            !this.notBoundedChannelContextSet.has(id)
+            !this.#notBoundedChannelContextSet.has(id)
             // Added in bindChannel only if this is not attached yet
             // Removed when this is attached by calling attachGraph
-            && !this.localChannelContextQueue.has(id)
+            && !this.#localChannelContextQueue.has(id)
             // Added in attachChannel called by bindChannel
             // Removed when attach op is broadcast
-            && !this.pendingAttach.has(id)
+            && !this.#pendingAttach.has(id)
         );
     }
 
@@ -556,7 +556,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      */
     private getOutboundRoutes(): string[] {
         const outboundRoutes: string[] = [];
-        for (const [contextId] of this.contexts) {
+        for (const [contextId] of this.#contexts) {
             outboundRoutes.push(`${this.absolutePath}/${contextId}`);
         }
         return outboundRoutes;
@@ -591,7 +591,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
         const builder = new GCDataBuilder();
         // Iterate over each channel context and get their GC data.
-        await Promise.all(Array.from(this.contexts)
+        await Promise.all(Array.from(this.#contexts)
             .filter(([contextId, _]) => {
                 // Get GC data only for attached contexts. Detached contexts are not connected in the GC reference
                 // graph so any references they might have won't be connected as well.
@@ -620,11 +620,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         // Verify that the used routes are correct.
         for (const [id] of usedContextRoutes) {
-            assert(this.contexts.has(id), 0x17e /* "Used route does not belong to any known context" */);
+            assert(this.#contexts.has(id), 0x17e /* "Used route does not belong to any known context" */);
         }
 
         // Update the used routes in each context. Used routes is empty for unused context.
-        for (const [contextId, context] of this.contexts) {
+        for (const [contextId, context] of this.#contexts) {
             context.updateUsedRoutes(usedContextRoutes.get(contextId) ?? [], gcTimestamp);
         }
     }
@@ -637,7 +637,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * @returns the requested channel's GC details in the initial summary.
      */
     private async getChannelInitialGCDetails(channelId: string): Promise<IGarbageCollectionSummaryDetails> {
-        let channelInitialGCDetails = (await this.initialChannelsGCDetailsP).get(channelId);
+        let channelInitialGCDetails = (await this.#initialChannelsGCDetailsP).get(channelId);
         if (channelInitialGCDetails === undefined) {
             channelInitialGCDetails = {};
         }
@@ -659,7 +659,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         const summaryBuilder = new SummaryTreeBuilder();
 
         // Iterate over each data store and ask it to summarize
-        await Promise.all(Array.from(this.contexts)
+        await Promise.all(Array.from(this.#contexts)
             .filter(([contextId, _]) => {
                 const isAttached = this.isChannelAttached(contextId);
                 // We are not expecting local dds! Summary may not capture local state.
@@ -687,12 +687,12 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         const summaryBuilder = new SummaryTreeBuilder();
 
         // Craft the .attributes file for each shared object
-        for (const [contextId, context] of this.contexts) {
+        for (const [contextId, context] of this.#contexts) {
             if (!(context instanceof LocalChannelContextBase)) {
                 throw new Error("Should only be called with local channel handles");
             }
 
-            if (!this.notBoundedChannelContextSet.has(contextId)) {
+            if (!this.#notBoundedChannelContextSet.has(contextId)) {
                 let summaryTree: ISummaryTreeWithStats;
                 if (context.isLoaded) {
                     const contextSummary = context.getAttachSummary();
@@ -727,7 +727,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * Will return when the data store is attached.
      */
     public async waitAttached(): Promise<void> {
-        return this.deferredAttached.promise;
+        return this.#deferredAttached.promise;
     }
 
     // @deprecated Warnings are being deprecated
@@ -750,7 +750,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         assert(this.isAttached, 0x182 /* "Data store should be attached to attach the channel." */);
         // Get the object snapshot only if the data store is Bound and its graph is attached too,
         // because if the graph is attaching, then it would get included in the data store snapshot.
-        if (this.bindState === BindState.Bound && this.graphAttachState === AttachState.Attached) {
+        if (this.#bindState === BindState.Bound && this.#graphAttachState === AttachState.Attached) {
             const summarizeResult = summarizeChannel(channel, true /* fullTree */, false /* trackState */);
             // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
             const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
@@ -760,11 +760,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 snapshot,
                 type: channel.attributes.type,
             };
-            this.pendingAttach.set(channel.id, message);
+            this.#pendingAttach.set(channel.id, message);
             this.submit(DataStoreMessageType.Attach, message);
         }
 
-        const context = this.contexts.get(channel.id) as LocalChannelContextBase;
+        const context = this.#contexts.get(channel.id) as LocalChannelContextBase;
         context.markAttached();
     }
 
@@ -796,7 +796,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 {
                     // For Operations, find the right channel and trigger resubmission on it.
                     const envelope = content as IEnvelope;
-                    const channelContext = this.contexts.get(envelope.address);
+                    const channelContext = this.#contexts.get(envelope.address);
                     assert(!!channelContext, 0x183 /* "There should be a channel context for the op" */);
                     channelContext.reSubmit(envelope.contents, localOpMetadata);
                     break;
@@ -812,7 +812,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     public async applyStashedOp(content: any): Promise<unknown> {
         const envelope = content as IEnvelope;
-        const channelContext = this.contexts.get(envelope.address);
+        const channelContext = this.#contexts.get(envelope.address);
         assert(!!channelContext, 0x184 /* "There should be a channel context for the op" */);
         await channelContext.getChannel();
         return channelContext.applyStashedOp(envelope.contents);
@@ -833,7 +833,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             contents: envelope.contents,
         };
 
-        const channelContext = this.contexts.get(envelope.address);
+        const channelContext = this.#contexts.get(envelope.address);
         assert(!!channelContext, 0x185 /* "Channel not found" */);
         channelContext.processOp(transformed, local, localOpMetadata);
 
@@ -843,23 +843,23 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private attachListener() {
         this.setMaxListeners(Number.MAX_SAFE_INTEGER);
         this.dataStoreContext.once("attaching", () => {
-            assert(this.bindState !== BindState.NotBound,
+            assert(this.#bindState !== BindState.NotBound,
                 0x186 /* "Data store attaching should not occur if it is not bound" */);
-            this._attachState = AttachState.Attaching;
+            this.#attachState = AttachState.Attaching;
             // This promise resolution will be moved to attached event once we fix the scheduler.
-            this.deferredAttached.resolve();
+            this.#deferredAttached.resolve();
             this.emit("attaching");
         });
         this.dataStoreContext.once("attached", () => {
-            assert(this.bindState === BindState.Bound,
+            assert(this.#bindState === BindState.Bound,
                 0x187 /* "Data store should only be attached after it is bound" */);
-            this._attachState = AttachState.Attached;
+            this.#attachState = AttachState.Attached;
             this.emit("attached");
         });
     }
 
     private verifyNotClosed() {
-        if (this._disposed) {
+        if (this.#disposed) {
             throw new Error("Runtime is closed");
         }
     }

@@ -46,8 +46,8 @@ import { createNewFluidFile } from "./createFile";
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-odsp:";
 
-    private readonly nonPersistentCache = new NonPersistentCache();
-    private readonly socketReferenceKeyPrefix?: string;
+    readonly #nonPersistentCache = new NonPersistentCache();
+    readonly #socketReferenceKeyPrefix?: string;
 
     public async createContainer(
         createNewSummary: ISummaryTree | undefined,
@@ -80,7 +80,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         const fileEntry: IFileEntry = { resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId };
         const cacheAndTracker = createOdspCacheAndTracker(
             this.persistedCache,
-            this.nonPersistentCache,
+            this.#nonPersistentCache,
             fileEntry,
             odspLogger);
 
@@ -132,7 +132,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     ) {
         if (this.hostPolicy.isolateSocketCache === true) {
             // create the key to separate the socket reuse cache
-            this.socketReferenceKeyPrefix = uuid();
+            this.#socketReferenceKeyPrefix = uuid();
         }
     }
 
@@ -151,7 +151,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
         const cacheAndTracker = cacheAndTrackerArg ?? createOdspCacheAndTracker(
             this.persistedCache,
-            this.nonPersistentCache,
+            this.#nonPersistentCache,
             { resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
             odspLogger);
 
@@ -180,7 +180,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             cacheAndTracker.cache,
             this.hostPolicy,
             cacheAndTracker.epochTracker,
-            this.socketReferenceKeyPrefix,
+            this.#socketReferenceKeyPrefix,
         );
     }
 }

@@ -40,17 +40,17 @@ export abstract class BaseContainerService implements IFluidRouter {
  * ContainerService Factory that will only create one instance of the service for the Container.
  */
 class SingletonContainerServiceFactory {
-    private service: Promise<FluidObject> | undefined;
+    #service: Promise<FluidObject> | undefined;
 
     public constructor(
         private readonly serviceFn: (runtime: IContainerRuntime) => Promise<FluidObject>,
     ) { }
 
     public async getService(runtime: IContainerRuntime): Promise<IFluidObject & FluidObject> {
-        if (!this.service) {
-            this.service = this.serviceFn(runtime);
+        if (!this.#service) {
+            this.#service = this.serviceFn(runtime);
         }
-        return this.service;
+        return this.#service;
     }
 }
 

@@ -26,11 +26,11 @@ export const neverCancelledSummaryToken: ISummaryCancellationToken = {
  * when disconnected or if stop() is called.
  */
 export class RunWhileConnectedCoordinator implements ICancellableSummarizerController {
-    private _cancelled = false;
-    private readonly stopDeferred = new Deferred<SummarizerStopReason>();
+    #cancelled = false;
+    readonly #stopDeferred = new Deferred<SummarizerStopReason>();
 
     public get cancelled() {
-        if (!this._cancelled) {
+        if (!this.#cancelled) {
             assert(this.runtime.deltaManager.active, 0x25d /* "We should never connect as 'read'" */);
 
             // This check can't be enabled in current design due to lastSummary flow, where
@@ -46,14 +46,14 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
             //    this.runtime.summarizerClientId === this.runtime.clientId, "onBehalfOfClientId");
         }
 
-        return this._cancelled;
+        return this.#cancelled;
     }
 
     /**
      * Returns a promise that resolves once stopped either externally or by disconnect.
      */
      public get waitCancelled(): Promise<SummarizerStopReason> {
-        return this.stopDeferred.promise;
+        return this.#stopDeferred.promise;
     }
 
     public static async create(runtime: IConnectableRuntime) {
@@ -98,9 +98,9 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
      * Stops running.
      */
     public stop(reason: SummarizerStopReason): void {
-        if (!this._cancelled) {
-            this._cancelled = true;
-            this.stopDeferred.resolve(reason);
+        if (!this.#cancelled) {
+            this.#cancelled = true;
+            this.#stopDeferred.resolve(reason);
         }
     }
 }

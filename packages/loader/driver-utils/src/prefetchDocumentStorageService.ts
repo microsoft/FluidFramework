@@ -13,8 +13,8 @@ import { canRetryOnError } from "./network";
 
 export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
     // BlobId -> blob prefetchCache cache
-    private readonly prefetchCache = new Map<string, Promise<ArrayBufferLike>>();
-    private prefetchEnabled = true;
+    readonly #prefetchCache = new Map<string, Promise<ArrayBufferLike>>();
+    #prefetchEnabled = true;
 
     public get policies() {
         const policies = this.internalStorageService.policies;
@@ -25,7 +25,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         const p = this.internalStorageService.getSnapshotTree(version);
-        if (this.prefetchEnabled) {
+        if (this.#prefetchEnabled) {
             // We don't care if the prefetch succeeds
             void p.then((tree: ISnapshotTree | null | undefined) => {
                 if (tree === null || tree === undefined) { return; }
@@ -39,20 +39,20 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
         return this.cachedRead(blobId);
     }
     public stopPrefetch() {
-        this.prefetchEnabled = false;
-        this.prefetchCache.clear();
+        this.#prefetchEnabled = false;
+        this.#prefetchCache.clear();
     }
 
     private async cachedRead(blobId: string): Promise<ArrayBufferLike> {
-        if (this.prefetchEnabled) {
-            const prefetchedBlobP = this.prefetchCache.get(blobId);
+        if (this.#prefetchEnabled) {
+            const prefetchedBlobP = this.#prefetchCache.get(blobId);
             if (prefetchedBlobP !== undefined) {
                 return prefetchedBlobP;
             }
             const prefetchedBlobPFromStorage = this.internalStorageService.readBlob(blobId);
-            this.prefetchCache.set(blobId, prefetchedBlobPFromStorage.catch((error) => {
+            this.#prefetchCache.set(blobId, prefetchedBlobPFromStorage.catch((error) => {
                 if (canRetryOnError(error)) {
-                    this.prefetchCache.delete(blobId);
+                    this.#prefetchCache.delete(blobId);
                 }
                 throw error;
             }));

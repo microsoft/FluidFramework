@@ -12,9 +12,9 @@ import { v4 as uuid } from "uuid";
  * Functions include database operations such as queries, insertion and update.
  */
 class LocalSessionStorageCollection<T> implements ICollection<T> {
-    private readonly collectionName: string;
+    readonly #collectionName: string;
     constructor(namespace, name) {
-        this.collectionName = `${namespace}-${name}`;
+        this.#collectionName = `${namespace}-${name}`;
     }
 
     public aggregate(group: any, options?: any): any {
@@ -207,7 +207,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         for (let i = 0; i < sessionStorage.length; i++) {
             const key = sessionStorage.key(i);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            if (key!.startsWith(this.collectionName)) {
+            if (key!.startsWith(this.#collectionName)) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 values.push(JSON.parse(sessionStorage.getItem(key!)!));
             }
@@ -227,7 +227,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
                 if (!value._id) {
                     value._id = uuid();
                 }
-                sessionStorage.setItem(`${this.collectionName}-${value._id}`, JSON.stringify(value));
+                sessionStorage.setItem(`${this.#collectionName}-${value._id}`, JSON.stringify(value));
             }
         }
     }
@@ -241,7 +241,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
      */
     private findOneInternal(query: any): any {
         if (query._id) {
-            const json = sessionStorage.getItem(`${this.collectionName}-${query._id}`);
+            const json = sessionStorage.getItem(`${this.#collectionName}-${query._id}`);
             if (json) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return JSON.parse(json);
@@ -251,7 +251,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
             for (let i = 0; i < sessionStorage.length; i++) {
                 const ssKey = sessionStorage.key(i);
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                if (!ssKey!.startsWith(this.collectionName)) {
+                if (!ssKey!.startsWith(this.#collectionName)) {
                     continue;
                 }
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -274,7 +274,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
  * A database for testing that stores data in the browsers session storage
  */
 class LocalSessionStorageDb extends EventEmitter implements IDb {
-    private readonly collections = new Map<string, LocalSessionStorageCollection<any>>();
+    readonly #collections = new Map<string, LocalSessionStorageCollection<any>>();
     constructor(private readonly namespace) {
         super();
     }
@@ -282,10 +282,10 @@ class LocalSessionStorageDb extends EventEmitter implements IDb {
         return Promise.resolve();
     }
     public collection<T>(name: string): ICollection<T> {
-        if (!this.collections.has(name)) {
-            this.collections.set(name, new LocalSessionStorageCollection<T>(`${this.namespace}-db`, name));
+        if (!this.#collections.has(name)) {
+            this.#collections.set(name, new LocalSessionStorageCollection<T>(`${this.namespace}-db`, name));
         }
-        return this.collections.get(name) as LocalSessionStorageCollection<T>;
+        return this.#collections.get(name) as LocalSessionStorageCollection<T>;
     }
 }
 

@@ -41,15 +41,15 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
  */
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid:";
-    private readonly driverPolicies: IRouterliciousDriverPolicies;
-    private readonly blobCache = new InMemoryCache<ArrayBufferLike>();
-    private readonly snapshotTreeCache = new InMemoryCache<ISnapshotTree>();
+    readonly #driverPolicies: IRouterliciousDriverPolicies;
+    readonly #blobCache = new InMemoryCache<ArrayBufferLike>();
+    readonly #snapshotTreeCache = new InMemoryCache<ISnapshotTree>();
 
     constructor(
         private readonly tokenProvider: ITokenProvider,
         driverPolicies: Partial<IRouterliciousDriverPolicies> = {},
     ) {
-        this.driverPolicies = {
+        this.#driverPolicies = {
             ...defaultRouterliciousDriverPolicies,
             ...driverPolicies,
         };
@@ -78,14 +78,14 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 
         const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
-        const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
+        const rateLimiter = new RateLimiter(this.#driverPolicies.maxConcurrentOrdererRequests);
         const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
             tenantId,
             undefined,
             this.tokenProvider,
             logger2,
             rateLimiter,
-            this.driverPolicies.enableRestLess,
+            this.#driverPolicies.enableRestLess,
             resolvedUrl.endpoints.ordererUrl,
         );
         // the backend responds with the actual document ID associated with the new container.
@@ -158,8 +158,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             this.tokenProvider,
             tenantId,
             documentId,
-            this.driverPolicies,
-            this.blobCache,
-            this.snapshotTreeCache);
+            this.#driverPolicies,
+            this.#blobCache,
+            this.#snapshotTreeCache);
     }
 }

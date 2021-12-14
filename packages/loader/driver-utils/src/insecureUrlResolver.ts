@@ -29,7 +29,7 @@ import Axios from "axios";
  * works or a router inside of a single page app framework.
  */
 export class InsecureUrlResolver implements IUrlResolver {
-    private readonly cache = new Map<string, Promise<IResolvedUrl>>();
+    readonly #cache = new Map<string, Promise<IResolvedUrl>>();
 
     constructor(
         private readonly hostUrl: string,
@@ -61,7 +61,7 @@ export class InsecureUrlResolver implements IUrlResolver {
             const documentRelativePath = fullPath.slice(documentId.length);
             return this.resolveHelper(documentId, documentRelativePath);
         } else {
-            const maybeResolvedUrl = this.cache.get(request.url);
+            const maybeResolvedUrl = this.#cache.get(request.url);
             if (maybeResolvedUrl) {
                 return maybeResolvedUrl;
             }
@@ -77,9 +77,9 @@ export class InsecureUrlResolver implements IUrlResolver {
                 {
                     headers,
                 });
-            this.cache.set(request.url, resolvedP.then((resolved) => resolved.data));
+            this.#cache.set(request.url, resolvedP.then((resolved) => resolved.data));
 
-            return this.cache.get(request.url);
+            return this.#cache.get(request.url);
         }
     }
 

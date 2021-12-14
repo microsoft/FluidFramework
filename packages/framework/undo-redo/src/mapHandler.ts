@@ -14,13 +14,13 @@ export class SharedMapUndoRedoHandler {
     constructor(private readonly stackManager: UndoRedoStackManager) { }
 
     public attachMap(map: ISharedMap) {
-        map.on("valueChanged", this.mapDeltaHandler);
+        map.on("valueChanged", this.#mapDeltaHandler);
     }
     public detachMap(map: ISharedMap) {
-        map.off("valueChanged", this.mapDeltaHandler);
+        map.off("valueChanged", this.#mapDeltaHandler);
     }
 
-    private readonly mapDeltaHandler = (changed: IValueChanged, local: boolean, target: ISharedMap) => {
+    readonly #mapDeltaHandler = (changed: IValueChanged, local: boolean, target: ISharedMap) => {
         if (local) {
             this.stackManager.pushToCurrentOperation(new SharedMapRevertible(changed, target));
         }

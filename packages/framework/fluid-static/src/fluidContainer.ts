@@ -135,22 +135,22 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
  * Implementation of the IFluidContainer.
  */
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
-    private readonly connectedHandler = () => this.emit("connected");
-    private readonly disconnectedHandler = () => this.emit("disconnected");
-    private readonly disposedHandler = () => this.emit("disposed");
-    private readonly savedHandler = () => this.emit("saved");
-    private readonly dirtyHandler = () => this.emit("dirty");
+    readonly #connectedHandler = () => this.emit("connected");
+    readonly #disconnectedHandler = () => this.emit("disconnected");
+    readonly #disposedHandler = () => this.emit("disposed");
+    readonly #savedHandler = () => this.emit("saved");
+    readonly #dirtyHandler = () => this.emit("dirty");
 
     public constructor(
         private readonly container: IContainer,
         private readonly rootDataObject: RootDataObject,
     ) {
         super();
-        container.on("connected", this.connectedHandler);
-        container.on("closed", this.disposedHandler);
-        container.on("disconnected", this.disconnectedHandler);
-        container.on("saved", this.savedHandler);
-        container.on("dirty", this.dirtyHandler);
+        container.on("connected", this.#connectedHandler);
+        container.on("closed", this.#disposedHandler);
+        container.on("disconnected", this.#disconnectedHandler);
+        container.on("saved", this.#savedHandler);
+        container.on("dirty", this.#dirtyHandler);
     }
 
     /**
@@ -209,10 +209,10 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
      */
     public dispose() {
         this.container.close();
-        this.container.off("connected", this.connectedHandler);
-        this.container.off("closed", this.disposedHandler);
-        this.container.off("disconnected", this.disconnectedHandler);
-        this.container.off("saved", this.savedHandler);
-        this.container.off("dirty", this.dirtyHandler);
+        this.container.off("connected", this.#connectedHandler);
+        this.container.off("closed", this.#disposedHandler);
+        this.container.off("disconnected", this.#disconnectedHandler);
+        this.container.off("saved", this.#savedHandler);
+        this.container.off("dirty", this.#dirtyHandler);
     }
 }

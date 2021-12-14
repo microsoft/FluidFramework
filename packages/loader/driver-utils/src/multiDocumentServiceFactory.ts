@@ -19,8 +19,8 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
             const factories: IDocumentServiceFactory[] = [];
             documentServiceFactory.forEach((factory) => {
                 const maybeMulti = factory as MultiDocumentServiceFactory;
-                if (maybeMulti.protocolToDocumentFactoryMap !== undefined) {
-                    factories.push(...maybeMulti.protocolToDocumentFactoryMap.values());
+                if (maybeMulti.#protocolToDocumentFactoryMap !== undefined) {
+                    factories.push(...maybeMulti.#protocolToDocumentFactoryMap.values());
                 } else {
                     factories.push(factory);
                 }
@@ -33,12 +33,12 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
         return documentServiceFactory;
     }
 
-    private readonly protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>;
+    readonly #protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>;
 
     constructor(documentServiceFactories: IDocumentServiceFactory[]) {
-        this.protocolToDocumentFactoryMap = new Map();
+        this.#protocolToDocumentFactoryMap = new Map();
         documentServiceFactories.forEach((factory: IDocumentServiceFactory) => {
-            this.protocolToDocumentFactoryMap.set(factory.protocolName, factory);
+            this.#protocolToDocumentFactoryMap.set(factory.protocolName, factory);
         });
     }
     public readonly protocolName = "none:";
@@ -49,7 +49,7 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
         if (urlObj.protocol === undefined || urlObj.protocol === null) {
             throw new Error("No protocol provided");
         }
-        const factory: IDocumentServiceFactory | undefined = this.protocolToDocumentFactoryMap.get(urlObj.protocol);
+        const factory: IDocumentServiceFactory | undefined = this.#protocolToDocumentFactoryMap.get(urlObj.protocol);
         if (factory === undefined) {
             throw new Error("Unknown Fluid protocol");
         }
@@ -68,7 +68,7 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
         if (urlObj.protocol === undefined || urlObj.protocol === null) {
             throw new Error("No protocol provided");
         }
-        const factory: IDocumentServiceFactory | undefined = this.protocolToDocumentFactoryMap.get(urlObj.protocol);
+        const factory: IDocumentServiceFactory | undefined = this.#protocolToDocumentFactoryMap.get(urlObj.protocol);
         if (factory === undefined) {
             throw new Error("Unknown Fluid protocol");
         }

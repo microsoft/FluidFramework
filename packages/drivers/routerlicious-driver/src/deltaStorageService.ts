@@ -30,7 +30,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
         private readonly documentStorageService: DocumentStorageService) {
     }
 
-    private logtailSha: string | undefined = this.documentStorageService.logTailSha;
+    #logtailSha: string | undefined = this.documentStorageService.logTailSha;
 
     fetchMessages(from: number,
         to: number | undefined,
@@ -57,10 +57,10 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
     }
 
     private async getCore(from: number, to: number): Promise<IDeltasFetchResult> {
-        const opsFromLogTail = this.logtailSha ? await readAndParse<ISequencedDocumentMessage[]>
-            (this.documentStorageService, this.logtailSha) : [];
+        const opsFromLogTail = this.#logtailSha ? await readAndParse<ISequencedDocumentMessage[]>
+            (this.documentStorageService, this.#logtailSha) : [];
 
-        this.logtailSha = undefined;
+        this.#logtailSha = undefined;
         if (opsFromLogTail.length > 0) {
             const messages = opsFromLogTail.filter((op) =>
                 op.sequenceNumber >= from,

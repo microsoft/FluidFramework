@@ -91,13 +91,13 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
         return new CounterFactory();
     }
 
-    private _value: number = 0;
+    #value: number = 0;
 
     /**
      * {@inheritDoc ISharedCounter.value}
      */
     public get value() {
-        return this._value;
+        return this.#value;
     }
 
     /**
@@ -120,8 +120,8 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     }
 
     private incrementCore(incrementAmount: number) {
-        this._value += incrementAmount;
-        this.emit("incremented", incrementAmount, this._value);
+        this.#value += incrementAmount;
+        this.emit("incremented", incrementAmount, this.#value);
     }
 
     /**
@@ -161,7 +161,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const content = await readAndParse<ICounterSnapshotFormat>(storage, snapshotFileName);
 
-        this._value = content.value;
+        this.#value = content.value;
     }
 
     /**

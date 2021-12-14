@@ -16,25 +16,25 @@ import {
 } from "./properties";
 
 export class PropertiesManager {
-    private pendingKeyUpdateCount: MapLike<number> | undefined;
-    private pendingRewriteCount: number;
+    #pendingKeyUpdateCount: MapLike<number> | undefined;
+    #pendingRewriteCount: number;
 
     constructor() {
-        this.pendingRewriteCount = 0;
+        this.#pendingRewriteCount = 0;
     }
 
     public ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg) {
         if (annotateOp.combiningOp && annotateOp.combiningOp.name === "rewrite") {
-            this.pendingRewriteCount--;
+            this.#pendingRewriteCount--;
         }
         for (const key of Object.keys(annotateOp.props)) {
-            if (this.pendingKeyUpdateCount?.[key] !== undefined) {
-                assert(this.pendingKeyUpdateCount[key] > 0,
+            if (this.#pendingKeyUpdateCount?.[key] !== undefined) {
+                assert(this.#pendingKeyUpdateCount[key] > 0,
                     0x05c /* "Trying to update more annotate props than do exist!" */);
-                this.pendingKeyUpdateCount[key]--;
-                if (this.pendingKeyUpdateCount?.[key] === 0) {
+                this.#pendingKeyUpdateCount[key]--;
+                if (this.#pendingKeyUpdateCount?.[key] === 0) {
                     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-                    delete this.pendingKeyUpdateCount[key];
+                    delete this.#pendingKeyUpdateCount[key];
                 }
             }
         }
@@ -46,12 +46,12 @@ export class PropertiesManager {
         op?: ICombiningOp,
         seq?: number,
         collaborating: boolean = false): PropertySet | undefined {
-        if (!this.pendingKeyUpdateCount) {
-            this.pendingKeyUpdateCount = createMap<number>();
+        if (!this.#pendingKeyUpdateCount) {
+            this.#pendingKeyUpdateCount = createMap<number>();
         }
 
         // There are outstanding local rewrites, so block all non-local changes
-        if (this.pendingRewriteCount > 0 && seq !== UnassignedSequenceNumber && collaborating) {
+        if (this.#pendingRewriteCount > 0 && seq !== UnassignedSequenceNumber && collaborating) {
             return undefined;
         }
 
@@ -60,7 +60,7 @@ export class PropertiesManager {
 
         const shouldModifyKey = (key: string): boolean => {
             if (seq === UnassignedSequenceNumber
-                || this.pendingKeyUpdateCount?.[key] === undefined
+                || this.#pendingKeyUpdateCount?.[key] === undefined
                 || combiningOp) {
                 return true;
             }
@@ -70,7 +70,7 @@ export class PropertiesManager {
         const deltas: PropertySet = {};
         if (rewrite) {
             if (collaborating && seq === UnassignedSequenceNumber) {
-                this.pendingRewriteCount++;
+                this.#pendingRewriteCount++;
             }
             // We are re-writting so delete all the properties
             // not in the new props
@@ -86,10 +86,10 @@ export class PropertiesManager {
         for (const key of Object.keys(newProps)) {
             if (collaborating) {
                 if (seq === UnassignedSequenceNumber) {
-                    if (this.pendingKeyUpdateCount?.[key] === undefined) {
-                        this.pendingKeyUpdateCount[key] = 0;
+                    if (this.#pendingKeyUpdateCount?.[key] === undefined) {
+                        this.#pendingKeyUpdateCount[key] = 0;
                     }
-                    this.pendingKeyUpdateCount[key]++;
+                    this.#pendingKeyUpdateCount[key]++;
                 } else if (!shouldModifyKey(key)) {
                     continue;
                 }
@@ -131,16 +131,16 @@ export class PropertiesManager {
             for (const key of Object.keys(oldProps)) {
                 newProps[key] = oldProps[key];
             }
-            newManager.pendingRewriteCount = this.pendingRewriteCount;
-            newManager.pendingKeyUpdateCount = createMap<number>();
-            for (const key of Object.keys(this.pendingKeyUpdateCount!)) {
-                newManager.pendingKeyUpdateCount[key] = this.pendingKeyUpdateCount![key];
+            newManager.#pendingRewriteCount = this.#pendingRewriteCount;
+            newManager.#pendingKeyUpdateCount = createMap<number>();
+            for (const key of Object.keys(this.#pendingKeyUpdateCount!)) {
+                newManager.#pendingKeyUpdateCount[key] = this.#pendingKeyUpdateCount![key];
             }
         }
         return newProps;
     }
 
     public hasPendingProperties() {
-        return this.pendingRewriteCount > 0 || Object.keys(this.pendingKeyUpdateCount!).length > 0;
+        return this.#pendingRewriteCount > 0 || Object.keys(this.#pendingKeyUpdateCount!).length > 0;
     }
 }

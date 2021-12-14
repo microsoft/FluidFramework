@@ -56,13 +56,13 @@ import { IUsedStateStats } from "./garbageCollection";
   */
 export class DataStores implements IDisposable {
     // Stores tracked by the Domain
-    private readonly pendingAttach = new Map<string, IAttachMessage>();
+    readonly #pendingAttach = new Map<string, IAttachMessage>();
     // 0.24 back-compat attachingBeforeSummary
     public readonly attachOpFiredForDataStore = new Set<string>();
 
-    private readonly logger: ITelemetryLogger;
+    readonly #logger: ITelemetryLogger;
 
-    private readonly disposeOnce = new Lazy<void>(() => this.contexts.dispose());
+    readonly #disposeOnce = new Lazy<void>(() => this.contexts.dispose());
 
     public readonly containerLoadStats: {
         // number of dataStores during loadContainer
@@ -83,7 +83,7 @@ export class DataStores implements IDisposable {
         private readonly dataStoreChanged: (id: string) => void,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
-        this.logger = ChildLogger.create(baseLogger);
+        this.#logger = ChildLogger.create(baseLogger);
 
         const baseDataStoresGCDetailsP = new LazyPromise(async () => {
             return getDataStoreBaseGCDetails();
@@ -150,10 +150,10 @@ export class DataStores implements IDisposable {
         const attachMessage = message.contents as InboundAttachMessage;
         // The local object has already been attached
         if (local) {
-            assert(this.pendingAttach.has(attachMessage.id),
+            assert(this.#pendingAttach.has(attachMessage.id),
                 0x15e /* "Local object does not have matching attach message id" */);
             this.contexts.get(attachMessage.id)?.emit("attached");
-            this.pendingAttach.delete(attachMessage.id);
+            this.#pendingAttach.delete(attachMessage.id);
             return;
         }
 
@@ -225,7 +225,7 @@ export class DataStores implements IDisposable {
             localContext.emit("attaching");
             const message = localContext.generateAttachMessage();
 
-            this.pendingAttach.set(id, message);
+            this.#pendingAttach.set(id, message);
             this.submitAttachFn(message);
             this.attachOpFiredForDataStore.add(id);
         }
@@ -269,8 +269,8 @@ export class DataStores implements IDisposable {
         return context;
     }
 
-    public get disposed() {return this.disposeOnce.evaluated;}
-    public readonly dispose = () => this.disposeOnce.value;
+    public get disposed() {return this.#disposeOnce.evaluated;}
+    public readonly dispose = () => this.#disposeOnce.value;
 
     public resubmitDataStoreOp(content: any, localOpMetadata: unknown) {
         const envelope = content as IEnvelope;
@@ -287,7 +287,7 @@ export class DataStores implements IDisposable {
     }
 
     public async applyStashedAttachOp(message: IAttachMessage) {
-        this.pendingAttach.set(message.id, message);
+        this.#pendingAttach.set(message.id, message);
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         this.processAttachMessage({ contents: message } as ISequencedDocumentMessage, false);
     }
@@ -320,7 +320,7 @@ export class DataStores implements IDisposable {
         if (!context) {
             // Attach message may not have been processed yet
             assert(!local, 0x163 /* "Missing datastore for local signal" */);
-            this.logger.sendTelemetryEvent({
+            this.#logger.sendTelemetryEvent({
                 eventName: "SignalFluidDataStoreNotFound",
                 fluidDataStoreId: address,
             });
@@ -335,7 +335,7 @@ export class DataStores implements IDisposable {
             try {
                 context.setConnectionState(connected, clientId);
             } catch (error) {
-                this.logger.sendErrorEvent({
+                this.#logger.sendErrorEvent({
                     eventName: "SetConnectionStateError",
                     clientId,
                     fluidDataStore,

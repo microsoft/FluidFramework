@@ -33,13 +33,13 @@ export class SummarizerClientElection
      * observed since this client was elected.
      * When a summary ack comes in, this will be set to the sequence number of the summary ack.
      */
-    private lastSummaryAckSeqForClient: number | undefined;
+    #lastSummaryAckSeqForClient: number | undefined;
     /**
      * Used to prevent excess logging by recording the sequence number that we last reported at,
      * and making sure we don't report another event to telemetry. If things work as intended,
      * this is not needed, otherwise it could report an event on every op in worst case scenario.
      */
-    private lastReportedSeq = 0;
+    #lastReportedSeq = 0;
 
     public get electedClientId() {
         return this.clientElection.electedClient?.clientId;
@@ -68,19 +68,19 @@ export class SummarizerClientElection
                 return;
             }
             let electionSequenceNumber = this.clientElection.electionSequenceNumber;
-            const opsWithoutSummary = sequenceNumber - (this.lastSummaryAckSeqForClient ?? electionSequenceNumber);
+            const opsWithoutSummary = sequenceNumber - (this.#lastSummaryAckSeqForClient ?? electionSequenceNumber);
             if (opsWithoutSummary > this.maxOpsSinceLastSummary) {
                 // Log and elect a new summarizer client.
-                const opsSinceLastReport = sequenceNumber - this.lastReportedSeq;
+                const opsSinceLastReport = sequenceNumber - this.#lastReportedSeq;
                 if (opsSinceLastReport > this.maxOpsSinceLastSummary) {
                     this.logger.sendErrorEvent({
                         eventName: "ElectedClientNotSummarizing",
                         electedClientId,
-                        lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
+                        lastSummaryAckSeqForClient: this.#lastSummaryAckSeqForClient,
                         electionSequenceNumber,
                         nextElectedClientId: this.clientElection.peekNextElectedClient()?.clientId,
                     });
-                    this.lastReportedSeq = sequenceNumber;
+                    this.#lastReportedSeq = sequenceNumber;
                 }
 
                 if (this.electionEnabled) {
@@ -89,12 +89,12 @@ export class SummarizerClientElection
                     // Verify that state incremented as expected. This should be reliable,
                     // since all of OrderedClientElection is synchronous.
                     electionSequenceNumber = this.clientElection.electionSequenceNumber;
-                    if (sequenceNumber > (this.lastSummaryAckSeqForClient ?? electionSequenceNumber)) {
+                    if (sequenceNumber > (this.#lastSummaryAckSeqForClient ?? electionSequenceNumber)) {
                         if (opsSinceLastReport > this.maxOpsSinceLastSummary) {
                             this.logger.sendErrorEvent({
                                 eventName: "UnexpectedElectionSequenceNumber",
                                 // Expected to be undefined
-                                lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
+                                lastSummaryAckSeqForClient: this.#lastSummaryAckSeqForClient,
                                 // Expected to be same as op sequenceNumber
                                 electionSequenceNumber,
                             });
@@ -106,13 +106,13 @@ export class SummarizerClientElection
 
         // When a summary ack comes in, reset our op seq counter.
         this.summaryCollection.on(MessageType.SummaryAck, (op) => {
-            this.lastSummaryAckSeqForClient = op.sequenceNumber;
+            this.#lastSummaryAckSeqForClient = op.sequenceNumber;
         });
 
         // Use oldest client election for unanimously and deterministically deciding
         // which client should summarize.
         this.clientElection.on("election", (client, sequenceNumber) => {
-            this.lastSummaryAckSeqForClient = undefined;
+            this.#lastSummaryAckSeqForClient = undefined;
             if (client === undefined && this.clientElection.eligibleCount > 0) {
                 // If no client is valid for election, reset to the oldest again.
                 // Also make extra sure not to get stuck in an infinite loop here:
@@ -129,7 +129,7 @@ export class SummarizerClientElection
         const { electedClientId, electionSequenceNumber } = this.clientElection.serialize();
         return {
             electedClientId,
-            electionSequenceNumber: this.lastSummaryAckSeqForClient ?? electionSequenceNumber,
+            electionSequenceNumber: this.#lastSummaryAckSeqForClient ?? electionSequenceNumber,
         };
     }
 

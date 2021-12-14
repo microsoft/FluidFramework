@@ -63,17 +63,17 @@ function bufferToString2(blob: ArrayBufferLike, encoding: "utf-8" | "base64"): s
   * Class responsible for aggregating smaller blobs into one and unpacking it later on.
   */
 class BlobAggregator {
-    private readonly content: [string, string][]= [];
+    readonly #content: [string, string][]= [];
 
     public addBlob(key: string, content: string) {
-        this.content.push([key, content]);
+        this.#content.push([key, content]);
     }
 
     public getAggregatedBlobContent() {
-        if (this.content.length === 0) {
+        if (this.#content.length === 0) {
             return undefined;
         }
-        return JSON.stringify(this.content);
+        return JSON.stringify(this.#content);
     }
 
     static load(input: ArrayBufferLike) {

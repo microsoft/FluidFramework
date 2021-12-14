@@ -29,8 +29,8 @@ export interface ICache {
 }
 
 export class OpsCache {
-  private readonly batches: Map<number, null | IBatch> = new Map();
-  private timer: ReturnType<typeof setTimeout> | undefined;
+  readonly #batches: Map<number, null | IBatch> = new Map();
+  #timer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(
     startingSequenceNumber: number,
@@ -45,7 +45,7 @@ export class OpsCache {
          */
         const remainingSlots = this.batchSize - this.getPositionInBatchArray(startingSequenceNumber) - 1;
         if (remainingSlots !== 0) {
-            this.batches.set(this.getBatchNumber(startingSequenceNumber), {
+            this.#batches.set(this.getBatchNumber(startingSequenceNumber), {
                 remainingSlots,
                 batchData : this.initializeNewBatchDataArray(),
                 dirty: false,
@@ -54,15 +54,15 @@ export class OpsCache {
     }
 
     public dispose() {
-        this.batches.clear();
-        if (this.timer !== undefined) {
-            clearTimeout(this.timer);
-            this.timer = undefined;
+        this.#batches.clear();
+        if (this.#timer !== undefined) {
+            clearTimeout(this.#timer);
+            this.#timer = undefined;
         }
     }
 
     public flushOps() {
-        for (const [key, value] of this.batches) {
+        for (const [key, value] of this.#batches) {
             if (value === null || !value.dirty) {
                 continue;
             }
@@ -80,7 +80,7 @@ export class OpsCache {
             const batchNumber = this.getBatchNumber(op.sequenceNumber);
             const positionInBatch = this.getPositionInBatchArray(op.sequenceNumber);
 
-            let currentBatch = this.batches.get(batchNumber);
+            let currentBatch = this.#batches.get(batchNumber);
 
             if (currentBatch === undefined) {
                 currentBatch = {
@@ -89,7 +89,7 @@ export class OpsCache {
                     dirty: true,
                 };
                 currentBatch.batchData[positionInBatch] = op;
-                this.batches.set(batchNumber, currentBatch);
+                this.#batches.set(batchNumber, currentBatch);
             } else if (currentBatch !== null && currentBatch.batchData[positionInBatch] === undefined) {
                 currentBatch.batchData[positionInBatch] = op;
                 currentBatch.remainingSlots--;
@@ -102,7 +102,7 @@ export class OpsCache {
             if (currentBatch.remainingSlots === 0) {
                 // batch is full, flush to cache
                 this.write(batchNumber, currentBatch);
-                this.batches.set(batchNumber, null);
+                this.#batches.set(batchNumber, null);
             } else {
                 this.scheduleTimer();
             }
@@ -189,9 +189,9 @@ export class OpsCache {
     }
 
     protected scheduleTimer() {
-        if (!this.timer && this.timerGranularity > 0) {
-            this.timer = setTimeout(() => {
-                this.timer = undefined;
+        if (!this.#timer && this.timerGranularity > 0) {
+            this.#timer = setTimeout(() => {
+                this.#timer = undefined;
                 this.flushOps();
             }, this.timerGranularity);
         }

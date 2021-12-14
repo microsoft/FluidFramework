@@ -49,17 +49,17 @@ export class SnapshotLegacy {
     // for very chunky text, blob size can easily be 4x-8x of that number.
     public static readonly sizeOfFirstChunk: number = 10000;
 
-    private header: SnapshotHeader | undefined;
-    private seq: number | undefined;
-    private segments: IJSONSegment[] | undefined;
-    private segmentLengths: number[] | undefined;
-    private readonly logger: ITelemetryLogger;
-    private readonly chunkSize: number;
+    #header: SnapshotHeader | undefined;
+    #seq: number | undefined;
+    #segments: IJSONSegment[] | undefined;
+    #segmentLengths: number[] | undefined;
+    readonly #logger: ITelemetryLogger;
+    readonly #chunkSize: number;
 
     constructor(public mergeTree: MergeTree, logger: ITelemetryLogger, public filename?: string,
         public onCompletion?: () => void) {
-        this.logger = ChildLogger.create(logger, "Snapshot");
-        this.chunkSize = mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotLegacy.sizeOfFirstChunk;
+        this.#logger = ChildLogger.create(logger, "Snapshot");
+        this.#chunkSize = mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotLegacy.sizeOfFirstChunk;
     }
 
     private getSeqLengthSegs(
@@ -81,9 +81,9 @@ export class SnapshotLegacy {
             chunkStartSegmentIndex: startIndex,
             chunkSegmentCount: segCount,
             chunkLengthChars: sequenceLength,
-            totalLengthChars: this.header!.segmentsTotalLength,
+            totalLengthChars: this.#header!.segmentsTotalLength,
             totalSegmentCount: allSegments.length,
-            chunkSequenceNumber: this.header!.seq,
+            chunkSequenceNumber: this.#header!.seq,
             segmentTexts: segs,
         };
     }
@@ -97,7 +97,7 @@ export class SnapshotLegacy {
         serializer: IFluidSerializer,
         bind: IFluidHandle,
     ): ITree {
-        const chunk1 = this.getSeqLengthSegs(this.segments!, this.segmentLengths!, this.chunkSize);
+        const chunk1 = this.getSeqLengthSegs(this.#segments!, this.#segmentLengths!, this.#chunkSize);
         let length: number = chunk1.chunkLengthChars;
         let segments: number = chunk1.chunkSegmentCount;
         const tree: ITree = {
@@ -110,7 +110,7 @@ export class SnapshotLegacy {
                         contents: serializeAsMinSupportedVersion(
                             SnapshotLegacy.header,
                             chunk1,
-                            this.logger,
+                            this.#logger,
                             this.mergeTree.options,
                             serializer,
                             bind),
@@ -121,8 +121,8 @@ export class SnapshotLegacy {
         };
 
         if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount!) {
-            const chunk2 = this.getSeqLengthSegs(this.segments!, this.segmentLengths!,
-                this.header!.segmentsTotalLength, chunk1.chunkSegmentCount);
+            const chunk2 = this.getSeqLengthSegs(this.#segments!, this.#segmentLengths!,
+                this.#header!.segmentsTotalLength, chunk1.chunkSegmentCount);
             length += chunk2.chunkLengthChars;
             segments += chunk2.chunkSegmentCount;
             tree.entries.push({
@@ -133,7 +133,7 @@ export class SnapshotLegacy {
                     contents: serializeAsMinSupportedVersion(
                         SnapshotLegacy.body,
                         chunk2,
-                        this.logger,
+                        this.#logger,
                         this.mergeTree.options,
                         serializer,
                         bind),
@@ -143,7 +143,7 @@ export class SnapshotLegacy {
         }
 
         assert(
-            length === this.header!.segmentsTotalLength,
+            length === this.#header!.segmentsTotalLength,
             0x05d /* "emit: mismatch in segmentsTotalLength" */);
 
         assert(
@@ -167,8 +167,8 @@ export class SnapshotLegacy {
 
     extractSync() {
         const collabWindow = this.mergeTree.getCollabWindow();
-        this.seq = collabWindow.minSeq;
-        this.header = {
+        this.#seq = collabWindow.minSeq;
+        this.#header = {
             segmentsTotalLength: this.mergeTree.getLength(this.mergeTree.collabWindow.minSeq,
                 NonCollabClient),
             seq: this.mergeTree.collabWindow.minSeq,
@@ -180,10 +180,10 @@ export class SnapshotLegacy {
             // eslint-disable-next-line max-len
             (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined) => {
                 // eslint-disable-next-line eqeqeq
-                if ((segment.seq != UnassignedSequenceNumber) && (segment.seq! <= this.seq!) &&
+                if ((segment.seq != UnassignedSequenceNumber) && (segment.seq! <= this.#seq!) &&
                     // eslint-disable-next-line eqeqeq
                     ((segment.removedSeq === undefined) || (segment.removedSeq == UnassignedSequenceNumber) ||
-                        (segment.removedSeq > this.seq!))) {
+                        (segment.removedSeq > this.#seq!))) {
                     if (prev && prev.canAppend(segment)
                         && matchProperties(prev.properties, segment.properties)
                     ) {
@@ -199,34 +199,34 @@ export class SnapshotLegacy {
                 return true;
             };
 
-        this.mergeTree.map({ leaf: extractSegment }, this.seq, NonCollabClient, undefined);
+        this.mergeTree.map({ leaf: extractSegment }, this.#seq, NonCollabClient, undefined);
         if (prev) {
             segs.push(prev);
         }
 
-        this.segments = [];
-        this.segmentLengths = [];
+        this.#segments = [];
+        this.#segmentLengths = [];
         let totalLength: number = 0;
         segs.map((segment) => {
             totalLength += segment.cachedLength;
-            this.segments!.push(segment.toJSONObject());
-            this.segmentLengths!.push(segment.cachedLength);
+            this.#segments!.push(segment.toJSONObject());
+            this.#segmentLengths!.push(segment.cachedLength);
         });
 
-        // We observed this.header.segmentsTotalLength < totalLength to happen in some cases
+        // We observed this.#header.segmentsTotalLength < totalLength to happen in some cases
         // When this condition happens, we might not write out all segments in getSeqLengthSegs()
         // when writing out "body". Issue #1995 tracks following up on the core of the problem.
         // In the meantime, this code makes sure we will write out all segments properly
         // eslint-disable-next-line eqeqeq
-        if (this.header.segmentsTotalLength != totalLength) {
-            this.logger.sendErrorEvent({
+        if (this.#header.segmentsTotalLength != totalLength) {
+            this.#logger.sendErrorEvent({
                 eventName: "SegmentsTotalLengthMismatch",
                 totalLength,
-                segmentsTotalLength: this.header.segmentsTotalLength,
+                segmentsTotalLength: this.#header.segmentsTotalLength,
             });
-            this.header.segmentsTotalLength = totalLength;
+            this.#header.segmentsTotalLength = totalLength;
         }
 
-        return this.segments;
+        return this.#segments;
     }
 }

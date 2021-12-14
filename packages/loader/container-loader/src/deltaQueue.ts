@@ -17,45 +17,45 @@ export class DeltaQueue<T>
     extends TypedEventEmitter<IDeltaQueueEvents<T>>
     implements IDeltaQueue<T>, IDeltaQueueWriter<T>
 {
-    private isDisposed: boolean = false;
-    private readonly q = new Deque<T>();
+    #isDisposed: boolean = false;
+    readonly #q = new Deque<T>();
 
     /**
      * Tracks the number of pause requests for the queue
      * The DeltaQueue is create initially paused.
      */
-    private pauseCount = 1;
+    #pauseCount = 1;
 
-    private error: any | undefined;
+    #error: any | undefined;
 
     /**
      * When processing is ongoing, holds a deferred that will resolve once processing stops.
      * Undefined when not processing.
      */
-    private processingDeferred: Deferred<void> | undefined;
+    #processingDeferred: Deferred<void> | undefined;
 
     public get disposed(): boolean {
-        return this.isDisposed;
+        return this.#isDisposed;
     }
 
     /**
      * @returns True if the queue is paused, false if not.
      */
     public get paused(): boolean {
-        return this.pauseCount !== 0;
+        return this.#pauseCount !== 0;
     }
 
     public get length(): number {
-        return this.q.length;
+        return this.#q.length;
     }
 
     public get idle(): boolean {
-        return this.processingDeferred === undefined && this.q.length === 0;
+        return this.#processingDeferred === undefined && this.#q.length === 0;
     }
 
     public async waitTillProcessingDone(): Promise<void> {
-        if (this.processingDeferred !== undefined) {
-            return this.processingDeferred.promise;
+        if (this.#processingDeferred !== undefined) {
+            return this.#processingDeferred.promise;
         }
     }
 
@@ -71,37 +71,37 @@ export class DeltaQueue<T>
 
     public dispose() {
         throw new Error("Not implemented.");
-        this.isDisposed = true;
+        this.#isDisposed = true;
     }
 
     public clear(): void {
-        this.q.clear();
+        this.#q.clear();
     }
 
     public peek(): T | undefined {
-        return this.q.peekFront();
+        return this.#q.peekFront();
     }
 
     public toArray(): T[] {
-        return this.q.toArray();
+        return this.#q.toArray();
     }
 
     public push(task: T) {
-        this.q.push(task);
+        this.#q.push(task);
         this.emit("push", task);
         this.ensureProcessing();
     }
 
     public async pause(): Promise<void> {
-        this.pauseCount++;
+        this.#pauseCount++;
         // If called from within the processing loop, we are in the middle of processing an op. Return a promise
         // that will resolve when processing has actually stopped.
         return this.waitTillProcessingDone();
     }
 
     public resume(): void {
-        assert(this.pauseCount > 0, 0x0f4 /* "Nonzero pause-count on resume()" */);
-        this.pauseCount--;
+        assert(this.#pauseCount > 0, 0x0f4 /* "Nonzero pause-count on resume()" */);
+        this.#pauseCount--;
         this.ensureProcessing();
     }
 
@@ -111,15 +111,15 @@ export class DeltaQueue<T>
      * not already started.
      */
     private ensureProcessing() {
-        if (!this.paused && this.processingDeferred === undefined) {
-            this.processingDeferred = new Deferred<void>();
+        if (!this.paused && this.#processingDeferred === undefined) {
+            this.#processingDeferred = new Deferred<void>();
             // Use a resolved promise to start the processing on a separate stack.
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             Promise.resolve().then(() => {
                 this.processDeltas();
-                if (this.processingDeferred !== undefined) {
-                    this.processingDeferred.resolve();
-                    this.processingDeferred = undefined;
+                if (this.#processingDeferred !== undefined) {
+                    this.#processingDeferred.resolve();
+                    this.#processingDeferred = undefined;
                 }
             });
         }
@@ -134,9 +134,9 @@ export class DeltaQueue<T>
 
         // For grouping to work we must process all local messages immediately and in the single turn.
         // So loop over them until no messages to process, we have become paused, or hit an error.
-        while (!(this.q.length === 0 || this.paused || this.error !== undefined)) {
+        while (!(this.#q.length === 0 || this.paused || this.#error !== undefined)) {
             // Get the next message in the queue
-            const next = this.q.shift();
+            const next = this.#q.shift();
             count++;
             // Process the message.
             try {
@@ -145,12 +145,12 @@ export class DeltaQueue<T>
                 this.worker(next!);
                 this.emit("op", next);
             } catch (error) {
-                this.error = error;
+                this.#error = error;
                 this.emit("error", error);
             }
         }
 
-        if (this.q.length === 0) {
+        if (this.#q.length === 0) {
             this.emit("idle", count, performance.now() - start);
         }
     }

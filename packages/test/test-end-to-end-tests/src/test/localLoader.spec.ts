@@ -41,7 +41,7 @@ export class TestDataObject extends DataObject {
         {},
     );
 
-    private counter!: SharedCounter;
+    #counter!: SharedCounter;
 
     /**
      * Expose the runtime for testing purposes.
@@ -57,13 +57,13 @@ export class TestDataObject extends DataObject {
     /**
      * Gets the current counter value.
      */
-    public get value(): number { return this.counter.value; }
+    public get value(): number { return this.#counter.value; }
 
     /**
      * Increments the counter value by 1.
      */
     public increment() {
-        this.counter.increment(1);
+        this.#counter.increment(1);
     }
 
     protected async initializingFirstTime() {
@@ -74,7 +74,7 @@ export class TestDataObject extends DataObject {
     protected async hasInitialized() {
         const counterHandle = await this.root.wait<IFluidHandle<SharedCounter>>(counterKey);
         assert(counterHandle);
-        this.counter = await counterHandle.get();
+        this.#counter = await counterHandle.get();
     }
 }
 

@@ -7,33 +7,33 @@ import { ISegment } from "./mergeTree";
 import { SortedSegmentSet } from "./sortedSegmentSet";
 
 export class TrackingGroup {
-    private readonly segmentSet: SortedSegmentSet;
+    readonly #segmentSet: SortedSegmentSet;
 
     constructor() {
-        this.segmentSet = new SortedSegmentSet();
+        this.#segmentSet = new SortedSegmentSet();
     }
 
     public get segments(): readonly ISegment[] {
-        return this.segmentSet.items;
+        return this.#segmentSet.items;
     }
 
     public get size(): number {
-        return this.segmentSet.size;
+        return this.#segmentSet.size;
     }
 
     public has(segment: ISegment): boolean {
-        return this.segmentSet.has(segment);
+        return this.#segmentSet.has(segment);
     }
 
     public link(segment: ISegment) {
-        if (!this.segmentSet.has(segment)) {
-            this.segmentSet.addOrUpdate(segment);
+        if (!this.#segmentSet.has(segment)) {
+            this.#segmentSet.addOrUpdate(segment);
             segment.trackingCollection.link(this);
         }
     }
 
     public unlink(segment: ISegment) {
-        if (this.segmentSet.remove(segment)) {
+        if (this.#segmentSet.remove(segment)) {
             segment.trackingCollection.unlink(this);
         }
     }

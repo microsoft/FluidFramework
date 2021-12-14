@@ -87,9 +87,9 @@ export class Client {
 
     protected readonly mergeTree: MergeTree;
 
-    private readonly clientNameToIds = new RedBlackTree<string, number>(compareStrings);
-    private readonly shortClientIdMap: string[] = [];
-    private readonly pendingConsensus = new Map<string, IConsensusInfo>();
+    readonly #clientNameToIds = new RedBlackTree<string, number>(compareStrings);
+    readonly #shortClientIdMap: string[] = [];
+    readonly #pendingConsensus = new Map<string, IConsensusInfo>();
 
     constructor(
         // Passing this callback would be unnecessary if Client were merged with SharedSegmentSequence
@@ -145,7 +145,7 @@ export class Client {
                 callback: consensusCallback,
                 marker,
             };
-            this.pendingConsensus.set(marker.getId()!, consensusInfo);
+            this.#pendingConsensus.set(marker.getId()!, consensusInfo);
             return annotateOp;
         } else {
             return undefined;
@@ -627,25 +627,25 @@ export class Client {
         return clone;
     }
     getOrAddShortClientId(longClientId: string) {
-        if (!this.clientNameToIds.get(longClientId)) {
+        if (!this.#clientNameToIds.get(longClientId)) {
             this.addLongClientId(longClientId);
         }
         return this.getShortClientId(longClientId);
     }
     getShortClientId(longClientId: string) {
-        return this.clientNameToIds.get(longClientId)!.data;
+        return this.#clientNameToIds.get(longClientId)!.data;
     }
     getLongClientId(shortClientId: number) {
         if (shortClientId >= 0) {
-            return this.shortClientIdMap[shortClientId];
+            return this.#shortClientIdMap[shortClientId];
         }
         else {
             return "original";
         }
     }
     addLongClientId(longClientId: string) {
-        this.clientNameToIds.put(longClientId, this.shortClientIdMap.length);
-        this.shortClientIdMap.push(longClientId);
+        this.#clientNameToIds.put(longClientId, this.#shortClientIdMap.length);
+        this.#shortClientIdMap.push(longClientId);
     }
 
     /**
@@ -957,7 +957,7 @@ export class Client {
     }
     updateConsensusProperty(op: IMergeTreeAnnotateMsg, msg: ISequencedDocumentMessage) {
         const markerId = op.relativePos1!.id!;
-        const consensusInfo = this.pendingConsensus.get(markerId);
+        const consensusInfo = this.#pendingConsensus.get(markerId);
         if (consensusInfo) {
             consensusInfo.marker.addProperties(op.props, op.combiningOp, msg.sequenceNumber);
         }
@@ -1040,10 +1040,10 @@ export class Client {
                     this.getShortClientId(this.longClientId), minSeq, currentSeq);
             } else {
                 const oldClientId = this.longClientId;
-                const oldData = this.clientNameToIds.get(oldClientId)!.data;
+                const oldData = this.#clientNameToIds.get(oldClientId)!.data;
                 this.longClientId = longClientId;
-                this.clientNameToIds.put(longClientId, oldData);
-                this.shortClientIdMap[oldData] = longClientId;
+                this.#clientNameToIds.put(longClientId, oldData);
+                this.#shortClientIdMap[oldData] = longClientId;
             }
         }
     }

@@ -52,18 +52,18 @@ class ActiveSession {
         return new ActiveSession(email, message);
     }
 
-    private opCount = 0;
+    #opCount = 0;
 
     constructor(private readonly email: string, private readonly startMessage: ISequencedDocumentMessage) {
     }
 
     public reportOp(timestamp: number) {
-        this.opCount++;
+        this.#opCount++;
     }
 
     public leave(timestamp: number): ISessionInfo {
         return {
-            opCount: this.opCount,
+            opCount: this.#opCount,
             email: this.email,
             startSeq: this.startMessage.sequenceNumber,
             duration: timestamp - this.startMessage.timestamp,
@@ -163,25 +163,25 @@ const getObjectId = (dataStoreId: string, id: string) => `[${dataStoreId}]/${id}
  * Analyzer for sessions
  */
 class SessionAnalyzer implements IMessageAnalyzer {
-    private readonly sessionsInProgress = new Map<string, ActiveSession>();
-    private readonly sessions = new Map<string, [number, number]>();
-    private readonly users = new Map<string, [number, number]>();
+    readonly #sessionsInProgress = new Map<string, ActiveSession>();
+    readonly #sessions = new Map<string, [number, number]>();
+    readonly #users = new Map<string, [number, number]>();
 
-    private first = true;
+    #first = true;
 
     public processOp(message: ISequencedDocumentMessage, msgSize: number, skipMessage: boolean): void {
-        if (this.first) {
-            this.first = false;
+        if (this.#first) {
+            this.#first = false;
             // Start of the road.
             const noNameSession = ActiveSession.create(noClientName, message);
-            this.sessionsInProgress.set(noClientName, noNameSession);
+            this.#sessionsInProgress.set(noClientName, noNameSession);
         }
         const session = processQuorumMessages(
             message,
             skipMessage,
-            this.sessionsInProgress,
-            this.sessions,
-            this.users);
+            this.#sessionsInProgress,
+            this.#sessions,
+            this.#users);
         if (!skipMessage && session) {
             session.reportOp(message.timestamp);
         }
@@ -191,22 +191,22 @@ class SessionAnalyzer implements IMessageAnalyzer {
         // Close any open sessions
         reportOpenSessions(
             lastOp.timestamp,
-            this.sessionsInProgress,
-            this.sessions,
-            this.users);
-        dumpStats(this.users, {
+            this.#sessionsInProgress,
+            this.#sessions,
+            this.#users);
+        dumpStats(this.#users, {
             title: "Users",
             headers: ["Sessions", "Op count"],
             reverseColumnsInUI: true,
             lines: 6,
         });
-        dumpStats(this.sessions, {
+        dumpStats(this.#sessions, {
             title: "Sessions",
             headers: ["Duration(s)", "Op count"],
             reverseColumnsInUI: true,
             lines: 6,
         });
-        dumpStats(this.sessions, {
+        dumpStats(this.#sessions, {
             title: "Sessions",
             headers: ["Duration(s)", "Op count"],
             orderByFirstColumn: true,
@@ -221,36 +221,36 @@ class SessionAnalyzer implements IMessageAnalyzer {
  * Analyzer for data structures
  */
 class DataStructureAnalyzer implements IMessageAnalyzer {
-    private readonly messageTypeStats = new Map<string, [number, number]>();
-    private readonly dataType = new Map<string, string>();
-    private readonly dataTypeStats = new Map<string, [number, number]>();
-    private readonly objectStats = new Map<string, [number, number]>();
+    readonly #messageTypeStats = new Map<string, [number, number]>();
+    readonly #dataType = new Map<string, string>();
+    readonly #dataTypeStats = new Map<string, [number, number]>();
+    readonly #objectStats = new Map<string, [number, number]>();
 
     public processOp(message: ISequencedDocumentMessage, msgSize: number, skipMessage: boolean): void {
         if (!skipMessage) {
             processOp(
                 message,
-                this.dataType,
-                this.objectStats,
+                this.#dataType,
+                this.#objectStats,
                 msgSize,
-                this.dataTypeStats,
-                this.messageTypeStats);
+                this.#dataTypeStats,
+                this.#messageTypeStats);
         }
     }
 
     public reportAnalyzes(lastOp: ISequencedDocumentMessage): void {
-        dumpStats(this.messageTypeStats, {
+        dumpStats(this.#messageTypeStats, {
             title: "Message Type",
             headers: ["Op count", "Bytes"],
             lines: 20,
         });
-        dumpStats(calcChannelStats(this.dataType, this.objectStats), {
+        dumpStats(calcChannelStats(this.#dataType, this.#objectStats), {
             title: "Channel name",
             headers: ["Op count", "Bytes"],
             lines: 7,
         });
         /*
-        dumpStats(this.dataTypeStats, {
+        dumpStats(this.#dataTypeStats, {
             title: "Channel type",
             headers: ["Op count", "Bytes"],
         });
@@ -262,29 +262,29 @@ class DataStructureAnalyzer implements IMessageAnalyzer {
  * Helper class to report if we filtered out any messages.
  */
 class FilteredMessageAnalyzer implements IMessageAnalyzer {
-    private sizeTotal = 0;
-    private opsTotal = 0;
-    private sizeFiltered = 0;
-    private opsFiltered = 0;
-    private filtered = false;
+    #sizeTotal = 0;
+    #opsTotal = 0;
+    #sizeFiltered = 0;
+    #opsFiltered = 0;
+    #filtered = false;
 
     public processOp(message: ISequencedDocumentMessage, msgSize: number, skipMessage: boolean): void {
-        this.sizeTotal += msgSize;
-        this.opsTotal++;
+        this.#sizeTotal += msgSize;
+        this.#opsTotal++;
         if (!skipMessage) {
-            this.sizeFiltered += msgSize;
-            this.opsFiltered++;
+            this.#sizeFiltered += msgSize;
+            this.#opsFiltered++;
         } else {
-            this.filtered = true;
+            this.#filtered = true;
         }
     }
 
     public reportAnalyzes(lastOp: ISequencedDocumentMessage): void {
-        if (this.filtered) {
+        if (this.#filtered) {
             // eslint-disable-next-line max-len
-            console.log(`\nData is filtered according to --filter:messageType argument(s):\nOp size: ${this.sizeFiltered} / ${this.sizeTotal}\nOp count ${this.opsFiltered} / ${this.opsTotal}`);
+            console.log(`\nData is filtered according to --filter:messageType argument(s):\nOp size: ${this.#sizeFiltered} / ${this.#sizeTotal}\nOp count ${this.#opsFiltered} / ${this.#opsTotal}`);
         }
-        if (this.opsTotal === 0) {
+        if (this.#opsTotal === 0) {
             console.error("No ops were found");
         }
     }
@@ -294,37 +294,37 @@ class FilteredMessageAnalyzer implements IMessageAnalyzer {
  * Helper class to find places where we generated too many ops
  */
 class MessageDensityAnalyzer implements IMessageAnalyzer {
-    private readonly opChunk = 1000;
-    private opLimit = 1;
-    private size = 0;
-    private timeStart = 0;
-    private doctimerStart = 0;
-    private readonly ranges = new Map<string, [number, number]>();
+    readonly #opChunk = 1000;
+    #opLimit = 1;
+    #size = 0;
+    #timeStart = 0;
+    #doctimerStart = 0;
+    readonly #ranges = new Map<string, [number, number]>();
 
     public processOp(message: ISequencedDocumentMessage, msgSize: number, skipMessage: boolean): void {
-        if (message.sequenceNumber >= this.opLimit) {
+        if (message.sequenceNumber >= this.#opLimit) {
             if (message.sequenceNumber !== 1) {
-                const timeDiff = durationFromTime(message.timestamp - this.timeStart);
-                const opsString = `ops = [${this.opLimit - this.opChunk}, ${this.opLimit - 1}]`.padEnd(26);
+                const timeDiff = durationFromTime(message.timestamp - this.#timeStart);
+                const opsString = `ops = [${this.#opLimit - this.#opChunk}, ${this.#opLimit - 1}]`.padEnd(26);
                 // eslint-disable-next-line max-len
-                const timeString = `time = [${durationFromTime(this.timeStart - this.doctimerStart)}, ${durationFromTime(message.timestamp - this.doctimerStart)}]`;
-                this.ranges.set(
+                const timeString = `time = [${durationFromTime(this.#timeStart - this.#doctimerStart)}, ${durationFromTime(message.timestamp - this.#doctimerStart)}]`;
+                this.#ranges.set(
                     `${opsString} ${timeString}`,
-                    [timeDiff, this.size]);
+                    [timeDiff, this.#size]);
             } else {
-                this.doctimerStart = message.timestamp;
+                this.#doctimerStart = message.timestamp;
             }
-            this.opLimit += this.opChunk;
-            this.size = 0;
-            this.timeStart = message.timestamp;
+            this.#opLimit += this.#opChunk;
+            this.#size = 0;
+            this.#timeStart = message.timestamp;
         }
         if (!skipMessage) {
-            this.size += msgSize;
+            this.#size += msgSize;
         }
     }
 
     public reportAnalyzes(lastOp: ISequencedDocumentMessage): void {
-        dumpStats(this.ranges, {
+        dumpStats(this.#ranges, {
             title: "Fastest 1000 op ranges",
             headers: ["Duration(s)", "Bytes"],
             orderByFirstColumn: true,
@@ -339,19 +339,19 @@ class MessageDensityAnalyzer implements IMessageAnalyzer {
  * Helper class to analyze collab window size
  */
 class CollabWindowSizeAnalyzer implements IMessageAnalyzer {
-    private maxCollabWindow = 0;
-    private opSeq = 0;
+    #maxCollabWindow = 0;
+    #opSeq = 0;
 
     public processOp(message: ISequencedDocumentMessage, msgSize: number, skipMessage: boolean): void {
         const value = message.sequenceNumber - message.minimumSequenceNumber;
-        if (value > this.maxCollabWindow) {
-            this.maxCollabWindow = value;
-            this.opSeq = message.sequenceNumber;
+        if (value > this.#maxCollabWindow) {
+            this.#maxCollabWindow = value;
+            this.#opSeq = message.sequenceNumber;
         }
     }
 
     public reportAnalyzes(lastOp: ISequencedDocumentMessage): void {
-        console.log(`\nMaximum collab window size: ${this.maxCollabWindow}, seq# ${this.opSeq}`);
+        console.log(`\nMaximum collab window size: ${this.#maxCollabWindow}, seq# ${this.#opSeq}`);
     }
 }
 
@@ -359,52 +359,52 @@ class CollabWindowSizeAnalyzer implements IMessageAnalyzer {
  * Helper class to analyze frequency of summaries
  */
 class SummaryAnalyzer implements IMessageAnalyzer {
-    private lastSummaryOp = 0;
-    private maxDistance = 0;
-    private maxSeq = 0;
-    private minDistance = Number.MAX_SAFE_INTEGER;
-    private minSeq = 0;
-    private maxResponse = 0;
-    private maxResponseSeq = 0;
+    #lastSummaryOp = 0;
+    #maxDistance = 0;
+    #maxSeq = 0;
+    #minDistance = Number.MAX_SAFE_INTEGER;
+    #minSeq = 0;
+    #maxResponse = 0;
+    #maxResponseSeq = 0;
 
     public processOp(message: ISequencedDocumentMessage, msgSize: number, skipMessage: boolean): void {
         if (message.type === MessageType.SummaryAck) {
-            const distance = message.sequenceNumber - this.lastSummaryOp - 1;
-            if (this.maxDistance < distance) {
-                this.maxDistance = distance;
-                this.maxSeq = message.sequenceNumber;
+            const distance = message.sequenceNumber - this.#lastSummaryOp - 1;
+            if (this.#maxDistance < distance) {
+                this.#maxDistance = distance;
+                this.#maxSeq = message.sequenceNumber;
             }
-            if (this.minDistance > distance) {
-                this.minDistance = distance;
-                this.minSeq = message.sequenceNumber;
+            if (this.#minDistance > distance) {
+                this.#minDistance = distance;
+                this.#minSeq = message.sequenceNumber;
             }
 
-            this.lastSummaryOp = message.sequenceNumber;
+            this.#lastSummaryOp = message.sequenceNumber;
         }
         if (message.type === MessageType.SummaryAck || message.type === MessageType.SummaryNack) {
             const contents: ISummaryProposal = message.contents.summaryProposal;
             const distance = message.sequenceNumber - contents.summarySequenceNumber;
-            if (distance > this.maxResponse) {
-                this.maxResponse = distance;
-                this.maxResponseSeq = message.sequenceNumber;
+            if (distance > this.#maxResponse) {
+                this.#maxResponse = distance;
+                this.#maxResponseSeq = message.sequenceNumber;
             }
         }
     }
 
     public reportAnalyzes(lastOp: ISequencedDocumentMessage): void {
-        const distance = lastOp.sequenceNumber - this.lastSummaryOp;
-        if (this.maxDistance < distance) {
-            this.maxDistance = distance;
-            this.maxSeq = lastOp.sequenceNumber + 1;
+        const distance = lastOp.sequenceNumber - this.#lastSummaryOp;
+        if (this.#maxDistance < distance) {
+            this.#maxDistance = distance;
+            this.#maxSeq = lastOp.sequenceNumber + 1;
         }
 
         console.log("");
-        if (this.minDistance === Number.MAX_SAFE_INTEGER) {
+        if (this.#minDistance === Number.MAX_SAFE_INTEGER) {
             console.log("No summaries found in this document");
         } else {
-            console.log(`Maximum distance between summaries: ${this.maxDistance}, seq# ${this.maxSeq}`);
-            console.log(`Maximum server response for summary: ${this.maxResponse}, seq# ${this.maxResponseSeq}`);
-            console.log(`Minimum distance between summaries: ${this.minDistance}, seq# ${this.minSeq}`);
+            console.log(`Maximum distance between summaries: ${this.#maxDistance}, seq# ${this.#maxSeq}`);
+            console.log(`Maximum server response for summary: ${this.#maxResponse}, seq# ${this.#maxResponseSeq}`);
+            console.log(`Minimum distance between summaries: ${this.#minDistance}, seq# ${this.#minSeq}`);
         }
     }
 }

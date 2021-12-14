@@ -270,7 +270,7 @@ export class OdspTestDriver implements ITestDriver {
 
     public readonly type = "odsp";
     public get version() { return this.api.version; }
-    private readonly testIdToUrl = new Map<string, string>();
+    readonly #testIdToUrl = new Map<string, string>();
     private constructor(
         private readonly config: Readonly<IOdspTestDriverConfig>,
         private readonly api = OdspDriverApi,
@@ -286,7 +286,7 @@ export class OdspTestDriver implements ITestDriver {
      *  container id is the hashed id generated using driveId and itemId. Container id is not the filename.
      */
     async createContainerUrl(testId: string): Promise<string> {
-        if (!this.testIdToUrl.has(testId)) {
+        if (!this.#testIdToUrl.has(testId)) {
             const siteUrl = this.config.siteUrl;
             const driveItem = await getDriveItemByRootFileName(
                 this.config.siteUrl,
@@ -299,7 +299,7 @@ export class OdspTestDriver implements ITestDriver {
                 false,
                 this.config.driveId);
 
-            this.testIdToUrl.set(
+            this.#testIdToUrl.set(
                 testId,
                 this.api.createOdspUrl({
                     ...driveItem,
@@ -308,7 +308,7 @@ export class OdspTestDriver implements ITestDriver {
                 }));
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.testIdToUrl.get(testId)!;
+        return this.#testIdToUrl.get(testId)!;
     }
 
     createDocumentServiceFactory(): IDocumentServiceFactory {

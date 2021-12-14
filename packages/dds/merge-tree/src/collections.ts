@@ -163,39 +163,39 @@ export interface Comparer<T> {
 }
 
 export class Heap<T> {
-    private L: T[];
+    #L: T[];
     public count() {
-        return this.L.length - 1;
+        return this.#L.length - 1;
     }
     constructor(a: T[], public comp: Comparer<T>) {
-        this.L = [comp.min];
+        this.#L = [comp.min];
         for (let i = 0, len = a.length; i < len; i++) {
             this.add(a[i]);
         }
     }
     public peek() {
-        return this.L[1];
+        return this.#L[1];
     }
 
     public get() {
-        const x = this.L[1];
-        this.L[1] = this.L[this.count()];
-        this.L.pop();
+        const x = this.#L[1];
+        this.#L[1] = this.#L[this.count()];
+        this.#L.pop();
         this.fixdown(1);
         return x;
     }
 
     public add(x: T) {
-        this.L.push(x);
+        this.#L.push(x);
         this.fixup(this.count());
     }
 
     private fixup(k: number) {
         let _k = k;
-        while (_k > 1 && (this.comp.compare(this.L[_k >> 1], this.L[_k]) > 0)) {
-            const tmp = this.L[_k >> 1];
-            this.L[_k >> 1] = this.L[_k];
-            this.L[_k] = tmp;
+        while (_k > 1 && (this.comp.compare(this.#L[_k >> 1], this.#L[_k]) > 0)) {
+            const tmp = this.#L[_k >> 1];
+            this.#L[_k >> 1] = this.#L[_k];
+            this.#L[_k] = tmp;
             _k = _k >> 1;
         }
     }
@@ -204,15 +204,15 @@ export class Heap<T> {
         let _k = k;
         while ((_k << 1) <= (this.count())) {
             let j = _k << 1;
-            if ((j < this.count()) && (this.comp.compare(this.L[j], this.L[j + 1]) > 0)) {
+            if ((j < this.count()) && (this.comp.compare(this.#L[j], this.#L[j + 1]) > 0)) {
                 j++;
             }
-            if (this.comp.compare(this.L[_k], this.L[j]) <= 0) {
+            if (this.comp.compare(this.#L[_k], this.#L[j]) <= 0) {
                 break;
             }
-            const tmp = this.L[_k];
-            this.L[_k] = this.L[j];
-            this.L[j] = tmp;
+            const tmp = this.#L[_k];
+            this.#L[_k] = this.#L[j];
+            this.#L[j] = tmp;
             _k = j;
         }
     }
@@ -249,7 +249,7 @@ export interface RBNodeActions<TKey, TData> {
 }
 
 export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> {
-    private root: RBNode<TKey, TData> | undefined;
+    #root: RBNode<TKey, TData> | undefined;
 
     constructor(
         private readonly compareKeys: KeyComparer<TKey>,
@@ -268,14 +268,14 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return node ? node.size : 0;
     }
     public size() {
-        return this.nodeSize(this.root);
+        return this.nodeSize(this.#root);
     }
     public isEmpty() {
-        return !this.root;
+        return !this.#root;
     }
     public get(key: TKey) {
         if (key !== undefined) {
-            return this.nodeGet(this.root, key);
+            return this.nodeGet(this.#root, key);
         }
     }
     private nodeGet(node: RBNode<TKey, TData> | undefined, key: TKey) {
@@ -300,7 +300,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     public gather(key: TKey, matcher: IRBMatcher<TKey, TData>) {
         const results = [] as RBNode<TKey, TData>[];
         if (key !== undefined) {
-            this.nodeGather(this.root, results, key, matcher);
+            this.nodeGather(this.#root, results, key, matcher);
         }
         return results;
     }
@@ -328,7 +328,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         actionFn: (node: RBNode<TKey, TData>) => void,
         continueLeftFn: (number: number) => boolean,
         continueRightFn: (number: number) => boolean) {
-        this.nodeWalkExactMatchesForward(this.root, compareFn, actionFn, continueLeftFn, continueRightFn);
+        this.nodeWalkExactMatchesForward(this.#root, compareFn, actionFn, continueLeftFn, continueRightFn);
     }
 
     private nodeWalkExactMatchesForward(
@@ -357,7 +357,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         actionFn: (node: RBNode<TKey, TData>) => void,
         continueLeftFn: (number: number) => boolean,
         continueRightFn: (number: number) => boolean) {
-        this.nodeWalkExactMatchesBackward(this.root, compareFn, actionFn, continueLeftFn, continueRightFn);
+        this.nodeWalkExactMatchesBackward(this.#root, compareFn, actionFn, continueLeftFn, continueRightFn);
     }
 
     private nodeWalkExactMatchesBackward(
@@ -387,8 +387,8 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
                 this.remove(key);
             }
             else {
-                this.root = this.nodePut(this.root, key, data, conflict);
-                this.root.color = RBColor.BLACK;
+                this.#root = this.nodePut(this.#root, key, data, conflict);
+                this.#root.color = RBColor.BLACK;
             }
         }
     }
@@ -484,13 +484,13 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 
     public removeExisting(key: TKey) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        if ((!this.isRed(this.root!.left)) && (!this.isRed(this.root!.right))) {
+        if ((!this.isRed(this.#root!.left)) && (!this.isRed(this.#root!.right))) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.root!.color = RBColor.RED;
+            this.#root!.color = RBColor.RED;
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.root = this.nodeRemove(this.root!, key);
+        this.#root = this.nodeRemove(this.#root!, key);
     }
 
     private nodeRemove(node: RBNode<TKey, TData>, key: TKey) {
@@ -530,7 +530,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return this.balance(_node);
     }
     private height() {
-        return this.nodeHeight(this.root);
+        return this.nodeHeight(this.#root);
     }
     private nodeHeight(node: RBNode<TKey, TData> | undefined): number {
         if (node === undefined) {
@@ -543,7 +543,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 
     public floor(key: TKey) {
         if (!this.isEmpty()) {
-            return this.nodeFloor(this.root, key);
+            return this.nodeFloor(this.#root, key);
         }
     }
 
@@ -570,7 +570,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 
     public ceil(key: TKey) {
         if (!this.isEmpty()) {
-            return this.nodeCeil(this.root, key);
+            return this.nodeCeil(this.#root, key);
         }
     }
 
@@ -596,8 +596,8 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     }
 
     public min() {
-        if (this.root) {
-            return this.nodeMin(this.root);
+        if (this.#root) {
+            return this.nodeMin(this.#root);
         }
     }
 
@@ -611,8 +611,8 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     }
 
     public max() {
-        if (this.root) {
-            return this.nodeMax(this.root);
+        if (this.#root) {
+            return this.nodeMax(this.#root);
         }
     }
 
@@ -713,12 +713,12 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     }
 
     public mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
-        this.nodeMap(this.root, action, start, end);
+        this.nodeMap(this.#root, action, start, end);
     }
 
     public map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum) {
         // TODO: optimize to avoid comparisons
-        this.nodeMap(this.root, action, accum);
+        this.nodeMap(this.#root, action, accum);
     }
 
     public keys() {
@@ -740,11 +740,11 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
      * @param action - action to apply to each node
      */
     public walk(actions: RBNodeActions<TKey, TData>) {
-        this.nodeWalk(this.root, actions);
+        this.nodeWalk(this.#root, actions);
     }
 
     public walkBackward(actions: RBNodeActions<TKey, TData>) {
-        this.nodeWalkBackward(this.root, actions);
+        this.nodeWalkBackward(this.#root, actions);
     }
 
     private nodeWalk(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>): boolean {
@@ -971,11 +971,11 @@ export interface ProxString<T> {
 }
 
 export class TST<T> {
-    private n = 0;
-    private root: TSTNode<T> | undefined;
+    #n = 0;
+    #root: TSTNode<T> | undefined;
 
     public size() {
-        return this.n;
+        return this.#n;
     }
 
     private contains(key: string) {
@@ -983,7 +983,7 @@ export class TST<T> {
     }
 
     public get(key: string) {
-        const x = this.nodeGet(this.root, key, 0);
+        const x = this.nodeGet(this.#root, key, 0);
         if (x === undefined) {
             return undefined;
         }
@@ -1009,9 +1009,9 @@ export class TST<T> {
 
     public put(key: string, val: T) {
         if (!this.contains(key)) {
-            this.n++;
+            this.#n++;
         }
-        this.root = this.nodePut(this.root, key, val, 0);
+        this.#root = this.nodePut(this.#root, key, val, 0);
         // console.log(`put ${key}`);
     }
 
@@ -1038,14 +1038,14 @@ export class TST<T> {
 
     public neighbors(text: string, distance = 2) {
         let q = <ProxString<T>[]>[];
-        this.nodeProximity(this.root, { text: "" }, 0, text, distance, q);
+        this.nodeProximity(this.#root, { text: "" }, 0, text, distance, q);
         q = q.filter((value) => (value.text.length > 0));
         return q;
     }
 
     public keysWithPrefix(text: string) {
         const q = <string[]>[];
-        const x = this.nodeGet(this.root, text, 0);
+        const x = this.nodeGet(this.#root, text, 0);
         if (x === undefined) {
             return q;
         }
@@ -1082,12 +1082,12 @@ export class TST<T> {
     }
 
     public map(fn: (key: string, val: T) => void) {
-        this.mapNode(this.root, { text: "" }, fn);
+        this.mapNode(this.#root, { text: "" }, fn);
     }
 
     public pairsWithPrefix(text: string) {
         const q = <TSTResult<T>[]>[];
-        const x = this.nodeGet(this.root, text, 0);
+        const x = this.nodeGet(this.#root, text, 0);
         if (x === undefined) {
             return q;
         }

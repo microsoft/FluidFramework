@@ -52,8 +52,8 @@ interface IMessageContents {
  * All the logic of replay tool
  */
 export class ClientReplayTool {
-    private errorCount = 0;
-    private deltaStorageService: FileDeltaStorageService;
+    #errorCount = 0;
+    #deltaStorageService: FileDeltaStorageService;
     public constructor(private readonly args: ReplayArgs) { }
 
     public async Go(): Promise<boolean> {
@@ -72,17 +72,17 @@ export class ClientReplayTool {
 
         process.removeListener("unhandledRejection", listener);
 
-        return this.errorCount === 0;
+        return this.#errorCount === 0;
     }
 
     private shouldReportError() {
         // Report only first 5 errors
-        this.errorCount++;
+        this.#errorCount++;
         const errorsToReport = 5;
-        if (this.errorCount <= errorsToReport) {
+        if (this.#errorCount <= errorsToReport) {
             return true;
         }
-        if (this.errorCount === errorsToReport + 1) {
+        if (this.#errorCount === errorsToReport + 1) {
             console.error("\n!!! Too many errors - stopped reporting errors !!!");
         }
         return false;
@@ -108,7 +108,7 @@ export class ClientReplayTool {
             return Promise.reject(new Error("File does not exist"));
         }
 
-        this.deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
+        this.#deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
     }
 
     private async mainCycle() {
@@ -116,7 +116,7 @@ export class ClientReplayTool {
         const mergeTreeAttachTrees = new Map<string, { tree: ITree, specToSeg(segment: IJSONSegment): ISegment }>();
         const mergeTreeMessages = new Array<IFullPathSequencedDocumentMessage>();
         const chunkMap = new Map<string, string[]>();
-        for (const message of this.deltaStorageService.getFromWebSocket(0, this.args.to)) {
+        for (const message of this.#deltaStorageService.getFromWebSocket(0, this.args.to)) {
             if (message.type === ContainerMessageType.ChunkedOp) {
                 const chunk = JSON.parse(message.contents as string) as IChunkedOp;
                 if (!chunkMap.has(message.clientId)) {

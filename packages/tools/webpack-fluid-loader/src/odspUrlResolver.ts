@@ -12,7 +12,7 @@ import {
 import { OdspDriverUrlResolver, createOdspUrl, createOdspCreateContainerRequest } from "@fluidframework/odsp-driver";
 
 export class OdspUrlResolver implements IUrlResolver {
-    private readonly driverUrlResolver = new OdspDriverUrlResolver();
+    readonly #driverUrlResolver = new OdspDriverUrlResolver();
 
     constructor(
         private readonly server: string,
@@ -21,7 +21,7 @@ export class OdspUrlResolver implements IUrlResolver {
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         try {
-            const resolvedUrl = await this.driverUrlResolver.resolve(request);
+            const resolvedUrl = await this.#driverUrlResolver.resolve(request);
             return resolvedUrl;
         } catch (error) { }
 
@@ -46,7 +46,7 @@ export class OdspUrlResolver implements IUrlResolver {
             dataStorePath,
         });
 
-        return this.driverUrlResolver.resolve({ url: odspUrl, headers: request.headers });
+        return this.#driverUrlResolver.resolve({ url: odspUrl, headers: request.headers });
     }
 
     private formFilePath(documentId: string): string {
@@ -55,7 +55,7 @@ export class OdspUrlResolver implements IUrlResolver {
     }
 
     public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
-        return this.driverUrlResolver.getAbsoluteUrl(resolvedUrl, relativeUrl);
+        return this.#driverUrlResolver.getAbsoluteUrl(resolvedUrl, relativeUrl);
     }
 
     public async createCreateNewRequest(fileName: string): Promise<IRequest> {

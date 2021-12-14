@@ -147,23 +147,23 @@ export class ContainerContext implements IContainerContext {
         return this.container.storage;
     }
 
-    private _runtime: IRuntime | undefined;
+    #runtime: IRuntime | undefined;
     private get runtime() {
-        if (this._runtime === undefined) {
+        if (this.#runtime === undefined) {
             throw new Error("Attempted to access runtime before it was defined");
         }
-        return this._runtime;
+        return this.#runtime;
     }
 
-    private _disposed = false;
+    #disposed = false;
 
     public get disposed() {
-        return this._disposed;
+        return this.#disposed;
     }
 
     public get codeDetails() { return this._codeDetails; }
 
-    private readonly _fluidModuleP: Promise<IFluidModuleWithDetails>;
+    readonly #fluidModuleP: Promise<IFluidModuleWithDetails>;
 
     constructor(
         private readonly container: Container,
@@ -185,7 +185,7 @@ export class ContainerContext implements IContainerContext {
 
     ) {
         this.taggedLogger = container.subLogger;
-        this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
+        this.#fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
             async () => this.loadCodeModule(_codeDetails),
         );
         this.attachListener();
@@ -196,10 +196,10 @@ export class ContainerContext implements IContainerContext {
     }
 
     public dispose(error?: Error): void {
-        if (this._disposed) {
+        if (this.#disposed) {
             return;
         }
-        this._disposed = true;
+        this.#disposed = true;
 
         this.runtime.dispose(error);
         this.quorum.dispose();
@@ -269,7 +269,7 @@ export class ContainerContext implements IContainerContext {
             comparers.push(maybeCompareCodeLoader.IFluidCodeDetailsComparer);
         }
 
-        const moduleWithDetails = await this._fluidModuleP;
+        const moduleWithDetails = await this.#fluidModuleP;
         const maybeCompareExport: Partial<IProvideFluidCodeDetailsComparer> | undefined =
             moduleWithDetails.module?.fluidExport;
         if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
@@ -305,7 +305,7 @@ export class ContainerContext implements IContainerContext {
 
     private async getRuntimeFactory(): Promise<IRuntimeFactory> {
         const fluidExport: FluidObject<IProvideRuntimeFactory> | undefined =
-            (await this._fluidModuleP).module?.fluidExport;
+            (await this.#fluidModuleP).module?.fluidExport;
         const runtimeFactory = fluidExport?.IRuntimeFactory;
         if (runtimeFactory === undefined) {
             throw new Error(PackageNotFactoryError);
@@ -316,7 +316,7 @@ export class ContainerContext implements IContainerContext {
 
     private async instantiateRuntime(existing: boolean) {
         const runtimeFactory = await this.getRuntimeFactory();
-        this._runtime = await runtimeFactory.instantiateRuntime(this, existing);
+        this.#runtime = await runtimeFactory.instantiateRuntime(this, existing);
     }
 
     private attachListener() {

@@ -26,9 +26,9 @@ import {
 export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
     public readonly isEmpty: boolean;
     public readonly deltaOperation: TOperation;
-    private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>;
-    private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation> | undefined>;
-    private readonly pLast: Lazy<ISequenceDeltaRange<TOperation> | undefined>;
+    readonly #sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>;
+    readonly #pFirst: Lazy<ISequenceDeltaRange<TOperation> | undefined>;
+    readonly #pLast: Lazy<ISequenceDeltaRange<TOperation> | undefined>;
 
     constructor(
         public readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>,
@@ -37,7 +37,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
         this.isEmpty = deltaArgs.deltaSegments.length === 0;
         this.deltaOperation = deltaArgs.operation;
 
-        this.sortedRanges = new Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>(
+        this.#sortedRanges = new Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>(
             () => {
                 const set = new SortedSegmentSet<ISequenceDeltaRange<TOperation>>();
                 this.deltaArgs.deltaSegments.forEach((delta) => {
@@ -52,20 +52,20 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
                 return set;
             });
 
-        this.pFirst = new Lazy<ISequenceDeltaRange<TOperation>>(
+        this.#pFirst = new Lazy<ISequenceDeltaRange<TOperation>>(
             () => {
                 if (this.isEmpty) {
                     return undefined;
                 }
-                return this.sortedRanges.value.items[0];
+                return this.#sortedRanges.value.items[0];
             });
 
-        this.pLast = new Lazy<ISequenceDeltaRange<TOperation>>(
+        this.#pLast = new Lazy<ISequenceDeltaRange<TOperation>>(
             () => {
                 if (this.isEmpty) {
                     return undefined;
                 }
-                return this.sortedRanges.value.items[this.sortedRanges.value.size - 1];
+                return this.#sortedRanges.value.items[this.#sortedRanges.value.size - 1];
             });
     }
 
@@ -74,7 +74,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
      * These may not be continuos.
      */
     public get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[] {
-        return this.sortedRanges.value.items;
+        return this.#sortedRanges.value.items;
     }
 
     /**
@@ -89,7 +89,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
      * like in the case where a delete comes in for a previously deleted range
      */
     public get first(): Readonly<ISequenceDeltaRange<TOperation>> | undefined {
-        return this.pFirst.value;
+        return this.#pFirst.value;
     }
 
     /**
@@ -97,7 +97,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
      * like in the case where a delete comes in for a previously deleted range
      */
     public get last(): Readonly<ISequenceDeltaRange<TOperation>> | undefined {
-        return this.pLast.value;
+        return this.#pLast.value;
     }
 }
 
@@ -162,21 +162,21 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
 }
 
 class Lazy<T> {
-    private pValue: T;
-    private pEvaluated: boolean;
+    #pValue: T;
+    #pEvaluated: boolean;
     constructor(private readonly valueGenerator: () => T) {
-        this.pEvaluated = false;
+        this.#pEvaluated = false;
     }
 
     public get evaluated(): boolean {
-        return this.pEvaluated;
+        return this.#pEvaluated;
     }
 
     public get value(): T {
-        if (!this.pEvaluated) {
-            this.pEvaluated = true;
-            this.pValue = this.valueGenerator();
+        if (!this.#pEvaluated) {
+            this.#pEvaluated = true;
+            this.#pValue = this.valueGenerator();
         }
-        return this.pValue;
+        return this.#pValue;
     }
 }

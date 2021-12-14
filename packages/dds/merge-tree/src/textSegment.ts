@@ -150,7 +150,7 @@ export class MergeTreeTextHelper {
                 `ref cli ${glc(this.mergeTree, clientId)} refSeq ${refSeq}`);
         }
         this.mergeTree.mapRange<ITextAndMarkerAccumulator>(
-            { leaf: this.gatherText },
+            { leaf: this.#gatherText },
             refSeq,
             clientId,
             accum,
@@ -171,7 +171,7 @@ export class MergeTreeTextHelper {
                 `ref cli ${glc(this.mergeTree, clientId)} refSeq ${refSeq}`);
         }
         this.mergeTree.mapRange<ITextAccumulator>(
-            { leaf: this.gatherText },
+            { leaf: this.#gatherText },
             refSeq,
             clientId,
             accum,
@@ -193,7 +193,7 @@ export class MergeTreeTextHelper {
         return range;
     }
 
-    private readonly gatherText = (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number,
+    readonly #gatherText = (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number,
         end: number, accumText: ITextAccumulatorType) => {
         let _start = start;
         if (TextSegment.is(segment)) {

@@ -124,7 +124,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     /**
      * The current ink snapshot.
      */
-    private inkData: InkData = new InkData();
+    #inkData: InkData = new InkData();
 
     /**
      * Create a new Ink.
@@ -178,14 +178,14 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
      * {@inheritDoc IInk.getStrokes}
      */
     public getStrokes(): IInkStroke[] {
-        return this.inkData.getStrokes();
+        return this.#inkData.getStrokes();
     }
 
     /**
      * {@inheritDoc IInk.getStroke}
      */
     public getStroke(key: string): IInkStroke {
-        return this.inkData.getStroke(key);
+        return this.#inkData.getStroke(key);
     }
 
     /**
@@ -199,7 +199,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
                     path: snapshotFileName,
                     type: TreeEntry.Blob,
                     value: {
-                        contents: JSON.stringify(this.inkData.getSerializable()),
+                        contents: JSON.stringify(this.#inkData.getSerializable()),
                         encoding: "utf-8",
                     },
                 },
@@ -214,7 +214,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const content = await readAndParse<ISerializableInk>(storage, snapshotFileName);
-        this.inkData = new InkData(content);
+        this.#inkData = new InkData(content);
     }
 
     /**
@@ -252,7 +252,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
      * @param operation - The operation object
      */
     private executeClearOperation(operation: IClearOperation): void {
-        this.inkData.clear();
+        this.#inkData.clear();
         this.emit("clear", operation);
     }
 
@@ -267,7 +267,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
             points: [],
             pen: operation.pen,
         };
-        this.inkData.addStroke(stroke);
+        this.#inkData.addStroke(stroke);
         this.emit("createStroke", operation);
         return stroke;
     }

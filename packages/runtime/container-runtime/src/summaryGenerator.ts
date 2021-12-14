@@ -152,7 +152,7 @@ export class SummarizeResultBuilder {
  * This class generates and tracks a summary attempt.
  */
 export class SummaryGenerator {
-    private readonly summarizeTimer: Timer;
+    readonly #summarizeTimer: Timer;
     constructor(
         private readonly pendingAckTimer: IPromiseTimer,
         private readonly heuristicData: ISummarizeHeuristicData,
@@ -161,7 +161,7 @@ export class SummaryGenerator {
         private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
         private readonly logger: ITelemetryLogger,
     ) {
-        this.summarizeTimer = new Timer(
+        this.#summarizeTimer = new Timer(
             maxSummarizeTimeoutTime,
             () => this.summarizeTimerHandler(maxSummarizeTimeoutTime, 1),
         );
@@ -235,7 +235,7 @@ export class SummaryGenerator {
         };
 
         // Wait to generate and send summary
-        this.summarizeTimer.start();
+        this.#summarizeTimer.start();
         // Use record type to prevent unexpected value types
         let summaryData: SubmitSummaryResult | undefined;
         let generateTelemetryProps: Record<string, string | number | boolean | undefined> = {};
@@ -288,7 +288,7 @@ export class SummaryGenerator {
             return fail("submitSummaryFailure", error);
         } finally {
             this.heuristicData.recordAttempt(summaryData?.referenceSequenceNumber);
-            this.summarizeTimer.clear();
+            this.#summarizeTimer.clear();
         }
 
         try {
@@ -377,11 +377,11 @@ export class SummaryGenerator {
         if (count < maxSummarizeTimeoutCount) {
             // Double and start a new timer
             const nextTime = time * 2;
-            this.summarizeTimer.start(nextTime, () => this.summarizeTimerHandler(nextTime, count + 1));
+            this.#summarizeTimer.start(nextTime, () => this.summarizeTimerHandler(nextTime, count + 1));
         }
     }
 
     public dispose() {
-        this.summarizeTimer.clear();
+        this.#summarizeTimer.clear();
     }
 }

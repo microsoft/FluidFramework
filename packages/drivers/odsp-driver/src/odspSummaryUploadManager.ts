@@ -47,7 +47,7 @@ function gatesMarkUnreferencedNodes() {
  */
 export class OdspSummaryUploadManager {
     // Last proposed handle of the uploaded app summary.
-    private lastSummaryProposalHandle: string | undefined;
+    #lastSummaryProposalHandle: string | undefined;
 
     constructor(
         private readonly snapshotUrl: string,
@@ -60,11 +60,11 @@ export class OdspSummaryUploadManager {
     public async writeSummaryTree(tree: api.ISummaryTree, context: ISummaryContext) {
         // If the last proposed handle is not the proposed handle of the acked summary(could happen when the last summary get nacked),
         // then re-initialize the caches with the previous ones else just update the previous caches with the caches from acked summary.
-        if (context.proposalHandle !== this.lastSummaryProposalHandle) {
+        if (context.proposalHandle !== this.#lastSummaryProposalHandle) {
             this.logger.sendTelemetryEvent({
                 eventName: "LastSummaryProposedHandleMismatch",
                 ackedSummaryProposedHandle: context.proposalHandle,
-                lastSummaryProposalHandle: this.lastSummaryProposalHandle,
+                lastSummaryProposalHandle: this.#lastSummaryProposalHandle,
             });
         }
         const result = await this.writeSummaryTreeCore(context.ackHandle, context.referenceSequenceNumber, tree);
@@ -72,7 +72,7 @@ export class OdspSummaryUploadManager {
         if (!result || !id) {
             throw new Error(`Failed to write summary tree`);
         }
-        this.lastSummaryProposalHandle = id;
+        this.#lastSummaryProposalHandle = id;
         return id;
     }
 

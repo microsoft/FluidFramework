@@ -40,15 +40,15 @@ export interface ISocketEvents extends IEvent {
 }
 
 class SocketReference extends TypedEventEmitter<ISocketEvents> {
-    private references: number = 1;
-    private delayDeleteTimeout: ReturnType<typeof setTimeout> | undefined;
-    private _socket: SocketIOClient.Socket | undefined;
+    #references: number = 1;
+    #delayDeleteTimeout: ReturnType<typeof setTimeout> | undefined;
+    #socket: SocketIOClient.Socket | undefined;
 
     // When making decisions about socket reuse, we do not reuse disconnected socket.
     // But we want to differentiate the following case from disconnected case:
     // Socket that never connected and never failed, it's in "attempting to connect" mode
     // such sockets should be reused, despite socket.disconnected === true
-    private isPendingInitialConnection = true;
+    #isPendingInitialConnection = true;
 
     // Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
     private static readonly socketIoSockets: Map<string, SocketReference> = new Map();
@@ -66,7 +66,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
         if (socketReference) {
             // Clear the pending deletion if there is one
             socketReference.clearTimer();
-            socketReference.references++;
+            socketReference.#references++;
         }
 
         return socketReference;
@@ -79,37 +79,37 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
      * @param isFatalError - true if the socket reference should be removed immediately due to a fatal error
      */
     public removeSocketIoReference(isFatalError: boolean) {
-        assert(this.references > 0, 0x09f /* "No more socketIO refs to remove!" */);
-        this.references--;
+        assert(this.#references > 0, 0x09f /* "No more socketIO refs to remove!" */);
+        this.#references--;
 
         // see comment in disconnected() getter
-        this.isPendingInitialConnection = false;
+        this.#isPendingInitialConnection = false;
 
         if (isFatalError || this.disconnected) {
             this.closeSocket();
             return;
         }
 
-        if (this.references === 0 && this.delayDeleteTimeout === undefined) {
-            this.delayDeleteTimeout = setTimeout(() => {
+        if (this.#references === 0 && this.#delayDeleteTimeout === undefined) {
+            this.#delayDeleteTimeout = setTimeout(() => {
                 // We should not get here with active users.
-                assert(this.references === 0, 0x0a0 /* "Unexpected socketIO references on timeout" */);
+                assert(this.#references === 0, 0x0a0 /* "Unexpected socketIO references on timeout" */);
                 this.closeSocket();
             }, socketReferenceBufferTime);
         }
     }
 
     public get socket() {
-        if (!this._socket) {
+        if (!this.#socket) {
             throw new Error(`Invalid socket for key "${this.key}`);
         }
-        return this._socket;
+        return this.#socket;
     }
 
     public constructor(public readonly key: string, socket: SocketIOClient.Socket) {
         super();
 
-        this._socket = socket;
+        this.#socket = socket;
         assert(!SocketReference.socketIoSockets.has(key), 0x220 /* "socket key collision" */);
         SocketReference.socketIoSockets.set(key, this);
 
@@ -124,7 +124,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
             // see comment in disconnected() getter
             // Setting it here to ensure socket reuse does not happen if new request to connect
             // comes in from "disconnect" listener below, before we close socket.
-            this.isPendingInitialConnection = false;
+            this.#isPendingInitialConnection = false;
 
             this.emit("server_disconnect", error);
             this.closeSocket();
@@ -132,14 +132,14 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
     }
 
     private clearTimer() {
-        if (this.delayDeleteTimeout !== undefined) {
-            clearTimeout(this.delayDeleteTimeout);
-            this.delayDeleteTimeout = undefined;
+        if (this.#delayDeleteTimeout !== undefined) {
+            clearTimeout(this.#delayDeleteTimeout);
+            this.#delayDeleteTimeout = undefined;
         }
     }
 
     private closeSocket() {
-        if (!this._socket) { return; }
+        if (!this.#socket) { return; }
 
         this.clearTimer();
 
@@ -147,8 +147,8 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
             0x0a1 /* "Socket reference set unexpectedly does not point to this socket!" */);
         SocketReference.socketIoSockets.delete(this.key);
 
-        const socket = this._socket;
-        this._socket = undefined;
+        const socket = this.#socket;
+        this.#socket = undefined;
 
         // Delay closing socket, to make sure all users of socket observe the same event that causes
         // this instance to close, and thus properly record reason for closure.
@@ -159,7 +159,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
     }
 
     private get disconnected() {
-        if (this._socket === undefined) { return true; }
+        if (this.#socket === undefined) { return true; }
         if (this.socket.connected) { return false; }
 
         // We have a socket that is not connected. Possible cases:
@@ -169,7 +169,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
         // We have to differentiate 1 from 2-3 (specifically 1 & 3) in order to be able to reuse socket in #3.
         // We will use the fact that socket had some activity. I.e. if socket disconnected, or client stopped using
         // socket, then removeSocketIoReference() will be called for it, and it will be the indiction that it's not #3.
-        return !this.isPendingInitialConnection;
+        return !this.#isPendingInitialConnection;
     }
 }
 
@@ -269,13 +269,13 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         return deltaConnection;
     }
 
-    private socketReference: SocketReference | undefined;
+    #socketReference: SocketReference | undefined;
 
-    private readonly requestOpsNoncePrefix: string;
-    private pushCallCounter = 0;
-    private readonly getOpsMap: Map<string, { start: number, from: number, to: number }> = new Map();
-    private flushOpNonce: string | undefined;
-    private flushDeferred: Deferred<FlushResult> | undefined;
+    readonly #requestOpsNoncePrefix: string;
+    #pushCallCounter = 0;
+    readonly #getOpsMap: Map<string, { start: number, from: number, to: number }> = new Map();
+    #flushOpNonce: string | undefined;
+    #flushDeferred: Deferred<FlushResult> | undefined;
 
     /**
      * Error raising for socket.io issues
@@ -339,8 +339,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         private readonly enableMultiplexing?: boolean,
     ) {
         super(socket, documentId, logger);
-        this.socketReference = socketReference;
-        this.requestOpsNoncePrefix = `${uuid()}-`;
+        this.#socketReference = socketReference;
+        this.#requestOpsNoncePrefix = `${uuid()}-`;
     }
 
     /**
@@ -359,8 +359,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             return;
         }
 
-        this.pushCallCounter++;
-        const nonce = `${this.requestOpsNoncePrefix}${this.pushCallCounter}`;
+        this.#pushCallCounter++;
+        const nonce = `${this.#requestOpsNoncePrefix}${this.#pushCallCounter}`;
         const start = performance.now();
 
         // We may keep keep accumulating memory for nothing, if we are not getting responses.
@@ -370,16 +370,16 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         // If it happens, we do not care about stale requests.
         // So track some number of requests, but log if we get too many in flight - that likely
         // indicates an error somewhere.
-        if (this.getOpsMap.size >= 5) {
+        if (this.#getOpsMap.size >= 5) {
             let time = start;
             let key: string | undefined;
-            for (const [keyCandidate, value] of this.getOpsMap.entries()) {
+            for (const [keyCandidate, value] of this.#getOpsMap.entries()) {
                 if (value.start <= time || key === undefined) {
                     time = value.start;
                     key = keyCandidate;
                 }
             }
-            const payloadToDelete = this.getOpsMap.get(key!)!;
+            const payloadToDelete = this.#getOpsMap.get(key!)!;
             this.logger.sendErrorEvent({
                 eventName: "GetOpsTooMany",
                 nonce,
@@ -388,9 +388,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                 length: payloadToDelete.to - payloadToDelete.from,
                 duration: performance.now() - payloadToDelete.start,
             });
-            this.getOpsMap.delete(key!);
+            this.#getOpsMap.delete(key!);
         }
-        this.getOpsMap.set(
+        this.#getOpsMap.set(
             nonce,
             {
                 start,
@@ -417,20 +417,20 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             throw new Error("flush() API is not supported by PUSH, required for single-commit summaries");
         }
 
-        this.pushCallCounter++;
-        const nonce = `${this.requestOpsNoncePrefix}${this.pushCallCounter}`;
+        this.#pushCallCounter++;
+        const nonce = `${this.#requestOpsNoncePrefix}${this.#pushCallCounter}`;
         // There should be only one flush ops in flight, kicked out by upload summary workflow
         // That said, it could timeout, and request could be repeated, so theoretically we can
         // get overlapping requests, but it should be very rare
-        if (this.flushDeferred !== undefined) {
+        if (this.#flushDeferred !== undefined) {
             this.logger.sendErrorEvent({ eventName: "FlushOpsTooMany" });
-            this.flushDeferred.reject("process involving flush() was cancelled OR unsupported concurrency");
+            this.#flushDeferred.reject("process involving flush() was cancelled OR unsupported concurrency");
         }
         this.socket.emit("flush_ops", this.clientId, { nonce });
 
-        this.flushOpNonce = nonce;
-        this.flushDeferred = new Deferred<FlushResult>();
-        return this.flushDeferred.promise;
+        this.#flushOpNonce = nonce;
+        this.#flushDeferred = new Deferred<FlushResult>();
+        return this.#flushDeferred.promise;
     }
 
     protected serverDisconnectHandler = (error: LoggingError & OdspError) => {
@@ -453,17 +453,17 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             };
         }
 
-        this.socketReference!.once("server_disconnect", this.serverDisconnectHandler);
+        this.#socketReference!.once("server_disconnect", this.serverDisconnectHandler);
 
         this.socket.on("get_ops_response", (result: IGetOpsResponse) => {
             const messages = result.messages;
-            const data = this.getOpsMap.get(result.nonce);
+            const data = this.#getOpsMap.get(result.nonce);
             // Due to socket multiplexing, this client may not have asked for any data
             // If so, there it most likely does not need these ops (otherwise it already asked for them)
-            // Also we may have deleted entry in this.getOpsMap due to too many requests and too slow response.
+            // Also we may have deleted entry in this.#getOpsMap due to too many requests and too slow response.
             // But not processing such result may push us into infinite loop of fast requests and dropping all responses
-            if (data !== undefined || result.nonce.indexOf(this.requestOpsNoncePrefix) === 0) {
-                this.getOpsMap.delete(result.nonce);
+            if (data !== undefined || result.nonce.indexOf(this.#requestOpsNoncePrefix) === 0) {
+                this.#getOpsMap.delete(result.nonce);
                 const common = {
                     eventName: "GetOps",
                     // We need nonce only to pair with GetOpsTooMany events, i.e. when record was deleted
@@ -491,7 +491,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         });
 
         this.socket.on("flush_ops_response", (result: IFlushOpsResponse) => {
-            if (this.flushOpNonce === result.nonce) {
+            if (this.#flushOpNonce === result.nonce) {
                 const seq = result.lastPersistedSequenceNumber;
                 let category: "generic" | "error" = "generic";
                 if (result.lastPersistedSequenceNumber === undefined || result.code !== 200) {
@@ -513,9 +513,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                     sequenceNumber: seq,
                     category,
                 });
-                this.flushDeferred!.resolve(result);
-                this.flushDeferred = undefined;
-                this.flushOpNonce = undefined;
+                this.#flushDeferred!.resolve(result);
+                this.#flushDeferred = undefined;
+                this.#flushOpNonce = undefined;
             }
         });
 
@@ -564,9 +564,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      * Disconnect from the websocket
      */
     protected disconnect(socketProtocolError: boolean, reason: any) {
-        const socket = this.socketReference;
+        const socket = this.#socketReference;
         assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
-        this.socketReference = undefined;
+        this.#socketReference = undefined;
 
         this.socket.off("server_disconnect", this.serverDisconnectHandler);
 

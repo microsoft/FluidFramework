@@ -54,34 +54,34 @@ export interface IWorkerArgs {
 }
 
 class ConcurrencyLimiter {
-    private readonly promises: Promise<void>[] = [];
-    private deferred: Deferred<void> | undefined;
+    readonly #promises: Promise<void>[] = [];
+    #deferred: Deferred<void> | undefined;
 
     constructor(private limit: number) { }
 
     async addWork(worker: () => Promise<void>) {
         this.limit--;
         if (this.limit < 0) {
-            assert(this.deferred === undefined);
-            this.deferred = new Deferred<void>();
-            await this.deferred.promise;
-            assert(this.deferred === undefined);
+            assert(this.#deferred === undefined);
+            this.#deferred = new Deferred<void>();
+            await this.#deferred.promise;
+            assert(this.#deferred === undefined);
             assert(this.limit >= 0);
         }
 
         const p = worker().then(() => {
             this.limit++;
-            if (this.deferred) {
+            if (this.#deferred) {
                 assert(this.limit === 0);
-                this.deferred.resolve();
-                this.deferred = undefined;
+                this.#deferred.resolve();
+                this.#deferred = undefined;
             }
         });
-        this.promises.push(p);
+        this.#promises.push(p);
     }
 
     async waitAll() {
-        return Promise.all(this.promises);
+        return Promise.all(this.#promises);
     }
 }
 

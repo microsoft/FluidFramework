@@ -45,11 +45,11 @@ export class SnapshotV1 {
     // for very chunky text, blob size can easily be 4x-8x of that number.
     public static readonly chunkSize: number = 10000;
 
-    private readonly header: MergeTreeHeaderMetadata;
-    private readonly segments: JsonSegmentSpecs[];
-    private readonly segmentLengths: number[];
-    private readonly logger: ITelemetryLogger;
-    private readonly chunkSize: number;
+    readonly #header: MergeTreeHeaderMetadata;
+    readonly #segments: JsonSegmentSpecs[];
+    readonly #segmentLengths: number[];
+    readonly #logger: ITelemetryLogger;
+    readonly #chunkSize: number;
 
     constructor(
         public mergeTree: MergeTree,
@@ -57,11 +57,11 @@ export class SnapshotV1 {
         public filename?: string,
         public onCompletion?: () => void,
     ) {
-        this.logger = ChildLogger.create(logger, "Snapshot");
-        this.chunkSize = mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotV1.chunkSize;
+        this.#logger = ChildLogger.create(logger, "Snapshot");
+        this.#chunkSize = mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotV1.chunkSize;
 
         const { currentSeq, minSeq } = mergeTree.getCollabWindow();
-        this.header = {
+        this.#header = {
             minSequenceNumber: minSeq,
             sequenceNumber: currentSeq,
             orderedChunkMetadata: [],
@@ -69,8 +69,8 @@ export class SnapshotV1 {
             totalSegmentCount: 0,
         };
 
-        this.segments = [];
-        this.segmentLengths = [];
+        this.#segments = [];
+        this.#segmentLengths = [];
     }
 
     private getSeqLengthSegs(
@@ -106,27 +106,27 @@ export class SnapshotV1 {
         bind: IFluidHandle,
     ): ITree {
         const chunks: MergeTreeChunkV1[] = [];
-        this.header.totalSegmentCount = 0;
-        this.header.totalLength = 0;
+        this.#header.totalSegmentCount = 0;
+        this.#header.totalLength = 0;
         do {
             const chunk = this.getSeqLengthSegs(
-                this.segments,
-                this.segmentLengths,
-                this.chunkSize,
-                this.header.totalSegmentCount);
+                this.#segments,
+                this.#segmentLengths,
+                this.#chunkSize,
+                this.#header.totalSegmentCount);
             chunks.push(chunk);
-            this.header.totalSegmentCount += chunk.segmentCount;
-            this.header.totalLength += chunk.length;
-        } while (this.header.totalSegmentCount < this.segments.length);
+            this.#header.totalSegmentCount += chunk.segmentCount;
+            this.#header.totalLength += chunk.length;
+        } while (this.#header.totalSegmentCount < this.#segments.length);
 
         // The do while loop should have added at least one chunk
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const headerChunk = chunks.shift()!;
-        headerChunk.headerMetadata = this.header;
+        headerChunk.headerMetadata = this.#header;
         headerChunk.headerMetadata.orderedChunkMetadata = [{ id: SnapshotLegacy.header }];
         const entries: ITreeEntry[] = chunks.map<ITreeEntry>((chunk, index) => {
             const id = `${SnapshotLegacy.body}_${index}`;
-            this.header.orderedChunkMetadata.push({ id });
+            this.#header.orderedChunkMetadata.push({ id });
             return {
                 mode: FileMode.File,
                 path: id,
@@ -135,7 +135,7 @@ export class SnapshotV1 {
                     contents: serializeAsMaxSupportedVersion(
                         id,
                         chunk,
-                        this.logger,
+                        this.#logger,
                         this.mergeTree.options,
                         serializer,
                         bind),
@@ -154,7 +154,7 @@ export class SnapshotV1 {
                         contents: serializeAsMaxSupportedVersion(
                             SnapshotLegacy.header,
                             headerChunk,
-                            this.logger,
+                            this.#logger,
                             this.mergeTree.options,
                             serializer,
                             bind),
@@ -170,12 +170,12 @@ export class SnapshotV1 {
 
     extractSync() {
         const mergeTree = this.mergeTree;
-        const minSeq = this.header.minSequenceNumber;
+        const minSeq = this.#header.minSequenceNumber;
 
         // Helper to add the given `MergeTreeChunkV0SegmentSpec` to the snapshot.
         const pushSegRaw = (json: JsonSegmentSpecs, length: number) => {
-            this.segments.push(json);
-            this.segmentLengths.push(length);
+            this.#segments.push(json);
+            this.#segmentLengths.push(length);
         };
 
         // Helper to serialize the given `segment` and add it to the snapshot (if a segment is provided).
@@ -260,7 +260,7 @@ export class SnapshotV1 {
         // If the last segment in the walk was coalescable, push it now.
         pushSeg(prev);
 
-        return this.segments;
+        return this.#segments;
     }
 
     public static async loadChunk(

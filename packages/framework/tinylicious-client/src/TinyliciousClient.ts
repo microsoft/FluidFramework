@@ -33,8 +33,8 @@ import { TinyliciousAudience } from "./TinyliciousAudience";
  * TinyliciousClient provides the ability to have a Fluid object backed by a Tinylicious service
  */
 export class TinyliciousClient {
-    private readonly documentServiceFactory: IDocumentServiceFactory;
-    private readonly urlResolver: IUrlResolver;
+    readonly #documentServiceFactory: IDocumentServiceFactory;
+    readonly #urlResolver: IUrlResolver;
 
     /**
      * Creates a new client instance using configuration parameters.
@@ -42,11 +42,11 @@ export class TinyliciousClient {
      */
     constructor(private readonly props?: TinyliciousClientProps) {
         const tokenProvider = new InsecureTinyliciousTokenProvider();
-        this.urlResolver = new InsecureTinyliciousUrlResolver(
+        this.#urlResolver = new InsecureTinyliciousUrlResolver(
             this.props?.connection?.port,
             this.props?.connection?.domain,
         );
-        this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
+        this.#documentServiceFactory = new RouterliciousDocumentServiceFactory(
             tokenProvider,
         );
     }
@@ -122,8 +122,8 @@ export class TinyliciousClient {
         const module = { fluidExport: containerRuntimeFactory };
         const codeLoader = { load: async () => module };
         const loader = new Loader({
-            urlResolver: this.urlResolver,
-            documentServiceFactory: this.documentServiceFactory,
+            urlResolver: this.#urlResolver,
+            documentServiceFactory: this.#documentServiceFactory,
             codeLoader,
             logger: this.props?.logger,
         });

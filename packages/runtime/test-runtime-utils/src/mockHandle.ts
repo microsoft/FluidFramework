@@ -10,10 +10,10 @@ import { AttachState } from "@fluidframework/container-definitions";
  * Mock implementation of IFluidHandle.
  */
 export class MockHandle<T> implements IFluidHandle {
-    private graphAttachState: AttachState = AttachState.Detached;
+    #graphAttachState: AttachState = AttachState.Detached;
 
     public get IFluidHandle(): IFluidHandle { return this; }
-    public get isAttached(): boolean { return this.graphAttachState === AttachState.Attached; }
+    public get isAttached(): boolean { return this.#graphAttachState === AttachState.Attached; }
 
     constructor(
         protected readonly value: T,
@@ -22,6 +22,6 @@ export class MockHandle<T> implements IFluidHandle {
     ) { }
 
     public async get(): Promise<any> { return this.value; }
-    public attachGraph(): void { this.graphAttachState = AttachState.Attached; }
+    public attachGraph(): void { this.#graphAttachState = AttachState.Attached; }
     public bind() { throw Error("MockHandle.bind() unimplemented."); }
 }

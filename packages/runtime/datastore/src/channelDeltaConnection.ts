@@ -9,11 +9,11 @@ import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-defin
 import { CreateProcessingError } from "@fluidframework/container-utils";
 
 export class ChannelDeltaConnection implements IDeltaConnection {
-    private _handler: IDeltaHandler | undefined;
+    #handler: IDeltaHandler | undefined;
 
     private get handler(): IDeltaHandler {
-        assert(!!this._handler, 0x177 /* "Missing delta handler" */);
-        return this._handler;
+        assert(!!this.#handler, 0x177 /* "Missing delta handler" */);
+        return this.#handler;
     }
     public get connected(): boolean {
         return this._connected;
@@ -27,8 +27,8 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     }
 
     public attach(handler: IDeltaHandler) {
-        assert(this._handler === undefined, 0x178 /* "Missing delta handler on attach" */);
-        this._handler = handler;
+        assert(this.#handler === undefined, 0x178 /* "Missing delta handler on attach" */);
+        this.#handler = handler;
     }
 
     public setConnectionState(connected: boolean) {

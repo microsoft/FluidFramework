@@ -26,9 +26,9 @@ import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
 const packageName = `${pkgName}@${pkgVersion}`;
 
 class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
-    private error: boolean = false;
-    private readonly schema = new Map<string, number>();
-    private logs: ITelemetryBaseEvent[] = [];
+    #error: boolean = false;
+    readonly #schema = new Map<string, number>();
+    #logs: ITelemetryBaseEvent[] = [];
 
     public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
         super();
@@ -37,14 +37,14 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     async flush(runInfo?: { url: string, runId?: number }): Promise<void> {
         const baseFlushP = this.baseLogger?.flush();
 
-        if (this.error && runInfo !== undefined) {
-            const logs = this.logs;
+        if (this.#error && runInfo !== undefined) {
+            const logs = this.#logs;
             const outputDir = `${__dirname}/output/${crypto.createHash("md5").update(runInfo.url).digest("hex")}`;
             if (!fs.existsSync(outputDir)) {
                 fs.mkdirSync(outputDir, { recursive: true });
             }
             // sort from most common column to least common
-            const schema = [...this.schema].sort((a, b) => b[1] - a[1]).map((v) => v[0]);
+            const schema = [...this.#schema].sort((a, b) => b[1] - a[1]).map((v) => v[0]);
             const data = logs.reduce(
                 (file, event) => `${file}\n${schema.reduce((line, k) => `${line}${event[k] ?? ""},`, "")}`,
                 schema.join(","));
@@ -53,9 +53,9 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
                 filePath,
                 data);
         }
-        this.schema.clear();
-        this.error = false;
-        this.logs = [];
+        this.#schema.clear();
+        this.#error = false;
+        this.#logs = [];
         return baseFlushP;
     }
     send(event: ITelemetryBaseEvent): void {
@@ -63,11 +63,11 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 
         event.Event_Time = Date.now();
         // keep track of the frequency of every log event, as we'll sort by most common on write
-        Object.keys(event).forEach((k) => this.schema.set(k, (this.schema.get(k) ?? 0) + 1));
+        Object.keys(event).forEach((k) => this.#schema.set(k, (this.#schema.get(k) ?? 0) + 1));
         if (event.category === "error") {
-            this.error = true;
+            this.#error = true;
         }
-        this.logs.push(event);
+        this.#logs.push(event);
     }
 }
 
