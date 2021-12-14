@@ -58,7 +58,7 @@
     "@types/json5": "^0.0.30",
     "@types/lodash.isequal": "^4.5.5",
     "@types/minimatch": "3.0.5",
-    "@types/node": "^14.14.0",
+    "@types/node": "^14.18.0",
     "@types/rimraf": "^2.0.3",
     "@types/semver": "^7.1.0",
     "@types/shelljs": "^0.8.8",
