@@ -63,10 +63,21 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const createFluidObject = async (
+const createFluidObject = (async (
     dataStoreContext: IFluidDataStoreContext,
     type: string,
-) => dataStoreContext.containerRuntime.createDataStore(type);
+) => {
+    const entrypoint = await dataStoreContext.containerRuntime.createDataStore(type);
+    if(entrypoint.handle) {
+        const obj: FluidObject<ITestFluidObject> = await entrypoint.handle.get();
+        if(obj.ITestFluidObject) {
+            return obj.ITestFluidObject;
+        }
+    }
+    return requestFluidObject<ITestFluidObject>(
+        entrypoint,
+        "");
+});
 
 describeFullCompat("Detached Container", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -132,16 +143,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         const subDataStore = await createFluidObject(dataStore.context, "default");
         dataStore.root.set("attachKey", subDataStore.handle);
 
-        const subDataStoreTestObj: FluidObject<ITestFluidObject> | undefined =
-            await subDataStore.handle?.get();
-
         // Get the sub dataStore's root channel and verify that it is attached.
-        const testChannel = await subDataStoreTestObj?.ITestFluidObject?.runtime.getChannel("root");
-        assert.strictEqual(testChannel?.isAttached(), false, "Channel should be detached!!");
-        assert.strictEqual(
-            subDataStoreTestObj?.ITestFluidObject?.context.attachState,
-            AttachState.Detached,
-            "DataStore should be detached!!");
+        const testChannel = await subDataStore.runtime.getChannel("root");
+        assert.strictEqual(testChannel.isAttached(), false, "Channel should be detached!!");
+        assert.strictEqual(subDataStore.context.attachState, AttachState.Detached, "DataStore should be detached!!");
     });
 
     it("DataStores in attached container", async () => {
@@ -157,19 +162,14 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         // Now attach the container
         await container.attach(request);
 
-        const testDataStoreObj: FluidObject<ITestFluidObject> | undefined =
-            await testDataStore.handle?.get();
-
-        assert(testDataStoreObj?.ITestFluidObject?.runtime.attachState !== AttachState.Detached,
+        assert(testDataStore.runtime.attachState !== AttachState.Detached,
             "DataStore should be attached!!");
 
         // Get the sub dataStore's "root" channel and verify that it is attached.
-        const testChannel = await testDataStoreObj?.ITestFluidObject?.runtime.getChannel("root");
-        assert.strictEqual(testChannel?.isAttached(), true, "Channel should be attached!!");
+        const testChannel = await testDataStore.runtime.getChannel("root");
+        assert.strictEqual(testChannel.isAttached(), true, "Channel should be attached!!");
 
-        assert.strictEqual(
-            testDataStoreObj?.ITestFluidObject?.context.attachState,
-            AttachState.Attached, "DataStore should be attached!!");
+        assert.strictEqual(testDataStore.context.attachState, AttachState.Attached, "DataStore should be attached!!");
     });
 
     it("Load attached container and check for dataStores", async () => {
@@ -192,23 +192,20 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         const requestUrl2 = await provider.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
 
-        const subDataStore1TestObj: FluidObject<ITestFluidObject> | undefined =
-           await subDataStore1.handle?.get();
-
         // Get the sub dataStore and assert that it is attached.
-        const response2 = await container2.request({ url: `/${subDataStore1TestObj?.ITestFluidObject?.context.id}` });
+        const response2 = await container2.request({ url: `/${subDataStore1.context.id}` });
         const subDataStore2 = response2.value as ITestFluidObject;
         assert(subDataStore2.runtime.attachState !== AttachState.Detached,
             "DataStore should be attached!!");
 
         // Verify the attributes of the root channel of both sub dataStores.
-        const testChannel1 = await subDataStore1TestObj?.ITestFluidObject?.runtime.getChannel("root");
+        const testChannel1 = await subDataStore1.runtime.getChannel("root");
         const testChannel2 = await subDataStore2.runtime.getChannel("root");
         assert.strictEqual(testChannel2.isAttached(), true, "Channel should be attached!!");
-        assert.strictEqual(testChannel2.isAttached(), testChannel1?.isAttached(),
+        assert.strictEqual(testChannel2.isAttached(), testChannel1.isAttached(),
             "Value for isAttached should persist!!");
 
-        assert.strictEqual(JSON.stringify(testChannel2.summarize()), JSON.stringify(testChannel1?.summarize()),
+        assert.strictEqual(JSON.stringify(testChannel2.summarize()), JSON.stringify(testChannel1.summarize()),
             "Value for summarize should be same!!");
     });
 
@@ -660,7 +657,7 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         // Get the root dataStore from the detached container.
         const response2 = await container2.request({ url: "/" });
         const dataStore2 = response2.value as ITestFluidObject;
-        assert.strictEqual(dataStore2.root.get("attachKey").absolutePath, subDataStore1?.handle?.absolutePath,
+        assert.strictEqual(dataStore2.root.get("attachKey").absolutePath, subDataStore1.handle.absolutePath,
             "Stored handle should match!!");
     });
 });
