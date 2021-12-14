@@ -41,11 +41,17 @@ export class LeaderElection {
             this.dataStoreRuntime.submitSignal("leaderMessage", "leaderMessage");
             this.updateLastPinged();
         }else if(this.leaderId === undefined) {
-            this.logger.sendTelemetryEvent({eventName: "LeaderUndefinedEventError"});
+            this.logger.sendTelemetryEvent({
+                eventName: "LeaderUndefinedEventError",
+                testHarnessEvent: true,
+            });
         }else {
             const current = Date.now();
             if(this.lastPinged !== undefined && current - this.lastPinged > this.leaderWait) {
-                this.logger.sendTelemetryEvent({eventName: "LeaderLostEventError"});
+                this.logger.sendTelemetryEvent({
+                    eventName: "LeaderLostEventError",
+                    testHarnessEvent: true,
+                });
                 this.prevPing = this.lastPinged;
                 this.lastPinged = undefined;
             }
@@ -56,7 +62,10 @@ export class LeaderElection {
         // eslint-disable-next-line no-null/no-null
         if(signal.clientId !== null && signal.content === "leaderMessage") {
             if(this.leaderId !== signal.clientId) {
-                this.logger.sendTelemetryEvent({eventName: "UnexpectedLeaderEventWarning"});
+                this.logger.sendTelemetryEvent({
+                    eventName: "UnexpectedLeaderEventWarning",
+                    testHarnessEvent: true,
+                });
             }
             this.updateLastPinged();
         }
@@ -66,7 +75,11 @@ export class LeaderElection {
         this.lastPinged = Date.now();
         if(this.lastPinged === undefined && this.prevPing !== undefined) {
             const time = this.lastPinged - this.prevPing;
-            this.logger.sendTelemetryEvent({eventName: "LeaderFound", time});
+            this.logger.sendTelemetryEvent({
+                eventName: "LeaderFound",
+                time,
+                testHarnessEvent: true,
+            });
         }
     }
 

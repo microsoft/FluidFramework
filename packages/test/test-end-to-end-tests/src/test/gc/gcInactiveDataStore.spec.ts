@@ -122,8 +122,8 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
             mockLogger.matchEvents([
                 {
                     eventName: inactiveObjectChangedEvent,
-                    deleteTimeoutMs,
-                    inactiveNodeId: `/${dataStore1.id}`,
+                    timeout: deleteTimeoutMs,
+                    id: `/${dataStore1.id}`,
                 },
             ]),
             "inactiveObjectChanged event not generated as expected",
@@ -148,8 +148,8 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
             mockLogger.matchEvents([
                 {
                     eventName: inactiveObjectRevivedEvent,
-                    deleteTimeoutMs,
-                    inactiveNodeId: `/${dataStore1.id}`,
+                    timeout: deleteTimeoutMs,
+                    id: `/${dataStore1.id}`,
                 },
             ]),
             "inactiveObjectRevived event not generated as expected",
