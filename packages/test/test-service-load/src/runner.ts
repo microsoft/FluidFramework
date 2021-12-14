@@ -379,7 +379,7 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
                 category: "metric",
                 eventName: "Fluid Operations Sent",
                 value: submitedOps,
-                clientId: container.clientId ?? "",
+                clientId: container.clientId,
                 userName: getUserName(container),
             });
         }
@@ -388,7 +388,7 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
                 category: "metric",
                 eventName: "Fluid Operations Received",
                 value: receivedOps,
-                clientId: container.clientId ?? "",
+                clientId: container.clientId,
                 userName: getUserName(container),
             });
         }

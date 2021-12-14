@@ -204,8 +204,13 @@ function setupTelemetry(
             value: 1,
             username,
             runId,
-            error: e.message,
         });
+        logger.sendErrorEvent({
+            eventName: "Runner Start Error",
+            username,
+            runId,
+        },
+        e);
     });
 
     process.once("exit", (code) => {
