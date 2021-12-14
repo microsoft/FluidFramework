@@ -40,6 +40,16 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
     attachGraph(): void;
 
     resolveHandle(request: IRequest): Promise<IResponse>;
+
+    /**
+     * Should be called when a new reference is added by this context. This is required so that garbage collection can
+     * identify all references added in the system.
+     * @param sourcePath - The path of the object that added the reference.
+     * @param referencedHandle - The handle of the object that is referenced.
+     *
+     * TODO: Optional for backwards compatibility.
+     */
+    referenceAdded?(sourcePath: string, referencedHandle: IFluidHandle): void;
 }
 
 export const IFluidHandle: keyof IProvideFluidHandle = "IFluidHandle";
