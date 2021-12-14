@@ -311,7 +311,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 
         const containerP = container.attach(request);
         const router = await dataStore.context.containerRuntime.createDataStore([testDataStoreType]);
-        const comp2 = await requestFluidObject<ITestFluidObject>(router, "/");
+        const comp2 = router.handle !== undefined
+            ? await router.handle.get() as ITestFluidObject
+            : await requestFluidObject<ITestFluidObject>(router, "/");
 
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");

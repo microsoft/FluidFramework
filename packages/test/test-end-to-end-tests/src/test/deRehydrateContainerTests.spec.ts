@@ -28,7 +28,7 @@ import { Ink } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { SharedCounter } from "@fluidframework/counter";
-import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IRequest, IFluidCodeDetails, FluidObject } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import {
@@ -136,9 +136,13 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
     const createPeerDataStore = async (
         containerRuntime: IContainerRuntimeBase,
     ) => {
-        const peerDataStore = await requestFluidObject<ITestFluidObject>(
-            await containerRuntime.createDataStore(["default"]),
-            "/");
+        const router = await containerRuntime.createDataStore(["default"]);
+        const fluidObject: FluidObject<ITestFluidObject> | undefined =
+            router.handle !== undefined
+                ? await router.handle.get()
+                : await requestFluidObject(router, "/");
+        const peerDataStore = fluidObject?.ITestFluidObject;
+        assert(peerDataStore);
         return {
             peerDataStore,
             peerDataStoreRuntimeChannel: peerDataStore.channel,

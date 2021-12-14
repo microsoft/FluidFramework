@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IRequest, IFluidCodeDetails, FluidObject } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import {
@@ -19,7 +19,6 @@ import {
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 
 // REVIEW: enable compat testing?
@@ -53,7 +52,10 @@ describeNoCompat(`Attach/Bind Api Tests For Attached Container`, (getTestObjectP
         containerRuntime: IContainerRuntimeBase,
     ) => {
         const router = await containerRuntime.createDataStore(["default"]);
-        const peerDataStore = await requestFluidObject<ITestFluidObject>(router, "/");
+        const fluidObject: FluidObject<ITestFluidObject> | undefined =
+            await router.handle?.get();
+        const peerDataStore = fluidObject?.ITestFluidObject;
+        assert(peerDataStore);
         return {
             peerDataStore,
             peerDataStoreRuntimeChannel: peerDataStore.channel,

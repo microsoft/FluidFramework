@@ -18,6 +18,7 @@ import {
     DataObjectFactoryType,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { FluidObject } from "@fluidframework/core-interfaces";
 
 const mapId = "map";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -297,7 +298,12 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             const runtime = (container as any).context.runtime as IContainerRuntime;
 
             const router = await runtime.createDataStore(["default"]);
-            const dataStore = await requestFluidObject<ITestFluidObject>(router, "/");
+            const fluidObject: FluidObject<ITestFluidObject> | undefined =
+                router.handle !== undefined
+                    ? await router.handle.get()
+                    : await requestFluidObject(router, "/");
+            const dataStore = fluidObject?.ITestFluidObject;
+            assert(dataStore);
             id = dataStore.context.id;
 
             const channel = dataStore.runtime.createChannel(newMapId, "https://graph.microsoft.com/types/map");

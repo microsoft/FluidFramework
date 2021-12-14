@@ -33,7 +33,9 @@ describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
         firstContainerObject1 = await requestFluidObject<ITestDataObject>(firstContainer, "default");
         const containerRuntime1 = firstContainerObject1._context.containerRuntime;
         const dataStore = await containerRuntime1.createDataStore(TestDataObjectType);
-        firstContainerObject2 = await requestFluidObject<ITestDataObject>(dataStore, "");
+        firstContainerObject2 = dataStore.handle !== undefined
+            ? await dataStore.handle.get() as ITestDataObject
+            : await requestFluidObject<ITestDataObject>(dataStore, "");
 
         // Load the Container that was created by the first client.
         const secondContainer = await provider.loadTestContainer();
