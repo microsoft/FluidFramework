@@ -132,7 +132,6 @@ import {
 } from "./summarizerTypes";
 import { formExponentialFn, Throttler } from "./throttler";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
-import { IDataStoreAliasMapping } from "./dataStore";
 import {
     GarbageCollector,
     gcTreeKey,
@@ -159,7 +158,7 @@ export enum ContainerMessageType {
     Rejoin = "rejoin",
 
     // Sets the alias of a root data store
-    AssignAlias = "assignAlias",
+    Alias = "alias",
 }
 
 export interface IChunkedOp {
@@ -291,7 +290,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
         case ContainerMessageType.FluidDataStoreOp:
         case ContainerMessageType.ChunkedOp:
         case ContainerMessageType.Attach:
-        case ContainerMessageType.AssignAlias:
+        case ContainerMessageType.Alias:
         case ContainerMessageType.BlobAttach:
         case ContainerMessageType.Rejoin:
         case MessageType.Operation:
@@ -1451,7 +1450,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return this.dataStores.applyStashedOp(op);
             case ContainerMessageType.Attach:
                 return this.dataStores.applyStashedAttachOp(op as unknown as IAttachMessage);
-            case ContainerMessageType.AssignAlias:
+            case ContainerMessageType.Alias:
             case ContainerMessageType.BlobAttach:
                 return;
             case ContainerMessageType.ChunkedOp:
@@ -1520,7 +1519,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 case ContainerMessageType.Attach:
                     this.dataStores.processAttachMessage(message, local || localAck);
                     break;
-                case ContainerMessageType.AssignAlias:
+                case ContainerMessageType.Alias:
                     this.processAliasMessage(message, localOpMetadata, local);
                     break;
                 case ContainerMessageType.FluidDataStoreOp:
@@ -1547,13 +1546,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         localOpMetadata: unknown,
         local: boolean,
     ) {
-        type PendingAliasResolve = (value: IDataStoreAliasMapping | undefined) => void;
-        const resolve = localOpMetadata as PendingAliasResolve;
-
-        const aliasResult = this.dataStores.processAliasMessage(message);
-        if (local) {
-            resolve(aliasResult);
-        }
+        this.dataStores.processAliasMessage(message, localOpMetadata, local);
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {
@@ -2300,7 +2293,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.dataStores.resubmitDataStoreOp(content, localOpMetadata);
                 break;
             case ContainerMessageType.Attach:
-            case ContainerMessageType.AssignAlias:
+            case ContainerMessageType.Alias:
                 this.submit(type, content, localOpMetadata);
                 break;
             case ContainerMessageType.ChunkedOp:

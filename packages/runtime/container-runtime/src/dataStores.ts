@@ -48,8 +48,42 @@ import {
     LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
-import { IDataStoreAliasMapping, IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { IUsedStateStats } from "./garbageCollection";
+
+type PendingAliasResolve = (value: IDataStoreAliasMapping | undefined) => void;
+
+interface IDataStoreAliasMessage {
+    readonly internalId: string;
+    readonly alias: string;
+}
+
+/**
+ * Interface to hold the result of an alias mapping operation.
+ */
+interface IDataStoreAliasMapping {
+    /** The internal id of the datastore which was supplied in the operation */
+    readonly suppliedInternalId: string;
+    /** The alias name that was requested to be bound */
+    readonly alias: string;
+    /**
+     * The actual internal id of the datastore bound to the alias. If it's the same as suppliedInternalId
+     * the operation was successful.
+     */
+    readonly aliasedInternalId: string;
+}
+
+/**
+ * Type guard that returns true if the given alias message is actually an instance of
+ * a class which implements @see IDataStoreAliasMessage
+ * @param maybeDataStoreAliasMessage - message object to be validated
+ * @returns True if the @see IDataStoreAliasMessage is fully implemented, false otherwise
+ */
+const isDataStoreAliasMessage = (
+    maybeDataStoreAliasMessage: any,
+): maybeDataStoreAliasMessage is IDataStoreAliasMessage => {
+    return typeof maybeDataStoreAliasMessage?.internalId === "string"
+        && typeof maybeDataStoreAliasMessage?.alias === "string";
+};
 
  /**
   * This class encapsulates data store handling. Currently it is only used by the container runtime,
@@ -218,7 +252,11 @@ export class DataStores implements IDisposable {
         Promise.resolve().then(async () => remotedFluidDataStoreContext.realize());
     }
 
-    public processAliasMessage(message: ISequencedDocumentMessage): IDataStoreAliasMapping | undefined {
+    public processAliasMessage(
+        message: ISequencedDocumentMessage,
+        localOpMetadata: unknown,
+        local: boolean,
+    ): void {
         const aliasMessage = message.contents as IDataStoreAliasMessage;
         if (!isDataStoreAliasMessage(aliasMessage)) {
             throw new DataCorruptionError(
@@ -229,6 +267,14 @@ export class DataStores implements IDisposable {
             );
         }
 
+        const resolve = localOpMetadata as PendingAliasResolve;
+        const aliasResult = this.processAliasMessageCore(aliasMessage);
+        if (local) {
+            resolve(aliasResult);
+        }
+    }
+
+    private processAliasMessageCore(aliasMessage: IDataStoreAliasMessage): IDataStoreAliasMapping | undefined {
         const existingMapping = this.aliasMap.get(aliasMessage.alias);
         if (existingMapping !== undefined) {
             return {
