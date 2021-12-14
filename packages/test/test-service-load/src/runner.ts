@@ -217,7 +217,10 @@ async function runnerProcess(
                 reset = false;
                 printStatus(runConfig, done ? `finished` : "closed");
             } catch (error) {
-                logger.sendErrorEvent({ eventName: "RunnerFailed" }, error);
+                logger.sendErrorEvent({
+                    eventName: "RunnerFailed",
+                    testHarnessEvent: true,
+                }, error);
             } finally {
                 if (!container.closed) {
                     container.close();
@@ -378,6 +381,7 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
             logger.send({
                 category: "metric",
                 eventName: "Fluid Operations Sent",
+                testHarnessEvent: true,
                 value: submitedOps,
                 clientId: container.clientId,
                 userName: getUserName(container),
@@ -387,6 +391,7 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
             logger.send({
                 category: "metric",
                 eventName: "Fluid Operations Received",
+                testHarnessEvent: true,
                 value: receivedOps,
                 clientId: container.clientId,
                 userName: getUserName(container),
