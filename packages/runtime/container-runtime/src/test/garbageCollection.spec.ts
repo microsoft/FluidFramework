@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { concatGarbageCollectionStates } from "@fluidframework/garbage-collector";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
@@ -31,6 +32,7 @@ describe("Garbage Collection Tests", () => {
         "/node4",
     ];
 
+    let clock: SinonFakeTimers;
     let mockLogger: MockLogger;
     // Time after which unreferenced nodes can be deleted.
     const deleteTimeoutMs = 500;
@@ -68,16 +70,21 @@ describe("Garbage Collection Tests", () => {
         );
     };
 
+    before(() => {
+        clock = useFakeTimers();
+    });
+
+    afterEach(() => {
+        clock.reset();
+    });
+
+    after(() => {
+        clock.restore();
+    });
+
     describe("Inactive events", () => {
         const inactiveObjectRevivedEvent = "GarbageCollector:inactiveObjectRevived";
         const inactiveObjectChangedEvent = "GarbageCollector:inactiveObjectChanged";
-
-        // Waits for > deleteTimeoutMs. To be called to make sure that any unreferenced nodes have been deleted.
-        async function waitForDeleteTimeout(): Promise<void> {
-            await new Promise<void>((resolve) => {
-                setTimeout(resolve, deleteTimeoutMs + 100);
-            });
-        }
 
         // Validates that no inactive event has been fired.
         function validateNoInactiveEvents() {
@@ -100,7 +107,6 @@ describe("Garbage Collection Tests", () => {
         // Returns a dummy snapshot tree to be built upon.
         const getDummySnapshotTree = (): ISnapshotTree => {
             return {
-                id: "dummy",
                 blobs: {},
                 commits: {},
                 trees: {},
@@ -115,8 +121,7 @@ describe("Garbage Collection Tests", () => {
             defaultGCData.gcNodes[nodes[2]] = [ nodes[3] ];
             defaultGCData.gcNodes[nodes[3]] = [ nodes[0] ];
         });
-
-        it("doesn't generate inactive events for referenced nodes", async () => {
+        it("doesn't generate events for referenced nodes", async () => {
             const garbageCollector = createGarbageCollector();
 
             // Run garbage collection on the default GC data where everything is referenced.
@@ -129,7 +134,7 @@ describe("Garbage Collection Tests", () => {
             validateNoInactiveEvents();
 
             // Wait for unreferenced timer (if any) to expire.
-            await waitForDeleteTimeout();
+            clock.tick(deleteTimeoutMs + 1);
 
             // Change all nodes again.
             changeAllNodes(garbageCollector);
@@ -138,7 +143,7 @@ describe("Garbage Collection Tests", () => {
             validateNoInactiveEvents();
         });
 
-        it("generates inactive events when inactive node is changed or revived", async () => {
+        it("generates events when inactive node is changed or revived", async () => {
             const garbageCollector = createGarbageCollector();
 
             // Remove node 2's reference from node 1. This should make node 2 and node 3 unreferenced.
@@ -153,15 +158,15 @@ describe("Garbage Collection Tests", () => {
             validateNoInactiveEvents();
 
             // Wait for unreferenced timer (if any) to expire.
-            await waitForDeleteTimeout();
+            clock.tick(deleteTimeoutMs + 1);
 
             // Change all nodes. This should result in an inactiveObjectChanged event for node 2 and node 3 since they
             // are inactive.
             changeAllNodes(garbageCollector);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectChangedEvent, deleteTimeoutMs, inactiveNodeId: nodes[2] },
-                    { eventName: inactiveObjectChangedEvent, deleteTimeoutMs, inactiveNodeId: nodes[3] },
+                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[2] },
+                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[3] },
                 ]),
                 "inactiveObjectChanged event not generated as expected",
             );
@@ -173,13 +178,13 @@ describe("Garbage Collection Tests", () => {
             await garbageCollector.collectGarbage({ runGC: true });
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectRevivedEvent, deleteTimeoutMs, inactiveNodeId: nodes[3] },
+                    { eventName: inactiveObjectRevivedEvent, timeout: deleteTimeoutMs, id: nodes[3] },
                 ]),
                 "inactiveObjectRevived event not generated as expected",
             );
         });
 
-        it("generates inactive events once per node", async () => {
+        it("generates events once per node", async () => {
             const garbageCollector = createGarbageCollector();
 
             // Remove node 3's reference from node 2.
@@ -187,14 +192,14 @@ describe("Garbage Collection Tests", () => {
 
             await garbageCollector.collectGarbage({ runGC: true });
 
-            await waitForDeleteTimeout();
+            clock.tick(deleteTimeoutMs + 1);
 
             // Change all nodes. This should result in an inactiveObjectChanged event for node 2 and node 3 since they
             // are inactive.
             changeAllNodes(garbageCollector);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectChangedEvent, deleteTimeoutMs, inactiveNodeId: nodes[3] },
+                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[3] },
                 ]),
                 "inactiveObjectChanged event not generated as expected",
             );
@@ -205,14 +210,19 @@ describe("Garbage Collection Tests", () => {
             validateNoInactiveEvents();
         });
 
-        it("generates inactive events for nodes that are inactive on load", async () => {
+        /**
+         * Here, the base snapshot contains nodes that are inactive. The test validates that we generate inactive events
+         * for these nodes.
+         */
+        it("generates events for nodes that are inactive on load", async () => {
             // Create GC state where node 3's unreferenced time was > deleteTimeoutMs ago.
             // This means this node should become inactive as soon as its data is loaded.
 
             // Create a snapshot tree to be used as the GC snapshot tree.
             const gcSnapshotTree = getDummySnapshotTree();
-            const gcBlobId = "gc_blob";
-            // Add a GC blob with prefix `gcBlobPrefix` to the GC snapshot tree.
+            const gcBlobId = "root";
+            // Add a GC blob with key that start with `gcBlobPrefix` to the GC snapshot tree. The blob Id for this
+            // is generated by server in real scenarios but we use a static id here for testing.
             gcSnapshotTree.blobs[`${gcBlobPrefix}_${gcBlobId}`] = gcBlobId;
 
             // Create a base snapshot that contains the GC snapshot tree.
@@ -246,7 +256,7 @@ describe("Garbage Collection Tests", () => {
             garbageCollector.nodeChanged(nodes[3]);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectChangedEvent, deleteTimeoutMs, inactiveNodeId: nodes[3] },
+                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[3] },
                 ]),
                 "inactiveObjectChanged event not generated as expected",
             );
@@ -256,13 +266,17 @@ describe("Garbage Collection Tests", () => {
             await garbageCollector.collectGarbage({ runGC: true });
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectRevivedEvent, deleteTimeoutMs, inactiveNodeId: nodes[3] },
+                    { eventName: inactiveObjectRevivedEvent, timeout: deleteTimeoutMs, id: nodes[3] },
                 ]),
                 "inactiveObjectRevived event not generated as expected",
             );
         });
 
-        it("generates inactive events for nodes that are inactive on load - snapshot is in old format", async () => {
+        /**
+         * Here, the base snapshot contains nodes that are inactive and the GC blob in snapshot is in old format. The
+         * test validates that we generate inactive events for these nodes.
+         */
+        it("generates events for nodes that are inactive on load - old snapshot format", async () => {
             // Create GC details for node 3's GC blob whose unreferenced time was > deleteTimeoutMs ago.
             // This means this node should become inactive as soon as its data is loaded.
             const node3GCDetails: IGarbageCollectionSummaryDetails = {
@@ -294,7 +308,7 @@ describe("Garbage Collection Tests", () => {
             garbageCollector.nodeChanged(nodes[3]);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectChangedEvent, deleteTimeoutMs, inactiveNodeId: nodes[3] },
+                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[3] },
                 ]),
                 "inactiveObjectChanged event not generated as expected",
             );
@@ -304,14 +318,17 @@ describe("Garbage Collection Tests", () => {
             await garbageCollector.collectGarbage({ runGC: true });
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectRevivedEvent, deleteTimeoutMs, inactiveNodeId: nodes[3] },
+                    { eventName: inactiveObjectRevivedEvent, timeout: deleteTimeoutMs, id: nodes[3] },
                 ]),
                 "inactiveObjectRevived event not generated as expected",
             );
         });
 
-        it(`generates inactive events for nodes that are inactive on load - GC state is present in multiple` +
-            `blobs in base snapshot`, async () => {
+        /**
+         * Here, the base snapshot contains nodes that are inactive and the GC data in snapshot is present in multiple
+         * blobs. The test validates that we generate inactive events for these nodes.
+         */
+        it(`generates events for nodes that are inactive on load - multi blob GC data`, async () => {
             const gcBlobMap: Map<string, IGarbageCollectionState> = new Map();
             const expiredTimestampMs = Date.now() - (deleteTimeoutMs + 100);
 
@@ -360,9 +377,9 @@ describe("Garbage Collection Tests", () => {
             garbageCollector.nodeChanged(nodes[3]);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectChangedEvent, deleteTimeoutMs, inactiveNodeId: nodes[1] },
-                    { eventName: inactiveObjectChangedEvent, deleteTimeoutMs, inactiveNodeId: nodes[2] },
-                    { eventName: inactiveObjectChangedEvent, deleteTimeoutMs, inactiveNodeId: nodes[3] },
+                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[1] },
+                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[2] },
+                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[3] },
                 ]),
                 "inactiveObjectChanged event not generated as expected",
             );
@@ -375,7 +392,7 @@ describe("Garbage Collection Tests", () => {
      *
      * In these tests, V = nodes and E = edges between nodes. Root nodes that are always referenced are marked as *.
      */
-     describe("References between summaries - state transition from unreferenced -> referenced -> unreferenced", () => {
+     describe("References between summaries", () => {
         let garbageCollector: IGarbageCollector;
         const nodeA = "/A";
         const nodeB = "/B";
@@ -391,17 +408,10 @@ describe("Garbage Collection Tests", () => {
             assert(!testResult, message);
         }
 
-        // Adds a small delay between two GC runs so that the unreferenced timestamp can be updated.
-        async function addDelay(): Promise<void> {
-            await new Promise<void>((resolve) => {
-                setTimeout(resolve, 100);
-            });
-        }
-
         // Runs GC and returns the unreferenced timestamps of all nodes in the GC summary.
         async function getUnreferencedTimestamps() {
-            // Add delay before running GC.
-            await addDelay();
+            // Advance the clock by 1 tick so that the unreferenced timestamp is updated in between runs.
+            clock.tick(1);
 
             await garbageCollector.collectGarbage({ runGC: true });
 
@@ -447,7 +457,7 @@ describe("Garbage Collection Tests", () => {
          * 4. Summary 2 at t2. V = [A*, B]. E = []. B has unreferenced time t2.
          * Validates that the unreferenced time for B is t2 which is > t1.
          */
-        it(`Scenario 1 - An unreferenced node B is referenced and then unreferenced`, async () => {
+        it(`Scenario 1 - Reference added and then removed`, async () => {
             // Initialize nodes A and B.
             defaultGCData.gcNodes["/"] = [ nodeA ];
             defaultGCData.gcNodes[nodeA] = [];
@@ -484,8 +494,7 @@ describe("Garbage Collection Tests", () => {
          * 5. Summary 2 at t2. V = [A*, B, C]. E = []. B and C have unreferenced time t2.
          * Validates that the unreferenced time for B and C is t2 which is > t1.
          */
-        it(`Scenario 2 - An unreferenced node B has reference to node C. B is referenced, removes reference to C ` +
-            `and is unreferenced`, async () => {
+        it(`Scenario 2 - Reference transitively added and removed`, async () => {
             // Initialize nodes A, B and C.
             defaultGCData.gcNodes["/"] = [ nodeA ];
             defaultGCData.gcNodes[nodeA] = [];
@@ -528,8 +537,7 @@ describe("Garbage Collection Tests", () => {
          * 4. Summary 2 at t2. V = [A*, B, C, D]. E = [B -> C, C -> D]. B, C and D have unreferenced time t2.
          * Validates that the unreferenced time for B, C and D is t2 which is > t1.
          */
-        it(`Scenario 3 - An unreferenced node B has reference to node C which has reference to node D. ` +
-            `B is referenced and then unreferenced`, async () => {
+        it(`Scenario 3 - Reference added through chain of references and removed`, async () => {
             // Initialize nodes A, B, C and D.
             defaultGCData.gcNodes["/"] = [ nodeA ];
             defaultGCData.gcNodes[nodeA] = [];
@@ -576,8 +584,7 @@ describe("Garbage Collection Tests", () => {
          * 6. Summary 2 at t2. V = [A*, B, C]. E = [A -> B]. C has unreferenced time t2.
          * Validates that the unreferenced time for C is t2 which is > t1.
          */
-        it(`Scenario 4 - A new node B is referenced, adds reference to an unreferenced node C and then removes ` +
-            `the reference to C`, async () => {
+        it(`Scenario 4 - Reference added via new nodes and removed`, async () => {
             // Initialize nodes A, B and C.
             defaultGCData.gcNodes["/"] = [ nodeA ];
             defaultGCData.gcNodes[nodeA] = [];
@@ -618,7 +625,7 @@ describe("Garbage Collection Tests", () => {
          * 3. Summary 2 at t2. V = [A*, B, C]. E = [B -> C]. B and C have unreferenced time t1.
          * Validates that the unreferenced time for B and C is still t1.
          */
-         it(`Scenario 5 - An unreferenced node B adds reference to another node C`, async () => {
+         it(`Scenario 5 - Reference added via unrefenced nodes`, async () => {
             // Initialize nodes A, B and C.
             defaultGCData.gcNodes["/"] = [ nodeA ];
             defaultGCData.gcNodes[nodeA] = [];

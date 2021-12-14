@@ -205,7 +205,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
      * In these tests, V = nodes and E = edges between nodes. Root nodes that are always referenced are marked as *.
      * The nodes are data stores represented by alphabets A, B, C and so on.
      */
-    describe("References between summaries - state transition from unreferenced -> referenced -> unreferenced", () => {
+    describe("References between summaries", () => {
         /**
          * Function that asserts the given test result fails. This is because all the scenarios here currently fail.
          * These should pass once this issue is fixed - https://github.com/microsoft/FluidFramework/issues/7924. The
@@ -223,7 +223,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
          * 4. Summary 2 at t2. V = [A*, B]. E = []. B has unreferenced time t2.
          * Validates that the unreferenced time for B is t2 which is > t1.
          */
-        it(`Scenario 1 - An unreferenced node B is referenced and then unreferenced`, async () => {
+        it(`Scenario 1 - Reference added and then removed`, async () => {
             const summarizerClient = await getNewSummarizer();
 
             // Create data store B and mark it as referenced by storing its handle in A.
@@ -261,8 +261,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
          * 5. Summary 2 at t2. V = [A*, B, C]. E = []. B and C have unreferenced time t2.
          * Validates that the unreferenced time for B and C is t2 which is > t1.
          */
-        it(`Scenario 2 - An unreferenced node B has reference to node C. B is referenced, removes reference to C ` +
-            `and is unreferenced`, async () => {
+        it(`Scenario 2 - Reference transitively added and removed`, async () => {
             const summarizerClient = await getNewSummarizer();
 
             // Create data stores B and C and mark them referenced as follows by storing their handles as follows:
@@ -309,8 +308,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
          * 4. Summary 2 at t2. V = [A*, B, C, D]. E = [B -> C, C -> D]. B, C and D have unreferenced time t2.
          * Validates that the unreferenced time for B, C and D is t2 which is > t1.
          */
-        it(`Scenario 3 - An unreferenced node B has reference to node C which has reference to node D. ` +
-            `B is referenced and then unreferenced`, async () => {
+        it(`Scenario 3 - Reference added through chain of references and removed`, async () => {
             const summarizerClient = await getNewSummarizer();
 
             // Create data stores B, C and D and mark them referenced as follows by storing their handles as follows:
@@ -362,8 +360,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
          * 6. Summary 2 at t2. V = [A*, B, C]. E = [A -> B]. C has unreferenced time t2.
          * Validates that the unreferenced time for C is t2 which is > t1.
          */
-        it(`Scenario 4 - A new node B is referenced, adds reference to an unreferenced node C and then removes ` +
-            `the reference to C`, async () => {
+        it(`Scenario 4 - Reference added and removed via new nodes`, async () => {
             const summarizerClient = await getNewSummarizer();
 
             // Create data store C and mark it referenced by storing its handle in data store A.
@@ -411,8 +408,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
          * The difference from the previous tests is that the new data stores is a root data store. So, this validates
          * that we can detect new root data stores and outbound references from them.
          */
-        it(`Scenario 5 - A new root node B is referenced, adds reference to an unreferenced node C and then removes` +
-         ` the reference to C`, async () => {
+        it(`Scenario 5 - Reference added via new root nodes and removed`, async () => {
          const summarizerClient = await getNewSummarizer();
 
          // Create data store C and mark it referenced by storing its handle in data store A.
@@ -458,8 +454,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
          * The difference from previous test case is that the reference from B to C is added before B is referenced and
          * observed by summarizer. So, the summarizer does not see this reference directly but only when B is realized.
          */
-        it(`Scenario 6 - A new node B adds reference to an unreferenced node C, B becomes referenced ` +
-            `and removes the reference to C`, async () => {
+        it(`Scenario 6 - Reference added via new unreferenced nodes and removed`, async () => {
             const summarizerClient = await getNewSummarizer();
 
             // Create data store C and mark it referenced by storing its handle in data store A.
@@ -509,8 +504,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
          * This difference from the previous test case is that there is another level of indirection here that
          * references the node which was unreferenced in previous summary.
          */
-        it(`Scenario 7 - Two new nodes B and C transitively add reference to an unreferenced node D, B and C ` +
-            `become referenced and remove the reference to D`, async () => {
+        it(`Scenario 7 - Reference added transitively via new nodes and removed`, async () => {
             const summarizerClient = await getNewSummarizer();
 
             // Create data store D and mark it referenced by storing its handle in data store A.
@@ -556,7 +550,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
          * 3. Summary 2 at t2. V = [A*, B, C]. E = [B -> C]. B and C have unreferenced time t1.
          * Validates that the unreferenced time for B and C is still t1.
          */
-         it(`Scenario 8 - An unreferenced node B adds reference to another node C`, async () => {
+         it(`Scenario 8 - Reference added via unreferenced nodes`, async () => {
             const summarizerClient = await getNewSummarizer();
 
             // Create data stores B and C and mark them referenced.
