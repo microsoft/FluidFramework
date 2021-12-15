@@ -18,7 +18,7 @@ spec:
         agentpool: fluid
       containers:
       - name: fluid-scale-test
-        image: loadgeneration.azurecr.io/odspwirefluid/fluid-scale-test-main:code
+        image: loadgeneration.azurecr.io/odspwirefluid/fluid-scale-test-main:latest
         imagePullPolicy: Always
         command: ["/bin/sh"]
         args: ["-c", "sh testRunner.sh > testRunner.log"]
