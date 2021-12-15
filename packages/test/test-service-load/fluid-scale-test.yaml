@@ -33,6 +33,8 @@ spec:
           value: "{{CLIENT_SECRET}}"
         - name: APPINSIGHTS_INSTRUMENTATIONKEY
           value: "{{INSTRUMENTATION_KEY}}"
+        - name: BUILD_BUILD_ID
+          value: "{{TEST_DOC_FOLDER}}"
         resources:
           requests:
             cpu: 500m

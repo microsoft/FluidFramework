@@ -15,7 +15,15 @@ sleep $rampupTimeInSeconds
 
 credentials=`jq -c '.credentials|to_entries|first as $x | { ($x.key): ($x.value) }' ./testUserConfig.json`
 export login__odsp__test__accounts=$credentials
-node ./dist/nodeStressTest.js -p $TEST_PROFILE -c ./testUserConfig.json -m > testscenario.logs 2>&1
+
+docId=`jq -c .docId ./testUserConfig.json`
+
+if [ -n "$docId" ]
+then
+  node ./dist/nodeStressTest.js -p $TEST_PROFILE -c ./testUserConfig.json -m > testscenario.logs 2>&1
+else
+  node ./dist/nodeStressTest.js -p $TEST_PROFILE -c ./testUserConfig.json -id $docId -m > testscenario.logs 2>&1
+fi
 
 echo "Test complete just keeping pod alive."
 while true;

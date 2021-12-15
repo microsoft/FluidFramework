@@ -9,6 +9,8 @@ import ps from "ps-node";
 import commander from "commander";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { NonRetryableError } from "@fluidframework/driver-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { createTestDriver, getProfile, initialize, loggerP, safeExit } from "./utils";
 
@@ -18,8 +20,6 @@ interface ITestUserConfig {
      * Value  : Password specific to that username
      */
     credentials: Record<string, string>;
-    rampup: number;
-    docUrl: string;
 }
 
 async function getTestUsers(credFile?: string) {
@@ -98,15 +98,24 @@ async function orchestratorProcess(
         seed,
         undefined,
         args.browserAuth);
-    let url = "";
-    if (profile.testUsers?.docUrl !== undefined && profile.testUsers.docUrl) {
-        // if docUrl is found from config file then reuse this document
-        url = profile.testUsers.docUrl;
-    } else {
-        // Create a new file if a testId wasn't provided
-        url = args.testId !== undefined
-            ? await testDriver.createContainerUrl(args.testId)
-            : await initialize(testDriver, seed, profile, args.verbose === true);
+
+    // If testId is provided, then try to load the file first.
+    let url;
+    if (args.testId !== undefined) {
+        try {
+            url = await testDriver.createContainerUrl(args.testId);
+        } catch(e: any) {
+            if (!(e instanceof NonRetryableError)
+                    || (e.errorType !== DriverErrorType.fileNotFoundOrAccessDeniedError)) {
+                throw e;
+            }
+            // If file not found, then try to create.
+        }
+    }
+
+    // If file doesn't exists, then create one.
+    if (url === undefined) {
+        url = await initialize(testDriver, seed, args.testId ?? Date.now().toString(), profile, args.verbose === true);
     }
 
     const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
@@ -159,11 +168,8 @@ async function orchestratorProcess(
 
     try {
         const usernames = profile.testUsers !== undefined ? Object.keys(profile.testUsers.credentials) : [];
-        const startIndex = Math.floor(Math.random() * usernames.length);
         await Promise.all(runnerArgs.map(async (childArgs, index) => {
-            await new Promise<void>((resolve) => setTimeout(resolve, 5000 + Math.random() * 10000));
-
-            const username = usernames !== undefined ? usernames[(index + startIndex) % usernames.length] : undefined;
+            const username = usernames !== undefined ? usernames[index % usernames.length] : undefined;
             const password = username !== undefined ? profile.testUsers?.credentials[username] : undefined;
             const envVar = { ...process.env };
             if (username !== undefined && password !== undefined) {
