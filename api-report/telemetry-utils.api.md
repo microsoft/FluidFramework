@@ -30,26 +30,6 @@ export class ChildLogger extends TelemetryLogger {
     send(event: ITelemetryBaseEvent): void;
 }
 
-// @public
-export class ConfigProvider implements IConfigProvider {
-    // (undocumented)
-    static create(orderedBaseProviders: (IConfigProviderBase | ITelemetryBaseLogger | undefined)[]): IConfigProvider;
-    // (undocumented)
-    getBoolean(name: string): boolean | undefined;
-    // (undocumented)
-    getBooleanArray(name: string): boolean[] | undefined;
-    // (undocumented)
-    getNumber(name: string): number | undefined;
-    // (undocumented)
-    getNumberArray(name: string): number[] | undefined;
-    // (undocumented)
-    getRawConfig(name: string): ConfigTypes;
-    // (undocumented)
-    getString(name: string): string | undefined;
-    // (undocumented)
-    getStringArray(name: string): string[] | undefined;
-    }
-
 // @public (undocumented)
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
@@ -183,7 +163,7 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
 export function logIfFalse(condition: any, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
 
 // @public (undocumented)
-export function mixinMonitoringContext<T extends ITelemetryBaseLogger = ITelemetryLogger>(logger: T, config: IConfigProvider): MonitoringContext<T>;
+export function mixinMonitoringContext<T extends ITelemetryBaseLogger = ITelemetryLogger>(logger: T, ...configs: (IConfigProviderBase | undefined)[]): MonitoringContext<T>;
 
 // @public
 export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
