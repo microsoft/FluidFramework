@@ -215,7 +215,7 @@ export class RelativeLoader implements ILoader {
 }
 
 // @public
-export function waitContainerToCatchUp(container: Container): Promise<boolean>;
+export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;
 
 
 // (No @packageDocumentation comment for this package)

@@ -152,9 +152,9 @@ class UnreferencedStateTracker {
         if (this.inactive && !this.inactiveEventsLogged.has(eventName)) {
             logger.sendErrorEvent({
                 eventName,
-                unreferencedDuratonMs: currentTimestampMs - this.unreferencedTimestampMs,
-                deleteTimeoutMs,
-                inactiveNodeId,
+                age: currentTimestampMs - this.unreferencedTimestampMs,
+                timeout: deleteTimeoutMs,
+                id: inactiveNodeId,
             });
             this.inactiveEventsLogged.add(eventName);
         }

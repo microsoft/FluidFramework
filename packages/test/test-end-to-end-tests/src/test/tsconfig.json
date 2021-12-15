@@ -4,7 +4,7 @@
         "declaration": false,
         "declarationMap": false,
         "rootDir": "../",
-        "outDir": "../../dist/test",
+        "outDir": "../../dist",
         "types": [
             "mocha",
             "@fluidframework/test-driver-definitions",
