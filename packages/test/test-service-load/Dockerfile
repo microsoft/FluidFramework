@@ -21,7 +21,6 @@ WORKDIR /app
 # Copy only required code
 COPY common/ common/
 COPY experimental/ experimental/
-COPY manifests/ manifests/
 COPY packages/ packages/
 COPY tools/ tools/
 COPY package.json .
