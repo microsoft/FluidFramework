@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/common-definitions";
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 import {
-    ConfigProvider,
+    CachedConfigProvider,
     loggerIsMonitoringContext,
     mixinMonitoringContext,
 } from "./config";
@@ -326,7 +326,7 @@ export class ChildLogger extends TelemetryLogger {
         if(loggerIsMonitoringContext(baseLogger)) {
             mixinMonitoringContext(
                 this,
-                ConfigProvider.create([baseLogger.config]));
+                new CachedConfigProvider(baseLogger.config));
         }
     }
 

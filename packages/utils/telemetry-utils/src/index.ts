@@ -12,7 +12,6 @@ export * from "./mockLogger";
 export * from "./thresholdCounter";
 export * from "./utils";
 export {
-    ConfigProvider,
     MonitoringContext,
     IConfigProviderBase,
     sessionStorageConfigProvider,

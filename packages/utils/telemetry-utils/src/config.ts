@@ -4,7 +4,6 @@
  */
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Lazy } from "@fluidframework/common-utils";
-import { DebugLogger } from "./debugLogger";
 
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
@@ -49,14 +48,14 @@ const NullConfigProvider: IConfigProviderBase = {
 export const inMemoryConfigProvider =
     (storage: Storage | undefined): IConfigProviderBase =>{
     if (storage !== undefined && storage !== null) {
-        return ConfigProvider.create([{
+        return new CachedConfigProvider({
             getRawConfig: (name: string) => {
                 try {
-                    return stronglyTypedParse(storage.getItem(name) ?? undefined)?.value;
+                    return stronglyTypedParse(storage.getItem(name) ?? undefined)?.raw;
                 } catch { }
                 return undefined;
             },
-        }]);
+        });
     }
     return NullConfigProvider;
 };
@@ -70,7 +69,6 @@ interface ConfigTypeStringToType {
     ["boolean[]"]: boolean[];
 }
 
-type ConfigTypeStrings = keyof ConfigTypeStringToType;
 type PrimitiveTypeStrings = "number" | "string" | "boolean";
 
 function isPrimitiveType(type: string): type is PrimitiveTypeStrings {
@@ -84,14 +82,25 @@ function isPrimitiveType(type: string): type is PrimitiveTypeStrings {
     }
 }
 
-interface stronglyTypedValue<T extends ConfigTypeStrings = ConfigTypeStrings> {
-    value: ConfigTypeStringToType[T];
-    type: T
+interface StronglyTypedValue extends Partial<ConfigTypeStringToType> {
+    raw: ConfigTypes;
 }
-
-function stronglyTypedParse(input: any): stronglyTypedValue | undefined {
+/**
+ * Takes any suppported config type, and returns the value with a strong type. If the type of
+ * the config is not a supported type undefined will be returned.
+ * The user of this function should cache the result to avoid duplicated work.
+ *
+ * Strings will be attempted to be parsed and coerced into a strong config type.
+ * if it is not possible to parsed and coerce a string to a strong config type the original string
+ * will be return with a string type for the consumer to handle further if necessary.
+ */
+function stronglyTypedParse(input: ConfigTypes): StronglyTypedValue | undefined {
     let output: ConfigTypes = input;
-    let defaultReturn: stronglyTypedValue<"string"> | undefined;
+    let defaultReturn: Pick<StronglyTypedValue,"raw" | "string"> | undefined;
+    // we do special handling for strings to try and coerce
+    // them into a config type if we can. This makes it easy
+    // for config sources like sessionStorage which only
+    // holds strings
     if (typeof input === "string") {
         try {
             output = JSON.parse(input);
@@ -100,9 +109,9 @@ function stronglyTypedParse(input: any): stronglyTypedValue | undefined {
             // so in this case, the default return will be string
             // rather than undefined, and the consumer
             // can parse, as we don't want to provide
-            // a false sense of security, but just
+            // a false sense of security by just
             // casting.
-            defaultReturn = { value: input, type: "string" };
+            defaultReturn = { raw: input, string: input };
         } catch { }
     }
 
@@ -112,20 +121,23 @@ function stronglyTypedParse(input: any): stronglyTypedValue | undefined {
 
     const outputType = typeof output;
     if (isPrimitiveType(outputType)) {
-        return { value: output, type: outputType };
+        return { ...defaultReturn, raw: input, [outputType]: output };
     }
 
     if (Array.isArray(output)) {
         const firstType = typeof output[0];
+        // ensure the first elements is a primitive type
         if (!isPrimitiveType(firstType)) {
             return defaultReturn;
         }
+        // ensue all the elements types are homogeneous
+        // aka they all have the same type as the first
         for (const v of output) {
             if (typeof v !== firstType) {
                 return defaultReturn;
             }
         }
-        return { value: output, type: `${firstType}[]` as ConfigTypeStrings };
+        return { ...defaultReturn, raw: input, [`${firstType}[]`]: output };
     }
 
     return defaultReturn;
@@ -137,38 +149,15 @@ const safeSessionStorage = (): Storage | undefined => {
     } catch { return undefined; }
 };
 
-interface ConfigCacheEntry extends Partial<ConfigTypeStringToType> {
-    readonly raw: ConfigTypes;
-    readonly name: string;
-}
-
 /**
  * Implementation of {@link IConfigProvider} which contains nested {@link IConfigProviderBase} instances
  */
-export class ConfigProvider implements IConfigProvider {
-    private readonly configCache = new Map<string, ConfigCacheEntry>();
+export class CachedConfigProvider implements IConfigProvider {
+    private readonly configCache = new Map<string, StronglyTypedValue>();
     private readonly orderedBaseProviders: (IConfigProviderBase | undefined)[];
-    private static readonly logger = DebugLogger.create("fluid:telemetry:configProvider");
 
-    static create(orderedBaseProviders: (IConfigProviderBase | ITelemetryBaseLogger | undefined)[],
-    ): IConfigProvider {
-        const filteredProviders: (IConfigProviderBase | undefined)[] = [];
-        for (const maybeProvider of orderedBaseProviders) {
-            if (maybeProvider !== undefined) {
-                if (isConfigProviderBase(maybeProvider)) {
-                    filteredProviders.push(maybeProvider);
-                } else {
-                    if (loggerIsMonitoringContext(maybeProvider)) {
-                        filteredProviders.push(maybeProvider.config);
-                    }
-                }
-            }
-        }
-        return new ConfigProvider(filteredProviders);
-    }
-
-    private constructor(
-        orderedBaseProviders: (IConfigProviderBase | undefined)[],
+    constructor(
+        ... orderedBaseProviders: (IConfigProviderBase | undefined)[]
     ) {
         this.orderedBaseProviders = [];
         const knownProviders = new Set<IConfigProviderBase>();
@@ -180,7 +169,7 @@ export class ConfigProvider implements IConfigProvider {
                 && !knownProviders.has(baseProvider)
             ) {
                 knownProviders.add(baseProvider);
-                if (baseProvider instanceof ConfigProvider) {
+                if (baseProvider instanceof CachedConfigProvider) {
                     candidateProviders.push(...baseProvider.orderedBaseProviders);
                 } else {
                     this.orderedBaseProviders.push(baseProvider);
@@ -189,72 +178,39 @@ export class ConfigProvider implements IConfigProvider {
         }
     }
     getBoolean(name: string): boolean | undefined {
-        return this.getConfig(name, "boolean");
+        return this.getCacheEntry(name)?.boolean;
     }
     getNumber(name: string): number | undefined {
-        return this.getConfig(name, "number");
+        return this.getCacheEntry(name)?.number;
     }
     getString(name: string): string | undefined {
-        return this.getConfig(name, "string");
+        return this.getCacheEntry(name)?.string;
     }
     getBooleanArray(name: string): boolean[] | undefined {
-        return this.getConfig(name, "boolean[]");
+        return this.getCacheEntry(name)?.["boolean[]"];
     }
     getNumberArray(name: string): number[] | undefined {
-        return this.getConfig(name, "number[]");
+        return this.getCacheEntry(name)?.["number[]"];
     }
     getStringArray(name: string): string[] | undefined {
-        return this.getConfig(name, "string[]");
+        return this.getCacheEntry(name)?.["string[]"];
     }
 
     getRawConfig(name: string): ConfigTypes {
         return this.getCacheEntry(name)?.raw;
     }
 
-    private getConfig<T extends ConfigTypeStrings>(
-        name: string, converter: T,
-    ): ConfigTypeStringToType[T] | undefined {
-        const cacheValue = this.getCacheEntry(name);
-
-        if (cacheValue?.raw === undefined) {
-            ConfigProvider.logger.sendTelemetryEvent({ eventName: "ConfigValueNotSet", name: cacheValue?.name });
-            return undefined;
-        }
-
-        if (converter === "string" && cacheValue[converter] === undefined) {
-            return JSON.stringify(cacheValue.raw) as ConfigTypeStringToType[T];
-        }
-
-        if (converter in cacheValue) {
-            return cacheValue[converter] as ConfigTypeStringToType[T];
-        }
-
-        ConfigProvider.logger.sendErrorEvent({
-            eventName: "ConfigValueNotConvertible",
-            name: cacheValue?.name,
-            value: JSON.stringify(cacheValue),
-            converter,
-        });
-
-        return undefined;
-    }
-
-    private getCacheEntry(name: string): ConfigCacheEntry | undefined {
+    private getCacheEntry(name: string): StronglyTypedValue | undefined {
         if (!this.configCache.has(name)) {
             for (const provider of this.orderedBaseProviders) {
                 const parsed = stronglyTypedParse(provider?.getRawConfig(name));
                 if (parsed !== undefined) {
-                    const entry: ConfigCacheEntry = {
-                        raw: parsed.value,
-                        name,
-                        [parsed.type]: parsed.value,
-                    };
-                    this.configCache.set(name, entry);
-                    return entry;
+                    this.configCache.set(name, parsed);
+                    return parsed;
                 }
             }
             // configs are immutable, if the first lookup returned no results, all lookups should
-            this.configCache.set(name, { raw: undefined, name });
+            this.configCache.set(name, { raw: undefined });
         }
         return this.configCache.get(name);
     }
@@ -279,11 +235,11 @@ export function loggerToMonitoringContext<T extends ITelemetryBaseLogger = ITele
     if(loggerIsMonitoringContext(logger)) {
         return logger;
     }
-    return mixinMonitoringContext(logger, ConfigProvider.create([sessionStorageConfigProvider.value]));
+    return mixinMonitoringContext(logger, sessionStorageConfigProvider.value);
 }
 
 export function mixinMonitoringContext<T extends ITelemetryBaseLogger = ITelemetryLogger>(
-    logger: T, config: IConfigProvider) {
+    logger: T, ... configs: (IConfigProviderBase | undefined)[]) {
     if (loggerIsMonitoringContext(logger)) {
         throw new Error("Logger is already a monitoring context");
     }
@@ -295,8 +251,8 @@ export function mixinMonitoringContext<T extends ITelemetryBaseLogger = ITelemet
      * so if a deeper layer then converts that logger to a monitoring context it can find the smuggled properties
      * of the MontoringContext and get the config provider.
      */
-     const mc: T & Partial<MonitoringContext<T>> = logger;
-    mc.config = config;
+    const mc: T & Partial<MonitoringContext<T>> = logger;
+    mc.config = new CachedConfigProvider(... configs);
     mc.logger = logger;
     return mc as MonitoringContext<T>;
 }

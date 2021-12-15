@@ -27,7 +27,6 @@ import {
 } from "@fluidframework/container-definitions";
 import {
     ChildLogger,
-    ConfigProvider,
     DebugLogger,
     IConfigProviderBase,
     loggerToMonitoringContext,
@@ -307,11 +306,9 @@ export class Loader implements IHostLoader {
 
         const subMc = mixinMonitoringContext(
             DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all: telemetryProps }),
-            ConfigProvider.create(
-                [
-                    sessionStorageConfigProvider.value,
-                    loaderProps.configProvider,
-                ]));
+                sessionStorageConfigProvider.value,
+                loaderProps.configProvider,
+            );
 
         this.services = {
             urlResolver: createCachedResolver(MultiUrlResolver.create(loaderProps.urlResolver)),

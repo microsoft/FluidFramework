@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import {
-    ConfigProvider,
+    CachedConfigProvider,
     ConfigTypes,
     IConfigProviderBase,
     inMemoryConfigProvider,
@@ -38,8 +38,8 @@ describe("Config", () => {
         const settings = {
             number: "1",
             badNumber: "{1}",
-            stringThatLooksLikeANumber: "1",
-            stringThatLooksLikeABoolean: "true",
+            stringAndNumber: "1",
+            stringAndBoolean: "true",
             string: "string",
             boolean: "true",
             badBoolean: "truthy",
@@ -52,17 +52,19 @@ describe("Config", () => {
         };
 
         const mockStore = getMockStore(settings);
-        const config = ConfigProvider.create([inMemoryConfigProvider(mockStore)]);
+        const config = new CachedConfigProvider(inMemoryConfigProvider(mockStore));
 
         assert.equal(config.getNumber("number"), 1);
         assert.equal(config.getNumber("badNumber"), undefined);
+        assert.equal(config.getNumber("stringAndNumber"), 1);
 
-        assert.equal(config.getString("stringThatLooksLikeANumber"), "1");
-        assert.equal(config.getString("stringThatLooksLikeABoolean"), "true");
+        assert.equal(config.getString("stringAndNumber"), "1");
+        assert.equal(config.getString("stringAndBoolean"), "true");
         assert.equal(config.getString("string"), "string");
 
         assert.equal(config.getBoolean("boolean"), true);
         assert.equal(config.getBoolean("badBoolean"), undefined);
+        assert.equal(config.getBoolean("stringAndBoolean"), true);
 
         assert.deepEqual(config.getNumberArray("numberArray"), [1, 2, 3]);
         assert.equal(config.getNumberArray("badNumberArray"), undefined);
@@ -77,10 +79,9 @@ describe("Config", () => {
     it("Typing - custom provider", () => {
         const settings = {
             number: 1,
-            sortOfNumber: "1",
             badNumber: "{1}",
-            stringThatLooksLikeANumber: "1",
-            stringThatLooksLikeABoolean: "true",
+            stringAndNumber: "1",
+            stringAndBoolean: "true",
             string: "string",
             badString: [],
             boolean: "true",
@@ -95,19 +96,20 @@ describe("Config", () => {
         };
 
         const mockStore = untypedProvider(settings);
-        const config = ConfigProvider.create([mockStore]);
+        const config = new CachedConfigProvider(mockStore);
 
         assert.equal(config.getNumber("number"), 1);
-        assert.equal(config.getNumber("sortOfNumber"), 1);
+        assert.equal(config.getNumber("stringAndNumber"), 1);
         assert.equal(config.getNumber("badNumber"), undefined);
 
-        assert.equal(config.getString("stringThatLooksLikeANumber"), "1");
-        assert.equal(config.getString("stringThatLooksLikeABoolean"), "true");
+        assert.equal(config.getString("stringAndNumber"), "1");
+        assert.equal(config.getString("stringAndBoolean"), "true");
         assert.equal(config.getString("string"), "string");
         assert.equal(config.getString("badString"), undefined);
 
         assert.equal(config.getBoolean("boolean"), true);
         assert.equal(config.getBoolean("badBoolean"), undefined);
+        assert.equal(config.getBoolean("stringAndBoolean"), true);
 
         assert.deepEqual(config.getNumberArray("numberArray"), [1, 2, 3]);
         assert.equal(config.getNumberArray("badNumberArray"), undefined);
@@ -121,7 +123,7 @@ describe("Config", () => {
     });
 
     it("Void provider", () => {
-        const config = ConfigProvider.create([inMemoryConfigProvider(undefined)]);
+        const config = new CachedConfigProvider(inMemoryConfigProvider(undefined));
         assert.equal(config.getNumber("number"), undefined);
         assert.equal(config.getNumber("does not exist"), undefined);
         assert.equal(config.getBoolean("boolean"), undefined);
@@ -147,13 +149,12 @@ describe("Config", () => {
             featureEnabled: "true",
         };
 
-        const config1 = ConfigProvider.create(
-            [
-                inMemoryConfigProvider(getMockStore(settings1)),
-                inMemoryConfigProvider(getMockStore(settings1)),
-                inMemoryConfigProvider(getMockStore(settings2)),
-                inMemoryConfigProvider(getMockStore(settings3)),
-            ]);
+        const config1 = new CachedConfigProvider(
+            inMemoryConfigProvider(getMockStore(settings1)),
+            inMemoryConfigProvider(getMockStore(settings1)),
+            inMemoryConfigProvider(getMockStore(settings2)),
+            inMemoryConfigProvider(getMockStore(settings3)),
+            );
 
         assert.equal(config1.getNumber("number"), 1); // from settings1
         assert.equal(config1.getString("string"), "string1"); // from settings1
@@ -162,13 +163,12 @@ describe("Config", () => {
         assert.equal(config1.getNumber("number3"), 4); // from settings3
         assert.equal(config1.getBoolean("featureEnabled"), false); // from settings1.BreakGlass
 
-        const config2 = ConfigProvider.create(
-            [
-                inMemoryConfigProvider(getMockStore(settings3)),
-                inMemoryConfigProvider(getMockStore(settings2)),
-                inMemoryConfigProvider(getMockStore(settings1)),
-                inMemoryConfigProvider(getMockStore(settings1)),
-            ]);
+        const config2 = new CachedConfigProvider(
+            inMemoryConfigProvider(getMockStore(settings3)),
+            inMemoryConfigProvider(getMockStore(settings2)),
+            inMemoryConfigProvider(getMockStore(settings1)),
+            inMemoryConfigProvider(getMockStore(settings1)),
+        );
 
         assert.equal(config2.getNumber("number"), 2); // from settings2
         assert.equal(config2.getString("string"), "string2"); // from settings2
@@ -216,8 +216,8 @@ describe("Config", () => {
             number: 1,
             sortOfNumber: "1",
             badNumber: "{1}",
-            stringThatLooksLikeANumber: "1",
-            stringThatLooksLikeABoolean: "true",
+            stringAndNumber: "1",
+            stringAndBoolean: "true",
             string: "string",
             badString: [],
             boolean: "true",
@@ -231,14 +231,14 @@ describe("Config", () => {
             badBooleanArray2: ["true", "false", "true"],
         };
 
-        const config = ConfigProvider.create([new HybridSettingsProvider(settings)]);
+        const config = new CachedConfigProvider(new HybridSettingsProvider(settings));
 
         assert.equal(config.getNumber("number"), 1);
         assert.equal(config.getNumber("sortOfNumber"), 1);
         assert.equal(config.getNumber("badNumber"), undefined);
 
-        assert.equal(config.getString("stringThatLooksLikeANumber"), "1");
-        assert.equal(config.getString("stringThatLooksLikeABoolean"), "true");
+        assert.equal(config.getString("stringAndNumber"), "1");
+        assert.equal(config.getString("stringAndBoolean"), "true");
         assert.equal(config.getString("string"), "string");
         assert.equal(config.getString("badString"), undefined);
 
