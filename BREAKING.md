@@ -12,10 +12,18 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ## 0.54 Breaking changes
 - [Removed `readAndParseFromBlobs` from `driver-utils`](#Removed-readAndParseFromBlobs-from-driver-utils)
+- [Audience event ordering](#Audience-event-ordering)
 - [IDeltaManager cleanup](#IDeltaManager-cleanup)
 
 ### Removed `readAndParseFromBlobs` from `driver-utils`
 The `readAndParseFromBlobs` function from `driver-utils` was deprecated in 0.44, and has now been removed from the `driver-utils` package.
+
+### Audience event ordering
+Before this release, Container.audience was mostly updated with latest state by the time "connected" event fired across all layers. Mostly, because in practice we observed cases where clientId for newly established connection was added to audience later.
+With this release, Audience will always be populated asynchronously relative to "connect" & "connected" events. I.e. at the time of "connected" event firing, you are more likely not to find Container.clientId in Audience list.
+In practice though, rules did not change:
+- Audience may contain clientId of previous connection (that's always true while client is disconnected or goes through connection transition)
+- Audience may contain clientId for new connection, but such clientId yet did not reflect through other APIs (like Container.clientId - it has for a while clientId of previous connection)
 
 ### IDeltaManager cleanup
 A number of IDeltaManager properties are deprecated and will be removed in future releases. They expose internal mechanics that should not be relevant to container runtime layer.

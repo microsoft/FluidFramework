@@ -648,6 +648,16 @@ export class ConnectionManager implements IConnectionManager {
             }
         }
 
+        this.props.connectHandler({
+            clientId: connection.clientId,
+            checkpointSequenceNumber,
+            mode: connection.mode,
+        });
+
+        /**
+         * The rest of the processing is async on DeltaManager side (inbound & inboundSignal queues)
+         */
+
         this.props.incomingOpHandler(
             initialMessages,
             this.connectFirstConnection ? "InitialOps" : "ReconnectOps");
@@ -662,12 +672,6 @@ export class ConnectionManager implements IConnectionManager {
                 this.props.signalHandler(signal);
             }
         }
-
-        this.props.connectHandler({
-            clientId: connection.clientId,
-            checkpointSequenceNumber,
-            mode: connection.mode,
-        });
 
         this.connectFirstConnection = false;
     }
