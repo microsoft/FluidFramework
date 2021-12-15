@@ -1762,6 +1762,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // back-compat: noopTimeFrequency & noopCountFrequency properties were added to
                 // IClientConfiguration in 0.54. Once newer version of protocol-definitions is picked up,
                 // remove case to any.
+                //
+                // Note that config from first connection will be used for this container's lifetime.
+                // That means that if relay service changes settings, such changes will impact only newly booted
+                // clients.
+                // All existing will continue to use settings they got earlier.
                 const config = this.serviceConfiguration as any;
                 assert(config !== undefined, "there should be service config for active connection");
                 this.collabWindowTracker = new CollabWindowTracker(
