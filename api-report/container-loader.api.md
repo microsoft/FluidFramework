@@ -48,7 +48,7 @@ export enum ConnectionState {
     Disconnected = 0
 }
 
-// @public (undocumented)
+// @public
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     constructor(loader: Loader, config: IContainerConfig);
     // (undocumented)

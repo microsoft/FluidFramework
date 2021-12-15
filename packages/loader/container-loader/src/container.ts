@@ -68,9 +68,9 @@ import {
     IQuorum,
     ISequencedClient,
     ISequencedDocumentMessage,
+    ISequencedProposal,
     ISignalClient,
     ISignalMessage,
-    ISequencedProposal,
     ISnapshotTree,
     ITree,
     ITreeEntry,
@@ -93,6 +93,7 @@ import {
     disconnectedEventName,
     normalizeError,
 } from "@fluidframework/telemetry-utils";
+import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
 import {
     ReconnectMode,
@@ -100,7 +101,6 @@ import {
     ILocalSequencedClient,
     SystemSignalType,
 } from "./contracts";
-import { Audience } from "./audience";
 import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
@@ -258,6 +258,32 @@ class ProtocolHandler extends ProtocolOpHandler {
             }
         }
         return super.processMessage(message, local);
+    }
+
+    public processSignal(message: ISignalMessage) {
+        // System signal. Currently that only contains audience signals.
+        if (message.clientId !== null) { return; }
+
+        const innerContent = message.content as { content: any; type: string };
+        switch (innerContent.type) {
+            case SystemSignalType.ClientJoin: {
+                const newClient = innerContent.content as ISignalClient;
+                this.audience.addMember(newClient.clientId, newClient.client);
+                break;
+            }
+            case SystemSignalType.ClientLeave: {
+                const leftClientId = innerContent.content as string;
+                this.audience.removeMember(leftClientId);
+                break;
+            }
+            case SystemSignalType.ClearClients: {
+                this.audience.clear();
+                break;
+            }
+            default:
+                // Some future signal this loader does not know about.
+                break;
+        }
     }
 }
 
@@ -1778,32 +1804,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private processSignal(message: ISignalMessage) {
-        if (message.clientId === null) {
-            // System signal. Currently that only contains audience signals.
-            const innerContent = message.content as { content: any; type: string };
-            switch (innerContent.type) {
-                case SystemSignalType.ClientJoin: {
-                    const newClient = innerContent.content as ISignalClient;
-                    this.protocolHandler.audience.addMember(newClient.clientId, newClient.client);
-                    break;
-                }
-                case SystemSignalType.ClientLeave: {
-                    const leftClientId = innerContent.content as string;
-                    this.protocolHandler.audience.removeMember(leftClientId);
-                    break;
-                }
-                case SystemSignalType.ClearClients: {
-                    this.protocolHandler.audience.clear();
-                    break;
-                }
-                default:
-                    this.logger.sendErrorEvent({
-                        eventName: "UnknownSystemSignal",
-                        type: innerContent.type,
-                    });
-                    break;
-            }
-        } else {
+        this.protocolHandler.processSignal(message);
+        if (message.clientId !== null) {
             this.context.processSignal(message, this.clientId === message.clientId);
         }
     }

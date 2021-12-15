@@ -652,15 +652,15 @@ export class ConnectionManager implements IConnectionManager {
             initialMessages,
             this.connectFirstConnection ? "InitialOps" : "ReconnectOps");
 
+        this.props.signalHandler({ clientId: null, content: { type: SystemSignalType.ClearClients } });
+        for (const content of connection.initialClients ?? []) {
+            this.props.signalHandler({ clientId: null, content: { type: SystemSignalType.ClientJoin, content } });
+        }
+
         if (connection.initialSignals !== undefined) {
             for (const signal of connection.initialSignals) {
                 this.props.signalHandler(signal);
             }
-        }
-
-        this.props.signalHandler({ clientId: null, content: { type: SystemSignalType.ClearClients } });
-        for (const content of connection.initialClients ?? []) {
-            this.props.signalHandler({ clientId: null, content: { type: SystemSignalType.ClientJoin, content } });
         }
 
         this.props.connectHandler({
