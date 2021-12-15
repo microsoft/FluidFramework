@@ -9,6 +9,8 @@ import ps from "ps-node";
 import commander from "commander";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { NonRetryableError } from "@fluidframework/driver-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { createTestDriver, getProfile, initialize, loggerP, safeExit } from "./utils";
 
@@ -97,10 +99,24 @@ async function orchestratorProcess(
         undefined,
         args.browserAuth);
 
-    // Create a new file if a testId wasn't provided
-    const url = args.testId !== undefined
-        ? await testDriver.createContainerUrl(args.testId)
-        : await initialize(testDriver, seed, profile, args.verbose === true);
+    // If testId is provided, then try to load the file first.
+    let url;
+    if (args.testId !== undefined) {
+        try {
+            url = await testDriver.createContainerUrl(args.testId);
+        } catch(e: any) {
+            if (!(e instanceof NonRetryableError)
+                    || (e.errorType !== DriverErrorType.fileNotFoundOrAccessDeniedError)) {
+                throw e;
+            }
+            // If file not found, then try to create.
+        }
+    }
+
+    // If file doesn't exists, then create one.
+    if (url === undefined) {
+        url = await initialize(testDriver, seed, args.testId ?? Date.now().toString(), profile, args.verbose === true);
+    }
 
     const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
     console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
