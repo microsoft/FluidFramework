@@ -28,35 +28,28 @@ import { isSystemMessage } from "@fluidframework/protocol-base";
 //    Note that system ops (including noops themselves) are excluded, so it's 1 noop per 50 real ops.
 export class CollabWindowTracker {
     private opsCountSinceNoop = 0;
-    private readonly timer: Timer;
+    private readonly timer: Timer | undefined;
 
     constructor(
         private readonly submit: (type: MessageType, contents: any) => void,
-        private readonly activeConnection: () => boolean,
         NoopTimeFrequency: number = 2000,
         private readonly NoopCountFrequency: number = 50,
     ) {
-        this.timer = new Timer(NoopTimeFrequency, () => {
-            // Can get here due to this.stopSequenceNumberUpdate() not resetting timer.
-            // Also timer callback can fire even after timer cancellation if it was queued before cancellation.
-            if (this.opsCountSinceNoop !== 0) {
-                assert(this.activeConnection(),
-                    0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */);
-                this.submitNoop(false /* immediate */);
-            }
-        });
+        if (NoopTimeFrequency !== Infinity) {
+            this.timer = new Timer(NoopTimeFrequency, () => {
+                // Can get here due to this.stopSequenceNumberUpdate() not resetting timer.
+                // Also timer callback can fire even after timer cancellation if it was queued before cancellation.
+                if (this.opsCountSinceNoop !== 0) {
+                    this.submitNoop(false /* immediate */);
+                }
+            });
+        }
     }
 
     /**
      * Schedules as ack to the server to update the reference sequence number
      */
     public scheduleSequenceNumberUpdate(message: ISequencedDocumentMessage, immediateNoOp: boolean): void {
-        // Exit early for inactive (not in quorum or not writers) clients.
-        // They don't take part in the minimum sequence number calculation.
-        if (!this.activeConnection()) {
-            return;
-        }
-
         // While processing a message, an immediate no-op can be requested.
         // i.e. to expedite approve or commit phase of quorum.
         if (immediateNoOp) {
@@ -77,10 +70,13 @@ export class CollabWindowTracker {
             this.submitNoop(false /* immediate */);
             return;
         }
-        if (this.opsCountSinceNoop === 1) {
-            this.timer.restart();
+
+        if (this.timer !== undefined) {
+            if (this.opsCountSinceNoop === 1) {
+                this.timer.restart();
+            }
+            assert(this.timer.hasTimer, 0x242 /* "has timer" */);
         }
-        assert(this.timer.hasTimer, 0x242 /* "has timer" */);
     }
 
     private submitNoop(immediate: boolean) {

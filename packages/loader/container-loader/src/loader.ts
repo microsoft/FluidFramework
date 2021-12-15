@@ -120,7 +120,10 @@ function createCachedResolver(resolver: IUrlResolver) {
     return cacheResolver;
 }
 
-export interface ILoaderOptions extends ILoaderOptions1{
+// back-compat: remove this interface and use one from container-definitions.
+// Omit<> part can be removed once latest version of container-definitions is picked up.
+// summarizeProtocolTree should be either removed or moved to container-definitions
+export interface ILoaderOptions extends Omit<ILoaderOptions1, "noopCountFrequency" | "noopTimeFrequency"> {
     summarizeProtocolTree?: true,
 }
 

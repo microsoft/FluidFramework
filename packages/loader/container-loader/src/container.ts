@@ -412,12 +412,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private setAutoReconnectTime = performance.now();
 
-    private readonly collabWindowTracker = new CollabWindowTracker(
-        (type, contents) => this.submitMessage(type, contents),
-        () => this.activeConnection(),
-        this.loader.services.options?.noopTimeFrequency,
-        this.loader.services.options?.noopCountFrequency,
-    );
+    private collabWindowTracker: CollabWindowTracker | undefined;
 
     private get connectionMode() { return this._deltaManager.connectionManager.connectionMode; }
 
@@ -602,7 +597,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 logConnectionStateChangeTelemetry: (value, oldState, reason) =>
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
-                maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
+                maxClientLeaveWaitTime: this.options.maxClientLeaveWaitTime,
                 logConnectionIssue: (eventName: string) => {
                     // We get here when socket does not receive any ops on "write" connection, including
                     // its own join op. Attempt recovery option.
@@ -1573,7 +1568,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         deltaManager.on("disconnect", (reason: string) => {
             this.manualReconnectInProgress = false;
-            this.collabWindowTracker.stopSequenceNumberUpdate();
+            this.collabWindowTracker?.stopSequenceNumberUpdate();
             this.connectionStateHandler.receivedDisconnectEvent(reason);
         });
 
@@ -1727,7 +1722,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         this.messageCountAfterDisconnection += 1;
-        this.collabWindowTracker.stopSequenceNumberUpdate();
+        this.collabWindowTracker?.stopSequenceNumberUpdate();
         return this._deltaManager.submit(type, contents, batch, metadata);
     }
 
@@ -1760,7 +1755,27 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Allow the protocol handler to process the message
         const result = this.protocolHandler.processMessage(message, local);
-        this.collabWindowTracker.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
+
+        // Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
+        if (this.activeConnection()) {
+            if (this.collabWindowTracker === undefined) {
+                // back-compat: noopTimeFrequency & noopCountFrequency properties were added to
+                // IClientConfiguration in 0.54. Once newer version of protocol-definitions is picked up,
+                // remove case to any.
+                const config = this.serviceConfiguration as any;
+                assert(config !== undefined, "there should be service config for active connection");
+                this.collabWindowTracker = new CollabWindowTracker(
+                    (type, contents) => {
+                        assert(this.activeConnection(),
+                            0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */);
+                        this.submitMessage(type, contents);
+                    },
+                    config.noopTimeFrequency,
+                    config.noopCountFrequency,
+                );
+            }
+            this.collabWindowTracker.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
+        }
 
         this.emit("op", message);
 

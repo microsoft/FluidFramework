@@ -34,4 +34,20 @@ export interface IClientConfiguration {
 
     // Summary algorithm configuration. This is sent to clients when they connect
     summary: ISummaryConfiguration;
+
+    /* noopTimeFrequency & noopCountFrequency control how often client with "write" connection needs to send
+     * noop messages in case no other ops are being sent by such client. Any op (including noops) result in client
+     * communicating its reference sequence number to relay service, which can recalculate MSN based on new info.
+     * Client send noop when either noopTimeFrequency ms elapsed from receiving last op or client received
+     * noopCountFrequency ops.
+     * If no value is provided, client choses some reasonable value
+     */
+     noopTimeFrequency?: number;
+
+     /**
+      * Set min op frequency with which noops would be sent in case of active connection which is not sending any op.
+      * Please see noopTimeFrequency comment for more details.
+      * If no value is provided, client choses some reasonable value
+      */
+     noopCountFrequency?: number;
 }
