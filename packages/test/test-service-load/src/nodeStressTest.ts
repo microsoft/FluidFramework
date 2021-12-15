@@ -167,7 +167,7 @@ async function orchestratorProcess(
     }
 
     try {
-        const usernames = profile.testUsers !== undefined ? Object.keys(profile.testUsers.credentials) : [];
+        const usernames = profile.testUsers !== undefined ? Object.keys(profile.testUsers.credentials) : undefined;
         await Promise.all(runnerArgs.map(async (childArgs, index) => {
             const username = usernames !== undefined ? usernames[index % usernames.length] : undefined;
             const password = username !== undefined ? profile.testUsers?.credentials[username] : undefined;
