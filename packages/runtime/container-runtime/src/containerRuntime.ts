@@ -979,7 +979,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 errorType: "ClientSessionExpired",
                 message: `The client has reached the expiry time of ${expiryMs} ms.`,
             });
-            setTimeout(() => closeRuntime(), expiryMs);
+            const timeout = setTimeout(() => closeRuntime(), expiryMs);
+            this.on("dispose", () => {
+                clearInterval(timeout);
+            });
         }
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
