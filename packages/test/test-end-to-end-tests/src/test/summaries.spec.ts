@@ -8,11 +8,11 @@ import { assert, bufferToString, TelemetryNullLogger } from "@fluidframework/com
 import { IContainer } from "@fluidframework/container-definitions";
 import {
     ContainerRuntime,
+    Summarizer,
     ISummarizer,
-    IOnDemandSummarizeResults,
+    ISummarizeResults,
     ISummarizerRequestOptions,
-    ISummaryRuntimeOptions,
-    requestOnDemandSummarizer} from "@fluidframework/container-runtime";
+    ISummaryRuntimeOptions} from "@fluidframework/container-runtime";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
@@ -86,7 +86,7 @@ async function createSummarizer(
     if (absoluteUrl === undefined) {
         throw new Error("URL could not be resolved");
     }
-    return requestOnDemandSummarizer(loader, absoluteUrl, options);
+    return Summarizer.create(loader, absoluteUrl, options);
 }
 
 function readBlobContent(content: ISummaryBlob["content"]): unknown {
@@ -109,12 +109,10 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
         };
         summarizer = await createSummarizer(provider, options);
 
-        let result: IOnDemandSummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });
-        let startedResult = await result.summarizerStarted;
-        assert(startedResult.success, "Summarizer should have successfully started");
+        let result: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });
+        let negResult: ISummarizeResults | undefined = summarizer.summarizeOnDemand({ reason: "negative test" });
 
         let submitResult = await result.summarySubmitted;
-
         assert(submitResult.success, "on-demand summary should submit");
         assert(submitResult.data.stage === "submit",
             "on-demand summary submitted data stage should be submit");
@@ -128,10 +126,16 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
         await flushPromises();
 
+        assert((await negResult.summarySubmitted).success === false, "Should fail to submit summary");
+
         const seq: number = (summarizer as any).runtime.deltaManager.lastSequenceNumber;
         result = summarizer.summarizeOnDemand({ reason: "test" });
-        startedResult = await result.summarizerStarted;
-        assert(startedResult.success, "Summarizer should have successfully started");
+        try {
+            negResult = undefined;
+            negResult = summarizer.summarizeOnDemand({ reason: "negative test" });
+        }
+        catch(reason) {}
+        assert(negResult === undefined, "Should not have attempted to summarize while summarizing");
 
         submitResult = await result.summarySubmitted;
         assert(submitResult.success, "Result should be complete on success");
@@ -208,12 +212,9 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
         await provider.ensureSynchronized();
 
-        let result = summarizer.summarizeOnDemand({ reason: "test" });
-        const startResult = await result.summarizerStarted;
-        assert(startResult.success, "Summarizer should have started");
+        let result: ISummarizeResults | undefined = summarizer.summarizeOnDemand({ reason: "test" });
 
         const submitResult = await result.summarySubmitted;
-
         assert(submitResult.success, "on-demand summary should submit");
         assert(submitResult.data.stage === "submit",
             "on-demand summary submitted data stage should be submit");
@@ -234,11 +235,12 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
         await flushPromises();
 
         try {
+            result = undefined;
             result = summarizer.summarizeOnDemand({ reason: "test" });
-            assert(false, "summarizeOnDemand should not complete with disposed summarizer");
         } catch(error) {
             assert(error.errorType === "summarizingError", "Should throw a summarizer error");
         }
+        assert(result === undefined, "Should not have attempted summary with disposed summarizer");
 
         // Validate stats
         assert(stats.handleNodeCount === 0, "Expecting no handles for first summary.");

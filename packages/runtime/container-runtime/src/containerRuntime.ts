@@ -25,7 +25,6 @@ import {
     ContainerWarning,
     ICriticalContainerError,
     AttachState,
-    ILoader,
     ILoaderOptions,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
@@ -49,7 +48,11 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
-import { DataCorruptionError, GenericError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
+import {
+    DataCorruptionError,
+    GenericError,
+    UsageError,
+    extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -1131,18 +1134,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.summaryCollection.on("default", defaultAction);
 
                 // Create the SummaryManager and mark the initial state
-                const requestOptions: ISummarizerRequestOptions =
-                {
-                    cache: false,
-                    reconnect: false,
-                    summarizingClient: true,
-                };
                 this.summaryManager = new SummaryManager(
                     this.summarizerClientElection,
                     this, // IConnectedState
                     this.summaryCollection,
                     this.logger,
-                    formRequestSummarizerFn(this.context.loader, requestOptions),
+                    this.formRequestSummarizerFn(this.context.loader),
                     new Throttler(
                         60 * 1000, // 60 sec delay window
                         30 * 1000, // 30 sec max delay
@@ -2409,7 +2406,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // If we're not the summarizer, and we don't have a summaryManager, we expect that
             // disableSummaries is turned on. We are throwing instead of returning a failure here,
             // because it is a misuse of the API rather than an expected failure.
-            throw new Error(
+            throw new UsageError(
                 `Can't summarize, disableSummaries: ${this.summariesDisabled}`,
             );
         }
@@ -2424,11 +2421,41 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // If we're not the summarizer, and we don't have a summaryManager, we expect that
             // generateSummaries is turned off. We are throwing instead of returning a failure here,
             // because it is a misuse of the API rather than an expected failure.
-            throw new Error(
+            throw new UsageError(
                 `Can't summarize, disableSummaries: ${this.summariesDisabled}`,
             );
         }
     };
+
+    /**
+     * * Forms a function that will request a Summarizer.
+     * @param loaderRouter - the loader acting as an IFluidRouter
+     * */
+    private formRequestSummarizerFn(loaderRouter: IFluidRouter) {
+        return async () => {
+            const request: IRequest = {
+                headers: {
+                    [LoaderHeader.cache]: false,
+                    [LoaderHeader.clientDetails]: {
+                        capabilities: { interactive: false },
+                        type: summarizerClientType,
+                    },
+                    [DriverHeader.summarizingClient]: true,
+                    [LoaderHeader.reconnect]: false,
+                },
+                url: "/_summarizer",
+            };
+
+            const fluidObject = await requestFluidObject<FluidObject<ISummarizer>>(loaderRouter, request);
+            const summarizer = fluidObject.ISummarizer;
+
+            if (!summarizer) {
+                throw new UsageError("Fluid object does not implement ISummarizer");
+            }
+
+            return summarizer;
+        };
+    }
 }
 
 /**
@@ -2450,80 +2477,3 @@ const waitForSeq = async (
     };
     deltaManager.on("op", handleOp);
 });
-
-export interface ISummarizerRequestOptions {
-    cache: boolean,
-    reconnect: boolean,
-    summarizingClient: boolean,
-}
-
-/**
- * Forms a function that will request a Summarizer.
- * @param loaderRouter - the loader acting as an IFluidRouter
- * @param lastSequenceNumber - the last sequence number (e.g., from DeltaManager)
- * @param cache - use cache to retrieve summarizer
- * @param summarizingClient - is summarizer client
- * @param reconnect - can reconnect on connection loss
- */
-export const formRequestSummarizerFn = (
-    loaderRouter: IFluidRouter,
-    options: ISummarizerRequestOptions,
-) => async () => {
-    const { cache, reconnect, summarizingClient } = options;
-    const request: IRequest = {
-        headers: {
-            [LoaderHeader.cache]: cache,
-            [LoaderHeader.clientDetails]: {
-                capabilities: { interactive: false },
-                type: summarizerClientType,
-            },
-            [DriverHeader.summarizingClient]: summarizingClient,
-            [LoaderHeader.reconnect]: reconnect,
-        },
-        url: "/_summarizer",
-    };
-
-    const fluidObject = await requestFluidObject<FluidObject<ISummarizer>>(loaderRouter, request);
-    const summarizer = fluidObject.ISummarizer;
-
-    if (!summarizer) {
-        return Promise.reject(new Error("Fluid object does not implement ISummarizer"));
-    }
-
-    return summarizer;
-};
-
-/**
- * Requests a Summarizer for the purpose of performing on-demand summary.
- * @param loader - the loader that resolves the request
- * @param url - the URL used to resolve the container
- * @param options - options used to resolve the container
- * @param reconnect - can reconnect on connection loss
- * @param summarizingClient - is summarizer client
- */
-export async function requestOnDemandSummarizer(
-    loader: ILoader,
-    url: string,
-    options: ISummarizerRequestOptions): Promise<ISummarizer> {
-    const { cache, reconnect, summarizingClient } = options;
-    const request: IRequest = {
-        headers: {
-            [LoaderHeader.cache]: cache,
-            [LoaderHeader.clientDetails]: {
-                capabilities: { interactive: false },
-                type: summarizerClientType,
-            },
-            [DriverHeader.summarizingClient]: summarizingClient,
-            [LoaderHeader.reconnect]: reconnect,
-        },
-        url,
-    };
-
-    const resolvedContainer = await loader.resolve(request);
-    const fluidObject =
-        await requestFluidObject<FluidObject<ISummarizer>>(resolvedContainer, { url: "_summarizer" });
-    if (fluidObject.ISummarizer === undefined) {
-        throw new Error("Fluid object does not implement ISummarizer");
-    }
-    return fluidObject.ISummarizer;
-}

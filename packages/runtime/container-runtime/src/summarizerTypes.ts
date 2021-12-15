@@ -238,11 +238,6 @@ export interface ISummarizeResults {
     readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult, INackSummaryResult>>;
 }
 
-export interface IOnDemandSummarizeResults extends ISummarizeResults {
-    /** Resolves when the summarizer has started */
-    readonly summarizerStarted: Promise<SummarizeResultPart<undefined>>;
-}
-
 export type EnqueueSummarizeResult = (ISummarizeResults & {
     /**
      * Indicates that another summarize attempt is not already enqueued,
@@ -291,9 +286,16 @@ export interface ISummarizerEvents extends IEvent {
     (event: "summarizingError", listener: (error: ISummarizingWarning) => void);
 }
 
+export interface ISummarizerRequestOptions {
+    cache: boolean,
+    reconnect: boolean,
+    summarizingClient: boolean,
+}
+
 export interface ISummarizer extends
     IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer>{
     stop(reason: SummarizerStopReason): void;
+
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
 
     /**
@@ -305,7 +307,7 @@ export interface ISummarizer extends
      * that resolve as the summarize attempt progresses. They will resolve with success
      * false if a failure is encountered.
      */
-    summarizeOnDemand(options: IOnDemandSummarizeOptions): IOnDemandSummarizeResults;
+    summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
     /**
      * Enqueue an attempt to summarize after the specified sequence number.
      * If afterSequenceNumber is provided, the summarize attempt is "enqueued"

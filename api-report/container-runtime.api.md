@@ -395,11 +395,6 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly reason: string;
 }
 
-// @public (undocumented)
-export interface IOnDemandSummarizeResults extends ISummarizeResults {
-    readonly summarizerStarted: Promise<SummarizeResultPart<undefined>>;
-}
-
 // @public
 export interface IPendingFlush {
     // (undocumented)
@@ -504,7 +499,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidLo
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
     // (undocumented)
     stop(reason: SummarizerStopReason): void;
-    summarizeOnDemand(options: IOnDemandSummarizeOptions): IOnDemandSummarizeResults;
+    summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
 }
 
 // @public (undocumented)
@@ -669,9 +664,6 @@ export class PendingStateManager implements IDisposable {
 }
 
 // @public
-export function requestOnDemandSummarizer(loader: ILoader, url: string, options: ISummarizerRequestOptions): Promise<ISummarizer>;
-
-// @public
 export class ScheduleManager {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, logger: ITelemetryLogger);
     // (undocumented)
@@ -688,6 +680,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     constructor(url: string,
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
     internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
+    static create(loader: ILoader, url: string, options: ISummarizerRequestOptions): Promise<ISummarizer>;
     dispose(): void;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
