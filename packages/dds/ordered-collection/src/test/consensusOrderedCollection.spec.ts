@@ -160,14 +160,18 @@ describe("ConsensusOrderedCollection", () => {
             it("Event", async () => {
                 let addCount = 0;
                 let removeCount = 0;
-                testCollection.on("add", (value) => {
+                const addListener = (value) => {
                     assert.strictEqual(value, input[addCount], "Added event value not matched");
                     addCount += 1;
-                });
-                testCollection.on("acquire", (value) => {
+                };
+                testCollection.on("add", addListener);
+
+                const acquireListener = (value) => {
                     assert.strictEqual(value, output[removeCount], "Remove event value not matched");
                     removeCount += 1;
-                });
+                };
+                testCollection.on("acquire", acquireListener);
+
                 for (const item of input) {
                     await addItem(item);
                 }
@@ -184,6 +188,9 @@ describe("ConsensusOrderedCollection", () => {
 
                 assert.strictEqual(addCount, input.length, "Incorrect number add event");
                 assert.strictEqual(removeCount, output.length, "Incorrect number remove event");
+
+                testCollection.off("add", addListener);
+                testCollection.off("acquire", acquireListener);
             });
 
             it("can clone object value", async () => {

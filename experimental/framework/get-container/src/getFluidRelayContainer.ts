@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import { IRuntimeFactory } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { IContainer, IRuntimeFactory } from "@fluidframework/container-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { InsecureTinyliciousTokenProvider, InsecureTinyliciousUrlResolver } from "@fluidframework/tinylicious-driver";
@@ -31,14 +30,14 @@ export async function getFluidRelayContainer(
     documentId: string,
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
-): Promise<[Container, string]> {
+): Promise<[IContainer, string]> {
     verifyEnvConfig();
 
     const tokenProvider = new InsecureTinyliciousTokenProvider();
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
     const urlResolver = new InsecureTinyliciousUrlResolver();
 
-    let container: Container;
+    let container: IContainer;
     if (createNew) {
         container = await createContainer({
             documentServiceFactory,

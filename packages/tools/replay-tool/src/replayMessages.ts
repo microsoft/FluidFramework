@@ -8,6 +8,7 @@ import child_process from "child_process";
 import fs from "fs";
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -140,7 +141,7 @@ class Logger implements ITelemetryBaseLogger {
  * Helper class holding container and providing load / snapshot capabilities
  */
 class Document {
-    private container: Container;
+    private container: IContainer;
     private replayer: Replayer;
     private documentSeqNumber = 0;
     private from = -1;
@@ -230,7 +231,7 @@ class Document {
     }
 
     public async snapshot() {
-        return this.container.snapshot(
+        return (this.container as Container).snapshot(
             `ReplayTool Snapshot: op ${this.currentOp}, ${this.getFileName()}`,
             !this.args.incremental /* generateFullTreeNoOtimizations */);
     }

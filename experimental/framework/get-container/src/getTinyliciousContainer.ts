@@ -6,7 +6,6 @@ import {
     IContainer,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import {
@@ -34,7 +33,7 @@ export async function getTinyliciousContainer(
     const tokenProvider = new InsecureTinyliciousTokenProvider();
     const urlResolver = new InsecureTinyliciousUrlResolver(tinyliciousPort);
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
-    let container: Container;
+    let container: IContainer;
     if (createNew) {
         container = await createContainer({
             documentServiceFactory,

@@ -15,7 +15,7 @@ import { ILogger } from "./lambdas";
  * @param  {(error)=>boolean} shouldIgnoreError? - function that takes error and decides whether to ignore it
  * @param  {(error)=>boolean} shouldRetry? - function that takes error and decides whether to retry on it
  * @param  {(error, numRetries, retryAfterInterval)=>number} calculateIntervalMs
- * function which alculates interval to wait before retrying based on error, retryAfterMs and retries so far
+ * function which calculates interval to wait before retrying based on error, retryAfterMs and retries so far
  * @param  {(error)=>void} onErrorFn? - function allowing caller to define custom logic to run on error e.g. custom logs
  */
 export async function runWithRetry<T>(
