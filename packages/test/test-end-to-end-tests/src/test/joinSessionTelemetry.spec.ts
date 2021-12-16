@@ -64,7 +64,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
     const getJoinSessionEvent = () => mockLogger.events.filter(
         (event) => event.eventName === "fluid:telemetry:OdspDriver:JoinSession_end");
 
-    beforeEach(async () => {
+    beforeEach(async function() {
         provider = getTestObjectProvider();
         if (provider.driver.type !== "odsp") {
             this.skip();
