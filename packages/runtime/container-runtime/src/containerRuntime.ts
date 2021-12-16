@@ -967,8 +967,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          * we don't have an op (on demand summaries for instance). In those cases, we will use the timestamp
          * of this client's connection - https://github.com/microsoft/FluidFramework/issues/8375.
          */
-        const getCurrentTimestamp = () => {
-            return this.deltaManager.lastMessage?.timestamp ?? Date.now();
+         const getCurrentTimestamp = () => {
+            const audience = this.getAudience();
+            const client = this.clientId !== undefined ? audience.getMember(this.clientId) : undefined;
+            const timestamp = client?.timestamp;
+            return this.deltaManager.lastMessage?.timestamp ?? timestamp ?? Date.now();
         };
         this.garbageCollector = GarbageCollector.create(
             this,
