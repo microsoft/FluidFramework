@@ -81,7 +81,7 @@ export async function runWithRetry<T>(
  * Executes a given request action while providing support for retrying on failures and taking action on error.
  * @summary
  * The difference between {@link requestWithRetry} and {@link runWithRetry} is that {@link runWithRetry} allows the user
- * to decide whether to ignore the error or not, on a sort of "fire and forget fashion". That makes the return type of
+ * to decide whether to ignore the error or not, on a "fire and forget" fashion. That makes the return type of
  * {@link runWithRetry} be slightly different, as `undefined` is a possible return value. That is not the case for
  * {@link requestWithRetry}, which focuses on requests/operations where the user always wants the error to be
  * bubbled up, e.g. network requests. It allows for a simpler return type, `T`, since the function would never return
