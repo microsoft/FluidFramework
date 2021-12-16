@@ -78,7 +78,7 @@ export async function runWithRetry<T>(
 }
 
 /**
- * Executes a given request action while providing support to retry on failures and taking action on error.
+ * Executes a given request action while providing support for retrying on failures and taking action on error.
  * @summary
  * The difference between {@link requestWithRetry} and {@link runWithRetry} is that {@link runWithRetry} allows the user
  * to decide whether to ignore the error or not, on a sort of "fire and forget fashion". That makes the return type of
