@@ -54,6 +54,7 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
     gcAllowed: booleanCases,
     runFullGC: booleanCases,
     runSweep: [false],
+    gcSessionExpiryTime: [undefined],
 };
 
 const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
