@@ -50,7 +50,7 @@ import {
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 import { IUsedStateStats } from "./garbageCollection";
 
-type PendingAliasResolve = (value: boolean) => void;
+type PendingAliasResolve = (success: boolean) => void;
 
 /**
  * Interface for an op to be used for assigning an
@@ -271,8 +271,8 @@ export class DataStores implements IDisposable {
             return false;
         }
 
-        // Unlikely scenario, but we may have an alias OP with the alias value
-        // equal to the id of an older named data store
+        // Unlikely scenario, but we may receive an alias OP with the alias value
+        // equal to one of the ids supplied to `createRootDataStore` in the past
         const maybeContextWithAliasAsId = this.contexts.get(aliasMessage.alias);
         if (maybeContextWithAliasAsId !== undefined) {
             return false;
@@ -280,7 +280,7 @@ export class DataStores implements IDisposable {
 
         const currentContext = this.contexts.get(aliasMessage.internalId);
         if (currentContext === undefined) {
-            this.logger.sendTelemetryEvent({
+            this.logger.sendErrorEvent({
                 eventName: "AliasFluidDataStoreNotFound",
                 fluidDataStoreId: aliasMessage.internalId,
             });

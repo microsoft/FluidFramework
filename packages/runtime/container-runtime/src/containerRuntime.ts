@@ -683,10 +683,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return readAndParse<T>(storage, blobId);
             }
         };
-        const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
-        const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
-        const electedSummarizerData = await tryFetchBlob<ISerializedElection>(electedSummarizerBlobName);
-        const aliases = await tryFetchBlob<[string, string][]>(aliasBlobName) ?? [];
+
+        const [chunks, metadata, electedSummarizerData, aliases] = await Promise.all([
+            tryFetchBlob<[string, string[]][]>(chunksBlobName),
+            tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName),
+            tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
+            tryFetchBlob<[string, string][]>(aliasBlobName),
+        ]);
 
         const loadExisting = existing === true || context.existing === true;
 
@@ -726,8 +729,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             registry,
             metadata,
             electedSummarizerData,
-            chunks,
-            aliases,
+            chunks ?? [],
+            aliases ?? [],
             {
                 summaryOptions,
                 gcOptions,
