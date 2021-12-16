@@ -418,6 +418,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     raiseContainerWarning(warning: ContainerWarning): void;
     // (undocumented)
+    referenceAdded(id: string, referencedHandle: IFluidHandle): void;
+    // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     requestDataStore(request: IRequest): Promise<IResponse>;

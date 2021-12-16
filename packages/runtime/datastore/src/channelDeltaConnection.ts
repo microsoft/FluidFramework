@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
 import { CreateProcessingError } from "@fluidframework/container-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 export class ChannelDeltaConnection implements IDeltaConnection {
     private _handler: IDeltaHandler | undefined;
@@ -23,7 +24,8 @@ export class ChannelDeltaConnection implements IDeltaConnection {
         public objectId: string,
         private _connected: boolean,
         private readonly submitFn: (message: IDocumentMessage, localOpMetadata: unknown) => void,
-        private readonly dirtyFn: () => void) {
+        private readonly dirtyFn: () => void,
+        private readonly referenceAddedFn: (id: string, referencedHandle: IFluidHandle) => void) {
     }
 
     public attach(handler: IDeltaHandler) {
@@ -66,5 +68,15 @@ export class ChannelDeltaConnection implements IDeltaConnection {
      */
     public dirty(): void {
         this.dirtyFn();
+    }
+
+    /**
+     * Called when a new reference is added to another Fluid object. This is required so that garbage collection can
+     * identify all references added in the system.
+     * @param id - The id of the node that added the reference.
+     * @param referencedHandle - The handle of the Fluid object that is referenced.
+     */
+    public referenceAdded(id: string, referencedHandle: IFluidHandle) {
+        this.referenceAddedFn(id, referencedHandle);
     }
 }

@@ -127,7 +127,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             { all: { sharedObjectId: uuid() } },
         );
 
-        this._serializer = new FluidSerializer(this.runtime.channelsRoutingContext);
+        this._serializer = new FluidSerializer(
+            this.runtime.channelsRoutingContext,
+            (handle: IFluidHandle) => this.handleDecoded(handle),
+        );
 
         this.attachListeners();
     }
@@ -249,7 +252,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
         let summaryTree: ISummaryTreeWithStats;
         try {
-            const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+            const serializer = new SummarySerializer(
+                this.runtime.channelsRoutingContext,
+                (handle: IFluidHandle) => this.handleDecoded(handle),
+            );
             const snapshot: ITree = this.snapshotCore(serializer);
             summaryTree = convertToSummaryTreeWithStats(snapshot, fullTree);
             assert(this._isSummarizing, 0x077 /* "Possible re-entrancy! Summary should have been in progress." */);
@@ -288,7 +294,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // We run the full summarize logic to get the list of outbound routes from this object. This is a little
         // expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
         // See: https://github.com/microsoft/FluidFramework/issues/4547
-        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+        const serializer = new SummarySerializer(
+            this.runtime.channelsRoutingContext,
+            (handle: IFluidHandle) => this.handleDecoded(handle),
+        );
         this.snapshotCore(serializer);
 
         // The GC data for this shared object contains a single GC node. The outbound routes of this node are the
@@ -309,6 +318,18 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param services - Storage used by the shared object
      */
     protected abstract loadCore(services: IChannelStorageService): Promise<void>;
+
+    /**
+     * Called when a handle id decoded by this object. A handle in the object's data represents a reference to another
+     * object in the container.
+     * @param handle - The handle of the Fluid object that is decoded.
+     */
+    protected handleDecoded(handle: IFluidHandle) {
+        if (this.isAttached()) {
+            // The handle is decoded by this object itself. So, the id is "/" representing this object.
+            this.services?.deltaConnection.referenceAdded?.("/", handle);
+        }
+    }
 
     /**
      * Allows the distributed data type to perform custom local loading.

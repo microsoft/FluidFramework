@@ -355,6 +355,14 @@ export interface IFluidDataStoreContext extends
      * and its children with the GC details from the previous summary.
      */
     getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
+
+    /**
+     * Called when a new reference is added to another Fluid object. This is required so that garbage collection can
+     * identify all references added in the system.
+     * @param id - The id of the node that added the reference.
+     * @param referencedHandle - The handle of the Fluid object that is referenced.
+     */
+    referenceAdded?(id: string, referencedHandle: IFluidHandle): void;
 }
 
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {

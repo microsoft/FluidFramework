@@ -162,11 +162,49 @@ export function concatGarbageCollectionStates(
     return { gcNodes: combinedGCNodes };
 }
 
+/**
+ * Concatenates the given GC datas and returns the concatenated GC data.
+ */
+export function concatGarbageCollectionDatas(gcData1: IGarbageCollectionData, gcData2: IGarbageCollectionData) {
+    const combinedGCData: IGarbageCollectionData = cloneGCData(gcData1);
+    for (const [id, routes] of Object.entries(gcData2.gcNodes)) {
+        if (combinedGCData.gcNodes[id] === undefined) {
+            combinedGCData.gcNodes[id] = Array.from(routes);
+        } else {
+            const combinedRoutes = [ ...routes, ...combinedGCData.gcNodes[id] ];
+            combinedGCData.gcNodes[id] = [ ...new Set(combinedRoutes) ];
+        }
+    }
+    return combinedGCData;
+}
+
+/**
+ * Prefixes the `prefix` to the given id and returns a normalized id. The normalized id has only one slash at the
+ * beginning and no slashes at the end.
+ */
+export function prefixAndNormalizeId(prefix: string, id: string): string {
+    let normalizedId = id;
+    // Remove any starting slashes from the id.
+    while (normalizedId.startsWith("/")) {
+        normalizedId = normalizedId.substr(1);
+    }
+
+    // Add the prefix to the normalized id.
+    normalizedId = `/${prefix}/${normalizedId}`;
+
+    // Remove any trailing slashes from the normalized id.
+    while (normalizedId.endsWith("/")) {
+        normalizedId = normalizedId.substr(0, normalizedId.length - 1);
+    }
+
+    return normalizedId;
+}
+
 export class GCDataBuilder implements IGarbageCollectionData {
     public readonly gcNodes: { [ id: string ]: string[] } = {};
 
     public addNode(id: string, outboundRoutes: string[]) {
-        this.gcNodes[id] = outboundRoutes;
+        this.gcNodes[id] = Array.from(outboundRoutes);
     }
 
     /**

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { IChannelAttributes } from "./storage";
@@ -100,6 +100,14 @@ export interface IDeltaConnection {
      * that needs to be part of the summary but does not generate ops.
      */
     dirty(): void;
+
+    /**
+     * Called when a new reference is added to another Fluid object. This is required so that garbage collection can
+     * identify all references added in the system.
+     * @param id - The id of the node that added the reference.
+     * @param referencedHandle - The handle of the Fluid object that is referenced.
+     */
+    referenceAdded?(id: string, referencedHandle: IFluidHandle): void;
 }
 
 /**

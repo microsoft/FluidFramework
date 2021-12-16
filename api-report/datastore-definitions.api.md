@@ -75,6 +75,7 @@ export interface IDeltaConnection {
     // (undocumented)
     connected: boolean;
     dirty(): void;
+    referenceAdded?(id: string, referencedHandle: IFluidHandle): void;
     submit(messageContent: any, localOpMetadata: unknown): void;
 }
 

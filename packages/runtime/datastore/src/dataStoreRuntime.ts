@@ -7,6 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
     IFluidHandleContext,
+    IFluidSerializer,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -70,6 +71,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import {
     GCDataBuilder,
+    prefixAndNormalizeId,
     unpackChildNodesGCDetails,
     unpackChildNodesUsedRoutes,
 } from "@fluidframework/garbage-collector";
@@ -140,7 +142,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this.dataStoreContext.IFluidHandleContext;
     }
 
-    private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
+    private readonly serializer: IFluidSerializer;
     // Back compat: deprecated in 0.53, can be removed in versions >= 0.55.
     public get IFluidSerializer() { return this.serializer; }
 
@@ -197,6 +199,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.deltaManager = dataStoreContext.deltaManager;
         this.quorum = dataStoreContext.getQuorum();
         this.audience = dataStoreContext.getAudience();
+        this.serializer = new FluidSerializer(this, (handle: IFluidHandle) => {});
 
         const tree = dataStoreContext.baseSnapshot;
 
@@ -224,6 +227,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         this.dataStoreContext.storage,
                         (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
                         (address: string) => this.setChannelDirty(address),
+                        (id: string, handle: IFluidHandle) => this.referenceAdded(path, id, handle),
                         tree.trees[path]);
                     // This is the case of rehydrating a detached container from snapshot. Now due to delay loading of
                     // data store, if the data store is loaded after the container is attached, then we missed marking
@@ -241,6 +245,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         dataStoreContext.storage,
                         (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
                         (address: string) => this.setChannelDirty(address),
+                        (id: string, handle: IFluidHandle) => this.referenceAdded(path, id, handle),
                         path,
                         tree.trees[path],
                         this.sharedObjectRegistry,
@@ -345,7 +350,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.dataStoreContext,
             this.dataStoreContext.storage,
             (content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
-            (address: string) => this.setChannelDirty(address));
+            (address: string) => this.setChannelDirty(address),
+            (srcId: string, handle: IFluidHandle) => this.referenceAdded(id, srcId, handle));
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
@@ -491,6 +497,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                             this.dataStoreContext.storage,
                             (content, localContentMetadata) => this.submitChannelOp(id, content, localContentMetadata),
                             (address: string) => this.setChannelDirty(address),
+                            (srcId: string, handle: IFluidHandle) => this.referenceAdded(id, srcId, handle),
                             id,
                             snapshotTree,
                             this.sharedObjectRegistry,
@@ -627,6 +634,19 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         for (const [contextId, context] of this.contexts) {
             context.updateUsedRoutes(usedContextRoutes.get(contextId) ?? [], gcTimestamp);
         }
+    }
+
+    /**
+     * Called when a new reference is added to another Fluid object. This is required so that garbage collection can
+     * identify all references added in the system.
+     * @param contextId - The id of the context in which the reference was added.
+     * @param id - The id of the node that added the reference.
+     * @param referencedHandle - The handle of the Fluid object that is referenced.
+     */
+    private referenceAdded(contextId: string, id: string, referencedHandle: IFluidHandle) {
+        // Prefix the context id to the id of the child node that added the reference so that it can be identified as
+        // belonging to this child.
+        this.dataStoreContext.referenceAdded?.(prefixAndNormalizeId(contextId, id), referencedHandle);
     }
 
     /**

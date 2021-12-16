@@ -13,6 +13,9 @@ import { ITelemetryLogger } from '@fluidframework/common-definitions';
 export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData;
 
 // @public
+export function concatGarbageCollectionDatas(gcData1: IGarbageCollectionData, gcData2: IGarbageCollectionData): IGarbageCollectionData;
+
+// @public
 export function concatGarbageCollectionStates(gcState1: IGarbageCollectionState, gcState2: IGarbageCollectionState): IGarbageCollectionState;
 
 // @public (undocumented)
@@ -36,6 +39,9 @@ export interface IGCResult {
     deletedNodeIds: string[];
     referencedNodeIds: string[];
 }
+
+// @public
+export function prefixAndNormalizeId(prefix: string, id: string): string;
 
 // @public
 export function removeRouteFromAllNodes(gcNodes: {

@@ -67,6 +67,8 @@ import {
     ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
 import { CreateProcessingError } from "@fluidframework/container-utils";
+import { prefixAndNormalizeId } from "@fluidframework/garbage-collector";
+
 import { ContainerRuntime } from "./containerRuntime";
 import {
     dataStoreAttributesBlobName,
@@ -494,6 +496,17 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (this.loaded) {
             this.updateChannelUsedRoutes();
         }
+    }
+
+    /**
+     * Called when a new reference is added to another Fluid object. This is required so that garbage collection can
+     * identify all references added in the system.
+     * @param id - The id of the node that added the reference.
+     * @param referencedHandle - The handle of the Fluid object that is referenced.
+     */
+    public referenceAdded(id: string, referencedHandle: IFluidHandle) {
+        // Prefix our id to the id of the node that added the reference so that it can be identified as belonging us.
+        this._containerRuntime.referenceAdded(prefixAndNormalizeId(this.id, id), referencedHandle);
     }
 
     /**

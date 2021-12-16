@@ -134,7 +134,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     // (undocumented)
-    readonly IFluidHandleContext: IFluidHandleContext;
+    get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)
     get IFluidRouter(): this;
     // (undocumented)
@@ -153,6 +153,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     processSignal(message: ISignalMessage, local: boolean): void;
     // (undocumented)
     readonly raiseContainerWarning: (warning: ContainerWarning) => void;
+    referenceAdded(id: string, referencedHandle: IFluidHandle): void;
     refreshLatestSummaryAck(proposalHandle: string | undefined, ackHandle: string, summaryRefSeq: number, summaryLogger: ITelemetryLogger): Promise<void>;
     request(request: IRequest): Promise<IResponse>;
     resolveHandle(request: IRequest): Promise<IResponse>;

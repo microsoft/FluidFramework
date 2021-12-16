@@ -207,15 +207,6 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
      */
     describe("References between summaries", () => {
         /**
-         * Function that asserts the given test result fails. This is because all the scenarios here currently fail.
-         * These should pass once this issue is fixed - https://github.com/microsoft/FluidFramework/issues/7924. The
-         * assert condition will be flipped then.
-         */
-         function assertTestFails(testResult: boolean, message: string) {
-            assert(!testResult, message);
-        }
-
-        /**
          * Validates that we can detect references that were added and then removed.
          * 1. Summary 1 at t1. V = [A*, B]. E = []. B has unreferenced time t1.
          * 2. Op adds reference from A to B. E = [A -> B].
@@ -247,7 +238,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             // 4. Get summary 2 and validate B's unreferenced timestamp updated. E = [].
             const timestamps2 = await getUnreferencedTimestamps(summarizerClient);
             const dsBTime2 = timestamps2.get(dataStoreB.id);
-            assertTestFails(dsBTime2 !== undefined && dsBTime2 > dsBTime1, `B's timestamp should have updated`);
+            assert(dsBTime2 !== undefined && dsBTime2 > dsBTime1, `B's timestamp should have updated`);
         }).timeout(20000);
 
         /**
@@ -292,8 +283,8 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             const timestamps2 = await getUnreferencedTimestamps(summarizerClient);
             const dsBTime2 = timestamps2.get(dataStoreB.id);
             const dsCTime2 = timestamps2.get(dataStoreC.id);
-            assertTestFails(dsBTime2 !== undefined && dsBTime2 > dsBTime1, `B's timestamp should have updated`);
-            assertTestFails(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
+            assert(dsBTime2 !== undefined && dsBTime2 > dsBTime1, `B's timestamp should have updated`);
+            assert(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
         }).timeout(20000);
 
         /**
@@ -339,9 +330,9 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             const dsBTime2 = timestamps2.get(dataStoreB.id);
             const dsCTime2 = timestamps2.get(dataStoreC.id);
             const dsDTime2 = timestamps2.get(dataStoreD.id);
-            assertTestFails(dsBTime2 !== undefined && dsBTime2 > dsBTime1, `B's timestamp should have updated`);
-            assertTestFails(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
-            assertTestFails(dsDTime2 !== undefined && dsDTime2 > dsDTime1, `D's timestamp should have updated`);
+            assert(dsBTime2 !== undefined && dsBTime2 > dsBTime1, `B's timestamp should have updated`);
+            assert(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
+            assert(dsDTime2 !== undefined && dsDTime2 > dsDTime1, `D's timestamp should have updated`);
         }).timeout(20000);
 
         /**
@@ -384,7 +375,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             // 6. Get summary 2 and validate that C's unreferenced timestamps updated. E = [A -> B].
             const timestamps2 = await getUnreferencedTimestamps(summarizerClient);
             const dsCTime2 = timestamps2.get(dataStoreC.id);
-            assertTestFails(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
+            assert(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
         }).timeout(20000);
 
         /**
@@ -427,7 +418,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             // 6. Get summary 2 and validate that C's unreferenced timestamps updated. E = [A -> B].
             const timestamps2 = await getUnreferencedTimestamps(summarizerClient);
             const dsCTime2 = timestamps2.get(dataStoreC.id);
-            assertTestFails(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
+            assert(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
         }).timeout(20000);
 
         /**
@@ -474,7 +465,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             // 6. Get summary 2 and validate that C's unreferenced timestamps updated. E = [A -> B].
             const timestamps2 = await getUnreferencedTimestamps(summarizerClient);
             const dsCTime2 = timestamps2.get(dataStoreC.id);
-            assertTestFails(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
+            assert(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
         }).timeout(20000);
 
         /**
@@ -526,7 +517,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             // 7. Get summary 2 and validate that D's unreferenced timestamps updated. E = [A -> B, B -> C].
             const timestamps2 = await getUnreferencedTimestamps(summarizerClient);
             const dsDTime2 = timestamps2.get(dataStoreD.id);
-            assertTestFails(dsDTime2 !== undefined && dsDTime2 > dsDTime1, `D's timestamp should have updated`);
+            assert(dsDTime2 !== undefined && dsDTime2 > dsDTime1, `D's timestamp should have updated`);
         }).timeout(20000);
 
         /**

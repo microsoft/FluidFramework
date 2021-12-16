@@ -169,6 +169,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly options: ILoaderOptions;
     readonly packagePath: readonly string[];
     raiseContainerWarning(warning: ContainerWarning): void;
+    referenceAdded?(id: string, referencedHandle: IFluidHandle): void;
     readonly scope: IFluidObject & FluidObject;
     setChannelDirty(address: string): void;
     // (undocumented)
