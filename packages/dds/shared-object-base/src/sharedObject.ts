@@ -308,6 +308,18 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
+     * Called when a handle is decoded by this object. A handle in the object's data represents an outbound reference
+     * to another object in the container.
+     * @param decodedHandle - The handle of the Fluid object that is decoded.
+     */
+    protected handleDecoded(decodedHandle: IFluidHandle) {
+        if (this.isAttached()) {
+            // This represents an outbound reference from this object to the node represented by decodedHandle.
+            this.services?.deltaConnection.addedGCOutboundReference?.(this.handle, decodedHandle);
+        }
+    }
+
+    /**
      * Gets a form of the object that can be serialized.
      * @returns A tree representing the snapshot of the shared object.
      */
@@ -318,18 +330,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param services - Storage used by the shared object
      */
     protected abstract loadCore(services: IChannelStorageService): Promise<void>;
-
-    /**
-     * Called when a handle id decoded by this object. A handle in the object's data represents a reference to another
-     * object in the container.
-     * @param handle - The handle of the Fluid object that is decoded.
-     */
-    protected handleDecoded(handle: IFluidHandle) {
-        if (this.isAttached()) {
-            // The handle is decoded by this object itself. So, the id is "/" representing this object.
-            this.services?.deltaConnection.referenceAdded?.("/", handle);
-        }
-    }
 
     /**
      * Allows the distributed data type to perform custom local loading.

@@ -8,7 +8,7 @@ import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import {
     cloneGCData,
     concatGarbageCollectionStates,
-    concatGarbageCollectionDatas,
+    concatGarbageCollectionData,
     IGCResult,
     runGarbageCollection,
     unpackChildNodesGCDetails,
@@ -106,7 +106,7 @@ export interface IGarbageCollector {
     /** Called when a node is changed. Used to detect and log when an inactive node is changed. */
     nodeChanged(id: string): void;
     /** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
-    referenceAdded(fromNodeId: string, toNodeId: string): void;
+    addedOutboundReference(fromNodeId: string, toNodeId: string): void;
 }
 
 /**
@@ -242,7 +242,10 @@ export class GarbageCollector implements IGarbageCollector {
     // ack'd, latestSummaryGCState is updated with this.
     private currentGCData: IGarbageCollectionData | undefined;
     private latestSummaryGCData: IGarbageCollectionData = { gcNodes: {} };
-    private readonly referencesSinceLatestSummary: Map<string, string> = new Map();
+
+    // Keeps a list of references (edges in the GC graph) between summaries. Each entry has a node id and a list of
+    // outbound routes from that node.
+    private readonly referencesSinceLatestSummary: Map<string, string[]> = new Map();
 
     // Promise when resolved initializes the base state of the nodes from the base summary state.
     private readonly initializeBaseStateP: Promise<void>;
@@ -562,15 +565,16 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Called when a reference is added to a node. This is used to identify all nodes that have been referenced
-     * between summaries so that thier unreferenced timestamp can be reset. We will do that the next time GC runs;
-     * store the reference for now.
+     * Called when an outbound reference is added to a node. This is used to identify all nodes that have been
+     * referenced between summaries so that their unreferenced timestamp can be reset.
      *
      * @param fromNodeId - The node from which the reference is added.
      * @param toNodeId - The node to which the reference is added.
      */
-    public referenceAdded(fromNodeId: string, toNodeId: string) {
-        this.referencesSinceLatestSummary.set(fromNodeId, toNodeId);
+    public addedOutboundReference(fromNodeId: string, toNodeId: string) {
+        const outboundRoutes = this.referencesSinceLatestSummary.get(fromNodeId) ?? [];
+        outboundRoutes.push(toNodeId);
+        this.referencesSinceLatestSummary.set(fromNodeId, outboundRoutes);
     }
 
     /**
@@ -662,12 +666,12 @@ export class GarbageCollector implements IGarbageCollector {
          *      which is tracked by https://github.com/microsoft/FluidFramework/issues/8470.
          *    - A new data store may have "root" DDSs already created and we don't detect them today.
          */
-        const gcDataSuperSet = concatGarbageCollectionDatas(this.latestSummaryGCData, currentGCData);
-        this.referencesSinceLatestSummary.forEach((outboundRoute: string, sourceNodeId: string) => {
+        const gcDataSuperSet = concatGarbageCollectionData(this.latestSummaryGCData, currentGCData);
+        this.referencesSinceLatestSummary.forEach((outboundRoutes: string[], sourceNodeId: string) => {
             if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
-                gcDataSuperSet.gcNodes[sourceNodeId] = [outboundRoute];
+                gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
             } else {
-                gcDataSuperSet.gcNodes[sourceNodeId].push(outboundRoute);
+                gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
             }
         });
 

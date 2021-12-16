@@ -53,7 +53,7 @@ export function createServiceEndpoints(
     connected: boolean,
     submitFn: (content: any, localOpMetadata: unknown) => void,
     dirtyFn: () => void,
-    referenceAddedFn: (id: string, referencedHandle: IFluidHandle) => void,
+    addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
     storageService: IDocumentStorageService,
     tree?: ISnapshotTree,
     extraBlobs?: Map<string, ArrayBufferLike>,
@@ -63,7 +63,7 @@ export function createServiceEndpoints(
         connected,
         (message, localOpMetadata) => submitFn(message, localOpMetadata),
         dirtyFn,
-        referenceAddedFn);
+        addedGCOutboundReferenceFn);
     const objectStorage = new ChannelStorageService(tree, storageService, extraBlobs);
 
     return {

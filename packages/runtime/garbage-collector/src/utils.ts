@@ -165,7 +165,7 @@ export function concatGarbageCollectionStates(
 /**
  * Concatenates the given GC datas and returns the concatenated GC data.
  */
-export function concatGarbageCollectionDatas(gcData1: IGarbageCollectionData, gcData2: IGarbageCollectionData) {
+export function concatGarbageCollectionData(gcData1: IGarbageCollectionData, gcData2: IGarbageCollectionData) {
     const combinedGCData: IGarbageCollectionData = cloneGCData(gcData1);
     for (const [id, routes] of Object.entries(gcData2.gcNodes)) {
         if (combinedGCData.gcNodes[id] === undefined) {
@@ -176,28 +176,6 @@ export function concatGarbageCollectionDatas(gcData1: IGarbageCollectionData, gc
         }
     }
     return combinedGCData;
-}
-
-/**
- * Prefixes the `prefix` to the given id and returns a normalized id. The normalized id has only one slash at the
- * beginning and no slashes at the end.
- */
-export function prefixAndNormalizeId(prefix: string, id: string): string {
-    let normalizedId = id;
-    // Remove any starting slashes from the id.
-    while (normalizedId.startsWith("/")) {
-        normalizedId = normalizedId.substr(1);
-    }
-
-    // Add the prefix to the normalized id.
-    normalizedId = `/${prefix}/${normalizedId}`;
-
-    // Remove any trailing slashes from the normalized id.
-    while (normalizedId.endsWith("/")) {
-        normalizedId = normalizedId.substr(0, normalizedId.length - 1);
-    }
-
-    return normalizedId;
 }
 
 export class GCDataBuilder implements IGarbageCollectionData {

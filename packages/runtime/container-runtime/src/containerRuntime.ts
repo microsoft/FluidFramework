@@ -1865,13 +1865,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * Called when a new reference is added to another Fluid object. This is required so that garbage collection can
-     * identify all references added in the system.
-     * @param id - The id of the node that added the reference.
-     * @param referencedHandle - The handle of the Fluid object that is referenced.
+     * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+     * all references added in the system.
+     * @param srcHandle - The handle of the node that added the reference.
+     * @param outboundHandle - The handle of the outbound node that is referenced.
      */
-    public referenceAdded(id: string, referencedHandle: IFluidHandle) {
-        this.garbageCollector.referenceAdded(id, referencedHandle.absolutePath);
+    public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
+        this.garbageCollector.addedOutboundReference(srcHandle.absolutePath, outboundHandle.absolutePath);
     }
 
     /**

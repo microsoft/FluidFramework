@@ -399,6 +399,14 @@ describe("Garbage Collection Tests", () => {
         const nodeC = "/C";
         const nodeD = "/D";
 
+        /**
+         * Function that asserts a test result fails. This is to add tests before implementing / fixing features. These
+         * will be flipped when the feature / fix is in place.
+         */
+         function assertTestFails(testResult: boolean, message: string) {
+            assert(!testResult, message);
+        }
+
         // Mimics latest summary refresh so that the latest summary state tracked by GC is updated after the GC run.
         const refreshLatestSummary = async () => garbageCollector.latestSummaryStateRefreshed(
             { wasSummaryTracked: true, latestSummaryUpdated: true },
@@ -466,7 +474,7 @@ describe("Garbage Collection Tests", () => {
             assert(nodeBTime1 !== undefined, "B should have unreferenced timestamp");
 
             // 2. Add reference from A to B. E = [A -> B].
-            garbageCollector.referenceAdded(nodeA, nodeB);
+            garbageCollector.addedOutboundReference(nodeA, nodeB);
             defaultGCData.gcNodes[nodeA] = [ nodeB ];
 
             // 3. Remove reference from A to B. E = [].
@@ -507,7 +515,7 @@ describe("Garbage Collection Tests", () => {
             assert(nodeCTime1 !== undefined, "C should have unreferenced timestamp");
 
             // 2. Add reference from A to B. E = [A -> B, B -> C].
-            garbageCollector.referenceAdded(nodeA, nodeB);
+            garbageCollector.addedOutboundReference(nodeA, nodeB);
             defaultGCData.gcNodes[nodeA] = [ nodeB ];
 
             // 3. Remove reference from B to C. E = [A -> B].
@@ -554,7 +562,7 @@ describe("Garbage Collection Tests", () => {
             assert(nodeDTime1 !== undefined, "D should have unreferenced timestamp");
 
             // 2. Add reference from A to B. E = [A -> B, B -> C, C -> D].
-            garbageCollector.referenceAdded(nodeA, nodeB);
+            garbageCollector.addedOutboundReference(nodeA, nodeB);
             defaultGCData.gcNodes[nodeA] = [ nodeB ];
 
             // 3. Remove reference from A to B. E = [B -> C, C -> D].
@@ -599,11 +607,11 @@ describe("Garbage Collection Tests", () => {
             defaultGCData.gcNodes[nodeB] = [];
 
             // 3. Add reference from A to B. E = [A -> B].
-            garbageCollector.referenceAdded(nodeA, nodeB);
+            garbageCollector.addedOutboundReference(nodeA, nodeB);
             defaultGCData.gcNodes[nodeA] = [ nodeB ];
 
             // 4. Add reference from B to C. E = [A -> B, B -> C].
-            garbageCollector.referenceAdded(nodeB, nodeC);
+            garbageCollector.addedOutboundReference(nodeB, nodeC);
             defaultGCData.gcNodes[nodeB] = [ nodeC ];
 
             // 5. Remove reference from B to C. E = [A -> B].
@@ -642,7 +650,7 @@ describe("Garbage Collection Tests", () => {
             assert(nodeCTime1 !== undefined, "C should have unreferenced timestamp");
 
             // 2. Add reference from B to C. E = [B -> C].
-            garbageCollector.referenceAdded(nodeB, nodeC);
+            garbageCollector.addedOutboundReference(nodeB, nodeC);
             defaultGCData.gcNodes[nodeB] = [ nodeC ];
 
             // 3. Run GC and generate summary 2. E = [B -> C].
@@ -656,6 +664,56 @@ describe("Garbage Collection Tests", () => {
         });
 
         /**
+         * Validates that we can detect multiple references that were added and then removed by the same node.
+         * 1. Summary 1 at t1. V = [A*, B, C]. E = []. B and C have unreferenced time t1.
+         * 2. Reference from A to B added. E = [A -> B].
+         * 3. Reference from A to C added. E = [A -> B, A -> C].
+         * 4. Reference from A to B removed. E = [A -> C].
+         * 5. Reference from A to C removed. E = [].
+         * 6. Summary 2 at t2. V = [A*, B]. E = []. B and C have unreferenced time t2.
+         * Validates that the unreferenced time for B and C is t2 which is > t1.
+         */
+        it(`Scenario 6 - Multiple references added and then removed by same node`, async () => {
+            // Initialize nodes A, B and C.
+            defaultGCData.gcNodes["/"] = [ nodeA ];
+            defaultGCData.gcNodes[nodeA] = [];
+            defaultGCData.gcNodes[nodeB] = [];
+            defaultGCData.gcNodes[nodeC] = [];
+
+            // 1. Run GC and generate summary 1. E = [].
+            const timestamps1 = await getUnreferencedTimestamps();
+            assert(timestamps1.get(nodeA) === undefined, "A should be referenced");
+
+            const nodeBTime1 = timestamps1.get(nodeB);
+            const nodeCTime1 = timestamps1.get(nodeC);
+            assert(nodeBTime1 !== undefined, "B should have unreferenced timestamp");
+            assert(nodeCTime1 !== undefined, "C should have unreferenced timestamp");
+
+            // 2. Add reference from A to B. E = [A -> B].
+            garbageCollector.addedOutboundReference(nodeA, nodeB);
+            defaultGCData.gcNodes[nodeA] = [ nodeB ];
+
+            // 3. Add reference from A to C. E = [A -> B, A -> C].
+            garbageCollector.addedOutboundReference(nodeA, nodeC);
+            defaultGCData.gcNodes[nodeA] = [ nodeB, nodeC ];
+
+            // 4. Remove reference from A to B. E = [A -> C].
+            defaultGCData.gcNodes[nodeA] = [ nodeC ];
+
+            // 5. Remove reference from A to C. E = [].
+            defaultGCData.gcNodes[nodeA] = [];
+
+            // 6. Run GC and generate summary 2. E = [].
+            const timestamps2 = await getUnreferencedTimestamps();
+            assert(timestamps2.get(nodeA) === undefined, "A should be referenced");
+
+            const nodeBTime2 = timestamps2.get(nodeB);
+            const nodeCTime2 = timestamps2.get(nodeC);
+            assert(nodeCTime2 !== undefined && nodeCTime2 > nodeCTime1, "C's timestamp should have updated");
+            assert(nodeBTime2 !== undefined && nodeBTime2 > nodeBTime1, "B's timestamp should have updated");
+        });
+
+        /**
          * Validates that we can detect references that are added after a summary is submitted and before that
          * summary is ack'd. This tests that we clear the pending summary state correctly.
          * 1. Summary 1 at t1. V = [A*, B]. E = []. B has unreferenced time t1.
@@ -665,7 +723,7 @@ describe("Garbage Collection Tests", () => {
          * 5. Summary 2 at t2. V = [A*, B]. E = []. B has unreferenced time t2.
          * Validates that the unreferenced time for B is t2 which is > t1.
          */
-         it(`Scenario 6 - Reference added after summary and before its ack'd`, async () => {
+        it(`Scenario 7 - Reference added after summary and before its ack'd`, async () => {
             // Initialize nodes A and B.
             defaultGCData.gcNodes["/"] = [ nodeA ];
             defaultGCData.gcNodes[nodeA] = [];
@@ -679,22 +737,22 @@ describe("Garbage Collection Tests", () => {
             assert(nodeBTime1 !== undefined, "B should have unreferenced timestamp");
 
             // 2. Add reference from A to B. E = [A -> B].
-            garbageCollector.referenceAdded(nodeA, nodeB);
+            garbageCollector.addedOutboundReference(nodeA, nodeB);
             defaultGCData.gcNodes[nodeA] = [ nodeB ];
 
             // 3. Mimic receiving a summary ack by refreshing latest summary.
             await refreshLatestSummary();
 
-            // 3. Remove reference from A to B. E = [].
+            // 4. Remove reference from A to B. E = [].
             defaultGCData.gcNodes[nodeA] = [];
 
-            // 4. Run GC and generate summary 2. E = [].
+            // 5. Run GC and generate summary 2. E = [].
             const timestamps2 = await getUnreferencedTimestamps();
             assert(timestamps2.get(nodeA) === undefined, "A should be referenced");
 
             const nodeBTime2 = timestamps2.get(nodeB);
-
-            assert(nodeBTime2 !== undefined && nodeBTime2 > nodeBTime1, "B's timestamp should have updated");
+            // This test current fails. Tracked by https://github.com/microsoft/FluidFramework/issues/8576.
+            assertTestFails(nodeBTime2 !== undefined && nodeBTime2 > nodeBTime1, "B's timestamp should have updated");
         });
     });
 });

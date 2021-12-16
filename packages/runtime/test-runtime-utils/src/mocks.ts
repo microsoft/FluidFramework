@@ -502,7 +502,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return null;
     }
 
-    public referenceAdded(id: string, referencedHandle: IFluidHandle): void {}
+    public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void {}
 
     public async summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats> {
         const stats = mergeStats();

@@ -23,9 +23,9 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     constructor(
         public objectId: string,
         private _connected: boolean,
-        private readonly submitFn: (message: IDocumentMessage, localOpMetadata: unknown) => void,
-        private readonly dirtyFn: () => void,
-        private readonly referenceAddedFn: (id: string, referencedHandle: IFluidHandle) => void) {
+        public readonly submit: (message: IDocumentMessage, localOpMetadata: unknown) => void,
+        public readonly dirty: () => void,
+        public readonly addedGCOutboundReference: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void) {
     }
 
     public attach(handler: IDeltaHandler) {
@@ -53,30 +53,5 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 
     public applyStashedOp(message: ISequencedDocumentMessage): unknown {
         return this.handler.applyStashedOp(message);
-    }
-
-    /**
-     * Send new messages to the server
-     */
-    public submit(message: IDocumentMessage, localOpMetadata: unknown): void {
-        this.submitFn(message, localOpMetadata);
-    }
-
-    /**
-     * Indicates that the channel is dirty and needs to be part of the summary. It is called by a SharedSummaryBlock
-     * that needs to be part of the summary but does not generate ops.
-     */
-    public dirty(): void {
-        this.dirtyFn();
-    }
-
-    /**
-     * Called when a new reference is added to another Fluid object. This is required so that garbage collection can
-     * identify all references added in the system.
-     * @param id - The id of the node that added the reference.
-     * @param referencedHandle - The handle of the Fluid object that is referenced.
-     */
-    public referenceAdded(id: string, referencedHandle: IFluidHandle) {
-        this.referenceAddedFn(id, referencedHandle);
     }
 }

@@ -73,6 +73,7 @@ export enum ContainerMessageType {
 
 // @public
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IContainerRuntime, IGarbageCollectionRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider {
+    addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     // (undocumented)
     get attachState(): AttachState;
     // (undocumented)
@@ -153,7 +154,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     processSignal(message: ISignalMessage, local: boolean): void;
     // (undocumented)
     readonly raiseContainerWarning: (warning: ContainerWarning) => void;
-    referenceAdded(id: string, referencedHandle: IFluidHandle): void;
     refreshLatestSummaryAck(proposalHandle: string | undefined, ackHandle: string, summaryRefSeq: number, summaryLogger: ITelemetryLogger): Promise<void>;
     request(request: IRequest): Promise<IResponse>;
     resolveHandle(request: IRequest): Promise<IResponse>;

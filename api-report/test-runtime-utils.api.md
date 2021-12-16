@@ -341,6 +341,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     get absolutePath(): string;
     // (undocumented)
+    addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
+    // (undocumented)
     applyStashedOp(content: any): Promise<void>;
     // (undocumented)
     attachGraph(): void;
@@ -417,8 +419,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     quorum: MockQuorum;
     // (undocumented)
     raiseContainerWarning(warning: ContainerWarning): void;
-    // (undocumented)
-    referenceAdded(id: string, referencedHandle: IFluidHandle): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)

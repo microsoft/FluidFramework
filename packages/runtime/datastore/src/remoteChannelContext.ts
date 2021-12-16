@@ -59,7 +59,7 @@ export class RemoteChannelContext implements IChannelContext {
         storageService: IDocumentStorageService,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
-        referenceAddedFn: (sourcePath: string, referencedHandle: IFluidHandle) => void,
+        addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
         private readonly id: string,
         baseSnapshot:  ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
@@ -73,7 +73,7 @@ export class RemoteChannelContext implements IChannelContext {
             this.dataStoreContext.connected,
             submitFn,
             () => dirtyFn(this.id),
-            referenceAddedFn,
+            addedGCOutboundReferenceFn,
             storageService,
             baseSnapshot,
             extraBlobs);
