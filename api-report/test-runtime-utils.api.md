@@ -300,7 +300,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
     // (undocumented)
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
     // (undocumented)

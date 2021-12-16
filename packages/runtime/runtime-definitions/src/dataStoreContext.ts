@@ -24,7 +24,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
     IDocumentMessage,
-    IQuorum,
+    IQuorumClients,
     ISequencedDocumentMessage,
     ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
@@ -133,7 +133,7 @@ export interface IContainerRuntimeBase extends
     /**
      * Returns the current quorum.
      */
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
 
     /**
      * Returns the current audience.
@@ -288,7 +288,7 @@ export interface IFluidDataStoreContext extends
     /**
      * Returns the current quorum.
      */
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
 
     /**
      * Returns the current audience.

@@ -51,7 +51,7 @@ import { DataCorruptionError, GenericError, extractSafePropertiesFromMessage } f
 import {
     IClientDetails,
     IDocumentMessage,
-    IQuorum,
+    IQuorumClients,
     ISequencedDocumentMessage,
     ISignalMessage,
     ISummaryConfiguration,
@@ -1676,7 +1676,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.connected && !this.deltaManager.readonly;
     }
 
-    public getQuorum(): IQuorum {
+    public getQuorum(): IQuorumClients {
         return this.context.quorum;
     }
 
