@@ -41,6 +41,7 @@ import {
     LumberEventName,
     Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+import safeStringify from "json-stringify-safe";
 import { ISummaryWriteResponse, ISummaryWriter } from "./interfaces";
 
 /**
@@ -305,7 +306,7 @@ export class SummaryWriter implements ISummaryWriter {
                 if (!networkError.isFatal) {
                     return {
                         message: {
-                            errorMessage: `A non-fatal error happened when trying to write client summary. Error: ${networkError.details}`,
+                            errorMessage: `A non-fatal error happened when trying to write client summary. Error: ${safeStringify(networkError.details)}`,
                             summaryProposal: {
                                 summarySequenceNumber: op.sequenceNumber,
                             },
