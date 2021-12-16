@@ -9,11 +9,21 @@ import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/r
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
-export interface IStateHost {
+/**
+ * Captured state of a channel at a particular revision
+ */
+export interface IChannelRevision {
     /**
-     * Produce a summary from the previously captured state
+     * Produce a summary from the previously captured state of a channel
      */
     summarize(fullTree?: boolean): Promise<ISummaryTreeWithStats>;
+
+    /**
+     * Returns the GC data for this channel revision. It contains a list of GC nodes that contains references to
+     * other GC nodes.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
+     */
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
 }
 
 export interface IChannel extends IFluidLoadable {
@@ -27,9 +37,9 @@ export interface IChannel extends IFluidLoadable {
     readonly attributes: IChannelAttributes;
 
     /**
-     * Capture the current content of the channel to be used to generate a summary
+     * Return an immutable version of current state of the channel to be used to later generate a summary and GC data
      */
-    captureState(): IStateHost;
+    captureRevision(): IChannelRevision;
 
     /**
      * True if the data structure is attached to storage.
@@ -40,13 +50,6 @@ export interface IChannel extends IFluidLoadable {
      * Enables the channel to send and receive ops
      */
     connect(services: IChannelServices): void;
-
-    /**
-     * Returns the GC data for this channel. It contains a list of GC nodes that contains references to
-     * other GC nodes.
-     * @param fullGC - true to bypass optimizations and force full generation of GC data.
-     */
-    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
 }
 
 /**

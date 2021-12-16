@@ -4,9 +4,8 @@
  */
 
 import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-import { IChannel, IChannelServices, ISnaphost } from "@fluidframework/datastore-definitions";
+import { IChannel, IChannelRevision, IChannelServices} from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
 export interface ISharedObjectEvents extends IErrorEvent {
     (event: "pre-op" | "op",
@@ -31,21 +30,14 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     isAttached(): boolean;
 
     /**
-     * Capture the current content of the channel to be used to generate a summary
-     * @returns Object containing captured state that exposes functionality over that state (e.g. produce summary)
+     * Capture the current state of the channel
+     * @returns Captured state that exposes functionality over that state (e.g. produce summary)
      */
-    captureState(): ISnaphost;
+    captureRevision(): IChannelRevision;
 
     /**
      * Enables the channel to send and receive ops.
      * @param services - Services to connect to
      */
     connect(services: IChannelServices): void;
-
-    /**
-     * Returns the GC data for this shared object. It contains a list of GC nodes that contains references to
-     * other GC nodes.
-     * @param fullGC - true to bypass optimizations and force full generation of GC data.
-     */
-    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
 }

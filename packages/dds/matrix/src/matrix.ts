@@ -459,28 +459,6 @@ export class SharedMatrix<T = any>
     }
 
     /**
-     * Returns the GC data for this SharedMatrix. All the IFluidHandle's stored in the cells represent routes to other
-     * objects.
-     */
-    protected async getGCDataCore(): Promise<IGarbageCollectionData> {
-        // Create a SummarySerializer and use it to serialize all the cells. It keeps track of all IFluidHandles that it
-        // serializes.
-        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
-
-        for (let row = 0; row < this.rowCount; row++) {
-            for (let col = 0; col < this.colCount; col++) {
-                serializer.stringify(this.getCell(row, col), this.handle);
-            }
-        }
-
-        return {
-            gcNodes:{
-                ["/"]: serializer.getSerializedRoutes(),
-            },
-        };
-    }
-
-    /**
      * Advances the 'localSeq' counter for the cell data operation currently being queued.
      *
      * Do not use with 'submitColMessage()/submitRowMessage()' as these helpers + the MergeTree will
