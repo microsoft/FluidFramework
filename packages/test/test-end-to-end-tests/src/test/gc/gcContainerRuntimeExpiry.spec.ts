@@ -57,7 +57,7 @@ import { TestDataObject } from "./mockSummarizerClient";
     it("Container should be closed with a ClientSessionExpired error after the gcSessionExpiryTime is up", async () => {
         container1 = await createContainer();
         container1.on("closed", (error) => {
-            assert(error?.errorType, "ClientSessionExpired");
+            assert.strictEqual(error?.errorType, "ClientSessionExpired");
         });
 
         await provider.ensureSynchronized();

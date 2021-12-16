@@ -215,11 +215,6 @@ export interface IGCRuntimeOptions {
     runSweep?: boolean;
 
     /**
-     * Sets the session expiry for containers when GC sweep is enabled
-     */
-    gcSessionExpiryTime?: number;
-
-    /**
      * Allows additional GC options to be passed.
      */
     [key: string]: any;
@@ -599,6 +594,9 @@ export function getDeviceSpec() {
     }
     return {};
 }
+
+export const defaultContainerRuntimeExpiryMs = 30 * 24 * 60 * 60 * 1000;
+
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
@@ -907,6 +905,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly createContainerMetadata: ICreateContainerMetadata;
     private summaryCount: number | undefined;
+    // The timeout responsible for closing the container when the container runtime has expired
     private readonly sessionExpiryTimeout?: NodeJS.Timeout;
 
     private constructor(
@@ -973,11 +972,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             metadata,
         );
 
-        if(this.garbageCollector.shouldRunSweep) {
-            const defaultContainerRuntimeExpiryMs = 30 * 24 * 60 * 60 * 1000;
-            const expiryMs = this.runtimeOptions.gcOptions?.gcSessionExpiryTime !== undefined
-                ? this.runtimeOptions.gcOptions?.gcSessionExpiryTime
-                : defaultContainerRuntimeExpiryMs;
+        if (this.garbageCollector.shouldRunSweep) {
+            const expiryMs = this.runtimeOptions.gcOptions?.gcSessionExpiryTime ?? defaultContainerRuntimeExpiryMs;
             this.sessionExpiryTimeout = setTimeout(() => this.closeFn({
                 errorType: "ClientSessionExpired",
                 message: `The client has reached the expiry time of ${expiryMs} ms.`,
