@@ -82,6 +82,8 @@ export interface IGarbageCollectionRuntime {
 export interface IGarbageCollector {
     /** Tells whether GC should run or not. */
     readonly shouldRunGC: boolean;
+    /** Tells whether GC sweep should be run based on the GC options and local storage flags. */
+    readonly shouldRunSweep: boolean;
     /**
      * This tracks two things:
      * 1. Whether GC is enabled - If this is 0, GC is disabled. If this is greater than 0, GC is enabled.
@@ -192,6 +194,11 @@ export class GarbageCollector implements IGarbageCollector {
     public readonly shouldRunGC: boolean;
 
     /**
+     * Tells whether GC sweep should be run based on the GC options and local storage flags.
+     */
+    public readonly shouldRunSweep: boolean;
+
+    /**
      * This tracks two things:
      * 1. Whether GC is enabled - If this is 0, GC is disabled. If this is greater than 0, GC is enabled.
      * 2. If GC is enabled, the version of GC used to generate the GC data written in a summary.
@@ -215,7 +222,6 @@ export class GarbageCollector implements IGarbageCollector {
      * throughout its lifetime.
      */
     private readonly gcEnabled: boolean;
-    private readonly shouldRunSweep: boolean;
     private readonly testMode: boolean;
     private readonly logger: ITelemetryLogger;
 

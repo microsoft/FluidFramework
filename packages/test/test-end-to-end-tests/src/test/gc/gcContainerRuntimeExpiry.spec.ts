@@ -15,12 +15,10 @@ import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { TestDataObject } from "./mockSummarizerClient";
 
 /**
- * Validates this scenario: When a data store is shared with an external app, if the data store becomes unreferenced
- * by the time it is requested via this external app, we return a failure (404).
- * Basically, for data stores that are unreferenced in the base snapshot that a container loads from, we return a
- * failure (404) when they are requested with "externalRequest" flag in the request header.
+ * Validates this scenario: When a client session expires, that the container throws the ClientSessionExpiry error
+ * when GC sweep is running.
  */
- describeNoCompat("GC ContainerRuntime Expiry", (getTestObjectProvider) => {
+ describeNoCompat("GC Session Expiry", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
@@ -35,7 +33,7 @@ import { TestDataObject } from "./mockSummarizerClient";
         gcOptions: {
             gcAllowed: true,
             runSweep: true,
-            testMode: true,
+            gcSessionExpiryTime: 0,
         },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
@@ -54,14 +52,16 @@ import { TestDataObject } from "./mockSummarizerClient";
 
     beforeEach(async () => {
         provider = getTestObjectProvider();
-
-        // Create a Container for the first client. Because testmode is true, the container should close immediately
-        container1 = await createContainer();
-        await provider.ensureSynchronized();
     });
 
-    it("Container should be closed", async () => {
-        const delay = async (ms) => new Promise((res) => setTimeout(res, ms));
+    it("Container should be closed with a ClientSessionExpired error after the gcSessionExpiryTime is up", async () => {
+        container1 = await createContainer();
+        container1.on("closed", (error) => {
+            assert(error?.errorType, "ClientSessionExpired");
+        });
+
+        await provider.ensureSynchronized();
+        const delay = async (ms: number) => new Promise((res) => setTimeout(res, ms));
         await delay(100);
         assert(container1.closed === true, "Container should be closed");
     });

@@ -215,6 +215,11 @@ export interface IGCRuntimeOptions {
     runSweep?: boolean;
 
     /**
+     * Sets the session expiry for containers when GC sweep is enabled
+     */
+    gcSessionExpiryTime?: number;
+
+    /**
      * Allows additional GC options to be passed.
      */
     [key: string]: any;
@@ -902,6 +907,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly createContainerMetadata: ICreateContainerMetadata;
     private summaryCount: number | undefined;
+    private readonly sessionExpiryTimeout?: NodeJS.Timeout;
 
     private constructor(
         private readonly context: IContainerContext,
@@ -967,22 +973,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             metadata,
         );
 
-        const shouldRunExpiry = this.runtimeOptions.gcOptions?.gcAllowed === true
-        && this.runtimeOptions.gcOptions?.disableGC !== true
-        && this.runtimeOptions.gcOptions?.runSweep === true;
-
-        if(shouldRunExpiry) {
+        if(this.garbageCollector.shouldRunSweep) {
             const defaultContainerRuntimeExpiryMs = 30 * 24 * 60 * 60 * 1000;
-            const expiryMs = this.runtimeOptions.gcOptions?.testMode === true ?
-                0 : defaultContainerRuntimeExpiryMs;
-            const closeRuntime = () => this.closeFn({
+            const expiryMs = this.runtimeOptions.gcOptions?.gcSessionExpiryTime !== undefined
+                ? this.runtimeOptions.gcOptions?.gcSessionExpiryTime
+                : defaultContainerRuntimeExpiryMs;
+            this.sessionExpiryTimeout = setTimeout(() => this.closeFn({
                 errorType: "ClientSessionExpired",
                 message: `The client has reached the expiry time of ${expiryMs} ms.`,
-            });
-            const timeout = setTimeout(() => closeRuntime(), expiryMs);
-            this.on("dispose", () => {
-                clearInterval(timeout);
-            });
+            }), expiryMs);
         }
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
@@ -1215,10 +1214,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.summaryManager.off("summarizerWarning", this.raiseContainerWarning);
             this.summaryManager.dispose();
         }
+        if (this.sessionExpiryTimeout !== undefined) {
+            clearTimeout(this.sessionExpiryTimeout);
+        }
         this._summarizer?.dispose();
         this.dataStores.dispose();
         this.pendingStateManager.dispose();
-
         this.emit("dispose");
         this.removeAllListeners();
     }
