@@ -5,6 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "useUnknownInCatchVariables": false,
         "allowSyntheticDefaultImports": true,
         "target": "es6",
         "module": "esnext",

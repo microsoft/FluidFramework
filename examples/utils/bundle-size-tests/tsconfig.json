@@ -5,6 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "useUnknownInCatchVariables": false,
         "module": "esnext",
         "outDir": "lib",
         "jsx": "react",

@@ -5,6 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "useUnknownInCatchVariables": false,
         "rootDir": "./src",
         "outDir": "dist",
         "jsx": "react",

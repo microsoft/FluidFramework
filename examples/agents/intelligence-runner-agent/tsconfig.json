@@ -5,6 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "useUnknownInCatchVariables": false,
         "declarationDir": "./dist",
         "rootDir": "./src",
         "outDir": "./dist"

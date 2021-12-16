@@ -5,6 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "useUnknownInCatchVariables": false,
         "target": "es6",
         "outDir": "dist",
         "jsx": "react",

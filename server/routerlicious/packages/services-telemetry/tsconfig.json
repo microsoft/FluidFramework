@@ -4,6 +4,7 @@
         "src/test/**/*"
     ],
     "compilerOptions": {
+        "useUnknownInCatchVariables": false,
         "strictNullChecks": true,
         "rootDir": "./src",
         "outDir": "./dist",

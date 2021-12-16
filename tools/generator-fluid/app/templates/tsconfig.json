@@ -1,9 +1,10 @@
-{    
+{
     "exclude": [
         "dist",
         "node_modules"
     ],
     "compilerOptions": {
+        "useUnknownInCatchVariables": false,
         "strict": true,
         "strictNullChecks": true,
         "target": "es2017",

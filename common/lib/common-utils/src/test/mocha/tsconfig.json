@@ -5,6 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "useUnknownInCatchVariables": false,
         "rootDir": "./",
         "outDir": "../../../dist/test/mocha",
         "types": [

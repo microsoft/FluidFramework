@@ -4,6 +4,7 @@
         "src/test/**/*"
     ],
     "compilerOptions": {
+        "useUnknownInCatchVariables": false,
         "experimentalDecorators": true,
         "allowJs": true,
         "outDir": "./dist",

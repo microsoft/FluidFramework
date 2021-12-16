@@ -4,6 +4,7 @@
         "src/test/**/*"
     ],
     "compilerOptions": {
+        "useUnknownInCatchVariables": false,
         "strictNullChecks": false,
         "rootDir": "./src",
         "jsx": "react",

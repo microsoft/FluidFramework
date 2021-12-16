@@ -4,6 +4,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "useUnknownInCatchVariables": false,
         "strictNullChecks": false,
         "target": "es6",
         "declaration": true,
