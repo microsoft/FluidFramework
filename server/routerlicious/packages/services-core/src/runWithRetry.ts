@@ -142,7 +142,7 @@ export async function runWithRetry<T>(
 }
 
 /**
- * Helper function to decide when or not to retry a {@link @fluidframework/server-services-client#NetworkError}.
+ * Helper function to decide when or not to retry a {@link NetworkError}.
  * Can be used with {@link runWithRetry} and {@link requestWithRetry}.
  * @param  {any} error - the error parameter to be inspected when deciding whether to retry or not.
  */

@@ -200,17 +200,32 @@ export class SummaryWriter implements ISummaryWriter {
                     1000 /* retryAfterMs */,
                     shouldRetryNetworkError);
             } else {
-                const [logTailTree, protocolTree, serviceProtocolTree, appSummaryTree] = await requestWithRetry(
-                    async () => Promise.all([
-                        this.summaryStorage.createTree({ entries: logTailEntries }),
-                        this.summaryStorage.createTree({ entries: protocolEntries }),
-                        this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
-                        this.summaryStorage.getTree(content.handle, false),
-                    ]),
-                    "writeClientSummary_createAndGetTree",
-                    3 /* maxRetries */,
-                    1000 /* retryAfterMs */,
-                    shouldRetryNetworkError);
+                const [logTailTree, protocolTree, serviceProtocolTree, appSummaryTree] = await Promise.all([
+                    requestWithRetry(
+                        async () => this.summaryStorage.createTree({ entries: logTailEntries }),
+                        "writeClientSummary_createLogTailTree",
+                        3 /* maxRetries */,
+                        1000 /* retryAfterMs */,
+                        shouldRetryNetworkError),
+                    requestWithRetry(
+                        async () => this.summaryStorage.createTree({ entries: protocolEntries }),
+                        "writeClientSummary_createProtocolTree",
+                        3 /* maxRetries */,
+                        1000 /* retryAfterMs */,
+                        shouldRetryNetworkError),
+                    requestWithRetry(
+                        async () => this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
+                        "writeClientSummary_createServiceProtocolTree",
+                        3 /* maxRetries */,
+                        1000 /* retryAfterMs */,
+                        shouldRetryNetworkError),
+                    requestWithRetry(
+                        async () => this.summaryStorage.getTree(content.handle, false),
+                        "writeClientSummary_getAppSummaryTree",
+                        3 /* maxRetries */,
+                        1000 /* retryAfterMs */,
+                        shouldRetryNetworkError),
+                ]);
 
                 // Combine the app summary with .protocol
                 const newTreeEntries = mergeAppAndProtocolTree(appSummaryTree, protocolTree);
@@ -377,16 +392,26 @@ export class SummaryWriter implements ISummaryWriter {
             } else {
                 // Fetch the last commit and summary tree. Create new trees with logTail and serviceProtocol.
                 const lastCommit = await this.summaryStorage.getCommit(existingRef.object.sha);
-                const [logTailTree, serviceProtocolTree, lastSummaryTree] = await requestWithRetry(
-                    async () => Promise.all([
-                        this.summaryStorage.createTree({ entries: logTailEntries }),
-                        this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
-                        this.summaryStorage.getTree(lastCommit.tree.sha, false),
-                    ]),
-                    "writeServiceSummary_createWholeServiceSummary",
-                    3 /* maxRetries */,
-                    1000 /* retryAfterMs */,
-                    shouldRetryNetworkError);
+                const [logTailTree, serviceProtocolTree, lastSummaryTree] = await Promise.all([
+                    requestWithRetry(
+                        async () => this.summaryStorage.createTree({ entries: logTailEntries }),
+                        "writeServiceSummary_createLogTailTree",
+                        3 /* maxRetries */,
+                        1000 /* retryAfterMs */,
+                        shouldRetryNetworkError),
+                    requestWithRetry(
+                        async () => this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
+                        "writeServiceSummary_createServiceProtocolTree",
+                        3 /* maxRetries */,
+                        1000 /* retryAfterMs */,
+                        shouldRetryNetworkError),
+                    requestWithRetry(
+                        async () => this.summaryStorage.getTree(lastCommit.tree.sha, false),
+                        "writeServiceSummary_getLastSummaryTree",
+                        3 /* maxRetries */,
+                        1000 /* retryAfterMs */,
+                        shouldRetryNetworkError),
+                ]);
 
                 // Combine the last summary tree with .logTail and .serviceProtocol
                 const newTreeEntries = lastSummaryTree.tree.map((value) => {
