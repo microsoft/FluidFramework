@@ -88,9 +88,9 @@ export async function runWithRetry<T>(
  * anything other than a `T` value - the only other possibility is a promise rejection.
  * @param  {()=>Promise<T>} request - function to run and retry in case of error
  * @param  {string} callName - name of the api function we are calling
+ * @param  {(error)=>boolean} shouldRetry - function that takes error and decides whether to retry on it
  * @param  {number} maxRetries - maximum retries after which error is thrown. Retry infinitely if set to -1
  * @param  {number} retryAfterMs - interval factor to wait before retrying. Param to calculateIntervalMs
- * @param  {(error)=>boolean} shouldRetry? - function that takes error and decides whether to retry on it
  * @param  {(error, numRetries, retryAfterInterval)=>number} calculateIntervalMs
  * function which calculates interval to wait before retrying based on error, retryAfterMs and retries so far
  * @param  {(error)=>void} onErrorFn? - function allowing caller to define custom logic to run on error e.g. custom logs
@@ -98,10 +98,10 @@ export async function runWithRetry<T>(
  export async function requestWithRetry<T>(
     request: () => Promise<T>,
     callName: string,
-    maxRetries: number,
-    retryAfterMs: number,
-    shouldRetry?: (error) => boolean,
-    calculateIntervalMs = (error, numRetries, retryAfterInterval) => retryAfterInterval * 2 ** numRetries,
+    shouldRetry: (error) => boolean = shouldRetryNetworkError,
+    maxRetries: number = -1,
+    retryAfterMs: number = 1000,
+    calculateIntervalMs = calculateRetryIntervalForNetworkError,
     onErrorFn?: (error) => void,
 ): Promise<T> {
     let result: T;
@@ -149,7 +149,28 @@ export async function runWithRetry<T>(
 export function shouldRetryNetworkError(error: any): boolean {
     if (error instanceof Error && error?.name === "NetworkError") {
         const networkError = error as NetworkError;
-        return !networkError.isFatal && networkError.canRetry !== undefined && networkError.canRetry;
+        return !networkError.isFatal && networkError.canRetry === true;
     }
     return false;
+}
+
+/**
+ * Helper function that calculates interval to wait before retrying. Leverage's {@link NetworkError.retryAfterMs}
+ * if the error is a {@link NetworkError}. Can be used with {@link runWithRetry} and {@link requestWithRetry}.
+ * @param {any} error - the error parameter to be inspected. If it is a {@link NetworkError},
+ * {@link NetworkError.retryAfterMs} will be used as the retry interval.
+ * @param {number} numRetries - the current retry count to be used in exponential backoff calculation.
+ * @param {number} retryAfterInterval - default value to be used when calculating the retry interval. Used when
+ * {@link NetworkError.retryAfterMs} is not defined.
+ */
+export function calculateRetryIntervalForNetworkError(
+    error: any,
+    numRetries: number,
+    retryAfterInterval: number): number {
+    let overwriteRetryAfterInterval: number | undefined;
+    if (error instanceof Error && error?.name === "NetworkError") {
+        const networkError = error as NetworkError;
+        overwriteRetryAfterInterval = networkError.retryAfterMs;
+    }
+    return (overwriteRetryAfterInterval ?? retryAfterInterval) * 2 ** numRetries;
 }

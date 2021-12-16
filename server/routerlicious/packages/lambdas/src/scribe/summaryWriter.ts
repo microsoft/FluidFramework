@@ -32,7 +32,6 @@ import {
     IScribe,
     ISequencedOperationMessage,
     requestWithRetry,
-    shouldRetryNetworkError,
 } from "@fluidframework/server-services-core";
 import {
     CommonProperties,
@@ -94,10 +93,7 @@ export class SummaryWriter implements ISummaryWriter {
             // two summaries at the same time. In this case the first one wins.
             const existingRef = await requestWithRetry(
                 async () => this.summaryStorage.getRef(encodeURIComponent(this.documentId)),
-                "writeClientSummary_getRef",
-                3 /* maxRetries */,
-                1000 /* retryAfterMs */,
-                shouldRetryNetworkError);
+                "writeClientSummary_getRef");
 
             if (content.head) {
                 // In usual case, client always refers to last summaryAck so lastClientSummaryHead should always match.
@@ -135,10 +131,7 @@ export class SummaryWriter implements ISummaryWriter {
                     await requestWithRetry(
                         // eslint-disable-next-line @typescript-eslint/promise-function-async
                         async () => Promise.all(content.parents.map((parentSummary) => this.summaryStorage.getCommit(parentSummary))),
-                        "writeClientSummary_validateParentSummary",
-                        3 /* maxRetries */,
-                        1000 /* retryAfterMs */,
-                        shouldRetryNetworkError);
+                        "writeClientSummary_validateParentSummary");
                 } catch (e) {
                     clientSummaryMetric.error(`One or more parent summaries are invalid`, e);
                     return {
@@ -196,36 +189,21 @@ export class SummaryWriter implements ISummaryWriter {
                         serviceProtocolEntries,
                         checkpoint.protocolState.sequenceNumber,
                         content.details?.includesProtocolTree),
-                    "writeClientSummary_updateWholeSummary",
-                    3 /* maxRetries */,
-                    1000 /* retryAfterMs */,
-                    shouldRetryNetworkError);
+                    "writeClientSummary_updateWholeSummary");
             } else {
                 const [logTailTree, protocolTree, serviceProtocolTree, appSummaryTree] = await Promise.all([
                     requestWithRetry(
                         async () => this.summaryStorage.createTree({ entries: logTailEntries }),
-                        "writeClientSummary_createLogTailTree",
-                        3 /* maxRetries */,
-                        1000 /* retryAfterMs */,
-                        shouldRetryNetworkError),
+                        "writeClientSummary_createLogTailTree"),
                     requestWithRetry(
                         async () => this.summaryStorage.createTree({ entries: protocolEntries }),
-                        "writeClientSummary_createProtocolTree",
-                        3 /* maxRetries */,
-                        1000 /* retryAfterMs */,
-                        shouldRetryNetworkError),
+                        "writeClientSummary_createProtocolTree"),
                     requestWithRetry(
                         async () => this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
-                        "writeClientSummary_createServiceProtocolTree",
-                        3 /* maxRetries */,
-                        1000 /* retryAfterMs */,
-                        shouldRetryNetworkError),
+                        "writeClientSummary_createServiceProtocolTree"),
                     requestWithRetry(
                         async () => this.summaryStorage.getTree(content.handle, false),
-                        "writeClientSummary_getAppSummaryTree",
-                        3 /* maxRetries */,
-                        1000 /* retryAfterMs */,
-                        shouldRetryNetworkError),
+                        "writeClientSummary_getAppSummaryTree"),
                 ]);
 
                 // Combine the app summary with .protocol
@@ -248,12 +226,9 @@ export class SummaryWriter implements ISummaryWriter {
                 // Finally perform the write to git
                 const gitTree = await requestWithRetry(
                     async () => this.summaryStorage.createGitTree({ tree: newTreeEntries }),
-                    "writeClientSummary_createGitTree",
-                    3 /* maxRetries */,
-                    1000 /* retryAfterMs */,
-                    shouldRetryNetworkError);
+                    "writeClientSummary_createGitTree");
 
-                    const commitParams: ICreateCommitParams = {
+                const commitParams: ICreateCommitParams = {
                     author: {
                         date: new Date().toISOString(),
                         email: "praguertdev@microsoft.com",
@@ -266,26 +241,17 @@ export class SummaryWriter implements ISummaryWriter {
 
                 const commit = await requestWithRetry(
                     async () => this.summaryStorage.createCommit(commitParams),
-                    "writeClientSummary_createCommit",
-                    3 /* maxRetries */,
-                    1000 /* retryAfterMs */,
-                    shouldRetryNetworkError);
+                    "writeClientSummary_createCommit");
                 uploadHandle = commit.sha;
 
                 if (existingRef) {
                     await requestWithRetry(
                         async () => this.summaryStorage.upsertRef(this.documentId, uploadHandle),
-                        "writeClientSummary_upsertRef",
-                        3 /* maxRetries */,
-                        1000 /* retryAfterMs */,
-                        shouldRetryNetworkError);
+                        "writeClientSummary_upsertRef");
                 } else {
                     await requestWithRetry(
                         async () => this.summaryStorage.createRef(this.documentId, uploadHandle),
-                        "writeClientSummary_createRef",
-                        3 /* maxRetries */,
-                        1000 /* retryAfterMs */,
-                        shouldRetryNetworkError);
+                        "writeClientSummary_createRef");
                 }
             }
             clientSummaryMetric.success(`Client summary success`);
@@ -341,11 +307,8 @@ export class SummaryWriter implements ISummaryWriter {
         this.setSummaryProperties(serviceSummaryMetric, op);
         try {
             const existingRef = await requestWithRetry(
-            async () => this.summaryStorage.getRef(encodeURIComponent(this.documentId)),
-            "writeServiceSummary_getRef",
-            3 /* maxRetries */,
-            1000 /* retryAfterMs */,
-            shouldRetryNetworkError);
+                async () => this.summaryStorage.getRef(encodeURIComponent(this.documentId)),
+                "writeServiceSummary_getRef");
 
             // Client assumes at least one app generated summary. To keep compatibility
             // for now, service summary requires at least one prior client generated summary.
@@ -368,10 +331,7 @@ export class SummaryWriter implements ISummaryWriter {
                     currentProtocolHead,
                     op.sequenceNumber + 1,
                     pendingOps),
-                "writeServiceSummary_generateLogtailEntries",
-                3 /* maxRetries */,
-                1000 /* retryAfterMs */,
-                shouldRetryNetworkError);
+                "writeServiceSummary_generateLogtailEntries");
 
             // Create service protocol entries combining scribe and deli states.
             const serviceProtocolEntries = generateServiceProtocolEntries(
@@ -385,32 +345,20 @@ export class SummaryWriter implements ISummaryWriter {
                         logTailEntries,
                         serviceProtocolEntries,
                         op.sequenceNumber),
-                    "writeServiceSummary_createWholeServiceSummary",
-                    3 /* maxRetries */,
-                    1000 /* retryAfterMs */,
-                    shouldRetryNetworkError);
+                    "writeServiceSummary_createWholeServiceSummary");
             } else {
                 // Fetch the last commit and summary tree. Create new trees with logTail and serviceProtocol.
                 const lastCommit = await this.summaryStorage.getCommit(existingRef.object.sha);
                 const [logTailTree, serviceProtocolTree, lastSummaryTree] = await Promise.all([
                     requestWithRetry(
                         async () => this.summaryStorage.createTree({ entries: logTailEntries }),
-                        "writeServiceSummary_createLogTailTree",
-                        3 /* maxRetries */,
-                        1000 /* retryAfterMs */,
-                        shouldRetryNetworkError),
+                        "writeServiceSummary_createLogTailTree"),
                     requestWithRetry(
                         async () => this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
-                        "writeServiceSummary_createServiceProtocolTree",
-                        3 /* maxRetries */,
-                        1000 /* retryAfterMs */,
-                        shouldRetryNetworkError),
+                        "writeServiceSummary_createServiceProtocolTree"),
                     requestWithRetry(
                         async () => this.summaryStorage.getTree(lastCommit.tree.sha, false),
-                        "writeServiceSummary_getLastSummaryTree",
-                        3 /* maxRetries */,
-                        1000 /* retryAfterMs */,
-                        shouldRetryNetworkError),
+                        "writeServiceSummary_getLastSummaryTree"),
                 ]);
 
                 // Combine the last summary tree with .logTail and .serviceProtocol
