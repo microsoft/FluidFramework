@@ -101,7 +101,8 @@ export async function runWithRetry<T>(
     shouldRetry: (error) => boolean = shouldRetryNetworkError,
     maxRetries: number = -1,
     retryAfterMs: number = 1000,
-    calculateIntervalMs = calculateRetryIntervalForNetworkError,
+    calculateIntervalMs: (error: any, numRetries: number, retryAfterInterval: number) => number
+        = calculateRetryIntervalForNetworkError,
     onErrorFn?: (error) => void,
 ): Promise<T> {
     let result: T;
@@ -167,9 +168,10 @@ export function calculateRetryIntervalForNetworkError(
     error: any,
     numRetries: number,
     retryAfterInterval: number): number {
-    let overwriteRetryAfterInterval: number | undefined;
-    if (error instanceof Error && error?.name === "NetworkError") {
-        overwriteRetryAfterInterval = (error as NetworkError).retryAfterMs;
+    if (error instanceof Error
+        && error?.name === "NetworkError"
+        && (error as NetworkError).retryAfterMs) {
+        return (error as NetworkError).retryAfterMs;
     }
-    return (overwriteRetryAfterInterval ?? retryAfterInterval) * 2 ** numRetries;
+    return retryAfterInterval * 2 ** numRetries;
 }
