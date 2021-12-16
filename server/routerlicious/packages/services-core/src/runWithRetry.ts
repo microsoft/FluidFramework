@@ -169,8 +169,7 @@ export function calculateRetryIntervalForNetworkError(
     retryAfterInterval: number): number {
     let overwriteRetryAfterInterval: number | undefined;
     if (error instanceof Error && error?.name === "NetworkError") {
-        const networkError = error as NetworkError;
-        overwriteRetryAfterInterval = networkError.retryAfterMs;
+        overwriteRetryAfterInterval = (error as NetworkError).retryAfterMs;
     }
     return (overwriteRetryAfterInterval ?? retryAfterInterval) * 2 ** numRetries;
 }
