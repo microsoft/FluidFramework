@@ -88,26 +88,38 @@ export class SummaryWriter implements ISummaryWriter {
         const clientSummaryMetric = Lumberjack.newLumberMetric(LumberEventName.ClientSummary);
         this.setSummaryProperties(clientSummaryMetric, op);
         const content = JSON.parse(op.contents) as ISummaryContent;
+        try {
+            // The summary must reference the existing summary to be valid. This guards against accidental sends of
+            // two summaries at the same time. In this case the first one wins.
+            const existingRef = await requestWithRetry(
+                async () => this.summaryStorage.getRef(encodeURIComponent(this.documentId)),
+                "writeClientSummary_getRef",
+                3 /* maxRetries */,
+                1000 /* retryAfterMs */,
+                shouldRetryNetworkError);
 
-        // The summary must reference the existing summary to be valid. This guards against accidental sends of
-        // two summaries at the same time. In this case the first one wins.
-        const existingRef = await requestWithRetry(
-            async () => this.summaryStorage.getRef(encodeURIComponent(this.documentId)),
-            "writeClientSummary_getRef",
-            3 /* maxRetries */,
-            1000 /* retryAfterMs */,
-            shouldRetryNetworkError);
-
-        if (content.head) {
-            // In usual case, client always refers to last summaryAck so lastClientSummaryHead should always match.
-            // However, the ack itself might be lost If scribe dies right after creating the summary. In that case,
-            // the client code just fetches the last summary which should be the same as existingRef sha.
-            if (!existingRef ||
-                (lastSummaryHead !== content.head && existingRef.object.sha !== content.head)) {
+            if (content.head) {
+                // In usual case, client always refers to last summaryAck so lastClientSummaryHead should always match.
+                // However, the ack itself might be lost If scribe dies right after creating the summary. In that case,
+                // the client code just fetches the last summary which should be the same as existingRef sha.
+                if (!existingRef ||
+                    (lastSummaryHead !== content.head && existingRef.object.sha !== content.head)) {
+                    clientSummaryMetric.error(`Proposed parent summary does not match actual parent summary`);
+                    return {
+                        message: {
+                            errorMessage: `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef ? existingRef.object.sha : "n/a"}".`,
+                            summaryProposal: {
+                                summarySequenceNumber: op.sequenceNumber,
+                            },
+                        },
+                        status: false,
+                    };
+                }
+            } else if (existingRef) {
                 clientSummaryMetric.error(`Proposed parent summary does not match actual parent summary`);
                 return {
                     message: {
-                        errorMessage: `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef ? existingRef.object.sha : "n/a"}".`,
+                        errorMessage: `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef.object.sha}".`,
                         summaryProposal: {
                             summarySequenceNumber: op.sequenceNumber,
                         },
@@ -115,34 +127,37 @@ export class SummaryWriter implements ISummaryWriter {
                     status: false,
                 };
             }
-        } else if (existingRef) {
-            clientSummaryMetric.error(`Proposed parent summary does not match actual parent summary`);
-            return {
-                message: {
-                    errorMessage: `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef.object.sha}".`,
-                    summaryProposal: {
-                        summarySequenceNumber: op.sequenceNumber,
-                    },
-                },
-                status: false,
-            };
-        }
 
-        // When using git, we also validate whether the parent summary is valid
-        if (!this.enableWholeSummaryUpload) {
-            try {
-                await requestWithRetry(
-                    // eslint-disable-next-line @typescript-eslint/promise-function-async
-                    async () => Promise.all(content.parents.map((parentSummary) => this.summaryStorage.getCommit(parentSummary))),
-                    "writeClientSummary_validateParentSummary",
-                    3 /* maxRetries */,
-                    1000 /* retryAfterMs */,
-                    shouldRetryNetworkError);
-            } catch (e) {
-                clientSummaryMetric.error(`One or more parent summaries are invalid`, e);
+            // When using git, we also validate whether the parent summary is valid
+            if (!this.enableWholeSummaryUpload) {
+                try {
+                    await requestWithRetry(
+                        // eslint-disable-next-line @typescript-eslint/promise-function-async
+                        async () => Promise.all(content.parents.map((parentSummary) => this.summaryStorage.getCommit(parentSummary))),
+                        "writeClientSummary_validateParentSummary",
+                        3 /* maxRetries */,
+                        1000 /* retryAfterMs */,
+                        shouldRetryNetworkError);
+                } catch (e) {
+                    clientSummaryMetric.error(`One or more parent summaries are invalid`, e);
+                    return {
+                        message: {
+                            errorMessage: "One or more parent summaries are invalid",
+                            summaryProposal: {
+                                summarySequenceNumber: op.sequenceNumber,
+                            },
+                        },
+                        status: false,
+                    };
+                }
+            }
+
+            // We should not accept this summary if it is less than current protocol sequence number
+            if (op.referenceSequenceNumber < checkpoint.protocolState.sequenceNumber) {
+                clientSummaryMetric.error(`Proposed summary reference sequence number less than current sequence number`);
                 return {
                     message: {
-                        errorMessage: "One or more parent summaries are invalid",
+                        errorMessage: `Proposed summary reference sequence number ${op.referenceSequenceNumber} is less than current sequence number ${checkpoint.protocolState.sequenceNumber}`,
                         summaryProposal: {
                             summarySequenceNumber: op.sequenceNumber,
                         },
@@ -150,41 +165,26 @@ export class SummaryWriter implements ISummaryWriter {
                     status: false,
                 };
             }
-        }
 
-        // We should not accept this summary if it is less than current protocol sequence number
-        if (op.referenceSequenceNumber < checkpoint.protocolState.sequenceNumber) {
-            clientSummaryMetric.error(`Proposed summary reference sequence number less than current sequence number`);
-            return {
-                message: {
-                    errorMessage: `Proposed summary reference sequence number ${op.referenceSequenceNumber} is less than current sequence number ${checkpoint.protocolState.sequenceNumber}`,
-                    summaryProposal: {
-                        summarySequenceNumber: op.sequenceNumber,
-                    },
-                },
-                status: false,
-            };
-        }
+            // At this point the summary op and its data are all valid and we can perform the write to history
+            const protocolEntries: ITreeEntry[] =
+                getQuorumTreeEntries(
+                    this.documentId,
+                    checkpoint.protocolState.minimumSequenceNumber,
+                    checkpoint.protocolState.sequenceNumber,
+                    op.term ?? 1,
+                    checkpoint.protocolState);
 
-        // At this point the summary op and its data are all valid and we can perform the write to history
-        const protocolEntries: ITreeEntry[] =
-            getQuorumTreeEntries(
-                this.documentId,
-                checkpoint.protocolState.minimumSequenceNumber,
-                checkpoint.protocolState.sequenceNumber,
-                op.term ?? 1,
-                checkpoint.protocolState);
+            // Generate a tree of logTail starting from protocol sequence number to summarySequenceNumber
+            const logTailEntries = await this.generateLogtailEntries(checkpoint.protocolState.sequenceNumber, op.sequenceNumber + 1, pendingOps);
 
-        // Generate a tree of logTail starting from protocol sequence number to summarySequenceNumber
-        const logTailEntries = await this.generateLogtailEntries(checkpoint.protocolState.sequenceNumber, op.sequenceNumber + 1, pendingOps);
+            // Create service protocol entries combining scribe and deli states.
+            const serviceProtocolEntries = generateServiceProtocolEntries(
+                op.additionalContent,
+                JSON.stringify(checkpoint));
 
-        // Create service protocol entries combining scribe and deli states.
-        const serviceProtocolEntries = generateServiceProtocolEntries(
-            op.additionalContent,
-            JSON.stringify(checkpoint));
+            let uploadHandle: string = "";
 
-        let uploadHandle: string = "";
-        try {
             if (this.enableWholeSummaryUpload) {
                 uploadHandle = await requestWithRetry(
                     async () => this.updateWholeSummary(
@@ -287,6 +287,16 @@ export class SummaryWriter implements ISummaryWriter {
                         shouldRetryNetworkError);
                 }
             }
+            clientSummaryMetric.success(`Client summary success`);
+            return {
+                message: {
+                    handle: uploadHandle,
+                    summaryProposal: {
+                        summarySequenceNumber: op.sequenceNumber,
+                    },
+                },
+                status: true,
+            };
         } catch (error: any) {
             clientSummaryMetric.error(`Client summary failed`, error);
 
@@ -306,17 +316,6 @@ export class SummaryWriter implements ISummaryWriter {
             }
             throw error;
         }
-
-        clientSummaryMetric.success(`Client summary success`);
-        return {
-            message: {
-                handle: uploadHandle,
-                summaryProposal: {
-                    summarySequenceNumber: op.sequenceNumber,
-                },
-            },
-            status: true,
-        };
     }
 
     /* eslint-enable max-len */
@@ -339,45 +338,45 @@ export class SummaryWriter implements ISummaryWriter {
         pendingOps: ISequencedOperationMessage[]): Promise<boolean> {
         const serviceSummaryMetric = Lumberjack.newLumberMetric(LumberEventName.ServiceSummary);
         this.setSummaryProperties(serviceSummaryMetric, op);
-        const existingRef = await requestWithRetry(
+        try {
+            const existingRef = await requestWithRetry(
             async () => this.summaryStorage.getRef(encodeURIComponent(this.documentId)),
             "writeServiceSummary_getRef",
             3 /* maxRetries */,
             1000 /* retryAfterMs */,
             shouldRetryNetworkError);
 
-        // Client assumes at least one app generated summary. To keep compatibility for now, service summary requires
-        // at least one prior client generated summary.
-        // TODO: With default createNew() flow, we can remove this check.
-        if (!existingRef) {
-            serviceSummaryMetric.error(`No prior summaries found`);
-            return false;
-        }
+            // Client assumes at least one app generated summary. To keep compatibility
+            // for now, service summary requires at least one prior client generated summary.
+            // TODO: With default createNew() flow, we can remove this check.
+            if (!existingRef) {
+                serviceSummaryMetric.error(`No prior summaries found`);
+                return false;
+            }
 
-        if (!op.additionalContent) {
-            // this is a mixed mode edge case that can occur if the "generateServiceSummary" config
-            // was disabled in a previous deployment and is now enabled in the next one
-            serviceSummaryMetric.error(`Additional content is not defined`);
-            return false;
-        }
+            if (!op.additionalContent) {
+                // this is a mixed mode edge case that can occur if the "generateServiceSummary" config
+                // was disabled in a previous deployment and is now enabled in the next one
+                serviceSummaryMetric.error(`Additional content is not defined`);
+                return false;
+            }
 
-        // Generate a tree of logTail starting from the last protocol state.
-        const logTailEntries = await requestWithRetry(
-            async () => this.generateLogtailEntries(
-                currentProtocolHead,
-                op.sequenceNumber + 1,
-                pendingOps),
-            "writeServiceSummary_generateLogtailEntries",
-            3 /* maxRetries */,
-            1000 /* retryAfterMs */,
-            shouldRetryNetworkError);
+            // Generate a tree of logTail starting from the last protocol state.
+            const logTailEntries = await requestWithRetry(
+                async () => this.generateLogtailEntries(
+                    currentProtocolHead,
+                    op.sequenceNumber + 1,
+                    pendingOps),
+                "writeServiceSummary_generateLogtailEntries",
+                3 /* maxRetries */,
+                1000 /* retryAfterMs */,
+                shouldRetryNetworkError);
 
-        // Create service protocol entries combining scribe and deli states.
-        const serviceProtocolEntries = generateServiceProtocolEntries(
-            op.additionalContent,
-            JSON.stringify(checkpoint));
+            // Create service protocol entries combining scribe and deli states.
+            const serviceProtocolEntries = generateServiceProtocolEntries(
+                op.additionalContent,
+                JSON.stringify(checkpoint));
 
-        try {
             if (this.enableWholeSummaryUpload) {
                 await requestWithRetry(
                     async () => this.createWholeServiceSummary(
@@ -453,6 +452,8 @@ export class SummaryWriter implements ISummaryWriter {
                 const commit = await this.summaryStorage.createCommit(commitParams);
                 await this.summaryStorage.upsertRef(this.documentId, commit.sha);
             }
+            serviceSummaryMetric.success(`Service summary success`);
+            return true;
         } catch (error) {
             serviceSummaryMetric.error(`Service summary failed`, error);
             if (error instanceof Error &&
@@ -462,8 +463,6 @@ export class SummaryWriter implements ISummaryWriter {
             }
             throw error;
         }
-        serviceSummaryMetric.success(`Service summary success`);
-        return true;
     }
 
     private setSummaryProperties(summaryMetric: Lumber<LumberEventName.ClientSummary | LumberEventName.ServiceSummary>
