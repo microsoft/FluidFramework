@@ -296,7 +296,7 @@ export interface IFluidDataStoreContext extends
     getAudience(): IAudience;
 
     /**
-     * Report error in that happend in the data store runtime layer to the container runtime layer
+     * Report error that happened in the data store runtime layer to the container runtime layer
      * @param err - the error object.
      */
     raiseContainerWarning(warning: ContainerWarning): void;
