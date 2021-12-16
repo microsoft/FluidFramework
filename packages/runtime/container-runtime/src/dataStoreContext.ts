@@ -30,7 +30,7 @@ import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import {
     IClientDetails,
     IDocumentMessage,
-    IQuorum,
+    IQuorumClients,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITreeEntry,
@@ -386,7 +386,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.channel?.processSignal(message, local);
     }
 
-    public getQuorum(): IQuorum {
+    public getQuorum(): IQuorumClients {
         return this._containerRuntime.getQuorum();
     }
 
