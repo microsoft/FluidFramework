@@ -526,16 +526,6 @@ export interface ISummarizerOptions {
 }
 
 // @public (undocumented)
-export interface ISummarizerRequestOptions {
-    // (undocumented)
-    cache: boolean;
-    // (undocumented)
-    reconnect: boolean;
-    // (undocumented)
-    summarizingClient: boolean;
-}
-
-// @public (undocumented)
 export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
     closeFn(): void;
@@ -680,7 +670,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     constructor(url: string,
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
     internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
-    static create(loader: ILoader, url: string, options: ISummarizerRequestOptions): Promise<ISummarizer>;
+    static create(loader: ILoader, url: string): Promise<ISummarizer>;
     dispose(): void;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];

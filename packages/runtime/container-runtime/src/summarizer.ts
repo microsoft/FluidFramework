@@ -30,7 +30,6 @@ import {
     ISummarizer,
     ISummarizerInternalsProvider,
     ISummarizerOptions,
-    ISummarizerRequestOptions,
     ISummarizerRuntime,
     ISummarizingWarning,
     SummarizerStopReason,
@@ -112,18 +111,16 @@ export class Summarizer extends EventEmitter implements ISummarizer {
      */
     public static async create(
         loader: ILoader,
-        url: string,
-        options: ISummarizerRequestOptions): Promise<ISummarizer> {
-        const { cache, reconnect, summarizingClient } = options;
+        url: string): Promise<ISummarizer> {
         const request: IRequest = {
             headers: {
-                [LoaderHeader.cache]: cache,
+                [LoaderHeader.cache]: false,
                 [LoaderHeader.clientDetails]: {
                     capabilities: { interactive: false },
                     type: summarizerClientType,
                 },
-                [DriverHeader.summarizingClient]: summarizingClient,
-                [LoaderHeader.reconnect]: reconnect,
+                [DriverHeader.summarizingClient]: true,
+                [LoaderHeader.reconnect]: false,
             },
             url,
         };

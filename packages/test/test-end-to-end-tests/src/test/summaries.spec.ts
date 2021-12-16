@@ -11,7 +11,6 @@ import {
     Summarizer,
     ISummarizer,
     ISummarizeResults,
-    ISummarizerRequestOptions,
     ISummaryRuntimeOptions} from "@fluidframework/container-runtime";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -71,9 +70,7 @@ async function createContainer(
     return provider.createContainer(runtimeFactory);
 }
 
-async function createSummarizer(
-    provider: ITestObjectProvider,
-    options: ISummarizerRequestOptions): Promise<ISummarizer> {
+async function createSummarizer(provider: ITestObjectProvider): Promise<ISummarizer> {
     const loader = createLoader(
         [[provider.defaultCodeDetails, provider.createFluidEntryPoint(testContainerConfig)]],
         provider.documentServiceFactory,
@@ -86,7 +83,7 @@ async function createSummarizer(
     if (absoluteUrl === undefined) {
         throw new Error("URL could not be resolved");
     }
-    return Summarizer.create(loader, absoluteUrl, options);
+    return Summarizer.create(loader, absoluteUrl);
 }
 
 function readBlobContent(content: ISummaryBlob["content"]): unknown {
@@ -102,12 +99,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
     });
 
     it("On demand summaries", async () => {
-        const options: ISummarizerRequestOptions = {
-            cache: false,
-            reconnect: false,
-            summarizingClient: true,
-        };
-        summarizer = await createSummarizer(provider, options);
+        summarizer = await createSummarizer(provider);
 
         let result: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });
         let negResult: ISummarizeResults | undefined = summarizer.summarizeOnDemand({ reason: "negative test" });
