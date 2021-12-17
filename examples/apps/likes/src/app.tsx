@@ -9,9 +9,9 @@ import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { LikesAndComments } from "./fluidObject";
-import { LikesAndCommentsContainer } from "./container";
-import { LikesAndCommentsView } from "./view";
+import { Likes } from "./fluidObject";
+import { LikesContainer } from "./container";
+import { LikesView } from "./view";
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
@@ -25,19 +25,19 @@ async function start() {
 
     // Get the Fluid Container associated with the provided id
     const [container, containerId] = await getTinyliciousContainer(
-        documentId, LikesAndCommentsContainer, shouldCreateNew,
+        documentId, LikesContainer, shouldCreateNew,
     );
     // update the browser URL and the window title with the actual container ID
     location.hash = containerId;
     document.title = containerId;
 
     // Get the Default Object from the Container
-    const defaultObject = await getDefaultObjectFromContainer<LikesAndComments>(container);
+    const defaultObject = await getDefaultObjectFromContainer<Likes>(container);
 
     const contentDiv = document.getElementById("content");
     if (contentDiv !== null) {
         ReactDOM.render(
-            <LikesAndCommentsView
+            <LikesView
                 syncedDataObject={defaultObject}
             />,
             contentDiv,

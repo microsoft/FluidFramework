@@ -14,14 +14,14 @@ import * as React from "react";
 
 // Interfaces
 
-interface ILikesAndCommentsViewProps {
+interface ILikesViewProps {
     syncedDataObject: SyncedDataObject,
 }
 
 // ---- Fluid Object w/ a Functional React view using a mixture of DDSes and local state ----
 
-export function LikesAndCommentsView(
-    props: ILikesAndCommentsViewProps,
+export function LikesView(
+    props: ILikesViewProps,
 ) {
     // Use synced states
     const [likes, likesReducer] = useSyncedCounter(props.syncedDataObject, "likes");
