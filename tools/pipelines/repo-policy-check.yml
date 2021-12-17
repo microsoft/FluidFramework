@@ -20,9 +20,9 @@ variables:
 
 steps:
 - task: UseNode@1
-  displayName: Use Node 12.x
-  inputs: 
-    version: 12.x
+  displayName: Use Node 14.x
+  inputs:
+    version: 14.x
 
 - task: Npm@1
   displayName: npm ci

@@ -26,6 +26,7 @@ import {
     ICriticalContainerError,
     AttachState,
     ILoaderOptions,
+    LoaderHeader,
 } from "@fluidframework/container-definitions";
 import {
     IContainerRuntime,
@@ -45,13 +46,17 @@ import {
     normalizeError,
     TaggedLoggerAdapter,
 } from "@fluidframework/telemetry-utils";
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
-import { DataCorruptionError, GenericError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
+import {
+    DataCorruptionError,
+    GenericError,
+    UsageError,
+    extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
 import {
     IClientDetails,
     IDocumentMessage,
-    IQuorum,
+    IQuorumClients,
     ISequencedDocumentMessage,
     ISignalMessage,
     ISummaryConfiguration,
@@ -89,6 +94,7 @@ import {
     RequestParser,
     create404Response,
     exceptionToResponse,
+    requestFluidObject,
     responseToException,
     seqFromTree,
     convertSummaryTreeToITree,
@@ -97,7 +103,7 @@ import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
-import { formRequestSummarizerFn, ISummarizerRequestOptions, SummaryManager } from "./summaryManager";
+import { SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry, latencyThreshold } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
@@ -105,6 +111,7 @@ import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo } from "./blobManager";
 import { DataStores, getSummaryForDatastores } from "./dataStores";
 import {
+    aliasBlobName,
     blobsTreeName,
     chunksBlobName,
     electedSummarizerBlobName,
@@ -155,6 +162,9 @@ export enum ContainerMessageType {
 
     // Ties our new clientId to our old one on reconnect
     Rejoin = "rejoin",
+
+    // Sets the alias of a root data store
+    Alias = "alias",
 }
 
 export interface IChunkedOp {
@@ -286,6 +296,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
         case ContainerMessageType.FluidDataStoreOp:
         case ContainerMessageType.ChunkedOp:
         case ContainerMessageType.Attach:
+        case ContainerMessageType.Alias:
         case ContainerMessageType.BlobAttach:
         case ContainerMessageType.Rejoin:
         case MessageType.Operation:
@@ -678,9 +689,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return readAndParse<T>(storage, blobId);
             }
         };
-        const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
-        const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
-        const electedSummarizerData = await tryFetchBlob<ISerializedElection>(electedSummarizerBlobName);
+
+        const [chunks, metadata, electedSummarizerData, aliases] = await Promise.all([
+            tryFetchBlob<[string, string[]][]>(chunksBlobName),
+            tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName),
+            tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
+            tryFetchBlob<[string, string][]>(aliasBlobName),
+        ]);
+
         const loadExisting = existing === true || context.existing === true;
 
         // read snapshot blobs needed for BlobManager to load
@@ -719,7 +735,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             registry,
             metadata,
             electedSummarizerData,
-            chunks,
+            chunks ?? [],
+            aliases ?? [],
             {
                 summaryOptions,
                 gcOptions,
@@ -736,6 +753,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return runtime;
     }
 
+    /**
+    * @deprecated This will be removed in a later release. Deprecated in 0.53
+    */
     public get id(): string {
         return this.context.id;
     }
@@ -900,6 +920,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._summarizer;
     }
 
+    private get summariesDisabled(): boolean {
+        return this.runtimeOptions.summaryOptions.disableSummaries === true ||
+            this.runtimeOptions.summaryOptions.summaryConfigOverrides?.disableSummaries === true;
+    }
+
     private readonly createContainerMetadata: ICreateContainerMetadata;
     private summaryCount: number | undefined;
 
@@ -909,6 +934,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         metadata: IContainerRuntimeMetadata | undefined,
         electedSummarizerData: ISerializedElection | undefined,
         chunks: [string, string[]][],
+        dataStoreAliasMap: [string, string][],
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
         private readonly containerScope: FluidObject,
         public readonly logger: ITelemetryLogger,
@@ -1012,6 +1038,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._logger,
             async () => this.garbageCollector.getDataStoreBaseGCDetails(),
             (id: string) => this.garbageCollector.nodeChanged(id),
+            new Map<string, string>(dataStoreAliasMap),
         );
 
         this.blobManager = new BlobManager(
@@ -1042,33 +1069,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
-        // Only create a SummaryManager if summaries are enabled and we are not the summarizer client
         // Map the deprecated generateSummaries flag to disableSummaries.
         if (this.runtimeOptions.summaryOptions.generateSummaries === false) {
             this.runtimeOptions.summaryOptions.disableSummaries = true;
         }
-        if (this.summariesDisabled()) {
-            this._logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
-        } else {
-            const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 7000;
-            const defaultAction = () => {
-                if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
-                    this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
-                    // unregister default to no log on every op after falling behind
-                    // and register summary ack handler to re-register this handler
-                    // after successful summary
-                    this.summaryCollection.once(MessageType.SummaryAck, () => {
-                        this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
-                        // we've caught up, so re-register the default action to monitor for
-                        // falling behind, and unregister ourself
-                        this.summaryCollection.on("default", defaultAction);
-                    });
-                    this.summaryCollection.off("default", defaultAction);
-                }
-            };
 
-            this.summaryCollection.on("default", defaultAction);
-                const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
+        if (this.summariesDisabled) {
+            this._logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
+        }
+        else {
+            const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
             const orderedClientCollection = new OrderedClientCollection(
                 orderedClientLogger,
                 this.context.deltaManager,
@@ -1082,6 +1092,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             );
             const summarizerClientElectionEnabled = getLocalStorageFeatureGate("summarizerClientElection") ??
                 this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
+            const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 7000;
             this.summarizerClientElection = new SummarizerClientElection(
                 orderedClientLogger,
                 this.summaryCollection,
@@ -1100,23 +1111,35 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.summaryCollection,
                     async (runtime: IConnectableRuntime) => RunWhileConnectedCoordinator.create(runtime),
                 );
-            } else if (SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)) {
+            }
+            else if (SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)) {
+                // Only create a SummaryManager and SummarizerClientElection
+                // if summaries are enabled and we are not the summarizer client.
+                const defaultAction = () => {
+                    if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
+                        this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
+                        // unregister default to no log on every op after falling behind
+                        // and register summary ack handler to re-register this handler
+                        // after successful summary
+                        this.summaryCollection.once(MessageType.SummaryAck, () => {
+                            this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
+                            // we've caught up, so re-register the default action to monitor for
+                            // falling behind, and unregister ourself
+                            this.summaryCollection.on("default", defaultAction);
+                        });
+                        this.summaryCollection.off("default", defaultAction);
+                    }
+                };
+
+                this.summaryCollection.on("default", defaultAction);
+
                 // Create the SummaryManager and mark the initial state
-                const requestOptions: ISummarizerRequestOptions =
-                    {
-                        cache: false,
-                        reconnect: false,
-                        summarizingClient: true,
-                    };
                 this.summaryManager = new SummaryManager(
                     this.summarizerClientElection,
                     this, // IConnectedState
                     this.summaryCollection,
                     this.logger,
-                    formRequestSummarizerFn(
-                        this.context.loader,
-                        this.context.deltaManager.lastSequenceNumber,
-                        requestOptions),
+                    this.formRequestSummarizerFn(this.context.loader),
                     new Throttler(
                         60 * 1000, // 60 sec delay window
                         30 * 1000, // 30 sec max delay
@@ -1356,6 +1379,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             addBlobToSummary(summaryTree, chunksBlobName, content);
         }
 
+        const dataStoreAliases = this.dataStores.aliases();
+        if (dataStoreAliases.size > 0) {
+            addBlobToSummary(summaryTree, aliasBlobName, JSON.stringify([...dataStoreAliases]));
+        }
+
         if (this.summarizerClientElection) {
             const electedSummarizerContent = JSON.stringify(this.summarizerClientElection?.serialize());
             addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
@@ -1435,6 +1463,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return this.dataStores.applyStashedOp(op);
             case ContainerMessageType.Attach:
                 return this.dataStores.applyStashedAttachOp(op as unknown as IAttachMessage);
+            case ContainerMessageType.Alias:
             case ContainerMessageType.BlobAttach:
                 return;
             case ContainerMessageType.ChunkedOp:
@@ -1503,6 +1532,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 case ContainerMessageType.Attach:
                     this.dataStores.processAttachMessage(message, local || localAck);
                     break;
+                case ContainerMessageType.Alias:
+                    this.processAliasMessage(message, localOpMetadata, local);
+                    break;
                 case ContainerMessageType.FluidDataStoreOp:
                     // if localAck === true, treat this as a local op because it's one we sent on a previous container
                     this.dataStores.processFluidDataStoreOp(message, local || localAck, localOpMetadata);
@@ -1520,6 +1552,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.scheduleManager.afterOpProcessing(e, message);
             throw e;
         }
+    }
+
+    private processAliasMessage(
+        message: ISequencedDocumentMessage,
+        localOpMetadata: unknown,
+        local: boolean,
+    ) {
+        this.dataStores.processAliasMessage(message, localOpMetadata, local);
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {
@@ -1673,7 +1713,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.connected && !this.deltaManager.readonly;
     }
 
-    public getQuorum(): IQuorum {
+    public getQuorum(): IQuorumClients {
         return this.context.quorum;
     }
 
@@ -1845,7 +1885,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * Runs garbage collection and udpates the reference / used state of the nodes in the container.
+     * Runs garbage collection and updates the reference / used state of the nodes in the container.
      * @returns the statistics of the garbage collection run.
      */
     public async collectGarbage(
@@ -2266,6 +2306,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.dataStores.resubmitDataStoreOp(content, localOpMetadata);
                 break;
             case ContainerMessageType.Attach:
+            case ContainerMessageType.Alias:
                 this.submit(type, content, localOpMetadata);
                 break;
             case ContainerMessageType.ChunkedOp:
@@ -2311,7 +2352,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @returns downloaded snapshot's reference sequence number
      */
     private async refreshLatestSummaryAckFromServer(summaryLogger: ITelemetryLogger): Promise<number> {
-        const snapshot = await this.fetchSnapshotFromStorage(this.id, summaryLogger, {
+        const snapshot = await this.fetchSnapshotFromStorage(null, summaryLogger, {
             eventName: "RefreshLatestSummaryGetSnapshot",
             fetchLatest: true,
         });
@@ -2333,7 +2374,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return snapshotRefSeq;
     }
 
-    private async fetchSnapshotFromStorage(versionId: string, logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
+    private async fetchSnapshotFromStorage(
+        versionId: string | null, logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
         return PerformanceEvent.timedExecAsync(logger, event, async (perfEvent) => {
             const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
             const trace = Trace.start();
@@ -2355,14 +2397,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.pendingStateManager.getLocalState();
     }
 
-    /**
-     * @returns true if summaries are explicitly disabled for this ContainerRuntime, false otherwise
-     */
-    public summariesDisabled(): boolean {
-        return this.runtimeOptions.summaryOptions.disableSummaries === true ||
-            this.runtimeOptions.summaryOptions.summaryConfigOverrides?.disableSummaries === true;
-    }
-
     public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
         if (this.clientDetails.type === summarizerClientType) {
             return this.summarizer.summarizeOnDemand(...args);
@@ -2372,8 +2406,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // If we're not the summarizer, and we don't have a summaryManager, we expect that
             // disableSummaries is turned on. We are throwing instead of returning a failure here,
             // because it is a misuse of the API rather than an expected failure.
-            throw new Error(
-                `Can't summarize, disableSummaries: ${this.summariesDisabled()}`,
+            throw new UsageError(
+                `Can't summarize, disableSummaries: ${this.summariesDisabled}`,
             );
         }
     };
@@ -2387,11 +2421,41 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // If we're not the summarizer, and we don't have a summaryManager, we expect that
             // generateSummaries is turned off. We are throwing instead of returning a failure here,
             // because it is a misuse of the API rather than an expected failure.
-            throw new Error(
-                `Can't summarize, disableSummaries: ${this.summariesDisabled()}`,
+            throw new UsageError(
+                `Can't summarize, disableSummaries: ${this.summariesDisabled}`,
             );
         }
     };
+
+    /**
+     * * Forms a function that will request a Summarizer.
+     * @param loaderRouter - the loader acting as an IFluidRouter
+     * */
+    private formRequestSummarizerFn(loaderRouter: IFluidRouter) {
+        return async () => {
+            const request: IRequest = {
+                headers: {
+                    [LoaderHeader.cache]: false,
+                    [LoaderHeader.clientDetails]: {
+                        capabilities: { interactive: false },
+                        type: summarizerClientType,
+                    },
+                    [DriverHeader.summarizingClient]: true,
+                    [LoaderHeader.reconnect]: false,
+                },
+                url: "/_summarizer",
+            };
+
+            const fluidObject = await requestFluidObject<FluidObject<ISummarizer>>(loaderRouter, request);
+            const summarizer = fluidObject.ISummarizer;
+
+            if (!summarizer) {
+                throw new UsageError("Fluid object does not implement ISummarizer");
+            }
+
+            return summarizer;
+        };
+    }
 }
 
 /**

@@ -33,8 +33,9 @@ import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IFluidTokenProvider } from '@fluidframework/container-definitions';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
-import { IQuorum } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
@@ -59,6 +60,8 @@ export const agentSchedulerId = "_scheduler";
 
 // @public (undocumented)
 export enum ContainerMessageType {
+    // (undocumented)
+    Alias = "alias",
     // (undocumented)
     Attach = "attach",
     // (undocumented)
@@ -122,12 +125,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     getPendingLocalState(): IPendingLocalState | undefined;
     // (undocumented)
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
     // (undocumented)
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     // (undocumented)
     get IContainerRuntime(): this;
-    // (undocumented)
+    // @deprecated (undocumented)
     get id(): string;
     // (undocumented)
     get IFluidConfiguration(): IFluidConfiguration;
@@ -176,8 +179,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     submitDataStoreSignal(address: string, type: string, content: any): void;
     submitSignal(type: string, content: any): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
-    // (undocumented)
-    summariesDisabled(): boolean;
     summarize(options: {
         summaryLogger: ITelemetryLogger;
         fullTree?: boolean;
@@ -498,7 +499,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidLo
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
     // (undocumented)
     stop(reason: SummarizerStopReason): void;
-    summarizeOnDemand(options: IOnDemandSummarizeOptions): OnDemandSummarizeResult;
+    summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
 }
 
 // @public (undocumented)
@@ -626,13 +627,6 @@ export interface IUsedStateStats {
 export const neverCancelledSummaryToken: ISummaryCancellationToken;
 
 // @public (undocumented)
-export type OnDemandSummarizeResult = (ISummarizeResults & {
-    readonly alreadyRunning?: undefined;
-}) | {
-    readonly alreadyRunning: Promise<void>;
-};
-
-// @public (undocumented)
 export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 // @public (undocumented)
@@ -676,6 +670,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     constructor(url: string,
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
     internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
+    static create(loader: ILoader, url: string): Promise<ISummarizer>;
     dispose(): void;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];

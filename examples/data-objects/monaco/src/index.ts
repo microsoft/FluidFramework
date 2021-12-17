@@ -20,7 +20,6 @@ const componentFactory = new DataObjectFactory(
     [
         sequence.SharedString.getFactory(),
         sequence.SharedObjectSequence.getFactory(),
-        sequence.SharedNumberSequence.getFactory(),
     ],
     {},
 );

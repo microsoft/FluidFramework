@@ -7,6 +7,7 @@ import { AsyncLocalStorage } from "async_hooks";
 import { Response } from "express";
 import * as jwt from "jsonwebtoken";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
+import { NetworkError } from "@fluidframework/server-services-client";
 import { ICache, ITenantService, RestGitService, ITenantCustomDataExternal } from "../services";
 import { parseToken } from "../utils";
 
@@ -31,7 +32,14 @@ export function handleResponse<T>(
             response.status(status).json(result);
         },
         (error) => {
-            response.status(error?.code ?? 400).json(error?.message ?? error);
+            if (error instanceof Error && error?.name === "NetworkError") {
+                const networkError = error as NetworkError;
+                response
+                    .status(networkError.code ?? 400)
+                    .json(networkError.details ?? error);
+            } else {
+                response.status(error?.code ?? 400).json(error?.message ?? error);
+            }
         });
 }
 

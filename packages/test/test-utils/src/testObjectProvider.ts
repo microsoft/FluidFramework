@@ -50,7 +50,7 @@ export interface ITestObjectProvider {
      */
     makeTestLoader(testContainerConfig?: ITestContainerConfig, detachedBlobStorage?: IDetachedBlobStorage): IHostLoader,
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
-    loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>,
     /**
      *
      * @param url - Resolved container URL
@@ -287,10 +287,17 @@ export class TestObjectProvider {
      * Load a container using a default document id and code details.
      * IContainer loaded is automatically added to the OpProcessingController to manage op flow
      * @param testContainerConfig - optional configuring the test Container
+     * @param requestHeader - optional headers to be supplied to the loader
      */
-    public async loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer> {
+    public async loadTestContainer(
+        testContainerConfig?: ITestContainerConfig,
+        requestHeader?: IRequestHeader,
+    ): Promise<IContainer> {
         const loader = this.makeTestLoader(testContainerConfig);
-        const container = await loader.resolve({ url: await this.driver.createContainerUrl(this.documentId) });
+        const container = await loader.resolve({
+            url: await this.driver.createContainerUrl(this.documentId),
+            headers: requestHeader,
+        });
         await waitContainerToCatchUp(container);
         return container;
     }

@@ -22,7 +22,7 @@ import type { Response } from "express";
             response.status(successStatus).json(result);
         },
         (error) => {
-            if (error?.name === "NetworkError") {
+            if (error instanceof Error && error?.name === "NetworkError") {
                 const networkError = error as NetworkError;
                 response
                     .status(errorStatus ?? networkError.code ?? 400)
