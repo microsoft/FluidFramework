@@ -963,7 +963,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         /**
          * Function that return the current server timestamp. This is used by the garbage collector to set the
          * time when a node becomes unreferenced.
-         * We use the timestamp of the last op for gcTimestamp. However, there can be cases where
+         * We use the timestamp of the last op for current timestamp. However, there can be cases where
          * we don't have an op (on demand summaries for instance). In those cases, we will use the timestamp
          * of this client's connection.
          */
