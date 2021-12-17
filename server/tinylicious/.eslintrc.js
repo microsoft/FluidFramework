@@ -16,6 +16,5 @@
         "@typescript-eslint/strict-boolean-expressions": "off",
         "import/no-internal-modules":"off",
         "no-null/no-null": "off",
-        "prefer-arrow/prefer-arrow-functions": "off"
     }
 }

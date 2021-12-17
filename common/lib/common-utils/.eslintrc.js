@@ -15,7 +15,6 @@ module.exports = {
         "@typescript-eslint/strict-boolean-expressions": "off",
         "no-bitwise": "off",
         "no-null/no-null": "off",
-        "prefer-arrow/prefer-arrow-functions": "off",
         "prefer-rest-params": "off"
     }
 }

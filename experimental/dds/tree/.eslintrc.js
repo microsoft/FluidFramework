@@ -30,7 +30,6 @@ module.exports = {
 		// Rules which could be re-enabled (by dropping these overrides, as they are enabled in base config) with some minor fixes:
 		'@typescript-eslint/no-shadow': 'off',
 		'no-shadow': 'off',
-		'prefer-arrow/prefer-arrow-functions': 'off',
 	},
 	overrides: [
 		{

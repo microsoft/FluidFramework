@@ -14,6 +14,5 @@ module.exports = {
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "no-case-declarations": "off",
-        "prefer-arrow/prefer-arrow-functions": "off"
     }
 }

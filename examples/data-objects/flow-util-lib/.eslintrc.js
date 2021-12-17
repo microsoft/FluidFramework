@@ -14,6 +14,5 @@ module.exports = {
         "@typescript-eslint/no-namespace": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "no-inner-declarations": "off",
-        "prefer-arrow/prefer-arrow-functions": "off"
     },
 }
