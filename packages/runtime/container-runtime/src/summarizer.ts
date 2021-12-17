@@ -105,9 +105,12 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     /**
      * Creates a Summarizer and its underlying client.
+     * Note that different implementations of ILoader will handle the URL differently.
+     * ILoader provided by a ContainerRuntime is a RelativeLoader, which will treat URL's
+     * starting with "/" as relative to the Container. The general ILoader
+     * interface will expect an absolute URL and will not handle "/".
      * @param loader - the loader that resolves the request
      * @param url - the URL used to resolve the container
-     * @param options - options used to resolve the container
      */
     public static async create(
         loader: ILoader,
@@ -226,7 +229,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             return this.runningSummarizer;
         }
         if (this.starting) {
-            throw new UsageError("start() called while summarizer is starting");
+            throw new UsageError("Attempting to start a summarizer that is already starting");
         }
         this.starting = true;
         // Initialize values and first ack (time is not exact)
