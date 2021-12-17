@@ -47,7 +47,12 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
-import { DataCorruptionError, GenericError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
+import {
+    CreateProcessingError,
+    DataCorruptionError,
+    GenericError,
+    extractSafePropertiesFromMessage,
+} from "@fluidframework/container-utils";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -1644,10 +1649,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         try {
             this.trackOrderSequentiallyCalls(callback);
-        } finally {
-            this.flush();
-            this.setFlushMode(savedFlushMode);
+        } catch(error) {
+            this.closeFn(CreateProcessingError(error, "orderSequentially"));
         }
+
+        this.flush();
+        this.setFlushMode(savedFlushMode);
     }
 
     private trackOrderSequentiallyCalls(callback: () => void): void {
