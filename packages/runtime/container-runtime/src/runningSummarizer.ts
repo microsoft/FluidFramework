@@ -5,6 +5,7 @@
 
 import { IDisposable, ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
     ISummaryConfiguration,
@@ -18,7 +19,6 @@ import {
     ISummarizeHeuristicData,
     ISummarizeHeuristicRunner,
     ISummarizerOptions,
-    OnDemandSummarizeResult,
     IOnDemandSummarizeOptions,
     EnqueueSummarizeResult,
     SummarizerStopReason,
@@ -408,25 +408,27 @@ export class RunningSummarizer implements IDisposable {
     }
 
     /** {@inheritdoc (ISummarizer:interface).summarizeOnDemand} */
-    public summarizeOnDemand({
-        reason,
-        ...options
-    }: IOnDemandSummarizeOptions): OnDemandSummarizeResult {
+    public summarizeOnDemand(
+        resultsBuilder: SummarizeResultBuilder = new SummarizeResultBuilder(),
+        {
+            reason,
+            ...options
+        }: IOnDemandSummarizeOptions): ISummarizeResults {
         if (this.stopping) {
-            const failBuilder = new SummarizeResultBuilder();
-            failBuilder.fail("RunningSummarizer stopped or disposed", undefined);
-            return failBuilder.build();
+            resultsBuilder.fail("RunningSummarizer stopped or disposed", undefined);
+            return resultsBuilder.build();
         }
         // Check for concurrent summary attempts. If one is found,
         // return a promise that caller can await before trying again.
         if (this.summarizingLock !== undefined) {
             // The heuristics are blocking concurrent summarize attempts.
-            return { alreadyRunning: this.summarizingLock };
+            throw new UsageError("Attempted to run an already-running summarizer on demand");
         }
         const result = this.trySummarizeOnce(
             { summarizeReason: `onDemand/${reason}` },
             options,
-            this.cancellationToken);
+            this.cancellationToken,
+            resultsBuilder);
         return result;
     }
 
