@@ -12,6 +12,8 @@ import { SharedSequence } from "./sharedSequence";
  * at a position within the sequence. See the
  * {@link https://fluidframework.com/docs/data-structures/sequences/ | sequence documentation}
  * for details on working with sequences.
+ *
+ * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
  */
 export class SharedObjectSequence<T> extends SharedSequence<T> {
     /**
@@ -20,6 +22,8 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
      * @param runtime - data store runtime the new shared object sequence belongs to
      * @param id - optional name of the shared object sequence
      * @returns newly create shared object sequence (but not attached yet)
+     *
+     * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
      */
     // eslint-disable-next-line @typescript-eslint/no-shadow
     public static create<T>(runtime: IFluidDataStoreRuntime, id?: string) {
@@ -30,15 +34,23 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
      * Get a factory for SharedObjectSequence to register with the data store.
      *
      * @returns a factory that creates and load SharedObjectSequence
+     *
+     * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
      */
     public static getFactory() {
         return new SharedObjectSequenceFactory();
     }
 
+    /**
+     * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
+     */
     constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
         super(document, id, attributes, SharedObjectSequenceFactory.segmentFromSpec);
     }
 
+    /**
+     * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
+     */
     public getRange(start: number, end?: number): Serializable<T>[] {
         return this.getItems(start, end);
     }
