@@ -6,23 +6,16 @@
 import {
     SyncedDataObject,
     useSyncedCounter,
-    useSyncedArray,
     useSyncedString,
 } from "@fluid-experimental/react";
 import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 import { SharedString } from "@fluidframework/sequence";
 import * as React from "react";
-import { getAuthorName } from "./utils";
 
 // Interfaces
 
 interface ILikesAndCommentsViewProps {
     syncedDataObject: SyncedDataObject,
-}
-
-export interface IComment {
-    author: string,
-    message: string;
 }
 
 // ---- Fluid Object w/ a Functional React view using a mixture of DDSes and local state ----
@@ -32,17 +25,7 @@ export function LikesAndCommentsView(
 ) {
     // Use synced states
     const [likes, likesReducer] = useSyncedCounter(props.syncedDataObject, "likes");
-    const [comments, commentReducer] = useSyncedArray<IComment>(props.syncedDataObject, "comments");
     const [imgUrl, setImgUrl] = useSyncedString(props.syncedDataObject,"imgUrl");
-    // Use local state
-    const [currentComment, setCurrentComment] = React.useState("");
-
-    // Convert data to JSX for comments state
-    const commentListItems = comments.map((item, key) => (
-        <li key={key}>
-            {`${item.author}: ${item.message}`}
-        </li>
-    ));
 
     // Render
     return (
@@ -63,26 +46,6 @@ export function LikesAndCommentsView(
             <button onClick={() => likesReducer.increment(1)}>
                 {"+"}
             </button>
-            <div>
-                <div>
-                    <input
-                        type="text"
-                        value={currentComment}
-                        onChange={(e) => setCurrentComment(e.target.value)}
-                        placeholder="Add Comment"
-                    />
-                    <button
-                        onClick={() => {
-                            commentReducer.add({
-                                message: currentComment,
-                                author: getAuthorName(props.syncedDataObject),
-                            });
-                            setCurrentComment("");
-                        }}
-                    >{"Submit"}</button>
-                </div>
-                <ul>{commentListItems}</ul>
-            </div>
         </div>
     );
 }

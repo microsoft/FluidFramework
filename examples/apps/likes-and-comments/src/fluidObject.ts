@@ -9,12 +9,10 @@ import {
 import {
     SyncedDataObject,
     setSyncedCounterConfig,
-    setSyncedArrayConfig,
     setSyncedStringConfig,
 } from "@fluid-experimental/react";
 import { SharedCounter } from "@fluidframework/counter";
-import { SharedObjectSequence, SharedString } from "@fluidframework/sequence";
-import { IComment } from "./view";
+import { SharedString } from "@fluidframework/sequence";
 
 const defaultImgUrl = "https://picsum.photos/id/221/1200/800";
 
@@ -27,7 +25,6 @@ export class LikesAndComments extends SyncedDataObject {
             LikesAndComments,
             [
                 SharedCounter.getFactory(),
-                SharedObjectSequence.getFactory(),
                 SharedString.getFactory(),
             ],
             {},
@@ -39,10 +36,6 @@ export class LikesAndComments extends SyncedDataObject {
         setSyncedCounterConfig(
             this,
             "likes",
-        );
-        setSyncedArrayConfig<IComment>(
-            this,
-            "comments",
         );
         setSyncedStringConfig(
             this,
