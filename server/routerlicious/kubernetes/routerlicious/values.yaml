@@ -67,6 +67,10 @@ zookeeper:
   local: false
   url: zookeeper_url:port
 
+system:
+  httpServer:
+    connectionTimeout: 0
+
 mongodb:
   operationsDbEndpoint: mongodb_url
   globalDbEndpoint: mongoglobaldb_url
