@@ -89,6 +89,7 @@ export async function fetchJoinSession(
             );
 
             const socketUrl = response.content.deltaStreamSocketUrl;
+            // e.g. url format should be https://{hostName}/fluid
             const webSocketHostName = socketUrl.split("/")[2];
 
             // TODO SPO-specific telemetry
