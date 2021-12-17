@@ -974,12 +974,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         /**
          * Function that return the current server timestamp. This is used by the garbage collector to set the
          * time when a node becomes unreferenced.
-         * For now, we use the timestamp of the last op for gcTimestamp. However, there can be cases where
+         * We use the timestamp of the last op for current timestamp. However, there can be cases where
          * we don't have an op (on demand summaries for instance). In those cases, we will use the timestamp
-         * of this client's connection - https://github.com/microsoft/FluidFramework/issues/8375.
+         * of this client's connection.
          */
-        const getCurrentTimestamp = () => {
-            return this.deltaManager.lastMessage?.timestamp ?? Date.now();
+         const getCurrentTimestamp = () => {
+            const client = this.clientId !== undefined ? this.getAudience().getMember(this.clientId) : undefined;
+            const timestamp = client?.timestamp;
+            return this.deltaManager.lastMessage?.timestamp ?? timestamp ?? Date.now();
         };
         this.garbageCollector = GarbageCollector.create(
             this,
