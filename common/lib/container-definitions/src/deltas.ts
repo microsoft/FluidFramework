@@ -165,7 +165,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 
     readonly readOnlyInfo: ReadOnlyInfo;
 
-    /** Terminate the connection to storage */
+    /** @deprecated - Use Container.close() or IContainerContext.closeFn() */
     close(): void;
 
     /** Submit a signal to the service to be broadcast to other connected clients, but not persisted */
