@@ -25,7 +25,7 @@
     "ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
     "clean": "rimraf dist lib bench/dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "stress": "mocha --recursive dist/test/**/*.spec.js --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict --fgrep stress-loop",

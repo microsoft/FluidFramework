@@ -24,7 +24,7 @@
     "debug:mini": "node --inspect-brk ./dist/nodeStressTest.js --debug --profile mini",
     "debug:runner": "node ./dist/nodeStressTest.js --debug --profile debug",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "full": "node ./dist/nodeStressTest.js --profile full",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",

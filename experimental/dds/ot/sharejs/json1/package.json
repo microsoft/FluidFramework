@@ -24,7 +24,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "dev": "npm run tsc && concurrently 'npm run tsc -- --watch' 'npm run build:test -- --watch'",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha",
