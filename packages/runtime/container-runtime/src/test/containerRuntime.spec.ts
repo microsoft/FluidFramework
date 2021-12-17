@@ -25,6 +25,7 @@ describe("Runtime", () => {
                         deltaManager: new MockDeltaManager(),
                         quorum: new MockQuorum(),
                         logger: new MockLogger(),
+                        clientDetails: { capabilities: { interactive: true } },
                         closeFn: (error?: ICriticalContainerError): void => {
                             if (error !== undefined) {
                                 containerErrors.push(error);

@@ -80,6 +80,11 @@
         "InterfaceDeclaration_IFluidDataStoreRuntime": {
           "backCompat": false
         }
+      },
+      "0.53.0": {
+        "InterfaceDeclaration_IFluidDataStoreRuntime": {
+          "backCompat": false
+        }
       }
     }
   }

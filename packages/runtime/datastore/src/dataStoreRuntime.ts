@@ -34,11 +34,11 @@ import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
     IClientDetails,
     IDocumentMessage,
-    IQuorum,
     ISequencedDocumentMessage,
     SummaryType,
     ISummaryBlob,
     ISummaryTree,
+    IQuorumClients,
 } from "@fluidframework/protocol-definitions";
 import {
     CreateSummarizerNodeSource,
@@ -171,7 +171,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public readonly id: string;
     public readonly options: ILoaderOptions;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    private readonly quorum: IQuorum;
+    private readonly quorum: IQuorumClients;
     private readonly audience: IAudience;
     public readonly logger: ITelemetryLogger;
 
@@ -447,7 +447,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         raiseConnectedEvent(this.logger, this, connected, clientId);
     }
 
-    public getQuorum(): IQuorum {
+    public getQuorum(): IQuorumClients {
         return this.quorum;
     }
 
