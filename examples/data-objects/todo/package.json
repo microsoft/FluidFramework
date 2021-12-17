@@ -48,6 +48,10 @@
     "@fluidframework/sequence": "^0.54.0",
     "@fluidframework/view-adapters": "^0.54.0",
     "@fluidframework/view-interfaces": "^0.54.0",
+    "@fluidframework/container-definitions": "^0.43.0",
+    "@fluidframework/container-runtime": "^0.54.0",
+    "@fluidframework/request-handler": "^0.54.0",
+    "@fluidframework/runtime-utils": "^0.54.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "source-map-loader": "^0.2.4"
