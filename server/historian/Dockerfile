@@ -1,15 +1,15 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:12.22.7-stretch-slim AS base
+FROM node:14.18.2-stretch-slim AS base
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
-        python3 \
-        make \
-        git \
-        curl \
-        g++
+    python3 \
+    make \
+    git \
+    curl \
+    g++
 
 # Add Tini
 ENV TINI_VERSION v0.18.0

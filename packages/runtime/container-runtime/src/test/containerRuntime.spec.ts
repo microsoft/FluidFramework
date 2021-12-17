@@ -23,6 +23,7 @@ describe("Runtime", () => {
                     deltaManager: new MockDeltaManager(),
                     quorum: new MockQuorum(),
                     logger: new MockLogger(),
+                    clientDetails: { capabilities: { interactive: true } },
                 };
 
                 beforeEach(async () => {

@@ -27,6 +27,7 @@ import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
     ICommittedProposal,
     IQuorum,
+    IQuorumClients,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISummaryTree,
@@ -446,7 +447,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return;
     }
 
-    public getQuorum(): IQuorum {
+    public getQuorum(): IQuorumClients {
         return this.quorum;
     }
 

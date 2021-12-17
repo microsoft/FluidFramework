@@ -88,11 +88,15 @@ export async function fetchJoinSession(
                 logger,
             );
 
+            const socketUrl = response.content.deltaStreamSocketUrl;
+            const webSocketHostName = socketUrl.split("/")[2];
+
             // TODO SPO-specific telemetry
             event.end({
                 ...response.commonSpoHeaders,
                 // pushV2 websocket urls will contain pushf
-                pushv2: response.content.deltaStreamSocketUrl.includes("pushf"),
+                pushv2: socketUrl.includes("pushf"),
+                webSocketHostName,
             });
 
             if (response.content.runtimeTenantId && !response.content.tenantId) {

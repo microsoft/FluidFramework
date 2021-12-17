@@ -20,7 +20,7 @@ import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IQuorum } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -87,7 +87,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;
@@ -159,7 +159,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     id: string,
     createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
     getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
     readonly isLocalDataStore: boolean;
