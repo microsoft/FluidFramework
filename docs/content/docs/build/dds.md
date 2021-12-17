@@ -186,13 +186,6 @@ These DDSes are used for storing key-value data. They are all optimistic and use
 
 * [SharedMap][] -- a basic key-value distributed data structure.
 
-### Sequences
-
-These DDSes are used for storing sequential data. They are all optimistic.
-
-* [SharedNumberSequence][] -- a distributed sequence of numbers.
-* [SharedObjectSequence][] -- a distributed sequence of objects.
-
 ### Specialized data structures
 
 * [SharedCounter][] -- a distributed counter.
@@ -211,8 +204,6 @@ These DDSes are used for storing sequential data. They are all optimistic.
 [IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
-[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
-[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedSequence]: {{< relref "sequences.md" >}}
 [SharedString]: {{< relref "string.md" >}}
 

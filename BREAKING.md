@@ -36,7 +36,7 @@ A future change will similarly convert calls to `getQuorum()` on `IContainer` an
 
 ### `SharedNumberSequence` and `SharedObjectSequence` deprecated
 
-The `SharedNumberSequence` and `SharedObjectSequence` have been deprecated and are not recommended for use.  To discuss future plans to support scenarios involving sequences of objects, please see [this Github issue](https://github.com/microsoft/FluidFramework/issues/8526).
+The `SharedNumberSequence` and `SharedObjectSequence` have been deprecated and are not recommended for use.  To discuss future plans to support scenarios involving sequences of objects, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526).
 
 Additionally, `useSyncedArray()` from `@fluid-experimental/react` has been removed, as it depended on the `SharedObjectArray`.
 
