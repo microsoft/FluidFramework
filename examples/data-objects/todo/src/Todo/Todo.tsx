@@ -5,10 +5,12 @@
 
 import { DataObject } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SequenceDeltaEvent, SharedObjectSequence, SharedString } from "@fluidframework/sequence";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
+import { v4 as uuid } from "uuid";
 import { ITodoItemInitialState, TodoItem } from "../TodoItem/index";
 import { TodoView } from "./TodoView";
 
@@ -26,7 +28,7 @@ export class Todo extends DataObject implements IFluidHTMLView {
     private readonly todoItemsKey = "todo-items";
     private readonly todoTitleKey = "todo-title";
 
-    private todoItems: SharedObjectSequence<IFluidHandle<TodoItem>>;
+    private todoItemsMap: ISharedMap;
 
     public get IFluidHTMLView() { return this; }
 
@@ -41,8 +43,8 @@ export class Todo extends DataObject implements IFluidHTMLView {
     protected async initializingFirstTime() {
         // Create a list for of all inner todo item components.
         // We will use this to know what components to load.
-        const seq = SharedObjectSequence.create(this.runtime);
-        this.root.set(this.todoItemsKey, seq.handle);
+        const map = SharedMap.create(this.runtime);
+        this.root.set(this.todoItemsKey, map.handle);
 
         const text = SharedString.create(this.runtime);
         text.insertText(0, "Title");
@@ -50,11 +52,12 @@ export class Todo extends DataObject implements IFluidHTMLView {
     }
 
     protected async hasInitialized() {
-        this.todoItems =
-            await this.root.get<IFluidHandle<SharedObjectSequence<IFluidHandle<TodoItem>>>>(this.todoItemsKey).get();
+        this.todoItemsMap = await this.root.get<IFluidHandle<ISharedMap>>(this.todoItemsKey).get();
         // Hide the DDS eventing used by the model, expose a model-specific event interface.
-        this.todoItems.on("sequenceDelta",(event: SequenceDeltaEvent)=>{
-            this.emit("todoItemsChanged");
+        this.todoItemsMap.on("valueChanged", (changed, local) => {
+            if (!local) {
+                this.emit("todoItemsChanged");
+            }
         });
     }
 
@@ -80,13 +83,21 @@ export class Todo extends DataObject implements IFluidHTMLView {
         // Create a new todo item
         const component = await TodoItem.getFactory().createChildInstance(this.context, props);
 
-        // Store the handle to the component in the sequence
-        this.todoItems.insert(this.todoItems.getLength(), [component.handle]);
+        // Generate a key that we can sort on later, and store the handle.
+        this.todoItemsMap.set(`${Date.now()}-${uuid()}`, component.handle);
+
+        this.emit("todoItemsChanged");
     }
 
     public async getTodoItemComponents() {
-        return Promise.all(
-            this.todoItems.getItems(0).map(async (i)=>i.get()));
+        const todoItemsEntries: [string, IFluidHandle<TodoItem>][] = [...this.todoItemsMap.entries()];
+        todoItemsEntries.sort((entryA, entryB) => {
+            // Sort on keys as strings
+            return entryA[0].localeCompare(entryB[0]);
+        });
+        const todoItemComponentPromises = todoItemsEntries.map(async (entry) => entry[1].get());
+
+        return Promise.all(todoItemComponentPromises);
     }
 
     // end public API surface for the Todo model, used by the view
