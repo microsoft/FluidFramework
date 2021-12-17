@@ -968,8 +968,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          * of this client's connection.
          */
          const getCurrentTimestamp = () => {
-            const audience = this.getAudience();
-            const client = this.clientId !== undefined ? audience.getMember(this.clientId) : undefined;
+            const client = this.clientId !== undefined ? this.getAudience().getMember(this.clientId) : undefined;
             const timestamp = client?.timestamp;
             return this.deltaManager.lastMessage?.timestamp ?? timestamp ?? Date.now();
         };
