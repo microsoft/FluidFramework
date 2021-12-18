@@ -100,9 +100,9 @@ export function getRequestErrorTranslator(
             // Here, we log information associated with the error for debugging purposes, and re-throw.
             const networkError = error as NetworkError;
             // eslint-disable-next-line max-len
-            winston.error(`${standardLogErrorMessage}: [statusCode: ${networkError.code}], [details: ${networkError.details ?? "undefined"}]`);
+            winston.error(`${standardLogErrorMessage}: [statusCode: ${networkError.code}], [details: ${safeStringify(networkError.details) ?? "undefined"}]`);
             // eslint-disable-next-line max-len
-            Lumberjack.error(`${standardLogErrorMessage}: [statusCode: ${networkError.code}], [details: ${networkError.details ?? "undefined"}]`, lumberProperties);
+            Lumberjack.error(`${standardLogErrorMessage}: [statusCode: ${networkError.code}], [details: ${safeStringify(networkError.details) ?? "undefined"}]`, lumberProperties);
             throw error;
         } else if (typeof error === "number" || !Number.isNaN(Number.parseInt(error, 10))) {
             // The legacy implementation of BasicRestWrapper used to throw status codes only, when status codes
