@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -465,7 +465,10 @@ export class SharedMatrix<T = any>
     protected getGCDataCore(): IGarbageCollectionData {
         // Create a SummarySerializer and use it to serialize all the cells. It keeps track of all IFluidHandles that it
         // serializes.
-        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+        const serializer = new SummarySerializer(
+            this.runtime.channelsRoutingContext,
+            (handle: IFluidHandle) => this.handleDecoded(handle),
+        );
 
         for (let row = 0; row < this.rowCount; row++) {
             for (let col = 0; col < this.colCount; col++) {

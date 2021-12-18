@@ -828,7 +828,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.attachState;
     }
 
-    public readonly IFluidHandleContext: IFluidHandleContext;
+    public get IFluidHandleContext(): IFluidHandleContext {
+        return this.handleContext;
+    }
+    private readonly handleContext: ContainerFluidHandleContext;
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly _logger: ITelemetryLogger;
@@ -967,7 +970,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
 
-        this.IFluidHandleContext = new ContainerFluidHandleContext("", this);
+        this.handleContext = new ContainerFluidHandleContext("", this);
 
         this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
 
@@ -1044,7 +1047,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         );
 
         this.blobManager = new BlobManager(
-            this.IFluidHandleContext,
+            this.handleContext,
             blobManagerSnapshot,
             () => this.storage,
             (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
@@ -1109,7 +1112,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this /* ISummarizerRuntime */,
                     () => this.summaryConfiguration,
                     this /* ISummarizerInternalsProvider */,
-                    this.IFluidHandleContext,
+                    this.handleContext,
                     this.summaryCollection,
                     async (runtime: IConnectableRuntime) => RunWhileConnectedCoordinator.create(runtime),
                 );
@@ -1901,6 +1904,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         },
     ): Promise<IGCStats> {
         return this.garbageCollector.collectGarbage(options);
+    }
+
+    /**
+     * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+     * all references added in the system.
+     * @param srcHandle - The handle of the node that added the reference.
+     * @param outboundHandle - The handle of the outbound node that is referenced.
+     */
+    public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
+        this.garbageCollector.addedOutboundReference(srcHandle.absolutePath, outboundHandle.absolutePath);
     }
 
     /**
