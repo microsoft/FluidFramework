@@ -16,6 +16,11 @@ import { TodoView } from "./TodoView";
 
 export const TodoName = "Todo";
 
+interface ITodoStorageFormat {
+    index: string;
+    handle: IFluidHandle<TodoItem>;
+}
+
 /**
  * Todo base component.
  * Visually contains the following:
@@ -84,18 +89,24 @@ export class Todo extends DataObject implements IFluidHTMLView {
         const component = await TodoItem.getFactory().createChildInstance(this.context, props);
 
         // Generate a key that we can sort on later, and store the handle.
-        this.todoItemsMap.set(`${Date.now()}-${uuid()}`, component.handle);
+        this.todoItemsMap.set(
+            uuid(),
+            {
+                index: `${Date.now()}-${uuid()}`,
+                handle: component.handle,
+            },
+        );
 
         this.emit("todoItemsChanged");
     }
 
     public async getTodoItemComponents() {
-        const todoItemsEntries: [string, IFluidHandle<TodoItem>][] = [...this.todoItemsMap.entries()];
+        const todoItemsEntries: [string, ITodoStorageFormat][] = [...this.todoItemsMap.entries()];
         todoItemsEntries.sort((entryA, entryB) => {
             // Sort on keys as strings
-            return entryA[0].localeCompare(entryB[0]);
+            return entryA[1].index.localeCompare(entryB[1].index);
         });
-        const todoItemComponentPromises = todoItemsEntries.map(async (entry) => entry[1].get());
+        const todoItemComponentPromises = todoItemsEntries.map(async (entry) => entry[1].handle.get());
 
         return Promise.all(todoItemComponentPromises);
     }
