@@ -9,6 +9,7 @@ import {
     IFluidConfiguration,
     IFluidLoadable,
     IFluidHandleContext,
+    IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 
@@ -360,6 +361,19 @@ describe("Routerlicious", () => {
                 assert(modules.length === 2, "Manager has two modules");
                 assert(modules.includes(IFluidLoadable), "Manager has IFluidLoadable");
                 assert(modules.includes(IFluidConfiguration), "Manager has IFluidConfiguration");
+            });
+
+            it(`Child has Parent modules`, async () => {
+                const parentDc = new DependencyContainer();
+                const loadableMock = new MockLoadable();
+                parentDc.register(IFluidLoadable, loadableMock);
+                const dc = new DependencyContainer(parentDc);
+                const configMock = new MockFluidConfiguration();
+                dc.register(IFluidConfiguration, configMock);
+
+                assert(dc.has(IFluidLoadable),"has includes parent registered");
+                assert(dc.has(IFluidConfiguration),"has includes registered");
+                assert(!dc.has(IFluidHandle),"does not include not registered");
             });
         });
     });

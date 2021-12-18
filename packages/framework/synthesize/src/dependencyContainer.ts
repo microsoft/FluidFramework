@@ -21,7 +21,7 @@ import {
  */
 export class DependencyContainer implements IFluidDependencySynthesizer {
     private readonly providers = new Map<keyof IFluidObject, FluidObjectProvider<any>>();
-
+    private readonly parents: IFluidDependencySynthesizer[];
     public get IFluidDependencySynthesizer() { return this; }
 
     /**
@@ -31,13 +31,15 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
         return this.providers.keys();
     }
 
-    public constructor(public parent: IFluidDependencySynthesizer | undefined = undefined) { }
+    public constructor(... parents: (IFluidDependencySynthesizer | undefined)[]) {
+        this.parents = parents.filter((v): v is IFluidDependencySynthesizer => v !== undefined);
+     }
 
     /**
      * {@inheritDoc (IFluidDependencySynthesizer:interface).register}
      */
     public register<T extends keyof IFluidObject>(type: T, provider: FluidObjectProvider<T>): void {
-        if (this.has(type)) {
+        if (this.providers.has(type)) {
             throw new Error(`Attempting to register a provider of type ${type} that already exists`);
         }
 
@@ -81,11 +83,13 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
      */
     public has(...types: (keyof IFluidObject)[]): boolean {
         return types.every((type) => {
-            return this.providers.has(type);
+            return this.getProvider(type) !== undefined;
         });
     }
 
     /**
+     * @deprecated - use synthesize instead
+     *
      * {@inheritDoc (IFluidDependencySynthesizer:interface).getProvider}
      */
     public getProvider<T extends keyof IFluidObject>(type: T): FluidObjectProvider<T> | undefined {
@@ -95,8 +99,18 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
             return provider;
         }
 
-        if (this.parent) {
-            return this.parent.getProvider(type);
+        for(const parent of this.parents) {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            const sp = { [type]: type } as FluidObjectSymbolProvider<Pick<IFluidObject, T>>;
+            // eslint-disable-next-line @typescript-eslint/ban-types
+            const syn =  parent.synthesize<Pick<IFluidObject, T>,{}>(
+                sp,
+                {});
+            const maybeProvider = syn[type];
+            if(maybeProvider !== undefined) {
+                // @ts-expect-error blah
+                return maybeProvider;
+            }
         }
 
         return undefined;
@@ -123,7 +137,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
         return Object.assign({}, ...Array.from(values, (t) => {
             const provider = this.getProvider(t);
             if (!provider) {
-                return { get [t]() { return Promise.resolve(undefined); } };
+                return { get [t]() { return undefined; } };
             }
 
             return this.resolveProvider(provider, t);

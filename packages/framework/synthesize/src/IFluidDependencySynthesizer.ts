@@ -32,11 +32,13 @@ export interface IProvideFluidDependencySynthesizer {
  */
 export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynthesizer {
     /**
+     * @deprecated - This will only be available on DependencyContainer
      * All the registered types available
      */
     readonly registeredTypes: Iterable<(keyof IFluidObject)>;
 
     /**
+     *  @deprecated - This will only be available on DependencyContainer
      * Add a new provider
      * @param type - Name of the Type T being provided
      * @param provider - A provider that will resolve the T correctly when asked
@@ -45,6 +47,7 @@ export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynt
     register<T extends keyof IFluidObject>(type: T, provider: FluidObjectProvider<T>): void;
 
     /**
+     *  @deprecated - This will only be available on DependencyContainer
      * Remove a provider
      * @param type - Name of the provider to remove
      */
@@ -65,12 +68,14 @@ export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynt
     ): AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<R>>;
 
     /**
+     *  @deprecated - This will only be available on DependencyContainer
      * Check if a given type is registered
      * @param types - Type to check
      */
     has(...types: (keyof IFluidObject)[]): boolean;
 
     /**
+     * @deprecated - This will be removed. Use synthesize instead, or has on a child DependencyContainer
      * Get a provider. undefined if not available.
      * @param type - Type to get
      */
