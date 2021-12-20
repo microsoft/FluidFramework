@@ -380,8 +380,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
 
     public get IFluidRouter() { return this; }
 
-    public readonly IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
-
     public readonly documentId: string;
     public readonly id: string = uuid();
     public readonly existing: boolean;
@@ -393,6 +391,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreRuntime");
     public quorum = new MockQuorum();
+
+    public readonly IFluidSerializer = new FluidSerializer(this.IFluidHandleContext, (handle: IFluidHandle) => {});
 
     public get absolutePath() {
         return `/${this.id}`;
@@ -502,6 +502,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public async request(request: IRequest): Promise<IResponse> {
         return null;
     }
+
+    public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void {}
 
     public async summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats> {
         const stats = mergeStats();
