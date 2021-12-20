@@ -149,8 +149,9 @@ You should always check the `isDirty` flag before closing the container or navig
 
 A container is considered dirty in the following cases:
 
-1. The container has local changes that have not yet been acknowledged by the service. These unacknowledged changes will be lost if the container is closed.
-1. There is no network connection while making changes to the container. These changes cannot be acknowledged by the service until the network connection is restored.
+1. The container has been created in the detached state, and it has not been attached yet.
+2. The container was attached, but it has local changes that have not yet been acknowledged by the service. These unacknowledged changes will be lost if the container is closed.
+3. There is no network connection while making changes to the container. These changes cannot be acknowledged by the service until the network connection is restored.
 
 ```typescript {linenos=inline}
 if(container.isDirty) {

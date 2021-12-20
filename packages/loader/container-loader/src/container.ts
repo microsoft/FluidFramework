@@ -405,7 +405,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _loadedFromVersion: IVersion | undefined;
     private _resolvedUrl: IFluidResolvedUrl | undefined;
     private attachStarted = false;
-    private _dirtyContainer = false;
+    private _dirtyContainer = true;
 
     private lastVisible: number | undefined;
     private readonly connectionStateHandler: ConnectionStateHandler;
@@ -1858,15 +1858,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (message) => this.submitSignal(message),
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,
-            (dirty: boolean) => {
-                this._dirtyContainer = dirty;
-                this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
-            },
+            (dirty: boolean) => this.updateDirtyContainerState(dirty),
             existing,
             pendingLocalState,
         );
 
         this.emit("contextChanged", codeDetails);
+    }
+
+    private updateDirtyContainerState(dirty: boolean) {
+        if (this._dirtyContainer === dirty) {
+            return;
+        }
+        this._dirtyContainer = dirty;
+        this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
     }
 
     // Please avoid calling it directly.

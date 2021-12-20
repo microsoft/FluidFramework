@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IContainer, IDeltaQueue, IHostLoader } from "@fluidframework/container-definitions";
+import { AttachState, IContainer, IDeltaQueue, IHostLoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
@@ -167,8 +167,10 @@ export class LoaderContainerTracker implements IOpProcessingController {
             if (containersToApply.length === 0) { break; }
 
             // Ignore readonly dirty containers, because it can't sent up and nothing can be done about it being dirty
-            const dirtyContainers =
-                containersToApply.filter((c) => c.deltaManager.readOnlyInfo.readonly !== true && c.isDirty);
+            const dirtyContainers = containersToApply.filter((c) => {
+                const { deltaManager, attachState,isDirty } = c;
+                return deltaManager.readOnlyInfo.readonly !== true && attachState === AttachState.Attached && isDirty;
+            });
             if (dirtyContainers.length === 0) {
                 // Wait for all the leave messages
                 const pendingClients = this.getPendingClients(containersToApply);
