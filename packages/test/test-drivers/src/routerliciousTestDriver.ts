@@ -144,4 +144,8 @@ export class RouterliciousTestDriver implements ITestDriver {
     createCreateNewRequest(testId: string): IRequest {
         return this.createUrlResolver().createCreateNewRequest(testId);
     }
+
+    async doesDocumentExists(testId: string): Promise<boolean> {
+        throw new Error("not implemented");
+    }
 }

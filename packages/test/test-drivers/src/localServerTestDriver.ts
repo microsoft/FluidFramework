@@ -22,14 +22,27 @@ export class LocalServerTestDriver implements ITestDriver {
     createDocumentServiceFactory(): IDocumentServiceFactory {
         return new this.api.LocalDocumentServiceFactory(this._server);
     }
+
     createUrlResolver(): IUrlResolver {
         return new this.api.LocalResolver();
     }
+
     createCreateNewRequest(testId: string): IRequest {
         return this.api.createLocalResolverCreateNewRequest(testId);
     }
 
     async createContainerUrl(testId: string): Promise<string> {
         return `http://localhost/${testId}`;
+    }
+
+    async doesDocumentExists(testId: string): Promise<boolean> {
+        const doc = await (await this._server.databaseManager.getDocumentCollection()).findOne({
+            tenantId: "tenantId", // Its hardcoded for Local resolver.
+            documentId: testId,
+        });
+
+        // If document doesn't exists then it returns null, hence need to check for null.
+        // eslint-disable-next-line no-null/no-null
+        return doc !== undefined && doc !== null;
     }
 }

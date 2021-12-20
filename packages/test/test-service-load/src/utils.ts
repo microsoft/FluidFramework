@@ -113,7 +113,13 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
     }
 }
 
-export async function initialize(testDriver: ITestDriver, seed: number, testConfig: ILoadTestConfig, verbose: boolean) {
+export async function initialize(
+    testDriver: ITestDriver,
+    seed: number,
+    testId: string,
+    testConfig: ILoadTestConfig,
+    verbose: boolean,
+) {
     const randEng = random.engines.mt19937();
     randEng.seed(seed);
     const loaderOptions = random.pick(
@@ -151,7 +157,6 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
         await Promise.all([...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)));
     }
 
-    const testId = Date.now().toString();
     const request = testDriver.createCreateNewRequest(testId);
     await container.attach(request);
     container.close();

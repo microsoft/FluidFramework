@@ -21,6 +21,7 @@ export interface ITestDriver {
     createCreateNewRequest(testId?: string): IRequest;
     createDocumentServiceFactory(): IDocumentServiceFactory;
     createUrlResolver(): IUrlResolver;
+    doesDocumentExists(testId: string): Promise<boolean>;
     readonly endpointName?: string;
     readonly tenantName?: string;
     readonly type: TestDriverTypes;
