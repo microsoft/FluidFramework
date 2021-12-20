@@ -83,3 +83,20 @@ export function summarizeChannel(
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
     return summarizeResult;
 }
+
+export async function summarizeChannelAsync(
+    channel: IChannel,
+    fullTree: boolean = false,
+    trackState: boolean = false,
+): Promise<ISummaryTreeWithStats> {
+    let summarizeResult: ISummaryTreeWithStats;
+    if (channel.summarizeAsync !== undefined) {
+        summarizeResult = await channel.summarizeAsync(fullTree, trackState);
+    } else {
+        summarizeResult = channel.summarize(fullTree, trackState);
+    }
+
+    // Add the channel attributes to the returned result.
+    addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
+    return summarizeResult;
+}

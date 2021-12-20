@@ -29,6 +29,7 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     isAttached(): boolean;
     summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    summarizeAsync(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 }
 
 // @public (undocumented)
@@ -47,7 +48,26 @@ export function parseHandles(value: any, serializer: IFluidSerializer): any;
 export function serializeHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): string | undefined;
 
 // @public
-export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
+export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    // (undocumented)
+    readonly attributes: IChannelAttributes;
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
+    protected getGCDataCore(): IGarbageCollectionData;
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    protected runtime: IFluidDataStoreRuntime;
+    // (undocumented)
+    protected get serializer(): IFluidSerializer;
+    protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
+    summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    // (undocumented)
+    summarizeAsync(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+}
+
+// @public
+export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
     protected abstract applyStashedOp(content: any): unknown;
@@ -58,8 +78,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     get connected(): boolean;
     protected didAttach(): void;
     protected dirty(): void;
-    getGCData(fullGC?: boolean): IGarbageCollectionData;
-    protected getGCDataCore(): IGarbageCollectionData;
+    abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
     readonly handle: IFluidHandle;
     protected handleDecoded(decodedHandle: IFluidHandle): void;
     // (undocumented)
@@ -71,7 +90,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     initializeLocal(): void;
     protected initializeLocalCore(): void;
     // (undocumented)
-    static is(obj: any): obj is SharedObject;
+    static is(obj: any): obj is SharedObjectCore;
     isAttached(): boolean;
     // (undocumented)
     get ISharedObject(): this;
@@ -88,9 +107,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected runtime: IFluidDataStoreRuntime;
     // (undocumented)
     protected get serializer(): IFluidSerializer;
-    protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
     protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
-    summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    abstract summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    abstract summarizeAsync(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
     }
 
 // @public

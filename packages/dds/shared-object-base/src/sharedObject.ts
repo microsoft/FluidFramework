@@ -29,13 +29,13 @@ import { ISharedObject, ISharedObjectEvents } from "./types";
 /**
  *  Base class from which all shared objects derive
  */
-export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
+export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
     extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     /**
      * @param obj - The thing to check if it is a SharedObject
      * @returns Returns true if the thing is a SharedObject
      */
-    public static is(obj: any): obj is SharedObject {
+    public static is(obj: any): obj is SharedObjectCore {
         return obj?.ISharedObject !== undefined;
     }
 
@@ -69,11 +69,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     private _isBoundToContext: boolean = false;
 
     /**
-     * True while we are summarizing this object's data.
-     */
-    private _isSummarizing: boolean = false;
-
-    /**
      * Tracks error that closed this object.
      */
     private closeError?: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>;
@@ -87,15 +82,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     protected get serializer(): IFluidSerializer {
-        /**
-         * During summarize, the SummarySerializer keeps track of IFluidHandles that are serialized. These handles
-         * represent references to other Fluid objects and are used for garbage collection.
-         *
-         * This is fine for now. However, if we implement delay loading in DDss, they may load and de-serialize content
-         * in summarize. When that happens, they may incorrectly hit this assert and we will have to change this.
-         */
-        assert(!this._isSummarizing,
-            0x075 /* "SummarySerializer should be used for serializing data during summary." */);
         return this._serializer;
     }
 
@@ -243,69 +229,17 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * {@inheritDoc (ISharedObject:interface).summarize}
      */
-    public summarize(fullTree: boolean = false, trackState: boolean = false): ISummaryTreeWithStats {
-        // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created below)
-        // to serialize handles in this object's data. The routes of these serialized handles are outbound routes
-        // to other Fluid objects.
-        assert(!this._isSummarizing, 0x076 /* "Possible re-entrancy! Summary should not already be in progress." */);
-        this._isSummarizing = true;
+    public abstract summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
 
-        let summaryTree: ISummaryTreeWithStats;
-        try {
-            const serializer = new SummarySerializer(
-                this.runtime.channelsRoutingContext,
-                (handle: IFluidHandle) => this.handleDecoded(handle),
-            );
-            const snapshot: ITree = this.snapshotCore(serializer);
-            summaryTree = convertToSummaryTreeWithStats(snapshot, fullTree);
-            assert(this._isSummarizing, 0x077 /* "Possible re-entrancy! Summary should have been in progress." */);
-        } finally {
-            this._isSummarizing = false;
-        }
-        return summaryTree;
-    }
+    /**
+     * {@inheritDoc (ISharedObject:interface).summarizeAsync}
+     */
+    public abstract summarizeAsync(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 
     /**
      * {@inheritDoc (ISharedObject:interface).getGCData}
      */
-    public getGCData(fullGC: boolean = false): IGarbageCollectionData {
-        // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created in
-        // getGCDataCore) to serialize handles in this object's data.
-        assert(!this._isSummarizing, 0x078 /* "Possible re-entrancy! Summary should not already be in progress." */);
-        this._isSummarizing = true;
-
-        let gcData: IGarbageCollectionData;
-        try {
-            gcData = this.getGCDataCore();
-            assert(this._isSummarizing, 0x079 /* "Possible re-entrancy! Summary should have been in progress." */);
-        } finally {
-            this._isSummarizing = false;
-        }
-
-        return gcData;
-    }
-
-    /**
-     * Returns the GC data for this shared object. It contains a list of GC nodes that contains references to
-     * other GC nodes.
-     * Derived classes must override this to provide custom list of references to other GC nodes.
-     */
-    protected getGCDataCore(): IGarbageCollectionData {
-        // We run the full summarize logic to get the list of outbound routes from this object. This is a little
-        // expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
-        // See: https://github.com/microsoft/FluidFramework/issues/4547
-        const serializer = new SummarySerializer(
-            this.runtime.channelsRoutingContext,
-            (handle: IFluidHandle) => this.handleDecoded(handle),
-        );
-        this.snapshotCore(serializer);
-
-        // The GC data for this shared object contains a single GC node. The outbound routes of this node are the
-        // routes of handles serialized during snapshot.
-        return {
-            gcNodes: { "/": serializer.getSerializedRoutes() },
-        };
-    }
+    public abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
 
     /**
      * Called when a handle is decoded by this object. A handle in the object's data represents an outbound reference
@@ -318,12 +252,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             this.services?.deltaConnection.addedGCOutboundReference?.(this.handle, decodedHandle);
         }
     }
-
-    /**
-     * Gets a form of the object that can be serialized.
-     * @returns A tree representing the snapshot of the shared object.
-     */
-    protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
 
     /**
      * Allows the distributed data type to perform custom loading
@@ -518,4 +446,119 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     protected abstract applyStashedOp(content: any): unknown;
+}
+
+/**
+ * SharedObject with simplified, synchronous summarization and GC
+ */
+export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
+    extends SharedObjectCore<TEvent> {
+    /**
+     * True while we are summarizing this object's data.
+     */
+    private _isSummarizing: boolean = false;
+
+    protected get serializer(): IFluidSerializer {
+        /**
+         * During summarize, the SummarySerializer keeps track of IFluidHandles that are serialized. These handles
+         * represent references to other Fluid objects and are used for garbage collection.
+         *
+         * This is fine for now. However, if we implement delay loading in DDss, they may load and de-serialize content
+         * in summarize. When that happens, they may incorrectly hit this assert and we will have to change this.
+         */
+        assert(!this._isSummarizing,
+            0x075 /* "SummarySerializer should be used for serializing data during summary." */);
+        return super.serializer;
+    }
+
+    /**
+     * @param id - The id of the shared object
+     * @param runtime - The IFluidDataStoreRuntime which contains the shared object
+     * @param attributes - Attributes of the shared object
+    */
+    constructor(
+        public id: string,
+        protected runtime: IFluidDataStoreRuntime,
+        public readonly attributes: IChannelAttributes)
+    {
+        super(id, runtime, attributes);
+    }
+
+    /**
+     * {@inheritDoc (ISharedObject:interface).summarize}
+     */
+    public summarize(fullTree: boolean = false, trackState: boolean = false): ISummaryTreeWithStats {
+        // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created below)
+        // to serialize handles in this object's data. The routes of these serialized handles are outbound routes
+        // to other Fluid objects.
+        assert(!this._isSummarizing, 0x076 /* "Possible re-entrancy! Summary should not already be in progress." */);
+        this._isSummarizing = true;
+
+        let summaryTree: ISummaryTreeWithStats;
+        try {
+            const serializer = new SummarySerializer(
+                this.runtime.channelsRoutingContext,
+                (handle: IFluidHandle) => this.handleDecoded(handle),
+            );
+            const snapshot: ITree = this.snapshotCore(serializer);
+            summaryTree = convertToSummaryTreeWithStats(snapshot, fullTree);
+            assert(this._isSummarizing, 0x077 /* "Possible re-entrancy! Summary should have been in progress." */);
+        } finally {
+            this._isSummarizing = false;
+        }
+        return summaryTree;
+    }
+
+    public async summarizeAsync(fullTree: boolean = false, trackState: boolean = false):
+        Promise<ISummaryTreeWithStats> {
+        return this.summarize(fullTree, trackState);
+    }
+
+    /**
+     * {@inheritDoc (ISharedObject:interface).getGCData}
+     */
+    public getGCData(fullGC: boolean = false): IGarbageCollectionData {
+        // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created in
+        // getGCDataCore) to serialize handles in this object's data.
+        assert(!this._isSummarizing, 0x078 /* "Possible re-entrancy! Summary should not already be in progress." */);
+        this._isSummarizing = true;
+
+        let gcData: IGarbageCollectionData;
+        try {
+            gcData = this.getGCDataCore();
+            assert(this._isSummarizing, 0x079 /* "Possible re-entrancy! Summary should have been in progress." */);
+        } finally {
+            this._isSummarizing = false;
+        }
+
+        return gcData;
+    }
+
+    /**
+     * Returns the GC data for this shared object. It contains a list of GC nodes that contains references to
+     * other GC nodes.
+     * Derived classes must override this to provide custom list of references to other GC nodes.
+     */
+    protected getGCDataCore(): IGarbageCollectionData {
+        // We run the full summarize logic to get the list of outbound routes from this object. This is a little
+        // expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
+        // See: https://github.com/microsoft/FluidFramework/issues/4547
+        const serializer = new SummarySerializer(
+            this.runtime.channelsRoutingContext,
+            (handle: IFluidHandle) => this.handleDecoded(handle),
+        );
+        this.snapshotCore(serializer);
+
+        // The GC data for this shared object contains a single GC node. The outbound routes of this node are the
+        // routes of handles serialized during snapshot.
+        return {
+            gcNodes: { "/": serializer.getSerializedRoutes() },
+        };
+    }
+
+    /**
+     * Gets a form of the object that can be serialized.
+     * @returns A tree representing the snapshot of the shared object.
+     */
+    protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
 }

@@ -37,6 +37,13 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
 
     /**
+     * Generates summary of the shared object asynchronously.
+     * This should not be called where the object can be modified while summarization is in progress.
+     * @returns A tree representing the summary of the channel.
+     */
+     summarizeAsync(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+
+    /**
      * Enables the channel to send and receive ops.
      * @param services - Services to connect to
      */

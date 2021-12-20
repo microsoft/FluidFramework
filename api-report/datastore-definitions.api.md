@@ -37,6 +37,7 @@ export interface IChannel extends IFluidLoadable {
     // (undocumented)
     readonly owner?: string;
     summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    summarizeAsync?(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 }
 
 // @public
