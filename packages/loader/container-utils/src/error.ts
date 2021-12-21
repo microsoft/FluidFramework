@@ -86,6 +86,17 @@ export class UsageError extends LoggingError implements IFluidErrorBase {
     }
 }
 
+export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
+    readonly errorType = "clientSessionExpiredError";
+
+    constructor(
+        readonly fluidErrorCode: string,
+        readonly expiryMs: number,
+    ) {
+        super(fluidErrorCode, { clientSessionExpiryMs: expiryMs});
+    }
+}
+
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
     readonly errorType = ContainerErrorType.dataCorruptionError;
     readonly canRetry = false;

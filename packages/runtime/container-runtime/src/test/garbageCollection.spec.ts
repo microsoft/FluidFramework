@@ -63,6 +63,7 @@ describe("Garbage Collection Tests", () => {
             { gcAllowed: true, deleteTimeoutMs },
             (unusedRoutes: string[]) => {},
             () => Date.now(),
+            () => {},
             baseSnapshot,
             async <T>(id: string) => getNodeGCDetails(id) as T,
             mockLogger,

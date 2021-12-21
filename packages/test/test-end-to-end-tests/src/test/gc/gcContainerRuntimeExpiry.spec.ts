@@ -32,8 +32,8 @@ import { TestDataObject } from "./mockSummarizerClient";
         },
         gcOptions: {
             gcAllowed: true,
-            runSweep: true,
-            gcSessionExpiryTime: 0,
+            gcSessionTimeoutEnabled: true,
+            gcTestSessionTimeoutMs: 0,
         },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
@@ -57,7 +57,7 @@ import { TestDataObject } from "./mockSummarizerClient";
     it("Container should be closed with a ClientSessionExpired error after the gcSessionExpiryTime is up", async () => {
         container1 = await createContainer();
         container1.on("closed", (error) => {
-            assert.strictEqual(error?.errorType, "ClientSessionExpired");
+            assert.strictEqual(error?.errorType, "clientSessionExpiredError");
         });
 
         await provider.ensureSynchronized();

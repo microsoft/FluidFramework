@@ -595,8 +595,6 @@ export function getDeviceSpec() {
     return {};
 }
 
-export const defaultContainerRuntimeExpiryMs = 30 * 24 * 60 * 60 * 1000;
-
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
@@ -905,8 +903,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly createContainerMetadata: ICreateContainerMetadata;
     private summaryCount: number | undefined;
-    // The timeout responsible for closing the container when the container runtime has expired
-    private readonly sessionExpiryTimeout?: NodeJS.Timeout;
 
     private constructor(
         private readonly context: IContainerContext,
@@ -965,20 +961,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.runtimeOptions.gcOptions,
             (unusedRoutes: string[]) => this.dataStores.deleteUnusedRoutes(unusedRoutes),
             getCurrentTimestamp,
+            this.closeFn,
             context.baseSnapshot,
             async <T>(id: string) => readAndParse<T>(this.storage, id),
             this._logger,
             existing,
             metadata,
         );
-
-        if (this.garbageCollector.shouldRunSweep) {
-            const expiryMs = this.runtimeOptions.gcOptions?.gcSessionExpiryTime ?? defaultContainerRuntimeExpiryMs;
-            this.sessionExpiryTimeout = setTimeout(() => this.closeFn({
-                errorType: "ClientSessionExpired",
-                message: `The client has reached the expiry time of ${expiryMs} ms.`,
-            }), expiryMs);
-        }
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         this.summarizerNode = createRootSummarizerNodeWithGC(
@@ -1210,9 +1199,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.summaryManager.off("summarizerWarning", this.raiseContainerWarning);
             this.summaryManager.dispose();
         }
-        if (this.sessionExpiryTimeout !== undefined) {
-            clearTimeout(this.sessionExpiryTimeout);
-        }
+        this.garbageCollector.dispose();
         this._summarizer?.dispose();
         this.dataStores.dispose();
         this.pendingStateManager.dispose();
@@ -1324,6 +1311,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // The last message processed at the time of summary. If there are no messages, nothing has changed from
             // the base summary we loaded from. So, use the message from its metadata blob.
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.baseSummaryMessage,
+            sessionTimeoutMs: this.garbageCollector.sessionExpiryMs,
         };
     }
 

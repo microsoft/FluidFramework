@@ -13,6 +13,17 @@ import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IThrottlingWarning } from '@fluidframework/container-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
+// @public (undocumented)
+export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
+    constructor(fluidErrorCode: string, expiryMs: number);
+    // (undocumented)
+    readonly errorType = "clientSessionExpiredError";
+    // (undocumented)
+    readonly expiryMs: number;
+    // (undocumented)
+    readonly fluidErrorCode: string;
+}
+
 // @public
 export const CreateProcessingError: typeof DataProcessingError.wrapIfUnrecognized;
 
