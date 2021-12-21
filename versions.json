@@ -1,0 +1,983 @@
+{
+    "main": {
+        "groups": {
+            "Client": {
+                "version": "0.54.0",
+                "members": [
+                    "@fluid-example/app-integration-container-views",
+                    "@fluid-example/app-integration-external-controller",
+                    "@fluid-example/app-integration-external-views",
+                    "@fluid-example/badge",
+                    "@fluid-example/bundle-size-tests",
+                    "@fluid-example/canvas",
+                    "@fluid-example/clicker",
+                    "@fluid-example/clicker-context",
+                    "@fluid-example/clicker-function",
+                    "@fluid-example/clicker-react",
+                    "@fluid-example/clicker-reducer",
+                    "@fluid-example/clicker-with-hook",
+                    "@fluid-example/client-ui-lib",
+                    "@fluid-example/codemirror",
+                    "@fluid-example/collaborative-textarea",
+                    "@fluid-example/contact-collection",
+                    "@fluid-example/diceroller",
+                    "@fluid-example/example-utils",
+                    "@fluid-example/flow-util-lib",
+                    "@fluid-example/focus-tracker",
+                    "@fluid-example/host-service-interfaces",
+                    "@fluid-example/iframe-host",
+                    "@fluid-example/image-gallery",
+                    "@fluid-example/intelligence-runner-agent",
+                    "@fluid-example/key-value-cache",
+                    "@fluid-example/likes",
+                    "@fluid-example/monaco",
+                    "@fluid-example/multiview-constellation-model",
+                    "@fluid-example/multiview-constellation-view",
+                    "@fluid-example/multiview-container",
+                    "@fluid-example/multiview-coordinate-interface",
+                    "@fluid-example/multiview-coordinate-model",
+                    "@fluid-example/multiview-plot-coordinate-view",
+                    "@fluid-example/multiview-slider-coordinate-view",
+                    "@fluid-example/multiview-triangle-view",
+                    "@fluid-example/musica",
+                    "@fluid-example/pond",
+                    "@fluid-example/primitives",
+                    "@fluid-example/prosemirror",
+                    "@fluid-example/scribe",
+                    "@fluid-example/search-menu",
+                    "@fluid-example/shared-text",
+                    "@fluid-example/simple-fluidobject-embed",
+                    "@fluid-example/smde",
+                    "@fluid-example/spaces",
+                    "@fluid-example/table-document",
+                    "@fluid-example/table-view",
+                    "@fluid-example/task-selection",
+                    "@fluid-example/todo",
+                    "@fluid-example/view-framework-sampler",
+                    "@fluid-example/vltava",
+                    "@fluid-example/webflow",
+                    "@fluid-experimental/bubblebench-baseline",
+                    "@fluid-experimental/bubblebench-common",
+                    "@fluid-experimental/bubblebench-ot",
+                    "@fluid-experimental/bubblebench-sharedtree",
+                    "@fluid-experimental/data-objects",
+                    "@fluid-experimental/get-container",
+                    "@fluid-experimental/last-edited",
+                    "@fluid-experimental/ot",
+                    "@fluid-experimental/partial-checkout",
+                    "@fluid-experimental/property-binder",
+                    "@fluid-experimental/property-changeset",
+                    "@fluid-experimental/property-common",
+                    "@fluid-experimental/property-dds",
+                    "@fluid-experimental/property-inspector",
+                    "@fluid-experimental/property-inspector-table",
+                    "@fluid-experimental/property-properties",
+                    "@fluid-experimental/property-proxy",
+                    "@fluid-experimental/property-query",
+                    "@fluid-experimental/property-query-service",
+                    "@fluid-experimental/react",
+                    "@fluid-experimental/react-inputs",
+                    "@fluid-experimental/schemas",
+                    "@fluid-experimental/sharejs-json1",
+                    "@fluid-experimental/task-manager",
+                    "@fluid-experimental/tree",
+                    "@fluid-experimental/tree-graphql",
+                    "@fluid-experimental/xtree",
+                    "@fluid-internal/functional-tests",
+                    "@fluid-internal/hosts-sample",
+                    "@fluid-internal/local-server-tests",
+                    "@fluid-internal/merge-tree-client-replay",
+                    "@fluid-internal/node-host",
+                    "@fluid-internal/replay-tool",
+                    "@fluid-internal/test-app-insights-logger",
+                    "@fluid-internal/test-dds-utils",
+                    "@fluid-internal/test-service-load",
+                    "@fluid-internal/test-snapshots",
+                    "@fluid-tools/fetch-tool",
+                    "@fluid-tools/fluidapp-odsp-urlresolver",
+                    "@fluid-tools/webpack-fluid-loader",
+                    "@fluidframework/agent-scheduler",
+                    "@fluidframework/aqueduct",
+                    "@fluidframework/azure-client",
+                    "@fluidframework/azure-service-utils",
+                    "@fluidframework/cell",
+                    "@fluidframework/container-loader",
+                    "@fluidframework/container-runtime",
+                    "@fluidframework/container-runtime-definitions",
+                    "@fluidframework/container-utils",
+                    "@fluidframework/counter",
+                    "@fluidframework/data-object-base",
+                    "@fluidframework/datastore",
+                    "@fluidframework/datastore-definitions",
+                    "@fluidframework/dds-interceptions",
+                    "@fluidframework/debugger",
+                    "@fluidframework/driver-base",
+                    "@fluidframework/driver-utils",
+                    "@fluidframework/file-driver",
+                    "@fluidframework/fluid-static",
+                    "@fluidframework/garbage-collector",
+                    "@fluidframework/iframe-driver",
+                    "@fluidframework/ink",
+                    "@fluidframework/local-driver",
+                    "@fluidframework/map",
+                    "@fluidframework/matrix",
+                    "@fluidframework/merge-tree",
+                    "@fluidframework/mocha-test-setup",
+                    "@fluidframework/odsp-doclib-utils",
+                    "@fluidframework/odsp-driver",
+                    "@fluidframework/odsp-driver-definitions",
+                    "@fluidframework/odsp-urlresolver",
+                    "@fluidframework/ordered-collection",
+                    "@fluidframework/register-collection",
+                    "@fluidframework/replay-driver",
+                    "@fluidframework/request-handler",
+                    "@fluidframework/routerlicious-driver",
+                    "@fluidframework/routerlicious-host",
+                    "@fluidframework/routerlicious-urlresolver",
+                    "@fluidframework/runtime-definitions",
+                    "@fluidframework/runtime-utils",
+                    "@fluidframework/sequence",
+                    "@fluidframework/shared-object-base",
+                    "@fluidframework/shared-summary-block",
+                    "@fluidframework/synthesize",
+                    "@fluidframework/telemetry-utils",
+                    "@fluidframework/test-client-utils",
+                    "@fluidframework/test-driver-definitions",
+                    "@fluidframework/test-drivers",
+                    "@fluidframework/test-end-to-end-tests",
+                    "@fluidframework/test-loader-utils",
+                    "@fluidframework/test-pairwise-generator",
+                    "@fluidframework/test-runtime-utils",
+                    "@fluidframework/test-utils",
+                    "@fluidframework/test-version-utils",
+                    "@fluidframework/tinylicious-client",
+                    "@fluidframework/tinylicious-driver",
+                    "@fluidframework/tool-utils",
+                    "@fluidframework/undo-redo",
+                    "@fluidframework/view-adapters",
+                    "@fluidframework/view-interfaces",
+                    "@fluidframework/web-code-loader",
+                    "fluid-framework"
+                ]
+            },
+            "Server": {
+                "version": "0.1035.0",
+                "members": [
+                    "@fluidframework/gitresources",
+                    "@fluidframework/protocol-base",
+                    "@fluidframework/server-kafka-orderer",
+                    "@fluidframework/server-lambdas",
+                    "@fluidframework/server-lambdas-driver",
+                    "@fluidframework/server-local-server",
+                    "@fluidframework/server-memory-orderer",
+                    "@fluidframework/server-routerlicious",
+                    "@fluidframework/server-routerlicious-base",
+                    "@fluidframework/server-services",
+                    "@fluidframework/server-services-client",
+                    "@fluidframework/server-services-core",
+                    "@fluidframework/server-services-ordering-kafkanode",
+                    "@fluidframework/server-services-ordering-rdkafka",
+                    "@fluidframework/server-services-ordering-zookeeper",
+                    "@fluidframework/server-services-shared",
+                    "@fluidframework/server-services-telemetry",
+                    "@fluidframework/server-services-utils",
+                    "@fluidframework/server-test-utils"
+                ]
+            },
+            "build": {
+                "version": "0.24.0",
+                "members": [
+                    "@fluidframework/build-common",
+                    "@fluidframework/eslint-config-fluid"
+                ]
+            },
+            "common-def": {
+                "version": "0.21.0",
+                "members": [
+                    "@fluidframework/common-definitions"
+                ]
+            },
+            "common-utils": {
+                "version": "0.33.0",
+                "members": [
+                    "@fluidframework/common-utils"
+                ]
+            },
+            "container-def": {
+                "version": "0.44.0",
+                "members": [
+                    "@fluidframework/container-definitions"
+                ]
+            },
+            "core-interfaces": {
+                "version": "0.42.0",
+                "members": [
+                    "@fluidframework/core-interfaces"
+                ]
+            },
+            "driver-def": {
+                "version": "0.44.0",
+                "members": [
+                    "@fluidframework/driver-definitions"
+                ]
+            },
+            "protocol-def": {
+                "version": "0.1027.0",
+                "members": [
+                    "@fluidframework/protocol-definitions"
+                ]
+            },
+            "tools": {
+                "version": "0.40.0",
+                "members": [
+                    "@fluid-tools/benchmark",
+                    "@fluidframework/azure-local-service",
+                    "generator-fluid",
+                    "tinylicious"
+                ]
+            }
+        },
+        "packages": {
+            "@fluid-example/app-integration-container-views": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/app-integration-external-controller": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/app-integration-external-views": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/badge": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/bundle-size-tests": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/canvas": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/clicker": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/clicker-context": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/clicker-function": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/clicker-react": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/clicker-reducer": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/clicker-with-hook": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/client-ui-lib": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/codemirror": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/collaborative-textarea": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/contact-collection": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/diceroller": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/example-utils": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/flow-util-lib": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/focus-tracker": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/host-service-interfaces": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/iframe-host": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/image-gallery": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/intelligence-runner-agent": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/key-value-cache": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/likes": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/monaco": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/multiview-constellation-model": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/multiview-constellation-view": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/multiview-container": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/multiview-coordinate-interface": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/multiview-coordinate-model": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/multiview-plot-coordinate-view": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/multiview-slider-coordinate-view": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/multiview-triangle-view": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/musica": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/pond": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/primitives": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/prosemirror": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/scribe": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/search-menu": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/shared-text": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/simple-fluidobject-embed": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/smde": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/spaces": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/table-document": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/table-view": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/task-selection": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/todo": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/view-framework-sampler": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/vltava": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-example/webflow": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/bubblebench-baseline": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/bubblebench-common": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/bubblebench-ot": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/bubblebench-sharedtree": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/data-objects": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/get-container": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/last-edited": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/ot": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/partial-checkout": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/property-binder": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/property-changeset": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/property-common": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/property-dds": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/property-inspector": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/property-inspector-table": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/property-properties": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/property-proxy": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/property-query": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/property-query-service": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/react": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/react-inputs": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/schemas": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/sharejs-json1": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/task-manager": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/tree": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/tree-graphql": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-experimental/xtree": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-internal/functional-tests": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-internal/hosts-sample": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-internal/local-server-tests": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-internal/merge-tree-client-replay": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-internal/node-host": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-internal/replay-tool": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-internal/test-app-insights-logger": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-internal/test-dds-utils": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-internal/test-service-load": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-internal/test-snapshots": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-tools/benchmark": {
+                "version": "0.40.0",
+                "group": "tools"
+            },
+            "@fluid-tools/fetch-tool": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-tools/fluidapp-odsp-urlresolver": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluid-tools/webpack-fluid-loader": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/agent-scheduler": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/aqueduct": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/azure-client": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/azure-local-service": {
+                "version": "0.1.0",
+                "group": "tools"
+            },
+            "@fluidframework/azure-service-utils": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/build-common": {
+                "version": "0.24.0",
+                "group": "build"
+            },
+            "@fluidframework/cell": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/common-definitions": {
+                "version": "0.21.0",
+                "group": "common-def"
+            },
+            "@fluidframework/common-utils": {
+                "version": "0.33.0",
+                "group": "common-utils"
+            },
+            "@fluidframework/container-definitions": {
+                "version": "0.44.0",
+                "group": "container-def"
+            },
+            "@fluidframework/container-loader": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/container-runtime": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/container-runtime-definitions": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/container-utils": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/core-interfaces": {
+                "version": "0.42.0",
+                "group": "core-interfaces"
+            },
+            "@fluidframework/counter": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/data-object-base": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/datastore": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/datastore-definitions": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/dds-interceptions": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/debugger": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/driver-base": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/driver-definitions": {
+                "version": "0.44.0",
+                "group": "driver-def"
+            },
+            "@fluidframework/driver-utils": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/eslint-config-fluid": {
+                "version": "0.25.0",
+                "group": "build"
+            },
+            "@fluidframework/file-driver": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/fluid-static": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/garbage-collector": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/gitresources": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/iframe-driver": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/ink": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/local-driver": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/map": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/matrix": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/merge-tree": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/mocha-test-setup": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/odsp-doclib-utils": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/odsp-driver": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/odsp-driver-definitions": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/odsp-urlresolver": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/ordered-collection": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/protocol-base": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/protocol-definitions": {
+                "version": "0.1027.0",
+                "group": "protocol-def"
+            },
+            "@fluidframework/register-collection": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/replay-driver": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/request-handler": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/routerlicious-driver": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/routerlicious-host": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/routerlicious-urlresolver": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/runtime-definitions": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/runtime-utils": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/sequence": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/server-kafka-orderer": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/server-lambdas": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/server-lambdas-driver": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/server-local-server": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/server-memory-orderer": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/server-routerlicious": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/server-routerlicious-base": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/server-services": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/server-services-client": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/server-services-core": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/server-services-ordering-kafkanode": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/server-services-ordering-rdkafka": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/server-services-ordering-zookeeper": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/server-services-shared": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/server-services-telemetry": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/server-services-utils": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/server-test-utils": {
+                "version": "0.1035.0",
+                "group": "Server"
+            },
+            "@fluidframework/shared-object-base": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/shared-summary-block": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/synthesize": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/telemetry-utils": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/test-client-utils": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/test-driver-definitions": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/test-drivers": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/test-end-to-end-tests": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/test-loader-utils": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/test-pairwise-generator": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/test-runtime-utils": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/test-utils": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/test-version-utils": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/tinylicious-client": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/tinylicious-driver": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/tool-utils": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/undo-redo": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/view-adapters": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/view-interfaces": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "@fluidframework/web-code-loader": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "fluid-framework": {
+                "version": "0.54.0",
+                "group": "Client"
+            },
+            "generator-fluid": {
+                "version": "0.3.0",
+                "group": "tools"
+            },
+            "tinylicious": {
+                "version": "0.4.0",
+                "group": "tools"
+            }
+        }
+    }
+}
