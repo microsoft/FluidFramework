@@ -26,11 +26,11 @@ export interface RootDataObjectProps {
 }
 
 export class RootDataObject extends DataObject<{InitialState: RootDataObjectProps}> {
-    readonly #initialObjectsDirKey = "initial-objects-key";
-    readonly #initialObjects: LoadableObjectRecord = {};
+    private readonly initialObjectsDirKey = "initial-objects-key";
+    private readonly _initialObjects: LoadableObjectRecord = {};
 
     private get initialObjectsDir() {
-        const dir = this.root.getSubDirectory(this.#initialObjectsDirKey);
+        const dir = this.root.getSubDirectory(this.initialObjectsDirKey);
         if (dir === undefined) {
             throw new Error("InitialObjects sub-directory was not initialized");
         }
@@ -38,7 +38,7 @@ export class RootDataObject extends DataObject<{InitialState: RootDataObjectProp
     }
 
     protected async initializingFirstTime(props: RootDataObjectProps) {
-        this.root.createSubDirectory(this.#initialObjectsDirKey);
+        this.root.createSubDirectory(this.initialObjectsDirKey);
 
         // Create initial objects provided by the developer
         const initialObjectsP: Promise<void>[] = [];
@@ -59,7 +59,7 @@ export class RootDataObject extends DataObject<{InitialState: RootDataObjectProp
         for (const [key, value] of Array.from(this.initialObjectsDir.entries())) {
             const loadDir = async () => {
                 const obj = await value.get();
-                Object.assign(this.#initialObjects, { [key]: obj });
+                Object.assign(this._initialObjects, { [key]: obj });
             };
             loadInitialObjectsP.push(loadDir());
         }
@@ -68,10 +68,10 @@ export class RootDataObject extends DataObject<{InitialState: RootDataObjectProp
     }
 
     public get initialObjects(): LoadableObjectRecord {
-        if (Object.keys(this.#initialObjects).length === 0) {
+        if (Object.keys(this._initialObjects).length === 0) {
             throw new Error("Initial Objects were not correctly initialized");
         }
-        return this.#initialObjects;
+        return this._initialObjects;
     }
 
     public async create<T extends IFluidLoadable>(

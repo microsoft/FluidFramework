@@ -21,14 +21,14 @@ export const defaultTinyliciousEndpoint = "http://localhost";
  * documentId/containerRelativePathing
  */
 export class InsecureTinyliciousUrlResolver implements IUrlResolver {
-    readonly #fluidProtocolEndpoint: string;
-    readonly #tinyliciousEndpoint: string;
+    private readonly fluidProtocolEndpoint: string;
+    private readonly tinyliciousEndpoint: string;
     public constructor(
         port = defaultTinyliciousPort,
         endpoint = defaultTinyliciousEndpoint,
     ) {
-        this.#tinyliciousEndpoint = `${endpoint}:${port}`;
-        this.#fluidProtocolEndpoint = this.#tinyliciousEndpoint.replace(/(^\w+:|^)\/\//, "fluid://");
+        this.tinyliciousEndpoint = `${endpoint}:${port}`;
+        this.fluidProtocolEndpoint = this.tinyliciousEndpoint.replace(/(^\w+:|^)\/\//, "fluid://");
     }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
@@ -42,35 +42,35 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
             const newDocumentId = request.url ?? "new";
             return {
                 endpoints: {
-                    deltaStorageUrl: `${this.#tinyliciousEndpoint}/deltas/tinylicious/${newDocumentId}`,
-                    ordererUrl: this.#tinyliciousEndpoint,
-                    storageUrl: `${this.#tinyliciousEndpoint}/repos/tinylicious`,
+                    deltaStorageUrl: `${this.tinyliciousEndpoint}/deltas/tinylicious/${newDocumentId}`,
+                    ordererUrl: this.tinyliciousEndpoint,
+                    storageUrl: `${this.tinyliciousEndpoint}/repos/tinylicious`,
                 },
                 // id is a mandatory attribute, but it's ignored by the driver for new container requests.
                 id: request.url,
                 // tokens attribute is redundant as all tokens are generated via ITokenProvider
                 tokens: {},
                 type: "fluid",
-                url: `${this.#fluidProtocolEndpoint}/tinylicious/${newDocumentId}`,
+                url: `${this.fluidProtocolEndpoint}/tinylicious/${newDocumentId}`,
             };
         }
         // for an existing container we'll parse the request URL to determine the document ID.
-        const url = request.url.replace(`${this.#tinyliciousEndpoint}/`, "");
+        const url = request.url.replace(`${this.tinyliciousEndpoint}/`, "");
         const documentId = url.split("/")[0];
         const encodedDocId = encodeURIComponent(documentId);
         const documentRelativePath = url.slice(documentId.length);
 
         const documentUrl =
-            `${this.#fluidProtocolEndpoint}/tinylicious/${encodedDocId}${documentRelativePath}`;
+            `${this.fluidProtocolEndpoint}/tinylicious/${encodedDocId}${documentRelativePath}`;
         const deltaStorageUrl =
-            `${this.#tinyliciousEndpoint}/deltas/tinylicious/${encodedDocId}`;
+            `${this.tinyliciousEndpoint}/deltas/tinylicious/${encodedDocId}`;
         const storageUrl =
-            `${this.#tinyliciousEndpoint}/repos/tinylicious`;
+            `${this.tinyliciousEndpoint}/repos/tinylicious`;
 
         const response: IFluidResolvedUrl = {
             endpoints: {
                 deltaStorageUrl,
-                ordererUrl: this.#tinyliciousEndpoint,
+                ordererUrl: this.tinyliciousEndpoint,
                 storageUrl,
             },
             id: documentId,
@@ -83,7 +83,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 
     public async getAbsoluteUrl(resolvedUrl: IFluidResolvedUrl, relativeUrl: string): Promise<string> {
         const documentId = decodeURIComponent(
-            resolvedUrl.url.replace(`${this.#fluidProtocolEndpoint}/tinylicious/`, ""),
+            resolvedUrl.url.replace(`${this.fluidProtocolEndpoint}/tinylicious/`, ""),
         );
         /*
          * The detached container flow will ultimately call getAbsoluteUrl() with the resolved.url produced by

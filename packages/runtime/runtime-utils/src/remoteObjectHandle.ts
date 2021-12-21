@@ -27,7 +27,7 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
     public get IFluidHandle() { return this; }
 
     public readonly isAttached = true;
-    #objectP: Promise<FluidObject> | undefined;
+    private objectP: Promise<FluidObject> | undefined;
 
     /**
      * Creates a new RemoteFluidObjectHandle when parsing an IFluidHandle.
@@ -42,9 +42,9 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
     }
 
     public async get(): Promise<any> {
-        if (this.#objectP === undefined) {
+        if (this.objectP === undefined) {
             const request = { url: this.absolutePath };
-            this.#objectP = this.routeContext.resolveHandle(request)
+            this.objectP = this.routeContext.resolveHandle(request)
                 .then<FluidObject>((response) => {
                     if (response.mimeType === "fluid/object") {
                         const fluidObject: FluidObject = response.value;
@@ -53,7 +53,7 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
                     throw responseToException(response, request);
                 });
         }
-        return this.#objectP;
+        return this.objectP;
     }
 
     public attachGraph(): void {

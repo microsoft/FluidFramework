@@ -23,27 +23,27 @@ import {
  *    processed, the time and number of turns it took to process the ops.
  */
 export class DeltaScheduler {
-    readonly #deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // The time for processing ops in a single turn.
     public static readonly processingTime = 20;
 
     // The increase in time for processing ops after each turn.
-    readonly #processingTimeIncrement = 10;
+    private readonly processingTimeIncrement = 10;
 
-    #processingStartTime: number | undefined;
-    #totalProcessingTime: number = DeltaScheduler.processingTime;
+    private processingStartTime: number | undefined;
+    private totalProcessingTime: number = DeltaScheduler.processingTime;
 
     // This keeps track of whether the delta scheduler is scheduling a particular run of the
     // the inbound delta queue. Basically, every time the delta queue starts processing with
     // more than one op, this will be set to true until the run completes.
-    #isScheduling: boolean = false;
+    private isScheduling: boolean = false;
 
     // This keeps track of the number of times inbound queue has been scheduled. After a particular
     // count, we log telemetry for the number of ops processed, the time and number of turns it took
     // to process the ops.
-    #schedulingCount: number = 0;
+    private schedulingCount: number = 0;
 
-    #schedulingLog: {
+    private schedulingLog: {
         numberOfOps: number;
         totalProcessingTime: number;
         numberOfTurns: number;
@@ -53,25 +53,25 @@ export class DeltaScheduler {
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly logger: ITelemetryLogger,
     ) {
-        this.#deltaManager = deltaManager;
-        this.#deltaManager.inbound.on("idle", () => { this.inboundQueueIdle(); });
+        this.deltaManager = deltaManager;
+        this.deltaManager.inbound.on("idle", () => { this.inboundQueueIdle(); });
     }
 
     public batchBegin() {
-        if (!this.#processingStartTime) {
-            this.#processingStartTime = performance.now();
+        if (!this.processingStartTime) {
+            this.processingStartTime = performance.now();
         }
     }
 
     public batchEnd() {
         if (this.shouldRunScheduler()) {
-            if (!this.#isScheduling) {
-                this.#isScheduling = true;
+            if (!this.isScheduling) {
+                this.isScheduling = true;
                 // Every 2000th time we are scheduling the inbound queue, we log telemetry for the
                 // number of ops processed, the time and number of turns it took to process the ops.
-                if (this.#schedulingCount % 2000 === 0) {
-                    this.#schedulingLog = {
-                        numberOfOps: this.#deltaManager.inbound.length,
+                if (this.schedulingCount % 2000 === 0) {
+                    this.schedulingLog = {
+                        numberOfOps: this.deltaManager.inbound.length,
                         numberOfTurns: 1,
                         totalProcessingTime: 0,
                     };
@@ -79,59 +79,59 @@ export class DeltaScheduler {
             }
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const elapsedTime = performance.now() - this.#processingStartTime!;
-            if (elapsedTime > this.#totalProcessingTime) {
+            const elapsedTime = performance.now() - this.processingStartTime!;
+            if (elapsedTime > this.totalProcessingTime) {
                 // We have processed ops for more than the total processing time. So, pause the
                 // queue, yield the thread and schedule a resume.
 
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                this.#deltaManager.inbound.pause();
+                this.deltaManager.inbound.pause();
                 setTimeout(() => {
-                    this.#deltaManager.inbound.resume();
+                    this.deltaManager.inbound.resume();
                 });
 
-                this.#processingStartTime = undefined;
+                this.processingStartTime = undefined;
                 // Increase the total processing time. Keep doing this after each turn until all the ops have
                 // been processed. This way we keep the responsiveness at the beginning while also making sure
                 // that all the ops process fairly quickly.
-                this.#totalProcessingTime += this.#processingTimeIncrement;
+                this.totalProcessingTime += this.processingTimeIncrement;
 
                 // If we are logging the telemetry this time, update the telemetry log object.
-                if (this.#schedulingLog) {
-                    this.#schedulingLog.numberOfTurns++;
-                    this.#schedulingLog.totalProcessingTime += elapsedTime;
+                if (this.schedulingLog) {
+                    this.schedulingLog.numberOfTurns++;
+                    this.schedulingLog.totalProcessingTime += elapsedTime;
                 }
             }
         }
     }
 
     private inboundQueueIdle() {
-        if (this.#schedulingLog) {
+        if (this.schedulingLog) {
             // Add the time taken for processing the final ops to the total processing time in the
             // telemetry log object.
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.#schedulingLog.totalProcessingTime += performance.now() - this.#processingStartTime!;
+            this.schedulingLog.totalProcessingTime += performance.now() - this.processingStartTime!;
 
             this.logger.sendTelemetryEvent({
                 eventName: "InboundOpsProcessingTime",
-                numberOfOps: this.#schedulingLog.numberOfOps,
-                numberOfTurns: this.#schedulingLog.numberOfTurns,
-                processingTime: this.#schedulingLog.totalProcessingTime,
+                numberOfOps: this.schedulingLog.numberOfOps,
+                numberOfTurns: this.schedulingLog.numberOfTurns,
+                processingTime: this.schedulingLog.totalProcessingTime,
             });
 
-            this.#schedulingLog = undefined;
+            this.schedulingLog = undefined;
         }
 
         // If we scheduled this batch of the inbound queue, increment the counter that tracks the
         // number of times we have done this.
-        if (this.#isScheduling) {
-            this.#isScheduling = false;
-            this.#schedulingCount++;
+        if (this.isScheduling) {
+            this.isScheduling = false;
+            this.schedulingCount++;
         }
 
         // Reset the processing times.
-        this.#processingStartTime = undefined;
-        this.#totalProcessingTime = DeltaScheduler.processingTime;
+        this.processingStartTime = undefined;
+        this.totalProcessingTime = DeltaScheduler.processingTime;
     }
 
     /**
@@ -140,6 +140,6 @@ export class DeltaScheduler {
     private shouldRunScheduler(): boolean {
         // If there are still ops in the queue after the one we are processing now, we should
         // run the scheduler.
-        return this.#deltaManager.inbound.length > 0;
+        return this.deltaManager.inbound.length > 0;
     }
 }

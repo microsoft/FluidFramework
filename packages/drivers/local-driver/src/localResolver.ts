@@ -30,8 +30,8 @@ export function createLocalResolverCreateNewRequest(documentId: string): IReques
  * related local classes.
  */
 export class LocalResolver implements IUrlResolver {
-    readonly #tenantId = "tenantId";
-    readonly #tokenKey = "tokenKey";
+    private readonly tenantId = "tenantId";
+    private readonly tokenKey = "tokenKey";
 
     constructor() { }
 
@@ -48,14 +48,14 @@ export class LocalResolver implements IUrlResolver {
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         const resolved: IFluidResolvedUrl = {
             endpoints: {
-                deltaStorageUrl: `http://localhost:3000/deltas/${this.#tenantId}/${documentId}`,
+                deltaStorageUrl: `http://localhost:3000/deltas/${this.tenantId}/${documentId}`,
                 ordererUrl: "http://localhost:3000",
-                storageUrl: `http://localhost:3000/repos/${this.#tenantId}`,
+                storageUrl: `http://localhost:3000/repos/${this.tenantId}`,
             },
             id: documentId,
-            tokens: { jwt: generateToken(this.#tenantId, documentId, this.#tokenKey, scopes) },
+            tokens: { jwt: generateToken(this.tenantId, documentId, this.tokenKey, scopes) },
             type: "fluid",
-            url: `fluid-test://localhost:3000/${this.#tenantId}/${fullPath}`,
+            url: `fluid-test://localhost:3000/${this.tenantId}/${fullPath}`,
         };
 
         return resolved;

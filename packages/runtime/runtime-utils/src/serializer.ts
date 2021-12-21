@@ -19,12 +19,16 @@ import { isSerializedHandle } from "./utils";
  * Data Store serializer implementation
  */
 export class FluidSerializer implements IFluidSerializer {
-    readonly #root: IFluidHandleContext;
+    private readonly root: IFluidHandleContext;
 
-    public constructor(private readonly context: IFluidHandleContext) {
-        this.#root = this.context;
-        while (this.#root.routeContext !== undefined) {
-            this.#root = this.#root.routeContext;
+    public constructor(
+        private readonly context: IFluidHandleContext,
+        // To be called whenever a handle is parsed by this serializer.
+        private readonly handleParsedCb: (handle: IFluidHandle) => void,
+    ) {
+        this.root = this.context;
+        while (this.root.routeContext !== undefined) {
+            this.root = this.root.routeContext;
         }
     }
 
@@ -47,7 +51,7 @@ export class FluidSerializer implements IFluidSerializer {
         // return the result of 'recursivelyReplace()'.
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         return !!input && typeof input === "object"
-            ? this.recursivelyReplace(input, this.#encodeValue, bind)
+            ? this.recursivelyReplace(input, this.encodeValue, bind)
             : input;
     }
 
@@ -65,22 +69,22 @@ export class FluidSerializer implements IFluidSerializer {
         // return the result of 'recursivelyReplace()'.
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         return !!input && typeof input === "object"
-            ? this.recursivelyReplace(input, this.#decodeValue)
+            ? this.recursivelyReplace(input, this.decodeValue)
             : input;
     }
 
     public stringify(input: any, bind: IFluidHandle) {
-        return JSON.stringify(input, (key, value) => this.#encodeValue(value, bind));
+        return JSON.stringify(input, (key, value) => this.encodeValue(value, bind));
     }
 
     // Parses the serialized data - context must match the context with which the JSON was stringified
     public parse(input: string) {
-        return JSON.parse(input, (key, value) => this.#decodeValue(value));
+        return JSON.parse(input, (key, value) => this.decodeValue(value));
     }
 
     // If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
     // Otherwise returns the original 'value'.  Used by 'replaceHandles()' and 'stringify()'.
-    readonly #encodeValue = (value: any, bind: IFluidHandle) => {
+    private readonly encodeValue = (value: any, bind: IFluidHandle) => {
         // Detect if 'value' is an IFluidHandle.
         const handle = value?.IFluidHandle;
 
@@ -92,7 +96,7 @@ export class FluidSerializer implements IFluidSerializer {
 
     // If the given 'value' is an encoded IFluidHandle, returns the decoded IFluidHandle.
     // Otherwise returns the original 'value'.  Used by 'decode()' and 'parse()'.
-    readonly #decodeValue = (value: any) => {
+    private readonly decodeValue = (value: any) => {
         // If 'value' is a serialized IFluidHandle return the deserialized result.
         if (isSerializedHandle(value)) {
             // Old documents may have handles with relative path in their summaries. Convert these to absolute
@@ -101,7 +105,9 @@ export class FluidSerializer implements IFluidSerializer {
                 ? value.url
                 : generateHandleContextPath(value.url, this.context);
 
-            return new RemoteFluidObjectHandle(absolutePath, this.#root);
+            const parsedHandle = new RemoteFluidObjectHandle(absolutePath, this.root);
+            this.handleParsedCb(parsedHandle);
+            return parsedHandle;
         } else {
             return value;
         }

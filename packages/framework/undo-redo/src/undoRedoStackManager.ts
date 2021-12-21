@@ -17,7 +17,7 @@ enum UndoRedoMode { None, Redo, Undo }
  */
 class Stack<T> {
     public itemPushedCallback: (() => void) | undefined;
-    readonly #items: T[] = [];
+    private readonly items: T[] = [];
     constructor(...items: T[]) {
         if (items !== undefined) {
             items.forEach((item) => this.push(item));
@@ -25,20 +25,20 @@ class Stack<T> {
     }
 
     public empty(): boolean {
-        return this.#items.length === 0;
+        return this.items.length === 0;
     }
     public top(): T | undefined {
         if (!this.empty()) {
-            return this.#items[0];
+            return this.items[0];
         }
         return undefined;
     }
     public pop(): T | undefined {
-        return this.#items.shift();
+        return this.items.shift();
     }
 
     public push(item: T) {
-        this.#items.unshift(item);
+        this.items.unshift(item);
         if (this.itemPushedCallback !== undefined) {
             this.itemPushedCallback();
         }
@@ -112,70 +112,70 @@ export class UndoRedoStackManager {
         pushStack.closeCurrentOperationIfInProgress();
     }
 
-    readonly #undoStack = new UndoRedoStack();
-    readonly #redoStack = new UndoRedoStack();
-    #mode: UndoRedoMode = UndoRedoMode.None;
-    readonly #eventEmitter = new EventEmitter();
+    private readonly undoStack = new UndoRedoStack();
+    private readonly redoStack = new UndoRedoStack();
+    private mode: UndoRedoMode = UndoRedoMode.None;
+    private readonly eventEmitter = new EventEmitter();
 
     constructor() {
-        this.#undoStack.itemPushedCallback =
-            () => this.#eventEmitter.emit("changePushed");
-        this.#redoStack.itemPushedCallback =
-            () => this.#eventEmitter.emit("changePushed");
+        this.undoStack.itemPushedCallback =
+            () => this.eventEmitter.emit("changePushed");
+        this.redoStack.itemPushedCallback =
+            () => this.eventEmitter.emit("changePushed");
     }
 
     public closeCurrentOperation() {
-        if (this.#mode === UndoRedoMode.None) {
-            this.#undoStack.closeCurrentOperationIfInProgress();
+        if (this.mode === UndoRedoMode.None) {
+            this.undoStack.closeCurrentOperationIfInProgress();
         }
     }
 
     public on(event: "changePushed", listener: () => void) {
-        this.#eventEmitter.on(event, listener);
+        this.eventEmitter.on(event, listener);
     }
     public removeListener(event: "changePushed", listener: () => void) {
-        this.#eventEmitter.removeListener(event, listener);
+        this.eventEmitter.removeListener(event, listener);
     }
 
     public undoOperation(): boolean {
-        if (this.#undoStack.empty()) {
+        if (this.undoStack.empty()) {
             return false;
         }
-        this.#mode = UndoRedoMode.Undo;
+        this.mode = UndoRedoMode.Undo;
         UndoRedoStackManager.revert(
-            this.#undoStack,
-            this.#redoStack);
-        this.#mode = UndoRedoMode.None;
+            this.undoStack,
+            this.redoStack);
+        this.mode = UndoRedoMode.None;
         return true;
     }
 
     public redoOperation(): boolean {
-        if (this.#redoStack.empty()) {
+        if (this.redoStack.empty()) {
             return false;
         }
-        this.#mode = UndoRedoMode.Redo;
+        this.mode = UndoRedoMode.Redo;
         UndoRedoStackManager.revert(
-            this.#redoStack,
-            this.#undoStack);
-        this.#mode = UndoRedoMode.None;
+            this.redoStack,
+            this.undoStack);
+        this.mode = UndoRedoMode.None;
         return true;
     }
 
     public pushToCurrentOperation(revertible: IRevertible) {
         let currentStack: UndoRedoStack;
 
-        switch (this.#mode) {
+        switch (this.mode) {
             case UndoRedoMode.None:
-                currentStack = this.#undoStack;
+                currentStack = this.undoStack;
                 this.clearRedoStack();
                 break;
 
             case UndoRedoMode.Redo:
-                currentStack = this.#undoStack;
+                currentStack = this.undoStack;
                 break;
 
             case UndoRedoMode.Undo:
-                currentStack = this.#redoStack;
+                currentStack = this.redoStack;
                 break;
 
             default:
@@ -190,8 +190,8 @@ export class UndoRedoStackManager {
     }
 
     private clearRedoStack() {
-        while (!this.#redoStack.empty()) {
-            const redoOpertionStack = this.#redoStack.pop();
+        while (!this.redoStack.empty()) {
+            const redoOpertionStack = this.redoStack.pop();
             if (redoOpertionStack !== undefined) {
                 while (!redoOpertionStack.empty()) {
                     const redoOperation = redoOpertionStack.pop();

@@ -50,7 +50,7 @@ export interface ITestObjectProvider {
      */
     makeTestLoader(testContainerConfig?: ITestContainerConfig, detachedBlobStorage?: IDetachedBlobStorage): IHostLoader,
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
-    loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>,
     /**
      *
      * @param url - Resolved container URL
@@ -132,11 +132,11 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
  */
 export class TestObjectProvider {
-    readonly #loaderContainerTracker = new LoaderContainerTracker();
-    #documentServiceFactory: IDocumentServiceFactory | undefined;
-    #urlResolver: IUrlResolver | undefined;
-    #logger: ITelemetryBaseLogger | undefined;
-    readonly #documentIdStrategy: IDocumentIdStrategy;
+    private readonly _loaderContainerTracker = new LoaderContainerTracker();
+    private _documentServiceFactory: IDocumentServiceFactory | undefined;
+    private _urlResolver: IUrlResolver | undefined;
+    private _logger: ITelemetryBaseLogger | undefined;
+    private readonly _documentIdStrategy: IDocumentIdStrategy;
 
     /**
      * Manage objects for loading and creating container, including the driver, loader, and OpProcessingController
@@ -148,12 +148,12 @@ export class TestObjectProvider {
         public readonly driver: ITestDriver,
         public readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint,
     ) {
-        this.#documentIdStrategy = getDocumentIdStrategy(driver.type);
+        this._documentIdStrategy = getDocumentIdStrategy(driver.type);
     }
 
     get logger() {
-        if (this.#logger === undefined) {
-            this.#logger = ChildLogger.create(getTestLogger?.(), undefined,
+        if (this._logger === undefined) {
+            this._logger = ChildLogger.create(getTestLogger?.(), undefined,
                 {
                     all: {
                         driverType: this.driver.type,
@@ -163,25 +163,25 @@ export class TestObjectProvider {
                     },
                 });
         }
-        return this.#logger;
+        return this._logger;
     }
 
     get documentServiceFactory() {
-        if (!this.#documentServiceFactory) {
-            this.#documentServiceFactory = this.driver.createDocumentServiceFactory();
+        if (!this._documentServiceFactory) {
+            this._documentServiceFactory = this.driver.createDocumentServiceFactory();
         }
-        return this.#documentServiceFactory;
+        return this._documentServiceFactory;
     }
 
     get urlResolver() {
-        if (!this.#urlResolver) {
-            this.#urlResolver = this.driver.createUrlResolver();
+        if (!this._urlResolver) {
+            this._urlResolver = this.driver.createUrlResolver();
         }
-        return this.#urlResolver;
+        return this._urlResolver;
     }
 
     get documentId() {
-        return this.#documentIdStrategy.get();
+        return this._documentIdStrategy.get();
     }
 
     get defaultCodeDetails() {
@@ -189,7 +189,7 @@ export class TestObjectProvider {
     }
 
     get opProcessingController(): IOpProcessingController {
-        return this.#loaderContainerTracker;
+        return this._loaderContainerTracker;
     }
 
     /**
@@ -220,7 +220,7 @@ export class TestObjectProvider {
             options,
             detachedBlobStorage,
         });
-        this.#loaderContainerTracker.add(loader);
+        this._loaderContainerTracker.add(loader);
         return loader;
     }
 
@@ -242,7 +242,7 @@ export class TestObjectProvider {
         );
         // r11s driver will generate a new ID for the new container.
         // update the document ID with the actual ID of the attached container.
-        this.#documentIdStrategy.update(container.resolvedUrl);
+        this._documentIdStrategy.update(container.resolvedUrl);
         return container;
     }
 
@@ -279,7 +279,7 @@ export class TestObjectProvider {
                 this.driver.createCreateNewRequest(this.documentId));
         // r11s driver will generate a new ID for the new container.
         // update the document ID with the actual ID of the attached container.
-        this.#documentIdStrategy.update(container.resolvedUrl);
+        this._documentIdStrategy.update(container.resolvedUrl);
         return container;
     }
 
@@ -287,27 +287,34 @@ export class TestObjectProvider {
      * Load a container using a default document id and code details.
      * IContainer loaded is automatically added to the OpProcessingController to manage op flow
      * @param testContainerConfig - optional configuring the test Container
+     * @param requestHeader - optional headers to be supplied to the loader
      */
-    public async loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer> {
+    public async loadTestContainer(
+        testContainerConfig?: ITestContainerConfig,
+        requestHeader?: IRequestHeader,
+    ): Promise<IContainer> {
         const loader = this.makeTestLoader(testContainerConfig);
-        const container = await loader.resolve({ url: await this.driver.createContainerUrl(this.documentId) });
+        const container = await loader.resolve({
+            url: await this.driver.createContainerUrl(this.documentId),
+            headers: requestHeader,
+        });
         await waitContainerToCatchUp(container);
         return container;
     }
 
     public reset() {
-        this.#loaderContainerTracker.reset();
-        this.#documentServiceFactory = undefined;
-        this.#urlResolver = undefined;
-        this.#documentIdStrategy.reset();
-        this.#logger = undefined;
+        this._loaderContainerTracker.reset();
+        this._documentServiceFactory = undefined;
+        this._urlResolver = undefined;
+        this._documentIdStrategy.reset();
+        this._logger = undefined;
     }
 
     public async ensureSynchronized() {
-        return this.#loaderContainerTracker.ensureSynchronized();
+        return this._loaderContainerTracker.ensureSynchronized();
     }
 
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
-        this.#documentIdStrategy.update(resolvedUrl);
+        this._documentIdStrategy.update(resolvedUrl);
     }
 }

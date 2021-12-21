@@ -62,22 +62,22 @@ export class SummarizerNode implements IRootSummarizerNode {
 
     protected readonly children = new Map<string, SummarizerNode>();
     protected readonly pendingSummaries = new Map<string, SummaryNode>();
-    readonly #outstandingOps: ISequencedDocumentMessage[] = [];
-    #wipReferenceSequenceNumber: number | undefined;
-    #wipLocalPaths: { localPath: EscapedPath, additionalPath?: EscapedPath } | undefined;
-    #wipSkipRecursion = false;
+    private readonly outstandingOps: ISequencedDocumentMessage[] = [];
+    private wipReferenceSequenceNumber: number | undefined;
+    private wipLocalPaths: { localPath: EscapedPath, additionalPath?: EscapedPath } | undefined;
+    private wipSkipRecursion = false;
 
     public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger) {
         assert(this.wipSummaryLogger === undefined,
             0x19f /* "wipSummaryLogger should not be set yet in startSummary" */);
-        assert(this.#wipReferenceSequenceNumber === undefined, 0x1a0 /* "Already tracking a summary" */);
+        assert(this.wipReferenceSequenceNumber === undefined, 0x1a0 /* "Already tracking a summary" */);
 
         this.wipSummaryLogger = summaryLogger;
 
         for (const child of this.children.values()) {
             child.startSummary(referenceSequenceNumber, this.wipSummaryLogger);
         }
-        this.#wipReferenceSequenceNumber = referenceSequenceNumber;
+        this.wipReferenceSequenceNumber = referenceSequenceNumber;
     }
 
     public async summarize(fullTree: boolean): Promise<ISummarizeResult> {
@@ -86,14 +86,14 @@ export class SummarizerNode implements IRootSummarizerNode {
             0x1a2 /* "wipSummaryLogger should have been set in startSummary or ctor" */);
 
         // Try to reuse the tree if unchanged
-        if (this.#canReuseHandle && !fullTree && !this.hasChanged()) {
+        if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
             const latestSummary = this._latestSummary;
             if (latestSummary !== undefined) {
-                this.#wipLocalPaths = {
+                this.wipLocalPaths = {
                     localPath: latestSummary.localPath,
                     additionalPath: latestSummary.additionalPath,
                 };
-                this.#wipSkipRecursion = true;
+                this.wipSkipRecursion = true;
                 const stats = mergeStats();
                 stats.handleNodeCount++;
                 return {
@@ -109,13 +109,13 @@ export class SummarizerNode implements IRootSummarizerNode {
 
         try {
             const result = await this.summarizeInternalFn(fullTree);
-            this.#wipLocalPaths = { localPath: EscapedPath.create(result.id) };
+            this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
             if (result.pathPartsForChildren !== undefined) {
-                this.#wipLocalPaths.additionalPath = EscapedPath.createAndConcat(result.pathPartsForChildren);
+                this.wipLocalPaths.additionalPath = EscapedPath.createAndConcat(result.pathPartsForChildren);
             }
             return { summary: result.summary, stats: result.stats };
         } catch (error) {
-            if (this.#throwOnError || this.#trackingSequenceNumber < this._changeSequenceNumber) {
+            if (this.throwOnError || this.trackingSequenceNumber < this._changeSequenceNumber) {
                 throw error;
             }
             const latestSummary = this._latestSummary;
@@ -145,12 +145,12 @@ export class SummarizerNode implements IRootSummarizerNode {
                 eventName: "SummarizingWithBasePlusOps",
             },
             error);
-            const summary = encodeSummary(encodeParam, this.#outstandingOps);
-            this.#wipLocalPaths = {
+            const summary = encodeSummary(encodeParam, this.outstandingOps);
+            this.wipLocalPaths = {
                 localPath,
                 additionalPath: summary.additionalPath,
             };
-            this.#wipSkipRecursion = true;
+            this.wipSkipRecursion = true;
             return { summary: summary.summary, stats: summary.stats };
         }
     }
@@ -172,8 +172,8 @@ export class SummarizerNode implements IRootSummarizerNode {
     ) {
         assert(this.wipSummaryLogger !== undefined,
             0x1a3 /* "wipSummaryLogger should have been set in startSummary or ctor" */);
-        assert(this.#wipReferenceSequenceNumber !== undefined, 0x1a4 /* "Not tracking a summary" */);
-        let localPathsToUse = this.#wipLocalPaths;
+        assert(this.wipReferenceSequenceNumber !== undefined, 0x1a4 /* "Not tracking a summary" */);
+        let localPathsToUse = this.wipLocalPaths;
 
         if (parentSkipRecursion) {
             const latestSummary = this._latestSummary;
@@ -207,7 +207,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
         const summary = new SummaryNode({
             ...localPathsToUse,
-            referenceSequenceNumber: this.#wipReferenceSequenceNumber,
+            referenceSequenceNumber: this.wipReferenceSequenceNumber,
             basePath: parentPath,
         });
         const fullPathForChildren = summary.fullPathForChildren;
@@ -215,7 +215,7 @@ export class SummarizerNode implements IRootSummarizerNode {
             child.completeSummaryCore(
                 proposalHandle,
                 fullPathForChildren,
-                this.#wipSkipRecursion || parentSkipRecursion,
+                this.wipSkipRecursion || parentSkipRecursion,
             );
         }
         // Note that this overwrites existing pending summary with
@@ -229,9 +229,9 @@ export class SummarizerNode implements IRootSummarizerNode {
     }
 
     public clearSummary() {
-        this.#wipReferenceSequenceNumber = undefined;
-        this.#wipLocalPaths = undefined;
-        this.#wipSkipRecursion = false;
+        this.wipReferenceSequenceNumber = undefined;
+        this.wipLocalPaths = undefined;
+        this.wipSkipRecursion = false;
         this.wipSummaryLogger = undefined;
         for (const child of this.children.values()) {
             child.clearSummary();
@@ -375,10 +375,10 @@ export class SummarizerNode implements IRootSummarizerNode {
 
         // Clear earlier outstanding ops
         while (
-            this.#outstandingOps.length > 0
-            && this.#outstandingOps[0].sequenceNumber <= referenceSequenceNumber
+            this.outstandingOps.length > 0
+            && this.outstandingOps[0].sequenceNumber <= referenceSequenceNumber
         ) {
-            this.#outstandingOps.shift();
+            this.outstandingOps.shift();
         }
     }
 
@@ -412,7 +412,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         if (outstandingOps.length > 0) {
             const newOpsLatestSeq = outstandingOps[outstandingOps.length - 1].sequenceNumber;
             assert(
-                newOpsLatestSeq <= this.#trackingSequenceNumber,
+                newOpsLatestSeq <= this.trackingSequenceNumber,
                 0x1a9 /* "When loading base summary, expected outstanding ops <= tracking sequence number" */,
             );
         }
@@ -424,7 +424,7 @@ export class SummarizerNode implements IRootSummarizerNode {
     }
 
     public recordChange(op: ISequencedDocumentMessage): void {
-        const lastOp = this.#outstandingOps[this.#outstandingOps.length - 1];
+        const lastOp = this.outstandingOps[this.outstandingOps.length - 1];
         if (lastOp !== undefined) {
             assert(
                 lastOp.sequenceNumber < op.sequenceNumber,
@@ -432,8 +432,8 @@ export class SummarizerNode implements IRootSummarizerNode {
             );
         }
         this.invalidate(op.sequenceNumber);
-        this.#trackingSequenceNumber = op.sequenceNumber;
-        this.#outstandingOps.push(op);
+        this.trackingSequenceNumber = op.sequenceNumber;
+        this.outstandingOps.push(op);
     }
 
     public invalidate(sequenceNumber: number): void {
@@ -455,14 +455,14 @@ export class SummarizerNode implements IRootSummarizerNode {
         return this._latestSummary;
     }
 
-    readonly #canReuseHandle: boolean;
-    readonly #throwOnError: boolean;
+    private readonly canReuseHandle: boolean;
+    private readonly throwOnError: boolean;
     /**
      * Sequence number of latest tracked op. This updates during recordChange,
      * but not for invalidate since we don't have the op. If this drifts from
      * changeSequenceNumber and we try to create a differential summary we assert.
      */
-    #trackingSequenceNumber: number;
+    private trackingSequenceNumber: number;
 
     /**
      * Do not call constructor directly.
@@ -478,12 +478,12 @@ export class SummarizerNode implements IRootSummarizerNode {
         private readonly initialSummary?: IInitialSummary,
         protected wipSummaryLogger?: ITelemetryLogger,
     ) {
-        this.#canReuseHandle = config.canReuseHandle ?? true;
+        this.canReuseHandle = config.canReuseHandle ?? true;
         // BUGBUG: Seeing issues with differential summaries.
         // this will disable them, and throw instead
         // while we continue to investigate
-        this.#throwOnError = true; // config.throwOnFailure ?? false;
-        this.#trackingSequenceNumber = this._changeSequenceNumber;
+        this.throwOnError = true; // config.throwOnFailure ?? false;
+        this.trackingSequenceNumber = this._changeSequenceNumber;
     }
 
     public createChild(
@@ -622,7 +622,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         // If we are tracking a summary, this child was created after the tracking started. So, we need to update the
         // child's tracking state as well.
         if (this.isTrackingInProgress()) {
-            child.#wipReferenceSequenceNumber = this.#wipReferenceSequenceNumber;
+            child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
         }
     }
 
@@ -630,7 +630,7 @@ export class SummarizerNode implements IRootSummarizerNode {
      * Tells whether summary tracking is in progress. True if "startSummary" API is called before summarize.
      */
     protected isTrackingInProgress(): boolean {
-        return this.#wipReferenceSequenceNumber !== undefined;
+        return this.wipReferenceSequenceNumber !== undefined;
     }
 }
 

@@ -368,7 +368,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc IDirectory.absolutePath}
      */
     public get absolutePath(): string {
-        return this.#root.absolutePath;
+        return this.root.absolutePath;
     }
 
     /**
@@ -379,12 +379,12 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * Root of the SharedDirectory, most operations on the SharedDirectory itself act on the root.
      */
-    readonly #root: SubDirectory = new SubDirectory(this, this.runtime, this.serializer, posix.sep);
+    private readonly root: SubDirectory = new SubDirectory(this, this.runtime, this.serializer, posix.sep);
 
     /**
      * Mapping of op types to message handlers.
      */
-    readonly #messageHandlers: Map<string, IDirectoryMessageHandler> = new Map();
+    private readonly messageHandlers: Map<string, IDirectoryMessageHandler> = new Map();
 
     /**
      * Constructs a new shared directory. If the object is non-local an id and service interfaces will
@@ -402,7 +402,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         this.localValueMaker = new LocalValueMaker(this.serializer);
         this.setMessageHandlers();
         // Mirror the containedValueChanged op on the SharedDirectory
-        this.#root.on(
+        this.root.on(
             "containedValueChanged",
             (changed: IValueChanged, local: boolean) => {
                 this.emit("containedValueChanged", changed, local, this);
@@ -414,21 +414,21 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc IDirectory.get}
      */
     public get<T = any>(key: string): T | undefined {
-        return this.#root.get<T>(key);
+        return this.root.get<T>(key);
     }
 
     /**
      * {@inheritDoc IDirectory.wait}
      */
     public async wait<T = any>(key: string): Promise<T> {
-        return this.#root.wait<T>(key);
+        return this.root.wait<T>(key);
     }
 
     /**
      * {@inheritDoc IDirectory.set}
      */
     public set<T = any>(key: string, value: T): this {
-        this.#root.set(key, value);
+        this.root.set(key, value);
         return this;
     }
 
@@ -438,14 +438,14 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * @returns True if the key existed and was deleted, false if it did not exist
      */
     public delete(key: string): boolean {
-        return this.#root.delete(key);
+        return this.root.delete(key);
     }
 
     /**
      * Deletes all keys from within this IDirectory.
      */
     public clear(): void {
-        this.#root.clear();
+        this.root.clear();
     }
 
     /**
@@ -454,14 +454,14 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * @returns True if the key exists, false otherwise
      */
     public has(key: string): boolean {
-        return this.#root.has(key);
+        return this.root.has(key);
     }
 
     /**
      * The number of entries under this IDirectory.
      */
     public get size(): number {
-        return this.#root.size;
+        return this.root.size;
     }
 
     /**
@@ -469,7 +469,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * @param callback - Callback to issue
      */
     public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
-        this.#root.forEach(callback);
+        this.root.forEach(callback);
     }
 
     /**
@@ -477,7 +477,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * @returns The iterator
      */
     public [Symbol.iterator](): IterableIterator<[string, any]> {
-        return this.#root[Symbol.iterator]();
+        return this.root[Symbol.iterator]();
     }
 
     /**
@@ -485,7 +485,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * @returns The iterator
      */
     public entries(): IterableIterator<[string, any]> {
-        return this.#root.entries();
+        return this.root.entries();
     }
 
     /**
@@ -493,7 +493,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * @returns The iterator
      */
     public keys(): IterableIterator<string> {
-        return this.#root.keys();
+        return this.root.keys();
     }
 
     /**
@@ -501,42 +501,42 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * @returns The iterator
      */
     public values(): IterableIterator<any> {
-        return this.#root.values();
+        return this.root.values();
     }
 
     /**
      * {@inheritDoc IDirectory.createSubDirectory}
      */
     public createSubDirectory(subdirName: string): IDirectory {
-        return this.#root.createSubDirectory(subdirName);
+        return this.root.createSubDirectory(subdirName);
     }
 
     /**
      * {@inheritDoc IDirectory.getSubDirectory}
      */
     public getSubDirectory(subdirName: string): IDirectory | undefined {
-        return this.#root.getSubDirectory(subdirName);
+        return this.root.getSubDirectory(subdirName);
     }
 
     /**
      * {@inheritDoc IDirectory.hasSubDirectory}
      */
     public hasSubDirectory(subdirName: string): boolean {
-        return this.#root.hasSubDirectory(subdirName);
+        return this.root.hasSubDirectory(subdirName);
     }
 
     /**
      * {@inheritDoc IDirectory.deleteSubDirectory}
      */
     public deleteSubDirectory(subdirName: string): boolean {
-        return this.#root.deleteSubDirectory(subdirName);
+        return this.root.deleteSubDirectory(subdirName);
     }
 
     /**
      * {@inheritDoc IDirectory.subdirectories}
      */
     public subdirectories(): IterableIterator<[string, IDirectory]> {
-        return this.#root.subdirectories();
+        return this.root.subdirectories();
     }
 
     /**
@@ -545,10 +545,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     public getWorkingDirectory(relativePath: string): IDirectory | undefined {
         const absolutePath = this.makeAbsolute(relativePath);
         if (absolutePath === posix.sep) {
-            return this.#root;
+            return this.root;
         }
 
-        let currentSubDir = this.#root;
+        let currentSubDir = this.root;
         const subdirs = absolutePath.substr(1).split(posix.sep);
         for (const subdir of subdirs) {
             currentSubDir = currentSubDir.getSubDirectory(subdir) as SubDirectory;
@@ -564,7 +564,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * @internal
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
-        return serializeDirectory(this.#root, serializer);
+        return serializeDirectory(this.root, serializer);
     }
 
     /**
@@ -590,7 +590,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      */
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         const message = content as IDirectoryOperation;
-        const handler = this.#messageHandlers.get(message.type);
+        const handler = this.messageHandlers.get(message.type);
         assert(handler !== undefined, 0x00d /* `Missing message handler for message type: ${message.type}` */);
         handler.submit(message, localOpMetadata);
     }
@@ -622,7 +622,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      */
     protected populate(data: IDirectoryDataObject) {
         const stack: [SubDirectory, IDirectoryDataObject][] = [];
-        stack.push([this.#root, data]);
+        stack.push([this.root, data]);
         while (stack.length > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const [currentSubDir, currentSubDirObject] = stack.pop()!;
@@ -661,7 +661,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      */
     protected registerCore(): void {
         const subdirsToRegisterFrom = new Array<SubDirectory>();
-        subdirsToRegisterFrom.push(this.#root);
+        subdirsToRegisterFrom.push(this.root);
 
         for (const currentSubDir of subdirsToRegisterFrom) {
             for (const value of currentSubDir.values()) {
@@ -683,7 +683,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         if (message.type === MessageType.Operation) {
             const op: IDirectoryOperation = message.contents as IDirectoryOperation;
-            const handler = this.#messageHandlers.get(op.type);
+            const handler = this.messageHandlers.get(op.type);
             assert(handler !== undefined, 0x00e /* `Missing message handler for message type: ${message.type}` */);
             handler.process(op, local, localOpMetadata);
         }
@@ -723,7 +723,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * Set the message handlers for the directory.
      */
     private setMessageHandlers(): void {
-        this.#messageHandlers.set(
+        this.messageHandlers.set(
             "clear",
             {
                 process: (op: IDirectoryClearOperation, local, localOpMetadata) => {
@@ -741,7 +741,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                 },
             },
         );
-        this.#messageHandlers.set(
+        this.messageHandlers.set(
             "delete",
             {
                 process: (op: IDirectoryDeleteOperation, local, localOpMetadata) => {
@@ -759,7 +759,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                 },
             },
         );
-        this.#messageHandlers.set(
+        this.messageHandlers.set(
             "set",
             {
                 process: (op: IDirectorySetOperation, local, localOpMetadata) => {
@@ -779,7 +779,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             },
         );
 
-        this.#messageHandlers.set(
+        this.messageHandlers.set(
             "createSubDirectory",
             {
                 process: (op: IDirectoryCreateSubDirectoryOperation, local, localOpMetadata) => {
@@ -798,7 +798,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             },
         );
 
-        this.#messageHandlers.set(
+        this.messageHandlers.set(
             "deleteSubDirectory",
             {
                 process: (op: IDirectoryDeleteSubDirectoryOperation, local, localOpMetadata) => {
@@ -839,33 +839,33 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     /**
      * The in-memory data the directory is storing.
      */
-    readonly #storage: Map<string, ILocalValue> = new Map();
+    private readonly _storage: Map<string, ILocalValue> = new Map();
 
     /**
      * The subdirectories the directory is holding.
      */
-    readonly #subdirectories: Map<string, SubDirectory> = new Map();
+    private readonly _subdirectories: Map<string, SubDirectory> = new Map();
 
     /**
      * Keys that have been modified locally but not yet ack'd from the server.
      */
-    readonly #pendingKeys: Map<string, number> = new Map();
+    private readonly pendingKeys: Map<string, number> = new Map();
 
     /**
      * Subdirectories that have been modified locally but not yet ack'd from the server.
      */
-    readonly #pendingSubDirectories: Map<string, number> = new Map();
+    private readonly pendingSubDirectories: Map<string, number> = new Map();
 
     /**
      * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
      */
-    #pendingMessageId: number = -1;
+    private pendingMessageId: number = -1;
 
     /**
      * If a clear has been performed locally but not yet ack'd from the server, then this stores the pending id
      * of that clear operation. Otherwise, is -1.
      */
-    #pendingClearMessageId: number = -1;
+    private pendingClearMessageId: number = -1;
 
     /**
      * Constructor.
@@ -889,14 +889,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @returns True if the key exists, false otherwise
      */
     public has(key: string): boolean {
-        return this.#storage.has(key);
+        return this._storage.has(key);
     }
 
     /**
      * {@inheritDoc IDirectory.get}
      */
     public get<T = any>(key: string): T | undefined {
-        return this.#storage.get(key)?.value as T | undefined;
+        return this._storage.get(key)?.value as T | undefined;
     }
 
     /**
@@ -904,9 +904,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      */
     public async wait<T = any>(key: string): Promise<T> {
         // Return immediately if the value already exists
-        if (this.#storage.has(key)) {
+        if (this._storage.has(key)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.#storage.get(key)!.value as T;
+            return this._storage.get(key)!.value as T;
         }
 
         // Otherwise subscribe to changes
@@ -914,7 +914,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             const callback = (changed: IDirectoryValueChanged) => {
                 if (this.absolutePath === changed.path && key === changed.key) {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    resolve(this.#storage.get(key)!.value as T);
+                    resolve(this._storage.get(key)!.value as T);
                     this.directory.removeListener("valueChanged", callback);
                 }
             };
@@ -978,7 +978,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         this.createSubDirectoryCore(subdirName, true);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const subDir: IDirectory = this.#subdirectories.get(subdirName)!;
+        const subDir: IDirectory = this._subdirectories.get(subdirName)!;
 
         // If we are not attached, don't submit the op.
         if (!this.directory.isAttached()) {
@@ -999,14 +999,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * {@inheritDoc IDirectory.getSubDirectory}
      */
     public getSubDirectory(subdirName: string): IDirectory | undefined {
-        return this.#subdirectories.get(subdirName);
+        return this._subdirectories.get(subdirName);
     }
 
     /**
      * {@inheritDoc IDirectory.hasSubDirectory}
      */
     public hasSubDirectory(subdirName: string): boolean {
-        return this.#subdirectories.has(subdirName);
+        return this._subdirectories.has(subdirName);
     }
 
     /**
@@ -1035,7 +1035,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * {@inheritDoc IDirectory.subdirectories}
      */
     public subdirectories(): IterableIterator<[string, IDirectory]> {
-        return this.#subdirectories.entries();
+        return this._subdirectories.entries();
     }
 
     /**
@@ -1093,7 +1093,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @param callback - Callback to issue
      */
     public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
-        this.#storage.forEach((localValue, key, map) => {
+        this._storage.forEach((localValue, key, map) => {
             callback(localValue.value, key, map);
         });
     }
@@ -1102,7 +1102,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * The number of entries under this IDirectory.
      */
     public get size(): number {
-        return this.#storage.size;
+        return this._storage.size;
     }
 
     /**
@@ -1110,7 +1110,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @returns The iterator
      */
     public entries(): IterableIterator<[string, any]> {
-        const localEntriesIterator = this.#storage.entries();
+        const localEntriesIterator = this._storage.entries();
         const iterator = {
             next(): IteratorResult<[string, any]> {
                 const nextVal = localEntriesIterator.next();
@@ -1133,7 +1133,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @returns The iterator
      */
     public keys(): IterableIterator<string> {
-        return this.#storage.keys();
+        return this._storage.keys();
     }
 
     /**
@@ -1141,7 +1141,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @returns The iterator
      */
     public values(): IterableIterator<any> {
-        const localValuesIterator = this.#storage.values();
+        const localValuesIterator = this._storage.values();
         const iterator = {
             next(): IteratorResult<any> {
                 const nextVal = localValuesIterator.next();
@@ -1185,8 +1185,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             assert(localOpMetadata !== undefined,
                 0x00f /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
             const pendingMessageId = localOpMetadata as number;
-            if (this.#pendingClearMessageId === pendingMessageId) {
-                this.#pendingClearMessageId = -1;
+            if (this.pendingClearMessageId === pendingMessageId) {
+                this.pendingClearMessageId = -1;
             }
             return;
         }
@@ -1286,9 +1286,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public submitClearMessage(op: IDirectoryClearOperation): void {
-        const pendingMessageId = ++this.#pendingMessageId;
+        const pendingMessageId = ++this.pendingMessageId;
         this.directory.submitDirectoryMessage(op, pendingMessageId);
-        this.#pendingClearMessageId = pendingMessageId;
+        this.pendingClearMessageId = pendingMessageId;
     }
 
     /**
@@ -1297,9 +1297,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public submitKeyMessage(op: IDirectoryKeyOperation): void {
-        const pendingMessageId = ++this.#pendingMessageId;
+        const pendingMessageId = ++this.pendingMessageId;
         this.directory.submitDirectoryMessage(op, pendingMessageId);
-        this.#pendingKeys.set(op.key, pendingMessageId);
+        this.pendingKeys.set(op.key, pendingMessageId);
     }
 
     /**
@@ -1308,9 +1308,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public submitSubDirectoryMessage(op: IDirectorySubDirectoryOperation): void {
-        const pendingMessageId = ++this.#pendingMessageId;
+        const pendingMessageId = ++this.pendingMessageId;
         this.directory.submitDirectoryMessage(op, pendingMessageId);
-        this.#pendingSubDirectories.set(op.subdirName, pendingMessageId);
+        this.pendingSubDirectories.set(op.subdirName, pendingMessageId);
     }
 
     /**
@@ -1320,7 +1320,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public *getSerializedStorage(serializer: IFluidSerializer) {
-        for (const [key, localValue] of this.#storage) {
+        for (const [key, localValue] of this._storage) {
             const value = localValue.makeSerialized(serializer, this.directory.handle);
             const res: [string, ISerializedValue] = [key, value];
             yield res;
@@ -1334,7 +1334,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public populateStorage(key: string, localValue: ILocalValue): void {
-        this.#storage.set(key, localValue);
+        this._storage.set(key, localValue);
     }
 
     /**
@@ -1344,7 +1344,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public populateSubDirectory(subdirName: string, newSubDir: SubDirectory): void {
-        this.#subdirectories.set(subdirName, newSubDir);
+        this._subdirectories.set(subdirName, newSubDir);
     }
 
     /**
@@ -1355,7 +1355,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public getLocalValue<T extends ILocalValue = ILocalValue>(key: string): T {
-        return this.#storage.get(key) as T;
+        return this._storage.get(key) as T;
     }
 
     /**
@@ -1382,25 +1382,25 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         local: boolean,
         localOpMetadata: unknown,
     ): boolean {
-        if (this.#pendingClearMessageId !== -1) {
+        if (this.pendingClearMessageId !== -1) {
             if (local) {
-                assert(localOpMetadata !== undefined && localOpMetadata as number < this.#pendingClearMessageId,
+                assert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
                     0x010 /* "Received out of order storage op when there is an unackd clear message" */);
             }
             // If I have a NACK clear, we can ignore all ops.
             return false;
         }
 
-        if (this.#pendingKeys.has(op.key)) {
+        if (this.pendingKeys.has(op.key)) {
             // Found an NACK op, clear it from the directory if the latest sequence number in the directory
             // match the message's and don't process the op.
             if (local) {
                 assert(localOpMetadata !== undefined,
                     0x011 /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
                 const pendingMessageId = localOpMetadata as number;
-                const pendingKeyMessageId = this.#pendingKeys.get(op.key);
+                const pendingKeyMessageId = this.pendingKeys.get(op.key);
                 if (pendingKeyMessageId === pendingMessageId) {
-                    this.#pendingKeys.delete(op.key);
+                    this.pendingKeys.delete(op.key);
                 }
             }
             return false;
@@ -1425,14 +1425,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         local: boolean,
         localOpMetadata: unknown,
     ): boolean {
-        if (this.#pendingSubDirectories.has(op.subdirName)) {
+        if (this.pendingSubDirectories.has(op.subdirName)) {
             if (local) {
                 assert(localOpMetadata !== undefined,
                     0x012 /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
                 const pendingMessageId = localOpMetadata as number;
-                const pendingSubDirectoryMessageId = this.#pendingSubDirectories.get(op.subdirName);
+                const pendingSubDirectoryMessageId = this.pendingSubDirectories.get(op.subdirName);
                 if (pendingSubDirectoryMessageId === pendingMessageId) {
-                    this.#pendingSubDirectories.delete(op.subdirName);
+                    this.pendingSubDirectories.delete(op.subdirName);
                 }
             }
             return false;
@@ -1448,13 +1448,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         // Assuming the pendingKeys is small and the map is large
         // we will get the value for the pendingKeys and clear the map
         const temp = new Map<string, ILocalValue>();
-        this.#pendingKeys.forEach((value, key, map) => {
+        this.pendingKeys.forEach((value, key, map) => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            temp.set(key, this.#storage.get(key)!);
+            temp.set(key, this._storage.get(key)!);
         });
-        this.#storage.clear();
+        this._storage.clear();
         temp.forEach((value, key, map) => {
-            this.#storage.set(key, value);
+            this._storage.set(key, value);
         });
     }
 
@@ -1464,7 +1464,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @param op - The message if from a remote clear, or null if from a local clear
      */
     private clearCore(local: boolean) {
-        this.#storage.clear();
+        this._storage.clear();
         this.directory.emit("clear", local, this.directory);
     }
 
@@ -1477,7 +1477,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      */
     private deleteCore(key: string, local: boolean) {
         const previousValue = this.get(key);
-        const successfullyRemoved = this.#storage.delete(key);
+        const successfullyRemoved = this._storage.delete(key);
         if (successfullyRemoved) {
             const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
             this.directory.emit("valueChanged", event, local, this.directory);
@@ -1496,7 +1496,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      */
     private setCore(key: string, value: ILocalValue, local: boolean) {
         const previousValue = this.get(key);
-        this.#storage.set(key, value);
+        this._storage.set(key, value);
         const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
         this.directory.emit("valueChanged", event, local, this.directory);
         const containedEvent: IValueChanged = { key, previousValue };
@@ -1509,8 +1509,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @param local - Whether the message originated from the local client
      */
     private createSubDirectoryCore(subdirName: string, local: boolean) {
-        if (!this.#subdirectories.has(subdirName)) {
-            this.#subdirectories.set(
+        if (!this._subdirectories.has(subdirName)) {
+            this._subdirectories.set(
                 subdirName,
                 new SubDirectory(
                     this.directory,
@@ -1530,6 +1530,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     private deleteSubDirectoryCore(subdirName: string, local: boolean) {
         // This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
         // Might want to consider cleaning out the structure more exhaustively though?
-        return this.#subdirectories.delete(subdirName);
+        return this._subdirectories.delete(subdirName);
     }
 }

@@ -45,9 +45,9 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
     // The values of this cache is useless. We only need the keys. So we are always putting
     // empty strings as values.
     protected readonly blobsShaCache = new Map<string, string>();
-    readonly #blobCache: ICache<ArrayBufferLike> | undefined;
-    readonly #snapshotTreeCache: ICache<ISnapshotTreeEx> | undefined;
-    readonly #summaryUploadManager: ISummaryUploadManager;
+    private readonly blobCache: ICache<ArrayBufferLike> | undefined;
+    private readonly snapshotTreeCache: ICache<ISnapshotTreeEx> | undefined;
+    private readonly summaryUploadManager: ISummaryUploadManager;
 
     public get repositoryUrl(): string {
         return "";
@@ -61,14 +61,14 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
         driverPolicies?: IRouterliciousDriverPolicies,
         blobCache?: ICache<ArrayBufferLike>,
         snapshotTreeCache?: ICache<ISnapshotTree>) {
-        this.#summaryUploadManager = new SummaryTreeUploadManager(
+        this.summaryUploadManager = new SummaryTreeUploadManager(
                 new RetriableGitManager(manager, logger),
                 this.blobsShaCache,
                 this.getPreviousFullSnapshot.bind(this),
             );
         if (driverPolicies?.enableRestLess === true || isNode) {
-            this.#blobCache = blobCache ?? new InMemoryCache();
-            this.#snapshotTreeCache = (snapshotTreeCache ?? new InMemoryCache()) as ICache<ISnapshotTreeEx>;
+            this.blobCache = blobCache ?? new InMemoryCache();
+            this.snapshotTreeCache = (snapshotTreeCache ?? new InMemoryCache()) as ICache<ISnapshotTreeEx>;
         }
     }
 
@@ -101,7 +101,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
             requestVersion = versions[0];
         }
 
-        const cachedSnapshotTree = await this.#snapshotTreeCache?.get(requestVersion.treeId);
+        const cachedSnapshotTree = await this.snapshotTreeCache?.get(requestVersion.treeId);
         if (cachedSnapshotTree) {
             return cachedSnapshotTree;
         }
@@ -121,12 +121,12 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
             },
         );
         const tree = buildHierarchy(rawTree, this.blobsShaCache, true);
-        await this.#snapshotTreeCache?.put(tree.id, tree);
+        await this.snapshotTreeCache?.put(tree.id, tree);
         return tree;
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        const cachedBlob = await this.#blobCache?.get(blobId);
+        const cachedBlob = await this.blobCache?.get(blobId);
         if (cachedBlob) {
             return cachedBlob;
         }
@@ -147,7 +147,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
         );
         this.blobsShaCache.set(value.sha, "");
         const bufferContent = stringToBuffer(value.content, value.encoding);
-        await this.#blobCache?.put(value.sha, bufferContent);
+        await this.blobCache?.put(value.sha, bufferContent);
         return bufferContent;
     }
 
@@ -170,7 +170,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
             {
                 eventName: "uploadSummaryWithContext",
             },
-            async () => this.#summaryUploadManager.writeSummaryTree(summary, context.ackHandle ?? "", "channel"),
+            async () => this.summaryUploadManager.writeSummaryTree(summary, context.ackHandle ?? "", "channel"),
         );
         return summaryHandle;
     }

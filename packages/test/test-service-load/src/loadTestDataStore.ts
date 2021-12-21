@@ -189,13 +189,13 @@ export class LoadTestDataStoreModel {
         return dataModel;
     }
 
-    readonly #taskId: string;
-    readonly #partnerId: number;
-    #taskStartTime: number = 0;
+    private readonly taskId: string;
+    private readonly partnerId: number;
+    private taskStartTime: number = 0;
 
-    readonly #isBlobWriter: boolean;
-    readonly #blobUploads: Promise<void>[] = [];
-    #blobCount = 0;
+    private readonly isBlobWriter: boolean;
+    private readonly blobUploads: Promise<void>[] = [];
+    private blobCount = 0;
 
     private constructor(
         private readonly root: ISharedDirectory,
@@ -209,12 +209,12 @@ export class LoadTestDataStoreModel {
     ) {
         const halfClients = Math.floor(this.config.testConfig.numClients / 2);
         // The runners are paired up and each pair shares a single taskId
-        this.#taskId = `op_sender${config.runId % halfClients}`;
-        this.#partnerId = (this.config.runId + halfClients) % this.config.testConfig.numClients;
+        this.taskId = `op_sender${config.runId % halfClients}`;
+        this.partnerId = (this.config.runId + halfClients) % this.config.testConfig.numClients;
         const changed = (taskId)=>{
-            if(taskId === this.#taskId && this.#taskStartTime !== 0) {
+            if(taskId === this.taskId && this.taskStartTime !== 0) {
                 this.dir.set(taskTimeKey, this.totalTaskTime);
-                this.#taskStartTime = 0;
+                this.taskStartTime = 0;
             }
         };
         this.taskManager.on("lost", changed);
@@ -223,35 +223,35 @@ export class LoadTestDataStoreModel {
         // calculate the number of blobs we will upload
         const clientBlobCount = Math.trunc((config.testConfig.totalBlobCount ?? 0) / config.testConfig.numClients) +
             (this.config.runId < ((config.testConfig.totalBlobCount ?? 0) % config.testConfig.numClients) ? 1 : 0);
-        this.#isBlobWriter = clientBlobCount > 0;
-        if (this.#isBlobWriter) {
+        this.isBlobWriter = clientBlobCount > 0;
+        if (this.isBlobWriter) {
             const clientOpCount = config.testConfig.totalSendCount / config.testConfig.numClients;
             const blobsPerOp = clientBlobCount / clientOpCount;
 
             // start uploading blobs where we left off
-            this.#blobCount = Math.trunc(this.counter.value * blobsPerOp);
+            this.blobCount = Math.trunc(this.counter.value * blobsPerOp);
 
             // upload blobs progressively as the counter is incremented
             this.counter.on("op", (_, local) => {
                 const value = this.counter.value;
                 if (!local) {
                     // this is an old op, we should have already uploaded this blob
-                    this.#blobCount = Math.max(this.#blobCount, Math.trunc(value * blobsPerOp));
+                    this.blobCount = Math.max(this.blobCount, Math.trunc(value * blobsPerOp));
                     return;
                 }
                 const newBlobs = value >= clientOpCount
-                    ? clientBlobCount - this.#blobCount
-                    : Math.trunc(value * blobsPerOp - this.#blobCount);
+                    ? clientBlobCount - this.blobCount
+                    : Math.trunc(value * blobsPerOp - this.blobCount);
 
                 if (newBlobs > 0) {
-                    this.#blobUploads.push(...[...Array(newBlobs)].map(async () => this.writeBlob(this.#blobCount++)));
+                    this.blobUploads.push(...[...Array(newBlobs)].map(async () => this.writeBlob(this.blobCount++)));
                 }
             });
         }
 
         // download any blobs our partner may upload
         const partnerBlobCount = Math.trunc(config.testConfig.totalBlobCount ?? 0 / config.testConfig.numClients) +
-            (this.#partnerId < (config.testConfig.totalBlobCount ?? 0 % config.testConfig.numClients) ? 1 : 0);
+            (this.partnerId < (config.testConfig.totalBlobCount ?? 0 % config.testConfig.numClients) ? 1 : 0);
         if (partnerBlobCount > 0) {
             this.root.on("valueChanged", (v) => {
                 if (v.key.startsWith(this.partnerBlobKeyPrefix)) {
@@ -269,15 +269,15 @@ export class LoadTestDataStoreModel {
         return (this.dir.get<number>(taskTimeKey) ?? 0) + this.currentTaskTime;
     }
     public get currentTaskTime(): number {
-        return Date.now() - (this.haveTaskLock() ?  this.#taskStartTime : this.startTime);
+        return Date.now() - (this.haveTaskLock() ?  this.taskStartTime : this.startTime);
     }
 
     private blobKey(id): string { return `blob_${this.config.runId}_${id}`; }
-    private get partnerBlobKeyPrefix(): string { return `blob_${this.#partnerId}_`; }
+    private get partnerBlobKeyPrefix(): string { return `blob_${this.partnerId}_`; }
 
     public async blobFinish() {
-        const p = Promise.all(this.#blobUploads);
-        this.#blobUploads.length = 0;
+        const p = Promise.all(this.blobUploads);
+        this.blobUploads.length = 0;
         return p;
     }
 
@@ -297,7 +297,7 @@ export class LoadTestDataStoreModel {
         if(this.runtime.disposed) {
             return undefined;
         }
-        const dir = this.root.getSubDirectory(this.#partnerId.toString());
+        const dir = this.root.getSubDirectory(this.partnerId.toString());
         if(dir === undefined) {
             return undefined;
         }
@@ -312,14 +312,14 @@ export class LoadTestDataStoreModel {
         if(this.runtime.disposed) {
             return false;
         }
-        return this.taskManager.haveTaskLock(this.#taskId);
+        return this.taskManager.haveTaskLock(this.taskId);
     }
 
     public abandonTask() {
         if(this.haveTaskLock()) {
             // We are becoming the reader. Remove the reference to the GC data store.
             this.runDir.delete(gcDataStoreKey);
-            this.taskManager.abandon(this.#taskId);
+            this.taskManager.abandon(this.taskId);
         }
     }
 
@@ -346,8 +346,8 @@ export class LoadTestDataStoreModel {
                         this.runtime.once("disconnected",rejAndClear);
                     });
                 }
-                await this.taskManager.lockTask(this.#taskId);
-                this.#taskStartTime = Date.now();
+                await this.taskManager.lockTask(this.taskId);
+                this.taskStartTime = Date.now();
 
                 // We just became the writer. Add a reference to the GC data store.
                 if (!this.runDir.has(gcDataStoreKey)) {
@@ -385,8 +385,8 @@ export class LoadTestDataStoreModel {
                 ` run time: ${taskMin.toFixed(2).toString().padStart(5)} min`,
                 ` total time: ${totalMin.toFixed(2).toString().padStart(5)} min`,
                 `hasTask: ${this.haveTaskLock().toString().padStart(5)}`,
-                blobsEnabled ? `blobWriter: ${this.#isBlobWriter.toString().padStart(5)}` : "",
-                blobsEnabled ? `blobs uploaded: ${formatBytes(this.#blobCount * blobSize).padStart(8)}` : "",
+                blobsEnabled ? `blobWriter: ${this.isBlobWriter.toString().padStart(5)}` : "",
+                blobsEnabled ? `blobs uploaded: ${formatBytes(this.blobCount * blobSize).padStart(8)}` : "",
                 !disposed ? `audience: ${this.runtime.getAudience().getMembers().size}` : "",
                 !disposed ? `quorum: ${this.runtime.getQuorum().getMembers().size}` : "",
             );

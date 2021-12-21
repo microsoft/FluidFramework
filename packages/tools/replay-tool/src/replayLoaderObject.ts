@@ -31,10 +31,10 @@ import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 
 /** Simple code loader that loads the runtime factory provided during creation. */
 export class ReplayCodeLoader implements ICodeLoader, IFluidCodeDetailsComparer {
-    readonly #fluidModule: IFluidModule;
+    private readonly fluidModule: IFluidModule;
 
     constructor(runtimeFactory: IProvideRuntimeFactory) {
-        this.#fluidModule = { fluidExport: runtimeFactory };
+        this.fluidModule = { fluidExport: runtimeFactory };
     }
 
     public get IFluidCodeDetailsComparer(): IFluidCodeDetailsComparer {
@@ -42,7 +42,7 @@ export class ReplayCodeLoader implements ICodeLoader, IFluidCodeDetailsComparer 
     }
 
     public async load(source: IFluidCodeDetails): Promise<IFluidModule> {
-        return Promise.resolve(this.#fluidModule);
+        return Promise.resolve(this.fluidModule);
     }
 
     public async satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean> {

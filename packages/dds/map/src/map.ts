@@ -133,7 +133,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     /**
      * MapKernel which manages actual map operations.
      */
-    readonly #kernel: MapKernel;
+    private readonly kernel: MapKernel;
 
     /**
      * Do not call the constructor. Instead, you should use the {@link SharedMap.create | create method}.
@@ -148,7 +148,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);
-        this.#kernel = new MapKernel(
+        this.kernel = new MapKernel(
             this.serializer,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
@@ -162,7 +162,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * @returns The iterator
      */
     public keys(): IterableIterator<string> {
-        return this.#kernel.keys();
+        return this.kernel.keys();
     }
 
     /**
@@ -170,7 +170,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * @returns The iterator
      */
     public entries(): IterableIterator<[string, any]> {
-        return this.#kernel.entries();
+        return this.kernel.entries();
     }
 
     /**
@@ -178,7 +178,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * @returns The iterator
      */
     public values(): IterableIterator<any> {
-        return this.#kernel.values();
+        return this.kernel.values();
     }
 
     /**
@@ -186,14 +186,14 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * @returns The iterator
      */
     public [Symbol.iterator](): IterableIterator<[string, any]> {
-        return this.#kernel.entries();
+        return this.kernel.entries();
     }
 
     /**
      * The number of key/value pairs stored in the map.
      */
     public get size() {
-        return this.#kernel.size;
+        return this.kernel.size;
     }
 
     /**
@@ -201,21 +201,21 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * @param callbackFn - Callback function
      */
     public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void {
-        this.#kernel.forEach(callbackFn);
+        this.kernel.forEach(callbackFn);
     }
 
     /**
      * {@inheritDoc ISharedMap.get}
      */
     public get<T = any>(key: string): T | undefined {
-        return this.#kernel.get<T>(key);
+        return this.kernel.get<T>(key);
     }
 
     /**
      * {@inheritDoc ISharedMap.wait}
      */
     public async wait<T = any>(key: string): Promise<T> {
-        return this.#kernel.wait<T>(key);
+        return this.kernel.wait<T>(key);
     }
 
     /**
@@ -224,14 +224,14 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * @returns True if the key exists, false otherwise
      */
     public has(key: string): boolean {
-        return this.#kernel.has(key);
+        return this.kernel.has(key);
     }
 
     /**
      * {@inheritDoc ISharedMap.set}
      */
     public set(key: string, value: any): this {
-        this.#kernel.set(key, value);
+        this.kernel.set(key, value);
         return this;
     }
 
@@ -241,14 +241,14 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * @returns True if the key existed and was deleted, false if it did not exist
      */
     public delete(key: string): boolean {
-        return this.#kernel.delete(key);
+        return this.kernel.delete(key);
     }
 
     /**
      * Clear all data from the map.
      */
     public clear(): void {
-        this.#kernel.clear();
+        this.kernel.clear();
     }
 
     /**
@@ -265,7 +265,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
             entries: [],
         };
 
-        const data = this.#kernel.getSerializedStorage(serializer);
+        const data = this.kernel.getSerializedStorage(serializer);
 
         // If single property exceeds this size, it goes into its own blob
         const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
@@ -336,13 +336,13 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         const json = await readAndParse<object>(storage, snapshotFileName);
         const newFormat = json as IMapSerializationFormat;
         if (Array.isArray(newFormat.blobs)) {
-            this.#kernel.populateFromSerializable(newFormat.content);
+            this.kernel.populateFromSerializable(newFormat.content);
             await Promise.all(newFormat.blobs.map(async (value) => {
                 const content = await readAndParse<IMapDataObjectSerializable>(storage, value);
-                this.#kernel.populateFromSerializable(content);
+                this.kernel.populateFromSerializable(content);
             }));
         } else {
-            this.#kernel.populateFromSerializable(json as IMapDataObjectSerializable);
+            this.kernel.populateFromSerializable(json as IMapDataObjectSerializable);
         }
     }
 
@@ -357,15 +357,15 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * @internal
      */
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        this.#kernel.trySubmitMessage(content, localOpMetadata);
+        this.kernel.trySubmitMessage(content, localOpMetadata);
     }
 
     /**
      * @internal
      */
     protected applyStashedOp(content: any): unknown {
-        this.#kernel.tryProcessMessage(content, false, undefined);
-        return this.#kernel.tryGetStashedOpLocalMetadata(content);
+        this.kernel.tryProcessMessage(content, false, undefined);
+        return this.kernel.tryGetStashedOpLocalMetadata(content);
     }
 
     /**
@@ -374,7 +374,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
-            this.#kernel.tryProcessMessage(message.contents, local, localOpMetadata);
+            this.kernel.tryProcessMessage(message.contents, local, localOpMetadata);
         }
     }
 

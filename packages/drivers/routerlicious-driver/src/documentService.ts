@@ -39,7 +39,7 @@ export class DocumentService implements api.IDocumentService {
     ) {
     }
 
-    #documentStorageService: DocumentStorageService | undefined;
+    private documentStorageService: DocumentStorageService | undefined;
 
     public dispose() {}
 
@@ -49,8 +49,8 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document storage service for routerlicious driver.
      */
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
-        if (this.#documentStorageService !== undefined) {
-            return this.#documentStorageService;
+        if (this.documentStorageService !== undefined) {
+            return this.documentStorageService;
         }
 
         if (this.gitUrl === undefined) {
@@ -80,7 +80,7 @@ export class DocumentService implements api.IDocumentService {
             minBlobSize: this.driverPolicies.aggregateBlobsSmallerThanBytes,
         };
 
-        this.#documentStorageService = new DocumentStorageService(
+        this.documentStorageService = new DocumentStorageService(
             this.documentId,
             gitManager,
             this.logger,
@@ -88,7 +88,7 @@ export class DocumentService implements api.IDocumentService {
             this.driverPolicies,
             this.blobCache,
             this.snapshotTreeCache);
-        return this.#documentStorageService;
+        return this.documentStorageService;
     }
 
     /**
@@ -98,7 +98,7 @@ export class DocumentService implements api.IDocumentService {
      */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
         await this.connectToStorage();
-        assert(!!this.#documentStorageService, 0x0b1 /* "Storage service not initialized" */);
+        assert(!!this.documentStorageService, 0x0b1 /* "Storage service not initialized" */);
 
         const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
         const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
@@ -111,7 +111,7 @@ export class DocumentService implements api.IDocumentService {
         );
         const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, ordererRestWrapper, this.logger);
         return new DocumentDeltaStorageService(this.tenantId, this.documentId,
-            deltaStorage, this.#documentStorageService);
+            deltaStorage, this.documentStorageService);
     }
 
     /**

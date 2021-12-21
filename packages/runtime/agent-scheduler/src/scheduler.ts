@@ -66,18 +66,18 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
     // Has no relationship with lists below.
     // The only requirement here - a task can be registered by a client only once.
     // Other clients can pick these tasks.
-    readonly #registeredTasks = new Set<string>();
+    private readonly registeredTasks = new Set<string>();
 
     // List of all tasks client is capable of running (essentially expressed desire to run)
     // Client will proactively attempt to pick them up these tasks if they are not assigned to other clients.
     // This is a strict superset of tasks running in the client.
-    readonly #locallyRunnableTasks = new Map<string, () => Promise<void>>();
+    private readonly locallyRunnableTasks = new Map<string, () => Promise<void>>();
 
     // Set of registered tasks client is currently running.
-    // It's subset of this.#locallyRunnableTasks
-    #runningTasks = new Set<string>();
+    // It's subset of this.locallyRunnableTasks
+    private runningTasks = new Set<string>();
 
-    readonly #handle: IFluidHandle<this>;
+    private readonly _handle: IFluidHandle<this>;
 
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
@@ -85,22 +85,22 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
         private readonly consensusRegisterCollection: ConsensusRegisterCollection<string | null>,
     ) {
         super();
-        this.#handle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
+        this._handle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
     }
 
     public get handle() {
-        return this.#handle;
+        return this._handle;
     }
 
     public async register(...taskUrls: string[]): Promise<void> {
         for (const taskUrl of taskUrls) {
-            if (this.#registeredTasks.has(taskUrl)) {
+            if (this.registeredTasks.has(taskUrl)) {
                 throw new Error(`${taskUrl} is already registered`);
             }
         }
         const unregisteredTasks: string[] = [];
         for (const taskUrl of taskUrls) {
-            this.#registeredTasks.add(taskUrl);
+            this.registeredTasks.add(taskUrl);
             // Only register for a new task.
             const currentClient = this.getTaskClientId(taskUrl);
             if (currentClient === undefined) {
@@ -111,10 +111,10 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
     }
 
     public async pick(taskId: string, worker: () => Promise<void>): Promise<void> {
-        if (this.#locallyRunnableTasks.has(taskId)) {
+        if (this.locallyRunnableTasks.has(taskId)) {
             throw new Error(`${taskId} is already attempted`);
         }
-        this.#locallyRunnableTasks.set(taskId, worker);
+        this.locallyRunnableTasks.set(taskId, worker);
 
         // We have a policy to disallow non-interactive clients from taking tasks.  Callers of pick() can
         // either perform this check proactively and call conditionally, or catch the error (in which case
@@ -134,7 +134,7 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
     public async release(...taskUrls: string[]): Promise<void> {
         const active = this.isActive();
         for (const taskUrl of taskUrls) {
-            if (!this.#locallyRunnableTasks.has(taskUrl)) {
+            if (!this.locallyRunnableTasks.has(taskUrl)) {
                 throw new Error(`${taskUrl} was never registered`);
             }
             // Note - the assumption is - we are connected.
@@ -148,7 +148,7 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
     }
 
     public pickedTasks(): string[] {
-        return Array.from(this.#runningTasks.values());
+        return Array.from(this.runningTasks.values());
     }
 
     private async registerCore(taskUrls: string[]): Promise<void> {
@@ -174,7 +174,7 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
             const releasesP: Promise<void>[] = [];
             for (const taskUrl of taskUrls) {
                 // Remove from local map so that it can be picked later.
-                this.#locallyRunnableTasks.delete(taskUrl);
+                this.locallyRunnableTasks.delete(taskUrl);
                 releasesP.push(this.writeCore(taskUrl, null));
             }
             await Promise.all(releasesP);
@@ -212,7 +212,7 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
                 const leftTasks: string[] = [];
                 for (const taskUrl of this.consensusRegisterCollection.keys()) {
                     if (this.getTaskClientId(taskUrl) === clientId) {
-                        if (this.#locallyRunnableTasks.has(taskUrl)) {
+                        if (this.locallyRunnableTasks.has(taskUrl)) {
                             tasks.push(this.writeCore(taskUrl, this.clientId));
                         } else {
                             leftTasks.push(taskUrl);
@@ -264,9 +264,9 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
     }
 
     private onNewTaskAssigned(key: string) {
-        assert(!this.#runningTasks.has(key), 0x11d /* "task is already running" */);
-        this.#runningTasks.add(key);
-        const worker = this.#locallyRunnableTasks.get(key);
+        assert(!this.runningTasks.has(key), 0x11d /* "task is already running" */);
+        this.runningTasks.add(key);
+        const worker = this.locallyRunnableTasks.get(key);
         if (worker === undefined) {
             this.sendErrorEvent("AgentScheduler_UnwantedChange", undefined, key);
         }
@@ -279,8 +279,8 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
     }
 
     private async onTaskReassigned(key: string, currentClient: string | null) {
-        if (this.#runningTasks.has(key)) {
-            this.#runningTasks.delete(key);
+        if (this.runningTasks.has(key)) {
+            this.runningTasks.delete(key);
             this.emit("released", key);
         }
         assert(currentClient !== undefined, 0x11e /* "client is undefined" */);
@@ -288,7 +288,7 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
             // attempt to pick up task if we are connected.
             // If not, initializeCore() will do it when connected
             if (currentClient === null) {
-                if (this.#locallyRunnableTasks.has(key)) {
+                if (this.locallyRunnableTasks.has(key)) {
                     await this.writeCore(key, this.clientId);
                 }
             }
@@ -322,7 +322,7 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
         const clearCandidates: string[] = [];
         const tasks: Promise<any>[] = [];
 
-        for (const [taskUrl] of this.#locallyRunnableTasks) {
+        for (const [taskUrl] of this.locallyRunnableTasks) {
             if (!this.getTaskClientId(taskUrl)) {
                 tasks.push(this.writeCore(taskUrl, this.clientId));
             }
@@ -343,8 +343,8 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
     }
 
     private clearRunningTasks() {
-        const tasks = this.#runningTasks;
-        this.#runningTasks = new Set<string>();
+        const tasks = this.runningTasks;
+        this.runningTasks = new Set<string>();
 
         if (this.isActive()) {
             // Clear all tasks with UnattachedClientId (if was unattached) and reapply for tasks with new clientId
@@ -363,20 +363,20 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
 }
 
 class AgentSchedulerRuntime extends FluidDataStoreRuntime {
-    readonly #agentSchedulerP: Promise<AgentScheduler>;
+    private readonly agentSchedulerP: Promise<AgentScheduler>;
     constructor(
         dataStoreContext: IFluidDataStoreContext,
         sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
     ) {
         super(dataStoreContext, sharedObjectRegistry, existing);
-        this.#agentSchedulerP = AgentScheduler.load(this, dataStoreContext, existing);
+        this.agentSchedulerP = AgentScheduler.load(this, dataStoreContext, existing);
     }
     public async request(request: IRequest) {
         const response = await super.request(request);
         if (response.status === 404) {
             if (request.url === "" || request.url === "/") {
-                const agentScheduler = await this.#agentSchedulerP;
+                const agentScheduler = await this.agentSchedulerP;
                 return { status: 200, mimeType: "fluid/object", value: agentScheduler };
             }
         }

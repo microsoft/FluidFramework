@@ -108,9 +108,9 @@ function drawShapes(
 }
 
 export class InkCanvas {
-    readonly #context: CanvasRenderingContext2D;
-    readonly #localActiveStrokeMap: Map<number, string> = new Map();
-    readonly #currentPen: IPen;
+    private readonly context: CanvasRenderingContext2D;
+    private readonly localActiveStrokeMap: Map<number, string> = new Map();
+    private readonly currentPen: IPen;
 
     constructor(private readonly canvas: HTMLCanvasElement, private readonly model: IInk) {
         this.model.on("clear", this.redraw.bind(this));
@@ -126,9 +126,9 @@ export class InkCanvas {
         if (context === null) {
             throw new Error("InkCanvas requires a canvas with 2d rendering context");
         }
-        this.#context = context;
+        this.context = context;
 
-        this.#currentPen = {
+        this.currentPen = {
             color: { r: 0, g: 161, b: 241, a: 0 },
             thickness: 7,
         };
@@ -137,7 +137,7 @@ export class InkCanvas {
     }
 
     public setPenColor(color: IColor) {
-        this.#currentPen.color = color;
+        this.currentPen.color = color;
     }
 
     public replay() {
@@ -164,8 +164,8 @@ export class InkCanvas {
         this.canvas.width = Math.floor(canvasBoundingClientRect.width * scale);
         this.canvas.height = Math.floor(canvasBoundingClientRect.height * scale);
         // Scale the context to bring back coordinate system in CSS pixels
-        this.#context.setTransform(1, 0, 0, 1, 0, 0);
-        this.#context.scale(scale, scale);
+        this.context.setTransform(1, 0, 0, 1, 0, 0);
+        this.context.scale(scale, scale);
 
         this.redraw();
     }
@@ -173,8 +173,8 @@ export class InkCanvas {
     private handlePointerDown(evt: PointerEvent) {
         // We will accept pen down or mouse left down as the start of a stroke.
         if ((evt.pointerType === "pen") || ((evt.pointerType === "mouse") && (evt.button === 0))) {
-            const strokeId = this.model.createStroke(this.#currentPen).id;
-            this.#localActiveStrokeMap.set(evt.pointerId, strokeId);
+            const strokeId = this.model.createStroke(this.currentPen).id;
+            this.localActiveStrokeMap.set(evt.pointerId, strokeId);
 
             this.appendPointerEventToStroke(evt);
 
@@ -183,7 +183,7 @@ export class InkCanvas {
     }
 
     private handlePointerMove(evt: PointerEvent) {
-        if (this.#localActiveStrokeMap.has(evt.pointerId)) {
+        if (this.localActiveStrokeMap.has(evt.pointerId)) {
             const evts = (evt as any)?.getCoalescedEvents() ?? [evt] as PointerEvent[];
             for (const e of evts) {
                 this.appendPointerEventToStroke(e);
@@ -192,14 +192,14 @@ export class InkCanvas {
     }
 
     private handlePointerUp(evt: PointerEvent) {
-        if (this.#localActiveStrokeMap.has(evt.pointerId)) {
+        if (this.localActiveStrokeMap.has(evt.pointerId)) {
             this.appendPointerEventToStroke(evt);
-            this.#localActiveStrokeMap.delete(evt.pointerId);
+            this.localActiveStrokeMap.delete(evt.pointerId);
         }
     }
 
     private appendPointerEventToStroke(evt: PointerEvent) {
-        const strokeId = this.#localActiveStrokeMap.get(evt.pointerId);
+        const strokeId = this.localActiveStrokeMap.get(evt.pointerId);
         if (strokeId === undefined) {
             throw new Error("Unexpected pointer ID trying to append to stroke");
         }
@@ -234,7 +234,7 @@ export class InkCanvas {
      * Clears the canvas
      */
     private clearCanvas() {
-        this.#context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
     private redraw() {
@@ -258,8 +258,8 @@ export class InkCanvas {
     ) {
         // TODO Consider save/restore context
         // TODO Consider half-pixel offset
-        this.#context.fillStyle = `rgb(${pen.color.r}, ${pen.color.g}, ${pen.color.b})`;
-        drawShapes(this.#context, previous, current, pen);
+        this.context.fillStyle = `rgb(${pen.color.r}, ${pen.color.g}, ${pen.color.b})`;
+        drawShapes(this.context, previous, current, pen);
     }
 
     private handleStylus(operation: IStylusOperation) {

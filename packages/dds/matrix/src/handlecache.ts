@@ -18,8 +18,8 @@ import { ensureRange } from "./range";
  *       so far there's no measurable perf penalty for being a separate object (node 12 x64)
  */
 export class HandleCache implements IVectorConsumer<Handle> {
-    #handles: Handle[] = [];
-    #start = 0;
+    private handles: Handle[] = [];
+    private start = 0;
 
     constructor(public readonly vector: PermutationVector) { }
 
@@ -28,7 +28,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
      * (If the position is not in the array, returns an integer greater than 'handles.length').
      */
     private getIndex(position: number) {
-        return (position - this.#start) >>> 0;
+        return (position - this.start) >>> 0;
     }
 
     /**
@@ -49,8 +49,8 @@ export class HandleCache implements IVectorConsumer<Handle> {
         //       checking that 'position' is in bounds until 'cacheMiss(..)'.  This yields an
         //       ~40% speedup when the position is in the cache (node v12 x64).
 
-        return index < this.#handles.length
-            ? this.#handles[index]
+        return index < this.handles.length
+            ? this.handles[index]
             : this.cacheMiss(position);
     }
 
@@ -59,10 +59,10 @@ export class HandleCache implements IVectorConsumer<Handle> {
         assert(isHandleValid(handle), 0x017 /* "Trying to add invalid handle!" */);
 
         const index = this.getIndex(position);
-        if (index < this.#handles.length) {
-            assert(!isHandleValid(this.#handles[index]),
+        if (index < this.handles.length) {
+            assert(!isHandleValid(this.handles[index]),
                 0x018 /* "Trying to insert handle into position with already valid handle!" */);
-            this.#handles[index] = handle;
+            this.handles[index] = handle;
         }
     }
 
@@ -96,15 +96,15 @@ export class HandleCache implements IVectorConsumer<Handle> {
         //       the cache to the next MergeTree segment boundary (within the limits of
         //       the handle cache).
 
-        if (_position < this.#start) {
-            this.#handles = this.getHandles(_position, this.#start).concat(this.#handles);
-            this.#start = _position;
-            return this.#handles[0];
+        if (_position < this.start) {
+            this.handles = this.getHandles(_position, this.start).concat(this.handles);
+            this.start = _position;
+            return this.handles[0];
         } else {
             ensureRange(_position, this.vector.getLength());
 
-            this.#handles = this.#handles.concat(this.getHandles(this.#start + this.#handles.length, _position + 1));
-            return this.#handles[this.#handles.length - 1];
+            this.handles = this.handles.concat(this.getHandles(this.start + this.handles.length, _position + 1));
+            return this.handles[this.handles.length - 1];
         }
     }
 
@@ -124,8 +124,8 @@ export class HandleCache implements IVectorConsumer<Handle> {
         //      * Use a sentinel value or other mechanism to allow "holes" in the cache.
 
         const index = this.getIndex(start);
-        if (index < this.#handles.length) {
-            this.#handles.length =  index;
+        if (index < this.handles.length) {
+            this.handles.length =  index;
         }
     }
 

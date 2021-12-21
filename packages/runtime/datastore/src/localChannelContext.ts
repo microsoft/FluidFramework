@@ -21,6 +21,7 @@ import {
 import { readAndParse } from "@fluidframework/driver-utils";
 import { CreateProcessingError } from "@fluidframework/container-utils";
 import { assert, Lazy } from "@fluidframework/common-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     createServiceEndpoints,
     IChannelContext,
@@ -35,7 +36,7 @@ import { ChannelStorageService } from "./channelStorageService";
  */
 export abstract class LocalChannelContextBase implements IChannelContext {
     public channel: IChannel | undefined;
-    #attached = false;
+    private attached = false;
     protected readonly pending: ISequencedDocumentMessage[] = [];
     protected factory: IChannelFactory | undefined;
     constructor(
@@ -60,13 +61,13 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 
     public setConnectionState(connected: boolean, clientId?: string) {
         // Connection events are ignored if the data store is not yet attached or loaded
-        if (this.#attached && this.isLoaded) {
+        if (this.attached && this.isLoaded) {
             this.servicesGetter().value.deltaConnection.setConnectionState(connected);
         }
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
-        assert(this.#attached, 0x188 /* "Local channel must be attached when processing op" */);
+        assert(this.attached, 0x188 /* "Local channel must be attached when processing op" */);
 
         // A local channel may not be loaded in case where we rehydrate the container from a snapshot because of
         // delay loading. So after the container is attached and some other client joins which start generating
@@ -82,7 +83,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 
     public reSubmit(content: any, localOpMetadata: unknown) {
         assert(this.isLoaded, 0x18a /* "Channel should be loaded to resubmit ops" */);
-        assert(this.#attached, 0x18b /* "Local channel must be attached when resubmitting op" */);
+        assert(this.attached, 0x18b /* "Local channel must be attached when resubmitting op" */);
         this.servicesGetter().value.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
@@ -106,7 +107,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
     }
 
     public markAttached(): void {
-        if (this.#attached) {
+        if (this.attached) {
             throw new Error("Channel is already attached");
         }
 
@@ -114,7 +115,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
             assert(!!this.channel, 0x192 /* "Channel should be there if loaded!!" */);
             this.channel.connect(this.servicesGetter().value);
         }
-        this.#attached = true;
+        this.attached = true;
     }
 
     /**
@@ -138,12 +139,12 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 }
 
 export class RehydratedLocalChannelContext extends LocalChannelContextBase {
-    readonly #services: Lazy<{
+    private readonly services: Lazy<{
         readonly deltaConnection: ChannelDeltaConnection,
         readonly objectStorage: ChannelStorageService,
     }>;
 
-    readonly #dirtyFn: () => void;
+    private readonly dirtyFn: () => void;
 
     constructor(
         id: string,
@@ -153,9 +154,10 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
         storageService: IDocumentStorageService,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
+        addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
         private readonly snapshotTree: ISnapshotTree,
     ) {
-        super(id, registry, runtime, () => this.#services);
+        super(id, registry, runtime, () => this.services);
         const blobMap: Map<string, ArrayBufferLike> = new Map<string, ArrayBufferLike>();
         const clonedSnapshotTree = cloneDeep(this.snapshotTree);
         // 0.47 back-compat Need to sanitize if snapshotTree.blobs still contains blob contents too.
@@ -165,18 +167,19 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
             this.sanitizeSnapshot(clonedSnapshotTree);
         }
 
-        this.#services = new Lazy(() => {
+        this.services = new Lazy(() => {
             return createServiceEndpoints(
                 this.id,
                 dataStoreContext.connected,
                 submitFn,
-                this.#dirtyFn,
+                this.dirtyFn,
+                addedGCOutboundReferenceFn,
                 storageService,
                 clonedSnapshotTree,
                 blobMap,
             );
         });
-        this.#dirtyFn = () => { dirtyFn(id); };
+        this.dirtyFn = () => { dirtyFn(id); };
     }
 
     public async getChannel(): Promise<IChannel> {
@@ -191,10 +194,10 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 
     private async loadChannel(): Promise<IChannel> {
         assert(!this.isLoaded, 0x18e /* "Channel must not already be loaded when loading" */);
-        assert(await this.#services.value.objectStorage.contains(".attributes"),
+        assert(await this.services.value.objectStorage.contains(".attributes"),
             0x190 /* ".attributes blob should be present" */);
         const attributes = await readAndParse<IChannelAttributes>(
-            this.#services.value.objectStorage,
+            this.services.value.objectStorage,
             ".attributes");
 
         assert(this.factory === undefined, 0x208 /* "Factory should be undefined before loading" */);
@@ -206,7 +209,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
         const channel = await this.factory.load(
             this.runtime,
             this.id,
-            this.#services.value,
+            this.services.value,
             attributes);
 
         // Commit changes.
@@ -214,7 +217,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 
         // Send all pending messages to the channel
         for (const message of this.pending) {
-            this.#services.value.deltaConnection.process(message, false, undefined /* localOpMetadata */);
+            this.services.value.deltaConnection.process(message, false, undefined /* localOpMetadata */);
         }
         return this.channel;
     }
@@ -253,11 +256,11 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 }
 
 export class LocalChannelContext extends LocalChannelContextBase {
-    readonly #services: Lazy<{
+    private readonly services: Lazy<{
         readonly deltaConnection: ChannelDeltaConnection,
         readonly objectStorage: ChannelStorageService,
     }>;
-    readonly #dirtyFn: () => void;
+    private readonly dirtyFn: () => void;
     constructor(
         id: string,
         registry: ISharedObjectRegistry,
@@ -267,23 +270,25 @@ export class LocalChannelContext extends LocalChannelContextBase {
         storageService: IDocumentStorageService,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
+        addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
     ) {
-        super(id, registry, runtime, () => this.#services);
+        super(id, registry, runtime, () => this.services);
         assert(type !== undefined, 0x209 /* "Factory Type should be defined" */);
         this.factory = registry.get(type);
         if (this.factory === undefined) {
             throw new Error(`Channel Factory ${type} not registered`);
         }
         this.channel = this.factory.create(runtime, id);
-        this.#services = new Lazy(() => {
+        this.services = new Lazy(() => {
             return createServiceEndpoints(
                 this.id,
                 dataStoreContext.connected,
                 submitFn,
-                this.#dirtyFn,
+                this.dirtyFn,
+                addedGCOutboundReferenceFn,
                 storageService,
             );
         });
-        this.#dirtyFn = () => { dirtyFn(id); };
+        this.dirtyFn = () => { dirtyFn(id); };
     }
 }

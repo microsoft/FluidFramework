@@ -20,7 +20,7 @@ import {
  * synthesize an object based on them when requested.
  */
 export class DependencyContainer implements IFluidDependencySynthesizer {
-    readonly #providers = new Map<keyof IFluidObject, FluidObjectProvider<any>>();
+    private readonly providers = new Map<keyof IFluidObject, FluidObjectProvider<any>>();
 
     public get IFluidDependencySynthesizer() { return this; }
 
@@ -28,7 +28,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
      * {@inheritDoc (IFluidDependencySynthesizer:interface).registeredTypes}
      */
     public get registeredTypes(): Iterable<(keyof IFluidObject)> {
-        return this.#providers.keys();
+        return this.providers.keys();
     }
 
     public constructor(public parent: IFluidDependencySynthesizer | undefined = undefined) { }
@@ -41,15 +41,15 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
             throw new Error(`Attempting to register a provider of type ${type} that already exists`);
         }
 
-        this.#providers.set(type, provider);
+        this.providers.set(type, provider);
     }
 
     /**
      * {@inheritDoc (IFluidDependencySynthesizer:interface).unregister}
      */
     public unregister<T extends keyof IFluidObject>(type: T): void {
-        if (this.#providers.has(type)) {
-            this.#providers.delete(type);
+        if (this.providers.has(type)) {
+            this.providers.delete(type);
         }
     }
 
@@ -81,7 +81,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
      */
     public has(...types: (keyof IFluidObject)[]): boolean {
         return types.every((type) => {
-            return this.#providers.has(type);
+            return this.providers.has(type);
         });
     }
 
@@ -90,7 +90,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
      */
     public getProvider<T extends keyof IFluidObject>(type: T): FluidObjectProvider<T> | undefined {
         // If we have the provider return it
-        const provider = this.#providers.get(type);
+        const provider = this.providers.get(type);
         if (provider) {
             return provider;
         }

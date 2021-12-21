@@ -18,14 +18,14 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 export class DocumentStorageServiceProxy implements IDocumentStorageService {
-    #policies: IDocumentStorageServicePolicies | undefined;
+    private _policies: IDocumentStorageServicePolicies | undefined;
 
     public set policies(policies: IDocumentStorageServicePolicies | undefined) {
-        this.#policies = policies;
+        this._policies = policies;
     }
 
     public get policies() {
-        return this.#policies ?? this.internalStorageService.policies;
+        return this._policies ?? this.internalStorageService.policies;
     }
 
     public get repositoryUrl(): string {

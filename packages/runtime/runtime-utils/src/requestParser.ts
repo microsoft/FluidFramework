@@ -27,7 +27,7 @@ export class RequestParser implements IRequest {
                 []);
     }
 
-    #requestPathParts: readonly string[] | undefined;
+    private requestPathParts: readonly string[] | undefined;
     public readonly query: string;
 
     public static create(request: Readonly<IRequest>) {
@@ -59,10 +59,10 @@ export class RequestParser implements IRequest {
      * Returns the decoded path parts of the request's url
      */
     public get pathParts(): readonly string[] {
-        if (this.#requestPathParts === undefined) {
-            this.#requestPathParts = RequestParser.getPathParts(this.url);
+        if (this.requestPathParts === undefined) {
+            this.requestPathParts = RequestParser.getPathParts(this.url);
         }
-        return this.#requestPathParts;
+        return this.requestPathParts;
     }
 
     /**

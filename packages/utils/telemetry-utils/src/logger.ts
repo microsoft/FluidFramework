@@ -425,25 +425,25 @@ export class PerformanceEvent {
         }
     }
 
-    public get duration() { return performance.now() - this.#startTime; }
+    public get duration() { return performance.now() - this.startTime; }
 
-    #event?: ITelemetryGenericEvent;
-    readonly #startTime = performance.now();
-    #startMark?: string;
+    private event?: ITelemetryGenericEvent;
+    private readonly startTime = performance.now();
+    private startMark?: string;
 
     protected constructor(
         private readonly logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
         private readonly markers: IPerformanceEventMarkers = {end: true, cancel: "generic"},
     ) {
-        this.#event = { ...event };
+        this.event = { ...event };
         if (this.markers.start) {
             this.reportEvent("start");
         }
 
         if (typeof window === "object" && window != null && window.performance) {
-            this.#startMark = `${event.eventName}-start`;
-            window.performance.mark(this.#startMark);
+            this.startMark = `${event.eventName}-start`;
+            window.performance.mark(this.startMark);
         }
     }
 
@@ -453,25 +453,25 @@ export class PerformanceEvent {
 
     private autoEnd() {
         // Event might have been cancelled or ended in the callback
-        if (this.#event && this.markers.end) {
+        if (this.event && this.markers.end) {
             this.reportEvent("end");
         }
         this.performanceEndMark();
-        this.#event = undefined;
+        this.event = undefined;
     }
 
     public end(props?: ITelemetryProperties): void {
         this.reportEvent("end", props);
         this.performanceEndMark();
-        this.#event = undefined;
+        this.event = undefined;
     }
 
     private performanceEndMark() {
-        if (this.#startMark && this.#event) {
-            const endMark = `${this.#event.eventName}-end`;
+        if (this.startMark && this.event) {
+            const endMark = `${this.event.eventName}-end`;
             window.performance.mark(endMark);
-            window.performance.measure(`${this.#event.eventName}`, this.#startMark, endMark);
-            this.#startMark = undefined;
+            window.performance.measure(`${this.event.eventName}`, this.startMark, endMark);
+            this.startMark = undefined;
         }
     }
 
@@ -479,7 +479,7 @@ export class PerformanceEvent {
         if (this.markers.cancel !== undefined) {
             this.reportEvent("cancel", {category: this.markers.cancel, ...props}, error);
         }
-        this.#event = undefined;
+        this.event = undefined;
     }
 
     /**
@@ -489,11 +489,11 @@ export class PerformanceEvent {
         // There are strange sequences involving multiple Promise chains
         // where the event can be cancelled and then later a callback is invoked
         // and the caller attempts to end directly, e.g. issue #3936. Just return.
-        if (!this.#event) {
+        if (!this.event) {
             return;
         }
 
-        const event: ITelemetryPerformanceEvent = { ...this.#event, ...props };
+        const event: ITelemetryPerformanceEvent = { ...this.event, ...props };
         event.eventName = `${event.eventName}_${eventNameSuffix}`;
         if (eventNameSuffix !== "start") {
             event.duration = this.duration;

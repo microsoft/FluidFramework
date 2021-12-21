@@ -17,15 +17,15 @@ import {
  */
 export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     public get connected(): boolean {
-        return this.#connected;
+        return this._connected;
     }
 
     public set connected(connected: boolean) {
-        if (this.#connected === connected) {
+        if (this._connected === connected) {
             return;
         }
 
-        this.#connected = connected;
+        this._connected = connected;
 
         if (connected) {
             this.clientSequenceNumber = 0;
@@ -47,7 +47,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
         });
     }
 
-    #connected = true;
+    private _connected = true;
 
     constructor(
         dataStoreRuntime: MockFluidDataStoreRuntime,

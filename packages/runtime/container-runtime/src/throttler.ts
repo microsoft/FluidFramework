@@ -33,10 +33,10 @@ export interface IThrottler {
  * Delay is based on previous attempts within specified time window, subtracting delay time.
  */
 export class Throttler implements IThrottler {
-    #startTimes: number[] = [];
+    private startTimes: number[] = [];
 
     public get numAttempts() {
-        return this.#startTimes.length;
+        return this.startTimes.length;
     }
 
     /**
@@ -44,7 +44,7 @@ export class Throttler implements IThrottler {
      * by adding the delay times to the actual times.
      */
     public getAttempts(): readonly number[] {
-        return [ ...this.#startTimes ];
+        return [ ...this.startTimes ];
     }
 
     /**
@@ -52,7 +52,7 @@ export class Throttler implements IThrottler {
      * by adding the delay time to the actual time.
      */
     public get latestAttemptTime() {
-        return this.#startTimes.length > 0 ? this.#startTimes[this.#startTimes.length - 1] : undefined;
+        return this.startTimes.length > 0 ? this.startTimes[this.startTimes.length - 1] : undefined;
     }
 
     constructor(
@@ -77,26 +77,26 @@ export class Throttler implements IThrottler {
             // subtract the remaining time, since we previously added it.
             const earlyMs = latestAttemptTime - now;
             if (earlyMs > 0) {
-                this.#startTimes = this.#startTimes.map((t) => t - earlyMs);
+                this.startTimes = this.startTimes.map((t) => t - earlyMs);
             }
         }
 
         // Remove all attempts that have already fallen out of the window.
-        this.#startTimes = this.#startTimes.filter((t) => (now - t) < this.delayWindowMs);
+        this.startTimes = this.startTimes.filter((t) => (now - t) < this.delayWindowMs);
 
         // Compute delay, but do not exceed the specified max delay.
-        const delayMs = Math.min(this.delayFn(this.#startTimes.length), this.maxDelayMs);
+        const delayMs = Math.min(this.delayFn(this.startTimes.length), this.maxDelayMs);
 
         // Record this attempt start time.
-        this.#startTimes.push(now);
+        this.startTimes.push(now);
 
         // Account for the delay time, by effectively removing it from the delay window.
-        this.#startTimes = this.#startTimes.map((t) => t + delayMs);
+        this.startTimes = this.startTimes.map((t) => t + delayMs);
 
         if (delayMs === this.maxDelayMs) {
             // We hit max delay, so adding more won't affect anything.
             // Shift off oldest time to stop this array from growing forever.
-            this.#startTimes.shift();
+            this.startTimes.shift();
         }
 
         return delayMs;

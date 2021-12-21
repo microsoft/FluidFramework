@@ -68,22 +68,22 @@ function expandTreeForReadability(tree: ITree): ITree {
 class ContainerContent {
     public snapshot?: IFileSnapshot;
 
-    readonly #normalizedSnapshot: Lazy<IFileSnapshot>;
-    readonly #snapshotAsString: Lazy<string>;
-    readonly #snapshotExpanded: Lazy<string>;
+    private readonly _normalizedSnapshot: Lazy<IFileSnapshot>;
+    private readonly _snapshotAsString: Lazy<string>;
+    private readonly _snapshotExpanded: Lazy<string>;
 
     public constructor(public readonly op: number) {
-        this.#normalizedSnapshot = new Lazy(() => {
+        this._normalizedSnapshot = new Lazy(() => {
             assert(this.snapshot !== undefined, 0x1c5 /* "snapshot should be set before retreiving it" */);
             return getNormalizedFileSnapshot(this.snapshot);
         });
 
-        this.#snapshotAsString = new Lazy(() => {
+        this._snapshotAsString = new Lazy(() => {
             assert(this.snapshot !== undefined, 0x1c6 /* "snapshot should be set before retreiving it" */);
             return JSON.stringify(this.snapshot, undefined, 2);
         });
 
-        this.#snapshotExpanded = new Lazy(() => {
+        this._snapshotExpanded = new Lazy(() => {
             assert(this.snapshot !== undefined,
                 0x1c7 /* "snapshot should be set before retreiving it as expanded string" */);
             const snapshotExpanded: IFileSnapshot = {
@@ -99,17 +99,17 @@ class ContainerContent {
 
     // Returns a normalized version of the file snapshot. This will be used when comparing snapshots.
     get normalizedSnapshot(): IFileSnapshot {
-        return this.#normalizedSnapshot.value;
+        return this._normalizedSnapshot.value;
     }
 
     // Returns the original snapshot as a string.
     get snapshotAsString(): string {
-        return this.#snapshotAsString.value;
+        return this._snapshotAsString.value;
     }
 
     // Returns an expanded string version of the original snapshot for readability.
     get snapshotExpanded(): string {
-        return this.#snapshotExpanded.value;
+        return this._snapshotExpanded.value;
     }
 }
 
@@ -141,13 +141,13 @@ class Logger implements ITelemetryBaseLogger {
  * Helper class holding container and providing load / snapshot capabilities
  */
 class Document {
-    #container: IContainer;
-    #replayer: Replayer;
-    #documentSeqNumber = 0;
-    #from = -1;
-    #snapshotFileName: string = "";
-    #docLogger: TelemetryLogger;
-    #originalSummarySeqs: number[];
+    private container: IContainer;
+    private replayer: Replayer;
+    private documentSeqNumber = 0;
+    private from = -1;
+    private snapshotFileName: string = "";
+    private docLogger: TelemetryLogger;
+    private originalSummarySeqs: number[];
 
     public constructor(
         protected readonly args: ReplayArgs,
@@ -156,27 +156,27 @@ class Document {
     }
 
     public get currentOp() {
-        return this.#replayer.currentReplayedOp;
+        return this.replayer.currentReplayedOp;
     }
 
     public get fromOp() {
-        return this.#from;
+        return this.from;
     }
 
     public get logger() {
-        return this.#docLogger;
+        return this.docLogger;
     }
 
     public get originalSummarySequenceNumbers(): readonly number[] {
-        return this.#originalSummarySeqs;
+        return this.originalSummarySeqs;
     }
 
     public getFileName() {
-        return `snapshot_${this.currentOp}_${this.#snapshotFileName}`;
+        return `snapshot_${this.currentOp}_${this.snapshotFileName}`;
     }
 
     public appendToFileName(suffix: string) {
-        this.#snapshotFileName = `${this.#snapshotFileName}${suffix}`;
+        this.snapshotFileName = `${this.snapshotFileName}${suffix}`;
     }
 
     public async load(
@@ -188,50 +188,50 @@ class Document {
             deltaStorageService,
             deltaConnection);
 
-        this.#docLogger = ChildLogger.create(new Logger(this.containerDescription, errorHandler));
-        this.#container = await loadContainer(
+        this.docLogger = ChildLogger.create(new Logger(this.containerDescription, errorHandler));
+        this.container = await loadContainer(
             documentServiceFactory,
             FileStorageDocumentName,
-            this.#docLogger);
+            this.docLogger);
 
-        this.#from = this.#container.deltaManager.lastSequenceNumber;
-        this.#replayer = deltaConnection.getReplayer();
-        this.#originalSummarySeqs = [];
-        this.#replayer.ops.forEach((op) => {
+        this.from = this.container.deltaManager.lastSequenceNumber;
+        this.replayer = deltaConnection.getReplayer();
+        this.originalSummarySeqs = [];
+        this.replayer.ops.forEach((op) => {
             if (op?.type === MessageType.Summarize) {
                 const seq = op.referenceSequenceNumber;
                 if (seq !== undefined) {
-                    this.#originalSummarySeqs.push(seq);
+                    this.originalSummarySeqs.push(seq);
                 }
             }
         });
 
-        this.#replayer.currentReplayedOp = this.#from;
+        this.replayer.currentReplayedOp = this.from;
 
-        this.#snapshotFileName = `${this.fromOp}`;
+        this.snapshotFileName = `${this.fromOp}`;
 
-        this.#container.on("op", (message: ISequencedDocumentMessage) => {
-            this.#documentSeqNumber = message.sequenceNumber;
-            if (this.currentOp === this.#documentSeqNumber) {
-                this.#resolveC();
+        this.container.on("op", (message: ISequencedDocumentMessage) => {
+            this.documentSeqNumber = message.sequenceNumber;
+            if (this.currentOp === this.documentSeqNumber) {
+                this.resolveC();
             }
         });
     }
 
     public async replay(replayTo: number) {
-        const fetched = this.#replayer.replay(replayTo);
+        const fetched = this.replayer.replay(replayTo);
 
-        if (fetched > 0 && this.#documentSeqNumber !== this.currentOp) {
+        if (fetched > 0 && this.documentSeqNumber !== this.currentOp) {
             await new Promise<void>((resolve) => {
-                this.#resolveC = resolve;
+                this.resolveC = resolve;
             });
-            assert(this.#documentSeqNumber === this.currentOp,
+            assert(this.documentSeqNumber === this.currentOp,
                 0x1c8 /* "Mismatch between document sequence number and current op number" */);
         }
     }
 
     public async snapshot() {
-        return (this.#container as Container).snapshot(
+        return (this.container as Container).snapshot(
             `ReplayTool Snapshot: op ${this.currentOp}, ${this.getFileName()}`,
             !this.args.incremental /* generateFullTreeNoOtimizations */);
     }
@@ -249,27 +249,27 @@ class Document {
     }
 
     public close() {
-        this.#container.close();
+        this.container.close();
     }
 
-    #resolveC = () => { };
+    private resolveC = () => { };
 }
 
 /**
  * All the logic of replay tool
  */
 export class ReplayTool {
-    #storage: ISnapshotWriterStorage;
-    #mainDocument: Document;
-    #documentNeverSnapshot?: Document;
-    #documentPriorSnapshot?: Document;
-    #documentPriorWindow?: Document;
-    readonly #documents: Document[] = [];
-    readonly #documentsWindow: Document[] = [];
-    readonly #documentsFromStorageSnapshots: Document[] = [];
-    #windiffCount = 0;
-    #deltaStorageService: FileDeltaStorageService;
-    readonly #errors: string[] = [];
+    private storage: ISnapshotWriterStorage;
+    private mainDocument: Document;
+    private documentNeverSnapshot?: Document;
+    private documentPriorSnapshot?: Document;
+    private documentPriorWindow?: Document;
+    private readonly documents: Document[] = [];
+    private readonly documentsWindow: Document[] = [];
+    private readonly documentsFromStorageSnapshots: Document[] = [];
+    private windiffCount = 0;
+    private deltaStorageService: FileDeltaStorageService;
+    private readonly errors: string[] = [];
 
     public constructor(private readonly args: ReplayArgs) { }
 
@@ -292,26 +292,26 @@ export class ReplayTool {
         await this.mainCycle();
 
         if (this.args.verbose) {
-            console.log("\nLast replayed op seq# ", this.#mainDocument.currentOp);
+            console.log("\nLast replayed op seq# ", this.mainDocument.currentOp);
         } else if (threads.isMainThread) {
             process.stdout.write("\n");
         }
-        assert(this.#documentsFromStorageSnapshots.length === 0,
+        assert(this.documentsFromStorageSnapshots.length === 0,
             0x1c9 /* "Leftover documents after replay!" */);
 
         process.removeListener("unhandledRejection", listener);
 
-        return this.#errors;
+        return this.errors;
     }
 
     private shouldReportError(errorString: string) {
         // Report only first 5 errors
-        this.#errors.push(errorString);
+        this.errors.push(errorString);
         const errorsToReport = 5;
-        if (this.#errors.length <= errorsToReport) {
+        if (this.errors.length <= errorsToReport) {
             return true;
         }
-        if (this.#errors.length === errorsToReport + 1) {
+        if (this.errors.length === errorsToReport + 1) {
             console.error("\n!!! Too many errors - stopped reporting errors !!!");
         }
         return false;
@@ -338,8 +338,8 @@ export class ReplayTool {
         // Avoid that, but have a safety net - increase error count, so that tool
         // still fails even if error is not propagated / reported properly.
         if (event.eventName === "fluid:telemetry:Container:SnapshotExceptionError") {
-            if (this.#errors.length === 0) {
-                this.#errors.push(errorString);
+            if (this.errors.length === 0) {
+                this.errors.push(errorString);
             }
             return false;
         }
@@ -349,7 +349,7 @@ export class ReplayTool {
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     private loadDoc(doc: Document) {
         return doc.load(
-            this.#deltaStorageService,
+            this.deltaStorageService,
             (event) => this.errorHandler(event));
     }
 
@@ -361,7 +361,7 @@ export class ReplayTool {
             return Promise.reject(new Error("File does not exist"));
         }
 
-        this.#deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
+        this.deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
 
         // Can't load files from ops any more, due to detached container creation
         // If there are snapshots present (from fetch tool), find latest snapshot and load from it.
@@ -390,20 +390,20 @@ export class ReplayTool {
             }
         }
 
-        this.#storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.fromVersion);
+        this.storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.fromVersion);
         let description = this.args.fromVersion ? this.args.fromVersion : "main container";
-        this.#mainDocument = new Document(this.args, this.#storage, description);
-        await this.loadDoc(this.#mainDocument);
-        this.#documents.push(this.#mainDocument);
-        if (this.args.from < this.#mainDocument.fromOp) {
-            this.args.from = this.#mainDocument.fromOp;
+        this.mainDocument = new Document(this.args, this.storage, description);
+        await this.loadDoc(this.mainDocument);
+        this.documents.push(this.mainDocument);
+        if (this.args.from < this.mainDocument.fromOp) {
+            this.args.from = this.mainDocument.fromOp;
         }
 
         if (this.args.fromVersion !== undefined) {
             if (this.args.verbose) {
-                console.log(`Starting from ${this.args.fromVersion}, seq# = ${this.#mainDocument.currentOp}`);
+                console.log(`Starting from ${this.args.fromVersion}, seq# = ${this.mainDocument.currentOp}`);
             }
-            if (this.#mainDocument.currentOp > this.args.to) {
+            if (this.mainDocument.currentOp > this.args.to) {
                 return Promise.reject(new Error("--to argument is below snapshot starting op. Nothing to do!"));
             }
         }
@@ -445,7 +445,7 @@ export class ReplayTool {
                         if (this.args.verbose) {
                             console.log(`Loaded snapshots ${node.name} generated at op = ${doc.fromOp}`);
                         }
-                        this.#documents.push(doc);
+                        this.documents.push(doc);
                     }
                 } catch (error) {
                     doc.logger.sendErrorEvent({ eventName: "FailedToLoadSnapshot" }, error);
@@ -458,11 +458,11 @@ export class ReplayTool {
         if (this.args.snapFreq !== undefined || this.args.validateStorageSnapshots) {
             const storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.fromVersion);
             description = this.args.fromVersion ? this.args.fromVersion : "secondary container";
-            this.#documentNeverSnapshot = new Document(this.args, storage, description);
+            this.documentNeverSnapshot = new Document(this.args, storage, description);
             await this.loadDoc(
-                this.#documentNeverSnapshot);
-            this.#documentNeverSnapshot.appendToFileName("_noSnapshots");
-            this.#documents.push(this.#documentNeverSnapshot);
+                this.documentNeverSnapshot);
+            this.documentNeverSnapshot.appendToFileName("_noSnapshots");
+            this.documents.push(this.documentNeverSnapshot);
         }
 
         // Load all snapshots from storage
@@ -492,26 +492,26 @@ export class ReplayTool {
                         console.log(`Skipping snapshots ${node.name} generated at op = ${doc.fromOp}`);
                     } else {
                         console.log(`Loaded snapshots ${node.name} generated at op = ${doc.fromOp}`);
-                        this.#documentsFromStorageSnapshots.push(doc);
+                        this.documentsFromStorageSnapshots.push(doc);
                     }
                 } catch (error) {
                     doc.logger.sendErrorEvent({ eventName: "FailedToLoadSnapshot" }, error);
                 }
             }
-            this.#documentsFromStorageSnapshots.sort((a: Document, b: Document) => a.fromOp > b.fromOp ? 1 : -1);
+            this.documentsFromStorageSnapshots.sort((a: Document, b: Document) => a.fromOp > b.fromOp ? 1 : -1);
         }
     }
 
     private async mainCycle() {
         const originalSummaries =
-            this.args.testSummaries ? [...this.#mainDocument.originalSummarySequenceNumbers] : [];
+            this.args.testSummaries ? [...this.mainDocument.originalSummarySequenceNumbers] : [];
         let nextSnapPoint;
         do {
             nextSnapPoint = originalSummaries.shift() ?? this.args.from;
         } while (nextSnapPoint < this.args.from);
         // eslint-disable-next-line no-constant-condition
         while (true) {
-            const currentOp = this.#mainDocument.currentOp;
+            const currentOp = this.mainDocument.currentOp;
             if (nextSnapPoint <= currentOp) {
                 if (this.args.snapFreq !== undefined) {
                     nextSnapPoint = currentOp + this.args.snapFreq;
@@ -521,20 +521,20 @@ export class ReplayTool {
             }
             let replayTo = Math.min(nextSnapPoint, this.args.to);
 
-            if (this.#documentsFromStorageSnapshots.length > 0) {
-                const op = this.#documentsFromStorageSnapshots[0].fromOp;
+            if (this.documentsFromStorageSnapshots.length > 0) {
+                const op = this.documentsFromStorageSnapshots[0].fromOp;
                 replayTo = Math.min(replayTo, op);
             }
 
             assert(replayTo > currentOp, 0x1ca /* "replay-to target is <= current op in replay cycle" */);
-            for (const doc of this.#documents) {
+            for (const doc of this.documents) {
                 await doc.replay(replayTo);
             }
-            for (const doc of this.#documentsWindow) {
+            for (const doc of this.documentsWindow) {
                 await doc.replay(replayTo);
             }
 
-            const final = this.#mainDocument.currentOp < replayTo || this.args.to <= this.#mainDocument.currentOp;
+            const final = this.mainDocument.currentOp < replayTo || this.args.to <= this.mainDocument.currentOp;
             await this.generateSnapshot(final);
             if (final) {
                 break;
@@ -543,22 +543,22 @@ export class ReplayTool {
     }
 
     private async generateMainSnapshot(dir: string, final: boolean): Promise<ContainerContent> {
-        const op = this.#mainDocument.currentOp;
+        const op = this.mainDocument.currentOp;
 
-        const content = this.#mainDocument.extractContent();
+        const content = this.mainDocument.extractContent();
 
-        this.#storage.onSnapshotHandler = (snapshot: IFileSnapshot) => {
+        this.storage.onSnapshotHandler = (snapshot: IFileSnapshot) => {
             content.snapshot = snapshot;
             if (this.args.compare) {
                 compareWithReferenceSnapshot(
                     content.normalizedSnapshot,
-                    `${dir}/${this.#mainDocument.getFileName()}`,
+                    `${dir}/${this.mainDocument.getFileName()}`,
                     (description: string, error?: any) => this.reportError(description, error));
             } else if (this.args.write) {
                 fs.mkdirSync(dir, { recursive: true });
                 this.expandForReadabilityAndWriteOut(
                     content,
-                    `${dir}/${this.#mainDocument.getFileName()}`);
+                    `${dir}/${this.mainDocument.getFileName()}`);
             }
         };
 
@@ -570,9 +570,9 @@ export class ReplayTool {
             }
         }
 
-        await this.#mainDocument.snapshot();
+        await this.mainDocument.snapshot();
         if (final) {
-            this.#mainDocument.close();
+            this.mainDocument.close();
         }
 
         return content;
@@ -587,19 +587,19 @@ export class ReplayTool {
         // Add extra container
         if (!final && (
             this.args.snapFreq !== undefined
-            && ((op - this.#mainDocument.fromOp) % this.args.snapFreq) === 0)
+            && ((op - this.mainDocument.fromOp) % this.args.snapFreq) === 0)
         ) {
             const storageClass = FileSnapshotWriterClassFactory(FileSnapshotReader);
             const storage = new storageClass(content.snapshot);
             const document3 = new Document(this.args, storage, `Saved & loaded at seq# ${op}`);
             await this.loadDoc(document3);
-            this.#documentsWindow.push(document3);
+            this.documentsWindow.push(document3);
         }
 
         const startOp = op - this.args.overlappingContainers * this.args.snapFreq;
-        while (this.#documentsWindow.length > 0
-            && (final || this.#documentsWindow[0].fromOp <= startOp)) {
-            const doc = this.#documentsWindow.shift();
+        while (this.documentsWindow.length > 0
+            && (final || this.documentsWindow[0].fromOp <= startOp)) {
+            const doc = this.documentsWindow.shift();
             assert(doc.fromOp === startOp || final,
                 0x1cb /* "Bad window to verify snapshot" */);
             await this.saveAndVerify(doc, dir, content, final);
@@ -609,21 +609,21 @@ export class ReplayTool {
     private async validateStorageSnapshots(content: ContainerContent, dir: string, final: boolean) {
         const op = content.op;
 
-        const processVersionedSnapshot = this.#documentsFromStorageSnapshots.length > 0 &&
-            this.#documentsFromStorageSnapshots[0].fromOp <= op;
-        if (this.#documentPriorSnapshot && (processVersionedSnapshot || final)) {
-            await this.#documentPriorSnapshot.replay(op);
-            await this.saveAndVerify(this.#documentPriorSnapshot, dir, content, final);
-            this.#documentPriorSnapshot = undefined;
+        const processVersionedSnapshot = this.documentsFromStorageSnapshots.length > 0 &&
+            this.documentsFromStorageSnapshots[0].fromOp <= op;
+        if (this.documentPriorSnapshot && (processVersionedSnapshot || final)) {
+            await this.documentPriorSnapshot.replay(op);
+            await this.saveAndVerify(this.documentPriorSnapshot, dir, content, final);
+            this.documentPriorSnapshot = undefined;
         }
         if (processVersionedSnapshot) {
-            this.#documentPriorSnapshot = this.#documentsFromStorageSnapshots.shift();
-            assert(this.#documentPriorSnapshot.fromOp === op, 0x1cc /* "Unexpected previous snapshot op number" */);
-            await this.saveAndVerify(this.#documentPriorSnapshot, dir, content, final)
+            this.documentPriorSnapshot = this.documentsFromStorageSnapshots.shift();
+            assert(this.documentPriorSnapshot.fromOp === op, 0x1cc /* "Unexpected previous snapshot op number" */);
+            await this.saveAndVerify(this.documentPriorSnapshot, dir, content, final)
                 .catch((e) => {
-                    const from = this.#documentPriorSnapshot.containerDescription;
+                    const from = this.documentPriorSnapshot.containerDescription;
                     this.reportError(`Error logged from ${from} while generating snapshot`, e);
-                    this.#documentPriorSnapshot = undefined;
+                    this.documentPriorSnapshot = undefined;
                 });
         }
     }
@@ -635,22 +635,22 @@ export class ReplayTool {
         // distance between load & save, and finds bugs in catchup ops.
         // No need to do it if overlappingContainers === 1 - there is container like that
         // in validateSlidingSnapshots()!
-        if (this.#documentPriorWindow && this.args.overlappingContainers !== 1) {
-            await this.#documentPriorWindow.replay(op);
-            await this.saveAndVerify(this.#documentPriorWindow, dir, content, final);
-            this.#documentPriorWindow = undefined;
+        if (this.documentPriorWindow && this.args.overlappingContainers !== 1) {
+            await this.documentPriorWindow.replay(op);
+            await this.saveAndVerify(this.documentPriorWindow, dir, content, final);
+            this.documentPriorWindow = undefined;
         }
 
         // Load it back to prove it's correct
         const storageClass = FileSnapshotWriterClassFactory(FileSnapshotReader);
         const storage = new storageClass(content.snapshot);
-        this.#documentPriorWindow = new Document(this.args, storage, `Saved & loaded at seq# ${op}`);
-        await this.loadDoc(this.#documentPriorWindow);
-        await this.saveAndVerify(this.#documentPriorWindow, dir, content, final);
+        this.documentPriorWindow = new Document(this.args, storage, `Saved & loaded at seq# ${op}`);
+        await this.loadDoc(this.documentPriorWindow);
+        await this.saveAndVerify(this.documentPriorWindow, dir, content, final);
     }
 
     private async generateSnapshot(final: boolean) {
-        const op = this.#mainDocument.currentOp;
+        const op = this.mainDocument.currentOp;
         const dir = this.args.outDirName; // `${this.args.outDirName}/${op}`;
 
         const content = await this.generateMainSnapshot(dir, final);
@@ -659,7 +659,7 @@ export class ReplayTool {
             // It takes some number of ops to get there (join, propose)
             // Do not report a failure if document is almost empty.
             if (op >= 4) {
-                this.reportError(`\nSnapshot ${this.#mainDocument.getFileName()} was not saved for op # ${op}!`);
+                this.reportError(`\nSnapshot ${this.mainDocument.getFileName()} was not saved for op # ${op}!`);
             }
             return;
         }
@@ -668,8 +668,8 @@ export class ReplayTool {
 
         await this.validateSlidingSnapshots(content, dir, final);
 
-        if (final && this.#documentNeverSnapshot) {
-            await this.saveAndVerify(this.#documentNeverSnapshot, dir, content, final);
+        if (final && this.documentNeverSnapshot) {
+            await this.saveAndVerify(this.documentNeverSnapshot, dir, content, final);
         }
 
         await this.validateStorageSnapshots(content, dir, final);
@@ -695,7 +695,7 @@ export class ReplayTool {
 
         const content2 = document2.extractContent();
 
-        const name1 = this.#mainDocument.getFileName();
+        const name1 = this.mainDocument.getFileName();
         const name2 = document2.getFileName();
 
         document2.storage.onSnapshotHandler = (snapshot: IFileSnapshot) => {
@@ -739,11 +739,11 @@ export class ReplayTool {
 
             if (this.args.windiff) {
                 console.log(`windiff.exe "${failedDir}/${name1}_expanded.json" "${failedDir}/${name2}_expanded.json"`);
-                this.#windiffCount++;
-                if (this.#windiffCount <= 10) {
+                this.windiffCount++;
+                if (this.windiffCount <= 10) {
                     child_process.exec(
                         `windiff.exe "${failedDir}/${name1}_expanded.json" "${failedDir}/${name2}_expanded.json"`);
-                } else if (this.#windiffCount === 10) {
+                } else if (this.windiffCount === 10) {
                     console.error("Launched 10 windiff processes, stopping!");
                 }
             }

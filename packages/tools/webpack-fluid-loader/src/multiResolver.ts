@@ -66,7 +66,7 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
 }
 
 export class MultiUrlResolver implements IUrlResolver {
-    readonly #urlResolver: IUrlResolver;
+    private readonly urlResolver: IUrlResolver;
     constructor(
         private readonly documentId: string,
         private readonly rawUrl: string,
@@ -74,9 +74,9 @@ export class MultiUrlResolver implements IUrlResolver {
         private readonly useLocalResolver: boolean = false,
     ) {
         if (this.useLocalResolver) {
-            this.#urlResolver = new LocalResolver();
+            this.urlResolver = new LocalResolver();
         } else {
-            this.#urlResolver = getUrlResolver(options);
+            this.urlResolver = getUrlResolver(options);
         }
     }
 
@@ -89,27 +89,27 @@ export class MultiUrlResolver implements IUrlResolver {
     }
 
     async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
-        return this.#urlResolver.resolve(request);
+        return this.urlResolver.resolve(request);
     }
 
     public async createRequestForCreateNew(
         fileName: string,
     ): Promise<IRequest> {
         if (this.useLocalResolver) {
-            return (this.#urlResolver as LocalResolver).createCreateNewRequest(fileName);
+            return (this.urlResolver as LocalResolver).createCreateNewRequest(fileName);
         }
         switch (this.options.mode) {
             case "r11s":
             case "docker":
             case "tinylicious":
-                return (this.#urlResolver as InsecureUrlResolver).createCreateNewRequest(fileName);
+                return (this.urlResolver as InsecureUrlResolver).createCreateNewRequest(fileName);
 
             case "spo":
             case "spo-df":
-                return (this.#urlResolver as OdspUrlResolver).createCreateNewRequest(fileName);
+                return (this.urlResolver as OdspUrlResolver).createCreateNewRequest(fileName);
 
             default: // Local
-                return (this.#urlResolver as LocalResolver).createCreateNewRequest(fileName);
+                return (this.urlResolver as LocalResolver).createCreateNewRequest(fileName);
         }
     }
 }

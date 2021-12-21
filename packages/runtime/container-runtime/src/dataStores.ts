@@ -50,19 +50,45 @@ import {
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 import { IUsedStateStats } from "./garbageCollection";
 
+type PendingAliasResolve = (success: boolean) => void;
+
+/**
+ * Interface for an op to be used for assigning an
+ * alias to a datastore
+ */
+interface IDataStoreAliasMessage {
+    /** The internal id of the datastore */
+    readonly internalId: string;
+    /** The alias name to be assigned to the datastore */
+    readonly alias: string;
+}
+
+/**
+ * Type guard that returns true if the given alias message is actually an instance of
+ * a class which implements @see IDataStoreAliasMessage
+ * @param maybeDataStoreAliasMessage - message object to be validated
+ * @returns True if the @see IDataStoreAliasMessage is fully implemented, false otherwise
+ */
+const isDataStoreAliasMessage = (
+    maybeDataStoreAliasMessage: any,
+): maybeDataStoreAliasMessage is IDataStoreAliasMessage => {
+    return typeof maybeDataStoreAliasMessage?.internalId === "string"
+        && typeof maybeDataStoreAliasMessage?.alias === "string";
+};
+
  /**
   * This class encapsulates data store handling. Currently it is only used by the container runtime,
   * but eventually could be hosted on any channel once we formalize the channel api boundary.
   */
 export class DataStores implements IDisposable {
     // Stores tracked by the Domain
-    readonly #pendingAttach = new Map<string, IAttachMessage>();
+    private readonly pendingAttach = new Map<string, IAttachMessage>();
     // 0.24 back-compat attachingBeforeSummary
     public readonly attachOpFiredForDataStore = new Set<string>();
 
-    readonly #logger: ITelemetryLogger;
+    private readonly logger: ITelemetryLogger;
 
-    readonly #disposeOnce = new Lazy<void>(() => this.contexts.dispose());
+    private readonly disposeOnce = new Lazy<void>(() => this.contexts.dispose());
 
     public readonly containerLoadStats: {
         // number of dataStores during loadContainer
@@ -81,9 +107,10 @@ export class DataStores implements IDisposable {
         baseLogger: ITelemetryBaseLogger,
         getDataStoreBaseGCDetails: () => Promise<Map<string, IGarbageCollectionSummaryDetails>>,
         private readonly dataStoreChanged: (id: string) => void,
+        private readonly aliasMap: Map<string, string>,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
-        this.#logger = ChildLogger.create(baseLogger);
+        this.logger = ChildLogger.create(baseLogger);
 
         const baseDataStoresGCDetailsP = new LazyPromise(async () => {
             return getDataStoreBaseGCDetails();
@@ -146,14 +173,18 @@ export class DataStores implements IDisposable {
         };
     }
 
+    public aliases(): ReadonlyMap<string, string> {
+        return this.aliasMap;
+    }
+
     public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
         const attachMessage = message.contents as InboundAttachMessage;
         // The local object has already been attached
         if (local) {
-            assert(this.#pendingAttach.has(attachMessage.id),
+            assert(this.pendingAttach.has(attachMessage.id),
                 0x15e /* "Local object does not have matching attach message id" */);
             this.contexts.get(attachMessage.id)?.emit("attached");
-            this.#pendingAttach.delete(attachMessage.id);
+            this.pendingAttach.delete(attachMessage.id);
             return;
         }
 
@@ -205,12 +236,60 @@ export class DataStores implements IDisposable {
                 }),
             pkg);
 
-        // Resolve pending gets and store off any new ones
         this.contexts.addBoundOrRemoted(remotedFluidDataStoreContext);
 
         // Equivalent of nextTick() - Prefetch once all current ops have completed
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         Promise.resolve().then(async () => remotedFluidDataStoreContext.realize());
+    }
+
+    public processAliasMessage(
+        message: ISequencedDocumentMessage,
+        localOpMetadata: unknown,
+        local: boolean,
+    ): void {
+        const aliasMessage = message.contents as IDataStoreAliasMessage;
+        if (!isDataStoreAliasMessage(aliasMessage)) {
+            throw new DataCorruptionError(
+                "malformedDataStoreAliasMessage",
+                {
+                    ...extractSafePropertiesFromMessage(message),
+                },
+            );
+        }
+
+        const resolve = localOpMetadata as PendingAliasResolve;
+        const aliasResult = this.processAliasMessageCore(aliasMessage);
+        if (local) {
+            resolve(aliasResult);
+        }
+    }
+
+    private processAliasMessageCore(aliasMessage: IDataStoreAliasMessage): boolean {
+        const existingMapping = this.aliasMap.get(aliasMessage.alias);
+        if (existingMapping !== undefined) {
+            return false;
+        }
+
+        // Unlikely scenario, but we may receive an alias OP with the alias value
+        // equal to one of the ids supplied to `createRootDataStore` in the past
+        const maybeContextWithAliasAsId = this.contexts.get(aliasMessage.alias);
+        if (maybeContextWithAliasAsId !== undefined) {
+            return false;
+        }
+
+        const currentContext = this.contexts.get(aliasMessage.internalId);
+        if (currentContext === undefined) {
+            this.logger.sendErrorEvent({
+                eventName: "AliasFluidDataStoreNotFound",
+                fluidDataStoreId: aliasMessage.internalId,
+            });
+            return false;
+        }
+
+        this.aliasMap.set(aliasMessage.alias, currentContext.id);
+        currentContext.setRoot();
+        return true;
     }
 
     public bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
@@ -225,7 +304,7 @@ export class DataStores implements IDisposable {
             localContext.emit("attaching");
             const message = localContext.generateAttachMessage();
 
-            this.#pendingAttach.set(id, message);
+            this.pendingAttach.set(id, message);
             this.submitAttachFn(message);
             this.attachOpFiredForDataStore.add(id);
         }
@@ -269,8 +348,8 @@ export class DataStores implements IDisposable {
         return context;
     }
 
-    public get disposed() {return this.#disposeOnce.evaluated;}
-    public readonly dispose = () => this.#disposeOnce.value;
+    public get disposed() {return this.disposeOnce.evaluated;}
+    public readonly dispose = () => this.disposeOnce.value;
 
     public resubmitDataStoreOp(content: any, localOpMetadata: unknown) {
         const envelope = content as IEnvelope;
@@ -287,7 +366,7 @@ export class DataStores implements IDisposable {
     }
 
     public async applyStashedAttachOp(message: IAttachMessage) {
-        this.#pendingAttach.set(message.id, message);
+        this.pendingAttach.set(message.id, message);
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         this.processAttachMessage({ contents: message } as ISequencedDocumentMessage, false);
     }
@@ -304,8 +383,9 @@ export class DataStores implements IDisposable {
     }
 
     public async getDataStore(id: string, wait: boolean): Promise<FluidDataStoreContext> {
-        const context = await this.contexts.getBoundOrRemoted(id, wait);
+        const internalId = this.aliasMap.get(id) ?? id;
 
+        const context = await this.contexts.getBoundOrRemoted(internalId, wait);
         if (context === undefined) {
             // The requested data store does not exits. Throw a 404 response exception.
             const request = { url: id };
@@ -320,7 +400,7 @@ export class DataStores implements IDisposable {
         if (!context) {
             // Attach message may not have been processed yet
             assert(!local, 0x163 /* "Missing datastore for local signal" */);
-            this.#logger.sendTelemetryEvent({
+            this.logger.sendTelemetryEvent({
                 eventName: "SignalFluidDataStoreNotFound",
                 fluidDataStoreId: address,
             });
@@ -335,7 +415,7 @@ export class DataStores implements IDisposable {
             try {
                 context.setConnectionState(connected, clientId);
             } catch (error) {
-                this.#logger.sendErrorEvent({
+                this.logger.sendErrorEvent({
                     eventName: "SetConnectionStateError",
                     clientId,
                     fluidDataStore,
@@ -421,8 +501,8 @@ export class DataStores implements IDisposable {
     /**
      * Generates data used for garbage collection. It does the following:
      * 1. Calls into each child data store context to get its GC data.
-     * 2. Prefixs the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be
-     *    idenfied as belonging to the child.
+     * 2. Prefixes the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be
+     *    identified as belonging to the child.
      * 3. Adds a GC node for this channel to the nodes received from the children. All these nodes together represent
      *    the GC data of this channel.
      * @param fullGC - true to bypass optimizations and force full generation of GC data.

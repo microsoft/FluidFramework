@@ -30,8 +30,8 @@ interface ContainerRecord {
 }
 
 export class LoaderContainerTracker implements IOpProcessingController {
-    readonly #containers = new Map<IContainer, ContainerRecord>();
-    #lastProposalSeqNum: number = 0;
+    private readonly containers = new Map<IContainer, ContainerRecord>();
+    private lastProposalSeqNum: number = 0;
 
     /**
      * Add a loader to start to track any container created from them
@@ -65,16 +65,16 @@ export class LoaderContainerTracker implements IOpProcessingController {
         if (!container.deltaManager.clientDetails.capabilities.interactive) { return; }
 
         // don't add container that is already tracked
-        if (this.#containers.has(container)) { return; }
+        if (this.containers.has(container)) { return; }
 
         const record = {
-            index: this.#containers.size,
+            index: this.containers.size,
             paused: false,
             startTrailingNoOps: 0,
             trailingNoOps: 0,
             lastProposal: 0,
         };
-        this.#containers.set(container, record);
+        this.containers.set(container, record);
         this.trackTrailingNoOps(container, record);
         this.trackLastProposal(container);
         this.setupTrace(container, record.index);
@@ -127,8 +127,8 @@ export class LoaderContainerTracker implements IOpProcessingController {
 
     private trackLastProposal(container: IContainer) {
         container.getQuorum().on("addProposal", (proposal) => {
-            if (proposal.sequenceNumber > this.#lastProposalSeqNum) {
-                this.#lastProposalSeqNum = proposal.sequenceNumber;
+            if (proposal.sequenceNumber > this.lastProposalSeqNum) {
+                this.lastProposalSeqNum = proposal.sequenceNumber;
             }
         });
     }
@@ -137,11 +137,11 @@ export class LoaderContainerTracker implements IOpProcessingController {
      * Reset the tracker, closing all containers and stop tracking them.
      */
     public reset() {
-        this.#lastProposalSeqNum = 0;
-        for (const container of this.#containers.keys()) {
+        this.lastProposalSeqNum = 0;
+        for (const container of this.containers.keys()) {
             container.close();
         }
-        this.#containers.clear();
+        this.containers.clear();
 
         // REVIEW: do we need to unpatch the loaders?
     }
@@ -189,9 +189,8 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 }
             } else {
                 // Wait for all the containers to be saved
-                debugWait(
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    `Waiting container to be saved ${dirtyContainers.map((c) => this.#containers.get(c)!.index)}`);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                debugWait(`Waiting container to be saved ${dirtyContainers.map((c) => this.containers.get(c)!.index)}`);
                 waitingSequenceNumberSynchronized = false;
                 await Promise.all(dirtyContainers.map(async (c) => new Promise((res) => c.once("saved", res))));
             }
@@ -218,7 +217,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
     private getPendingClients(containersToApply: IContainer[]) {
         // All the clientId we track should be a superset of the quorum, otherwise, we are missing
         // leave messages
-        const openedDocuments = Array.from(this.#containers.keys()).filter((c) => !c.closed);
+        const openedDocuments = Array.from(this.containers.keys()).filter((c) => !c.closed);
         const openedClientId = openedDocuments.map((container) => (container as Container).clientId);
 
         const pendingClients: [IContainer, Set<string>][] = [];
@@ -262,7 +261,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
             // Note that in read only mode, the op won't be submitted
             let deltaManager = (container.deltaManager as any);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const { trailingNoOps } = this.#containers.get(container)!;
+            const { trailingNoOps } = this.containers.get(container)!;
             // Back-compat: clientSequenceNumber & clientSequenceNumberObserved moved to ConnectionManager in 0.53
             if (!("clientSequenceNumber" in deltaManager)) {
                 deltaManager = deltaManager.connectionManager;
@@ -278,7 +277,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
         }
 
         const minSeqNum = containersToApply[0].deltaManager.minimumSequenceNumber;
-        if (minSeqNum < this.#lastProposalSeqNum) {
+        if (minSeqNum < this.lastProposalSeqNum) {
             // There is an unresolved proposal
             return false;
         }
@@ -298,7 +297,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
      */
     private async waitForPendingClients(pendingClients: [IContainer, Set<string>][]) {
         const unconnectedClients =
-            Array.from(this.#containers.keys()).filter((c) => !c.closed && !(c as Container).connected);
+            Array.from(this.containers.keys()).filter((c) => !c.closed && !(c as Container).connected);
         return Promise.all(pendingClients.map(async ([container, pendingClientId]) => {
             return new Promise<void>((res) => {
                 const cleanup = () => {
@@ -313,7 +312,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
                     }
                 };
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                const index = this.#containers.get(container)!.index;
+                const index = this.containers.get(container)!.index;
                 debugWait(`${index}: Waiting for pending clients ${Array.from(pendingClientId.keys())}`);
                 unconnectedClients.forEach((c) => c.on("connected", handler));
                 container.getQuorum().on("removeMember", handler);
@@ -350,7 +349,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
         const resumed: IContainer[] = [];
         const containersToApply = this.getContainers(containers);
         for (const container of containersToApply) {
-            const record = this.#containers.get(container);
+            const record = this.containers.get(container);
             if (record !== undefined && record.paused) {
                 debugWait(`${record.index}: container resumed`);
                 container.deltaManager.inbound.resume();
@@ -370,7 +369,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
         const pauseP: Promise<void>[] = [];
         const containersToApply = this.getContainers(containers);
         for (const container of containersToApply) {
-            const record = this.#containers.get(container);
+            const record = this.containers.get(container);
             if (record !== undefined && !record.paused) {
                 debugWait(`${record.index}: container paused`);
                 pauseP.push(container.deltaManager.inbound.pause());
@@ -543,7 +542,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
      * all open containers.
      */
     private getContainers(containers: IContainer[]) {
-        const containersToApply = containers.length === 0 ? Array.from(this.#containers.keys()) : containers;
+        const containersToApply = containers.length === 0 ? Array.from(this.containers.keys()) : containers;
         return containersToApply.filter((container) => !container.closed);
     }
 }

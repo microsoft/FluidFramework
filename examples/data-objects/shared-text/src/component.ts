@@ -29,8 +29,6 @@ import {
     IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
 import {
-    SharedNumberSequence,
-    SharedObjectSequence,
     SharedString,
 } from "@fluidframework/sequence";
 import {
@@ -118,8 +116,6 @@ export class SharedTextRunner
 
             debug(`Not existing ${this.runtime.id} - ${performance.now()}`);
             this.rootView.set("users", this.sharedTextDocument.createMap().handle);
-            const seq = SharedNumberSequence.create(this.sharedTextDocument.runtime);
-            this.rootView.set("sequence-test", seq.handle);
             const newString = this.sharedTextDocument.createString();
 
             const template = parse(window.location.search.substr(1)).template;
@@ -284,8 +280,6 @@ export function instantiateDataStore(context: IFluidDataStoreContext, existing: 
             SharedMap.getFactory(),
             SharedString.getFactory(),
             SharedCell.getFactory(),
-            SharedObjectSequence.getFactory(),
-            SharedNumberSequence.getFactory(),
         ].map((factory) => [factory.type, factory])),
         existing,
     );

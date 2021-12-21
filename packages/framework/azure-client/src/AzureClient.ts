@@ -36,20 +36,20 @@ export const LOCAL_MODE_TENANT_ID = "local";
  * when running with local tenantId, have it be backed by a local Azure Fluid Relay instance.
  */
 export class AzureClient {
-    readonly #documentServiceFactory: IDocumentServiceFactory;
-    readonly #urlResolver: IUrlResolver;
+    private readonly documentServiceFactory: IDocumentServiceFactory;
+    private readonly urlResolver: IUrlResolver;
 
     /**
      * Creates a new client instance using configuration parameters.
      * @param props - Properties for initializing a new AzureClient instance
      */
     constructor(private readonly props: AzureClientProps) {
-        this.#urlResolver = new AzureUrlResolver();
+        this.urlResolver = new AzureUrlResolver();
         // The local service implementation differs from the Azure Fluid Relay in blob
         // storage format. Azure Fluid Relay supports whole summary upload. Local currently does not.
         const enableWholeSummaryUpload =
             this.props.connection.tenantId !== LOCAL_MODE_TENANT_ID;
-        this.#documentServiceFactory = new RouterliciousDocumentServiceFactory(
+        this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
             this.props.connection.tokenProvider,
             { enableWholeSummaryUpload },
         );
@@ -141,8 +141,8 @@ export class AzureClient {
         const module = { fluidExport: runtimeFactory };
         const codeLoader = { load: async () => module };
         return new Loader({
-            urlResolver: this.#urlResolver,
-            documentServiceFactory: this.#documentServiceFactory,
+            urlResolver: this.urlResolver,
+            documentServiceFactory: this.documentServiceFactory,
             codeLoader,
             logger: this.props.logger,
         });

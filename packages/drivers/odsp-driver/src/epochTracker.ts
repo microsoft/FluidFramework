@@ -42,12 +42,12 @@ export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000;
  * then it also clears all the cached entries for the given container.
  */
 export class EpochTracker implements IPersistedFileCache {
-    #fluidEpoch: string | undefined;
+    private _fluidEpoch: string | undefined;
 
     public readonly rateLimiter: RateLimiter;
-    readonly #driverId = uuid();
+    private readonly driverId = uuid();
     // This tracks the request number made by the driver instance.
-    #networkCallNumber = 1;
+    private networkCallNumber = 1;
     constructor(
         protected readonly cache: IPersistedCache,
         protected readonly fileEntry: IFileEntry,
@@ -59,8 +59,8 @@ export class EpochTracker implements IPersistedFileCache {
 
     // public for UT purposes only!
     public setEpoch(epoch: string, fromCache: boolean, fetchType: FetchTypeInternal) {
-        assert(this.#fluidEpoch === undefined, 0x1db /* "epoch exists" */);
-        this.#fluidEpoch = epoch;
+        assert(this._fluidEpoch === undefined, 0x1db /* "epoch exists" */);
+        this._fluidEpoch = epoch;
 
         this.logger.sendTelemetryEvent(
             {
@@ -84,11 +84,11 @@ export class EpochTracker implements IPersistedFileCache {
                 return undefined;
             }
             assert(value.fluidEpoch !== undefined, 0x1dc /* "all entries have to have epoch" */);
-            if (this.#fluidEpoch === undefined) {
+            if (this._fluidEpoch === undefined) {
                 this.setEpoch(value.fluidEpoch, true, "cache");
             // Epoch mismatch, the cached value is considerably different from what the current state of
             // the runtime and should not be used
-            } else if (this.#fluidEpoch !== value.fluidEpoch) {
+            } else if (this._fluidEpoch !== value.fluidEpoch) {
                 return undefined;
             }
             // Expire the cached snapshot if it's older than the defaultCacheExpiryTimeoutMs and immediately
@@ -116,7 +116,7 @@ export class EpochTracker implements IPersistedFileCache {
     }
 
     public async put(entry: IEntry, value: any) {
-        assert(this.#fluidEpoch !== undefined, 0x1dd /* "no epoch" */);
+        assert(this._fluidEpoch !== undefined, 0x1dd /* "no epoch" */);
         // For snapshots, the value should have the cacheEntryTime. This will be used to expire snapshots older
         // than the defaultCacheExpiryTimeoutMs.
         if (entry.type === snapshotKey) {
@@ -125,7 +125,7 @@ export class EpochTracker implements IPersistedFileCache {
         const data: IVersionedValueWithEpoch = {
             value,
             version: persistedCacheValueVersion,
-            fluidEpoch: this.#fluidEpoch,
+            fluidEpoch: this._fluidEpoch,
         };
         return this.cache.put(this.fileEntryFromEntry(entry), data)
             .catch((error) => {
@@ -143,7 +143,7 @@ export class EpochTracker implements IPersistedFileCache {
     }
 
     public get fluidEpoch() {
-        return this.#fluidEpoch;
+        return this._fluidEpoch;
     }
 
     public async validateEpochFromPush(details: IConnected) {
@@ -285,7 +285,7 @@ export class EpochTracker implements IPersistedFileCache {
     }
 
     private formatClientCorrelationId() {
-        return `driverId=${this.#driverId}, RequestNumber=${this.#networkCallNumber++}`;
+        return `driverId=${this.driverId}, RequestNumber=${this.networkCallNumber++}`;
     }
 
     protected validateEpochFromResponse(
@@ -298,7 +298,7 @@ export class EpochTracker implements IPersistedFileCache {
             throw error;
         }
         if (epochFromResponse !== undefined) {
-            if (this.#fluidEpoch === undefined) {
+            if (this._fluidEpoch === undefined) {
                 this.setEpoch(epochFromResponse, fromCache, fetchType);
             }
         }
@@ -349,7 +349,7 @@ export class EpochTracker implements IPersistedFileCache {
 }
 
 export class EpochTrackerWithRedemption extends EpochTracker {
-    readonly #treesLatestDeferral = new Deferred<void>();
+    private readonly treesLatestDeferral = new Deferred<void>();
 
     protected validateEpochFromResponse(
         epochFromResponse: string | undefined,
@@ -361,7 +361,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
         // Any successful call means we have access to a file, i.e. any redemption that was required already happened.
         // That covers cases of "treesLatest" as well as "getVersions" or "createFile" - all the ways we can start
         // exploring a file.
-        this.#treesLatestDeferral.resolve();
+        this.treesLatestDeferral.resolve();
     }
 
     public async get(
@@ -376,13 +376,13 @@ export class EpochTrackerWithRedemption extends EpochTracker {
                     // If there is nothing in cache, we need to wait for network call to complete (and do redemption)
                     // Otherwise file was redeemed in prior session, so if joinSession failed, we should not retry
                     if (value !== undefined) {
-                        this.#treesLatestDeferral.resolve();
+                        this.treesLatestDeferral.resolve();
                     }
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     return value;
                 })
                 .catch((error) => {
-                    this.#treesLatestDeferral.reject(error);
+                    this.treesLatestDeferral.reject(error);
                     throw error;
                 });
         }
@@ -397,7 +397,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
     ): Promise<IOdspResponse<T>> {
         // Optimize the flow if we know that treesLatestDeferral was already completed by the timer we started
         // joinSession call. If we did - there is no reason to repeat the call as it will fail with same error.
-        const completed = this.#treesLatestDeferral.isCompleted;
+        const completed = this.treesLatestDeferral.isCompleted;
 
         try {
             return await super.fetchAndParseAsJSON<T>(url, fetchOptions, fetchType, addInBody);
@@ -406,7 +406,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
             // Similar, if getVersions failed, we should not do any further storage calls.
             // So treesLatest is the only call that can have parallel joinSession request.
             if (fetchType === "treesLatest") {
-                this.#treesLatestDeferral.reject(error);
+                this.treesLatestDeferral.reject(error);
             }
             if (fetchType !== "joinSession" || error.statusCode < 401 || error.statusCode > 404 || completed) {
                 throw error;
@@ -434,7 +434,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
                 const res = await Promise.race([
                     timeoutP,
                     // cancel timeout to unblock UTs (otherwise Node process does not exit for 15 sec)
-                    this.#treesLatestDeferral.promise.finally(() => clearTimeout(timer))]);
+                    this.treesLatestDeferral.promise.finally(() => clearTimeout(timer))]);
                 if (res === timeoutRes) {
                     event.cancel();
                 }

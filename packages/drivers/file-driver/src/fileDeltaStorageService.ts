@@ -13,11 +13,11 @@ import * as api from "@fluidframework/protocol-definitions";
  * Provides access to the underlying delta storage on the local file storage for file driver.
  */
 export class FileDeltaStorageService implements IDocumentDeltaStorageService {
-    readonly #messages: api.ISequencedDocumentMessage[];
-    #lastOps: api.ISequencedDocumentMessage[] = [];
+    private readonly messages: api.ISequencedDocumentMessage[];
+    private lastOps: api.ISequencedDocumentMessage[] = [];
 
     constructor(private readonly path: string) {
-        this.#messages = [];
+        this.messages = [];
         let counter = 0;
         // eslint-disable-next-line no-constant-condition
         while (true) {
@@ -29,7 +29,7 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
                 break;
             }
             const data = fs.readFileSync(filename);
-            this.#messages = this.#messages.concat(JSON.parse(data.toString("utf-8")));
+            this.messages = this.messages.concat(JSON.parse(data.toString("utf-8")));
             counter++;
         }
     }
@@ -43,7 +43,7 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
     }
 
     public get ops(): readonly Readonly<api.ISequencedDocumentMessage>[] {
-        return this.#messages;
+        return this.messages;
     }
 
     /**
@@ -54,19 +54,19 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
      */
     public getFromWebSocket(from: number, to: number): api.ISequencedDocumentMessage[] {
         const readFrom = Math.max(from, 0); // Inclusive
-        const readTo = Math.min(to, this.#messages.length); // Exclusive
+        const readTo = Math.min(to, this.messages.length); // Exclusive
 
-        if (readFrom >= this.#messages.length || readTo <= 0 || readFrom >= readTo) {
+        if (readFrom >= this.messages.length || readTo <= 0 || readFrom >= readTo) {
             return [];
         }
 
         // Optimizations for multiple readers (replay tool)
-        if (this.#lastOps.length > 0 && this.#lastOps[0].sequenceNumber === readFrom + 1) {
-            return this.#lastOps;
+        if (this.lastOps.length > 0 && this.lastOps[0].sequenceNumber === readFrom + 1) {
+            return this.lastOps;
         }
-        this.#lastOps = this.#messages.slice(readFrom, readTo);
-        assert(this.#lastOps[0].sequenceNumber === readFrom + 1,
+        this.lastOps = this.messages.slice(readFrom, readTo);
+        assert(this.lastOps[0].sequenceNumber === readFrom + 1,
             0x091 /* "Retrieved ops' first sequence number has unexpected value!" */);
-        return this.#lastOps;
+        return this.lastOps;
     }
 }

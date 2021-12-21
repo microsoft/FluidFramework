@@ -36,27 +36,27 @@ export class ReactViewAdapter extends React.Component<IReactViewAdapterProps> {
     /**
      * Once we've adapted the view to a React element, we'll retain a reference to render.
      */
-    readonly #element: JSX.Element;
+    private readonly element: JSX.Element;
 
     constructor(props: IReactViewAdapterProps) {
         super(props);
 
         if (React.isValidElement(this.props.view)) {
-            this.#element = this.props.view;
+            this.element = this.props.view;
             return;
         }
         const maybeView: FluidObject<IFluidHTMLView> = this.props.view;
         const htmlView = maybeView.IFluidHTMLView;
         if (htmlView !== undefined) {
-            this.#element = <HTMLViewEmbeddedComponent htmlView={htmlView} />;
+            this.element = <HTMLViewEmbeddedComponent htmlView={htmlView} />;
             return;
         }
 
-        this.#element = <></>;
+        this.element = <></>;
     }
 
     public render() {
-        return this.#element;
+        return this.element;
     }
 }
 
@@ -68,22 +68,22 @@ interface IHTMLViewProps {
  * Embeds a Fluid Object that supports IFluidHTMLView
  */
 class HTMLViewEmbeddedComponent extends React.Component<IHTMLViewProps> {
-    readonly #ref: React.RefObject<HTMLDivElement>;
+    private readonly ref: React.RefObject<HTMLDivElement>;
 
     constructor(props: IHTMLViewProps) {
         super(props);
 
-        this.#ref = React.createRef<HTMLDivElement>();
+        this.ref = React.createRef<HTMLDivElement>();
     }
 
     public async componentDidMount() {
         // eslint-disable-next-line no-null/no-null
-        if (this.#ref.current !== null) {
-            this.props.htmlView.render(this.#ref.current);
+        if (this.ref.current !== null) {
+            this.props.htmlView.render(this.ref.current);
         }
     }
 
     public render() {
-        return <div ref={this.#ref}></div>;
+        return <div ref={this.ref}></div>;
     }
 }

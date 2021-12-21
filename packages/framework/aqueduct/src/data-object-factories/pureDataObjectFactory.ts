@@ -112,8 +112,8 @@ async function createDataObject<TObj extends PureDataObject,I extends DataObject
 export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes>
     implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>, IRootDataObjectFactory
 {
-    readonly #sharedObjectRegistry: ISharedObjectRegistry;
-    readonly #registry: IFluidDataStoreRegistry | undefined;
+    private readonly sharedObjectRegistry: ISharedObjectRegistry;
+    private readonly registry: IFluidDataStoreRegistry | undefined;
 
     constructor(
         public readonly type: string,
@@ -127,15 +127,15 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
             throw new Error("undefined type member");
         }
         if (registryEntries !== undefined) {
-            this.#registry = new FluidDataStoreRegistry(registryEntries);
+            this.registry = new FluidDataStoreRegistry(registryEntries);
         }
-        this.#sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
+        this.sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
     }
 
     public get IFluidDataStoreFactory() { return this; }
 
     public get IFluidDataStoreRegistry() {
-        return this.#registry;
+        return this.registry;
     }
 
     /**
@@ -157,7 +157,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
         const { runtime } = await createDataObject(
             this.ctor,
             context,
-            this.#sharedObjectRegistry,
+            this.sharedObjectRegistry,
             this.optionalProviders,
             this.runtimeClass,
             existing);
@@ -210,7 +210,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
      * Creates a new instance of the object. Uses container's registry to find this factory.
      * It's expected that only container owners would use this functionality, as only such developers
      * have knowledge of entries in container registry.
-     * The name in this.#registry for such record should match type of this factory.
+     * The name in this registry for such record should match type of this factory.
      * @param runtime - container runtime. It's registry is used to create an object.
      * @param initialState - The initial state to provide to the created component.
      * @returns an object created by this factory. Data store and objects created are not attached to container.
@@ -230,7 +230,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
      * Creates a new root instance of the object. Uses container's registry to find this factory.
      * It's expected that only container owners would use this functionality, as only such developers
      * have knowledge of entries in container registry.
-     * The name in this.#registry for such record should match type of this factory.
+     * The name in this registry for such record should match type of this factory.
      * @param runtime - container runtime. It's registry is used to create an object.
      * @param initialState - The initial state to provide to the created component.
      * @returns an object created by this factory. Data store and objects created are not attached to container.
@@ -261,7 +261,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
         const { instance, runtime } = await createDataObject(
             this.ctor,
             context,
-            this.#sharedObjectRegistry,
+            this.sharedObjectRegistry,
             this.optionalProviders,
             this.runtimeClass,
             false, // existing

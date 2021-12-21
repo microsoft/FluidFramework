@@ -116,35 +116,35 @@ export function addTreeToSummary(summary: ISummaryTreeWithStats, key: string, su
 }
 
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
-    #attachmentCounter: number = 0;
+    private attachmentCounter: number = 0;
 
     public get summary(): ISummaryTree {
         return {
             type: SummaryType.Tree,
-            tree: { ...this.#summaryTree },
+            tree: { ...this.summaryTree },
         };
     }
 
     public get stats(): Readonly<ISummaryStats> {
-        return { ...this.#summaryStats };
+        return { ...this.summaryStats };
     }
 
     constructor() {
-        this.#summaryStats = mergeStats();
-        this.#summaryStats.treeNodeCount++;
+        this.summaryStats = mergeStats();
+        this.summaryStats.treeNodeCount++;
     }
 
-    readonly #summaryTree: { [path: string]: SummaryObject } = {};
-    #summaryStats: ISummaryStats;
+    private readonly summaryTree: { [path: string]: SummaryObject } = {};
+    private summaryStats: ISummaryStats;
 
     public addBlob(key: string, content: string | Uint8Array): void {
         // Prevent cloning by directly referencing underlying private properties
         addBlobToSummary({
             summary: {
                 type: SummaryType.Tree,
-                tree: this.#summaryTree,
+                tree: this.summaryTree,
             },
-            stats: this.#summaryStats,
+            stats: this.summaryStats,
         }, key, content);
     }
 
@@ -153,21 +153,21 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
         handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment,
         handle: string): void
     {
-        this.#summaryTree[key] = {
+        this.summaryTree[key] = {
             type: SummaryType.Handle,
             handleType,
             handle,
         };
-        this.#summaryStats.handleNodeCount++;
+        this.summaryStats.handleNodeCount++;
     }
 
     public addWithStats(key: string, summarizeResult: ISummarizeResult): void {
-        this.#summaryTree[key] = summarizeResult.summary;
-        this.#summaryStats = mergeStats(this.#summaryStats, summarizeResult.stats);
+        this.summaryTree[key] = summarizeResult.summary;
+        this.summaryStats = mergeStats(this.summaryStats, summarizeResult.stats);
     }
 
     public addAttachment(id: string) {
-        this.#summaryTree[this.#attachmentCounter++] = { id, type: SummaryType.Attachment };
+        this.summaryTree[this.attachmentCounter++] = { id, type: SummaryType.Attachment };
     }
 
     public getSummaryTree(): ISummaryTreeWithStats {

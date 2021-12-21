@@ -76,7 +76,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 
     // Member to prevent repeated initialization in initStorage(...), which also
     // returns if this controller should be used or function as a passthrough
-    #shouldUseController: boolean | undefined;
+    private shouldUseController: boolean | undefined;
 
     public connectToUi(ui: IDebuggerUI): void {
         this.ui = ui;
@@ -203,8 +203,8 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public async initStorage(documentService: IDocumentService): Promise<boolean> {
-        if (this.#shouldUseController !== undefined) {
-            return this.#shouldUseController;
+        if (this.shouldUseController !== undefined) {
+            return this.shouldUseController;
         }
 
         assert(!!documentService, 0x080 /* "Invalid document service!" */);
@@ -243,11 +243,11 @@ export class DebugReplayController extends ReplayController implements IDebugger
         });
 
         // This hangs until the user makes a selection or closes the window.
-        this.#shouldUseController = await this.startSeqDeferred.promise !== DebugReplayController.WindowClosedSeq;
+        this.shouldUseController = await this.startSeqDeferred.promise !== DebugReplayController.WindowClosedSeq;
 
-        assert(this.isSelectionMade() === this.#shouldUseController,
+        assert(this.isSelectionMade() === this.shouldUseController,
             0x083 /* "User selection status does not match replay controller use status!" */);
-        return this.#shouldUseController;
+        return this.shouldUseController;
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {

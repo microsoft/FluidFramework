@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -85,50 +85,50 @@ export class SharedMatrix<T = any>
     IMatrixReader<MatrixItem<T>>,
     IMatrixWriter<MatrixItem<T>>
 {
-    readonly #consumers = new Set<IMatrixConsumer<MatrixItem<T>>>();
+    private readonly consumers = new Set<IMatrixConsumer<MatrixItem<T>>>();
 
     public static getFactory() { return new SharedMatrixFactory(); }
 
-    readonly #rows: PermutationVector;   // Map logical row to storage handle (if any)
-    readonly #cols: PermutationVector;   // Map logical col to storage handle (if any)
+    private readonly rows: PermutationVector;   // Map logical row to storage handle (if any)
+    private readonly cols: PermutationVector;   // Map logical col to storage handle (if any)
 
-    #cells = new SparseArray2D<MatrixItem<T>>();     // Stores cell values.
-    #pending = new SparseArray2D<number>();          // Tracks #pending writes.
+    private cells = new SparseArray2D<MatrixItem<T>>();     // Stores cell values.
+    private pending = new SparseArray2D<number>();          // Tracks pending writes.
 
     constructor(runtime: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
 
-        this.#rows = new PermutationVector(
+        this.rows = new PermutationVector(
             SnapshotPath.rows,
             this.logger,
             runtime,
-            this.#onRowDelta,
-            this.#onRowHandlesRecycled);
+            this.onRowDelta,
+            this.onRowHandlesRecycled);
 
-        this.#cols = new PermutationVector(
+        this.cols = new PermutationVector(
             SnapshotPath.cols,
             this.logger,
             runtime,
-            this.#onColDelta,
-            this.#onColHandlesRecycled);
+            this.onColDelta,
+            this.onColHandlesRecycled);
     }
 
-    #undo?: MatrixUndoProvider<T>;
+    private undo?: MatrixUndoProvider<T>;
 
     /**
      * Subscribes the given IUndoConsumer to the matrix.
      */
     public openUndo(consumer: IUndoConsumer) {
-        assert(this.#undo === undefined,
+        assert(this.undo === undefined,
             0x019 /* "SharedMatrix.openUndo() supports at most a single IUndoConsumer." */);
 
-        this.#undo = new MatrixUndoProvider(consumer, this, this.#rows, this.#cols);
+        this.undo = new MatrixUndoProvider(consumer, this, this.rows, this.cols);
     }
 
     // TODO: closeUndo()?
 
-    private get rowHandles() { return this.#rows.handleCache; }
-    private get colHandles() { return this.#cols.handleCache; }
+    private get rowHandles() { return this.rows.handleCache; }
+    private get colHandles() { return this.cols.handleCache; }
 
     /**
      * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
@@ -142,20 +142,20 @@ export class SharedMatrix<T = any>
     openMatrix(
         consumer: IMatrixConsumer<MatrixItem<T>>,
     ): IMatrixReader<MatrixItem<T>> {
-        this.#consumers.add(consumer);
+        this.consumers.add(consumer);
         return this;
     }
 
     closeMatrix(consumer: IMatrixConsumer<MatrixItem<T>>): void {
-        this.#consumers.delete(consumer);
+        this.consumers.delete(consumer);
     }
 
     // #endregion IMatrixProducer
 
     // #region IMatrixReader
 
-    public get rowCount() { return this.#rows.getLength(); }
-    public get colCount() { return this.#cols.getLength(); }
+    public get rowCount() { return this.rows.getLength(); }
+    public get colCount() { return this.cols.getLength(); }
 
     public getCell(row: number, col: number): MatrixItem<T> {
         // Perf: When possible, bounds checking is performed inside the implementation for
@@ -167,12 +167,12 @@ export class SharedMatrix<T = any>
         if (isHandleValid(rowHandle)) {
             const colHandle = this.colHandles.getHandle(col);
             if (isHandleValid(colHandle)) {
-                return this.#cells.getCell(rowHandle, colHandle);
+                return this.cells.getCell(rowHandle, colHandle);
             }
         } else {
             // If we early exit because the given rowHandle is unallocated, we still need to
             // bounds-check the 'col' parameter.
-            ensureRange(col, this.#cols.getLength());
+            ensureRange(col, this.cols.getLength());
         }
 
         return undefined;
@@ -190,7 +190,7 @@ export class SharedMatrix<T = any>
         this.setCellCore(row, col, value);
 
         // Avoid reentrancy by raising change notifications after the op is queued.
-        for (const consumer of this.#consumers.values()) {
+        for (const consumer of this.consumers.values()) {
             consumer.cellsChanged(row, col, 1, 1, this);
         }
     }
@@ -223,7 +223,7 @@ export class SharedMatrix<T = any>
         }
 
         // Avoid reentrancy by raising change notifications after the op is queued.
-        for (const consumer of this.#consumers.values()) {
+        for (const consumer of this.consumers.values()) {
             consumer.cellsChanged(rowStart, colStart, rowCount, colCount, this);
         }
     }
@@ -232,24 +232,24 @@ export class SharedMatrix<T = any>
         row: number,
         col: number,
         value: MatrixItem<T>,
-        rowHandle = this.#rows.getAllocatedHandle(row),
-        colHandle = this.#cols.getAllocatedHandle(col),
+        rowHandle = this.rows.getAllocatedHandle(row),
+        colHandle = this.cols.getAllocatedHandle(col),
     ) {
-        if (this.#undo !== undefined) {
-            let oldValue = this.#cells.getCell(rowHandle, colHandle);
+        if (this.undo !== undefined) {
+            let oldValue = this.cells.getCell(rowHandle, colHandle);
 
             // eslint-disable-next-line no-null/no-null
             if (oldValue === null) {
                 oldValue = undefined;
             }
 
-            this.#undo.cellSet(
+            this.undo.cellSet(
                 rowHandle,
                 colHandle,
                 oldValue);
         }
 
-        this.#cells.setCell(rowHandle, colHandle, value);
+        this.cells.setCell(rowHandle, colHandle, value);
 
         if (this.isAttached()) {
             this.sendSetCellOp(row, col, value, rowHandle, colHandle);
@@ -280,7 +280,7 @@ export class SharedMatrix<T = any>
         };
 
         this.submitLocalMessage(op, metadata);
-        this.#pending.setCell(rowHandle, colHandle, localSeq);
+        this.pending.setCell(rowHandle, colHandle, localSeq);
     }
 
     private submitVectorMessage(
@@ -318,34 +318,34 @@ export class SharedMatrix<T = any>
     }
 
     private submitColMessage(message: any) {
-        this.submitVectorMessage(this.#cols, this.#rows, SnapshotPath.cols, message);
+        this.submitVectorMessage(this.cols, this.rows, SnapshotPath.cols, message);
     }
 
     public insertCols(colStart: number, count: number) {
-        this.submitColMessage(this.#cols.insert(colStart, count));
+        this.submitColMessage(this.cols.insert(colStart, count));
     }
 
     public removeCols(colStart: number, count: number) {
-        this.submitColMessage(this.#cols.remove(colStart, count));
+        this.submitColMessage(this.cols.remove(colStart, count));
     }
 
     private submitRowMessage(message: any) {
-        this.submitVectorMessage(this.#rows, this.#cols, SnapshotPath.rows, message);
+        this.submitVectorMessage(this.rows, this.cols, SnapshotPath.rows, message);
     }
 
     public insertRows(rowStart: number, count: number) {
-        this.submitRowMessage(this.#rows.insert(rowStart, count));
+        this.submitRowMessage(this.rows.insert(rowStart, count));
     }
 
     public removeRows(rowStart: number, count: number) {
-        this.submitRowMessage(this.#rows.remove(rowStart, count));
+        this.submitRowMessage(this.rows.remove(rowStart, count));
     }
 
     /** @internal */ public _undoRemoveRows(segment: ISegment) {
         const original = segment as PermutationSegment;
 
         // (Re)insert the removed number of rows at the original position.
-        const { op, inserted } = this.#rows.insertRelative(original, original.cachedLength);
+        const { op, inserted } = this.rows.insertRelative(original, original.cachedLength);
         this.submitRowMessage(op);
 
         // Transfer handles and undo/redo tracking groups from the original segment to the
@@ -354,8 +354,8 @@ export class SharedMatrix<T = any>
 
         // Invalidate the handleCache in case it was populated during the 'rowsChanged'
         // callback, which occurs before the handle span is populated.
-        const rowStart = this.#rows.getPosition(inserted);
-        this.#rows.handleCache.itemsChanged(
+        const rowStart = this.rows.getPosition(inserted);
+        this.rows.handleCache.itemsChanged(
             rowStart,
             /* removedCount: */ 0,
             /* insertedCount: */ inserted.cachedLength);
@@ -366,7 +366,7 @@ export class SharedMatrix<T = any>
         for (let row = rowStart; row < rowStart + rowCount; row++, rowHandle++) {
             for (let col = 0; col < this.colCount; col++) {
                 const colHandle = this.colHandles.getHandle(col);
-                const value = this.#cells.getCell(rowHandle, colHandle);
+                const value = this.cells.getCell(rowHandle, colHandle);
                 // eslint-disable-next-line no-null/no-null
                 if (this.isAttached() && value !== undefined && value !== null) {
                     this.sendSetCellOp(
@@ -380,7 +380,7 @@ export class SharedMatrix<T = any>
         }
 
         // Avoid reentrancy by raising change notifications after the op is queued.
-        for (const consumer of this.#consumers.values()) {
+        for (const consumer of this.consumers.values()) {
             consumer.cellsChanged(rowStart, /* colStart: */ 0, rowCount, this.colCount, this);
         }
     }
@@ -389,7 +389,7 @@ export class SharedMatrix<T = any>
         const original = segment as PermutationSegment;
 
         // (Re)insert the removed number of columns at the original position.
-        const { op, inserted } = this.#cols.insertRelative(original, original.cachedLength);
+        const { op, inserted } = this.cols.insertRelative(original, original.cachedLength);
         this.submitColMessage(op);
 
         // Transfer handles and undo/redo tracking groups from the original segment to the
@@ -398,8 +398,8 @@ export class SharedMatrix<T = any>
 
         // Invalidate the handleCache in case it was populated during the 'colsChanged'
         // callback, which occurs before the handle span is populated.
-        const colStart = this.#cols.getPosition(inserted);
-        this.#cols.handleCache.itemsChanged(
+        const colStart = this.cols.getPosition(inserted);
+        this.cols.handleCache.itemsChanged(
             colStart,
             /* removedCount: */ 0,
             /* insertedCount: */ inserted.cachedLength);
@@ -410,7 +410,7 @@ export class SharedMatrix<T = any>
         for (let col = colStart; col < colStart + colCount; col++, colHandle++) {
             for (let row = 0; row < this.rowCount; row++) {
                 const rowHandle = this.rowHandles.getHandle(row);
-                const value = this.#cells.getCell(rowHandle, colHandle);
+                const value = this.cells.getCell(rowHandle, colHandle);
                 // eslint-disable-next-line no-null/no-null
                 if (this.isAttached() && value !== undefined && value !== null) {
                     this.sendSetCellOp(
@@ -424,7 +424,7 @@ export class SharedMatrix<T = any>
         }
 
         // Avoid reentrancy by raising change notifications after the op is queued.
-        for (const consumer of this.#consumers.values()) {
+        for (const consumer of this.consumers.values()) {
             consumer.cellsChanged(/* rowStart: */ 0, colStart, this.rowCount, colCount, this);
         }
     }
@@ -436,20 +436,20 @@ export class SharedMatrix<T = any>
                     mode: FileMode.Directory,
                     path: SnapshotPath.rows,
                     type: TreeEntry.Tree,
-                    value: this.#rows.snapshot(this.runtime, this.handle, serializer),
+                    value: this.rows.snapshot(this.runtime, this.handle, serializer),
                 },
                 {
                     mode: FileMode.Directory,
                     path: SnapshotPath.cols,
                     type: TreeEntry.Tree,
-                    value: this.#cols.snapshot(this.runtime, this.handle, serializer),
+                    value: this.cols.snapshot(this.runtime, this.handle, serializer),
                 },
                 serializeBlob(
                     this.handle,
                     SnapshotPath.cells,
                     [
-                        this.#cells.snapshot(),
-                        this.#pending.snapshot(),
+                        this.cells.snapshot(),
+                        this.pending.snapshot(),
                     ],
                     serializer),
             ],
@@ -465,7 +465,10 @@ export class SharedMatrix<T = any>
     protected getGCDataCore(): IGarbageCollectionData {
         // Create a SummarySerializer and use it to serialize all the cells. It keeps track of all IFluidHandles that it
         // serializes.
-        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+        const serializer = new SummarySerializer(
+            this.runtime.channelsRoutingContext,
+            (handle: IFluidHandle) => this.handleDecoded(handle),
+        );
 
         for (let row = 0; row < this.rowCount; row++) {
             for (let col = 0; col < this.colCount; col++) {
@@ -492,8 +495,8 @@ export class SharedMatrix<T = any>
         // for SharedMatrix ops it's not aware of to keep them synchronized.  (For cell data operations, we
         // need to bump both counters.)
 
-        this.#cols.getCollabWindow().localSeq++;
-        return ++this.#rows.getCollabWindow().localSeq;
+        this.cols.getCollabWindow().localSeq++;
+        return ++this.rows.getCollabWindow().localSeq;
     }
 
     protected submitLocalMessage(message: any, localOpMetadata?: any) {
@@ -505,7 +508,7 @@ export class SharedMatrix<T = any>
 
         // Ensure that row/col 'localSeq' are synchronized (see 'nextLocalSeq()').
         assert(
-            this.#rows.getCollabWindow().localSeq === this.#cols.getCollabWindow().localSeq,
+            this.rows.getCollabWindow().localSeq === this.cols.getCollabWindow().localSeq,
             0x01e /* "Row and col collab window 'localSeq' desynchronized!" */,
         );
     }
@@ -514,29 +517,29 @@ export class SharedMatrix<T = any>
         // We've attached we need to start generating and sending ops.
         // so start collaboration and provide a default client id incase we are not connected
         if (this.isAttached()) {
-            this.#rows.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
-            this.#cols.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
+            this.rows.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
+            this.cols.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
         }
     }
 
     protected onConnect() {
-        assert(this.#rows.getCollabWindow().collaborating === this.#cols.getCollabWindow().collaborating,
+        assert(this.rows.getCollabWindow().collaborating === this.cols.getCollabWindow().collaborating,
             0x01f /* "Row and col collab window 'collaborating' status desynchronized!" */);
 
         // Update merge tree collaboration information with new client ID and then resend pending ops
-        this.#rows.startOrUpdateCollaboration(this.runtime.clientId as string);
-        this.#cols.startOrUpdateCollaboration(this.runtime.clientId as string);
+        this.rows.startOrUpdateCollaboration(this.runtime.clientId as string);
+        this.cols.startOrUpdateCollaboration(this.runtime.clientId as string);
     }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         switch (content.target) {
             case SnapshotPath.cols:
-                this.submitColMessage(this.#cols.regeneratePendingOp(
+                this.submitColMessage(this.cols.regeneratePendingOp(
                     content as IMergeTreeOp,
                     localOpMetadata as SegmentGroup | SegmentGroup[]));
                 break;
             case SnapshotPath.rows:
-                this.submitRowMessage(this.#rows.regeneratePendingOp(
+                this.submitRowMessage(this.rows.regeneratePendingOp(
                     content as IMergeTreeOp,
                     localOpMetadata as SegmentGroup | SegmentGroup[]));
                 break;
@@ -550,8 +553,8 @@ export class SharedMatrix<T = any>
                 // to skip resubmitting this op since it is possible the row/col handle has been recycled
                 // and now refers to a different position than when this op was originally submitted.
                 if (this.isLatestPendingWrite(rowHandle, colHandle, localSeq)) {
-                    const row = this.#rows.handleToPosition(rowHandle, localSeq);
-                    const col = this.#cols.handleToPosition(colHandle, localSeq);
+                    const row = this.rows.handleToPosition(rowHandle, localSeq);
+                    const col = this.cols.handleToPosition(colHandle, localSeq);
 
                     if (row >= 0 && col >= 0) {
                         this.sendSetCellOp(
@@ -576,18 +579,18 @@ export class SharedMatrix<T = any>
      */
     protected async loadCore(storage: IChannelStorageService) {
         try {
-            await this.#rows.load(
+            await this.rows.load(
                 this.runtime,
                 new ObjectStoragePartition(storage, SnapshotPath.rows),
                 this.serializer);
-            await this.#cols.load(
+            await this.cols.load(
                 this.runtime,
                 new ObjectStoragePartition(storage, SnapshotPath.cols),
                 this.serializer);
             const [cellData, pendingCliSeqData] = await deserializeBlob(storage, SnapshotPath.cells, this.serializer);
 
-            this.#cells = SparseArray2D.load(cellData);
-            this.#pending = SparseArray2D.load(pendingCliSeqData);
+            this.cells = SparseArray2D.load(cellData);
+            this.pending = SparseArray2D.load(pendingCliSeqData);
         } catch (error) {
             this.logger.sendErrorEvent({ eventName: "MatrixLoadFailed" }, error);
         }
@@ -600,10 +603,10 @@ export class SharedMatrix<T = any>
 
         switch (contents.target) {
             case SnapshotPath.cols:
-                this.#cols.applyMsg(msg);
+                this.cols.applyMsg(msg);
                 break;
             case SnapshotPath.rows:
-                this.#rows.applyMsg(msg);
+                this.rows.applyMsg(msg);
                 break;
             default: {
                 assert(contents.type === MatrixOp.set,
@@ -619,30 +622,30 @@ export class SharedMatrix<T = any>
                     // If this is the most recent write to the cell by the local client, remove our
                     // entry from 'pendingCliSeqs' to resume allowing remote writes.
                     if (this.isLatestPendingWrite(rowHandle, colHandle, localSeq)) {
-                        this.#pending.setCell(rowHandle, colHandle, undefined);
+                        this.pending.setCell(rowHandle, colHandle, undefined);
                     }
                 } else {
-                    const rowClientId = this.#rows.getOrAddShortClientId(clientId);
-                    const adjustedRow = this.#rows.adjustPosition(row, refSeq, rowClientId);
+                    const rowClientId = this.rows.getOrAddShortClientId(clientId);
+                    const adjustedRow = this.rows.adjustPosition(row, refSeq, rowClientId);
 
                     if (adjustedRow !== undefined) {
-                        const colClientId = this.#cols.getOrAddShortClientId(clientId);
-                        const adjustedCol = this.#cols.adjustPosition(col, refSeq, colClientId);
+                        const colClientId = this.cols.getOrAddShortClientId(clientId);
+                        const adjustedCol = this.cols.adjustPosition(col, refSeq, colClientId);
 
                         if (adjustedCol !== undefined) {
-                            const rowHandle = this.#rows.getAllocatedHandle(adjustedRow);
-                            const colHandle = this.#cols.getAllocatedHandle(adjustedCol);
+                            const rowHandle = this.rows.getAllocatedHandle(adjustedRow);
+                            const colHandle = this.cols.getAllocatedHandle(adjustedCol);
 
                             assert(isHandleValid(rowHandle) && isHandleValid(colHandle),
                                 0x022 /* "SharedMatrix row and/or col handles are invalid!" */);
 
                             // If there is a pending (unACKed) local write to the same cell, skip the current op
                             // since it "happened before" the pending write.
-                            if (this.#pending.getCell(rowHandle, colHandle) === undefined) {
+                            if (this.pending.getCell(rowHandle, colHandle) === undefined) {
                                 const { value } = contents;
-                                this.#cells.setCell(rowHandle, colHandle, value);
+                                this.cells.setCell(rowHandle, colHandle, value);
 
-                                for (const consumer of this.#consumers.values()) {
+                                for (const consumer of this.consumers.values()) {
                                     consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
                                 }
                             }
@@ -654,35 +657,35 @@ export class SharedMatrix<T = any>
     }
 
     protected registerCore() {
-        this.#rows.startOrUpdateCollaboration(this.runtime.clientId, 0);
-        this.#cols.startOrUpdateCollaboration(this.runtime.clientId, 0);
+        this.rows.startOrUpdateCollaboration(this.runtime.clientId, 0);
+        this.cols.startOrUpdateCollaboration(this.runtime.clientId, 0);
     }
 
     // Invoked by PermutationVector to notify IMatrixConsumers of row insertion/deletions.
-    readonly #onRowDelta = (position: number, removedCount: number, insertedCount: number) => {
-        for (const consumer of this.#consumers) {
+    private readonly onRowDelta = (position: number, removedCount: number, insertedCount: number) => {
+        for (const consumer of this.consumers) {
             consumer.rowsChanged(position, removedCount, insertedCount, this);
         }
     };
 
     // Invoked by PermutationVector to notify IMatrixConsumers of col insertion/deletions.
-    readonly #onColDelta = (position: number, removedCount: number, insertedCount: number) => {
-        for (const consumer of this.#consumers) {
+    private readonly onColDelta = (position: number, removedCount: number, insertedCount: number) => {
+        for (const consumer of this.consumers) {
             consumer.colsChanged(position, removedCount, insertedCount, this);
         }
     };
 
-    readonly #onRowHandlesRecycled = (rowHandles: Handle[]) => {
+    private readonly onRowHandlesRecycled = (rowHandles: Handle[]) => {
         for (const rowHandle of rowHandles) {
-            this.#cells.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
-            this.#pending.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
+            this.cells.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
+            this.pending.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
         }
     };
 
-    readonly #onColHandlesRecycled = (colHandles: Handle[]) => {
+    private readonly onColHandlesRecycled = (colHandles: Handle[]) => {
         for (const colHandle of colHandles) {
-            this.#cells.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
-            this.#pending.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
+            this.cells.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
+            this.pending.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
         }
     };
 
@@ -696,7 +699,7 @@ export class SharedMatrix<T = any>
      */
     private isLatestPendingWrite(rowHandle: Handle, colHandle: Handle, localSeq: number) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const pendingLocalSeq = this.#pending.getCell(rowHandle, colHandle)!;
+        const pendingLocalSeq = this.pending.getCell(rowHandle, colHandle)!;
 
         // Note while we're awaiting the ACK for a local set, it's possible for the row/col to be
         // locally removed and the row/col handles recycled.  If this happens, the pendingLocalSeq will
@@ -711,7 +714,7 @@ export class SharedMatrix<T = any>
     }
 
     public toString() {
-        let s = `client:${this.runtime.clientId}\nrows: ${this.#rows.toString()}\ncols: ${this.#cols.toString()}\n\n`;
+        let s = `client:${this.runtime.clientId}\nrows: ${this.rows.toString()}\ncols: ${this.cols.toString()}\n\n`;
 
         for (let r = 0; r < this.rowCount; r++) {
             s += `  [`;

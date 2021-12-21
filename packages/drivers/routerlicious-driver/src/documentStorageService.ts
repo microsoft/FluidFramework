@@ -23,10 +23,10 @@ import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorag
 import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService";
 
 export class DocumentStorageService extends DocumentStorageServiceProxy {
-    #logTailSha: string | undefined = undefined;
+    private _logTailSha: string | undefined = undefined;
 
     public get logTailSha(): string | undefined {
-        return this.#logTailSha;
+        return this._logTailSha;
     }
 
     private static loadInternalDocumentStorageService(
@@ -84,7 +84,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         const tree = await this.internalStorageService.getSnapshotTree(version);
         if (tree !== null) {
-            this.#logTailSha = ".logTail" in tree.trees ? tree.trees[".logTail"].blobs.logTail : undefined;
+            this._logTailSha = ".logTail" in tree.trees ? tree.trees[".logTail"].blobs.logTail : undefined;
         }
         return tree;
     }

@@ -38,8 +38,8 @@ import { FluidObject } from "@fluidframework/core-interfaces";
 export class BaseContainerRuntimeFactory
     extends RuntimeFactoryHelper
     implements IProvideFluidDataStoreRegistry {
-    public get IFluidDataStoreRegistry() { return this.#registry; }
-    readonly #registry: IFluidDataStoreRegistry;
+    public get IFluidDataStoreRegistry() { return this.registry; }
+    private readonly registry: IFluidDataStoreRegistry;
 
     /**
      * @param registryEntries - The data store registry for containers produced
@@ -54,7 +54,7 @@ export class BaseContainerRuntimeFactory
         private readonly runtimeOptions?: IContainerRuntimeOptions,
     ) {
         super();
-        this.#registry = new FluidDataStoreRegistry(registryEntries);
+        this.registry = new FluidDataStoreRegistry(registryEntries);
     }
 
     public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {

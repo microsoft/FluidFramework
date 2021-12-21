@@ -31,8 +31,8 @@ export class ReplayControllerStatic extends ReplayController {
     private static readonly DelayInterval = 50;
     private static readonly ReplayResolution = 15;
 
-    #firstTimeStamp: number | undefined;
-    #replayCurrent = 0;
+    private firstTimeStamp: number | undefined;
+    private replayCurrent = 0;
     // Simulated delay interval for emitting the ops
 
     /**
@@ -85,8 +85,8 @@ export class ReplayControllerStatic extends ReplayController {
             if (this.unitIsTime === true) {
                 return (
                     lastTimeStamp !== undefined
-                    && this.#firstTimeStamp !== undefined
-                    && lastTimeStamp - this.#firstTimeStamp >= this.replayTo);
+                    && this.firstTimeStamp !== undefined
+                    && lastTimeStamp - this.firstTimeStamp >= this.replayTo);
             }
             return currentOp >= this.replayTo;
         }
@@ -101,16 +101,16 @@ export class ReplayControllerStatic extends ReplayController {
             for (let i = 0; i < fetchedOps.length; i += 1) {
                 const timeStamp = fetchedOps[i].timestamp;
                 if (timeStamp !== undefined) {
-                    if (this.#firstTimeStamp === undefined) {
-                        this.#firstTimeStamp = timeStamp;
+                    if (this.firstTimeStamp === undefined) {
+                        this.firstTimeStamp = timeStamp;
                     }
-                    if (timeStamp - this.#firstTimeStamp >= this.replayFrom) {
+                    if (timeStamp - this.firstTimeStamp >= this.replayFrom) {
                         return i;
                     }
                 }
             }
-        } else if (this.replayFrom > this.#replayCurrent) {
-            return this.replayFrom - this.#replayCurrent;
+        } else if (this.replayFrom > this.replayCurrent) {
+            return this.replayFrom - this.replayCurrent;
         }
         return 0;
     }
@@ -157,9 +157,9 @@ export class ReplayControllerStatic extends ReplayController {
                             current += 1;
                         }
 
-                        if (this.#firstTimeStamp !== undefined
+                        if (this.firstTimeStamp !== undefined
                             && this.replayTo >= 0
-                            && currentTimeStamp + nextInterval - this.#firstTimeStamp > this.replayTo) {
+                            && currentTimeStamp + nextInterval - this.firstTimeStamp > this.replayTo) {
                             nextInterval = -1;
                         }
                     }
@@ -171,7 +171,7 @@ export class ReplayControllerStatic extends ReplayController {
                 if (nextInterval >= 0 && current < fetchedOps.length) {
                     setTimeout(replayNextOps, nextInterval);
                 } else {
-                    this.#replayCurrent += current;
+                    this.replayCurrent += current;
                     resolve();
                 }
             };
@@ -288,9 +288,9 @@ export class ReplayDocumentDeltaConnection
     public async submitSignal(message: any) {
     }
 
-    #disposed = false;
-    public get disposed() { return this.#disposed; }
-    public dispose() { this.#disposed = true; }
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+    public dispose() { this._disposed = true; }
 
     /**
      * This gets the specified ops from the delta storage endpoint and replays them in the replayer.

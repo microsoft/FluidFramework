@@ -21,22 +21,22 @@ export class ChannelStorageService implements IChannelStorageService {
         }
     }
 
-    readonly #flattenedTree: { [path: string]: string };
+    private readonly flattenedTree: { [path: string]: string };
 
     constructor(
         private readonly tree: ISnapshotTree | undefined,
         private readonly storage: Pick<IDocumentStorageService, "readBlob">,
         private readonly extraBlobs?: Map<string, ArrayBufferLike>,
     ) {
-        this.#flattenedTree = {};
+        this.flattenedTree = {};
         // Create a map from paths to blobs
         if (tree !== undefined) {
-             ChannelStorageService.flattenTree("", tree, this.#flattenedTree);
+             ChannelStorageService.flattenTree("", tree, this.flattenedTree);
         }
     }
 
     public async contains(path: string): Promise<boolean> {
-        return this.#flattenedTree[path] !== undefined;
+        return this.flattenedTree[path] !== undefined;
     }
 
     public async readBlob(path: string): Promise<ArrayBufferLike> {
@@ -67,6 +67,6 @@ export class ChannelStorageService implements IChannelStorageService {
     }
 
     private async getIdForPath(path: string): Promise<string> {
-        return this.#flattenedTree[path];
+        return this.flattenedTree[path];
     }
 }

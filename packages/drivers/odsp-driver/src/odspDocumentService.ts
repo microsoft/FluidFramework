@@ -57,7 +57,7 @@ function gatesBinaryFormatSnapshot() {
  * clients
  */
 export class OdspDocumentService implements IDocumentService {
-    #policies: IDocumentServicePolicies;
+    private _policies: IDocumentServicePolicies;
 
     /**
      * @param resolvedUrl - resolved url identifying document that will be managed by returned service instance.
@@ -97,17 +97,17 @@ export class OdspDocumentService implements IDocumentService {
         );
     }
 
-    #storageManager?: OdspDocumentStorageService;
+    private storageManager?: OdspDocumentStorageService;
 
-    readonly #logger: TelemetryLogger;
+    private readonly logger: TelemetryLogger;
 
-    readonly #joinSessionKey: string;
+    private readonly joinSessionKey: string;
 
-    readonly #hostPolicy: HostStoragePolicyInternal;
+    private readonly hostPolicy: HostStoragePolicyInternal;
 
-    #opsCache?: OpsCache;
+    private _opsCache?: OpsCache;
 
-    #currentConnection?: OdspDocumentDeltaConnection;
+    private currentConnection?: OdspDocumentDeltaConnection;
 
     /**
      * @param odspResolvedUrl - resolved url identifying document that will be managed by this service instance.
@@ -134,13 +134,13 @@ export class OdspDocumentService implements IDocumentService {
         private readonly epochTracker: EpochTracker,
         private readonly socketReferenceKeyPrefix?: string,
     ) {
-        this.#policies = {
+        this._policies = {
             // load in storage-only mode if a file version is specified
             storageOnly: odspResolvedUrl.fileVersion !== undefined,
         };
 
-        this.#joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
-        this.#logger = ChildLogger.create(logger,
+        this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
+        this.logger = ChildLogger.create(logger,
             undefined,
             {
                 all: {
@@ -148,10 +148,10 @@ export class OdspDocumentService implements IDocumentService {
                 },
             });
 
-        this.#hostPolicy = hostPolicy;
-        this.#hostPolicy.fetchBinarySnapshotFormat ??= gatesBinaryFormatSnapshot();
+        this.hostPolicy = hostPolicy;
+        this.hostPolicy.fetchBinarySnapshotFormat ??= gatesBinaryFormatSnapshot();
         if (this.odspResolvedUrl.summarizer) {
-            this.#hostPolicy = { ...this.#hostPolicy, summarizerClient: true };
+            this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
         }
     }
 
@@ -159,7 +159,7 @@ export class OdspDocumentService implements IDocumentService {
         return this.odspResolvedUrl;
     }
     public get policies() {
-        return this.#policies;
+        return this._policies;
     }
 
     /**
@@ -168,26 +168,26 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document storage service for sharepoint driver.
      */
     public async connectToStorage(): Promise<IDocumentStorageService> {
-        if (!this.#storageManager) {
-            this.#storageManager = new OdspDocumentStorageService(
+        if (!this.storageManager) {
+            this.storageManager = new OdspDocumentStorageService(
                 this.odspResolvedUrl,
                 this.getStorageToken,
-                this.#logger,
+                this.logger,
                 true,
                 this.cache,
-                this.#hostPolicy,
+                this.hostPolicy,
                 this.epochTracker,
                 // flushCallback
                 async () => {
-                    if (this.#currentConnection !== undefined && !this.#currentConnection.disposed) {
-                        return this.#currentConnection.flush();
+                    if (this.currentConnection !== undefined && !this.currentConnection.disposed) {
+                        return this.currentConnection.flush();
                     }
                     throw new Error("Disconnected while uploading summary (attempt to perform flush())");
                 },
             );
         }
 
-        return new RetryErrorsStorageAdapter(this.#storageManager, this.#logger);
+        return new RetryErrorsStorageAdapter(this.storageManager, this.logger);
     }
 
     /**
@@ -196,20 +196,20 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document delta storage service for sharepoint driver.
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
-        const snapshotOps = this.#storageManager?.ops ?? [];
+        const snapshotOps = this.storageManager?.ops ?? [];
         const service = new OdspDeltaStorageService(
             this.odspResolvedUrl.endpoints.deltaStorageUrl,
             this.getStorageToken,
             this.epochTracker,
-            this.#logger,
+            this.logger,
         );
 
         // batch size, please see issue #5211 for data around batch sizing
-        const batchSize = this.#hostPolicy.opsBatchSize ?? 5000;
-        const concurrency = this.#hostPolicy.concurrentOpsBatches ?? 1;
+        const batchSize = this.hostPolicy.opsBatchSize ?? 5000;
+        const concurrency = this.hostPolicy.concurrentOpsBatches ?? 1;
         return new OdspDeltaStorageWithCache(
             snapshotOps,
-            this.#logger,
+            this.logger,
             batchSize,
             concurrency,
             async (from, to, telemetryProps, fetchReason) => service.get(from, to, telemetryProps, fetchReason),
@@ -218,8 +218,8 @@ export class OdspDocumentService implements IDocumentService {
                 return res as ISequencedDocumentMessage[] ?? [];
             },
             (from, to) => {
-                if (this.#currentConnection !== undefined && !this.#currentConnection.disposed) {
-                    this.#currentConnection.requestOps(from, to);
+                if (this.currentConnection !== undefined && !this.currentConnection.disposed) {
+                    this.currentConnection.requestOps(from, to);
                 }
             },
             (ops: ISequencedDocumentMessage[]) => this.opsReceived(ops),
@@ -252,7 +252,7 @@ export class OdspDocumentService implements IDocumentService {
                                 // This document can only be opened in storage-only mode.
                                 // DeltaManager will recognize this error
                                 // and load without a delta stream connection.
-                                this.#policies = {...this.#policies,storageOnly: true};
+                                this._policies = {...this._policies,storageOnly: true};
                                 throw new DeltaStreamConnectionForbiddenError(code);
                             default:
                                 continue;
@@ -287,10 +287,10 @@ export class OdspDocumentService implements IDocumentService {
                 connection.on("op", (documentId, ops: ISequencedDocumentMessage[]) => {
                     this.opsReceived(ops);
                 });
-                this.#currentConnection = connection;
+                this.currentConnection = connection;
                 return connection;
             } catch (error) {
-                this.cache.sessionJoinCache.remove(this.#joinSessionKey);
+                this.cache.sessionJoinCache.remove(this.joinSessionKey);
                 if (typeof error === "object" && error !== null) {
                     error.socketDocumentId = websocketEndpoint.id;
                 }
@@ -308,17 +308,17 @@ export class OdspDocumentService implements IDocumentService {
                 this.odspResolvedUrl,
                 "opStream/joinSession",
                 "POST",
-                this.#logger,
+                this.logger,
                 this.getStorageToken,
                 this.epochTracker,
                 requestSocketToken,
                 options,
-                this.#hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
+                this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
             );
 
         // Note: The sessionCache is configured with a sliding expiry of 1 hour,
         // so if we've fetched the join session within the last hour we won't run executeFetch again now.
-        return this.cache.sessionJoinCache.addOrGet(this.#joinSessionKey, executeFetch);
+        return this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
     }
 
     /**
@@ -348,7 +348,7 @@ export class OdspDocumentService implements IDocumentService {
             io,
             client,
             webSocketUrl,
-            this.#logger,
+            this.logger,
             60000,
             this.epochTracker,
             this.socketReferenceKeyPrefix,
@@ -358,7 +358,7 @@ export class OdspDocumentService implements IDocumentService {
         // Given that most reconnects result in reusing socket and happen very quickly,
         // report event only if it took longer than threshold.
         if (duration >= 2000) {
-            this.#logger.sendPerformanceEvent({
+            this.logger.sendPerformanceEvent({
                 eventName: "ConnectionSuccess",
                 duration,
             });
@@ -374,18 +374,18 @@ export class OdspDocumentService implements IDocumentService {
         if (error !== undefined) {
             this.epochTracker.removeEntries().catch(() => {});
         } else {
-            this.#opsCache?.flushOps();
+            this._opsCache?.flushOps();
         }
-        this.#opsCache?.dispose();
+        this._opsCache?.dispose();
     }
 
     protected get opsCache() {
-        if (this.#opsCache) {
-            return this.#opsCache;
+        if (this._opsCache) {
+            return this._opsCache;
         }
 
-        const seqNumber = this.#storageManager?.snapshotSequenceNumber;
-        const batchSize = this.#hostPolicy.opsCaching?.batchSize ?? 100;
+        const seqNumber = this.storageManager?.snapshotSequenceNumber;
+        const batchSize = this.hostPolicy.opsCaching?.batchSize ?? 100;
         if (seqNumber === undefined || batchSize < 1) {
             return;
         }
@@ -393,9 +393,9 @@ export class OdspDocumentService implements IDocumentService {
         const opsKey: Omit<IEntry, "key"> = {
             type: "ops",
         };
-        this.#opsCache = new OpsCache(
+        this._opsCache = new OpsCache(
             seqNumber,
-            this.#logger,
+            this.logger,
             // ICache
             {
                 write: async (key: string, opsData: string) => {
@@ -405,10 +405,10 @@ export class OdspDocumentService implements IDocumentService {
                 remove: () => { this.cache.persistedCache.removeEntries().catch(() => {}); },
             },
             batchSize,
-            this.#hostPolicy.opsCaching?.timerGranularity ?? 5000,
-            this.#hostPolicy.opsCaching?.totalOpsToCache ?? 5000,
+            this.hostPolicy.opsCaching?.timerGranularity ?? 5000,
+            this.hostPolicy.opsCaching?.totalOpsToCache ?? 5000,
         );
-        return this.#opsCache;
+        return this._opsCache;
     }
 
     // Called whenever re receive ops through any channel for this document (snapshot, delta connection, delta storage)

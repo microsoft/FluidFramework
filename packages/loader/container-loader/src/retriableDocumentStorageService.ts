@@ -22,7 +22,7 @@ import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definition
 import { runWithRetry } from "@fluidframework/driver-utils";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
-    #disposed = false;
+    private _disposed = false;
     constructor(
         private readonly internalStorageService: IDocumentStorageService,
         private readonly logger: ITelemetryLogger,
@@ -32,9 +32,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
     public get policies(): IDocumentStorageServicePolicies | undefined {
         return this.internalStorageService.policies;
     }
-    public get disposed() { return this.#disposed; }
+    public get disposed() { return this._disposed; }
     public dispose() {
-        this.#disposed = true;
+        this._disposed = true;
     }
 
     public get repositoryUrl(): string {
@@ -107,7 +107,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
     }
 
     private checkStorageDisposed() {
-        if (this.#disposed) {
+        if (this._disposed) {
             throw new GenericError("storageServiceDisposedCannotRetry", { canRetry: false });
         }
         return undefined;

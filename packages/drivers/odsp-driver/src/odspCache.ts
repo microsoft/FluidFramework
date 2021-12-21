@@ -27,7 +27,7 @@ export interface IPersistedFileCache {
  * (Based off of the same class in promiseCache.ts, could be consolidated)
  */
 class GarbageCollector<TKey> {
-    readonly #gcTimeouts = new Map<TKey, ReturnType<typeof setTimeout>>();
+    private readonly gcTimeouts = new Map<TKey, ReturnType<typeof setTimeout>>();
 
     constructor(
         private readonly cleanup: (key: TKey) => void,
@@ -37,7 +37,7 @@ class GarbageCollector<TKey> {
      * Schedule GC for the given key, as applicable
      */
     public schedule(key: TKey, durationMs: number) {
-        this.#gcTimeouts.set(
+        this.gcTimeouts.set(
             key,
             setTimeout(
                 () => { this.cleanup(key); this.cancel(key); },
@@ -50,10 +50,10 @@ class GarbageCollector<TKey> {
      * Cancel any pending GC for the given key
      */
     public cancel(key: TKey) {
-        const timeout = this.#gcTimeouts.get(key);
+        const timeout = this.gcTimeouts.get(key);
         if (timeout !== undefined) {
             clearTimeout(timeout);
-            this.#gcTimeouts.delete(key);
+            this.gcTimeouts.delete(key);
         }
     }
 }
@@ -63,28 +63,28 @@ class GarbageCollector<TKey> {
  * used if no persisted cache is provided by the host
  */
 export class LocalPersistentCache implements IPersistedCache {
-    readonly #cache = new Map<string, any>();
-    readonly #gc = new GarbageCollector<string>((key) => this.#cache.delete(key));
+    private readonly cache = new Map<string, any>();
+    private readonly gc = new GarbageCollector<string>((key) => this.cache.delete(key));
 
     public constructor(private readonly snapshotExpiryPolicy = 30 * 1000) {}
 
     async get(entry: ICacheEntry): Promise<any> {
         const key = this.keyFromEntry(entry);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.#cache.get(key);
+        return this.cache.get(key);
     }
 
     async put(entry: ICacheEntry, value: any) {
         const key = this.keyFromEntry(entry);
-        this.#cache.set(key, value);
+        this.cache.set(key, value);
 
         // Do not keep items too long in memory
-        this.#gc.cancel(key);
-        this.#gc.schedule(key, this.snapshotExpiryPolicy);
+        this.gc.cancel(key);
+        this.gc.schedule(key, this.snapshotExpiryPolicy);
     }
 
     async removeEntries(file: IFileEntry): Promise<void> {
-        Array.from(this.#cache)
+        Array.from(this.cache)
         .filter(([cachekey]) => {
             const docIdFromKey = cachekey.split("_");
             if (docIdFromKey[0] === file.docId) {
@@ -92,7 +92,7 @@ export class LocalPersistentCache implements IPersistedCache {
             }
         })
         .map(([cachekey]) => {
-            this.#cache.delete(cachekey);
+            this.cache.delete(cachekey);
         });
     }
 

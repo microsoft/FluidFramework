@@ -49,9 +49,9 @@ export interface ShareLinkFetcherProps {
  * This resolver also handles share links and try to generate one for the use by the app.
  */
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
-    readonly #logger: ITelemetryLogger;
-    readonly #sharingLinkCache = new PromiseCache<string, string>();
-    readonly #shareLinkFetcherProps: ShareLinkFetcherProps | undefined;
+    private readonly logger: ITelemetryLogger;
+    private readonly sharingLinkCache = new PromiseCache<string, string>();
+    private readonly shareLinkFetcherProps: ShareLinkFetcherProps | undefined;
 
     /**
      * Creates url resolver instance
@@ -68,11 +68,11 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         logger?: ITelemetryBaseLogger,
         private readonly appName?: string,
     ) {
-        this.#logger = createOdspLogger(logger);
+        this.logger = createOdspLogger(logger);
         if (shareLinkFetcherProps) {
-            this.#shareLinkFetcherProps = {
+            this.shareLinkFetcherProps = {
                 ...shareLinkFetcherProps,
-                tokenFetcher: this.toInstrumentedTokenFetcher(this.#logger, shareLinkFetcherProps.tokenFetcher),
+                tokenFetcher: this.toInstrumentedTokenFetcher(this.logger, shareLinkFetcherProps.tokenFetcher),
             };
         }
     }
@@ -175,7 +175,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     }
 
     private async getShareLinkPromise(resolvedUrl: IOdspResolvedUrl): Promise<string> {
-        if (this.#shareLinkFetcherProps === undefined) {
+        if (this.shareLinkFetcherProps === undefined) {
             throw new Error("Failed to get share link because share link fetcher props are missing");
         }
 
@@ -185,22 +185,22 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         }
 
         const key = this.getKey(resolvedUrl);
-        const cachedLinkPromise = this.#sharingLinkCache.get(key);
+        const cachedLinkPromise = this.sharingLinkCache.get(key);
         if (cachedLinkPromise) {
             return cachedLinkPromise;
         }
         const newLinkPromise = getFileLink(
-            this.#shareLinkFetcherProps.tokenFetcher,
+            this.shareLinkFetcherProps.tokenFetcher,
             resolvedUrl,
-            this.#shareLinkFetcherProps.identityType,
-            this.#logger,
+            this.shareLinkFetcherProps.identityType,
+            this.logger,
         ).catch((error) => {
             // This should imply that error is a non-retriable error.
-            this.#logger.sendErrorEvent({ eventName: "FluidFileUrlError" }, error);
-            this.#sharingLinkCache.remove(key);
+            this.logger.sendErrorEvent({ eventName: "FluidFileUrlError" }, error);
+            this.sharingLinkCache.remove(key);
             throw error;
         });
-        this.#sharingLinkCache.add(key, async () => newLinkPromise);
+        this.sharingLinkCache.add(key, async () => newLinkPromise);
         return newLinkPromise;
     }
 

@@ -27,6 +27,7 @@ import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
     ICommittedProposal,
     IQuorum,
+    IQuorumClients,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISummaryTree,
@@ -56,10 +57,10 @@ import { MockDeltaManager } from "./mockDeltas";
  */
 export class MockDeltaConnection implements IDeltaConnection {
     public get connected(): boolean {
-        return this.#connected;
+        return this._connected;
     }
 
-    #connected = true;
+    private _connected = true;
     public handler: IDeltaHandler | undefined;
 
     constructor(
@@ -81,7 +82,7 @@ export class MockDeltaConnection implements IDeltaConnection {
     }
 
     public setConnectionState(connected: boolean) {
-        this.#connected = connected;
+        this._connected = connected;
         this.handler?.setConnectionState(connected);
     }
 
@@ -109,7 +110,7 @@ export interface IMockContainerRuntimePendingMessage {
 export class MockContainerRuntime {
     public clientId: string;
     protected clientSequenceNumber: number = 0;
-    readonly #deltaManager: MockDeltaManager;
+    private readonly deltaManager: MockDeltaManager;
     protected readonly deltaConnections: MockDeltaConnection[] = [];
     protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
 
@@ -117,9 +118,9 @@ export class MockContainerRuntime {
         protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
         protected readonly factory: MockContainerRuntimeFactory,
     ) {
-        this.#deltaManager = new MockDeltaManager();
+        this.deltaManager = new MockDeltaManager();
         // Set FluidDataStoreRuntime's deltaManager to ours so that they are in sync.
-        this.dataStoreRuntime.deltaManager = this.#deltaManager;
+        this.dataStoreRuntime.deltaManager = this.deltaManager;
         this.dataStoreRuntime.quorum = factory.quorum;
         // FluidDataStoreRuntime already creates a clientId, reuse that so they are in sync.
         this.clientId = this.dataStoreRuntime.clientId;
@@ -141,7 +142,7 @@ export class MockContainerRuntime {
             clientId: this.clientId,
             clientSequenceNumber,
             contents: messageContent,
-            referenceSequenceNumber: this.#deltaManager.lastSequenceNumber,
+            referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
             type: MessageType.Operation,
 
         };
@@ -155,9 +156,9 @@ export class MockContainerRuntime {
     public dirty(): void { }
 
     public process(message: ISequencedDocumentMessage) {
-        this.#deltaManager.lastSequenceNumber = message.sequenceNumber;
-        this.#deltaManager.lastMessage = message;
-        this.#deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
+        this.deltaManager.lastSequenceNumber = message.sequenceNumber;
+        this.deltaManager.lastMessage = message;
+        this.deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
         const [local, localOpMetadata] = this.processInternal(message);
         this.deltaConnections.forEach((dc) => {
             dc.process(message, local, localOpMetadata);
@@ -248,30 +249,30 @@ export class MockContainerRuntimeFactory {
 }
 
 export class MockQuorum implements IQuorum, EventEmitter {
-    readonly #map = new Map<string, any>();
-    readonly #members: Map<string, ISequencedClient>;
-    readonly #eventEmitter = new EventEmitter();
+    private readonly map = new Map<string, any>();
+    private readonly members: Map<string, ISequencedClient>;
+    private readonly eventEmitter = new EventEmitter();
 
     constructor(...members: [string, Partial<ISequencedClient>][]) {
-        this.#members = new Map(members as [string, ISequencedClient][] ?? []);
+        this.members = new Map(members as [string, ISequencedClient][] ?? []);
     }
 
     async propose(key: string, value: any) {
-        if (this.#map.has(key)) {
+        if (this.map.has(key)) {
             throw new Error(`${key} exists`);
         }
-        this.#map.set(key, value);
-        this.#eventEmitter.emit("approveProposal", 0, key, value);
-        this.#eventEmitter.emit("commitProposal", 0, key, value);
+        this.map.set(key, value);
+        this.eventEmitter.emit("approveProposal", 0, key, value);
+        this.eventEmitter.emit("commitProposal", 0, key, value);
     }
 
     has(key: string): boolean {
-        return this.#map.has(key);
+        return this.map.has(key);
     }
 
     get(key: string) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.#map.get(key);
+        return this.map.get(key);
     }
 
     getApprovalData(key: string): ICommittedProposal | undefined {
@@ -279,18 +280,18 @@ export class MockQuorum implements IQuorum, EventEmitter {
     }
 
     addMember(id: string, client: Partial<ISequencedClient>) {
-        this.#members.set(id, client as ISequencedClient);
-        this.#eventEmitter.emit("addMember");
+        this.members.set(id, client as ISequencedClient);
+        this.eventEmitter.emit("addMember");
     }
 
     removeMember(id: string) {
-        if (this.#members.delete(id)) {
-            this.#eventEmitter.emit("removeMember");
+        if (this.members.delete(id)) {
+            this.eventEmitter.emit("removeMember");
         }
     }
 
     getMembers(): Map<string, ISequencedClient> {
-        return this.#members;
+        return this.members;
     }
     getMember(clientId: string): ISequencedClient | undefined {
         return this.getMembers().get(clientId);
@@ -307,7 +308,7 @@ export class MockQuorum implements IQuorum, EventEmitter {
     on(event: string | symbol, listener: (...args: any[]) => void): this {
         switch (event) {
             case "afterOn":
-                this.#eventEmitter.on(event, listener);
+                this.eventEmitter.on(event, listener);
                 return this;
 
             case "addMember":
@@ -315,8 +316,8 @@ export class MockQuorum implements IQuorum, EventEmitter {
             case "addProposal":
             case "approveProposal":
             case "commitProposal":
-                this.#eventEmitter.on(event, listener);
-                this.#eventEmitter.emit("afterOn", event);
+                this.eventEmitter.on(event, listener);
+                this.eventEmitter.emit("afterOn", event);
                 return this;
             default:
                 throw new Error("Method not implemented.");
@@ -332,11 +333,11 @@ export class MockQuorum implements IQuorum, EventEmitter {
         throw new Error("Method not implemented.");
     }
     removeListener(event: string | symbol, listener: (...args: any[]) => void): this {
-        this.#eventEmitter.removeListener(event, listener);
+        this.eventEmitter.removeListener(event, listener);
         return this;
     }
     off(event: string | symbol, listener: (...args: any[]) => void): this {
-        this.#eventEmitter.off(event, listener);
+        this.eventEmitter.off(event, listener);
         return this;
     }
     removeAllListeners(event?: string | symbol | undefined): this {
@@ -379,8 +380,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
 
     public get IFluidRouter() { return this; }
 
-    public readonly IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
-
     public readonly documentId: string;
     public readonly id: string = uuid();
     public readonly existing: boolean;
@@ -393,26 +392,28 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreRuntime");
     public quorum = new MockQuorum();
 
+    public readonly IFluidSerializer = new FluidSerializer(this.IFluidHandleContext, (handle: IFluidHandle) => {});
+
     public get absolutePath() {
         return `/${this.id}`;
     }
 
-    #local = false;
+    private _local = false;
 
     public get local(): boolean {
-        return this.#local;
+        return this._local;
     }
 
     public set local(local: boolean) {
-        this.#local = local;
+        this._local = local;
     }
 
-    #disposed = false;
+    private _disposed = false;
 
-    public get disposed() { return this.#disposed; }
+    public get disposed() { return this._disposed; }
 
     public dispose(): void {
-        this.#disposed = true;
+        this._disposed = true;
     }
 
     public async getChannel(id: string): Promise<IChannel> {
@@ -446,7 +447,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return;
     }
 
-    public getQuorum(): IQuorum {
+    public getQuorum(): IQuorumClients {
         return this.quorum;
     }
 
@@ -501,6 +502,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public async request(request: IRequest): Promise<IResponse> {
         return null;
     }
+
+    public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void {}
 
     public async summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats> {
         const stats = mergeStats();

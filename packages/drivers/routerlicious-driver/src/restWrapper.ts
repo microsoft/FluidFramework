@@ -20,8 +20,8 @@ import { ITokenProvider } from "./tokens";
 type AuthorizationHeaderGetter = (refresh?: boolean) => Promise<string | undefined>;
 
 export class RouterliciousRestWrapper extends RestWrapper {
-    #authorizationHeader: string | undefined;
-    readonly #restLess = new RestLessClient();
+    private authorizationHeader: string | undefined;
+    private readonly restLess = new RestLessClient();
 
     constructor(
         private readonly logger: ITelemetryLogger,
@@ -35,7 +35,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
     }
 
     public async load() {
-        this.#authorizationHeader = await this.getAuthorizationHeader();
+        this.authorizationHeader = await this.getAuthorizationHeader();
     }
 
     protected async request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry = true): Promise<T> {
@@ -44,7 +44,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
             headers: this.generateHeaders(requestConfig.headers),
         };
 
-        const translatedConfig = this.useRestLess ? this.#restLess.translate(config) : config;
+        const translatedConfig = this.useRestLess ? this.restLess.translate(config) : config;
 
         try {
             const response = await this.rateLimiter.schedule(async () => Axios.request<T>(translatedConfig));
@@ -69,7 +69,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
 
             if (axiosError.response?.status === 401 && canRetry) {
                 // Refresh Authorization header and retry once
-                this.#authorizationHeader = await this.getAuthorizationHeader(true);
+                this.authorizationHeader = await this.getAuthorizationHeader(true);
                 return this.request<T>(config, statusCode, false);
             }
 
@@ -93,7 +93,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
         return {
             ...requestHeaders,
             "x-correlation-id": correlationId,
-            "Authorization": this.#authorizationHeader,
+            "Authorization": this.authorizationHeader,
         };
     }
 }

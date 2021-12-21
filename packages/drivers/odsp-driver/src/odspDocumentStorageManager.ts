@@ -57,35 +57,35 @@ async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{ index
 
 class BlobCache {
     // Save the timeout so we can cancel and reschedule it as needed
-    #blobCacheTimeout: ReturnType<typeof setTimeout> | undefined;
+    private blobCacheTimeout: ReturnType<typeof setTimeout> | undefined;
     // If the defer flag is set when the timeout fires, we'll reschedule rather than clear immediately
     // This deferral approach is used (rather than clearing/resetting the timer) as current calling patterns trigger
     // too many calls to setTimeout/clearTimeout.
-    #deferBlobCacheClear: boolean = false;
+    private deferBlobCacheClear: boolean = false;
 
-    readonly #blobCache: Map<string, ArrayBuffer> = new Map();
+    private readonly _blobCache: Map<string, ArrayBuffer> = new Map();
 
     // Tracks all blob IDs evicted from cache
-    readonly #blobsEvicted: Set<string> = new Set();
+    private readonly blobsEvicted: Set<string> = new Set();
 
     // Initial time-out to purge data from cache
     // If this time out is very small, then we purge blobs from cache too soon and that results in a lot of
     // requests to storage, which brings down perf and may trip protection limits causing 429s
-    #blobCacheTimeoutDuration = 2 * 60 * 1000;
+    private blobCacheTimeoutDuration = 2 * 60 * 1000;
 
     // SPO does not keep old snapshots around for long, so we are running chances of not
     // being able to rehydrate data store / DDS in the future if we purge anything (and with blob de-duping,
     // even if blob read by runtime, it could be read again in the future)
     // So for now, purging is disabled.
-    readonly #purgeEnabled = false;
+    private readonly purgeEnabled = false;
 
     public get value() {
-        return this.#blobCache;
+        return this._blobCache;
     }
 
     public addBlobs(blobs: Map<string, ArrayBuffer>) {
         blobs.forEach((value, blobId) => {
-            this.#blobCache.set(blobId, value);
+            this._blobCache.set(blobId, value);
         });
         // Reset the timer on cache set
         this.scheduleClearBlobsCache();
@@ -95,16 +95,16 @@ class BlobCache {
      * Schedule a timer for clearing the blob cache or defer the current one.
      */
     private scheduleClearBlobsCache() {
-        if (this.#blobCacheTimeout !== undefined) {
+        if (this.blobCacheTimeout !== undefined) {
             // If we already have an outstanding timer, just signal that we should defer the clear
-            this.#deferBlobCacheClear = true;
-        } else if (this.#purgeEnabled) {
+            this.deferBlobCacheClear = true;
+        } else if (this.purgeEnabled) {
             // If we don't have an outstanding timer, set a timer
             // When the timer runs out, we'll decide whether to proceed with the cache clear or reset the timer
             const clearCacheOrDefer = () => {
-                this.#blobCacheTimeout = undefined;
-                if (this.#deferBlobCacheClear) {
-                    this.#deferBlobCacheClear = false;
+                this.blobCacheTimeout = undefined;
+                if (this.deferBlobCacheClear) {
+                    this.deferBlobCacheClear = false;
                     this.scheduleClearBlobsCache();
                 } else {
                     // NOTE: Slightly better algorithm here would be to purge either only big blobs,
@@ -113,22 +113,22 @@ class BlobCache {
                     // We want to optimize both - memory footprint and number of future requests to storage.
                     // Note that Container can realize data store or DDS on-demand at any point in time, so we do not
                     // control when blobs will be used.
-                    this.#blobCache.forEach((_, blobId) => this.#blobsEvicted.add(blobId));
-                    this.#blobCache.clear();
+                    this._blobCache.forEach((_, blobId) => this.blobsEvicted.add(blobId));
+                    this._blobCache.clear();
                 }
             };
-            this.#blobCacheTimeout = setTimeout(clearCacheOrDefer, this.#blobCacheTimeoutDuration);
+            this.blobCacheTimeout = setTimeout(clearCacheOrDefer, this.blobCacheTimeoutDuration);
             // any future storage reads that get into the cache should be cleared from cache rather quickly -
             // there is not much value in keeping them longer
-            this.#blobCacheTimeoutDuration = 10 * 1000;
+            this.blobCacheTimeoutDuration = 10 * 1000;
         }
     }
 
     public getBlob(blobId: string) {
         // Reset the timer on attempted cache read
         this.scheduleClearBlobsCache();
-        const blobContent = this.#blobCache.get(blobId);
-        const evicted = this.#blobsEvicted.has(blobId);
+        const blobContent = this._blobCache.get(blobId);
+        const evicted = this.blobsEvicted.has(blobId);
         return { blobContent, evicted };
     }
 
@@ -143,10 +143,10 @@ class BlobCache {
         if (size < 256 * 1024) {
             // Reset the timer on cache set
             this.scheduleClearBlobsCache();
-            return this.#blobCache.set(blobId, blob);
+            return this._blobCache.set(blobId, blob);
         } else {
             // we evicted it here by not caching.
-            this.#blobsEvicted.add(blobId);
+            this.blobsEvicted.add(blobId);
         }
     }
 }
@@ -169,45 +169,45 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         minBlobSize: 2048,
     };
 
-    readonly #commitCache: Map<string, api.ISnapshotTree> = new Map();
+    private readonly commitCache: Map<string, api.ISnapshotTree> = new Map();
 
-    readonly #attributesBlobHandles: Set<string> = new Set();
+    private readonly attributesBlobHandles: Set<string> = new Set();
 
-    readonly #odspSummaryUploadManager: OdspSummaryUploadManager;
-    #ops: api.ISequencedDocumentMessage[] | undefined;
+    private readonly odspSummaryUploadManager: OdspSummaryUploadManager;
+    private _ops: api.ISequencedDocumentMessage[] | undefined;
 
-    #firstVersionCall = true;
-    #snapshotSequenceNumber: number | undefined;
+    private firstVersionCall = true;
+    private _snapshotSequenceNumber: number | undefined;
 
-    readonly #documentId: string;
-    readonly #snapshotUrl: string | undefined;
-    readonly #attachmentPOSTUrl: string | undefined;
-    readonly #attachmentGETUrl: string | undefined;
+    private readonly documentId: string;
+    private readonly snapshotUrl: string | undefined;
+    private readonly attachmentPOSTUrl: string | undefined;
+    private readonly attachmentGETUrl: string | undefined;
     // Driver specified limits for snapshot size and time.
     /**
      * NOTE: While commit cfff6e3 added restrictions to prevent large payloads, snapshot failures will continue to
      * happen until blob request throttling is implemented. Until then, as a temporary fix we set arbitrarily large
      * snapshot size and timeout limits so that such failures are unlikely to occur.
      */
-    readonly #maxSnapshotSizeLimit = 500000000; // 500 MB
-    readonly #maxSnapshotFetchTimeout = 120000; // 2 min
+    private readonly maxSnapshotSizeLimit = 500000000; // 500 MB
+    private readonly maxSnapshotFetchTimeout = 120000; // 2 min
 
     // limits the amount of parallel "attachment" blob uploads
-    readonly #createBlobRateLimiter = new RateLimiter(1);
+    private readonly createBlobRateLimiter = new RateLimiter(1);
 
-    readonly #blobCache = new BlobCache();
+    private readonly blobCache = new BlobCache();
 
     public set ops(ops: api.ISequencedDocumentMessage[] | undefined) {
-        assert(this.#ops === undefined, 0x0a5 /* "Trying to set ops when they are already set!" */);
-        this.#ops = ops;
+        assert(this._ops === undefined, 0x0a5 /* "Trying to set ops when they are already set!" */);
+        this._ops = ops;
     }
 
     public get ops(): api.ISequencedDocumentMessage[] | undefined {
-        return this.#ops;
+        return this._ops;
     }
 
     public get snapshotSequenceNumber() {
-        return this.#snapshotSequenceNumber;
+        return this._snapshotSequenceNumber;
     }
 
     constructor(
@@ -220,11 +220,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         private readonly epochTracker: EpochTracker,
         private readonly flushCallback: () => Promise<FlushResult>,
     ) {
-        this.#documentId = this.odspResolvedUrl.hashedDocumentId;
-        this.#snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
-        this.#attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
-        this.#attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
-        this.#odspSummaryUploadManager = new OdspSummaryUploadManager(this.#snapshotUrl, getStorageToken, logger, epochTracker);
+        this.documentId = this.odspResolvedUrl.hashedDocumentId;
+        this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
+        this.attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
+        this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
+        this.odspSummaryUploadManager = new OdspSummaryUploadManager(this.snapshotUrl, getStorageToken, logger, epochTracker);
     }
 
     public get repositoryUrl(): string {
@@ -236,7 +236,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         const response = await getWithRetryForTokenRefresh(async (options) => {
             const storageToken = await this.getStorageToken(options, "CreateBlob");
-            const { url, headers } = getUrlAndHeadersWithAuth(`${this.#attachmentPOSTUrl}/content`, storageToken);
+            const { url, headers } = getUrlAndHeadersWithAuth(`${this.attachmentPOSTUrl}/content`, storageToken);
             headers["Content-Type"] = "application/octet-stream";
 
             return PerformanceEvent.timedExecAsync(
@@ -244,10 +244,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 {
                     eventName: "createBlob",
                     size: file.byteLength,
-                    waitQueueLength: this.#createBlobRateLimiter.waitQueueLength,
+                    waitQueueLength: this.createBlobRateLimiter.waitQueueLength,
                 },
                 async (event) => {
-                    const res = await this.#createBlobRateLimiter.schedule(async () =>
+                    const res = await this.createBlobRateLimiter.schedule(async () =>
                         this.epochTracker.fetchAndParseAsJSON<api.ICreateBlobResponse>(
                             url,
                             {
@@ -270,7 +270,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     private async readBlobCore(blobId: string): Promise<ArrayBuffer> {
-        const { blobContent, evicted } = this.#blobCache.getBlob(blobId);
+        const { blobContent, evicted } = this.blobCache.getBlob(blobId);
         let blob = blobContent;
 
         if (blob === undefined) {
@@ -278,7 +278,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
             blob = await getWithRetryForTokenRefresh(async (options) => {
                 const storageToken = await this.getStorageToken(options, "GetBlob");
-                const unAuthedUrl = `${this.#attachmentGETUrl}/${encodeURIComponent(blobId)}/content`;
+                const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobId)}/content`;
                 const { url, headers } = getUrlAndHeadersWithAuth(unAuthedUrl, storageToken);
 
                 return PerformanceEvent.timedExecAsync(
@@ -310,7 +310,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     },
                 );
             });
-            this.#blobCache.setBlob(blobId, blob);
+            this.blobCache.setBlob(blobId, blob);
         }
 
         return blob;
@@ -321,7 +321,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
-        if (!this.#snapshotUrl) {
+        if (!this.snapshotUrl) {
             return null;
         }
 
@@ -359,7 +359,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             if (snapshotTree.blobs) {
                 const attributesBlob = snapshotTree.blobs.attributes;
                 if (attributesBlob) {
-                    this.#attributesBlobHandles.add(attributesBlob);
+                    this.attributesBlobHandles.add(attributesBlob);
                 }
             }
 
@@ -376,7 +376,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
         // Regular load workflow uses blobId === documentID to indicate "latest".
-        if (blobid !== this.#documentId && blobid) {
+        if (blobid !== this.documentId && blobid) {
             // FluidFetch & FluidDebugger tools use empty sting to query for versions
             // In such case we need to make a call against SPO to give full picture to the tool.
             // Otherwise, each commit calls getVersions but odsp doesn't have a history for each commit
@@ -390,13 +390,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
 
         // Can't really make a call if we do not have URL
-        if (!this.#snapshotUrl) {
+        if (!this.snapshotUrl) {
             return [];
         }
 
         // If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
         // Do it only once - we might get more here due to summarizer - it needs only container tree, not full snapshot.
-        if (this.#firstVersionCall && count === 1 && (blobid === null || blobid === this.#documentId)) {
+        if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
             const hostSnapshotOptions = this.hostPolicy.snapshotOptions;
             const odspSnapshotCacheValue: ISnapshotContents = await PerformanceEvent.timedExecAsync(
                 this.logger,
@@ -474,9 +474,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             );
 
             // Successful call, make network calls only
-            this.#firstVersionCall = false;
+            this.firstVersionCall = false;
 
-            this.#snapshotSequenceNumber = odspSnapshotCacheValue.sequenceNumber;
+            this._snapshotSequenceNumber = odspSnapshotCacheValue.sequenceNumber;
             const { snapshotTree, blobs, ops } = odspSnapshotCacheValue;
             // id should be undefined in case of just ops in snapshot.
             let id: string | undefined;
@@ -495,7 +495,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         return getWithRetryForTokenRefresh(async (options) => {
             const storageToken = await this.getStorageToken(options, "GetVersions");
-            const { url, headers } = getUrlAndHeadersWithAuth(`${this.#snapshotUrl}/versions?count=${count}`, storageToken);
+            const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`, storageToken);
 
             // Fetch the latest snapshot versions for the document
             const response = await PerformanceEvent.timedExecAsync(
@@ -554,9 +554,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private async fetchSnapshotCore(hostSnapshotOptions: ISnapshotOptions | undefined) {
         const snapshotOptions: ISnapshotOptions = {
-            mds: this.#maxSnapshotSizeLimit,
+            mds: this.maxSnapshotSizeLimit,
             ...hostSnapshotOptions,
-            timeout: hostSnapshotOptions?.timeout ? Math.min(hostSnapshotOptions.timeout, this.#maxSnapshotFetchTimeout) : this.#maxSnapshotFetchTimeout,
+            timeout: hostSnapshotOptions?.timeout ? Math.min(hostSnapshotOptions.timeout, this.maxSnapshotFetchTimeout) : this.maxSnapshotFetchTimeout,
         };
 
         // No limit on size of snapshot or time to fetch, as otherwise we fail all clients to summarize
@@ -671,7 +671,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         const id = await PerformanceEvent.timedExecAsync(this.logger,
             { eventName: "uploadSummaryWithContext" },
-            async () => this.#odspSummaryUploadManager.writeSummaryTree(summary, context));
+            async () => this.odspSummaryUploadManager.writeSummaryTree(summary, context));
         return id;
     }
 
@@ -680,15 +680,15 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     private setRootTree(id: string, tree: api.ISnapshotTree) {
-        this.#commitCache.set(id, tree);
+        this.commitCache.set(id, tree);
     }
 
     private initBlobsCache(blobs: Map<string, ArrayBuffer>) {
-        this.#blobCache.addBlobs(blobs);
+        this.blobCache.addBlobs(blobs);
     }
 
     private checkSnapshotUrl() {
-        if (!this.#snapshotUrl) {
+        if (!this.snapshotUrl) {
             throw new NonRetryableError(
                 "noSnapshotUrlProvided",
                 "Method failed because no snapshot url was available",
@@ -697,7 +697,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     private checkAttachmentPOSTUrl() {
-        if (!this.#attachmentPOSTUrl) {
+        if (!this.attachmentPOSTUrl) {
             throw new NonRetryableError(
                 "noAttachmentPOSTUrlProvided",
                 "Method failed because no attachment POST url was available",
@@ -706,7 +706,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     private checkAttachmentGETUrl() {
-        if (!this.#attachmentGETUrl) {
+        if (!this.attachmentGETUrl) {
             throw new NonRetryableError(
                 "noAttachmentGETUrlWasProvided",
                 "Method failed because no attachment GET url was available",
@@ -715,10 +715,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     private async readTree(id: string): Promise<api.ISnapshotTree | null> {
-        if (!this.#snapshotUrl) {
+        if (!this.snapshotUrl) {
             return null;
         }
-        let tree = this.#commitCache.get(id);
+        let tree = this.commitCache.get(id);
         if (!tree) {
             tree = await getWithRetryForTokenRefresh(async (options) => {
                 const storageToken = await this.getStorageToken(options, "ReadCommit");
@@ -729,7 +729,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         "snapshotTree",
                     );
                 };
-                const snapshot = await fetchSnapshot(this.#snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger, snapshotDownloader);
+                const snapshot = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger, snapshotDownloader);
                 let treeId = "";
                 if (snapshot.snapshotTree) {
                     assert(snapshot.snapshotTree.id !== undefined, 0x222 /* "Root tree should contain the id!!" */);
@@ -741,7 +741,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 }
                 // If the version id doesn't match with the id of the tree, then use the id of first tree which in that case
                 // will be the actual id of tree to be fetched.
-                return this.#commitCache.get(id) ?? this.#commitCache.get(treeId);
+                return this.commitCache.get(id) ?? this.commitCache.get(treeId);
             });
         }
 
@@ -779,7 +779,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (hierarchicalProtocolTree.blobs) {
             const attributesBlob = hierarchicalProtocolTree.blobs.attributes;
             if (attributesBlob) {
-                this.#attributesBlobHandles.add(attributesBlob);
+                this.attributesBlobHandles.add(attributesBlob);
             }
         }
         return this.combineProtocolAndAppSnapshotTree(hierarchicalAppTree, hierarchicalProtocolTree);

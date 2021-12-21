@@ -117,7 +117,7 @@ export class OdspDeltaStorageService {
 }
 
 export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
-    #firstCacheMiss = Number.MAX_SAFE_INTEGER;
+    private firstCacheMiss = Number.MAX_SAFE_INTEGER;
 
     public constructor(
         private snapshotOps: ISequencedDocumentMessage[] | undefined,
@@ -187,7 +187,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 
             // Cache in normal flow is continuous. Once there is a miss, stop consulting cache.
             // This saves a bit of processing time
-            if (from < this.#firstCacheMiss) {
+            if (from < this.firstCacheMiss) {
                 const messagesFromCache = await this.getCached(from, to);
                 this.validateMessages("cached", messagesFromCache, from);
                 if (messagesFromCache.length !== 0) {
@@ -197,7 +197,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
                         partialResult: true,
                     };
                 }
-                this.#firstCacheMiss = Math.min(this.#firstCacheMiss, from);
+                this.firstCacheMiss = Math.min(this.firstCacheMiss, from);
             }
 
             if (cachedOnly) {

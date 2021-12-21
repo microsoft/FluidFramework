@@ -75,10 +75,10 @@ export class MockDocumentDeltaConnection
             this.submitSignalHandler(message);
         }
     }
-    #disposed = false;
-    public get disposed() { return this.#disposed; }
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
     public dispose(error?: Error) {
-        this.#disposed = true;
+        this._disposed = true;
         this.emit("disconnect", error?.message ?? "mock close() called");
     }
 

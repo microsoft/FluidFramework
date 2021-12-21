@@ -117,19 +117,19 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     /**
      * The data held by this cell.
      */
-    #data: Serializable<T> | undefined;
+    private data: Serializable<T> | undefined;
 
     /**
      * This is used to assign a unique id to outgoing messages. It is used to track messages until
      * they are ack'd.
      */
-    #messageId: number = -1;
+    private messageId: number = -1;
 
     /**
      * This keeps track of the messageId of messages that have been ack'd. It is updated every time
      * we a message is ack'd with it's messageId.
      */
-    #messageIdObserved: number = -1;
+    private messageIdObserved: number = -1;
 
     /**
      * Constructs a new shared cell. If the object is non-local an id and service interfaces will
@@ -146,7 +146,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * {@inheritDoc ISharedCell.get}
      */
     public get(): Serializable<T> | undefined {
-        return this.#data;
+        return this.data;
     }
 
     /**
@@ -174,7 +174,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
             type: "setCell",
             value: operationValue,
         };
-        this.submitLocalMessage(op, ++this.#messageId);
+        this.submitLocalMessage(op, ++this.messageId);
     }
 
     /**
@@ -192,14 +192,14 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
         const op: IDeleteCellOperation = {
             type: "deleteCell",
         };
-        this.submitLocalMessage(op, ++this.#messageId);
+        this.submitLocalMessage(op, ++this.messageId);
     }
 
     /**
      * {@inheritDoc ISharedCell.empty}
      */
     public empty() {
-        return this.#data === undefined;
+        return this.data === undefined;
     }
 
     /**
@@ -209,7 +209,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
         const content: ICellValue = {
-            value: this.#data,
+            value: this.data,
         };
 
         const tree: ITree = {
@@ -235,22 +235,22 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const content = await readAndParse<ICellValue>(storage, snapshotFileName);
 
-        this.#data = this.decode(content);
+        this.data = this.decode(content);
     }
 
     /**
      * Initialize a local instance of cell
      */
     protected initializeLocalCore() {
-        this.#data = undefined;
+        this.data = undefined;
     }
 
     /**
      * Process the cell value on register
      */
     protected registerCore() {
-        if (SharedObject.is(this.#data)) {
-            this.#data.bindToContext();
+        if (SharedObject.is(this.data)) {
+            this.data.bindToContext();
         }
     }
 
@@ -268,15 +268,15 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * For messages from a remote client, this will be undefined.
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        if (this.#messageId !== this.#messageIdObserved) {
+        if (this.messageId !== this.messageIdObserved) {
             // We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.
             if (local) {
                 const messageIdReceived = localOpMetadata as number;
-                assert(messageIdReceived !== undefined && messageIdReceived <= this.#messageId,
+                assert(messageIdReceived !== undefined && messageIdReceived <= this.messageId,
                     0x00c /* "messageId is incorrect from from the local client's ACK" */);
 
                 // We got an ACK. Update messageIdObserved.
-                this.#messageIdObserved = localOpMetadata as number;
+                this.messageIdObserved = localOpMetadata as number;
             }
             return;
         }
@@ -300,12 +300,12 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     }
 
     private setCore(value: Serializable<T>) {
-        this.#data = value;
+        this.data = value;
         this.emit("valueChanged", value);
     }
 
     private deleteCore() {
-        this.#data = undefined;
+        this.data = undefined;
         this.emit("delete");
     }
 

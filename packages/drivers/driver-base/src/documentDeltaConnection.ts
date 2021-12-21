@@ -77,21 +77,21 @@ export class DocumentDeltaConnection
      * A flag to indicate whether we have our handler attached.  If it's attached, we're queueing incoming ops
      * to later be retrieved via initialMessages.
      */
-    #earlyOpHandlerAttached: boolean = false;
+    private earlyOpHandlerAttached: boolean = false;
 
-    #socketConnectionTimeout: ReturnType<typeof setTimeout> | undefined;
+    private socketConnectionTimeout: ReturnType<typeof setTimeout> | undefined;
 
     protected readonly submitManager: BatchManager<IDocumentMessage[]>;
 
-    #details: IConnected | undefined;
+    private _details: IConnected | undefined;
 
     // Listeners only needed while the connection is in progress
-    readonly #connectionListeners: Map<string, (...args: any[]) => void> = new Map();
+    private readonly connectionListeners: Map<string, (...args: any[]) => void> = new Map();
     // Listeners used throughout the lifetime of the DocumentDeltaConnection
-    readonly #trackedListeners: Map<string, (...args: any[]) => void> = new Map();
+    private readonly trackedListeners: Map<string, (...args: any[]) => void> = new Map();
 
     protected get hasDetails(): boolean {
-        return !!this.#details;
+        return !!this._details;
     }
 
     public get disposed() {
@@ -107,10 +107,10 @@ export class DocumentDeltaConnection
     protected readonly isBatchManagerDisabled: boolean = false;
 
     public get details(): IConnected {
-        if (!this.#details) {
+        if (!this._details) {
             throw new Error("Internal error: calling method before _details is initialized!");
         }
-        return this.#details;
+        return this._details;
     }
 
     /**
@@ -134,7 +134,7 @@ export class DocumentDeltaConnection
 
             // Some events are already forwarded - see this.addTrackedListener() calls in initialize().
             if (DocumentDeltaConnection.eventsAlwaysForwarded.includes(event)) {
-                assert(this.#trackedListeners.has(event), 0x245 /* "tracked listener" */);
+                assert(this.trackedListeners.has(event), 0x245 /* "tracked listener" */);
                 return;
             }
 
@@ -147,8 +147,8 @@ export class DocumentDeltaConnection
             // and that there are no "internal" listeners installed (like "error" case we skip above)
             // Better flow might be to always unconditionally register all handlers on successful connection,
             // though some logic (naming assert in initialMessages getter) might need to be adjusted (it becomes noop)
-            assert((this.listeners(event).length !== 0) === this.#trackedListeners.has(event), 0x20b /* "mismatch" */);
-            if (!this.#trackedListeners.has(event)) {
+            assert((this.listeners(event).length !== 0) === this.trackedListeners.has(event), 0x20b /* "mismatch" */);
+            if (!this.trackedListeners.has(event)) {
                 this.addTrackedListener(
                     event,
                     (...args: any[]) => {
@@ -233,7 +233,7 @@ export class DocumentDeltaConnection
 
         // If we call this when the earlyOpHandler is not attached, then the queuedMessages may not include the
         // latest ops.  This could possibly indicate that initialMessages was called twice.
-        assert(this.#earlyOpHandlerAttached, 0x08e /* "Potentially missed initial messages" */);
+        assert(this.earlyOpHandlerAttached, 0x08e /* "Potentially missed initial messages" */);
         // We will lose ops and perf will tank as we need to go to storage to become current!
         assert(this.listeners("op").length !== 0, 0x08f /* "No op handler is setup!" */);
 
@@ -366,9 +366,9 @@ export class DocumentDeltaConnection
     protected async initialize(connectMessage: IConnect, timeout: number) {
         this.socket.on("op", this.earlyOpHandler);
         this.socket.on("signal", this.earlySignalHandler);
-        this.#earlyOpHandlerAttached = true;
+        this.earlyOpHandlerAttached = true;
 
-        this.#details = await new Promise<IConnected>((resolve, reject) => {
+        this._details = await new Promise<IConnected>((resolve, reject) => {
             const fail = (socketProtocolError: boolean, err: DriverError) => {
                 this.disposeCore(socketProtocolError, err);
                 reject(err);
@@ -465,7 +465,7 @@ export class DocumentDeltaConnection
             this.socket.emit("connect_document", connectMessage);
 
             // Give extra 2 seconds for handshake on top of socket connection timeout
-            this.#socketConnectionTimeout = setTimeout(() => {
+            this.socketConnectionTimeout = setTimeout(() => {
                 fail(false, this.createErrorObject("orderingServiceHandshakeTimeout"));
             }, timeout + 2000);
         });
@@ -483,7 +483,7 @@ export class DocumentDeltaConnection
 
     private removeEarlyOpHandler() {
         this.socket.removeListener("op", this.earlyOpHandler);
-        this.#earlyOpHandlerAttached = false;
+        this.earlyOpHandlerAttached = false;
     }
 
     private removeEarlySignalHandler() {
@@ -496,18 +496,18 @@ export class DocumentDeltaConnection
         assert(!DocumentDeltaConnection.eventsToForward.includes(event),
             0x248 /* "should not subscribe to forwarded events" */);
         this.socket.on(event, listener);
-        assert(!this.#connectionListeners.has(event), 0x20d /* "double connection listener" */);
-        this.#connectionListeners.set(event, listener);
+        assert(!this.connectionListeners.has(event), 0x20d /* "double connection listener" */);
+        this.connectionListeners.set(event, listener);
     }
 
     protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        assert(!this.#trackedListeners.has(event), 0x20e /* "double tracked listener" */);
-        this.#trackedListeners.set(event, listener);
+        assert(!this.trackedListeners.has(event), 0x20e /* "double tracked listener" */);
+        this.trackedListeners.set(event, listener);
     }
 
     private removeTrackedListeners() {
-        for (const [event, listener] of this.#trackedListeners.entries()) {
+        for (const [event, listener] of this.trackedListeners.entries()) {
             this.socket.off(event, listener);
         }
         // removeTrackedListeners removes all listeners, including connection listeners
@@ -516,18 +516,18 @@ export class DocumentDeltaConnection
         this.removeEarlyOpHandler();
         this.removeEarlySignalHandler();
 
-        this.#trackedListeners.clear();
+        this.trackedListeners.clear();
     }
 
     private removeConnectionListeners() {
-        if (this.#socketConnectionTimeout !== undefined) {
-            clearTimeout(this.#socketConnectionTimeout);
+        if (this.socketConnectionTimeout !== undefined) {
+            clearTimeout(this.socketConnectionTimeout);
         }
 
-        for (const [event, listener] of this.#connectionListeners.entries()) {
+        for (const [event, listener] of this.connectionListeners.entries()) {
             this.socket.off(event, listener);
         }
-        this.#connectionListeners.clear();
+        this.connectionListeners.clear();
     }
 
     /**

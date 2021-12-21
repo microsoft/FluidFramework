@@ -31,7 +31,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-test:";
 
     // A map of clientId to LocalDocumentService.
-    readonly #documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection> = new Map();
+    private readonly documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection> = new Map();
 
     /**
      * @param localDeltaConnectionServer - delta connection server for ops
@@ -108,7 +108,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
             tokenProvider,
             tenantId,
             documentId,
-            this.#documentDeltaConnectionsMap,
+            this.documentDeltaConnectionsMap,
             this.policies,
             this.innerDocumentService);
     }
@@ -119,11 +119,11 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
      * @param disconnectReason - The reason of the disconnection.
      */
     public disconnectClient(clientId: string, disconnectReason: string) {
-        if (!this.#documentDeltaConnectionsMap.has(clientId)) {
+        if (!this.documentDeltaConnectionsMap.has(clientId)) {
             throw new Error(`No client with the id: ${clientId}`);
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.#documentDeltaConnectionsMap.get(clientId)!.disconnectClient(disconnectReason);
+        this.documentDeltaConnectionsMap.get(clientId)!.disconnectClient(disconnectReason);
     }
 
     /**
@@ -134,10 +134,10 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
      * @param message - A message about the nack for debugging/logging/telemetry purposes.
      */
     public nackClient(clientId: string, code?: number, type?: NackErrorType, message?: any) {
-        if (!this.#documentDeltaConnectionsMap.has(clientId)) {
+        if (!this.documentDeltaConnectionsMap.has(clientId)) {
             throw new Error(`No client with the id: ${clientId}`);
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.#documentDeltaConnectionsMap.get(clientId)!.nackClient(code, type, message);
+        this.documentDeltaConnectionsMap.get(clientId)!.nackClient(code, type, message);
     }
 }

@@ -26,8 +26,8 @@ import { DataObjectTypes } from "./types";
  */
 export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I>
 {
-    #internalRoot: ISharedDirectory | undefined;
-    readonly #rootDirectoryId = "root";
+    private internalRoot: ISharedDirectory | undefined;
+    private readonly rootDirectoryId = "root";
 
     public async request(request: IRequest): Promise<IResponse> {
         const requestParser = RequestParser.create(request);
@@ -48,11 +48,11 @@ export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> ex
      * the root has not been correctly created/set.
      */
     protected get root(): ISharedDirectory {
-        if (!this.#internalRoot) {
+        if (!this.internalRoot) {
             throw new Error(this.getUninitializedErrorString(`root`));
         }
 
-        return this.#internalRoot;
+        return this.internalRoot;
     }
 
     /**
@@ -62,16 +62,16 @@ export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> ex
     public async initializeInternal(existing: boolean): Promise<void> {
         if (!existing) {
             // Create a root directory and register it before calling initializingFirstTime
-            this.#internalRoot = SharedDirectory.create(this.runtime, this.#rootDirectoryId);
-            this.#internalRoot.bindToContext();
+            this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
+            this.internalRoot.bindToContext();
         } else {
             // data store has a root directory so we just need to set it before calling initializingFromExisting
-            this.#internalRoot = await this.runtime.getChannel(this.#rootDirectoryId) as ISharedDirectory;
+            this.internalRoot = await this.runtime.getChannel(this.rootDirectoryId) as ISharedDirectory;
 
             // This will actually be an ISharedMap if the channel was previously created by the older version of
             // DataObject which used a SharedMap.  Since SharedMap and SharedDirectory are compatible unless
             // SharedDirectory-only commands are used on SharedMap, this will mostly just work for compatibility.
-            if (this.#internalRoot.attributes.type === MapFactory.Type) {
+            if (this.internalRoot.attributes.type === MapFactory.Type) {
                 this.runtime.logger.send({
                     category: "generic",
                     eventName: "MapDataObject",

@@ -34,23 +34,23 @@ export class MountableView implements IFluidMountableView {
     }
 
     /**
-     * A reference to the current container node for this.#view so we can do DOM cleanup.
+     * A reference to the current container node for this view so we can do DOM cleanup.
      * This also doubles as a way for us to know if we are mounted or not.
      */
-    #containerElement: HTMLElement | undefined;
+    private containerElement: HTMLElement | undefined;
 
     /**
      * If the view is an IFluidHTMLView we will retain a reference to it across rendering/removal.
      */
-    #htmlView: IFluidHTMLView | undefined;
+    private htmlView: IFluidHTMLView | undefined;
 
     /**
      * If the viewProvider is a React component we will retain a reference to the React component across
      * rendering/removal.
      */
-    #reactView: JSX.Element | undefined;
+    private reactView: JSX.Element | undefined;
 
-    readonly #view: FluidObject;
+    private readonly view: FluidObject;
 
     /**
      * {@inheritDoc @fluidframework/view-interfaces#IFluidMountableViewClass.new}
@@ -59,27 +59,27 @@ export class MountableView implements IFluidMountableView {
         if (!MountableView.canMount(view)) {
             throw new Error("Unmountable view type");
         }
-        this.#view = view;
+        this.view = view;
     }
 
     /**
      * {@inheritDoc @fluidframework/view-interfaces#IFluidMountableView.mount}
      */
     public mount(container: HTMLElement) {
-        if (this.#containerElement !== undefined) {
+        if (this.containerElement !== undefined) {
             throw new Error("Already mounted");
         }
 
-        this.#containerElement = container;
+        this.containerElement = container;
 
         // Try to get an IFluidHTMLView if we don't have one already.
-        if (this.#htmlView === undefined) {
-            const maybeHtmlView: FluidObject<IFluidHTMLView> = this.#view;
-            this.#htmlView = maybeHtmlView.IFluidHTMLView;
+        if (this.htmlView === undefined) {
+            const maybeHtmlView: FluidObject<IFluidHTMLView> = this.view;
+            this.htmlView = maybeHtmlView.IFluidHTMLView;
         }
         // Render with IFluidHTMLView if possible.
-        if (this.#htmlView !== undefined) {
-            this.#htmlView.render(this.#containerElement);
+        if (this.htmlView !== undefined) {
+            this.htmlView.render(this.containerElement);
             return;
         }
 
@@ -89,12 +89,12 @@ export class MountableView implements IFluidMountableView {
         // Fluid object in a factory of its own creation.  So, prioritizing this below IFluidHTMLView
         // temporarily, so that we have the best chance of cross-bundle adaptation.
         // Try to get a React view if we don't have one already.
-        if (this.#reactView === undefined && React.isValidElement(this.#view)) {
-            this.#reactView = this.#view;
+        if (this.reactView === undefined && React.isValidElement(this.view)) {
+            this.reactView = this.view;
         }
         // Render with React if possible.
-        if (this.#reactView !== undefined) {
-            ReactDOM.render(this.#reactView, this.#containerElement);
+        if (this.reactView !== undefined) {
+            ReactDOM.render(this.reactView, this.containerElement);
             return;
         }
 
@@ -107,23 +107,23 @@ export class MountableView implements IFluidMountableView {
      */
     public unmount() {
         // Do nothing if we are already unmounted.
-        if (this.#containerElement === undefined) {
+        if (this.containerElement === undefined) {
             return;
         }
 
         // Call appropriate cleanup methods on the view and then remove it from the DOM.
-        if (this.#reactView !== undefined) {
-            ReactDOM.unmountComponentAtNode(this.#containerElement);
-        } else if (this.#htmlView !== undefined) {
-            if (this.#htmlView.remove !== undefined) {
-                this.#htmlView.remove();
+        if (this.reactView !== undefined) {
+            ReactDOM.unmountComponentAtNode(this.containerElement);
+        } else if (this.htmlView !== undefined) {
+            if (this.htmlView.remove !== undefined) {
+                this.htmlView.remove();
             }
             // eslint-disable-next-line no-null/no-null
-            while (this.#containerElement.firstChild !== null) {
-                this.#containerElement.removeChild(this.#containerElement.firstChild);
+            while (this.containerElement.firstChild !== null) {
+                this.containerElement.removeChild(this.containerElement.firstChild);
             }
         }
 
-        this.#containerElement = undefined;
+        this.containerElement = undefined;
     }
 }

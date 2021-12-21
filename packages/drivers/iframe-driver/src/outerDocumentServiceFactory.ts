@@ -68,11 +68,11 @@ export const IDocumentServiceFactoryProxyKey = "IDocumentServiceFactoryProxy";
  * Proxy of the Document Service Factory that gets sent to the innerFrame
  */
 export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy {
-    #clients: {
+    private _clients: {
         [clientId: string]: ICombinedDriver,
     } = {};
 
-    public get clients() { return Comlink.proxy(this.#clients); }
+    public get clients() { return Comlink.proxy(this._clients); }
 
     constructor(
         private readonly documentServiceFactory: IDocumentServiceFactory,
@@ -110,7 +110,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
     public createProxy(): IDocumentServiceFactoryProxy {
         const proxy: IDocumentServiceFactoryProxy = {
             connected: Comlink.proxy(async () => this.connected()),
-            clients: Comlink.proxy(this.#clients),
+            clients: Comlink.proxy(this._clients),
             // Continue investigation of scope after feature check in
             createDocumentService: Comlink.proxy(async (resolvedUrl) => this.createDocumentService(resolvedUrl)),
             createContainer: Comlink.proxy(
@@ -155,7 +155,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             logger: this.getLogger(outerProxyLogger),
         };
 
-        this.#clients[clientId] = combinedDriver;
+        this._clients[clientId] = combinedDriver;
 
         return clientId;
     }

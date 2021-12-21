@@ -13,17 +13,17 @@ import { RuntimeRequestHandler } from "./requestHandlers";
   * The provided handlers sequentially applied until one is able to satisfy the request.
   */
 export class RuntimeRequestHandlerBuilder {
-    readonly #handlers: RuntimeRequestHandler[] = [];
+    private readonly handlers: RuntimeRequestHandler[] = [];
 
     public pushHandler(...handlers: RuntimeRequestHandler[]) {
         if (handlers !== undefined) {
-            this.#handlers.push(...handlers);
+            this.handlers.push(...handlers);
         }
     }
 
     public async handleRequest(request: IRequest, runtime: IContainerRuntime): Promise<IResponse> {
         const parser = RequestParser.create(request);
-        for (const handler of this.#handlers) {
+        for (const handler of this.handlers) {
             const response = await handler(parser, runtime);
             if (response !== undefined) {
                 return response;

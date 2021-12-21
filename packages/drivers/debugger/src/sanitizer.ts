@@ -63,19 +63,19 @@ class ChunkedOpProcessor {
      * be top-level chunkedOp messages, or top-level op messages with a chunkedOp
      * within the contents
      */
-    #messages = new Array<any>();
+    private messages = new Array<any>();
     /**
      * The messages' parsed contents for processing.  Should parallel the
      * messages member
      */
-    #parsedMessageContents = new Array<any>();
-    #writtenBack = false;
+    private parsedMessageContents = new Array<any>();
+    private writtenBack = false;
     /**
      * keep track of the total starting length to make sure we don't somehow end
      * up with more content than we started with (meaning we may not be able to
      * write it back)
      */
-    #concatenatedLength = 0;
+    private concatenatedLength = 0;
 
     constructor(
         readonly validateSchemaFn: (object: any, schema: any) => boolean,
@@ -89,7 +89,7 @@ class ChunkedOpProcessor {
     }
 
     addMessage(message: any): void {
-        this.#messages.push(message);
+        this.messages.push(message);
 
         let parsed;
         try {
@@ -104,11 +104,11 @@ class ChunkedOpProcessor {
             this.debugMsg(message.contents);
         }
         this.validateSchemaFn(parsed, chunkedOpContentsSchema);
-        this.#parsedMessageContents.push(parsed);
+        this.parsedMessageContents.push(parsed);
     }
 
     hasAllMessages(): boolean {
-        const lastMsgContents = this.#parsedMessageContents[this.#parsedMessageContents.length - 1];
+        const lastMsgContents = this.parsedMessageContents[this.parsedMessageContents.length - 1];
         return lastMsgContents.chunkId !== undefined && lastMsgContents.chunkId === lastMsgContents.totalChunks;
     }
 
@@ -116,11 +116,11 @@ class ChunkedOpProcessor {
      * @returns The concatenated contents of all the messages parsed as json
      */
     getConcatenatedContents(): any {
-        const contentsString = this.#parsedMessageContents.reduce((previousValue: string, currentValue: any) => {
+        const contentsString = this.parsedMessageContents.reduce((previousValue: string, currentValue: any) => {
             return previousValue + (currentValue.contents as string);
         }, "");
 
-        this.#concatenatedLength = contentsString.length;
+        this.concatenatedLength = contentsString.length;
         try {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return JSON.parse(contentsString);
@@ -139,24 +139,24 @@ class ChunkedOpProcessor {
      */
     writeSanitizedContents(contents: any): void {
         // Write back a chunk size equal to the original
-        const chunkSize = this.#parsedMessageContents[0].contents.length;
+        const chunkSize = this.parsedMessageContents[0].contents.length;
 
         let stringified: string;
         try {
             stringified = JSON.stringify(contents);
-            assert(stringified.length <= this.#concatenatedLength,
+            assert(stringified.length <= this.concatenatedLength,
                 0x089 /* "Stringified length of chunk contents > total starting length" */);
         } catch (e) {
             this.debugMsg(e);
             throw e;
         }
 
-        for (let i = 0; i < this.#messages.length; i++) {
+        for (let i = 0; i < this.messages.length; i++) {
             const substring = stringified.substring(i * chunkSize, (i + 1) * chunkSize);
 
-            const parsedContents = this.#parsedMessageContents[i];
+            const parsedContents = this.parsedMessageContents[i];
             parsedContents.contents = substring;
-            const message = this.#messages[i];
+            const message = this.messages[i];
 
             let stringifiedParsedContents;
             try {
@@ -178,19 +178,19 @@ class ChunkedOpProcessor {
             message.contents = stringifiedParsedContents;
         }
 
-        this.#writtenBack = true;
+        this.writtenBack = true;
     }
 
     reset(): void {
-        assert(this.#writtenBack, 0x08a /* "resetting ChunkedOpProcessor that never wrote back its contents" */);
-        this.#messages = new Array<any>();
-        this.#parsedMessageContents = new Array<any>();
-        this.#writtenBack = false;
-        this.#concatenatedLength = 0;
+        assert(this.writtenBack, 0x08a /* "resetting ChunkedOpProcessor that never wrote back its contents" */);
+        this.messages = new Array<any>();
+        this.parsedMessageContents = new Array<any>();
+        this.writtenBack = false;
+        this.concatenatedLength = 0;
     }
 
     isPendingProcessing(): boolean {
-        return this.#messages.length !== 0;
+        return this.messages.length !== 0;
     }
 }
 

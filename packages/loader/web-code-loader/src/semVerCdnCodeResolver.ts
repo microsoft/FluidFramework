@@ -14,16 +14,16 @@ import {
  } from "./utils";
 
 class FluidPackage {
-    #resolveP: Promise<IResolvedFluidCodeDetails> | undefined;
+    private resolveP: Promise<IResolvedFluidCodeDetails> | undefined;
 
     constructor(private readonly codeDetails: IFluidCodeDetails, private readonly packageUrl: string) { }
 
     public async resolve(): Promise<IResolvedFluidCodeDetails> {
-        if (this.#resolveP === undefined) {
-            this.#resolveP = this.resolveCore();
+        if (this.resolveP === undefined) {
+            this.resolveP = this.resolveCore();
         }
 
-        return this.#resolveP;
+        return this.resolveP;
     }
 
     private async resolveCore(): Promise<IResolvedFluidCodeDetails> {
@@ -67,7 +67,7 @@ class FluidPackage {
  */
 export class SemVerCdnCodeResolver implements IFluidCodeResolver {
     // Cache goes CDN -> package -> entrypoint
-    readonly #fluidPackageCache = new Map<string, FluidPackage>();
+    private readonly fluidPackageCache = new Map<string, FluidPackage>();
 
     public async resolveCodeDetails(codeDetails: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
         const parsed = extractPackageIdentifierDetails(codeDetails.package);
@@ -78,11 +78,11 @@ export class SemVerCdnCodeResolver implements IFluidCodeResolver {
             ? `${cdn}/${scopePath}${encodeURI(`${parsed.name}@${parsed.version}`)}`
             : `${cdn}/${scopePath}${encodeURI(`${parsed.name}`)}`;
 
-        if (!this.#fluidPackageCache.has(packageUrl)) {
+        if (!this.fluidPackageCache.has(packageUrl)) {
             const resolved = new FluidPackage(codeDetails, packageUrl);
-            this.#fluidPackageCache.set(packageUrl, resolved);
+            this.fluidPackageCache.set(packageUrl, resolved);
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.#fluidPackageCache.get(packageUrl)!.resolve();
+        return this.fluidPackageCache.get(packageUrl)!.resolve();
     }
 }

@@ -14,8 +14,8 @@ import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
 export class FluidObjectHandle<T extends FluidObject = IFluidObject> implements IFluidHandle {
     // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
-    #graphAttachState: AttachState = AttachState.Detached;
-    #bound: Set<IFluidHandle> | undefined;
+    private graphAttachState: AttachState = AttachState.Detached;
+    private bound: Set<IFluidHandle> | undefined;
     public readonly absolutePath: string;
 
     public get IFluidHandle(): IFluidHandle { return this; }
@@ -44,32 +44,32 @@ export class FluidObjectHandle<T extends FluidObject = IFluidObject> implements 
 
     public attachGraph(): void {
         // If this handle is already in attaching state in the graph or attached, no need to attach again.
-        if (this.#graphAttachState !== AttachState.Detached) {
+        if (this.graphAttachState !== AttachState.Detached) {
             return;
         }
-        this.#graphAttachState = AttachState.Attaching;
-        if (this.#bound !== undefined) {
-            for (const handle of this.#bound) {
+        this.graphAttachState = AttachState.Attaching;
+        if (this.bound !== undefined) {
+            for (const handle of this.bound) {
                 handle.attachGraph();
             }
 
-            this.#bound = undefined;
+            this.bound = undefined;
         }
         this.routeContext.attachGraph();
-        this.#graphAttachState = AttachState.Attached;
+        this.graphAttachState = AttachState.Attached;
     }
 
     public bind(handle: IFluidHandle) {
         // If the dds is already attached or its graph is already in attaching or attached state,
         // then attach the incoming handle too.
-        if (this.isAttached || this.#graphAttachState !== AttachState.Detached) {
+        if (this.isAttached || this.graphAttachState !== AttachState.Detached) {
             handle.attachGraph();
             return;
         }
-        if (this.#bound === undefined) {
-            this.#bound = new Set<IFluidHandle>();
+        if (this.bound === undefined) {
+            this.bound = new Set<IFluidHandle>();
         }
 
-        this.#bound.add(handle);
+        this.bound.add(handle);
     }
 }

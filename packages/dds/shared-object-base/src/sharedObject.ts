@@ -56,34 +56,34 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * Connection state
      */
-    #connected = false;
+    private _connected = false;
 
     /**
      * Services used by the shared object
      */
-    #services: IChannelServices | undefined;
+    private services: IChannelServices | undefined;
 
     /**
      * True if the dds is bound to its parent.
      */
-    #isBoundToContext: boolean = false;
+    private _isBoundToContext: boolean = false;
 
     /**
      * True while we are summarizing this object's data.
      */
-    #isSummarizing: boolean = false;
+    private _isSummarizing: boolean = false;
 
     /**
      * Tracks error that closed this object.
      */
-    #closeError?: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>;
+    private closeError?: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>;
 
     /**
      * Gets the connection state
      * @returns The state of the connection
      */
     public get connected(): boolean {
-        return this.#connected;
+        return this._connected;
     }
 
     protected get serializer(): IFluidSerializer {
@@ -94,15 +94,15 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
          * This is fine for now. However, if we implement delay loading in DDss, they may load and de-serialize content
          * in summarize. When that happens, they may incorrectly hit this assert and we will have to change this.
          */
-        assert(!this.#isSummarizing,
+        assert(!this._isSummarizing,
             0x075 /* "SummarySerializer should be used for serializing data during summary." */);
-        return this.#serializer;
+        return this._serializer;
     }
 
     /**
      * The serializer to use to serialize / parse handles, if any.
      */
-    readonly #serializer: IFluidSerializer;
+    private readonly _serializer: IFluidSerializer;
 
     /**
      * @param id - The id of the shared object
@@ -127,7 +127,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             { all: { sharedObjectId: uuid() } },
         );
 
-        this.#serializer = new FluidSerializer(this.runtime.channelsRoutingContext);
+        this._serializer = new FluidSerializer(
+            this.runtime.channelsRoutingContext,
+            (handle: IFluidHandle) => this.handleDecoded(handle),
+        );
 
         this.attachListeners();
     }
@@ -138,8 +141,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param error - error object that is thrown whenever an attempt is made to modify this object
      */
     private closeWithError(error: any) {
-        if (this.#closeError === undefined) {
-            this.#closeError = error;
+        if (this.closeError === undefined) {
+            this.closeError = error;
         }
     }
 
@@ -147,8 +150,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * Verifies that this object is not closed via closeWithError(). If it is, throws an error used to close it.
      */
     private verifyNotClosed() {
-        if (this.#closeError !== undefined) {
-            throw this.#closeError;
+        if (this.closeError !== undefined) {
+            throw this.closeError;
         }
     }
 
@@ -190,7 +193,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     public async load(services: IChannelServices): Promise<void> {
         if (this.runtime.attachState !== AttachState.Detached) {
-            this.#services = services;
+            this.services = services;
         }
         await this.loadCore(services.objectStorage);
         if (this.runtime.attachState !== AttachState.Detached) {
@@ -210,11 +213,11 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc (ISharedObject:interface).bindToContext}
      */
     public bindToContext(): void {
-        if (this.#isBoundToContext) {
+        if (this._isBoundToContext) {
             return;
         }
 
-        this.#isBoundToContext = true;
+        this._isBoundToContext = true;
 
         // Allow derived classes to perform custom processing prior to registering this object
         this.registerCore();
@@ -226,7 +229,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc (ISharedObject:interface).connect}
      */
     public connect(services: IChannelServices) {
-        this.#services = services;
+        this.services = services;
         this.attachDeltaHandler();
     }
 
@@ -234,7 +237,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc (ISharedObject:interface).isAttached}
      */
     public isAttached(): boolean {
-        return this.#services !== undefined && this.runtime.attachState !== AttachState.Detached;
+        return this.services !== undefined && this.runtime.attachState !== AttachState.Detached;
     }
 
     /**
@@ -244,17 +247,20 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created below)
         // to serialize handles in this object's data. The routes of these serialized handles are outbound routes
         // to other Fluid objects.
-        assert(!this.#isSummarizing, 0x076 /* "Possible re-entrancy! Summary should not already be in progress." */);
-        this.#isSummarizing = true;
+        assert(!this._isSummarizing, 0x076 /* "Possible re-entrancy! Summary should not already be in progress." */);
+        this._isSummarizing = true;
 
         let summaryTree: ISummaryTreeWithStats;
         try {
-            const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+            const serializer = new SummarySerializer(
+                this.runtime.channelsRoutingContext,
+                (handle: IFluidHandle) => this.handleDecoded(handle),
+            );
             const snapshot: ITree = this.snapshotCore(serializer);
             summaryTree = convertToSummaryTreeWithStats(snapshot, fullTree);
-            assert(this.#isSummarizing, 0x077 /* "Possible re-entrancy! Summary should have been in progress." */);
+            assert(this._isSummarizing, 0x077 /* "Possible re-entrancy! Summary should have been in progress." */);
         } finally {
-            this.#isSummarizing = false;
+            this._isSummarizing = false;
         }
         return summaryTree;
     }
@@ -265,15 +271,15 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     public getGCData(fullGC: boolean = false): IGarbageCollectionData {
         // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created in
         // getGCDataCore) to serialize handles in this object's data.
-        assert(!this.#isSummarizing, 0x078 /* "Possible re-entrancy! Summary should not already be in progress." */);
-        this.#isSummarizing = true;
+        assert(!this._isSummarizing, 0x078 /* "Possible re-entrancy! Summary should not already be in progress." */);
+        this._isSummarizing = true;
 
         let gcData: IGarbageCollectionData;
         try {
             gcData = this.getGCDataCore();
-            assert(this.#isSummarizing, 0x079 /* "Possible re-entrancy! Summary should have been in progress." */);
+            assert(this._isSummarizing, 0x079 /* "Possible re-entrancy! Summary should have been in progress." */);
         } finally {
-            this.#isSummarizing = false;
+            this._isSummarizing = false;
         }
 
         return gcData;
@@ -288,7 +294,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // We run the full summarize logic to get the list of outbound routes from this object. This is a little
         // expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
         // See: https://github.com/microsoft/FluidFramework/issues/4547
-        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+        const serializer = new SummarySerializer(
+            this.runtime.channelsRoutingContext,
+            (handle: IFluidHandle) => this.handleDecoded(handle),
+        );
         this.snapshotCore(serializer);
 
         // The GC data for this shared object contains a single GC node. The outbound routes of this node are the
@@ -296,6 +305,18 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         return {
             gcNodes: { "/": serializer.getSerializedRoutes() },
         };
+    }
+
+    /**
+     * Called when a handle is decoded by this object. A handle in the object's data represents an outbound reference
+     * to another object in the container.
+     * @param decodedHandle - The handle of the Fluid object that is decoded.
+     */
+    protected handleDecoded(decodedHandle: IFluidHandle) {
+        if (this.isAttached()) {
+            // This represents an outbound reference from this object to the node represented by decodedHandle.
+            this.services?.deltaConnection.addedGCOutboundReference?.(this.handle, decodedHandle);
+        }
     }
 
     /**
@@ -355,7 +376,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         this.verifyNotClosed();
         if (this.isAttached()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.#services!.deltaConnection.submit(content, localOpMetadata);
+            this.services!.deltaConnection.submit(content, localOpMetadata);
         }
     }
 
@@ -369,7 +390,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.#services!.deltaConnection.dirty();
+        this.services!.deltaConnection.dirty();
     }
 
     /**
@@ -419,13 +440,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     private attachDeltaHandler() {
         // Services should already be there in case we are attaching delta handler.
-        assert(this.#services !== undefined, 0x07a /* "Services should be there to attach delta handler" */);
-        this.#isBoundToContext = true;
+        assert(this.services !== undefined, 0x07a /* "Services should be there to attach delta handler" */);
+        this._isBoundToContext = true;
         // Allows objects to do any custom processing if it is attached.
         this.didAttach();
 
         // attachDeltaHandler is only called after services is assigned
-        this.#services.deltaConnection.attach({
+        this.services.deltaConnection.attach({
             process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => {
                 this.process(message, local, localOpMetadata);
             },
@@ -442,7 +463,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
         // Trigger initial state
         // attachDeltaHandler is only called after services is assigned
-        this.setConnectionState(this.#services.deltaConnection.connected);
+        this.setConnectionState(this.services.deltaConnection.connected);
     }
 
     /**
@@ -450,13 +471,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param connected - true if connected, false otherwise.
      */
     private setConnectionState(connected: boolean) {
-        if (this.#connected === connected) {
+        if (this._connected === connected) {
             // Not changing state, nothing the same.
             return;
         }
 
         // Should I change the state at the end? So that we *can't* send new stuff before we send old?
-        this.#connected = connected;
+        this._connected = connected;
 
         if (!connected) {
             // Things that are true now...
