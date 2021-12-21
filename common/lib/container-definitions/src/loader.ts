@@ -175,15 +175,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly attachState: AttachState;
 
     /**
-     * The current code details for the container's runtime
-     * @deprecated use getSpecifiedCodeDetails for the code details currently specified for this container, or
-     * getLoadedCodeDetails for the code details that the container's context was loaded with.
-     * To be removed after getSpecifiedCodeDetails and getLoadedCodeDetails become ubiquitous.
-     * This is now marked as optional and due to be removed in next release.
-     */
-    readonly codeDetails?: IFluidCodeDetails | undefined;
-
-    /**
      * Get the code details that are currently specified for the container.
      * @returns The current code details if any are specified, undefined if none are specified.
      */
@@ -257,12 +248,12 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     /**
      * Provides the current connected state of the container
      */
-    readonly connectionState?: ConnectionState;
+    readonly connectionState: ConnectionState;
 
     /**
      * Boolean indicating whether the container is currently connected or not
      */
-    readonly connected?: boolean;
+    readonly connected: boolean;
 
     /**
      * Dictates whether or not the current container will automatically attempt to reconnect to the delta stream
@@ -270,25 +261,25 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * @param reconnect - Boolean indicating if reconnect should automatically occur
      * @alpha
      */
-    setAutoReconnect?(reconnect: boolean): void;
+    setAutoReconnect(reconnect: boolean): void;
 
     /**
      * Have the container attempt to resume processing ops
      * @alpha
      */
-    resume?(): void;
+    resume(): void;
 
     /**
      * The audience information for all clients currently associated with the document in the current session
      */
-    readonly audience?: IAudience;
+    readonly audience: IAudience;
 
     /**
      * The server provided ID of the client.
      * Set once this.connected is true, otherwise undefined
      * @alpha
      */
-    readonly clientId?: string | undefined;
+    readonly clientId: string | undefined;
 
     /**
      * Tells if container is in read-only mode.
@@ -302,14 +293,14 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
      */
-    readonly readOnlyInfo?: ReadOnlyInfo;
+    readonly readOnlyInfo: ReadOnlyInfo;
 
     /**
      * Allows the host to have the container force to be in read-only mode
      * @param readonly - Boolean that toggles if read-only policies will be enforced
      * @alpha
      */
-    forceReadonly?(readonly: boolean);
+    forceReadonly(readonly: boolean);
 }
 
 /**
