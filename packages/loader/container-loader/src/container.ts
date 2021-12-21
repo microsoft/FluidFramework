@@ -1837,7 +1837,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     ) {
         assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
         // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
-        if (this._dirtyContainer) {
+        if (!this._dirtyContainer) {
             this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer" });
         }
 
