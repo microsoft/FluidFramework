@@ -5,6 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "importHelpers": true,
         "rootDir": "./src",
         "outDir": "./dist",
         "types": [ "node", "mocha" ]

@@ -6,6 +6,7 @@
         "test-d"
     ],
     "compilerOptions": {
+        "importHelpers": true,
         "rootDir": "./src",
         "outDir": "./dist"
     },

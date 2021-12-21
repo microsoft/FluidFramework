@@ -5,6 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "importHelpers": true,
         "allowSyntheticDefaultImports": true,
         "target": "es6",
         "module": "esnext",

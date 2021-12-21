@@ -4,6 +4,7 @@
         "src/test/**/*"
     ],
     "compilerOptions": {
+        "importHelpers": true,
         "strict": false,
         "allowJs": true,
         "checkJs": false,

@@ -4,6 +4,7 @@
         "src/test/**/*"
     ],
     "compilerOptions": {
+        "importHelpers": true,
         "experimentalDecorators": true,
         "allowJs": true,
         "outDir": "./dist",

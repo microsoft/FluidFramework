@@ -5,6 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "importHelpers": true,
         "module": "esnext",
         "lib": ["ESNext", "DOM"],
         "outDir": "dist",

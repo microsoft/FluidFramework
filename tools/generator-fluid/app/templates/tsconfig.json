@@ -1,9 +1,10 @@
-{    
+{
     "exclude": [
         "dist",
         "node_modules"
     ],
     "compilerOptions": {
+        "importHelpers": true,
         "strict": true,
         "strictNullChecks": true,
         "target": "es2017",

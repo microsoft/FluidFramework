@@ -5,6 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "importHelpers": true,
         "target": "es6",
         "outDir": "dist",
         "lib": [

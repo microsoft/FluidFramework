@@ -4,6 +4,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "importHelpers": true,
         "target": "es6",
         "declaration": true,
         "module": "commonjs",

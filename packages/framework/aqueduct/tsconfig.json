@@ -4,6 +4,7 @@
         "src/test/**/*"
     ],
     "compilerOptions": {
+        "importHelpers": true,
         "declarationDir": "./dist",
         "rootDir": "./src",
         "outDir": "./dist",

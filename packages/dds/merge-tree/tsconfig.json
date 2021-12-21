@@ -4,6 +4,7 @@
         "src/test/**/*"
     ],
     "compilerOptions": {
+        "importHelpers": true,
         "rootDir": "./src",
         "outDir": "./dist",
         "composite": true,

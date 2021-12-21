@@ -4,6 +4,7 @@
         "src/test/**/*"
     ],
     "compilerOptions": {
+        "importHelpers": true,
         "noUnusedLocals": false,
         "strictNullChecks": false,
         "rootDir": "./src",
