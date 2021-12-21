@@ -14,6 +14,7 @@ import {
     SummaryCollection,
     neverCancelledSummaryToken,
 } from "@fluidframework/container-runtime";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { concatGarbageCollectionStates } from "@fluidframework/garbage-collector";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -26,6 +27,10 @@ import { IGarbageCollectionState } from "@fluidframework/runtime-definitions";
 export class TestDataObject extends DataObject {
     public get _root() {
         return this.root;
+    }
+
+    public get dataStoreRuntime(): IFluidDataStoreRuntime {
+        return this.runtime;
     }
 
     public get containerRuntime(): ContainerRuntime {

@@ -68,6 +68,15 @@ export interface ITestDriver{
      * will use it as an additional hint when resolving the container URL.
      */
     createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string>;
+
+    /**
+     * Checks whether document with given testId exists.
+     * The test id may not map directly to any specific Fluid Framework concept.
+     * If you need more control you should disambiguate the driver based on its
+     * type, this should only be done it absolutely necessary for complex scenarios
+     * as the test may not work against all supported servers if done.
+     */
+    doesDocumentExists(testId: string): Promise<boolean>;
 }
 
 /**

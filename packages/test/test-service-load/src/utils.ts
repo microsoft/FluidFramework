@@ -113,8 +113,13 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
     }
 }
 
-export async function initialize(testDriver: ITestDriver, seed: number, testId: string,
-        testConfig: ILoadTestConfig, verbose: boolean) {
+export async function initialize(
+    testDriver: ITestDriver,
+    seed: number,
+    testId: string,
+    testConfig: ILoadTestConfig,
+    verbose: boolean,
+) {
     const randEng = random.engines.mt19937();
     randEng.seed(seed);
     const loaderOptions = random.pick(

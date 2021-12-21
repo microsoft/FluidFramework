@@ -8,22 +8,22 @@
  */
 export interface INetworkErrorDetails {
     /**
-     * Indicates whether this is an error that can be retried. Refer to {@link NetworkError#canRetry}.
+     * Indicates whether this is an error that can be retried. Refer to {@link NetworkError.canRetry}.
      */
     canRetry?: boolean;
     /**
      * Indicates whether this error is fatal. This generally indicates that the error causes
      * negative, non-recoverable impact to the component/caller and cannot be ignored.
-     * Refer to {@link NetworkError#isFatal}.
+     * Refer to {@link NetworkError.isFatal}.
      */
     isFatal?: boolean;
     /**
-     * Represents the message associated with the error. Refer to {@link NetworkError#message}.
+     * Represents the message associated with the error. Refer to {@link NetworkError}'s message.
      */
     message?: string;
     /**
      * Represents the time in milliseconds that should be waited before retrying.
-     * Refer to {@link NetworkError#retryAfterMs}.
+     * Refer to {@link NetworkError.retryAfterMs}.
      */
     retryAfter?: number;
 }
@@ -51,7 +51,7 @@ export class NetworkError extends Error {
         message: string,
         /**
          * Optional boolean indicating whether this is an error that can be retried.
-         * Only relevant when {@link NetworkError#isFatal} is false.
+         * Only relevant when {@link NetworkError.isFatal} is false.
          * @public
          */
         public readonly canRetry?: boolean,

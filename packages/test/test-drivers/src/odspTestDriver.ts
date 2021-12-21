@@ -287,28 +287,44 @@ export class OdspTestDriver implements ITestDriver {
      */
     async createContainerUrl(testId: string): Promise<string> {
         if (!this.testIdToUrl.has(testId)) {
-            const siteUrl = this.config.siteUrl;
-            const driveItem = await getDriveItemByRootFileName(
-                this.config.siteUrl,
-                undefined,
-                `/${this.config.directory}/${testId}.fluid`,
-                {
-                    accessToken: await this.getStorageToken({ siteUrl, refresh: false }),
-                    refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: false }),
-                },
-                false,
-                this.config.driveId);
-
-            this.testIdToUrl.set(
-                testId,
-                this.api.createOdspUrl({
-                    ...driveItem,
-                    siteUrl,
-                    dataStorePath: "/",
-                }));
+            const url = await this.createContainerUrlNoCache(testId);
+            this.testIdToUrl.set(testId, url);
         }
+
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.testIdToUrl.get(testId)!;
+    }
+
+    private async createContainerUrlNoCache(testId: string) {
+        const siteUrl = this.config.siteUrl;
+        const driveItem = await getDriveItemByRootFileName(
+            this.config.siteUrl,
+            undefined,
+            `/${this.config.directory}/${testId}.fluid`,
+            {
+                accessToken: await this.getStorageToken({ siteUrl, refresh: false }),
+                refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: false }),
+            },
+            false,
+            this.config.driveId);
+
+        return this.api.createOdspUrl({
+            ...driveItem,
+            siteUrl,
+            dataStorePath: "/",
+        });
+    }
+
+    async doesDocumentExists(testId: string): Promise<boolean> {
+        try {
+            // Its the best way to check if file exists.
+            const url = await this.createContainerUrlNoCache(testId);
+            // Cache URL as we already have it. Optimization.
+            this.testIdToUrl.set(testId, url);
+            return true;
+        } catch (_) {
+            return false;
+        }
     }
 
     createDocumentServiceFactory(): IDocumentServiceFactory {

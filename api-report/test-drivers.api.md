@@ -78,6 +78,8 @@ export class LocalServerTestDriver implements ITestDriver {
     // (undocumented)
     createUrlResolver(): IUrlResolver;
     // (undocumented)
+    doesDocumentExists(testId: string): Promise<boolean>;
+    // (undocumented)
     get server(): ILocalDeltaConnectionServer;
     // (undocumented)
     readonly type = "local";
@@ -115,6 +117,8 @@ export class OdspTestDriver implements ITestDriver {
     // (undocumented)
     createUrlResolver(): IUrlResolver;
     // (undocumented)
+    doesDocumentExists(testId: string): Promise<boolean>;
+    // (undocumented)
     getUrlFromItemId(itemId: string): string;
     // (undocumented)
     readonly tenantName?: string | undefined;
@@ -151,6 +155,8 @@ export class RouterliciousTestDriver implements ITestDriver {
     // (undocumented)
     createUrlResolver(): InsecureUrlResolver;
     // (undocumented)
+    doesDocumentExists(testId: string): Promise<boolean>;
+    // (undocumented)
     readonly endpointName?: string | undefined;
     // (undocumented)
     readonly type = "routerlicious";
@@ -169,6 +175,8 @@ export class TinyliciousTestDriver implements ITestDriver {
     createDocumentServiceFactory(): IDocumentServiceFactory;
     // (undocumented)
     createUrlResolver(): InsecureTinyliciousUrlResolver;
+    // (undocumented)
+    doesDocumentExists(testId: string): Promise<boolean>;
     // (undocumented)
     readonly type = "tinylicious";
     // (undocumented)

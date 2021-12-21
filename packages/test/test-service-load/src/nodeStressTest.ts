@@ -9,8 +9,6 @@ import ps from "ps-node";
 import commander from "commander";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { NonRetryableError } from "@fluidframework/driver-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { createTestDriver, getProfile, initialize, loggerP, safeExit } from "./utils";
 
@@ -102,14 +100,9 @@ async function orchestratorProcess(
     // If testId is provided, then try to load the file first.
     let url;
     if (args.testId !== undefined) {
-        try {
+        const docExists: boolean = await testDriver.doesDocumentExists(args.testId);
+        if (docExists) {
             url = await testDriver.createContainerUrl(args.testId);
-        } catch(e: any) {
-            if (!(e instanceof NonRetryableError)
-                    || (e.errorType !== DriverErrorType.fileNotFoundOrAccessDeniedError)) {
-                throw e;
-            }
-            // If file not found, then try to create.
         }
     }
 

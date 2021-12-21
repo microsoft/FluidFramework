@@ -196,18 +196,6 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.addSequenceEntry();
-        },
-        key: "seq +",
-    },
-    {
-        exec: (c, p, f) => {
-            f.showSequenceEntries();
-        },
-        key: "seq show",
-    },
-    {
-        exec: (c, p, f) => {
             f.createComment();
         },
         key: "comment",
@@ -2835,11 +2823,6 @@ export interface IFlowViewModes {
     showCursorLocation?: boolean;
 }
 
-export interface ISeqTestItem {
-    x: string;
-    v: number;
-}
-
 export class PersistentComponent {
     constructor(public component: FluidObject, public elm: HTMLDivElement) {
     }
@@ -2870,9 +2853,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public bookmarks: Sequence.IntervalCollection<Sequence.SequenceInterval>;
     public tempBookmarks: Sequence.SequenceInterval[];
     public comments: Sequence.IntervalCollection<Sequence.SequenceInterval>;
-    public sequenceTest: Sequence.SharedNumberSequence;
     public persistentComponents: Map<FluidObject, PersistentComponent>;
-    public sequenceObjTest: Sequence.SharedObjectSequence<ISeqTestItem>;
     public presenceSignal: PresenceSignal;
     public presenceVector: Map<string, ILocalPresenceInfo> = new Map();
     public docRoot: types.ISharedMap;
@@ -3087,25 +3068,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 presenceInfo.cursor.refresh();
             }
         }
-    }
-
-    public addSeqObjEntry() {
-        const len = this.sequenceObjTest.getItemCount();
-        const pos = Math.floor(Math.random() * len);
-        const item = <ISeqTestItem>{ x: "veal", v: Math.floor(Math.random() * 10) };
-        this.sequenceObjTest.insert(pos, [item]);
-    }
-
-    public addSequenceEntry() {
-        const len = this.sequenceTest.getItemCount();
-        const pos = Math.floor(Math.random() * len);
-        const item = Math.floor(Math.random() * 10);
-        this.sequenceTest.insert(pos, [item]);
-    }
-
-    public showSequenceEntries() {
-        const items = this.sequenceTest.getItems(0);
-        this.statusMessage("seq", `seq: ${items.toString()}`);
     }
 
     public addPresenceSignal(presenceSignal: PresenceSignal) {
@@ -4623,12 +4585,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         // For examples of showing the API we do interval adds on the collection with comments.
         this.comments = this.sharedString.getIntervalCollection("comments");
 
-        this.sequenceTest = await this.docRoot
-            .get<IFluidHandle<Sequence.SharedNumberSequence>>("sequence-test")
-            .get();
-        this.sequenceTest.on("sequenceDelta", (ev: Sequence.SequenceDeltaEvent) => {
-            this.showSequenceEntries();
-        });
         this.render(0, true);
         if (clockStart > 0) {
             // eslint-disable-next-line max-len
