@@ -261,13 +261,13 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * @param reconnect - Boolean indicating if reconnect should automatically occur
      * @alpha
      */
-    setAutoReconnect(reconnect: boolean): void;
+    setAutoReconnect?(reconnect: boolean): void;
 
     /**
      * Have the container attempt to resume processing ops
      * @alpha
      */
-    resume(): void;
+    resume?(): void;
 
     /**
      * The audience information for all clients currently associated with the document in the current session
@@ -279,7 +279,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * Set once this.connected is true, otherwise undefined
      * @alpha
      */
-    readonly clientId: string | undefined;
+    readonly clientId?: string | undefined;
 
     /**
      * Tells if container is in read-only mode.
@@ -300,7 +300,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * @param readonly - Boolean that toggles if read-only policies will be enforced
      * @alpha
      */
-    forceReadonly(readonly: boolean);
+    forceReadonly?(readonly: boolean);
 }
 
 /**

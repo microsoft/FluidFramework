@@ -131,7 +131,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly attachState: AttachState;
     readonly audience: IAudience;
     // @alpha
-    readonly clientId: string | undefined;
+    readonly clientId?: string | undefined;
     close(error?: ICriticalContainerError): void;
     closeAndGetPendingLocalState(): string;
     readonly closed: boolean;
@@ -139,7 +139,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly connectionState: ConnectionState;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // @alpha
-    forceReadonly(readonly: boolean): any;
+    forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getLoadedCodeDetails?(): IFluidCodeDetails_2 | undefined;
     getQuorum(): IQuorum;
@@ -150,10 +150,10 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     request(request: IRequest): Promise<IResponse>;
     resolvedUrl: IResolvedUrl | undefined;
     // @alpha
-    resume(): void;
+    resume?(): void;
     serialize(): string;
     // @alpha
-    setAutoReconnect(reconnect: boolean): void;
+    setAutoReconnect?(reconnect: boolean): void;
 }
 
 // @public
