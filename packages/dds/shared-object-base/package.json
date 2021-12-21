@@ -29,7 +29,6 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.43.0",
@@ -41,6 +40,7 @@
     "@fluidframework/runtime-definitions": "^0.54.0",
     "@fluidframework/runtime-utils": "^0.54.0",
     "@fluidframework/telemetry-utils": "^0.54.0",
+    "tslib": "^1.10.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {

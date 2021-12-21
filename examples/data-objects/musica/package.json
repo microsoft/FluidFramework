@@ -32,7 +32,6 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/aqueduct": "^0.54.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/map": "^0.54.0",
@@ -41,7 +40,8 @@
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "react-piano": "^3.1.2",
-    "react-widgets": "^4.4.11"
+    "react-widgets": "^4.4.11",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",

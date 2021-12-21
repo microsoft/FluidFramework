@@ -31,7 +31,6 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluid-experimental/get-container": "^0.54.0",
     "@fluid-experimental/react": "^0.54.0",
     "@fluid-experimental/react-inputs": "^0.54.0",
@@ -45,7 +44,8 @@
     "@fluidframework/sequence": "^0.54.0",
     "@fluidframework/shared-object-base": "^0.54.0",
     "react": "^16.10.2",
-    "react-dom": "^16.10.2"
+    "react-dom": "^16.10.2",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluidframework/test-tools": "^0.2.3074",

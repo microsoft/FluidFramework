@@ -56,7 +56,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.43.0",
@@ -70,6 +69,7 @@
     "abort-controller": "^3.0.0",
     "double-ended-queue": "^2.1.0-0",
     "lodash": "^4.17.21",
+    "tslib": "^1.10.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {

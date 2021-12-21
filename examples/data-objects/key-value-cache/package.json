@@ -32,7 +32,6 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/aqueduct": "^0.54.0",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.43.0",
@@ -44,7 +43,8 @@
     "@fluidframework/request-handler": "^0.54.0",
     "@fluidframework/runtime-definitions": "^0.54.0",
     "@fluidframework/runtime-utils": "^0.54.0",
-    "debug": "^4.1.1"
+    "debug": "^4.1.1",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": "^0.54.0",

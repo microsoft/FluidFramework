@@ -56,12 +56,12 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/map": "^0.54.0",
     "@fluidframework/merge-tree": "^0.54.0",
     "@fluidframework/runtime-definitions": "^0.54.0",
-    "@fluidframework/sequence": "^0.54.0"
+    "@fluidframework/sequence": "^0.54.0",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

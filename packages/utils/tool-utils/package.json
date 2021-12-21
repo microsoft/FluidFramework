@@ -56,7 +56,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/odsp-doclib-utils": "^0.54.0",
     "@fluidframework/protocol-base": "^0.1034.0",
@@ -64,7 +63,8 @@
     "async-mutex": "^0.3.1",
     "debug": "^4.1.1",
     "jwt-decode": "^2.2.0",
-    "proper-lockfile": "^4.1.2"
+    "proper-lockfile": "^4.1.2",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

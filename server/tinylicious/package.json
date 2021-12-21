@@ -30,7 +30,6 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/gitresources": "^0.1034.0",
     "@fluidframework/protocol-base": "^0.1034.0",
@@ -64,6 +63,7 @@
     "semver": "^6.3.0",
     "socket.io": "^4.1.2",
     "split": "^1.0.0",
+    "tslib": "^1.10.0",
     "uuid": "^8.3.2",
     "winston": "^3.3.3"
   },

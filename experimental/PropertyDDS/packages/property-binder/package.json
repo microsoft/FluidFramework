@@ -60,12 +60,12 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@babel/runtime": "^7.13.7",
     "@fluid-experimental/property-changeset": "^0.54.0",
     "@fluid-experimental/property-dds": "^0.54.0",
     "@fluid-experimental/property-properties": "^0.54.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",

@@ -54,14 +54,14 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/driver-definitions": "^0.43.0",
     "@fluidframework/driver-utils": "^0.54.0",
     "@fluidframework/odsp-driver-definitions": "^0.54.0",
     "@fluidframework/telemetry-utils": "^0.54.0",
-    "node-fetch": "^2.6.1"
+    "node-fetch": "^2.6.1",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

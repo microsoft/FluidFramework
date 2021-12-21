@@ -37,7 +37,6 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluid-example/multiview-constellation-model": "^0.54.0",
     "@fluid-example/multiview-constellation-view": "^0.54.0",
     "@fluid-example/multiview-coordinate-interface": "^0.54.0",
@@ -51,7 +50,8 @@
     "@fluidframework/request-handler": "^0.54.0",
     "@fluidframework/runtime-utils": "^0.54.0",
     "@fluidframework/view-adapters": "^0.54.0",
-    "react": "^16.10.2"
+    "react": "^16.10.2",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": "^0.54.0",

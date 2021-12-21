@@ -35,7 +35,6 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluid-example/clicker": "^0.54.0",
     "@fluid-example/codemirror": "^0.54.0",
     "@fluid-example/prosemirror": "^0.54.0",
@@ -58,6 +57,7 @@
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "react-tabs": "^3.1.0",
+    "tslib": "^1.10.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {

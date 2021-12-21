@@ -46,7 +46,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/aqueduct": "^0.54.0",
     "@fluidframework/cell": "^0.54.0",
     "@fluidframework/common-utils": "^0.32.1",
@@ -72,7 +71,8 @@
     "@fluidframework/test-utils": "^0.54.0",
     "nconf": "^0.11.0",
     "proper-lockfile": "^4.1.2",
-    "semver": "^7.3.4"
+    "semver": "^7.3.4",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

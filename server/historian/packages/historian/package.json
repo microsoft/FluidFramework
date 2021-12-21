@@ -20,7 +20,6 @@
     "tslint": "tslint 'src/**/*.ts'"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/historian-base": "^0.0.1",
     "@fluidframework/server-services-shared": "^0.1035.0-46466",
     "@fluidframework/server-services-utils": "^0.1035.0-46466",
@@ -34,6 +33,7 @@
     "morgan": "^1.9.1",
     "nconf": "^0.11.0",
     "split": "^1.0.0",
+    "tslib": "^1.10.0",
     "uuid": "^3.3.2",
     "winston": "^3.3.3"
   },

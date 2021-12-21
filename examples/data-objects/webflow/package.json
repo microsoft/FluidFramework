@@ -69,7 +69,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluid-example/flow-util-lib": "^0.54.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
@@ -80,7 +79,8 @@
     "@fluidframework/runtime-definitions": "^0.54.0",
     "@fluidframework/sequence": "^0.54.0",
     "@fluidframework/view-interfaces": "^0.54.0",
-    "debug": "^4.1.1"
+    "debug": "^4.1.1",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": "^0.54.0",

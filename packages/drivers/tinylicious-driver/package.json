@@ -27,7 +27,6 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/core-interfaces": "^0.41.0",
     "@fluidframework/driver-definitions": "^0.43.0",
     "@fluidframework/driver-utils": "^0.54.0",
@@ -35,6 +34,7 @@
     "@fluidframework/routerlicious-driver": "^0.54.0",
     "@fluidframework/server-services-client": "^0.1034.0",
     "jsrsasign": "^10.2.0",
+    "tslib": "^1.10.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {

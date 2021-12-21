@@ -30,7 +30,6 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/cell": "^0.54.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
@@ -52,7 +51,8 @@
     "@fluidframework/runtime-utils": "^0.54.0",
     "@fluidframework/sequence": "^0.54.0",
     "@fluidframework/telemetry-utils": "^0.54.0",
-    "@fluidframework/tool-utils": "^0.54.0"
+    "@fluidframework/tool-utils": "^0.54.0",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

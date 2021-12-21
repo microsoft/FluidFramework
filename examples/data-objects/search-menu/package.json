@@ -25,10 +25,10 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/core-interfaces": "^0.41.0",
     "@fluidframework/merge-tree": "^0.54.0",
-    "@types/node": "^14.18.0"
+    "@types/node": "^14.18.0",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

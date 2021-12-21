@@ -55,7 +55,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.41.0",
@@ -71,6 +70,7 @@
     "abort-controller": "^3.0.0",
     "node-fetch": "^2.6.1",
     "socket.io-client": "^2.4.0",
+    "tslib": "^1.10.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {

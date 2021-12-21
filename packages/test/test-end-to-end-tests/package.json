@@ -65,7 +65,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/agent-scheduler": "^0.54.0",
     "@fluidframework/aqueduct": "^0.54.0",
     "@fluidframework/cell": "^0.54.0",
@@ -111,6 +110,7 @@
     "semver": "^7.3.4",
     "start-server-and-test": "^1.11.7",
     "tinylicious": "^0.4.38350",
+    "tslib": "^1.10.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {

@@ -32,9 +32,9 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluid-experimental/property-changeset": "^0.54.0",
-    "@fluid-experimental/property-properties": "^0.54.0"
+    "@fluid-experimental/property-properties": "^0.54.0",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",

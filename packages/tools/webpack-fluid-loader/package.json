@@ -57,7 +57,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/aqueduct": "^0.54.0",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.43.0",
@@ -84,6 +83,7 @@
     "express": "^4.16.3",
     "moniker": "^0.1.2",
     "nconf": "^0.11.0",
+    "tslib": "^1.10.0",
     "uuid": "^8.3.1",
     "webpack-dev-server": "^3.8.0"
   },

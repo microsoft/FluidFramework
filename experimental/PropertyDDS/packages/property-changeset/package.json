@@ -56,7 +56,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluid-experimental/property-common": "^0.54.0",
     "ajv": "7.1.1",
     "ajv-keywords": "4.0.0",
@@ -64,7 +63,8 @@
     "fastest-json-copy": "^1.0.1",
     "lodash": "^4.17.21",
     "semver": "^7.3.4",
-    "traverse": "0.6.6"
+    "traverse": "0.6.6",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

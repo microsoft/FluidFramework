@@ -47,7 +47,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/gitresources": "^0.1035.0",
     "@fluidframework/protocol-base": "^0.1035.0",
@@ -66,6 +65,7 @@
     "socket.io": "^4.1.2",
     "socket.io-adapter": "^2.3.1",
     "socket.io-parser": "^4.0.4",
+    "tslib": "^1.10.0",
     "uuid": "^8.3.1",
     "winston": "^3.3.3"
   },

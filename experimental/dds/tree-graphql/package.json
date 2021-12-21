@@ -32,13 +32,13 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluid-experimental/tree": "^0.54.0",
     "@fluidframework/common-utils": "^0.32.1",
     "@graphql-codegen/plugin-helpers": "^1.18.2",
     "@graphql-codegen/visitor-plugin-common": "^1.18.2",
     "graphql": "^15.4.0",
-    "graphql-tools": "^7.0.2"
+    "graphql-tools": "^7.0.2",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluidframework/mocha-test-setup": "^0.54.0",

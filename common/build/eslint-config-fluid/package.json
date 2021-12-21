@@ -9,7 +9,6 @@
   "main": "index.js",
   "scripts": {},
   "dependencies": {
-    "tslib": "^1.10.0",
     "@rushstack/eslint-config": "^2.5.0",
     "@rushstack/eslint-patch": "^1.1.0",
     "@typescript-eslint/eslint-plugin": "~5.7.0",
@@ -19,7 +18,8 @@
     "eslint-plugin-no-null": "~1.0.2",
     "eslint-plugin-optimize-regex": "~1.2.1",
     "eslint-plugin-react": "~7.27.1",
-    "eslint-plugin-unicorn": "~39.0.0"
+    "eslint-plugin-unicorn": "~39.0.0",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "eslint": ">=8.4.1",

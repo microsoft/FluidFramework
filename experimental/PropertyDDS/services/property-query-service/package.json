@@ -38,7 +38,6 @@
     "tempDirectory": "coverage/tmp"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluid-experimental/property-changeset": "^0.54.0",
     "@fluid-experimental/property-common": "^0.54.0",
     "@fluid-experimental/property-properties": "^0.54.0",
@@ -63,7 +62,8 @@
     "qs": "6.7.0",
     "rmfr": "2.0.0",
     "sanitize": "2.1.0",
-    "sleep-promise": "8.0.1"
+    "sleep-promise": "8.0.1",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluid-experimental/property-dds": "^0.54.0",

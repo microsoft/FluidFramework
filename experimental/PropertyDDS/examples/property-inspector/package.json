@@ -31,7 +31,6 @@
     "webpack": "webpack --color --display=errors-only"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluid-experimental/get-container": "^0.54.0",
     "@fluid-experimental/property-binder": "^0.54.0",
     "@fluid-experimental/property-changeset": "^0.54.0",
@@ -69,7 +68,8 @@
     "lodash": "^4.17.21",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
-    "react-virtualized-auto-sizer": "^1.0.2"
+    "react-virtualized-auto-sizer": "^1.0.2",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "clean-webpack-plugin": "^3.0.0",

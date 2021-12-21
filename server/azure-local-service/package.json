@@ -28,8 +28,8 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
-    "tinylicious": "^0.4.38350"
+    "tinylicious": "^0.4.38350",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

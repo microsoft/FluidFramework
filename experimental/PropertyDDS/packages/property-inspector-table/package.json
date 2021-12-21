@@ -33,7 +33,6 @@
     "webpack": "webpack --config webpack.prod.js --env.production"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@hig/fonts": "^1.0.2",
     "@material-ui/core": "^4.0.0",
     "@material-ui/lab": "^4.0.0-alpha.16",
@@ -43,7 +42,8 @@
     "react-base-table": "1.0.2",
     "react-loading-skeleton": "^1.1.2",
     "react-select": "^2.4.3",
-    "react-virtualized-auto-sizer": "^1.0.2"
+    "react-virtualized-auto-sizer": "^1.0.2",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",

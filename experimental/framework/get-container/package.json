@@ -26,7 +26,6 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/container-definitions": "^0.43.0",
     "@fluidframework/container-loader": "^0.54.0",
     "@fluidframework/core-interfaces": "^0.41.0",
@@ -38,7 +37,8 @@
     "@fluidframework/server-local-server": "^0.1034.0",
     "@fluidframework/test-runtime-utils": "^0.54.0",
     "@fluidframework/tinylicious-driver": "^0.54.0",
-    "jsonwebtoken": "^8.4.0"
+    "jsonwebtoken": "^8.4.0",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

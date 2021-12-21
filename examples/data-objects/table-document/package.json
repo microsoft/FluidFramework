@@ -48,7 +48,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/aqueduct": "^0.54.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
@@ -58,7 +57,8 @@
     "@fluidframework/protocol-definitions": "^0.1026.0",
     "@fluidframework/runtime-definitions": "^0.54.0",
     "@fluidframework/sequence": "^0.54.0",
-    "debug": "^4.1.1"
+    "debug": "^4.1.1",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

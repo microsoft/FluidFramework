@@ -14,11 +14,11 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "azure-devops-node-api": "^10.1.0",
     "jszip": "^3.2.2",
     "msgpack-lite": "^0.1.26",
     "pako": "^1.0.10",
+    "tslib": "^1.10.0",
     "typescript": "^3.7.4"
   },
   "devDependencies": {

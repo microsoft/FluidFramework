@@ -33,7 +33,6 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluid-experimental/get-container": "^0.54.0",
     "@fluid-experimental/react-inputs": "^0.54.0",
     "@fluidframework/aqueduct": "^0.54.0",
@@ -44,7 +43,8 @@
     "css-loader": "^1.0.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
-    "style-loader": "^1.0.0"
+    "style-loader": "^1.0.0",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": "^0.54.0",

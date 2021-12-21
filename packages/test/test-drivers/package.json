@@ -50,7 +50,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.41.0",
     "@fluidframework/driver-definitions": "^0.43.0",
@@ -70,6 +69,7 @@
     "@fluidframework/tool-utils": "^0.54.0",
     "axios": "^0.21.2",
     "semver": "^7.3.4",
+    "tslib": "^1.10.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {

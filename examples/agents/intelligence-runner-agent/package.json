@@ -24,12 +24,12 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/core-interfaces": "^0.41.0",
     "@fluidframework/map": "^0.54.0",
     "@fluidframework/protocol-definitions": "^0.1026.0",
     "@fluidframework/sequence": "^0.54.0",
-    "request": "^2.88.0"
+    "request": "^2.88.0",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

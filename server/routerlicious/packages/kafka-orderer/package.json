@@ -23,9 +23,9 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "tslib": "^1.10.0",
     "@fluidframework/protocol-definitions": "^0.1026.0",
-    "@fluidframework/server-services-core": "^0.1035.0"
+    "@fluidframework/server-services-core": "^0.1035.0",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

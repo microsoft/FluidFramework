@@ -538,7 +538,7 @@ export class GarbageCollector implements IGarbageCollector {
         // If the summary was tracked by this client, it was the one that generated the summary in the first place.
         // Basically, it was written in the current GC version.
         if (result.wasSummaryTracked) {
-            assert(this.currentGCData !== undefined, "GC must have run if we are tracking a summary");
+            assert(this.currentGCData !== undefined, 0x2b6 /* "GC must have run if we are tracking a summary" */);
             this.latestSummaryGCVersion = this.currentGCVersion;
             this.latestSummaryGCData = cloneGCData(this.currentGCData);
             this.referencesSinceLatestSummary.clear();
