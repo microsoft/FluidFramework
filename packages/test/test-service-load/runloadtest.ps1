@@ -4,121 +4,158 @@ function RunLoadTest {
     Param(
         [Parameter(Mandatory = $false)]
         [int]$NumOfDocs = 2,
+
 		[Parameter(Mandatory = $false)]
         [string]$Profile = 'mini',
+
 		[Parameter(Mandatory = $false)]
         [string]$Namespace = 'fluid-scale-test',
+
         [Parameter(Mandatory = $false)]
         [string]$TestDocFolder = [Math]::Floor([decimal](Get-Date(Get-Date).ToUniversalTime() -uformat '%s')),
+
         [Parameter(Mandatory = $false)]
-        [string]$TestUid = [guid]::NewGuid()
+        [string]$TestUid = [guid]::NewGuid(),
+
+        [Parameter(Mandatory = $false)]
+        [string]$TestConfig = '.\testConfig.json',
+
+        [Parameter(Mandatory = $false)]
+        [string]$TestTenantConfig = '.\testTenantConfig.json'
     )
 
+    # Input checks
     if ( ( $NumOfDocs -gt 10 ) -and ( $Namespace -ne 'fluid-scale-test' ) ) {
-        Write-Host "Large tests should be run with namespace fluid-scale-test. Exiting."
+        Write-Host 'Large tests should be run with namespace fluid-scale-test. Exiting.'
         return
     }
 
     if ( $NumOfDocs -gt 2400 ) {
-        Write-Host "Can't run test for more than 2400 docs."
+        Write-Host 'Can''t run test for more than 2400 docs.'
         return
     }
 
     Write-Output "Starting LoadTest for TestUid: $TestUid TestDocFolder: $TestDocFolder"
 
-    $StorageAccountName = "fluidconfig"
+    $StorageAccountName = $env:StorageAccountName
 	$StorageAccountKey = $env:StorageAccountKey
-    $Profiles = Get-Content -Raw -Path .\testConfig.json | ConvertFrom-Json
-    [int]$NumOfUsersPerDoc = $Profiles.profiles.$Profile.numClients
+    $NumOfUsersPerDoc = (Get-Content -Raw -Path .\testConfig.json | ConvertFrom-Json).profiles.$Profile.numClients
+
     Write-Host "NumOfDocs: $NumOfDocs, Profile: $Profile, NumOfUsersPerDoc: $NumOfUsersPerDoc"
-	kubectl config set-context --current --namespace=$Namespace | out-null
-	CreateInfra -NumOfPods $NumOfDocs -Namespace $Namespace -TestUid $TestUid -Profile $Profile -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey -TestDocFolder $TestDocFolder
-	CreateAndUploadConfig -Profile $Profile -Namespace $Namespace -NumOfUsersPerDoc $NumOfUsersPerDoc -NumOfDocs $NumOfDocs -TestUid $TestUid -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
-	Write-Output "Triggered LoadTest for TestUid: $TestUid"
+
+    # Create AKS pods
+	CreateInfra `
+        -NumOfPods $NumOfDocs `
+        -Namespace $Namespace `
+        -TestUid $TestUid `
+        -Profile $Profile `
+        -StorageAccountName $StorageAccountName `
+        -StorageAccountKey $StorageAccountKey `
+        -TestDocFolder $TestDocFolder
+
+    # Create and upload configs for pods to trigger tests.
+	CreateAndUploadConfig `
+        -Profile $Profile `
+        -Namespace $Namespace `
+        -NumOfUsersPerDoc $NumOfUsersPerDoc `
+        -NumOfDocs $NumOfDocs `
+        -TestTenantConfig $TestTenantConfig `
+        -TestUid $TestUid `
+        -StorageAccountName $StorageAccountName `
+        -StorageAccountKey $StorageAccountKey
+
+    Write-Output "Triggered LoadTest for TestUid: $TestUid TestDocFolder: $TestDocFolder"
 }
 
 function CreateInfra{
 
-	[CmdletBinding()]
     Param(
-        [Parameter(Mandatory = $true)]
+        [Parameter()]
         [int]$NumOfPods,
-		[Parameter(Mandatory = $true)]
+		[Parameter()]
         [string]$Namespace,
-        [Parameter(Mandatory = $true)]
+        [Parameter()]
         [string]$TestUid,
-		[Parameter(Mandatory = $true)]
+		[Parameter()]
         [string]$Profile,
-		[Parameter(Mandatory = $true)]
+		[Parameter()]
         [string]$StorageAccountName,
-		[Parameter(Mandatory = $true)]
+		[Parameter()]
         [string]$StorageAccountKey,
-        [Parameter(Mandatory = $true)]
+        [Parameter()]
         [string]$TestDocFolder
     )
+
     kubectl create namespace $Namespace
-	kubectl create secret generic fluid-config-store-secret --from-literal=azurestorageaccountname=$StorageAccountName --from-literal=azurestorageaccountkey=$StorageAccountKey -n $Namespace
-	$FluidPodsDesc = Get-Content -Path fluid-scale-test.yaml
+	kubectl create secret generic fluid-config-store-secret `
+        --from-literal=azurestorageaccountname=$StorageAccountName `
+        --from-literal=azurestorageaccountkey=$StorageAccountKey `
+        -n $Namespace
+    (Get-Content fluid-scale-test.yaml -Raw) -replace "{{FLUID_IMAGE_URL}}",$env:FluidImage | kubectl apply -n $Namespace -f -
 
-    $ClientId = $env:ClientId
-    $ClientSecret = $env:ClientSecret
-    $InstrumentationKey = $env:InstrumentationKey
+    kubectl set env deployment/fluid-scale-test `
+        FLUID_TEST_UID="$TestUid" `
+        TEST_PROFILE="$Profile" `
+        login__microsoft__clientId="$env:ClientId" `
+        login__microsoft__secret="$env:ClientSecret" `
+        APPINSIGHTS_INSTRUMENTATIONKEY="$env:InstrumentationKey" `
+        BUILD_BUILD_ID="$TestDocFolder"
 
-    $FluidPodsDesc = $FluidPodsDesc -replace "{{FLUID_TEST_UID}}","$TestUid"
-    $FluidPodsDesc = $FluidPodsDesc -replace "{{TEST_PROFILE}}","$Profile"
-    $FluidPodsDesc = $FluidPodsDesc -replace "{{CLIENT_ID}}","$ClientId"
-    $FluidPodsDesc = $FluidPodsDesc -replace "{{CLIENT_SECRET}}","$ClientSecret"
-    $FluidPodsDesc = $FluidPodsDesc -replace "{{INSTRUMENTATION_KEY}}","$InstrumentationKey"
-    $FluidPodsDesc = $FluidPodsDesc -replace "{{TEST_DOC_FOLDER}}","$TestDocFolder"
-    $FluidPodsDesc | kubectl apply -n $Namespace -f -
     kubectl scale deployments fluid-scale-test -n $Namespace --replicas=$NumOfPods
-    $RunningNumOfPods = $(kubectl get pods -n $Namespace --field-selector status.phase=Running).count - 1
-    while ($NumOfPods -ne $RunningNumOfPods) {
+
+    # Wait until all pods are running.
+    do {
         Write-Host "Pods are in-progress"
         Start-Sleep -s 10
-        $RunningNumOfPods = $(kubectl get pods -n $Namespace  --field-selector status.phase=Running).count - 1
-    }
-    Write-Host "Pods are created and running"
+        $RunningNumOfPods = $(kubectl get pods -n $Namespace --field-selector status.phase=Running).count - 1
+    } while ($NumOfPods -ne $RunningNumOfPods)
+
+    Write-Host 'Pods are created and running.'
 }
 
 function CreateAndUploadConfig{
-	[CmdletBinding()]
+
     Param(
-		[Parameter(Mandatory = $true)]
+		[Parameter()]
         [string]$Profile,
-		[Parameter(Mandatory = $true)]
+		[Parameter()]
         [string]$Namespace,
-        [Parameter(Mandatory = $true)]
+        [Parameter()]
         [int]$NumOfUsersPerDoc,
-        [Parameter(Mandatory = $true)]
+        [Parameter()]
         [int]$NumOfDocs,
-        [Parameter(Mandatory = $true)]
+        [Parameter()]
         [string]$TestUid,
-		[Parameter(Mandatory = $true)]
+        [Parameter()]
+        [string]$TestTenantConfig,
+		[Parameter()]
         [string]$StorageAccountName,
-		[Parameter(Mandatory = $true)]
+		[Parameter()]
         [string]$StorageAccountKey
     )
 
-    $Tenants = (Get-Content -Raw -Path testTenantConfig.json | ConvertFrom-Json).tenants
+    $Tenants = (Get-Content -Raw -Path $TestTenantConfig | ConvertFrom-Json).tenants
     $TenantNames = $Tenants | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
     $TenantsCount = $TenantNames.Count
-	$Pods = $(kubectl get pods -n $Namespace --field-selector status.phase=Running -o json | ConvertFrom-Json).items
-    [int]$PodsCount = $Pods.count
+
+    $Pods = $(kubectl get pods -n $Namespace --field-selector status.phase=Running -o json | ConvertFrom-Json).items
+    $PodsCount = $Pods.count
 
     if ( $PodsCount -ne $NumOfDocs ) {
-        Write-Error "Number of pods not equal to number of docs"
+        Write-Error 'Number of pods not equal to number of docs.'
         return
     }
-    Write-Output "Starting pod's configuration creation at $(Get-Date)"
-    #Hast table is maintained for storing index of url per tenant which can be used next time
+
+    Write-Output "Creating pod's configuration at $(Get-Date)"
+
+    # Hast table stores index of url per tenant which can be used next time
     $TenantUrlIndexHt = [hashtable]::new()
-    for ($i = 0; $i -lt $TenantNames.length; $i++) {
+    for ( $i = 0 ; $i -lt $TenantNames.length ; $i++ ) {
         $TenantUrlIndexHt[$TenantNames[$i]] = 0
     }
-    $TempPath = "\tmp"
-	az storage directory create --account-key $StorageAccountKey  --account-name $StorageAccountName  --name $TestUid --share-name fluid-config-store
-	$PodConfigPath = (Join-Path -Path $TempPath -ChildPath $TestUid)
+
+    # Create config file for each pod
+	$PodConfigPath = (Join-Path -Path '\tmp' -ChildPath $TestUid)
 	New-Item -Path $PodConfigPath -ItemType Directory | out-null
 	foreach ($i in 1..$PodsCount) {
 		$PodName = $Pods[$i - 1].metadata.name
@@ -127,42 +164,36 @@ function CreateAndUploadConfig{
         $TenantContent = [PSCustomObject]@{
             credentials = $Tenants.$TenantId
 		    rampup = $i
-            docId = $i
+            docId = "doc$i"
         }
-        $LocalFile = (Join-Path -Path $PodConfigPath -ChildPath ($PodName + "_PodConfig.json"))
+        $LocalFile = (Join-Path -Path $PodConfigPath -ChildPath "${PodName}_PodConfig.json")
 		$TenantContent | ConvertTo-Json | Out-File -Encoding ascii -FilePath $LocalFile
-        Write-Output "Pod configuration created for PodNo:${i}, PodName:${PodName}`n"
+        Write-Output "Pod configuration created for Pod No:$i, PodName:$PodName"
     }
-	Write-Output "Finished pod's configuration creation in the local directory: $PodConfigPath at $(Get-Date)`n"
-	Write-Output "Starting pod's configuration upload into the file share: $StorageAccountName at $(Get-Date)"
-	az storage file upload-batch --account-key $StorageAccountKey --account-name $StorageAccountName --source $PodConfigPath --destination "fluid-config-store/$TestUid" --max-connections 10
-	$TestTriggerFile = (Join-Path -Path $PodConfigPath -ChildPath ($TestUid + "_Trigger.json"))
+	Write-Output "Created pod's configuration in the local directory: $PodConfigPath at $(Get-Date)"
+
+	Write-Output "Uploading pod's configuration into the file share: $StorageAccountName at $(Get-Date)"
+
+    az storage directory create `
+        --account-key $StorageAccountKey `
+        --account-name $StorageAccountName `
+        --name $TestUid `
+        --share-name fluid-config-store
+	az storage file upload-batch `
+        --account-key $StorageAccountKey `
+        --account-name $StorageAccountName `
+        --source $PodConfigPath `
+        --destination "fluid-config-store/$TestUid" `
+        --max-connections 10
+
+    $TestTriggerFile = (Join-Path -Path $PodConfigPath -ChildPath "${TestUid}_Trigger.json")
 	Out-File -FilePath $TestTriggerFile
-	az storage file upload --account-key $StorageAccountKey --account-name $StorageAccountName --share-name fluid-config-store --source $TestTriggerFile --path $TestUid
-	Write-Output "Finished upload pod's configuration into file share: $StorageAccountName at $(Get-Date)`n"
-}
+	az storage file upload `
+        --account-key $StorageAccountKey `
+        --account-name $StorageAccountName `
+        --share-name fluid-config-store `
+        --source $TestTriggerFile `
+        --path $TestUid
 
-function CheckTest{
-	[CmdletBinding()]
-    Param(
-		[Parameter(Mandatory = $true)]
-        [string]$Namespace
-    )
-
-	$Pods = $(kubectl get pods -n $Namespace --field-selector status.phase=Running -o json | ConvertFrom-Json).items
-    [int]$PodsCount = $Pods.count
-
-    Write-Output "Checking test"
-
-    foreach ($i in 1..$PodsCount) {
-        $PodName = $Pods[$i - 1].metadata.name
-        $Command = "ps -a | grep node"
-
-        Write-Output "$PodName starting"
-        kubectl exec $PodName -n $Namespace -- bash -c $Command
-        if ($? -eq $false) {
-            Exit 1
-        }
-        Write-Output "$PodName starting"
-    }
+    Write-Output "Uploaded pod's configuration into file share: $StorageAccountName at $(Get-Date)"
 }
