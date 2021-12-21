@@ -34,6 +34,7 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluidframework/azure-client": "^0.54.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/test-client-utils": "^0.54.0",

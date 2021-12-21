@@ -38,6 +38,7 @@
     "tempDirectory": "coverage/tmp"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluid-experimental/property-changeset": "^0.54.0",
     "@fluid-experimental/property-common": "^0.54.0",
     "@fluid-experimental/property-properties": "^0.54.0",

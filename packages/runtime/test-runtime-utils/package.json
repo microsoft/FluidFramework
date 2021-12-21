@@ -53,6 +53,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluidframework/azure-service-utils": "^0.54.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",

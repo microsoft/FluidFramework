@@ -74,6 +74,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@types/events": "^3.0.0",
     "base64-js": "^1.5.1",

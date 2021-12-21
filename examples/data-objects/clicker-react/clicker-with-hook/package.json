@@ -36,6 +36,7 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluid-example/example-utils": "^0.54.0",
     "@fluid-experimental/react": "^0.54.0",
     "@fluidframework/aqueduct": "^0.54.0",

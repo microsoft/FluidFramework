@@ -58,6 +58,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluidframework/core-interfaces": "^0.41.0"
   },
   "devDependencies": {

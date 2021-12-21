@@ -31,6 +31,7 @@
     "webpack": "webpack --color --display=errors-only"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluid-experimental/get-container": "^0.54.0",
     "@fluid-experimental/property-binder": "^0.54.0",
     "@fluid-experimental/property-changeset": "^0.54.0",

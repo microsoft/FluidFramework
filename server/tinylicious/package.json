@@ -30,6 +30,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/gitresources": "^0.1034.0",
     "@fluidframework/protocol-base": "^0.1034.0",

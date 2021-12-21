@@ -17,6 +17,7 @@
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluid-experimental/property-changeset": "^0.54.0",
     "@fluid-experimental/property-common": "^0.54.0",
     "ajv": "7.1.1",

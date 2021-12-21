@@ -30,6 +30,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluidframework/driver-definitions": "^0.43.0"
   },
   "devDependencies": {

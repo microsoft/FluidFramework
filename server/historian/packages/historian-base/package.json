@@ -24,6 +24,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluidframework/common-utils": "^0.31.0",
     "@fluidframework/gitresources": "^0.1035.0-46466",
     "@fluidframework/protocol-definitions": "^0.1026.0",

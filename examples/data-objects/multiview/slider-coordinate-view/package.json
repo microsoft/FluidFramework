@@ -37,6 +37,7 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluid-example/multiview-coordinate-interface": "^0.54.0",
     "react": "^16.10.2"
   },

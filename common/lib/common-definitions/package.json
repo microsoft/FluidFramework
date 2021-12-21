@@ -37,7 +37,8 @@
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
   },
-  "dependencies": {},
+  "dependencies": {
+    "tslib": "^1.10.0",},
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/build-tools": "^0.2.44827",

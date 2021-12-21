@@ -53,6 +53,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluid-internal/replay-tool": "^0.54.0",
     "@fluidframework/cell": "^0.54.0",
     "@fluidframework/common-utils": "^0.32.1",

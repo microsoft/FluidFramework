@@ -28,6 +28,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "benchmark": "^2.1.4",
     "chai": "^4.2.0",
     "easy-table": "^1.1.1",

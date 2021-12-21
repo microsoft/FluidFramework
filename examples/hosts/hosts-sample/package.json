@@ -26,6 +26,7 @@
     "webpack": "webpack --config webpack.config.js"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluidframework/aqueduct": "^0.54.0",
     "@fluidframework/container-definitions": "^0.43.0",
     "@fluidframework/container-loader": "^0.54.0",

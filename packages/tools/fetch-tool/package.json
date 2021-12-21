@@ -25,6 +25,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluid-tools/fluidapp-odsp-urlresolver": "^0.54.0",
     "@fluidframework/azure-client": "^0.54.0",
     "@fluidframework/common-utils": "^0.32.1",

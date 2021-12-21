@@ -35,6 +35,7 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluid-example/clicker": "^0.54.0",
     "@fluid-example/codemirror": "^0.54.0",
     "@fluid-example/collaborative-textarea": "^0.54.0",

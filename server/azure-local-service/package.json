@@ -28,6 +28,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "tinylicious": "^0.4.38350"
   },
   "devDependencies": {

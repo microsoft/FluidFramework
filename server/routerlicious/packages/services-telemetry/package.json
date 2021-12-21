@@ -48,6 +48,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluidframework/common-utils": "^0.32.1",
     "json-stringify-safe": "^5.0.1",
     "path-browserify": "^1.0.1",

@@ -37,6 +37,7 @@
     "start": "npm run build:md-magic && hugo server"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@tylerbu/bin-installer": "^0.0.2",
     "@tylerbu/custom-api-documenter": "0.3.3-tylerbu-5",
     "@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",

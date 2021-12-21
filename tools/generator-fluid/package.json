@@ -22,6 +22,7 @@
     "unlink": "npm rm --global generator-fluid"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "chalk": "^2.4.2",
     "ts-morph": "^4.2.0",
     "yeoman-generator": "^4.1.0"

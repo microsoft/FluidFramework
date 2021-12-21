@@ -9,6 +9,7 @@
   "main": "index.js",
   "scripts": {},
   "dependencies": {
+    "tslib": "^1.10.0",
     "@rushstack/eslint-config": "^2.5.0",
     "@rushstack/eslint-patch": "^1.1.0",
     "@typescript-eslint/eslint-plugin": "~5.7.0",

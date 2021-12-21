@@ -34,6 +34,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluidframework/common-definitions": "^0.20.0"
   },
   "devDependencies": {

@@ -40,6 +40,7 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
+    "tslib": "^1.10.0",
     "@fluid-example/client-ui-lib": "^0.54.0",
     "@fluid-example/intelligence-runner-agent": "^0.54.0",
     "@fluid-example/monaco": "^0.54.0",

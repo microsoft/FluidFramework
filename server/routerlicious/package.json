@@ -71,7 +71,8 @@
     ],
     "temp-directory": "nyc/.nyc_output"
   },
-  "dependencies": {},
+  "dependencies": {
+    "tslib": "^1.10.0",},
   "devDependencies": {
     "@fluidframework/build-tools": "^0.2.46657",
     "@microsoft/api-documenter": "^7.4.6",
