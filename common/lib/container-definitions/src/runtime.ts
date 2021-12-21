@@ -121,7 +121,10 @@ export interface IRuntime extends IDisposable {
  * and the Container has created a new ContainerContext.
  */
 export interface IContainerContext extends IDisposable {
-    // readonly id: string;
+    /**
+    * @deprecated This will be removed in a later release. Deprecated in 0.53
+    */
+    readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: ILoaderOptions;
     readonly configuration: IFluidConfiguration;
