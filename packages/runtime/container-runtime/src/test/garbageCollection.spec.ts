@@ -53,6 +53,9 @@ describe("Garbage Collection Tests", () => {
     // Update this for individual node to update the initial GC state of that node.
     const emptyGCDetails: IGarbageCollectionSummaryDetails = {};
 
+    // The flag for the close call
+    let closeCalled = false;
+
     const createGarbageCollector = (
         baseSnapshot: ISnapshotTree | undefined = undefined,
         getNodeGCDetails: (id: string) => IGarbageCollectionSummaryDetails = () => emptyGCDetails,
@@ -60,10 +63,12 @@ describe("Garbage Collection Tests", () => {
         mockLogger = new MockLogger();
         return GarbageCollector.create(
             gcRuntime,
-            { gcAllowed: true, deleteTimeoutMs },
+            { gcAllowed: true, deleteTimeoutMs, gcTestSessionTimeoutMs: 0 },
             (unusedRoutes: string[]) => {},
             () => Date.now(),
-            () => {},
+            () => {
+                closeCalled = true;
+            },
             baseSnapshot,
             async <T>(id: string) => getNodeGCDetails(id) as T,
             mockLogger,
@@ -81,6 +86,17 @@ describe("Garbage Collection Tests", () => {
 
     after(() => {
         clock.restore();
+    });
+
+    describe("Session expiry is called", () => {
+        beforeEach(() => {
+            closeCalled = false;
+        });
+        it("Session expiry is called", async () => {
+            createGarbageCollector();
+            clock.tick(1);
+            assert(closeCalled, "Close should have been called.");
+        });
     });
 
     describe("Inactive events", () => {
@@ -393,7 +409,7 @@ describe("Garbage Collection Tests", () => {
      *
      * In these tests, V = nodes and E = edges between nodes. Root nodes that are always referenced are marked as *.
      */
-     describe("References between summaries", () => {
+    describe("References between summaries", () => {
         let garbageCollector: IGarbageCollector;
         const nodeA = "/A";
         const nodeB = "/B";

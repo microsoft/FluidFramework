@@ -1311,7 +1311,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // The last message processed at the time of summary. If there are no messages, nothing has changed from
             // the base summary we loaded from. So, use the message from its metadata blob.
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.baseSummaryMessage,
-            sessionTimeoutMs: this.garbageCollector.sessionExpiryMs,
+            sessionExpiryTimeoutMs: this.garbageCollector.sessionExpiryTimeoutMs,
         };
     }
 

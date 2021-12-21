@@ -86,6 +86,7 @@ export class UsageError extends LoggingError implements IFluidErrorBase {
     }
 }
 
+/** Error indicating that a client's session has reached its time limit and is closed. */
 export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
     readonly errorType = "clientSessionExpiredError";
 
@@ -93,7 +94,7 @@ export class ClientSessionExpiredError extends LoggingError implements IFluidErr
         readonly fluidErrorCode: string,
         readonly expiryMs: number,
     ) {
-        super(fluidErrorCode, { clientSessionExpiryMs: expiryMs});
+        super(fluidErrorCode, { timeoutMs: expiryMs});
     }
 }
 

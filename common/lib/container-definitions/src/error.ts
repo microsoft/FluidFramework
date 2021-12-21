@@ -37,9 +37,8 @@ export enum ContainerErrorType {
     /**
      * Error indicating an client session has expired.
      */
-
     clientSessionExpired = "clientSessionExpiredError",
-    }
+}
 
 /**
  * Base interface for all errors and warnings at container level
