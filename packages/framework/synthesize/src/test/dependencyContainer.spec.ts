@@ -14,6 +14,8 @@ import {
 import { FluidObjectHandle } from "@fluidframework/datastore";
 
 import { DependencyContainer } from "..";
+import { IFluidDependencySynthesizer } from "../IFluidDependencySynthesizer";
+import { FluidObjectProvider } from "../types";
 
 const mockHandleContext: IFluidHandleContext = {
     absolutePath: "",
@@ -374,6 +376,24 @@ describe("Routerlicious", () => {
                 assert(dc.has(IFluidLoadable),"has includes parent registered");
                 assert(dc.has(IFluidConfiguration),"has includes registered");
                 assert(!dc.has(IFluidHandle),"does not include not registered");
+            });
+
+            it(`Parent Resolved from Child`, async () => {
+                const parentDc = new DependencyContainer();
+                const loadableToHandle: FluidObjectProvider<"IFluidHandle"> =
+                    async (fds: IFluidDependencySynthesizer) => {
+                        // eslint-disable-next-line @typescript-eslint/ban-types
+                        const loadable = fds.synthesize<{},IFluidLoadable>({},{IFluidLoadable});
+                        return (await loadable.IFluidLoadable).handle;
+                    };
+                parentDc.register(IFluidHandle, loadableToHandle);
+
+                const dc = new DependencyContainer(parentDc);
+                const loadableMock = new MockLoadable();
+                dc.register(IFluidLoadable, loadableMock);
+
+                const deps = dc.synthesize<IFluidHandle>({IFluidHandle}, {});
+                assert(await deps.IFluidHandle !== undefined, "handle undefined");
             });
         });
     });

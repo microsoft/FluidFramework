@@ -14,6 +14,10 @@ import {
 import {
     IFluidDependencySynthesizer,
 } from "./IFluidDependencySynthesizer";
+import {
+    AsyncOptionalFluidObjectProvider,
+    AsyncRequiredFluidObjectProvider,
+} from ".";
 
 /**
  * DependencyContainer is similar to a IoC Container. It takes providers and will
@@ -65,17 +69,11 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
             optionalTypes: FluidObjectSymbolProvider<O>,
             requiredTypes: FluidObjectSymbolProvider<R>,
     ): AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<R>> {
-        const optionalValues = Object.values(optionalTypes);
-        const requiredValues = Object.values(requiredTypes);
-
-        // There was nothing passed in so we can return
-        if (optionalValues === [] && requiredValues === []) {
-            return {} as any;
-        }
-
-        const required = this.generateRequired<R>(requiredTypes);
-        const optional = this.generateOptional<O>(optionalTypes);
-        return { ...required, ...optional };
+        const base: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<R>> = {} as any;
+        this.generateRequired<R>(base,requiredTypes);
+        this.generateOptional<O>(base, optionalTypes);
+        Object.defineProperty(base, IFluidDependencySynthesizer, {get: ()=> this});
+        return base;
     }
 
     /**
@@ -100,16 +98,9 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
         }
 
         for(const parent of this.parents) {
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            const sp = { [type]: type } as FluidObjectSymbolProvider<Pick<IFluidObject, T>>;
-            // eslint-disable-next-line @typescript-eslint/ban-types
-            const syn =  parent.synthesize<Pick<IFluidObject, T>,{}>(
-                sp,
-                {});
-            const maybeProvider = syn[type];
-            if(maybeProvider !== undefined) {
-                // @ts-expect-error blah
-                return maybeProvider;
+            const p = parent.getProvider(type);
+            if(p !== undefined) {
+                return p;
             }
         }
 
@@ -117,42 +108,77 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
     }
 
     private generateRequired<T extends IFluidObject>(
+        base: AsyncRequiredFluidObjectProvider<FluidObjectKey<T>>,
         types: FluidObjectSymbolProvider<T>,
     ) {
-        const values: (keyof IFluidObject)[] = Object.values(types);
-        return Object.assign({}, ...Array.from(values, (t) => {
-            const provider = this.getProvider(t);
-            if (!provider) {
-                throw new Error(`Object attempted to be created without registered required provider ${t}`);
+        for(const key of Object.keys(types) as unknown as (keyof IFluidObject)[]) {
+            const provider = this.resolveProvider(key);
+            if(provider === undefined) {
+                throw new Error(`Object attempted to be created without registered required provider ${key}`);
             }
-
-            return this.resolveProvider(provider, t);
-        }));
+            Object.defineProperty(
+                base,
+                key,
+                provider,
+            );
+        }
     }
 
     private generateOptional<T extends IFluidObject>(
+        base: AsyncOptionalFluidObjectProvider<FluidObjectKey<T>>,
         types: FluidObjectSymbolProvider<T>,
     ) {
-        const values: (keyof IFluidObject)[] = Object.values(types);
-        return Object.assign({}, ...Array.from(values, (t) => {
-            const provider = this.getProvider(t);
-            if (!provider) {
-                return { get [t]() { return undefined; } };
+        for(const key of Object.keys(types) as unknown as (keyof IFluidObject)[]) {
+            const provider = this.resolveProvider(key);
+            if(provider !== undefined) {
+                Object.defineProperty(
+                    base,
+                    key,
+                    provider,
+                );
             }
-
-            return this.resolveProvider(provider, t);
-        }));
+        }
     }
 
-    private resolveProvider<T extends keyof IFluidObject>(provider: FluidObjectProvider<T>, t: keyof IFluidObject) {
+    private resolveProvider<T extends keyof IFluidObject>(t: T): PropertyDescriptor | undefined {
+        // If we have the provider return it
+        const provider = this.providers.get(t);
+        if (provider === undefined) {
+            for(const parent of this.parents) {
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                const sp = { [t]: t } as FluidObjectSymbolProvider<Pick<IFluidObject, T>>;
+                // eslint-disable-next-line @typescript-eslint/ban-types
+                const syn =  parent.synthesize<Pick<IFluidObject, T>,{}>(
+                    sp,
+                    {});
+                const descriptor = Object.getOwnPropertyDescriptor(syn, t);
+                if(descriptor !== undefined) {
+                    return descriptor;
+                }
+            }
+            return undefined;
+        }
+
         // The double nested gets are required for lazy loading the provider resolution
         if (typeof provider === "function") {
-            // eslint-disable-next-line @typescript-eslint/no-this-alias
-            const self = this;
             return {
-                get [t]() {
+                get() {
                     if (provider && typeof provider === "function") {
-                        return Promise.resolve(provider(self)).then((p) => {
+                        return Promise.resolve(this[IFluidDependencySynthesizer])
+                            .then(async (fds): Promise<any>=>provider(fds))
+                            .then((p) => {
+                                if (p) {
+                                    return p[t];
+                                }
+                            });
+                    }
+                },
+            };
+        }
+        return {
+                get() {
+                    if (provider) {
+                        return Promise.resolve(provider).then((p) => {
                             if (p) {
                                 return p[t];
                             }
@@ -160,18 +186,5 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
                     }
                 },
             };
-        }
-
-        return {
-            get [t]() {
-                if (provider) {
-                    return Promise.resolve(provider).then((p) => {
-                        if (p) {
-                            return p[t];
-                        }
-                    });
-                }
-            },
-        };
     }
 }
