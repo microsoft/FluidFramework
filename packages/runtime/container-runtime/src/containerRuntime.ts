@@ -1049,6 +1049,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.mc.logger,
             async () => this.garbageCollector.getDataStoreBaseGCDetails(),
             (id: string) => this.garbageCollector.nodeChanged(id),
+            (handle: IFluidHandle) => this.garbageCollector.addedOutboundReference("/", handle.absolutePath),
             new Map<string, string>(dataStoreAliasMap),
         );
 
@@ -1871,6 +1872,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             0x12f /* "Container Runtime's summarize should always return a tree" */);
 
         return summarizeResult as ISummaryTreeWithStats;
+    }
+
+    /**
+     * Implementation of IGarbageCollectionRuntime::updateStateBeforeGC.
+     * Before GC runs, called by the garbage collector to update any pending GC state.
+     */
+    public async updateStateBeforeGC() {
+        return this.dataStores.updateStateBeforeGC();
     }
 
     /**

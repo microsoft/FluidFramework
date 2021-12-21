@@ -5,6 +5,7 @@
 
 import { ITelemetryLogger, ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import { DataCorruptionError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -49,6 +50,7 @@ import {
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 import { IUsedStateStats } from "./garbageCollection";
+import { RootGCHandle } from "./rootGcHandle";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -97,6 +99,10 @@ export class DataStores implements IDisposable {
         readonly referencedDataStoreCount: number;
     };
 
+    // Stores the ids of new data stores between two GC runs. This is used to notify the garbage collector of new
+    // root data stores that are added.
+    private dataStoresSinceLastGC: string[] = [];
+
     constructor(
         private readonly baseSnapshot: ISnapshotTree | undefined,
         private readonly runtime: ContainerRuntime,
@@ -107,6 +113,7 @@ export class DataStores implements IDisposable {
         baseLogger: ITelemetryBaseLogger,
         getDataStoreBaseGCDetails: () => Promise<Map<string, IGarbageCollectionSummaryDetails>>,
         private readonly dataStoreChanged: (id: string) => void,
+        private readonly rootDataStoreAdded: (handle: IFluidHandle) => void,
         private readonly aliasMap: Map<string, string>,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
@@ -179,6 +186,9 @@ export class DataStores implements IDisposable {
 
     public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
         const attachMessage = message.contents as InboundAttachMessage;
+
+        this.dataStoresSinceLastGC.push(attachMessage.id);
+
         // The local object has already been attached
         if (local) {
             assert(this.pendingAttach.has(attachMessage.id),
@@ -496,6 +506,23 @@ export class DataStores implements IDisposable {
         } while (notBoundContextsLength !== this.contexts.notBoundLength());
 
         return builder.getSummaryTree();
+    }
+
+    /**
+     * Before GC runs, called by the garbage collector to update any pending GC state.
+     * The garbage collector needs to know all outbound references that are added. Since root data stores are not
+     * explicitly marked as referenced, notify GC of new root data stores that were added since the last GC run.
+     */
+    public async updateStateBeforeGC(): Promise<void> {
+        for (const id of this.dataStoresSinceLastGC) {
+            const context = this.contexts.get(id);
+            assert(context !== undefined, `Missing data store context with id ${id}`);
+            if (await context.isRoot()) {
+                const handle = new RootGCHandle(id, this.runtime.IFluidHandleContext);
+                this.rootDataStoreAdded(handle);
+            }
+        }
+        this.dataStoresSinceLastGC = [];
     }
 
     /**

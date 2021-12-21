@@ -46,6 +46,7 @@ describe("Garbage Collection Tests", () => {
     };
     // The runtime to be passed to the garbage collector.
     const gcRuntime: IGarbageCollectionRuntime = {
+        updateStateBeforeGC: async () => {},
         getGCData,
         updateUsedRoutes,
     };
@@ -407,6 +408,8 @@ describe("Garbage Collection Tests", () => {
      * In these tests, V = nodes and E = edges between nodes. Root nodes that are always referenced are marked as *.
      */
     describe("References between summaries", () => {
+        const unknownRouteEvent = "GarbageCollector:gcUnknownOutboundRoute";
+
         let garbageCollector: IGarbageCollector;
         const nodeA = "/A";
         const nodeB = "/B";
@@ -629,7 +632,7 @@ describe("Garbage Collection Tests", () => {
          * 3. Summary 2 at t2. V = [A*, B, C]. E = [B -> C]. B and C have unreferenced time t1.
          * Validates that the unreferenced time for B and C is still t1.
          */
-         it(`Scenario 5 - Reference added via unrefenced nodes`, async () => {
+        it(`Scenario 5 - Reference added via unreferenced nodes`, async () => {
             // Initialize nodes A, B and C.
             defaultGCData.gcNodes["/"] = [ nodeA ];
             defaultGCData.gcNodes[nodeA] = [];
@@ -707,6 +710,39 @@ describe("Garbage Collection Tests", () => {
             const nodeCTime2 = timestamps2.get(nodeC);
             assert(nodeCTime2 !== undefined && nodeCTime2 > nodeCTime1, "C's timestamp should have updated");
             assert(nodeBTime2 !== undefined && nodeBTime2 > nodeBTime1, "B's timestamp should have updated");
+        });
+
+        /**
+         * Validates that we generate error on detecting reference during GC that was not notified explicitly.
+         * 1. Summary 1 at t1. V = [A*]. E = [].
+         * 2. Node B is created. E = [].
+         * 3. Reference from A to B added without notifying GC. E = [A -> B].
+         * 4. Summary 2 at t2. V = [A*, B]. E = [A -> B].
+         * Validates that we log an error since B is detected as a referenced node but its reference was notified
+         * to GC.
+         */
+        it(`Scenario 7 - Reference added without notifying GC`, async () => {
+            // Initialize node A.
+            defaultGCData.gcNodes["/"] = [ nodeA ];
+            defaultGCData.gcNodes[nodeA] = [];
+
+            // 1. Run GC and generate summary 1. E = [].
+            const timestamps1 = await getUnreferencedTimestamps();
+            assert(timestamps1.get(nodeA) === undefined, "A should be referenced");
+
+            // 2. Create node B. E = [].
+            defaultGCData.gcNodes[nodeB] = [];
+
+            // 3. Add reference from A to B without calling addedOutboundReference. E = [A -> B].
+            defaultGCData.gcNodes[nodeA] = [ nodeB ];
+
+            // 4. Run GC and generate summary 2. E = [A -> B].
+            await getUnreferencedTimestamps();
+
+            // Validate that we got the "gcUnknownOutboundRoute" error.
+            mockLogger.matchEvents([
+                { eventName: unknownRouteEvent, route: nodeB },
+            ]);
         });
     });
 });
