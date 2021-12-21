@@ -7,7 +7,7 @@ import {
     ContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/aqueduct";
 
-import { LikesAndComments } from "./fluidObject";
+import { Likes } from "./fluidObject";
 
 /**
  * This does setup for the Fluid Container.
@@ -19,7 +19,7 @@ import { LikesAndComments } from "./fluidObject";
  * In this example, we are only registering a single FluidObject, but more complex examples will register multiple
  * FluidObjects.
  */
-export const LikesAndCommentsContainer = new ContainerRuntimeFactoryWithDefaultDataStore(
-    LikesAndComments.factory,
-    new Map([LikesAndComments.factory.registryEntry]),
+export const LikesContainer = new ContainerRuntimeFactoryWithDefaultDataStore(
+    Likes.factory,
+    new Map([Likes.factory.registryEntry]),
 );

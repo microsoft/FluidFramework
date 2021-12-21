@@ -29,7 +29,6 @@ import {
     IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
 import {
-    SharedObjectSequence,
     SharedString,
 } from "@fluidframework/sequence";
 import {
@@ -281,7 +280,6 @@ export function instantiateDataStore(context: IFluidDataStoreContext, existing: 
             SharedMap.getFactory(),
             SharedString.getFactory(),
             SharedCell.getFactory(),
-            SharedObjectSequence.getFactory(),
         ].map((factory) => [factory.type, factory])),
         existing,
     );
