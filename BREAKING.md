@@ -45,11 +45,13 @@ Additionally, `useSyncedArray()` from `@fluid-experimental/react` has been remov
 The breaking changes introduced in [`IContainer` interface updated to expose actively used `Container` public APIs](#IContainer-interface-updated-to-expose-actively-used-Container-public-APIs) have now been completed in 0.54. The following additions to the `IContainer` interface are no longer optional but rather mandatory:
 - `connectionState`
 - `connected`
+- `audience`
+- `readOnlyInfo`
+
+The following "alpha" APIs are still optional:
 - `setAutoReconnect()` (**alpha**)
 - `resume()` (**alpha**)
-- `audience`
 - `clientId` (**alpha**)
-- `readOnlyInfo`
 - `forceReadonly()` (**alpha**)
 
 The deprecated `codeDetails` API, which was marked as optional on the last release, has now been removed.
