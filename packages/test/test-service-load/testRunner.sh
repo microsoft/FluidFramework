@@ -20,7 +20,7 @@ credentials=`jq -c '.credentials|to_entries|first as $x | { ($x.key): ($x.value)
 export login__odsp__test__accounts=$credentials
 
 docId=`jq -c .docId ./testUserConfig.json`
-node ./dist/nodeStressTest.js -p $TEST_PROFILE -c ./testUserConfig.json -id $docId -m > testscenario.logs 2>&1
+node ./dist/nodeStressTest.js -p $TEST_PROFILE -c ./testUserConfig.json -id $docId -m > loadTestRun.logs
 
 echo "Test complete just keeping pod alive."
 while true;

@@ -92,19 +92,12 @@ function CreateAndUploadConfig{
 
     Write-Output "Creating pod's configuration at $(Get-Date)"
 
-    # Hast table stores index of url per tenant which can be used next time
-    $TenantUrlIndexHt = [hashtable]::new()
-    for ( $i = 0 ; $i -lt $TenantNames.length ; $i++ ) {
-        $TenantUrlIndexHt[$TenantNames[$i]] = 0
-    }
-
     # Create config file for each pod
-	$PodConfigPath = (Join-Path -Path '\tmp' -ChildPath $TestUid)
+	$PodConfigPath = (Join-Path -Path $env:TEMP -ChildPath $TestUid)
 	New-Item -Path $PodConfigPath -ItemType Directory | out-null
-	foreach ($i in 1..$PodsCount) {
-		$PodName = $Pods[$i - 1].metadata.name
-        $TenantIndex = ($i-1) % $TenantsCount
-        $TenantId = $TenantNames[$TenantIndex]
+	foreach ( $i in 0..($PodsCount - 1) ) {
+		$PodName = $Pods[$i].metadata.name
+        $TenantId = $TenantNames[$i % $TenantsCount]
         $TenantContent = [PSCustomObject]@{
             credentials = $Tenants.$TenantId
 		    rampup = $i
@@ -112,7 +105,7 @@ function CreateAndUploadConfig{
         }
         $LocalFile = (Join-Path -Path $PodConfigPath -ChildPath "${PodName}_PodConfig.json")
 		$TenantContent | ConvertTo-Json | Out-File -Encoding ascii -FilePath $LocalFile
-        Write-Output "Pod configuration created for Pod No: $i, PodName:$PodName"
+        Write-Output "Pod configuration created for Pod No: $i, PodName: $PodName"
     }
 
 	Write-Output "Uploading pod's configuration into the file share: $env:AZURE_STORAGE_ACCOUNT at $(Get-Date)"
@@ -122,8 +115,7 @@ function CreateAndUploadConfig{
 
     $TestTriggerFile = (Join-Path -Path $PodConfigPath -ChildPath "${TestUid}_Trigger.json")
 	Out-File -FilePath $TestTriggerFile
-	az storage file upload `
-        --share-name fluid-config-store `
-        --source $TestTriggerFile `
-        --path $TestUid
+	az storage file upload --share-name fluid-config-store --source $TestTriggerFile --path $TestUid
+
+    Remove-Item -Force -Recursive $PodConfigPath
 }
