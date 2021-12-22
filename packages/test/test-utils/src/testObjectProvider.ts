@@ -137,7 +137,8 @@ export class TestObjectProvider {
     private _urlResolver: IUrlResolver | undefined;
     private _logger: ITelemetryBaseLogger | undefined;
     private readonly _documentIdStrategy: IDocumentIdStrategy;
-    private _usedDocumentId: boolean;
+    // Since documentId doesn't change we can only create/make one container. Call the load functions instead.
+    private _documentCreated = false;
 
     /**
      * Manage objects for loading and creating container, including the driver, loader, and OpProcessingController
@@ -150,7 +151,6 @@ export class TestObjectProvider {
         public readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint,
     ) {
         this._documentIdStrategy = getDocumentIdStrategy(driver.type);
-        this._usedDocumentId = false;
     }
 
     get logger() {
@@ -236,16 +236,17 @@ export class TestObjectProvider {
      * @param packageEntries - list of code details and fluidEntryPoint pairs.
      */
     public async createContainer(entryPoint: fluidEntryPoint, options?: ITestLoaderOptions) {
-        const loader = this.createLoader([[defaultCodeDetails, entryPoint]], options);
-        if (this._usedDocumentId) {
-            throw new Error("createContainer can only be called once! Use loadContainer");
+        if (this._documentCreated) {
+            throw new Error(
+                "Only one container/document can be created. To load the container/document use loadContainer");
         }
+        const loader = this.createLoader([[defaultCodeDetails, entryPoint]], options);
         const container = await createAndAttachContainer(
             defaultCodeDetails,
             loader,
             this.driver.createCreateNewRequest(this.documentId),
         );
-        this._usedDocumentId = true;
+        this._documentCreated = true;
         // r11s driver will generate a new ID for the new container.
         // update the document ID with the actual ID of the attached container.
         this._documentIdStrategy.update(container.resolvedUrl);
@@ -277,16 +278,17 @@ export class TestObjectProvider {
      * @param testContainerConfig - optional configuring the test Container
      */
     public async makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer> {
-        const loader = this.makeTestLoader(testContainerConfig);
-        if (this._usedDocumentId) {
-            throw new Error("makeTestContainer can only be called once! Use loadTestContainer");
+        if (this._documentCreated) {
+            throw new Error(
+                "Only one container/document can be created. To load the container/document use loadTestContainer");
         }
+        const loader = this.makeTestLoader(testContainerConfig);
         const container =
             await createAndAttachContainer(
                 defaultCodeDetails,
                 loader,
                 this.driver.createCreateNewRequest(this.documentId));
-        this._usedDocumentId = true;
+        this._documentCreated = true;
         // r11s driver will generate a new ID for the new container.
         // update the document ID with the actual ID of the attached container.
         this._documentIdStrategy.update(container.resolvedUrl);
@@ -318,7 +320,7 @@ export class TestObjectProvider {
         this._urlResolver = undefined;
         this._documentIdStrategy.reset();
         this._logger = undefined;
-        this._usedDocumentId = false;
+        this._documentCreated = false;
     }
 
     public async ensureSynchronized() {
