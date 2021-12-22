@@ -34,6 +34,7 @@ describe("Garbage Collection Tests", () => {
 
     let clock: SinonFakeTimers;
     let mockLogger: MockLogger;
+    let closeCalled = false;
     // Time after which unreferenced nodes can be deleted.
     const deleteTimeoutMs = 500;
 
@@ -53,22 +54,18 @@ describe("Garbage Collection Tests", () => {
     // Update this for individual node to update the initial GC state of that node.
     const emptyGCDetails: IGarbageCollectionSummaryDetails = {};
 
-    // The flag for the close call
-    let closeCalled = false;
-
     const createGarbageCollector = (
         baseSnapshot: ISnapshotTree | undefined = undefined,
         getNodeGCDetails: (id: string) => IGarbageCollectionSummaryDetails = () => emptyGCDetails,
+        gcTestSessionTimeoutMs?: number,
     ) => {
         mockLogger = new MockLogger();
         return GarbageCollector.create(
             gcRuntime,
-            { gcAllowed: true, deleteTimeoutMs, gcTestSessionTimeoutMs: 0 },
+            { gcAllowed: true, deleteTimeoutMs, gcTestSessionTimeoutMs },
             (unusedRoutes: string[]) => {},
             () => Date.now(),
-            () => {
-                closeCalled = true;
-            },
+            () => { closeCalled = true; },
             baseSnapshot,
             async <T>(id: string) => getNodeGCDetails(id) as T,
             mockLogger,
@@ -93,7 +90,7 @@ describe("Garbage Collection Tests", () => {
             closeCalled = false;
         });
         it("Session expiry is called", async () => {
-            createGarbageCollector();
+            createGarbageCollector(undefined, undefined, 0);
             clock.tick(1);
             assert(closeCalled, "Close should have been called.");
         });

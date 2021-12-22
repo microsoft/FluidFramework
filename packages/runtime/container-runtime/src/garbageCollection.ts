@@ -162,11 +162,10 @@ class UnreferencedStateTracker {
 }
 
 /**
- * This sets the default container runtime expiry. We have container runtime expiry for GC purposes. Once the
- * ContainerRuntimeExpiry is set, we should not be able to change this value. Please look at this readme #link to
- * readme.
+ * This sets the default session expiry. We have session expiry for GC purposes. Once the session expiry is
+ * set, we should not be able to change this value. Please look at TODO: link to GC readme.
  */
- export const defaultContainerRuntimeExpiryMs = 30 * 24 * 60 * 60 * 1000; // 30 days
+ export const defaultSessionExpiryMs = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 /**
  * The garbage collector for the container runtime. It consolidates the garbage collection functionality and maintains
@@ -264,8 +263,8 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly deleteTimeoutMs: number;
     // Map of node ids to their unreferenced state tracker.
     private readonly unreferencedNodesState: Map<string, UnreferencedStateTracker> = new Map();
-    // The timeout responsible for closing the container when the container runtime has expired
-    private readonly sessionExpiryTimer?: ReturnType<typeof setTimeout>;
+    // The timeout responsible for closing the container when the session has expired
+    private sessionExpiryTimer?: ReturnType<typeof setTimeout>;
 
     protected constructor(
         private readonly provider: IGarbageCollectionRuntime,
@@ -288,13 +287,13 @@ export class GarbageCollector implements IGarbageCollector {
         let prevSummaryGCVersion: number | undefined;
 
         // GC can only be enabled during creation. After that, it can never be enabled again. So, for existing
-        // documents, we get this information from the metadata blob.
+        // documents, we get this information from the metadata blob. Similarly the session timeout should be
+        // consistent across all clients, thus we grab it as well from the metadata blob, and set it once on creation.
         if (existing) {
             prevSummaryGCVersion = getGCVersion(metadata);
             // Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
             // other exsiting documents, GC is enabled.
             this.gcEnabled = prevSummaryGCVersion > 0;
-            // Grab from metadata
             this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
         } else {
             // For new documents, GC has to be exlicitly enabled via the gcAllowed flag in GC options.
@@ -304,7 +303,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // if session expiry is enabled, we need to close the container when the timeout expires
         if (this.sessionExpiryTimeoutMs !== undefined) {
-            // TODO: Change to ClientSessionExpiredError, issue #8605
+            // TODO: Change to ClientSessionExpiredError, issue https://github.com/microsoft/FluidFramework/issues/8605
             // this.sessionExpiryTimer = setTimeout(() => this.closeFn(
             //     new ClientSessionExpiredError(`Client expired, it has lasted ${this.sessionExpiryTimeoutMs} ms.`,
             //     this.sessionExpiryTimeoutMs)),
@@ -588,6 +587,7 @@ export class GarbageCollector implements IGarbageCollector {
     public dispose(): void {
         if (this.sessionExpiryTimer !== undefined) {
             clearTimeout(this.sessionExpiryTimer);
+            this.sessionExpiryTimer = undefined;
         }
     }
 
