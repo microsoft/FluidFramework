@@ -307,7 +307,7 @@ export class GarbageCollector implements IGarbageCollector {
             this.sessionExpiryTimeoutMs = this.gcOptions.gcTestSessionTimeoutMs;
         }
 
-        // if session expiry is enabled, we need to close the container when the timeout expires
+        // If session expiry is enabled, we need to close the container when the timeout expires
         if (this.sessionExpiryTimeoutMs !== undefined) {
             // TODO: Change to ClientSessionExpiredError, issue https://github.com/microsoft/FluidFramework/issues/8605
             // this.sessionExpiryTimer = setTimeout(() => this.closeFn(
@@ -315,7 +315,7 @@ export class GarbageCollector implements IGarbageCollector {
             //     this.sessionExpiryTimeoutMs)),
             //     this.sessionExpiryTimeoutMs);
             this.sessionExpiryTimer = setTimeout(() => this.closeFn({
-                errorType: "clientSessionExpired",
+                errorType: "clientSessionExpiredError",
                 message: `The client has reached the expiry time of ${this.sessionExpiryTimeoutMs} ms.`,
             }), this.sessionExpiryTimeoutMs);
         }

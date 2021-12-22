@@ -37,7 +37,7 @@ export enum ContainerErrorType {
     /**
      * Error indicating an client session has expired.
      */
-    clientSessionExpired = "clientSessionExpiredError",
+    clientSessionExpiredError = "clientSessionExpiredError",
 }
 
 /**
