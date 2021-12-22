@@ -71,6 +71,7 @@ export interface IChannelStorageService {
 
 // @public
 export interface IDeltaConnection {
+    addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     attach(handler: IDeltaHandler): void;
     // (undocumented)
     connected: boolean;

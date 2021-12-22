@@ -444,61 +444,67 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
     get type(): string;
 }
 
-// @public
+// @public @deprecated
 export class SharedNumberSequence extends SharedSequence<number> {
+    // @deprecated
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
+    // @deprecated
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedNumberSequence;
+    // @deprecated
     static getFactory(): SharedNumberSequenceFactory;
-    // (undocumented)
+    // @deprecated (undocumented)
     getRange(start: number, end?: number): number[];
     // (undocumented)
     id: string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class SharedNumberSequenceFactory implements IChannelFactory {
-    // (undocumented)
+    // @deprecated (undocumented)
     static readonly Attributes: IChannelAttributes;
-    // (undocumented)
+    // @deprecated (undocumented)
     get attributes(): IChannelAttributes;
-    // (undocumented)
+    // @deprecated (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
-    // (undocumented)
+    // @deprecated (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
-    // (undocumented)
+    // @deprecated (undocumented)
     static segmentFromSpec(segSpec: IJSONSegment): SubSequence<number>;
-    // (undocumented)
+    // @deprecated (undocumented)
     static Type: string;
-    // (undocumented)
+    // @deprecated (undocumented)
     get type(): string;
 }
 
-// @public
+// @public @deprecated
 export class SharedObjectSequence<T> extends SharedSequence<T> {
+    // @deprecated
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
+    // @deprecated
     static create<T>(runtime: IFluidDataStoreRuntime, id?: string): SharedObjectSequence<T>;
+    // @deprecated
     static getFactory(): SharedObjectSequenceFactory;
-    // (undocumented)
+    // @deprecated (undocumented)
     getRange(start: number, end?: number): Serializable<T>[];
     // (undocumented)
     id: string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class SharedObjectSequenceFactory implements IChannelFactory {
-    // (undocumented)
+    // @deprecated (undocumented)
     static readonly Attributes: IChannelAttributes;
-    // (undocumented)
+    // @deprecated (undocumented)
     get attributes(): IChannelAttributes;
-    // (undocumented)
+    // @deprecated (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
-    // (undocumented)
+    // @deprecated (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
-    // (undocumented)
+    // @deprecated (undocumented)
     static segmentFromSpec(segSpec: IJSONSegment): SubSequence<object>;
-    // (undocumented)
+    // @deprecated (undocumented)
     static Type: string;
-    // (undocumented)
+    // @deprecated (undocumented)
     get type(): string;
 }
 

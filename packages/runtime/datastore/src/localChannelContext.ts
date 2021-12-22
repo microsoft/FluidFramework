@@ -21,6 +21,7 @@ import {
 import { readAndParse } from "@fluidframework/driver-utils";
 import { CreateProcessingError } from "@fluidframework/container-utils";
 import { assert, Lazy } from "@fluidframework/common-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     createServiceEndpoints,
     IChannelContext,
@@ -153,6 +154,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
         storageService: IDocumentStorageService,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
+        addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
         private readonly snapshotTree: ISnapshotTree,
     ) {
         super(id, registry, runtime, () => this.services);
@@ -171,6 +173,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
                 dataStoreContext.connected,
                 submitFn,
                 this.dirtyFn,
+                addedGCOutboundReferenceFn,
                 storageService,
                 clonedSnapshotTree,
                 blobMap,
@@ -267,6 +270,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
         storageService: IDocumentStorageService,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
+        addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
     ) {
         super(id, registry, runtime, () => this.services);
         assert(type !== undefined, 0x209 /* "Factory Type should be defined" */);
@@ -281,6 +285,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
                 dataStoreContext.connected,
                 submitFn,
                 this.dirtyFn,
+                addedGCOutboundReferenceFn,
                 storageService,
             );
         });

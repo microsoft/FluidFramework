@@ -13,6 +13,9 @@ import { ITelemetryLogger } from '@fluidframework/common-definitions';
 export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData;
 
 // @public
+export function concatGarbageCollectionData(gcData1: IGarbageCollectionData, gcData2: IGarbageCollectionData): IGarbageCollectionData;
+
+// @public
 export function concatGarbageCollectionStates(gcState1: IGarbageCollectionState, gcState2: IGarbageCollectionState): IGarbageCollectionState;
 
 // @public (undocumented)

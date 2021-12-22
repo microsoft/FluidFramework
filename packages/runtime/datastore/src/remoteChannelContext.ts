@@ -6,6 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { DataCorruptionError } from "@fluidframework/container-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     IChannel,
     IChannelAttributes,
@@ -58,6 +59,7 @@ export class RemoteChannelContext implements IChannelContext {
         storageService: IDocumentStorageService,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
+        addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
         private readonly id: string,
         baseSnapshot:  ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
@@ -71,6 +73,7 @@ export class RemoteChannelContext implements IChannelContext {
             this.dataStoreContext.connected,
             submitFn,
             () => dirtyFn(this.id),
+            addedGCOutboundReferenceFn,
             storageService,
             baseSnapshot,
             extraBlobs);
