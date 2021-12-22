@@ -15,8 +15,8 @@ import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
+import { IGarbageCollectionBaseDetails } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { IGarbageCollectionSummaryDetails } from '@fluidframework/runtime-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IRequestHeader } from '@fluidframework/core-interfaces';
@@ -73,7 +73,7 @@ export function createResponseError(status: number, value: string, request: IReq
 export const createRootSummarizerNode: (logger: ITelemetryLogger, summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfig) => IRootSummarizerNode;
 
 // @public
-export const createRootSummarizerNodeWithGC: (logger: ITelemetryLogger, summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfigWithGC, getGCDataFn?: ((fullGC?: boolean | undefined) => Promise<IGarbageCollectionData>) | undefined, getInitialGCSummaryDetailsFn?: (() => Promise<IGarbageCollectionSummaryDetails>) | undefined) => IRootSummarizerNodeWithGC;
+export const createRootSummarizerNodeWithGC: (logger: ITelemetryLogger, summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfigWithGC, getGCDataFn?: ((fullGC?: boolean | undefined) => Promise<IGarbageCollectionData>) | undefined, getBaseGCDetailsFn?: (() => Promise<IGarbageCollectionBaseDetails>) | undefined) => IRootSummarizerNodeWithGC;
 
 // @public (undocumented)
 export function exceptionToResponse(err: any): IResponse;

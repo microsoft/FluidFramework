@@ -8,7 +8,7 @@ import {
     IGarbageCollectionData,
     IGarbageCollectionNodeData,
     IGarbageCollectionState,
-    IGarbageCollectionSummaryDetails,
+    IGarbageCollectionBaseDetails,
 } from "@fluidframework/runtime-definitions";
 
 /**
@@ -31,8 +31,8 @@ export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionD
  * @param gcDetails - The GC details of a node.
  * @returns A map of GC details of each children of the the given node.
  */
- export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionSummaryDetails) {
-    const childGCDetailsMap: Map<string, IGarbageCollectionSummaryDetails> = new Map();
+ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionBaseDetails) {
+    const childGCDetailsMap: Map<string, IGarbageCollectionBaseDetails> = new Map();
 
     // If GC data is not available, bail out.
     if (gcDetails.gcData === undefined) {

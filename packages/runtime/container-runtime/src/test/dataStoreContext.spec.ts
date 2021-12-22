@@ -19,7 +19,7 @@ import {
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     IGarbageCollectionData,
-    IGarbageCollectionSummaryDetails,
+    IGarbageCollectionBaseDetails,
     SummarizeInternalFn,
     CreateChildSummarizerNodeFn,
     CreateSummarizerNodeSource,
@@ -63,7 +63,7 @@ describe("Data Store Context Tests", () => {
             createSummarizerNodeFn = (
                 summarizeInternal: SummarizeInternalFn,
                 getGCDataFn: () => Promise<IGarbageCollectionData>,
-                getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+                getBaseGCDetailsFn: () => Promise<IGarbageCollectionBaseDetails>,
             ) => summarizerNode.createChild(
                 summarizeInternal,
                 dataStoreId,
@@ -71,7 +71,7 @@ describe("Data Store Context Tests", () => {
                 // DDS will not create failure summaries
                 { throwOnFailure: true },
                 getGCDataFn,
-                getInitialGCSummaryDetailsFn,
+                getBaseGCDetailsFn,
             );
 
             const factory: IFluidDataStoreFactory = {
@@ -317,7 +317,7 @@ describe("Data Store Context Tests", () => {
                 createSummarizerNodeFn = (
                     summarizeInternal: SummarizeInternalFn,
                     getGCDataFn: () => Promise<IGarbageCollectionData>,
-                    getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+                    getBaseGCDetailsFn: () => Promise<IGarbageCollectionBaseDetails>,
                 ) => summarizerNode.createChild(
                     summarizeInternal,
                     dataStoreId,
@@ -325,7 +325,7 @@ describe("Data Store Context Tests", () => {
                     // Disable GC for initialization tests.
                     { gcDisabled: true },
                     getGCDataFn,
-                    getInitialGCSummaryDetailsFn,
+                    getBaseGCDetailsFn,
                 );
             });
             const pkgName = "TestDataStore1";
@@ -440,14 +440,14 @@ describe("Data Store Context Tests", () => {
                 createSummarizerNodeFn = (
                     summarizeInternal: SummarizeInternalFn,
                     getGCDataFn: () => Promise<IGarbageCollectionData>,
-                    getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+                    getBaseGCDetailsFn: () => Promise<IGarbageCollectionBaseDetails>,
                 ) => summarizerNode.createChild(
                     summarizeInternal,
                     dataStoreId,
                     { type: CreateSummarizerNodeSource.FromSummary },
                     undefined,
                     getGCDataFn,
-                    getInitialGCSummaryDetailsFn,
+                    getBaseGCDetailsFn,
                 );
             });
 
@@ -496,7 +496,7 @@ describe("Data Store Context Tests", () => {
                     commits: {},
                     trees: {},
                 };
-                const gcDetails: IGarbageCollectionSummaryDetails = {
+                const gcDetails: IGarbageCollectionBaseDetails = {
                     usedRoutes: [],
                     gcData: emptyGCData,
                 };
@@ -531,7 +531,7 @@ describe("Data Store Context Tests", () => {
                     commits: {},
                     trees: {},
                 };
-                const gcDetails: IGarbageCollectionSummaryDetails = {
+                const gcDetails: IGarbageCollectionBaseDetails = {
                     usedRoutes: [],
                     gcData: {
                         gcNodes: {
@@ -572,7 +572,7 @@ describe("Data Store Context Tests", () => {
                     commits: {},
                     trees: {},
                 };
-                const gcDetails: IGarbageCollectionSummaryDetails = {
+                const gcDetails: IGarbageCollectionBaseDetails = {
                     usedRoutes: [""], // Set initial used routes to be same as the default used routes.
                 };
 

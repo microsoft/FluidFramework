@@ -51,6 +51,7 @@ import {
     IFluidDataStoreContextEvents,
     IFluidDataStoreRegistry,
     IGarbageCollectionData,
+    IGarbageCollectionBaseDetails,
     IGarbageCollectionSummaryDetails,
     IInboundSignalMessage,
     IProvideFluidDataStoreFactory,
@@ -248,7 +249,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
             async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
-            async () => this.getInitialGCSummaryDetails(),
+            async () => this.getBaseGCDetails(),
         );
 
         this.subLogger = ChildLogger.create(this.logger, "FluidDataStoreContext");
@@ -652,7 +653,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      */
     public abstract setRoot(): void;
 
+    /**
+     * @deprecated - Renamed to getBaseGCDetails().
+     */
     public abstract getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
+
+    public abstract getBaseGCDetails(): Promise<IGarbageCollectionBaseDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
         assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
@@ -679,7 +685,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return (
             summarizeInternal: SummarizeInternalFn,
             getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-            getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+            getBaseGCDetailsFn: () => Promise<IGarbageCollectionBaseDetails>,
         ) => this.summarizerNode.createChild(
             summarizeInternal,
             id,
@@ -687,7 +693,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             // DDS will not create failure summaries
             { throwOnFailure: true },
             getGCDataFn,
-            getInitialGCSummaryDetailsFn,
+            getBaseGCDetailsFn,
         );
     }
 
@@ -698,11 +704,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
 export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     private isRootDataStore: boolean | undefined;
+    private readonly baseGCDetailsP: Promise<IGarbageCollectionBaseDetails>;
 
     constructor(
         id: string,
         private readonly initSnapshotValue: ISnapshotTree | string | undefined,
-        private readonly getBaseSummaryGCDetails: () => Promise<IGarbageCollectionSummaryDetails | undefined>,
+        getBaseGCDetails: () => Promise<IGarbageCollectionBaseDetails | undefined>,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: FluidObject,
@@ -723,6 +730,10 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             },
             pkg,
         );
+
+        this.baseGCDetailsP = new LazyPromise<IGarbageCollectionBaseDetails>(async () => {
+            return (await getBaseGCDetails()) ?? {};
+        });
     }
 
     private readonly initialSnapshotDetailsP =  new LazyPromise<ISnapshotDetails>(async () => {
@@ -787,16 +798,19 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         };
     });
 
-    private readonly gcDetailsInInitialSummaryP = new LazyPromise<IGarbageCollectionSummaryDetails>(async () => {
-        return (await this.getBaseSummaryGCDetails()) ?? {};
-    });
-
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         return this.initialSnapshotDetailsP;
     }
 
+    /**
+     * @deprecated - Renamed to getBaseGCDetails.
+     */
     public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
-        return this.gcDetailsInInitialSummaryP;
+        return this.getBaseGCDetails();
+    }
+
+    public async getBaseGCDetails(): Promise<IGarbageCollectionBaseDetails> {
+        return this.baseGCDetailsP;
     }
 
     public generateAttachMessage(): IAttachMessage {
@@ -926,7 +940,15 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         };
     }
 
+    /**
+     * @deprecated - Renamed to getBaseGCDetails.
+     */
     public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
+        // Local data store does not have initial summary.
+        return {};
+    }
+
+    public async getBaseGCDetails(): Promise<IGarbageCollectionBaseDetails> {
         // Local data store does not have initial summary.
         return {};
     }

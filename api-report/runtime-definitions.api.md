@@ -155,10 +155,12 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
+    getBaseGCDetails?(): Promise<IGarbageCollectionBaseDetails>;
     // (undocumented)
     getCreateChildSummarizerNodeFn(
     id: string,
     createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
+    // @deprecated (undocumented)
     getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
     getQuorum(): IQuorumClients;
     // (undocumented)
@@ -210,6 +212,13 @@ export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry 
 }
 
 // @public
+export interface IGarbageCollectionBaseDetails {
+    gcData?: IGarbageCollectionData;
+    unrefTimestamp?: number;
+    usedRoutes?: string[];
+}
+
+// @public
 export interface IGarbageCollectionData {
     gcNodes: {
         [id: string]: string[];
@@ -230,12 +239,8 @@ export interface IGarbageCollectionState {
     };
 }
 
-// @public
-export interface IGarbageCollectionSummaryDetails {
-    gcData?: IGarbageCollectionData;
-    unrefTimestamp?: number;
-    usedRoutes?: string[];
-}
+// @public @deprecated (undocumented)
+export type IGarbageCollectionSummaryDetails = IGarbageCollectionBaseDetails;
 
 // @public
 export interface IInboundSignalMessage extends ISignalMessage {
@@ -325,9 +330,11 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     createParam: CreateChildSummarizerNodeParam,
     config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>): ISummarizerNodeWithGC;
     deleteChild(id: string): void;
+    getBaseGCDetails?(): IGarbageCollectionBaseDetails;
     // (undocumented)
     getChild(id: string): ISummarizerNodeWithGC | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    // @deprecated (undocumented)
     getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
     isReferenced(): boolean;
     // (undocumented)

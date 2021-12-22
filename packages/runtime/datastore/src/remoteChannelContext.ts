@@ -23,7 +23,7 @@ import {
     CreateChildSummarizerNodeFn,
     IFluidDataStoreContext,
     IGarbageCollectionData,
-    IGarbageCollectionSummaryDetails,
+    IGarbageCollectionBaseDetails,
     ISummarizeInternalResult,
     ISummarizeResult,
     ISummarizerNodeWithGC,
@@ -65,7 +65,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly registry: ISharedObjectRegistry,
         extraBlobs: Map<string, ArrayBufferLike> | undefined,
         createSummarizerNode: CreateChildSummarizerNodeFn,
-        gcDetailsInInitialSummary: () => Promise<IGarbageCollectionSummaryDetails>,
+        getBaseGCDetails: () => Promise<IGarbageCollectionBaseDetails>,
         private readonly attachMessageType?: string,
     ) {
         this.services = createServiceEndpoints(
@@ -84,7 +84,7 @@ export class RemoteChannelContext implements IChannelContext {
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
             async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
-            async () => gcDetailsInInitialSummary(),
+            async () => getBaseGCDetails(),
         );
 
         this.subLogger = ChildLogger.create(this.runtime.logger, "RemoteChannelContext");
