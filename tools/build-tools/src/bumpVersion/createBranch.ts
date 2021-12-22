@@ -3,20 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { Context, VersionBumpType } from "./context";
 import { getReleasedPrereleaseDependencies } from "./bumpDependencies";
 import { bumpRepo } from "./bumpVersion";
-import { ReferenceVersionBag, getRepoStateChange } from "./versionBag";
+import { Context, VersionBumpType } from "./context";
 import { fatal, runPolicyCheckWithFix, } from "./utils";
+import { ReferenceVersionBag, getRepoStateChange } from "./versionBag";
+import { updateBranchVersions } from "./versionsJson";
 import { MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import * as semver from "semver";
+
 
 /**
  * Create release branch based on the repo state, bump minor version immediately
  * and push it to `main` and the new release branch to remote
  */
-export async function createReleaseBranch(context: Context) {
+export async function createReleaseBranch(context: Context, branchName?: string) {
 
     // run policy check before creating release branch.
     // right now this only does assert short codes
@@ -69,6 +71,9 @@ export async function createReleaseBranch(context: Context) {
     }
 
     // Bump the version
+    console.log(`Updating versions.json for new release branch`);
+    await updateBranchVersions(branchName ?? releaseBranch);
+
     console.log(`Bumping minor version for development`)
     console.log(await bumpCurrentBranch(context, "minor", releaseName, depVersions));
 

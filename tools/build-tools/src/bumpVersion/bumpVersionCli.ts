@@ -20,7 +20,7 @@ function printUsage() {
         `
 Usage: fluid-bump-version <options>
 Options:
-     --branch                    Create release branch and bump the version that would be released on main branch
+     --branch [<name>]           Create release branch and bump the version that would be released on main branch
   -b --bump [<pkg>[=<type>]]     Bump the package version of specified package or monorepo (default: client)
   -d --dep [<pkg>[=<version>]]   Bump the dependencies version of specified package or monorepo (default: client)
   -r --release [<pkg>[=<type>]]  Release and bump version of specified package or monorepo and dependencies (default: client)
@@ -32,6 +32,7 @@ ${commonOptionString}
 
 const paramBumpDepPackages = new Map<string, string | undefined>();
 let paramBranch = false;
+let paramBranchName: string | undefined;
 let paramLocal = true;
 let paramReleaseName: string | undefined;
 let paramReleaseVersion: VersionBumpType | undefined;
@@ -79,6 +80,10 @@ function parseNameVersion(arg: string | undefined) {
     return { name, version, extra };
 }
 
+function parseName(name: string | undefined) {
+    return name?.startsWith("--") ? undefined : name;
+}
+
 function parseOptions(argv: string[]) {
     let error = false;
     for (let i = 2; i < process.argv.length; i++) {
@@ -121,6 +126,7 @@ function parseOptions(argv: string[]) {
 
         if (arg === "--branch") {
             paramBranch = true;
+            paramBranchName = parseName(process.argv[++i]);
             paramClean = true;
             break;
         }
@@ -267,7 +273,7 @@ async function main() {
 
         switch (command) {
             case "branch":
-                await createReleaseBranch(context);
+                await createReleaseBranch(context, paramBranchName);
                 break;
             case "dep":
                 console.log("Bumping dependencies");

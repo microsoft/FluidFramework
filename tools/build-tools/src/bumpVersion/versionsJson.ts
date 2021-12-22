@@ -98,9 +98,9 @@ export async function updateBranchVersions(branch?: string) {
     const versionsJsonPath = path.join(resolvedRoot, "versions.json");
     const versionsJson = readVersionsJson(versionsJsonPath);
     if (versionsJson[versionsBranch] !== undefined && versionsBranch !== currentBranch) {
-        throw new Error(
-            `Attempting to overwrite info for branch ${versionsBranch} with info from branch ${currentBranch}\n` +
-            `This should only be done when creating a new versions json branch entry`,
+        console.warn(
+            `WARNING: Overwrite info for branch ${versionsBranch} with info from branch ${currentBranch}. `,
+            `This should usually only be done when creating a new versions json branch entry`,
         );
     }
 
