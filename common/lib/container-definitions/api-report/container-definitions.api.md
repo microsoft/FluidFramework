@@ -184,7 +184,7 @@ export interface IContainerContext extends IDisposable {
     getLoadedFromVersion(): IVersion | undefined;
     // @deprecated (undocumented)
     getSpecifiedCodeDetails?(): IFluidCodeDetails_2 | undefined;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
