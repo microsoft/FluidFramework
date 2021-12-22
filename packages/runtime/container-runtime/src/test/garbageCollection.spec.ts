@@ -399,30 +399,12 @@ describe("Garbage Collection Tests", () => {
         const nodeC = "/C";
         const nodeD = "/D";
 
-        /**
-         * Function that asserts a test result fails. This is to add tests before implementing / fixing features. These
-         * will be flipped when the feature / fix is in place.
-         */
-         function assertTestFails(testResult: boolean, message: string) {
-            assert(!testResult, message);
-        }
-
-        // Mimics latest summary refresh so that the latest summary state tracked by GC is updated after the GC run.
-        const refreshLatestSummary = async () => garbageCollector.latestSummaryStateRefreshed(
-            { wasSummaryTracked: true, latestSummaryUpdated: true },
-            async <T>(id: string) => { assert(false, "readAndParseBlob should not have been called"); },
-        );
-
         // Runs GC and returns the unreferenced timestamps of all nodes in the GC summary.
-        async function getUnreferencedTimestamps(refreshLatest = true) {
+        async function getUnreferencedTimestamps() {
             // Advance the clock by 1 tick so that the unreferenced timestamp is updated in between runs.
             clock.tick(1);
 
             await garbageCollector.collectGarbage({ runGC: true });
-
-            if (refreshLatest) {
-                await refreshLatestSummary();
-            }
 
             const summaryTree = garbageCollector.summarize()?.summary;
             assert(summaryTree !== undefined, "Nothing to summarize after running GC");
@@ -711,48 +693,6 @@ describe("Garbage Collection Tests", () => {
             const nodeCTime2 = timestamps2.get(nodeC);
             assert(nodeCTime2 !== undefined && nodeCTime2 > nodeCTime1, "C's timestamp should have updated");
             assert(nodeBTime2 !== undefined && nodeBTime2 > nodeBTime1, "B's timestamp should have updated");
-        });
-
-        /**
-         * Validates that we can detect references that are added after a summary is submitted and before that
-         * summary is ack'd. This tests that we clear the pending summary state correctly.
-         * 1. Summary 1 at t1. V = [A*, B]. E = []. B has unreferenced time t1.
-         * 2. Reference from A to B added. E = [A -> B].
-         * 3. Summary ack received.
-         * 4. Reference from A to B removed. E = [].
-         * 5. Summary 2 at t2. V = [A*, B]. E = []. B has unreferenced time t2.
-         * Validates that the unreferenced time for B is t2 which is > t1.
-         */
-        it(`Scenario 7 - Reference added after summary and before its ack'd`, async () => {
-            // Initialize nodes A and B.
-            defaultGCData.gcNodes["/"] = [ nodeA ];
-            defaultGCData.gcNodes[nodeA] = [];
-            defaultGCData.gcNodes[nodeB] = [];
-
-            // 1. Run GC and generate summary 1. E = [].
-            const timestamps1 = await getUnreferencedTimestamps(false /* refreshLatest */);
-            assert(timestamps1.get(nodeA) === undefined, "A should be referenced");
-
-            const nodeBTime1 = timestamps1.get(nodeB);
-            assert(nodeBTime1 !== undefined, "B should have unreferenced timestamp");
-
-            // 2. Add reference from A to B. E = [A -> B].
-            garbageCollector.addedOutboundReference(nodeA, nodeB);
-            defaultGCData.gcNodes[nodeA] = [ nodeB ];
-
-            // 3. Mimic receiving a summary ack by refreshing latest summary.
-            await refreshLatestSummary();
-
-            // 4. Remove reference from A to B. E = [].
-            defaultGCData.gcNodes[nodeA] = [];
-
-            // 5. Run GC and generate summary 2. E = [].
-            const timestamps2 = await getUnreferencedTimestamps();
-            assert(timestamps2.get(nodeA) === undefined, "A should be referenced");
-
-            const nodeBTime2 = timestamps2.get(nodeB);
-            // This test current fails. Tracked by https://github.com/microsoft/FluidFramework/issues/8576.
-            assertTestFails(nodeBTime2 !== undefined && nodeBTime2 > nodeBTime1, "B's timestamp should have updated");
         });
     });
 });
