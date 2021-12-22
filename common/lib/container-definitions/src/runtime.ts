@@ -122,7 +122,7 @@ export interface IRuntime extends IDisposable {
  */
 export interface IContainerContext extends IDisposable {
     /**
-    * @deprecated This will be removed in a later release. Deprecated in 0.53
+    * @deprecated This will be removed in a later release. Deprecated in 0.44 of container-definitions
     */
     readonly id: string;
     readonly existing: boolean | undefined;
