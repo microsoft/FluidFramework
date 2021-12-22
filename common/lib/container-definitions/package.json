@@ -153,16 +153,20 @@
           "backCompat": false
         },
         "InterfaceDeclaration_ILoader": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IProxyLoaderFactory": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IHostLoader": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IContainer": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IDeltaManager": {
           "backCompat": false
@@ -173,57 +177,112 @@
       },
       "0.41.0": {
         "InterfaceDeclaration_ILoader": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IProxyLoaderFactory": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IHostLoader": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IFluidModule": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IContainerContext": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IContainer": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ICodeLoader": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IDeltaManager": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IConnectionDetails": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProvideRuntimeFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IRuntimeFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        }
+      },
+      "0.42.0": {
+        "InterfaceDeclaration_ILoader": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IProxyLoaderFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IHostLoader": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IContainerContext": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IContainer": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IProvideLoader": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IProvideRuntimeFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IRuntimeFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IDeltaManager": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IConnectionDetails": {
           "backCompat": false
         },
         "InterfaceDeclaration_ICodeLoader": {
           "backCompat": false
         },
-        "InterfaceDeclaration_IDeltaManager": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_IConnectionDetails": {
+        "InterfaceDeclaration_IFluidModule": {
           "backCompat": false
         }
       },
-      "0.42.0": {
+      "0.43.0": {
         "InterfaceDeclaration_ILoader": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_IProxyLoaderFactory": {
-          "backCompat": false
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IHostLoader": {
-          "backCompat": false
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IContainerContext": {
-          "backCompat": false
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IContainer": {
-          "backCompat": false
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IProvideLoader": {
-          "backCompat": false
+          "forwardCompat": false
         },
-        "InterfaceDeclaration_IDeltaManager": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_IConnectionDetails": {
-          "backCompat": false
+        "InterfaceDeclaration_IProxyLoaderFactory": {
+          "forwardCompat": false
         }
       }
     }
