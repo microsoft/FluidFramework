@@ -205,7 +205,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
         for (let i = 0; i < containers.length; i++) {
             assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
             assert.deepStrictEqual(
-                containers[i].getSpecifiedCodeDetails?.(),
+                containers[i].getLoadedCodeDetails?.(),
                 { package: packageV1 },
                 `containers[${i}] code details should update`);
         }
