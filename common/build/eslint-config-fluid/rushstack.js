@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// This is a workaround for https://github.com/eslint/eslint/issues/3458
-require("@rushstack/eslint-config/patch/modern-module-resolution");
-
 module.exports = {
     "env": {
         "browser": true,
@@ -15,7 +12,6 @@ module.exports = {
     "extends": [
         "@rushstack/eslint-config/profile/web-app",
         "@rushstack/eslint-config/mixins/tsdoc",
-        // "@rushstack/eslint-config/mixins/packlets",
         "plugin:eslint-comments/recommended",
         "plugin:import/errors",
         "plugin:import/warnings",
@@ -33,12 +29,9 @@ module.exports = {
         "ecmaVersion": 2018,
         "sourceType": "module",
         "project": "./tsconfig.json",
-        // "tsconfigRootDir": __dirname
     },
     "plugins": [
-        // "@typescript-eslint",
         "no-null",
-        // "optimize-regex",
         "prefer-arrow",
         "react",
         "unicorn",
@@ -63,6 +56,13 @@ module.exports = {
                         format: ["camelCase"],
                         "leadingUnderscore": "allow"
                     },
+                ],
+
+                // Ensourages minimal disabling of eslint rules, while still permitting whole-file exclusions.
+                "eslint-comments/disable-enable-pair": [
+                    "error", {
+                        "allowWholeFile": true
+                    }
                 ],
 
                 // eslint-plugin-unicorn
@@ -97,12 +97,6 @@ module.exports = {
                 "@typescript-eslint/explicit-function-return-type": "off",
                 "@typescript-eslint/no-explicit-any": "off",
                 "@typescript-eslint/member-ordering": "off",
-                // "@typescript-eslint/explicit-member-accessibility": [
-                //     "error",
-                //     {
-                //         "accessibility": "no-public",
-                //     },
-                // ]
                 "@typescript-eslint/typedef": "off",
                 "@typescript-eslint/no-parameter-properties": [
                     "error",
@@ -115,13 +109,6 @@ module.exports = {
                         ]
                     },
                 ],
-
-
-                // TODO: Enable these ASAP
-                // "@typescript-eslint/explicit-module-boundary-types": "off",
-                // "@typescript-eslint/no-unsafe-assignment": "off",
-                // "@typescript-eslint/no-unsafe-call": "off",
-                // "@typescript-eslint/no-unsafe-member-access": "off",
             }
         }
     ],

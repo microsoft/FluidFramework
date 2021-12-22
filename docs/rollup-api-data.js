@@ -36,12 +36,6 @@ const memberCombineInstructions = [
         ])
     },
     {
-        package: "@fluidframework/azure-service-utils",
-        sourceImports: new Map([
-            ["@fluidframework/server-services-client", ["generateToken"]],
-        ])
-    },
-    {
         package: "@fluidframework/fluid-static",
         sourceImports: new Map([
             ["@fluidframework/container-definitions", ["IAudience"]],

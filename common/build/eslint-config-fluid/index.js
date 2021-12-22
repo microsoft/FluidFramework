@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-module.exports = require("./no-tslint.js")
+module.exports = require("./eslint8.js")

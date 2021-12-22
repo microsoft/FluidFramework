@@ -5,7 +5,8 @@
 
 import { strict } from "assert";
 import fs from "fs";
-import { Container, Loader } from "@fluidframework/container-loader";
+import { IContainer } from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
     IDocumentServiceFactory,
@@ -71,7 +72,7 @@ export async function loadContainer(
     documentServiceFactory: IDocumentServiceFactory,
     documentName: string,
     logger?: TelemetryLogger,
-): Promise<Container> {
+): Promise<IContainer> {
     const resolved: IFluidResolvedUrl = {
         endpoints: {
             deltaStorageUrl: "example.com",

@@ -137,6 +137,7 @@ export function getMetadataFormatVersion(metadata?: IContainerRuntimeMetadata): 
     return metadata?.summaryFormatVersion ?? 0;
 }
 
+export const aliasBlobName = ".aliases";
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
 export const electedSummarizerBlobName = ".electedSummarizer";
