@@ -13,7 +13,7 @@ import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IThrottlingWarning } from '@fluidframework/container-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
-// @public (undocumented)
+// @public
 export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
     constructor(fluidErrorCode: string, expiryMs: number);
     // (undocumented)
