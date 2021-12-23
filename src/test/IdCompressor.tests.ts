@@ -4,1300 +4,1244 @@
  */
 
 import { expect } from 'chai';
+import { v4, v5 } from 'uuid';
 import {
 	IdCompressor,
 	isFinalId,
-	SerializedIdCompressor,
-	systemReservedIdCount,
-	systemReservedUuidBase,
+	isLocalId,
+	reservedIdCount,
+	reservedSessionId,
+	reservedIdRange,
+	hasOngoingSession,
 } from '../id-compressor/IdCompressor';
-import { CompressedId, LocalCompressedId, FinalCompressedId, StableId } from '../Identifiers';
-import { assert, assertNotUndefined, fail, Mutable, noop } from '../Common';
+import { LocalCompressedId, FinalCompressedId } from '../Identifiers';
+import { assert, assertNotUndefined, fail } from '../Common';
 import {
+	assertIsStableId,
+	createSessionId as createSessionId,
 	incrementUuid,
-	NumericUuid,
-	numericUuidFromUuidString,
+	isStableId,
+	minimizeUuidString,
+	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from '../id-compressor/NumericUuid';
-import { MinimalUuidString, SessionId } from '..';
+import { MinimalUuidString, OpSpaceCompressedId, SessionSpaceCompressedId } from '..';
+import { IdRange, UnackedLocalId } from '../id-compressor/IdRange';
 import {
-	Client,
 	createCompressor,
-	integerToStableId,
-	isCapacityChange,
-	makeLargeFuzzTest,
-	sessionNumericUuids,
+	performFuzzActions,
 	sessionIds,
-	TestUsage,
-	useCompressor,
-	IdAllocationUsage,
-	isBatchAllocation,
+	IdCompressorTestNetwork,
+	Client,
+	DestinationClient,
+	MetaClient,
+	expectSerializes,
+	roundtrip,
+	sessionNumericUuids,
 } from './utilities/IdCompressorTestUtilities';
-
-type IdCompressorScenario = readonly [
-	description: string,
-	clusterCapacity: number,
-	localClient: Client,
-	usages: TestUsage[],
-	asserts: (compressor: IdCompressor, idData: readonly TestIdData[]) => void
-];
-
-interface TestIdData {
-	readonly id: CompressedId;
-	readonly clientIdNumber: number;
-	readonly client: Client;
-	readonly sessionStableId: StableId;
-	readonly sessionUuid: NumericUuid;
-	readonly explicitId?: MinimalUuidString;
-}
+import { expectDefined } from './utilities/TestUtilities';
 
 describe('IdCompressor', () => {
-	describe('Creation', () => {
-		it('can decompress system IDs', () => {
-			const systemSessionUuid = numericUuidFromUuidString(systemReservedUuidBase) ?? fail();
+	it('detects invalid cluster sizes', () => {
+		const compressor = createCompressor(Client.Client1, 1);
+		expect(() => (compressor.clusterCapacity = -1)).to.throw('Clusters must have a positive capacity');
+		expect(() => (compressor.clusterCapacity = 0)).to.throw('Clusters must have a positive capacity');
+		expect(() => (compressor.clusterCapacity = IdCompressor.maxClusterSize + 1)).to.throw(
+			'Clusters must not exceed max cluster size'
+		);
+	});
+
+	it('reports the proper session ID', () => {
+		const sessionId = createSessionId();
+		const compressor = new IdCompressor(sessionId);
+		expect(compressor.localSessionId).to.equal(sessionId);
+	});
+
+	describe('ID Generation', () => {
+		it('can create a compressed ID with a uuid override', () => {
 			const compressor = createCompressor(Client.Client1);
-			for (let i = 0; i < systemReservedIdCount; i++) {
-				const finalId = i as FinalCompressedId;
-				const stable = compressor.decompress(finalId);
-				expect(stable).to.not.be.undefined;
-				expect(stable).to.equal(stableIdFromNumericUuid(incrementUuid(systemSessionUuid, i)));
-				const finalIdForReserved = compressor.compress(assertNotUndefined(stable));
+			const uuid = minimizeUuidString('f2a8243a-b9b9-40e3-b05e-ced099e9e285');
+			const id = compressor.generateCompressedId(uuid);
+			expect(compressor.decompress(id)).to.equal(uuid);
+		});
+
+		it('can create compressed IDs with v5 uuid overrides', () => {
+			const compressor = createCompressor(Client.Client1);
+			const uuidA = minimizeUuidString(v5('foo', '7834b437-6e8c-4936-a1a3-0130b1178f17'));
+			const uuidB = minimizeUuidString(
+				uuidA.slice(0, uuidA.length - 1) + (uuidA.charAt(uuidA.length - 1) === 'a' ? 'b' : 'a')
+			);
+			const idA = compressor.generateCompressedId(uuidA);
+			const idB = compressor.generateCompressedId(uuidB);
+			expect(compressor.decompress(idA)).to.equal(uuidA);
+			expect(compressor.decompress(idB)).to.equal(uuidB);
+		});
+
+		it('can manually create a compressed ID', () => {
+			const compressor = createCompressor(Client.Client1);
+			const id = compressor.generateCompressedId();
+			const uuid = compressor.decompress(id);
+			expect(id).to.equal(compressor.compress(uuid));
+		});
+
+		it('will not decompress IDs it did not compress', () => {
+			const compressor = createCompressor(Client.Client1);
+			expect(() => compressor.decompress(-1 as LocalCompressedId)).to.throw(
+				'Cannot decompress ID which is not known to this compressor'
+			);
+			expect(() => compressor.decompress(reservedIdCount as FinalCompressedId)).to.throw(
+				'Cannot decompress ID which is not known to this compressor'
+			);
+		});
+
+		it('will not re-compress uuids it did not originally compress', () => {
+			const compressor = createCompressor(Client.Client1);
+			expect(compressor.compress(minimizeUuidString('5fff846a-efd4-42fb-8b78-b32ce2672f99'))).to.be.undefined;
+		});
+
+		it('unifies duplicate overridden ids originating from the same compressor', () => {
+			const uuid = assertIsStableId('03c63ee57a4346d6bd9ced779d94f654');
+			const compressor1 = createCompressor(Client.Client1, 3);
+
+			// Client1 compresses a uuid
+			const localId1 = compressor1.generateCompressedId(uuid);
+			const localId2 = compressor1.generateCompressedId(uuid);
+			expect(localId1).to.equal(localId2, 'only one local ID should be allocated for the same uuid');
+			expect(compressor1.decompress(localId1)).to.equal(uuid, 'uuid incorrectly associated with local ID');
+		});
+
+		it('cannot create negative amounts of implicit IDs', () => {
+			expect(() => createCompressor(Client.Client1).takeNextRange(-1)).to.throw(
+				'Implicit count cannot be negative.'
+			);
+		});
+	});
+
+	it('only sends attribution info on the first range from each session', () => {
+		const compressor = createCompressor(Client.Client1, 5, 'attribution');
+		const range1 = compressor.takeNextRange(0);
+		expectDefined(range1.attributionInfo);
+		const range2 = compressor.takeNextRange(1);
+		expect(range2.attributionInfo).to.be.undefined;
+	});
+
+	describe('can produce a range', () => {
+		const tests: {
+			title: string;
+			overrideIndices: number[];
+			firstImplicitIndex: number;
+			implicitCount: number;
+		}[] = [
+			{ title: 'that is empty', overrideIndices: [], firstImplicitIndex: 0, implicitCount: 0 },
+			{ title: 'with only implicit IDs', overrideIndices: [], firstImplicitIndex: 0, implicitCount: 3 },
+			{
+				title: 'with an overriding ID',
+				overrideIndices: [0],
+				firstImplicitIndex: 1,
+				implicitCount: 0,
+			},
+			{
+				title: 'with an explicit ID before an overriding ID',
+				overrideIndices: [1],
+				firstImplicitIndex: 2,
+				implicitCount: 0,
+			},
+			{
+				title: 'with an explicit ID after an overriding ID',
+				overrideIndices: [0],
+				firstImplicitIndex: 2,
+				implicitCount: 0,
+			},
+			{
+				title: 'with an overriding ID between explicit IDs',
+				overrideIndices: [1],
+				firstImplicitIndex: 3,
+				implicitCount: 0,
+			},
+			{
+				title: 'with an overriding ID and implicit IDs',
+				overrideIndices: [0],
+				firstImplicitIndex: 1,
+				implicitCount: 3,
+			},
+			{
+				title: 'with an explicit ID before an overriding ID and implicit IDs',
+				overrideIndices: [1],
+				firstImplicitIndex: 2,
+				implicitCount: 3,
+			},
+			{
+				title: 'with an explicit ID after an overriding ID and implicit IDs',
+				overrideIndices: [0],
+				firstImplicitIndex: 2,
+				implicitCount: 3,
+			},
+			{
+				title: 'with an overriding ID between explicit IDs and implicit IDs',
+				overrideIndices: [1],
+				firstImplicitIndex: 3,
+				implicitCount: 3,
+			},
+		];
+
+		tests.forEach(({ title, overrideIndices, firstImplicitIndex, implicitCount }) => {
+			it(title, () => {
+				const compressor = createCompressor(Client.Client1);
+				validateIdRange(compressor, firstImplicitIndex, implicitCount, new Set(overrideIndices));
+			});
+
+			tests.forEach(
+				({
+					title: title2,
+					overrideIndices: overrideIndices2,
+					firstImplicitIndex: firstImplicitIndex2,
+					implicitCount: implicitCount2,
+				}) => {
+					it(`${title2} after a range ${title}`, () => {
+						const compressor = createCompressor(Client.Client1);
+						const lastTaken = validateIdRange(
+							compressor,
+							firstImplicitIndex,
+							implicitCount,
+							new Set(overrideIndices)
+						);
+						validateIdRange(
+							compressor,
+							firstImplicitIndex2,
+							implicitCount2,
+							new Set(overrideIndices2),
+							lastTaken
+						);
+					});
+				}
+			);
+		});
+
+		function validateIdRange(
+			compressor: IdCompressor,
+			firstImplicitIndex: number,
+			implicitCount: number,
+			overrideIndices: Set<number>,
+			lastTakenId = 0 as UnackedLocalId
+		): UnackedLocalId {
+			const explicits: [SessionSpaceCompressedId, MinimalUuidString?][] = [];
+			for (let i = 0; i < firstImplicitIndex; i++) {
+				const override = overrideIndices.has(i) ? minimizeUuidString(v4()) : undefined;
+				const id = compressor.generateCompressedId(override);
+				explicits.push([id, override]);
+			}
+			const range = compressor.takeNextRange(implicitCount);
+			let newLastTakenId = lastTakenId;
+			let explicitsActual = IdRange.getExplicits(range);
+			if (explicits.length === 0) {
+				expect(explicitsActual).to.be.undefined;
+			} else {
+				explicitsActual = expectDefined(explicitsActual);
+				expect(explicits[0][0]).to.equal(explicitsActual.first);
+				expect(explicits[explicits.length - 1][0]).to.equal(explicitsActual.last);
+				for (const [id, uuid] of Object.entries(overrideIndices)) {
+					expect(explicits[id][1]).to.equal(uuid);
+				}
+				newLastTakenId = explicitsActual.last;
+			}
+
+			let implicitsActual = IdRange.getImplicits(range);
+			if (implicitCount === 0) {
+				expect(implicitsActual).to.be.undefined;
+			} else {
+				implicitsActual = expectDefined(implicitsActual);
+				if (explicits.length > 0) {
+					expect(implicitsActual.first).to.equal(explicits[explicits.length - 1][0] - 1);
+				} else {
+					expect(implicitsActual.first).to.equal(lastTakenId - 1);
+				}
+
+				expect(implicitsActual.last).to.equal(newLastTakenId - implicitCount);
+				expect(implicitsActual.count).to.equal(implicitCount);
+				newLastTakenId = implicitsActual.last;
+			}
+
+			return newLastTakenId;
+		}
+	});
+
+	describe('Finalizing', () => {
+		it('can finalize multiple override uuids into the same cluster using different ranges', () => {
+			const compressor = createCompressor(Client.Client1);
+			const uuid1 = minimizeUuidString('1f4505e1-b5e3-48b9-b951-91f85bcc4e85');
+			const uuid2 = minimizeUuidString('51a98e14-7c3a-48f9-a507-cb2eb8accd6f');
+			const id1 = compressor.generateCompressedId(uuid1);
+			const range1 = compressor.takeNextRange(1);
+			const id2 = compressor.generateCompressedId(uuid2);
+			const range2 = compressor.takeNextRange(0);
+			compressor.finalizeRange(range1);
+			compressor.finalizeRange(range2);
+			const finalId1 = compressor.normalizeToOpSpace(id1);
+			const finalId2 = compressor.normalizeToOpSpace(id2);
+			expect(isFinalId(finalId1)).to.be.true;
+			expect(isFinalId(finalId2)).to.be.true;
+			expect(compressor.decompress(finalId1)).to.equal(uuid1);
+			expect(compressor.decompress(finalId2)).to.equal(uuid2);
+		});
+
+		it('prevents attempts to finalize ranges twice', () => {
+			const implicitCompressor = createCompressor(Client.Client1);
+			const implicitRange = implicitCompressor.takeNextRange(1);
+			implicitCompressor.finalizeRange(implicitRange);
+			expect(() => implicitCompressor.finalizeRange(implicitRange)).to.throw('Ranges finalized out of order.');
+
+			// Make a new compressor, as the first one will be left in a bad state
+			const explicitCompressor = createCompressor(Client.Client1);
+			explicitCompressor.generateCompressedId();
+			const explicitRange = explicitCompressor.takeNextRange(1);
+			explicitCompressor.finalizeRange(explicitRange);
+			expect(() => explicitCompressor.finalizeRange(explicitRange)).to.throw('Ranges finalized out of order.');
+		});
+
+		it('prevents attempts to finalize ranges out of order', () => {
+			const implicitCompressor = createCompressor(Client.Client1);
+			implicitCompressor.takeNextRange(1);
+			const implicitRange = implicitCompressor.takeNextRange(1);
+			expect(() => implicitCompressor.finalizeRange(implicitRange)).to.throw('Ranges finalized out of order.');
+
+			// Make a new compressor, as the first one will be left in a bad state
+			const explicitCompressor = createCompressor(Client.Client1);
+			explicitCompressor.generateCompressedId();
+			explicitCompressor.takeNextRange(1);
+			explicitCompressor.generateCompressedId();
+			const explicitRange = implicitCompressor.takeNextRange(1);
+			expect(() => explicitCompressor.finalizeRange(explicitRange)).to.throw('Ranges finalized out of order.');
+		});
+
+		it('prevents finalizing unacceptably enormous amounts of ID allocation', () => {
+			const compressor1 = createCompressor(Client.Client1);
+			const compressor2 = createCompressor(Client.Client2);
+			const integerLargerThanHalfMax = Math.round((Number.MAX_SAFE_INTEGER / 3) * 2);
+			const range1 = compressor1.takeNextRange(integerLargerThanHalfMax);
+			const range2 = compressor2.takeNextRange(integerLargerThanHalfMax);
+			compressor1.finalizeRange(range1);
+			expect(() => compressor1.finalizeRange(range2)).to.throw(
+				'The number of allocated final IDs must not exceed the JS maximum safe integer.'
+			);
+		});
+	});
+
+	describe('Compression', () => {
+		it('can re-compress a sequential uuid it generated', () => {
+			const compressor = createCompressor(Client.Client1);
+			const id = compressor.generateCompressedId();
+			const uuid = compressor.decompress(id);
+			expect(compressor.compress(uuid)).to.equal(id);
+			compressor.finalizeRange(compressor.takeNextRange(0));
+			expect(compressor.compress(uuid)).to.equal(id);
+		});
+
+		it('can re-compress an override uuid it generated', () => {
+			const compressor = createCompressor(Client.Client1);
+			const override = minimizeUuidString('dce4302e-76c0-4db9-bcf2-b7109beb698e');
+			const id = compressor.generateCompressedId(override);
+			expect(compressor.compress(override)).to.equal(id);
+			compressor.finalizeRange(compressor.takeNextRange(0));
+			expect(compressor.compress(override)).to.equal(id);
+		});
+
+		it('can re-compress uuids from a remote client it has finalized', () => {
+			const compressor = createCompressor(Client.Client1);
+			const id = compressor.generateCompressedId();
+			const override = minimizeUuidString('dce4302e-76c0-4db9-bcf2-b7109beb698e');
+			compressor.generateCompressedId(override);
+			const uuid = compressor.decompress(id);
+
+			const compressor2 = createCompressor(Client.Client2);
+			compressor2.finalizeRange(compressor.takeNextRange(0));
+			const finalId1 = compressor2.compress(uuid);
+			const finalId2 = compressor2.compress(override);
+			if (finalId1 === undefined || finalId2 === undefined) {
+				expect.fail();
+			}
+			expect(isFinalId(finalId1)).to.be.true;
+			expect(isFinalId(finalId2)).to.be.true;
+		});
+
+		it('will not re-compress a uuid it never compressed or finalized', () => {
+			const compressor = createCompressor(Client.Client1, 5);
+			// Leading zeroes to exploit calls to getOrNextLower on uuid maps, as it will be before test session uuids
+			const override = minimizeUuidString('00000000-e224-4706-a1ee-e765b1396691');
+			expect(compressor.compress(override)).to.be.undefined;
+			expect(compressor.compress(stableIdFromNumericUuid(sessionNumericUuids.get(Client.Client1), 1))).to.be
+				.undefined;
+			compressor.generateCompressedId(override);
+			compressor.finalizeRange(compressor.takeNextRange(2));
+			expect(compressor.compress(stableIdFromNumericUuid(sessionNumericUuids.get(Client.Client1), 4))).to.be
+				.undefined;
+			assert(isStableId(override));
+			const numericOverride = numericUuidFromStableId(override);
+			expect(compressor.compress(stableIdFromNumericUuid(numericOverride, 1)));
+		});
+	});
+
+	describe('Decompression', () => {
+		it('can decompress a local ID before and after finalizing', () => {
+			const compressor = createCompressor(Client.Client1);
+			const id = compressor.generateCompressedId();
+			const uuid = compressor.decompress(id);
+			expect(isStableId(uuid)).to.be.true;
+			compressor.finalizeRange(compressor.takeNextRange(0));
+			expect(compressor.decompress(id)).to.equal(uuid);
+		});
+
+		it('can decompress reserved IDs', () => {
+			// This is a glass box test in that it increments UUIDs
+			const reservedSessionUuid = numericUuidFromStableId(reservedSessionId);
+			const compressor = createCompressor(Client.Client1);
+			const reservedIds = compressor.getImplicitIdsFromRange(reservedIdRange);
+			for (let i = 0; i < reservedIdCount; i++) {
+				const reservedId = reservedIds.get(i);
+				const stable = compressor.decompress(reservedId);
+				expect(stable).to.equal(stableIdFromNumericUuid(incrementUuid(reservedSessionUuid, i)));
+				const finalIdForReserved = compressor.compress(stable);
 				if (finalIdForReserved === undefined) {
 					expect.fail();
 				}
-				if (!isFinalId(finalIdForReserved)) {
+				if (isLocalId(finalIdForReserved)) {
 					expect.fail();
 				}
-				expect(finalIdForReserved).to.equal(finalId);
+				expect(finalIdForReserved).to.equal(reservedId);
 			}
+			const outOfBoundsError = 'Index out of bounds of implicit range.';
+			expect(() => reservedIds.get(-1)).to.throw(outOfBoundsError);
+			expect(() => reservedIds.get(reservedIdCount)).to.throw(outOfBoundsError);
 		});
-		it('can detect invalid local session IDs', () => {
-			expect(() => new IdCompressor('00000000000000000000000000000000' as SessionId)).to.throw(
-				'Uuid provided is not a valid session ID.'
-			);
+
+		it('can decompress a final ID', () => {
+			const compressor = createCompressor(Client.Client1);
+			const range = compressor.takeNextRange(1);
+			compressor.finalizeRange(range);
+			const finalId = compressor.normalizeToOpSpace(compressor.getImplicitIdsFromRange(range).get(0));
+			if (isLocalId(finalId)) {
+				expect.fail('Op space ID was finalized but is local');
+			}
+			const uuid = compressor.decompress(finalId);
+			expect(isStableId(uuid)).to.be.true;
+		});
+
+		it('can decompress a final ID with an override uuid', () => {
+			const compressor = createCompressor(Client.Client1);
+			const overrideUuid = minimizeUuidString('91593fa7-6372-430e-897d-f6206564bc68');
+			const id = compressor.generateCompressedId(overrideUuid);
+			const range = compressor.takeNextRange(0);
+			compressor.finalizeRange(range);
+			const finalId = compressor.normalizeToOpSpace(id);
+			if (isLocalId(finalId)) {
+				expect.fail('Op space ID was finalized but is local');
+			}
+			const uuid = compressor.decompress(finalId);
+			expect(uuid).to.equal(overrideUuid);
 		});
 	});
 
-	describe('ID generation and compression/decompression', () => {
-		it('detects non-uuid explicit IDs', () => {
+	describe('Normalization', () => {
+		it('can normalize a local ID to op space before finalizing', () => {
 			const compressor = createCompressor(Client.Client1);
-			expect(() =>
-				useCompressor(compressor, [
-					{
-						client: Client.Client2,
-						numIds: 1,
-						explicitIds: {
-							0: 'test' as StableId,
-						},
-					},
-				])
-			).to.throw('test is not a uuid');
+			const id = compressor.generateCompressedId();
+			const normalized = compressor.normalizeToOpSpace(id);
+			expect(isLocalId(id)).to.be.true;
+			expect(id).to.equal(normalized);
 		});
 
-		it('rejects uuids that contain separators', () => {
+		it('can normalize a local ID to op space after finalizing', () => {
 			const compressor = createCompressor(Client.Client1);
-			expect(() =>
-				useCompressor(compressor, [
-					{
-						client: Client.Client2,
-						numIds: 1,
-						explicitIds: {
-							0: '726197c4-d895-495e-bc2a-b7df9913200c' as StableId,
-						},
-					},
-				])
-			).to.throw('uuid must not contain separators');
+			const id = compressor.generateCompressedId();
+			compressor.finalizeRange(compressor.takeNextRange(0));
+			const normalized = compressor.normalizeToOpSpace(id);
+			expect(isFinalId(normalized)).to.be.true;
+			expect(id).to.not.equal(normalized);
 		});
 
-		it('detects invalid cluster sizes', () => {
-			const compressor = createCompressor(Client.Client1, 1);
-			expect(() => (compressor.clusterCapacity = 0)).to.throw('Clusters must have a positive capacity');
-			expect(() => (compressor.clusterCapacity = Number.MAX_SAFE_INTEGER)).to.throw(
-				'Clusters must not exceed max cluster size'
+		it('cannot normalize a remote ID to session space if it has not been finalized', () => {
+			const compressor1 = createCompressor(Client.Client1);
+			const compressor2 = createCompressor(Client.Client2);
+			const normalized = compressor1.normalizeToOpSpace(compressor1.generateCompressedId());
+			expect(() => compressor2.normalizeToSessionSpace(normalized, compressor1.localSessionId)).to.throw(
+				'No IDs have ever been finalized by the supplied session.'
 			);
 		});
 
-		it('detects invalid remote session IDs', () => {
-			const compressor = createCompressor(Client.Client1, 1);
-			expect(() => compressor.getFinalIdGenerator('00000000000000000000000000000000' as SessionId)).to.throw(
-				'Uuid provided is not a valid session ID.'
+		it('can normalize local and final IDs from a remote session to session space', () => {
+			const compressor1 = createCompressor(Client.Client1);
+			const compressor2 = createCompressor(Client.Client2);
+			const id = compressor1.generateCompressedId();
+			const normalizedLocal = compressor1.normalizeToOpSpace(id);
+			const range = compressor1.takeNextRange(0);
+			compressor1.finalizeRange(range);
+			const normalizedFinal = compressor1.normalizeToOpSpace(id);
+			compressor2.finalizeRange(range);
+			expect(isLocalId(normalizedLocal)).to.be.true;
+			expect(isFinalId(normalizedFinal)).to.be.true;
+			expect(compressor2.normalizeToSessionSpace(normalizedFinal, compressor1.localSessionId)).to.equal(
+				normalizedFinal
 			);
-		});
-
-		it('detects overflow in batch allocation of final IDs', () => {
-			const localClient = Client.Client1;
-			const localSessionId = sessionIds[localClient];
-			const failure = 'The number of allocated final IDs must not exceed the JS maximum safe integer.';
-			let compressor = createCompressor(localClient, 5);
-			expect(() =>
-				compressor.getFinalIdGenerator(localSessionId).generateFinalIdBatch(Number.MAX_SAFE_INTEGER)
-			).to.throw(failure);
-			// Allocate a new compressor, as the previous is left in a bad state
-			compressor = createCompressor(localClient, 5);
-			compressor.getFinalIdGenerator(localSessionId).generateFinalIdBatch(5);
-			expect(() =>
-				compressor.getFinalIdGenerator(localSessionId).generateFinalIdBatch(Number.MAX_SAFE_INTEGER)
-			).to.throw(failure);
-		});
-
-		it('can allocate batches of final IDs', () => {
-			const clusterSize = 5;
-			const batchSize = 3;
-			const localClient = Client.Client1;
-			const compressor = createCompressor(localClient, clusterSize);
-			const generator = compressor.getFinalIdGenerator(sessionIds[localClient]);
-
-			const localIds = useCompressor(compressor, [{ client: Client.Local, numIds: 100 }]);
-			const finalIdsBeforeBatch = useCompressor(compressor, [
-				{ client: localClient, numIds: clusterSize - batchSize /* next batch will fill up the cluster */ },
-			]);
-
-			// Mix some remote final IDs in to avoid cluster expansion tricks
-			useCompressor(compressor, [{ client: Client.Client2, numIds: 3 }]);
-
-			generator.generateFinalIdBatch(batchSize);
-			const finalIdsAfterFirstBatch = useCompressor(compressor, [
-				{ client: localClient, numIds: clusterSize - batchSize + 1 /* next batch will overflow the cluster */ },
-			]);
-
-			// Mix some remote final IDs in to avoid cluster expansion tricks
-			useCompressor(compressor, [{ client: Client.Client2, numIds: 3 }]);
-
-			generator.generateFinalIdBatch(batchSize);
-			const finalIdsAfterSecondBatch = useCompressor(compressor, [
-				{ client: localClient, numIds: clusterSize - batchSize + 1 /* next batch will overflow the cluster */ },
-			]);
-
-			// No remote final IDs this time, test cluster expansion by a batch size
-			generator.generateFinalIdBatch(batchSize);
-			const finalIdsAfterThirdBatch = useCompressor(compressor, [
-				{ client: localClient, numIds: clusterSize /* next batch will overflow the cluster */ },
-			]);
-
-			function expectMatches(localId: CompressedId, finalId: CompressedId): void {
-				assert(!isFinalId(localId));
-				expect(compressor.normalizeToFinal(localId)).to.equal(finalId);
-				expect(localId).to.equal(compressor.normalizeToLocal(finalId));
-			}
-
-			for (let i = 0; i < finalIdsBeforeBatch.length; i++) {
-				expectMatches(localIds[i], finalIdsBeforeBatch[i]);
-			}
-
-			for (let i = 0; i < finalIdsAfterFirstBatch.length; i++) {
-				expectMatches(localIds[i + finalIdsBeforeBatch.length + batchSize], finalIdsAfterFirstBatch[i]);
-			}
-
-			for (let i = 0; i < finalIdsAfterSecondBatch.length; i++) {
-				expectMatches(
-					localIds[i + finalIdsBeforeBatch.length + finalIdsAfterFirstBatch.length + batchSize * 2],
-					finalIdsAfterSecondBatch[i]
-				);
-			}
-
-			for (let i = 0; i < finalIdsAfterThirdBatch.length; i++) {
-				expectMatches(
-					localIds[
-						i +
-							finalIdsBeforeBatch.length +
-							finalIdsAfterFirstBatch.length +
-							finalIdsAfterSecondBatch.length +
-							batchSize * 3
-					],
-					finalIdsAfterThirdBatch[i]
-				);
-			}
-
-			const finalizedCount =
-				finalIdsBeforeBatch.length +
-				finalIdsAfterFirstBatch.length +
-				finalIdsAfterSecondBatch.length +
-				finalIdsAfterThirdBatch.length +
-				batchSize * 3;
-			// Finalize the remainder of the local IDs
-			generator.generateFinalIdBatch(localIds.length - finalizedCount);
-
-			for (const localId of localIds) {
-				if (isFinalId(localId)) {
-					fail('Local IDs are final.');
-				}
-				const finalized = compressor.normalizeToFinal(localId);
-				expect(isFinalId(finalized)).to.be.true;
-				expect(compressor.normalizeToLocal(finalized)).to.equal(localId);
-			}
-		});
-
-		it('can normalize compressed IDs local IDs', () => {
-			const clusterCapacity = 5;
-			const localCompressor: IdCompressor = createCompressor(Client.Client1, clusterCapacity);
-			const remoteCompressor: IdCompressor = createCompressor(Client.Client2, clusterCapacity);
-
-			const usages = [
-				{
-					client: Client.Local,
-					numIds: clusterCapacity,
-				},
-				{
-					client: Client.Client1,
-					numIds: clusterCapacity,
-				},
-				{
-					client: Client.Client2,
-					numIds: clusterCapacity,
-				},
-				{
-					client: Client.Local,
-					numIds: clusterCapacity - 2,
-				},
-				{
-					client: Client.Client1,
-					numIds: clusterCapacity - 2,
-				},
-				{
-					client: Client.Client2,
-					numIds: clusterCapacity - 3,
-				},
-			];
-
-			const idData: [local: CompressedId[], final: CompressedId[]][] = [];
-			idData[Client.Client1] = [[], []];
-			idData[Client.Client2] = [[], []];
-
-			function useBothCompressors(usages: IdAllocationUsage[]): CompressedId[] {
-				const totalIds: CompressedId[] = [];
-				for (const usage of usages) {
-					useCompressor(remoteCompressor, [usage]);
-					const ids = useCompressor(localCompressor, [usage]);
-					totalIds.push(...ids);
-					const isLocal = usage.client === Client.Local;
-					const actualClient = isLocal ? Client.Client1 : usage.client;
-					idData[actualClient][isLocal ? 0 : 1].push(...ids);
-				}
-				return totalIds;
-			}
-
-			const ids = useBothCompressors(usages);
-			expect(idData[Client.Client2][0].length).to.equal(0);
-			expect(
-				idData[Client.Client1][0].length + idData[Client.Client1][1].length + idData[Client.Client2][1].length
-			).to.equal(ids.length);
-
-			const localIds = idData[Client.Client1][0];
-			for (const id of localIds) {
-				expect(isFinalId(id)).to.be.false;
-				expect(localCompressor.normalizeToLocal(id)).to.equal(id);
-			}
-
-			const finalizedIds = idData[Client.Client1][1];
-			for (let i = 0; i < finalizedIds.length; i++) {
-				const id = finalizedIds[i];
-				expect(isFinalId(id)).to.be.true;
-				expect(remoteCompressor.normalizeToLocal(id)).to.equal(id);
-				const localLocalized = localCompressor.normalizeToLocal(id);
-				expect(isFinalId(localLocalized)).to.be.false;
-				expect(localLocalized).to.equal(localIds[i]);
-			}
-
-			for (const id of idData[Client.Client2][1]) {
-				expect(isFinalId(id)).to.be.true;
-				expect(isFinalId(remoteCompressor.normalizeToLocal(id))).to.be.false;
-				expect(localCompressor.normalizeToLocal(id)).to.equal(id);
-			}
-		});
-
-		it('can normalize local IDs from a remote session to final IDs', () => {
-			const localCompressor: IdCompressor = createCompressor(Client.Client1);
-			const remoteCompressor: IdCompressor = createCompressor(Client.Client2);
-			const usages = [
-				{
-					client: Client.Local,
-					numIds: 5,
-				},
-				{
-					client: Client.Client1,
-					numIds: 5,
-				},
-				{
-					client: Client.Client2,
-					numIds: 5,
-				},
-				{
-					client: Client.Client1,
-					numIds: 5,
-				},
-				{
-					client: Client.Client2,
-					numIds: 5,
-				},
-			];
-			const remoteIds = useCompressor(remoteCompressor, usages);
-			const remoteLocalIds = remoteIds.filter((compressedId) => !isFinalId(compressedId)) as LocalCompressedId[];
-			remoteLocalIds.forEach((remoteLocalId) => {
-				expect(localCompressor.normalizeToFinal(remoteLocalId, remoteCompressor.localSessionId)).to.be
-					.undefined;
-			});
-			useCompressor(localCompressor, usages);
-			remoteLocalIds.forEach((remoteLocalId) => {
-				expect(localCompressor.normalizeToFinal(remoteLocalId, remoteCompressor.localSessionId)).to.equal(
-					remoteCompressor.normalizeToFinal(remoteLocalId)
-				);
-			});
-		});
-
-		it('can normalize local IDs from a local session to final IDs', () => {
-			const compressor = createCompressor(Client.Client1, 2);
-			const compressorClone = createCompressor(Client.Client1, 2);
-			// This local ID is only allocated on the clone, so it should not decompress on the original compressor
-			const unallocatedLocal = compressorClone.generateCompressedId();
-			assert(!isFinalId(unallocatedLocal));
-			expect(() => compressor.normalizeToFinal(1 as LocalCompressedId)).to.throw('1 is not an local ID.');
-			expect(() => compressor.normalizeToFinal(unallocatedLocal)).to.throw(
-				'Supplied local ID was not created by this compressor.'
+			expect(compressor2.normalizeToSessionSpace(normalizedLocal, compressor1.localSessionId)).to.equal(
+				normalizedFinal
 			);
-			const client1Ids = useCompressor(compressor, [
-				{
-					client: Client.Local,
-					numIds: 1,
-				},
-			]);
-			const firstLocal = client1Ids[0];
-			assert(!isFinalId(firstLocal));
-			expect(compressor.normalizeToFinal(firstLocal)).to.equal(firstLocal);
-			client1Ids.push(
-				...useCompressor(compressor, [
-					{
-						client: Client.Client1,
-						numIds: 1,
-					},
-				])
-			);
-			expect(compressor.normalizeToFinal(firstLocal)).to.equal(client1Ids[1]);
-			client1Ids.push(
-				...useCompressor(compressor, [
-					{
-						client: Client.Local,
-						numIds: 10,
-					},
-				])
-			);
-			useCompressor(compressor, [
-				{
-					client: Client.Client2,
-					numIds: 2,
-				},
-			]);
-			client1Ids.push(
-				...useCompressor(compressor, [
-					{
-						client: Client.Client1,
-						numIds: 3,
-					},
-				])
-			);
-			useCompressor(compressor, [
-				{
-					client: Client.Client2,
-					numIds: 2,
-				},
-			]);
-			client1Ids.push(
-				...useCompressor(compressor, [
-					{
-						client: Client.Client1,
-						numIds: 1,
-					},
-				])
-			);
-			const localIds = client1Ids.filter((compressedId) => !isFinalId(compressedId)) as LocalCompressedId[];
-			const finalIds = client1Ids.filter((compressedId) => isFinalId(compressedId)) as FinalCompressedId[];
-			for (let i = 0; i < localIds.length; i++) {
-				if (i < finalIds.length) {
-					expect(compressor.normalizeToFinal(localIds[i])).to.equal(finalIds[i]);
-				} else {
-					expect(compressor.normalizeToFinal(localIds[i])).to.equal(localIds[i]);
-				}
-			}
-		});
-
-		it('can normalize local IDs to final IDs in a large fuzz session', () => {
-			const [compressorAUsages, compressorBUsages] = makeFuzzLocalAndRemoteCompressorPair(10);
-			const [compressorA, compressorAIds] = compressorAUsages;
-			const [compressorB, compressorBIds] = compressorBUsages;
-			const results: [IdCompressor, CompressedId[], IdCompressor][] = [
-				[compressorA, compressorAIds, compressorB],
-				[compressorB, compressorBIds, compressorA],
-			];
-			results.forEach(([localCompressor, ids, remoteCompressor]) => {
-				const localIds = ids.filter((compressedId) => !isFinalId(compressedId)) as LocalCompressedId[];
-				localIds.forEach((localId) => {
-					const finalIdLocal = localCompressor.normalizeToFinal(localId);
-					const finalIdRemote = remoteCompressor.normalizeToFinal(localId, localCompressor.localSessionId);
-					assert(finalIdRemote !== undefined);
-					expect(finalIdLocal).to.equal(finalIdRemote);
-					expect(localCompressor.decompress(finalIdLocal)).to.equal(
-						remoteCompressor.decompress(finalIdRemote)
-					);
-				});
-			});
-		});
-
-		it('unifies duplicate explicit ids', () => {
-			const uuid = '03c63ee57a4346d6bd9ced779d94f654' as StableId;
-			const compressor1 = createCompressor(Client.Client1, 3);
-			const compressor2 = createCompressor(Client.Client2, 3);
-
-			// Client1 compresses a uuid
-			const localId1_1 = compressor1.generateCompressedId(uuid);
-			const localId1_2 = compressor1.generateCompressedId(uuid);
-			expect(localId1_1).to.equal(localId1_2, 'only one local ID should be allocated for the same uuid');
-			expect(compressor1.decompress(localId1_1)).to.equal(uuid, 'uuid incorrectly associated with local ID');
-
-			// Client2 compresses the same uuid before seeing Client1's compressed version
-			compressor2.generateCompressedId(); // Interleave to ensure local IDs are different
-			const localId2_1 = compressor2.generateCompressedId(uuid);
-			const localId2_2 = compressor2.generateCompressedId(uuid);
-			expect(localId2_1).to.equal(localId2_2, 'only one local ID should be allocated for the same uuid');
-			expect(compressor2.decompress(localId2_1)).to.equal(uuid, 'uuid incorrectly associated with local ID');
-
-			const generator1 = compressor1.getFinalIdGenerator(compressor1.localSessionId);
-			const generator2 = compressor2.getFinalIdGenerator(compressor2.localSessionId);
-
-			// Client1's compression is final
-			const finalIdForUuid1_1 = generator1.generateFinalId(uuid);
-			const finalIdForUuid2_1 = generator2.generateFinalId(uuid);
-			expect(isFinalId(finalIdForUuid1_1)).to.be.true;
-			expect(finalIdForUuid1_1).equals(finalIdForUuid2_1);
-			expect(compressor1.compress(uuid)).to.equal(finalIdForUuid1_1);
-
-			// Client2's compression is final
-			const finalIdForUuid1_2 = generator1.generateFinalId(uuid);
-			const finalIdForUuid2_2 = generator2.generateFinalId(uuid);
-			expect(finalIdForUuid1_2).to.equal(
-				finalIdForUuid2_2,
-				'only one final ID should be allocated for the same uuid'
-			);
-			expect(finalIdForUuid1_2).to.equal(finalIdForUuid1_1, 'final IDs for the same uuid should be deduplicated');
-			const uuidDecompressed = compressor1.decompress(finalIdForUuid1_1);
-			expect(uuidDecompressed).to.equal(uuid);
-			expect(uuidDecompressed).to.equal(compressor2.decompress(finalIdForUuid1_1));
-		});
-
-		it('detects explicit ids that collide with sequential ids', () => {
-			const clusterCapacity = 3;
-			const explicitInInitialCluster = stableIdFromNumericUuid(
-				incrementUuid(sessionNumericUuids[Client.Client1], clusterCapacity - 1)
-			);
-			const explicitOutsideInitialCluster = stableIdFromNumericUuid(
-				incrementUuid(sessionNumericUuids[Client.Client1], clusterCapacity)
-			);
-			const makeFailure = (explicitId): string =>
-				`Explicit ID ${explicitId} collides with another allocated uuid.`;
-			const failure = makeFailure(explicitInInitialCluster);
-
-			const scenarios: [(compressor: IdCompressor) => void, string | undefined][] = [
-				[
-					(compressor) => {
-						useCompressor(compressor, [
-							{
-								client: Client.Client1,
-								numIds: 3,
-							},
-							{
-								client: Client.Client2,
-								numIds: 1,
-								explicitIds: {
-									0: explicitOutsideInitialCluster,
-								},
-							},
-						]);
-					},
-					undefined, // No failure expected
-				],
-				[
-					(compressor) => {
-						useCompressor(compressor, [
-							{
-								client: Client.Client1,
-								numIds: 3,
-							},
-							{
-								client: Client.Client2,
-								numIds: 1,
-								explicitIds: {
-									// Collide with the last final ID in the previous cluster (uuid base + 2)
-									0: explicitInInitialCluster,
-								},
-							},
-						]);
-					},
-					failure,
-				],
-				[
-					(compressor) => {
-						useCompressor(compressor, [
-							{
-								client: Client.Client2,
-								numIds: 1,
-								explicitIds: {
-									// Collide with the last final ID in the cluster about to be created
-									0: explicitInInitialCluster,
-								},
-							},
-							{
-								client: Client.Client1,
-								numIds: 3,
-							},
-						]);
-					},
-					failure,
-				],
-				[
-					(compressor) => {
-						useCompressor(compressor, [
-							{
-								client: Client.Client1,
-								numIds: 1,
-							},
-							{
-								client: Client.Client2,
-								numIds: 1,
-								explicitIds: {
-									// Collide with an empty part of the cluster, since it has been reserved
-									0: explicitInInitialCluster,
-								},
-							},
-						]);
-					},
-					failure,
-				],
-				[
-					(compressor) => {
-						useCompressor(compressor, [
-							{
-								client: Client.Client1,
-								numIds: 3,
-							},
-							{
-								client: Client.Client2,
-								numIds: 1,
-								explicitIds: {
-									// Will collide with the next cluster created by Client1
-									0: explicitOutsideInitialCluster,
-								},
-							},
-							{
-								client: Client.Client1,
-								numIds: 1,
-							},
-						]);
-					},
-					explicitOutsideInitialCluster,
-				],
-			];
-			scenarios.forEach((scenario) => {
-				const compressor = createCompressor(Client.Client1, clusterCapacity);
-				if (scenario[1] !== undefined) {
-					expect(() => scenario[0](compressor)).to.throw(scenario[1]);
-				} else {
-					expect(() => scenario[0](compressor)).to.not.throw();
-				}
-			});
-		});
-
-		const scenarios: IdCompressorScenario[] = [
-			[
-				'can decompress local IDs before and after sequencing',
-				3,
-				Client.Client1,
-				[
-					{
-						client: Client.Local,
-						numIds: 5,
-						explicitIds: { 1: '01674aef6b2e4e388212f2de4e5e4068' as StableId },
-					},
-					{
-						client: Client.Client1,
-						numIds: 5,
-						explicitIds: { 1: '01674aef6b2e4e388212f2de4e5e4068' as StableId },
-					},
-				],
-				(compressor, idData) => {
-					for (let i = 0; i < 5; i++) {
-						const local = idData[i];
-						const final = idData[i + 5];
-						expect(isFinalId(local.id)).to.be.false;
-						expect(isFinalId(final.id)).to.be.true;
-						const localStable = compressor.decompress(local.id);
-						const finalStable = compressor.decompress(final.id);
-						expect(localStable).to.not.be.undefined;
-						expect(localStable).to.equal(finalStable);
-					}
-				},
-			],
-			[
-				'will not decompress ids for empty parts of clusters',
-				5,
-				Client.Client1,
-				[
-					{ client: Client.Client1, numIds: 1 },
-					{ client: Client.Client2, numIds: 1 },
-				],
-				(compressor, idData) => {
-					expect(idData.length).to.equal(2);
-					// Traverse the range of final IDs that should be covered by clusters (but unallocated) and assert they do not
-					// decompress (except for the two requested)
-					for (const idDataPoint of idData) {
-						let offset = 1;
-						const idAsNumber = idDataPoint.id as number;
-						for (let i = idAsNumber + 1; i < idAsNumber + 5; i++, offset++) {
-							expect(compressor.decompress(i as FinalCompressedId)).to.be.undefined;
-							const correspondingStableId = stableIdFromNumericUuid(idDataPoint.sessionUuid, offset);
-							expect(compressor.compress(correspondingStableId)).to.be.undefined;
-						}
-					}
-				},
-			],
-			[
-				'can decompress final IDs from a single client',
-				3,
-				Client.Client1,
-				[{ client: Client.Client1, numIds: 4 }],
-				noop,
-			],
-			[
-				'can decompress final IDs from multiple clients',
-				3,
-				Client.Client1,
-				[
-					{ client: Client.Client1, numIds: 2 },
-					{ client: Client.Client2, numIds: 3 },
-					{ client: Client.Client1, numIds: 5 },
-					{ client: Client.Client3, numIds: 3 },
-					{ client: Client.Client2, numIds: 3 },
-				],
-				noop,
-			],
-			[
-				'can re-compress local stable IDs',
-				3,
-				Client.Client1,
-				[{ client: Client.Local, numIds: 2 }],
-				(compressor, idData) => {
-					for (let i = 0; i < 2; i++) {
-						const local = idData[i];
-						expect(isFinalId(local.id)).to.be.false;
-						const localStable = compressor.decompress(local.id);
-						if (localStable === undefined) {
-							expect.fail();
-						}
-						const recompressed = compressor.compress(localStable);
-						expect(recompressed).to.equal(local.id);
-					}
-					const numericSession = sessionNumericUuids[Client.Client1];
-					const notAllocatedStable = stableIdFromNumericUuid(numericSession, 10);
-					expect(compressor.compress(notAllocatedStable)).to.be.undefined;
-				},
-			],
-			[
-				'can decompress final explicit IDs',
-				3,
-				Client.Client1,
-				[
-					{
-						client: Client.Client1,
-						numIds: 2,
-						explicitIds: {
-							1: 'b2043d3f57bf4c38b97a01b380539ff1' as StableId,
-						},
-					},
-					{
-						client: Client.Client2,
-						numIds: 3,
-						explicitIds: {
-							0: '98d37498701d42bbabb5831eea3106ad' as StableId,
-							2: 'cd6ae62c515f4ae48625701a8b8eb435' as StableId,
-						},
-					},
-				],
-				noop,
-			],
-			[
-				'can compress an explicit ID that aligns with cluster boundaries',
-				2,
-				Client.Client1,
-				[
-					{
-						client: Client.Local,
-						numIds: 2,
-						explicitIds: {
-							0: 'b2043d3f57bf4c38b97a01b380539ff1' as StableId,
-						},
-					},
-					{
-						client: Client.Client1,
-						numIds: 2,
-						explicitIds: {
-							0: 'b2043d3f57bf4c38b97a01b380539ff1' as StableId,
-						},
-					},
-				],
-				noop,
-			],
-			[
-				'can decompress local IDs after sequencing',
-				2,
-				Client.Client1,
-				[
-					{
-						client: Client.Local,
-						numIds: 5,
-						explicitIds: {
-							1: 'b2043d3f57bf4c38b97a01b380539ff1' as StableId,
-							3: '542f1a60cc294addbc91ed3d87e76f9f' as StableId,
-						},
-					},
-					{
-						client: Client.Client2,
-						numIds: 10,
-					},
-					{
-						client: Client.Client1,
-						numIds: 5,
-						explicitIds: {
-							1: 'b2043d3f57bf4c38b97a01b380539ff1' as StableId,
-							3: '542f1a60cc294addbc91ed3d87e76f9f' as StableId,
-						},
-					},
-					{
-						client: Client.Client3,
-						numIds: 10,
-					},
-				],
-				noop,
-			],
-			[
-				'can dynamically change cluster size',
-				2,
-				Client.Client1,
-				[
-					...[...new Array(20).keys()].map((i) => {
-						if (i % 2 === 1) {
-							return { newClusterCapacity: i };
-						}
-						return {
-							client: i % 3,
-							numIds: i * 2,
-						};
-					}),
-				],
-				noop,
-			],
-			[
-				'can process batch final ID allocations from multiple clients',
-				3,
-				Client.Client1,
-				[
-					{
-						client: Client.Local,
-						numIds: 100,
-					},
-					{
-						client: Client.Client1,
-						numIds: 2,
-					},
-					{
-						client: Client.Client2,
-						numIds: 5,
-					},
-					{
-						client: Client.Client1,
-						batchSize: 1,
-					},
-					{
-						client: Client.Client1,
-						numIds: 2,
-					},
-					{
-						client: Client.Client1,
-						batchSize: 5,
-					},
-					{
-						client: Client.Client2,
-						numIds: 10,
-					},
-					{
-						client: Client.Client1,
-						numIds: 3,
-					},
-				],
-				noop,
-			],
-			[
-				'returns undefined when decompressing a uuid that was never compressed',
-				3,
-				Client.Client1,
-				[
-					{
-						client: Client.Client2,
-						numIds: 10,
-						explicitIds: {
-							0: '20aa9f408d114e0faef7657c2b862b01' as StableId,
-							3: '9849f95bd7234c69abecfa49dcccd37c' as StableId,
-						},
-					},
-				],
-				(compressor) => {
-					expect(compressor.compress('00d9f957b0d546519b50362b53e9c8fa' as StableId)).to.be.undefined;
-					expect(compressor.decompress((systemReservedIdCount + 100) as FinalCompressedId)).to.be.undefined;
-					expect(compressor.decompress(-1 as LocalCompressedId)).to.be.undefined;
-				},
-			],
-			[
-				'can generate IDs for large fuzzed input',
-				3,
-				Client.Client1,
-				makeLargeFuzzTest(3, true, Client.Client1, 2001),
-				noop,
-			],
-		];
-
-		/**
-		 *
-		 * @param compressor the compressor owning the ID
-		 * @param data the ID data
-		 * @param correspondingLocalId a corresponding local ID if `data` is a final ID generated by the local session, otherwise undefined.
-		 * @param correspondingFinalId a corresponding final ID if `data` is a local ID generated by the local session that was finalized
-		 * individually, true if it was finalized by the local session in a batch, otherwise false.
-		 */
-		function expectValidId(
-			compressor: IdCompressor,
-			data: TestIdData,
-			correspondingLocalId: LocalCompressedId | undefined,
-			correspondingFinalId: FinalCompressedId | boolean
-		): void {
-			const stableId = compressor.decompress(data.id);
-			if (stableId === undefined) {
-				expect.fail('compressed id did not decompress to stable id');
-			}
-			const compressed = compressor.compress(stableId);
-			if (compressed === undefined) {
-				expect.fail('stable id does not compress');
-			}
-			const localized = compressor.normalizeToLocal(compressed);
-			if (!isFinalId(data.id)) {
-				const finalized = compressor.normalizeToFinal(data.id);
-				if (typeof correspondingFinalId === 'boolean') {
-					expect(isFinalId(finalized)).to.equal(correspondingFinalId);
-					expect(isFinalId(compressed)).to.equal(correspondingFinalId);
-					if (correspondingFinalId) {
-						expect(finalized).to.equal(compressed);
-					} else {
-						expect(finalized).to.equal(data.id);
-						expect(compressed).to.equal(data.id);
-					}
-				} else {
-					expect(finalized).to.equal(correspondingFinalId);
-					expect(compressed).to.equal(finalized);
-				}
-			} else {
-				if (correspondingLocalId !== undefined) {
-					const finalized = compressor.normalizeToFinal(correspondingLocalId);
-					expect(data.id).to.equal(finalized);
-					expect(finalized).to.equal(compressed);
-					expect(localized).to.equal(correspondingLocalId);
-				} else {
-					expect(compressed).to.equal(data.id);
-				}
-			}
-			if (isFinalId(compressed) === isFinalId(data.id)) {
-				expect(compressed).to.equal(data.id, 'bidirectional mapping not correct');
-			}
-			if (data.explicitId === undefined && !isFinalId(data.id)) {
-				expect(stableId).to.equal(
-					stableIdFromNumericUuid(incrementUuid(data.sessionUuid, data.clientIdNumber)),
-					'non-sequential uuids generated'
-				);
-			} else if (data.explicitId !== undefined) {
-				expect(stableId).to.equal(data.explicitId);
-			}
-		}
-
-		scenarios.forEach((scenario) => {
-			it(scenario[0], () => {
-				const compressor = createCompressor(scenario[2]);
-				compressor.clusterCapacity = scenario[1];
-				const sessionIdCounts = new Map<string, number>();
-				const idDataWithoutIds: Mutable<Omit<TestIdData, 'id'>>[] = [];
-				const finalIndexToBatchOffset: number[] = [];
-				let totalLocalIdCount = 0;
-				let currentLocalOffset = 0;
-				for (const usage of scenario[3]) {
-					if (!isCapacityChange(usage)) {
-						const isLocal = usage.client === Client.Local;
-						const realClient = isLocal ? scenario[2] : usage.client;
-						const isFinalizingLocal = usage.client === scenario[2];
-						const sessionStableId = sessionIds[realClient];
-						const accumulatorClientKey = isLocal ? 'local' : sessionStableId;
-						let clientIdNumber = sessionIdCounts.get(accumulatorClientKey) ?? 0;
-						if (isBatchAllocation(usage)) {
-							sessionIdCounts.set(accumulatorClientKey, clientIdNumber + usage.batchSize);
-							if (isFinalizingLocal) {
-								currentLocalOffset += usage.batchSize;
-							}
-						} else {
-							for (let j = 0; j < usage.numIds; j++) {
-								const idDataPoint = {
-									client: realClient,
-									clientIdNumber,
-									sessionStableId,
-									sessionUuid: sessionNumericUuids[realClient],
-									explicitId: usage.explicitIds === undefined ? undefined : usage.explicitIds[j],
-								};
-								idDataWithoutIds.push(idDataPoint);
-								if (isFinalizingLocal) {
-									finalIndexToBatchOffset.push(currentLocalOffset);
-								} else if (isLocal) {
-									totalLocalIdCount++;
-								}
-								clientIdNumber++;
-							}
-							sessionIdCounts.set(accumulatorClientKey, clientIdNumber);
-						}
-					}
-				}
-
-				const localIndexToBatchOffset: (number | boolean)[] = [];
-				let prevOffset = 0;
-				for (const currentOffset of finalIndexToBatchOffset) {
-					for (let i = 0; i < currentOffset - prevOffset; i++) {
-						localIndexToBatchOffset.push(true);
-					}
-					localIndexToBatchOffset.push(currentOffset);
-					prevOffset = currentOffset;
-				}
-				for (let i = localIndexToBatchOffset.length; i < totalLocalIdCount; i++) {
-					localIndexToBatchOffset.push(false);
-				}
-
-				const idData: TestIdData[] = [];
-				let idsProcessed = 0;
-				const localIds: LocalCompressedId[] = [];
-				const finalizedLocalIds: FinalCompressedId[] = [];
-				const ids = useCompressor(compressor, scenario[3], (usage, idsInProgress) => {
-					while (idsProcessed < idsInProgress.length) {
-						const id = idsInProgress[idsProcessed];
-						const isLocal = usage.client === Client.Local;
-						const isFinalizedLocal = usage.client === scenario[2];
-						expect(isFinalId(id)).to.equal(!isLocal);
-						if (!isFinalId(id)) {
-							localIds.push(id);
-						} else if (isFinalizedLocal) {
-							finalizedLocalIds.push(id);
-						}
-						const dataWithoutId = idDataWithoutIds[idsProcessed];
-						const idDataPoint = { ...dataWithoutId, id };
-						idData.push(idDataPoint);
-						const finalizedIndex = finalizedLocalIds.length - 1;
-						expectValidId(
-							compressor,
-							idDataPoint,
-							isFinalizedLocal
-								? localIds[finalizedIndex + finalIndexToBatchOffset[finalizedIndex]]
-								: undefined,
-							isFinalizedLocal && isFinalId(id) ? id : false
-						);
-						idsProcessed++;
-					}
-				});
-
-				expect(ids.length).to.equal(idData.length);
-				expect(idData.length).to.equal(idDataWithoutIds.length);
-
-				let localIdCount = 0;
-				let finalizedIdCount = 0;
-				idData.forEach((data) => {
-					let correspondingLocalId: LocalCompressedId | undefined;
-					let correspondingFinalId: FinalCompressedId | boolean;
-					if (!isFinalId(data.id)) {
-						correspondingLocalId = data.id;
-						const batchOffset = localIndexToBatchOffset[localIdCount];
-						correspondingFinalId =
-							typeof batchOffset === 'boolean'
-								? batchOffset
-								: finalizedLocalIds[localIdCount - batchOffset];
-						localIdCount++;
-					} else {
-						if (data.client === scenario[2]) {
-							correspondingLocalId =
-								localIds[finalizedIdCount + finalIndexToBatchOffset[finalizedIdCount]];
-							finalizedIdCount++;
-						} else {
-							correspondingLocalId = undefined;
-						}
-						correspondingFinalId = data.id;
-					}
-					expectValidId(compressor, data, correspondingLocalId, correspondingFinalId);
-				});
-				scenario[4](compressor, idData);
-			});
 		});
 	});
-
-	/**
-	 * Creates two compressors, each having received the same final ID generation requests.
-	 * The two have different local session IDs and have processed requests for local ID generation.
-	 */
-	function makeFuzzLocalAndRemoteCompressorPair(seed: number): [IdCompressor, CompressedId[]][] {
-		const clientAId = Client.Client1;
-		const clientBId = Client.Client2;
-		const compressorA = createCompressor(clientAId);
-		const compressorB = createCompressor(clientBId);
-		const clusterSize = 5;
-		const includeExplicitIds = true;
-		const localUsages = makeLargeFuzzTest(clusterSize, includeExplicitIds, clientAId, seed);
-		const remoteUsages = makeLargeFuzzTest(clusterSize, includeExplicitIds, clientBId, seed);
-		const results: [IdCompressor, CompressedId[]][] = [
-			[compressorA, useCompressor(compressorA, localUsages)],
-			[compressorB, useCompressor(compressorB, remoteUsages)],
-		];
-		return results;
-	}
 
 	describe('Serialization', () => {
-		function roundtrip(compressor: IdCompressor, sessionId?: SessionId): [SerializedIdCompressor, IdCompressor] {
-			const serialized = compressor.serialize();
-			const deserialized = IdCompressor.deserialize(serialized, sessionId ?? compressor.localSessionId);
-			return [serialized, deserialized];
-		}
-		function expectSerializes(compressor: IdCompressor): SerializedIdCompressor {
-			const [serialized, deserialized] = roundtrip(compressor);
-			const chainCount: number[] = [];
-			for (let i = 0; i < serialized.sessions.length; i++) {
-				chainCount[i] = 0;
-			}
-			const chainProcessed: number[] = [...chainCount];
-
-			for (const cluster of serialized.clusters) {
-				const [sessionIndex] = cluster;
-				expect(sessionIndex < serialized.sessions.length);
-				chainCount[sessionIndex]++;
-			}
-
-			for (const cluster of serialized.clusters) {
-				const [sessionIndex, capacity, maybeSize] = cluster;
-				const chainIndex = chainProcessed[sessionIndex];
-				if (chainIndex < chainCount[sessionIndex] - 1) {
-					expect(maybeSize === undefined);
-				} else {
-					expect(maybeSize === undefined || typeof maybeSize !== 'number' || maybeSize < capacity);
-				}
-				chainProcessed[sessionIndex]++;
-			}
-			expect(compressor.equals(deserialized)).to.be.true;
-			return serialized;
-		}
-
 		it('can serialize an empty compressor', () => {
 			const compressor = createCompressor(Client.Client1);
-			const serialized = expectSerializes(compressor);
-			expect(serialized.clusters.length).to.equal(0, 'system cluster should not be serialized');
+			const [serializedNoSession, serializedWithSession] = expectSerializes(compressor);
+			expect(serializedWithSession.clusters.length).to.equal(0, 'reserved cluster should not be serialized');
+			expect(serializedNoSession.clusters.length).to.equal(0, 'reserved cluster should not be serialized');
 		});
 
-		it('round-trips local state if deserialization uses the same session ID', () => {
-			const compressor = createCompressor(Client.Client1, 3);
-			useCompressor(compressor, [
-				{ client: Client.Local, numIds: 12 },
-				{ client: Client.Client1, numIds: 2 },
-				{ client: Client.Client2, numIds: 3 },
-				{ client: Client.Client1, numIds: 5 },
-				{ client: Client.Client1, numIds: 5 },
-				{ client: Client.Client3, numIds: 3 },
-				{ client: Client.Client2, numIds: 3 },
-				{ client: Client.Local, numIds: 4 },
-			]);
-			expectSerializes(compressor);
+		it('correctly deserializes and resumes a session', () => {
+			const compressor1 = createCompressor(Client.Client1, undefined, Client.Client1);
+			const compressor2 = createCompressor(Client.Client2, undefined, Client.Client2);
+			const range1 = compressor1.takeNextRange(1);
+			compressor1.finalizeRange(range1);
+			compressor2.finalizeRange(range1);
+			const [_, serializedWithSession] = expectSerializes(compressor1);
+			const compressorResumed = IdCompressor.deserialize(serializedWithSession);
+			const range2 = compressorResumed.takeNextRange(1);
+			compressor1.finalizeRange(range2);
+			compressor2.finalizeRange(range2);
+			expect(
+				IdCompressor.deserialize(compressor1.serialize(false), createSessionId()).equals(
+					IdCompressor.deserialize(compressor2.serialize(false), createSessionId()),
+					false // don't compare local state
+				)
+			).to.be.true;
+		});
+	});
+
+	// No validation, as these leave the network in a broken state
+	describeNetworkNoValidation('detects UUID collision', (itNetwork) => {
+		itNetwork('when an override uuid collides with one allocated sequentially', 2, (network) => {
+			network.allocateAndSendIds(Client.Client1, 1);
+			network.deliverOperations(Client.Client1);
+			const compressor1 = network.getCompressor(Client.Client1);
+			const id = network.getIdLog(Client.Client1)[0].id;
+			const uuid = compressor1.decompress(id);
+			expect(() => network.allocateAndSendIds(Client.Client1, 1, { 0: uuid })).to.throw(
+				`Override ID ${uuid} collides with another allocated uuid.`
+			);
 		});
 
-		it('drops local state if deserialization uses a different session ID', () => {
-			const capacity = 3;
-			const compressor = createCompressor(Client.Client1, capacity);
-			const compressorNoLocal = createCompressor(Client.Client3, capacity);
-			const finalUsages = [
-				{ client: Client.Client1, numIds: 2 },
-				{ client: Client.Client2, numIds: 3 },
-			];
-			useCompressor(compressor, [{ client: Client.Local, numIds: 5 }, ...finalUsages]);
-			useCompressor(compressorNoLocal, finalUsages);
-			const [_, roundtripped] = roundtrip(compressor, sessionIds[Client.Client3]);
-			expect(roundtripped.equals(compressorNoLocal)).to.be.true;
-			expect(compressorNoLocal.serialize().localState).to.be.undefined;
-		});
-
-		it('finalizes local IDs', () => {
-			// Upholds the queue invariant in top-level IdCompressor doc
-			function expectIdsFinalize(compressor: IdCompressor, client: Client, numIds: number): void {
-				const localIds = useCompressor(compressor, [{ client: Client.Local, numIds }]);
-				const finalizedIds = useCompressor(compressor, [{ client, numIds }]);
-				expect(localIds.map((id) => compressor.decompress(id))).to.deep.equal(
-					finalizedIds.map((id) => compressor.decompress(id))
+		itNetwork(
+			'when a client requests an override uuid that is reserved for later allocation by a cluster',
+			2,
+			(network) => {
+				network.allocateAndSendIds(Client.Client1, 1);
+				network.deliverOperations(Client.Client1);
+				const compressor1 = network.getCompressor(Client.Client1);
+				const id = network.getIdLog(Client.Client1)[0].id;
+				const uuid = assertIsStableId(compressor1.decompress(id));
+				const nextUuid = stableIdFromNumericUuid(numericUuidFromStableId(uuid), 1);
+				expect(() => network.allocateAndSendIds(Client.Client1, 1, { 0: nextUuid })).to.throw(
+					`Override ID ${nextUuid} collides with another allocated uuid.`
 				);
 			}
+		);
 
-			const capacity = 3;
-			const compressor = createCompressor(Client.Client1, capacity);
-			expectIdsFinalize(compressor, Client.Client1, 2);
-			useCompressor(compressor, [{ client: Client.Client1, numIds: capacity * 2 }]);
-			expectIdsFinalize(compressor, Client.Client1, 2);
-			useCompressor(compressor, [{ client: Client.Client2, numIds: capacity * 2 }]);
-			expectIdsFinalize(compressor, Client.Client1, 2);
+		itNetwork('when a new cluster is allocated that collides with an existing override uuid', 2, (network) => {
+			network.allocateAndSendIds(Client.Client1, 1);
+			network.deliverOperations(DestinationClient.All);
+			const compressor1 = network.getCompressor(Client.Client1);
+			const id = network.getIdLog(Client.Client1)[0].id;
+			const uuid = assertIsStableId(compressor1.decompress(id));
+			const nextUuid = stableIdFromNumericUuid(numericUuidFromStableId(uuid), 2);
+			network.allocateAndSendIds(Client.Client1, 1, { 0: nextUuid });
+			network.allocateAndSendIds(Client.Client2, 1);
+			network.deliverOperations(DestinationClient.All);
+			network.allocateAndSendIds(Client.Client1, 1); // new cluster
+			expect(() => network.deliverOperations(Client.Client1)).to.throw(
+				`Override ID ${nextUuid} collides with another allocated uuid.`
+			);
 		});
 
-		it('can serialize a cluster chain with an smaller explicit ID overriding the first final ID', () => {
-			// the uuid ordering will look like:
-			// 0000-0000-0000-0001 (explicit)
-			// 0000-0000-0000-000C (cluster 1)
-			// 0000-0000-0000-000E (cluster 2),
-			// XXXX-XXXX-XXXX-XXXX (system cluster),
-			// The first of them is an explicit ID that maps to the first final ID in the cluster ending in 0C.
-			// This test is a glass box test that ensures the backwards walk through the cluster chain handles this case correctly.
-			const explicitId = integerToStableId(1);
-			const sessionStableId = integerToStableId(10) as SessionId; // This is a valid SessionId since its highest order bit is 0
-			const compressor = new IdCompressor(sessionStableId);
-			const clusterSize = 2;
-			const numClusters = 2;
-			compressor.clusterCapacity = 2;
-			const generator = compressor.getFinalIdGenerator(sessionStableId);
-			generator.generateFinalId(explicitId);
-			for (let i = 1; i < numClusters * clusterSize; i++) {
-				generator.generateFinalId();
+		itNetwork('detects colliding override UUIDs when expanding a cluster', 1, (network) => {
+			// This is a glass box test in that it is testing cluster expansion
+			network.allocateAndSendIds(Client.Client1, 1);
+			network.deliverOperations(DestinationClient.All);
+			const compressor1 = network.getCompressor(Client.Client1);
+			const id = network.getIdLog(Client.Client1)[0].id;
+			const uuid = assertIsStableId(compressor1.decompress(id));
+			const expansion = 3;
+			const nextUuid = stableIdFromNumericUuid(numericUuidFromStableId(uuid), expansion);
+			network.allocateAndSendIds(Client.Client1, expansion, { 0: nextUuid });
+			expect(() => network.deliverOperations(DestinationClient.All)).to.throw(
+				`Override ID ${nextUuid} collides with another allocated uuid.`
+			);
+		});
+	});
+
+	describeNetwork('Networked', (itNetwork) => {
+		describe('can attribute', () => {
+			itNetwork('local IDs before and after being finalized', (network) => {
+				const compressor = network.getCompressor(Client.Client1);
+				network.allocateAndSendIds(Client.Client1, 1);
+				const id = network.getIdLog(Client.Client1)[0].id;
+				expect(compressor.attributeId(id)).to.equal(Client.Client1);
+				network.deliverOperations(Client.Client1);
+				expect(compressor.attributeId(id)).to.equal(Client.Client1);
+			});
+
+			itNetwork('final IDs from a remote session', (network) => {
+				const compressor = network.getCompressor(Client.Client1);
+				network.allocateAndSendIds(Client.Client2, 1);
+				network.deliverOperations(DestinationClient.All);
+				const id = network.getSequencedIdLog(Client.Client1)[0].id;
+				expect(compressor.attributeId(id)).to.equal(Client.Client2);
+			});
+
+			itNetwork('final IDs from multiple remote sessions', 1, (network) => {
+				const compressor = network.getCompressor(Client.Client1);
+				// Ensure multiple clusters are made by each client. Cluster size === 1.
+				network.allocateAndSendIds(Client.Client1, compressor.clusterCapacity);
+				network.allocateAndSendIds(Client.Client2, compressor.clusterCapacity);
+				network.allocateAndSendIds(Client.Client3, compressor.clusterCapacity);
+				network.allocateAndSendIds(Client.Client1, compressor.clusterCapacity);
+				network.allocateAndSendIds(Client.Client2, compressor.clusterCapacity);
+				network.allocateAndSendIds(Client.Client3, compressor.clusterCapacity);
+				network.deliverOperations(DestinationClient.All);
+				const log = network.getSequencedIdLog(Client.Client1);
+				expect(compressor.attributeId(log[0].id)).to.equal(Client.Client1);
+				expect(compressor.attributeId(log[1].id)).to.equal(Client.Client2);
+				expect(compressor.attributeId(log[2].id)).to.equal(Client.Client3);
+				expect(compressor.attributeId(log[3].id)).to.equal(Client.Client1);
+				expect(compressor.attributeId(log[4].id)).to.equal(Client.Client2);
+				expect(compressor.attributeId(log[5].id)).to.equal(Client.Client3);
+			});
+
+			itNetwork('unified IDs', (network) => {
+				const uuid = minimizeUuidString('3cc54227-dfb7-4897-a257-82412fd60c4f');
+				const allTargets = network.getTargetCompressors(DestinationClient.All);
+				for (const [client, compressor] of allTargets) {
+					network.allocateAndSendIds(client, 1, { 0: uuid });
+					for (const { id } of network.getIdLog(client)) {
+						expect(compressor.attributeId(id)).to.equal(client);
+					}
+				}
+				network.deliverOperations(DestinationClient.All);
+				const firstTarget = allTargets[0][0];
+				for (const [client, compressor] of allTargets) {
+					for (const { id } of network.getIdLog(client)) {
+						expect(compressor.attributeId(id)).to.equal(firstTarget);
+					}
+				}
+			});
+		});
+
+		itNetwork('upholds the invariant that IDs always decompress to the same UUID', 2, (network) => {
+			network.allocateAndSendIds(Client.Client1, 5, {
+				1: minimizeUuidString('0d2b6d6a0f584b5abfefa9baff49b6d5'),
+			});
+			network.allocateAndSendIds(Client.Client2, 5, {
+				2: minimizeUuidString('7f9b0783d2964d4fbff72e6dd7b48227'),
+			});
+			network.allocateAndSendIds(Client.Client3, 5, {
+				3: minimizeUuidString('552d1499a10d4488b2e019912ee70d43'),
+			});
+
+			const preAckLocals = new Map<Client, [SessionSpaceCompressedId, MinimalUuidString][]>();
+			for (const [client, compressor] of network.getTargetCompressors(MetaClient.All)) {
+				const locals: [SessionSpaceCompressedId, MinimalUuidString][] = [];
+				for (const idData of network.getIdLog(client)) {
+					locals.push([idData.id, compressor.decompress(idData.id)]);
+				}
+				preAckLocals.set(client, locals);
 			}
-			expectSerializes(compressor);
+
+			// Ack all IDs
+			network.deliverOperations(DestinationClient.All);
+
+			for (const [client, compressor] of network.getTargetCompressors(MetaClient.All)) {
+				const preAckLocalIds = preAckLocals.get(client) ?? fail();
+				let i = 0;
+				for (const idData of network.getIdLog(client)) {
+					if (idData.originatingClient === client) {
+						expect(isFinalId(idData.id)).to.be.false;
+						const currentUuid = compressor.decompress(idData.id);
+						expect(currentUuid).to.equal(preAckLocalIds[i % preAckLocalIds.length][1]);
+						i++;
+					}
+				}
+			}
 		});
 
-		const scenarios: [
-			description: string,
-			clusterCapacity: number,
-			localClient: Client,
-			usages: TestUsage[],
-			asserts: (compressor: IdCompressor, serialized: SerializedIdCompressor) => void
-		][] = [
-			[
-				'can serialize a partially empty cluster',
-				5,
-				Client.Client1,
-				[
-					{ client: Client.Local, numIds: 2 },
-					{ client: Client.Client1, numIds: 2 },
-				],
-				noop,
-			],
-			['can serialize a full cluster', 2, Client.Client1, [{ client: Client.Client1, numIds: 2 }], noop],
-			[
-				'can serialize full clusters from different clients',
-				2,
-				Client.Client1,
-				[
-					{ client: Client.Local, numIds: 2 },
-					{ client: Client.Client1, numIds: 2 },
-					{ client: Client.Client2, numIds: 2 },
-				],
-				noop,
-			],
-			[
-				'can serialize clusters of different sizes and clients',
-				3,
-				Client.Client1,
-				[
-					{ client: Client.Local, numIds: 2 },
-					{ client: Client.Client1, numIds: 2 },
-					{ client: Client.Client2, numIds: 3 },
-					{ client: Client.Client1, numIds: 5 },
-					{ client: Client.Client1, numIds: 5 },
-					{ client: Client.Client3, numIds: 3 },
-					{ client: Client.Client2, numIds: 3 },
-					{ client: Client.Local, numIds: 4 },
-				],
-				noop,
-			],
-			[
-				'can serialize clusters with explicit ids',
-				3,
-				Client.Client1,
-				[
-					{
-						client: Client.Local,
-						numIds: 2,
-						explicitIds: {
-							1: 'b2043d3f57bf4c38b97a01b380539ff1' as StableId,
-						},
-					},
-					{
-						client: Client.Client1,
-						numIds: 2,
-						explicitIds: {
-							1: 'b2043d3f57bf4c38b97a01b380539ff1' as StableId,
-						},
-					},
-					{
-						client: Client.Client2,
-						numIds: 3,
-						explicitIds: {
-							0: '98d37498701d42bbabb5831eea3106ad' as StableId,
-							2: 'c25c9a04d1e0463bb44fe18cb46b7ddf' as StableId,
-						},
-					},
-				],
-				noop,
-			],
-			[
-				'packs IDs into a single cluster when a single client generates non-explicit ids',
-				3,
-				Client.Client1,
-				[
-					{ client: Client.Local, numIds: 20 },
-					{ client: Client.Client1, numIds: 20 },
-				],
-				(_, serialized) => {
-					expect(serialized.clusters.length).to.equal(1);
-				},
-			],
-			[
-				'does not pack IDs into a single cluster when explicit IDs are present',
-				3,
-				Client.Client1,
-				[
-					{
-						client: Client.Local,
-						numIds: 20,
-						explicitIds: { 10: '34caac2168f647dfb54b593c7c452e3f' as StableId },
-					},
-					{
-						client: Client.Client1,
-						numIds: 20,
-						explicitIds: { 10: '34caac2168f647dfb54b593c7c452e3f' as StableId },
-					},
-				],
-				(_, serialized) => {
-					expect(serialized.clusters.length).to.equal(2);
-				},
-			],
-			[
-				'can serialize after a large fuzz input',
-				3,
-				Client.Client1,
-				makeLargeFuzzTest(3, true, Client.Client1, Math.PI),
-				noop,
-			],
-		];
+		itNetwork('can normalize session space IDs to op space', 5, (network) => {
+			const clusterCapacity = 5;
+			const idCount = clusterCapacity * 2;
+			for (let i = 0; i < idCount; i++) {
+				network.allocateAndSendIds(Client.Client1, 1);
+				network.allocateAndSendIds(Client.Client2, 1);
+				network.allocateAndSendIds(Client.Client3, 1);
+			}
 
-		scenarios.forEach((scenario) => {
-			it(scenario[0], () => {
-				const compressor = createCompressor(scenario[2]);
-				compressor.clusterCapacity = scenario[1];
-				useCompressor(compressor, scenario[3]);
-				const serialized = expectSerializes(compressor);
-				scenario[4](compressor, serialized);
+			for (const [client, compressor] of network.getTargetCompressors(MetaClient.All)) {
+				for (const idData of network.getIdLog(client)) {
+					expect(idData.originatingClient).to.equal(client);
+					expect(isLocalId(compressor.normalizeToOpSpace(idData.id))).to.be.true;
+				}
+			}
+
+			network.deliverOperations(DestinationClient.All);
+
+			for (const [client, compressor] of network.getTargetCompressors(MetaClient.All)) {
+				for (const idData of network.getIdLog(client)) {
+					expect(isFinalId(compressor.normalizeToOpSpace(idData.id))).to.be.true;
+				}
+			}
+		});
+
+		itNetwork('can normalize local op space IDs from a local session to session space IDs', (network) => {
+			const compressor = network.getCompressor(Client.Client1);
+			const range = network.allocateAndSendIds(Client.Client1, 1);
+			network.deliverOperations(Client.Client1);
+			const id = compressor.normalizeToOpSpace(compressor.getImplicitIdsFromRange(range).get(0));
+			expect(isFinalId(id)).to.be.true;
+			expect(isLocalId(compressor.normalizeToSessionSpace(id, compressor.localSessionId))).to.be.true;
+		});
+
+		itNetwork('can normalize local op space IDs from a remote session to session space IDs', (network) => {
+			const compressor1 = network.getCompressor(Client.Client1);
+			const compressor2 = network.getCompressor(Client.Client2);
+			const range = network.allocateAndSendIds(Client.Client1, 1);
+			// Mimic sending a reference to an ID that hasn't been acked yet, such as in a slow network
+			const id = compressor1.normalizeToOpSpace(compressor1.getImplicitIdsFromRange(range).get(0));
+			const getSessionNormalizedId = () => compressor2.normalizeToSessionSpace(id, compressor1.localSessionId);
+			expect(getSessionNormalizedId).to.throw('No IDs have ever been finalized by the supplied session.');
+			network.deliverOperations(Client.Client2);
+			expect(isFinalId(getSessionNormalizedId())).to.be.true;
+		});
+
+		itNetwork('unifies duplicate overridden ids', 3, (network) => {
+			const uuid = assertIsStableId('03c63ee57a4346d6bd9ced779d94f654');
+			const compressor1 = network.getCompressor(Client.Client1);
+			const compressor2 = network.getCompressor(Client.Client2);
+			const compressor3 = network.getCompressor(Client.Client3);
+			const clusterCapacity = compressor1.clusterCapacity;
+
+			// Ensure some clusters exist to avoid simple case of empty clusters
+			network.allocateAndSendIds(Client.Client1, clusterCapacity);
+			network.allocateAndSendIds(Client.Client2, clusterCapacity);
+			network.allocateAndSendIds(Client.Client3, clusterCapacity);
+			network.deliverOperations(DestinationClient.All);
+
+			const range1 = network.allocateAndSendIds(Client.Client1, 1, { 0: uuid });
+			const overrides1 = expectDefined(IdRange.getExplicits(range1)?.overrides);
+			const id1 = compressor1.normalizeToSessionSpace(overrides1[0][0], compressor1.localSessionId);
+			const opNormalizedLocal1 = compressor1.normalizeToOpSpace(id1);
+			expect(isLocalId(opNormalizedLocal1)).to.be.true;
+			expect(isFinalId(id1)).to.be.false;
+
+			network.deliverOperations(DestinationClient.Client1);
+
+			const finalId1 = compressor1.normalizeToOpSpace(id1);
+			expect(isFinalId(finalId1)).to.be.true;
+
+			const range2 = network.allocateAndSendIds(Client.Client2, 2, { 1: uuid });
+			const overrides2 = expectDefined(IdRange.getExplicits(range2)?.overrides);
+			const id2 = compressor2.normalizeToSessionSpace(overrides2[0][0], compressor2.localSessionId);
+			const opNormalizedLocal2 = compressor2.normalizeToOpSpace(id2);
+			expect(isLocalId(opNormalizedLocal2)).to.be.true;
+			expect(isFinalId(id2)).to.be.false;
+
+			network.allocateAndSendIds(Client.Client3, 1);
+			network.deliverOperations(DestinationClient.All);
+
+			const finalId2 = compressor2.normalizeToOpSpace(id2);
+			expect(isFinalId(finalId2)).to.be.true;
+
+			expect(finalId1).to.equal(finalId2);
+
+			expect(compressor1.normalizeToOpSpace(id1)).to.equal(finalId1);
+			expect(compressor1.normalizeToSessionSpace(finalId1, compressor1.localSessionId)).to.equal(id1);
+			expect(compressor1.normalizeToSessionSpace(opNormalizedLocal2, compressor2.localSessionId)).to.equal(id1);
+			expect(compressor1.decompress(id1)).to.equal(uuid);
+			expect(compressor1.decompress(finalId1)).to.equal(uuid);
+			expect(compressor1.compress(uuid)).to.equal(id1);
+
+			expect(compressor2.normalizeToOpSpace(id2)).to.equal(finalId2);
+			expect(compressor2.normalizeToSessionSpace(finalId1, compressor1.localSessionId)).to.equal(id2);
+			expect(compressor2.normalizeToSessionSpace(opNormalizedLocal1, compressor1.localSessionId)).to.equal(id2);
+			expect(compressor2.decompress(id2)).to.equal(uuid);
+			expect(compressor2.decompress(finalId2)).to.equal(uuid);
+			expect(compressor2.compress(uuid)).to.equal(id2);
+
+			expect(compressor3.normalizeToSessionSpace(finalId1, compressor1.localSessionId)).to.equal(finalId1);
+			expect(compressor3.normalizeToSessionSpace(opNormalizedLocal1, compressor1.localSessionId)).to.equal(
+				finalId1
+			);
+			expect(compressor3.normalizeToSessionSpace(opNormalizedLocal2, compressor2.localSessionId)).to.equal(
+				finalId1
+			);
+			expect(compressor3.decompress(finalId1)).to.equal(uuid);
+			expect(compressor3.compress(uuid)).to.equal(finalId1);
+		});
+
+		itNetwork('maintains alignment after unifying duplicate override ids', 3, (network) => {
+			const uuid = assertIsStableId('03c63ee57a4346d6bd9ced779d94f654');
+			network.allocateAndSendIds(Client.Client1, 1, { 0: uuid });
+			network.allocateAndSendIds(Client.Client2, 2, { 1: uuid });
+			network.allocateAndSendIds(Client.Client1, 5);
+			network.allocateAndSendIds(Client.Client2, 5);
+			expectSequencedLogsAlign(network, Client.Client1, Client.Client2, 1);
+		});
+
+		function expectSequencedLogsAlign(
+			network: IdCompressorTestNetwork,
+			client1: Client,
+			client2: Client,
+			numUnifications = 0
+		): void {
+			network.deliverOperations(DestinationClient.All);
+			assert(client1 !== client2);
+			const log1 = network.getSequencedIdLog(client1);
+			const log2 = network.getSequencedIdLog(client2);
+			expect(log1.length).to.equal(log2.length);
+			const compressor1 = network.getCompressor(client1);
+			const compressor2 = network.getCompressor(client2);
+			const ids = new Set<OpSpaceCompressedId>();
+			const uuids = new Set<MinimalUuidString>();
+			for (let i = 0; i < log1.length; i++) {
+				const id1 = compressor1.normalizeToOpSpace(log1[i].id);
+				const id2 = compressor2.normalizeToOpSpace(log2[i].id);
+				expect(isFinalId(id1)).to.be.true;
+				ids.add(id1);
+				expect(id1).to.equal(id2);
+				const uuid1 = compressor1.decompress(id1);
+				uuids.add(uuid1);
+				expect(isStableId(uuid1)).to.be.true;
+				expect(uuid1).to.equal(compressor2.decompress(id2));
+			}
+			const expectedSize = log1.length - numUnifications;
+			expect(ids.size).to.equal(expectedSize);
+			expect(uuids.size).to.equal(expectedSize);
+		}
+
+		itNetwork('produces ID spaces correctly', (network) => {
+			// This test asserts that IDs returned from IDCompressor APIs are correctly encoded as either local or final.
+			// This is a glass box test in that it assumes the negative/positive encoding of CompressedIds (negative = local, positive = final).
+			const compressor1 = network.getCompressor(Client.Client1);
+
+			// Client 1 makes two IDs, two explicit (one with override UUID) and one implicit
+			network.allocateAndSendIds(Client.Client1, 3, {
+				1: minimizeUuidString('729bc6ab-ecb3-4c00-871c-f3c3f8eae772'),
+			});
+
+			network.getIdLog(Client.Client1).forEach((id) => expect(id.id).to.be.lessThan(0));
+
+			// Client 1's IDs have not been acked so have no op space equivalent
+			network
+				.getIdLog(Client.Client1)
+				.forEach((idData) => expect(compressor1.normalizeToOpSpace(idData.id)).to.be.lessThan(0));
+
+			// Client 1's IDs are acked
+			network.deliverOperations(Client.Client1);
+			network.getIdLog(Client.Client1).forEach((id) => expect(id.id).to.be.lessThan(0));
+
+			// Client 3 makes two IDs, two explicit (one with override UUID) and one implicit
+			network.allocateAndSendIds(Client.Client2, 3, {
+				1: minimizeUuidString('9331d43c-7717-4cc3-be23-cdfc5953911f'),
+			});
+
+			network.getIdLog(Client.Client2).forEach((id) => expect(id.id).to.be.lessThan(0));
+
+			// Client 1 receives Client 2's IDs
+			network.deliverOperations(Client.Client1);
+
+			network
+				.getIdLog(Client.Client1)
+				.slice(-3)
+				.forEach((id) => expect(id.id).to.be.greaterThan(0));
+
+			// All IDs have been acked or are from another client, and therefore have a final form in op space
+			network
+				.getIdLog(Client.Client1)
+				.forEach((idData) => expect(compressor1.normalizeToOpSpace(idData.id)).to.be.greaterThan(0));
+
+			// Compression should preserve ID space correctness
+			network.getIdLog(Client.Client1).forEach((idData) => {
+				const roundtripped = compressor1.compress(compressor1.decompress(idData.id)) ?? fail();
+				expect(Math.sign(roundtripped)).to.equal(Math.sign(idData.id));
+			});
+
+			network.getIdLog(Client.Client1).forEach((idData) => {
+				const opNormalized = compressor1.normalizeToOpSpace(idData.id);
+				expect(Math.sign(compressor1.normalizeToSessionSpace(opNormalized, idData.sessionId))).to.equal(
+					Math.sign(idData.id)
+				);
+			});
+		});
+
+		itNetwork('produces consistent IDs with large fuzz input', (network) => {
+			performFuzzActions(network, 1984, true, undefined, true, 1000, 25, (network) =>
+				network.assertNetworkState()
+			);
+			network.deliverOperations(DestinationClient.All);
+		});
+
+		itNetwork('can set the cluster size via constructor', 2, (network) => {
+			const compressor1 = network.getCompressor(Client.Client1);
+			network.allocateAndSendIds(Client.Client1, 1);
+			const range = network.allocateAndSendIds(Client.Client2, 2);
+			network.deliverOperations(DestinationClient.All);
+			const id = compressor1.getImplicitIdsFromRange(range).get(0);
+			// Glass box test, as it knows the order of final IDs
+			expect(id).to.equal(reservedIdCount + compressor1.clusterCapacity);
+		});
+
+		itNetwork('can set the cluster size via API', 2, (network) => {
+			const compressor1 = network.getCompressor(Client.Client1);
+			const initialClusterCapacity = compressor1.clusterCapacity;
+			network.allocateAndSendIds(Client.Client1, initialClusterCapacity);
+			network.allocateAndSendIds(Client.Client2, initialClusterCapacity);
+			network.enqueueCapacityChange(5);
+			network.allocateAndSendIds(Client.Client1, 1);
+			const range = network.allocateAndSendIds(Client.Client2, 1);
+			network.deliverOperations(DestinationClient.All);
+			const id = compressor1.getImplicitIdsFromRange(range).get(0);
+			// Glass box test, as it knows the order of final IDs
+			expect(id).to.equal(reservedIdCount + initialClusterCapacity * 2 + compressor1.clusterCapacity);
+		});
+
+		describe('can get IDs from ranges', () => {
+			itNetwork('unless they are unfinalized and from a remote session', (network) => {
+				const compressor = network.getCompressor(Client.Client1);
+				const unackedRemoteRange = network.allocateAndSendIds(Client.Client2, 5);
+				expect(() => compressor.getImplicitIdsFromRange(unackedRemoteRange)).to.throw(
+					'Unknown session, range may not be finalized.'
+				);
+				network.deliverOperations(Client.Client1);
+				const unackedRemoteRange2 = network.allocateAndSendIds(Client.Client2, 5);
+				expect(() => compressor.getImplicitIdsFromRange(unackedRemoteRange2)).to.throw(
+					'Remote range must be finalized before getting IDs.'
+				);
+			});
+
+			itNetwork('that are unacked', (network) => {
+				const compressor = network.getCompressor(Client.Client1);
+				const range1 = compressor.getImplicitIdsFromRange(network.allocateAndSendIds(Client.Client1, 5));
+				for (let i = 0; i < range1.length; i++) {
+					expect(range1.get(i)).to.equal(-(i + 1));
+				}
+				const range2 = compressor.getImplicitIdsFromRange(network.allocateAndSendIds(Client.Client1, 7));
+				for (let i = 0; i < range2.length; i++) {
+					expect(range2.get(i)).to.equal(-(i + 1 + range1.length));
+				}
+			});
+
+			itNetwork('from the local session that are acked', (network) => {
+				const compressor = network.getCompressor(Client.Client1);
+				const range1 = compressor.getImplicitIdsFromRange(network.allocateAndSendIds(Client.Client1, 5));
+				network.deliverOperations(Client.Client1);
+
+				for (let i = 0; i < range1.length; i++) {
+					expect(range1.get(i)).to.equal(-(i + 1));
+				}
+			});
+
+			itNetwork('from a remote session that are in a single cluster', 5, (network) => {
+				const compressor = network.getCompressor(Client.Client1);
+				const clusterCapacity = compressor.clusterCapacity;
+				network.allocateAndSendIds(Client.Client1, 1);
+				// Spans an entire cluster
+				const rangeFullCluster = network.allocateAndSendIds(Client.Client2, clusterCapacity);
+				network.allocateAndSendIds(Client.Client1, 1);
+				network.allocateAndSendIds(Client.Client2, 1);
+				// Spans the middle 3 IDs in a cluster of size 5
+				const rangeMiddleCluster = network.allocateAndSendIds(Client.Client2, clusterCapacity - 2);
+				network.deliverOperations(Client.Client1);
+
+				const idsFullCluster = compressor.getImplicitIdsFromRange(rangeFullCluster);
+				for (let i = 0; i < idsFullCluster.length; i++) {
+					expect(idsFullCluster.get(i)).to.equal(reservedIdCount + clusterCapacity + i);
+				}
+
+				const idsMiddleCluster = compressor.getImplicitIdsFromRange(rangeMiddleCluster);
+				for (let i = 0; i < idsMiddleCluster.length; i++) {
+					expect(idsMiddleCluster.get(i)).to.equal(reservedIdCount + clusterCapacity * 2 + 1 + i);
+				}
+			});
+
+			itNetwork('from a remote session that span multiple clusters', 5, (network) => {
+				const compressor = network.getCompressor(Client.Client1);
+				const clusterCapacity = compressor.clusterCapacity;
+				network.allocateAndSendIds(Client.Client1, clusterCapacity);
+				network.allocateAndSendIds(Client.Client2, clusterCapacity - 2);
+				network.allocateAndSendIds(Client.Client1, 1);
+				const rangeSpanningClusters = network.allocateAndSendIds(Client.Client2, clusterCapacity);
+				network.deliverOperations(Client.Client1);
+
+				const idsSpanningClusters = compressor.getImplicitIdsFromRange(rangeSpanningClusters);
+				for (let i = 0; i < 2; i++) {
+					expect(idsSpanningClusters.get(i)).to.equal(reservedIdCount + clusterCapacity + 3 + i);
+				}
+				for (let i = 2; i < idsSpanningClusters.length; i++) {
+					expect(idsSpanningClusters.get(i)).to.equal(reservedIdCount + clusterCapacity * 2 + 3 + i);
+				}
+			});
+		});
+
+		itNetwork('does not decompress ids for empty parts of clusters', 2, (network) => {
+			// This is a glass box test in that it creates a final ID outside of the ID compressor
+			network.allocateAndSendIds(Client.Client1, 1);
+			network.deliverOperations(DestinationClient.All);
+			const id = network.getSequencedIdLog(Client.Client2)[0].id;
+			expect(isFinalId(id)).to.be.true;
+			// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+			const emptyId = (id + 1) as FinalCompressedId;
+			expect(() => network.getCompressor(Client.Client2).decompress(emptyId)).to.throw(
+				'Cannot decompress ID which is not known to this compressor'
+			);
+		});
+
+		describe('Finalizing', () => {
+			itNetwork('can finalize IDs from multiple clients', (network) => {
+				network.allocateAndSendIds(Client.Client1, 3, {
+					1: minimizeUuidString('babb918d-55ad-4bd5-899d-3720cd5cf519'),
+				});
+				network.allocateAndSendIds(Client.Client2, 3, {
+					1: minimizeUuidString('b949b3a4-0e99-4df1-8655-3e12e9d082ce'),
+				});
+				expectSequencedLogsAlign(network, Client.Client1, Client.Client2);
+			});
+
+			itNetwork('can finalize a range when the current cluster is full', 5, (network) => {
+				const clusterCapacity = network.getCompressor(Client.Client1).clusterCapacity;
+				network.allocateAndSendIds(Client.Client1, clusterCapacity);
+				network.allocateAndSendIds(Client.Client2, clusterCapacity);
+				network.allocateAndSendIds(Client.Client1, clusterCapacity, {
+					0: minimizeUuidString('b949b3a4-0e99-4df1-8655-3e12e9d082ce'),
+					1: minimizeUuidString('35898899-d381-4d65-9539-c0f5a6b318e5'),
+					2: minimizeUuidString('ec8fc252-9aec-4f42-8562-7cf271cbf190'),
+				});
+				expectSequencedLogsAlign(network, Client.Client1, Client.Client2);
+			});
+
+			itNetwork('can finalize a range that spans multiple clusters', 5, (network) => {
+				const clusterCapacity = network.getCompressor(Client.Client1).clusterCapacity;
+				network.allocateAndSendIds(Client.Client1, clusterCapacity - 2, {
+					0: minimizeUuidString('15945826-87b5-46d6-b297-ed14aa57abf0'),
+					1: minimizeUuidString('861f2bc2-6388-4ac7-8a45-bcc3e45624d2'),
+				});
+				network.allocateAndSendIds(Client.Client2, 1);
+				network.allocateAndSendIds(Client.Client1, clusterCapacity, {
+					0: minimizeUuidString('b949b3a4-0e99-4df1-8655-3e12e9d082ce'),
+					1: minimizeUuidString('35898899-d381-4d65-9539-c0f5a6b318e5'),
+					2: minimizeUuidString('ec8fc252-9aec-4f42-8562-7cf271cbf190'),
+				});
+				expectSequencedLogsAlign(network, Client.Client1, Client.Client2);
+			});
+		});
+
+		describe('Serialization', () => {
+			itNetwork(
+				'prevents attempts to resume a session from a serialized compressor with no session',
+				(network) => {
+					const compressor = network.getCompressor(Client.Client1);
+					network.allocateAndSendIds(Client.Client2, 1);
+					network.allocateAndSendIds(Client.Client3, 1);
+					network.deliverOperations(Client.Client1);
+					const serializedWithoutLocalState = compressor.serialize(false);
+					expect(() =>
+						IdCompressor.deserialize(serializedWithoutLocalState, sessionIds.get(Client.Client2))
+					).to.throw('Cannot resume existing session.');
+				}
+			);
+
+			itNetwork('round-trips local state', 3, (network) => {
+				network.allocateAndSendIds(Client.Client1, 2);
+				network.allocateAndSendIds(Client.Client2, 3);
+				network.allocateAndSendIds(Client.Client1, 5);
+				network.allocateAndSendIds(Client.Client1, 5);
+				network.allocateAndSendIds(Client.Client3, 3);
+				network.allocateAndSendIds(Client.Client2, 3);
+				network.deliverOperations(Client.Client1);
+				// Some un-acked locals at the end
+				network.allocateAndSendIds(Client.Client1, 4);
+				const [serializedNoSession, serializedWithSession] = expectSerializes(
+					network.getCompressor(Client.Client1)
+				);
+				expect(hasOngoingSession(serializedWithSession)).to.be.true;
+				expect(hasOngoingSession(serializedNoSession)).to.be.false;
+			});
+
+			itNetwork('can serialize a partially empty cluster', 5, (network) => {
+				network.allocateAndSendIds(Client.Client1, 2);
+				network.deliverOperations(DestinationClient.All);
+				expectSerializes(network.getCompressor(Client.Client1));
+				expectSerializes(network.getCompressor(Client.Client3));
+			});
+
+			itNetwork('can serialize a full cluster', 2, (network) => {
+				network.allocateAndSendIds(Client.Client1, 2);
+				network.deliverOperations(DestinationClient.All);
+				expectSerializes(network.getCompressor(Client.Client1));
+				expectSerializes(network.getCompressor(Client.Client3));
+			});
+
+			itNetwork('can serialize full clusters from different clients', 2, (network) => {
+				network.allocateAndSendIds(Client.Client1, 2);
+				network.allocateAndSendIds(Client.Client2, 2);
+				network.deliverOperations(DestinationClient.All);
+				expectSerializes(network.getCompressor(Client.Client1));
+				expectSerializes(network.getCompressor(Client.Client3));
+			});
+
+			itNetwork('can serialize clusters of different sizes and clients', 3, (network) => {
+				network.allocateAndSendIds(Client.Client1, 2);
+				network.allocateAndSendIds(Client.Client2, 3);
+				network.allocateAndSendIds(Client.Client1, 5);
+				network.allocateAndSendIds(Client.Client1, 5);
+				network.allocateAndSendIds(Client.Client2, 3);
+				network.deliverOperations(DestinationClient.All);
+				expectSerializes(network.getCompressor(Client.Client1));
+				expectSerializes(network.getCompressor(Client.Client3));
+			});
+
+			itNetwork('can serialize clusters with overrides', 3, (network) => {
+				network.allocateAndSendIds(Client.Client1, 2, {
+					1: assertIsStableId('b2043d3f57bf4c38b97a01b380539ff1'),
+				});
+				network.allocateAndSendIds(Client.Client2, 3, {
+					0: assertIsStableId('98d37498701d42bbabb5831eea3106ad'),
+					2: assertIsStableId('c25c9a04d1e0463bb44fe18cb46b7ddf'),
+				});
+				network.deliverOperations(DestinationClient.All);
+				expectSerializes(network.getCompressor(Client.Client1));
+				expectSerializes(network.getCompressor(Client.Client3));
+			});
+
+			itNetwork(
+				'packs IDs into a single cluster when a single client generates non-overridden ids',
+				3,
+				(network) => {
+					network.allocateAndSendIds(Client.Client1, 20);
+					network.deliverOperations(DestinationClient.All);
+					const [serialized1WithNoSession, serialized1WithSession] = expectSerializes(
+						network.getCompressor(Client.Client1)
+					);
+					expect(serialized1WithNoSession.clusters.length).to.equal(1);
+					expect(serialized1WithSession.clusters.length).to.equal(1);
+					const [serialized3WithNoSession, serialized3WithSession] = expectSerializes(
+						network.getCompressor(Client.Client3)
+					);
+					expect(serialized3WithNoSession.clusters.length).to.equal(1);
+					expect(serialized3WithSession.clusters.length).to.equal(1);
+				}
+			);
+
+			itNetwork('does not pack IDs into a single cluster when overrides are present', 3, (network) => {
+				network.allocateAndSendIds(Client.Client1, 20, {
+					10: assertIsStableId('34caac2168f647dfb54b593c7c452e3f'),
+				});
+				network.allocateAndSendIds(Client.Client1, 20);
+				network.deliverOperations(DestinationClient.All);
+				const [serialized1WithNoSession, serialized1WithSession] = expectSerializes(
+					network.getCompressor(Client.Client1)
+				);
+				expect(serialized1WithNoSession.clusters.length).to.equal(2);
+				expect(serialized1WithSession.clusters.length).to.equal(2);
+				const [serialized3WithNoSession, serialized3WithSession] = expectSerializes(
+					network.getCompressor(Client.Client3)
+				);
+				expect(serialized3WithNoSession.clusters.length).to.equal(2);
+				expect(serialized3WithSession.clusters.length).to.equal(2);
+			});
+
+			itNetwork('serializes correctly after unifying duplicate overrides', 3, (network) => {
+				const uuid = assertIsStableId('03c63ee57a4346d6bd9ced779d94f654');
+				network.allocateAndSendIds(Client.Client1, 1, { 0: uuid });
+				network.allocateAndSendIds(Client.Client2, 2, { 1: uuid });
+				network.allocateAndSendIds(Client.Client1, 5);
+				network.allocateAndSendIds(Client.Client2, 5);
+				network.deliverOperations(DestinationClient.All);
+				expectSerializes(network.getCompressor(Client.Client1));
+				expectSerializes(network.getCompressor(Client.Client2));
+				expectSerializes(network.getCompressor(Client.Client3));
+			});
+
+			itNetwork('can resume a session and interact with multiple other clients', 3, (network) => {
+				const clusterSize = network.getCompressor(Client.Client1).clusterCapacity;
+				network.allocateAndSendIds(Client.Client1, clusterSize);
+				network.allocateAndSendIds(Client.Client2, clusterSize);
+				network.allocateAndSendIds(Client.Client3, clusterSize);
+				network.allocateAndSendIds(Client.Client1, clusterSize);
+				network.allocateAndSendIds(Client.Client2, clusterSize);
+				network.allocateAndSendIds(Client.Client3, clusterSize);
+				network.deliverOperations(DestinationClient.All);
+				network.goOfflineThenResume(Client.Client1);
+				network.allocateAndSendIds(Client.Client1, 2);
+				network.allocateAndSendIds(Client.Client2, 2);
+				network.allocateAndSendIds(Client.Client3, 2);
+				expectSequencedLogsAlign(network, Client.Client1, Client.Client2);
+			});
+
+			itNetwork('can serialize after a large fuzz input', 3, (network) => {
+				performFuzzActions(network, Math.PI, true, undefined, true, 1000, 25, (network) => {
+					// Periodically check that everyone in the network has the same serialized state
+					network.deliverOperations(DestinationClient.All);
+					const compressors = network.getTargetCompressors(DestinationClient.All);
+					let deserializedPrev = roundtrip(compressors[0][1], false)[1];
+					for (let i = 1; i < compressors.length; i++) {
+						const deserializedCur = roundtrip(compressors[i][1], false)[1];
+						expect(deserializedPrev.equals(deserializedCur, false)).to.be.true;
+						deserializedPrev = deserializedCur;
+					}
+				});
+				expectSerializes(network.getCompressor(Client.Client1));
+				expectSerializes(network.getCompressor(Client.Client2));
+				expectSerializes(network.getCompressor(Client.Client3));
 			});
 		});
 	});
 });
+
+type NetworkTestFunction = (title: string, test: (network: IdCompressorTestNetwork) => void) => void;
+
+type NetworkTestFunctionWithCapacity = (
+	title: string,
+	initialClusterCapacity: number,
+	test: (network: IdCompressorTestNetwork) => void
+) => void;
+
+function createNetworkTestFunction(validateAfter: boolean): NetworkTestFunction & NetworkTestFunctionWithCapacity {
+	return (
+		title: string,
+		testOrCapacity: ((network: IdCompressorTestNetwork) => void) | number,
+		test?: (network: IdCompressorTestNetwork) => void
+	) => {
+		it(title, () => {
+			const hasCapacity = typeof testOrCapacity === 'number';
+			const capacity = hasCapacity ? testOrCapacity : undefined;
+			const network = new IdCompressorTestNetwork(capacity);
+			(hasCapacity ? assertNotUndefined(test) : testOrCapacity)(network);
+			if (validateAfter) {
+				network.deliverOperations(DestinationClient.All);
+				network.assertNetworkState();
+			}
+		});
+	};
+}
+
+function describeNetwork(title: string, its: (itFunc: NetworkTestFunction & NetworkTestFunctionWithCapacity) => void) {
+	describe(title, () => {
+		its(createNetworkTestFunction(false));
+	});
+
+	describe(`${title} (with validation)`, () => {
+		its(createNetworkTestFunction(true));
+	});
+}
+
+function describeNetworkNoValidation(
+	title: string,
+	its: (itFunc: NetworkTestFunction & NetworkTestFunctionWithCapacity) => void
+) {
+	describe(title, () => {
+		its(createNetworkTestFunction(false));
+	});
+}

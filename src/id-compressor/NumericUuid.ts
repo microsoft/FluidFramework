@@ -123,7 +123,7 @@ export function expandUuidString(uuid: MinimalUuidString): UuidString {
 /**
  * @returns the supplied uuid with "-" separators removed.
  */
-export function minimizeUuidString(uuid: UuidString): MinimalUuidString {
+export function minimizeUuidString(uuid: string): MinimalUuidString {
 	if (uuid.length !== 32) {
 		if (uuid.length !== 36) {
 			fail(`${uuid} is not a uuid.`);
@@ -133,49 +133,65 @@ export function minimizeUuidString(uuid: UuidString): MinimalUuidString {
 			36
 		)}` as StableId;
 	}
-	return uuid as unknown as StableId;
+	return uuid as unknown as MinimalUuidString;
 }
 
 /**
- * @param uuidString a minimal uuid string
- * @returns a numeric representation of `uuidString`, or undefined if `uuidString` is not a valid v4 uuid.
+ * @returns if the supplied string is a minimal uuid.
  */
-export function numericUuidFromUuidString(uuidString: MinimalUuidString): NumericUuid | undefined {
-	assertIsMinimalUuidString(uuidString);
-	const versionNibble = uuidString.charAt(12);
-	if (versionNibble !== '4') {
-		return undefined;
+export function isMinimalUuidString(uuid: string): uuid is MinimalUuidString {
+	if (uuid.length !== 32) {
+		return false;
 	}
+	return true;
+}
 
-	const variantNibble = uuidString.charAt(16);
-	if (variantNibble !== '8' && variantNibble !== '9' && variantNibble !== 'a' && variantNibble !== 'b') {
-		return undefined;
-	}
-
+/**
+ * @param stableId a minimal uuid string
+ * @returns a numeric representation of `stableId`.
+ */
+export function numericUuidFromStableId(stableId: StableId): NumericUuid {
 	const uuid: (string | number)[] = new Array(2);
-	uuid[0] = uuidString.substr(0, nibblesInNumericString);
-	uuid[1] = Number.parseInt(uuidString.substr(nibblesInNumericString, nibblesInNumericUuidInteger), 16);
+	uuid[0] = stableId.substr(0, nibblesInNumericString);
+	uuid[1] = Number.parseInt(stableId.substr(nibblesInNumericString, nibblesInNumericUuidInteger), 16);
 	return uuid as readonly (number | string)[] as NumericUuid;
 }
 
 /**
- * Asserts that the supplied UUID string is of the correct form.
+ * Asserts that the supplied uuid is a stable ID.
  */
-export function assertIsMinimalUuidString(uuid: MinimalUuidString) {
+export function assertIsStableId(uuid: string): StableId {
+	assert(isMinimalUuidString(uuid));
+	assert(isStableId(uuid));
+	return uuid;
+}
+
+/**
+ * Returns whether the supplied uuid is a v4 variant 2 uuid without separators.
+ */
+export function isStableId(uuid: MinimalUuidString): uuid is StableId {
 	if (uuid.length !== 32) {
-		if (uuid.length === 36) {
-			fail('uuid must not contain separators');
-		}
-		fail(`${uuid} is not a uuid.`);
+		return false;
 	}
+
+	const versionNibble = uuid.charAt(12);
+	if (versionNibble !== '4') {
+		return false;
+	}
+
+	const variantNibble = uuid.charAt(16);
+	if (variantNibble !== '8' && variantNibble !== '9' && variantNibble !== 'a' && variantNibble !== 'b') {
+		return false;
+	}
+	return true;
 }
 
 /**
  * Creates a session base ID.
  * This method (rather than standard uuid generation methods) should be used to generate session IDs.
  */
-export function createSessionUuid(): SessionId {
-	const uuid = minimizeUuidString(v4() as UuidString) as StableId;
+export function createSessionId(): SessionId {
+	const uuid = assertIsStableId(minimizeUuidString(v4()));
 	return ensureSessionUuid(uuid);
 }
 

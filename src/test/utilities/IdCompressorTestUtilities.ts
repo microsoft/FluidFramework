@@ -7,71 +7,84 @@
 
 import { v5 } from 'uuid';
 import Prando from 'prando';
-import { assert, assertNotUndefined, Mutable, noop } from '../../Common';
-import { IdCompressor, FinalIdGenerator } from '../../id-compressor/IdCompressor';
-import { CompressedId, StableId } from '../../Identifiers';
-import { minimizeUuidString, NumericUuid, numericUuidFromUuidString } from '../../id-compressor/NumericUuid';
-import { MinimalUuidString, SessionId, UuidString } from '../..';
+import { expect } from 'chai';
+import { Serializable } from '@fluidframework/datastore-definitions';
+import { assert, assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
+import {
+	IdCompressor,
+	isLocalId,
+	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
+} from '../../id-compressor/IdCompressor';
+import {
+	assertIsStableId,
+	createSessionId,
+	ensureSessionUuid,
+	minimizeUuidString,
+	NumericUuid,
+	numericUuidFromStableId,
+	stableIdFromNumericUuid,
+} from '../../id-compressor/NumericUuid';
+import { MinimalUuidString, SessionId, StableId, SessionSpaceCompressedId } from '../../Identifiers';
+import { IdRange } from '../../id-compressor/IdRange';
+import { FinalCompressedId } from '../..';
+
+/** Identifies a compressor in a network */
+export enum Client {
+	Client1 = 'Client1',
+	Client2 = 'Client2',
+	Client3 = 'Client3',
+}
+
+/** Identifies a compressor with respect to a specific operation */
+export enum SemanticClient {
+	LocalClient = 'LocalClient',
+}
+
+/** Identifies categories of compressors */
+export enum MetaClient {
+	All = 'All',
+}
 
 /**
- * Used to attribute operations to clients in a distributed collaboration session.
+ * Used to attribute actions to clients in a distributed collaboration session.
  * `Local` implies a local and unsequenced operation. All others imply sequenced operations.
  */
-export enum Client {
-	Client1 = 0,
-	Client2 = 1,
-	Client3 = 2,
-	Local = 3,
-}
+export type OriginatingClient = Client | SemanticClient;
+export const OriginatingClient = { ...Client, ...SemanticClient };
 
-/**
- * A test operation on an ID compressor.
- */
-export type TestUsage = IdAllocationUsage | CapacityChangeUsage | FinalIdBatchAllocationUsage;
-
-/**
- * A test allocation operation on an ID compressor.
- */
-export interface IdAllocationUsage {
-	readonly client: Client;
-	readonly numIds: number;
-	readonly explicitIds?: { [index: number]: MinimalUuidString | undefined };
-}
-
-/**
- * A test operation to change cluster capacity on an ID compressor.
- */
-export interface CapacityChangeUsage {
-	readonly newClusterCapacity: number;
-}
-
-/**
- * A test operation to batch allocate final IDs on an ID compressor.
- */
-export interface FinalIdBatchAllocationUsage {
-	readonly client: Client;
-	readonly batchSize: number;
-}
+/** Identifies a compressor to which to send an operation */
+export type DestinationClient = Client | MetaClient;
+export const DestinationClient = { ...Client, ...MetaClient };
 
 /**
  * Creates a new compressor with the supplied cluster capacity.
  */
-export function createCompressor(client: Client, clusterCapacity = 5): IdCompressor {
-	assert(client !== Client.Local, 'Use a numbered client.');
-	const compressor = new IdCompressor(sessionIds[client]);
+export function createCompressor<T>(
+	client: Client,
+	clusterCapacity = 5,
+	attributionInfo?: Serializable<T>
+): IdCompressor {
+	const compressor = new IdCompressor(sessionIds.get(client), attributionInfo);
 	compressor.clusterCapacity = clusterCapacity;
 	return compressor;
 }
 
-function makeSessionIds(): readonly SessionId[] {
-	const stableIds: SessionId[] = [];
-	for (let i = 0; i <= Client.Client3; i++) {
+/**
+ * A closed map from NamedClient to T.
+ */
+export type ClientMap<T> = ClosedMap<Client, T>;
+
+function makeSessionIds(): ClientMap<SessionId> {
+	const stableIds = new Map<Client, SessionId>();
+	const clients = Object.values(Client);
+	for (let i = 0; i < clients.length; i++) {
 		// Place session uuids roughly in the middle of uuid space to increase odds of encountering interesting
 		// orderings in sorted collections
-		const sessionUuid = `8888888888884888b${i.toString(16)}88888888888888` as SessionId;
-		stableIds.push(sessionUuid);
+		const sessionId = ensureSessionUuid(assertIsStableId(`8888888888884888b${i}88888888888888`));
+		stableIds.set(clients[i], sessionId);
 	}
-	return stableIds;
+	return stableIds as ClientMap<SessionId>;
 }
 
 /**
@@ -82,180 +95,576 @@ export const sessionIds = makeSessionIds();
 /**
  * An array of session uuids corresponding to all non-local `Client` entries.
  */
-export const sessionNumericUuids: readonly NumericUuid[] = sessionIds.map((sessionStableId) => {
-	return assertNotUndefined(numericUuidFromUuidString(sessionStableId), 'Session UUID creation bug');
-});
+export const sessionNumericUuids = new Map(
+	[...sessionIds.entries()].map(([client, sessionId]) => {
+		return [client, numericUuidFromStableId(sessionId)];
+	})
+) as ClientMap<NumericUuid>;
+
+/** An immutable view of an `IdCompressor` */
+export interface ReadonlyIdCompressor
+	extends Omit<IdCompressor, 'generateCompressedId' | 'takeNextRange' | 'finalizeRange'> {
+	readonly clusterCapacity: number;
+}
+
+/** Information about a generated ID in a network to be validated by tests */
+export interface TestIdData {
+	readonly id: SessionSpaceCompressedId;
+	readonly originatingClient: Client;
+	readonly sessionId: SessionId;
+	readonly sessionNumericUuid: NumericUuid;
+	readonly expectedOverride: MinimalUuidString | undefined;
+	readonly isSequenced: boolean;
+}
 
 /**
- * Applies the supplied operations to the compressor.
- * @param compressor the ID compressor to perform operations on
- * @param usages the operations to perform
- * @param asserts a callback that can be used to assert invariants after the operations are applied
- * @returns the compressed IDs created by the operations
+ * Simulates a network of ID compressors.
+ * Not suitable for performance testing.
  */
-export function useCompressor(
-	compressor: IdCompressor,
-	usages: TestUsage[],
-	asserts: (usage: IdAllocationUsage, ids: readonly CompressedId[]) => void = noop
-): CompressedId[] {
-	const ids: CompressedId[] = [];
-	for (const usage of usages) {
-		if (isCapacityChange(usage)) {
-			compressor.clusterCapacity = usage.newClusterCapacity;
-		} else if (isBatchAllocation(usage)) {
-			assert(usage.client !== Client.Local);
-			compressor.getFinalIdGenerator(sessionIds[usage.client]).generateFinalIdBatch(usage.batchSize);
-		} else {
-			const { client, numIds, explicitIds } = usage;
-			const sessionUuid = sessionIds[client];
-			const generator: FinalIdGenerator | undefined =
-				client === Client.Local ? undefined : compressor.getFinalIdGenerator(sessionUuid);
-			for (let i = 0; i < numIds; i++) {
-				const explicitId = explicitIds === undefined ? undefined : explicitIds[i];
-				if (client === Client.Local) {
-					ids.push(compressor.generateCompressedId(explicitId));
-				} else {
-					assert(generator !== undefined);
-					ids.push(generator.generateFinalId(explicitId));
-				}
-				asserts(usage, ids);
+export class IdCompressorTestNetwork {
+	/** The compressors used in this network */
+	private readonly compressors: ClientMap<IdCompressor>;
+	/** The log of operations seen by the server so far. Append-only. */
+	private readonly serverOperations: ([range: IdRange, clientFrom: Client] | number)[] = [];
+	/** An index into `serverOperations` for each client which represents how many operations have been delivered to that client */
+	private readonly clientProgress: ClientMap<number>;
+	/** All ids (local and sequenced) that a client has created or received, in order. */
+	private readonly idLogs: ClientMap<TestIdData[]>;
+	/** All ids that a client has received from the server, in order. */
+	private readonly sequencedIdLogs: ClientMap<TestIdData[]>;
+
+	public constructor(
+		public readonly initialClusterSize = 5,
+		private readonly onIdReceived?: (network: IdCompressorTestNetwork, clientTo: Client, ids: TestIdData[]) => void
+	) {
+		const compressors = new Map<Client, IdCompressor>();
+		const clientProgress = new Map<Client, number>();
+		const clientIds = new Map<Client, TestIdData[]>();
+		const clientSequencedIds = new Map<Client, TestIdData[]>();
+		for (const client of Object.values(Client)) {
+			const compressor = createCompressor(client, initialClusterSize, client);
+			compressors.set(client, compressor);
+			clientProgress.set(client, 0);
+			clientIds.set(client, []);
+			clientSequencedIds.set(client, []);
+		}
+		this.compressors = compressors as ClientMap<IdCompressor>;
+		this.clientProgress = clientProgress as ClientMap<number>;
+		this.idLogs = clientIds as ClientMap<TestIdData[]>;
+		this.sequencedIdLogs = clientSequencedIds as ClientMap<TestIdData[]>;
+	}
+
+	/**
+	 * Returns an immutable handle to a compressor in the network.
+	 */
+	public getCompressor(client: Client): ReadonlyIdCompressor {
+		const compressors = this.compressors;
+		const handler = {
+			get(_, property) {
+				const compressor = compressors.get(client);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+				return compressor[property];
+			},
+			set(_, property, value): boolean {
+				const compressor = compressors.get(client);
+				compressor[property] = value;
+				return true;
+			},
+		};
+		return new Proxy<IdCompressor>({} as unknown as IdCompressor, handler);
+	}
+
+	/**
+	 * Returns a mutable handle to a compressor in the network. Use of mutation methods will break the network invariants and
+	 * should only be used if the network will not be used again.
+	 */
+	public getCompressorUnsafe(client: Client): IdCompressor {
+		return this.getCompressor(client) as IdCompressor;
+	}
+
+	/**
+	 * Returns data for all IDs created and received by this client, including ack's of their own (i.e. their own IDs will appear twice)
+	 */
+	public getIdLog(client: Client): readonly TestIdData[] {
+		return this.idLogs.get(client);
+	}
+
+	/**
+	 * Returns data for all IDs received by this client, including ack's of their own (i.e. their own IDs will appear twice)
+	 */
+	public getSequencedIdLog(client: Client): readonly TestIdData[] {
+		return this.sequencedIdLogs.get(client);
+	}
+
+	/**
+	 * Get all compressors for the given destination
+	 */
+	public getTargetCompressors(clientTo: DestinationClient): [Client, IdCompressor][] {
+		return clientTo === MetaClient.All
+			? [...this.compressors.entries()]
+			: ([[clientTo, this.getCompressor(clientTo)]] as [Client, IdCompressor][]);
+	}
+
+	/**
+	 * Submit a capacity change operation to the network. It will not take effect immediately but will be processed in sequence order.
+	 */
+	public enqueueCapacityChange(newClusterCapacity: number): void {
+		this.serverOperations.push(newClusterCapacity);
+	}
+
+	private addNewId(
+		client: Client,
+		id: SessionSpaceCompressedId,
+		expectedOverride: MinimalUuidString | undefined,
+		originatingClient: Client,
+		isSequenced: boolean
+	): void {
+		const idData = {
+			id,
+			originatingClient,
+			sessionId: sessionIds.get(originatingClient),
+			sessionNumericUuid: sessionNumericUuids.get(originatingClient),
+			expectedOverride,
+			isSequenced,
+		};
+		const clientIds = this.idLogs.get(client);
+		clientIds.push(idData);
+		if (isSequenced) {
+			const sequencedIds = this.sequencedIdLogs.get(client);
+			sequencedIds.push(idData);
+		}
+		this.onIdReceived?.(this, client, clientIds);
+	}
+
+	/**
+	 * Allocates a new range of local IDs and enqueues them for future delivery via a `testIdDelivery` action.
+	 * Calls to this method determine the total order of delivery, regardless of when `deliverOperations` is called.
+	 */
+	public allocateAndSendIds(
+		client: Client,
+		numIds: number,
+		overrides: { [index: number]: MinimalUuidString } = {}
+	): IdRange {
+		assert(numIds > 0, 'Must allocate a non-zero number of IDs');
+		const compressor = this.compressors.get(client);
+		let nextExplicitIndex = 0;
+		for (const [overrideIndex, uuid] of Object.entries(overrides)
+			.map(([id, uuid]) => [Number.parseInt(id, 10), uuid] as [number, MinimalUuidString])
+			.sort(([a], [b]) => a - b)) {
+			while (nextExplicitIndex < overrideIndex) {
+				this.addNewId(client, compressor.generateCompressedId(), undefined, client, false);
+				nextExplicitIndex += 1;
 			}
+			this.addNewId(client, compressor.generateCompressedId(uuid), uuid, client, false);
+			nextExplicitIndex += 1;
+		}
+		const numImplicits = numIds - nextExplicitIndex;
+		const range = compressor.takeNextRange(numImplicits);
+		const ids = compressor.getImplicitIdsFromRange(range);
+		for (let i = 0; i < numImplicits; i++) {
+			this.addNewId(client, ids.get(i), undefined, client, false);
+		}
+		this.serverOperations.push([range, client]);
+		return range;
+	}
+
+	/**
+	 * Delivers all undelivered ID ranges and cluster capacity changes from the server to the target clients.
+	 */
+	public deliverOperations(clientTakingDelivery: DestinationClient) {
+		for (const [clientTo, compressorTo] of this.getTargetCompressors(clientTakingDelivery)) {
+			for (let i = this.clientProgress.get(clientTo); i < this.serverOperations.length; i++) {
+				const operation = this.serverOperations[i];
+				if (typeof operation === 'number') {
+					compressorTo.clusterCapacity = operation;
+				} else {
+					const [range, clientFrom] = operation;
+					compressorTo.finalizeRange(range);
+
+					const explicits = IdRange.getExplicits(range);
+					if (explicits !== undefined) {
+						let overrideIndex = 0;
+						const overrides = explicits.overrides;
+						for (let id = explicits.first; id >= explicits.last; id--) {
+							let override: MinimalUuidString | undefined;
+							if (overrides !== undefined && id === overrides[overrideIndex][0]) {
+								override = overrides[overrideIndex][1];
+								overrideIndex++;
+							}
+							const sessionSpaceId = compressorTo.normalizeToSessionSpace(id, range.sessionId);
+							this.addNewId(clientTo, sessionSpaceId, override, clientFrom, true);
+						}
+						assert(overrideIndex === (overrides?.length ?? 0));
+					}
+
+					const ids = compressorTo.getImplicitIdsFromRange(range);
+					for (let i = 0; i < ids.length; i++) {
+						this.addNewId(clientTo, ids.get(i), undefined, clientFrom, true);
+					}
+				}
+			}
+
+			this.clientProgress.set(clientTo, this.serverOperations.length);
 		}
 	}
-	return ids;
+
+	/**
+	 * Simulate a client disconnecting (and serializing), then reconnecting (and deserializing)
+	 */
+	public goOfflineThenResume(client: Client): void {
+		const compressor = this.compressors.get(client);
+		const [_, resumedCompressor] = roundtrip(compressor, true);
+		this.compressors.set(client, resumedCompressor);
+	}
+
+	/**
+	 * Ensure general validity of the network state. Useful for calling periodically or at the end of test scenarios.
+	 */
+	public assertNetworkState(): void {
+		const sequencedLogs = Object.values(Client).map(
+			(client) => [this.compressors.get(client), this.getSequencedIdLog(client)] as [IdCompressor, TestIdData[]]
+		);
+
+		const maxLogLength = sequencedLogs.map(([_, data]) => data.length).reduce((p, n) => Math.max(p, n));
+
+		function getNextLogWithEntryAt(logsIndex: number, entryIndex: number): number | undefined {
+			for (let i = logsIndex; i < sequencedLogs.length; i++) {
+				const log = sequencedLogs[i];
+				if (log[1].length > entryIndex) {
+					return i;
+				}
+			}
+			return undefined;
+		}
+
+		const uuids = new Set<MinimalUuidString>();
+		const finalIds = new Set<FinalCompressedId>();
+		const idIndicesAggregator = new Map<Client, number>();
+
+		function* getLogIndices(
+			columnIndex: number
+		): Iterable<
+			[
+				current: [compressor: IdCompressor, idData: TestIdData],
+				next?: [compressor: IdCompressor, idData: TestIdData]
+			]
+		> {
+			let current = getNextLogWithEntryAt(0, columnIndex);
+			while (current !== undefined) {
+				const next = getNextLogWithEntryAt(current + 1, columnIndex);
+				const [compressor, log] = sequencedLogs[current];
+				if (next === undefined) {
+					yield [[compressor, log[columnIndex]]];
+				} else {
+					const [compressorNext, logNext] = sequencedLogs[next];
+					yield [
+						[compressor, log[columnIndex]],
+						[compressorNext, logNext[columnIndex]],
+					];
+				}
+				current = next;
+			}
+		}
+
+		for (let i = 0; i < maxLogLength; i++) {
+			const creator: [creator: Client, override?: MinimalUuidString][] = [];
+			let originatingClient: Client | undefined;
+			let localCount = 0;
+			let rowCount = 0;
+			for (const [current, next] of getLogIndices(i)) {
+				const [compressorA, idDataA] = current;
+				const sessionSpaceIdA = idDataA.id;
+				if (isLocalId(sessionSpaceIdA)) {
+					localCount += 1;
+				}
+				const idIndex = getOrCreate(idIndicesAggregator, idDataA.originatingClient, () => 0);
+				originatingClient ??= idDataA.originatingClient;
+				assert(
+					idDataA.originatingClient === originatingClient,
+					'Test infra gave wrong originating client to TestIdData'
+				);
+
+				// Only one client should have this ID as local in its session space, as only one client could have created this ID
+				if (isLocalId(sessionSpaceIdA)) {
+					localCount++;
+					expect(idDataA.sessionId).to.equal(this.compressors.get(originatingClient).localSessionId);
+					expect(creator.length === 0 || creator[creator.length - 1][1] === idDataA.expectedOverride).to.be
+						.true;
+					creator.push([originatingClient, idDataA.expectedOverride]);
+				}
+
+				const uuidASessionSpace = compressorA.decompress(sessionSpaceIdA);
+				if (idDataA.expectedOverride !== undefined) {
+					expect(uuidASessionSpace).to.equal(idDataA.expectedOverride);
+				} else {
+					expect(uuidASessionSpace).to.equal(stableIdFromNumericUuid(idDataA.sessionNumericUuid, idIndex));
+				}
+				expect(compressorA.compress(uuidASessionSpace)).to.equal(sessionSpaceIdA);
+				uuids.add(uuidASessionSpace);
+				const opSpaceIdA = compressorA.normalizeToOpSpace(sessionSpaceIdA);
+				if (isLocalId(opSpaceIdA)) {
+					expect.fail('IDs should have been finalized.');
+				}
+				finalIds.add(opSpaceIdA);
+				const uuidAOpSpace = compressorA.decompress(opSpaceIdA);
+
+				expect(uuidASessionSpace).to.equal(uuidAOpSpace);
+
+				if (next !== undefined) {
+					const [compressorB, idDataB] = next;
+					const sessionSpaceIdB = idDataB.id;
+
+					const uuidBSessionSpace = compressorB.decompress(sessionSpaceIdB);
+					expect(uuidASessionSpace).to.equal(uuidBSessionSpace);
+					const opSpaceIdB = compressorB.normalizeToOpSpace(sessionSpaceIdB);
+					if (opSpaceIdA !== opSpaceIdB) {
+						compressorB.normalizeToOpSpace(sessionSpaceIdB);
+						compressorA.normalizeToOpSpace(sessionSpaceIdA);
+					}
+					expect(opSpaceIdA).to.equal(opSpaceIdB);
+					if (isLocalId(opSpaceIdB)) {
+						fail('IDs should have been finalized.');
+					}
+					const uuidBOpSpace = compressorB.decompress(opSpaceIdB);
+					expect(uuidAOpSpace).to.equal(uuidBOpSpace);
+				}
+
+				rowCount += 1;
+			}
+
+			// A local count > 1 indicates that this ID was unified, as more than one client has a local ID for it
+			// in their session space.
+			if (rowCount === this.sequencedIdLogs.size && localCount <= 1) {
+				expect(localCount).to.equal(1);
+				for (const [[compressor, { id, originatingClient }]] of getLogIndices(i)) {
+					expect(compressor.attributeId(id)).to.equal(originatingClient);
+				}
+			}
+
+			expect(uuids.size).to.equal(finalIds.size);
+			assert(originatingClient !== undefined);
+			idIndicesAggregator.set(
+				originatingClient,
+				assertNotUndefined(idIndicesAggregator.get(originatingClient)) + 1
+			);
+		}
+
+		for (const [compressor] of sequencedLogs) {
+			expectSerializes(compressor);
+		}
+	}
 }
 
 /**
- * @returns whether the supplied TestUsage assigns a new cluster capacity.
+ * Roundtrips the supplied compressor through serialization and deserialization.
  */
-export function isCapacityChange(usage: TestUsage): usage is CapacityChangeUsage {
-	return (usage as CapacityChangeUsage).newClusterCapacity !== undefined;
+export function roundtrip(
+	compressor: ReadonlyIdCompressor,
+	withSession: true
+): [SerializedIdCompressorWithOngoingSession, IdCompressor];
+
+/**
+ * Roundtrips the supplied compressor through serialization and deserialization.
+ */
+export function roundtrip(
+	compressor: ReadonlyIdCompressor,
+	withSession: false
+): [SerializedIdCompressorWithNoSession, IdCompressor];
+
+export function roundtrip(
+	compressor: ReadonlyIdCompressor,
+	withSession: boolean
+): [SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession, IdCompressor] {
+	if (withSession) {
+		const serialized = compressor.serialize(withSession);
+		return [serialized, IdCompressor.deserialize(serialized)];
+	}
+
+	const nonLocalSerialized = compressor.serialize(withSession);
+	return [nonLocalSerialized, IdCompressor.deserialize(nonLocalSerialized, createSessionId())];
 }
 
 /**
- * @returns whether the supplied TestUsage assigns a new cluster capacity.
+ * Asserts that the supplied compressor correctly roundtrips through serialization/deserialization.
  */
-export function isBatchAllocation(usage: TestUsage): usage is FinalIdBatchAllocationUsage {
-	return (usage as FinalIdBatchAllocationUsage).batchSize !== undefined;
+export function expectSerializes(
+	compressor: ReadonlyIdCompressor
+): [SerializedIdCompressorWithNoSession, SerializedIdCompressorWithOngoingSession] {
+	function expectSerializes(
+		withSession: boolean
+	): SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession {
+		let serialized: SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession;
+		let deserialized: IdCompressor;
+		if (withSession) {
+			[serialized, deserialized] = roundtrip(compressor, true);
+		} else {
+			[serialized, deserialized] = roundtrip(compressor, false);
+		}
+		const chainCount: number[] = [];
+		for (let i = 0; i < serialized.sessions.length; i++) {
+			chainCount[i] = 0;
+		}
+		const chainProcessed: number[] = [...chainCount];
+
+		for (const cluster of serialized.clusters) {
+			const [sessionIndex] = cluster;
+			expect(sessionIndex < serialized.sessions.length);
+			chainCount[sessionIndex]++;
+		}
+
+		for (const cluster of serialized.clusters) {
+			const [sessionIndex, capacity, maybeSize] = cluster;
+			const chainIndex = chainProcessed[sessionIndex];
+			if (chainIndex < chainCount[sessionIndex] - 1) {
+				expect(maybeSize === undefined);
+			} else {
+				expect(maybeSize === undefined || typeof maybeSize !== 'number' || maybeSize < capacity);
+			}
+			chainProcessed[sessionIndex]++;
+		}
+
+		expect(compressor.equals(deserialized, withSession)).to.be.true;
+		return serialized;
+	}
+
+	return [
+		expectSerializes(false) as SerializedIdCompressorWithNoSession,
+		expectSerializes(true) as SerializedIdCompressorWithOngoingSession,
+	];
 }
 
 /**
- * Generates a large fuzz scenario of usages.
- * Multiple calls to this method with different `localClient`s but identical seed and configuration parameters will return usages
- * that generate the same `FinalCompressedIds`. This is useful for testing invariants between two different clients that process
- * the same total order broadcast.
- * @param initialClusterSize the size of newly created clusters in the compressor these usages will be performed upon
- * @param includeExplicitIds whether or not the returned usages will generate explicit IDs
- * @param localClient whether or not the returned usages will generate local IDs
- * @param seed the seed for the random generation of the fuzz usages
+ * Merges 'from' into 'to', and returns 'to'.
  */
-export function makeLargeFuzzTest(
-	initialClusterSize: number,
-	includeExplicitIds: boolean,
-	localClient: Client | undefined,
+export function mergeArrayMaps<K, V>(
+	to: Pick<Map<K, V[]>, 'get' | 'set'>,
+	from: ReadonlyMap<K, V[]>
+): Pick<Map<K, V[]>, 'get' | 'set'> {
+	for (const [key, value] of from.entries()) {
+		const entry = to.get(key);
+		if (entry !== undefined) {
+			entry.push(...value);
+		} else {
+			to.set(key, [...value]);
+		}
+	}
+	return to;
+}
+
+enum Operation {
+	AllocateIds,
+	DeliverOperations,
+	ChangeCapacity,
+	GenerateUnifyingIds,
+	GoOfflineThenResume,
+}
+
+/**
+ * Performs random actions on a test network.
+ * @param network the test network to test
+ * @param seed the seed for the random generation of the fuzz actions
+ * @param includeOverrides whether or not the fuzz actions will generate override UUIDs
+ * @param observerClient if provided, this client will never generate local ids
+ * @param synchronizeAtEnd if provided, all client will have all operations delivered from the server at the end of the test
+ * @param numUsages if provided, the number of operations to perform as part of this test. Defaults to 1000.
+ * @param validator if provided, this callback will be invoked periodically during the fuzz test.
+ */
+export function performFuzzActions(
+	network: IdCompressorTestNetwork,
 	seed: number,
-	numUsages = 350
-): TestUsage[] {
+	includeOverrides: boolean,
+	observerClient?: Client,
+	synchronizeAtEnd: boolean = true,
+	numUsages = 1000,
+	maxClusterSize = 25,
+	validator?: (network: IdCompressorTestNetwork) => void
+): void {
 	const rand = new Prando(seed);
-	const selectableClients: Client[] = [Client.Client1, Client.Client2, Client.Client3];
-	let clusterSize = initialClusterSize;
-
-	// First generate usages for the final IDs, so that the partial ordering of these usages does not differ between calls to this
-	// method with the same seed and params
-	const localFinalUsages: [usage: TestUsage, usageIndex: number][] = [];
-	const usages: TestUsage[] = [];
+	const selectableClients: Client[] = network.getTargetCompressors(MetaClient.All).map(([client]) => client);
+	const activeClients = selectableClients.filter((c) => c !== observerClient);
 	// Ensure that the same UUIDs are generated for the same seed across different calls
 	let uuidNum = 0;
 	const uuidNamespace = 'ece2be2e-f374-4ca8-b034-a0bac2da69da';
+	let clusterSize: number = network.initialClusterSize;
+	if (clusterSize > maxClusterSize) {
+		network.enqueueCapacityChange(maxClusterSize);
+		clusterSize = maxClusterSize;
+	}
 
-	function getClient(): Client {
-		return selectableClients[rand.nextInt(0, selectableClients.length - 1)];
+	const opWeights: [Operation, number][] = [
+		[Operation.ChangeCapacity, 1],
+		[Operation.AllocateIds, 8],
+		[Operation.DeliverOperations, 4],
+		[Operation.GenerateUnifyingIds, 1],
+		[Operation.GoOfflineThenResume, 1],
+	];
+
+	const opSums: [Operation, number][] = [];
+	let prevWeight = 0;
+	for (const opWeight of opWeights) {
+		const weight = prevWeight + opWeight[1];
+		opSums.push([opWeight[0], weight]);
+		prevWeight = weight;
 	}
 
 	for (let i = 0; i < numUsages; i++) {
-		if (rand.nextInt(0, Math.round(numUsages / 20)) === 0) {
-			clusterSize = rand.nextInt(initialClusterSize, initialClusterSize * 3);
-			usages.push({ newClusterCapacity: clusterSize });
-		} else {
-			const allocationClient = getClient();
-			const maxIdsPerUsage = clusterSize * 2;
-			const numIds = rand.nextInt(1, maxIdsPerUsage);
-
-			let batchExtra: number | undefined;
-			if (rand.nextInt(0, Math.round(numUsages / 20)) === 0) {
-				const batchClient = getClient();
-				const batchSize = rand.nextInt(1, maxIdsPerUsage);
-				if (batchClient === localClient) {
-					if (batchClient === allocationClient) {
-						batchExtra = batchSize;
-					} else {
-						localFinalUsages.push([{ client: Client.Local, numIds: batchSize }, usages.length]);
+		const weightSelected = rand.nextInt(1, prevWeight);
+		let opIndex = 0;
+		while (weightSelected > opSums[opIndex][1]) {
+			opIndex++;
+		}
+		const operation = opWeights[opIndex][0];
+		switch (operation) {
+			case Operation.ChangeCapacity: {
+				clusterSize = Math.min(Math.floor(rand.next(0, 1) ** 2 * maxClusterSize) + 1, maxClusterSize);
+				network.enqueueCapacityChange(clusterSize);
+				break;
+			}
+			case Operation.AllocateIds: {
+				const client = rand.nextArrayItem(activeClients);
+				const maxIdsPerUsage = clusterSize * 2;
+				const numIds = Math.floor(rand.next(0, 1) ** 2 * maxIdsPerUsage) + 1;
+				const overrides: { [index: number]: MinimalUuidString } = {};
+				if (includeOverrides && /* 25% chance: */ rand.nextInt(0, 3) === 0) {
+					for (let j = 0; j < numIds; j++) {
+						if (/* 33% chance: */ rand.nextInt(0, 2) === 0) {
+							overrides[j] = minimizeUuidString(v5((uuidNum++).toString(), uuidNamespace));
+						}
 					}
 				}
-				usages.push({ client: batchClient, batchSize });
+				network.allocateAndSendIds(client, numIds, overrides);
+				break;
 			}
-
-			const usage: Mutable<TestUsage> = {
-				client: allocationClient,
-				numIds,
-			};
-
-			if (includeExplicitIds && rand.nextInt(0, 3) === 0) {
-				usage.explicitIds = {};
-				for (let j = 0; j < numIds; j++) {
-					if (rand.nextInt(0, 2) === 0) {
-						usage.explicitIds[j] = minimizeUuidString(
-							v5((uuidNum++).toString(), uuidNamespace) as UuidString
-						);
-					}
-				}
+			case Operation.DeliverOperations: {
+				const client = rand.nextArrayItem([...selectableClients, MetaClient.All]);
+				network.deliverOperations(client);
+				break;
 			}
-
-			if (allocationClient === localClient) {
-				const localUsage: Mutable<TestUsage> = { ...usage, client: Client.Local };
-				let finalizeIndex: number;
-				if (batchExtra !== undefined) {
-					localUsage.numIds += batchExtra;
-					finalizeIndex = usages.length - 1;
-				} else {
-					finalizeIndex = usages.length;
-				}
-				localFinalUsages.push([localUsage, finalizeIndex]);
+			case Operation.GenerateUnifyingIds: {
+				const clientA = rand.nextArrayItem(activeClients);
+				const clientB = rand.nextArrayItem(activeClients.filter((c) => c !== clientA));
+				const uuid = minimizeUuidString(v5((uuidNum++).toString(), uuidNamespace));
+				network.allocateAndSendIds(clientA, 1, { 0: uuid });
+				network.allocateAndSendIds(clientB, 1, { 0: uuid });
+				break;
 			}
-
-			usages.push(usage);
+			case Operation.GoOfflineThenResume: {
+				const client = rand.nextArrayItem(activeClients);
+				network.goOfflineThenResume(client);
+				break;
+			}
+			default:
+				throw new Error('Unknown operation.');
+		}
+		if (i !== 0 && i % Math.round(numUsages / 5) === 0) {
+			validator?.(network);
 		}
 	}
 
-	// Next, generate usages for local ID creation (if requested), ensuring that the number generated is paired correctly with the matching
-	// generation of final IDs for the local session. For example, if a client generates 5 `CompressedFinalId`s in the 8th usage, then
-	// there should be a usage that generates 8 `CompressedLocalId`s somewhere in the first 7 usages.
-	if (localClient !== undefined) {
-		const usagesWithLocal: TestUsage[] = [];
-		let i = 0;
-		let numLocals = 0;
-		for (const [usage, usageIndex] of localFinalUsages) {
-			let added = false;
-			while (i <= usageIndex) {
-				if (!added && rand.nextInt(0, usageIndex - i) === 0) {
-					numLocals++;
-					usagesWithLocal.push(usage);
-					added = true;
-				}
-				usagesWithLocal.push(usages[i]);
-				i++;
-			}
-		}
-		assert(i === localFinalUsages[localFinalUsages.length - 1][1] + 1);
-		usagesWithLocal.push(...usages.slice(i));
-		assert(
-			numLocals === localFinalUsages.length,
-			'Fuzz generation must match local generation and finalizing locals.'
-		);
-		return usagesWithLocal;
+	if (synchronizeAtEnd) {
+		network.deliverOperations(DestinationClient.All);
+		validator?.(network);
 	}
-
-	return usages;
 }
 
 /**
@@ -270,8 +679,7 @@ export function integerToStableId(num: number | bigint): StableId {
 	const middleString = `4${padToLength(middle.toString(16), '0', 3)}`;
 	const lowerString = padToLength((BigInt('0x8000000000000000') | BigInt(lower)).toString(16), '0', 16);
 	const uuid = upperString + middleString + lowerString;
-	assert(uuid.length === 32);
-	return uuid as StableId;
+	return assertIsStableId(uuid);
 }
 
 /**

@@ -5,7 +5,7 @@
 
 import { Definition, NodeId } from './Identifiers';
 import { ChangeNode } from './generic';
-import { systemReservedUuidBase, expandUuidString } from './id-compressor';
+import { reservedSessionId, expandUuidString } from './id-compressor';
 
 /**
  * The initial tree.
@@ -15,5 +15,5 @@ export const initialTree: ChangeNode = {
 	traits: {},
 	definition: '51c58718-47b9-4fe4-ad46-56312f3b9e86' as Definition,
 	// TODO:#63765: handle accidental extra hex character in initialTree identifier when `IdCompressor` is integrated
-	identifier: `${expandUuidString(systemReservedUuidBase)}6` as NodeId,
+	identifier: `${expandUuidString(reservedSessionId)}6` as NodeId,
 };

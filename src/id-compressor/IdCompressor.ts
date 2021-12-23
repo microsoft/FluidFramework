@@ -6,37 +6,75 @@
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 
 import BTree from 'sorted-btree';
-import { MinimalUuidString, SessionId } from '..';
-import { assert, assertNotUndefined, compareBtrees, compareMaps, fail, Mutable } from '../Common';
-import { LocalCompressedId, FinalCompressedId, CompressedId, StableId } from '../Identifiers';
+import { CompressedId } from '..';
+import { assert, assertNotUndefined, compareMaps, fail, Mutable, setPropertyIfDefined } from '../Common';
+import {
+	LocalCompressedId,
+	FinalCompressedId,
+	SessionSpaceCompressedId,
+	StableId,
+	MinimalUuidString,
+	OpSpaceCompressedId,
+	SessionId,
+} from '../Identifiers';
 import { compareFiniteNumbers, compareStrings } from '../TreeViewUtilities';
 import { AppendOnlyDoublySortedMap, AppendOnlySortedMap } from './AppendOnlySortedMap';
+import { AttributionInfo, IdRange, UnackedLocalId } from './IdRange';
 import {
 	numericUuidEquals,
 	getPositiveDelta,
 	incrementUuid,
-	numericUuidFromUuidString,
+	numericUuidFromStableId,
 	NumericUuid,
 	stableIdFromNumericUuid,
-	assertIsMinimalUuidString,
+	isStableId,
+	assertIsStableId,
+	ensureSessionUuid,
 } from './NumericUuid';
 
 /**
  * A cluster of final (sequenced via consensus), sequentially allocated compressed IDs.
  * A final ID in a cluster decompresses to a uuid that is one of the following:
  * 1. A sequentially allocated uuid that is the result of adding its offset within the cluster to `baseUuid`.
- * 2. An explicit uuid (stored in `explicitIds`) specified at allocation time.
+ * 2. An override uuid (stored in `overrides`) specified at allocation time.
  */
 interface IdCluster {
+	/**
+	 * The UUID corresponding to the first final ID in the cluster.
+	 */
 	readonly baseUuid: NumericUuid;
-	readonly capacity: number;
-	readonly count: number;
 
 	/**
-	 * Explicit IDs assigned final IDs within this cluster.
+	 * The total number of final IDs reserved for allocation in the cluster.
+	 * Clusters are reserved in blocks as a performance optimization.
 	 */
-	readonly explicitIds?: Map<FinalCompressedId, MinimalUuidString>;
+	capacity: number;
+
+	/**
+	 * The number of final IDs currently allocated in the cluster.
+	 */
+	count: number;
+
+	/**
+	 * The session in which this cluster was created
+	 */
+	readonly session: Session;
+
+	/**
+	 * Final IDs assigned override UUIDs within this cluster.
+	 * These are one of the following:
+	 * 1. The override UUID string
+	 * 2. The override UUID string and external override details. This occurs when local IDs corresponding to the same override UUID
+	 * 		string are created by different sessions before any have been finalized. This can occur due to concurrency or offline.
+	 * 		In this case, the UUID is stored for the final ID that got sequenced first, and that final ID is stored associated with
+	 * 		all subsequent final IDs with the same UUID.
+	 */
+	overrides?: Map<FinalCompressedId, MinimalUuidString | UnifiedOverride>;
 }
+
+type UnifiedOverride = HasOverriddenIds & {
+	uuid: MinimalUuidString;
+};
 
 /**
  * Data about a SharedTree session.
@@ -44,10 +82,21 @@ interface IdCluster {
  */
 interface Session {
 	readonly sessionUuid: NumericUuid;
+
 	/**
-	 * Undefined if a new cluster must be allocated when the session requests the next final ID allocation.
+	 * `cluster` is undefined if a new cluster must be allocated when the session requests the next final ID allocation.
 	 */
-	readonly currentClusterDetails: { clusterBase: FinalCompressedId; cluster: IdCluster } | undefined;
+	currentClusterDetails: { readonly clusterBase: FinalCompressedId; readonly cluster: IdCluster } | undefined;
+
+	/**
+	 * The last local ID known to be finalized for this session.
+	 */
+	lastFinalizedLocalId: LocalCompressedId | undefined;
+
+	/**
+	 * The attribution info of the session, if it exists.
+	 */
+	attributionInfo?: AttributionInfo;
 }
 
 /**
@@ -57,64 +106,150 @@ interface Session {
 export const defaultClusterCapacity = 512;
 
 /**
- * Number of reserved final IDs for special system identities.
+ * Number of statically reserved final IDs.
  * This value must *NOT* change without careful consideration to compatibility.
  */
-export const systemReservedIdCount = 1024;
+export const reservedIdCount = 1024;
 
 /**
- * The base uuid for the system-reserved id cluster.
+ * The base uuid for the reserved id cluster.
  * This should not be changed without consideration to compatibility.
  */
-export const systemReservedUuidBase = '24e26f0b3c1a47f8a7a1e8461ddb69ce' as StableId;
+export const reservedSessionId = ensureSessionUuid(assertIsStableId('24e26f0b3c1a47f8a7a1e8461ddb69ce'));
 
 /**
- * Special session uuid for reserved system identities.
+ * The range of statically reserved IDs.
  */
-const systemSessionUuid =
-	numericUuidFromUuidString(systemReservedUuidBase) ?? fail('System guid should be a valid v4 uuid.');
+export const reservedIdRange: IdRange = {
+	sessionId: reservedSessionId,
+	ids: { implicits: { first: -1 as UnackedLocalId, last: -reservedIdCount as UnackedLocalId } },
+};
 
 /**
- * @returns true if the supplied compressed ID is a final ID.
+ * @returns true if the supplied ID is a final ID.
  */
-export function isFinalId(compressedId: CompressedId): compressedId is FinalCompressedId {
-	return compressedId >= 0;
+export function isFinalId(id: CompressedId): id is FinalCompressedId {
+	return id >= 0;
 }
 
 /**
- * A generator of final IDs.
- * @param explicitId An optional uuid to be permanently associated with the returned final ID.
+ * @returns true if the supplied ID is a local ID.
  */
-export interface FinalIdGenerator {
-	generateFinalId(explicitId?: MinimalUuidString): FinalCompressedId;
-	generateFinalIdBatch(batchSize: number): void;
+export function isLocalId(id: CompressedId): id is LocalCompressedId {
+	return id < 0;
 }
 
-interface LocalSessionDetails {
-	id: SessionId;
-	numericId: NumericUuid;
+/**
+ * A object for retrieving the session-space IDs for a range of implicit IDs.
+ * Optimized to avoid allocating an array of IDs.
+ */
+export interface ImplicitIdRange {
+	/**
+	 * The length of the ID range.
+	 */
+	readonly length: number;
+
+	/**
+	 * Returns the implicit ID in range at the provided index.
+	 */
+	get(index: number): SessionSpaceCompressedId;
 }
+
+/**
+ * An entry in the uuid-to-ID map, which maps the first stable ID in a cluster to the cluster itself.
+ */
+interface ClusterInfo {
+	readonly clusterBase: FinalCompressedId;
+	readonly cluster: IdCluster;
+}
+
+interface HasOverriddenIds {
+	readonly originalOverridingFinal: FinalCompressedId;
+	readonly associatedLocalId?: LocalCompressedId;
+}
+
+/**
+ * An override with a final ID associated with it.
+ *
+ * `associatedLocalId` is present on this type when a local ID in this session is associated with the override.
+ *
+ * It may be present even when `overriddenFinalId` was created by another session. This occurs when local IDs corresponding to the
+ * same override UUID string are created by different sessions before any have been finalized. `overriddenFinalId` will be set to
+ * the *first* finalized ID with that uuid, but `associatedLocal` will be set to the local session's local ID for that uuid. This is
+ * done to preserve the invariant that a uuid will always compress into the same session-space ID for the lifetime of the session.
+ */
+type FinalizedOverride = {
+	readonly cluster: IdCluster;
+} & HasOverriddenIds;
+
+/**
+ * An entry in the uuid-to-ID map, which maps an override to the cluster containing it (if finalized) or the local ID corresponding to it.
+ *
+ * Override uuids associated with local IDs stored in `uuidStringToId` are *always* replaced immediately upon finalizing, and thus it is
+ * typed as op-space (unacked local).
+ */
+type UuidOverride = UnackedLocalId | FinalizedOverride;
+
+type CompressionMapping = ClusterInfo | UuidOverride;
 
 /**
  * A distributed uuid generator and compressor.
  *
- * Generates arbitrary non-colliding v4 UUIDs, called stable ids, for multiple sessions (which can be distributed across the network),
+ * Generates arbitrary non-colliding v4 UUIDs, called stable IDs, for multiple "sessions" (which can be distributed across the network),
  * providing each session with the ability to map these UUIDs to `numbers`.
- * For each stable id, two numbers are provided:
- * 	1. A local id, which is stable for the lifetime of the IdCompressor instance. Available as soon as the stable id is allocated.
- * 	2. A final id, which is stable across serialization and deserialization of an IdCompressor. Available as soon as the allocation
- * 	   of the stable id is totally ordered (via consensus) with respect to other sessions' allocations.
  *
- * For each session, generating local IDs conceptually forms a queue of local IDs waiting to be "finalized". Each time a final ID is
- * generated for that session, it dequeues a local ID and is thereafter guaranteed to decompress to the same UUID as it. If the queue is
- * empty when a final ID is generated, no association with a local ID occurs.
+ * A session is a unique identifier that denotes a single compressor. New IDs are created through a single compressor API
+ * which should then sent in ranges to the server for total ordering (and are subsequently relayed to other clients). When a new ID is created,
+ * it is said to be created by the compressor's "local" session.
  *
- * Optimized IdCompressors can allocate these UUIDs in non-random ways to reduce entropy allowing for optimized storage of the data needed
+ * For each stable ID created, two numeric IDs are provided by the compressor:
+ * 	1. A local ID, which is stable for the lifetime of the session (which could be longer than that of the compressor object, as it may
+ * 		be serialized for offline usage). Available as soon as the stable ID is allocated. Local IDs are session-unique and are thus only
+ * 		publicly usable by the compressor that created the stable ID.
+ * 	2. A final ID, which is stable across serialization and deserialization of an IdCompressor. Available as soon as the range containing
+ * 		the corresponding local ID is totally ordered (via consensus) with respect to other sessions' allocations.
+ * 		Final IDs are known to and publicly usable by any compressor that has received them.
+ *
+ * Compressors will allocate UUIDs in non-random ways to reduce entropy allowing for optimized storage of the data needed
  * to map the UUIDs to the numbers.
  *
- * An `IdCompressor` allows a client to supply a predetermined uuid when generating `CompressedId`s, explicitly overriding the uuid that
- * would otherwise be associated with that `CompressedId`. If an explicit uuid is provided to an `IdCompressor`'s nth `LocalCompressedId`
- * allocation, then that same uuid must be provided to the allocation of the nth `CompressedFinalId` (and visa versa).
+ * A compressor allows a client to supply a predetermined UUID when generating IDs, explicitly overriding the UUID that
+ * would otherwise be associated with the local/final ID.
+ *
+ * The following invariants are upheld by IdCompressor:
+ * 1. Local IDs will always decompress to the same UUIDs for the lifetime of the session.
+ * 2. Final IDs will always decompress to the same UUIDs.
+ * 3. After a server-processed range of local IDs (from any session) is received by a compressor, any of those local IDs may be
+ * 		translated by the compressor into its corresponding final ID. For any given local ID, this translation will always yield the
+ * 		same final ID.
+ * 4. A uuid will always compress into the same session-space ID for the lifetime of the session.
+ *
+ * Local IDs are sent across the wire in efficiently-represented ranges. These ranges are created by querying the compressor, and *must*
+ * be ordered (i.e. sent to the server) in the order they are created in order to preserve the above invariants.
+ *
+ * Session-local IDs can be used immediately after creation, but will eventually (after being sequenced) have a corresponding final ID. This
+ * could make reasoning about equality of those two forms (the local and final) difficult. For example, if a cache is keyed off of a
+ * local ID but is later queried using the final ID (which is semantically equal, as it decompresses to the same UUID) it will produce a
+ * cache miss. In order to make using collections of both remotely created and locally created IDs easy, regardless of whether the
+ * session-local IDs have been finalized, the compressor defines two "spaces" of IDs:
+ *
+ * 1. Session space: in this space, all IDs are normalized to their "most local form". This means that all IDs created by the local session
+ * will be in local form, regardless of if they have been finalized. Remotely created IDs, which could only have been received after
+ * finalizing and will never have a local form for the compressor, will of course be final IDs. This space should be used with consumer APIs
+ * and data structures, as the lifetime of the IDs is guaranteed to be the same as the compressor object. Care must be taken to not use
+ * these IDs across compressor objects, as the local IDs are specific to the compressor that created them.
+ *
+ * 2. Op space: in this space, all IDs are normalized to their "most final form". This means that all IDs except session-local IDs that
+ * have not yet been finalized will be in final ID form. This space is useful for serialization in ops (e.g. references), as other clients
+ * that receive them need not do any work to normalize them to *their* session-space in the common case. Note that IDs in op space may move
+ * out of Op space over time, namely, when a local ID in this space becomes finalized, and thereafter has a "more final form".
+ * Consequentially, it may be useful to restrict parameters of a persisted type to this space (to optimize perf), but it is potentially
+ * incorrect to use this type for a runtime variable. This is an asymmetry that does not affect session space, as local IDs are always as
+ * "local as possible".
+ *
+ * These two spaces naturally define a rule: consumers of compressed IDs should use session-space IDs and serialized forms such as ops
+ * should use op-space IDs.
+ *
  */
 export class IdCompressor {
 	/**
@@ -147,22 +282,44 @@ export class IdCompressor {
 
 	/**
 	 * Session ID -> data about the session's current cluster.
+	 * Sessions are mutable, and thus should only be created via `createSession`.
 	 */
-	private readonly sessions: Map<SessionId, Session>;
+	private readonly sessions = new Map<SessionId, Session>();
+
+	/**
+	 * The `IdCompressor`'s current local session.
+	 */
+	private readonly localSession: Session;
+
+	/**
+	 * Boolean to track whether attribution has been sent with an ID range yet. Prevents unnecessary bloat of ranges.
+	 */
+	private sentAttributionInfo = false;
+
 	/**
 	 * The base final ID of the next cluster to be created.
 	 */
-	private nextClusterBaseFinalId: number;
+	private nextClusterBaseFinalId: FinalCompressedId = 0 as FinalCompressedId;
 
 	/**
 	 * Total number of IDs created locally during the current session.
 	 */
-	private localIdCount: number;
+	private localIdCount = 0;
+
 	/**
-	 * Maps local IDs to explicit IDs. This will contain an entry for every explicit ID assigned to a local ID generated during
+	 * The most recent (i.e. smallest, due to being negative) local ID in a range returned by `takeNextRange`.
+	 * Undefined if no non-empty ranges have ever been returned by this compressor.
+	 */
+	private lastTakenLocalId: LocalCompressedId | undefined;
+
+	/**
+	 * Maps local IDs to override uuids. This will contain an entry for every override assigned to a local ID generated during
 	 * the current session, and retains entries for the lifetime of this compressor.
 	 */
-	private readonly localExplicitIds: Map<LocalCompressedId, MinimalUuidString>;
+	private readonly localOverrides = new AppendOnlySortedMap<LocalCompressedId, MinimalUuidString>(
+		compareFiniteNumbersReversed
+	);
+
 	/**
 	 * Maps local IDs to the cluster they belong to (if any). This can be used to efficiently convert a local ID to a
 	 * final ID by finding an entry <= a given local ID (to find the cluster it is associated with) and checking
@@ -172,296 +329,560 @@ export class IdCompressor {
 		LocalCompressedId,
 		[FinalCompressedId, IdCluster],
 		FinalCompressedId
-	>;
-	/**
-	 * A count of final IDs allocated for the local client (i.e. with the local session ID)
-	 */
-	private finalizedLocalIdCount: number;
-	/**
-	 * The local session info.
-	 */
-	private readonly localSessionDetails: LocalSessionDetails;
-
-	/**
-	 * The `IdCompressor`'s current local session ID.
-	 */
-	public get localSessionId(): SessionId {
-		return this.localSessionDetails.id;
-	}
+	> = new AppendOnlyDoublySortedMap(
+		compareFiniteNumbersReversed,
+		(value) => value[0],
+		IdCompressor.overrideComparator
+	);
 
 	/**
 	 * Maps uuid strings to the compressed form of that uuid.
-	 * Contains entries for cluster base uuids and explicit uuids (both local and final).
-	 * As a performance optimization, entries for base uuids also include the cluster object itself.
-	 * This can be viewed as three separate tables: the inverse table for `localExplicitIds`, the inverse table for the union of all
+	 * Contains entries for cluster base uuids and override uuids (both local and final).
+	 * As a performance optimization, entries for finalized uuids also include the cluster object itself.
+	 * This can be viewed as three separate tables: the inverse table for `localOverrides`, the inverse table for the union of all
 	 * the `explicitIds` of the clusters in `finalIdToCluster`, and the inverse lookup of cluster base uuids to their clusters.
-	 * This is unified as a performance optimization, as the common case does not have any explicit IDs.
+	 * This is unified as a performance optimization, as the common case does not have overridden IDs. It is a btree due to the need
+	 * to make range queries.
 	 */
-	private readonly uuidStringToCompressed: BTree<MinimalUuidString, CompressedId | [FinalCompressedId, IdCluster]>;
+	private readonly uuidStringToId: BTree<MinimalUuidString, CompressionMapping> = new BTree(
+		undefined,
+		compareStrings
+	);
+
 	/**
 	 * Maps the first final ID in a cluster to its owning cluster.
 	 * Can be searched in O(log n) to determine clusters for any final ID.
 	 */
-	private readonly finalIdToCluster: AppendOnlySortedMap<FinalCompressedId, IdCluster>;
+	private readonly finalIdToCluster: AppendOnlySortedMap<FinalCompressedId, IdCluster> = new AppendOnlySortedMap(
+		compareFiniteNumbers
+	);
 
 	/**
-	 * Collection of all generators created for this compressor.
+	 * Helper comparator for searching append-only sorted maps.
 	 */
-	private readonly generators: Record<StableId, FinalIdGenerator> = {};
-
-	public constructor(sessionId: SessionId) {
-		this.sessions = new Map();
-		this.localIdCount = 0;
-		this.localExplicitIds = new Map();
-		this.localIdToCluster = new AppendOnlyDoublySortedMap(
-			compareFiniteNumbersReversed,
-			(value) => value[0],
-			(search, value) => {
-				return compareFiniteNumbers(search, value[0]);
-			}
-		);
-		this.finalizedLocalIdCount = 0;
-		this.localSessionDetails = {
-			id: sessionId,
-			numericId: numericUuidFromUuidString(sessionId) ?? fail('Uuid provided is not a valid session ID.'),
-		};
-		this.uuidStringToCompressed = new BTree(undefined, compareStrings);
-		this.finalIdToCluster = new AppendOnlySortedMap(compareFiniteNumbers);
-		const reservedCluster: IdCluster = {
-			baseUuid: systemSessionUuid,
-			capacity: systemReservedIdCount,
-			count: systemReservedIdCount,
-		};
-		this.nextClusterBaseFinalId = reservedCluster.count;
-		const baseFinalId = 0 as FinalCompressedId;
-		this.uuidStringToCompressed.set(systemReservedUuidBase, [baseFinalId, reservedCluster]);
-		this.finalIdToCluster.append(baseFinalId, reservedCluster);
+	private static overrideComparator<T extends number>(search: T, element: readonly [T, unknown]): number {
+		return compareFiniteNumbers(search, element[0]);
 	}
 
 	/**
+	 * @param localSessionId the `IdCompressor`'s current local session ID.
+	 * @param attributionInfo information used by other clients to attribute IDs made by this client
+	 */
+	public constructor(public readonly localSessionId: SessionId, attributionInfo?: AttributionInfo) {
+		this.localSession = this.createSession(localSessionId, attributionInfo);
+		// Reserved final IDs are implicitly finalized and no one locally created them, so finalizing immediately is safe.
+		this.finalizeRange(reservedIdRange);
+	}
+
+	/**
+	 * Creates a session object for the supplied ID.
+	 * Must only be called once per ID.
 	 * @param sessionId the ID for the session
 	 * @returns the session object for the supplied ID
 	 */
-	private getOrCreateSession(sessionId: SessionId, isLocal: boolean): Session {
-		assertIsMinimalUuidString(sessionId);
-		let existingSession = this.sessions.get(sessionId);
-		if (existingSession === undefined) {
-			const uuid = isLocal ? this.localSessionDetails.numericId : numericUuidFromUuidString(sessionId);
-			assert(uuid !== undefined, 'Uuid provided is not a valid session ID.');
-			assert(!this.uuidStringToCompressed.has(sessionId));
-			existingSession = {
-				sessionUuid: uuid,
-				currentClusterDetails: undefined,
-			};
-			this.sessions.set(sessionId, existingSession);
+	private createSession(sessionId: SessionId, attributionInfo: AttributionInfo | undefined): Session {
+		const existingSession = this.sessions.get(sessionId);
+		if (existingSession !== undefined) {
+			fail('createSession must only be called once for each session ID.');
 		}
+		const uuid = numericUuidFromStableId(sessionId);
+		assert(!this.uuidStringToId.has(sessionId));
+		const session: Session = {
+			sessionUuid: uuid,
+			currentClusterDetails: undefined,
+			lastFinalizedLocalId: undefined,
+		};
+		setPropertyIfDefined(attributionInfo, session, 'attributionInfo');
+		this.sessions.set(sessionId, session);
+		return session;
+	}
 
-		return existingSession;
+	private tryGetSession(sessionId: SessionId): Session | undefined {
+		return this.sessions.get(sessionId);
 	}
 
 	/**
-	 * Provides a callable generator of final IDs for the supplied session ID.
-	 * The returned generator must only be used to generate IDs for a sequenced operation.
-	 * @param sessionId The session ID of the client that created the sequenced operation.
+	 * Returns the attribution info associated with the compressor that created the ID, if it exists.
 	 */
-	public getFinalIdGenerator(sessionId: SessionId): FinalIdGenerator {
-		// This method is optimized for performance. Unlike allocation of local IDs, it exposes a generator for batch allocation.
-		// This amortizes the significant cost incurred preparing to allocate final IDs across batches.
-		assertIsMinimalUuidString(sessionId);
-		let generator: FinalIdGenerator | undefined = this.generators[sessionId];
-		if (generator === undefined) {
-			const isLocal = sessionId === this.localSessionDetails.id;
-			const session = this.getOrCreateSession(sessionId, isLocal);
-			const { currentClusterDetails } = session;
+	public attributeId(id: SessionSpaceCompressedId): AttributionInfo | undefined {
+		const opSpaceNormalizedId = this.normalizeToOpSpace(id);
+		if (isLocalId(opSpaceNormalizedId)) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			return this.localSession.attributionInfo;
+		}
+		const [_, cluster] =
+			this.getClusterForFinalId(opSpaceNormalizedId) ?? fail('Cluster does not exist for final ID');
 
-			let currentBaseFinalId: FinalCompressedId | undefined;
-			let currentCluster: Mutable<IdCluster> | undefined;
-			if (currentClusterDetails !== undefined) {
-				currentBaseFinalId = currentClusterDetails.clusterBase;
-				currentCluster = currentClusterDetails.cluster;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return cluster.session.attributionInfo;
+	}
+
+	/**
+	 * Provides the session-space IDs corresponding to a range of implicit IDs.
+	 * See `ImplicitIdRange` for more details.
+	 */
+	public getImplicitIdsFromRange(localRange: IdRange): ImplicitIdRange {
+		const { sessionId } = localRange;
+		const implicits = IdRange.getImplicits(localRange);
+
+		if (sessionId === this.localSessionId) {
+			if (implicits === undefined) {
+				return {
+					length: 0,
+					get: () => fail('No implicit IDs exist in range.'),
+				};
 			}
 
-			const generatorFunc = (option: MinimalUuidString | undefined | number): FinalCompressedId => {
-				const isBatch = typeof option === 'number';
-				const explicitId = isBatch ? undefined : option;
-				const batchSize = isBatch ? option : 1;
-				let batchSizeRemaining = batchSize;
-
-				// If this explicitId has already been assigned a final ID, there is no need to allocate a new one.
-				if (explicitId !== undefined) {
-					assertIsMinimalUuidString(explicitId);
-					const existingCompressedId = this.getCompressedIdForNewExplicitId(explicitId);
-					if (existingCompressedId !== undefined && isFinalId(existingCompressedId)) {
-						return existingCompressedId;
+			const { first, count } = implicits;
+			return {
+				length: count,
+				get: (index: number) => {
+					if (index < 0 || index >= count) {
+						fail('Index out of bounds of implicit range.');
 					}
-				}
-
-				if (isLocal) {
-					this.finalizedLocalIdCount += batchSizeRemaining;
-					if (this.finalizedLocalIdCount > this.localIdCount) {
-						this.localIdCount = this.finalizedLocalIdCount;
-					}
-				}
-
-				let newBaseUuid: NumericUuid | undefined;
-				let remainingCapacity: number;
-				if (currentCluster !== undefined && currentBaseFinalId !== undefined) {
-					remainingCapacity = currentCluster.capacity - currentCluster.count;
-					const overflow = batchSizeRemaining - remainingCapacity;
-					const hasRoom = overflow <= 0;
-					if (
-						hasRoom ||
-						(currentCluster.explicitIds === undefined &&
-							currentBaseFinalId === this.finalIdToCluster.maxKey())
-					) {
-						const firstFinalIdInBatch = (currentBaseFinalId + currentCluster.count) as FinalCompressedId;
-						currentCluster.count += batchSizeRemaining;
-						// Case 1: common case, there is room in the cluster so add new final ID to it
-						if (!hasRoom) {
-							// Case 2: the cluster is full but is the last in the list of clusters.
-							// This allows it to be expanded instead of allocating a new one.
-							// Note from the condition above that this is heuristically done only if the cluster to be expanded does
-							// not have any explicit IDs, as they slow down operations for all IDs in the cluster.
-
-							// -1 to best-effort align the new capacity to  increments of the client's requested cluster size in the
-							// common case where batch size === 1
-							const expansionAmount = this.newClusterCapacity + overflow - 1;
-							currentCluster.capacity += expansionAmount;
-							this.nextClusterBaseFinalId += expansionAmount;
-							assert(
-								this.nextClusterBaseFinalId < Number.MAX_SAFE_INTEGER,
-								'The number of allocated final IDs must not exceed the JS maximum safe integer.'
-							);
-						}
-						if (explicitId !== undefined) {
-							this.addExplicitIdToCluster(currentCluster, firstFinalIdInBatch, explicitId);
-						}
-						return firstFinalIdInBatch;
-					} else {
-						// Case 3: the batch cannot be fully allocated in the existing cluster, so allocate any space left in it and
-						// form a new one by incrementing the previous baseUuid
-						newBaseUuid = incrementUuid(currentCluster.baseUuid, currentCluster.capacity);
-						currentCluster.count += remainingCapacity;
-						batchSizeRemaining -= remainingCapacity;
-					}
-				} else {
-					// Case 4: client has never made a cluster, form a new one with the session uuid as the baseUuid
-					remainingCapacity = 0;
-					newBaseUuid = session.sessionUuid;
-				}
-
-				// Case 3 or 4, need to make a new cluster
-				if (currentCluster !== undefined && currentCluster.capacity !== currentCluster.count) {
-					fail('Cluster must be filled before another is allocated.');
-				}
-				const newBaseFinalId = this.nextClusterBaseFinalId as FinalCompressedId;
-				const newCluster: Mutable<IdCluster> = {
-					baseUuid: newBaseUuid,
-					capacity: this.newClusterCapacity + batchSizeRemaining - 1,
-					count: batchSizeRemaining,
-				};
-				if (explicitId !== undefined) {
-					this.addExplicitIdToCluster(newCluster, newBaseFinalId, explicitId);
-				}
-				if (isLocal) {
-					this.localIdToCluster.append(
-						-(this.finalizedLocalIdCount - (batchSize - remainingCapacity) + 1) as LocalCompressedId,
-						[newBaseFinalId, newCluster]
-					);
-				}
-
-				const maxClusterUuid = incrementUuid(newCluster.baseUuid, newCluster.capacity - 1);
-				const maxClusterStableId = stableIdFromNumericUuid(maxClusterUuid);
-				const closestMatch = this.uuidStringToCompressed.getPairOrNextLower(maxClusterStableId);
-				if (closestMatch !== undefined) {
-					const [foundUuidString, compressedResult] = closestMatch;
-					if (typeof compressedResult === 'number') {
-						if (IdCompressor.uuidsMightCollide(foundUuidString, maxClusterStableId, newCluster.capacity)) {
-							const numericExplicit = numericUuidFromUuidString(foundUuidString);
-							if (numericExplicit !== undefined) {
-								const delta = getPositiveDelta(
-									maxClusterUuid,
-									numericExplicit,
-									newCluster.capacity - 1
-								);
-								if (delta !== undefined) {
-									IdCompressor.failWithCollidingExplicit(foundUuidString);
-								}
-							}
-						}
-					}
-				}
-
-				this.uuidStringToCompressed.set(stableIdFromNumericUuid(newCluster.baseUuid), [
-					newBaseFinalId,
-					newCluster,
-				]);
-				this.sessions.set(sessionId, {
-					sessionUuid: session.sessionUuid,
-					currentClusterDetails: { cluster: newCluster, clusterBase: newBaseFinalId },
-				});
-				this.nextClusterBaseFinalId += newCluster.capacity;
-				assert(
-					this.nextClusterBaseFinalId < Number.MAX_SAFE_INTEGER,
-					'The number of allocated final IDs must not exceed the JS maximum safe integer.'
-				);
-				this.finalIdToCluster.append(newBaseFinalId, newCluster);
-				currentCluster = newCluster;
-				currentBaseFinalId = newBaseFinalId;
-				return newBaseFinalId;
+					return (first - index) as LocalCompressedId;
+				},
 			};
+		} else {
+			if (implicits === undefined) {
+				return {
+					length: 0,
+					get: () => fail('No implicit IDs exist in range.'),
+				};
+			} else {
+				const { first, count } = implicits;
+				const session = this.tryGetSession(sessionId) ?? fail('Unknown session, range may not be finalized.');
+				const firstNumericUuid = incrementUuid(session.sessionUuid, -first - 1);
+				const firstImplicitFinal =
+					this.compressNumericUuid(firstNumericUuid) ??
+					fail('Remote range must be finalized before getting IDs.');
+				assert(
+					isFinalId(firstImplicitFinal),
+					'Implicit IDs from a remote session ID must have final form, as overrides are impossible by definition.'
+				);
+				const [baseFinalId, cluster] = this.getClusterForFinalId(firstImplicitFinal) ?? fail();
+				const numImplicitsRemainingInFirstCluster = cluster.capacity - (firstImplicitFinal - baseFinalId);
+				let pivotFinal: FinalCompressedId | undefined;
+				if (count > numImplicitsRemainingInFirstCluster) {
+					const compressedPivot = this.compressNumericUuid(
+						incrementUuid(firstNumericUuid, numImplicitsRemainingInFirstCluster)
+					);
+					// Looking up the actual cluster can be avoided, as it is guaranteed that at most one new cluster will be
+					// created when finalizing a range (regardless of size) due to the expansion optimization.
+					if (compressedPivot === undefined || isLocalId(compressedPivot)) {
+						fail(
+							'Implicit IDs from a remote session ID must have final form, as overrides are impossible by definition.'
+						);
+					} else {
+						pivotFinal = compressedPivot;
+					}
+				}
 
-			generator = { generateFinalId: generatorFunc, generateFinalIdBatch: generatorFunc };
-			this.generators[sessionId] = generator;
+				return {
+					length: count,
+					get: (index: number) => {
+						if (index < 0 || index >= count) {
+							fail('Index out of bounds of implicit range.');
+						}
+						if (index < numImplicitsRemainingInFirstCluster) {
+							return (firstImplicitFinal + index) as FinalCompressedId & SessionSpaceCompressedId;
+						} else {
+							return ((pivotFinal ?? fail('Pivot must exist if range spans clusters.')) +
+								(index - numImplicitsRemainingInFirstCluster)) as FinalCompressedId &
+								SessionSpaceCompressedId;
+						}
+					},
+				};
+			}
+		}
+	}
+
+	/**
+	 * Returns a range of local IDs created by this session in a format for sending to the server for finalizing.
+	 * The range will include the supplied number of implicit IDs as well as all local IDs generated via calls to
+	 * `generateCompressedId` since the last time this method was called.
+	 * @param implicitCount the number of implicit local IDs in the range. Zero should be passed if no implicits should be in the range.
+	 * @returns the range of session-local IDs, or undefined if none exist. This range must be sent to the server for ordering before
+	 * it is finalized. Ranges must be sent to the server in the order that they are taken via calls to this method.
+	 */
+	public takeNextRange(implicitCount: number): IdRange {
+		assert(implicitCount >= 0, 'Implicit count cannot be negative.');
+		const firstImplicitLocal = -(this.localIdCount + 1) as UnackedLocalId;
+		const lastExplicitLocal = (firstImplicitLocal + 1) as UnackedLocalId;
+		const lastTakenNormalized = this.lastTakenLocalId ?? 0;
+		assert(lastExplicitLocal <= lastTakenNormalized);
+
+		let explicits: IdRange.Explicits | undefined;
+		if (lastExplicitLocal !== lastTakenNormalized) {
+			const firstExplicitLocal = (lastTakenNormalized - 1) as UnackedLocalId;
+			const localOverrides = [
+				...this.localOverrides.getRange(
+					(lastTakenNormalized - 1) as LocalCompressedId,
+					(firstImplicitLocal + 1) as LocalCompressedId
+				),
+			];
+			if (localOverrides.length > 0) {
+				// Cast: typecript 4.4.4 doesn't infer that `localOverrides` has at least one element and is therefore an `Overrides`
+				const overrides = localOverrides as unknown as IdRange.Overrides;
+				assert(overrides[0][0] <= firstExplicitLocal);
+				assert(overrides[overrides.length - 1][0] >= lastExplicitLocal);
+				explicits = {
+					overrides,
+				};
+				const first = firstExplicitLocal === overrides[0][0] ? undefined : firstExplicitLocal;
+				const last = lastExplicitLocal === overrides[overrides.length - 1][0] ? undefined : lastExplicitLocal;
+				setPropertyIfDefined(first, explicits, 'first');
+				setPropertyIfDefined(last, explicits, 'last');
+			} else {
+				explicits = {
+					first: firstExplicitLocal,
+					last: lastExplicitLocal,
+				};
+			}
+			this.lastTakenLocalId = lastExplicitLocal;
 		}
 
-		return generator;
-	}
+		const range: Mutable<IdRange> = { sessionId: this.localSessionId };
+		if (!this.sentAttributionInfo) {
+			setPropertyIfDefined(this.localSession.attributionInfo, range, 'attributionInfo');
+			this.sentAttributionInfo = true;
+		}
+		if (explicits === undefined && implicitCount === 0) {
+			return range;
+		}
 
-	private static failWithCollidingExplicit(explicitId: MinimalUuidString): void {
-		fail(`Explicit ID ${explicitId} collides with another allocated uuid.`);
-	}
-
-	private addExplicitIdToCluster(
-		cluster: Mutable<IdCluster>,
-		finalId: FinalCompressedId,
-		explicitId: MinimalUuidString
-	): void {
-		cluster.explicitIds ??= new Map();
-		cluster.explicitIds.set(finalId, explicitId);
-		this.uuidStringToCompressed.set(explicitId, finalId);
-	}
-
-	private getCompressedIdForNewExplicitId(explicitId: MinimalUuidString): CompressedId | undefined {
-		const closestMatch = this.uuidStringToCompressed.getPairOrNextLower(explicitId, reusedArray);
-		if (closestMatch !== undefined) {
-			const [foundUuidString, compressedResult] = closestMatch;
-			const isExplicit = typeof compressedResult === 'number';
-			if (isExplicit) {
-				return foundUuidString === explicitId ? compressedResult : undefined;
+		let ids: IdRange.Ids;
+		if (implicitCount !== 0) {
+			const lastImplicitLocal = (firstImplicitLocal - implicitCount + 1) as UnackedLocalId;
+			this.localIdCount += implicitCount;
+			if (explicits === undefined) {
+				ids = { implicits: { first: firstImplicitLocal, last: lastImplicitLocal } };
 			} else {
-				const [_, cluster] = compressedResult;
-				if (!IdCompressor.uuidsMightCollide(foundUuidString, explicitId, cluster.capacity)) {
+				ids = { explicits, implicits: { last: lastImplicitLocal } };
+			}
+			assert(
+				ids.implicits !== undefined && ids.implicits.last < (this.lastTakenLocalId ?? lastTakenNormalized),
+				'Implicits must be ordered after explicits'
+			);
+			this.lastTakenLocalId = ids.implicits.last;
+		} else {
+			ids = { explicits: explicits ?? fail('No explicits and no implicits should have returned earlier.') };
+		}
+
+		assert(
+			this.lastTakenLocalId === -this.localIdCount && this.lastTakenLocalId !== lastTakenNormalized,
+			'Non-empty range must properly consume local IDs'
+		);
+
+		range.ids = ids;
+		return range;
+	}
+
+	/**
+	 * Finalizes the supplied range of IDs (which may be from either a remote or local session).
+	 * @param range the range of session-local IDs to finalize.
+	 */
+	public finalizeRange(range: IdRange): void {
+		const { sessionId, attributionInfo } = range;
+
+		const isLocal = sessionId === this.localSessionId;
+		let session = this.tryGetSession(sessionId);
+		assert(
+			range.attributionInfo === undefined || session === undefined || isLocal,
+			'Attribution info can only be supplied on initial range for a session, and never modified.'
+		);
+		session ??= this.createSession(sessionId, attributionInfo);
+
+		const implicits = IdRange.getImplicits(range);
+		const explicits = IdRange.getExplicits(range);
+		if (implicits === undefined && explicits === undefined) {
+			return;
+		}
+
+		const { currentClusterDetails } = session;
+		const { cluster: currentCluster, clusterBase: currentBaseFinalId } = currentClusterDetails ?? {
+			cluster: undefined,
+			clusterBase: undefined,
+		};
+
+		const normalizedLastFinalized = session.lastFinalizedLocalId ?? 0;
+		const newFirstFinalizedLocalId = explicits?.first ?? implicits?.first;
+		assert(newFirstFinalizedLocalId === normalizedLastFinalized - 1, 'Ranges finalized out of order.');
+		const newLastFinalizedLocalId = implicits?.last ?? explicits?.last ?? fail();
+
+		// The total number of session-local IDs to finalize
+		const finalizeCount = normalizedLastFinalized - newLastFinalizedLocalId;
+		assert(finalizeCount >= 1, 'Cannot finalize an empty range.');
+
+		let initialClusterCount = 0;
+		let remainingCount = finalizeCount;
+		let newBaseUuid: NumericUuid | undefined;
+		if (currentCluster !== undefined && currentBaseFinalId !== undefined) {
+			initialClusterCount = currentCluster.count;
+			const remainingCapacity = currentCluster.capacity - initialClusterCount;
+			const overflow = remainingCount - remainingCapacity;
+			const hasRoom = overflow <= 0;
+			if (
+				hasRoom ||
+				(currentCluster.overrides === undefined && currentBaseFinalId === this.finalIdToCluster.maxKey())
+			) {
+				currentCluster.count += remainingCount;
+				remainingCount = 0;
+				// The common case is that there is room in the cluster, and the new final IDs can simply be added to it
+				if (!hasRoom) {
+					// The cluster is full but is the last in the list of clusters.
+					// This allows it to be expanded instead of allocating a new one.
+					// Note from the condition above that this is heuristically done only if the cluster to be expanded does
+					// not have any overridden IDs, as they slow down operations for all IDs in the cluster.
+					const expansionAmount = this.newClusterCapacity + overflow;
+					currentCluster.capacity += expansionAmount;
+					this.nextClusterBaseFinalId = (this.nextClusterBaseFinalId + expansionAmount) as FinalCompressedId;
+					assert(
+						this.nextClusterBaseFinalId < Number.MAX_SAFE_INTEGER,
+						'The number of allocated final IDs must not exceed the JS maximum safe integer.'
+					);
+					this.checkClusterForCollision(currentCluster);
+				}
+			} else {
+				// The range cannot be fully allocated in the existing cluster, so allocate any space left in it and
+				// form a new one by incrementing the previous baseUuid
+				newBaseUuid = incrementUuid(currentCluster.baseUuid, currentCluster.capacity);
+				currentCluster.count += remainingCapacity;
+				remainingCount -= remainingCapacity;
+			}
+		} else {
+			// Session has never made a cluster, form a new one with the session uuid as the baseUuid
+			newBaseUuid = session.sessionUuid;
+		}
+
+		// Finalizing a range results in one of three cases:
+		// 1. All local IDs are finalized into a new cluster (because there was either never a cluster for that session, or the current
+		//		cluster for the session was full).
+		// 2. All local IDs are finalized into the existing (current) cluster for the session.
+		// 3. Local IDs are finalized into both the current cluster and a new one, as the current cluster did not have enough room.
+		let newCluster: IdCluster | undefined;
+		let newBaseFinalId: FinalCompressedId | undefined;
+		// The first local ID that will be finalized into a new cluster, if there is one.
+		// This lets us quickly compare which cluster an override UUID will go into.
+		let localIdPivot: LocalCompressedId | undefined;
+
+		// Need to make a new cluster
+		if (newBaseUuid !== undefined) {
+			if (remainingCount <= 0) {
+				fail('Should not create an empty cluster.');
+			}
+			if (currentCluster !== undefined && currentCluster.capacity !== currentCluster.count) {
+				fail('Cluster must be filled before another is allocated.');
+			}
+
+			newBaseFinalId = this.nextClusterBaseFinalId;
+			newCluster = {
+				baseUuid: newBaseUuid,
+				capacity: Math.max(this.newClusterCapacity, remainingCount),
+				count: remainingCount,
+				session,
+			};
+
+			const usedCapacity = finalizeCount - remainingCount;
+			localIdPivot = (newFirstFinalizedLocalId - usedCapacity) as LocalCompressedId;
+
+			if (isLocal) {
+				this.localIdToCluster.append(localIdPivot, [newBaseFinalId, newCluster]);
+			}
+
+			this.checkClusterForCollision(newCluster);
+			this.uuidStringToId.set(stableIdFromNumericUuid(newCluster.baseUuid), {
+				clusterBase: newBaseFinalId,
+				cluster: newCluster,
+			});
+			session.currentClusterDetails = { cluster: newCluster, clusterBase: newBaseFinalId };
+			this.nextClusterBaseFinalId = (this.nextClusterBaseFinalId + newCluster.capacity) as FinalCompressedId;
+			assert(
+				this.nextClusterBaseFinalId < Number.MAX_SAFE_INTEGER,
+				'The number of allocated final IDs must not exceed the JS maximum safe integer.'
+			);
+			this.finalIdToCluster.append(newBaseFinalId, newCluster);
+		}
+
+		// If there are overrides, we must determine which cluster object (current or overflow) each belongs to and add it.
+		const overrides = explicits?.overrides;
+		if (overrides !== undefined) {
+			for (let i = 0; i < overrides.length; i++) {
+				const [overriddenLocal, overrideUuid] = overrides[i];
+				// Note: recall that local IDs are negative
+				assert(i === 0 || overriddenLocal < overrides[i - 1][0], 'Override IDs must be in sorted order.');
+				assert(overriddenLocal < normalizedLastFinalized, 'Ranges finalized out of order.');
+				assert(
+					overriddenLocal >= newLastFinalizedLocalId,
+					'Malformed range: override ID ahead of implicit range start.'
+				);
+				let cluster: IdCluster;
+				let overriddenFinal: FinalCompressedId;
+				if (localIdPivot !== undefined && overriddenLocal <= localIdPivot) {
+					// Override is at or past the pivot, so it is in a new cluster.
+					assert(
+						newCluster !== undefined && newBaseFinalId !== undefined,
+						'No cluster was created when overflow occurred.'
+					);
+					cluster = newCluster;
+					overriddenFinal = (newBaseFinalId + (localIdPivot - overriddenLocal)) as FinalCompressedId;
+				} else {
+					// Override was finalized into an existing cluster
+					assert(
+						currentCluster !== undefined && currentBaseFinalId !== undefined,
+						'No cluster exists but IDs were finalized.'
+					);
+					cluster = currentCluster;
+					overriddenFinal = (currentBaseFinalId +
+						initialClusterCount +
+						(normalizedLastFinalized - overriddenLocal) -
+						1) as FinalCompressedId;
+				}
+				cluster.overrides ??= new Map();
+
+				const existingIds = this.getExistingIdsForNewOverride(overrideUuid);
+				let overrideForCluster: MinimalUuidString | FinalCompressedId;
+				let associatedLocal: LocalCompressedId | undefined;
+				if (existingIds !== undefined) {
+					let mostFinalExistingOverride: CompressedId;
+					if (typeof existingIds === 'number') {
+						mostFinalExistingOverride = existingIds;
+						if (isLocalId(mostFinalExistingOverride)) {
+							associatedLocal = mostFinalExistingOverride;
+						}
+					} else {
+						[associatedLocal, mostFinalExistingOverride] = existingIds;
+					}
+					if (isFinalId(mostFinalExistingOverride)) {
+						// A previous range already finalized an ID with this override. See `IdCluster` for more.
+						overrideForCluster = mostFinalExistingOverride;
+					} else {
+						assert(
+							!isLocal || mostFinalExistingOverride === overriddenLocal,
+							'Cannot have multiple local IDs with identical override UUIDs.'
+						);
+						// This session has created an ID with this override before, but has not finalized it yet. The incoming
+						// range "wins" and will contain the final ID associated with that uuid, regardless of if that range was
+						// made by this session or not.
+						overrideForCluster = overrideUuid;
+					}
+				} else {
+					// This is the first time this uuid has been associated with any ID
+					overrideForCluster = overrideUuid;
+				}
+
+				assert(!cluster.overrides.has(overriddenFinal), 'Cannot add a second override UUID for final id');
+				const hasAssociatedLocal = associatedLocal !== undefined;
+				if (typeof overrideForCluster === 'string') {
+					if (isLocal || associatedLocal === undefined) {
+						cluster.overrides.set(overriddenFinal, overrideUuid);
+					} else {
+						cluster.overrides.set(overriddenFinal, {
+							uuid: overrideUuid,
+							originalOverridingFinal: overriddenFinal,
+							associatedLocalId: associatedLocal,
+						});
+					}
+				} else {
+					const override: Mutable<UnifiedOverride> = {
+						uuid: overrideUuid,
+						originalOverridingFinal: overrideForCluster,
+					};
+					if (hasAssociatedLocal) {
+						override.associatedLocalId = associatedLocal;
+					}
+					cluster.overrides.set(overriddenFinal, override);
+				}
+				const overrideObj: Mutable<FinalizedOverride> = { cluster, originalOverridingFinal: overriddenFinal };
+				if (hasAssociatedLocal) {
+					overrideObj.associatedLocalId = associatedLocal;
+				}
+				const currentOverride = this.uuidStringToId.get(overrideUuid);
+				if (currentOverride === undefined || typeof currentOverride === 'number') {
+					// Update the map to contained a finalized override, but never update it with future finalized overrides with
+					// the same uuid as those should decompress to the first final ID with that override.
+					this.uuidStringToId.set(overrideUuid, overrideObj);
+				}
+			}
+		}
+
+		session.lastFinalizedLocalId = newLastFinalizedLocalId;
+	}
+
+	private checkClusterForCollision(cluster: IdCluster): void {
+		const maxClusterUuid = incrementUuid(cluster.baseUuid, cluster.capacity - 1);
+		const maxClusterStableId = stableIdFromNumericUuid(maxClusterUuid);
+		const closestMatch = this.uuidStringToId.getPairOrNextLower(maxClusterStableId);
+		if (closestMatch !== undefined) {
+			const [foundUuidString, compressionMapping] = closestMatch;
+			if (!IdCompressor.isClusterInfo(compressionMapping)) {
+				if (
+					isStableId(foundUuidString) &&
+					IdCompressor.uuidsMightCollide(foundUuidString, maxClusterStableId, cluster.capacity)
+				) {
+					const numericOverride = numericUuidFromStableId(foundUuidString);
+					const delta = getPositiveDelta(maxClusterUuid, numericOverride, cluster.capacity - 1);
+					if (delta !== undefined) {
+						IdCompressor.failWithCollidingOverride(foundUuidString);
+					}
+				}
+			}
+		}
+	}
+
+	private static failWithCollidingOverride(override: MinimalUuidString): void {
+		fail(`Override ID ${override} collides with another allocated uuid.`);
+	}
+
+	private static isClusterInfo(compressionMapping: CompressionMapping): compressionMapping is ClusterInfo {
+		return (compressionMapping as ClusterInfo).clusterBase !== undefined;
+	}
+
+	/**
+	 * Returns an existing ID associated with an override UUID, or undefined if none exists.
+	 */
+	private getExistingIdsForNewOverride(
+		overrideUuid: MinimalUuidString
+	): SessionSpaceCompressedId | [LocalCompressedId, FinalCompressedId] | undefined {
+		const closestMatch = this.uuidStringToId.getPairOrNextLower(overrideUuid, reusedArray);
+		if (closestMatch !== undefined) {
+			const [foundUuidString, compressionMapping] = closestMatch;
+			if (!IdCompressor.isClusterInfo(compressionMapping)) {
+				if (foundUuidString !== overrideUuid) {
 					return undefined;
 				}
-				const numericExplicit =
-					numericUuidFromUuidString(explicitId) ?? fail('Non-v4 uuid generated accidentally.');
-
-				const delta = getPositiveDelta(numericExplicit, cluster.baseUuid, cluster.capacity - 1);
+				if (typeof compressionMapping === 'number') {
+					return compressionMapping;
+				}
+				const finalizedOverride = compressionMapping;
+				return finalizedOverride.associatedLocalId !== undefined
+					? [finalizedOverride.associatedLocalId, finalizedOverride.originalOverridingFinal]
+					: (finalizedOverride.originalOverridingFinal as SessionSpaceCompressedId);
+			} else if (isStableId(overrideUuid)) {
+				const cluster = compressionMapping.cluster;
+				if (!IdCompressor.uuidsMightCollide(foundUuidString as StableId, overrideUuid, cluster.capacity)) {
+					return undefined;
+				}
+				const numericOverride = numericUuidFromStableId(overrideUuid);
+				const delta = getPositiveDelta(numericOverride, cluster.baseUuid, cluster.capacity - 1);
 				if (delta === undefined) {
 					return undefined;
 				}
+				IdCompressor.failWithCollidingOverride(overrideUuid);
 			}
-			IdCompressor.failWithCollidingExplicit(explicitId);
 		}
 		return undefined;
 	}
 
-	private static uuidsMightCollide(a: MinimalUuidString, b: MinimalUuidString, range: number): boolean {
+	/**
+	 * Check if `a` might be within `range` of `b`, where both are treated as hex numbers.
+	 * @param range an integer
+	 */
+	private static uuidsMightCollide(a: StableId, b: StableId, range: number): boolean {
 		// Check if any of the UUIDs in the cluster collide (i.e. any in [base, base + capacity)).
 		// Optimization: All UUIDs in a cluster are the same string up until the last few characters which encode the offset from
-		// the cluster base. So, first compute the length of that shared string, and early out if it is different from the explicit
-		// id. This way we usually need not do the more expensive check below.
+		// the cluster base. So, first compute the length of that shared string, and early out if it is different from the override
+		// UUID. This way we usually need not do the more expensive check below.
 		const hexDigitsToCheck = 32 - Math.ceil(Math.log2(range) / 2);
 		if (a.startsWith(b.slice(0, hexDigitsToCheck))) {
 			return true;
@@ -471,24 +892,38 @@ export class IdCompressor {
 	}
 
 	/**
+	 * Helper for retrieving an uuid override.
+	 */
+	private static tryGetOverride(cluster: IdCluster, finalId: FinalCompressedId): MinimalUuidString | undefined {
+		const override = cluster.overrides?.get(finalId);
+		if (override === undefined) {
+			return undefined;
+		}
+		if (typeof override === 'string') {
+			return override;
+		}
+		return override.uuid;
+	}
+
+	/**
 	 * Generates a new compressed ID or returns an existing one.
 	 * This should ONLY be called to generate IDs for local operations.
-	 * @param explicitId Specifies a specific uuid to be associated with the returned compressed ID.
-	 * Performance note: assigning explicit IDs incurs a performance overhead and should be avoided if possible.
-	 * @returns an existing CompressedId if one already exists for `explicitId`, and a new `LocalCompressedId` otherwise.
+	 * @param override Specifies a specific uuid to be associated with the returned compressed ID.
+	 * Performance note: assigning override UUIDs incurs a performance overhead.
+	 * @returns an existing ID if one already exists for `override`, and a new local ID otherwise. The returned ID is in session space.
 	 */
-	public generateCompressedId(explicitId?: MinimalUuidString): CompressedId {
-		// If any compressed ID exists for this explicit ID (locally or remotely allocated), return it.
-		if (explicitId) {
-			assertIsMinimalUuidString(explicitId);
-			const existingCompressedId = this.getCompressedIdForNewExplicitId(explicitId);
-			if (existingCompressedId !== undefined) {
-				return existingCompressedId;
+	public generateCompressedId(override?: MinimalUuidString): SessionSpaceCompressedId {
+		// If any ID exists for this override (locally or remotely allocated), return it (after ensuring it is in session-space).
+		if (override) {
+			const existingIds = this.getExistingIdsForNewOverride(override);
+			if (existingIds !== undefined) {
+				return typeof existingIds === 'number' ? existingIds : existingIds[0];
 			} else {
-				const compressedId = this.generateNextLocalId();
-				this.localExplicitIds.set(compressedId, explicitId);
-				this.uuidStringToCompressed.set(explicitId, compressedId);
-				return compressedId;
+				const newLocalId = this.generateNextLocalId();
+				this.localOverrides.append(newLocalId, override);
+				// Since the local ID was just created, it is in both session and op space
+				this.uuidStringToId.set(override, newLocalId as UnackedLocalId);
+				return newLocalId;
 			}
 		} else {
 			return this.generateNextLocalId();
@@ -502,18 +937,18 @@ export class IdCompressor {
 	/**
 	 * Decompresses a previously compressed ID into a uuid.
 	 * @param id the compressed ID to be decompressed.
-	 * @returns the uuid associated with the compressed ID or undefined if that ID has never been generated.
+	 * @returns the uuid associated with the compressed ID
 	 */
-	public decompress(id: CompressedId): MinimalUuidString | undefined {
+	public decompress(id: SessionSpaceCompressedId | FinalCompressedId): MinimalUuidString {
 		if (isFinalId(id)) {
 			const possibleCluster = this.getClusterForFinalId(id);
 			if (possibleCluster === undefined) {
-				return undefined;
+				fail('Cannot decompress ID which is not known to this compressor');
 			} else {
 				const [baseFinalId, cluster] = possibleCluster;
-				const explicitId = cluster.explicitIds?.get(id);
-				if (explicitId !== undefined) {
-					return explicitId;
+				const override = IdCompressor.tryGetOverride(cluster, id);
+				if (override !== undefined) {
+					return override;
 				} else {
 					const offsetInCluster = id - baseFinalId;
 					return stableIdFromNumericUuid(cluster.baseUuid, offsetInCluster);
@@ -523,17 +958,17 @@ export class IdCompressor {
 			const idOffset = -id; // Convert to a positive number
 			if (idOffset > this.localIdCount) {
 				// This local ID was never allocated.
-				return undefined;
+				fail('Cannot decompress ID which is not known to this compressor');
 			}
 
-			// If this is a local ID with an explicit ID, then it must have been allocated on this machine and will be contained in
-			// `localExplicitId`s. Otherwise, it is a sequential allocation from the session uuid and can simply be negated and
+			// If this is a local ID with an override, then it must have been allocated on this machine and will be contained in
+			// `localOverrides`s. Otherwise, it is a sequential allocation from the session uuid and can simply be negated and
 			// added to that uuid to obtain the stable ID associated with it.
-			const localExplicitId = this.localExplicitIds?.get(id);
-			if (localExplicitId !== undefined) {
-				return localExplicitId;
+			const localOverride = this.localOverrides?.get(id);
+			if (localOverride !== undefined) {
+				return localOverride;
 			} else {
-				return stableIdFromNumericUuid(this.localSessionDetails.numericId, idOffset - 1);
+				return stableIdFromNumericUuid(this.localSession.sessionUuid, idOffset - 1);
 			}
 		}
 	}
@@ -543,49 +978,66 @@ export class IdCompressor {
 	 * @param uncompressedUuid the uuid to recompress.
 	 * @returns the `CompressedId` associated with the uuid or undefined if it has not been previously compressed by this compressor.
 	 */
-	public compress(uncompressedUuid: MinimalUuidString): CompressedId | undefined {
-		assertIsMinimalUuidString(uncompressedUuid);
-		let numericUuid: NumericUuid | undefined;
-		const closestMatch = this.uuidStringToCompressed.getPairOrNextLower(uncompressedUuid, reusedArray);
+	public compress(uncompressedUuid: MinimalUuidString): SessionSpaceCompressedId | undefined {
+		return this.compressInternal(uncompressedUuid);
+	}
+
+	/**
+	 * Helper to compress an uncompressed uuid. It can optionally be supplied with the numeric form of `uncompressedUuid` as a
+	 * performance optimization.
+	 */
+	private compressInternal(
+		uncompressedUuid: MinimalUuidString,
+		uncompressedUuidNumeric?: NumericUuid
+	): SessionSpaceCompressedId | undefined {
+		let numericUuid = uncompressedUuidNumeric;
+		const closestMatch = this.uuidStringToId.getPairOrNextLower(uncompressedUuid, reusedArray);
 		if (closestMatch !== undefined) {
-			const [foundUuidString, compressedResult] = closestMatch;
-			const isExplicit = typeof compressedResult === 'number';
-			if (isExplicit) {
-				if (isFinalId(compressedResult)) {
-					const [_, cluster] =
-						this.getClusterForFinalId(compressedResult) ?? fail('Cluster tables out of sync');
-					const explicitId = cluster?.explicitIds?.get(compressedResult);
-					if (explicitId === undefined) {
-						fail('No explicit ID for string table entry marked as having one.');
-					}
-					if (explicitId === uncompressedUuid) {
-						return compressedResult;
-					}
-				} else {
-					// Closest match is a local explicit ID
-					if (foundUuidString === uncompressedUuid) {
-						// Exact match with local ID means it must be an explicit ID, so no cluster math needed.
-						return compressedResult;
+			const [foundUuidString, compressionMapping] = closestMatch;
+			if (!IdCompressor.isClusterInfo(compressionMapping)) {
+				if (foundUuidString === uncompressedUuid) {
+					if (typeof compressionMapping === 'number') {
+						return compressionMapping;
+					} else {
+						const cluster = compressionMapping.cluster;
+						assert(
+							IdCompressor.tryGetOverride(cluster, compressionMapping.originalOverridingFinal) !==
+								undefined,
+							'No override for cluster marked as having one.'
+						);
+						return (
+							compressionMapping.associatedLocalId ??
+							(compressionMapping.originalOverridingFinal as SessionSpaceCompressedId)
+						);
 					}
 				}
 			} else {
-				const [closestBaseFinalId, closestCluster] = compressedResult;
-				numericUuid = numericUuidFromUuidString(uncompressedUuid);
-				const uuidOffset =
-					numericUuid === undefined
-						? undefined
-						: getPositiveDelta(numericUuid, closestCluster.baseUuid, closestCluster.count - 1);
+				if (!isStableId(uncompressedUuid)) {
+					return undefined;
+				}
+				const { clusterBase: closestBaseFinalId, cluster: closestCluster } = compressionMapping;
+				numericUuid ??= numericUuidFromStableId(uncompressedUuid);
+				const uuidOffset = getPositiveDelta(numericUuid, closestCluster.baseUuid, closestCluster.count - 1);
 				if (uuidOffset !== undefined && uuidOffset !== undefined) {
-					return (closestBaseFinalId + uuidOffset) as FinalCompressedId;
+					let targetFinalId = (closestBaseFinalId + uuidOffset) as FinalCompressedId;
+					const override = closestCluster.overrides?.get(targetFinalId);
+					if (typeof override === 'object') {
+						if (override.associatedLocalId !== undefined) {
+							return override.associatedLocalId;
+						}
+						// This may be a uuid that should actually compress into a different final ID that it aligns with, due to
+						// another session having an identical override (see `IdCluster` for more).
+						targetFinalId = override.originalOverridingFinal;
+					}
+					return this.normalizeToSessionSpace(targetFinalId, this.localSessionId);
 				}
 			}
 		}
 
-		if (numericUuid === undefined) {
-			numericUuid = numericUuidFromUuidString(uncompressedUuid);
-		}
-		if (numericUuid !== undefined) {
-			const offset = getPositiveDelta(numericUuid, this.localSessionDetails.numericId, this.localIdCount - 1);
+		if (isStableId(uncompressedUuid)) {
+			// May have already computed the numeric uuid, so avoid recomputing if possible
+			numericUuid ??= numericUuidFromStableId(uncompressedUuid);
+			const offset = getPositiveDelta(numericUuid, this.localSession.sessionUuid, this.localIdCount - 1);
 			if (offset !== undefined) {
 				return (-offset - 1) as LocalCompressedId;
 			}
@@ -594,81 +1046,113 @@ export class IdCompressor {
 	}
 
 	/**
-	 * Attempts to normalize a `LocalCompressedId` created by the local session into its corresponding final ID.
-	 * @param localId the local ID to normalize.
-	 * @returns the `FinalCompressedId` corresponding to the local ID or the local ID if it does not exist (has not been finalized).
+	 * Normalizes a session space ID into op space.
+	 * @param id the local ID to normalize.
+	 * @returns the ID in op space.
 	 */
-	public normalizeToFinal(localId: LocalCompressedId): CompressedId;
-
-	/**
-	 * Attempts to normalize a `LocalCompressedId` created by a remote session into its corresponding final ID.
-	 * @param remoteLocalId the local ID to normalize.
-	 * @param remoteSessionId the session ID that generated the localId. If not provided, it defaults to the local session.
-	 * @returns the `FinalCompressedId` corresponding to the local ID, or undefined if the local ID has not been finalized.
-	 */
-	public normalizeToFinal(
-		remoteLocalId: LocalCompressedId,
-		remoteSessionId?: SessionId
-	): FinalCompressedId | undefined;
-
-	/**
-	 * Implementation of `normalizeToFinal`. Public API exposed via overloads above.
-	 */
-	public normalizeToFinal(localId: LocalCompressedId, sessionId?: SessionId): CompressedId | undefined {
-		if (isFinalId(localId)) {
-			fail(`${localId} is not an local ID.`);
+	public normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId {
+		if (isFinalId(id)) {
+			return id;
 		}
-
-		const localCounter = -localId;
-		if (sessionId === undefined || sessionId === this.localSessionId) {
-			// Check if this local ID has not been allocated yet
-			if (localCounter > this.localIdCount) {
-				fail('Supplied local ID was not created by this compressor.');
-			}
-			// Check if this local ID has not been finalized yet
-			if (localCounter > this.finalizedLocalIdCount) {
-				return localId;
-			}
-			const [localBase, [finalBase]] =
-				this.localIdToCluster.getPairOrNextLower(localId) ??
-				fail('Locally created cluster should be added to the map when allocated');
-			return (finalBase + (localBase + localCounter)) as FinalCompressedId;
-		} else {
-			const session = this.getOrCreateSession(sessionId, false);
-			const stableId = stableIdFromNumericUuid(session.sessionUuid, localCounter - 1);
-			const compressedId = this.compress(stableId);
-			if (compressedId === undefined || !isFinalId(compressedId)) {
-				return undefined;
-			}
-			return compressedId;
+		// Check if this local ID has not been allocated yet
+		if (-id > this.localIdCount) {
+			fail('Supplied local ID was not created by this compressor.');
 		}
+		// Check if this local ID has not been finalized yet
+		const { lastFinalizedLocalId } = this.localSession;
+		if (lastFinalizedLocalId === undefined || id < lastFinalizedLocalId) {
+			return id as OpSpaceCompressedId;
+		}
+		const [localBase, [finalBase, cluster]] =
+			this.localIdToCluster.getPairOrNextLower(id) ??
+			fail('Locally created cluster should be added to the map when allocated');
+		const correspondingFinal = (finalBase + (localBase - id)) as FinalCompressedId;
+		if (cluster.overrides) {
+			const override = cluster.overrides.get(correspondingFinal);
+			if (typeof override === 'object' && override.originalOverridingFinal !== undefined) {
+				// Rare case of two local IDs with same override UUIDs are created concurrently. See `IdCluster` for more.
+				return override.originalOverridingFinal;
+			}
+		}
+		return correspondingFinal;
 	}
 
 	/**
-	 * Attempts to normalize a `CompressedId` into its corresponding local ID.
-	 * @param id the compressed ID to normalize.
-	 * @returns a normalized compressed ID in the following way:
-	 * - If `id` is a final ID created by the local session, return the corresponding local ID.
-	 * - Return `id` otherwise.
+	 * Normalizes an ID into session space.
+	 * @param id the ID to normalize. If it is a local ID, it is assumed to have been created by the session corresponding
+	 * to `sessionId`.
+	 * @param originSessionId the session from which `id` originated
+	 * @returns the final ID corresponding to `id`, which might not have been a final ID if the client that created it had not yet
+	 * finalized it. This can occur when a client references an ID during the window of time in which it is waiting to receive the ordered
+	 * range that contained it from the server.
 	 */
-	public normalizeToLocal(id: CompressedId): CompressedId {
-		if (!isFinalId(id)) {
-			const localIndex = -id;
-			if (localIndex > this.localIdCount) {
-				fail('Supplied local ID was not created by this compressor.');
+	public normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId {
+		const isLocalSession = originSessionId === this.localSessionId;
+		if (isLocalId(id)) {
+			if (isLocalSession) {
+				const localIndex = -id;
+				if (localIndex > this.localIdCount) {
+					fail('Supplied local ID was not created by this compressor.');
+				}
+				return id;
+			} else {
+				const session = this.tryGetSession(originSessionId);
+				if (session === undefined) {
+					fail('No IDs have ever been finalized by the supplied session.');
+				}
+				const localCount = -id;
+				const numericUuid = incrementUuid(session.sessionUuid, localCount - 1);
+				return this.compressNumericUuid(numericUuid) ?? fail('ID is not known to this compressor.');
 			}
-			return id;
 		}
+
 		const closestResult = this.localIdToCluster.getPairOrNextLowerByValue(id);
-		if (closestResult === undefined) {
-			return id;
+		if (closestResult !== undefined) {
+			const [localBase, [finalBase, cluster]] = closestResult;
+			const indexInCluster = id - finalBase;
+			if (indexInCluster < cluster.count) {
+				return (localBase - indexInCluster) as LocalCompressedId;
+			}
 		}
-		const [localBase, [finalBase, cluster]] = closestResult;
-		const indexInCluster = id - finalBase;
-		if (indexInCluster >= cluster.count) {
-			return id;
+
+		// Check for a unified override finalized first by another session but to which the local session
+		// still has an associated local ID.
+		const [_, cluster] =
+			this.getClusterForFinalId(id) ?? fail('Supplied final ID was not finalized by this compressor.');
+		const override = cluster.overrides?.get(id);
+		if (typeof override === 'object' && override.associatedLocalId !== undefined) {
+			return override.associatedLocalId;
 		}
-		return (localBase - indexInCluster) as LocalCompressedId;
+		return id as SessionSpaceCompressedId;
+	}
+
+	/**
+	 * Returns the session-space compressed ID corresponding to the numeric uuid, or undefined if it is not known to this compressor.
+	 * Typically, it will return the session-space ID sequentially aligned with it (which will be local if `numericUuid` was made by
+	 * the local session, or final otherwise). However, in the event that the aligned session-space ID was overridden with a uuid
+	 * *and* that override uuid was concurrently used in an older ID (earlier, w.r.t. sequencing), this method can return the first
+	 * ID to correspond to that override.
+	 *
+	 * As an example, consider the following two clients:
+	 * ClientA, session uuid: A0000000000000000000000000000000
+	 * ClientB, session uuid: B0000000000000000000000000000000
+	 *
+	 * If concurrently, two clients performed:
+	 * ClientA: generateCompressedId(override: 'X0000000000000000000000000000000') // aligned with A0000000000000000000000000000000
+	 *
+	 * ClientB: generateCompressedId() // aligned with B0000000000000000000000000000000
+	 * ClientB: generateCompressedId(override: 'X0000000000000000000000000000000') // aligned with B0000000000000000000000000000001
+	 *
+	 * After sequencing, calling this method and passing the numeric uuid for B0000000000000000000000000000001 would return the
+	 * session-space ID corresponding to A0000000000000000000000000000000 (with override X0000000000000000000000000000000).
+	 */
+	private compressNumericUuid(numericUuid: NumericUuid): SessionSpaceCompressedId | undefined {
+		const stableId = stableIdFromNumericUuid(numericUuid);
+		const sessionSpaceId = this.compressInternal(stableId, numericUuid);
+		if (sessionSpaceId === undefined) {
+			return undefined;
+		}
+		return sessionSpaceId;
 	}
 
 	private getClusterForFinalId(
@@ -687,264 +1171,461 @@ export class IdCompressor {
 
 	/**
 	 * @returns if `other` is equal to this `IdCompressor`. The equality check includes local session state.
+	 * @testOnly
 	 */
-	public equals(other: IdCompressor): boolean {
+	public equals(other: IdCompressor, compareLocalState: boolean): boolean {
+		if (compareLocalState) {
+			if (
+				this.localIdCount !== other.localIdCount ||
+				this.localSessionId !== other.localSessionId ||
+				this.lastTakenLocalId !== other.lastTakenLocalId ||
+				this.sentAttributionInfo !== other.sentAttributionInfo
+			) {
+				return false;
+			}
+			if (!this.localOverrides.equals(other.localOverrides, (a, b) => a === b)) {
+				return false;
+			}
+			if (
+				!compareMaps(this.sessions, other.sessions, (a, b) =>
+					IdCompressor.sessionDataEqual(a, b, true, compareLocalState)
+				)
+			) {
+				return false;
+			}
+		} else {
+			for (const [keyA, valueA] of this.sessions) {
+				const valueB = other.sessions.get(keyA);
+				if (valueB === undefined) {
+					if (valueA.lastFinalizedLocalId !== undefined) {
+						return false;
+					}
+				} else if (!IdCompressor.sessionDataEqual(valueA, valueB, true, compareLocalState)) {
+					return false;
+				}
+			}
+
+			for (const [keyB, valueB] of other.sessions) {
+				const valueA = this.sessions.get(keyB);
+				if (valueA === undefined) {
+					if (valueB.lastFinalizedLocalId !== undefined) {
+						return false;
+					}
+				}
+			}
+		}
 		if (
-			this.localIdCount !== other.localIdCount ||
-			this.finalizedLocalIdCount !== other.finalizedLocalIdCount ||
 			this.nextClusterBaseFinalId !== other.nextClusterBaseFinalId ||
-			this.localSessionId !== other.localSessionId ||
 			this.newClusterCapacity !== other.newClusterCapacity
 		) {
 			return false;
 		}
-
 		if (
-			!this.finalIdToCluster.equals(other.finalIdToCluster, IdCompressor.idClustersEqual) ||
-			!compareMaps(this.localExplicitIds, other.localExplicitIds) ||
-			!compareMaps(this.sessions, other.sessions, IdCompressor.sessionDataEqual) ||
-			!compareBtrees(this.uuidStringToCompressed, other.uuidStringToCompressed, (a, b) => {
-				if (typeof a === 'number') {
-					return a === b;
-				}
-				if (typeof b === 'number') {
-					return false;
-				}
-				return a[0] === b[0] && IdCompressor.idClustersEqual(a[1], b[1]);
-			})
+			!this.finalIdToCluster.equals(other.finalIdToCluster, (a, b) =>
+				IdCompressor.idClustersEqual(a, b, true, compareLocalState)
+			)
 		) {
 			return false;
 		}
 
+		const missingInOne = (_: MinimalUuidString, value: CompressionMapping): { break: boolean } | undefined => {
+			if (!compareLocalState && typeof value === 'number') {
+				return undefined;
+			}
+			return { break: true };
+		};
+
+		const compareCompressionMappings = (a, b) => {
+			if (typeof a === 'number' || typeof b === 'number') {
+				if (a !== b) {
+					return false;
+				}
+				return true;
+			}
+			if (IdCompressor.isClusterInfo(a)) {
+				if (!IdCompressor.isClusterInfo(b) || a.clusterBase !== b.clusterBase) {
+					return false;
+				}
+			} else {
+				if (
+					IdCompressor.isClusterInfo(b) ||
+					(compareLocalState && a.associatedLocalId !== b.associatedLocalId) ||
+					a.originalOverridingFinal !== b.originalOverridingFinal
+				) {
+					return false;
+				}
+			}
+			if (!IdCompressor.idClustersEqual(a.cluster, b.cluster, true, compareLocalState)) {
+				return false;
+			}
+			return true;
+		};
+
+		const diff = this.uuidStringToId.diffAgainst(
+			other.uuidStringToId,
+			missingInOne,
+			missingInOne,
+			(_, valA, valB) => {
+				if (!compareCompressionMappings(valA, valB)) {
+					return { break: true };
+				}
+				return undefined;
+			}
+		);
+
+		return diff === undefined;
+	}
+
+	private static sessionDataEqual(a: Session, b: Session, checkCluster = true, compareLocalState = true): boolean {
+		if (
+			a.attributionInfo !== b.attributionInfo ||
+			!numericUuidEquals(a.sessionUuid, b.sessionUuid) ||
+			a.lastFinalizedLocalId !== b.lastFinalizedLocalId
+		) {
+			return false;
+		}
+		if (a.currentClusterDetails === undefined || b.currentClusterDetails === undefined) {
+			if (a.currentClusterDetails !== b.currentClusterDetails) {
+				return false;
+			}
+			return true;
+		}
+		if (
+			checkCluster &&
+			!IdCompressor.idClustersEqual(
+				a.currentClusterDetails.cluster,
+				b.currentClusterDetails.cluster,
+				false,
+				compareLocalState
+			)
+		) {
+			return false;
+		}
 		return true;
 	}
 
-	private static sessionDataEqual(a: Session, b: Session): boolean {
-		return (
-			numericUuidEquals(a.sessionUuid, b.sessionUuid) &&
-			(a.currentClusterDetails === b.currentClusterDetails ||
-				(a.currentClusterDetails !== undefined &&
-					b.currentClusterDetails !== undefined &&
-					a.currentClusterDetails.clusterBase === b.currentClusterDetails.clusterBase &&
-					IdCompressor.idClustersEqual(a.currentClusterDetails.cluster, b.currentClusterDetails.cluster)))
-		);
-	}
-
-	private static idClustersEqual(a: IdCluster, b: IdCluster): boolean {
+	private static idClustersEqual(
+		a: IdCluster,
+		b: IdCluster,
+		checkSessionData = true,
+		compareLocalState = true
+	): boolean {
 		const areEqual =
 			numericUuidEquals(a.baseUuid, b.baseUuid) &&
 			a.capacity === b.capacity &&
 			a.count === b.count &&
-			(a.explicitIds === undefined) === (b.explicitIds === undefined) &&
-			(a.explicitIds === undefined ||
-				compareMaps(assertNotUndefined(a.explicitIds), assertNotUndefined(b.explicitIds)));
+			(!checkSessionData || IdCompressor.sessionDataEqual(a.session, b.session, false, compareLocalState)) &&
+			(a.overrides === undefined) === (b.overrides === undefined) &&
+			(a.overrides === undefined ||
+				compareMaps(assertNotUndefined(a.overrides), assertNotUndefined(b.overrides), (a, b) => {
+					if (compareLocalState) {
+						if (typeof a === 'string' || typeof b === 'string') {
+							return a === b;
+						}
+						const overridesEqual =
+							a.uuid === b.uuid &&
+							a.originalOverridingFinal === b.originalOverridingFinal &&
+							(!compareLocalState || a.associatedLocalId === b.associatedLocalId);
+						return overridesEqual;
+					}
+
+					const uuidA = typeof a === 'string' ? a : a.uuid;
+					const uuidB = typeof b === 'string' ? b : b.uuid;
+					if (
+						typeof a !== 'string' &&
+						typeof b !== 'string' &&
+						a.originalOverridingFinal !== b.originalOverridingFinal
+					) {
+						return false;
+					}
+					return uuidA === uuidB;
+				}));
 		return areEqual;
 	}
 
 	/**
 	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
+	 * This includes finalized state as well as un-finalized state and is therefore suitable for use in offline scenarios.
 	 */
-	public serialize(): SerializedIdCompressor {
-		const sessions: SerializedSessionData[] = [];
-		const baseUuidToSessionIndex = new Map<StableId, number>();
-		const sessionUuidToSessionIndex = new Map<StableId, number>();
+	public serialize(
+		withSession: boolean
+	): SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession;
 
-		const getPrevClusterInSessionChain = (
-			clusterBaseInfo: [StableId, NumericUuid]
-		): [StableId, NumericUuid] | undefined => {
-			const [clusterBaseStableId, clusterBaseUuid] = clusterBaseInfo;
-			const nextLowerCandidate = this.uuidStringToCompressed.nextLowerPair(clusterBaseStableId);
-			if (nextLowerCandidate !== undefined) {
-				const [closestUuidString, compressedResult] = nextLowerCandidate;
-				if (typeof compressedResult === 'object') {
-					const [_, cluster] = compressedResult;
-					const offset = getPositiveDelta(clusterBaseUuid, cluster.baseUuid, cluster.capacity);
-					if (offset !== undefined) {
-						assert(
-							cluster.count === cluster.capacity && offset === cluster.capacity,
-							`${cluster.count} === ${cluster.capacity} && ${offset} === ${cluster.capacity}`
-						);
-						// We know this is a cluster base uuid, and is thus guaranteed to be a stable ID
-						return [closestUuidString as StableId, cluster.baseUuid];
-					}
-				}
-			}
-			return undefined;
-		};
+	/**
+	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
+	 * This includes finalized state as well as un-finalized state and is therefore suitable for use in offline scenarios.
+	 */
+	public serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
 
-		for (const [_, cluster] of this.finalIdToCluster.entriesReversed()) {
-			const { baseUuid } = cluster;
-			const baseStableId = stableIdFromNumericUuid(baseUuid);
-			if (baseStableId !== systemReservedUuidBase && !baseUuidToSessionIndex.has(baseStableId)) {
-				// Base uuids associated with clusters in a chain made in the same session, in reverse order
-				const clusterChain: [StableId, NumericUuid][] = [[baseStableId, baseUuid]];
-				let prevClusterBase: [StableId, NumericUuid] | undefined = clusterChain[0];
-				while ((prevClusterBase = getPrevClusterInSessionChain(prevClusterBase)) !== undefined) {
-					clusterChain.push(prevClusterBase);
+	/**
+	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
+	 * This only includes finalized state and is therefore suitable for use in summaries.
+	 */
+	public serialize(withSession: false): SerializedIdCompressorWithNoSession;
+
+	public serialize(withSession: boolean): SerializedIdCompressor {
+		const serializedSessions: SerializedSessionData[] = [];
+		const sessionIdToSessionIndex = new Map<SessionId, number>();
+
+		for (const [sessionId, session] of this.sessions) {
+			const isLocalSession = sessionId === this.localSessionId;
+			const includeSession =
+				sessionId !== reservedSessionId && // Ignore reserved clusters, but
+				(session.lastFinalizedLocalId !== undefined || // always serialize sessions that made final IDs,
+					(isLocalSession && withSession)); // include the un-acked local session if requested
+
+			if (includeSession) {
+				const sessionData: Mutable<SerializedSessionData> = [sessionId];
+				if (session.attributionInfo !== undefined) {
+					sessionData.push(session.attributionInfo);
 				}
-				const sessionUuidForChain = clusterChain[clusterChain.length - 1];
-				const sessionStableIdForChain = sessionUuidForChain[0] as SessionId;
-				let sessionIndex = sessionUuidToSessionIndex.get(sessionStableIdForChain);
-				if (sessionIndex === undefined) {
-					sessionIndex = sessions.length;
-					sessionUuidToSessionIndex.set(sessionStableIdForChain, sessionIndex);
-					const session = assertNotUndefined(
-						this.sessions.get(sessionStableIdForChain),
-						'session cluster chain not in session map'
-					);
-					const currentClusterDetails = assertNotUndefined(
-						session.currentClusterDetails,
-						'non-local empty session in session map'
-					);
-					sessions.push([sessionStableIdForChain, currentClusterDetails.clusterBase]);
-				}
-				sessionUuidToSessionIndex.set(sessionStableIdForChain, sessionIndex);
-				for (const clusterInChain of clusterChain) {
-					baseUuidToSessionIndex.set(clusterInChain[0], sessionIndex);
-				}
+				sessionIdToSessionIndex.set(sessionId, serializedSessions.length);
+				serializedSessions.push(sessionData);
 			}
 		}
 
-		assert(sessions.length === this.sessions.size, 'session not serialized');
+		const serializedClusters: SerializedCluster[] = [];
+		for (const cluster of this.finalIdToCluster.values()) {
+			const sessionId = stableIdFromNumericUuid(cluster.session.sessionUuid) as SessionId;
+			if (sessionId !== reservedSessionId) {
+				const sessionIndex =
+					sessionIdToSessionIndex.get(sessionId) ??
+					fail('Session object contains wrong session numeric uuid');
 
-		// Note that half of the compressor's bimap is not needed since it is derivable from `this.compressedIdToStableId`.
-		const clusters: SerializedCluster[] = [];
-		for (const [_, cluster] of this.finalIdToCluster.entries()) {
-			const baseStableId = stableIdFromNumericUuid(cluster.baseUuid);
-			// Skip the system reserved cluster
-			const { capacity } = cluster;
-			if (baseStableId !== systemReservedUuidBase) {
-				const sessionIndex = assertNotUndefined(baseUuidToSessionIndex.get(baseStableId));
-				const serializedCluster: Mutable<SerializedCluster> = [sessionIndex, capacity];
-
+				const serializedCluster: Mutable<SerializedCluster> = [sessionIndex, cluster.capacity];
 				if (cluster.count !== cluster.capacity) {
 					serializedCluster.push(cluster.count);
 				}
 
-				if (cluster.explicitIds !== undefined) {
-					const explicitIds: [FinalCompressedId, MinimalUuidString][] = [];
-					for (const [finalId, explicitId] of cluster.explicitIds) {
-						explicitIds.push([finalId, explicitId]);
+				if (cluster.overrides !== undefined) {
+					const serializedOverrides: Mutable<SerializedClusterOverrides> = [];
+					for (const [finalId, override] of cluster.overrides) {
+						if (typeof override === 'string') {
+							serializedOverrides.push([finalId, override]);
+						} else if (override.originalOverridingFinal === finalId) {
+							serializedOverrides.push([finalId, override.uuid]);
+						} else {
+							serializedOverrides.push([finalId, override.uuid, override.originalOverridingFinal]);
+						}
 					}
-					serializedCluster.push(explicitIds);
+					serializedCluster.push(serializedOverrides);
 				}
-				clusters.push(serializedCluster);
+
+				serializedClusters.push(serializedCluster);
 			}
 		}
 
-		const serializedIdCompressor: Mutable<SerializedIdCompressor> = {
-			version: currentWrittenVersion,
-			newClusterSize: this.newClusterCapacity,
-			sessions,
-			clusters,
-		};
+		// Reserved session not serialized, and local session is present but may not make IDs
+		assert(serializedSessions.length - this.sessions.size <= 2, 'session not serialized');
 
-		if (this.localIdCount > 0) {
-			serializedIdCompressor.localState = {
-				sessionId: this.localSessionId,
-				localIdCount: this.localIdCount,
-				explicitIds: [...this.localExplicitIds.entries()],
-			};
+		const serializedIdCompressor = {
+			version: currentWrittenVersion,
+			clusterCapacity: this.clusterCapacity,
+			sessions: serializedSessions,
+			clusters: serializedClusters,
+		} as unknown as SerializedIdCompressor;
+
+		if (withSession) {
+			const serializedWithSession = serializedIdCompressor as Mutable<SerializedIdCompressorWithOngoingSession>;
+			serializedWithSession.localSessionIndex = serializedWithSession.sessions.findIndex(
+				([sessionId]) => sessionId === this.localSessionId
+			);
+			if (this.localIdCount > 0) {
+				serializedWithSession.localState = {
+					localIdCount: this.localIdCount,
+					overrides: [...this.localOverrides.entries()].map((entry) => [...entry]),
+					lastTakenLocalId: this.lastTakenLocalId,
+					sentAttributionInfo: this.sentAttributionInfo,
+				};
+			}
+
+			return serializedWithSession;
 		}
 
 		return serializedIdCompressor;
 	}
 
 	/**
-	 * Rehydrates an `IdCompressor` from the serialized state.
-	 * @param serialized the serialized compressor state
-	 * @param localSessionId the session ID for the new compressor. If this is the same as the id of the session in which the compressor
-	 * was serialized then local state will be preserved, otherwise it will be dropped.
+	 * Deserialize an serialized IdCompressor that is part of an ongoing session, thereby resuming that session.
 	 */
-	public static deserialize(serialized: SerializedIdCompressorBase, localSessionId: SessionId): IdCompressor {
-		let serializedConcrete: SerializedIdCompressor;
-		switch (serialized.version) {
-			case currentWrittenVersion:
-				serializedConcrete = serialized as SerializedIdCompressor;
-				break;
-			default:
-				fail('unknown SerializedIdCompressor version number');
+	public static deserialize(serialized: SerializedIdCompressorWithOngoingSession): IdCompressor;
+
+	/**
+	 * Deserialize an serialized IdCompressor with a new session. The provided serialized compressor
+	 * must have an ongoing session.
+	 * @param serialized the serialized compressor state
+	 * @param newSessionId the session ID for the new compressor.
+	 * @param attributionInfo information used by other clients to attribute IDs made by this client
+	 */
+	public static deserialize(
+		serialized: SerializedIdCompressorWithNoSession,
+		newSessionId: SessionId,
+		attributionInfo?: AttributionInfo
+	): IdCompressor;
+
+	public static deserialize(
+		serialized: SerializedIdCompressorWithNoSession | SerializedIdCompressorWithOngoingSession,
+		newSessionIdMaybe?: SessionId,
+		attributionInfoMaybe?: AttributionInfo
+	): IdCompressor {
+		const hasSession = hasOngoingSession(serialized);
+		let localSessionId: SessionId;
+		let attributionInfo: AttributionInfo | undefined;
+		let serializedLocalState: SerializedLocalState | undefined;
+		if (hasSession) {
+			assert(newSessionIdMaybe === undefined && attributionInfoMaybe === undefined);
+			[localSessionId, attributionInfo] = serialized.sessions[serialized.localSessionIndex];
+			serializedLocalState = serialized.localState;
+		} else {
+			assert(newSessionIdMaybe !== undefined);
+			localSessionId = newSessionIdMaybe;
+			attributionInfo = attributionInfoMaybe;
 		}
-		const { newClusterSize, sessions, clusters, localState } = serializedConcrete;
-		const compressor = new IdCompressor(localSessionId);
-		compressor.newClusterCapacity = newClusterSize;
+
+		const { sessions: serializedSessions, clusters: serializedClusters } = serialized;
+		const compressor = new IdCompressor(localSessionId, attributionInfo);
+		compressor.clusterCapacity = serialized.clusterCapacity;
+
+		const localOverridesInverse = new Map<MinimalUuidString, LocalCompressedId>();
+		if (serializedLocalState !== undefined) {
+			// Do this part of local rehydration first since the cluster map population needs to query to local overrides
+			compressor.localIdCount = serializedLocalState.localIdCount;
+			compressor.lastTakenLocalId = serializedLocalState.lastTakenLocalId;
+			compressor.sentAttributionInfo = serializedLocalState.sentAttributionInfo;
+			if (serializedLocalState.overrides !== undefined) {
+				for (const [localId, override] of serializedLocalState.overrides) {
+					compressor.localOverrides.append(localId, override);
+					localOverridesInverse.set(override, localId);
+					compressor.uuidStringToId.set(override, localId as UnackedLocalId);
+				}
+			}
+		}
 
 		const sessionInfos: {
-			readonly sessionUuid: NumericUuid;
-			readonly currentClusterBase: FinalCompressedId;
+			readonly session: Session;
 			readonly sessionId: SessionId;
-			idsCreated: number;
 		}[] = [];
-		for (const serializedSession of sessions) {
-			const [sessionId, currentClusterBase] = serializedSession;
-			const sessionUuid = numericUuidFromUuidString(sessionId) ?? fail('Serialized non-session uuid');
-			sessionInfos.push({ sessionUuid, idsCreated: 0, currentClusterBase, sessionId });
+		for (const serializedSession of serializedSessions) {
+			const [sessionId, attributionInfo] = serializedSession;
+			if (sessionId === localSessionId) {
+				assert(hasSession, 'Cannot resume existing session.');
+				sessionInfos.push({ session: compressor.localSession, sessionId });
+			} else {
+				const session = compressor.createSession(sessionId, attributionInfo);
+				sessionInfos.push({ session, sessionId });
+			}
 		}
 
-		for (const serializedCluster of clusters) {
-			const [sessionIndex, capacity] = serializedCluster;
-			const third = serializedCluster[2];
-			const fourth = serializedCluster[3];
-			const sessionInfo = sessionInfos[sessionIndex];
-			const sessionUuid = sessionInfo.sessionUuid;
-			const explicitSize = typeof third === 'number' ? third : capacity;
-			const idsCreated = sessionInfo.idsCreated;
+		for (const serializedCluster of serializedClusters) {
+			const { sessionIndex, capacity, count, overrides } = deserializeCluster(serializedCluster);
+			const { session, sessionId } = sessionInfos[sessionIndex];
+			const { lastFinalizedLocalId, sessionUuid } = session;
+			const currentIdCount = lastFinalizedLocalId === undefined ? 0 : -lastFinalizedLocalId;
+
 			const cluster: Mutable<IdCluster> = {
 				capacity,
-				count: explicitSize,
-				baseUuid: incrementUuid(sessionUuid, idsCreated),
+				count,
+				baseUuid: incrementUuid(sessionUuid, currentIdCount),
+				session,
 			};
-			sessionInfo.idsCreated += explicitSize;
-			const serializedExplicitIds =
-				typeof third === 'object' ? third : typeof fourth === 'object' ? fourth : undefined;
-			if (serializedExplicitIds !== undefined) {
-				cluster.explicitIds = new Map(serializedExplicitIds);
-				for (const [finalId, explicitId] of serializedExplicitIds) {
-					compressor.uuidStringToCompressed.set(explicitId, finalId);
-				}
-			}
-			const baseFinalId = compressor.nextClusterBaseFinalId as FinalCompressedId;
-			if (baseFinalId === sessionInfo.currentClusterBase) {
-				compressor.sessions.set(sessionInfo.sessionId, {
-					sessionUuid,
-					currentClusterDetails: { cluster, clusterBase: baseFinalId },
-				});
-			}
-			compressor.finalIdToCluster.append(baseFinalId, cluster);
-			compressor.uuidStringToCompressed.set(stableIdFromNumericUuid(cluster.baseUuid), [baseFinalId, cluster]);
-			compressor.nextClusterBaseFinalId += capacity;
-		}
 
-		if (localState !== undefined && localState.sessionId === localSessionId) {
-			compressor.localIdCount = localState.localIdCount;
-			if (localState.explicitIds !== undefined) {
-				for (const [localId, explicitId] of localState.explicitIds) {
-					compressor.localExplicitIds.set(localId, explicitId);
-				}
-			}
-
-			let clusterInChainDetails = compressor.uuidStringToCompressed.get(compressor.localSessionDetails.id);
-			let finalizedLocalIdCount = 0;
-			while (clusterInChainDetails !== undefined) {
-				assert(typeof clusterInChainDetails === 'object');
-				const [baseFinalId, cluster] = clusterInChainDetails;
-				compressor.localIdToCluster.append(-(finalizedLocalIdCount + 1) as LocalCompressedId, [
-					baseFinalId,
+			const lastFinalizedNormalized = lastFinalizedLocalId ?? 0;
+			const clusterBase = compressor.nextClusterBaseFinalId;
+			if (serializedLocalState !== undefined && sessionId === compressor.localSessionId) {
+				compressor.localIdToCluster.append((lastFinalizedNormalized - 1) as LocalCompressedId, [
+					clusterBase,
 					cluster,
 				]);
-				finalizedLocalIdCount += cluster.count;
-				clusterInChainDetails = compressor.uuidStringToCompressed.get(
-					stableIdFromNumericUuid(
-						incrementUuid(compressor.localSessionDetails.numericId, finalizedLocalIdCount)
-					)
-				);
 			}
 
-			compressor.finalizedLocalIdCount = finalizedLocalIdCount;
-			assert(compressor.localIdCount >= compressor.finalizedLocalIdCount);
+			session.lastFinalizedLocalId = (lastFinalizedNormalized - count) as LocalCompressedId;
+			session.currentClusterDetails = { clusterBase, cluster };
+			compressor.nextClusterBaseFinalId = (compressor.nextClusterBaseFinalId + capacity) as FinalCompressedId;
+			compressor.finalIdToCluster.append(clusterBase, cluster);
+			compressor.uuidStringToId.set(stableIdFromNumericUuid(cluster.baseUuid), {
+				clusterBase,
+				cluster,
+			});
+
+			if (overrides !== undefined) {
+				cluster.overrides = new Map();
+				for (const [finalId, uuid, originalOverridingFinal] of overrides) {
+					if (originalOverridingFinal !== undefined) {
+						const unifiedOverride: Mutable<UnifiedOverride> = {
+							uuid,
+							originalOverridingFinal,
+						};
+						if (serializedLocalState !== undefined) {
+							setPropertyIfDefined(localOverridesInverse.get(uuid), unifiedOverride, 'associatedLocalId');
+						}
+						cluster.overrides.set(finalId, unifiedOverride);
+					} else {
+						const associatedLocal = localOverridesInverse.get(uuid);
+						if (associatedLocal !== undefined && sessionId !== localSessionId) {
+							// In this case, there is a local ID associated with this override, but this is the first cluster to contain
+							// that override (because only the first cluster will have the string serialized). In this case, the override
+							// needs to hold that local value.
+							cluster.overrides.set(finalId, {
+								uuid,
+								originalOverridingFinal: finalId,
+								associatedLocalId: associatedLocal,
+							});
+						} else {
+							cluster.overrides.set(finalId, uuid);
+						}
+						const finalizedOverride: Mutable<FinalizedOverride> = {
+							cluster,
+							originalOverridingFinal: finalId,
+						};
+						if (serializedLocalState !== undefined) {
+							setPropertyIfDefined(associatedLocal, finalizedOverride, 'associatedLocalId');
+						}
+						compressor.uuidStringToId.set(uuid, finalizedOverride);
+					}
+				}
+			}
 		}
 
+		assert(
+			compressor.localSession.lastFinalizedLocalId === undefined ||
+				compressor.localIdCount >= -compressor.localSession.lastFinalizedLocalId
+		);
+
 		return compressor;
+	}
+
+	/**
+	 * Converts the given serialized compressor to the current version.
+	 * @param serializedCompressor the serialized compressor to convert. Must not have been serialized with an ongoing session.
+	 * @returns a serialized compressor with no ongoing session.
+	 */
+	public static convertToCurrentVersion(
+		serializedCompressor: VersionedSerializedIdCompressor,
+		hasSession: false
+	): SerializedIdCompressorWithNoSession;
+
+	/**
+	 * Converts the given serialized compressor to the current version.
+	 * @param serializedCompressor the serialized compressor to convert. Must have been serialized with an ongoing session.
+	 * @returns a serialized compressor with the same ongoing session.
+	 */
+	public static convertToCurrentVersion(
+		serializedCompressor: VersionedSerializedIdCompressor,
+		hasSession: true
+	): SerializedIdCompressorWithOngoingSession;
+
+	public static convertToCurrentVersion(
+		serializedCompressor: VersionedSerializedIdCompressor,
+		hasSession: boolean
+	): SerializedIdCompressor | undefined {
+		if (serializedCompressor.version !== currentWrittenVersion) {
+			fail('Unknown SerializedIdCompressor version number');
+		}
+		const serialized = serializedCompressor as SerializedIdCompressorWithOngoingSession;
+		if (hasSession !== hasOngoingSession(serialized)) {
+			return undefined;
+		}
+		return serialized;
 	}
 }
 
@@ -956,35 +1637,71 @@ const currentWrittenVersion = '0.0.1';
 /**
  * The minimal required contents of a serialized IdCompressor.
  */
-export interface SerializedIdCompressorBase {
+export interface VersionedSerializedIdCompressor {
+	readonly _versionedSerializedIdCompressor: '8c73c57c-1cf4-4278-8915-6444cb4f6af5';
 	readonly version: string;
 }
 
 /**
  * The serialized contents of an IdCompressor, suitable for persistence in a summary.
  */
-export interface SerializedIdCompressor extends SerializedIdCompressorBase {
-	readonly newClusterSize: number;
+export interface SerializedIdCompressor extends VersionedSerializedIdCompressor {
+	/** The cluster capacity of this compressor */
+	readonly clusterCapacity: number;
+	/** All sessions except the local session. */
 	readonly sessions: readonly SerializedSessionData[];
+	/** All clusters in the compressor in the order they were created. */
 	readonly clusters: readonly SerializedCluster[];
+}
+
+/**
+ * The serialized contents of an IdCompressor, suitable for persistence in a summary.
+ */
+export interface SerializedIdCompressorWithNoSession extends SerializedIdCompressor {
+	readonly _noLocalState: '3aa2e1e8-cc28-4ea7-bc1a-a11dc3f26dfb';
+}
+
+/**
+ * @returns whether or not the given serialized ID compressor has an ongoing session.
+ */
+export function hasOngoingSession(
+	serialized: SerializedIdCompressorWithNoSession | SerializedIdCompressorWithOngoingSession
+): serialized is SerializedIdCompressorWithOngoingSession {
+	return (serialized as Partial<SerializedIdCompressorWithOngoingSession>).localSessionIndex !== undefined;
+}
+
+/**
+ * The serialized contents of an IdCompressor, suitable for persistence in a summary.
+ */
+export interface SerializedIdCompressorWithOngoingSession extends SerializedIdCompressor {
+	readonly _hasLocalState: '1281acae-6d14-47e7-bc92-71c8ee0819cb';
+	/** The session ID of the local session, by index into `sessions`. */
+	readonly localSessionIndex: number;
+	/** This is only present if the local session made any IDs. */
 	readonly localState?: SerializedLocalState;
 }
 
-type SerializedLocalIds = readonly [LocalCompressedId, MinimalUuidString][];
+type SerializedLocalOverrides = readonly [LocalCompressedId, MinimalUuidString][];
 
 interface SerializedLocalState {
-	/**
-	 * The session ID of the local session
-	 */
-	sessionId: SessionId;
 	/**
 	 * The total number of local IDs created by this session
 	 */
 	localIdCount: number;
 	/**
-	 * Explicit IDs overriding sequential IDs in this session. Omitted if no local explicit IDs exist in the session.
+	 * Override UUIDs overriding sequential UUIDs in this session. Omitted if no local overrides exist in the session.
 	 */
-	explicitIds?: SerializedLocalIds;
+	overrides?: SerializedLocalOverrides;
+
+	/**
+	 * Boolean to track whether attribution has been sent with an ID range yet.
+	 */
+	sentAttributionInfo: boolean;
+
+	/**
+	 * The most recent local ID in a range returned by `takeNextRange`.
+	 */
+	lastTakenLocalId: LocalCompressedId | undefined;
 }
 
 /**
@@ -997,19 +1714,24 @@ type SerializedSessionData = readonly [
 	sessionId: SessionId,
 
 	/**
-	 * The first final ID in the cluster most recently allocated by this session.
+	 * The attribution info provided for the session
 	 */
-	currentClusterBase: FinalCompressedId
+	attributionInfo?: AttributionInfo
 ];
 
-type SerializedExplicitIds = readonly [FinalCompressedId, MinimalUuidString][];
+type SerializedClusterOverrides = readonly [
+	overriddenFinal: FinalCompressedId,
+	uuid: MinimalUuidString,
+	override?: FinalCompressedId
+][];
 
 /**
  * A serialized final ID cluster.
  */
 type SerializedCluster = readonly [
 	/**
-	 * Index into the serialized sessionData array. Can be converted into a baseUuid via its order in `clusters`.
+	 * Index into the serialized sessions array. Can be converted into a baseUuid via its order in `clusters`.
+	 * If negative, then this cluster was created by the local session.
 	 */
 	sessionIndex: number,
 
@@ -1019,15 +1741,34 @@ type SerializedCluster = readonly [
 	capacity: number,
 
 	/**
-	 * The size of the cluster. Omitted if size === capacity.
+	 * The number of IDs in the cluster. Omitted if count === capacity.
+	 * --OR--
+	 * The uuids overriding sequential IDs in this cluster. Omitted if no overrides exist in the cluster.
 	 */
-	size?: number | SerializedExplicitIds,
+	countOrOverrides?: number | SerializedClusterOverrides,
 
 	/**
-	 * Explicit IDs overriding sequential IDs in this cluster. Omitted if no explicit IDs exist in the cluster.
+	 * Uuids overriding sequential IDs in this cluster. Omitted if no overrides exist in the cluster.
 	 */
-	explicitIds?: number | SerializedExplicitIds
+	overrides?: SerializedClusterOverrides
 ];
+
+function deserializeCluster(serializedCluster: SerializedCluster): {
+	sessionIndex: number;
+	capacity: number;
+	count: number;
+	overrides?: SerializedClusterOverrides;
+} {
+	const [sessionIndex, capacity, countOrOverrides, overrides] = serializedCluster;
+	const hasCount = typeof countOrOverrides === 'number';
+
+	return {
+		sessionIndex,
+		capacity,
+		count: hasCount ? countOrOverrides : capacity,
+		overrides: hasCount ? overrides : countOrOverrides,
+	};
+}
 
 /**
  * Optimization used by the sorted-btree library to avoid allocating tuples every time a lookup method is called.

@@ -52,10 +52,30 @@ export type EditId = UuidString & { readonly EditId: '56897beb-53e4-4e66-85da-4b
 export type DetachedSequenceId = number & { readonly DetachedSequenceId: 'f7d7903a-194e-45e7-8e82-c9ef4333577d' };
 
 /**
- * An identifier that has been shortened by a distributed compression algorithm.
+ * An identifier (UUID) that has been shortened by a distributed compression algorithm.
  * @internal
  */
 export type CompressedId = FinalCompressedId | LocalCompressedId;
+
+/**
+ * A compressed ID that has been normalized into "session space" (see `IdCompressor` for more).
+ * Consumer-facing APIs and data structures should use session-space IDs as their lifetime and equality is stable and tied to the
+ * compressor that produced them.
+ * @internal
+ */
+export type SessionSpaceCompressedId = CompressedId & {
+	readonly SessionNormalized: 'cea55054-6b82-4cbf-ad19-1fa645ea3b3e';
+};
+
+/**
+ * A compressed ID that has been normalized into "op space" (see `IdCompressor` for more).
+ * Serialized/persisted structures (e.g. ops) should use op-space IDs as a performance optimization, as they require no normalizing when
+ * received by a remote client due to the fact that op space for a given compressor is session space for all other compressors.
+ * @internal
+ */
+export type OpSpaceCompressedId = CompressedId & {
+	readonly OpNormalized: '9209432d-a959-4df7-b2ad-767ead4dbcae';
+};
 
 /**
  * A compressed ID that is local to a document. Stable across all revisions of a document starting from the one in which it was created.
@@ -63,7 +83,12 @@ export type CompressedId = FinalCompressedId | LocalCompressedId;
  * If external persistence is needed (e.g. by a client), a StableId should be used instead.
  * @internal
  */
-export type FinalCompressedId = number & { readonly FinalCompressedId: '5d83d1e2-98b7-4e4e-a889-54c855cfa73d' };
+export type FinalCompressedId = number & {
+	readonly FinalCompressedId: '5d83d1e2-98b7-4e4e-a889-54c855cfa73d';
+
+	// Same brand as OpNormalizedCompressedId, as final IDs are always finally normalized
+	readonly OpNormalized: '9209432d-a959-4df7-b2ad-767ead4dbcae';
+};
 
 /**
  * A compressed ID that is local to a session (can only be decompressed when paired with a SessionId).
@@ -71,7 +96,12 @@ export type FinalCompressedId = number & { readonly FinalCompressedId: '5d83d1e2
  * If external persistence is needed (e.g. by a client), a StableId should be used instead.
  * @internal
  */
-export type LocalCompressedId = number & { readonly LocalCompressedId: '6fccb42f-e2a4-4243-bd29-f13d12b9c6d1' };
+export type LocalCompressedId = number & {
+	readonly LocalCompressedId: '6fccb42f-e2a4-4243-bd29-f13d12b9c6d1';
+
+	// Same brand as CompressedId, as local IDs are always locally normalized
+	readonly SessionNormalized: 'cea55054-6b82-4cbf-ad19-1fa645ea3b3e';
+};
 
 /**
  * Node identifier.

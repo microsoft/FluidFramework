@@ -457,6 +457,32 @@ export function copyPropertyIfDefined<TSrc, TDst>(source: TSrc, destination: TDs
 	}
 }
 
+/**
+ * Sets a property in such a way that it is only set on `destination` if the provided value is not undefined.
+ * This avoids having explicit undefined values under properties that would cause `Object.hasOwnProperty` to return true.
+ */
+export function setPropertyIfDefined<TDst, P extends keyof TDst>(
+	value: TDst[P] | undefined,
+	destination: TDst,
+	property: P
+): void {
+	if (value !== undefined) {
+		destination[property] = value;
+	}
+}
+
+/**
+ * function (thing: ObjectWithMaybeFoo) {
+ * 	   const x: MyActualType = {
+ * 	       bar: 3
+ *     };
+ * 		x.foo = 3;
+ *
+ * 	    copyPropertyIfDefined(thing, x, 'foo');
+ * }
+ * @returns
+ */
+
 function breakOnDifference(): { break: boolean } {
 	return { break: true };
 }
@@ -570,3 +596,10 @@ export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
 /** Type that includes the property K: V on T */
 export type With<T, K extends keyof never, V> = T & { [key in K]: V };
+
+/**
+ * A readonly `Map` which is known to contain a value for every possible key
+ */
+export interface ClosedMap<K, V> extends Omit<Map<K, V>, 'delete' | 'clear'> {
+	get(key: K): V;
+}
