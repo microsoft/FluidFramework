@@ -16,15 +16,15 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
-import { IFluidCodeDetails as IFluidCodeDetails_2 } from '@fluidframework/core-interfaces';
+import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
 import { IFluidConfiguration } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
-import { IFluidPackage as IFluidPackage_2 } from '@fluidframework/core-interfaces';
-import { IFluidPackageEnvironment as IFluidPackageEnvironment_2 } from '@fluidframework/core-interfaces';
+import { IFluidPackage } from '@fluidframework/core-interfaces';
+import { IFluidPackageEnvironment } from '@fluidframework/core-interfaces';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IPendingProposal } from '@fluidframework/protocol-definitions';
-import { IProvideFluidCodeDetailsComparer as IProvideFluidCodeDetailsComparer_2 } from '@fluidframework/core-interfaces';
+import { IProvideFluidCodeDetailsComparer } from '@fluidframework/core-interfaces';
 import { IQuorum } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
@@ -96,14 +96,9 @@ export interface ICodeAllowList {
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
-// @public
-export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer_2> {
-    load(source: IFluidCodeDetails_2): Promise<IFluidModuleWithDetails>;
-}
-
 // @public @deprecated
-export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer_2> {
-    load(source: IFluidCodeDetails_2): Promise<IFluidModule>;
+export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer> {
+    load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
 
 // @public
@@ -129,24 +124,26 @@ export interface IConnectionDetails {
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
     attach(request: IRequest): Promise<void>;
     readonly attachState: AttachState;
-    readonly audience: IAudience;
+    readonly audience?: IAudience;
     // @alpha
     readonly clientId?: string | undefined;
     close(error?: ICriticalContainerError): void;
     closeAndGetPendingLocalState(): string;
     readonly closed: boolean;
-    readonly connected: boolean;
-    readonly connectionState: ConnectionState;
+    // @deprecated
+    readonly codeDetails?: IFluidCodeDetails | undefined;
+    readonly connected?: boolean;
+    readonly connectionState?: ConnectionState;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    getLoadedCodeDetails?(): IFluidCodeDetails_2 | undefined;
+    getLoadedCodeDetails?(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorum;
-    getSpecifiedCodeDetails?(): IFluidCodeDetails_2 | undefined;
+    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     readonly isDirty: boolean;
-    proposeCodeDetails(codeDetails: IFluidCodeDetails_2): Promise<boolean>;
-    readonly readOnlyInfo: ReadOnlyInfo;
+    proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
+    readonly readOnlyInfo?: ReadOnlyInfo;
     request(request: IRequest): Promise<IResponse>;
     resolvedUrl: IResolvedUrl | undefined;
     // @alpha
@@ -177,12 +174,12 @@ export interface IContainerContext extends IDisposable {
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     readonly existing: boolean | undefined;
+    // (undocumented)
+    forceReadOnly(readonly: boolean): void;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
     getLoadedFromVersion(): IVersion | undefined;
-    // @deprecated (undocumented)
-    getSpecifiedCodeDetails?(): IFluidCodeDetails_2 | undefined;
-    // @deprecated (undocumented)
+    // (undocumented)
     readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
@@ -218,9 +215,9 @@ export interface IContainerEvents extends IEvent {
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
     // (undocumented)
-    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails_2, proposal: IPendingProposal) => void): any;
+    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void): any;
     // (undocumented)
-    (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails_2) => void): any;
+    (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void): any;
     // (undocumented)
     (event: "disconnected" | "attached", listener: () => void): any;
     // (undocumented)
@@ -254,7 +251,6 @@ export interface IDeltaHandlerStrategy {
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender, IDisposable {
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
-    // @deprecated (undocumented)
     close(): void;
     readonly hasCheckpointSequenceNumber: boolean;
     readonly inbound: IDeltaQueue<T>;
@@ -333,16 +329,16 @@ export interface IErrorBase extends Partial<Error> {
 }
 
 // @public
-export interface IFluidBrowserPackage extends IFluidPackage_2 {
+export interface IFluidBrowserPackage extends IFluidPackage {
     // (undocumented)
     fluid: {
         browser: IFluidBrowserPackageEnvironment;
-        [environment: string]: IFluidPackageEnvironment_2;
+        [environment: string]: IFluidPackageEnvironment;
     };
 }
 
 // @public
-export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironment_2 {
+export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironment {
     umd: {
         files: string[];
         library: string;
@@ -350,58 +346,14 @@ export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironmen
 }
 
 // @public
-export interface IFluidCodeDetails {
-    readonly config?: IFluidCodeDetailsConfig;
-    readonly package: string | Readonly<IFluidPackage>;
-}
-
-// @public (undocumented)
-export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer;
-
-// @public
-export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsComparer {
-    compare(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<number | undefined>;
-    satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean>;
-}
-
-// @public
-export interface IFluidCodeDetailsConfig {
-    // (undocumented)
-    readonly [key: string]: string;
-}
-
-// @public
 export interface IFluidCodeResolver {
-    resolveCodeDetails(details: IFluidCodeDetails_2): Promise<IResolvedFluidCodeDetails>;
+    resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails>;
 }
 
 // @public (undocumented)
 export interface IFluidModule {
     // (undocumented)
-    fluidExport: IFluidObject & FluidObject<IRuntimeFactory & IProvideFluidCodeDetailsComparer_2>;
-}
-
-// @public
-export interface IFluidModuleWithDetails {
-    details: IFluidCodeDetails_2;
-    module: IFluidModule;
-}
-
-// @public
-export interface IFluidPackage {
-    [key: string]: unknown;
-    fluid: {
-        [environment: string]: undefined | IFluidPackageEnvironment;
-    };
-    name: string;
-}
-
-// @public
-export interface IFluidPackageEnvironment {
-    [target: string]: undefined | {
-        files: string[];
-        [key: string]: unknown;
-    };
+    fluidExport: IFluidObject & FluidObject<IRuntimeFactory & IProvideFluidCodeDetailsComparer>;
 }
 
 // @public @deprecated (undocumented)
@@ -425,7 +377,7 @@ export interface IGenericError extends IErrorBase {
 
 // @public
 export interface IHostLoader extends ILoader {
-    createDetachedContainer(codeDetails: IFluidCodeDetails_2): Promise<IContainer>;
+    createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer>;
     rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
 }
 
@@ -475,12 +427,6 @@ export interface IProvideDeltaSender {
     readonly IDeltaSender: IDeltaSender;
 }
 
-// @public (undocumented)
-export interface IProvideFluidCodeDetailsComparer {
-    // (undocumented)
-    readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
-}
-
 // @public @deprecated (undocumented)
 export interface IProvideFluidTokenProvider {
     // (undocumented)
@@ -506,8 +452,8 @@ export interface IProxyLoaderFactory {
 }
 
 // @public
-export interface IResolvedFluidCodeDetails extends IFluidCodeDetails_2 {
-    readonly resolvedPackage: Readonly<IFluidPackage_2>;
+export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
+    readonly resolvedPackage: Readonly<IFluidPackage>;
     readonly resolvedPackageCacheId: string | undefined;
 }
 
@@ -533,12 +479,6 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 
 // @public
 export const isFluidBrowserPackage: (maybePkg: any) => maybePkg is Readonly<IFluidBrowserPackage>;
-
-// @public (undocumented)
-export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
-
-// @public
-export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
 
 // @public
 export interface IThrottlingWarning extends IErrorBase {
