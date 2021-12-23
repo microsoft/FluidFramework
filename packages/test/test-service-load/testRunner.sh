@@ -19,7 +19,7 @@ sleep $rampupTimeInSeconds
 credentials=`jq -c '.credentials|to_entries|first as $x | { ($x.key): ($x.value) }' ./testUserConfig.json`
 export login__odsp__test__accounts=$credentials
 
-docId=`jq -c .docId ./testUserConfig.json`
+docId=`jq -c .docId ./testUserConfig.json` | xargs
 node ./dist/nodeStressTest.js -p $TEST_PROFILE -c ./testUserConfig.json -id $docId -m > loadTestRun.logs
 
 echo "Test complete. Exiting."
