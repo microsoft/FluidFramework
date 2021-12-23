@@ -14,8 +14,9 @@ spec:
       labels:
         name: fluid-scale-test
     spec:
+      restartPolicy: Never
       nodeSelector:
-        agentpool: fluid
+        agentpool: testPods
       containers:
       - name: fluid-scale-test
         image: {{FLUID_IMAGE_URL}}
@@ -23,9 +24,6 @@ spec:
         command: ["/bin/sh"]
         args: ["-c", "sh testRunner.sh > testRunner.log"]
         resources:
-          requests:
-            cpu: 500m
-            memory: 1000M
           limits:
             cpu: 500m
             memory: 1000M

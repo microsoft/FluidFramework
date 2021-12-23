@@ -22,8 +22,6 @@ export login__odsp__test__accounts=$credentials
 docId=`jq -c .docId ./testUserConfig.json`
 node ./dist/nodeStressTest.js -p $TEST_PROFILE -c ./testUserConfig.json -id $docId -m > loadTestRun.logs
 
-echo "Test complete just keeping pod alive."
-while true;
-do
-    sleep 3600s;
-done
+echo "Test complete. Exiting."
+
+sleep 60s;
