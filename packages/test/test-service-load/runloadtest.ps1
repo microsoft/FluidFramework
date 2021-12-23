@@ -117,5 +117,5 @@ function CreateAndUploadConfig{
 	Out-File -FilePath $TestTriggerFile
 	az storage file upload --share-name fluid-config-store --source $TestTriggerFile --path $TestUid
 
-    Remove-Item -Force -Recursive $PodConfigPath
+    Remove-Item -Force -Recurse $PodConfigPath
 }

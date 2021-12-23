@@ -14,9 +14,8 @@ spec:
       labels:
         name: fluid-scale-test
     spec:
-      restartPolicy: Never
       nodeSelector:
-        agentpool: testPods
+        agentpool: testpods
       containers:
       - name: fluid-scale-test
         image: {{FLUID_IMAGE_URL}}
