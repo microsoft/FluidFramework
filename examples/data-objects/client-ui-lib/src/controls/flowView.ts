@@ -2823,11 +2823,6 @@ export interface IFlowViewModes {
     showCursorLocation?: boolean;
 }
 
-export interface ISeqTestItem {
-    x: string;
-    v: number;
-}
-
 export class PersistentComponent {
     constructor(public component: FluidObject, public elm: HTMLDivElement) {
     }
@@ -2859,7 +2854,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public tempBookmarks: Sequence.SequenceInterval[];
     public comments: Sequence.IntervalCollection<Sequence.SequenceInterval>;
     public persistentComponents: Map<FluidObject, PersistentComponent>;
-    public sequenceObjTest: Sequence.SharedObjectSequence<ISeqTestItem>;
     public presenceSignal: PresenceSignal;
     public presenceVector: Map<string, ILocalPresenceInfo> = new Map();
     public docRoot: types.ISharedMap;
@@ -3074,13 +3068,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 presenceInfo.cursor.refresh();
             }
         }
-    }
-
-    public addSeqObjEntry() {
-        const len = this.sequenceObjTest.getItemCount();
-        const pos = Math.floor(Math.random() * len);
-        const item = <ISeqTestItem>{ x: "veal", v: Math.floor(Math.random() * 10) };
-        this.sequenceObjTest.insert(pos, [item]);
     }
 
     public addPresenceSignal(presenceSignal: PresenceSignal) {
