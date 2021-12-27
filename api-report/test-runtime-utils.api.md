@@ -37,6 +37,7 @@ import { IGarbageCollectionSummaryDetails } from '@fluidframework/runtime-defini
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorum } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedClient } from '@fluidframework/protocol-definitions';
@@ -299,7 +300,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
     // (undocumented)
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
     // (undocumented)
@@ -340,6 +341,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
     // (undocumented)
     get absolutePath(): string;
+    // (undocumented)
+    addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     // (undocumented)
     applyStashedOp(content: any): Promise<void>;
     // (undocumented)
@@ -385,7 +388,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     getGCData(): Promise<IGarbageCollectionData>;
     // (undocumented)
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
     // (undocumented)

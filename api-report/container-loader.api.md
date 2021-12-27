@@ -190,15 +190,15 @@ export interface ILoaderServices {
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
     // (undocumented)
-    createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container>;
+    createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer>;
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     // (undocumented)
-    rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<Container>;
+    rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    resolve(request: IRequest, pendingLocalState?: string): Promise<Container>;
+    resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
     // (undocumented)
     readonly services: ILoaderServices;
 }

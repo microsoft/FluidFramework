@@ -162,11 +162,27 @@ export function concatGarbageCollectionStates(
     return { gcNodes: combinedGCNodes };
 }
 
+/**
+ * Concatenates the given GC datas and returns the concatenated GC data.
+ */
+export function concatGarbageCollectionData(gcData1: IGarbageCollectionData, gcData2: IGarbageCollectionData) {
+    const combinedGCData: IGarbageCollectionData = cloneGCData(gcData1);
+    for (const [id, routes] of Object.entries(gcData2.gcNodes)) {
+        if (combinedGCData.gcNodes[id] === undefined) {
+            combinedGCData.gcNodes[id] = Array.from(routes);
+        } else {
+            const combinedRoutes = [ ...routes, ...combinedGCData.gcNodes[id] ];
+            combinedGCData.gcNodes[id] = [ ...new Set(combinedRoutes) ];
+        }
+    }
+    return combinedGCData;
+}
+
 export class GCDataBuilder implements IGarbageCollectionData {
     public readonly gcNodes: { [ id: string ]: string[] } = {};
 
     public addNode(id: string, outboundRoutes: string[]) {
-        this.gcNodes[id] = outboundRoutes;
+        this.gcNodes[id] = Array.from(outboundRoutes);
     }
 
     /**

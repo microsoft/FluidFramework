@@ -150,8 +150,6 @@ An example where this is useful is building a collaborative storyboarding applic
 [IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
-[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
-[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedSequence]: {{< relref "sequences.md" >}}
 [SharedString]: {{< relref "string.md" >}}
 

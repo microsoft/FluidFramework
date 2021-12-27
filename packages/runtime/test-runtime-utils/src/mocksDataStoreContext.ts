@@ -21,7 +21,7 @@ import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
     IClientDetails,
     IDocumentMessage,
-    IQuorum,
+    IQuorumClients,
     ISequencedDocumentMessage,
     ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
@@ -86,7 +86,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
         throw new Error("Method not implemented.");
     }
 
-    public getQuorum(): IQuorum {
+    public getQuorum(): IQuorumClients {
         return;
     }
 

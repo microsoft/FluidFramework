@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:12.13.1
+FROM node:14.18.2
 
 # Avoid warnings by switching to noninteractive
 ENV DEBIAN_FRONTEND=noninteractive
@@ -31,8 +31,8 @@ RUN apt-get update \
     # https://jilles.me/badassify-your-terminal-and-shell/
     # https://billgrant.io/post/2019-05-05-vsremote/
     && apt-get install -y zsh \
-        wget \
-        vim \
+    wget \
+    vim \
     #
     # Install Docker CE CLI
     && apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common lsb-release \
@@ -56,11 +56,11 @@ RUN apt-get update \
 
 # Fluid specific dependencies
 RUN apt-get update && apt-get install -y \
-        python \
-        make \
-        git \
-        curl \
-        g++
+    python \
+    make \
+    git \
+    curl \
+    g++
 
 # terminal colors with xterm
 ENV TERM xterm
