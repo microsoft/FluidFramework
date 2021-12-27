@@ -91,8 +91,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         assert.strictEqual(container.getQuorum().getMembers().size, 0, "Quorum should not contain any members");
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
             "Container should be in disconnected state!!");
-        assert.strictEqual(container.codeDetails?.package, provider.defaultCodeDetails.package,
-            "Loaded package should be same as provided");
+
         if (container.getSpecifiedCodeDetails !== undefined) {
             assert.strictEqual(container.getSpecifiedCodeDetails()?.package, provider.defaultCodeDetails.package,
             "Specified package should be same as provided");
