@@ -7,6 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
     IFluidHandleContext,
+    IFluidSerializer,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -140,7 +141,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this.dataStoreContext.IFluidHandleContext;
     }
 
-    private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
+    private readonly serializer: IFluidSerializer;
     // Back compat: deprecated in 0.53, can be removed in versions >= 0.55.
     public get IFluidSerializer() { return this.serializer; }
 
@@ -197,6 +198,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.deltaManager = dataStoreContext.deltaManager;
         this.quorum = dataStoreContext.getQuorum();
         this.audience = dataStoreContext.getAudience();
+        this.serializer = new FluidSerializer(this, (handle: IFluidHandle) => {});
 
         const tree = dataStoreContext.baseSnapshot;
 
@@ -224,6 +226,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         this.dataStoreContext.storage,
                         (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
                         (address: string) => this.setChannelDirty(address),
+                        (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+                            this.addedGCOutboundReference(srcHandle, outboundHandle),
                         tree.trees[path]);
                     // This is the case of rehydrating a detached container from snapshot. Now due to delay loading of
                     // data store, if the data store is loaded after the container is attached, then we missed marking
@@ -241,6 +245,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         dataStoreContext.storage,
                         (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
                         (address: string) => this.setChannelDirty(address),
+                        (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+                            this.addedGCOutboundReference(srcHandle, outboundHandle),
                         path,
                         tree.trees[path],
                         this.sharedObjectRegistry,
@@ -345,7 +351,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.dataStoreContext,
             this.dataStoreContext.storage,
             (content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
-            (address: string) => this.setChannelDirty(address));
+            (address: string) => this.setChannelDirty(address),
+            (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+                this.addedGCOutboundReference(srcHandle, outboundHandle));
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
@@ -491,6 +499,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                             this.dataStoreContext.storage,
                             (content, localContentMetadata) => this.submitChannelOp(id, content, localContentMetadata),
                             (address: string) => this.setChannelDirty(address),
+                            (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+                                this.addedGCOutboundReference(srcHandle, outboundHandle),
                             id,
                             snapshotTree,
                             this.sharedObjectRegistry,
@@ -627,6 +637,16 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         for (const [contextId, context] of this.contexts) {
             context.updateUsedRoutes(usedContextRoutes.get(contextId) ?? [], gcTimestamp);
         }
+    }
+
+    /**
+     * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+     * all references added in the system.
+     * @param srcHandle - The handle of the node that added the reference.
+     * @param outboundHandle - The handle of the outbound node that is referenced.
+     */
+    private addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
+        this.dataStoreContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
     }
 
     /**
