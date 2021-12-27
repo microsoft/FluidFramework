@@ -53,11 +53,11 @@ export const gcTreeKey = "gc";
 export const gcBlobPrefix = "__gc";
 
 // Local storage key to turn GC on / off.
-const runGCKey = "FluidRunGC";
+const runGCKey = "Fluid.GarbageCollection.FluidRunGC";
 // Local storage key to turn GC test mode on / off.
-const gcTestModeKey = "FluidGCTestMode";
+const gcTestModeKey = "Fluid.GarbageCollection.FluidGCTestMode";
 // Local storage key to turn GC sweep on / off.
-const runSweepKey = "FluidRunSweep";
+const runSweepKey = "Fluid.GarbageCollection.FluidRunSweep";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -224,7 +224,7 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly gcEnabled: boolean;
     private readonly shouldRunSweep: boolean;
     private readonly testMode: boolean;
-    private readonly mc: MonitoringContext;
+    private readonly mc: MonitoringContext<`Fluid.GarbageCollection.${string}`>;
 
     /**
      * Tells whether the GC data should be written to the root of the summary tree. We do this under 2 conditions:
@@ -691,7 +691,7 @@ export class GarbageCollector implements IGarbageCollector {
          * unreferenced, stop tracking them and remove from unreferenced list.
          * Some of these nodes may be unreferenced now and if so, the current run will add unreferenced state for them.
          */
-        const gcResult = runGarbageCollection(gcDataSuperSet.gcNodes, ["/"], this.logger);
+        const gcResult = runGarbageCollection(gcDataSuperSet.gcNodes, ["/"], this.mc.logger);
         for (const nodeId of gcResult.referencedNodeIds) {
             const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
             if (nodeStateTracker !== undefined) {

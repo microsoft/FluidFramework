@@ -26,7 +26,7 @@ import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definition
 import { ChildLogger, loggerToMonitoringContext, MonitoringContext } from "@fluidframework/telemetry-utils";
 
 // Local storage key to disable the BatchManager
-const batchManagerDisabledKey = "FluidDisableBatchManager";
+const batchManagerDisabledKey = "Fluid.DriverBase.FluidDisableBatchManager";
 
 // See #8129.
 // Need to move to common-utils (tracked as #8165)
@@ -103,7 +103,7 @@ export class DocumentDeltaConnection
      * After disconnection, we flip this to prevent any stale messages from being emitted.
      */
     protected _disposed: boolean = false;
-    protected readonly mc: MonitoringContext;
+    protected readonly mc: MonitoringContext<`Fluid.DriverBase.${string}`>;
     protected readonly isBatchManagerDisabled: boolean = false;
 
     public get details(): IConnected {

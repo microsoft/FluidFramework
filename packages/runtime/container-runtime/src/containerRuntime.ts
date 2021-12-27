@@ -290,7 +290,7 @@ type IRuntimeMessageMetadata = undefined | {
 };
 
 // Local storage key to set the default flush mode to TurnBased
-const turnBasedFlushModeKey = "FluidFlushModeTurnBased";
+const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FluidFlushModeTurnBased";
 
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     switch (message.type) {
@@ -835,7 +835,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly handleContext: ContainerFluidHandleContext;
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
-    private readonly mc: MonitoringContext;
+    private readonly mc: MonitoringContext<`Fluid.ContainerRuntime.${string}`>;
     private readonly summarizerClientElection?: SummarizerClientElection;
     /**
      * summaryManager will only be created if this client is permitted to spawn a summarizing client
@@ -1082,7 +1082,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         if (this.summariesDisabled) {
-            this.mc.sendTelemetryEvent({ eventName: "SummariesDisabled" });
+            this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
         }
         else {
             const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
@@ -1092,13 +1092,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.context.quorum,
             );
             const orderedClientElectionForSummarizer = new OrderedClientElection(
+
                 orderedClientLogger,
                 orderedClientCollection,
                 electedSummarizerData ?? this.context.deltaManager.lastSequenceNumber,
                 SummarizerClientElection.isClientEligible,
             );
             const summarizerClientElectionEnabled =
-                this.mc.config.getBoolean("summarizerClientElection") ??
+                this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection") ??
                 this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
             const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 7000;
             this.summarizerClientElection = new SummarizerClientElection(
