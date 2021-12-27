@@ -319,7 +319,8 @@ export class ChildLogger extends TelemetryLogger {
     private constructor(
         protected readonly baseLogger: ITelemetryBaseLogger,
         namespace: string | undefined,
-        properties: ITelemetryLoggerPropertyBags | undefined) {
+        properties: ITelemetryLoggerPropertyBags | undefined,
+    ) {
         super(namespace, properties);
 
         // propagate the monitoring context
