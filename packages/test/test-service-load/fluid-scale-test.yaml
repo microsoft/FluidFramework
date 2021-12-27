@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: fluid-scale-test
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       name: fluid-scale-test
@@ -16,6 +16,11 @@ spec:
     spec:
       nodeSelector:
         agentpool: testpods
+      tolerations:
+      - key: "type"
+        value: "fluidTestPod"
+        operator: "Equal"
+        effect: "NoSchedule"
       containers:
       - name: fluid-scale-test
         image: {{FLUID_IMAGE_URL}}
