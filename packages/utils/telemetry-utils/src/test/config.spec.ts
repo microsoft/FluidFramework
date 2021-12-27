@@ -125,7 +125,7 @@ describe("Config", () => {
     it("Void provider", () => {
         const config = new CachedConfigProvider(inMemoryConfigProvider(undefined));
         assert.equal(config.getNumber("number"), undefined);
-        assert.equal(config.getNumber("does not exist"), undefined);
+        assert.equal(config.getString("does not exist"), undefined);
         assert.equal(config.getBoolean("boolean"), undefined);
     });
 

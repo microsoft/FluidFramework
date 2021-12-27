@@ -44,26 +44,26 @@ export type NamespacedConfigProvider<N extends string> =
         };
 
 /**
- * Creates a base configuration provider based on `localStorage`
+ * Creates a base configuration provider based on `sessionStorage`
  *
- * @returns A lazy initialized base configuration provider with `localStorage` as the underlying config store
+ * @returns A lazy initialized base configuration provider with `sessionStorage` as the underlying config store
  */
 export const sessionStorageConfigProvider =
-    new Lazy<IConfigProviderBase>(() =>inMemoryConfigProvider(safeSessionStorage()));
+    new Lazy<IConfigProviderBase>(() => inMemoryConfigProvider(safeSessionStorage()));
 
 const NullConfigProvider: IConfigProviderBase = {
-    getRawConfig: ()=>undefined,
+    getRawConfig: () => undefined,
 };
 
 /**
  * Creates a base configuration provider based on the supplied `Storage` instance
  *
  * @param storage - instance of `Storage` to be used as storage media for the config
- * @returns A lazy initialized base configuration provider with
+ * @returns A base configuration provider with
  * the supplied `Storage` instance as the underlying config store
  */
 export const inMemoryConfigProvider =
-    (storage: Storage | undefined): IConfigProviderBase =>{
+    (storage: Storage | undefined): IConfigProviderBase => {
     if (storage !== undefined && storage !== null) {
         return new CachedConfigProvider({
             getRawConfig: (name: string) => {
@@ -160,6 +160,7 @@ function stronglyTypedParse(input: ConfigTypes): StronglyTypedValue | undefined 
     return defaultReturn;
 }
 
+/** Referencing the `sessionStorage` variable can throw in some environments such as Node */
 const safeSessionStorage = (): Storage | undefined => {
     try {
         return sessionStorage !== null ? sessionStorage : undefined;
@@ -279,5 +280,5 @@ export function mixinMonitoringContext<N extends string = string, L extends ITel
 
 function isConfigProviderBase(obj: unknown): obj is IConfigProviderBase {
     const maybeConfig = obj as Partial<IConfigProviderBase> | undefined;
-    return maybeConfig?.getRawConfig !== undefined;
+    return typeof (maybeConfig?.getRawConfig) === "function";
 }
