@@ -91,7 +91,7 @@ export class OdspDocumentService implements IDocumentService {
 
     private storageManager?: OdspDocumentStorageService;
 
-    private readonly mc: MonitoringContext;
+    private readonly mc: MonitoringContext<`Fluid.Driver.Odsp.${string}`>;
 
     private readonly joinSessionKey: string;
 
@@ -142,7 +142,8 @@ export class OdspDocumentService implements IDocumentService {
             }));
 
         this.hostPolicy = hostPolicy;
-        this.hostPolicy.fetchBinarySnapshotFormat ??= this.mc.config.getBoolean("binaryFormatSnapshot");
+        this.hostPolicy.fetchBinarySnapshotFormat ??=
+            this.mc.config.getBoolean("Fluid.Driver.Odsp.binaryFormatSnapshot");
         if (this.odspResolvedUrl.summarizer) {
             this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
         }

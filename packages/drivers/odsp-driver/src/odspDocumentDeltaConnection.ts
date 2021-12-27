@@ -380,7 +380,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                 }
             }
             const payloadToDelete = this.getOpsMap.get(key!)!;
-            this.mc.logger.sendErrorEvent({
+            this.logger.sendErrorEvent({
                 eventName: "GetOpsTooMany",
                 nonce,
                 from: payloadToDelete.from,
@@ -413,7 +413,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             // summary includes required ops and SPO has some validation mechanism to ensure
             // they are not forged by client.
             // If design changes, we can reconsider it, but right now it's non-recoverable failure.
-            this.mc.logger.sendErrorEvent({ eventName: "FlushOpsNotSupported" });
+            this.logger.sendErrorEvent({ eventName: "FlushOpsNotSupported" });
             throw new Error("flush() API is not supported by PUSH, required for single-commit summaries");
         }
 
@@ -423,7 +423,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         // That said, it could timeout, and request could be repeated, so theoretically we can
         // get overlapping requests, but it should be very rare
         if (this.flushDeferred !== undefined) {
-            this.mc.logger.sendErrorEvent({ eventName: "FlushOpsTooMany" });
+            this.logger.sendErrorEvent({ eventName: "FlushOpsTooMany" });
             this.flushDeferred.reject("process involving flush() was cancelled OR unsupported concurrency");
         }
         this.socket.emit("flush_ops", this.clientId, { nonce });
@@ -474,7 +474,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                     duration: data === undefined ? undefined : performance.now() - data.start,
                 };
                 if (messages !== undefined && messages.length > 0) {
-                    this.mc.logger.sendPerformanceEvent({
+                    this.logger.sendPerformanceEvent({
                         ...common,
                         first: messages[0].sequenceNumber,
                         last: messages[messages.length - 1].sequenceNumber,
@@ -482,7 +482,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                     });
                     this.emit("op", this.documentId, messages);
                 } else {
-                    this.mc.logger.sendPerformanceEvent({
+                    this.logger.sendPerformanceEvent({
                         ...common,
                         length: 0,
                     });
@@ -507,7 +507,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                             break;
                     }
                 }
-                this.mc.logger.sendTelemetryEvent({
+                this.logger.sendTelemetryEvent({
                     eventName: "FlushResult",
                     code: result.code,
                     sequenceNumber: seq,

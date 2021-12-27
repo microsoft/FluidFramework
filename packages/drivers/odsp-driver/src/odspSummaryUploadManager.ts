@@ -31,7 +31,7 @@ import { getWithRetryForTokenRefresh } from "./odspUtils";
 export class OdspSummaryUploadManager {
     // Last proposed handle of the uploaded app summary.
     private lastSummaryProposalHandle: string | undefined;
-    private readonly mc: MonitoringContext;
+    private readonly mc: MonitoringContext<`Fluid.Driver.Odsp.${string}`>;
 
     constructor(
         private readonly snapshotUrl: string,
@@ -130,7 +130,7 @@ export class OdspSummaryUploadManager {
         tree: api.ISummaryTree,
         rootNodeName: string,
         path: string = "",
-        markUnreferencedNodes: boolean = this.mc.config.getBoolean("FluidMarkUnreferencedNodes") ?? true,
+        markUnreferencedNodes: boolean = this.mc.config.getBoolean("Fluid.Driver.Odsp.FluidMarkUnreferencedNodes") ?? true,
     ) {
         const snapshotTree: IOdspSummaryTree = {
             type: "tree",
