@@ -1658,12 +1658,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         try {
             this.trackOrderSequentiallyCalls(callback);
+            this.flush();
+            this.setFlushMode(savedFlushMode);
         } catch(error) {
             this.closeFn(CreateProcessingError(error, "orderSequentially"));
         }
-
-        this.flush();
-        this.setFlushMode(savedFlushMode);
     }
 
     private trackOrderSequentiallyCalls(callback: () => void): void {
