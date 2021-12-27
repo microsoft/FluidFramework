@@ -6,7 +6,7 @@
 import { DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedMap } from "@fluidframework/map";
-import { SharedObjectSequence, SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence";
 import { TodoItem } from "../TodoItem";
 
 import { TodoName } from "./Todo";
@@ -20,7 +20,6 @@ export const TodoInstantiationFactory =
             SharedMap.getFactory(),
             SharedString.getFactory(),
             SharedCell.getFactory(),
-            SharedObjectSequence.getFactory(),
         ],
         {},
         new Map([
