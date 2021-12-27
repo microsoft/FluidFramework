@@ -115,6 +115,9 @@
         "kafkaClientId": "scribe"
     },
     "system": {
+        "httpServer": {
+            "connectionTimeoutMs": 0
+        },
         "topics": {
             "send": "deltas"
         }
