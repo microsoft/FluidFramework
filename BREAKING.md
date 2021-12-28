@@ -16,6 +16,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [`getQuorum()` returns `IQuorumClients` from within the container](#getQuorum-returns-IQuorumClients-from-within-the-container)
 - [`SharedNumberSequence` and `SharedObjectSequence` deprecated](#SharedNumberSequence-and-SharedObjectSequence-deprecated)
 - [Aqueduct and IFluidDependencySynthesizer changes](#Aqueduct-and-IFluidDependencySynthesizer-changes)
+- [`IContainer` interface updated to complete 0.53 changes](#IContainer-interface-updated-to-complete-0.53-changes)
 
 ### Removed `readAndParseFromBlobs` from `driver-utils`
 The `readAndParseFromBlobs` function from `driver-utils` was deprecated in 0.44, and has now been removed from the `driver-utils` package.
@@ -65,6 +66,20 @@ In both cases, the third parameter to the constructor has been changed from `pro
 -    ]);
 +    dependencyContainer);
 ```
+### `IContainer` interface updated to complete 0.53 changes
+The breaking changes introduced in [`IContainer` interface updated to expose actively used `Container` public APIs](#IContainer-interface-updated-to-expose-actively-used-Container-public-APIs) have now been completed in 0.54. The following additions to the `IContainer` interface are no longer optional but rather mandatory:
+- `connectionState`
+- `connected`
+- `audience`
+- `readOnlyInfo`
+
+The following "alpha" APIs are still optional:
+- `setAutoReconnect()` (**alpha**)
+- `resume()` (**alpha**)
+- `clientId` (**alpha**)
+- `forceReadonly()` (**alpha**)
+
+The deprecated `codeDetails` API, which was marked as optional on the last release, has now been removed.
 
 ## 0.53 Breaking changes
 - [`IContainer` interface updated to expose actively used `Container` public APIs](#IContainer-interface-updated-to-expose-actively-used-Container-public-APIs)

@@ -36,9 +36,7 @@ export abstract class ServiceAudience<M extends IMember = IMember>
       protected readonly container: IContainer,
   ) {
     super();
-    // TODO: Remove null check after next release #8523
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    this.audience = container.audience!;
+    this.audience = container.audience;
 
     // getMembers will assign lastMembers so the removeMember event has what it needs
     // in case it would fire before getMembers otherwise gets called the first time
