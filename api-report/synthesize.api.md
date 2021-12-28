@@ -29,7 +29,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
     get IFluidDependencySynthesizer(): this;
     // (undocumented)
     register<T extends keyof IFluidObject>(type: T, provider: FluidObjectProvider<T>): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     get registeredTypes(): Iterable<(keyof IFluidObject)>;
     synthesize<O extends IFluidObject, R extends IFluidObject = {}>(optionalTypes: FluidObjectSymbolProvider<O>, requiredTypes: FluidObjectSymbolProvider<R>): AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<R>>;
     // (undocumented)
