@@ -835,7 +835,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly handleContext: ContainerFluidHandleContext;
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
-    private readonly mc: MonitoringContext<`Fluid.ContainerRuntime.${string}`>;
+    private readonly mc: MonitoringContext;
     private readonly summarizerClientElection?: SummarizerClientElection;
     /**
      * summaryManager will only be created if this client is permitted to spawn a summarizing client

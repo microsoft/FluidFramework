@@ -25,24 +25,6 @@ export interface IConfigProviderBase {
     getNumberArray(name: string): number[] | undefined;
     getStringArray(name: string): string[] | undefined;
  }
-
-/**
- * This is a helper type that allows enforcing the format of the name string in
- * a ConfigProvider at the typing layer. This should be used with typescripts
- * template literal types:
- * https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html
- *
- * example: `const mc: NamespacedConfigProvider<`Some.Namespace.${string}`>`
- */
-export type NamespacedConfigProvider<N extends string> =
-    string extends N
-        ? IConfigProvider
-        :  {
-            [P in keyof IConfigProvider]: IConfigProvider[P] extends (name: string) => infer R
-                ? (name: N) => R
-                : never;
-        };
-
 /**
  * Creates a base configuration provider based on `sessionStorage`
  *
@@ -238,30 +220,29 @@ export class CachedConfigProvider implements IConfigProvider {
  * A type containing both a telemetry logger and a configuration provider
  */
 export interface MonitoringContext<
-    N extends string = string,
     L extends ITelemetryBaseLogger = ITelemetryLogger
 > {
-    config: NamespacedConfigProvider<N>;
+    config: IConfigProvider;
     logger: L;
 }
 
-export function loggerIsMonitoringContext<N extends string = string, L extends ITelemetryBaseLogger = ITelemetryLogger>(
-    obj: L): obj is L & MonitoringContext<N,L> {
-    const maybeConfig = obj as Partial<MonitoringContext<N,L>> | undefined;
+export function loggerIsMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(
+    obj: L): obj is L & MonitoringContext<L> {
+    const maybeConfig = obj as Partial<MonitoringContext<L>> | undefined;
     return isConfigProviderBase(maybeConfig?.config) && maybeConfig?.logger !== undefined;
 }
 
-export function loggerToMonitoringContext<N extends string = string, L extends ITelemetryBaseLogger = ITelemetryLogger>(
-    logger: L): MonitoringContext<N,L> {
-    if(loggerIsMonitoringContext<N,L>(logger)) {
+export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(
+    logger: L): MonitoringContext<L> {
+    if(loggerIsMonitoringContext<L>(logger)) {
         return logger;
     }
-    return mixinMonitoringContext<N,L>(logger, sessionStorageConfigProvider.value);
+    return mixinMonitoringContext<L>(logger, sessionStorageConfigProvider.value);
 }
 
-export function mixinMonitoringContext<N extends string = string, L extends ITelemetryBaseLogger = ITelemetryLogger>(
+export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(
     logger: L, ... configs: (IConfigProviderBase | undefined)[]) {
-    if (loggerIsMonitoringContext<N,L>(logger)) {
+    if (loggerIsMonitoringContext<L>(logger)) {
         throw new Error("Logger is already a monitoring context");
     }
     /**
@@ -272,10 +253,10 @@ export function mixinMonitoringContext<N extends string = string, L extends ITel
      * so if a deeper layer then converts that logger to a monitoring context it can find the smuggled properties
      * of the MonitoringContext and get the config provider.
      */
-    const mc: L & Partial<MonitoringContext<N,L>> = logger;
-    mc.config = new CachedConfigProvider(... configs) as unknown as NamespacedConfigProvider<N>;
+    const mc: L & Partial<MonitoringContext<L>> = logger;
+    mc.config = new CachedConfigProvider(...configs);
     mc.logger = logger;
-    return mc as MonitoringContext<N,L>;
+    return mc as MonitoringContext<L>;
 }
 
 function isConfigProviderBase(obj: unknown): obj is IConfigProviderBase {

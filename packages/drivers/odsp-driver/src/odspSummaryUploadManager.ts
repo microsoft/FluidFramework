@@ -31,7 +31,7 @@ import { getWithRetryForTokenRefresh } from "./odspUtils";
 export class OdspSummaryUploadManager {
     // Last proposed handle of the uploaded app summary.
     private lastSummaryProposalHandle: string | undefined;
-    private readonly mc: MonitoringContext<`Fluid.Driver.Odsp.${string}`>;
+    private readonly mc: MonitoringContext;
 
     constructor(
         private readonly snapshotUrl: string,

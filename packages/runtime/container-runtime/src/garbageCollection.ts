@@ -224,7 +224,7 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly gcEnabled: boolean;
     private readonly shouldRunSweep: boolean;
     private readonly testMode: boolean;
-    private readonly mc: MonitoringContext<`Fluid.GarbageCollection.${string}`>;
+    private readonly mc: MonitoringContext;
 
     /**
      * Tells whether the GC data should be written to the root of the summary tree. We do this under 2 conditions:

@@ -103,7 +103,7 @@ export class DocumentDeltaConnection
      * After disconnection, we flip this to prevent any stale messages from being emitted.
      */
     protected _disposed: boolean = false;
-    private readonly mc: MonitoringContext<`Fluid.Driver.BaseDocumentDeltaConnection.${string}`>;
+    private readonly mc: MonitoringContext;
     protected readonly isBatchManagerDisabled: boolean = false;
     /**
      * @deprecated - Implementors should manage their own logger or monitoring context

@@ -148,7 +148,7 @@ export interface ITelemetryLoggerPropertyBags {
 }
 
 // @public (undocumented)
-export function loggerToMonitoringContext<N extends string = string, L extends ITelemetryBaseLogger = ITelemetryLogger>(logger: L): MonitoringContext<N, L>;
+export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(logger: L): MonitoringContext<L>;
 
 // @public
 export class LoggingError extends Error implements ILoggingError, Pick<IFluidErrorBase, "errorInstanceId"> {
@@ -163,7 +163,7 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
 export function logIfFalse(condition: any, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
 
 // @public (undocumented)
-export function mixinMonitoringContext<N extends string = string, L extends ITelemetryBaseLogger = ITelemetryLogger>(logger: L, ...configs: (IConfigProviderBase | undefined)[]): MonitoringContext<N, L>;
+export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(logger: L, ...configs: (IConfigProviderBase | undefined)[]): MonitoringContext<L>;
 
 // @public
 export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
@@ -177,11 +177,9 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
 }
 
 // @public
-export interface MonitoringContext<N extends string = string, L extends ITelemetryBaseLogger = ITelemetryLogger> {
-    // Warning: (ae-forgotten-export) The symbol "NamespacedConfigProvider" needs to be exported by the entry point index.d.ts
-    //
+export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger> {
     // (undocumented)
-    config: NamespacedConfigProvider<N>;
+    config: IConfigProvider;
     // (undocumented)
     logger: L;
 }
