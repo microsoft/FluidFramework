@@ -23,31 +23,10 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, getCircularReplacer } from "@fluidframework/telemetry-utils";
 
 // Local storage key to disable the BatchManager
 const batchManagerDisabledKey = "FluidDisableBatchManager";
-
-// See #8129.
-// Need to move to common-utils (tracked as #8165)
-// Borrowed from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#examples
-// Avoids runtime errors with circular references.
-// Not ideal, as will cut values that are not necessarily circular references.
-// Could be improved by implementing Node's util.inspect() for browser (minus all the coloring code)
-const getCircularReplacer = () => {
-    const seen = new WeakSet();
-    return (key: string, value: any): any => {
-        // eslint-disable-next-line no-null/no-null
-        if (typeof value === "object" && value !== null) {
-            if (seen.has(value)) {
-                return "<removed/circular>";
-            }
-            seen.add(value);
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return value;
-    };
-};
 
 /**
  * Represents a connection to a stream of delta updates
