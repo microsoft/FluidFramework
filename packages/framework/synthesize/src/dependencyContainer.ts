@@ -29,6 +29,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
     public get IFluidDependencySynthesizer() { return this; }
 
     /**
+     * @deprecated - use has instead
      * {@inheritDoc (IFluidDependencySynthesizer:interface).registeredTypes}
      */
     public get registeredTypes(): Iterable<(keyof IFluidObject)> {
@@ -86,7 +87,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
     }
 
     /**
-     * @deprecated - use synthesize instead
+     * @deprecated - use synthesize or has instead
      *
      * {@inheritDoc (IFluidDependencySynthesizer:interface).getProvider}
      */

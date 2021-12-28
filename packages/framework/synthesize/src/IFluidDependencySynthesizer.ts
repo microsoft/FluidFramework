@@ -68,14 +68,13 @@ export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynt
     ): AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<R>>;
 
     /**
-     *  @deprecated - This will only be available on DependencyContainer
      * Check if a given type is registered
      * @param types - Type to check
      */
     has(...types: (keyof IFluidObject)[]): boolean;
 
     /**
-     * @deprecated - This will be removed. Use synthesize instead, or has on a child DependencyContainer
+     * @deprecated - This will be removed. Use synthesize or has instead
      * Get a provider. undefined if not available.
      * @param type - Type to get
      */
