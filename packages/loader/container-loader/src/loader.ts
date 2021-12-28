@@ -25,7 +25,16 @@ import {
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
-import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import {
+    ChildLogger,
+    DebugLogger,
+    IConfigProviderBase,
+    loggerToMonitoringContext,
+    mixinMonitoringContext,
+    MonitoringContext,
+    PerformanceEvent,
+    sessionStorageConfigProvider,
+} from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
     IDocumentStorageService,
@@ -207,6 +216,11 @@ export interface ILoaderProps {
      * Blobs storage for detached containers.
      */
     readonly detachedBlobStorage?: IDetachedBlobStorage;
+
+    /**
+     * The configuration provider which may be used to control features.
+     */
+     readonly configProvider?: IConfigProviderBase;
 }
 
 /**
@@ -278,7 +292,7 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
 export class Loader implements IHostLoader {
     private readonly containers = new Map<string, Promise<Container>>();
     public readonly services: ILoaderServices;
-    private readonly logger: ITelemetryLogger;
+    private readonly mc: MonitoringContext;
 
     constructor(loaderProps: ILoaderProps) {
         const scope = { ...loaderProps.scope as FluidObject<ILoader> };
@@ -289,17 +303,25 @@ export class Loader implements IHostLoader {
             loaderId: uuid(),
             loaderVersion: pkgVersion,
         };
+
+        const subMc = mixinMonitoringContext(
+            DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all: telemetryProps }),
+            sessionStorageConfigProvider.value,
+            loaderProps.configProvider,
+        );
+
         this.services = {
             urlResolver: createCachedResolver(MultiUrlResolver.create(loaderProps.urlResolver)),
             documentServiceFactory: MultiDocumentServiceFactory.create(loaderProps.documentServiceFactory),
             codeLoader: loaderProps.codeLoader,
             options: loaderProps.options ?? {},
             scope,
-            subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all: telemetryProps }),
+            subLogger: subMc.logger,
             proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
             detachedBlobStorage: loaderProps.detachedBlobStorage,
         };
-        this.logger = ChildLogger.create(this.services.subLogger, "Loader");
+        this.mc = loggerToMonitoringContext(
+            ChildLogger.create(this.services.subLogger, "Loader"));
     }
 
     public get IFluidRouter(): IFluidRouter { return this; }
@@ -329,7 +351,7 @@ export class Loader implements IHostLoader {
 
     public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
         const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
-        return PerformanceEvent.timedExecAsync(this.logger, { eventName }, async () => {
+        return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName }, async () => {
             const resolved = await this.resolveCore(
                 request,
                 pendingLocalState !== undefined ? JSON.parse(pendingLocalState) : undefined,
@@ -339,7 +361,7 @@ export class Loader implements IHostLoader {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
+        return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName: "Request" }, async () => {
             const resolved = await this.resolveCore(request);
             return resolved.container.request({
                 ...request,
