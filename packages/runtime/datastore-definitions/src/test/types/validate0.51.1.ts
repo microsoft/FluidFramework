@@ -19,6 +19,7 @@ declare function get_old_InterfaceDeclaration_IChannel():
 declare function use_current_InterfaceDeclaration_IChannel(
     use: current.IChannel);
 use_current_InterfaceDeclaration_IChannel(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IChannel());
 
 /*
@@ -68,6 +69,7 @@ declare function get_old_InterfaceDeclaration_IChannelFactory():
 declare function use_current_InterfaceDeclaration_IChannelFactory(
     use: current.IChannelFactory);
 use_current_InterfaceDeclaration_IChannelFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IChannelFactory());
 
 /*
@@ -189,6 +191,7 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreRuntime():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreRuntime(
     use: current.IFluidDataStoreRuntime);
 use_current_InterfaceDeclaration_IFluidDataStoreRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreRuntime());
 
 /*

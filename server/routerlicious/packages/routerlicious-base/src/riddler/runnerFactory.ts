@@ -13,6 +13,7 @@ import {
     IResourcesFactory,
     IRunner,
     IRunnerFactory,
+    IWebServerFactory,
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
@@ -21,7 +22,10 @@ import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
 
 export class RiddlerResources implements IResources {
+    public webServerFactory: IWebServerFactory;
+
     constructor(
+        public readonly config: Provider,
         public readonly tenantsCollectionName: string,
         public readonly mongoManager: MongoManager,
         public readonly port: any,
@@ -31,6 +35,8 @@ export class RiddlerResources implements IResources {
         public readonly defaultInternalHistorianUrl: string,
         public readonly secretManager: ISecretManager,
     ) {
+        const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
+        this.webServerFactory = new services.BasicWebServerFactory(httpServerConfig);
     }
 
     public async dispose(): Promise<void> {
@@ -77,6 +83,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
         const defaultInternalHistorianUrl = config.get("worker:internalBlobStorageUrl") || defaultHistorianUrl;
 
         return new RiddlerResources(
+            config,
             tenantsCollectionName,
             mongoManager,
             port,
@@ -91,6 +98,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
     public async create(resources: RiddlerResources): Promise<IRunner> {
         return new RiddlerRunner(
+            resources.webServerFactory,
             resources.tenantsCollectionName,
             resources.port,
             resources.mongoManager,
