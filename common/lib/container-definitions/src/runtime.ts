@@ -135,7 +135,7 @@ export interface IContainerContext extends IDisposable {
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     readonly submitSignalFn: (contents: any) => void;
-    readonly closeFn: (error?: ICriticalContainerError) => void;
+    readonly closeFn: (error?: ICriticalContainerError, reason?: string) => void;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly quorum: IQuorum;
     /**

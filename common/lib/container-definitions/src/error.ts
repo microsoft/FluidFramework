@@ -78,7 +78,7 @@ export interface ContainerWarning extends IErrorBase {
 /**
  * Represents errors raised on container.
  */
-export type ICriticalContainerError = IErrorBase;
+export type ICriticalContainerError = IErrorBase & Error;
 
 /**
  * Generic wrapper for an unrecognized/uncategorized error object
