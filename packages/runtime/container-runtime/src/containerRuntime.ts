@@ -290,7 +290,7 @@ type IRuntimeMessageMetadata = undefined | {
 };
 
 // Local storage key to set the default flush mode to TurnBased
-const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FluidFlushModeTurnBased";
+const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
 
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     switch (message.type) {

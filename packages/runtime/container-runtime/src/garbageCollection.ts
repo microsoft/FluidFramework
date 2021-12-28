@@ -53,11 +53,11 @@ export const gcTreeKey = "gc";
 export const gcBlobPrefix = "__gc";
 
 // Local storage key to turn GC on / off.
-const runGCKey = "Fluid.GarbageCollection.FluidRunGC";
+const runGCKey = "Fluid.GarbageCollection.RunGC";
 // Local storage key to turn GC test mode on / off.
-const gcTestModeKey = "Fluid.GarbageCollection.FluidGCTestMode";
+const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 // Local storage key to turn GC sweep on / off.
-const runSweepKey = "Fluid.GarbageCollection.FluidRunSweep";
+const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 
