@@ -20,17 +20,17 @@ export interface IChannel extends IFluidLoadable {
     readonly attributes: IChannelAttributes;
 
     /**
-     * Generates summary of the channel.
+     * Generates summary of the channel synchronously.
      * @returns A tree representing the summary of the channel.
      */
-    summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
 
     /**
      * Generates summary of the channel asynchronously.
      * This should not be called where the channel can be modified while summarization is in progress.
      * @returns A tree representing the summary of the channel.
      */
-    summarizeAsync?(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 
     /**
      * True if the data structure is attached to storage.

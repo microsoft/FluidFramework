@@ -77,7 +77,7 @@ export function summarizeChannel(
     fullTree: boolean = false,
     trackState: boolean = false,
 ): ISummaryTreeWithStats {
-    const summarizeResult = channel.summarize(fullTree, trackState);
+    const summarizeResult = channel.getAttachSummary(fullTree, trackState);
 
     // Add the channel attributes to the returned result.
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
@@ -89,12 +89,7 @@ export async function summarizeChannelAsync(
     fullTree: boolean = false,
     trackState: boolean = false,
 ): Promise<ISummaryTreeWithStats> {
-    let summarizeResult: ISummaryTreeWithStats;
-    if (channel.summarizeAsync !== undefined) {
-        summarizeResult = await channel.summarizeAsync(fullTree, trackState);
-    } else {
-        summarizeResult = channel.summarize(fullTree, trackState);
-    }
+    const summarizeResult = await channel.summarize(fullTree, trackState);
 
     // Add the channel attributes to the returned result.
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));

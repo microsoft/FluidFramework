@@ -227,14 +227,14 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).summarize}
+     * {@inheritDoc (ISharedObject:interface).getAttachSummary}
      */
-    public abstract summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    public abstract getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
 
     /**
-     * {@inheritDoc (ISharedObject:interface).summarizeAsync}
+     * {@inheritDoc (ISharedObject:interface).summarize}
      */
-    public abstract summarizeAsync(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    public abstract summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 
     /**
      * {@inheritDoc (ISharedObject:interface).getGCData}
@@ -472,46 +472,15 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * @param id - The id of the shared object
-     * @param runtime - The IFluidDataStoreRuntime which contains the shared object
-     * @param attributes - Attributes of the shared object
-    */
-    constructor(
-        public id: string,
-        protected runtime: IFluidDataStoreRuntime,
-        public readonly attributes: IChannelAttributes)
-    {
-        super(id, runtime, attributes);
-    }
-
-    /**
      * {@inheritDoc (ISharedObject:interface).summarize}
      */
-    public summarize(fullTree: boolean = false, trackState: boolean = false): ISummaryTreeWithStats {
-        // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created below)
-        // to serialize handles in this object's data. The routes of these serialized handles are outbound routes
-        // to other Fluid objects.
-        assert(!this._isSummarizing, 0x076 /* "Possible re-entrancy! Summary should not already be in progress." */);
-        this._isSummarizing = true;
-
-        let summaryTree: ISummaryTreeWithStats;
-        try {
-            const serializer = new SummarySerializer(
-                this.runtime.channelsRoutingContext,
-                (handle: IFluidHandle) => this.handleDecoded(handle),
-            );
-            const snapshot: ITree = this.snapshotCore(serializer);
-            summaryTree = convertToSummaryTreeWithStats(snapshot, fullTree);
-            assert(this._isSummarizing, 0x077 /* "Possible re-entrancy! Summary should have been in progress." */);
-        } finally {
-            this._isSummarizing = false;
-        }
-        return summaryTree;
+    public getAttachSummary(fullTree: boolean = false, trackState: boolean = false): ISummaryTreeWithStats {
+        const snapshot: ITree = this.snapshotCore(this.serializer);
+        return convertToSummaryTreeWithStats(snapshot, fullTree);
     }
 
-    public async summarizeAsync(fullTree: boolean = false, trackState: boolean = false):
-        Promise<ISummaryTreeWithStats> {
-        return this.summarize(fullTree, trackState);
+    public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummaryTreeWithStats> {
+        return this.getAttachSummary(fullTree, trackState);
     }
 
     /**
