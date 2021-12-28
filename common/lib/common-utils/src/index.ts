@@ -24,4 +24,3 @@ export * from "./lazy";
 export * from "./performanceIsomorphic";
 export * from "./delay";
 export * from "./bufferShared";
-export * from "./parseErrorMessage";
