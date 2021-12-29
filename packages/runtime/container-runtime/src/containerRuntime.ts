@@ -51,10 +51,12 @@ import {
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
 import {
+    CreateProcessingError,
     DataCorruptionError,
     GenericError,
     UsageError,
-    extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
+    extractSafePropertiesFromMessage,
+} from "@fluidframework/container-utils";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -1660,9 +1662,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         try {
             this.trackOrderSequentiallyCalls(callback);
-        } finally {
             this.flush();
             this.setFlushMode(savedFlushMode);
+        } catch(error) {
+            this.closeFn(CreateProcessingError(error, "orderSequentially"));
         }
     }
 
