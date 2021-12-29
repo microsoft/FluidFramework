@@ -23,10 +23,15 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger, getCircularReplacer } from "@fluidframework/telemetry-utils";
+import { 
+  ChildLogger,
+  getCircularReplacer,
+  loggerToMonitoringContext,
+  MonitoringContext,
+} from "@fluidframework/telemetry-utils";
 
 // Local storage key to disable the BatchManager
-const batchManagerDisabledKey = "FluidDisableBatchManager";
+const batchManagerDisabledKey = "Fluid.Driver.BaseDocumentDeltaConnection.DisableBatchManager";
 
 /**
  * Represents a connection to a stream of delta updates
@@ -82,8 +87,14 @@ export class DocumentDeltaConnection
      * After disconnection, we flip this to prevent any stale messages from being emitted.
      */
     protected _disposed: boolean = false;
-    protected readonly logger: ITelemetryLogger;
+    private readonly mc: MonitoringContext;
     protected readonly isBatchManagerDisabled: boolean = false;
+    /**
+     * @deprecated - Implementors should manage their own logger or monitoring context
+     */
+    protected get logger(): ITelemetryLogger {
+        return this.mc.logger;
+    }
 
     public get details(): IConnected {
         if (!this._details) {
@@ -103,7 +114,8 @@ export class DocumentDeltaConnection
     ) {
         super();
 
-        this.logger = ChildLogger.create(logger, "DeltaConnection");
+        this.mc = loggerToMonitoringContext(
+            ChildLogger.create(logger, "DeltaConnection"));
 
         this.submitManager = new BatchManager<IDocumentMessage[]>(
             (submitType, work) => this.emitMessages(submitType, work));
@@ -136,7 +148,7 @@ export class DocumentDeltaConnection
             }
         });
 
-        this.isBatchManagerDisabled = DocumentDeltaConnection.disabledBatchManagerFeatureGate;
+        this.isBatchManagerDisabled = this.mc.config.getBoolean(batchManagerDisabledKey) === true;
     }
 
     /**
@@ -265,15 +277,6 @@ export class DocumentDeltaConnection
         if (!this.disposed) {
             this.socket.emit(type, this.clientId, messages);
         }
-    }
-
-    private static get disabledBatchManagerFeatureGate() {
-        try {
-            return localStorage !== undefined
-                && typeof localStorage === "object"
-                && localStorage.getItem(batchManagerDisabledKey) === "1";
-        } catch (e) { }
-        return false;
     }
 
     protected submitCore(type: string, messages: IDocumentMessage[]) {

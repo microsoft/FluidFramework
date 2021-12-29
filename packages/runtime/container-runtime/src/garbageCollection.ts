@@ -26,11 +26,15 @@ import {
     RefreshSummaryResult,
     SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import {
+    ChildLogger,
+    loggerToMonitoringContext,
+    MonitoringContext,
+    PerformanceEvent,
+ } from "@fluidframework/telemetry-utils";
 
 import { IGCRuntimeOptions } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
-import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
 import {
     getGCVersion,
     GCVersion,
@@ -49,11 +53,11 @@ export const gcTreeKey = "gc";
 export const gcBlobPrefix = "__gc";
 
 // Local storage key to turn GC on / off.
-const runGCKey = "FluidRunGC";
+const runGCKey = "Fluid.GarbageCollection.RunGC";
 // Local storage key to turn GC test mode on / off.
-const gcTestModeKey = "FluidGCTestMode";
+const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 // Local storage key to turn GC sweep on / off.
-const runSweepKey = "FluidRunSweep";
+const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -220,7 +224,7 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly gcEnabled: boolean;
     private readonly shouldRunSweep: boolean;
     private readonly testMode: boolean;
-    private readonly logger: ITelemetryLogger;
+    private readonly mc: MonitoringContext;
 
     /**
      * Tells whether the GC data should be written to the root of the summary tree. We do this under 2 conditions:
@@ -266,7 +270,8 @@ export class GarbageCollector implements IGarbageCollector {
         existing: boolean,
         metadata?: IContainerRuntimeMetadata,
     ) {
-        this.logger = ChildLogger.create(baseLogger, "GarbageCollector");
+        this.mc = loggerToMonitoringContext(
+            ChildLogger.create(baseLogger, "GarbageCollector"));
 
         this.deleteTimeoutMs = this.gcOptions.deleteTimeoutMs ?? defaultDeleteTimeoutMs;
 
@@ -287,7 +292,7 @@ export class GarbageCollector implements IGarbageCollector {
         this.latestSummaryGCVersion = prevSummaryGCVersion ?? this.currentGCVersion;
 
         // Whether GC should run or not. Can override with localStorage flag.
-        this.shouldRunGC = getLocalStorageFeatureGate(runGCKey) ?? (
+        this.shouldRunGC = this.mc.config.getBoolean(runGCKey) ?? (
             // GC must be enabled for the document.
             this.gcEnabled
             // GC must not be disabled via GC options.
@@ -297,10 +302,10 @@ export class GarbageCollector implements IGarbageCollector {
         // Whether GC sweep phase should run or not. If this is false, only GC mark phase is run. Can override with
         // localStorage flag.
         this.shouldRunSweep = this.shouldRunGC &&
-            (getLocalStorageFeatureGate(runSweepKey) ?? gcOptions.runSweep === true);
+            (this.mc.config.getBoolean(runSweepKey) ?? gcOptions.runSweep === true);
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
-        this.testMode = getLocalStorageFeatureGate(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
+        this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
 
         // If `writeDataAtRoot` GC option is true, we should write the GC data into the root of the summary tree. This
         // GC option is used for testing only. It will be removed once we start writing GC data into root by default.
@@ -413,7 +418,7 @@ export class GarbageCollector implements IGarbageCollector {
             const usedRoutes = runGarbageCollection(
                 gcNodes,
                 [ "/" ],
-                this.logger,
+                this.mc.logger,
             ).referencedNodeIds;
 
             const dataStoreGCDetailsMap = unpackChildNodesGCDetails({ gcData: { gcNodes }, usedRoutes });
@@ -446,7 +451,7 @@ export class GarbageCollector implements IGarbageCollector {
         },
     ): Promise<IGCStats> {
         const {
-            logger = this.logger,
+            logger = this.mc.logger,
             runSweep = this.shouldRunSweep,
             fullGC = this.gcOptions.runFullGC === true || this.hasGCVersionChanged,
         } = options;
@@ -561,7 +566,7 @@ export class GarbageCollector implements IGarbageCollector {
         // Prefix "/" if needed to make it relative to the root.
         const nodeId = id.startsWith("/") ? id : `/${id}`;
         this.unreferencedNodesState.get(nodeId)?.logIfInactive(
-            this.logger,
+            this.mc.logger,
             "inactiveObjectChanged",
             this.getCurrentTimestampMs(),
             this.deleteTimeoutMs,
@@ -629,7 +634,7 @@ export class GarbageCollector implements IGarbageCollector {
                 // If this node has been unreferenced for longer than deleteTimeoutMs and is being referenced,
                 // log an error as this may mean the deleteTimeoutMs is not long enough.
                 nodeStateTracker.logIfInactive(
-                    this.logger,
+                    this.mc.logger,
                     "inactiveObjectRevived",
                     currentTimestampMs,
                     this.deleteTimeoutMs,
@@ -686,7 +691,7 @@ export class GarbageCollector implements IGarbageCollector {
          * unreferenced, stop tracking them and remove from unreferenced list.
          * Some of these nodes may be unreferenced now and if so, the current run will add unreferenced state for them.
          */
-        const gcResult = runGarbageCollection(gcDataSuperSet.gcNodes, ["/"], this.logger);
+        const gcResult = runGarbageCollection(gcDataSuperSet.gcNodes, ["/"], this.mc.logger);
         for (const nodeId of gcResult.referencedNodeIds) {
             const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
             if (nodeStateTracker !== undefined) {
