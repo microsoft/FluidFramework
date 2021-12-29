@@ -118,6 +118,9 @@ data:
             "kafkaClientId": "{{ template "scribe.fullname" . }}"
         },
         "system": {
+            "httpServer": {
+                "connectionTimeout": {{ .Values.system.httpServer.connectionTimeout }}
+            },
             "topics": {
                 "send": "{{ .Values.kafka.topics.deltas }}"
             }

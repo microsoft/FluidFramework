@@ -105,6 +105,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         afterEach(async () => reset());
 
         it("Root datastore creation fails at attach op", async () => {
+            const dataCorruption = anyDataCorruption([container1, container2]);
             // Isolate inbound communication
             await container1.deltaManager.inbound.pause();
             await container2.deltaManager.inbound.pause();
@@ -116,17 +117,15 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             container1.deltaManager.inbound.resume();
             container2.deltaManager.inbound.resume();
 
-            const container3 = await provider.loadTestContainer(testContainerConfig);
-            const dataCorruption = await anyDataCorruption([container1, container2, container3]);
-            assert(dataCorruption);
+            assert(await dataCorruption);
         });
 
         it("Root datastore creation fails when already attached", async () => {
+            const dataCorruption = anyDataCorruption([container1, container2]);
             await createRootDataStore(dataObject1, "2");
             await createRootDataStore(dataObject2, "2");
 
-            const dataCorruption = await anyDataCorruption([container1, container2]);
-            assert(dataCorruption);
+            assert(await dataCorruption);
         });
 
         it("Root datastore creation fails when already attached - same container", async () => {

@@ -61,8 +61,8 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     get initialSignals(): ISignalMessage[];
     // (undocumented)
     protected readonly isBatchManagerDisabled: boolean;
-    // (undocumented)
-    protected readonly logger: ITelemetryLogger;
+    // @deprecated (undocumented)
+    protected get logger(): ITelemetryLogger;
     get maxMessageSize(): number;
     get mode(): ConnectionMode;
     // (undocumented)
