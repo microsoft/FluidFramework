@@ -79,6 +79,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
 
     /**
      * {@inheritDoc (IFluidDependencySynthesizer:interface).has}
+     * @param excludeParents - If true, exclude checking parent registries
      */
     public has(type: (keyof IFluidObject), excludeParents?: boolean): boolean {
         if (this.providers.has(type)) {

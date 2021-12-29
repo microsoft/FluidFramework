@@ -57,7 +57,7 @@ export const IFluidDependencySynthesizer: keyof IProvideFluidDependencySynthesiz
 export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynthesizer {
     // @deprecated (undocumented)
     getProvider<T extends keyof IFluidObject>(type: T): FluidObjectProvider<T> | undefined;
-    has(type: (keyof IFluidObject), excludeParents?: boolean): boolean;
+    has(type: (keyof IFluidObject)): boolean;
     // @deprecated (undocumented)
     register<T extends keyof IFluidObject>(type: T, provider: FluidObjectProvider<T>): void;
     // @deprecated (undocumented)

@@ -70,9 +70,8 @@ export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynt
     /**
      * Check if a given type is registered
      * @param type - Type to check
-     * @param excludeParents - If true, exclude checking parent registries
      */
-    has(type: (keyof IFluidObject), excludeParents?: boolean): boolean;
+    has(type: (keyof IFluidObject)): boolean;
 
     /**
      * @deprecated - This will be removed. Use synthesize or has instead
