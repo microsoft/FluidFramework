@@ -23,11 +23,11 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { 
-  ChildLogger,
-  getCircularReplacer,
-  loggerToMonitoringContext,
-  MonitoringContext,
+import {
+    ChildLogger,
+    getCircularReplacer,
+    loggerToMonitoringContext,
+    MonitoringContext,
 } from "@fluidframework/telemetry-utils";
 
 // Local storage key to disable the BatchManager

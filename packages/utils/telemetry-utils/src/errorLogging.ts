@@ -259,10 +259,12 @@ function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryPr
     return props;
 }
 
-// Borrowed from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#examples
-// Avoids runtime errors with circular references.
-// Not ideal, as will cut values that are not necessarily circular references.
-// Could be improved by implementing Node's util.inspect() for browser (minus all the coloring code)
+/**
+ * Borrowed from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#examples
+ * Avoids runtime errors with circular references.
+ * Not ideal, as will cut values that are not necessarily circular references.
+ * Could be improved by implementing Node's util.inspect() for browser (minus all the coloring code)
+*/
 export const getCircularReplacer = () => {
     const seen = new WeakSet();
     return (key: string, value: any): any => {
