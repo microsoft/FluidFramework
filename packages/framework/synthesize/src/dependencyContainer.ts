@@ -80,10 +80,14 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
     /**
      * {@inheritDoc (IFluidDependencySynthesizer:interface).has}
      */
-    public has(...types: (keyof IFluidObject)[]): boolean {
-        return types.every((type) => {
-            return this.getProvider(type) !== undefined;
-        });
+    public has(type: (keyof IFluidObject), excludeParents?: boolean): boolean {
+        if (this.providers.has(type)) {
+            return true;
+        }
+        if (excludeParents !== true) {
+            return this.parents.some((p: IFluidDependencySynthesizer) => p.has(type));
+        }
+        return false;
     }
 
     /**

@@ -24,7 +24,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
     constructor(...parents: (IFluidDependencySynthesizer | undefined)[]);
     // @deprecated (undocumented)
     getProvider<T extends keyof IFluidObject>(type: T): FluidObjectProvider<T> | undefined;
-    has(...types: (keyof IFluidObject)[]): boolean;
+    has(type: (keyof IFluidObject), excludeParents?: boolean): boolean;
     // (undocumented)
     get IFluidDependencySynthesizer(): this;
     // (undocumented)
@@ -57,7 +57,7 @@ export const IFluidDependencySynthesizer: keyof IProvideFluidDependencySynthesiz
 export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynthesizer {
     // @deprecated (undocumented)
     getProvider<T extends keyof IFluidObject>(type: T): FluidObjectProvider<T> | undefined;
-    has(...types: (keyof IFluidObject)[]): boolean;
+    has(type: (keyof IFluidObject), excludeParents?: boolean): boolean;
     // @deprecated (undocumented)
     register<T extends keyof IFluidObject>(type: T, provider: FluidObjectProvider<T>): void;
     // @deprecated (undocumented)

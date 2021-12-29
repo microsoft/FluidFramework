@@ -350,7 +350,7 @@ describe("Routerlicious", () => {
                 assert(dc.has(IFluidLoadable), "Manager has IFluidLoadable");
                 assert(dc.has(IFluidConfiguration), "Manager has IFluidConfiguration");
                 assert(
-                    dc.has(IFluidLoadable, IFluidConfiguration),
+                    dc.has(IFluidLoadable) && dc.has(IFluidConfiguration),
                     "Manager has IFluidLoadable & IFluidConfiguration");
                 assert(Array.from(dc.registeredTypes).length === 2, "Manager has two modules");
             });
@@ -373,7 +373,8 @@ describe("Routerlicious", () => {
                 const configMock = new MockFluidConfiguration();
                 dc.register(IFluidConfiguration, configMock);
 
-                assert(dc.has(IFluidLoadable),"has includes parent registered");
+                assert(dc.has(IFluidLoadable), "has includes parent registered");
+                assert(!dc.has(IFluidLoadable, true),"has does not include excluded parent registered");
                 assert(dc.has(IFluidConfiguration),"has includes registered");
                 assert(!dc.has(IFluidHandle),"does not include not registered");
             });
