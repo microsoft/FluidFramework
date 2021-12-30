@@ -17,7 +17,7 @@ import {
 import {
     AsyncOptionalFluidObjectProvider,
     AsyncRequiredFluidObjectProvider,
-} from ".";
+} from "./types";
 
 /**
  * DependencyContainer is similar to a IoC Container. It takes providers and will
@@ -38,7 +38,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
 
     public constructor(... parents: (IFluidDependencySynthesizer | undefined)[]) {
         this.parents = parents.filter((v): v is IFluidDependencySynthesizer => v !== undefined);
-     }
+    }
 
     /**
      * {@inheritDoc (IFluidDependencySynthesizer:interface).register}
@@ -71,9 +71,9 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
             requiredTypes: FluidObjectSymbolProvider<R>,
     ): AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<R>> {
         const base: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<R>> = {} as any;
-        this.generateRequired<R>(base,requiredTypes);
+        this.generateRequired<R>(base, requiredTypes);
         this.generateOptional<O>(base, optionalTypes);
-        Object.defineProperty(base, IFluidDependencySynthesizer, {get: ()=> this});
+        Object.defineProperty(base, IFluidDependencySynthesizer, { get: () => this });
         return base;
     }
 
@@ -105,7 +105,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
 
         for(const parent of this.parents) {
             const p = parent.getProvider(type);
-            if(p !== undefined) {
+            if (p !== undefined) {
                 return p;
             }
         }
@@ -154,11 +154,11 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 const sp = { [t]: t } as FluidObjectSymbolProvider<Pick<IFluidObject, T>>;
                 // eslint-disable-next-line @typescript-eslint/ban-types
-                const syn =  parent.synthesize<Pick<IFluidObject, T>,{}>(
+                const syn = parent.synthesize<Pick<IFluidObject, T>,{}>(
                     sp,
                     {});
                 const descriptor = Object.getOwnPropertyDescriptor(syn, t);
-                if(descriptor !== undefined) {
+                if (descriptor !== undefined) {
                     return descriptor;
                 }
             }
@@ -171,12 +171,8 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
                 get() {
                     if (provider && typeof provider === "function") {
                         return Promise.resolve(this[IFluidDependencySynthesizer])
-                            .then(async (fds): Promise<any>=>provider(fds))
-                            .then((p) => {
-                                if (p) {
-                                    return p[t];
-                                }
-                            });
+                            .then(async (fds): Promise<any> => provider(fds))
+                            .then((p) => p?.[t]);
                     }
                 },
             };
