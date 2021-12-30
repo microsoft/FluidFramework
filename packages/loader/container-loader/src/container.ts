@@ -1352,6 +1352,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             new RetriableDocumentStorageService(storageService, this.mc.logger);
 
         if(this.options.summarizeProtocolTree === true) {
+            this.mc.logger.sendTelemetryEvent({eventName:"summarizeProtocolTreeEnabled"});
             this._storageService =
                 new ProtocolTreeStorageService(this._storageService, ()=>this.captureProtocolSummary());
         }
