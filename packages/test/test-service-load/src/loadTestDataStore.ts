@@ -13,7 +13,7 @@ import {ISharedCounter, SharedCounter} from "@fluidframework/counter";
 import { ITaskManager, TaskManager } from "@fluid-experimental/task-manager";
 import { IDirectory, ISharedDirectory } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import random from "random-js";
+import random, { integer } from "random-js";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/common-utils";
@@ -285,12 +285,14 @@ export class LoadTestDataStoreModel {
      * Upload a unique attachment blob and store the handle in a unique key on the root map
      */
     public async writeBlob(blobNumber: number) {
-        const blobSize = this.config.testConfig.blobSize ?? defaultBlobSize;
-        // upload a unique blob, since they may be deduped otherwise
-        const buffer = Buffer.alloc(blobSize, `${this.config.runId}/${blobNumber}:`);
-        assert(buffer.byteLength === blobSize, "incorrect buffer size");
-        const handle = await this.runtime.uploadBlob(buffer);
-        this.root.set(this.blobKey(blobNumber), handle);
+        if (!this.runtime.disposed) {
+            const blobSize = this.config.testConfig.blobSize ?? defaultBlobSize;
+            // upload a unique blob, since they may be deduped otherwise
+            const buffer = Buffer.alloc(blobSize, `${this.config.runId}/${blobNumber}:`);
+            assert(buffer.byteLength === blobSize, "incorrect buffer size");
+            const handle = await this.runtime.uploadBlob(buffer);
+            this.root.set(this.blobKey(blobNumber), handle);
+        }
     }
 
     public async getPartnerCounter() {
