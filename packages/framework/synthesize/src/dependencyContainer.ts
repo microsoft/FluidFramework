@@ -10,6 +10,8 @@ import {
     FluidObjectSymbolProvider,
     FluidObjectProvider,
     FluidObjectKey,
+    AsyncOptionalFluidObjectProvider,
+    AsyncRequiredFluidObjectProvider,
 } from "./types";
 import {
     IFluidDependencySynthesizer,
@@ -21,23 +23,26 @@ import {
  */
 export class DependencyContainer implements IFluidDependencySynthesizer {
     private readonly providers = new Map<keyof IFluidObject, FluidObjectProvider<any>>();
-
+    private readonly parents: IFluidDependencySynthesizer[];
     public get IFluidDependencySynthesizer() { return this; }
 
     /**
+     * @deprecated - use has instead
      * {@inheritDoc (IFluidDependencySynthesizer:interface).registeredTypes}
      */
     public get registeredTypes(): Iterable<(keyof IFluidObject)> {
         return this.providers.keys();
     }
 
-    public constructor(public parent: IFluidDependencySynthesizer | undefined = undefined) { }
+    public constructor(... parents: (IFluidDependencySynthesizer | undefined)[]) {
+        this.parents = parents.filter((v): v is IFluidDependencySynthesizer => v !== undefined);
+    }
 
     /**
      * {@inheritDoc (IFluidDependencySynthesizer:interface).register}
      */
     public register<T extends keyof IFluidObject>(type: T, provider: FluidObjectProvider<T>): void {
-        if (this.has(type)) {
+        if (this.providers.has(type)) {
             throw new Error(`Attempting to register a provider of type ${type} that already exists`);
         }
 
@@ -63,29 +68,30 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
             optionalTypes: FluidObjectSymbolProvider<O>,
             requiredTypes: FluidObjectSymbolProvider<R>,
     ): AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<R>> {
-        const optionalValues = Object.values(optionalTypes);
-        const requiredValues = Object.values(requiredTypes);
-
-        // There was nothing passed in so we can return
-        if (optionalValues === [] && requiredValues === []) {
-            return {} as any;
-        }
-
-        const required = this.generateRequired<R>(requiredTypes);
-        const optional = this.generateOptional<O>(optionalTypes);
-        return { ...required, ...optional };
+        const base: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<R>> = {} as any;
+        this.generateRequired<R>(base, requiredTypes);
+        this.generateOptional<O>(base, optionalTypes);
+        Object.defineProperty(base, IFluidDependencySynthesizer, { get: () => this });
+        return base;
     }
 
     /**
      * {@inheritDoc (IFluidDependencySynthesizer:interface).has}
+     * @param excludeParents - If true, exclude checking parent registries
      */
-    public has(...types: (keyof IFluidObject)[]): boolean {
-        return types.every((type) => {
-            return this.providers.has(type);
-        });
+    public has(type: (keyof IFluidObject), excludeParents?: boolean): boolean {
+        if (this.providers.has(type)) {
+            return true;
+        }
+        if (excludeParents !== true) {
+            return this.parents.some((p: IFluidDependencySynthesizer) => p.has(type));
+        }
+        return false;
     }
 
     /**
+     * @deprecated - use synthesize or has instead
+     *
      * {@inheritDoc (IFluidDependencySynthesizer:interface).getProvider}
      */
     public getProvider<T extends keyof IFluidObject>(type: T): FluidObjectProvider<T> | undefined {
@@ -95,50 +101,84 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
             return provider;
         }
 
-        if (this.parent) {
-            return this.parent.getProvider(type);
+        for(const parent of this.parents) {
+            const p = parent.getProvider(type);
+            if (p !== undefined) {
+                return p;
+            }
         }
 
         return undefined;
     }
 
     private generateRequired<T extends IFluidObject>(
+        base: AsyncRequiredFluidObjectProvider<FluidObjectKey<T>>,
         types: FluidObjectSymbolProvider<T>,
     ) {
-        const values: (keyof IFluidObject)[] = Object.values(types);
-        return Object.assign({}, ...Array.from(values, (t) => {
-            const provider = this.getProvider(t);
-            if (!provider) {
-                throw new Error(`Object attempted to be created without registered required provider ${t}`);
+        for(const key of Object.keys(types) as unknown as (keyof IFluidObject)[]) {
+            const provider = this.resolveProvider(key);
+            if(provider === undefined) {
+                throw new Error(`Object attempted to be created without registered required provider ${key}`);
             }
-
-            return this.resolveProvider(provider, t);
-        }));
+            Object.defineProperty(
+                base,
+                key,
+                provider,
+            );
+        }
     }
 
     private generateOptional<T extends IFluidObject>(
+        base: AsyncOptionalFluidObjectProvider<FluidObjectKey<T>>,
         types: FluidObjectSymbolProvider<T>,
     ) {
-        const values: (keyof IFluidObject)[] = Object.values(types);
-        return Object.assign({}, ...Array.from(values, (t) => {
-            const provider = this.getProvider(t);
-            if (!provider) {
-                return { get [t]() { return Promise.resolve(undefined); } };
+        for(const key of Object.keys(types) as unknown as (keyof IFluidObject)[]) {
+            const provider = this.resolveProvider(key);
+            if(provider !== undefined) {
+                Object.defineProperty(
+                    base,
+                    key,
+                    provider,
+                );
             }
-
-            return this.resolveProvider(provider, t);
-        }));
+        }
     }
 
-    private resolveProvider<T extends keyof IFluidObject>(provider: FluidObjectProvider<T>, t: keyof IFluidObject) {
+    private resolveProvider<T extends keyof IFluidObject>(t: T): PropertyDescriptor | undefined {
+        // If we have the provider return it
+        const provider = this.providers.get(t);
+        if (provider === undefined) {
+            for(const parent of this.parents) {
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                const sp = { [t]: t } as FluidObjectSymbolProvider<Pick<IFluidObject, T>>;
+                // eslint-disable-next-line @typescript-eslint/ban-types
+                const syn = parent.synthesize<Pick<IFluidObject, T>,{}>(
+                    sp,
+                    {});
+                const descriptor = Object.getOwnPropertyDescriptor(syn, t);
+                if (descriptor !== undefined) {
+                    return descriptor;
+                }
+            }
+            return undefined;
+        }
+
         // The double nested gets are required for lazy loading the provider resolution
         if (typeof provider === "function") {
-            // eslint-disable-next-line @typescript-eslint/no-this-alias
-            const self = this;
             return {
-                get [t]() {
+                get() {
                     if (provider && typeof provider === "function") {
-                        return Promise.resolve(provider(self)).then((p) => {
+                        return Promise.resolve(this[IFluidDependencySynthesizer])
+                            .then(async (fds): Promise<any> => provider(fds))
+                            .then((p) => p?.[t]);
+                    }
+                },
+            };
+        }
+        return {
+                get() {
+                    if (provider) {
+                        return Promise.resolve(provider).then((p) => {
                             if (p) {
                                 return p[t];
                             }
@@ -146,18 +186,5 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
                     }
                 },
             };
-        }
-
-        return {
-            get [t]() {
-                if (provider) {
-                    return Promise.resolve(provider).then((p) => {
-                        if (p) {
-                            return p[t];
-                        }
-                    });
-                }
-            },
-        };
     }
 }

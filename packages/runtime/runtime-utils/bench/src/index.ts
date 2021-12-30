@@ -9,7 +9,7 @@ import { FluidSerializer } from "../..";
 import { makeJson, MockHandleContext } from "../../src/test/utils";
 import { consume, runSuites } from "./util";
 
-const serializer = new FluidSerializer(new MockHandleContext());
+const serializer = new FluidSerializer(new MockHandleContext(), (handle: IFluidHandle) => {});
 
 // Mock Fluid handle
 const handle: IFluidHandle = {

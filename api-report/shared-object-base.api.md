@@ -61,6 +61,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     protected getGCDataCore(): IGarbageCollectionData;
     readonly handle: IFluidHandle;
+    protected handleDecoded(decodedHandle: IFluidHandle): void;
     // (undocumented)
     get IChannel(): this;
     // (undocumented)

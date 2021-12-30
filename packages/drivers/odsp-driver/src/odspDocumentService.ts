@@ -5,7 +5,11 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import {
+    ChildLogger,
+    loggerToMonitoringContext,
+    MonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -39,18 +43,6 @@ import { isOdcOrigin } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OpsCache } from "./opsCaching";
 import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter";
-
-// Gate that when set to "1", instructs to fetch the binary format snapshot from the spo.
-function gatesBinaryFormatSnapshot() {
-    try {
-        if (typeof localStorage === "object" && localStorage !== null) {
-            if  (localStorage.binaryFormatSnapshot === "1") {
-                return true;
-            }
-        }
-    } catch (e) {}
-    return false;
-}
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -99,7 +91,7 @@ export class OdspDocumentService implements IDocumentService {
 
     private storageManager?: OdspDocumentStorageService;
 
-    private readonly logger: TelemetryLogger;
+    private readonly mc: MonitoringContext;
 
     private readonly joinSessionKey: string;
 
@@ -140,16 +132,18 @@ export class OdspDocumentService implements IDocumentService {
         };
 
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
-        this.logger = ChildLogger.create(logger,
+        this.mc = loggerToMonitoringContext(
+            ChildLogger.create(logger,
             undefined,
             {
                 all: {
                     odc: isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin),
                 },
-            });
+            }));
 
         this.hostPolicy = hostPolicy;
-        this.hostPolicy.fetchBinarySnapshotFormat ??= gatesBinaryFormatSnapshot();
+        this.hostPolicy.fetchBinarySnapshotFormat ??=
+            this.mc.config.getBoolean("Fluid.Driver.Odsp.binaryFormatSnapshot");
         if (this.odspResolvedUrl.summarizer) {
             this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
         }
@@ -172,7 +166,7 @@ export class OdspDocumentService implements IDocumentService {
             this.storageManager = new OdspDocumentStorageService(
                 this.odspResolvedUrl,
                 this.getStorageToken,
-                this.logger,
+                this.mc.logger,
                 true,
                 this.cache,
                 this.hostPolicy,
@@ -187,7 +181,7 @@ export class OdspDocumentService implements IDocumentService {
             );
         }
 
-        return new RetryErrorsStorageAdapter(this.storageManager, this.logger);
+        return new RetryErrorsStorageAdapter(this.storageManager, this.mc.logger);
     }
 
     /**
@@ -201,7 +195,7 @@ export class OdspDocumentService implements IDocumentService {
             this.odspResolvedUrl.endpoints.deltaStorageUrl,
             this.getStorageToken,
             this.epochTracker,
-            this.logger,
+            this.mc.logger,
         );
 
         // batch size, please see issue #5211 for data around batch sizing
@@ -209,7 +203,7 @@ export class OdspDocumentService implements IDocumentService {
         const concurrency = this.hostPolicy.concurrentOpsBatches ?? 1;
         return new OdspDeltaStorageWithCache(
             snapshotOps,
-            this.logger,
+            this.mc.logger,
             batchSize,
             concurrency,
             async (from, to, telemetryProps, fetchReason) => service.get(from, to, telemetryProps, fetchReason),
@@ -308,7 +302,7 @@ export class OdspDocumentService implements IDocumentService {
                 this.odspResolvedUrl,
                 "opStream/joinSession",
                 "POST",
-                this.logger,
+                this.mc.logger,
                 this.getStorageToken,
                 this.epochTracker,
                 requestSocketToken,
@@ -348,7 +342,7 @@ export class OdspDocumentService implements IDocumentService {
             io,
             client,
             webSocketUrl,
-            this.logger,
+            this.mc.logger,
             60000,
             this.epochTracker,
             this.socketReferenceKeyPrefix,
@@ -358,7 +352,7 @@ export class OdspDocumentService implements IDocumentService {
         // Given that most reconnects result in reusing socket and happen very quickly,
         // report event only if it took longer than threshold.
         if (duration >= 2000) {
-            this.logger.sendPerformanceEvent({
+            this.mc.logger.sendPerformanceEvent({
                 eventName: "ConnectionSuccess",
                 duration,
             });
@@ -395,7 +389,7 @@ export class OdspDocumentService implements IDocumentService {
         };
         this._opsCache = new OpsCache(
             seqNumber,
-            this.logger,
+            this.mc.logger,
             // ICache
             {
                 write: async (key: string, opsData: string) => {

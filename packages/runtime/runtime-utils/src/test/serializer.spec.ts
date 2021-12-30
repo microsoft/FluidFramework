@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { RemoteFluidObjectHandle } from "../remoteObjectHandle";
 import { FluidSerializer } from "../serializer";
 import {
@@ -42,7 +43,7 @@ describe("FluidSerializer", () => {
 
     describe("vanilla JSON", () => {
         const context = new MockHandleContext();
-        const serializer = new FluidSerializer(context);
+        const serializer = new FluidSerializer(context, (parsedHandle: IFluidHandle) => {});
         const handle = new RemoteFluidObjectHandle("/root", context);
 
         // Start with the various JSON-serializable types.  A mix of "truthy" and "falsy" values
@@ -133,7 +134,7 @@ describe("FluidSerializer", () => {
 
     describe("JSON w/embedded handles", () => {
         const context = new MockHandleContext();
-        const serializer = new FluidSerializer(context);
+        const serializer = new FluidSerializer(context, (parsedHandle: IFluidHandle) => {});
         const handle = new RemoteFluidObjectHandle("/root", context);
         const serializedHandle = {
             type: "__fluid_handle__",
@@ -202,7 +203,7 @@ describe("FluidSerializer", () => {
         const rootContext = new MockHandleContext("");
         const dsContext = new MockHandleContext("/default", rootContext);
         // Create serialized with a handle context whose parent is a root handle context.
-        const serializer = new FluidSerializer(dsContext);
+        const serializer = new FluidSerializer(dsContext, (parsedHandle: IFluidHandle) => {});
 
         it("can parse handles with absolute path", () => {
             const serializedHandle = JSON.stringify({
