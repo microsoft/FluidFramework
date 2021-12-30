@@ -452,7 +452,7 @@ export class ConnectionManager implements IConnectionManager {
             // to keep setupNewSuccessfulConnection happy
             this.pendingConnection = true;
             this.setupNewSuccessfulConnection(connection, "read");
-            assert(!this.pendingConnection, "logic error");
+            assert(!this.pendingConnection, 0x2b3 /* "logic error" */);
             return;
         }
 
@@ -792,7 +792,7 @@ export class ConnectionManager implements IConnectionManager {
     }
 
     public sendMessages(messages: IDocumentMessage[]) {
-        assert(this.connected, "not connected on sending ops!");
+        assert(this.connected, 0x2b4 /* "not connected on sending ops!" */);
 
         // If connection is "read" or implicit "read" (got leave op for "write" connection),
         // then op can't make it through - we will get a nack if op is sent.
@@ -816,7 +816,7 @@ export class ConnectionManager implements IConnectionManager {
             return;
         }
 
-        assert(!this.pendingReconnect, "logic error");
+        assert(!this.pendingReconnect, 0x2b5 /* "logic error" */);
 
         this._outbound.push(messages);
     }
