@@ -1071,7 +1071,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
-        this.resetDirtyState(this.context.attachState);
+        this.dirtyContainer = this.context.attachState !== AttachState.Attached;
+        this.context.updateDirtyContainerState(this.dirtyContainer);
 
         // Map the deprecated generateSummaries flag to disableSummaries.
         if (this.runtimeOptions.summaryOptions.generateSummaries === false) {
@@ -1782,7 +1783,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.emit("attached");
         }
         this.dataStores.setAttachState(attachState);
-        this.resetDirtyState(attachState);
     }
 
     /**
@@ -2461,17 +2461,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return summarizer;
         };
     }
-
-     /**
-     * * Resets the dirty state based on the "attach" state of the container.
-     *  This happens oeither on construction or if the container has just transitioned
-     * to "attached" state
-     * @param attachState - AttachState of the container
-     * */
-      private resetDirtyState(attachState: AttachState) {
-        const isDirty = attachState !== AttachState.Attached;
-        this.updateDocumentDirtyState(isDirty);
-      }
 }
 
 /**

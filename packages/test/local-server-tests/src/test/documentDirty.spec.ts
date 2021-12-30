@@ -522,6 +522,9 @@ describe("Document Dirty", () => {
             const request = urlResolver.createCreateNewRequest(documentId);
             await container.attach(request);
 
+             // Wait for the ops to get processed which should mark the document clean after processing
+             await loaderContainerTracker.ensureSynchronized();
+
             checkDirtyState("after attach", false, 1);
         });
 
@@ -529,6 +532,9 @@ describe("Document Dirty", () => {
             const urlResolver = new LocalResolver();
             const request = urlResolver.createCreateNewRequest(documentId);
             await container.attach(request);
+
+            // Wait for the ops to get processed which should mark the document clean after processing
+            await loaderContainerTracker.ensureSynchronized();
 
             checkDirtyState("after attach", false, 1);
 

@@ -405,7 +405,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _loadedFromVersion: IVersion | undefined;
     private _resolvedUrl: IFluidResolvedUrl | undefined;
     private attachStarted = false;
-    private _dirtyContainer = true;
+    private _dirtyContainer = false;
 
     private lastVisible: number | undefined;
     private readonly connectionStateHandler: ConnectionStateHandler;
@@ -1836,10 +1836,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         pendingLocalState?: unknown,
     ) {
         assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
-        // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
-        if (!this._dirtyContainer) {
-            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer" });
-        }
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
