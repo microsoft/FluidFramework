@@ -33,7 +33,7 @@ export type AsyncRequiredFluidObjectProvider<T extends keyof IFluidObject> = {
  * the property or undefined.
  */
 export type AsyncOptionalFluidObjectProvider<T extends keyof IFluidObject> = {
-    [P in T]?: Promise<IFluidObject[P] | undefined>;
+    [P in T]: Promise<IFluidObject[P] | undefined>;
 };
 
 /**

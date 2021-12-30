@@ -11,7 +11,7 @@ export type AsyncFluidObjectProvider<O extends keyof IFluidObject, R extends key
 
 // @public
 export type AsyncOptionalFluidObjectProvider<T extends keyof IFluidObject> = {
-    [P in T]?: Promise<IFluidObject[P] | undefined>;
+    [P in T]: Promise<IFluidObject[P] | undefined>;
 };
 
 // @public

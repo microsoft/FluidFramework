@@ -10,14 +10,12 @@ import {
     FluidObjectSymbolProvider,
     FluidObjectProvider,
     FluidObjectKey,
+    AsyncOptionalFluidObjectProvider,
+    AsyncRequiredFluidObjectProvider,
 } from "./types";
 import {
     IFluidDependencySynthesizer,
 } from "./IFluidDependencySynthesizer";
-import {
-    AsyncOptionalFluidObjectProvider,
-    AsyncRequiredFluidObjectProvider,
-} from "./types";
 
 /**
  * DependencyContainer is similar to a IoC Container. It takes providers and will
