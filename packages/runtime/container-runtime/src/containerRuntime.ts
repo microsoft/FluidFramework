@@ -875,7 +875,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
-    private dirtyContainer = true;
+    private dirtyContainer: boolean;
     private emitDirtyDocumentEvent = true;
     /**
      * Summarizer is responsible for coordinating when to send generate and send summaries.
