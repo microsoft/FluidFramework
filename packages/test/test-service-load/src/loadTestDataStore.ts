@@ -13,7 +13,7 @@ import {ISharedCounter, SharedCounter} from "@fluidframework/counter";
 import { ITaskManager, TaskManager } from "@fluid-experimental/task-manager";
 import { IDirectory, ISharedDirectory } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import random, { integer } from "random-js";
+import random from "random-js";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/common-utils";
@@ -101,7 +101,7 @@ export class LoadTestDataStoreModel {
     /**
      * For GC testing - We create a data store for each client pair. The url of the data store is stored in a key
      * common to both the clients. Each client adds a reference to this data store when it becomes a writer
-     * and removes the reference before it transtions to a reader.
+     * and removes the reference before it transitions to a reader.
      * So, at any point in time, the data store can have 0, 1 or 2 references.
      */
     private static async getGCDataStore(
@@ -160,7 +160,7 @@ export class LoadTestDataStoreModel {
             throw new Error("counter not available");
         }
         if(taskmanager === undefined) {
-            throw new Error("taskmanger not available");
+            throw new Error("taskmanager not available");
         }
 
         const gcDataStore = await this.getGCDataStore(config, root, containerRuntime);
