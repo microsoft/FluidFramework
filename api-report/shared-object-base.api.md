@@ -61,6 +61,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     protected getGCDataCore(): IGarbageCollectionData;
     readonly handle: IFluidHandle;
+    protected handleDecoded(decodedHandle: IFluidHandle): void;
     // (undocumented)
     get IChannel(): this;
     // (undocumented)
@@ -90,7 +91,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
     protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
     summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
-}
+    }
 
 // @public
 export class SummarySerializer extends FluidSerializer {

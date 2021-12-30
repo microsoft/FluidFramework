@@ -33,12 +33,10 @@ export interface ITableDocumentEvents extends IEvent {
  * @deprecated - TableDocument is an abandoned prototype.  Please use SharedMatrix with
  *               the IMatrixProducer/Consumer interfaces instead.
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> implements ITable {
+export class TableDocument extends DataObject<{Events: ITableDocumentEvents}> implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    private static readonly factory = new DataObjectFactory<TableDocument, object, object, IEvent>(
+    private static readonly factory = new DataObjectFactory(
         TableDocumentType,
         TableDocument,
         [

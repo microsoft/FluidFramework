@@ -10,7 +10,7 @@ import { DriverErrorType, IThrottlingWarning } from "@fluidframework/driver-defi
 import { createWriteError, GenericNetworkError } from "@fluidframework/driver-utils";
 import { OdspErrorType, OdspError, IOdspError } from "@fluidframework/odsp-driver-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
-import { createOdspNetworkError, invalidFileNameStatusCode, enrichOdspError } from "../odspErrorUtils";
+import { createOdspNetworkError, enrichOdspError } from "../odspErrorUtils";
 
 describe("OdspErrorUtils", () => {
     function assertCustomPropertySupport(err: any) {
@@ -94,16 +94,6 @@ describe("OdspErrorUtils", () => {
                 "testErrorCode",
                 "Test Message",
                 414 /* statusCode */);
-            assert(networkError.errorType === OdspErrorType.invalidFileNameError,
-                "Error should be an InvalidFileNameError");
-            assertCustomPropertySupport(networkError);
-        });
-
-        it("InvalidFileNameError Test", () => {
-            const networkError = createOdspNetworkError(
-                "testErrorCode",
-                "Test Message",
-                invalidFileNameStatusCode /* statusCode */);
             assert(networkError.errorType === OdspErrorType.invalidFileNameError,
                 "Error should be an InvalidFileNameError");
             assertCustomPropertySupport(networkError);

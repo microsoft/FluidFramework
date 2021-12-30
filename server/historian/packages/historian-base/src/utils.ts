@@ -51,31 +51,72 @@ export function getTenantIdFromRequest(params: Params) {
     return "-";
 }
 
+export function getDocumentIdFromRequest(tenantId: string, authorization: string) {
+    try {
+        const token = parseToken(tenantId, authorization);
+        const decoded = jwt.decode(token) as ITokenClaims;
+        return decoded.documentId;
+    } catch (err) {
+        return "-";
+    }
+}
+
+export function parseToken(tenantId: string, authorization: string): string {
+    let token: string;
+    if (authorization) {
+        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+        const base64TokenMatch = authorization.match(/Basic (.+)/);
+        if (!base64TokenMatch) {
+            throw new NetworkError(403, "Malformed authorization token");
+        }
+        const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
+
+        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+        const tokenMatch = encoded.match(/(.+):(.+)/);
+        if (!tokenMatch || tenantId !== tokenMatch[1]) {
+            throw new NetworkError(403, "Malformed authorization token");
+        }
+
+        token = tokenMatch[2];
+    }
+
+    return token;
+}
+
 /**
  * Pass into `.catch()` block of a RestWrapper call to output a more standardized network error.
  * @param url request url to be output in error log
  * @param method request method (e.g. "GET", "POST") to be output in error log
- * @param networkErrorOverride NetworkError to throw, regardless of error received from request
+ * @param lumberProperties Collection of Lumberjack telemetry properties associated with the request
  */
 export function getRequestErrorTranslator(
     url: string,
-    method: string): (error: any) => never {
+    method: string,
+    lumberProperties?: Map<string, any> | Record<string, any>): (error: any) => never {
     const standardLogErrorMessage = `[${method}] Request to [${url}] failed`;
     const requestErrorTranslator = (error: any): never => {
-        // BasicRestWrapper only throws `AxiosError.response.status` when available.
-        // Only bubble the error code, but log additional details for debugging purposes
-        if (typeof error === "number" || !Number.isNaN(Number.parseInt(error, 10)))  {
+        if (typeof error === "object" && error instanceof Error && error.name === "NetworkError") {
+            // BasicRestWrapper throws NetworkErrors that describe the error details associated with the network call.
+            // Here, we log information associated with the error for debugging purposes, and re-throw.
+            const networkError = error as NetworkError;
+            // eslint-disable-next-line max-len
+            winston.error(`${standardLogErrorMessage}: [statusCode: ${networkError.code}], [details: ${safeStringify(networkError.details) ?? "undefined"}]`);
+            // eslint-disable-next-line max-len
+            Lumberjack.error(`${standardLogErrorMessage}: [statusCode: ${networkError.code}], [details: ${safeStringify(networkError.details) ?? "undefined"}]`, lumberProperties);
+            throw error;
+        } else if (typeof error === "number" || !Number.isNaN(Number.parseInt(error, 10))) {
+            // The legacy implementation of BasicRestWrapper used to throw status codes only, when status codes
+            // were available. Here, we deal with that legacy scenario, logging the error information and throwing
+            // a new NetworkError based on it.
             const errorCode = typeof error === "number" ? error : Number.parseInt(error, 10);
-            winston.error(`${standardLogErrorMessage}: ${errorCode}`);
-            Lumberjack.error(`${standardLogErrorMessage}: ${errorCode}`);
-            throw new NetworkError(
-                errorCode,
-                "Internal Service Request Failed",
-            );
+            winston.error(`${standardLogErrorMessage}: [statusCode: ${errorCode}]`);
+            Lumberjack.error(`${standardLogErrorMessage}: [statusCode: ${errorCode}]`, lumberProperties);
+            throw new NetworkError(errorCode, "Internal Service Request Failed");
         }
+
         // Treat anything else as an internal error, but log for debugging purposes
         winston.error(`${standardLogErrorMessage}: ${safeStringify(error)}`);
-        Lumberjack.error(standardLogErrorMessage, undefined, error);
+        Lumberjack.error(standardLogErrorMessage, lumberProperties, error);
         throw new NetworkError(500, "Internal Server Error");
     };
     return requestErrorTranslator;

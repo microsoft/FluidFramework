@@ -5,10 +5,18 @@
 ```ts
 
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IGarbageCollectionState } from '@fluidframework/runtime-definitions';
+import { IGarbageCollectionSummaryDetails } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 
 // @public
 export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData;
+
+// @public
+export function concatGarbageCollectionData(gcData1: IGarbageCollectionData, gcData2: IGarbageCollectionData): IGarbageCollectionData;
+
+// @public
+export function concatGarbageCollectionStates(gcState1: IGarbageCollectionState, gcState2: IGarbageCollectionState): IGarbageCollectionState;
 
 // @public (undocumented)
 export class GCDataBuilder implements IGarbageCollectionData {
@@ -27,12 +35,6 @@ export class GCDataBuilder implements IGarbageCollectionData {
 }
 
 // @public
-export function getChildNodesGCData(gcData: IGarbageCollectionData): Map<string, IGarbageCollectionData>;
-
-// @public
-export function getChildNodesUsedRoutes(usedRoutes: string[]): Map<string, string[]>;
-
-// @public
 export interface IGCResult {
     deletedNodeIds: string[];
     referencedNodeIds: string[];
@@ -47,6 +49,12 @@ export function removeRouteFromAllNodes(gcNodes: {
 export function runGarbageCollection(referenceGraph: {
     [id: string]: string[];
 }, rootIds: string[], logger: ITelemetryLogger): IGCResult;
+
+// @public
+export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionSummaryDetails): Map<string, IGarbageCollectionSummaryDetails>;
+
+// @public
+export function unpackChildNodesUsedRoutes(usedRoutes: string[]): Map<string, string[]>;
 
 
 // (No @packageDocumentation comment for this package)

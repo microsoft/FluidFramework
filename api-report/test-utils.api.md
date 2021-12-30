@@ -4,7 +4,6 @@
 
 ```ts
 
-import { Container } from '@fluidframework/container-loader';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -148,7 +147,7 @@ export interface ITestObjectProvider {
     // (undocumented)
     loadContainer(entryPoint: fluidEntryPoint, options?: ITestLoaderOptions, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
-    loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
     logger: ITelemetryBaseLogger;
     // (undocumented)
@@ -252,10 +251,10 @@ export class TestObjectProvider {
     // (undocumented)
     ensureSynchronized(): Promise<void>;
     // (undocumented)
-    loadContainer(entryPoint: fluidEntryPoint, options?: ITestLoaderOptions, requestHeader?: IRequestHeader): Promise<Container>;
+    loadContainer(entryPoint: fluidEntryPoint, options?: ITestLoaderOptions, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
     readonly LoaderConstructor: typeof Loader;
-    loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<Container>;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
     get logger(): ITelemetryBaseLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;

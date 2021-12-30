@@ -5,7 +5,7 @@
 
 import { v4 as uuid } from "uuid";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
@@ -21,6 +21,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { convertToSummaryTreeWithStats, FluidSerializer } from "@fluidframework/runtime-utils";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
+import { DataProcessingError } from "@fluidframework/container-utils";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
@@ -73,6 +74,11 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     private _isSummarizing: boolean = false;
 
     /**
+     * Tracks error that closed this object.
+     */
+    private closeError?: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>;
+
+    /**
      * Gets the connection state
      * @returns The state of the connection
      */
@@ -108,7 +114,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         protected runtime: IFluidDataStoreRuntime,
         public readonly attributes: IChannelAttributes)
     {
-        super((eventName, error) => this.runtime.raiseContainerWarning(error));
+        super((event: EventEmitterEventType, e: any) => this.eventListenerErrorHandler(event, e));
 
         this.handle = new SharedObjectHandle(
             this,
@@ -121,9 +127,52 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             { all: { sharedObjectId: uuid() } },
         );
 
-        this._serializer = new FluidSerializer(this.runtime.channelsRoutingContext);
+        this._serializer = new FluidSerializer(
+            this.runtime.channelsRoutingContext,
+            (handle: IFluidHandle) => this.handleDecoded(handle),
+        );
 
         this.attachListeners();
+    }
+
+    /**
+     * Marks this objects as closed. Any attempt to change it (local changes or processing remote ops)
+     * would result in same error thrown. If called multiple times, only first error is remembered.
+     * @param error - error object that is thrown whenever an attempt is made to modify this object
+     */
+    private closeWithError(error: any) {
+        if (this.closeError === undefined) {
+            this.closeError = error;
+        }
+    }
+
+    /**
+     * Verifies that this object is not closed via closeWithError(). If it is, throws an error used to close it.
+     */
+    private verifyNotClosed() {
+        if (this.closeError !== undefined) {
+            throw this.closeError;
+        }
+    }
+
+    /**
+     * Event listener handler helper that can be used to react to exceptions thrown from event listeners
+     * It wraps error with DataProcessingError, closes this object and throws resulting error.
+     * See closeWithError() for more details
+     * Ideally such situation never happens, as consumers of DDS should never throw exceptions
+     * in event listeners (i.e. catch any of the issues and make determination on how to handle it).
+     * When such exceptions propagate through, most likely data model is no longer consistent, i.e.
+     * DDS state does not match what user sees. Because of it DDS moves to "corrupted state" and does not
+     * allow processing of ops or local changes, which very quickly results in container closure.
+     */
+    private eventListenerErrorHandler(event: EventEmitterEventType, e: any) {
+        const error = DataProcessingError.wrapIfUnrecognized(
+            e,
+            "SharedObjectEventListenerException");
+        error.addTelemetryProperties({ emittedEventName: String(event) });
+
+        this.closeWithError(error);
+        throw error;
     }
 
     private attachListeners() {
@@ -203,7 +252,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
         let summaryTree: ISummaryTreeWithStats;
         try {
-            const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+            const serializer = new SummarySerializer(
+                this.runtime.channelsRoutingContext,
+                (handle: IFluidHandle) => this.handleDecoded(handle),
+            );
             const snapshot: ITree = this.snapshotCore(serializer);
             summaryTree = convertToSummaryTreeWithStats(snapshot, fullTree);
             assert(this._isSummarizing, 0x077 /* "Possible re-entrancy! Summary should have been in progress." */);
@@ -242,7 +294,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // We run the full summarize logic to get the list of outbound routes from this object. This is a little
         // expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
         // See: https://github.com/microsoft/FluidFramework/issues/4547
-        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+        const serializer = new SummarySerializer(
+            this.runtime.channelsRoutingContext,
+            (handle: IFluidHandle) => this.handleDecoded(handle),
+        );
         this.snapshotCore(serializer);
 
         // The GC data for this shared object contains a single GC node. The outbound routes of this node are the
@@ -250,6 +305,18 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         return {
             gcNodes: { "/": serializer.getSerializedRoutes() },
         };
+    }
+
+    /**
+     * Called when a handle is decoded by this object. A handle in the object's data represents an outbound reference
+     * to another object in the container.
+     * @param decodedHandle - The handle of the Fluid object that is decoded.
+     */
+    protected handleDecoded(decodedHandle: IFluidHandle) {
+        if (this.isAttached()) {
+            // This represents an outbound reference from this object to the node represented by decodedHandle.
+            this.services?.deltaConnection.addedGCOutboundReference?.(this.handle, decodedHandle);
+        }
     }
 
     /**
@@ -306,6 +373,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * also sent if we are asked to resubmit the message.
      */
     protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
+        this.verifyNotClosed();
         if (this.isAttached()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.services!.deltaConnection.submit(content, localOpMetadata);
@@ -433,6 +501,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * For messages from a remote client, this will be undefined.
      */
     private process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+        this.verifyNotClosed(); // This will result in container closure.
         this.emit("pre-op", message, local, this);
         this.processCore(message, local, localOpMetadata);
         this.emit("op", message, local, this);

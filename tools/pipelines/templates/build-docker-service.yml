@@ -192,9 +192,9 @@ stages:
 
     # for npm ci in component detection and set version
     - task: UseNode@1
-      displayName: Use Node 12.x
+      displayName: Use Node 14.x
       inputs:
-        version: 12.x
+        version: 14.x
 
     # Component detection
     - ${{ if eq(variables.componentDetection, true) }}:

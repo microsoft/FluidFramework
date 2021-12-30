@@ -53,7 +53,7 @@ module.exports.TSConfig = function(fileType, generateDeclarations, distTypesPath
             test: /\.tsx?$/,
             exclude: [/node_modules/],
             use: {
-              loader: 'ts-loader',
+              loader: require.resolve('ts-loader'),
               options: options
             }
           }

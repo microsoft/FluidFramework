@@ -7,6 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
     IFluidHandleContext,
+    IFluidSerializer,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -14,6 +15,7 @@ import {
     IAudience,
     IDeltaManager,
     ContainerWarning,
+    BindState,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -33,11 +35,11 @@ import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
     IClientDetails,
     IDocumentMessage,
-    IQuorum,
     ISequencedDocumentMessage,
     SummaryType,
     ISummaryBlob,
     ISummaryTree,
+    IQuorumClients,
 } from "@fluidframework/protocol-definitions";
 import {
     CreateSummarizerNodeSource,
@@ -68,11 +70,9 @@ import {
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import {
-    cloneGCData,
     GCDataBuilder,
-    getChildNodesGCData,
-    getChildNodesUsedRoutes,
-    removeRouteFromAllNodes,
+    unpackChildNodesGCDetails,
+    unpackChildNodesUsedRoutes,
 } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
@@ -122,8 +122,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public get clientDetails(): IClientDetails {
-        // back-compat 0.38 - clientDetails is added to IFluidDataStoreContext in 0.38.
-        return this.dataStoreContext.clientDetails ?? this.dataStoreContext.containerRuntime.clientDetails;
+        return this.dataStoreContext.clientDetails;
     }
 
     public get isAttached(): boolean {
@@ -139,11 +138,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public get routeContext(): IFluidHandleContext {
-        // back-compat 0.38 - IFluidHandleContext is added to IFluidDataStoreContext in 0.38.
-        return this.dataStoreContext.IFluidHandleContext ?? this.dataStoreContext.containerRuntime.IFluidHandleContext;
+        return this.dataStoreContext.IFluidHandleContext;
     }
 
-    private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
+    private readonly serializer: IFluidSerializer;
+    // Back compat: deprecated in 0.53, can be removed in versions >= 0.55.
     public get IFluidSerializer() { return this.serializer; }
 
     public get IFluidHandleContext() { return this; }
@@ -159,6 +158,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private readonly pendingAttach = new Map<string, IAttachMessage>();
 
+    private bindState: BindState;
     // For new data stores, this is used to break the recursion while attaching the graph. The graph must be attached
     // before the data store can move to Attached state (see _attachState) and become live.
     // For existing data stores, the graph is always attached.
@@ -172,17 +172,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public readonly id: string;
     public readonly options: ILoaderOptions;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    private readonly quorum: IQuorum;
+    private readonly quorum: IQuorumClients;
     private readonly audience: IAudience;
     public readonly logger: ITelemetryLogger;
 
-    // A map of child channel context ids to the context's used routes in the initial summary of this data store. This
-    // is used to initialize the context with data from the previous summary.
-    private readonly initialChannelUsedRoutesP: LazyPromise<Map<string, string[]>>;
-
-    // A map of child channel context ids to the channel context's GC data in the initial summary of this data store.
-    // This is used to initialize the context with data from the previous summary.
-    private readonly initialChannelGCDataP: LazyPromise<Map<string, IGarbageCollectionData>>;
+    // A map of child channel context ids to the their GC details in the initial summary of this data store.
+    // This is used to initialize the channel context with data from the base summary.
+    private readonly initialChannelsGCDetailsP: LazyPromise<Map<string, IGarbageCollectionSummaryDetails>>;
 
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -192,9 +188,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         super();
 
         this.logger = ChildLogger.create(
-            // back-compat 0.38 - logger is added to IFluidDataStoreContext in 0.38.
-            dataStoreContext.logger ?? dataStoreContext.containerRuntime.logger,
-            undefined,
+            dataStoreContext.logger,
+            "FluidDataStoreRuntime",
             {all:{ dataStoreId: uuid() }},
         );
 
@@ -203,32 +198,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.deltaManager = dataStoreContext.deltaManager;
         this.quorum = dataStoreContext.getQuorum();
         this.audience = dataStoreContext.getAudience();
+        this.serializer = new FluidSerializer(this, (handle: IFluidHandle) => {});
 
         const tree = dataStoreContext.baseSnapshot;
 
-        this.initialChannelUsedRoutesP = new LazyPromise(async () => {
+        this.initialChannelsGCDetailsP = new LazyPromise(async () => {
             const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails();
-            if (gcDetailsInInitialSummary?.usedRoutes !== undefined) {
-                // Remove the route to this data store, if it exists.
-                const usedRoutes = gcDetailsInInitialSummary.usedRoutes.filter(
-                    (id: string) => { return id !== "/" && id !== ""; },
-                );
-                return getChildNodesUsedRoutes(usedRoutes);
-            }
-            return new Map();
-        });
-
-        this.initialChannelGCDataP = new LazyPromise(async () => {
-            const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails();
-            if (gcDetailsInInitialSummary?.gcData !== undefined) {
-                const gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
-                // Remove GC node for this data store, if any.
-                delete gcData.gcNodes["/"];
-                // Remove the back route to this data store that was added when generating each child's GC nodes.
-                removeRouteFromAllNodes(gcData.gcNodes, this.absolutePath);
-                return getChildNodesGCData(gcData);
-            }
-            return new Map();
+            return unpackChildNodesGCDetails(gcDetailsInInitialSummary);
         });
 
         // Must always receive the data store type inside of the attributes
@@ -250,6 +226,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         this.dataStoreContext.storage,
                         (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
                         (address: string) => this.setChannelDirty(address),
+                        (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+                            this.addedGCOutboundReference(srcHandle, outboundHandle),
                         tree.trees[path]);
                     // This is the case of rehydrating a detached container from snapshot. Now due to delay loading of
                     // data store, if the data store is loaded after the container is attached, then we missed marking
@@ -267,6 +245,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         dataStoreContext.storage,
                         (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
                         (address: string) => this.setChannelDirty(address),
+                        (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+                            this.addedGCOutboundReference(srcHandle, outboundHandle),
                         path,
                         tree.trees[path],
                         this.sharedObjectRegistry,
@@ -286,8 +266,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
 
         this.attachListener();
-        // If exists on storage or loaded from a snapshot, its graph should be already be attached.
-        this.graphAttachState = existing ? AttachState.Attached : AttachState.Detached;
+        // If exists on storage or loaded from a snapshot, it should already be binded.
+        this.bindState = existing ? BindState.Bound : BindState.NotBound;
         this._attachState = dataStoreContext.attachState;
 
         // If it's existing we know it has been attached.
@@ -371,7 +351,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.dataStoreContext,
             this.dataStoreContext.storage,
             (content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
-            (address: string) => this.setChannelDirty(address));
+            (address: string) => this.setChannelDirty(address),
+            (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+                this.addedGCOutboundReference(srcHandle, outboundHandle));
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
@@ -430,8 +412,23 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         });
 
         this.localChannelContextQueue.clear();
-        this.dataStoreContext.bindToContext();
+        this.bindToContext();
         this.graphAttachState = AttachState.Attached;
+    }
+
+    /**
+     * Binds this runtime to the container
+     * This includes the following:
+     * 1. Sending an Attach op that includes all existing state
+     * 2. Attaching the graph if the data store becomes attached.
+     */
+     public bindToContext() {
+        if (this.bindState !== BindState.NotBound) {
+            return;
+        }
+        this.bindState = BindState.Binding;
+        this.dataStoreContext.bindToContext();
+        this.bindState = BindState.Bound;
     }
 
     public bind(handle: IFluidHandle): void {
@@ -458,7 +455,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         raiseConnectedEvent(this.logger, this, connected, clientId);
     }
 
-    public getQuorum(): IQuorum {
+    public getQuorum(): IQuorumClients {
         return this.quorum;
     }
 
@@ -502,6 +499,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                             this.dataStoreContext.storage,
                             (content, localContentMetadata) => this.submitChannelOp(id, content, localContentMetadata),
                             (address: string) => this.setChannelDirty(address),
+                            (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+                                this.addedGCOutboundReference(srcHandle, outboundHandle),
                             id,
                             snapshotTree,
                             this.sharedObjectRegistry,
@@ -627,7 +626,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      */
     public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         // Get a map of channel ids to routes used in it.
-        const usedContextRoutes = getChildNodesUsedRoutes(usedRoutes);
+        const usedContextRoutes = unpackChildNodesUsedRoutes(usedRoutes);
 
         // Verify that the used routes are correct.
         for (const [id] of usedContextRoutes) {
@@ -641,6 +640,16 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     /**
+     * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+     * all references added in the system.
+     * @param srcHandle - The handle of the node that added the reference.
+     * @param outboundHandle - The handle of the outbound node that is referenced.
+     */
+    private addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
+        this.dataStoreContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
+    }
+
+    /**
      * Returns the GC details in initial summary for the channel with the given id. The initial summary of the data
      * store contains the GC details of all the child channel contexts that were created before the summary was taken.
      * We find the GC details belonging to the given channel context and return it.
@@ -648,20 +657,17 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * @returns the requested channel's GC details in the initial summary.
      */
     private async getChannelInitialGCDetails(channelId: string): Promise<IGarbageCollectionSummaryDetails> {
-        const channelInitialUsedRoutes = await this.initialChannelUsedRoutesP;
-        const channelInitialGCData = await this.initialChannelGCDataP;
-
-        let channelUsedRoutes = channelInitialUsedRoutes.get(channelId);
-        // Currently, channel context's are always considered used. So, it there is no used route for it, we still
-        // need to mark it as used. Add self-route (empty string) to the channel context's used routes.
-        if (channelUsedRoutes === undefined || channelUsedRoutes.length === 0) {
-            channelUsedRoutes = [""];
+        let channelInitialGCDetails = (await this.initialChannelsGCDetailsP).get(channelId);
+        if (channelInitialGCDetails === undefined) {
+            channelInitialGCDetails = {};
         }
 
-        return {
-            usedRoutes: channelUsedRoutes,
-            gcData: channelInitialGCData.get(channelId),
-        };
+        // Currently, channel context's are always considered used. So, it there are no used routes for it, we still
+        // need to mark it as used. Add self-route (empty string) to the channel context's used routes.
+        if (channelInitialGCDetails.usedRoutes === undefined || channelInitialGCDetails.usedRoutes.length === 0) {
+            channelInitialGCDetails.usedRoutes = [""];
+        }
+        return channelInitialGCDetails;
     }
 
     /**
@@ -696,6 +702,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public getAttachSummary(): ISummaryTreeWithStats {
+        this.attachGraph();
+
         const summaryBuilder = new SummaryTreeBuilder();
 
         // Craft the .attributes file for each shared object
@@ -760,9 +768,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         channel.handle.attachGraph();
 
         assert(this.isAttached, 0x182 /* "Data store should be attached to attach the channel." */);
-        // Get the object snapshot only if its graph is attached too, because if the graph is attaching,
-        // then it would get included in the data store snapshot.
-        if (this.graphAttachState === AttachState.Attached) {
+        // Get the object snapshot only if the data store is Bound and its graph is attached too,
+        // because if the graph is attaching, then it would get included in the data store snapshot.
+        if (this.bindState === BindState.Bound && this.graphAttachState === AttachState.Attached) {
             const summarizeResult = summarizeChannel(channel, true /* fullTree */, false /* trackState */);
             // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
             const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
@@ -855,20 +863,16 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private attachListener() {
         this.setMaxListeners(Number.MAX_SAFE_INTEGER);
         this.dataStoreContext.once("attaching", () => {
-            assert(
-                this.graphAttachState !== AttachState.Detached,
-                "Data store attaching should not occur if its graph is detached",
-            );
+            assert(this.bindState !== BindState.NotBound,
+                0x186 /* "Data store attaching should not occur if it is not bound" */);
             this._attachState = AttachState.Attaching;
             // This promise resolution will be moved to attached event once we fix the scheduler.
             this.deferredAttached.resolve();
             this.emit("attaching");
         });
         this.dataStoreContext.once("attached", () => {
-            assert(
-                this.graphAttachState === AttachState.Attached,
-                "Data store should only be attached after its graph is attached",
-            );
+            assert(this.bindState === BindState.Bound,
+                0x187 /* "Data store should only be attached after it is bound" */);
             this._attachState = AttachState.Attached;
             this.emit("attached");
         });
@@ -902,10 +906,12 @@ export const mixinRequestHandler = (
 
 /**
  * Mixin class that adds await for DataObject to finish initialization before we proceed to summary.
+ * @param handler - handler that returns info about blob to be added to summary.
+ * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  */
 export const mixinSummaryHandler = (
-    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[], content: string }>,
+    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[], content: string } | undefined >,
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ) => class RuntimeWithSummarizerHandler extends Base {
         private addBlob(summary: ISummaryTreeWithStats, path: string[], content: string) {
@@ -934,7 +940,9 @@ export const mixinSummaryHandler = (
         async summarize(...args: any[]) {
             const summary = await super.summarize(...args);
             const content = await handler(this);
-            this.addBlob(summary, content.path, content.content);
+            if (content !== undefined) {
+                this.addBlob(summary, content.path, content.content);
+            }
             return summary;
         }
     } as typeof FluidDataStoreRuntime;

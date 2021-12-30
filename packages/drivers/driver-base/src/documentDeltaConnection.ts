@@ -23,10 +23,10 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, loggerToMonitoringContext, MonitoringContext } from "@fluidframework/telemetry-utils";
 
 // Local storage key to disable the BatchManager
-const batchManagerDisabledKey = "FluidDisableBatchManager";
+const batchManagerDisabledKey = "Fluid.Driver.BaseDocumentDeltaConnection.DisableBatchManager";
 
 // See #8129.
 // Need to move to common-utils (tracked as #8165)
@@ -103,8 +103,14 @@ export class DocumentDeltaConnection
      * After disconnection, we flip this to prevent any stale messages from being emitted.
      */
     protected _disposed: boolean = false;
-    protected readonly logger: ITelemetryLogger;
+    private readonly mc: MonitoringContext;
     protected readonly isBatchManagerDisabled: boolean = false;
+    /**
+     * @deprecated - Implementors should manage their own logger or monitoring context
+     */
+    protected get logger(): ITelemetryLogger {
+        return this.mc.logger;
+    }
 
     public get details(): IConnected {
         if (!this._details) {
@@ -124,7 +130,8 @@ export class DocumentDeltaConnection
     ) {
         super();
 
-        this.logger = ChildLogger.create(logger, "DeltaConnection");
+        this.mc = loggerToMonitoringContext(
+            ChildLogger.create(logger, "DeltaConnection"));
 
         this.submitManager = new BatchManager<IDocumentMessage[]>(
             (submitType, work) => this.emitMessages(submitType, work));
@@ -157,7 +164,7 @@ export class DocumentDeltaConnection
             }
         });
 
-        this.isBatchManagerDisabled = DocumentDeltaConnection.disabledBatchManagerFeatureGate;
+        this.isBatchManagerDisabled = this.mc.config.getBoolean(batchManagerDisabledKey) === true;
     }
 
     /**
@@ -288,15 +295,6 @@ export class DocumentDeltaConnection
         }
     }
 
-    private static get disabledBatchManagerFeatureGate() {
-        try {
-            return localStorage !== undefined
-                && typeof localStorage === "object"
-                && localStorage.getItem(batchManagerDisabledKey) === "1";
-        } catch (e) { }
-        return false;
-    }
-
     protected submitCore(type: string, messages: IDocumentMessage[]) {
         if (this.isBatchManagerDisabled) {
             this.emitMessages(type, [messages]);
@@ -333,9 +331,6 @@ export class DocumentDeltaConnection
             false, // socketProtocolError
             createGenericNetworkError("clientClosingConnection", undefined, true /* canRetry */));
     }
-
-    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
-    public close() { this.dispose(); }
 
     protected disposeCore(socketProtocolError: boolean, err: any) {
         // Can't check this.disposed here, as we get here on socket closure,

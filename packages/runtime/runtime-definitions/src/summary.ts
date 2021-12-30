@@ -36,6 +36,22 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
     pathPartsForChildren?: string[];
 }
 
+/** The garbage collection data of each node in the reference graph. */
+export interface IGarbageCollectionNodeData {
+    /** The set of routes to other nodes in the graph. */
+    outboundRoutes: string[];
+    /** If the node is unreferenced, the timestamp of when it was marked unreferenced. */
+    unreferencedTimestampMs?: number;
+}
+
+/**
+ * The garbage collection state of the reference graph. It contains a list of all the nodes in the graph and their
+ * GC data.
+ */
+export interface IGarbageCollectionState {
+    gcNodes: { [ id: string ]: IGarbageCollectionNodeData };
+}
+
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
 
 export interface ISummarizerNodeConfig {
@@ -62,8 +78,6 @@ export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
      * This is propagated to all child nodes.
      */
     readonly gcDisabled?: boolean;
-    /** The max duration for which a node can be unreferenced before it is eligible for deletion. */
-    readonly maxUnreferencedDurationMs?: number;
 }
 
 export enum CreateSummarizerNodeSource {

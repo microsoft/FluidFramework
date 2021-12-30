@@ -37,7 +37,7 @@ const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
         // strictly control summarization
         summaryOptions: {
-            generateSummaries: false,
+            disableSummaries: true,
             initialSummarizerDelayMs: 0,
             summaryConfigOverrides: { maxOps },
         },
@@ -83,7 +83,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                             ... testContainerConfig.runtimeOptions,
                             summaryOptions:{
                                 ... testContainerConfig.runtimeOptions?.summaryOptions,
-                                generateSummaries: true,
+                                disableSummaries: false,
                             },
                         },
                     })]],
@@ -150,7 +150,6 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                 storageOnlyContainer.resume();
                 const deltaManager = storageOnlyContainer.deltaManager;
                 assert.strictEqual(deltaManager.active, false, "deltaManager.active");
-                assert.strictEqual(deltaManager.readonly, true, "deltaManager.readonly");
                 assert.ok(deltaManager.readOnlyInfo.readonly, "deltaManager.readOnlyInfo.readonly");
                 assert.ok(deltaManager.readOnlyInfo.permissions, "deltaManager.readOnlyInfo.permissions");
                 assert.ok(deltaManager.readOnlyInfo.storageOnly, "deltaManager.readOnlyInfo.storageOnly");

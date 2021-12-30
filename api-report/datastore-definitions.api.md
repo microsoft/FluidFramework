@@ -21,7 +21,7 @@ import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
-import { IQuorum } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
@@ -71,6 +71,7 @@ export interface IChannelStorageService {
 
 // @public
 export interface IDeltaConnection {
+    addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     attach(handler: IDeltaHandler): void;
     // (undocumented)
     connected: boolean;
@@ -102,12 +103,12 @@ export interface IFluidDataStoreRuntime extends IFluidRouter, IEventProvider<IFl
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     getAudience(): IAudience;
     getChannel(id: string): Promise<IChannel>;
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly IFluidSerializer: IFluidSerializer;
     // (undocumented)
     readonly logger: ITelemetryLogger;

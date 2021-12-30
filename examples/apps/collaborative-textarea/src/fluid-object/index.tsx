@@ -4,7 +4,6 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
@@ -25,7 +24,7 @@ export class CollaborativeText extends DataObject implements IFluidHTMLView {
     public static get Name() { return "@fluid-example/collaborative-textarea"; }
 
     private static readonly factory =
-        new DataObjectFactory<CollaborativeText, undefined, undefined, IEvent>(
+        new DataObjectFactory(
             CollaborativeText.Name,
             CollaborativeText,
             [

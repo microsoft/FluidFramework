@@ -11,6 +11,7 @@ import {
     IFluidHandle,
     IRequest,
     IResponse,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -23,7 +24,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
     IDocumentMessage,
-    IQuorum,
+    IQuorumClients,
     ISequencedDocumentMessage,
     ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
@@ -132,7 +133,7 @@ export interface IContainerRuntimeBase extends
     /**
      * Returns the current quorum.
      */
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
 
     /**
      * Returns the current audience.
@@ -156,6 +157,13 @@ export interface IFluidDataStoreChannel extends
      * Indicates the attachment state of the channel to a host service.
      */
     readonly attachState: AttachState;
+
+    /**
+     * @deprecated - This is an internal method that should not be exposed.
+     * Called to bind the runtime to the container.
+     * If the container is not attached to storage, then this would also be unknown to other clients.
+     */
+     bindToContext(): void;
 
     /**
      * Runs through the graph and attaches the bound handles. Then binds this runtime to the container.
@@ -275,12 +283,12 @@ export interface IFluidDataStoreContext extends
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IFluidObject;
+    readonly scope: IFluidObject & FluidObject;
 
     /**
      * Returns the current quorum.
      */
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
 
     /**
      * Returns the current audience.
@@ -288,7 +296,7 @@ export interface IFluidDataStoreContext extends
     getAudience(): IAudience;
 
     /**
-     * Report error in that happend in the data store runtime layer to the container runtime layer
+     * Report error that happened in the data store runtime layer to the container runtime layer
      * @param err - the error object.
      */
     raiseContainerWarning(warning: ContainerWarning): void;
@@ -347,6 +355,14 @@ export interface IFluidDataStoreContext extends
      * and its children with the GC details from the previous summary.
      */
     getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
+
+    /**
+     * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+     * all references added in the system.
+     * @param srcHandle - The handle of the node that added the reference.
+     * @param outboundHandle - The handle of the outbound node that is referenced.
+     */
+    addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
 }
 
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {

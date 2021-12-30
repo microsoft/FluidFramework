@@ -4,6 +4,7 @@
 
 ```ts
 
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
@@ -17,14 +18,14 @@ import { RequestParser } from '@fluidframework/runtime-utils';
 export function buildRuntimeRequestHandler(...handlers: RuntimeRequestHandler[]): (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 
 // @public (undocumented)
-export const createFluidObjectResponse: (fluidObject: IFluidObject) => {
-    status: number;
-    mimeType: string;
-    value: IFluidObject;
+export const createFluidObjectResponse: (fluidObject: FluidObject) => {
+    status: 200;
+    mimeType: "fluid/object";
+    value: FluidObject;
 };
 
 // @public (undocumented)
-export function handleFromLegacyUri<T = IFluidObject & IFluidLoadable>(uri: string, runtime: IContainerRuntimeBase): IFluidHandle<T>;
+export function handleFromLegacyUri<T = IFluidObject & FluidObject & IFluidLoadable>(uri: string, runtime: IContainerRuntimeBase): IFluidHandle<T>;
 
 // @public @deprecated (undocumented)
 export const innerRequestHandler: (request: IRequest, runtime: IContainerRuntimeBase) => Promise<IResponse>;

@@ -75,7 +75,7 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 }
 
 export type GCVersion = number;
-export interface IContainerRuntimeMetadata {
+export interface IContainerRuntimeMetadata extends ICreateContainerMetadata {
     readonly summaryFormatVersion: 1;
     /** The last message processed at the time of summary. Only primitive propertiy types are added to the summary. */
     readonly message: ISummaryMetadataMessage | undefined;
@@ -83,6 +83,15 @@ export interface IContainerRuntimeMetadata {
     readonly disableIsolatedChannels?: true;
     /** 0 to disable GC, > 0 to enable GC, undefined defaults to disabled. */
     readonly gcFeature?: GCVersion;
+    /** Counter of the last summary happened, increments every time we summarize */
+    readonly summaryCount?: number;
+}
+
+export interface ICreateContainerMetadata {
+    /** Runtime version of the container when it was first created */
+    createContainerRuntimeVersion?: string;
+    /** Timestamp of the container when it was first created */
+    createContainerTimestamp?: number;
 }
 
 /** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
@@ -126,6 +135,7 @@ export function getMetadataFormatVersion(metadata?: IContainerRuntimeMetadata): 
     return metadata?.summaryFormatVersion ?? 0;
 }
 
+export const aliasBlobName = ".aliases";
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
 export const electedSummarizerBlobName = ".electedSummarizer";

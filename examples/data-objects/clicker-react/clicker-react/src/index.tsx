@@ -7,7 +7,6 @@ import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import {
     FluidReactView,
     IFluidState,
@@ -76,7 +75,7 @@ class CounterReactView extends FluidReactView<CounterViewState, CounterFluidStat
 
 // ----- FACTORY SETUP -----
 export const ClickerInstantiationFactory =
-    new DataObjectFactory<Clicker, unknown, unknown, IEvent>(
+    new DataObjectFactory(
         "clicker",
         Clicker,
         [SharedCounter.getFactory()],

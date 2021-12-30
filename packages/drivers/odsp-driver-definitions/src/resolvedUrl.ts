@@ -87,7 +87,7 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
     /**
      * @deprecated Use shareLinkInfo.sharingLinkToRedeem instead
      */
-    sharingLinkToRedeem?: string;
+     sharingLinkToRedeem?: string;
 
     codeHint?: {
         // containerPackageName is used for adding the package name to the request headers.

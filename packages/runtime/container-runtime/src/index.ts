@@ -3,10 +3,28 @@
  * Licensed under the MIT License.
  */
 
-export * from "./containerRuntime";
+export {
+    ContainerMessageType,
+    IChunkedOp,
+    ContainerRuntimeMessage,
+    IGCRuntimeOptions,
+    ISummaryRuntimeOptions,
+    IContainerRuntimeOptions,
+    isRuntimeMessage,
+    unpackRuntimeMessage,
+    ScheduleManager,
+    agentSchedulerId,
+    ContainerRuntime,
+} from "./containerRuntime";
 export * from "./deltaScheduler";
 export * from "./dataStoreRegistry";
-export { IGarbageCollectionRuntime, IGCStats, IUsedStateStats } from "./garbageCollection";
+export {
+    gcBlobPrefix,
+    gcTreeKey,
+    IGarbageCollectionRuntime,
+    IGCStats,
+    IUsedStateStats,
+} from "./garbageCollection";
 export * from "./pendingStateManager";
 export * from "./summarizer";
 export * from "./summarizerTypes";

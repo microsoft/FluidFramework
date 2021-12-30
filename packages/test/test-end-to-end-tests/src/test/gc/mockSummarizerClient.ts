@@ -8,19 +8,29 @@ import { assert, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import {
     ContainerRuntime,
+    gcBlobPrefix,
+    gcTreeKey,
     ISummaryNackMessage,
     SummaryCollection,
     neverCancelledSummaryToken,
 } from "@fluidframework/container-runtime";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
+import { concatGarbageCollectionStates } from "@fluidframework/garbage-collector";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { IGarbageCollectionState } from "@fluidframework/runtime-definitions";
 
 // data store that exposes container runtime for testing.
 export class TestDataObject extends DataObject {
     public get _root() {
         return this.root;
+    }
+
+    public get dataStoreRuntime(): IFluidDataStoreRuntime {
+        return this.runtime;
     }
 
     public get containerRuntime(): ContainerRuntime {
@@ -96,4 +106,24 @@ export async function submitAndAckSummary(
         logger,
     );
     return { ackedSummary, summarySequenceNumber };
+}
+
+export function getGCStateFromSummary(summary: ISummaryTree): IGarbageCollectionState {
+    const rootGCTree = summary.tree[gcTreeKey];
+    assert(rootGCTree?.type === SummaryType.Tree, `GC tree not available`);
+
+    let rootGCState: IGarbageCollectionState = { gcNodes: {} };
+    for (const key of Object.keys(rootGCTree.tree)) {
+        // Skip blobs that do not stsart with the GC prefix.
+        if (!key.startsWith(gcBlobPrefix)) {
+            continue;
+        }
+
+        const gcBlob = rootGCTree.tree[key];
+        assert(gcBlob?.type === SummaryType.Blob, `GC blob not available`);
+        const gcState = JSON.parse(gcBlob.content as string) as IGarbageCollectionState;
+        // Merge the GC state of this blob into the root GC state.
+        rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
+    }
+    return rootGCState;
 }
