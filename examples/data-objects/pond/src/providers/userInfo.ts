@@ -62,9 +62,9 @@ export class UserInfo extends EventEmitter implements IFluidUserInformation {
 
 export const userInfoFactory = async (dc: IFluidDependencySynthesizer) => {
     // eslint-disable-next-line @typescript-eslint/ban-types
-    const s = dc.synthesize<{},IProvideContainerRuntime>(
+    const s = dc.synthesize<{}, IProvideContainerRuntime>(
         {},
-        {IContainerRuntime});
+        { IContainerRuntime });
     const containerRuntime = await s.IContainerRuntime;
     return new UserInfo(containerRuntime);
 };

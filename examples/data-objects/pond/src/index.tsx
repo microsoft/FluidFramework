@@ -120,11 +120,12 @@ export class Pond extends DataObject implements IFluidHTMLView {
 // ----- CONTAINER SETUP STUFF -----
 
 const dependencyContainer = new DependencyContainer();
-dependencyContainer.register(IFluidUserInformation,async (dc) => userInfoFactory(dc));
+dependencyContainer.register(IFluidUserInformation, async (dc) => userInfoFactory(dc));
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     Pond.getFactory(),
     new Map([
         Pond.getFactory().registryEntry,
     ]),
-    dependencyContainer);
+    dependencyContainer,
+);
