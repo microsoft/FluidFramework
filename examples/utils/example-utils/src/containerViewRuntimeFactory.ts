@@ -44,7 +44,7 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
         // and add our default view request handler.
         super(
             new Map([[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]]),
-            [],
+            undefined,
             [mountableViewRequestHandler(MountableView, [makeViewRequestHandler(viewCallback)])],
         );
     }
