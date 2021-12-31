@@ -48,6 +48,7 @@ const testContainerConfig: ITestContainerConfig = {
 describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvider) => {
     const scenarioToContainerUrl = new Map<string, string>();
     before(()=>{
+        // clear first, so each version combination gets a new container
         scenarioToContainerUrl.clear();
     });
     async function getContainerUrl(
