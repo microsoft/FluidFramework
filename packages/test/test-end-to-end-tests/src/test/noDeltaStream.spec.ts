@@ -46,8 +46,14 @@ const testContainerConfig: ITestContainerConfig = {
 
 describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvider) => {
     for(const testConfig of testConfigs) {
-        it.skip(`Validate Load Modes: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
+        it(`Validate Load Modes: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
             const provider  = getTestObjectProvider();
+            switch(provider.driver.type) {
+                case "local":
+                    break;
+                default:
+                    this.skip();
+            }
             let containerUrl: IResolvedUrl | undefined;
             // initialize the container and its data
             {
@@ -160,7 +166,8 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                 for(const key of validationDataObject.root.keys()) {
                     assert.strictEqual(
                         storageOnlyDataObject.root.get(key),
-                        validationDataObject.root.get(key));
+                        storageOnlyDataObject.root.get(key),
+                        `${storageOnlyDataObject.root.get(key)} !== ${storageOnlyDataObject.root.get(key)}`);
                 }
             }
         });

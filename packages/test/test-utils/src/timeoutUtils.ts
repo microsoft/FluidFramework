@@ -28,23 +28,28 @@ export async function timeoutAwait<T = void>(
     executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void,
     timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
 ): Promise<T> {
+    const timeout =
+        timeoutOptions.durationMs !== undefined
+        && Number.isFinite(timeoutOptions.durationMs)
+        && timeoutOptions.durationMs > 0
+            ?  timeoutOptions.durationMs : defaultTimeoutDurationMs;
     // create the timeout error outside the async task, so it's callstack includes
     // the original call site, this makes it easier to debug
     const err = timeoutOptions.reject === false
         ? undefined
-        : new Error(timeoutOptions.errorMsg ?? "Timeout");
+        : new Error(timeoutOptions.errorMsg ?? `Timed out after ${timeout} ms`);
     return new Promise<T>((res,rej)=>{
-        const timeout = setTimeout(
+        const timer = setTimeout(
             ()=>timeoutOptions.reject === false ? res(timeoutOptions.value) : rej(err),
-            timeoutOptions.durationMs ?? defaultTimeoutDurationMs);
+            timeout);
 
         executor(
             (value) => {
-                clearTimeout(timeout);
+                clearTimeout(timer);
                 res(value);
             },
             (reason) => {
-                clearTimeout(timeout);
+                clearTimeout(timer);
                 rej(reason);
             });
     });
