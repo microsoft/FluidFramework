@@ -185,7 +185,6 @@
                 ]
             },
             "build": {
-                "version": "0.24.0",
                 "members": [
                     "@fluidframework/build-common",
                     "@fluidframework/eslint-config-fluid"
@@ -228,7 +227,6 @@
                 ]
             },
             "tools": {
-                "version": "0.40.0",
                 "members": [
                     "@fluid-tools/benchmark",
                     "@fluidframework/azure-local-service",
