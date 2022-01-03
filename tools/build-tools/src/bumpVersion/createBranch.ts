@@ -72,6 +72,7 @@ export async function createReleaseBranch(context: Context, branchName?: string)
 
     // Bump the version
     console.log(`Updating versions.json for new release branch`);
+    await updateVersionsFile("main");
     await updateVersionsFile(branchName ?? releaseBranch);
 
     console.log(`Bumping minor version for development`)

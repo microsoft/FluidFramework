@@ -113,5 +113,3 @@ export async function updateVersionsFile(branch?: string) {
     }
     writeVersionsJson(versionsJsonPath, versionsJson);
 }
-
-updateVersionsFile().catch(e => console.log(e));
