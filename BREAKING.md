@@ -10,6 +10,16 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.55 Breaking changes
+- [`SharedObject.snapshotCore` changed to `summarizeCore`](#SharedObject.snapshotCore-changed-to-summarizeCore)
+- [`IChannel.summarize` split into sync and async](#IChannel.summarize-split-into-sync-and-async)
+
+### `SharedObject.snapshotCore` changed to `summarizeCore`
+`SharedObject.snapshotCore` is renamed to `summarizeCore` and returns `ISummaryTreeWithStats`. The simplest way to fix up your implementation of SharedObject is to call `convertToSummaryTreeWithStats` on the `ITree`.
+
+### `IChannel.summarize` split into sync and async
+`IChannel` now has two summarization methods instead of a single synchronous `summarize`. `getAttachSummary` is synchronous, `summarize` is asynchronous.
+
 ## 0.54 Breaking changes
 - [Removed `readAndParseFromBlobs` from `driver-utils`](#Removed-readAndParseFromBlobs-from-driver-utils)
 - [Loader now returns `IContainer` instead of `Container`](#Loader-now-returns-IContainer-instead-of-Container)
