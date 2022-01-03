@@ -13,7 +13,7 @@ Use `IContainerContext.taggedLogger` instead if present. If it's missing and you
 be sure to handle tagged data before sending events to it.
 `logger` won't be removed for a very long time since old loaders could remain in production for quite some time.
 
-## 0.44 Breaking changes
+## 0.45 Breaking changes
 - [ContainerErrorType.clientSessionExpiredError added](#ContainerErrorType.clientSessionExpiredError-added)
 
 ### ContainerErrorType.clientSessionExpiredError added
