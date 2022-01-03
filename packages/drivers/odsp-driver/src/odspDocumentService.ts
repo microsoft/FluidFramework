@@ -346,6 +346,8 @@ export class OdspDocumentService implements IDocumentService {
             60000,
             this.epochTracker,
             this.socketReferenceKeyPrefix,
+            this.cache.sessionJoinCache,
+            this.joinSessionKey,
         );
         const duration = performance.now() - startTime;
         // This event happens rather often, so it adds up to cost of telemetry.
