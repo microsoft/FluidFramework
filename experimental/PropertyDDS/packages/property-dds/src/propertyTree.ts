@@ -27,7 +27,7 @@ import {
 
 import { bufferToString, assert } from "@fluidframework/common-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
+import { IFluidSerializer } from "@fluidframework/runtime-utils";
 
 import {
 	ChangeSet,

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IFluidSerializer } from '@fluidframework/core-interfaces';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IFluidSerializer } from '@fluidframework/runtime-utils';
 import { serializeHandles } from '@fluidframework/shared-object-base';
 import { assert, assertNotUndefined } from '../Common';
 import { EditLogSummary, OrderedEditSet } from '../EditLog';

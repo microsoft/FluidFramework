@@ -4,7 +4,8 @@
  */
 
 import { bufferToString, IsoBuffer } from '@fluidframework/common-utils';
-import { IFluidHandle, IFluidSerializer } from '@fluidframework/core-interfaces';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IFluidSerializer } from '@fluidframework/runtime-utils';
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidframework/protocol-definitions';
 import {
 	IFluidDataStoreRuntime,
@@ -508,7 +509,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 			this.editLog.processEditChunkHandle(this.deserializeHandle(editHandle), startRevision);
 		} else if (type === SharedTreeOpType.Edit) {
 			const semiSerializedEdit = message.contents.edit;
-			// semiSerializedEdit may have handles which have been replaced by `serializer.replaceHandles`.
+			// semiSerializedEdit may have handles which have been replaced by `serializer.encode`.
 			// Since there is no API to un-replace them except via parse, re-stringify the edit, then parse it.
 			// Stringify using JSON, not IFluidSerializer since OPs use JSON directly.
 			// TODO:Performance:#48025: Avoid this serialization round trip.
@@ -583,7 +584,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		// IFluidHandles are not allowed in Ops.
 		// Ops can contain Fluid's Serializable (for payloads) which allows IFluidHandles.
 		// So replace the handles before sending:
-		const semiSerialized = this.serializer.replaceHandles(editOp, this.handle);
+		const semiSerialized = this.serializer.encode(editOp, this.handle);
 
 		// TODO:44711: what should be passed in when unattached?
 		this.submitLocalMessage(semiSerialized);

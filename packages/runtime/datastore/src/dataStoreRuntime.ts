@@ -7,7 +7,6 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
     IFluidHandleContext,
-    IFluidSerializer,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -55,7 +54,6 @@ import {
 import {
     convertSnapshotTreeToSummaryTree,
     convertSummaryTreeToITree,
-    FluidSerializer,
     generateHandleContextPath,
     RequestParser,
     SummaryTreeBuilder,
@@ -141,10 +139,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this.dataStoreContext.IFluidHandleContext;
     }
 
-    private readonly serializer: IFluidSerializer;
-    // Back compat: deprecated in 0.53, can be removed in versions >= 0.55.
-    public get IFluidSerializer() { return this.serializer; }
-
     public get IFluidHandleContext() { return this; }
 
     public get rootRoutingContext() { return this; }
@@ -198,7 +192,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.deltaManager = dataStoreContext.deltaManager;
         this.quorum = dataStoreContext.getQuorum();
         this.audience = dataStoreContext.getAudience();
-        this.serializer = new FluidSerializer(this, (handle: IFluidHandle) => {});
 
         const tree = dataStoreContext.baseSnapshot;
 

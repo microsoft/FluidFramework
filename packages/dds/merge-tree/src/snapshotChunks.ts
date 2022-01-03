@@ -5,10 +5,8 @@
 
  /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import {
-    IFluidSerializer,
-    IFluidHandle,
-} from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidSerializer } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";

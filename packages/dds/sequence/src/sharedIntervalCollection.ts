@@ -4,7 +4,7 @@
  */
 
 import { bufferToString } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
+import { IFluidSerializer } from "@fluidframework/runtime-utils";
 import {
     FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry,
 } from "@fluidframework/protocol-definitions";

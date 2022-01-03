@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IFluidHandle,
-    IFluidSerializer,
-} from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidSerializer } from "@fluidframework/runtime-utils";
 
 /**
  * Given a mostly-plain object that may have handle objects embedded within, return a string representation of an object
@@ -50,7 +48,7 @@ export function makeHandlesSerializable(
     bind: IFluidHandle,
 ) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return serializer.replaceHandles(
+    return serializer.encode(
         value,
         bind);
 }

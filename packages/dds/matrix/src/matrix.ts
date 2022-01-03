@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -24,7 +24,7 @@ import {
     SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
-import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
+import { IFluidSerializer, ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
     IMatrixProducer,
     IMatrixConsumer,

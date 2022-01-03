@@ -14,7 +14,6 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionSummaryDetails } from '@fluidframework/runtime-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
@@ -23,7 +22,6 @@ import { IRequestHeader } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
-import { ISerializedHandle } from '@fluidframework/core-interfaces';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummarizeInternalResult } from '@fluidframework/runtime-definitions';
 import { ISummarizeResult } from '@fluidframework/runtime-definitions';
@@ -85,11 +83,11 @@ export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreReg
 export class FluidSerializer implements IFluidSerializer {
     constructor(context: IFluidHandleContext, handleParsedCb: (handle: IFluidHandle) => void);
     decode(input: any): any;
+    encode(input: any, bind: IFluidHandle): any;
     // (undocumented)
     get IFluidSerializer(): this;
     // (undocumented)
     parse(input: string): any;
-    replaceHandles(input: any, bind: IFluidHandle): any;
     // (undocumented)
     protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle): {
         type: string;
@@ -109,11 +107,36 @@ export function getBlobSize(content: ISummaryBlob["content"]): number;
 export function getNormalizedObjectStoragePathParts(path: string): string[];
 
 // @public (undocumented)
+export const IFluidSerializer: keyof IProvideFluidSerializer;
+
+// @public (undocumented)
+export interface IFluidSerializer extends IProvideFluidSerializer {
+    decode(input: any): any;
+    encode(value: any, bind: IFluidHandle): any;
+    parse(value: string): any;
+    stringify(value: any, bind: IFluidHandle): string;
+}
+
+// @public (undocumented)
+export interface IProvideFluidSerializer {
+    // (undocumented)
+    readonly IFluidSerializer: IFluidSerializer;
+}
+
+// @public (undocumented)
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {
 }
 
 // @public (undocumented)
 export interface IRootSummarizerNodeWithGC extends ISummarizerNodeWithGC, ISummarizerNodeRootContract {
+}
+
+// @public
+export interface ISerializedHandle {
+    // (undocumented)
+    type: "__fluid_handle__";
+    // (undocumented)
+    url: string;
 }
 
 // @public (undocumented)

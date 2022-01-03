@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISerializedHandle } from "@fluidframework/core-interfaces";
 import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISerializedHandle } from "./serializer";
 
 export const isSerializedHandle = (value: any): value is ISerializedHandle =>
     value?.type === "__fluid_handle__";
