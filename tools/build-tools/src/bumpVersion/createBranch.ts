@@ -8,7 +8,7 @@ import { bumpRepo } from "./bumpVersion";
 import { Context, VersionBumpType } from "./context";
 import { fatal, runPolicyCheckWithFix, } from "./utils";
 import { ReferenceVersionBag, getRepoStateChange } from "./versionBag";
-import { updateBranchVersions } from "./versionsJson";
+import { updateVersionsFile } from "./versionsJson";
 import { MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import * as semver from "semver";
@@ -54,7 +54,7 @@ export async function createReleaseBranch(context: Context, branchName?: string)
 
     // creating the release branch and bump the version
     const releaseBranchVersion = `${ semver.major(releaseVersion) }.${ semver.minor(releaseVersion) }`;
-    const releaseBranch = `release / ${ releaseBranchVersion }`;
+    const releaseBranch = `release/${ releaseBranchVersion }`;
     const commit = await context.gitRepo.getShaForBranch(releaseBranch);
     if (commit) {
         fatal(`${ releaseBranch } already exists`);
@@ -72,7 +72,7 @@ export async function createReleaseBranch(context: Context, branchName?: string)
 
     // Bump the version
     console.log(`Updating versions.json for new release branch`);
-    await updateBranchVersions(branchName ?? releaseBranch);
+    await updateVersionsFile(branchName ?? releaseBranch);
 
     console.log(`Bumping minor version for development`)
     console.log(await bumpCurrentBranch(context, "minor", releaseName, depVersions));

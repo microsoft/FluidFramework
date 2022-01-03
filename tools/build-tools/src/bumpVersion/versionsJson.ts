@@ -66,7 +66,7 @@ function writeVersionsJson(jsonPath: string, versionsJson: IVersionsJson) {
  * @param branch The branch name to update in the versions json file.
  *      Defaults to the current branch name.
  */
-export async function updateBranchVersions(branch?: string) {
+export async function updateVersionsFile(branch?: string) {
     const resolvedRoot = await getResolvedFluidRoot();
     const repo = new GitRepo(resolvedRoot);
     const currentBranch = await repo.getCurrentBranchName();
@@ -111,4 +111,4 @@ export async function updateBranchVersions(branch?: string) {
     writeVersionsJson(versionsJsonPath, versionsJson);
 }
 
-updateBranchVersions().catch(e => console.log(e));
+updateVersionsFile().catch(e => console.log(e));
