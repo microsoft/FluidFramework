@@ -20,7 +20,6 @@ import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { ITree } from '@fluidframework/protocol-definitions';
 
 // @public
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
@@ -51,12 +50,11 @@ export function serializeHandles(value: any, serializer: IFluidSerializer, bind:
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
     getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
-    protected getGCDataCore(): IGarbageCollectionData;
+    protected getGCDataCore(serializer: SummarySerializer): IGarbageCollectionData;
     // (undocumented)
     protected get serializer(): IFluidSerializer;
-    protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
-    // (undocumented)
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    protected abstract summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
 }
 
 // @public

@@ -4,12 +4,7 @@
  */
 
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
@@ -17,10 +12,12 @@ import {
     Jsonable,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     SharedObject,
 } from "@fluidframework/shared-object-base";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { SharedSummaryBlockFactory } from "./sharedSummaryBlockFactory";
 import { ISharedSummaryBlock } from "./interfaces";
 
@@ -93,30 +90,16 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
      */
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
+    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
         const contentsBlob: ISharedSummaryBlockDataSerializable = {};
         this.data.forEach((value, key) => {
             contentsBlob[key] = value;
         });
-
-        // Construct the tree for the data.
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: snapshotFileName,
-                    type: TreeEntry.Blob,
-                    value: {
-                        contents: JSON.stringify(contentsBlob),
-                        encoding: "utf-8",
-                    },
-                },
-            ],
-        };
-
-        return tree;
+        const builder = new SummaryTreeBuilder();
+        builder.addBlob(snapshotFileName, JSON.stringify(contentsBlob));
+        return builder.getSummaryTree();
     }
 
     /**

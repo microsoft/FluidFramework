@@ -38,7 +38,7 @@ import { ISegmentAction } from '@fluidframework/merge-tree';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ITree } from '@fluidframework/protocol-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { Jsonable } from '@fluidframework/datastore-definitions';
 import { LocalReference } from '@fluidframework/merge-tree';
 import { Marker } from '@fluidframework/merge-tree';
@@ -52,6 +52,7 @@ import { ReferencePosition } from '@fluidframework/merge-tree';
 import { ReferenceType } from '@fluidframework/merge-tree';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
+import { SummarySerializer } from '@fluidframework/shared-object-base';
 import { TextSegment } from '@fluidframework/merge-tree';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
@@ -423,7 +424,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     // (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
-    protected snapshotCore(serializer: IFluidSerializer): ITree;
+    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
     // (undocumented)
     waitIntervalCollection(label: string): Promise<IntervalCollection<TInterval>>;
 }
@@ -529,7 +530,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     };
     // (undocumented)
     getCurrentSeq(): number;
-    protected getGCDataCore(): IGarbageCollectionData;
+    protected getGCDataCore(serializer: SummarySerializer): IGarbageCollectionData;
     // (undocumented)
     getIntervalCollection(label: string): IntervalCollection<SequenceInterval>;
     getLength(): number;
@@ -579,9 +580,9 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     readonly segmentFromSpec: (spec: IJSONSegment) => ISegment;
     // (undocumented)
-    protected snapshotCore(serializer: IFluidSerializer): ITree;
-    // (undocumented)
     submitSequenceMessage(message: IMergeTreeOp): void;
+    // (undocumented)
+    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
     // (undocumented)
     waitIntervalCollection(label: string): Promise<IntervalCollection<SequenceInterval>>;
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start?: number, end?: number, accum?: TClientData, splitRange?: boolean): void;
