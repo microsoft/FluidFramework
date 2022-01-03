@@ -25,7 +25,7 @@ import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IPendingProposal } from '@fluidframework/protocol-definitions';
 import { IProvideFluidCodeDetailsComparer as IProvideFluidCodeDetailsComparer_2 } from '@fluidframework/core-interfaces';
-import { IQuorum } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -141,9 +141,9 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    getLoadedCodeDetails?(): IFluidCodeDetails_2 | undefined;
-    getQuorum(): IQuorum;
-    getSpecifiedCodeDetails?(): IFluidCodeDetails_2 | undefined;
+    getLoadedCodeDetails(): IFluidCodeDetails_2 | undefined;
+    getQuorum(): IQuorumClients;
+    getSpecifiedCodeDetails(): IFluidCodeDetails_2 | undefined;
     readonly isDirty: boolean;
     proposeCodeDetails(codeDetails: IFluidCodeDetails_2): Promise<boolean>;
     readonly readOnlyInfo: ReadOnlyInfo;
@@ -193,7 +193,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     pendingLocalState?: unknown;
     // (undocumented)
-    readonly quorum: IQuorum;
+    readonly quorum: IQuorumClients;
     // (undocumented)
     raiseContainerWarning(warning: ContainerWarning): void;
     readonly scope: IFluidObject & FluidObject;
