@@ -4,19 +4,33 @@
  */
 
 import { strict as assert } from "assert";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { TextSegment } from "@fluidframework/merge-tree";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { FlowDocument } from "../document";
 import { SegmentSpan } from "../document/segmentspan";
+import { documentType } from "../package";
 
 describeLoaderCompat("SegmentSpan", (getTestObjectProvider) => {
     let doc: FlowDocument;
     let provider: ITestObjectProvider;
     before(async () => {
         provider = getTestObjectProvider(/* reset */ false);
-        const container = await provider.createContainer(FlowDocument.getFactory());
+        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+            runtime.IFluidHandleContext.resolveHandle(request);
+        const factory = new ContainerRuntimeFactoryWithDefaultDataStore(
+            FlowDocument.getFactory(),
+            new Map([
+                [documentType, Promise.resolve(FlowDocument.getFactory())],
+            ]),
+            undefined,
+            [innerRequestHandler],
+        );
+        const container = await provider.createContainer(factory);
         doc = await requestFluidObject<FlowDocument>(container, "default");
     });
 

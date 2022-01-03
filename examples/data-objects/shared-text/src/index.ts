@@ -14,10 +14,7 @@ import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
-import {
-    innerRequestHandler,
-    buildRuntimeRequestHandler,
-} from "@fluidframework/request-handler";
+import { buildRuntimeRequestHandler, rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import * as sharedTextComponent from "./component";
@@ -69,7 +66,7 @@ class SharedTextFactoryComponent extends RuntimeFactoryHelper implements IFluidD
             ],
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(DefaultComponentName),
-                innerRequestHandler,
+                rootDataStoreRequestHandler,
             ),
             undefined, // runtimeOptions
             undefined, // containerScope

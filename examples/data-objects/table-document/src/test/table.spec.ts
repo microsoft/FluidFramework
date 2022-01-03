@@ -4,12 +4,16 @@
  */
 
 import { strict as assert } from "assert";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { TableDocument } from "../document";
 import { TableSlice } from "../slice";
 import { TableDocumentItem } from "../table";
+import { TableDocumentType } from "../componentTypes";
 
 describeLoaderCompat("TableDocument", (getTestObjectProvider) => {
     let tableDocument: TableDocument;
@@ -22,7 +26,18 @@ describeLoaderCompat("TableDocument", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(async () => {
         provider = getTestObjectProvider();
-        const container = await provider.createContainer(TableDocument.getFactory());
+        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+                runtime.IFluidHandleContext.resolveHandle(request);
+        const factory = new ContainerRuntimeFactoryWithDefaultDataStore(
+            TableDocument.getFactory(),
+            new Map([
+                [TableDocumentType, Promise.resolve(TableDocument.getFactory())],
+            ]),
+            undefined,
+            [innerRequestHandler],
+            undefined,
+        );
+        const container = await provider.createContainer(factory);
         tableDocument = await requestFluidObject<TableDocument>(container, "default");
     });
 
