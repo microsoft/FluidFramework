@@ -25,13 +25,7 @@ import { isSerializedHandle } from "./utils";
     url: string;
 }
 
-export const IFluidSerializer: keyof IProvideFluidSerializer = "IFluidSerializer";
-
-export interface IProvideFluidSerializer {
-    readonly IFluidSerializer: IFluidSerializer;
-}
-
-export interface IFluidSerializer extends IProvideFluidSerializer {
+export interface IFluidSerializer {
     /**
      * Given a mostly-plain object that may have handle objects embedded within, will return a fully-plain object
      * where any embedded IFluidHandles have been replaced with a serializable form.
