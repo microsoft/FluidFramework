@@ -26,7 +26,7 @@ class ContactCollectionContainerRuntimeFactoryType extends BaseContainerRuntimeF
     constructor() {
         super(
             new Map([ContactCollectionInstantiationFactory.registryEntry]),
-            [],
+            undefined,
             [collectionRequestHandler],
         );
     }

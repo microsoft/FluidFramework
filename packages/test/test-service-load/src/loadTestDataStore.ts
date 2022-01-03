@@ -101,7 +101,7 @@ export class LoadTestDataStoreModel {
     /**
      * For GC testing - We create a data store for each client pair. The url of the data store is stored in a key
      * common to both the clients. Each client adds a reference to this data store when it becomes a writer
-     * and removes the reference before it transtions to a reader.
+     * and removes the reference before it transitions to a reader.
      * So, at any point in time, the data store can have 0, 1 or 2 references.
      */
     private static async getGCDataStore(
@@ -160,7 +160,7 @@ export class LoadTestDataStoreModel {
             throw new Error("counter not available");
         }
         if(taskmanager === undefined) {
-            throw new Error("taskmanger not available");
+            throw new Error("taskmanager not available");
         }
 
         const gcDataStore = await this.getGCDataStore(config, root, containerRuntime);
@@ -285,12 +285,14 @@ export class LoadTestDataStoreModel {
      * Upload a unique attachment blob and store the handle in a unique key on the root map
      */
     public async writeBlob(blobNumber: number) {
-        const blobSize = this.config.testConfig.blobSize ?? defaultBlobSize;
-        // upload a unique blob, since they may be deduped otherwise
-        const buffer = Buffer.alloc(blobSize, `${this.config.runId}/${blobNumber}:`);
-        assert(buffer.byteLength === blobSize, "incorrect buffer size");
-        const handle = await this.runtime.uploadBlob(buffer);
-        this.root.set(this.blobKey(blobNumber), handle);
+        if (!this.runtime.disposed) {
+            const blobSize = this.config.testConfig.blobSize ?? defaultBlobSize;
+            // upload a unique blob, since they may be deduped otherwise
+            const buffer = Buffer.alloc(blobSize, `${this.config.runId}/${blobNumber}:`);
+            assert(buffer.byteLength === blobSize, "incorrect buffer size");
+            const handle = await this.runtime.uploadBlob(buffer);
+            this.root.set(this.blobKey(blobNumber), handle);
+        }
     }
 
     public async getPartnerCounter() {

@@ -214,6 +214,7 @@ declare function get_old_InterfaceDeclaration_IContainer():
 declare function use_current_InterfaceDeclaration_IContainer(
     use: current.IContainer);
 use_current_InterfaceDeclaration_IContainer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainer());
 
 /*
@@ -700,6 +701,7 @@ declare function get_old_InterfaceDeclaration_IHostLoader():
 declare function use_current_InterfaceDeclaration_IHostLoader(
     use: current.IHostLoader);
 use_current_InterfaceDeclaration_IHostLoader(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IHostLoader());
 
 /*
@@ -725,6 +727,7 @@ declare function get_old_InterfaceDeclaration_ILoader():
 declare function use_current_InterfaceDeclaration_ILoader(
     use: current.ILoader);
 use_current_InterfaceDeclaration_ILoader(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ILoader());
 
 /*
@@ -896,6 +899,7 @@ declare function get_old_InterfaceDeclaration_IProxyLoaderFactory():
 declare function use_current_InterfaceDeclaration_IProxyLoaderFactory(
     use: current.IProxyLoaderFactory);
 use_current_InterfaceDeclaration_IProxyLoaderFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProxyLoaderFactory());
 
 /*
