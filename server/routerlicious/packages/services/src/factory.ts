@@ -2,7 +2,8 @@ import { IDbFactory } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import registerDebug from "debug";
 
-export const debug = registerDebug("fluid:backend");
+const debug = registerDebug("fluid:backend");
+
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class DbFactoryFactory {
     static async create(config: Provider): Promise<IDbFactory> {

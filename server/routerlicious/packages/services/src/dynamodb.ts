@@ -17,6 +17,7 @@ import { isEmpty, extend, isObject } from "lodash";
 
 const UNUSED_RANGE_KEY = "UNUSED";
 const MaxFetchSize = 500;
+const MaxBatchSize = 25;
 
 interface IQueryFragment { Key?: string, ConditionFragment: string, AttributeValuesFragment: Record<string, string> }
 
@@ -143,23 +144,42 @@ export class DynamoDBCollection<T> implements core.ICollection<T> {
         return this.insertOneInternal(value);
     }
 
+    private chunkArray(commands: any[]): any[][] {
+        const result: (T[])[] = [];
+        for (let i = 0; i < commands.length; i += MaxBatchSize) {
+            const chunk = commands.slice(i, i + MaxBatchSize);
+            result.push(chunk);
+        }
+        return result;
+    }
+
     async insertMany(values: T[], _ordered: boolean): Promise<void> {
-        const command: BatchWriteCommandInput = {
-            RequestItems: {
-                [this.options.table_name]: values.map((val) => {
-                    const { Key } = this.compose_partition_key(val);
-                    const range_key = this.getRangeKeyFromValue(val);
-                    const v = val as any;
-                    // input value contains a mongoTimestamp field which is a Date object, we convert
-                    // it to a string for DynamoDB to handle this
-                    if (v.mongoTimestamp) {
-                        v.mongoTimestamp = (v.mongoTimestamp as Date).toString();
-                    }
-                    return { PutRequest: { Item: { content: val, pk: Key, sk: range_key } } };
-                }),
-            },
-        };
-        await this.client.batchWrite(command);
+        const puts = values.map((val) => {
+            const { Key } = this.compose_partition_key(val);
+            const range_key = this.getRangeKeyFromValue(val);
+            const v = val as any;
+            // input value contains a mongoTimestamp field which is a Date object, we convert
+            // it to a string for DynamoDB to handle this
+            if (v.mongoTimestamp) {
+                v.mongoTimestamp = (v.mongoTimestamp as Date).toString();
+            }
+            return { PutRequest: { Item: { content: val, pk: Key, sk: range_key } } };
+        });
+
+        const putsChunks = this.chunkArray(puts);
+
+        const batchWrites = putsChunks.map((chunk) => {
+            const cmd: BatchWriteCommandInput = {
+                RequestItems: {
+                    [this.options.table_name]: chunk,
+                },
+            };
+            return cmd;
+        });
+
+        for (const batch of batchWrites) {
+            await this.client.batchWrite(batch);
+        }
     }
 
     async deleteOne(filter: any): Promise<any> {
@@ -176,19 +196,25 @@ export class DynamoDBCollection<T> implements core.ICollection<T> {
 
     async deleteMany(filter: any): Promise<any> {
         const values = await this.find(filter, undefined);
+        const deletes = values.map((val) => {
+            const { Key } = this.compose_partition_key(val);
+            const range_key = this.getRangeKeyFromValue(val);
+            return { DeleteRequest: { Key: { pk: Key, sk: range_key } } };
+        });
+        const deletesChunks = this.chunkArray(deletes);
 
-        const command: BatchWriteCommandInput = {
-            RequestItems: {
-                [this.options.table_name]:
-                    values.map((val) => {
-                        const { Key } = this.compose_partition_key(val);
-                        const range_key = this.getRangeKeyFromValue(val);
-                        return { DeleteRequest: { Key: { pk: Key, sk: range_key } } };
-                    }),
-            }
-            ,
-        };
-        await this.client.batchWrite(command);
+        const batchDeletes = deletesChunks.map((chunk) => {
+            const cmd: BatchWriteCommandInput = {
+                RequestItems: {
+                    [this.options.table_name]: chunk,
+                },
+            };
+            return cmd;
+        });
+
+        for (const batch of batchDeletes) {
+            await this.client.batchWrite(batch);
+        }
     }
 
     async createIndex(index: any, unique: boolean): Promise<void> {
