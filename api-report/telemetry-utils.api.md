@@ -17,6 +17,7 @@ import { ITelemetryGenericEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITelemetryPerformanceEvent } from '@fluidframework/common-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import { Lazy } from '@fluidframework/common-utils';
 import { TelemetryEventCategory } from '@fluidframework/common-definitions';
 import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
@@ -28,6 +29,9 @@ export class ChildLogger extends TelemetryLogger {
     static create(baseLogger?: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     send(event: ITelemetryBaseEvent): void;
 }
+
+// @public (undocumented)
+export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
 // @public (undocumented)
 export const connectedEventName = "connected";
@@ -63,10 +67,35 @@ export function generateErrorWithStack(): Error;
 // @public (undocumented)
 export function generateStack(): string | undefined;
 
+// @public
+export const getCircularReplacer: () => (key: string, value: any) => any;
+
 // @public (undocumented)
 export const hasErrorInstanceId: (x: any) => x is {
     errorInstanceId: string;
 };
+
+// @public
+export interface IConfigProvider extends IConfigProviderBase {
+    // (undocumented)
+    getBoolean(name: string): boolean | undefined;
+    // (undocumented)
+    getBooleanArray(name: string): boolean[] | undefined;
+    // (undocumented)
+    getNumber(name: string): number | undefined;
+    // (undocumented)
+    getNumberArray(name: string): number[] | undefined;
+    // (undocumented)
+    getString(name: string): string | undefined;
+    // (undocumented)
+    getStringArray(name: string): string[] | undefined;
+}
+
+// @public
+export interface IConfigProviderBase {
+    // (undocumented)
+    getRawConfig(name: string): ConfigTypes;
+}
 
 // @public
 export interface IFluidErrorAnnotations {
@@ -121,6 +150,9 @@ export interface ITelemetryLoggerPropertyBags {
     error?: ITelemetryLoggerPropertyBag;
 }
 
+// @public (undocumented)
+export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(logger: L): MonitoringContext<L>;
+
 // @public
 export class LoggingError extends Error implements ILoggingError, Pick<IFluidErrorBase, "errorInstanceId"> {
     constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
@@ -133,6 +165,9 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
 // @public
 export function logIfFalse(condition: any, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
 
+// @public (undocumented)
+export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(logger: L, ...configs: (IConfigProviderBase | undefined)[]): MonitoringContext<L>;
+
 // @public
 export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
     constructor();
@@ -142,6 +177,14 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
     matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean;
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
+}
+
+// @public
+export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger> {
+    // (undocumented)
+    config: IConfigProvider;
+    // (undocumented)
+    logger: L;
 }
 
 // @public
@@ -181,6 +224,9 @@ export function raiseConnectedEvent(logger: ITelemetryLogger, emitter: EventEmit
 
 // @public (undocumented)
 export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLogger, event: string, ...args: any[]): void;
+
+// @public
+export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
 // @public
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {

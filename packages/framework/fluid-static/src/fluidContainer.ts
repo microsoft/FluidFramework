@@ -178,9 +178,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
      * {@inheritDoc IFluidContainer.connected}
      */
     public get connected() {
-        // TODO: Remove null check after next release #8523
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.container.connected!;
+        return this.container.connected;
     }
 
     /**

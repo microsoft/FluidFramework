@@ -92,9 +92,14 @@ export class AlfredResources implements core.IResources {
         public port: any,
         public documentsCollectionName: string,
         public metricClientConfig: any,
-        public globalDbMongoManager?: core.MongoManager) {
+        public globalDbMongoManager?: core.MongoManager,
+    ) {
         const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
-        this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig, socketIoAdapterConfig);
+        const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
+        this.webServerFactory = new services.SocketIoWebServerFactory(
+            this.redisConfig,
+            socketIoAdapterConfig,
+            httpServerConfig);
     }
 
     public async dispose(): Promise<void> {

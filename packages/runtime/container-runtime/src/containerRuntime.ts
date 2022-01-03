@@ -45,14 +45,18 @@ import {
     PerformanceEvent,
     normalizeError,
     TaggedLoggerAdapter,
+    MonitoringContext,
+    loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
 import {
+    CreateProcessingError,
     DataCorruptionError,
     GenericError,
     UsageError,
-    extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
+    extractSafePropertiesFromMessage,
+} from "@fluidframework/container-utils";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -123,7 +127,6 @@ import {
     wrapSummaryInChannelsTree,
 } from "./summaryFormat";
 import { SummaryCollection } from "./summaryCollection";
-import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
 import { ISerializedElection, OrderedClientCollection, OrderedClientElection } from "./orderedClientElection";
 import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
 import {
@@ -289,7 +292,7 @@ type IRuntimeMessageMetadata = undefined | {
 };
 
 // Local storage key to set the default flush mode to TurnBased
-const turnBasedFlushModeKey = "FluidFlushModeTurnBased";
+const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
 
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     switch (message.type) {
@@ -835,7 +838,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly handleContext: ContainerFluidHandleContext;
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
-    private readonly _logger: ITelemetryLogger;
+    private readonly mc: MonitoringContext;
     private readonly summarizerClientElection?: SummarizerClientElection;
     /**
      * summaryManager will only be created if this client is permitted to spawn a summarizing client
@@ -848,7 +851,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
     private _orderSequentiallyCalls: number = 0;
-    private _flushMode = ContainerRuntime.defaultFlushMode;
+    private _flushMode: FlushMode;
     private needsFlush = false;
     private flushTrigger = false;
 
@@ -915,10 +918,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /** The message in the metadata of the base summary this container is loaded from. */
     private readonly baseSummaryMessage: ISummaryMetadataMessage | undefined;
 
-    private static get defaultFlushMode(): FlushMode {
-        return getLocalStorageFeatureGate(turnBasedFlushModeKey) ? FlushMode.TurnBased : FlushMode.Immediate;
-    }
-
     private get summarizer(): Summarizer {
         assert(this._summarizer !== undefined, 0x257 /* "This is not summarizing container" */);
         return this._summarizer;
@@ -973,7 +972,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.handleContext = new ContainerFluidHandleContext("", this);
 
-        this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
+        this.mc = loggerToMonitoringContext(
+            ChildLogger.create(this.logger, "ContainerRuntime"));
+
+        this._flushMode =
+            this.mc.config.getBoolean(turnBasedFlushModeKey) ?? false
+            ? FlushMode.TurnBased : FlushMode.Immediate;
 
         /**
          * Function that return the current server timestamp. This is used by the garbage collector to set the
@@ -995,7 +999,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.closeFn,
             context.baseSnapshot,
             async <T>(id: string) => readAndParse<T>(this.storage, id),
-            this._logger,
+            this.mc.logger,
             existing,
             metadata,
         );
@@ -1042,7 +1046,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     getInitialGCSummaryDetailsFn,
                 ),
             (id: string) => this.summarizerNode.deleteChild(id),
-            this._logger,
+            this.mc.logger,
             async () => this.garbageCollector.getDataStoreBaseGCDetails(),
             (id: string) => this.garbageCollector.nodeChanged(id),
             new Map<string, string>(dataStoreAliasMap),
@@ -1082,7 +1086,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         if (this.summariesDisabled) {
-            this._logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
+            this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
         }
         else {
             const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
@@ -1092,12 +1096,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.context.quorum,
             );
             const orderedClientElectionForSummarizer = new OrderedClientElection(
+
                 orderedClientLogger,
                 orderedClientCollection,
                 electedSummarizerData ?? this.context.deltaManager.lastSequenceNumber,
                 SummarizerClientElection.isClientEligible,
             );
-            const summarizerClientElectionEnabled = getLocalStorageFeatureGate("summarizerClientElection") ??
+            const summarizerClientElectionEnabled =
+                this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection") ??
                 this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
             const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 7000;
             this.summarizerClientElection = new SummarizerClientElection(
@@ -1498,7 +1504,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.dataStores.setConnectionState(connected, clientId);
 
-        raiseConnectedEvent(this._logger, this, connected, clientId);
+        raiseConnectedEvent(this.mc.logger, this, connected, clientId);
     }
 
     public process(messageArg: ISequencedDocumentMessage, local: boolean) {
@@ -1659,9 +1665,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         try {
             this.trackOrderSequentiallyCalls(callback);
-        } finally {
             this.flush();
             this.setFlushMode(savedFlushMode);
+        } catch(error) {
+            this.closeFn(CreateProcessingError(error, "orderSequentially"));
         }
     }
 
@@ -2270,7 +2277,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // That might be not what caller hopes to get, but we can look deeper if telemetry tells us it's a problem.
         const middleOfBatch = this.flushMode === FlushMode.TurnBased && this.needsFlush;
         if (middleOfBatch) {
-            this._logger.sendErrorEvent({ eventName: "submitSystemMessageError", type });
+            this.mc.logger.sendErrorEvent({ eventName: "submitSystemMessageError", type });
         }
 
         return this.context.submitFn(
