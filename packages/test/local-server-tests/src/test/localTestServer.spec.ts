@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IContainer, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import { LocalResolver, LocalDocumentServiceFactory} from "@fluidframework/local-driver";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { SharedString } from "@fluidframework/sequence";
@@ -18,7 +18,10 @@ import {
     LoaderContainerTracker,
     ITestFluidObject,
     TestFluidObjectFactory,
+    fluidEntryPoint,
 } from "@fluidframework/test-utils";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 /**
  * Creates a loader with the given package entries and a delta connection server.
@@ -26,7 +29,7 @@ import {
  * @param deltaConnectionServer - The delta connection server to use as the server.
  */
 function createLocalLoader(
-    packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
+    packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
     deltaConnectionServer: ILocalDeltaConnectionServer,
     urlResolver: IUrlResolver,
     options?: ILoaderOptions,
@@ -51,6 +54,17 @@ describe("LocalTestServer", () => {
         config: {},
     };
     const factory = new TestFluidObjectFactory([[stringId, SharedString.getFactory()]]);
+    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+            runtime.IFluidHandleContext.resolveHandle(request);
+    const runtimeFactory =
+        new ContainerRuntimeFactoryWithDefaultDataStore(
+            factory,
+            [
+                [factory.type, Promise.resolve(factory)],
+            ],
+            undefined,
+            [innerRequestHandler],
+        );
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let urlResolver: LocalResolver;
@@ -63,14 +77,14 @@ describe("LocalTestServer", () => {
     let sharedString2: SharedString;
 
     async function createContainer(): Promise<IContainer> {
-        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        const loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
         loaderContainerTracker.add(loader);
         return createAndAttachContainer(
             codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(): Promise<IContainer> {
-        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        const loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
         loaderContainerTracker.add(loader);
         return loader.resolve({ url: documentLoadUrl });
     }
