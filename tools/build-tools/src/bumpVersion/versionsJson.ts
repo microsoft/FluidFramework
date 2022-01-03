@@ -10,7 +10,7 @@ import { Context } from "./context";
 import { GitRepo } from "./utils";
 
 interface IGroupItem {
-    version: string,
+    version?: string,
     members: string[],
 }
 
@@ -82,11 +82,14 @@ export async function updateVersionsFile(branch?: string) {
                 groupInfo[pkg.group] = { version: pkg.version, members: [] };
             }
             groupInfo[pkg.group].members.push(pkg.name);
-            if (groupInfo[pkg.group].version !== pkg.version &&
-                // certain groups have divergent versions
-                // TODO: clean up these groups
-                !["build", "tools"].includes(pkg.group)) {
-                throw new Error(`Version for pkg ${pkg.name} does not match that of its group ${pkg.group}`);
+            if (groupInfo[pkg.group].version !== undefined &&
+                groupInfo[pkg.group].version !== pkg.version) {
+                // some groups don't keep versions in lockstep.  omit the version for those groups
+                // but error when it's not a known group
+                if (!["build", "tools"].includes(pkg.group)) {
+                    throw new Error(`Version for pkg ${pkg.name} does not match that of its group ${pkg.group}`);
+                }
+                delete groupInfo[pkg.group].version;
             }
         }
     }
@@ -99,7 +102,7 @@ export async function updateVersionsFile(branch?: string) {
     const versionsJson = readVersionsJson(versionsJsonPath);
     if (versionsJson[versionsBranch] !== undefined && versionsBranch !== currentBranch) {
         console.warn(
-            `WARNING: Overwrite info for branch ${versionsBranch} with info from branch ${currentBranch}. `,
+            `WARNING: Overwriting info for branch ${versionsBranch} with info from branch ${currentBranch}. `,
             `This should usually only be done when creating a new versions json branch entry`,
         );
     }
