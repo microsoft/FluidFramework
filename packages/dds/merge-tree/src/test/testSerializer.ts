@@ -23,7 +23,7 @@ export class TestSerializer implements IFluidSerializer {
     }
 
     public decode(input: any): any {
-		throw new Error("Method not implemented.");
+        throw new Error("Method not implemented.");
     }
 
     public stringify(value: any, bind: IFluidHandle) {
