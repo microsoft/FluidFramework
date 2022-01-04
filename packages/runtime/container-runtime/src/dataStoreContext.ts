@@ -51,7 +51,7 @@ import {
     IFluidDataStoreContextEvents,
     IFluidDataStoreRegistry,
     IGarbageCollectionData,
-    IGarbageCollectionBaseDetails,
+    IGarbageCollectionDetailsBase,
     IGarbageCollectionSummaryDetails,
     IInboundSignalMessage,
     IProvideFluidDataStoreFactory,
@@ -658,7 +658,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      */
     public abstract getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
 
-    public abstract getBaseGCDetails(): Promise<IGarbageCollectionBaseDetails>;
+    public abstract getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
         assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
@@ -685,7 +685,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return (
             summarizeInternal: SummarizeInternalFn,
             getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-            getBaseGCDetailsFn: () => Promise<IGarbageCollectionBaseDetails>,
+            getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
         ) => this.summarizerNode.createChild(
             summarizeInternal,
             id,
@@ -704,12 +704,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
 export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     private isRootDataStore: boolean | undefined;
-    private readonly baseGCDetailsP: Promise<IGarbageCollectionBaseDetails>;
+    private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
 
     constructor(
         id: string,
         private readonly initSnapshotValue: ISnapshotTree | string | undefined,
-        getBaseGCDetails: () => Promise<IGarbageCollectionBaseDetails | undefined>,
+        getBaseGCDetails: () => Promise<IGarbageCollectionDetailsBase | undefined>,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: FluidObject,
@@ -731,7 +731,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             pkg,
         );
 
-        this.baseGCDetailsP = new LazyPromise<IGarbageCollectionBaseDetails>(async () => {
+        this.baseGCDetailsP = new LazyPromise<IGarbageCollectionDetailsBase>(async () => {
             return (await getBaseGCDetails()) ?? {};
         });
     }
@@ -809,7 +809,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         return this.getBaseGCDetails();
     }
 
-    public async getBaseGCDetails(): Promise<IGarbageCollectionBaseDetails> {
+    public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
         return this.baseGCDetailsP;
     }
 
@@ -948,7 +948,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         return {};
     }
 
-    public async getBaseGCDetails(): Promise<IGarbageCollectionBaseDetails> {
+    public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
         // Local data store does not have initial summary.
         return {};
     }

@@ -23,7 +23,7 @@ import {
     CreateChildSummarizerNodeFn,
     IFluidDataStoreContext,
     IGarbageCollectionData,
-    IGarbageCollectionBaseDetails,
+    IGarbageCollectionDetailsBase,
     ISummarizeInternalResult,
     ISummarizeResult,
     ISummarizerNodeWithGC,
@@ -65,7 +65,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly registry: ISharedObjectRegistry,
         extraBlobs: Map<string, ArrayBufferLike> | undefined,
         createSummarizerNode: CreateChildSummarizerNodeFn,
-        getBaseGCDetails: () => Promise<IGarbageCollectionBaseDetails>,
+        getBaseGCDetails: () => Promise<IGarbageCollectionDetailsBase>,
         private readonly attachMessageType?: string,
     ) {
         this.services = createServiceEndpoints(

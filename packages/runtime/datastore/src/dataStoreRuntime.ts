@@ -48,7 +48,7 @@ import {
     IFluidDataStoreContext,
     IFluidDataStoreChannel,
     IGarbageCollectionData,
-    IGarbageCollectionBaseDetails,
+    IGarbageCollectionDetailsBase,
     IInboundSignalMessage,
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
@@ -178,7 +178,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     // A map of child channel context ids to the their base GC details. This is used to initialize the GC state of the
     // channel contexts.
-    private readonly channelsBaseGCDetails: LazyPromise<Map<string, IGarbageCollectionBaseDetails>>;
+    private readonly channelsBaseGCDetails: LazyPromise<Map<string, IGarbageCollectionDetailsBase>>;
 
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -655,7 +655,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * @param channelId - The id of the channel context that is asked for the initial GC details.
      * @returns the requested channel's base GC details.
      */
-    private async getChannelBaseGCDetails(channelId: string): Promise<IGarbageCollectionBaseDetails> {
+    private async getChannelBaseGCDetails(channelId: string): Promise<IGarbageCollectionDetailsBase> {
         let channelBaseGCDetails = (await this.channelsBaseGCDetails).get(channelId);
         if (channelBaseGCDetails === undefined) {
             channelBaseGCDetails = {};

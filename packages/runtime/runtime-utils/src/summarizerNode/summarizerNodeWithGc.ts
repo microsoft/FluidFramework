@@ -11,7 +11,7 @@ import {
     CreateChildSummarizerNodeParam,
     gcBlobKey,
     IGarbageCollectionData,
-    IGarbageCollectionBaseDetails,
+    IGarbageCollectionDetailsBase,
     IGarbageCollectionSummaryDetails,
     ISummarizeInternalResult,
     ISummarizeResult,
@@ -62,7 +62,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     private referenceUsedRoutes: string[] | undefined;
 
     // The base GC details of this node used to initialize the GC state.
-    private baseGCDetailsP: LazyPromise<IGarbageCollectionBaseDetails> | undefined;
+    private readonly baseGCDetailsP: LazyPromise<IGarbageCollectionDetailsBase>;
+
+    // Keeps track of whether we have loaded the base details to ensure that we on;y do it once.
+    private baseGCDetailsLoaded: boolean = false;
 
     private gcData: IGarbageCollectionData | undefined;
 
@@ -91,7 +94,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         initialSummary?: IInitialSummary,
         wipSummaryLogger?: ITelemetryLogger,
         private readonly getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-        getBaseGCDetailsFn?: () => Promise<IGarbageCollectionBaseDetails>,
+        getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
     ) {
         super(
             logger,
@@ -118,7 +121,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     // Returns the GC details to be added to this node's summary and is used to initialize new nodes' GC state.
-    public getBaseGCDetails(): IGarbageCollectionBaseDetails {
+    public getBaseGCDetails(): IGarbageCollectionDetailsBase {
         return {
             gcData: this.gcData,
             usedRoutes: this.usedRoutes,
@@ -133,14 +136,15 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      * - gcData: The garbage collection data of this node that is required for running GC.
      */
     private async loadBaseGCDetails() {
-        if (this.baseGCDetailsP === undefined) {
+        const baseGCDetails = await this.baseGCDetailsP;
+
+        // Possible race - If there were parallel calls to loadBaseGCDetails, we want to make sure that we only update
+        // the state from the base details only once.
+        if (this.baseGCDetailsLoaded) {
             return;
         }
+        this.baseGCDetailsLoaded = true;
 
-        const baseGCDetailsP = this.baseGCDetailsP;
-        this.baseGCDetailsP = undefined;
-
-        const baseGCDetails = await baseGCDetailsP;
         // If the GC details has GC data, initialize our GC data from it.
         if (baseGCDetails.gcData !== undefined) {
             this.gcData = cloneGCData(baseGCDetails.gcData);
@@ -272,7 +276,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         if (!this.gcDisabled) {
             const gcDetailsBlob = snapshotTree.blobs[gcBlobKey];
             if (gcDetailsBlob !== undefined) {
-                const gcDetails = await readAndParseBlob<IGarbageCollectionBaseDetails>(gcDetailsBlob);
+                const gcDetails = await readAndParseBlob<IGarbageCollectionDetailsBase>(gcDetailsBlob);
 
                 // Possible re-entrancy. If we have already seen a summary later than this one, ignore it.
                 if (this.referenceSequenceNumber >= referenceSequenceNumber) {
@@ -309,7 +313,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         createParam: CreateChildSummarizerNodeParam,
         config: ISummarizerNodeConfigWithGC = {},
         getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-        getBaseGCDetailsFn?: () => Promise<IGarbageCollectionBaseDetails>,
+        getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
     ): ISummarizerNodeWithGC {
         assert(!this.children.has(id), 0x1b6 /* "Create SummarizerNode child already exists" */);
 
@@ -426,7 +430,7 @@ export const createRootSummarizerNodeWithGC = (
     referenceSequenceNumber: number | undefined,
     config: ISummarizerNodeConfigWithGC = {},
     getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-    getBaseGCDetailsFn?: () => Promise<IGarbageCollectionBaseDetails>,
+    getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 ): IRootSummarizerNodeWithGC => new SummarizerNodeWithGC(
     logger,
     summarizeInternalFn,

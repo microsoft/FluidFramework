@@ -32,7 +32,7 @@ import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
 import {
     IGarbageCollectionData,
-    IGarbageCollectionBaseDetails,
+    IGarbageCollectionDetailsBase,
     IGarbageCollectionSummaryDetails,
 } from "./garbageCollection";
 import { IInboundSignalMessage } from "./protocol";
@@ -363,7 +363,7 @@ export interface IFluidDataStoreContext extends
      * Returns the GC details in the initial summary of this data store. This is used to initialize the data store
      * and its children with the GC details from the previous summary.
      */
-    getBaseGCDetails?(): Promise<IGarbageCollectionBaseDetails>;
+    getBaseGCDetails?(): Promise<IGarbageCollectionDetailsBase>;
 
     /**
      * Called when a new outbound reference is added to another node. This is used by garbage collection to identify

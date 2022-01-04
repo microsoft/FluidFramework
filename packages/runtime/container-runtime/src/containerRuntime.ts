@@ -77,7 +77,7 @@ import {
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
     IGarbageCollectionData,
-    IGarbageCollectionBaseDetails,
+    IGarbageCollectionDetailsBase,
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelope,
@@ -1036,7 +1036,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
                     summarizeInternal: SummarizeInternalFn,
                     getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-                    getBaseGCDetailsFn: () => Promise<IGarbageCollectionBaseDetails>,
+                    getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
                 ) => this.summarizerNode.createChild(
                     summarizeInternal,
                     id,

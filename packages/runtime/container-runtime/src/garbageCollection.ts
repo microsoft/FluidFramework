@@ -19,7 +19,7 @@ import {
     gcBlobKey,
     IGarbageCollectionData,
     IGarbageCollectionState,
-    IGarbageCollectionBaseDetails,
+    IGarbageCollectionDetailsBase,
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -107,7 +107,7 @@ export interface IGarbageCollector {
     /** Summarizes the GC data and returns it as a summary tree. */
     summarize(): ISummaryTreeWithStats | undefined;
     /** Returns a map of each data store id to its GC details in the base summary. */
-    getDataStoreBaseGCDetails(): Promise<Map<string, IGarbageCollectionBaseDetails>>;
+    getDataStoreBaseGCDetails(): Promise<Map<string, IGarbageCollectionDetailsBase>>;
     /** Called when the latest summary of the system has been refreshed. */
     latestSummaryStateRefreshed(result: RefreshSummaryResult, readAndParseBlob: ReadAndParseBlob): Promise<void>;
     /** Called when a node is changed. Used to detect and log when an inactive node is changed. */
@@ -268,7 +268,7 @@ export class GarbageCollector implements IGarbageCollector {
     // Promise when resolved initializes the base state of the nodes from the base summary state.
     private readonly initializeBaseStateP: Promise<void>;
     // The map of data store ids to their GC details in the base summary returned in getDataStoreGCDetails().
-    private readonly dataStoreGCDetailsP: Promise<Map<string, IGarbageCollectionBaseDetails>>;
+    private readonly dataStoreGCDetailsP: Promise<Map<string, IGarbageCollectionDetailsBase>>;
     // The time after which an unreferenced node can be deleted. Currently, we only set the node's state to expired.
     private readonly deleteTimeoutMs: number;
     // Map of node ids to their unreferenced state tracker.
@@ -378,7 +378,7 @@ export class GarbageCollector implements IGarbageCollector {
                     continue;
                 }
 
-                const gcSummaryDetails = await readAndParseBlob<IGarbageCollectionBaseDetails>(blobId);
+                const gcSummaryDetails = await readAndParseBlob<IGarbageCollectionDetailsBase>(blobId);
                 // If there are no nodes for this data store, skip it.
                 if (gcSummaryDetails.gcData?.gcNodes === undefined) {
                     continue;
@@ -441,7 +441,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Get the GC details for each data store from the GC state in the base summary. This is returned in
         // getDataStoreBaseGCDetails and is used to initialize each data store's GC state.
-        this.dataStoreGCDetailsP = new LazyPromise<Map<string, IGarbageCollectionBaseDetails>>(async () => {
+        this.dataStoreGCDetailsP = new LazyPromise<Map<string, IGarbageCollectionDetailsBase>>(async () => {
             const baseState = await baseSummaryStateP;
             if (baseState === undefined) {
                 return new Map();
@@ -571,7 +571,7 @@ export class GarbageCollector implements IGarbageCollector {
      * Returns a map of data store ids to their base GC details generated from the base summary.This is used to
      * initialize the GC state of data stores.
      */
-    public async getDataStoreBaseGCDetails(): Promise<Map<string, IGarbageCollectionBaseDetails>> {
+    public async getDataStoreBaseGCDetails(): Promise<Map<string, IGarbageCollectionDetailsBase>> {
         return this.dataStoreGCDetailsP;
     }
 

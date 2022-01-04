@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IGarbageCollectionData,
-    IGarbageCollectionBaseDetails,
+    IGarbageCollectionDetailsBase,
     IGarbageCollectionSummaryDetails,
 } from "./garbageCollection";
 
@@ -230,7 +230,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
 
     /** Returns the GC details to be added to this node's summary and is used to initialize new nodes' GC state. */
-    getBaseGCDetails?(): IGarbageCollectionBaseDetails;
+    getBaseGCDetails?(): IGarbageCollectionDetailsBase;
 }
 
 export const channelsTreeName = ".channels";

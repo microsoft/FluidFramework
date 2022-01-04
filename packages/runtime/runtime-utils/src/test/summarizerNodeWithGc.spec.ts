@@ -10,7 +10,7 @@ import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
     CreateSummarizerNodeSource,
     IGarbageCollectionData,
-    IGarbageCollectionBaseDetails,
+    IGarbageCollectionDetailsBase,
     ISummarizeInternalResult,
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
@@ -28,7 +28,7 @@ describe("SummarizerNodeWithGC Tests", () => {
     const subNode2Id = "/gcNode2/subNode";
 
     let internalGCData: IGarbageCollectionData;
-    let baseGCDetails: IGarbageCollectionBaseDetails;
+    let baseGCDetails: IGarbageCollectionDetailsBase;
     let rootSummarizerNode: IRootSummarizerNodeWithGC;
     let summarizerNode: ISummarizerNodeWithGC;
     let mockLogger: MockLogger;
@@ -79,7 +79,7 @@ describe("SummarizerNodeWithGC Tests", () => {
     }
 
     const getInternalGCData = async (): Promise<IGarbageCollectionData> => internalGCData;
-    const getBaseGCDetails = async (): Promise<IGarbageCollectionBaseDetails> => baseGCDetails;
+    const getBaseGCDetails = async (): Promise<IGarbageCollectionDetailsBase> => baseGCDetails;
 
     describe("getGCData API", () => {
         it("fails when function to get GC data is not provided", async () => {

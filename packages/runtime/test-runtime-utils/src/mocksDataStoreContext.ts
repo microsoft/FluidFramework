@@ -31,7 +31,7 @@ import {
     IContainerRuntimeBase,
     IFluidDataStoreContext,
     IFluidDataStoreRegistry,
-    IGarbageCollectionBaseDetails,
+    IGarbageCollectionDetailsBase,
     IGarbageCollectionSummaryDetails,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
@@ -134,7 +134,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
         throw new Error("Method not implemented.");
     }
 
-    public async getBaseGCDetails(): Promise<IGarbageCollectionBaseDetails> {
+    public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
         throw new Error("Method not implemented.");
     }
 }

@@ -19,7 +19,7 @@ import {
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     IGarbageCollectionData,
-    IGarbageCollectionBaseDetails,
+    IGarbageCollectionDetailsBase,
     SummarizeInternalFn,
     CreateChildSummarizerNodeFn,
     CreateSummarizerNodeSource,
@@ -63,7 +63,7 @@ describe("Data Store Context Tests", () => {
             createSummarizerNodeFn = (
                 summarizeInternal: SummarizeInternalFn,
                 getGCDataFn: () => Promise<IGarbageCollectionData>,
-                getBaseGCDetailsFn: () => Promise<IGarbageCollectionBaseDetails>,
+                getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
             ) => summarizerNode.createChild(
                 summarizeInternal,
                 dataStoreId,
@@ -317,7 +317,7 @@ describe("Data Store Context Tests", () => {
                 createSummarizerNodeFn = (
                     summarizeInternal: SummarizeInternalFn,
                     getGCDataFn: () => Promise<IGarbageCollectionData>,
-                    getBaseGCDetailsFn: () => Promise<IGarbageCollectionBaseDetails>,
+                    getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
                 ) => summarizerNode.createChild(
                     summarizeInternal,
                     dataStoreId,
@@ -440,7 +440,7 @@ describe("Data Store Context Tests", () => {
                 createSummarizerNodeFn = (
                     summarizeInternal: SummarizeInternalFn,
                     getGCDataFn: () => Promise<IGarbageCollectionData>,
-                    getBaseGCDetailsFn: () => Promise<IGarbageCollectionBaseDetails>,
+                    getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
                 ) => summarizerNode.createChild(
                     summarizeInternal,
                     dataStoreId,
@@ -496,7 +496,7 @@ describe("Data Store Context Tests", () => {
                     commits: {},
                     trees: {},
                 };
-                const gcDetails: IGarbageCollectionBaseDetails = {
+                const gcDetails: IGarbageCollectionDetailsBase = {
                     usedRoutes: [],
                     gcData: emptyGCData,
                 };
@@ -531,7 +531,7 @@ describe("Data Store Context Tests", () => {
                     commits: {},
                     trees: {},
                 };
-                const gcDetails: IGarbageCollectionBaseDetails = {
+                const gcDetails: IGarbageCollectionDetailsBase = {
                     usedRoutes: [],
                     gcData: {
                         gcNodes: {
@@ -572,7 +572,7 @@ describe("Data Store Context Tests", () => {
                     commits: {},
                     trees: {},
                 };
-                const gcDetails: IGarbageCollectionBaseDetails = {
+                const gcDetails: IGarbageCollectionDetailsBase = {
                     usedRoutes: [""], // Set initial used routes to be same as the default used routes.
                 };
 

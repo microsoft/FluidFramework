@@ -155,7 +155,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
-    getBaseGCDetails?(): Promise<IGarbageCollectionBaseDetails>;
+    getBaseGCDetails?(): Promise<IGarbageCollectionDetailsBase>;
     // (undocumented)
     getCreateChildSummarizerNodeFn(
     id: string,
@@ -212,17 +212,17 @@ export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry 
 }
 
 // @public
-export interface IGarbageCollectionBaseDetails {
-    gcData?: IGarbageCollectionData;
-    unrefTimestamp?: number;
-    usedRoutes?: string[];
-}
-
-// @public
 export interface IGarbageCollectionData {
     gcNodes: {
         [id: string]: string[];
     };
+}
+
+// @public
+export interface IGarbageCollectionDetailsBase {
+    gcData?: IGarbageCollectionData;
+    unrefTimestamp?: number;
+    usedRoutes?: string[];
 }
 
 // @public
@@ -240,7 +240,7 @@ export interface IGarbageCollectionState {
 }
 
 // @public @deprecated (undocumented)
-export type IGarbageCollectionSummaryDetails = IGarbageCollectionBaseDetails;
+export type IGarbageCollectionSummaryDetails = IGarbageCollectionDetailsBase;
 
 // @public
 export interface IInboundSignalMessage extends ISignalMessage {
@@ -330,7 +330,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     createParam: CreateChildSummarizerNodeParam,
     config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>): ISummarizerNodeWithGC;
     deleteChild(id: string): void;
-    getBaseGCDetails?(): IGarbageCollectionBaseDetails;
+    getBaseGCDetails?(): IGarbageCollectionDetailsBase;
     // (undocumented)
     getChild(id: string): ISummarizerNodeWithGC | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
