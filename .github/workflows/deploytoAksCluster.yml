@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-    - main
+    - loadtest/main
 
 jobs:
   build-and-deploy:
