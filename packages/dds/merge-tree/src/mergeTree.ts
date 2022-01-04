@@ -1274,7 +1274,7 @@ export class MergeTree {
                         } else {
                             if (MergeTree.traceZRemove) {
                                 // eslint-disable-next-line @typescript-eslint/dot-notation, max-len
-                                console.log(`${this.getLongClientId!(this.collabWindow.clientId)}: Zremove ${segment.text}; cli ${this.getLongClientId!(segment.clientId)}`);
+                                console.log(`${this.getLongClientId!(this.collabWindow.clientId)}: Zremove ${segment["text"]}; cli ${this.getLongClientId!(segment.clientId)}`);
                             }
 
                             // Notify maintenance event observers that the segment is being unlinked from the MergeTree
@@ -1300,7 +1300,7 @@ export class MergeTree {
                             if (canAppend) {
                                 if (MergeTree.traceAppend) {
                                     // eslint-disable-next-line @typescript-eslint/dot-notation, max-len
-                                    console.log(`${this.getLongClientId!(this.collabWindow.clientId)}: append ${prevSegment!.text} + ${segment.text}; cli ${this.getLongClientId!(prevSegment!.clientId)} + cli ${this.getLongClientId!(segment.clientId)}`);
+                                    console.log(`${this.getLongClientId!(this.collabWindow.clientId)}: append ${prevSegment!["text"]} + ${segment["text"]}; cli ${this.getLongClientId!(prevSegment!.clientId)} + cli ${this.getLongClientId!(segment.clientId)}`);
                                 }
                                 prevSegment!.append(segment);
                                 if (this.mergeTreeMaintenanceCallback) {
@@ -2920,7 +2920,7 @@ export class MergeTree {
                 if (MergeTree.traceIncrTraversal) {
                     if (child.isLeaf()) {
                         // eslint-disable-next-line @typescript-eslint/dot-notation, max-len
-                        console.log(`considering (r ${state.refSeq} c ${glc(this, state.clientId)}) seg with text ${child.text} len ${len} seq ${child.seq} rseq ${child.removedSeq} cli ${glc(this, child.clientId)}`);
+                        console.log(`considering (r ${state.refSeq} c ${glc(this, state.clientId)}) seg with text ${child["text"]} len ${len} seq ${child.seq} rseq ${child.removedSeq} cli ${glc(this, child.clientId)}`);
                     }
                 }
                 if ((len > 0) && (state.start < len) && (state.end > 0)) {
@@ -2931,7 +2931,7 @@ export class MergeTree {
                     } else {
                         if (MergeTree.traceIncrTraversal) {
                             // eslint-disable-next-line @typescript-eslint/dot-notation
-                            console.log(`action on seg with text ${child.text}`);
+                            console.log(`action on seg with text ${child["text"]}`);
                         }
                         state.actions.leaf(child, state);
                     }

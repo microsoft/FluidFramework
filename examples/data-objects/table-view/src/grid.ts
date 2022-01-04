@@ -354,7 +354,7 @@ export class GridView {
     };
 
     private readonly cellKeyDown = (e: KeyboardEvent) => {
-        /* eslint-disable default-case */
+        /* eslint-disable no-fallthrough */
         switch (e.code) {
             case KeyCode.escape: { this.cancelInput(); break; }
             case KeyCode.arrowUp: { this.moveInputByOffset(e, /* rowOffset: */ -1, /* colOffset */  0); break; }
@@ -364,7 +364,7 @@ export class GridView {
             case KeyCode.tab: { e.preventDefault(); /* fall-through */ }
             case KeyCode.arrowRight: { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */  1); }
         }
-        /* eslint-enable default-case */
+        /* eslint-enable no-fallthrough */
     };
 
     public readonly formulaKeypress = (e: KeyboardEvent) => {

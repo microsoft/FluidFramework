@@ -61,7 +61,7 @@ import { TestDataObject } from "./mockSummarizerClient";
         });
 
         await provider.ensureSynchronized();
-        const delay = async (ms: number) => new Promise((res) => setTimeout(res, ms));
+        const delay = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
         await delay(100);
         assert(container1.closed === true, "Container should be closed");
     });

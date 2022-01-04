@@ -62,10 +62,9 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
     it("attach sends an op", async function() {
         const container = await provider.makeTestContainer(testContainerConfig);
 
-        const blobOpP = new Promise<void>((res, rej) => container.on("op", (op) => {
+        const blobOpP = new Promise<void>((resolve, reject) => container.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
-                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                op.metadata?.blobId ? res() : rej(new Error("no op metadata"));
+                op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
             }
         }));
 
@@ -99,10 +98,9 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         const container1 = await provider.makeTestContainer(testContainerConfig);
         const dataStore = await requestFluidObject<ITestDataObject>(container1, "default");
 
-        const attachOpP = new Promise<void>((res, rej) => container1.on("op", (op) => {
+        const attachOpP = new Promise<void>((resolve, reject) => container1.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
-                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                op.metadata?.blobId ? res() : rej(new Error("no op metadata"));
+                op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
             }
         }));
 
@@ -193,10 +191,10 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         const container = await provider.makeTestContainer(testContainerConfig);
         const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
 
-        const blobOpP = new Promise<void>((res) => container.deltaManager.on("submitOp", (op) => {
+        const blobOpP = new Promise<void>((resolve) => container.deltaManager.on("submitOp", (op) => {
             if (op.contents.includes("blobAttach")) {
                 (container.deltaManager as any)._inbound.pause();
-                res();
+                resolve();
             }
         }));
         const blobP = dataStore._runtime.uploadBlob(stringToBuffer("more text", "utf-8"));

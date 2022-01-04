@@ -34,7 +34,7 @@ export class TestClientLogger {
         const op = msg ? msg.contents as IMergeTreeOp : undefined;
         const opType = op ? op.type.toString() : "";
         // eslint-disable-next-line @typescript-eslint/dot-notation, max-len
-        const opPos = op && op.pos1 !== undefined ? `@${op.pos1}${op.pos2 !== undefined ? `,${op.pos2}` : ""}` : "";
+        const opPos = op && op["pos1"] !== undefined ? `@${op["pos1"]}${op["pos2"] !== undefined ? `,${op["pos2"]}` : ""}` : "";
         const clientOp = ` ${client}${opType}${opPos}`;
         const ackedLine: string[] = [
             seq,

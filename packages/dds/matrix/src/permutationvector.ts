@@ -282,7 +282,8 @@ export class PermutationVector extends Client {
         // containing this position and use 'findReconnectionPosition' to adjust for the local ops that
         // have not yet been submitted.
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        // eslint-disable-next-line max-len
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
         return this.findReconnectionPostition(containingSegment, localSeq) + containingOffset!;
     }
 

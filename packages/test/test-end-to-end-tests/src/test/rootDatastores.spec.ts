@@ -66,8 +66,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     const reset = async () => provider.reset();
 
     const anyDataCorruption = async (containers: IContainer[]) => Promise.race(
-        containers.map(async (c) => new Promise<boolean>((res) => c.once("closed", (error) => {
-            res(error?.errorType === ContainerErrorType.dataCorruptionError);
+        containers.map(async (c) => new Promise<boolean>((resolve) => c.once("closed", (error) => {
+            resolve(error?.errorType === ContainerErrorType.dataCorruptionError);
         }))));
 
     const runtimeOf = (dataObject: ITestFluidObject): ContainerRuntime =>

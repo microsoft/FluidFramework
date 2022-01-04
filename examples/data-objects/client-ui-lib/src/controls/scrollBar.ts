@@ -23,16 +23,19 @@ export class ScrollBar extends ui.Component {
     /**
      * Sets the value of the track
      */
+    // eslint-disable-next-line accessor-pairs
     public set value(value: number) {
         this.range.value = value;
         this.updateTrack();
     }
 
+    // eslint-disable-next-line accessor-pairs
     public set min(value: number) {
         this.range.min = value;
         this.updateTrack();
     }
 
+    // eslint-disable-next-line accessor-pairs
     public set max(value: number) {
         this.range.max = value;
         this.updateTrack();

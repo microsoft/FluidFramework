@@ -1,9 +1,7 @@
 /*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
-
-/* eslint-disable unicorn/filename-case */
+* Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+* Licensed under the MIT License.
+*/
 
 import fs from "fs";
 import os from "os";
