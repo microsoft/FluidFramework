@@ -770,8 +770,14 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Get a list of all the outbound routes (or references) in the current GC data.
         const currentReferences: string[] = [];
-        for (const [, outboundRoutes] of Object.entries(currentGCData.gcNodes)) {
-            currentReferences.push(...outboundRoutes);
+        for (const [nodeId, outboundRoutes] of Object.entries(currentGCData.gcNodes)) {
+            /**
+             * Remove routes from a child node to its parent which is added implicitly by the runtime. For instance,
+             * each adds its data store as an outbound route to mark it as referenced if the DDS is referenced.
+             * We won't get any explicit notification for these references so they must be removed before validation.
+             */
+            const explicitRoutes = outboundRoutes.filter((route) => !nodeId.startsWith(route));
+            currentReferences.push(...explicitRoutes);
         }
 
         // Get a list of outbound routes (or references) from the last run's GC data plus references added since the
