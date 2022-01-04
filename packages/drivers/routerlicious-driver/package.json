@@ -67,6 +67,7 @@
     "@fluidframework/telemetry-utils": "^0.55.0",
     "axios": "^0.21.2",
     "json-stringify-safe": "5.0.1",
+    "node-fetch": "^2.6.1",
     "socket.io-client": "^2.4.0",
     "url-parse": "^1.5.3",
     "uuid": "^8.3.1"
@@ -78,6 +79,7 @@
     "@microsoft/api-extractor": "^7.16.1",
     "@types/mocha": "^8.2.2",
     "@types/nock": "^9.3.0",
+    "@types/node-fetch": "^2.5.10",
     "@types/socket.io-client": "^1.4.32",
     "@types/url-parse": "^1.4.4",
     "@types/uuid": "^8.3.0",
@@ -94,6 +96,7 @@
     "eslint-plugin-prefer-arrow": "~1.2.2",
     "eslint-plugin-react": "~7.22.0",
     "eslint-plugin-unicorn": "~26.0.1",
+    "fetch-mock": "^9.11.0",
     "mocha": "^8.4.0",
     "nock": "^10.0.1",
     "nyc": "^15.0.0",
