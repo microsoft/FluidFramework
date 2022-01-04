@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-    - loadtest/main
+    - main
 
 jobs:
   build-and-deploy:
@@ -11,7 +11,7 @@ jobs:
 
     - uses: azure/docker-login@v1
       with:
-        login-server: fluidscaletest.azurecr.io
+        login-server: ${{ secrets.acr_fluidscaletest_server }}
         username: ${{ secrets.acr_fluidscaletest_username }}
         password: ${{ secrets.acr_fluidscaletest_password }}
 
@@ -21,4 +21,4 @@ jobs:
 
     - name: Push to ACR
       id: push-image
-      run: docker push fluidscaletest.azurecr.io/odspwirefluid/fluid-scale-test-main:latest
+      run: docker push ${{ secrets.acr_fluidscaletest_dockerpath }}

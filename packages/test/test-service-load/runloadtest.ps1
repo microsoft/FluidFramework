@@ -7,10 +7,9 @@ function RunLoadTest {
         [int]$NumOfDocs = 2,
 
 		[Parameter(Mandatory = $false, HelpMessage = 'Profile to run test with.')]
-        [string]$Profile = 'mini',
+        [string]$TestProfile = 'mini',
 
 		[Parameter(Mandatory = $false, HelpMessage = 'AKS Namespace.')]
-        [ValidateScript({ ( $NumOfDocs -le 10 ) -or ($_ -eq 'fluid-scale-test' ) })]
         [string]$Namespace = 'fluid-scale-test',
 
         [Parameter(Mandatory = $false, HelpMessage = 'Folder to create in Storage for test files.')]
@@ -28,7 +27,7 @@ function RunLoadTest {
     kubectl config set-context --current --namespace $Namespace
 
     # Create AKS pods
-	CreateInfra -NumOfPods $NumOfDocs -TestUid $TestUid -Profile $Profile -TestDocFolder $TestDocFolder
+	CreateInfra -NumOfPods $NumOfDocs -TestUid $TestUid -TestProfile $TestProfile -TestDocFolder $TestDocFolder
 
     # Create and upload configs for pods to trigger tests.
 	CreateAndUploadConfig -TestTenantConfig $TestTenantConfig -TestUid $TestUid
@@ -44,7 +43,7 @@ function CreateInfra {
         [Parameter()]
         [string]$TestUid,
 		[Parameter()]
-        [string]$Profile,
+        [string]$TestProfile,
         [Parameter()]
         [string]$TestDocFolder
     )
@@ -56,7 +55,7 @@ function CreateInfra {
 
     kubectl set env deployment/fluid-scale-test `
         FLUID_TEST_UID="$TestUid" `
-        TEST_PROFILE="$Profile" `
+        TEST_PROFILE="$TestProfile" `
         login__microsoft__clientId="$env:ClientId" `
         login__microsoft__secret="$env:ClientSecret" `
         APPINSIGHTS_INSTRUMENTATIONKEY="$env:InstrumentationKey" `

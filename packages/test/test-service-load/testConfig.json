@@ -59,8 +59,8 @@
             "totalSendCount": 10000,
             "readWriteCycleMs": 30000
         },
-        "LongScenario_5": {
-            "opRatePerMin": 68,
+        "scale": {
+            "opRatePerMin": 60,
             "progressIntervalMs": 20000,
             "numClients": 10,
             "totalSendCount": 70000,
@@ -68,8 +68,8 @@
             "faultInjectionMinMs": 900000,
             "faultInjectionMaxMs": 1800000
         },
-        "LongScenario_5_nofault": {
-            "opRatePerMin": 68,
+        "scale_nofault": {
+            "opRatePerMin": 60,
             "progressIntervalMs": 20000,
             "numClients": 10,
             "totalSendCount": 70000,
