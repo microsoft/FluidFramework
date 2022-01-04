@@ -7,19 +7,27 @@ export interface ISnapshotOptions {
     blobs?: number;
     deltas?: number;
     channels?: number;
-    /*
+    /**
      * Maximum Data size (in bytes)
      * If specified, SPO will fail snapshot request with 413 error (see OdspErrorType.snapshotTooBig)
      * if snapshot is bigger in size than specified limit.
      */
     mds?: number;
 
-    /*
+    /**
      * Maximum time limit to fetch snapshot (in seconds)
      * If specified, client will timeout the fetch request if it exceeds the time limit and
      * will try to fetch the snapshot without blobs.
      */
     timeout?: number;
+
+    /**
+     * Overrides the default cache expiry (in milliseconds)
+     * This will only override the default cache expiry if it is less than the default cache expiry.
+     * If specified, the snapshot cache will be expired earlier, and a network call will be made instead.
+     * The session expiry will be affected by setting this override.
+     */
+     cacheExpiryTimeoutOverrideMs?: number;
 }
 
 export interface IOpsCachingPolicy {

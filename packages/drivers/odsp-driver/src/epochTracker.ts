@@ -52,9 +52,13 @@ export class EpochTracker implements IPersistedFileCache {
         protected readonly cache: IPersistedCache,
         protected readonly fileEntry: IFileEntry,
         protected readonly logger: ITelemetryLogger,
+        protected readonly cacheExpiryTimeoutOverrideMs?: number,
     ) {
         // Limits the max number of concurrent requests to 24.
         this.rateLimiter = new RateLimiter(24);
+        if (cacheExpiryTimeoutOverrideMs !== undefined && cacheExpiryTimeoutOverrideMs >= defaultCacheExpiryTimeoutMs) {
+            throw new Error(`The cacheExpiryTimeoutOverrideMs cannot exceed ${defaultCacheExpiryTimeoutMs}ms. `);
+        }
     }
 
     // public for UT purposes only!
@@ -96,12 +100,13 @@ export class EpochTracker implements IPersistedFileCache {
             if (entry.type === snapshotKey) {
                 const cacheTime = value.value?.cacheEntryTime;
                 const currentTime = Date.now();
-                if (cacheTime === undefined || currentTime - cacheTime >= defaultCacheExpiryTimeoutMs) {
+                const maxCacheAgeMs = this.cacheExpiryTimeoutOverrideMs ?? defaultCacheExpiryTimeoutMs;
+                if (cacheTime === undefined || currentTime - cacheTime >= maxCacheAgeMs) {
                     this.logger.sendTelemetryEvent(
                         {
                             eventName: "odspVersionsCacheExpired",
                             duration: currentTime - cacheTime,
-                            maxCacheAgeMs: defaultCacheExpiryTimeoutMs,
+                            maxCacheAgeMs,
                         });
                     await this.removeEntries();
                     return undefined;
