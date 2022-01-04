@@ -85,6 +85,8 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata {
     readonly gcFeature?: GCVersion;
     /** Counter of the last summary happened, increments every time we summarize */
     readonly summaryCount?: number;
+    /** If this is present, the session for this container will expire after this time and the container will close */
+    readonly sessionExpiryTimeoutMs?: number;
 }
 
 export interface ICreateContainerMetadata {
