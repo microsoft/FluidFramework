@@ -1,5 +1,17 @@
 # Change Log
 
+## 16.7.1
+
+* build: updates package dependencies (except typescript)
+  * Associated pull request: [36923](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/36923)
+  * Commit: [c4c77342620631dc879150cf9ea3c17bffb92883](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c4c77342620631dc879150cf9ea3c17bffb92883)
+* feat: IdCompressor API cleanup, supports attribution
+  * Associated pull request: [36857](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/36857)
+  * Commit: [e6911e750d084bfcca0aed2aefd0c079ee6c0036](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/e6911e750d084bfcca0aed2aefd0c079ee6c0036)
+* build: refresh lock files
+  * Associated pull request: [36584](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/36584)
+  * Commit: [0e10cefc5a6f5cd54f547288363adfa7f210b196](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/0e10cefc5a6f5cd54f547288363adfa7f210b196)
+
 ## 16.2.1
 
 * build: update deps (except typescript)
