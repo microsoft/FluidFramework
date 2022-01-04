@@ -39,6 +39,7 @@ const odspSnapshotOptions: OptionsMatrix<ISnapshotOptions> = {
     deltas: numberCases,
     mds: numberCases,
     timeout: numberCases,
+    cacheExpiryTimeoutOverrideMs: numberCases,
 };
 
 const odspOpsCaching: OptionsMatrix<IOpsCachingPolicy> = {

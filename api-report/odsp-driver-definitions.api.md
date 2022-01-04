@@ -133,13 +133,12 @@ export interface IPersistedCache {
 export interface ISnapshotOptions {
     // (undocumented)
     blobs?: number;
+    cacheExpiryTimeoutOverrideMs?: number;
     // (undocumented)
     channels?: number;
     // (undocumented)
     deltas?: number;
-    // (undocumented)
     mds?: number;
-    // (undocumented)
     timeout?: number;
 }
 
