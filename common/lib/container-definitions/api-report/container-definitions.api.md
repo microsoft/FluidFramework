@@ -70,6 +70,7 @@ export type ConnectionState = ConnectionState.Disconnected | ConnectionState.Con
 
 // @public
 export enum ContainerErrorType {
+    clientSessionExpiredError = "clientSessionExpiredError",
     dataCorruptionError = "dataCorruptionError",
     dataProcessingError = "dataProcessingError",
     genericError = "genericError",

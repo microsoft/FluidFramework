@@ -90,7 +90,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get loadedFromVersion(): IVersion | undefined;
     // (undocumented)
-    get options(): ILoaderOptions;
+    readonly options: ILoaderOptions;
     // (undocumented)
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     raiseContainerWarning(warning: ContainerWarning): void;
@@ -158,7 +158,7 @@ export interface IFluidModuleWithDetails {
 // @public (undocumented)
 export interface ILoaderOptions extends ILoaderOptions_2 {
     // (undocumented)
-    summarizeProtocolTree?: true;
+    summarizeProtocolTree?: boolean;
 }
 
 // @public
