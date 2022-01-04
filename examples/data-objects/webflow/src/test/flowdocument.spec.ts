@@ -25,12 +25,12 @@ describeLoaderCompat("FlowDocument", (getTestObjectProvider) => {
             runtime.IFluidHandleContext.resolveHandle(request);
         const factory = new ContainerRuntimeFactoryWithDefaultDataStore(
             FlowDocument.getFactory(),
-                new Map([
-                    [documentType, Promise.resolve(FlowDocument.getFactory())],
-                ]),
-                undefined,
-                [innerRequestHandler],
-                undefined,
+            new Map([
+                [documentType, Promise.resolve(FlowDocument.getFactory())],
+            ]),
+            undefined,
+            [innerRequestHandler],
+            undefined,
         );
         const container = await provider.createContainer(factory);
         doc = await requestFluidObject<FlowDocument>(container, "default");

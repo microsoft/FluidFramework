@@ -7,7 +7,7 @@
 import * as crypto from "crypto";
 import { expect } from "chai";
 import { IContainer, ILoader, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
@@ -18,6 +18,8 @@ import {
 	ITestFluidObject,
 	TestFluidObjectFactory,
 	LoaderContainerTracker,
+    TestContainerRuntimeFactory,
+    fluidEntryPoint,
 } from "@fluidframework/test-utils";
 import { DeterministicRandomGenerator } from "@fluid-experimental/property-common";
 import * as _ from "lodash";
@@ -27,11 +29,12 @@ import {
 	ArrayProperty,
 	NamedProperty,
 } from "@fluid-experimental/property-properties";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { SharedPropertyTree } from "../propertyTree";
 
 function createLocalLoader(
-	packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
+	packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 	deltaConnectionServer: ILocalDeltaConnectionServer,
 	urlResolver: IUrlResolver,
 	options?: ILoaderOptions,
@@ -74,6 +77,14 @@ describe("PropertyDDS", () => {
 			config: {},
 		};
 		const factory = new TestFluidObjectFactory([[propertyDdsId, SharedPropertyTree.getFactory()]]);
+        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+            runtime.IFluidHandleContext.resolveHandle(request);
+        const runtimeFactory = new TestContainerRuntimeFactory(
+            factory.type,
+            factory,
+            {},
+            [innerRequestHandler],
+        );
 
 		let deltaConnectionServer: ILocalDeltaConnectionServer;
 		let urlResolver: LocalResolver;
@@ -88,13 +99,13 @@ describe("PropertyDDS", () => {
 		let errorHandler: (Error) => void;
 
 		async function createContainer(): Promise<IContainer> {
-			const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+			const loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
 			opProcessingController.add(loader);
 			return createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
 		}
 
 		async function loadContainer(): Promise<IContainer> {
-			const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+			const loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
 			opProcessingController.add(loader);
 			return loader.resolve({ url: documentLoadUrl });
 		}
