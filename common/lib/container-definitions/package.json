@@ -132,6 +132,18 @@
         }
       },
       "0.40.0": {
+        "InterfaceDeclaration_IUsageError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IThrottlingWarning": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IGenericError": {
+          "backCompat": false
+        },
+        "EnumDeclaration_ContainerErrorType": {
+          "backCompat": false
+        },
         "InterfaceDeclaration_ICodeLoader": {
           "forwardCompat": false,
           "backCompat": false
@@ -176,6 +188,18 @@
         }
       },
       "0.41.0": {
+        "InterfaceDeclaration_IUsageError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IThrottlingWarning": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IGenericError": {
+          "backCompat": false
+        },
+        "EnumDeclaration_ContainerErrorType": {
+          "backCompat": false
+        },
         "InterfaceDeclaration_ILoader": {
           "backCompat": false,
           "forwardCompat": false
@@ -220,6 +244,18 @@
         }
       },
       "0.42.0": {
+        "InterfaceDeclaration_IUsageError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IThrottlingWarning": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IGenericError": {
+          "backCompat": false
+        },
+        "EnumDeclaration_ContainerErrorType": {
+          "backCompat": false
+        },
         "InterfaceDeclaration_ILoader": {
           "backCompat": false,
           "forwardCompat": false
@@ -266,6 +302,18 @@
         }
       },
       "0.43.0": {
+        "InterfaceDeclaration_IUsageError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IThrottlingWarning": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IGenericError": {
+          "backCompat": false
+        },
+        "EnumDeclaration_ContainerErrorType": {
+          "backCompat": false
+        },
         "InterfaceDeclaration_ILoader": {
           "forwardCompat": false
         },

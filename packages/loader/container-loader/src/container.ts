@@ -8,7 +8,6 @@ import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
     IDisposable,
-    ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -93,6 +92,8 @@ import {
     connectedEventName,
     disconnectedEventName,
     normalizeError,
+    MonitoringContext,
+    loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
@@ -248,7 +249,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             });
 
         return PerformanceEvent.timedExecAsync(
-            container.logger,
+            container.mc.logger,
             { eventName: "Load" },
             async (event) => new Promise<Container>((res, rej) => {
                 container._lifecycleState = "loading";
@@ -299,7 +300,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {});
 
         return PerformanceEvent.timedExecAsync(
-            container.logger,
+            container.mc.logger,
             { eventName: "CreateDetached" },
             async (_event) => {
                 container._lifecycleState = "loading";
@@ -321,7 +322,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             loader,
             {});
         return PerformanceEvent.timedExecAsync(
-            container.logger,
+            container.mc.logger,
             { eventName: "RehydrateDetachedFromSnapshot" },
             async (_event) => {
                 const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
@@ -338,7 +339,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // If false, container gets closed on loss of connection.
     private readonly _canReconnect: boolean = true;
 
-    private readonly logger: ITelemetryLogger;
+    private readonly mc: MonitoringContext;
 
     private _lifecycleState: "created" | "loading" | "loaded" | "closing" | "closed" = "created";
 
@@ -368,7 +369,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._storage;
     }
 
-    // Active chaincode and associated runtime
     private _storageService: IDocumentStorageService & IDisposable | undefined;
     private get storageService(): IDocumentStorageService  {
         if (this._storageService === undefined) {
@@ -531,7 +531,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private get serviceFactory() {return this.loader.services.documentServiceFactory;}
     private get urlResolver() {return this.loader.services.urlResolver;}
-    public get options(): ILoaderOptions { return this.loader.services.options; }
+    public readonly options: ILoaderOptions;
     private get scope() { return this.loader.services.scope;}
     private get codeLoader() { return this.loader.services.codeLoader;}
 
@@ -540,7 +540,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         config: IContainerConfig,
     ) {
         super((name, error) => {
-            this.logger.sendErrorEvent(
+            this.mc.logger.sendErrorEvent(
                 {
                     eventName: "ContainerEventHandlerException",
                     name: typeof name === "string" ? name : undefined,
@@ -574,7 +574,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     containerLifecycleState: () => this._lifecycleState,
                     containerConnectionState: () => ConnectionState[this.connectionState],
                 },
-                // we need to be judicious with our logging here to avoid generting too much data
+                // we need to be judicious with our logging here to avoid generating too much data
                 // all data logged here should be broadly applicable, and not specific to a
                 // specific error or class of errors
                 error: {
@@ -587,14 +587,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
                     dmLastMsqSeqTimestamp: () => this.deltaManager?.lastMessage?.timestamp,
                     dmLastMsqSeqClientId: () => this.deltaManager?.lastMessage?.clientId,
-                    connectionState: () => ConnectionState[this.connectionState],
                     connectionStateDuration:
                         () => performance.now() - this.connectionTransitionTimes[this.connectionState],
                 },
             });
 
         // Prefix all events in this file with container-loader
-        this.logger = ChildLogger.create(this.subLogger, "Container");
+        this.mc = loggerToMonitoringContext(ChildLogger.create(this.subLogger, "Container"));
+
+        const summarizeProtocolTree =
+            this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree")
+            ?? this.loader.services.options.summarizeProtocolTree;
+
+        this.options = {
+            ... this.loader.services.options,
+            summarizeProtocolTree,
+        };
 
         this.connectionStateHandler = new ConnectionStateHandler(
             {
@@ -617,7 +625,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     }
                 },
             },
-            this.logger,
+            this.mc.logger,
         );
 
         this._deltaManager = this.createDeltaManager();
@@ -625,9 +633,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             () => {
                 if (this.attachState !== AttachState.Attached) {
                     if (this.loader.services.detachedBlobStorage !== undefined) {
-                        return new BlobOnlyStorage(this.loader.services.detachedBlobStorage, this.logger);
+                        return new BlobOnlyStorage(this.loader.services.detachedBlobStorage, this.mc.logger);
                     }
-                    this.logger.sendErrorEvent({
+                    this.mc.logger.sendErrorEvent({
                         eventName: "NoRealStorageInDetachedContainer",
                     });
                     throw new Error("Real storage calls not allowed in Unattached container");
@@ -684,7 +692,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     default:
                 }
             }).catch((error) =>  {
-                this.logger.sendErrorEvent({ eventName: "RaiseConnectedEventError" }, error);
+                this.mc.logger.sendErrorEvent({ eventName: "RaiseConnectedEventError" }, error);
             });
         });
     }
@@ -724,10 +732,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // Driver need to ensure all caches are cleared on critical errors
                 this.service?.dispose(error);
             } catch (exception) {
-                this.logger.sendErrorEvent({ eventName: "ContainerCloseException"}, exception);
+                this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException"}, exception);
             }
 
-            this.logger.sendTelemetryEvent(
+            this.mc.logger.sendTelemetryEvent(
                 {
                     eventName: "ContainerClose",
                     category: error === undefined ? "generic" : "error",
@@ -779,7 +787,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async attach(request: IRequest): Promise<void> {
-        await PerformanceEvent.timedExecAsync(this.logger, { eventName: "Attach" }, async () => {
+        await PerformanceEvent.timedExecAsync(this.mc.logger, { eventName: "Attach" }, async () => {
             if (this._lifecycleState !== "loaded") {
                 throw new UsageError(`containerNotValidForAttach [${this._lifecycleState}]`);
             }
@@ -824,7 +832,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                             this.subLogger,
                         ),
                         "containerAttach",
-                        this.logger,
+                        this.mc.logger,
                         {}, // progress
                     );
                 }
@@ -890,7 +898,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public async request(path: IRequest): Promise<IResponse> {
         return PerformanceEvent.timedExecAsync(
-            this.logger,
+            this.mc.logger,
             { eventName: "Request" },
             async () => this.context.request(path),
             { end: true, cancel: "error" },
@@ -900,7 +908,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<void> {
         // Only snapshot once a code quorum has been established
         if (!this.protocolHandler.quorum.has("code") && !this.protocolHandler.quorum.has("code2")) {
-            this.logger.sendTelemetryEvent({ eventName: "SkipSnapshot" });
+            this.mc.logger.sendTelemetryEvent({ eventName: "SkipSnapshot" });
             return;
         }
 
@@ -909,7 +917,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             await this.deltaManager.inbound.pause();
             await this.snapshotCore(tagMessage, fullTree);
         } catch (ex) {
-            this.logger.sendErrorEvent({ eventName: "SnapshotExceptionError" }, ex);
+            this.mc.logger.sendErrorEvent({ eventName: "SnapshotExceptionError" }, ex);
             throw ex;
         } finally {
             this.deltaManager.inbound.resume();
@@ -931,7 +939,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const duration = now - this.setAutoReconnectTime;
         this.setAutoReconnectTime = now;
 
-        this.logger.sendTelemetryEvent({
+        this.mc.logger.sendTelemetryEvent({
             eventName: reconnect ? "AutoReconnectEnabled" : "AutoReconnectDisabled",
             connectionMode: this.connectionMode,
             connectionState: ConnectionState[this.connectionState],
@@ -1007,10 +1015,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         if (this.codeLoader.IFluidCodeDetailsComparer) {
-            const comparision = await this.codeLoader.IFluidCodeDetailsComparer.compare(
+            const comparison = await this.codeLoader.IFluidCodeDetailsComparer.compare(
                 codeDetails,
                 this.getCodeDetailsFromQuorum());
-            if (comparision !== undefined && comparision <= 0) {
+            if (comparison !== undefined && comparison <= 0) {
                 throw new Error("Proposed code details should be greater than the current");
             }
         }
@@ -1341,9 +1349,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const storageService = await this.service.connectToStorage();
 
         this._storageService =
-            new RetriableDocumentStorageService(storageService, this.logger);
+            new RetriableDocumentStorageService(storageService, this.mc.logger);
 
         if(this.options.summarizeProtocolTree === true) {
+            this.mc.logger.sendTelemetryEvent({eventName:"summarizeProtocolTreeEnabled"});
             this._storageService =
                 new ProtocolTreeStorageService(this._storageService, ()=>this.captureProtocolSummary());
         }
@@ -1449,7 +1458,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (sequenceNumber, key, value) => {
                 if (key === "code" || key === "code2") {
                     if (!isFluidCodeDetails(value)) {
-                        this.logger.sendErrorEvent({
+                        this.mc.logger.sendErrorEvent({
                                 eventName: "CodeProposalNotIFluidCodeDetails",
                         });
                     }
@@ -1646,7 +1655,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         }
 
-        this.logger.sendPerformanceEvent({
+        this.mc.logger.sendPerformanceEvent({
             eventName: `ConnectionStateChange_${ConnectionState[value]}`,
             from: ConnectionState[oldState],
             duration,
@@ -1684,10 +1693,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         assert(this.protocolHandler !== undefined, 0x0dc /* "Protocol handler should be set here" */);
         this.protocolHandler.quorum.setConnectionState(state, this.clientId);
-        raiseConnectedEvent(this.logger, this, state, this.clientId);
+        raiseConnectedEvent(this.mc.logger, this, state, this.clientId);
 
         if (logOpsOnReconnect) {
-            this.logger.sendTelemetryEvent(
+            this.mc.logger.sendTelemetryEvent(
                 { eventName: "OpsSentOnReconnect", count: this.messageCountAfterDisconnection });
         }
     }
@@ -1722,7 +1731,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private submitMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
         if (this.connectionState !== ConnectionState.Connected) {
-            this.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
+            this.mc.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
             return -1;
         }
 
@@ -1800,13 +1809,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         if (version === undefined && specifiedVersion !== undefined) {
             // We should have a defined version to load from if specified version requested
-            this.logger.sendErrorEvent({ eventName: "NoVersionFoundWhenSpecified", id: specifiedVersion });
+            this.mc.logger.sendErrorEvent({ eventName: "NoVersionFoundWhenSpecified", id: specifiedVersion });
         }
         this._loadedFromVersion = version;
         const snapshot = await this.storageService.getSnapshotTree(version) ?? undefined;
 
         if (snapshot === undefined && version !== undefined) {
-            this.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });
+            this.mc.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });
         }
         return { snapshot, versionId: version?.id };
     }
@@ -1838,7 +1847,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
         // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
         if (this._dirtyContainer) {
-            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer" });
+            this.mc.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer" });
         }
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
@@ -1872,6 +1881,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // Please avoid calling it directly.
     // raiseContainerWarning() is the right flow for most cases
     private logContainerError(warning: ContainerWarning) {
-        this.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
+        this.mc.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
     }
 }
