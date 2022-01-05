@@ -17,7 +17,7 @@ import {
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
-import { IOdspSocketError, IGetOpsResponse, IFlushOpsResponse, ISocketStorageDiscovery } from "./contracts";
+import { IOdspSocketError, IGetOpsResponse, IFlushOpsResponse } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { errorObjectFromSocketError } from "./odspError";
 import { pkgVersion } from "./packageVersion";
@@ -203,8 +203,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         telemetryLogger: ITelemetryLogger,
         timeoutMs: number,
         epochTracker: EpochTracker,
-        socketReferenceKeyPrefix: string | undefined,
-    ): Promise<OdspDocumentDeltaConnection> {
+        socketReferenceKeyPrefix: string | undefined): Promise<OdspDocumentDeltaConnection> {
         // enable multiplexing when the websocket url does not include the tenant/document id
         const parsedUrl = new URL(url);
         const enableMultiplexing = !parsedUrl.searchParams.has("documentId") && !parsedUrl.searchParams.has("tenantId");
