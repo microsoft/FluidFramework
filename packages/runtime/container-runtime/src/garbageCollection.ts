@@ -5,6 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
     cloneGCData,
     concatGarbageCollectionStates,
@@ -87,6 +88,8 @@ export interface IGarbageCollectionRuntime {
 export interface IGarbageCollector {
     /** Tells whether GC should run or not. */
     readonly shouldRunGC: boolean;
+    /** The time in ms to expire a session for a client for gc. */
+    readonly sessionExpiryTimeoutMs: number | undefined;
     /**
      * This tracks two things:
      * 1. Whether GC is enabled - If this is 0, GC is disabled. If this is greater than 0, GC is enabled.
@@ -109,6 +112,7 @@ export interface IGarbageCollector {
     latestSummaryStateRefreshed(result: RefreshSummaryResult, readAndParseBlob: ReadAndParseBlob): Promise<void>;
     /** Called when a node is changed. Used to detect and log when an inactive node is changed. */
     nodeChanged(id: string): void;
+    dispose(): void;
     /** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
     addedOutboundReference(fromNodeId: string, toNodeId: string): void;
 }
@@ -165,6 +169,12 @@ class UnreferencedStateTracker {
 }
 
 /**
+ * This sets the default session expiry. We have session expiry for GC purposes. Once the session expiry is
+ * set, we should not be able to change this value. Please look at TODO: link to GC readme.
+ */
+ export const defaultSessionExpiryMs = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+/**
  * The garbage collector for the container runtime. It consolidates the garbage collection functionality and maintains
  * its state across summaries.
  */
@@ -174,6 +184,7 @@ export class GarbageCollector implements IGarbageCollector {
         gcOptions: IGCRuntimeOptions,
         deleteUnusedRoutes: (unusedRoutes: string[]) => void,
         getCurrentTimestampMs: () => number,
+        closeFn: (error?: ICriticalContainerError) => void,
         baseSnapshot: ISnapshotTree | undefined,
         readAndParseBlob: ReadAndParseBlob,
         baseLogger: ITelemetryLogger,
@@ -185,6 +196,7 @@ export class GarbageCollector implements IGarbageCollector {
             gcOptions,
             deleteUnusedRoutes,
             getCurrentTimestampMs,
+            closeFn,
             baseSnapshot,
             readAndParseBlob,
             baseLogger,
@@ -197,6 +209,11 @@ export class GarbageCollector implements IGarbageCollector {
      * Tells whether GC should be run based on the GC options and local storage flags.
      */
     public readonly shouldRunGC: boolean;
+
+    /**
+     * The time in ms to expire a session for a client for gc.
+     */
+    public readonly sessionExpiryTimeoutMs: number | undefined;
 
     /**
      * This tracks two things:
@@ -256,6 +273,8 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly deleteTimeoutMs: number;
     // Map of node ids to their unreferenced state tracker.
     private readonly unreferencedNodesState: Map<string, UnreferencedStateTracker> = new Map();
+    // The timeout responsible for closing the container when the session has expired
+    private sessionExpiryTimer?: ReturnType<typeof setTimeout>;
 
     protected constructor(
         private readonly provider: IGarbageCollectionRuntime,
@@ -264,6 +283,7 @@ export class GarbageCollector implements IGarbageCollector {
         private readonly deleteUnusedRoutes: (unusedRoutes: string[]) => void,
         /** Returns the current timestamp to be assigned to nodes that become unreferenced. */
         private readonly getCurrentTimestampMs: () => number,
+        private readonly closeFn: (error?: ICriticalContainerError) => void,
         baseSnapshot: ISnapshotTree | undefined,
         readAndParseBlob: ReadAndParseBlob,
         baseLogger: ITelemetryLogger,
@@ -276,17 +296,35 @@ export class GarbageCollector implements IGarbageCollector {
         this.deleteTimeoutMs = this.gcOptions.deleteTimeoutMs ?? defaultDeleteTimeoutMs;
 
         let prevSummaryGCVersion: number | undefined;
+
         // GC can only be enabled during creation. After that, it can never be enabled again. So, for existing
-        // documents, we get this information from the metadata blob.
+        // documents, we get this information from the metadata blob. Similarly the session timeout should be
+        // consistent across all clients, thus we grab it as well from the metadata blob, and set it once on creation.
         if (existing) {
             prevSummaryGCVersion = getGCVersion(metadata);
             // Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
             // other exsiting documents, GC is enabled.
             this.gcEnabled = prevSummaryGCVersion > 0;
+            this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
         } else {
             // For new documents, GC has to be exlicitly enabled via the gcAllowed flag in GC options.
             this.gcEnabled = gcOptions.gcAllowed === true;
+            this.sessionExpiryTimeoutMs = this.gcOptions.gcTestSessionTimeoutMs;
         }
+
+        // If session expiry is enabled, we need to close the container when the timeout expires
+        if (this.sessionExpiryTimeoutMs !== undefined) {
+            // TODO: Change to ClientSessionExpiredError, issue https://github.com/microsoft/FluidFramework/issues/8605
+            // this.sessionExpiryTimer = setTimeout(() => this.closeFn(
+            //     new ClientSessionExpiredError(`Client expired, it has lasted ${this.sessionExpiryTimeoutMs} ms.`,
+            //     this.sessionExpiryTimeoutMs)),
+            //     this.sessionExpiryTimeoutMs);
+            this.sessionExpiryTimer = setTimeout(() => this.closeFn({
+                errorType: "clientSessionExpiredError",
+                message: `The client has reached the expiry time of ${this.sessionExpiryTimeoutMs} ms.`,
+            }), this.sessionExpiryTimeoutMs);
+        }
+
         // For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
         // latest tracked GC version. For new documents, we will be writing the first summary with the current version.
         this.latestSummaryGCVersion = prevSummaryGCVersion ?? this.currentGCVersion;
@@ -302,7 +340,8 @@ export class GarbageCollector implements IGarbageCollector {
         // Whether GC sweep phase should run or not. If this is false, only GC mark phase is run. Can override with
         // localStorage flag.
         this.shouldRunSweep = this.shouldRunGC &&
-            (this.mc.config.getBoolean(runSweepKey) ?? gcOptions.runSweep === true);
+            (this.mc.config.getBoolean(runSweepKey) ?? gcOptions.runSweep === true)
+            && this.sessionExpiryTimer !== undefined;
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
         this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
@@ -572,6 +611,13 @@ export class GarbageCollector implements IGarbageCollector {
             this.deleteTimeoutMs,
             nodeId,
         );
+    }
+
+    public dispose(): void {
+        if (this.sessionExpiryTimer !== undefined) {
+            clearTimeout(this.sessionExpiryTimer);
+            this.sessionExpiryTimer = undefined;
+        }
     }
 
     /**

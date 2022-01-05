@@ -163,6 +163,10 @@ export class ContainerContext implements IContainerContext {
 
     public get codeDetails() { return this._codeDetails; }
 
+    private readonly _quorum: IQuorum;
+    // Update to return IQuorumClients after 0.45 container definitions are picked up.
+    public get quorum(): IQuorum { return this._quorum; }
+
     private readonly _fluidModuleP: Promise<IFluidModuleWithDetails>;
 
     constructor(
@@ -172,7 +176,7 @@ export class ContainerContext implements IContainerContext {
         private readonly _codeDetails: IFluidCodeDetails,
         private readonly _baseSnapshot: ISnapshotTree | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        public readonly quorum: IQuorum,
+        quorum: IQuorum,
         public readonly loader: ILoader,
         public readonly raiseContainerWarning: (warning: ContainerWarning) => void,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
@@ -184,6 +188,7 @@ export class ContainerContext implements IContainerContext {
         public readonly pendingLocalState?: unknown,
 
     ) {
+        this._quorum = quorum;
         this.taggedLogger = container.subLogger;
         this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
             async () => this.loadCodeModule(_codeDetails),
@@ -192,7 +197,7 @@ export class ContainerContext implements IContainerContext {
     }
 
     public getSpecifiedCodeDetails(): IFluidCodeDetails | undefined {
-        return (this.quorum.get("code") ?? this.quorum.get("code2")) as IFluidCodeDetails | undefined;
+        return (this._quorum.get("code") ?? this._quorum.get("code2")) as IFluidCodeDetails | undefined;
     }
 
     public dispose(error?: Error): void {
@@ -202,7 +207,7 @@ export class ContainerContext implements IContainerContext {
         this._disposed = true;
 
         this.runtime.dispose(error);
-        this.quorum.dispose();
+        this._quorum.dispose();
         this.deltaManager.dispose();
     }
 
