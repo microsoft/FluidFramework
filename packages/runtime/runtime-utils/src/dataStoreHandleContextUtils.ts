@@ -14,7 +14,7 @@ import { IFluidHandleContext } from "@fluidframework/core-interfaces";
 export function generateHandleContextPath(path: string, routeContext?: IFluidHandleContext): string {
     // Remove beginning and trailing slashes, if any, from the path.
     let normalizedPath = path.startsWith("/") ? path.slice(1) : path;
-    normalizedPath = normalizedPath.endsWith("/") ? normalizedPath.slice(0, normalizedPath.length - 1) : normalizedPath;
+    normalizedPath = normalizedPath.endsWith("/") ? normalizedPath.slice(0, -1) : normalizedPath;
 
     if (normalizedPath === "") {
         // The `path` is empty.
