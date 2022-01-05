@@ -120,7 +120,7 @@ export class DataStores implements IDisposable {
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
         this.logger = ChildLogger.create(baseLogger);
-        this.containerRuntimeHandle = new FluidObjectHandle(this.runtime, "", this.runtime.IFluidHandleContext);
+        this.containerRuntimeHandle = new FluidObjectHandle(this.runtime, "/", this.runtime.IFluidHandleContext);
 
         const baseDataStoresGCDetailsP = new LazyPromise(async () => {
             return getDataStoreBaseGCDetails();
