@@ -12,11 +12,11 @@ import { IFluidHandleContext } from "@fluidframework/core-interfaces";
  * @returns The absolute path to the Fluid object from the root of the Container.
  */
 export function generateHandleContextPath(path: string, routeContext?: IFluidHandleContext): string {
-    if (path.includes("/")) {
-        throw new Error(`The relative object path should not include slashes as it will interfere with url routing`);
-    }
+    // Remove beginning and trailing slashes, if any, from the path.
+    let normalizedPath = path.startsWith("/") ? path.slice(1) : path;
+    normalizedPath = normalizedPath.endsWith("/") ? normalizedPath.slice(0, normalizedPath.length - 1) : normalizedPath;
 
-    if (path === "") {
+    if (normalizedPath === "") {
         // The `path` is empty.
         // If the routeContext does not exist, this is the root.
         // If the routeContext exists, the absolute path is the same as that of the routeContext.
@@ -26,7 +26,7 @@ export function generateHandleContextPath(path: string, routeContext?: IFluidHan
         // If the routeContext exists, absolute path is routeContext's absolute path plus the path to the Fluid object.
         // Handle the special case where the routeContext is the root to avoid double slashes in the path.
         return routeContext === undefined
-            ? `/${path}`
-            : `${routeContext.absolutePath  === "/" ? "" : routeContext.absolutePath}/${path}`;
+            ? `/${normalizedPath}`
+            : `${routeContext.absolutePath  === "/" ? "" : routeContext.absolutePath}/${normalizedPath}`;
     }
 }
