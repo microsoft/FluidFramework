@@ -19,7 +19,7 @@ import {
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
     IGarbageCollectionData,
-    IGarbageCollectionSummaryDetails,
+    IGarbageCollectionDetailsBase,
     IInboundSignalMessage,
     InboundAttachMessage,
     ISummarizeResult,
@@ -105,19 +105,19 @@ export class DataStores implements IDisposable {
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
         private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
-        getDataStoreBaseGCDetails: () => Promise<Map<string, IGarbageCollectionSummaryDetails>>,
+        getBaseGCDetails: () => Promise<Map<string, IGarbageCollectionDetailsBase>>,
         private readonly dataStoreChanged: (id: string) => void,
         private readonly aliasMap: Map<string, string>,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
         this.logger = ChildLogger.create(baseLogger);
 
-        const baseDataStoresGCDetailsP = new LazyPromise(async () => {
-            return getDataStoreBaseGCDetails();
+        const baseGCDetailsP = new LazyPromise(async () => {
+            return getBaseGCDetails();
         });
-        // Returns the base summary GC details for the data store with the given id.
+        // Returns the base GC details for the data store with the given id.
         const dataStoreBaseGCDetails = async (dataStoreId: string) => {
-            const baseGCDetails = await baseDataStoresGCDetailsP;
+            const baseGCDetails = await baseGCDetailsP;
             return baseGCDetails.get(dataStoreId);
         };
 

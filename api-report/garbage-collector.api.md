@@ -5,8 +5,8 @@
 ```ts
 
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionState } from '@fluidframework/runtime-definitions';
-import { IGarbageCollectionSummaryDetails } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 
 // @public
@@ -51,7 +51,7 @@ export function runGarbageCollection(referenceGraph: {
 }, rootIds: string[], logger: ITelemetryLogger): IGCResult;
 
 // @public
-export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionSummaryDetails): Map<string, IGarbageCollectionSummaryDetails>;
+export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBase): Map<string, IGarbageCollectionDetailsBase>;
 
 // @public
 export function unpackChildNodesUsedRoutes(usedRoutes: string[]): Map<string, string[]>;

@@ -12,7 +12,7 @@ import {
     IGarbageCollectionData,
     IGarbageCollectionNodeData,
     IGarbageCollectionState,
-    IGarbageCollectionSummaryDetails,
+    IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -52,11 +52,11 @@ describe("Garbage Collection Tests", () => {
 
     // The GC details in the summary blob of a node. This is used by the garbage collector to initialize GC state.
     // Update this for individual node to update the initial GC state of that node.
-    const emptyGCDetails: IGarbageCollectionSummaryDetails = {};
+    const emptyGCDetails: IGarbageCollectionDetailsBase = {};
 
     const createGarbageCollector = (
         baseSnapshot: ISnapshotTree | undefined = undefined,
-        getNodeGCDetails: (id: string) => IGarbageCollectionSummaryDetails = () => emptyGCDetails,
+        getNodeGCDetails: (id: string) => IGarbageCollectionDetailsBase = () => emptyGCDetails,
         gcTestSessionTimeoutMs?: number,
     ) => {
         mockLogger = new MockLogger();
@@ -293,7 +293,7 @@ describe("Garbage Collection Tests", () => {
         it("generates events for nodes that are inactive on load - old snapshot format", async () => {
             // Create GC details for node 3's GC blob whose unreferenced time was > deleteTimeoutMs ago.
             // This means this node should become inactive as soon as its data is loaded.
-            const node3GCDetails: IGarbageCollectionSummaryDetails = {
+            const node3GCDetails: IGarbageCollectionDetailsBase = {
                 gcData: { gcNodes: { "/": [] } },
                 unrefTimestamp: Date.now() - (deleteTimeoutMs + 100),
             };

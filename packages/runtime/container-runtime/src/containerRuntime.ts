@@ -77,7 +77,7 @@ import {
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
     IGarbageCollectionData,
-    IGarbageCollectionSummaryDetails,
+    IGarbageCollectionDetailsBase,
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelope,
@@ -1036,14 +1036,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
                     summarizeInternal: SummarizeInternalFn,
                     getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-                    getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+                    getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
                 ) => this.summarizerNode.createChild(
                     summarizeInternal,
                     id,
                     createParam,
                     undefined,
                     getGCDataFn,
-                    getInitialGCSummaryDetailsFn,
+                    getBaseGCDetailsFn,
                 ),
             (id: string) => this.summarizerNode.deleteChild(id),
             this.mc.logger,
@@ -1361,7 +1361,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const dataStoreContext = await this.dataStores.getDataStore(id, wait);
         // The data store is referenced if used routes in the initial summary has a route to self.
         // Older documents may not have used routes in the summary. They are considered referenced.
-        const usedRoutes = (await dataStoreContext.getInitialGCSummaryDetails()).usedRoutes;
+        const usedRoutes = (await dataStoreContext.getBaseGCDetails()).usedRoutes;
         if (usedRoutes === undefined || usedRoutes.includes("") || usedRoutes.includes("/")) {
             return dataStoreContext.realize();
         }

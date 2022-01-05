@@ -10,7 +10,11 @@ import {
     ISnapshotTree,
     ITree,
 } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, IGarbageCollectionSummaryDetails } from "./garbageCollection";
+import {
+    IGarbageCollectionData,
+    IGarbageCollectionDetailsBase,
+    IGarbageCollectionSummaryDetails,
+} from "./garbageCollection";
 
 export interface ISummaryStats {
     treeNodeCount: number;
@@ -219,8 +223,14 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
      */
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 
-    /** Returns the GC details that may be added to this node's summary. */
+    /**
+     * @deprecated - Renamed to getBaseGCDetails.
+     * Returns the GC details that may be added to this node's summary.
+     */
     getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
+
+    /** Returns the GC details to be added to this node's summary and is used to initialize new nodes' GC state. */
+    getBaseGCDetails?(): IGarbageCollectionDetailsBase;
 }
 
 export const channelsTreeName = ".channels";
