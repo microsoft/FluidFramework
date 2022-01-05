@@ -12,10 +12,65 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ## 0.55 Breaking changes
 - [`container-loader` interfaces return `IQuorumClients` rather than `IQuorum`](#container-loader-interfaces-return-IQuorumClients-rather-than-IQuorum)
+- [`wait()` methods deprecated on map and directory](#wait()-methods-deprecated-on-map-and-directory)
 
 ### `container-loader` interfaces return `IQuorumClients` rather than `IQuorum`
 
 The `getQuorum()` method on `IContainer` and the `quorum` member of `IContainerContext` return an `IQuorumClients` rather than an `IQuorum`.  See the [prior breaking change notice announcing this change](#getQuorum-returns-IQuorumClients-from-within-the-container) for recommendations on migration.
+
+### `wait()` methods deprecated on map and directory
+
+The `wait()` methods on `ISharedMap` and `IDirectory` have been deprecated and will be removed in an upcoming release.  To wait for a change to a key, you can replicate this functionality with a helper function that listens to the change events.
+
+```ts
+const directoryWait = async <T = any>(directory: IDirectory, key: string): Promise<T> => {
+    const maybeValue = directory.get<T>(key);
+    if (maybeValue !== undefined) {
+        return maybeValue;
+    }
+
+    return new Promise((resolve) => {
+        const handler = (changed: IValueChanged) => {
+            if (changed.key === key) {
+                directory.off("containedValueChanged", handler);
+                const value = directory.get<T>(changed.key);
+                if (value === undefined) {
+                    throw new Error("Unexpected containedValueChanged result");
+                }
+                resolve(value);
+            }
+        };
+        directory.on("containedValueChanged", handler);
+    });
+};
+
+const foo = await directoryWait<Foo>(this.root, fooKey);
+
+const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
+    const maybeValue = map.get<T>(key);
+    if (maybeValue !== undefined) {
+        return maybeValue;
+    }
+
+    return new Promise((resolve) => {
+        const handler = (changed: IValueChanged) => {
+            if (changed.key === key) {
+                map.off("valueChanged", handler);
+                const value = map.get<T>(changed.key);
+                if (value === undefined) {
+                    throw new Error("Unexpected valueChanged result");
+                }
+                resolve(value);
+            }
+        };
+        map.on("valueChanged", handler);
+    });
+};
+
+const bar = await mapWait<Bar>(someSharedMap, barKey);
+```
+
+As-written above, these promises will silently remain pending forever if the key is never set (similar to current `wait()` functionality).  For production use, consider adding timeouts, telemetry, or other failure flow support to detect and handle failure cases appropriately.
 
 ## 0.54 Breaking changes
 - [Removed `readAndParseFromBlobs` from `driver-utils`](#Removed-readAndParseFromBlobs-from-driver-utils)
