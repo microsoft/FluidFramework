@@ -283,6 +283,8 @@ export class OdspDocumentService implements IDocumentService {
                 connection.on("op", (documentId, ops: ISequencedDocumentMessage[]) => {
                     this.opsReceived(ops);
                 });
+                // On disconnect with 401/403 error code, we can just clear the joinSession cache as we will again
+                // get the auth error on reconnecting and face latency.
                 connection.on("disconnect", (error: OdspError) => {
                     if (error.errorType === DriverErrorType.authorizationError) {
                         this.cache.sessionJoinCache.remove(this.joinSessionKey);
