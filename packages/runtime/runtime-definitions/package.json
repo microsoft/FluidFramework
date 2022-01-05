@@ -46,6 +46,7 @@
     "@fluidframework/runtime-definitions-0.51.1": "npm:@fluidframework/runtime-definitions@0.51.1",
     "@fluidframework/runtime-definitions-0.52.0": "npm:@fluidframework/runtime-definitions@0.52.0",
     "@fluidframework/runtime-definitions-0.53.0": "npm:@fluidframework/runtime-definitions@0.53.0",
+    "@fluidframework/runtime-definitions-0.54.0": "npm:@fluidframework/runtime-definitions@0.54.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
@@ -63,7 +64,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.54.0",
+    "version": "0.55.0",
     "broken": {
       "0.51.1": {
         "InterfaceDeclaration_IFluidDataStoreContextDetached": {
