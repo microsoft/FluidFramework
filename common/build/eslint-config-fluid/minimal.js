@@ -103,6 +103,8 @@ module.exports = {
         "no-return-assign": "off",
         "no-void": "off",
         "require-atomic-updates": "off",
+        "dot-notation": "off", // Superseded by @typescript-eslint/dot-notation
+        "no-unused-expressions": "off", // Superseded by @typescript-eslint/no-unused-expressions
     },
     "overrides": [
         {
@@ -110,6 +112,7 @@ module.exports = {
             "files": ["*.ts", "*.tsx"],
             "rules": {
                 "dot-notation": "off", // Superseded by @typescript-eslint/dot-notation
+                "no-unused-expressions": "off", // Superseded by @typescript-eslint/no-unused-expressions
             }
         },
         {
