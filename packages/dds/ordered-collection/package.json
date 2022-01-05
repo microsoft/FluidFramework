@@ -59,7 +59,6 @@
     "@fluidframework/core-interfaces": "^0.41.0",
     "@fluidframework/datastore-definitions": "^0.55.0",
     "@fluidframework/protocol-definitions": "^0.1026.0",
-    "@fluidframework/runtime-utils": "^0.55.0",
     "@fluidframework/shared-object-base": "^0.55.0",
     "uuid": "^8.3.1"
   },

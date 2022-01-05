@@ -18,13 +18,14 @@ import {
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import {
+    IFluidSerializer,
     makeHandlesSerializable,
     parseHandles,
     SharedObject,
     SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer, ObjectStoragePartition } from "@fluidframework/runtime-utils";
+import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
     IMatrixProducer,
     IMatrixConsumer,

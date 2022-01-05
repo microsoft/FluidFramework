@@ -22,7 +22,8 @@ import {
 } from "@fluidframework/merge-tree";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { FileMode, TreeEntry, ITree } from "@fluidframework/protocol-definitions";
-import { IFluidSerializer, ObjectStoragePartition } from "@fluidframework/runtime-utils";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import { HandleTable, Handle, isHandleValid } from "./handletable";
 import { serializeBlob, deserializeBlob } from "./serialization";
 import { HandleCache } from "./handlecache";

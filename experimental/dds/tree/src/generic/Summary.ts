@@ -4,8 +4,7 @@
  */
 
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/runtime-utils';
-import { serializeHandles } from '@fluidframework/shared-object-base';
+import { IFluidSerializer, serializeHandles } from '@fluidframework/shared-object-base';
 import { assert, assertNotUndefined } from '../Common';
 import { EditLogSummary, OrderedEditSet } from '../EditLog';
 import { Snapshot } from '../Snapshot';

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidSerializer } from "@fluidframework/runtime-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -16,8 +15,8 @@ import {
     IChannelStorageService,
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import { InkFactory } from "./inkFactory";
 import {

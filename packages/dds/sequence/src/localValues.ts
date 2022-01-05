@@ -7,8 +7,6 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     IFluidSerializer,
     ISerializedHandle,
-} from "@fluidframework/runtime-utils";
-import {
     parseHandles,
     serializeHandles,
     SharedObject,

@@ -10,7 +10,6 @@ import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
@@ -80,24 +79,6 @@ export function exceptionToResponse(err: any): IResponse;
 export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;
 
 // @public
-export class FluidSerializer implements IFluidSerializer {
-    constructor(context: IFluidHandleContext, handleParsedCb: (handle: IFluidHandle) => void);
-    decode(input: any): any;
-    encode(input: any, bind: IFluidHandle): any;
-    // (undocumented)
-    get IFluidSerializer(): this;
-    // (undocumented)
-    parse(input: string): any;
-    // (undocumented)
-    protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle): {
-        type: string;
-        url: string;
-    };
-    // (undocumented)
-    stringify(input: any, bind: IFluidHandle): string;
-}
-
-// @public
 export function generateHandleContextPath(path: string, routeContext?: IFluidHandleContext): string;
 
 // @public (undocumented)
@@ -107,40 +88,12 @@ export function getBlobSize(content: ISummaryBlob["content"]): number;
 export function getNormalizedObjectStoragePathParts(path: string): string[];
 
 // @public (undocumented)
-export const IFluidSerializer: keyof IProvideFluidSerializer;
-
-// @public (undocumented)
-export interface IFluidSerializer extends IProvideFluidSerializer {
-    decode(input: any): any;
-    encode(value: any, bind: IFluidHandle): any;
-    parse(value: string): any;
-    stringify(value: any, bind: IFluidHandle): string;
-}
-
-// @public (undocumented)
-export interface IProvideFluidSerializer {
-    // (undocumented)
-    readonly IFluidSerializer: IFluidSerializer;
-}
-
-// @public (undocumented)
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {
 }
 
 // @public (undocumented)
 export interface IRootSummarizerNodeWithGC extends ISummarizerNodeWithGC, ISummarizerNodeRootContract {
 }
-
-// @public
-export interface ISerializedHandle {
-    // (undocumented)
-    type: "__fluid_handle__";
-    // (undocumented)
-    url: string;
-}
-
-// @public (undocumented)
-export const isSerializedHandle: (value: any) => value is ISerializedHandle;
 
 // @public (undocumented)
 export interface ISummarizerNodeRootContract {

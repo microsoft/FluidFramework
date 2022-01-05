@@ -5,7 +5,12 @@
 
 import { bufferToString, IsoBuffer } from '@fluidframework/common-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/runtime-utils';
+import {
+	IFluidSerializer,
+	ISharedObjectEvents,
+	serializeHandles,
+	SharedObject,
+} from '@fluidframework/shared-object-base';
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidframework/protocol-definitions';
 import {
 	IFluidDataStoreRuntime,
@@ -13,7 +18,6 @@ import {
 	IChannelAttributes,
 } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
-import { ISharedObjectEvents, serializeHandles, SharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
 import { assert, assertNotUndefined, fail } from '../Common';

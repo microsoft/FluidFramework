@@ -6,7 +6,6 @@
 import { EventEmitter } from "events";
 
 import { assert } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/runtime-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -21,7 +20,7 @@ import {
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { TaskManagerFactory } from "./taskManagerFactory";
 import { ITaskManager, ITaskManagerEvents } from "./interfaces";
 

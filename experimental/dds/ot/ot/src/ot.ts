@@ -4,7 +4,6 @@
  */
 
 import { assert, bufferToString } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/runtime-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -16,7 +15,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
-import { SharedObject } from "@fluidframework/shared-object-base";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 
 interface ISequencedOpInfo<TOp> {
     client: string;

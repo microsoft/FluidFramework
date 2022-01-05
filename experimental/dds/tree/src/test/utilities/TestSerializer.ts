@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle, IRequest, IResponse } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/runtime-utils';
+import { IFluidSerializer } from '@fluidframework/shared-object-base';
 
 export class TestFluidSerializer implements IFluidSerializer {
 	public constructor() {}

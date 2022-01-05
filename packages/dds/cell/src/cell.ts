@@ -18,9 +18,8 @@ import {
     IChannelFactory,
     Serializable,
 } from "@fluidframework/datastore-definitions";
-import { IFluidSerializer } from "@fluidframework/runtime-utils";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { ISharedCell, ISharedCellEvents } from "./interfaces";
 

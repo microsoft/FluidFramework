@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/runtime-utils";
+import { IFluidSerializer } from "./serializer";
 
 /**
  * Given a mostly-plain object that may have handle objects embedded within, return a string representation of an object

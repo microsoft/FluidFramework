@@ -11,11 +11,11 @@ There are a few steps you can take to write a good change note and avoid needing
 - Consider providing code examples as part of guidance for non-trivial changes.
 
 ## 0.55 Breaking changes
-- [`IFluidSerializer` moved to runtime-utils](#IFluidSerializer-moved-to-runtime-utils)
+- [`IFluidSerializer` moved to shared-object-base](#IFluidSerializer-moved-to-shared-object-base)
 - [Removed `IFluidSerializer` from `IFluidDataStoreRuntime`](#Removed-IFluidSerializer-from-IFluidDataStoreRuntime)
 
-### `IFluidSerializer` moved to runtime-utils
-`IFluidSerializer` has moved packages from core-interfaces to runtime-utils. `replaceHandles` method is renamed to `encode`. `decode` method is now required. `IFluidSerializer` in core-interfaces is now deprecated and will be removed in a future release.
+### `IFluidSerializer` moved to shared-object-base
+`IFluidSerializer` has moved packages from core-interfaces to shared-object-base. `replaceHandles` method is renamed to `encode`. `decode` method is now required. `IFluidSerializer` in core-interfaces is now deprecated and will be removed in a future release.
 
 ### Removed `IFluidSerializer` from `IFluidDataStoreRuntime`
 `IFluidSerializer` in `IFluidDataStoreRuntime` was deprecated in version 0.53 and is now removed.

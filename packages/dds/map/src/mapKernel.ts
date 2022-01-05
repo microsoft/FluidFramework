@@ -4,8 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/runtime-utils";
-import { ValueType } from "@fluidframework/shared-object-base";
+import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ISerializableValue,

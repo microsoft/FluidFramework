@@ -4,7 +4,6 @@
  */
 
 import { assert,TypedEventEmitter } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/runtime-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
@@ -19,7 +18,7 @@ import {
     IChannelServices,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import { IFluidSerializer, SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import * as path from "path-browserify";
 import {
     IDirectory,

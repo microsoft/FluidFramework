@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { FluidSerializer } from '@fluidframework/runtime-utils';
+import { FluidSerializer } from '@fluidframework/shared-object-base';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
 import { comparePayloads } from '../Common';

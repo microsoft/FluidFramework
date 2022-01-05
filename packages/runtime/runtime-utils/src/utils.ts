@@ -4,10 +4,6 @@
  */
 
 import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { ISerializedHandle } from "./serializer";
-
-export const isSerializedHandle = (value: any): value is ISerializedHandle =>
-    value?.type === "__fluid_handle__";
 
 /** Reads a blob from storage and parses it from JSON. */
 export type ReadAndParseBlob = <T>(id: string) => Promise<T>;

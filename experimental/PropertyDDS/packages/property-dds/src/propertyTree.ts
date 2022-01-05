@@ -26,8 +26,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 
 import { bufferToString, assert } from "@fluidframework/common-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
-import { IFluidSerializer } from "@fluidframework/runtime-utils";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 
 import {
 	ChangeSet,

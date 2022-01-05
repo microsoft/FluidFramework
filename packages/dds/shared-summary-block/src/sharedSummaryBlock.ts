@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidSerializer } from "@fluidframework/runtime-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -19,6 +18,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
+    IFluidSerializer,
     SharedObject,
 } from "@fluidframework/shared-object-base";
 import { SharedSummaryBlockFactory } from "./sharedSummaryBlockFactory";

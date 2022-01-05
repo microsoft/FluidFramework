@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidSerializer } from "@fluidframework/runtime-utils";
 import {
     ISequencedDocumentMessage,
     ITree,
@@ -14,6 +13,7 @@ import {
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import {
+    IFluidSerializer,
     SharedObject,
 } from "@fluidframework/shared-object-base";
 import { SharedXTreeFactory } from "./runtime";

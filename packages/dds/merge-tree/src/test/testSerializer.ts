@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/runtime-utils";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
 
 /**
  * Test serializer implementation for merge tree tests

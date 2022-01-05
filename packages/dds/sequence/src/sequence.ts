@@ -42,8 +42,9 @@ import {
     ReferenceType,
     SegmentGroup,
 } from "@fluidframework/merge-tree";
-import { IFluidSerializer, ObjectStoragePartition } from "@fluidframework/runtime-utils";
+import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
+    IFluidSerializer,
     makeHandlesSerializable,
     parseHandles,
     SharedObject,
