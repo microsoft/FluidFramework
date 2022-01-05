@@ -11,14 +11,17 @@ There are a few steps you can take to write a good change note and avoid needing
 - Consider providing code examples as part of guidance for non-trivial changes.
 
 ## 0.55 Breaking changes
-- [`SharedObject.snapshotCore` changed to `summarizeCore`](#SharedObject.snapshotCore-changed-to-summarizeCore)
+- [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)
 - [`IChannel.summarize` split into sync and async](#IChannel.summarize-split-into-sync-and-async)
 
-### `SharedObject.snapshotCore` changed to `summarizeCore`
-`SharedObject.snapshotCore` is renamed to `summarizeCore` and returns `ISummaryTreeWithStats`. The simplest way to fix up your implementation of SharedObject is to call `convertToSummaryTreeWithStats` on the `ITree`.
+### `SharedObject` summary and GC API changes
+
+`SharedObject.snapshotCore` is renamed to `summarizeCore` and returns `ISummaryTreeWithStats`. A temporary way to fix this up quickly is to call `convertToSummaryTreeWithStats` on the `ITree` previously returned, but `convertToSummaryTreeWithStats` will be deprecated in the future and `ISummaryTreeWithStats` should be created directly.
+
+`SharedObject.getGCDataCore` is renamed to `processGCDataCore` and a `SummarySerializer` is passed as a parameter. The method should run the serializer over the handles as before and does not need to return anything. The caller will extract the GC data from the serializer.
 
 ### `IChannel.summarize` split into sync and async
-`IChannel` now has two summarization methods instead of a single synchronous `summarize`. `getAttachSummary` is synchronous, `summarize` is asynchronous.
+`IChannel` now has two summarization methods instead of a single synchronous `summarize`. `getAttachSummary` is synchronous to prevent channel modifications during summarization, `summarize` is asynchronous.
 
 ## 0.54 Breaking changes
 - [Removed `readAndParseFromBlobs` from `driver-utils`](#Removed-readAndParseFromBlobs-from-driver-utils)

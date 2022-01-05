@@ -22,6 +22,9 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 
 // @public
+export function createSingleBlobSummary(key: string, content: string | Uint8Array): ISummaryTreeWithStats;
+
+// @public
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
     bindToContext(): void;
     connect(services: IChannelServices): void;
@@ -48,9 +51,10 @@ export function serializeHandles(value: any, serializer: IFluidSerializer, bind:
 
 // @public
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
-    protected getGCDataCore(serializer: SummarySerializer): IGarbageCollectionData;
+    protected processGCDataCore(serializer: SummarySerializer): void;
     // (undocumented)
     protected get serializer(): IFluidSerializer;
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
@@ -97,8 +101,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     protected runtime: IFluidDataStoreRuntime;
-    // (undocumented)
-    protected get serializer(): IFluidSerializer;
     protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
     abstract summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
     }

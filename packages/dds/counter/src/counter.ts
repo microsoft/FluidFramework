@@ -12,8 +12,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
+import { createSingleBlobSummary, SharedObject } from "@fluidframework/shared-object-base";
 import { CounterFactory } from "./counterFactory";
 import { ISharedCounter, ISharedCounterEvents } from "./interfaces";
 
@@ -133,10 +132,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
         };
 
         // And then construct the summary for it
-        const blobContent = JSON.stringify(content);
-        const builder = new SummaryTreeBuilder();
-        builder.addBlob(snapshotFileName, blobContent);
-        return builder.getSummaryTree();
+        return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
     }
 
     /**

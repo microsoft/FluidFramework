@@ -11,7 +11,6 @@ import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IMatrixConsumer } from '@tiny-calc/nano';
 import { IMatrixProducer } from '@tiny-calc/nano';
 import { IMatrixReader } from '@tiny-calc/nano';
@@ -57,7 +56,6 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     getCell(row: number, col: number): MatrixItem<T>;
     // (undocumented)
     static getFactory(): SharedMatrixFactory;
-    protected getGCDataCore(serializer: SummarySerializer): IGarbageCollectionData;
     // (undocumented)
     id: string;
     // (undocumented)
@@ -77,6 +75,7 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     openUndo(consumer: IUndoConsumer): void;
     // (undocumented)
     protected processCore(rawMessage: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    protected processGCDataCore(serializer: SummarySerializer): void;
     // (undocumented)
     protected registerCore(): void;
     // (undocumented)

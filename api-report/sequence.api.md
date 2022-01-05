@@ -20,7 +20,6 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IInterval } from '@fluidframework/merge-tree';
 import { IJSONSegment } from '@fluidframework/merge-tree';
 import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree';
@@ -530,7 +529,6 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     };
     // (undocumented)
     getCurrentSeq(): number;
-    protected getGCDataCore(serializer: SummarySerializer): IGarbageCollectionData;
     // (undocumented)
     getIntervalCollection(label: string): IntervalCollection<SequenceInterval>;
     getLength(): number;
@@ -567,6 +565,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     posFromRelativePos(relativePos: IRelativePosition): number;
     // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    protected processGCDataCore(serializer: SummarySerializer): void;
     // (undocumented)
     protected registerCore(): void;
     // (undocumented)

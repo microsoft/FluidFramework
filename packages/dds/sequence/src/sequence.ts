@@ -51,7 +51,7 @@ import {
     SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
 import {
     IntervalCollection,
@@ -456,20 +456,15 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     }
 
     /**
-     * Returns the GC data for this SharedMatrix. All the IFluidHandle's represent routes to other objects.
+     * Runs serializer over the GC data for this SharedMatrix.
+     * All the IFluidHandle's represent routes to other objects.
      */
-    protected getGCDataCore(serializer: SummarySerializer): IGarbageCollectionData {
+    protected processGCDataCore(serializer: SummarySerializer) {
         if (this.intervalMapKernel.size > 0) {
             this.intervalMapKernel.serialize(serializer);
         }
 
         this.client.serializeGCData(this.handle, serializer);
-
-        return {
-            gcNodes:{
-                ["/"]: serializer.getSerializedRoutes(),
-            },
-        };
     }
 
     /**

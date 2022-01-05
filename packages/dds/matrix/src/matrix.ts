@@ -23,7 +23,7 @@ import {
     SharedObject,
     SummarySerializer,
 } from "@fluidframework/shared-object-base";
-import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { convertToSummaryTreeWithStats, ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
     IMatrixProducer,
@@ -459,21 +459,15 @@ export class SharedMatrix<T = any>
     }
 
     /**
-     * Returns the GC data for this SharedMatrix. All the IFluidHandle's stored in the cells represent routes to other
-     * objects.
+     * Runs serializer on the GC data for this SharedMatrix.
+     * All the IFluidHandle's stored in the cells represent routes to other objects.
      */
-    protected getGCDataCore(serializer: SummarySerializer): IGarbageCollectionData {
+    protected processGCDataCore(serializer: SummarySerializer) {
         for (let row = 0; row < this.rowCount; row++) {
             for (let col = 0; col < this.colCount; col++) {
                 serializer.stringify(this.getCell(row, col), this.handle);
             }
         }
-
-        return {
-            gcNodes:{
-                ["/"]: serializer.getSerializedRoutes(),
-            },
-        };
     }
 
     /**

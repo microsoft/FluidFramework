@@ -15,9 +15,9 @@ import {
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
+    createSingleBlobSummary,
     SharedObject,
 } from "@fluidframework/shared-object-base";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
     Interval,
     IntervalCollection,
@@ -146,10 +146,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     }
 
     protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
-        const blobContent = this.intervalMapKernel.serialize(serializer);
-        const builder = new SummaryTreeBuilder();
-        builder.addBlob(snapshotFileName, blobContent);
-        return builder.getSummaryTree();
+        return createSingleBlobSummary(snapshotFileName, this.intervalMapKernel.serialize(serializer));
     }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {

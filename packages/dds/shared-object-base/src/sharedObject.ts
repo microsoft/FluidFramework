@@ -81,15 +81,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         return this._connected;
     }
 
-    protected get serializer(): IFluidSerializer {
-        return this._serializer;
-    }
-
-    /**
-     * The serializer to use to serialize / parse handles, if any.
-     */
-    private readonly _serializer: IFluidSerializer;
-
     /**
      * @param id - The id of the shared object
      * @param runtime - The IFluidDataStoreRuntime which contains the shared object
@@ -111,11 +102,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             runtime.logger,
             undefined,
             { all: { sharedObjectId: uuid() } },
-        );
-
-        this._serializer = new FluidSerializer(
-            this.runtime.channelsRoutingContext,
-            (handle: IFluidHandle) => this.handleDecoded(handle),
         );
 
         this.attachListeners();
@@ -458,6 +444,11 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     private _isGCing: boolean = false;
 
+    /**
+     * The serializer to use to serialize / parse handles, if any.
+     */
+    private readonly _serializer: IFluidSerializer;
+
     protected get serializer(): IFluidSerializer {
         /**
          * During garbage collection, the SummarySerializer keeps track of IFluidHandles that are serialized. These
@@ -468,7 +459,25 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
          */
         assert(!this._isGCing,
             0x075 /* "SummarySerializer should be used for serializing data during summary." */);
-        return super.serializer;
+        return this._serializer;
+    }
+
+    /**
+     * @param id - The id of the shared object
+     * @param runtime - The IFluidDataStoreRuntime which contains the shared object
+     * @param attributes - Attributes of the shared object
+     */
+     constructor(
+        id: string,
+        runtime: IFluidDataStoreRuntime,
+        attributes: IChannelAttributes)
+    {
+        super(id, runtime, attributes);
+
+        this._serializer = new FluidSerializer(
+            this.runtime.channelsRoutingContext,
+            (handle: IFluidHandle) => this.handleDecoded(handle),
+        );
     }
 
     /**
@@ -500,7 +509,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
                 this.runtime.channelsRoutingContext,
                 (handle: IFluidHandle) => this.handleDecoded(handle),
             );
-            gcData = this.getGCDataCore(serializer);
+            this.processGCDataCore(serializer);
+            // The GC data for this shared object contains a single GC node. The outbound routes of this node are the
+            // routes of handles serialized during summarization.
+            gcData = { gcNodes: { "/": serializer.getSerializedRoutes() } };
             assert(this._isGCing, 0x079 /* "Possible re-entrancy! Summary should have been in progress." */);
         } finally {
             this._isGCing = false;
@@ -510,21 +522,14 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * Returns the GC data for this shared object. It contains a list of GC nodes that contains references to
-     * other GC nodes.
+     * Calls the serializer over all data in this object that reference other GC nodes.
      * Derived classes must override this to provide custom list of references to other GC nodes.
      */
-    protected getGCDataCore(serializer: SummarySerializer): IGarbageCollectionData {
+    protected processGCDataCore(serializer: SummarySerializer) {
         // We run the full summarize logic to get the list of outbound routes from this object. This is a little
         // expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
         // See: https://github.com/microsoft/FluidFramework/issues/4547
         this.summarizeCore(serializer, false);
-
-        // The GC data for this shared object contains a single GC node. The outbound routes of this node are the
-        // routes of handles serialized during summarization.
-        return {
-            gcNodes: { "/": serializer.getSerializedRoutes() },
-        };
     }
 
     /**

@@ -16,8 +16,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { createSingleBlobSummary, SharedObject } from "@fluidframework/shared-object-base";
 import { TaskManagerFactory } from "./taskManagerFactory";
 import { ITaskManager, ITaskManagerEvents } from "./interfaces";
 
@@ -368,10 +367,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
         // TODO filter out tasks with no clients, some are still getting in.
         const content = [...this.taskQueues.entries()];
-        const blobContent = JSON.stringify(content);
-        const builder = new SummaryTreeBuilder();
-        builder.addBlob(snapshotFileName, blobContent);
-        return builder.getSummaryTree();
+        return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
     }
 
     /**

@@ -12,8 +12,7 @@ import {
     IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { SharedObject } from "@fluidframework/shared-object-base";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { createSingleBlobSummary, SharedObject } from "@fluidframework/shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection, ReadPolicy, IConsensusRegisterCollectionEvents } from "./interfaces";
 
@@ -186,10 +185,7 @@ export class ConsensusRegisterCollection<T>
         const dataObj: { [key: string]: ILocalData<T> } = {};
         this.data.forEach((v, k) => { dataObj[k] = v; });
 
-        const blobContent = this.stringify(dataObj, serializer);
-        const builder = new SummaryTreeBuilder();
-        builder.addBlob(snapshotFileName, blobContent);
-        return builder.getSummaryTree();
+        return createSingleBlobSummary(snapshotFileName, this.stringify(dataObj, serializer));
     }
 
     /**

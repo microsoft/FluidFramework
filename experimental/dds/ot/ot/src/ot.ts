@@ -12,8 +12,7 @@ import {
     IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { SharedObject } from "@fluidframework/shared-object-base";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { createSingleBlobSummary, SharedObject } from "@fluidframework/shared-object-base";
 
 interface ISequencedOpInfo<TOp> {
     client: string;
@@ -79,10 +78,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
         // Summarizer must not have locally pending changes.
         assert(this.pendingOps.length === 0, 0);
 
-        const blobContent = serializer.stringify(this.global, this.handle);
-        const builder = new SummaryTreeBuilder();
-        builder.addBlob("header", blobContent);
-        return builder.getSummaryTree();
+        return createSingleBlobSummary("header", serializer.stringify(this.global, this.handle));
     }
 
     protected async loadCore(storage: IChannelStorageService): Promise<void> {

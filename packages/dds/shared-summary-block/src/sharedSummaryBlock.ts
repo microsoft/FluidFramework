@@ -15,9 +15,9 @@ import {
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
+    createSingleBlobSummary,
     SharedObject,
 } from "@fluidframework/shared-object-base";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { SharedSummaryBlockFactory } from "./sharedSummaryBlockFactory";
 import { ISharedSummaryBlock } from "./interfaces";
 
@@ -97,9 +97,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
         this.data.forEach((value, key) => {
             contentsBlob[key] = value;
         });
-        const builder = new SummaryTreeBuilder();
-        builder.addBlob(snapshotFileName, JSON.stringify(contentsBlob));
-        return builder.getSummaryTree();
+        return createSingleBlobSummary(snapshotFileName, JSON.stringify(contentsBlob));
     }
 
     /**
