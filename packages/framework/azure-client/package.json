@@ -56,7 +56,7 @@
     "@fluidframework/aqueduct": "^0.55.0",
     "@fluidframework/azure-local-service": "^0.1.38773",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.24.0",
+    "@fluidframework/eslint-config-fluid": "^0.25.0-0",
     "@fluidframework/test-client-utils": "^0.55.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
