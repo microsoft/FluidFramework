@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/container-definitions": "^0.44.0-0",
+    "@fluidframework/container-definitions": "^0.44.0",
     "@fluidframework/core-interfaces": "^0.41.0",
     "@fluidframework/driver-definitions": "^0.43.0",
     "@fluidframework/protocol-definitions": "^0.1026.0",
@@ -45,6 +45,7 @@
     "@fluidframework/container-runtime-definitions-0.51.1": "npm:@fluidframework/container-runtime-definitions@0.51.1",
     "@fluidframework/container-runtime-definitions-0.52.0": "npm:@fluidframework/container-runtime-definitions@0.52.0",
     "@fluidframework/container-runtime-definitions-0.53.0": "npm:@fluidframework/container-runtime-definitions@0.53.0",
+    "@fluidframework/container-runtime-definitions-0.54.0": "npm:@fluidframework/container-runtime-definitions@0.54.0",
     "@fluidframework/eslint-config-fluid": "^0.24.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
@@ -63,7 +64,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.54.0",
+    "version": "0.55.0",
     "broken": {
       "0.51.1": {
         "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {

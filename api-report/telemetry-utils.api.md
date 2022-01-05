@@ -67,6 +67,9 @@ export function generateErrorWithStack(): Error;
 // @public (undocumented)
 export function generateStack(): string | undefined;
 
+// @public
+export const getCircularReplacer: () => (key: string, value: any) => any;
+
 // @public (undocumented)
 export const hasErrorInstanceId: (x: any) => x is {
     errorInstanceId: string;

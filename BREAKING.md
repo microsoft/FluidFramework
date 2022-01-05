@@ -11,8 +11,13 @@ There are a few steps you can take to write a good change note and avoid needing
 - Consider providing code examples as part of guidance for non-trivial changes.
 
 ## 0.55 Breaking changes
+- [`container-loader` interfaces return `IQuorumClients` rather than `IQuorum`](#container-loader-interfaces-return-IQuorumClients-rather-than-IQuorum)
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)
 - [`IChannel.summarize` split into sync and async](#IChannel.summarize-split-into-sync-and-async)
+
+### `container-loader` interfaces return `IQuorumClients` rather than `IQuorum`
+
+The `getQuorum()` method on `IContainer` and the `quorum` member of `IContainerContext` return an `IQuorumClients` rather than an `IQuorum`.  See the [prior breaking change notice announcing this change](#getQuorum-returns-IQuorumClients-from-within-the-container) for recommendations on migration.
 
 ### `SharedObject` summary and GC API changes
 
@@ -45,7 +50,7 @@ All of the required functionality from a `Container` instance should be availabl
 
 ### `getQuorum()` returns `IQuorumClients` from within the container
 
-The `getQuorum()` method on `IContainerRuntimeBase`, `IFluidDataStoreContext`, and `IFluidDataStoreRuntime` now returns an `IQuorumClients` rather than an `IQuorum`.  `IQuorumClients` retains the ability to inspect the clients connected to the collaboration session, but removes the ability to access the quorum proposals.  It is not recommended to access the quorum proposals from within the container code.
+The `getQuorum()` method on `IContainerRuntimeBase`, `IFluidDataStoreContext`, and `IFluidDataStoreRuntime` now returns an `IQuorumClients` rather than an `IQuorum`.  `IQuorumClients` retains the ability to inspect the clients connected to the collaboration session, but removes the ability to access the quorum proposals.  It is not recommended to access the quorum proposals directly.
 
 A future change will similarly convert calls to `getQuorum()` on `IContainer` and `IContainerContext` to return an `IQuorumClients`.  If you need to access the code details on the `IContainer`, you should use the `getSpecifiedCodeDetails()` API instead.  If you are currently accessing the code details on the `IContainerContext`, a temporary `getSpecifiedCodeDetails()` method is exposed there as well to aid in migration.  However, accessing the code details from the container context is not recommended and this migratory API will be removed in an upcoming release.  It is instead recommended to only inspect code details in the code loader while loading code, or on `IContainer` as part of code upgrade scenarios (i.e. when calling `IContainer`'s `proposeCodeDetails()`).  Other uses are not supported.
 
