@@ -10,6 +10,9 @@ module.exports = {
         "plugin:unicorn/recommended",
         "plugin:editorconfig/all",
     ],
+    "plugins": [
+        "editorconfig",
+    ],
     "rules": {
         // RECOMMEDED RULES
         "@rushstack/no-new-null": "error",
@@ -37,5 +40,14 @@ module.exports = {
         "unicorn/empty-brace-spaces": "off",
         "unicorn/prevent-abbreviations": "off",
     },
+    "overrides": [
+        {
+            // Rules only for TypeScript files
+            "files": ["**/*.{ts,tsx}"],
+            "rules": {
+                "editorconfig/indent": "off", // We use tsfmt for "official" formatting.
+            }
+        }
+    ]
 };
 
