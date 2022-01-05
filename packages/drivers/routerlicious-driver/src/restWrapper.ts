@@ -16,7 +16,7 @@ import {
     RequestInfo as FetchRequestInfo,
     RequestInit as FetchRequestInit,
 } from "node-fetch";
-import { AxiosRequestConfig } from "axios";
+import type { AxiosRequestConfig } from "axios";
 import safeStringify from "json-stringify-safe";
 import { v4 as uuid } from "uuid";
 import { throwR11sNetworkError } from "./errorUtils";
