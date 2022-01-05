@@ -17,6 +17,7 @@ import {
     IResolvedUrl,
     IDocumentStorageService,
     IDocumentServicePolicies,
+    DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import { DeltaStreamConnectionForbiddenError, NonRetryableError } from "@fluidframework/driver-utils";
 import { IFacetCodes } from "@fluidframework/odsp-doclib-utils";
@@ -31,6 +32,7 @@ import {
     HostStoragePolicy,
     InstrumentedStorageTokenFetcher,
     OdspErrorType,
+    OdspError,
 } from "@fluidframework/odsp-driver-definitions";
 import { HostStoragePolicyInternal, ISocketStorageDiscovery } from "./contracts";
 import { IOdspCache } from "./odspCache";
@@ -281,6 +283,11 @@ export class OdspDocumentService implements IDocumentService {
                 connection.on("op", (documentId, ops: ISequencedDocumentMessage[]) => {
                     this.opsReceived(ops);
                 });
+                connection.on("disconnect", (error: OdspError) => {
+                    if (error.errorType === DriverErrorType.authorizationError) {
+                        this.cache.sessionJoinCache.remove(this.joinSessionKey);
+                    }
+                });
                 this.currentConnection = connection;
                 return connection;
             } catch (error) {
@@ -346,8 +353,6 @@ export class OdspDocumentService implements IDocumentService {
             60000,
             this.epochTracker,
             this.socketReferenceKeyPrefix,
-            this.cache.sessionJoinCache,
-            this.joinSessionKey,
         );
         const duration = performance.now() - startTime;
         // This event happens rather often, so it adds up to cost of telemetry.

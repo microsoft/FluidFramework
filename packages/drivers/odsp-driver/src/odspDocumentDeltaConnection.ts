@@ -6,7 +6,7 @@
 import { ITelemetryLogger, IEvent } from "@fluidframework/common-definitions";
 import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
-import { DriverError, DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverError } from "@fluidframework/driver-definitions";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import {
@@ -21,7 +21,6 @@ import { IOdspSocketError, IGetOpsResponse, IFlushOpsResponse, ISocketStorageDis
 import { EpochTracker } from "./epochTracker";
 import { errorObjectFromSocketError } from "./odspError";
 import { pkgVersion } from "./packageVersion";
-import { PromiseCacheWithOneHourSlidingExpiry } from "./odspCache";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
@@ -205,8 +204,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         timeoutMs: number,
         epochTracker: EpochTracker,
         socketReferenceKeyPrefix: string | undefined,
-        sessionJoinCache: PromiseCacheWithOneHourSlidingExpiry<ISocketStorageDiscovery>,
-        joinSessionCacheKey: string,
     ): Promise<OdspDocumentDeltaConnection> {
         // enable multiplexing when the websocket url does not include the tenant/document id
         const parsedUrl = new URL(url);
@@ -219,13 +216,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
             io, timeoutMs, socketReferenceKey, url, enableMultiplexing, tenantId, documentId, telemetryLogger);
-        // On server disconnect with 401/403 error code, we can just clear the joinSession cache as we will again
-        // get the auth error on reconnecting and face latency.
-        socketReference.on("server_disconnect", (error: OdspError) => {
-            if (error.errorType === DriverErrorType.authorizationError) {
-                sessionJoinCache.remove(joinSessionCacheKey);
-            }
-        });
+
         const socket = socketReference.socket;
 
         const connectMessage: IConnect = {
