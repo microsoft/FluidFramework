@@ -8,7 +8,7 @@ import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframewor
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { DriverError } from "@fluidframework/driver-definitions";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { loggerToMonitoringContext, LoggingError } from "@fluidframework/telemetry-utils";
 import {
     IClient,
     IConnect,
@@ -204,6 +204,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         timeoutMs: number,
         epochTracker: EpochTracker,
         socketReferenceKeyPrefix: string | undefined): Promise<OdspDocumentDeltaConnection> {
+        const mc = loggerToMonitoringContext(telemetryLogger);
+
         // enable multiplexing when the websocket url does not include the tenant/document id
         const parsedUrl = new URL(url);
         const enableMultiplexing = !parsedUrl.searchParams.has("documentId") && !parsedUrl.searchParams.has("tenantId");
@@ -231,8 +233,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         };
 
         // Reference to this client supporting get_ops flow.
-        // back-compat: remove cast to any once new definition of IConnect comes through.
-        (connectMessage as any).supportedFeatures = { [feature_get_ops]: true };
+        connectMessage.supportedFeatures = { };
+        if (mc.config.getBoolean("Fluid.Driver.Odsp.GetOpsEnabled") === true) {
+            connectMessage.supportedFeatures[feature_get_ops] = true;
+        }
 
         const deltaConnection = new OdspDocumentDeltaConnection(
             socket,
