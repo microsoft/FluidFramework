@@ -78,6 +78,8 @@ export interface IGCStats {
 
 /** Defines the APIs for the runtime object to be passed to the garbage collector. */
 export interface IGarbageCollectionRuntime {
+    /** Before GC runs, called to notify the runtime to update any pending GC state. */
+    updateStateBeforeGC(): Promise<void>;
     /** Returns the garbage collection data of the runtime. */
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     /** After GC has run, called to notify the runtime of routes that are used in it. */
@@ -498,6 +500,9 @@ export class GarbageCollector implements IGarbageCollector {
         return PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
             await this.initializeBaseStateP;
 
+            // Let the runtime update its pending state before GC runs.
+            await this.provider.updateStateBeforeGC();
+
             const gcStats: {
                 deletedNodes?: number,
                 totalNodes?: number,
@@ -708,6 +713,9 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
+        // Validate that we have identified all references correctly.
+        this.validateReferenceCorrectness(currentGCData);
+
         /**
          * Generate a super set of the GC data that contains the nodes and edges from last run, plus any new node and
          * edges that have been added since then. To do this, combine the GC data from the last run and the current
@@ -747,6 +755,55 @@ export class GarbageCollector implements IGarbageCollector {
                 this.unreferencedNodesState.delete(nodeId);
             }
         }
+    }
+
+    /**
+     * Validates that all new references are correctly identified and processed. The basic principle for validation is
+     * that we should not have new references in the reference graph (GC data) that have not been notified to the
+     * garbage collector via `referenceAdded`.
+     * We validate that the references in the current reference graph should be a subset of the references in the last
+     * run's reference graph + references since the last run.
+     * @param currentGCData - The GC data (reference graph) from the current GC run.
+     */
+    private validateReferenceCorrectness(currentGCData: IGarbageCollectionData) {
+        assert(this.gcDataFromLastRun !== undefined, "Can't validate correctness without GC data from last run");
+
+        // Get a list of all the outbound routes (or references) in the current GC data.
+        const currentReferences: string[] = [];
+        for (const [nodeId, outboundRoutes] of Object.entries(currentGCData.gcNodes)) {
+            /**
+             * Remove routes from a child node to its parent which is added implicitly by the runtime. For instance,
+             * each adds its data store as an outbound route to mark it as referenced if the DDS is referenced.
+             * We won't get any explicit notification for these references so they must be removed before validation.
+             */
+            const explicitRoutes = outboundRoutes.filter((route) => !nodeId.startsWith(route));
+            currentReferences.push(...explicitRoutes);
+        }
+
+        // Get a list of outbound routes (or references) from the last run's GC data plus references added since the
+        // last run that were notified via `referenceAdded`.
+        const explicitReferences: string[] = [];
+        for (const [, outboundRoutes] of Object.entries(this.gcDataFromLastRun.gcNodes)) {
+            explicitReferences.push(...outboundRoutes);
+        }
+        this.referencesSinceLastRun.forEach((outboundRoutes: string[]) => {
+            explicitReferences.push(...outboundRoutes);
+        });
+
+        // Validate that the current reference graph doesn't have references that we are not already aware of. If this
+        // happens, it might indicate data corruption since we may delete objects prematurely.
+        currentReferences.forEach((route: string) => {
+            // Validate references for data stores only whose routes are of the format "/dataStoreId". Currently, layers
+            // below data stores don't have GC implemented so there is no guarantee their references will be notified.
+            if (route.split("/").length === 2 && !explicitReferences.includes(route)) {
+                // We should ideally throw a data corruption error here. However, send an error for now until we have
+                // implemented sweep and have reasonable confidence in the sweep process.
+                this.mc.logger.sendErrorEvent({
+                    eventName: "gcUnknownOutboundRoute",
+                    route,
+                });
+            }
+        });
     }
 }
 
