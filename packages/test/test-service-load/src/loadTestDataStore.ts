@@ -154,7 +154,7 @@ export class LoadTestDataStoreModel {
             runDir.set(startTimeKey, Date.now());
         }
         const counter = await runDir.get<IFluidHandle<ISharedCounter>>(counterKey)?.get();
-        const taskmanager = await root.wait<IFluidHandle<ITaskManager>>(taskManagerKey).then(async (h)=>h.get());
+        const taskmanager = await root.get<IFluidHandle<ITaskManager>>(taskManagerKey)?.get();
 
         if(counter === undefined) {
             throw new Error("counter not available");

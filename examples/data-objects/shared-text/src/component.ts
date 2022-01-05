@@ -42,6 +42,10 @@ import { downloadRawText, getInsights, setTranslation } from "./utils";
 
 const debug = registerDebug("fluid:shared-text");
 
+const insightsMapId = "insights";
+const textSharedStringId = "text";
+const flowContainerMapId = "flowContainerMap";
+
 export class SharedTextRunner
     extends EventEmitter
     implements IFluidHTMLView, IFluidLoadable {
@@ -109,13 +113,10 @@ export class SharedTextRunner
         this.rootView = this.sharedTextDocument.getRoot();
 
         if (!existing) {
-            const insightsMapId = "insights";
-
             const insights = this.sharedTextDocument.createMap(insightsMapId);
             this.rootView.set(insightsMapId, insights.handle);
 
             debug(`Not existing ${this.runtime.id} - ${performance.now()}`);
-            this.rootView.set("users", this.sharedTextDocument.createMap().handle);
             const newString = this.sharedTextDocument.createString();
 
             const template = parse(window.location.search.substr(1)).template;
@@ -134,14 +135,14 @@ export class SharedTextRunner
                     newString.insertMarker(newString.getLength(), marker.refType, marker.properties);
                 }
             }
-            this.rootView.set("text", newString.handle);
+            this.rootView.set(textSharedStringId, newString.handle);
 
             insights.set(newString.id, this.sharedTextDocument.createMap().handle);
 
             // The flowContainerMap MUST be set last
 
             const flowContainerMap = this.sharedTextDocument.createMap();
-            this.rootView.set("flowContainerMap", flowContainerMap.handle);
+            this.rootView.set(flowContainerMapId, flowContainerMap.handle);
 
             insights.set(newString.id, this.sharedTextDocument.createMap().handle);
         }
@@ -149,10 +150,10 @@ export class SharedTextRunner
         debug(`collabDoc loaded ${this.runtime.id} - ${performance.now()}`);
         debug(`Getting root ${this.runtime.id} - ${performance.now()}`);
 
-        await this.rootView.wait("flowContainerMap");
+        await this.rootView.wait(flowContainerMapId);
 
-        this.sharedString = await this.rootView.get<IFluidHandle<SharedString>>("text").get();
-        this.insightsMap = await this.rootView.get<IFluidHandle<ISharedMap>>("insights").get();
+        this.sharedString = await this.rootView.get<IFluidHandle<SharedString>>(textSharedStringId).get();
+        this.insightsMap = await this.rootView.get<IFluidHandle<ISharedMap>>(insightsMapId).get();
         debug(`Shared string ready - ${performance.now()}`);
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performance.now()}`);
