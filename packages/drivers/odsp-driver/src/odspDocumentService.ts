@@ -32,7 +32,6 @@ import {
     HostStoragePolicy,
     InstrumentedStorageTokenFetcher,
     OdspErrorType,
-    OdspError,
 } from "@fluidframework/odsp-driver-definitions";
 import { HostStoragePolicyInternal, ISocketStorageDiscovery } from "./contracts";
 import { IOdspCache } from "./odspCache";
@@ -285,8 +284,9 @@ export class OdspDocumentService implements IDocumentService {
                 });
                 // On disconnect with 401/403 error code, we can just clear the joinSession cache as we will again
                 // get the auth error on reconnecting and face latency.
-                connection.on("disconnect", (error: OdspError) => {
-                    if (error.errorType === DriverErrorType.authorizationError) {
+                connection.on("disconnect", (error: any) => {
+                    if (typeof error === "object" && error !== null
+                        && error.errorType === DriverErrorType.authorizationError) {
                         this.cache.sessionJoinCache.remove(this.joinSessionKey);
                     }
                 });
