@@ -82,7 +82,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.persistedCache,
             this.nonPersistentCache,
             fileEntry,
-            odspLogger);
+            odspLogger,
+            this.hostPolicy.snapshotOptions?.cacheExpiryTimeoutOverrideMs);
 
         return PerformanceEvent.timedExecAsync(
             odspLogger,
@@ -153,7 +154,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.persistedCache,
             this.nonPersistentCache,
             { resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
-            odspLogger);
+            odspLogger,
+            this.hostPolicy.snapshotOptions?.cacheExpiryTimeoutOverrideMs);
 
         const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
             odspLogger,

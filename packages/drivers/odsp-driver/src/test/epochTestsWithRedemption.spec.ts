@@ -54,7 +54,8 @@ describe("Tests for Epoch Tracker With Redemption", () => {
                 docId: hashedDocumentId,
                 resolvedUrl,
             },
-            new TelemetryUTLogger());
+            new TelemetryUTLogger(),
+            undefined);
         epochCallback = new DeferralWithCallback();
         (epochTracker as any).treesLatestDeferral = epochCallback;
     });

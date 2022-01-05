@@ -12,7 +12,8 @@ import { EpochTracker } from "../epochTracker";
 import { mockFetchOk } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache(2000);
-const createUtEpochTracker = (fileEntry, logger) => new EpochTracker(createUtLocalCache(), fileEntry, logger);
+const createUtEpochTracker = (fileEntry, logger) =>
+    new EpochTracker(createUtLocalCache(), fileEntry, logger, undefined);
 
 describe("DeltaStorageService", () => {
     /*

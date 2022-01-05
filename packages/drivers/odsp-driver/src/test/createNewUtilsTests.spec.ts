@@ -96,7 +96,8 @@ describe("Create New Utils Tests", () => {
                 docId: hashedDocumentId,
                 resolvedUrl,
             },
-            new TelemetryNullLogger());
+            new TelemetryNullLogger(),
+            undefined);
 
         const filePath = "path";
         const newFileParams: INewFileInfo = {
@@ -142,7 +143,8 @@ describe("Create New Utils Tests", () => {
                 docId: hashedDocumentId,
                 resolvedUrl,
             },
-            new TelemetryNullLogger());
+            new TelemetryNullLogger(),
+            undefined);
 
         const newFileParams: INewFileInfo = {
             driveId,

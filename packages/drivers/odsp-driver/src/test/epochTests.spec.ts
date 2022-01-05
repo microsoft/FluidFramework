@@ -41,7 +41,8 @@ describe("Tests for Epoch Tracker", () => {
                 docId: hashedDocumentId,
                 resolvedUrl,
             },
-            new TelemetryNullLogger());
+            new TelemetryNullLogger(),
+            undefined);
     });
 
     it("Cache, old versions", async () => {

@@ -105,6 +105,7 @@ describe("Tests for snapshot fetch", () => {
                 resolvedUrl,
             },
             new TelemetryNullLogger(),
+            undefined,
         );
 
         const resolved = await resolver.resolve({ url: odspUrl });

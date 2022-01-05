@@ -52,7 +52,7 @@ export class EpochTracker implements IPersistedFileCache {
         protected readonly cache: IPersistedCache,
         protected readonly fileEntry: IFileEntry,
         protected readonly logger: ITelemetryLogger,
-        protected readonly cacheExpiryTimeoutOverrideMs?: number,
+        protected readonly cacheExpiryTimeoutOverrideMs: number | undefined,
     ) {
         // Limits the max number of concurrent requests to 24.
         this.rateLimiter = new RateLimiter(24);
@@ -458,9 +458,10 @@ export function createOdspCacheAndTracker(
     persistedCacheArg: IPersistedCache,
     nonpersistentCache: INonPersistentCache,
     fileEntry: IFileEntry,
-    logger: ITelemetryLogger): ICacheAndTracker
+    logger: ITelemetryLogger,
+    cacheExpiryOverrideMs: number | undefined): ICacheAndTracker
 {
-    const epochTracker = new EpochTrackerWithRedemption(persistedCacheArg, fileEntry, logger);
+    const epochTracker = new EpochTrackerWithRedemption(persistedCacheArg, fileEntry, logger, cacheExpiryOverrideMs);
     return {
         cache: {
             ...nonpersistentCache,
