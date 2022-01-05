@@ -80,6 +80,4 @@ class SharedTextFactoryComponent extends RuntimeFactoryHelper implements IFluidD
     }
 }
 
-export * from "./utils";
-
 export const fluidExport = new SharedTextFactoryComponent();

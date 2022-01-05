@@ -38,7 +38,7 @@ import {
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { IFluidTokenProvider } from "@fluidframework/container-definitions";
 import { SharedTextDocument } from "./document";
-import { downloadRawText, getInsights, setTranslation } from "./utils";
+import { downloadRawText, getInsights, mapWait, setTranslation } from "./utils";
 
 const debug = registerDebug("fluid:shared-text");
 
@@ -150,7 +150,7 @@ export class SharedTextRunner
         debug(`collabDoc loaded ${this.runtime.id} - ${performance.now()}`);
         debug(`Getting root ${this.runtime.id} - ${performance.now()}`);
 
-        await this.rootView.wait(flowContainerMapId);
+        await mapWait(this.rootView, flowContainerMapId);
 
         this.sharedString = await this.rootView.get<IFluidHandle<SharedString>>(textSharedStringId).get();
         this.insightsMap = await this.rootView.get<IFluidHandle<ISharedMap>>(insightsMapId).get();
