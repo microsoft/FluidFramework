@@ -77,7 +77,7 @@ import {
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
     IGarbageCollectionData,
-    IGarbageCollectionSummaryDetails,
+    IGarbageCollectionDetailsBase,
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelope,
@@ -608,6 +608,7 @@ export function getDeviceSpec() {
     }
     return {};
 }
+
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
@@ -995,6 +996,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.runtimeOptions.gcOptions,
             (unusedRoutes: string[]) => this.dataStores.deleteUnusedRoutes(unusedRoutes),
             getCurrentTimestamp,
+            this.closeFn,
             context.baseSnapshot,
             async <T>(id: string) => readAndParse<T>(this.storage, id),
             this.mc.logger,
@@ -1034,14 +1036,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
                     summarizeInternal: SummarizeInternalFn,
                     getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-                    getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+                    getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
                 ) => this.summarizerNode.createChild(
                     summarizeInternal,
                     id,
                     createParam,
                     undefined,
                     getGCDataFn,
-                    getInitialGCSummaryDetailsFn,
+                    getBaseGCDetailsFn,
                 ),
             (id: string) => this.summarizerNode.deleteChild(id),
             this.mc.logger,
@@ -1231,10 +1233,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.summaryManager.off("summarizerWarning", this.raiseContainerWarning);
             this.summaryManager.dispose();
         }
+        this.garbageCollector.dispose();
         this._summarizer?.dispose();
         this.dataStores.dispose();
         this.pendingStateManager.dispose();
-
         this.emit("dispose");
         this.removeAllListeners();
     }
@@ -1343,6 +1345,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // The last message processed at the time of summary. If there are no messages, nothing has changed from
             // the base summary we loaded from. So, use the message from its metadata blob.
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.baseSummaryMessage,
+            sessionExpiryTimeoutMs: this.garbageCollector.sessionExpiryTimeoutMs,
         };
     }
 
@@ -1358,7 +1361,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const dataStoreContext = await this.dataStores.getDataStore(id, wait);
         // The data store is referenced if used routes in the initial summary has a route to self.
         // Older documents may not have used routes in the summary. They are considered referenced.
-        const usedRoutes = (await dataStoreContext.getInitialGCSummaryDetails()).usedRoutes;
+        const usedRoutes = (await dataStoreContext.getBaseGCDetails()).usedRoutes;
         if (usedRoutes === undefined || usedRoutes.includes("") || usedRoutes.includes("/")) {
             return dataStoreContext.realize();
         }
@@ -1868,6 +1871,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             0x12f /* "Container Runtime's summarize should always return a tree" */);
 
         return summarizeResult as ISummaryTreeWithStats;
+    }
+
+    /**
+     * Implementation of IGarbageCollectionRuntime::updateStateBeforeGC.
+     * Before GC runs, called by the garbage collector to update any pending GC state. This is mainly used to notify
+     * the garbage collector of references detected since the last GC run. Most references are notified immediately
+     * but there can be some for which async operation is required (such as detecting new root data stores).
+     */
+    public async updateStateBeforeGC() {
+        return this.dataStores.updateStateBeforeGC();
     }
 
     /**

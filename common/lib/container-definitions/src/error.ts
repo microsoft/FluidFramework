@@ -33,7 +33,12 @@ export enum ContainerErrorType {
      * Error indicating an API is being used improperly resulting in an invalid operation.
      */
      usageError = "usageError",
-    }
+
+    /**
+     * Error indicating an client session has expired.
+     */
+    clientSessionExpiredError = "clientSessionExpiredError",
+}
 
 /**
  * Base interface for all errors and warnings at container level
