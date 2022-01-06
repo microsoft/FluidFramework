@@ -63,10 +63,10 @@ export async function setTranslation(
     existing: boolean,
 ): Promise<void> {
     // Create the translations map
-    const handle = await document.getRoot().wait<IFluidHandle<ISharedMap>>("insights");
+    const handle = await mapWait<IFluidHandle<ISharedMap>>(document.getRoot(), "insights");
     const insights = await handle.get();
 
-    const idMapHandle = await insights.wait<IFluidHandle<ISharedMap>>(id);
+    const idMapHandle = await mapWait<IFluidHandle<ISharedMap>>(insights, id);
     const idMap = await idMapHandle.get();
 
     if (!existing) {
