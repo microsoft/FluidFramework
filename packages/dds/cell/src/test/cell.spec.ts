@@ -79,7 +79,7 @@ describe("Cell", () => {
                 cell.set("testValue");
                 assert.equal(cell.get(), "testValue", "Could not retrieve cell value");
 
-                const services = MockSharedObjectServices.createFromSummary(cell.summarize().summary);
+                const services = MockSharedObjectServices.createFromSummary(cell.getAttachSummary().summary);
                 const cell2 = new SharedCell("cell2", new MockFluidDataStoreRuntime(), CellFactory.Attributes);
                 await cell2.load(services);
 
@@ -87,7 +87,7 @@ describe("Cell", () => {
             });
 
             it("can load a SharedCell with undefined value from snapshot", async () => {
-                const services = MockSharedObjectServices.createFromSummary(cell.summarize().summary);
+                const services = MockSharedObjectServices.createFromSummary(cell.getAttachSummary().summary);
                 const cell2 = new SharedCell("cell2", new MockFluidDataStoreRuntime(), CellFactory.Attributes);
                 await cell2.load(services);
 
@@ -107,7 +107,7 @@ describe("Cell", () => {
                 const containerRuntimeFactory = new MockContainerRuntimeFactory();
                 const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
                 const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-                const services2 = MockSharedObjectServices.createFromSummary(cell1.summarize().summary);
+                const services2 = MockSharedObjectServices.createFromSummary(cell1.getAttachSummary().summary);
                 services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
                 const cell2 = new SharedCell("cell2", dataStoreRuntime2, CellFactory.Attributes);

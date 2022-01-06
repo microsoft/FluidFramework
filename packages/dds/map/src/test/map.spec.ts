@@ -122,7 +122,7 @@ describe("Map", () => {
                 const subMap = createLocalMap("subMap");
                 map.set("object", subMap.handle);
 
-                const summaryContent = (map.summarize().summary.tree.header as ISummaryBlob).content;
+                const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob).content;
                 const subMapHandleUrl = subMap.handle.absolutePath;
                 // eslint-disable-next-line max-len
                 assert.equal(summaryContent, `{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`);
@@ -136,7 +136,7 @@ describe("Map", () => {
                 const subMap = createLocalMap("subMap");
                 map.set("object", subMap.handle);
 
-                const summaryContent = (map.summarize().summary.tree.header as ISummaryBlob).content;
+                const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob).content;
                 const subMapHandleUrl = subMap.handle.absolutePath;
                 // eslint-disable-next-line max-len
                 assert.equal(summaryContent, `{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`);
@@ -155,7 +155,7 @@ describe("Map", () => {
 
                 const subMapHandleUrl = subMap.handle.absolutePath;
                 const subMap2HandleUrl = subMap2.handle.absolutePath;
-                const summaryContent = (map.summarize().summary.tree.header as ISummaryBlob).content;
+                const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob).content;
                 // eslint-disable-next-line max-len
                 assert.equal(summaryContent, `{"blobs":[],"content":{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}}}}}`);
             });
@@ -181,7 +181,7 @@ describe("Map", () => {
             it("new serialization format for small maps", async () => {
                 map.set("key", "value");
 
-                const summaryTree = map.summarize().summary;
+                const summaryTree = map.getAttachSummary().summary;
                 assert.strictEqual(
                     Object.keys(summaryTree.tree).length, 1, "summary tree should only have one blob");
                 const summaryContent = (summaryTree.tree.header as ISummaryBlob)?.content;
@@ -215,7 +215,7 @@ describe("Map", () => {
                 map.set("longValue", longString);
                 map.set("zzz", "the end");
 
-                const summaryTree = map.summarize().summary;
+                const summaryTree = map.getAttachSummary().summary;
                 assert.strictEqual(
                     Object.keys(summaryTree.tree).length, 2, "There should be 2 entries in the summary tree");
                 const expectedContent1 = JSON.stringify({
@@ -282,7 +282,7 @@ describe("Map", () => {
                 const containerRuntimeFactory = new MockContainerRuntimeFactory();
                 const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
                 const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-                const services2 = MockSharedObjectServices.createFromSummary(map1.summarize().summary);
+                const services2 = MockSharedObjectServices.createFromSummary(map1.getAttachSummary().summary);
                 services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
                 const map2 = new SharedMap("testMap2", dataStoreRuntime2, MapFactory.Attributes);
