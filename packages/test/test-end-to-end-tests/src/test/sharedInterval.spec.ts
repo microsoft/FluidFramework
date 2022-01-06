@@ -776,7 +776,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             assert.equal(
                 mapFrom3.get("nestedKey"), "nestedValue", "Incorrect value in interval collection's shared map");
 
-            const summaryBlob = outerString2.summarize().summary.tree.header as ISummaryBlob;
+            const summaryBlob = (await outerString2.summarize()).summary.tree.header as ISummaryBlob;
             // Since it's based on a map kernel, its contents parse as
             // an IMapDataObjectSerializable with the "comments" member we set
             const parsedContent = JSON.parse(summaryBlob.content as string);

@@ -19,7 +19,9 @@ import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { ITree } from '@fluidframework/protocol-definitions';
+
+// @public
+export function createSingleBlobSummary(key: string, content: string | Uint8Array): ISummaryTreeWithStats;
 
 // @public
 export class FluidSerializer implements IFluidSerializer {
@@ -59,9 +61,10 @@ export interface ISerializedHandle {
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
     bindToContext(): void;
     connect(services: IChannelServices): void;
+    getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     isAttached(): boolean;
-    summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 }
 
 // @public (undocumented)
@@ -83,7 +86,19 @@ export function parseHandles(value: any, serializer: IFluidSerializer): any;
 export function serializeHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): string | undefined;
 
 // @public
-export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
+export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
+    protected processGCDataCore(serializer: SummarySerializer): void;
+    // (undocumented)
+    protected get serializer(): IFluidSerializer;
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    protected abstract summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
+}
+
+// @public
+export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
     protected abstract applyStashedOp(content: any): unknown;
@@ -94,8 +109,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     get connected(): boolean;
     protected didAttach(): void;
     protected dirty(): void;
-    getGCData(fullGC?: boolean): IGarbageCollectionData;
-    protected getGCDataCore(): IGarbageCollectionData;
+    abstract getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
     readonly handle: IFluidHandle;
     protected handleDecoded(decodedHandle: IFluidHandle): void;
     // (undocumented)
@@ -107,7 +122,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     initializeLocal(): void;
     protected initializeLocalCore(): void;
     // (undocumented)
-    static is(obj: any): obj is SharedObject;
+    static is(obj: any): obj is SharedObjectCore;
     isAttached(): boolean;
     // (undocumented)
     get ISharedObject(): this;
@@ -122,11 +137,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     protected runtime: IFluidDataStoreRuntime;
-    // (undocumented)
-    protected get serializer(): IFluidSerializer;
-    protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
     protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
-    summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    abstract summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
     }
 
 // @public

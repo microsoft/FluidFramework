@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
@@ -16,8 +11,10 @@ import {
     Jsonable,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
+    createSingleBlobSummary,
     IFluidSerializer,
     SharedObject,
 } from "@fluidframework/shared-object-base";
@@ -93,30 +90,14 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
      */
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
+    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
         const contentsBlob: ISharedSummaryBlockDataSerializable = {};
         this.data.forEach((value, key) => {
             contentsBlob[key] = value;
         });
-
-        // Construct the tree for the data.
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: snapshotFileName,
-                    type: TreeEntry.Blob,
-                    value: {
-                        contents: JSON.stringify(contentsBlob),
-                        encoding: "utf-8",
-                    },
-                },
-            ],
-        };
-
-        return tree;
+        return createSingleBlobSummary(snapshotFileName, JSON.stringify(contentsBlob));
     }
 
     /**

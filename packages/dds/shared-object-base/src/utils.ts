@@ -5,6 +5,8 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "./serializer";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 
 /**
  * Given a mostly-plain object that may have handle objects embedded within, return a string representation of an object
@@ -68,4 +70,16 @@ export function parseHandles(
 ) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return value !== undefined ? serializer.parse(JSON.stringify(value)) : value;
+}
+
+/**
+ * Create a new summary containing one blob
+ * @param key - the key for the blob in the summary
+ * @param content - blob content
+ * @returns The summary containing the blob
+ */
+export function createSingleBlobSummary(key: string, content: string | Uint8Array): ISummaryTreeWithStats {
+    const builder = new SummaryTreeBuilder();
+    builder.addBlob(key, content);
+    return builder.getSummaryTree();
 }

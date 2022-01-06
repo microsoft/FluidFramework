@@ -5,21 +5,23 @@
 
 import { bufferToString, IsoBuffer } from '@fluidframework/common-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import {
-	IFluidSerializer,
-	ISharedObjectEvents,
-	serializeHandles,
-	SharedObject,
-} from '@fluidframework/shared-object-base';
-import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidframework/protocol-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 	IChannelAttributes,
 } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
+import {
+	createSingleBlobSummary,
+	IFluidSerializer,
+	ISharedObjectEvents,
+	serializeHandles,
+	SharedObject,
+} from '@fluidframework/shared-object-base';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { assert, assertNotUndefined, fail } from '../Common';
 import { EditLog, OrderedEditSet } from '../EditLog';
 import { EditId } from '../Identifiers';
@@ -308,24 +310,10 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
 	 */
-	public snapshotCore(serializer: IFluidSerializer): ITree {
-		const tree: ITree = {
-			entries: [
-				{
-					mode: FileMode.File,
-					path: snapshotFileName,
-					type: TreeEntry[TreeEntry.Blob],
-					value: {
-						contents: this.saveSerializedSummary({ serializer }),
-						encoding: 'utf-8',
-					},
-				},
-			],
-		};
-
-		return tree;
+	public summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+		return createSingleBlobSummary(snapshotFileName, this.saveSerializedSummary({ serializer }));
 	}
 
 	/**

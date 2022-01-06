@@ -26,6 +26,8 @@ import {
 } from "@fluidframework/datastore-definitions";
 
 import { bufferToString, assert } from "@fluidframework/common-utils";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 
 import {
@@ -388,7 +390,7 @@ export class SharedPropertyTree extends SharedObject {
 		this.remoteChanges = remoteChanges;
 		this.unrebasedRemoteChanges = unrebasedRemoteChanges;
 	}
-	public snapshotCore(serializer: IFluidSerializer): ITree {
+	public summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
 		this.pruneHistory();
 		const snapshot: ISnapshot = {
 			branchGuid: this.handle.absolutePath.split("/").pop() as string,
@@ -436,7 +438,7 @@ export class SharedPropertyTree extends SharedObject {
 			snapshot.numChunks = chunks.length;
 		}
 
-		return {
+		return convertToSummaryTreeWithStats({
 			entries: [
 				{
 					path: "properties",
@@ -453,7 +455,7 @@ export class SharedPropertyTree extends SharedObject {
 				...chunks,
 			],
 			id: undefined,
-		};
+		}, fullTree);
 	}
 
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {

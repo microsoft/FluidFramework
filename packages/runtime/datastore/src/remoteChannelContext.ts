@@ -33,7 +33,7 @@ import {
     attributesBlobKey,
     createServiceEndpoints,
     IChannelContext,
-    summarizeChannel,
+    summarizeChannelAsync,
 } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
@@ -147,7 +147,7 @@ export class RemoteChannelContext implements IChannelContext {
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const channel = await this.getChannel();
-        const summarizeResult = summarizeChannel(channel, fullTree, trackState);
+        const summarizeResult = await summarizeChannelAsync(channel, fullTree, trackState);
         return { ...summarizeResult, id: this.id };
     }
 
