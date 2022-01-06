@@ -12,10 +12,21 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ## 0.55 Breaking changes
 - [`container-loader` interfaces return `IQuorumClients` rather than `IQuorum`](#container-loader-interfaces-return-IQuorumClients-rather-than-IQuorum)
+- [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)
+- [`IChannel.summarize` split into sync and async](#IChannel.summarize-split-into-sync-and-async)
 
 ### `container-loader` interfaces return `IQuorumClients` rather than `IQuorum`
 
 The `getQuorum()` method on `IContainer` and the `quorum` member of `IContainerContext` return an `IQuorumClients` rather than an `IQuorum`.  See the [prior breaking change notice announcing this change](#getQuorum-returns-IQuorumClients-from-within-the-container) for recommendations on migration.
+
+### `SharedObject` summary and GC API changes
+
+`SharedObject.snapshotCore` is renamed to `summarizeCore` and returns `ISummaryTreeWithStats`. A temporary way to fix this up quickly is to call `convertToSummaryTreeWithStats` on the `ITree` previously returned, but `convertToSummaryTreeWithStats` will be deprecated in the future and `ISummaryTreeWithStats` should be created directly.
+
+`SharedObject.getGCDataCore` is renamed to `processGCDataCore` and a `SummarySerializer` is passed as a parameter. The method should run the serializer over the handles as before and does not need to return anything. The caller will extract the GC data from the serializer.
+
+### `IChannel.summarize` split into sync and async
+`IChannel` now has two summarization methods instead of a single synchronous `summarize`. `getAttachSummary` is synchronous to prevent channel modifications during summarization, `summarize` is asynchronous.
 
 ## 0.54 Breaking changes
 - [Removed `readAndParseFromBlobs` from `driver-utils`](#Removed-readAndParseFromBlobs-from-driver-utils)
