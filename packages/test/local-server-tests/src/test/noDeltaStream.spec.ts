@@ -136,14 +136,14 @@ describe("No Delta Stream", () => {
         const normalDataObject2 = await requestFluidObject<ITestFluidObject>(normalContainer2, "default");
         normalDataObject1.root.set("fluid", "great");
         normalDataObject2.root.set("prague", "a city in europe");
-        assert.strictEqual(normalDataObject1.root.get("prague"), "a city in europe");
-        assert.strictEqual(normalDataObject2.root.get("fluid"), "great");
+        assert.strictEqual(await normalDataObject1.root.wait("prague"), "a city in europe");
+        assert.strictEqual(await normalDataObject2.root.wait("fluid"), "great");
 
         const storageOnlyContainer = await loadContainer(true);
         await waitContainerToCatchUp(storageOnlyContainer as Container);
         const storageOnlyDataObject = await requestFluidObject<ITestFluidObject>(storageOnlyContainer, "default");
-        assert.strictEqual(storageOnlyDataObject.root.get("prague"), "a city in europe");
-        assert.strictEqual(storageOnlyDataObject.root.get("fluid"), "great");
+        assert.strictEqual(await storageOnlyDataObject.root.wait("prague"), "a city in europe");
+        assert.strictEqual(await storageOnlyDataObject.root.wait("fluid"), "great");
     });
 
     it("loads in storage-only mode on error thrown from connectToDeltaStream()", async () => {
