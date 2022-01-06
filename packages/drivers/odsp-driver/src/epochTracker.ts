@@ -18,7 +18,7 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { PerformanceEvent, isFluidError, normalizeError } from "@fluidframework/telemetry-utils";
-import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse } from "./odspUtils";
+import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse, getOdspResolvedUrl } from "./odspUtils";
 import {
     IOdspCache,
     INonPersistentCache,
@@ -245,7 +245,7 @@ export class EpochTracker implements IPersistedFileCache {
         clientCorrelationId: string,
     ) {
         if (addInBody) {
-            const headers: {[key: string]: string} = {};
+            const headers: {[key: string]: string} = getOdspResolvedUrl(this.fileEntry.resolvedUrl).fetchHeaders ?? {};
             headers["X-RequestStats"] = clientCorrelationId;
             if (this.fluidEpoch !== undefined) {
                 headers["x-fluid-epoch"] = this.fluidEpoch;

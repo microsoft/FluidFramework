@@ -101,6 +101,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 },
                 fileVersion: undefined,
                 shareLinkInfo,
+                fetchHeaders: request.headers?[DriverHeader.fetchHeaders],
             };
         }
         const { siteUrl, driveId, itemId, path, containerPackageName, fileVersion } = decodeOdspUrl(request.url);
@@ -142,6 +143,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 containerPackageName,
             },
             fileVersion,
+            fetchHeaders: request.headers?[DriverHeader.fetchHeaders],
         };
     }
 

@@ -85,6 +85,8 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
         deltaStorageUrl: string;
     };
     // (undocumented)
+    fetchHeaders?: Record<string, string>;
+    // (undocumented)
     fileName: string;
     // (undocumented)
     fileVersion: string | undefined;

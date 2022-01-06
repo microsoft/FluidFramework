@@ -364,6 +364,7 @@ async function fetchSnapshotContentsCoreV1(
     const postBody = formParams.join("\r\n");
     const headers: {[index: string]: any} = {
         "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
+        ...odspResolvedUrl.fetchHeaders,
     };
 
     const fetchOptions = {
@@ -410,7 +411,7 @@ async function fetchSnapshotContentsCoreV2(
     const queryString = getQueryString(queryParams);
     const { url, headers } = getUrlAndHeadersWithAuth(`${fullUrl}${queryString}`, storageToken);
     const fetchOptions = {
-        headers,
+        headers: {...odspResolvedUrl.fetchHeaders, ...headers},
         signal: controller?.signal,
     };
     const response = await (epochTracker?.fetchArray(url, fetchOptions, "treesLatest") ??
