@@ -5,7 +5,6 @@
 ```ts
 
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
-import { FluidSerializer } from '@fluidframework/runtime-utils';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -15,12 +14,46 @@ import { IEventProvider } from '@fluidframework/common-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/runtime-utils';
+import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
+
+// @public
+export class FluidSerializer implements IFluidSerializer {
+    constructor(context: IFluidHandleContext, handleParsedCb: (handle: IFluidHandle) => void);
+    decode(input: any): any;
+    encode(input: any, bind: IFluidHandle): any;
+    // (undocumented)
+    get IFluidSerializer(): this;
+    // (undocumented)
+    parse(input: string): any;
+    // (undocumented)
+    protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle): {
+        type: string;
+        url: string;
+    };
+    // (undocumented)
+    stringify(input: any, bind: IFluidHandle): string;
+}
+
+// @public (undocumented)
+export interface IFluidSerializer {
+    decode(input: any): any;
+    encode(value: any, bind: IFluidHandle): any;
+    parse(value: string): any;
+    stringify(value: any, bind: IFluidHandle): string;
+}
+
+// @public
+export interface ISerializedHandle {
+    // (undocumented)
+    type: "__fluid_handle__";
+    // (undocumented)
+    url: string;
+}
 
 // @public
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
@@ -36,6 +69,9 @@ export interface ISharedObjectEvents extends IErrorEvent {
     // (undocumented)
     (event: "pre-op" | "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
+
+// @public (undocumented)
+export const isSerializedHandle: (value: any) => value is ISerializedHandle;
 
 // @public
 export function makeHandlesSerializable(value: any, serializer: IFluidSerializer, bind: IFluidHandle): any;
