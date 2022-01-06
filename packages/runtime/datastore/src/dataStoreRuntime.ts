@@ -48,7 +48,7 @@ import {
     IFluidDataStoreContext,
     IFluidDataStoreChannel,
     IGarbageCollectionData,
-    IGarbageCollectionSummaryDetails,
+    IGarbageCollectionDetailsBase,
     IInboundSignalMessage,
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
@@ -176,9 +176,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly audience: IAudience;
     public readonly logger: ITelemetryLogger;
 
-    // A map of child channel context ids to the their GC details in the initial summary of this data store.
-    // This is used to initialize the channel context with data from the base summary.
-    private readonly initialChannelsGCDetailsP: LazyPromise<Map<string, IGarbageCollectionSummaryDetails>>;
+    // A map of child channel context ids to the their base GC details. This is used to initialize the GC state of the
+    // channel contexts.
+    private readonly channelsBaseGCDetails: LazyPromise<Map<string, IGarbageCollectionDetailsBase>>;
 
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -202,9 +202,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         const tree = dataStoreContext.baseSnapshot;
 
-        this.initialChannelsGCDetailsP = new LazyPromise(async () => {
-            const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails();
-            return unpackChildNodesGCDetails(gcDetailsInInitialSummary);
+        this.channelsBaseGCDetails = new LazyPromise(async () => {
+            const baseGCDetails = await
+                (this.dataStoreContext.getBaseGCDetails?.() ?? this.dataStoreContext.getInitialGCSummaryDetails());
+            return unpackChildNodesGCDetails(baseGCDetails);
         });
 
         // Must always receive the data store type inside of the attributes
@@ -255,7 +256,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                             path,
                             { type: CreateSummarizerNodeSource.FromSummary },
                         ),
-                        async () => this.getChannelInitialGCDetails(path));
+                        async () => this.getChannelBaseGCDetails(path));
                 }
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
@@ -513,7 +514,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                                     snapshot: attachMessage.snapshot,
                                 },
                             ),
-                            async () => this.getChannelInitialGCDetails(id),
+                            async () => this.getChannelBaseGCDetails(id),
                             attachMessage.type);
 
                         this.contexts.set(id, remoteChannelContext);
@@ -650,24 +651,22 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     /**
-     * Returns the GC details in initial summary for the channel with the given id. The initial summary of the data
-     * store contains the GC details of all the child channel contexts that were created before the summary was taken.
-     * We find the GC details belonging to the given channel context and return it.
+     * Returns the base GC details for the channel with the given id. This is used to initialize its GC state.
      * @param channelId - The id of the channel context that is asked for the initial GC details.
-     * @returns the requested channel's GC details in the initial summary.
+     * @returns the requested channel's base GC details.
      */
-    private async getChannelInitialGCDetails(channelId: string): Promise<IGarbageCollectionSummaryDetails> {
-        let channelInitialGCDetails = (await this.initialChannelsGCDetailsP).get(channelId);
-        if (channelInitialGCDetails === undefined) {
-            channelInitialGCDetails = {};
+    private async getChannelBaseGCDetails(channelId: string): Promise<IGarbageCollectionDetailsBase> {
+        let channelBaseGCDetails = (await this.channelsBaseGCDetails).get(channelId);
+        if (channelBaseGCDetails === undefined) {
+            channelBaseGCDetails = {};
         }
 
         // Currently, channel context's are always considered used. So, it there are no used routes for it, we still
         // need to mark it as used. Add self-route (empty string) to the channel context's used routes.
-        if (channelInitialGCDetails.usedRoutes === undefined || channelInitialGCDetails.usedRoutes.length === 0) {
-            channelInitialGCDetails.usedRoutes = [""];
+        if (channelBaseGCDetails.usedRoutes === undefined || channelBaseGCDetails.usedRoutes.length === 0) {
+            channelBaseGCDetails.usedRoutes = [""];
         }
-        return channelInitialGCDetails;
+        return channelBaseGCDetails;
     }
 
     /**

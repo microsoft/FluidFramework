@@ -216,6 +216,9 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
         const broadcastResult = await result.summaryOpBroadcasted;
         assert(broadcastResult.success, "summary op should be broadcast");
 
+        const ackNackResult = await result.receivedSummaryAckOrNack;
+        assert(ackNackResult.success, "summary should be acked");
+
         const { stats, summary } = await containerRuntime.summarize({
             runGC: false,
             fullTree: false,

@@ -30,7 +30,11 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
-import { IGarbageCollectionData, IGarbageCollectionSummaryDetails } from "./garbageCollection";
+import {
+    IGarbageCollectionData,
+    IGarbageCollectionDetailsBase,
+    IGarbageCollectionSummaryDetails,
+} from "./garbageCollection";
 import { IInboundSignalMessage } from "./protocol";
 import {
     CreateChildSummarizerNodeParam,
@@ -351,10 +355,15 @@ export interface IFluidDataStoreContext extends
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 
     /**
+     * @deprecated - Renamed to getBaseGCDetails.
+     */
+    getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
+
+    /**
      * Returns the GC details in the initial summary of this data store. This is used to initialize the data store
      * and its children with the GC details from the previous summary.
      */
-    getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
+    getBaseGCDetails?(): Promise<IGarbageCollectionDetailsBase>;
 
     /**
      * Called when a new outbound reference is added to another node. This is used by garbage collection to identify

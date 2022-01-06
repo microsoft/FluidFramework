@@ -26,6 +26,7 @@ import {
     createServiceEndpoints,
     IChannelContext,
     summarizeChannel,
+    summarizeChannelAsync,
 } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
@@ -98,7 +99,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
      */
     public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummarizeResult> {
         assert(this.isLoaded && this.channel !== undefined, 0x18c /* "Channel should be loaded to summarize" */);
-        return summarizeChannel(this.channel, fullTree, trackState);
+        return summarizeChannelAsync(this.channel, fullTree, trackState);
     }
 
     public getAttachSummary(): ISummarizeResult {

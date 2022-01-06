@@ -13,7 +13,7 @@ import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ITree } from '@fluidframework/protocol-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public
@@ -94,7 +94,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     // (undocumented)
     protected registerCore(): void;
     // (undocumented)
-    protected snapshotCore(serializer: IFluidSerializer): ITree;
+    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
 }
 
 // @public (undocumented)
