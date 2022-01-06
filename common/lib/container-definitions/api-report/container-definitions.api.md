@@ -170,8 +170,8 @@ export interface IContainerContext extends IDisposable {
     readonly clientId: string | undefined;
     // (undocumented)
     readonly closeFn: (error?: ICriticalContainerError) => void;
-    // (undocumented)
-    readonly configuration: IFluidConfiguration;
+    // @deprecated (undocumented)
+    readonly configuration?: IFluidConfiguration;
     // (undocumented)
     readonly connected: boolean;
     // (undocumented)
