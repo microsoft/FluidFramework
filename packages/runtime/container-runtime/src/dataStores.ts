@@ -5,6 +5,8 @@
 
 import { ITelemetryLogger, ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import { DataCorruptionError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { FluidObjectHandle } from "@fluidframework/datastore";
 import {
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -19,7 +21,7 @@ import {
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
     IGarbageCollectionData,
-    IGarbageCollectionSummaryDetails,
+    IGarbageCollectionDetailsBase,
     IInboundSignalMessage,
     InboundAttachMessage,
     ISummarizeResult,
@@ -97,6 +99,13 @@ export class DataStores implements IDisposable {
         readonly referencedDataStoreCount: number;
     };
 
+    // Stores the ids of new data stores between two GC runs. This is used to notify the garbage collector of new
+    // root data stores that are added.
+    private dataStoresSinceLastGC: string[] = [];
+    // The handle to the container runtime. This is used mainly for GC purposes to represent outbound reference from
+    // the container runtime to other nodes.
+    private readonly containerRuntimeHandle: IFluidHandle;
+
     constructor(
         private readonly baseSnapshot: ISnapshotTree | undefined,
         private readonly runtime: ContainerRuntime,
@@ -105,19 +114,20 @@ export class DataStores implements IDisposable {
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
         private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
-        getDataStoreBaseGCDetails: () => Promise<Map<string, IGarbageCollectionSummaryDetails>>,
+        getBaseGCDetails: () => Promise<Map<string, IGarbageCollectionDetailsBase>>,
         private readonly dataStoreChanged: (id: string) => void,
         private readonly aliasMap: Map<string, string>,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
         this.logger = ChildLogger.create(baseLogger);
+        this.containerRuntimeHandle = new FluidObjectHandle(this.runtime, "/", this.runtime.IFluidHandleContext);
 
-        const baseDataStoresGCDetailsP = new LazyPromise(async () => {
-            return getDataStoreBaseGCDetails();
+        const baseGCDetailsP = new LazyPromise(async () => {
+            return getBaseGCDetails();
         });
-        // Returns the base summary GC details for the data store with the given id.
+        // Returns the base GC details for the data store with the given id.
         const dataStoreBaseGCDetails = async (dataStoreId: string) => {
-            const baseGCDetails = await baseDataStoresGCDetailsP;
+            const baseGCDetails = await baseGCDetailsP;
             return baseGCDetails.get(dataStoreId);
         };
 
@@ -179,6 +189,9 @@ export class DataStores implements IDisposable {
 
     public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
         const attachMessage = message.contents as InboundAttachMessage;
+
+        this.dataStoresSinceLastGC.push(attachMessage.id);
+
         // The local object has already been attached
         if (local) {
             assert(this.pendingAttach.has(attachMessage.id),
@@ -496,6 +509,24 @@ export class DataStores implements IDisposable {
         } while (notBoundContextsLength !== this.contexts.notBoundLength());
 
         return builder.getSummaryTree();
+    }
+
+    /**
+     * Before GC runs, called by the garbage collector to update any pending GC state.
+     * The garbage collector needs to know all outbound references that are added. Since root data stores are not
+     * explicitly marked as referenced, notify GC of new root data stores that were added since the last GC run.
+     */
+    public async updateStateBeforeGC(): Promise<void> {
+        for (const id of this.dataStoresSinceLastGC) {
+            const context = this.contexts.get(id);
+            assert(context !== undefined, `Missing data store context with id ${id}`);
+            if (await context.isRoot()) {
+                // A root data store is basically a reference from the container runtime to the data store.
+                const handle = new FluidObjectHandle(context, id, this.runtime.IFluidHandleContext);
+                this.runtime.addedGCOutboundReference(this.containerRuntimeHandle, handle);
+            }
+        }
+        this.dataStoresSinceLastGC = [];
     }
 
     /**

@@ -52,7 +52,7 @@ describe("ErrorUtils", () => {
             assert.strictEqual(error.canRetry, true);
         });
         it("creates retriable error on Network Error", () => {
-            const message = "Network Error";
+            const message = "NetworkError: failed to fetch";
             const error = createR11sNetworkError("errorCode", message);
             assert.strictEqual(error.errorType, DriverErrorType.genericNetworkError);
             assert.strictEqual(error.canRetry, true);
@@ -131,7 +131,7 @@ describe("ErrorUtils", () => {
             });
         });
         it("throws retriable error on Network Error", () => {
-            const message = "Network Error";
+            const message = "NetworkError: failed to fetch";
             assert.throws(() => {
                 throwR11sNetworkError("errorCode", message);
             }, {

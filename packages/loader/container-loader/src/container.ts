@@ -1023,7 +1023,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         }
 
-        return this.getQuorum().propose("code", codeDetails)
+        return this.protocolHandler.quorum.propose("code", codeDetails)
             .then(()=>true)
             .catch(()=>false);
     }
