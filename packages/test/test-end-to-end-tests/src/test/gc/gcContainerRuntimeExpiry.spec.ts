@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { SinonFakeTimers, useFakeTimers } from "sinon";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObjectFactory,
@@ -20,6 +21,7 @@ import { TestDataObject } from "./mockSummarizerClient";
  */
  describeNoCompat("GC Session Expiry", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
+    const timeoutMs = 100;
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
         TestDataObject,
@@ -33,7 +35,7 @@ import { TestDataObject } from "./mockSummarizerClient";
         gcOptions: {
             gcAllowed: true,
             gcSessionTimeoutEnabled: true,
-            gcTestSessionTimeoutMs: 0,
+            gcTestSessionTimeoutMs: timeoutMs,
         },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
@@ -47,22 +49,46 @@ import { TestDataObject } from "./mockSummarizerClient";
     );
 
     let container1: IContainer;
-
     const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory);
+    const loadContainer = async (): Promise<IContainer> => provider.loadContainer(runtimeFactory);
+    let clock: SinonFakeTimers;
+
+    before(() => {
+        clock = useFakeTimers();
+    });
+
+    afterEach(() => {
+        clock.reset();
+    });
+
+    after(() => {
+        clock.restore();
+    });
 
     beforeEach(async () => {
         provider = getTestObjectProvider();
-    });
-
-    it("Container should be closed with a ClientSessionExpired error after the gcSessionExpiryTime is up", async () => {
         container1 = await createContainer();
         container1.on("closed", (error) => {
             assert.strictEqual(error?.errorType, "clientSessionExpiredError");
         });
+    });
 
+    it("Container should be closed with a ClientSessionExpired error after the gcSessionExpiryTime is up", async () => {
         await provider.ensureSynchronized();
-        const delay = async (ms: number) => new Promise((res) => setTimeout(res, ms));
-        await delay(100);
-        assert(container1.closed === true, "Container should be closed");
+        clock.tick(timeoutMs - 1);
+        assert(container1.closed === false, "Container1 should not be closed");
+        clock.tick(1);
+        assert(container1.closed, "Container should be closed");
+    });
+
+    it("Containers should have the same expiry time for the same document", async () => {
+        clock.tick(timeoutMs / 2);
+        const container2 = await loadContainer();
+        assert(container1.closed === false, "Container1 should not be closed");
+        clock.tick(timeoutMs / 2);
+        assert(container1.closed, "Container1 should be closed");
+        assert(container2.closed === false, "Container2 should not be closed");
+        clock.tick(timeoutMs / 2);
+        assert(container2.closed, "Container2 should be closed");
     });
 });
