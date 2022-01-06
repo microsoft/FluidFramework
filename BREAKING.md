@@ -14,6 +14,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [`container-loader` interfaces return `IQuorumClients` rather than `IQuorum`](#container-loader-interfaces-return-IQuorumClients-rather-than-IQuorum)
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)
 - [`IChannel.summarize` split into sync and async](#IChannel.summarize-split-into-sync-and-async)
+- [`IFluidConfiguration` deprecated and `configuration` member removed from `ContainerRuntime`](#IFluidConfiguration-deprecated-and-configuration-member-removed-from-ContainerRuntime)
 
 ### `container-loader` interfaces return `IQuorumClients` rather than `IQuorum`
 
@@ -27,6 +28,12 @@ The `getQuorum()` method on `IContainer` and the `quorum` member of `IContainerC
 
 ### `IChannel.summarize` split into sync and async
 `IChannel` now has two summarization methods instead of a single synchronous `summarize`. `getAttachSummary` is synchronous to prevent channel modifications during summarization, `summarize` is asynchronous.
+
+### `IFluidConfiguration` deprecated and `configuration` member removed from `ContainerRuntime`
+
+The `IFluidConfiguration` interface has been deprecated and will be removed in an upcoming release.  This will include removal of the `configuration` member of the `IContainerContext` at that time.  To inspect whether the document is in readonly state, you should instead query `container.readOnlyInfo.readonly`.
+
+The `configuration` member of `ContainerRuntime` has also been removed.
 
 ## 0.54 Breaking changes
 - [Removed `readAndParseFromBlobs` from `driver-utils`](#Removed-readAndParseFromBlobs-from-driver-utils)
