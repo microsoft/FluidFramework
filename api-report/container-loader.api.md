@@ -82,8 +82,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     getQuorum(): IQuorum;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
     // (undocumented)
-    get id(): string;
-    // (undocumented)
     get IFluidRouter(): IFluidRouter;
     get isDirty(): boolean;
     static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: unknown): Promise<Container>;
