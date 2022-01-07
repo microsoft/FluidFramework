@@ -7,7 +7,11 @@ export { FlowDocument } from "./document";
 export { Editor, IFluidHTMLViewFactory } from "./editor";
 export { htmlFormatter } from "./html/formatters";
 
-import { RuntimeFactory } from "@fluidframework/data-object-base";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { WebFlow } from "./host";
+import { hostType } from "./package";
 
-export const fluidExport = new RuntimeFactory(WebFlow.getFactory());
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
+    WebFlow.getFactory(),
+    [[hostType, Promise.resolve(WebFlow.getFactory())]],
+);
