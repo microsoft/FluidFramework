@@ -20,7 +20,7 @@ import {
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
-import * as sharedTextComponent from "./component";
+import { instantiateDataStore } from "./component";
 
 /* eslint-disable max-len */
 // const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@fluid-example/monaco");
@@ -49,7 +49,7 @@ class SharedTextFactoryComponent extends RuntimeFactoryHelper implements IFluidD
     public get IFluidDataStoreFactory() { return this; }
 
     public async instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean) {
-        return sharedTextComponent.instantiateDataStore(context, existing);
+        return instantiateDataStore(context, existing);
     }
 
     public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {

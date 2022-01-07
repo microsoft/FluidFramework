@@ -38,11 +38,11 @@ export class SharedTextDocument {
         return this.root;
     }
 
-    public createMap(id?: string): ISharedMap {
-        return SharedMap.create(this.runtime, id);
+    public createMap(): ISharedMap {
+        return SharedMap.create(this.runtime);
     }
 
-    public createString(id?: string): SharedString {
-        return SharedString.create(this.runtime, id);
+    public createString(): SharedString {
+        return SharedString.create(this.runtime);
     }
 }

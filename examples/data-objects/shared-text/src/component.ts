@@ -113,7 +113,7 @@ export class SharedTextRunner
         this.rootView = this.sharedTextDocument.getRoot();
 
         if (!existing) {
-            const insights = this.sharedTextDocument.createMap(insightsMapId);
+            const insights = this.sharedTextDocument.createMap();
             this.rootView.set(insightsMapId, insights.handle);
 
             debug(`Not existing ${this.runtime.id} - ${performance.now()}`);
