@@ -33,8 +33,8 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
             registryEntries,
             dependencyContainer,
             [
-                ...requestHandlers,
                 defaultRouteRequestHandler(defaultDataStoreId),
+                ...requestHandlers,
             ],
             runtimeOptions,
         );

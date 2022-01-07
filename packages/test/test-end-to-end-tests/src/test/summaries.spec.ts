@@ -15,11 +15,12 @@ import {
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
-import { channelsTreeName } from "@fluidframework/runtime-definitions";
+import { channelsTreeName, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedObjectSequence } from "@fluidframework/sequence";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { createLoader, ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
+import { IRequest } from "@fluidframework/core-interfaces";
 
 const defaultDataStoreId = "default";
 let summarizer: ISummarizer;
@@ -56,6 +57,9 @@ async function createContainer(
     // Force generateSummaries to false.
     const summaryOptions: ISummaryRuntimeOptions = { ...summaryOpt, disableSummaries: true };
 
+    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+        runtime.IFluidHandleContext.resolveHandle(request);
+
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         factory,
         [
@@ -63,7 +67,7 @@ async function createContainer(
             [TestDataObject.dataObjectName, Promise.resolve(factory)],
         ],
         undefined,
-        undefined,
+        [innerRequestHandler],
         { summaryOptions },
     );
 

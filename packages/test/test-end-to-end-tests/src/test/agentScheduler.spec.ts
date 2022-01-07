@@ -13,9 +13,18 @@ import {
     TestContainerRuntimeFactory,
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+
+const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+    runtime.IFluidHandleContext.resolveHandle(request);
 
 const runtimeFactory: IProvideRuntimeFactory = {
-    IRuntimeFactory: new TestContainerRuntimeFactory(AgentSchedulerFactory.type, new AgentSchedulerFactory()),
+    IRuntimeFactory: new TestContainerRuntimeFactory(
+        AgentSchedulerFactory.type,
+        new AgentSchedulerFactory(),
+        {},
+        [innerRequestHandler]),
 };
 
 // By default, the container loads in read mode.  However, pick() attempts silently fail if not in write

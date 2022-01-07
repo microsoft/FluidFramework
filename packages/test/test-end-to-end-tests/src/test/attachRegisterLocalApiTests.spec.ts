@@ -21,6 +21,7 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 
 // REVIEW: enable compat testing?
 describeNoCompat(`Attach/Bind Api Tests For Attached Container`, (getTestObjectProvider) => {
@@ -65,8 +66,20 @@ describeNoCompat(`Attach/Bind Api Tests For Attached Container`, (getTestObjectP
             [mapId1, SharedMap.getFactory()],
             [mapId2, SharedMap.getFactory()],
         ]);
+        const innerRequestHandler = async (request1: IRequest, runtime: IContainerRuntimeBase) =>
+            runtime.IFluidHandleContext.resolveHandle(request1);
+
+        const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+            factory,
+            [
+                [factory.type, Promise.resolve(factory)],
+            ],
+            undefined,
+            [innerRequestHandler],
+        );
+
         const urlResolver = provider.urlResolver;
-        const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
+        const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
         const documentServiceFactory = provider.documentServiceFactory;
         const testLoader = new Loader({
             urlResolver,
