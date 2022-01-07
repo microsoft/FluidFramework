@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -18,6 +17,7 @@ import {
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import {
+    IFluidSerializer,
     makeHandlesSerializable,
     parseHandles,
     SharedObject,

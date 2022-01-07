@@ -47,10 +47,6 @@ const defaultBlobSize = 1024;
  * via task picking.
  */
 export class LoadTestDataStoreModel {
-    public static initializingFirstTime(root: ISharedDirectory, runtime: IFluidDataStoreRuntime) {
-        root.set(taskManagerKey, TaskManager.create(runtime).handle);
-    }
-
     private static async waitForCatchup(runtime: IFluidDataStoreRuntime): Promise<void> {
         if (!runtime.connected) {
             await new Promise<void>((resolve, reject) => {
@@ -400,9 +396,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     public static DataStoreName = "StressTestDataStore";
 
     protected async initializingFirstTime() {
-        LoadTestDataStoreModel.initializingFirstTime(
-            this.root,
-            this.runtime);
+        this.root.set(taskManagerKey, TaskManager.create(this.runtime).handle);
     }
 
     public async detached(config: Omit<IRunConfig, "runId">) {

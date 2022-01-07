@@ -28,8 +28,7 @@ import {
 import { bufferToString, assert } from "@fluidframework/common-utils";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 
 import {
 	ChangeSet,

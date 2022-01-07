@@ -4,7 +4,6 @@
  */
 
 import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
@@ -12,7 +11,7 @@ import {
     IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { createSingleBlobSummary, SharedObject } from "@fluidframework/shared-object-base";
+import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection, ReadPolicy, IConsensusRegisterCollectionEvents } from "./interfaces";
 

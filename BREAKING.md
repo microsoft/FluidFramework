@@ -14,6 +14,8 @@ There are a few steps you can take to write a good change note and avoid needing
 - [`container-loader` interfaces return `IQuorumClients` rather than `IQuorum`](#container-loader-interfaces-return-IQuorumClients-rather-than-IQuorum)
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)
 - [`IChannel.summarize` split into sync and async](#IChannel.summarize-split-into-sync-and-async)
+- [`IFluidSerializer` moved to shared-object-base](#IFluidSerializer-moved-to-shared-object-base)
+- [Removed `IFluidSerializer` from `IFluidDataStoreRuntime`](#Removed-IFluidSerializer-from-IFluidDataStoreRuntime)
 - [`wait()` methods deprecated on map and directory](#wait()-methods-deprecated-on-map-and-directory)
 
 ### `container-loader` interfaces return `IQuorumClients` rather than `IQuorum`
@@ -28,6 +30,12 @@ The `getQuorum()` method on `IContainer` and the `quorum` member of `IContainerC
 
 ### `IChannel.summarize` split into sync and async
 `IChannel` now has two summarization methods instead of a single synchronous `summarize`. `getAttachSummary` is synchronous to prevent channel modifications during summarization, `summarize` is asynchronous.
+
+### `IFluidSerializer` moved to shared-object-base
+`IFluidSerializer` has moved packages from core-interfaces to shared-object-base. `replaceHandles` method is renamed to `encode`. `decode` method is now required. `IFluidSerializer` in core-interfaces is now deprecated and will be removed in a future release.
+
+### Removed `IFluidSerializer` from `IFluidDataStoreRuntime`
+`IFluidSerializer` in `IFluidDataStoreRuntime` was deprecated in version 0.53 and is now removed.
 
 ### `wait()` methods deprecated on map and directory
 
