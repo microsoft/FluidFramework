@@ -56,14 +56,14 @@ export async function getInsights(map: ISharedMap, id: string): Promise<ISharedM
 }
 
 export async function setTranslation(
-    document: { getRoot: () => ISharedMap },
+    rootMap: ISharedMap,
     id: string,
     fromLanguage: string,
     toLanguage: string,
     existing: boolean,
 ): Promise<void> {
     // Create the translations map
-    const handle = await mapWait<IFluidHandle<ISharedMap>>(document.getRoot(), "insights");
+    const handle = await mapWait<IFluidHandle<ISharedMap>>(rootMap, "insights");
     const insights = await handle.get();
 
     const idMapHandle = await mapWait<IFluidHandle<ISharedMap>>(insights, id);

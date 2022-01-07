@@ -37,11 +37,11 @@ import {
 } from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { IFluidTokenProvider } from "@fluidframework/container-definitions";
-import { SharedTextDocument } from "./document";
 import { downloadRawText, getInsights, mapWait, setTranslation } from "./utils";
 
 const debug = registerDebug("fluid:shared-text");
 
+const rootMapId = "root";
 const insightsMapId = "insights";
 const textSharedStringId = "text";
 const flowContainerMapId = "flowContainerMap";
@@ -70,8 +70,7 @@ export class SharedTextRunner
 
     private sharedString: SharedString;
     private insightsMap: ISharedMap;
-    private rootView: ISharedMap;
-    private sharedTextDocument: SharedTextDocument;
+    private root: ISharedMap;
     private uiInitialized = false;
     private readonly title: string = "Shared Text";
 
@@ -93,7 +92,7 @@ export class SharedTextRunner
     }
 
     public getRoot(): ISharedMap {
-        return this.rootView;
+        return this.root;
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -109,12 +108,12 @@ export class SharedTextRunner
     }
 
     private async initialize(existing: boolean): Promise<void> {
-        this.sharedTextDocument = await SharedTextDocument.load(this.runtime, existing);
-        this.rootView = this.sharedTextDocument.getRoot();
-
         if (!existing) {
+            this.root = SharedMap.create(this.runtime, rootMapId);
+            this.root.bindToContext();
+
             const insights: ISharedMap = SharedMap.create(this.runtime);
-            this.rootView.set(insightsMapId, insights.handle);
+            this.root.set(insightsMapId, insights.handle);
 
             debug(`Not existing ${this.runtime.id} - ${performance.now()}`);
             const newString = SharedString.create(this.runtime);
@@ -135,25 +134,27 @@ export class SharedTextRunner
                     newString.insertMarker(newString.getLength(), marker.refType, marker.properties);
                 }
             }
-            this.rootView.set(textSharedStringId, newString.handle);
+            this.root.set(textSharedStringId, newString.handle);
 
             insights.set(newString.id, SharedMap.create(this.runtime).handle);
 
             // The flowContainerMap MUST be set last
 
             const flowContainerMap = SharedMap.create(this.runtime);
-            this.rootView.set(flowContainerMapId, flowContainerMap.handle);
+            this.root.set(flowContainerMapId, flowContainerMap.handle);
 
             insights.set(newString.id, SharedMap.create(this.runtime).handle);
+        } else {
+            this.root = await this.runtime.getChannel(rootMapId) as ISharedMap;
         }
 
         debug(`collabDoc loaded ${this.runtime.id} - ${performance.now()}`);
         debug(`Getting root ${this.runtime.id} - ${performance.now()}`);
 
-        await mapWait(this.rootView, flowContainerMapId);
+        await mapWait(this.root, flowContainerMapId);
 
-        this.sharedString = await this.rootView.get<IFluidHandle<SharedString>>(textSharedStringId).get();
-        this.insightsMap = await this.rootView.get<IFluidHandle<ISharedMap>>(insightsMapId).get();
+        this.sharedString = await this.root.get<IFluidHandle<SharedString>>(textSharedStringId).get();
+        this.insightsMap = await this.root.get<IFluidHandle<ISharedMap>>(insightsMapId).get();
         debug(`Shared string ready - ${performance.now()}`);
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performance.now()}`);
@@ -166,7 +167,7 @@ export class SharedTextRunner
 
         const options = parse(window.location.search.substr(1));
         setTranslation(
-            this.sharedTextDocument,
+            this.root,
             this.sharedString.id,
             options.translationFromLanguage as string,
             options.translationToLanguage as string,
@@ -217,7 +218,7 @@ export class SharedTextRunner
         browserContainerHost.attach(container, div);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        getInsights(this.rootView, this.sharedString.id).then(
+        getInsights(this.root, this.sharedString.id).then(
             (insightsMap) => {
                 container.trackInsights(insightsMap);
             });
@@ -227,7 +228,7 @@ export class SharedTextRunner
         }
         theFlow.timeToEdit = theFlow.timeToImpression = performance.now();
 
-        theFlow.setEdit(this.rootView);
+        theFlow.setEdit(this.root);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.sharedString.loaded.then(() => {
