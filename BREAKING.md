@@ -16,6 +16,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [`IChannel.summarize` split into sync and async](#IChannel.summarize-split-into-sync-and-async)
 - [`IFluidSerializer` moved to shared-object-base](#IFluidSerializer-moved-to-shared-object-base)
 - [Removed `IFluidSerializer` from `IFluidDataStoreRuntime`](#Removed-IFluidSerializer-from-IFluidDataStoreRuntime)
+- [`IFluidConfiguration` deprecated and `IFluidConfiguration` member removed from `ContainerRuntime`](#IFluidConfiguration-deprecated-and-IFluidConfiguration-member-removed-from-ContainerRuntime)
 
 ### `container-loader` interfaces return `IQuorumClients` rather than `IQuorum`
 
@@ -35,6 +36,12 @@ The `getQuorum()` method on `IContainer` and the `quorum` member of `IContainerC
 
 ### Removed `IFluidSerializer` from `IFluidDataStoreRuntime`
 `IFluidSerializer` in `IFluidDataStoreRuntime` was deprecated in version 0.53 and is now removed.
+
+### `IFluidConfiguration` deprecated and `IFluidConfiguration` member removed from `ContainerRuntime`
+
+The `IFluidConfiguration` interface from `@fluidframework/core-interfaces` has been deprecated and will be removed in an upcoming release.  This will include removal of the `configuration` member of the `IContainerContext` from `@fluidframework/container-definitions` and `ContainerContext` from `@fluidframework/container-loader` at that time.  To inspect whether the document is in readonly state, you should instead query `container.readOnlyInfo.readonly`.
+
+The `IFluidConfiguration` member of `ContainerRuntime` from `@fluidframework/container-runtime` has also been removed.
 
 ## 0.54 Breaking changes
 - [Removed `readAndParseFromBlobs` from `driver-utils`](#Removed-readAndParseFromBlobs-from-driver-utils)
