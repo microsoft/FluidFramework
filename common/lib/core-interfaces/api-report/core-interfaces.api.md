@@ -38,12 +38,12 @@ export interface IFluidCodeDetailsConfig {
     readonly [key: string]: string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IFluidConfiguration: keyof IProvideFluidConfiguration;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IFluidConfiguration extends IProvideFluidConfiguration {
-    // (undocumented)
+    // @deprecated (undocumented)
     scopes: string[];
 }
 
@@ -154,9 +154,9 @@ export interface IProvideFluidCodeDetailsComparer {
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IProvideFluidConfiguration {
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly IFluidConfiguration: IFluidConfiguration;
 }
 
