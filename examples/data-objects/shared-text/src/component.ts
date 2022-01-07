@@ -26,7 +26,7 @@ import {
 } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import {
-    IFluidDataStoreContext,
+    IFluidDataStoreContext, IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
 import {
     SharedString,
@@ -269,23 +269,30 @@ class TaskScheduler {
     }
 }
 
-export function instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
-    const runtimeClass = mixinRequestHandler(
-        async (request: IRequest) => {
-            const router = await routerP;
-            return router.request(request);
-        });
+export class SharedTextDataStoreFactory implements IFluidDataStoreFactory {
+    public static readonly type = "@fluid-example/shared-text";
+    public readonly type = SharedTextDataStoreFactory.type;
 
-    const runtime = new runtimeClass(
-        context,
-        new Map([
-            SharedMap.getFactory(),
-            SharedString.getFactory(),
-            SharedCell.getFactory(),
-        ].map((factory) => [factory.type, factory])),
-        existing,
-    );
-    const routerP = SharedTextRunner.load(runtime, context, existing);
+    public get IFluidDataStoreFactory() { return this; }
 
-    return runtime;
+    public async instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean) {
+        const runtimeClass = mixinRequestHandler(
+            async (request: IRequest) => {
+                const router = await routerP;
+                return router.request(request);
+            });
+
+        const runtime = new runtimeClass(
+            context,
+            new Map([
+                SharedMap.getFactory(),
+                SharedString.getFactory(),
+                SharedCell.getFactory(),
+            ].map((factory) => [factory.type, factory])),
+            existing,
+        );
+        const routerP = SharedTextRunner.load(runtime, context, existing);
+
+        return runtime;
+    }
 }
