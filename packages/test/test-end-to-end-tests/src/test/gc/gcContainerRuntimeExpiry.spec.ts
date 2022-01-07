@@ -76,19 +76,33 @@ import { TestDataObject } from "./mockSummarizerClient";
     it("Container should be closed with a ClientSessionExpired error after the gcSessionExpiryTime is up", async () => {
         await provider.ensureSynchronized();
         clock.tick(timeoutMs - 1);
-        assert(container1.closed === false, "Container1 should not be closed");
+        assert(container1.closed === false, "Container1 should not be closed, it should be 1 tick away from expiring.");
         clock.tick(1);
-        assert(container1.closed, "Container should be closed");
+        assert(container1.closed, "Container1 should be closed, it has should have reached its session expiry timeout");
     });
 
     it("Containers should have the same expiry time for the same document", async () => {
-        clock.tick(timeoutMs / 2);
+        // Container1 should expire in one tick
+        clock.tick(timeoutMs - 1);
+        // Load the two other containers
         const container2 = await loadContainer();
-        assert(container1.closed === false, "Container1 should not be closed");
-        clock.tick(timeoutMs / 2);
-        assert(container1.closed, "Container1 should be closed");
-        assert(container2.closed === false, "Container2 should not be closed");
-        clock.tick(timeoutMs / 2);
-        assert(container2.closed, "Container2 should be closed");
+        const container3 = await loadContainer();
+        assert(container1.closed === false, "Container1 should not be closed, it should be 1 tick away from expiring.");
+        assert(container2.closed === false, "Container2 should not be closed, it should not expire on load.");
+        assert(container3.closed === false, "Container3 should not be closed, it should not expire on load.");
+        // Ticking one more should expire the first container
+        clock.tick(1);
+        assert(container1.closed, "Container1 should be closed as it has reached its expiry.");
+        // Containers 2 & 3 should be one tick in.
+        assert(container2.closed === false, "Container2 should not be closed, as it has not reached expiry.");
+        assert(container3.closed === false, "Container3 should not be closed, as it has not reached expiry.");
+        // Containers 2 & 3 should be one tick away from expiring
+        clock.tick(timeoutMs - 2);
+        assert(container2.closed === false, "Container2 should not be closed, it should only expire on the next tick.");
+        assert(container3.closed === false, "Container3 should not be closed, it should only expire on the next tick.");
+        // This one tick should expire both containers at the same time as they were created in the same time
+        clock.tick(1);
+        assert(container2.closed, "Container2 should be closed as it has reached its expiry.");
+        assert(container3.closed, "Container3 should be closed as it has reached its expiry.");
     });
 });
