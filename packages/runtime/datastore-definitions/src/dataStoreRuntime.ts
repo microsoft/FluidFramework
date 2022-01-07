@@ -6,7 +6,6 @@
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandleContext,
-    IFluidSerializer,
     IFluidRouter,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
@@ -46,11 +45,6 @@ export interface IFluidDataStoreRuntime extends
     Partial<IProvideFluidDataStoreRegistry> {
 
     readonly id: string;
-
-    /**
-     * @deprecated - FluidSerializer is not required as DDSs are the only ones that serialize data.
-     */
-    readonly IFluidSerializer: IFluidSerializer;
 
     readonly IFluidHandleContext: IFluidHandleContext;
 
