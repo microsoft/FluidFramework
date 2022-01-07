@@ -19,7 +19,13 @@ describe("Runtime", () => {
     describe("Container Runtime", () => {
         describe("ContainerRuntime", () => {
             describe("Dirty flag", () => {
-                const createMockContext = (attachState: AttachState): Partial<IContainerContext> => {
+                const createMockContext =
+                    (attachState: AttachState, addPendingMsg: boolean): Partial<IContainerContext> => {
+                    const pendingMessage = {
+                        type: "message",
+                        content: {},
+                    };
+
                     return {
                         deltaManager: new MockDeltaManager(),
                         quorum: new MockQuorum(),
@@ -27,11 +33,12 @@ describe("Runtime", () => {
                         clientDetails: { capabilities: { interactive: true } },
                         updateDirtyContainerState: (dirty: boolean) => {},
                         attachState,
+                        pendingLocalState: addPendingMsg ? {pendingStates: [pendingMessage]} : undefined,
                     };
                 };
 
-                it("should NOT be set to dirty if context is attached", async () => {
-                    const mockContext = createMockContext(AttachState.Attached);
+                it("should NOT be set to dirty if context is attached with no pending ops", async () => {
+                    const mockContext = createMockContext(AttachState.Attached, false);
                     const updateDirtyStateStub = stub(mockContext, "updateDirtyContainerState");
                     await ContainerRuntime.load(
                         mockContext as IContainerContext,
@@ -43,8 +50,21 @@ describe("Runtime", () => {
                     assert.deepStrictEqual(updateDirtyStateStub.args, [[false]]);
                 });
 
+                it("should be set to dirty if context is attached with pending ops", async () => {
+                    const mockContext = createMockContext(AttachState.Attached, true);
+                    const updateDirtyStateStub = stub(mockContext, "updateDirtyContainerState");
+                    await ContainerRuntime.load(
+                        mockContext as IContainerContext,
+                        [],
+                        undefined,
+                        {},
+                    );
+                    assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
+                    assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
+                });
+
                 it("should be set to dirty if context is attaching", async () => {
-                    const mockContext = createMockContext(AttachState.Attaching);
+                    const mockContext = createMockContext(AttachState.Attaching, false);
                     const updateDirtyStateStub = stub(mockContext, "updateDirtyContainerState");
                     await ContainerRuntime.load(
                         mockContext as IContainerContext,
@@ -57,7 +77,7 @@ describe("Runtime", () => {
                 });
 
                 it("should be set to dirty if context is detached", async () => {
-                    const mockContext = createMockContext(AttachState.Detached);
+                    const mockContext = createMockContext(AttachState.Detached, false);
                     const updateDirtyStateStub = stub(mockContext, "updateDirtyContainerState");
                     await ContainerRuntime.load(
                         mockContext as IContainerContext,
