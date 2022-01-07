@@ -19,7 +19,7 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
+import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IInterval } from '@fluidframework/merge-tree';
 import { IJSONSegment } from '@fluidframework/merge-tree';
 import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree';

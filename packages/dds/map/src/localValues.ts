@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
-    IFluidHandle,
     IFluidSerializer,
     ISerializedHandle,
-} from "@fluidframework/core-interfaces";
-import {
     parseHandles,
     serializeHandles,
     SharedObject,

@@ -10,7 +10,6 @@ import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions';
 import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { FluidSerializer } from '@fluidframework/runtime-utils';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -398,8 +397,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)
     get IFluidRouter(): this;
-    // (undocumented)
-    readonly IFluidSerializer: FluidSerializer;
     // (undocumented)
     get isAttached(): boolean;
     // (undocumented)

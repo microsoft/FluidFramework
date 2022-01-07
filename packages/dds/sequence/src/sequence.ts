@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import { Deferred, bufferToString, assert } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     FileMode,
@@ -44,6 +43,7 @@ import {
 } from "@fluidframework/merge-tree";
 import { convertToSummaryTreeWithStats, ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
+    IFluidSerializer,
     makeHandlesSerializable,
     parseHandles,
     SharedObject,

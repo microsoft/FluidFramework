@@ -7,7 +7,7 @@ import { v4 as uuid } from "uuid";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
@@ -19,9 +19,9 @@ import {
     IGarbageCollectionData,
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { FluidSerializer } from "@fluidframework/runtime-utils";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
+import { FluidSerializer, IFluidSerializer } from "./serializer";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";

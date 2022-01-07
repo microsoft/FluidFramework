@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
@@ -15,6 +14,7 @@ import {
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
+    IFluidSerializer,
     SharedObject,
 } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
