@@ -113,11 +113,11 @@ export class SharedTextRunner
         this.rootView = this.sharedTextDocument.getRoot();
 
         if (!existing) {
-            const insights = this.sharedTextDocument.createMap();
+            const insights: ISharedMap = SharedMap.create(this.runtime);
             this.rootView.set(insightsMapId, insights.handle);
 
             debug(`Not existing ${this.runtime.id} - ${performance.now()}`);
-            const newString = this.sharedTextDocument.createString();
+            const newString = SharedString.create(this.runtime);
 
             const template = parse(window.location.search.substr(1)).template;
             const starterText = template
@@ -137,14 +137,14 @@ export class SharedTextRunner
             }
             this.rootView.set(textSharedStringId, newString.handle);
 
-            insights.set(newString.id, this.sharedTextDocument.createMap().handle);
+            insights.set(newString.id, SharedMap.create(this.runtime).handle);
 
             // The flowContainerMap MUST be set last
 
-            const flowContainerMap = this.sharedTextDocument.createMap();
+            const flowContainerMap = SharedMap.create(this.runtime);
             this.rootView.set(flowContainerMapId, flowContainerMap.handle);
 
-            insights.set(newString.id, this.sharedTextDocument.createMap().handle);
+            insights.set(newString.id, SharedMap.create(this.runtime).handle);
         }
 
         debug(`collabDoc loaded ${this.runtime.id} - ${performance.now()}`);

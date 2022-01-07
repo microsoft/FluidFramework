@@ -5,7 +5,6 @@
 
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { SharedString } from "@fluidframework/sequence";
 
 const rootMapId = "root";
 
@@ -36,13 +35,5 @@ export class SharedTextDocument {
 
     public getRoot(): ISharedMap {
         return this.root;
-    }
-
-    public createMap(): ISharedMap {
-        return SharedMap.create(this.runtime);
-    }
-
-    public createString(): SharedString {
-        return SharedString.create(this.runtime);
     }
 }
