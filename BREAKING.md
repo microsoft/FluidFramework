@@ -11,7 +11,93 @@ There are a few steps you can take to write a good change note and avoid needing
 - Consider providing code examples as part of guidance for non-trivial changes.
 
 ## 0.55 Breaking changes
+- [`container-loader` interfaces return `IQuorumClients` rather than `IQuorum`](#container-loader-interfaces-return-IQuorumClients-rather-than-IQuorum)
+- [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)
+- [`IChannel.summarize` split into sync and async](#IChannel.summarize-split-into-sync-and-async)
+- [`IFluidSerializer` moved to shared-object-base](#IFluidSerializer-moved-to-shared-object-base)
+- [Removed `IFluidSerializer` from `IFluidDataStoreRuntime`](#Removed-IFluidSerializer-from-IFluidDataStoreRuntime)
+- [`IFluidConfiguration` deprecated and `IFluidConfiguration` member removed from `ContainerRuntime`](#IFluidConfiguration-deprecated-and-IFluidConfiguration-member-removed-from-ContainerRuntime)
+- [`wait()` methods deprecated on map and directory](#wait()-methods-deprecated-on-map-and-directory)
 - [Removed `innerRequestHandler`](#Removed-innerRequestHandler)
+
+### `container-loader` interfaces return `IQuorumClients` rather than `IQuorum`
+
+The `getQuorum()` method on `IContainer` and the `quorum` member of `IContainerContext` return an `IQuorumClients` rather than an `IQuorum`.  See the [prior breaking change notice announcing this change](#getQuorum-returns-IQuorumClients-from-within-the-container) for recommendations on migration.
+
+### `SharedObject` summary and GC API changes
+
+`SharedObject.snapshotCore` is renamed to `summarizeCore` and returns `ISummaryTreeWithStats`. A temporary way to fix this up quickly is to call `convertToSummaryTreeWithStats` on the `ITree` previously returned, but `convertToSummaryTreeWithStats` will be deprecated in the future and `ISummaryTreeWithStats` should be created directly.
+
+`SharedObject.getGCDataCore` is renamed to `processGCDataCore` and a `SummarySerializer` is passed as a parameter. The method should run the serializer over the handles as before and does not need to return anything. The caller will extract the GC data from the serializer.
+
+### `IChannel.summarize` split into sync and async
+`IChannel` now has two summarization methods instead of a single synchronous `summarize`. `getAttachSummary` is synchronous to prevent channel modifications during summarization, `summarize` is asynchronous.
+
+### `IFluidSerializer` moved to shared-object-base
+`IFluidSerializer` has moved packages from core-interfaces to shared-object-base. `replaceHandles` method is renamed to `encode`. `decode` method is now required. `IFluidSerializer` in core-interfaces is now deprecated and will be removed in a future release.
+
+### Removed `IFluidSerializer` from `IFluidDataStoreRuntime`
+`IFluidSerializer` in `IFluidDataStoreRuntime` was deprecated in version 0.53 and is now removed.
+
+### `IFluidConfiguration` deprecated and `IFluidConfiguration` member removed from `ContainerRuntime`
+
+The `IFluidConfiguration` interface from `@fluidframework/core-interfaces` has been deprecated and will be removed in an upcoming release.  This will include removal of the `configuration` member of the `IContainerContext` from `@fluidframework/container-definitions` and `ContainerContext` from `@fluidframework/container-loader` at that time.  To inspect whether the document is in readonly state, you should instead query `container.readOnlyInfo.readonly`.
+
+The `IFluidConfiguration` member of `ContainerRuntime` from `@fluidframework/container-runtime` has also been removed.
+
+### `wait()` methods deprecated on map and directory
+
+The `wait()` methods on `ISharedMap` and `IDirectory` have been deprecated and will be removed in an upcoming release.  To wait for a change to a key, you can replicate this functionality with a helper function that listens to the change events.
+
+```ts
+const directoryWait = async <T = any>(directory: IDirectory, key: string): Promise<T> => {
+    const maybeValue = directory.get<T>(key);
+    if (maybeValue !== undefined) {
+        return maybeValue;
+    }
+
+    return new Promise((resolve) => {
+        const handler = (changed: IValueChanged) => {
+            if (changed.key === key) {
+                directory.off("containedValueChanged", handler);
+                const value = directory.get<T>(changed.key);
+                if (value === undefined) {
+                    throw new Error("Unexpected containedValueChanged result");
+                }
+                resolve(value);
+            }
+        };
+        directory.on("containedValueChanged", handler);
+    });
+};
+
+const foo = await directoryWait<Foo>(this.root, fooKey);
+
+const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
+    const maybeValue = map.get<T>(key);
+    if (maybeValue !== undefined) {
+        return maybeValue;
+    }
+
+    return new Promise((resolve) => {
+        const handler = (changed: IValueChanged) => {
+            if (changed.key === key) {
+                map.off("valueChanged", handler);
+                const value = map.get<T>(changed.key);
+                if (value === undefined) {
+                    throw new Error("Unexpected valueChanged result");
+                }
+                resolve(value);
+            }
+        };
+        map.on("valueChanged", handler);
+    });
+};
+
+const bar = await mapWait<Bar>(someSharedMap, barKey);
+```
+
+As-written above, these promises will silently remain pending forever if the key is never set (similar to current `wait()` functionality).  For production use, consider adding timeouts, telemetry, or other failure flow support to detect and handle failure cases appropriately.
 
 ### Removed `innerRequestHandler`
 `innerRequestHandler` is removed from `@fluidframework/request-handlers` package, and its usage is removed from `BaseContainerRuntimeFactory` and `ContainerRuntimeFactoryWithDefaultDataStore`.  If you are using these container runtime factories, attempting to access internal data stores via `request()` will result in 404 responses.

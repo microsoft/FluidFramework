@@ -11,10 +11,9 @@ import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
-    IFluidDataStoreContext,
-    IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import { buildRuntimeRequestHandler, rootDataStoreRequestHandler } from "@fluidframework/request-handler";
+    rootDataStoreRequestHandler,
+    buildRuntimeRequestHandler,
+} from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import * as sharedTextComponent from "./component";

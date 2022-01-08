@@ -18,10 +18,7 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 import {
     channelsTreeName,
     IContainerRuntimeBase,
-    IGarbageCollectionSummaryDetails } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeFullCompat, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
+    IGarbageCollectionDetailsBase } from "@fluidframework/runtime-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { pkgVersion } from "../../packageVersion";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
