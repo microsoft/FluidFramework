@@ -28,17 +28,17 @@ const deepWithHandles = makeJson(/* breadth: */ 8, /* depth: */ 8, () => handle)
 const shallowNoHandlesString = serializer.stringify(shallowNoHandles, handle);
 const deepWithHandlesString =  serializer.stringify(deepWithHandles, handle);
 
-const measureReplaceHandles = (name: string, value: any) => new Suite(`replaceHandles Handles: ${name}`)
-    .add("replaceHandles(...)", () => {
-        consume(serializer.replaceHandles(value, handle));
+const measureReplaceHandles = (name: string, value: any) => new Suite(`encode Handles: ${name}`)
+    .add("encode(...)", () => {
+        consume(serializer.encode(value, handle));
     })
     .add("parse(stringify(...))", () => {
         consume(serializer.parse(serializer.stringify(value, handle)));
     });
 
 const measureStringify = (name: string, value: any) => new Suite(`Stringify: ${name}`)
-    .add("JSON.stringify(replaceHandles(...))", () => {
-        consume(JSON.stringify(serializer.replaceHandles(value, handle)));
+    .add("JSON.stringify(encode(...))", () => {
+        consume(JSON.stringify(serializer.encode(value, handle)));
     })
     .add("stringify(...)", () => {
         consume(serializer.stringify(value, handle));

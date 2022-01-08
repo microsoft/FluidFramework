@@ -23,7 +23,10 @@ export class Canvas extends DataObject {
 
     protected async hasInitialized() {
         // Wait here for the ink
-        const handle = await this.root.wait<IFluidHandle<IInk>>("ink");
+        const handle = this.root.get<IFluidHandle<IInk>>("ink");
+        if (handle === undefined) {
+            throw new Error("Canvas improperly initialized");
+        }
         this._ink = await handle.get();
     }
 }

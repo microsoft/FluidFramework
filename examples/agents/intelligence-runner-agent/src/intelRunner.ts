@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap } from "@fluidframework/map";
+import { ISharedMap, IValueChanged } from "@fluidframework/map";
 import * as Sequence from "@fluidframework/sequence";
 import { resumeAnalytics, textAnalytics } from "./analytics";
 import { IntelligentServicesManager } from "./serviceManager";
@@ -20,6 +20,27 @@ const resumeAnalyticsConfig = {
     url: "",
 };
 
+const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
+    const maybeValue = map.get<T>(key);
+    if (maybeValue !== undefined) {
+        return maybeValue;
+    }
+
+    return new Promise((resolve) => {
+        const handler = (changed: IValueChanged) => {
+            if (changed.key === key) {
+                map.off("valueChanged", handler);
+                const value = map.get<T>(changed.key);
+                if (value === undefined) {
+                    throw new Error("Unexpected valueChanged result");
+                }
+                resolve(value);
+            }
+        };
+        map.on("valueChanged", handler);
+    });
+};
+
 export class IntelRunner {
     private intelligenceManager: IntelligentServicesManager | undefined;
 
@@ -30,7 +51,7 @@ export class IntelRunner {
     }
 
     public async start(): Promise<void> {
-        await this.insightsMap.wait(this.sharedString.id);
+        await mapWait(this.insightsMap, this.sharedString.id);
         this.intelligenceManager = new IntelligentServicesManager(this.sharedString, this.insightsMap);
         this.intelligenceManager.registerService(textAnalytics.factory.create(this.config));
         this.intelligenceManager.registerService(resumeAnalytics.factory.create(resumeAnalyticsConfig));

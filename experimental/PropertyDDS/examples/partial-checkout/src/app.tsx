@@ -61,11 +61,6 @@ async function start(): Promise<void> {
 
     // Render property inspector
     renderInspector(dataBinder, propertyTree);
-
-    // Reload the page on any further hash changes, e.g. in case you want to paste in a different document ID.
-    window.addEventListener("hashchange", () => {
-        location.reload();
-    });
 }
 
 start().catch((error) => console.error(error));

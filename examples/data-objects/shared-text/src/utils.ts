@@ -4,8 +4,29 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISharedMap } from "@fluidframework/map";
+import { ISharedMap, IValueChanged } from "@fluidframework/map";
 import { default as axios } from "axios";
+
+export const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
+    const maybeValue = map.get<T>(key);
+    if (maybeValue !== undefined) {
+        return maybeValue;
+    }
+
+    return new Promise((resolve) => {
+        const handler = (changed: IValueChanged) => {
+            if (changed.key === key) {
+                map.off("valueChanged", handler);
+                const value = map.get<T>(changed.key);
+                if (value === undefined) {
+                    throw new Error("Unexpected valueChanged result");
+                }
+                resolve(value);
+            }
+        };
+        map.on("valueChanged", handler);
+    });
+};
 
 export async function downloadRawText(textUrl: string): Promise<string> {
     const data = await axios.get(textUrl);
@@ -27,25 +48,25 @@ export async function waitForFullConnection(runtime: any): Promise<void> {
 }
 
 export async function getInsights(map: ISharedMap, id: string): Promise<ISharedMap> {
-    const insightsHandle = await map.wait<IFluidHandle<ISharedMap>>("insights");
+    const insightsHandle = await mapWait<IFluidHandle<ISharedMap>>(map, "insights");
     const insights = await insightsHandle.get();
 
-    const handle = await insights.wait<IFluidHandle<ISharedMap>>(id);
+    const handle = await mapWait<IFluidHandle<ISharedMap>>(insights, id);
     return handle.get();
 }
 
 export async function setTranslation(
-    document: { getRoot: () => ISharedMap },
+    rootMap: ISharedMap,
     id: string,
     fromLanguage: string,
     toLanguage: string,
     existing: boolean,
 ): Promise<void> {
     // Create the translations map
-    const handle = await document.getRoot().wait<IFluidHandle<ISharedMap>>("insights");
+    const handle = await mapWait<IFluidHandle<ISharedMap>>(rootMap, "insights");
     const insights = await handle.get();
 
-    const idMapHandle = await insights.wait<IFluidHandle<ISharedMap>>(id);
+    const idMapHandle = await mapWait<IFluidHandle<ISharedMap>>(insights, id);
     const idMap = await idMapHandle.get();
 
     if (!existing) {

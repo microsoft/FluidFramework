@@ -16,7 +16,6 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientConfiguration,
     IClientDetails,
-    IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
@@ -24,6 +23,7 @@ import {
     ISummaryTree,
     IVersion,
     IDocumentMessage,
+    IQuorumClients,
 } from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
@@ -127,7 +127,10 @@ export interface IContainerContext extends IDisposable {
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: ILoaderOptions;
-    readonly configuration: IFluidConfiguration;
+    /**
+     * @deprecated 0.45 - Configuration is not recommended to be used and will be removed in an upcoming release.
+     */
+    readonly configuration?: IFluidConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly storage: IDocumentStorageService;
@@ -137,7 +140,7 @@ export interface IContainerContext extends IDisposable {
     readonly submitSignalFn: (contents: any) => void;
     readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly quorum: IQuorum;
+    readonly quorum: IQuorumClients;
     /**
      * @deprecated This method is provided as a migration tool for customers currently reading the code details
      * from within the Container by directly accessing the Quorum proposals.  The code details should not be accessed

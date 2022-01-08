@@ -43,7 +43,7 @@ import {
     IChannelStorageService,
     IChannelServices,
 } from "@fluidframework/datastore-definitions";
-import { FluidSerializer, getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
+import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
 import {
     IFluidDataStoreChannel,
     IGarbageCollectionData,
@@ -391,8 +391,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreRuntime");
     public quorum = new MockQuorum();
-
-    public readonly IFluidSerializer = new FluidSerializer(this.IFluidHandleContext, (handle: IFluidHandle) => {});
 
     public get absolutePath() {
         return `/${this.id}`;
