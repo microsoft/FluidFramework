@@ -38,12 +38,12 @@ export interface IFluidCodeDetailsConfig {
     readonly [key: string]: string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IFluidConfiguration: keyof IProvideFluidConfiguration;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IFluidConfiguration extends IProvideFluidConfiguration {
-    // (undocumented)
+    // @deprecated (undocumented)
     scopes: string[];
 }
 
@@ -137,10 +137,10 @@ export interface IFluidRunnable {
     stop(reason?: string): void;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IFluidSerializer: keyof IProvideFluidSerializer;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IFluidSerializer extends IProvideFluidSerializer {
     decode?(input: any): any;
     parse(value: string): any;
@@ -154,9 +154,9 @@ export interface IProvideFluidCodeDetailsComparer {
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IProvideFluidConfiguration {
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly IFluidConfiguration: IFluidConfiguration;
 }
 
@@ -190,7 +190,7 @@ export interface IProvideFluidRunnable {
     readonly IFluidRunnable: IFluidRunnable;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IProvideFluidSerializer {
     // (undocumented)
     readonly IFluidSerializer: IFluidSerializer;
@@ -226,7 +226,7 @@ export interface IResponse {
     value: any;
 }
 
-// @public
+// @public @deprecated
 export interface ISerializedHandle {
     // (undocumented)
     type: "__fluid_handle__";

@@ -5,7 +5,7 @@
 
 module.exports = {
     "extends": [
-        "./rushstack.js"
+        "./recommended.js"
     ],
     "overrides": [
         {
@@ -13,27 +13,24 @@ module.exports = {
             "files": ["*.ts", "*.tsx"],
             "rules": {
                 // STRICT RULES
-
-                // This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
-                "tsdoc/syntax": "error",
-
-                // In some cases, type inference can be wrong, and this can cause a "flip-flop" of type changes in our
-                // API documentation. For example, type inference might decide a function returns a concrete type
-                // instead of an interface. This has no runtime impact, but would cause compilation problems.
-                "@typescript-eslint/explicit-function-return-type": [
+                "@typescript-eslint/explicit-member-accessibility": [
                     "error",
                     {
-                        "allowExpressions": false,
-                        "allowTypedFunctionExpressions": true,
-                        "allowHigherOrderFunctions": true,
-                        "allowDirectConstAssertionInArrowFunctions": true,
-                        "allowConciseArrowFunctionExpressionsStartingWithVoid": false,
-                    }
+                        accessibility: "explicit",
+                        overrides: {
+                            accessors: "explicit",
+                            constructors: "no-public",
+                            methods: "explicit",
+                            properties: "explicit",
+                            parameterProperties: "explicit"
+                        }
+                    },
                 ],
 
-                // Parameter properties are hard to understand for new TypeScript developers.
+                // Parameter properties can be confusing to those new to TypeScript as they are less explicit than other
+                // ways of declaring and initializing class members.
                 "@typescript-eslint/no-parameter-properties": [
-                    "error",
+                    "warn",
                     {
                         "allows": [
                             "private",

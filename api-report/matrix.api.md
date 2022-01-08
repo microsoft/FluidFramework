@@ -10,17 +10,17 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IMatrixConsumer } from '@tiny-calc/nano';
 import { IMatrixProducer } from '@tiny-calc/nano';
 import { IMatrixReader } from '@tiny-calc/nano';
 import { IMatrixWriter } from '@tiny-calc/nano';
 import { ISegment } from '@fluidframework/merge-tree';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ITree } from '@fluidframework/protocol-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
+import { SummarySerializer } from '@fluidframework/shared-object-base';
 
 // @public (undocumented)
 export interface IRevertible {
@@ -56,7 +56,6 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     getCell(row: number, col: number): MatrixItem<T>;
     // (undocumented)
     static getFactory(): SharedMatrixFactory;
-    protected getGCDataCore(): IGarbageCollectionData;
     // (undocumented)
     id: string;
     // (undocumented)
@@ -76,6 +75,7 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     openUndo(consumer: IUndoConsumer): void;
     // (undocumented)
     protected processCore(rawMessage: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    protected processGCDataCore(serializer: SummarySerializer): void;
     // (undocumented)
     protected registerCore(): void;
     // (undocumented)
@@ -91,9 +91,9 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     // (undocumented)
     setCells(rowStart: number, colStart: number, colCount: number, values: readonly (MatrixItem<T>)[]): void;
     // (undocumented)
-    protected snapshotCore(serializer: IFluidSerializer): ITree;
-    // (undocumented)
     protected submitLocalMessage(message: any, localOpMetadata?: any): void;
+    // (undocumented)
+    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
     // (undocumented)
     toString(): string;
     // @internal (undocumented)

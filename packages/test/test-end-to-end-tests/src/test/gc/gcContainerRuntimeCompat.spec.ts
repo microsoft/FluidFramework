@@ -20,6 +20,9 @@ import {
     IContainerRuntimeBase,
     IGarbageCollectionDetailsBase } from "@fluidframework/runtime-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { describeFullCompat, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
 import { pkgVersion } from "../../packageVersion";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
 import { loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSummarizerClient";
@@ -166,7 +169,7 @@ describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => 
                 );
                 const gcBlob = summaryObject.tree.gc;
                 assert(gcBlob?.type === SummaryType.Blob, `Data store ${id} does not have GC blob`);
-                const gcSummaryDetails = JSON.parse(gcBlob.content as string) as IGarbageCollectionSummaryDetails;
+                const gcSummaryDetails = JSON.parse(gcBlob.content as string) as IGarbageCollectionDetailsBase;
                 nodeTimestamps.set(id, gcSummaryDetails.unrefTimestamp);
             }
             return nodeTimestamps;
