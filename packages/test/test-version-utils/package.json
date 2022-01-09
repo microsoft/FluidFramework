@@ -69,6 +69,7 @@
     "@fluidframework/test-driver-definitions": "^0.55.0",
     "@fluidframework/test-drivers": "^0.55.0",
     "@fluidframework/test-utils": "^0.55.0",
+    "@fluidframework/request-handler": "^0.55.0",
     "nconf": "^0.11.0",
     "proper-lockfile": "^4.1.2",
     "semver": "^7.3.4"

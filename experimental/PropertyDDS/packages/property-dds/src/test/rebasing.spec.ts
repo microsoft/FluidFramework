@@ -31,6 +31,7 @@ import {
 } from "@fluid-experimental/property-properties";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { assert } from "@fluidframework/common-utils";
+import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 import { SharedPropertyTree } from "../propertyTree";
 
 function createLocalLoader(
@@ -83,7 +84,7 @@ describe("PropertyDDS", () => {
             factory.type,
             factory,
             {},
-            [innerRequestHandler],
+            [rootDataStoreRequestHandler],
         );
 
 		let deltaConnectionServer: ILocalDeltaConnectionServer;
