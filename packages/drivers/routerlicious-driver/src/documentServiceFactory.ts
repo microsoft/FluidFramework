@@ -32,7 +32,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     maxConcurrentOrdererRequests: 100,
     aggregateBlobsSmallerThanBytes: undefined,
     enableWholeSummaryUpload: false,
-    enableRestLess: false,
+    enableRestLess: true,
 };
 
 /**

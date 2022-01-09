@@ -25,7 +25,7 @@ import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IPendingProposal } from '@fluidframework/protocol-definitions';
 import { IProvideFluidCodeDetailsComparer as IProvideFluidCodeDetailsComparer_2 } from '@fluidframework/core-interfaces';
-import { IQuorum } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -70,6 +70,7 @@ export type ConnectionState = ConnectionState.Disconnected | ConnectionState.Con
 
 // @public
 export enum ContainerErrorType {
+    clientSessionExpiredError = "clientSessionExpiredError",
     dataCorruptionError = "dataCorruptionError",
     dataProcessingError = "dataProcessingError",
     genericError = "genericError",
@@ -129,26 +130,24 @@ export interface IConnectionDetails {
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
     attach(request: IRequest): Promise<void>;
     readonly attachState: AttachState;
-    readonly audience?: IAudience;
+    readonly audience: IAudience;
     // @alpha
     readonly clientId?: string | undefined;
     close(error?: ICriticalContainerError): void;
     closeAndGetPendingLocalState(): string;
     readonly closed: boolean;
-    // @deprecated
-    readonly codeDetails?: IFluidCodeDetails_2 | undefined;
-    readonly connected?: boolean;
-    readonly connectionState?: ConnectionState;
+    readonly connected: boolean;
+    readonly connectionState: ConnectionState;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    getLoadedCodeDetails?(): IFluidCodeDetails_2 | undefined;
-    getQuorum(): IQuorum;
-    getSpecifiedCodeDetails?(): IFluidCodeDetails_2 | undefined;
+    getLoadedCodeDetails(): IFluidCodeDetails_2 | undefined;
+    getQuorum(): IQuorumClients;
+    getSpecifiedCodeDetails(): IFluidCodeDetails_2 | undefined;
     readonly isDirty: boolean;
     proposeCodeDetails(codeDetails: IFluidCodeDetails_2): Promise<boolean>;
-    readonly readOnlyInfo?: ReadOnlyInfo;
+    readonly readOnlyInfo: ReadOnlyInfo;
     request(request: IRequest): Promise<IResponse>;
     resolvedUrl: IResolvedUrl | undefined;
     // @alpha
@@ -171,8 +170,8 @@ export interface IContainerContext extends IDisposable {
     readonly clientId: string | undefined;
     // (undocumented)
     readonly closeFn: (error?: ICriticalContainerError) => void;
-    // (undocumented)
-    readonly configuration: IFluidConfiguration;
+    // @deprecated (undocumented)
+    readonly configuration?: IFluidConfiguration;
     // (undocumented)
     readonly connected: boolean;
     // (undocumented)
@@ -184,7 +183,7 @@ export interface IContainerContext extends IDisposable {
     getLoadedFromVersion(): IVersion | undefined;
     // @deprecated (undocumented)
     getSpecifiedCodeDetails?(): IFluidCodeDetails_2 | undefined;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
@@ -195,7 +194,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     pendingLocalState?: unknown;
     // (undocumented)
-    readonly quorum: IQuorum;
+    readonly quorum: IQuorumClients;
     // (undocumented)
     raiseContainerWarning(warning: ContainerWarning): void;
     readonly scope: IFluidObject & FluidObject;
@@ -256,6 +255,7 @@ export interface IDeltaHandlerStrategy {
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender, IDisposable {
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
+    // @deprecated (undocumented)
     close(): void;
     readonly hasCheckpointSequenceNumber: boolean;
     readonly inbound: IDeltaQueue<T>;

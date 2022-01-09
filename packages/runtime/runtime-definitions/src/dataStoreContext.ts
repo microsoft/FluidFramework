@@ -24,13 +24,17 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
     IDocumentMessage,
-    IQuorum,
+    IQuorumClients,
     ISequencedDocumentMessage,
     ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
-import { IGarbageCollectionData, IGarbageCollectionSummaryDetails } from "./garbageCollection";
+import {
+    IGarbageCollectionData,
+    IGarbageCollectionDetailsBase,
+    IGarbageCollectionSummaryDetails,
+} from "./garbageCollection";
 import { IInboundSignalMessage } from "./protocol";
 import {
     CreateChildSummarizerNodeParam,
@@ -133,7 +137,7 @@ export interface IContainerRuntimeBase extends
     /**
      * Returns the current quorum.
      */
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
 
     /**
      * Returns the current audience.
@@ -288,7 +292,7 @@ export interface IFluidDataStoreContext extends
     /**
      * Returns the current quorum.
      */
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
 
     /**
      * Returns the current audience.
@@ -296,7 +300,7 @@ export interface IFluidDataStoreContext extends
     getAudience(): IAudience;
 
     /**
-     * Report error in that happend in the data store runtime layer to the container runtime layer
+     * Report error that happened in the data store runtime layer to the container runtime layer
      * @param err - the error object.
      */
     raiseContainerWarning(warning: ContainerWarning): void;
@@ -351,10 +355,23 @@ export interface IFluidDataStoreContext extends
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 
     /**
+     * @deprecated - Renamed to getBaseGCDetails.
+     */
+    getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
+
+    /**
      * Returns the GC details in the initial summary of this data store. This is used to initialize the data store
      * and its children with the GC details from the previous summary.
      */
-    getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
+    getBaseGCDetails?(): Promise<IGarbageCollectionDetailsBase>;
+
+    /**
+     * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+     * all references added in the system.
+     * @param srcHandle - The handle of the node that added the reference.
+     * @param outboundHandle - The handle of the outbound node that is referenced.
+     */
+    addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
 }
 
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {

@@ -167,6 +167,8 @@ export class ConnectionManager implements IConnectionManager {
 
     private _connectionVerboseProps: Record<string, string | number> = {};
 
+    private _connectionProps: ITelemetryProperties = {};
+
     private closed = false;
 
     private readonly _outbound: DeltaQueue<IDocumentMessage[]>;
@@ -228,13 +230,10 @@ export class ConnectionManager implements IConnectionManager {
     */
      public get connectionProps(): ITelemetryProperties {
         if (this.connection !== undefined) {
-            return {
-                connectionMode: this.connectionMode,
-                relayServiceAgent: this.connection.relayServiceAgent,
-                socketDocumentId: this.connection?.claims.documentId,
-            };
+            return this._connectionProps;
         } else {
             return {
+                ...this._connectionProps,
                 // Report how many ops this client sent in last disconnected session
                 sentOps: this.clientSequenceNumber,
             };
@@ -283,7 +282,6 @@ export class ConnectionManager implements IConnectionManager {
             existing: connection.existing,
             checkpointSequenceNumber: connection.checkpointSequenceNumber,
             get initialClients() { return connection.initialClients; },
-            maxMessageSize: connection.serviceConfiguration.maxMessageSize,
             mode: connection.mode,
             serviceConfiguration: connection.serviceConfiguration,
             version: connection.version,
@@ -454,7 +452,7 @@ export class ConnectionManager implements IConnectionManager {
             // to keep setupNewSuccessfulConnection happy
             this.pendingConnection = true;
             this.setupNewSuccessfulConnection(connection, "read");
-            assert(!this.pendingConnection, "logic error");
+            assert(!this.pendingConnection, 0x2b3 /* "logic error" */);
             return;
         }
 
@@ -646,9 +644,17 @@ export class ConnectionManager implements IConnectionManager {
             clientId: connection.clientId,
             mode: connection.mode,
         };
+
+        // reset connection props
+        this._connectionProps = {};
+
         if (connection.relayServiceAgent !== undefined) {
             this._connectionVerboseProps.relayServiceAgent = connection.relayServiceAgent;
+            this._connectionProps.relayServiceAgent = connection.relayServiceAgent;
         }
+        this._connectionProps.socketDocumentId = connection.claims.documentId;
+        this._connectionProps.connectionMode = connection.mode;
+
         let last = -1;
         if (initialMessages.length !== 0) {
             this._connectionVerboseProps.connectionInitialOpsFrom = initialMessages[0].sequenceNumber;
@@ -786,7 +792,7 @@ export class ConnectionManager implements IConnectionManager {
     }
 
     public sendMessages(messages: IDocumentMessage[]) {
-        assert(this.connected, "not connected on sending ops!");
+        assert(this.connected, 0x2b4 /* "not connected on sending ops!" */);
 
         // If connection is "read" or implicit "read" (got leave op for "write" connection),
         // then op can't make it through - we will get a nack if op is sent.
@@ -810,7 +816,7 @@ export class ConnectionManager implements IConnectionManager {
             return;
         }
 
-        assert(!this.pendingReconnect, "logic error");
+        assert(!this.pendingReconnect, 0x2b5 /* "logic error" */);
 
         this._outbound.push(messages);
     }

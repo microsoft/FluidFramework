@@ -73,7 +73,7 @@ describe("SharedCounter", () => {
                 testCounter.increment(-10);
 
                 // Load a new SharedCounter from the snapshot of the first one.
-                const services = MockSharedObjectServices.createFromSummary(testCounter.summarize().summary);
+                const services = MockSharedObjectServices.createFromSummary(testCounter.getAttachSummary().summary);
                 const testCounter2 = factory.create(dataStoreRuntime, "counter2") as SharedCounter;
                 await testCounter2.load(services);
 

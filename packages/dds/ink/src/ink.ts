@@ -3,21 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-    TreeEntry,
-} from "@fluidframework/protocol-definitions";
 import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
+import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import { InkFactory } from "./inkFactory";
 import {
@@ -189,24 +183,11 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
      */
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: snapshotFileName,
-                    type: TreeEntry.Blob,
-                    value: {
-                        contents: JSON.stringify(this.inkData.getSerializable()),
-                        encoding: "utf-8",
-                    },
-                },
-            ],
-        };
-
-        return tree;
+    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+        const blobContent = JSON.stringify(this.inkData.getSerializable());
+        return createSingleBlobSummary(snapshotFileName, blobContent);
     }
 
     /**

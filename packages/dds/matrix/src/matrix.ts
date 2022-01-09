@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -18,13 +17,14 @@ import {
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import {
+    IFluidSerializer,
     makeHandlesSerializable,
     parseHandles,
     SharedObject,
     SummarySerializer,
 } from "@fluidframework/shared-object-base";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
-import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { convertToSummaryTreeWithStats, ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
     IMatrixProducer,
     IMatrixConsumer,
@@ -429,7 +429,7 @@ export class SharedMatrix<T = any>
         }
     }
 
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
+    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
         const tree: ITree = {
             entries: [
                 {
@@ -455,29 +455,19 @@ export class SharedMatrix<T = any>
             ],
         };
 
-        return tree;
+        return convertToSummaryTreeWithStats(tree, fullTree);
     }
 
     /**
-     * Returns the GC data for this SharedMatrix. All the IFluidHandle's stored in the cells represent routes to other
-     * objects.
+     * Runs serializer on the GC data for this SharedMatrix.
+     * All the IFluidHandle's stored in the cells represent routes to other objects.
      */
-    protected getGCDataCore(): IGarbageCollectionData {
-        // Create a SummarySerializer and use it to serialize all the cells. It keeps track of all IFluidHandles that it
-        // serializes.
-        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
-
+    protected processGCDataCore(serializer: SummarySerializer) {
         for (let row = 0; row < this.rowCount; row++) {
             for (let col = 0; col < this.colCount; col++) {
                 serializer.stringify(this.getCell(row, col), this.handle);
             }
         }
-
-        return {
-            gcNodes:{
-                ["/"]: serializer.getSerializedRoutes(),
-            },
-        };
     }
 
     /**

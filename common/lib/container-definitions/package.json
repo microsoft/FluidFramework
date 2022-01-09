@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/container-definitions",
-  "version": "0.44.0",
+  "version": "0.45.0",
   "description": "Fluid container definitions",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -38,20 +38,22 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.0",
     "@fluidframework/core-interfaces": "^0.41.0",
-    "@fluidframework/driver-definitions": "^0.43.0-0",
+    "@fluidframework/driver-definitions": "^0.43.0",
     "@fluidframework/protocol-definitions": "^0.1026.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.44827",
+    "@fluidframework/build-tools": "^0.2.46657",
     "@fluidframework/container-definitions-0.39.8": "npm:@fluidframework/container-definitions@0.39.8",
     "@fluidframework/container-definitions-0.40.0": "npm:@fluidframework/container-definitions@0.40.0",
     "@fluidframework/container-definitions-0.41.0": "npm:@fluidframework/container-definitions@0.41.0",
     "@fluidframework/container-definitions-0.42.0": "npm:@fluidframework/container-definitions@0.42.0",
+    "@fluidframework/container-definitions-0.43.0": "npm:@fluidframework/container-definitions@0.43.0",
+    "@fluidframework/container-definitions-0.44.0": "npm:@fluidframework/container-definitions@0.44.0",
     "@fluidframework/eslint-config-fluid": "^0.24.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@types/mocha": "^8.2.2",
-    "@types/node": "^12.19.0",
+    "@types/node": "^14.18.0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
     "concurrently": "^6.2.0",
@@ -68,7 +70,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.43.0",
+    "version": "0.45.0",
     "broken": {
       "0.39.8": {
         "EnumDeclaration_ContainerErrorType": {
@@ -131,6 +133,18 @@
         }
       },
       "0.40.0": {
+        "InterfaceDeclaration_IUsageError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IThrottlingWarning": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IGenericError": {
+          "backCompat": false
+        },
+        "EnumDeclaration_ContainerErrorType": {
+          "backCompat": false
+        },
         "InterfaceDeclaration_ICodeLoader": {
           "forwardCompat": false,
           "backCompat": false
@@ -152,16 +166,20 @@
           "backCompat": false
         },
         "InterfaceDeclaration_ILoader": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IProxyLoaderFactory": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IHostLoader": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IContainer": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IDeltaManager": {
           "backCompat": false
@@ -171,57 +189,232 @@
         }
       },
       "0.41.0": {
-        "InterfaceDeclaration_ILoader": {
+        "InterfaceDeclaration_IUsageError": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IThrottlingWarning": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IGenericError": {
+          "backCompat": false
+        },
+        "EnumDeclaration_ContainerErrorType": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ILoader": {
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IProxyLoaderFactory": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IHostLoader": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IFluidModule": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IContainerContext": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IContainer": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ICodeLoader": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IDeltaManager": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IConnectionDetails": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProvideRuntimeFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IRuntimeFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        }
+      },
+      "0.42.0": {
+        "InterfaceDeclaration_IUsageError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IThrottlingWarning": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IGenericError": {
+          "backCompat": false
+        },
+        "EnumDeclaration_ContainerErrorType": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ILoader": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IProxyLoaderFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IHostLoader": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IContainerContext": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IContainer": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IProvideLoader": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IProvideRuntimeFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IRuntimeFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IDeltaManager": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IConnectionDetails": {
           "backCompat": false
         },
         "InterfaceDeclaration_ICodeLoader": {
           "backCompat": false
         },
-        "InterfaceDeclaration_IDeltaManager": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_IConnectionDetails": {
+        "InterfaceDeclaration_IFluidModule": {
           "backCompat": false
         }
       },
-      "0.42.0": {
-        "InterfaceDeclaration_ILoader": {
+      "0.43.0": {
+        "InterfaceDeclaration_IUsageError": {
           "backCompat": false
         },
-        "InterfaceDeclaration_IProxyLoaderFactory": {
+        "InterfaceDeclaration_IThrottlingWarning": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IGenericError": {
+          "backCompat": false
+        },
+        "EnumDeclaration_ContainerErrorType": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ILoader": {
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IHostLoader": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IContainerContext": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IContainer": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IProvideLoader": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IProxyLoaderFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ICodeDetailsLoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ICodeLoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IFluidModule": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IFluidModuleWithDetails": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProvideRuntimeFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IRuntimeFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        }
+      },
+      "0.44.0": {
+        "EnumDeclaration_ContainerErrorType": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ICodeDetailsLoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ICodeLoader": {
           "backCompat": false
         },
         "InterfaceDeclaration_IContainer": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IContainerContext": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IFluidModule": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IFluidModuleWithDetails": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IGenericError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IHostLoader": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ILoader": {
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IProvideLoader": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IProvideRuntimeFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IProxyLoaderFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IRuntimeFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IThrottlingWarning": {
           "backCompat": false
         },
-        "InterfaceDeclaration_IDeltaManager": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_IConnectionDetails": {
+        "InterfaceDeclaration_IUsageError": {
           "backCompat": false
         }
       }

@@ -12,6 +12,7 @@ import { IAudience } from '@fluidframework/container-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { ICodeLoader } from '@fluidframework/container-definitions';
+import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerEvents } from '@fluidframework/container-definitions';
 import { IContainerLoadMode } from '@fluidframework/container-definitions';
@@ -89,7 +90,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get loadedFromVersion(): IVersion | undefined;
     // (undocumented)
-    get options(): ILoaderOptions;
+    readonly options: ILoaderOptions;
     // (undocumented)
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     raiseContainerWarning(warning: ContainerWarning): void;
@@ -157,12 +158,13 @@ export interface IFluidModuleWithDetails {
 // @public (undocumented)
 export interface ILoaderOptions extends ILoaderOptions_2 {
     // (undocumented)
-    summarizeProtocolTree?: true;
+    summarizeProtocolTree?: boolean;
 }
 
 // @public
 export interface ILoaderProps {
     readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly configProvider?: IConfigProviderBase;
     readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger;
@@ -188,15 +190,15 @@ export interface ILoaderServices {
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
     // (undocumented)
-    createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container>;
+    createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer>;
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     // (undocumented)
-    rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<Container>;
+    rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    resolve(request: IRequest, pendingLocalState?: string): Promise<Container>;
+    resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
     // (undocumented)
     readonly services: ILoaderServices;
 }

@@ -7,7 +7,7 @@
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
+import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
@@ -24,13 +24,12 @@ export interface AugmentedIntervalNode {
 
 // @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
-    constructor();
     // (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): PropertySet | undefined;
     // (undocumented)
-    addSerializedProps(jseg: IJSONSegment): void;
+    protected addSerializedProps(jseg: IJSONSegment): void;
     // (undocumented)
     abstract append(segment: ISegment): void;
     // (undocumented)
@@ -40,7 +39,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     abstract clone(): ISegment;
     // (undocumented)
-    cloneInto(b: ISegment): void;
+    protected cloneInto(b: ISegment): void;
     // (undocumented)
     protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
     // (undocumented)
@@ -135,7 +134,7 @@ export class Client {
     // (undocumented)
     getLongClientId(shortClientId: number): string;
     // (undocumented)
-    getMarkerFromId(id: string): ISegment;
+    getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getOrAddShortClientId(longClientId: string): number;
     getPosition(segment: ISegment): number;
@@ -980,8 +979,6 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
     hierBlock(): HierMergeBlock | undefined;
     // (undocumented)
     setOrdinal(child: IMergeNode, index: number): void;
-    // (undocumented)
-    static traceOrdinals: boolean;
 }
 
 // @public (undocumented)
@@ -1010,23 +1007,13 @@ export class MergeTree {
     // (undocumented)
     blockClone(block: IMergeBlock, segments?: ISegment[]): MergeBlock;
     // (undocumented)
-    blockUpdateActions: BlockUpdateActions;
-    // (undocumented)
-    static readonly blockUpdateMarkers = true;
-    // (undocumented)
     clone(): void;
     // (undocumented)
-    cloneSegments(refSeq: number, clientId: number, start?: number, end?: number): ISegment[];
+    readonly collabWindow: CollaborationWindow;
     // (undocumented)
-    collabWindow: CollaborationWindow;
-    // (undocumented)
-    static diagInsertTie: boolean;
-    // (undocumented)
-    static diagOverlappingRemove: boolean;
+    static readonly diagOverlappingRemove = false;
     // (undocumented)
     findHistorialPosition(pos: number, fromSeq: number, toSeq: number, clientId: number): number;
-    // (undocumented)
-    findHistorialPositionFromClient(pos: number, fromSeq: number, toSeq: number, clientId: number): number;
     // (undocumented)
     findHistorialRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, clientId: number): IIntegerRange[];
     // (undocumented)
@@ -1048,21 +1035,15 @@ export class MergeTree {
     // (undocumented)
     getLongClientId?: (id: number) => string;
     // (undocumented)
-    getMarkerFromId(id: string): ISegment;
+    getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getPosition(node: MergeNode, refSeq: number, clientId: number): number;
-    // (undocumented)
-    getRemovalInfo(segment: ISegment): IRemovalInfo;
     // (undocumented)
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
     getStats(): MergeTreeStats;
     // (undocumented)
-    idToSegment: MapLike<ISegment>;
-    // (undocumented)
     incrementalBlockMap<TContext>(stateStack: Stack<IncrementalMapState<TContext>>): void;
-    // (undocumented)
-    static initBlockUpdateActions: BlockUpdateActions;
     // (undocumented)
     insertAtReferencePosition(referencePosition: ReferencePosition, insertSegment: ISegment, opArgs: IMergeTreeDeltaOpArgs): void;
     // (undocumented)
@@ -1079,29 +1060,21 @@ export class MergeTree {
     // (undocumented)
     markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number, overwrite: boolean | undefined, opArgs: IMergeTreeDeltaOpArgs): void;
     // (undocumented)
-    maxOrdTime: number;
-    // (undocumented)
     mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
     // (undocumented)
     mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
-    // (undocumented)
-    minSeqListeners: Heap<MinListener> | undefined;
     // (undocumented)
     nodeToString(block: IMergeBlock, strbuf: string, indentCount?: number): string;
     // (undocumented)
     options?: PropertySet | undefined;
     // (undocumented)
-    static options: {
+    static readonly options: {
         incrementalUpdate: boolean;
         insertAfterRemovedSegs: boolean;
         measureOrdinalTime: boolean;
         measureWindowTime: boolean;
         zamboniSegments: boolean;
     };
-    // (undocumented)
-    ordTime: number;
-    // (undocumented)
-    packTime: number;
     // (undocumented)
     pendingSegments: List<SegmentGroup> | undefined;
     posFromRelativePos(relativePos: IRelativePosition, refseq?: number, clientId?: number): number;
@@ -1115,38 +1088,16 @@ export class MergeTree {
     // (undocumented)
     root: IMergeBlock;
     // (undocumented)
-    segmentsToScour: Heap<LRUSegment> | undefined;
-    // (undocumented)
     setMinSeq(minSeq: number): void;
-    // (undocumented)
-    static skipLeftShift: boolean;
     // (undocumented)
     startCollaboration(localClientId: number, minSeq: number, currentSeq: number): void;
     // (undocumented)
-    static TextSegmentGranularity: number;
-    // (undocumented)
-    static theUnfinishedNode: IMergeBlock;
-    // (undocumented)
     toString(): string;
     // (undocumented)
-    static traceAppend: boolean;
-    // (undocumented)
-    static traceGatherText: boolean;
-    // (undocumented)
-    static traceIncrTraversal: boolean;
-    // (undocumented)
-    static traceOrdinals: boolean;
-    // (undocumented)
-    static traceTraversal: boolean;
-    // (undocumented)
-    static traceZRemove: boolean;
+    static readonly traceGatherText = false;
     // (undocumented)
     walkAllSegments<TClientData>(block: IMergeBlock, action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): boolean;
-    // (undocumented)
-    windowTime: number;
-    // (undocumented)
-    static zamboniSegmentsMaxCount: number;
-}
+    }
 
 // @public (undocumented)
 export type MergeTreeDeltaCallback = (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs) => void;

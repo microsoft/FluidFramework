@@ -2,7 +2,7 @@
 
 The Fluid Framework's React package enables React developers to quickly start building large, scalable React apps with synced views powered by Fluid data. It does this by providing a `SyncedDataObject`, Fluid React hooks and a base view class for building React views that use synced states provided by Fluid.
 
-Examples on how to use all of the different tools in this package can be found in the [clicker-react](../../../examples/data-objects/clicker-react) and [`likes-and-comments`](../../../examples/data-objects/likes-and-comments) folders under `./examples/data-object/` from the Fluid Framework repo root.
+Examples on how to use all of the different tools in this package can be found in the [clicker-react](../../../examples/data-objects/clicker-react) and [`likes`](../../../examples/data-objects/likes) folders under `./examples/data-object/` from the Fluid Framework repo root.
 
 A good general order of operations to follow when writing a `SyncedDataObject` implementation is the following:
 1. Define the DDSes needed in the `SyncedDataObject`constructor. This can be done using the `set*Config` functions.
@@ -17,25 +17,20 @@ The `SyncedDataObject` essentially acts as the data store for the React app that
 
 `SyncedDataObject` uses the same factory as `DataObject`. However, in addition, it also provides the following functionality:
 
-- A `syncedStateConfig` where users can define the different types of values that they would like to see prepared for their view to consume. Values defined here are guaranteed to be initialized and available prior to `render` being called. Here, users can assign the DDSes that their React views will need by using the pre-built helper functions available to them from the `syncedObjects` folder, i.e. `setSyncedStringConfig`, `setSyncedArrayConfig`, etc. or they can manually define their own unique configuration with `this.setConfig`. Each value set on the config will have its own `syncedStateId` which we will use to refer to the prepared value from the view.
+- A `syncedStateConfig` where users can define the different types of values that they would like to see prepared for their view to consume. Values defined here are guaranteed to be initialized and available prior to `render` being called. Here, users can assign the DDSes that their React views will need by using the pre-built helper functions available to them from the `syncedObjects` folder, i.e. `setSyncedStringConfig`, etc. or they can manually define their own unique configuration with `this.setConfig`. Each value set on the config will have its own `syncedStateId` which we will use to refer to the prepared value from the view.
 
 - A `fluidObjectMap` that guarantees that all Fluid DDSes/objects used by this `SyncedDataObject` will be automatically created and loaded without the need for component lifecycle methods such as `initializeStateFirstTime` and `initializeStateFromExisting`
 
 #### SyncedDataObject Example
 
 ```jsx
-export class LikesAndComments extends SyncedDataObject {
+export class Likes extends SyncedDataObject {
     constructor(props) {
         super(props);
         // Adds a synced counter to config under ID 'likes'
         setSyncedCounterConfig(
             this,
             "likes",
-        );
-        // Adds a synced array to config under ID 'comments'
-        setSyncedArrayConfig<IComment>(
-            this,
-            "comments",
         );
         // Adds a synced string to config under ID 'imgUrl'
         setSyncedStringConfig(
@@ -58,37 +53,25 @@ A single `syncedDataObject` can hold multiple different types of DDSes and other
 The current roster of available helper & hook pairs for different DDSes are:
 - For just setting type T objects on a `SharedMap` -> `useSyncedObject<T>` & `setSyncedObjectConfig<T>`
 - `SharedCounter` -> `useSyncedCounter` & `setSyncedCounterConfig`
-- `SharedObjectSequence` -> `useSyncedArray<T>` & `setSyncedArrayConfig`
 - `SharedString` -> `useSyncedString` & `setSyncedStringConfig`
 
 NOTE: IT IS IMPORTANT TO PICK THE RIGHT DDS.
 
-While it may be tempting to use `useSyncedObject` for any type T object, a SharedMap has different syncing logic from a SharedString, SharedObjectSequence, etc. Therefore, passing a string to be set on a SharedMap is not the same as using a SharedString. The latter contains additional logic that allows people to, for example, type on the same word together without overwriting one another's characters. Please use `useSyncedString` for these scenarios. The SharedMap, on the other hand, is useful for having a distributed dictionary of items that are always in sync based on the values being set on the map.
+While it may be tempting to use `useSyncedObject` for any type T object, a SharedMap has different syncing logic from a SharedString, etc. Therefore, passing a string to be set on a SharedMap is not the same as using a SharedString. The latter contains additional logic that allows people to, for example, type on the same word together without overwriting one another's characters. Please use `useSyncedString` for these scenarios. The SharedMap, on the other hand, is useful for having a distributed dictionary of items that are always in sync based on the values being set on the map.
 
 ### syncedObject Hooks Example
 
 This example provides the view for the `syncedDataObject` in the example above.
 
 ```jsx
-function LikesAndCommentsView(
-    props: ILikesAndCommentsViewProps,
+function LikesView(
+    props: ILikesViewProps,
 ) {
     // Use the synced states that were prepared on our syncedDataObject above using the setSynced*Config helper functions. Note that the useSynced* function and the ID passed in correspond to the how the config was set above. These values are guaranteed to be available in the view
     const [likes, likesReducer] = useSyncedCounter(props.syncedDataObject, "likes");
-    const [comments, commentReducer] = useSyncedArray<IComment>(props.syncedDataObject, "comments");
     const [imgUrl, setImgUrl] = useSyncedString(props.syncedDataObject,"imgUrl");
 
-    // Use local state for the comment as we don't want it to be synced until it is submitted
-    const [currentComment, setCurrentComment] = React.useState("");
-
     // The remaining code is for rendering the React view elements themselves
-
-    // Convert data to JSX for comments state
-    const commentListItems = comments.map((item, key) => (
-        <li key={key}>
-            {`${item.author}: ${item.message}`}
-        </li>
-    ));
 
     // Render
     return (
@@ -109,26 +92,6 @@ function LikesAndCommentsView(
             <button onClick={() => likesReducer.increment(1)}>
                 {"+"}
             </button>
-            <div>
-                <div>
-                    <input
-                        type="text"
-                        value={currentComment}
-                        onChange={(e) => setCurrentComment(e.target.value)}
-                        placeholder="Add Comment"
-                    />
-                    <button
-                        onClick={() => {
-                            commentReducer.add({
-                                message: currentComment,
-                                author: getAuthorName(props.syncedDataObject),
-                            });
-                            setCurrentComment("");
-                        }}
-                    >{"Submit"}</button>
-                </div>
-                <ul>{commentListItems}</ul>
-            </div>
         </div>
     );
 }
@@ -139,17 +102,16 @@ Please note that for every different type of DDS that is used, the initial facto
 I.e. for the example above,
 ```jsx
 // ----- FACTORY SETUP -----
-export const LikesAndCommentsInstantiationFactory = new DataObjectFactory(
-    "likes-and-comments",
-    LikesAndComments,
+export const LikesInstantiationFactory = new DataObjectFactory(
+    "likes",
+    Likes,
     [
         SharedCounter.getFactory(),
-        SharedObjectSequence.getFactory(),
         SharedString.getFactory(),
     ],
     {},
 );
-export const fluidExport = LikesAndCommentsInstantiationFactory;
+export const fluidExport = LikesInstantiationFactory;
 ```
 
 These hooks should allow for general functionality to start users off building synced React views using Fluid DDSes. However, if users would like to set up their own custom relationships and configurations, we do also offer the `FluidReactView` base class that extends `React.Component` for classical views, and the `useStateFluid` and `useReducerFluid` hooks for functional views.
@@ -272,7 +234,7 @@ Reducers offer ways of mutating the state whereas selectors offer ways of fetchi
 
 Any updates to the root state are converted to updates in the view using the provided fluidConverters in the fluidToView map, and vice versa. This allows changes locally to reflect on the root, and root changes to also be translated back to local state updates.
 
-This is currently used to power the `useSyncedCounter` and `useSyncedArray` hook, and an example showcasing how to use it is coming soon.
+This is currently used to power the `useSyncedCounter` hook, and an example showcasing how to use it is coming soon.
 
 ## createContextFluid
 

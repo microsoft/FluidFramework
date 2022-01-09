@@ -147,7 +147,7 @@ export interface ITestObjectProvider {
     // (undocumented)
     loadContainer(entryPoint: fluidEntryPoint, options?: ITestLoaderOptions, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
-    loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
     logger: ITelemetryBaseLogger;
     // (undocumented)
@@ -254,7 +254,7 @@ export class TestObjectProvider {
     loadContainer(entryPoint: fluidEntryPoint, options?: ITestLoaderOptions, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
     readonly LoaderConstructor: typeof Loader;
-    loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
     get logger(): ITelemetryBaseLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;

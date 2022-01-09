@@ -120,7 +120,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
                 {},
                 registryEntries,
             );
-        super([rootDataObjectFactory.registryEntry], [], [defaultRouteRequestHandler(rootDataStoreId)]);
+        super([rootDataObjectFactory.registryEntry], undefined, [defaultRouteRequestHandler(rootDataStoreId)]);
         this.rootDataObjectFactory = rootDataObjectFactory;
         this.initialObjects = schema.initialObjects;
     }

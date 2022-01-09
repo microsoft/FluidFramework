@@ -10,7 +10,7 @@ import {
     ISequencedDocumentMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { IContainerContext } from "@fluidframework/container-definitions";
+import { IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
 import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
 
@@ -19,15 +19,29 @@ describe("Runtime", () => {
         describe("ContainerRuntime", () => {
             describe("orderSequentially", () => {
                 let containerRuntime: ContainerRuntime;
-                const mockContext: Partial<IContainerContext> = {
-                    deltaManager: new MockDeltaManager(),
-                    quorum: new MockQuorum(),
-                    logger: new MockLogger(),
+                const containerErrors: ICriticalContainerError[] = [];
+                const getMockContext = ((): Partial<IContainerContext> => {
+                    return {
+                        deltaManager: new MockDeltaManager(),
+                        quorum: new MockQuorum(),
+                        logger: new MockLogger(),
+                        clientDetails: { capabilities: { interactive: true } },
+                        closeFn: (error?: ICriticalContainerError): void => {
+                            if (error !== undefined) {
+                                containerErrors.push(error);
+                            }
+                        },
+                    };
+                });
+
+                const getSingleContainerError = (): ICriticalContainerError => {
+                    assert.strictEqual(containerErrors.length, 1);
+                    return containerErrors[0];
                 };
 
                 beforeEach(async () => {
                     containerRuntime = await ContainerRuntime.load(
-                        mockContext as IContainerContext,
+                        getMockContext() as IContainerContext,
                         [],
                         undefined, // requestHandler
                         {
@@ -36,21 +50,35 @@ describe("Runtime", () => {
                             },
                         },
                     );
+                    containerErrors.length = 0;
                 });
 
                 it("Can't call flush() inside orderSequentially's callback", () => {
-                    assert.throws(() => containerRuntime.orderSequentially(() => containerRuntime.flush()));
+                    containerRuntime.orderSequentially(() => containerRuntime.flush());
+                    assert.strictEqual(getSingleContainerError().errorType, "dataProcessingError");
                 });
 
                 it("Can't call flush() inside orderSequentially's callback when nested", () => {
-                    assert.throws(
+                    containerRuntime.orderSequentially(
                         () => containerRuntime.orderSequentially(
                             () => containerRuntime.orderSequentially(
-                                () => containerRuntime.orderSequentially(
-                                    () => containerRuntime.flush()))));
+                                () => containerRuntime.flush())));
+
+                    assert.strictEqual(getSingleContainerError().errorType, "dataProcessingError");
+                });
+
+                it("Errors propagate to the container", () => {
+                    containerRuntime.orderSequentially(() => {
+                        throw new Error("Any");
+                    });
+
+                    const error = getSingleContainerError();
+                    assert.strictEqual(error.errorType, "dataProcessingError");
+                    assert.ok(error.message.includes("Any"));
                 });
             });
         });
+
         describe("ScheduleManager", () => {
             describe("Batch processing events", () => {
                 let batchBegin: number = 0;

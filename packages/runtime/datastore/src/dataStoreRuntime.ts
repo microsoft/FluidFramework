@@ -34,11 +34,11 @@ import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
     IClientDetails,
     IDocumentMessage,
-    IQuorum,
     ISequencedDocumentMessage,
     SummaryType,
     ISummaryBlob,
     ISummaryTree,
+    IQuorumClients,
 } from "@fluidframework/protocol-definitions";
 import {
     CreateSummarizerNodeSource,
@@ -47,14 +47,13 @@ import {
     IFluidDataStoreContext,
     IFluidDataStoreChannel,
     IGarbageCollectionData,
-    IGarbageCollectionSummaryDetails,
+    IGarbageCollectionDetailsBase,
     IInboundSignalMessage,
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import {
     convertSnapshotTreeToSummaryTree,
     convertSummaryTreeToITree,
-    FluidSerializer,
     generateHandleContextPath,
     RequestParser,
     SummaryTreeBuilder,
@@ -140,10 +139,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this.dataStoreContext.IFluidHandleContext;
     }
 
-    private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
-    // Back compat: deprecated in 0.53, can be removed in versions >= 0.55.
-    public get IFluidSerializer() { return this.serializer; }
-
     public get IFluidHandleContext() { return this; }
 
     public get rootRoutingContext() { return this; }
@@ -171,13 +166,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public readonly id: string;
     public readonly options: ILoaderOptions;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    private readonly quorum: IQuorum;
+    private readonly quorum: IQuorumClients;
     private readonly audience: IAudience;
     public readonly logger: ITelemetryLogger;
 
-    // A map of child channel context ids to the their GC details in the initial summary of this data store.
-    // This is used to initialize the channel context with data from the base summary.
-    private readonly initialChannelsGCDetailsP: LazyPromise<Map<string, IGarbageCollectionSummaryDetails>>;
+    // A map of child channel context ids to the their base GC details. This is used to initialize the GC state of the
+    // channel contexts.
+    private readonly channelsBaseGCDetails: LazyPromise<Map<string, IGarbageCollectionDetailsBase>>;
 
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -200,9 +195,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         const tree = dataStoreContext.baseSnapshot;
 
-        this.initialChannelsGCDetailsP = new LazyPromise(async () => {
-            const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails();
-            return unpackChildNodesGCDetails(gcDetailsInInitialSummary);
+        this.channelsBaseGCDetails = new LazyPromise(async () => {
+            const baseGCDetails = await
+                (this.dataStoreContext.getBaseGCDetails?.() ?? this.dataStoreContext.getInitialGCSummaryDetails());
+            return unpackChildNodesGCDetails(baseGCDetails);
         });
 
         // Must always receive the data store type inside of the attributes
@@ -224,6 +220,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         this.dataStoreContext.storage,
                         (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
                         (address: string) => this.setChannelDirty(address),
+                        (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+                            this.addedGCOutboundReference(srcHandle, outboundHandle),
                         tree.trees[path]);
                     // This is the case of rehydrating a detached container from snapshot. Now due to delay loading of
                     // data store, if the data store is loaded after the container is attached, then we missed marking
@@ -241,6 +239,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         dataStoreContext.storage,
                         (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
                         (address: string) => this.setChannelDirty(address),
+                        (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+                            this.addedGCOutboundReference(srcHandle, outboundHandle),
                         path,
                         tree.trees[path],
                         this.sharedObjectRegistry,
@@ -249,7 +249,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                             path,
                             { type: CreateSummarizerNodeSource.FromSummary },
                         ),
-                        async () => this.getChannelInitialGCDetails(path));
+                        async () => this.getChannelBaseGCDetails(path));
                 }
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
@@ -345,7 +345,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.dataStoreContext,
             this.dataStoreContext.storage,
             (content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
-            (address: string) => this.setChannelDirty(address));
+            (address: string) => this.setChannelDirty(address),
+            (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+                this.addedGCOutboundReference(srcHandle, outboundHandle));
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
@@ -447,7 +449,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         raiseConnectedEvent(this.logger, this, connected, clientId);
     }
 
-    public getQuorum(): IQuorum {
+    public getQuorum(): IQuorumClients {
         return this.quorum;
     }
 
@@ -491,6 +493,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                             this.dataStoreContext.storage,
                             (content, localContentMetadata) => this.submitChannelOp(id, content, localContentMetadata),
                             (address: string) => this.setChannelDirty(address),
+                            (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+                                this.addedGCOutboundReference(srcHandle, outboundHandle),
                             id,
                             snapshotTree,
                             this.sharedObjectRegistry,
@@ -503,7 +507,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                                     snapshot: attachMessage.snapshot,
                                 },
                             ),
-                            async () => this.getChannelInitialGCDetails(id),
+                            async () => this.getChannelBaseGCDetails(id),
                             attachMessage.type);
 
                         this.contexts.set(id, remoteChannelContext);
@@ -630,24 +634,32 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     /**
-     * Returns the GC details in initial summary for the channel with the given id. The initial summary of the data
-     * store contains the GC details of all the child channel contexts that were created before the summary was taken.
-     * We find the GC details belonging to the given channel context and return it.
-     * @param channelId - The id of the channel context that is asked for the initial GC details.
-     * @returns the requested channel's GC details in the initial summary.
+     * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+     * all references added in the system.
+     * @param srcHandle - The handle of the node that added the reference.
+     * @param outboundHandle - The handle of the outbound node that is referenced.
      */
-    private async getChannelInitialGCDetails(channelId: string): Promise<IGarbageCollectionSummaryDetails> {
-        let channelInitialGCDetails = (await this.initialChannelsGCDetailsP).get(channelId);
-        if (channelInitialGCDetails === undefined) {
-            channelInitialGCDetails = {};
+    private addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
+        this.dataStoreContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
+    }
+
+    /**
+     * Returns the base GC details for the channel with the given id. This is used to initialize its GC state.
+     * @param channelId - The id of the channel context that is asked for the initial GC details.
+     * @returns the requested channel's base GC details.
+     */
+    private async getChannelBaseGCDetails(channelId: string): Promise<IGarbageCollectionDetailsBase> {
+        let channelBaseGCDetails = (await this.channelsBaseGCDetails).get(channelId);
+        if (channelBaseGCDetails === undefined) {
+            channelBaseGCDetails = {};
         }
 
         // Currently, channel context's are always considered used. So, it there are no used routes for it, we still
         // need to mark it as used. Add self-route (empty string) to the channel context's used routes.
-        if (channelInitialGCDetails.usedRoutes === undefined || channelInitialGCDetails.usedRoutes.length === 0) {
-            channelInitialGCDetails.usedRoutes = [""];
+        if (channelBaseGCDetails.usedRoutes === undefined || channelBaseGCDetails.usedRoutes.length === 0) {
+            channelBaseGCDetails.usedRoutes = [""];
         }
-        return channelInitialGCDetails;
+        return channelBaseGCDetails;
     }
 
     /**

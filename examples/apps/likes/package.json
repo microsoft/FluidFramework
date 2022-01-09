@@ -1,0 +1,100 @@
+{
+  "name": "@fluid-example/likes",
+  "version": "0.55.0",
+  "description": "A Fluid object for storing like counts using pre-build DDS hooks",
+  "homepage": "https://fluidframework.com",
+  "repository": "https://github.com/microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft and contributors",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:lint",
+    "build:compile": "concurrently npm:tsc npm:build:copy",
+    "build:copy": "copyfiles -u 1 \"src/**/*.css\" dist/",
+    "build:full": "concurrently npm:build npm:webpack",
+    "build:full:compile": "concurrently npm:build:compile npm:webpack",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "dev": "npm run webpack:dev",
+    "eslint": "eslint --format stylish src",
+    "eslint:fix": "eslint --format stylish src --fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
+    "prepack": "npm run webpack",
+    "start": "webpack-dev-server",
+    "start:server": "tinylicious",
+    "tsc": "tsc",
+    "tsfmt": "tsfmt --verify",
+    "tsfmt:fix": "tsfmt --replace",
+    "webpack": "webpack --env.production",
+    "webpack:dev": "webpack --env.development"
+  },
+  "dependencies": {
+    "@fluid-experimental/get-container": "^0.55.0",
+    "@fluid-experimental/react": "^0.55.0",
+    "@fluid-experimental/react-inputs": "^0.55.0",
+    "@fluidframework/aqueduct": "^0.55.0",
+    "@fluidframework/common-definitions": "^0.20.1",
+    "@fluidframework/counter": "^0.55.0",
+    "@fluidframework/datastore-definitions": "^0.55.0",
+    "@fluidframework/map": "^0.55.0",
+    "@fluidframework/merge-tree": "^0.55.0",
+    "@fluidframework/protocol-definitions": "^0.1026.0",
+    "@fluidframework/sequence": "^0.55.0",
+    "@fluidframework/shared-object-base": "^0.55.0",
+    "react": "^16.10.2",
+    "react-dom": "^16.10.2"
+  },
+  "devDependencies": {
+    "@fluidframework/test-tools": "^0.2.3074",
+    "@types/expect-puppeteer": "2.2.1",
+    "@types/jest": "22.2.3",
+    "@types/jest-environment-puppeteer": "2.2.0",
+    "@types/node": "^14.18.0",
+    "@types/puppeteer": "1.3.0",
+    "@types/react": "^16.9.15",
+    "@types/react-dom": "^16.9.4",
+    "@typescript-eslint/eslint-plugin": "~4.14.0",
+    "@typescript-eslint/parser": "~4.14.0",
+    "concurrently": "^6.2.0",
+    "copyfiles": "^2.1.0",
+    "css-loader": "^1.0.0",
+    "eslint": "~7.18.0",
+    "eslint-plugin-eslint-comments": "~3.2.0",
+    "eslint-plugin-import": "~2.22.1",
+    "eslint-plugin-no-null": "~1.0.2",
+    "eslint-plugin-prefer-arrow": "~1.2.2",
+    "eslint-plugin-react": "~7.22.0",
+    "eslint-plugin-unicorn": "~26.0.1",
+    "html-webpack-plugin": "^4.3.0",
+    "jest": "^26.6.3",
+    "jest-junit": "^10.0.0",
+    "jest-puppeteer": "^4.3.0",
+    "puppeteer": "^1.20.0",
+    "rimraf": "^2.6.2",
+    "style-loader": "^1.0.0",
+    "ts-jest": "^26.4.4",
+    "ts-loader": "^6.1.2",
+    "typescript": "~4.1.3",
+    "typescript-formatter": "7.1.0",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-server": "^3.8.0",
+    "webpack-merge": "^4.1.4"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  },
+  "jest-junit": {
+    "outputDirectory": "nyc",
+    "outputName": "jest-junit-report.xml"
+  }
+}

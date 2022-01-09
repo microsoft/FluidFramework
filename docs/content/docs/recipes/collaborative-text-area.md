@@ -38,7 +38,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     |---|---|
     | `fluid-framework`    |Contains the SharedString [distributed data structure]({{< relref "dds.md" >}}) that synchronizes text across clients. *This object will hold the most recent text update made by any client.*|
     | `@fluidframework/tinylicious-client`   |Defines the connection to a Fluid server and defines the starting schema for the [Fluid container]({{< relref "containers.md" >}}).|
-    | `@fluid-experimental/react-inputs`   |Contains the SharedStringHelper class that helps provides a simple APIs to interact with the [SharedString]({{< relref "string.md" >}}) object.|
+    | `@fluid-experimental/react-inputs`   |Contains the SharedStringHelper class that provides helper APIs to interact with the [SharedString]({{< relref "string.md" >}}) object.|
     {.table}
 
     Run the following command to install the libraries.

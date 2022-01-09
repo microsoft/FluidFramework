@@ -53,9 +53,9 @@ jobs:
           - download: current
             artifact: pack
           - task: UseNode@1
-            displayName: Use Node 12.x
+            displayName: Use Node 14.x
             inputs:
-              version: 12.x
+              version: 14.x
           - template: include-publish-npm-package-steps.yml
             parameters:
               namespace: ${{ parameters.namespace }}
@@ -64,7 +64,7 @@ jobs:
               customEndPoint: ${{ parameters.customEndPoint }}
               official: ${{ parameters.official }}
               publishFlags: ${{ parameters.publishFlags }}
-          - ${{ if eq(parameters.publishNonScopedPackages, true) }}:  
+          - ${{ if eq(parameters.publishNonScopedPackages, true) }}:
             - template: include-publish-npm-package-steps.yml
               parameters:
                 namespace: false
