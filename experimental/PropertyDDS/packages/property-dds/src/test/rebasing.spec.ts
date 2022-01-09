@@ -29,7 +29,6 @@ import {
 	ArrayProperty,
 	NamedProperty,
 } from "@fluid-experimental/property-properties";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 import { SharedPropertyTree } from "../propertyTree";
@@ -78,8 +77,6 @@ describe("PropertyDDS", () => {
 			config: {},
 		};
 		const factory = new TestFluidObjectFactory([[propertyDdsId, SharedPropertyTree.getFactory()]]);
-        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-            runtime.IFluidHandleContext.resolveHandle(request);
         const runtimeFactory = new TestContainerRuntimeFactory(
             factory.type,
             factory,
