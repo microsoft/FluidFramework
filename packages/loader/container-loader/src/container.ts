@@ -162,6 +162,80 @@ export enum ConnectionState {
     Connected,
 }
 
+enum LifecycleState {
+    /**
+     * The container has been created
+     */
+    Created = "created",
+
+    /**
+     * The container is loading
+     */
+    Loading = "loading",
+
+    /**
+     * The container has been loaded
+     */
+    Loaded = "loaded",
+
+    /**
+     * The container has been marked for closure
+     */
+    Closing = "closing",
+
+    /**
+     * The container is in closed state
+     */
+    Closed = "closed",
+}
+
+class LifecycleStateHandler {
+    constructor(state: LifecycleState) {
+        this._state = state;
+    }
+
+    public get state(): LifecycleState {
+        return this._state;
+    }
+
+    /**
+     * Returns true if the container has been closed, otherwise false
+     */
+    public isClosed(): boolean {
+        return (this._state === LifecycleState.Closing || this._state === LifecycleState.Closed);
+    }
+
+    /**
+     * Returns true if the container has been loaded, otherwise false
+     */
+    public isLoaded(): boolean {
+        return (this._state !== LifecycleState.Created && this._state !== LifecycleState.Loading);
+    }
+
+    /**
+     * Transitions the container's lifecycle state
+     */
+    public changeState(newState: LifecycleState) {
+        // TODO: Figure our the possible state transitions...
+        switch (newState) {
+            case LifecycleState.Loaded:
+                assert(this._state !== LifecycleState.Created,
+                    0x27e /* "Must go through loading state before loaded" */);
+
+                // It's conceivable the container could be closed when this is called
+                // Only transition states if currently loading
+                if (this._state === LifecycleState.Loading) {
+                    this._state = newState;
+                }
+                break;
+            default:
+                this._state = newState;
+        }
+    }
+
+    private _state: LifecycleState;
+}
+
 /**
  * Waits until container connects to delta storage and gets up-to-date
  * Useful when resolving URIs and hitting 404, due to container being loaded from (stale) snapshot and not being
@@ -252,7 +326,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             container.mc.logger,
             { eventName: "Load" },
             async (event) => new Promise<Container>((resolve, reject) => {
-                container._lifecycleState = "loading";
+                container._stateHandler.changeState(LifecycleState.Loading);
                 const version = loadOptions.version;
 
                 // always load unpaused with pending ops!
@@ -303,7 +377,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             container.mc.logger,
             { eventName: "CreateDetached" },
             async (_event) => {
-                container._lifecycleState = "loading";
+                container._stateHandler.changeState(LifecycleState.Loading);
                 await container.createDetached(codeDetails);
                 return container;
             },
@@ -326,7 +400,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             { eventName: "RehydrateDetachedFromSnapshot" },
             async (_event) => {
                 const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
-                container._lifecycleState = "loading";
+                container._stateHandler.changeState(LifecycleState.Loading);
                 await container.rehydrateDetachedFromSnapshot(deserializedSummary);
                 return container;
             },
@@ -341,25 +415,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly mc: MonitoringContext;
 
-    private _lifecycleState: "created" | "loading" | "loaded" | "closing" | "closed" = "created";
+    private readonly _stateHandler: LifecycleStateHandler = new LifecycleStateHandler(LifecycleState.Created);
 
     private get loaded(): boolean {
-        return (this._lifecycleState !== "created" && this._lifecycleState !== "loading");
+        return this._stateHandler.isLoaded();
     }
 
     private set loaded(t: boolean) {
         assert(t, 0x27d /* "Setting loaded state to false is not supported" */);
-        assert(this._lifecycleState !== "created", 0x27e /* "Must go through loading state before loaded" */);
-
-        // It's conceivable the container could be closed when this is called
-        // Only transition states if currently loading
-        if (this._lifecycleState === "loading") {
-            this._lifecycleState = "loaded";
-        }
+        this._stateHandler.changeState(LifecycleState.Loaded);
     }
 
     public get closed(): boolean {
-        return (this._lifecycleState === "closing" || this._lifecycleState === "closed");
+        return this._stateHandler.isClosed();
     }
 
     private _attachState = AttachState.Detached;
@@ -558,7 +626,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     containerId: uuid(),
                     docId: () => this._resolvedUrl?.id ?? undefined,
                     containerAttachState: () => this._attachState,
-                    containerLifecycleState: () => this._lifecycleState,
+                    containerLifecycleState: () => this._stateHandler.state,
                     containerConnectionState: () => ConnectionState[this.connectionState],
                 },
                 // we need to be judicious with our logging here to avoid generating too much data
@@ -702,7 +770,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         try {
-            this._lifecycleState = "closing";
+            this._stateHandler.changeState(LifecycleState.Closing);
 
             // Ensure that we raise all key events even if one of these throws
             try {
@@ -742,7 +810,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 document.removeEventListener("visibilitychange", this.visibilityEventHandler);
             }
         } finally {
-            this._lifecycleState = "closed";
+            this._stateHandler.changeState(LifecycleState.Closed);
         }
     }
 
@@ -783,8 +851,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public async attach(request: IRequest): Promise<void> {
         await PerformanceEvent.timedExecAsync(this.mc.logger, { eventName: "Attach" }, async () => {
-            if (this._lifecycleState !== "loaded") {
-                throw new UsageError(`containerNotValidForAttach [${this._lifecycleState}]`);
+            if (this._stateHandler.state !== LifecycleState.Loaded) {
+                throw new UsageError(`containerNotValidForAttach [${this._stateHandler.state}]`);
             }
 
             // If container is already attached or attach is in progress, throw an error.
