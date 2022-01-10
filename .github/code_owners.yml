@@ -48,7 +48,6 @@ packages/loader/**:
 - anthony-murphy
 packages/runtime/**:
 - vladsud
-- arinwt
 - curtisman
 
 packages/test/**:
