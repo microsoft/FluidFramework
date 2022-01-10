@@ -11,7 +11,9 @@ const { BannedModulesPlugin } = require('@fluidframework/bundle-size-tools')
 
 module.exports = {
   entry: {
-    'container': './src/container',
+    'aqueduct': './src/aqueduct',
+    'containerRuntime': './src/containerRuntime',
+    'loader': './src/loader',
     'map': './src/map',
     'matrix': './src/matrix',
     'odspDriver': './src/odspDriver',
