@@ -151,38 +151,6 @@ export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
     createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime): Promise<IFluidRouter>;
 }
 
-// @public @deprecated (undocumented)
-export abstract class LegacyDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent> extends DataObject<{
-    OptionalProviders: O;
-    InitialState: S;
-    Events: E;
-}> {
-}
-
-// @public @deprecated (undocumented)
-export class LegacyDataObjectFactory<TObj extends LegacyDataObject<O, S, E>, O, S, E extends IEvent = IEvent> extends DataObjectFactory<TObj, {
-    OptionalProviders: O;
-    InitialState: S;
-    Events: E;
-}> {
-}
-
-// @public @deprecated (undocumented)
-export abstract class LegacyPureDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent> extends PureDataObject<{
-    OptionalProviders: O;
-    InitialState: S;
-    Events: E;
-}> {
-}
-
-// @public @deprecated (undocumented)
-export class LegacyPureDataObjectFactory<TObj extends LegacyPureDataObject<O, S, E>, O, S, E extends IEvent = IEvent> extends PureDataObjectFactory<TObj, {
-    OptionalProviders: O;
-    InitialState: S;
-    Events: E;
-}> {
-}
-
 // @public
 export const mountableViewRequestHandler: (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse>;
 
