@@ -278,7 +278,9 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 
     private stop(reason: SummarizerStopReason) {
-        assert(SummaryManager.isStartingOrRunning(this.state), 0x265 /* "Expected: Starting or Running" */);
+        if (!SummaryManager.isStartingOrRunning(this.state)) {
+            return;
+        }
         this.state = SummaryManagerState.Stopping;
 
         // Stopping the running summarizer client should trigger a change
