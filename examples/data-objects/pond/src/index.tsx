@@ -10,6 +10,7 @@ import {
 } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedDirectory } from "@fluidframework/map";
+import { DependencyContainer } from "@fluidframework/synthesize";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import {
@@ -118,14 +119,13 @@ export class Pond extends DataObject implements IFluidHTMLView {
 
 // ----- CONTAINER SETUP STUFF -----
 
+const dependencyContainer = new DependencyContainer();
+dependencyContainer.register(IFluidUserInformation, async (dc) => userInfoFactory(dc));
+
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     Pond.getFactory(),
     new Map([
         Pond.getFactory().registryEntry,
     ]),
-    [
-        {
-            type: IFluidUserInformation,
-            provider: async (dc) => userInfoFactory(dc),
-        },
-    ]);
+    dependencyContainer,
+);

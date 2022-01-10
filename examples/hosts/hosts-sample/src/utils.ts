@@ -55,6 +55,6 @@ export function parsePackageDetails(pkg: string | Readonly<IFluidPackage>) {
 
 /** Retrieve the code proposal value from the container's quorum */
 export function getCodeDetailsFromQuorum(container: IContainer): IFluidCodeDetails {
-    const pkg = container.getQuorum().get("code");
+    const pkg = container.getSpecifiedCodeDetails?.();
     return pkg as IFluidCodeDetails;
 }

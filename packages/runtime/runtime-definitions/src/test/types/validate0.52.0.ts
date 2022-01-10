@@ -495,26 +495,26 @@ use_old_InterfaceDeclaration_IGarbageCollectionData(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.52.0:
-* "InterfaceDeclaration_IGarbageCollectionSummaryDetails": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IGarbageCollectionSummaryDetails": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IGarbageCollectionSummaryDetails():
     old.IGarbageCollectionSummaryDetails;
-declare function use_current_InterfaceDeclaration_IGarbageCollectionSummaryDetails(
+declare function use_current_RemovedInterfaceDeclaration_IGarbageCollectionSummaryDetails(
     use: current.IGarbageCollectionSummaryDetails);
-use_current_InterfaceDeclaration_IGarbageCollectionSummaryDetails(
+use_current_RemovedInterfaceDeclaration_IGarbageCollectionSummaryDetails(
     get_old_InterfaceDeclaration_IGarbageCollectionSummaryDetails());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.52.0:
-* "InterfaceDeclaration_IGarbageCollectionSummaryDetails": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IGarbageCollectionSummaryDetails": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IGarbageCollectionSummaryDetails():
+declare function get_current_RemovedInterfaceDeclaration_IGarbageCollectionSummaryDetails():
     current.IGarbageCollectionSummaryDetails;
 declare function use_old_InterfaceDeclaration_IGarbageCollectionSummaryDetails(
     use: old.IGarbageCollectionSummaryDetails);
 use_old_InterfaceDeclaration_IGarbageCollectionSummaryDetails(
-    get_current_InterfaceDeclaration_IGarbageCollectionSummaryDetails());
+    get_current_RemovedInterfaceDeclaration_IGarbageCollectionSummaryDetails());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -6,7 +6,6 @@
 
 import { AsyncFluidObjectProvider } from '@fluidframework/synthesize';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
-import { DependencyContainerRegistry } from '@fluidframework/synthesize';
 import { EventForwarder } from '@fluidframework/common-utils';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { FluidObject } from '@fluidframework/core-interfaces';
@@ -25,6 +24,7 @@ import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definiti
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidDependencySynthesizer } from '@fluidframework/synthesize';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidMountableViewClass } from '@fluidframework/view-interfaces';
@@ -43,7 +43,7 @@ import { RuntimeRequestHandler } from '@fluidframework/request-handler';
 
 // @public
 export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements IProvideFluidDataStoreRegistry {
-    constructor(registryEntries: NamedFluidDataStoreRegistryEntries, providerEntries?: DependencyContainerRegistry, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions | undefined);
+    constructor(registryEntries: NamedFluidDataStoreRegistryEntries, dependencyContainer?: IFluidDependencySynthesizer | undefined, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions | undefined);
     protected containerHasInitialized(runtime: IContainerRuntime): Promise<void>;
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
@@ -69,7 +69,7 @@ export abstract class BaseContainerService implements IFluidRouter {
 
 // @public
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
-    constructor(defaultFactory: IFluidDataStoreFactory, registryEntries: NamedFluidDataStoreRegistryEntries, providerEntries?: DependencyContainerRegistry, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions);
+    constructor(defaultFactory: IFluidDataStoreFactory, registryEntries: NamedFluidDataStoreRegistryEntries, dependencyContainer?: IFluidDependencySynthesizer, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions);
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
     static readonly defaultDataStoreId = "default";
@@ -149,38 +149,6 @@ export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
 export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
     // (undocumented)
     createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime): Promise<IFluidRouter>;
-}
-
-// @public @deprecated (undocumented)
-export abstract class LegacyDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent> extends DataObject<{
-    OptionalProviders: O;
-    InitialState: S;
-    Events: E;
-}> {
-}
-
-// @public @deprecated (undocumented)
-export class LegacyDataObjectFactory<TObj extends LegacyDataObject<O, S, E>, O, S, E extends IEvent = IEvent> extends DataObjectFactory<TObj, {
-    OptionalProviders: O;
-    InitialState: S;
-    Events: E;
-}> {
-}
-
-// @public @deprecated (undocumented)
-export abstract class LegacyPureDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent> extends PureDataObject<{
-    OptionalProviders: O;
-    InitialState: S;
-    Events: E;
-}> {
-}
-
-// @public @deprecated (undocumented)
-export class LegacyPureDataObjectFactory<TObj extends LegacyPureDataObject<O, S, E>, O, S, E extends IEvent = IEvent> extends PureDataObjectFactory<TObj, {
-    OptionalProviders: O;
-    InitialState: S;
-    Events: E;
-}> {
 }
 
 // @public

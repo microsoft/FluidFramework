@@ -9,7 +9,7 @@ import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { loggerToMonitoringContext, MonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IOdspSummaryPayload,
     IWriteSummaryResponse,
@@ -24,23 +24,6 @@ import { getWithRetryForTokenRefresh } from "./odspUtils";
 
 /* eslint-disable max-len */
 
-// Gate that when flipped, instructs to mark unreferenced nodes as such in the summary sent to SPO.
-function gatesMarkUnreferencedNodes() {
-    try {
-        // Leave override for testing purposes
-        if (typeof localStorage === "object" && localStorage !== null) {
-            if  (localStorage.FluidMarkUnreferencedNodes === "1") {
-                return true;
-            }
-            if  (localStorage.FluidMarkUnreferencedNodes === "0") {
-                return false;
-            }
-        }
-    } catch (e) {}
-
-    return true;
-}
-
 /**
  * This class manages a summary upload. When it receives a call to upload summary, it converts the summary tree into
  * a snapshot tree and then uploads that to the server.
@@ -48,20 +31,22 @@ function gatesMarkUnreferencedNodes() {
 export class OdspSummaryUploadManager {
     // Last proposed handle of the uploaded app summary.
     private lastSummaryProposalHandle: string | undefined;
+    private readonly mc: MonitoringContext;
 
     constructor(
         private readonly snapshotUrl: string,
         private readonly getStorageToken: InstrumentedStorageTokenFetcher,
-        private readonly logger: ITelemetryLogger,
+        logger: ITelemetryLogger,
         private readonly epochTracker: EpochTracker,
     ) {
+        this.mc = loggerToMonitoringContext(logger);
     }
 
     public async writeSummaryTree(tree: api.ISummaryTree, context: ISummaryContext) {
         // If the last proposed handle is not the proposed handle of the acked summary(could happen when the last summary get nacked),
         // then re-initialize the caches with the previous ones else just update the previous caches with the caches from acked summary.
         if (context.proposalHandle !== this.lastSummaryProposalHandle) {
-            this.logger.sendTelemetryEvent({
+            this.mc.logger.sendTelemetryEvent({
                 eventName: "LastSummaryProposedHandleMismatch",
                 ackedSummaryProposedHandle: context.proposalHandle,
                 lastSummaryProposalHandle: this.lastSummaryProposalHandle,
@@ -107,7 +92,7 @@ export class OdspSummaryUploadManager {
 
             const postBody = JSON.stringify(snapshot);
 
-            return PerformanceEvent.timedExecAsync(this.logger,
+            return PerformanceEvent.timedExecAsync(this.mc.logger,
                 {
                     eventName: "uploadSummary",
                     attempt: options.refresh ? 2 : 1,
@@ -145,7 +130,7 @@ export class OdspSummaryUploadManager {
         tree: api.ISummaryTree,
         rootNodeName: string,
         path: string = "",
-        markUnreferencedNodes: boolean = gatesMarkUnreferencedNodes(),
+        markUnreferencedNodes: boolean = this.mc.config.getBoolean("Fluid.Driver.Odsp.MarkUnreferencedNodes") ?? true,
     ) {
         const snapshotTree: IOdspSummaryTree = {
             type: "tree",

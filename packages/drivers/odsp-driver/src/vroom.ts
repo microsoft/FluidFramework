@@ -89,6 +89,7 @@ export async function fetchJoinSession(
             );
 
             const socketUrl = response.content.deltaStreamSocketUrl;
+            // expecting socketUrl to be something like https://{hostName}/...
             const webSocketHostName = socketUrl.split("/")[2];
 
             // TODO SPO-specific telemetry

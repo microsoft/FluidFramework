@@ -113,12 +113,12 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
         containers.push(await loadContainer());
 
         assert.deepStrictEqual(
-            containers[0].codeDetails,
+            containers[0].getLoadedCodeDetails?.(),
             codeDetails,
             "Code proposal in containers[0] doesn't match");
 
         assert.deepStrictEqual(
-            containers[1].codeDetails,
+            containers[1].getLoadedCodeDetails?.(),
             codeDetails,
             "Code proposal in containers[1] doesn't match");
 
@@ -182,7 +182,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
         for (let i = 0; i < containers.length; i++) {
             assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
             assert.deepStrictEqual(
-                containers[i].codeDetails,
+                containers[i].getSpecifiedCodeDetails?.(),
                 { package: packageV1 },
                 `containers[${i}] code details should not update`);
         }
@@ -205,7 +205,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
         for (let i = 0; i < containers.length; i++) {
             assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
             assert.deepStrictEqual(
-                containers[i].codeDetails,
+                containers[i].getLoadedCodeDetails?.(),
                 { package: packageV1 },
                 `containers[${i}] code details should update`);
         }

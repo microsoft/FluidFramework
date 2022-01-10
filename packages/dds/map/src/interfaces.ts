@@ -44,6 +44,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
      * A form of get except it will only resolve the promise once the key exists in the directory.
      * @param key - Key to retrieve from
      * @returns The stored value once available
+     * @deprecated 0.55 - This method will be removed in an upcoming release.  See BREAKING.md for migration options.
      */
     wait<T = any>(key: string): Promise<T>;
 
@@ -268,6 +269,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
      * A form of get except it will only resolve the promise once the key exists in the map.
      * @param key - Key to retrieve from
      * @returns The stored value once available
+     * @deprecated 0.55 - This method will be removed in an upcoming release.  See BREAKING.md for migration options.
      */
     wait<T = any>(key: string): Promise<T>;
 

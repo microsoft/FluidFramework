@@ -22,7 +22,6 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
-import { IFluidConfiguration } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
@@ -134,8 +133,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // @deprecated (undocumented)
     get id(): string;
     // (undocumented)
-    get IFluidConfiguration(): IFluidConfiguration;
-    // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
@@ -191,6 +188,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
+    updateStateBeforeGC(): Promise<void>;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
@@ -341,6 +339,7 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 // @public
 export interface IGarbageCollectionRuntime {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    updateStateBeforeGC(): Promise<void>;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
 }
 

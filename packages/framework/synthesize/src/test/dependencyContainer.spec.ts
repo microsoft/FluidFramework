@@ -9,10 +9,13 @@ import {
     IFluidConfiguration,
     IFluidLoadable,
     IFluidHandleContext,
+    IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 
 import { DependencyContainer } from "..";
+import { IFluidDependencySynthesizer } from "../IFluidDependencySynthesizer";
+import { FluidObjectProvider } from "../types";
 
 const mockHandleContext: IFluidHandleContext = {
     absolutePath: "",
@@ -347,7 +350,7 @@ describe("Routerlicious", () => {
                 assert(dc.has(IFluidLoadable), "Manager has IFluidLoadable");
                 assert(dc.has(IFluidConfiguration), "Manager has IFluidConfiguration");
                 assert(
-                    dc.has(IFluidLoadable, IFluidConfiguration),
+                    dc.has(IFluidLoadable) && dc.has(IFluidConfiguration),
                     "Manager has IFluidLoadable & IFluidConfiguration");
                 assert(Array.from(dc.registeredTypes).length === 2, "Manager has two modules");
             });
@@ -360,6 +363,38 @@ describe("Routerlicious", () => {
                 assert(modules.length === 2, "Manager has two modules");
                 assert(modules.includes(IFluidLoadable), "Manager has IFluidLoadable");
                 assert(modules.includes(IFluidConfiguration), "Manager has IFluidConfiguration");
+            });
+
+            it(`Child has Parent modules`, async () => {
+                const parentDc = new DependencyContainer();
+                const loadableMock = new MockLoadable();
+                parentDc.register(IFluidLoadable, loadableMock);
+                const dc = new DependencyContainer(parentDc);
+                const configMock = new MockFluidConfiguration();
+                dc.register(IFluidConfiguration, configMock);
+
+                assert(dc.has(IFluidLoadable), "has includes parent registered");
+                assert(!dc.has(IFluidLoadable, true),"has does not include excluded parent registered");
+                assert(dc.has(IFluidConfiguration),"has includes registered");
+                assert(!dc.has(IFluidHandle),"does not include not registered");
+            });
+
+            it(`Parent Resolved from Child`, async () => {
+                const parentDc = new DependencyContainer();
+                const loadableToHandle: FluidObjectProvider<"IFluidHandle"> =
+                    async (fds: IFluidDependencySynthesizer) => {
+                        // eslint-disable-next-line @typescript-eslint/ban-types
+                        const loadable = fds.synthesize<{},IFluidLoadable>({},{IFluidLoadable});
+                        return (await loadable.IFluidLoadable).handle;
+                    };
+                parentDc.register(IFluidHandle, loadableToHandle);
+
+                const dc = new DependencyContainer(parentDc);
+                const loadableMock = new MockLoadable();
+                dc.register(IFluidLoadable, loadableMock);
+
+                const deps = dc.synthesize<IFluidHandle>({IFluidHandle}, {});
+                assert(await deps.IFluidHandle !== undefined, "handle undefined");
             });
         });
     });

@@ -4,9 +4,9 @@
  */
 
 import { assert,TypedEventEmitter } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
+import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils";
 import {
     ISequencedDocumentMessage,
     ITree,
@@ -19,7 +19,8 @@ import {
     IChannelServices,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { IFluidSerializer, SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import * as path from "path-browserify";
 import {
     IDirectory,
@@ -560,11 +561,12 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
      * @internal
      */
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
-        return serializeDirectory(this.root, serializer);
+    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+        const snapshot = serializeDirectory(this.root, serializer);
+        return convertToSummaryTreeWithStats(snapshot, fullTree);
     }
 
     /**

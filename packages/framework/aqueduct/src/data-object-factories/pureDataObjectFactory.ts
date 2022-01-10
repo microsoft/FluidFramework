@@ -28,13 +28,11 @@ import {
     IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 
-import { IEvent } from "@fluidframework/common-definitions";
 import {
     IDataObjectProps,
     PureDataObject,
     DataObjectType,
     DataObjectTypes,
-    LegacyPureDataObject,
 } from "../data-objects";
 /*
  * Useful interface in places where it's useful to do type erasure for PureDataObject generic
@@ -272,19 +270,3 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
         return instance;
     }
 }
-
-/**
- * @deprecated - This type is meant to ease the transition from the old PureDataObjectFactory type to the new.
- * please migrate to PureDataObjectFactory.
- *
- * PureDataObjectFactory is a barebones IFluidDataStoreFactory for use with PureDataObject.
- * Consumers should typically use DataObjectFactory instead unless creating
- * another base data store factory.
- *
- * @typeParam TObj - DataObject (concrete type)
- * @typeParam O - represents a type that will define optional providers that will be injected
- * @typeParam S - the initial state type that the produced data object may take during creation
- * @typeParam E - represents events that will be available in the EventForwarder
- */
- export class LegacyPureDataObjectFactory<TObj extends LegacyPureDataObject<O, S, E>, O, S, E extends IEvent = IEvent>
- extends PureDataObjectFactory<TObj,{OptionalProviders: O, InitialState: S, Events: E}> {}

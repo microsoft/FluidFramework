@@ -12,7 +12,7 @@ import {
     IGarbageCollectionData,
     IGarbageCollectionNodeData,
     IGarbageCollectionState,
-    IGarbageCollectionSummaryDetails,
+    IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -34,6 +34,7 @@ describe("Garbage Collection Tests", () => {
 
     let clock: SinonFakeTimers;
     let mockLogger: MockLogger;
+    let closeCalled = false;
     // Time after which unreferenced nodes can be deleted.
     const deleteTimeoutMs = 500;
 
@@ -45,24 +46,27 @@ describe("Garbage Collection Tests", () => {
     };
     // The runtime to be passed to the garbage collector.
     const gcRuntime: IGarbageCollectionRuntime = {
+        updateStateBeforeGC: async () => {},
         getGCData,
         updateUsedRoutes,
     };
 
     // The GC details in the summary blob of a node. This is used by the garbage collector to initialize GC state.
     // Update this for individual node to update the initial GC state of that node.
-    const emptyGCDetails: IGarbageCollectionSummaryDetails = {};
+    const emptyGCDetails: IGarbageCollectionDetailsBase = {};
 
     const createGarbageCollector = (
         baseSnapshot: ISnapshotTree | undefined = undefined,
-        getNodeGCDetails: (id: string) => IGarbageCollectionSummaryDetails = () => emptyGCDetails,
+        getNodeGCDetails: (id: string) => IGarbageCollectionDetailsBase = () => emptyGCDetails,
+        gcTestSessionTimeoutMs?: number,
     ) => {
         mockLogger = new MockLogger();
         return GarbageCollector.create(
             gcRuntime,
-            { gcAllowed: true, deleteTimeoutMs },
+            { gcAllowed: true, deleteTimeoutMs, gcTestSessionTimeoutMs },
             (unusedRoutes: string[]) => {},
             () => Date.now(),
+            () => { closeCalled = true; },
             baseSnapshot,
             async <T>(id: string) => getNodeGCDetails(id) as T,
             mockLogger,
@@ -80,6 +84,17 @@ describe("Garbage Collection Tests", () => {
 
     after(() => {
         clock.restore();
+    });
+
+    describe("Session expiry is called", () => {
+        beforeEach(() => {
+            closeCalled = false;
+        });
+        it("Session expiry is called", async () => {
+            createGarbageCollector(undefined, undefined, 0);
+            clock.tick(1);
+            assert(closeCalled, "Close should have been called.");
+        });
     });
 
     describe("Inactive events", () => {
@@ -279,7 +294,7 @@ describe("Garbage Collection Tests", () => {
         it("generates events for nodes that are inactive on load - old snapshot format", async () => {
             // Create GC details for node 3's GC blob whose unreferenced time was > deleteTimeoutMs ago.
             // This means this node should become inactive as soon as its data is loaded.
-            const node3GCDetails: IGarbageCollectionSummaryDetails = {
+            const node3GCDetails: IGarbageCollectionDetailsBase = {
                 gcData: { gcNodes: { "/": [] } },
                 unrefTimestamp: Date.now() - (deleteTimeoutMs + 100),
             };
@@ -392,37 +407,21 @@ describe("Garbage Collection Tests", () => {
      *
      * In these tests, V = nodes and E = edges between nodes. Root nodes that are always referenced are marked as *.
      */
-     describe("References between summaries", () => {
+    describe("References between summaries", () => {
+        const unknownRouteEvent = "GarbageCollector:gcUnknownOutboundRoute";
+
         let garbageCollector: IGarbageCollector;
         const nodeA = "/A";
         const nodeB = "/B";
         const nodeC = "/C";
         const nodeD = "/D";
 
-        /**
-         * Function that asserts a test result fails. This is to add tests before implementing / fixing features. These
-         * will be flipped when the feature / fix is in place.
-         */
-         function assertTestFails(testResult: boolean, message: string) {
-            assert(!testResult, message);
-        }
-
-        // Mimics latest summary refresh so that the latest summary state tracked by GC is updated after the GC run.
-        const refreshLatestSummary = async () => garbageCollector.latestSummaryStateRefreshed(
-            { wasSummaryTracked: true, latestSummaryUpdated: true },
-            async <T>(id: string) => { assert(false, "readAndParseBlob should not have been called"); },
-        );
-
         // Runs GC and returns the unreferenced timestamps of all nodes in the GC summary.
-        async function getUnreferencedTimestamps(refreshLatest = true) {
+        async function getUnreferencedTimestamps() {
             // Advance the clock by 1 tick so that the unreferenced timestamp is updated in between runs.
             clock.tick(1);
 
             await garbageCollector.collectGarbage({ runGC: true });
-
-            if (refreshLatest) {
-                await refreshLatestSummary();
-            }
 
             const summaryTree = garbageCollector.summarize()?.summary;
             assert(summaryTree !== undefined, "Nothing to summarize after running GC");
@@ -633,7 +632,7 @@ describe("Garbage Collection Tests", () => {
          * 3. Summary 2 at t2. V = [A*, B, C]. E = [B -> C]. B and C have unreferenced time t1.
          * Validates that the unreferenced time for B and C is still t1.
          */
-         it(`Scenario 5 - Reference added via unrefenced nodes`, async () => {
+        it(`Scenario 5 - Reference added via unreferenced nodes`, async () => {
             // Initialize nodes A, B and C.
             defaultGCData.gcNodes["/"] = [ nodeA ];
             defaultGCData.gcNodes[nodeA] = [];
@@ -714,45 +713,36 @@ describe("Garbage Collection Tests", () => {
         });
 
         /**
-         * Validates that we can detect references that are added after a summary is submitted and before that
-         * summary is ack'd. This tests that we clear the pending summary state correctly.
-         * 1. Summary 1 at t1. V = [A*, B]. E = []. B has unreferenced time t1.
-         * 2. Reference from A to B added. E = [A -> B].
-         * 3. Summary ack received.
-         * 4. Reference from A to B removed. E = [].
-         * 5. Summary 2 at t2. V = [A*, B]. E = []. B has unreferenced time t2.
-         * Validates that the unreferenced time for B is t2 which is > t1.
+         * Validates that we generate error on detecting reference during GC that was not notified explicitly.
+         * 1. Summary 1 at t1. V = [A*]. E = [].
+         * 2. Node B is created. E = [].
+         * 3. Reference from A to B added without notifying GC. E = [A -> B].
+         * 4. Summary 2 at t2. V = [A*, B]. E = [A -> B].
+         * Validates that we log an error since B is detected as a referenced node but its reference was notified
+         * to GC.
          */
-        it(`Scenario 7 - Reference added after summary and before its ack'd`, async () => {
-            // Initialize nodes A and B.
+        it(`Scenario 7 - Reference added without notifying GC`, async () => {
+            // Initialize node A.
             defaultGCData.gcNodes["/"] = [ nodeA ];
             defaultGCData.gcNodes[nodeA] = [];
-            defaultGCData.gcNodes[nodeB] = [];
 
             // 1. Run GC and generate summary 1. E = [].
-            const timestamps1 = await getUnreferencedTimestamps(false /* refreshLatest */);
+            const timestamps1 = await getUnreferencedTimestamps();
             assert(timestamps1.get(nodeA) === undefined, "A should be referenced");
 
-            const nodeBTime1 = timestamps1.get(nodeB);
-            assert(nodeBTime1 !== undefined, "B should have unreferenced timestamp");
+            // 2. Create node B. E = [].
+            defaultGCData.gcNodes[nodeB] = [];
 
-            // 2. Add reference from A to B. E = [A -> B].
-            garbageCollector.addedOutboundReference(nodeA, nodeB);
+            // 3. Add reference from A to B without calling addedOutboundReference. E = [A -> B].
             defaultGCData.gcNodes[nodeA] = [ nodeB ];
 
-            // 3. Mimic receiving a summary ack by refreshing latest summary.
-            await refreshLatestSummary();
+            // 4. Run GC and generate summary 2. E = [A -> B].
+            await getUnreferencedTimestamps();
 
-            // 4. Remove reference from A to B. E = [].
-            defaultGCData.gcNodes[nodeA] = [];
-
-            // 5. Run GC and generate summary 2. E = [].
-            const timestamps2 = await getUnreferencedTimestamps();
-            assert(timestamps2.get(nodeA) === undefined, "A should be referenced");
-
-            const nodeBTime2 = timestamps2.get(nodeB);
-            // This test current fails. Tracked by https://github.com/microsoft/FluidFramework/issues/8576.
-            assertTestFails(nodeBTime2 !== undefined && nodeBTime2 > nodeBTime1, "B's timestamp should have updated");
+            // Validate that we got the "gcUnknownOutboundRoute" error.
+            mockLogger.matchEvents([
+                { eventName: unknownRouteEvent, route: nodeB },
+            ]);
         });
     });
 });
