@@ -173,8 +173,10 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
         dataStore1._root.set("color", "purple");
         dataStore2._root.set("color", "pink");
 
+        await provider.ensureSynchronized();
+
         assert.equal(dataStore1._root.get("color"), "purple", "datastore1 value incorrect");
-        assert.equal(await testDataStore._root.wait("color"), dataStore2._root.get("color"),
+        assert.equal(testDataStore._root.get("color"), dataStore2._root.get("color"),
             "two instances of same dataStore have different values");
     });
 
