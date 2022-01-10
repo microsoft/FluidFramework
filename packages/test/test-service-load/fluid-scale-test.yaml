@@ -26,7 +26,7 @@ spec:
         image: {{FLUID_IMAGE_URL}}
         imagePullPolicy: Always
         command: ["/bin/sh"]
-        args: ["-c", "sh testRunner.sh > testRunner.log"]
+        args: ["-c", "sh testRunner.sh > testRunner.log" && sleep infinity]
         resources:
           limits:
             cpu: 500m
