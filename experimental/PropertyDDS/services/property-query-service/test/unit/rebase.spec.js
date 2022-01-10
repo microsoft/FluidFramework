@@ -100,13 +100,6 @@ describe("Rebasing", () => {
     config: {},
   };
   const factory = new TestFluidObjectFactory([[propertyDdsId, SharedPropertyTree.getFactory()]]);
-  const innerRequestHandler = async (request, runtime) => runtime.IFluidHandleContext.resolveHandle(request);
-  const runtimeFactory = new TestContainerRuntimeFactory(
-      factory.type,
-      factory,
-      {},
-      [innerRequestHandler],
-  );
 
   let deltaConnectionServer;
   let urlResolver
@@ -123,13 +116,13 @@ describe("Rebasing", () => {
   let errorHandler;
 
   async function createContainer() {
-    const loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
+    const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
     opProcessingController.add(loader);
     return createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
   }
 
   async function loadContainer() {
-    const loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
+    const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
     opProcessingController.add(loader);
     return loader.resolve({ url: documentLoadUrl });
   }

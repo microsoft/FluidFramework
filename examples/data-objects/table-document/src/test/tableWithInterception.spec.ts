@@ -4,16 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IRequest } from "@fluidframework/core-interfaces";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { IContainerRuntimeBase, IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { ITable } from "../table";
 import { TableDocument } from "../document";
-import { TableDocumentType } from "../componentTypes";
 import { createTableWithInterception } from "../interception";
 
 describeLoaderCompat("Table Document with Interception", (getTestObjectProvider) => {
@@ -62,19 +59,7 @@ describeLoaderCompat("Table Document with Interception", (getTestObjectProvider)
         let provider: ITestObjectProvider;
         beforeEach(async () => {
             provider = getTestObjectProvider();
-            const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-                runtime.IFluidHandleContext.resolveHandle(request);
-            const factory = new ContainerRuntimeFactoryWithDefaultDataStore(
-                TableDocument.getFactory(),
-                new Map([
-                    [TableDocumentType, Promise.resolve(TableDocument.getFactory())],
-                ]),
-                undefined,
-                [innerRequestHandler],
-                undefined,
-            );
-
-            const container = await provider.createContainer(factory);
+            const container = await provider.createContainer(TableDocument.getFactory());
             tableDocument = await requestFluidObject<TableDocument>(container, "default");
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

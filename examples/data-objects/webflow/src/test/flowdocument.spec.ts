@@ -5,15 +5,11 @@
 
 import { strict as assert } from "assert";
 import { TagName } from "@fluid-example/flow-util-lib";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IRequest } from "@fluidframework/core-interfaces";
 import { Marker, ReferenceType } from "@fluidframework/merge-tree";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { FlowDocument } from "../document";
-import { documentType } from "../package";
 
 describeLoaderCompat("FlowDocument", (getTestObjectProvider) => {
     let doc: FlowDocument;
@@ -21,18 +17,7 @@ describeLoaderCompat("FlowDocument", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(async () => {
         provider = getTestObjectProvider();
-        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-            runtime.IFluidHandleContext.resolveHandle(request);
-        const factory = new ContainerRuntimeFactoryWithDefaultDataStore(
-            FlowDocument.getFactory(),
-            new Map([
-                [documentType, Promise.resolve(FlowDocument.getFactory())],
-            ]),
-            undefined,
-            [innerRequestHandler],
-            undefined,
-        );
-        const container = await provider.createContainer(factory);
+        const container = await provider.createContainer(FlowDocument.getFactory());
         doc = await requestFluidObject<FlowDocument>(container, "default");
     });
 

@@ -30,7 +30,8 @@ describeLoaderCompat("SegmentSpan", (getTestObjectProvider) => {
             undefined,
             [innerRequestHandler],
         );
-        const container = await provider.createContainer(factory);
+        console.log(factory);
+        const container = await provider.createContainer(FlowDocument.getFactory());
         doc = await requestFluidObject<FlowDocument>(container, "default");
     });
 

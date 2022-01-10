@@ -67,10 +67,8 @@
   "devDependencies": {
     "@fluid-experimental/property-dds": "^0.55.0",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/core-interfaces": "^0.41.0",
     "@fluidframework/local-driver": "^0.55.0",
     "@fluidframework/mocha-test-setup": "^0.55.0",
-    "@fluidframework/runtime-definitions": "^0.55.0",
     "@fluidframework/runtime-utils": "^0.55.0",
     "@fluidframework/server-local-server": "^0.1034.0",
     "@fluidframework/test-utils": "^0.55.0",

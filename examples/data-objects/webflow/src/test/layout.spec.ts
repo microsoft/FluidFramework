@@ -11,16 +11,12 @@ window.performance.mark = window.performance.mark || (() => { });
 window.performance.measure = window.performance.measure || (() => { });
 
 import { strict as assert } from "assert";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { htmlFormatter } from "..";
 import { FlowDocument } from "../document";
 import { Layout } from "../view/layout";
-import { documentType } from "../package";
 
 interface ISnapshotNode {
     node: Node;
@@ -51,18 +47,7 @@ describeLoaderCompat("Layout", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     before(async () => {
         provider = getTestObjectProvider(/* reset */ false);
-        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-            runtime.IFluidHandleContext.resolveHandle(request);
-        const factory = new ContainerRuntimeFactoryWithDefaultDataStore(
-            FlowDocument.getFactory(),
-                new Map([
-                    [documentType, Promise.resolve(FlowDocument.getFactory())],
-                ]),
-                undefined,
-                [innerRequestHandler],
-                undefined,
-        );
-        const container = await provider.createContainer(factory);
+        const container = await provider.createContainer(FlowDocument.getFactory());
         doc = await requestFluidObject<FlowDocument>(container, "default");
     });
 

@@ -18,8 +18,6 @@ import {
 	ITestFluidObject,
 	TestFluidObjectFactory,
 	LoaderContainerTracker,
-    TestContainerRuntimeFactory,
-    fluidEntryPoint,
 } from "@fluidframework/test-utils";
 import { DeterministicRandomGenerator } from "@fluid-experimental/property-common";
 import * as _ from "lodash";
@@ -30,11 +28,10 @@ import {
 	NamedProperty,
 } from "@fluid-experimental/property-properties";
 import { assert } from "@fluidframework/common-utils";
-import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 import { SharedPropertyTree } from "../propertyTree";
 
 function createLocalLoader(
-	packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
+	packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
 	deltaConnectionServer: ILocalDeltaConnectionServer,
 	urlResolver: IUrlResolver,
 	options?: ILoaderOptions,
@@ -77,12 +74,6 @@ describe("PropertyDDS", () => {
 			config: {},
 		};
 		const factory = new TestFluidObjectFactory([[propertyDdsId, SharedPropertyTree.getFactory()]]);
-        const runtimeFactory = new TestContainerRuntimeFactory(
-            factory.type,
-            factory,
-            {},
-            [rootDataStoreRequestHandler],
-        );
 
 		let deltaConnectionServer: ILocalDeltaConnectionServer;
 		let urlResolver: LocalResolver;
@@ -97,13 +88,13 @@ describe("PropertyDDS", () => {
 		let errorHandler: (Error) => void;
 
 		async function createContainer(): Promise<IContainer> {
-			const loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
+			const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
 			opProcessingController.add(loader);
 			return createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
 		}
 
 		async function loadContainer(): Promise<IContainer> {
-			const loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer, urlResolver);
+			const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
 			opProcessingController.add(loader);
 			return loader.resolve({ url: documentLoadUrl });
 		}
