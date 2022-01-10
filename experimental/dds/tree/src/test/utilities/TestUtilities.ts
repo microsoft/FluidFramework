@@ -23,7 +23,8 @@ import {
 } from '@fluidframework/test-utils';
 import { createFluidTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { rootDataStoreRequestHandler } from '@fluidframework/request-handler';
+import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
+import { IRequest } from '@fluidframework/core-interfaces';
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../../Identifiers';
 import { compareArrays, comparePayloads, fail } from '../../Common';
 import { initialTree } from '../../InitialTree';
@@ -284,6 +285,8 @@ async function setUpLocalServerTestSharedTreeGeneric<
 
 	const treeId = id ?? 'test';
 	const registry: ChannelFactoryRegistry = [[treeId, factoryGetter(summarizeHistory)]];
+	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+		runtime.IFluidHandleContext.resolveHandle(request);
 	const runtimeFactory = () =>
 		new TestContainerRuntimeFactory(
 			TestDataStoreType,
@@ -291,7 +294,7 @@ async function setUpLocalServerTestSharedTreeGeneric<
 			{
 				summaryOptions: { initialSummarizerDelayMs: 0 },
 			},
-			[rootDataStoreRequestHandler]
+			[innerRequestHandler]
 		);
 
 	let provider: TestObjectProvider;
