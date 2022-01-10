@@ -47,7 +47,7 @@ class TestDataObject extends DataObject {
     }
 
     protected async hasInitialized() {
-        const matrixHandle = await this.root.wait<IFluidHandle<SharedMatrix>>(this.matrixKey);
+        const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
         assert(matrixHandle !== undefined, "SharedMatrix not found");
         this.matrix = await matrixHandle.get();
 
@@ -56,7 +56,7 @@ class TestDataObject extends DataObject {
         this.matrix.insertCols(0, 3);
         this.matrix.openUndo(this.undoRedoStackManager);
 
-        const sharedStringHandle = await this.root.wait<IFluidHandle<SharedString>>(this.sharedStringKey);
+        const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(this.sharedStringKey);
         assert(sharedStringHandle !== undefined, "SharedMatrix not found");
         this.sharedString = await sharedStringHandle.get();
     }
