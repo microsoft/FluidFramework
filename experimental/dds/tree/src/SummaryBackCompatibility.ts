@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
+import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ErrorString } from './Common';
 import { EditLog } from './EditLog';
 import { ChangeNode, Edit, SharedTreeSummaryBase, SharedTreeSummary } from './generic';

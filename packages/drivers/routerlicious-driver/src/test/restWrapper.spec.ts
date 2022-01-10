@@ -7,15 +7,15 @@ import assert from "assert";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { RateLimiter } from "@fluidframework/driver-utils";
-import Axios, { AxiosRequestConfig } from "axios";
-import AxiosMockAdapter from "axios-mock-adapter";
+import fetchMock from "fetch-mock";
+import * as nodeFetchModule from "node-fetch";
+import { reset, replace } from "sinon";
 import { RouterliciousRestWrapper } from "../restWrapper";
 import { R11sErrorType } from "../errorUtils";
 
 describe("RouterliciousDriverRestWrapper", () => {
-    const axiosMockAdapter = new AxiosMockAdapter(Axios);
     const rateLimiter = new RateLimiter(1);
-    const testUrl = "/api/protected";
+    const testUrl = "https://contoso.com/api/protected";
 
     // Set up mock request authentication
     let validToken: string | undefined;
@@ -26,13 +26,13 @@ describe("RouterliciousDriverRestWrapper", () => {
     // Pop a token off tokenQueue to generate an auth header
     const getAuthHeader = async () => `Bearer ${tokenQueue.shift() || ""}`;
     // Check if auth header token value matches current validToken
-    const isValidAuthHeader = (header: string) => header.replace(/^Bearer /, "") === validToken;
+    const isValidAuthHeader = (header: string | null) => header && header.replace(/^Bearer /, "") === validToken;
     // Returns 200 on valid Authorization header; otherwise returns 401
-    const replyWithAuth = (requestConfig: AxiosRequestConfig) => {
-        if (isValidAuthHeader(requestConfig.headers?.Authorization)) {
-            return [200, "OK"];
+    const replyWithAuth = (_url, opts) => {
+        if (isValidAuthHeader(opts.headers?.Authorization)) {
+            return { status: 200, body: "OK" };
         }
-        return [401, "Not Allowed"];
+        return { status: 401, body: "Not Allowed" };
     };
 
     // Set up mock throttling
@@ -45,12 +45,19 @@ describe("RouterliciousDriverRestWrapper", () => {
         const retryAfterSeconds = (throttleDurationInMs - Date.now() - throttledAt) / 1000;
         const throttled = retryAfterSeconds > 0;
         if (throttled) {
-            return [429, { retryAfter: retryAfterSeconds }];
+            return { status: 429, body: { retryAfter: retryAfterSeconds } };
         }
-        return [200, "OK"];
+        return { status: 200, body: "OK" };
     };
 
     let restWrapper: RouterliciousRestWrapper;
+
+    const fetchMockSandbox = fetchMock.sandbox();
+    replace(
+        nodeFetchModule,
+        "default",
+        (fetchMockSandbox as unknown) as typeof nodeFetchModule.default,
+    );
 
     beforeEach(async () => {
         // reset auth mocking
@@ -60,7 +67,7 @@ describe("RouterliciousDriverRestWrapper", () => {
         throttledAt = 0;
         throttleDurationInMs = 50;
 
-        axiosMockAdapter.reset();
+        fetchMockSandbox.resetBehavior();
         restWrapper = new RouterliciousRestWrapper(
             new TelemetryUTLogger(),
             rateLimiter,
@@ -69,25 +76,28 @@ describe("RouterliciousDriverRestWrapper", () => {
         );
         await restWrapper.load();
     });
+    after(() => {
+        reset();
+    });
 
     describe("get()", () => {
         it("sends a request with auth headers", async () => {
             validToken = token1;
-            axiosMockAdapter.onGet(testUrl).reply(replyWithAuth);
+            fetchMockSandbox.get(testUrl, replyWithAuth);
             await assert.doesNotReject(restWrapper.get(testUrl));
         });
         it("retries a request with fresh auth headers on 401", async () => {
             validToken = token1;
-            axiosMockAdapter.onGet(testUrl).reply(replyWithAuth);
+            fetchMockSandbox.get(testUrl, replyWithAuth);
             await assert.doesNotReject(restWrapper.get(testUrl));
         });
         it("throws a non-retriable error on 2nd 401", async () => {
             validToken = token1;
-            axiosMockAdapter.onGet(testUrl).reply(replyWithAuth);
+            fetchMockSandbox.get(testUrl, replyWithAuth);
             await assert.doesNotReject(restWrapper.get(testUrl));
         });
         it("throws a retriable error on 500", async () => {
-            axiosMockAdapter.onGet(testUrl).reply(500);
+            fetchMockSandbox.get(testUrl, 500);
             await assert.rejects(restWrapper.get(testUrl), {
                 canRetry: true,
                 errorType: DriverErrorType.genericNetworkError,
@@ -95,18 +105,18 @@ describe("RouterliciousDriverRestWrapper", () => {
         });
         it("retries with delay on 429 with retryAfter", async () => {
             throttle();
-            axiosMockAdapter.onGet(testUrl).reply(replyWithThrottling);
+            fetchMockSandbox.get(testUrl, replyWithThrottling);
             await assert.doesNotReject(restWrapper.get(testUrl));
         });
         it("throws a retriable error on 429 without retryAfter", async () => {
-            axiosMockAdapter.onGet(testUrl).reply(429, { retryAfter: undefined });
+            fetchMockSandbox.get(testUrl, { status: 429, body: { retryAfter: undefined } });
             await assert.rejects(restWrapper.get(testUrl), {
                 canRetry: true,
                 errorType: DriverErrorType.genericNetworkError,
             });
         });
         it("throws a non-retriable error on 404", async () => {
-            axiosMockAdapter.onGet(testUrl).reply(404);
+            fetchMockSandbox.get(testUrl, 404);
             await assert.rejects(restWrapper.get(testUrl), {
                 canRetry: false,
                 errorType: R11sErrorType.fileNotFoundOrAccessDeniedError,
@@ -117,21 +127,21 @@ describe("RouterliciousDriverRestWrapper", () => {
     describe("post()", () => {
         it("sends a request with auth headers", async () => {
             validToken = token1;
-            axiosMockAdapter.onPost(testUrl).reply(replyWithAuth);
+            fetchMockSandbox.post(testUrl, replyWithAuth);
             await assert.doesNotReject(restWrapper.post(testUrl, { test: "payload" }));
         });
         it("retries a request with fresh auth headers on 401", async () => {
             validToken = token1;
-            axiosMockAdapter.onPost(testUrl).reply(replyWithAuth);
+            fetchMockSandbox.post(testUrl, replyWithAuth);
             await assert.doesNotReject(restWrapper.post(testUrl, { test: "payload" }));
         });
         it("throws a non-retriable error on 2nd 401", async () => {
             validToken = token1;
-            axiosMockAdapter.onPost(testUrl).reply(replyWithAuth);
+            fetchMockSandbox.post(testUrl, replyWithAuth);
             await assert.doesNotReject(restWrapper.post(testUrl, { test: "payload" }));
         });
         it("throws a retriable error on 500", async () => {
-            axiosMockAdapter.onPost(testUrl).reply(500);
+            fetchMockSandbox.post(testUrl, 500);
             await assert.rejects(restWrapper.post(testUrl, { test: "payload" }), {
                 canRetry: true,
                 errorType: DriverErrorType.genericNetworkError,
@@ -139,18 +149,18 @@ describe("RouterliciousDriverRestWrapper", () => {
         });
         it("retries with delay on 429 with retryAfter", async () => {
             throttle();
-            axiosMockAdapter.onPost(testUrl).reply(replyWithThrottling);
+            fetchMockSandbox.post(testUrl, replyWithThrottling);
             await assert.doesNotReject(restWrapper.post(testUrl, { test: "payload" }));
         });
         it("throws a retriable error on 429 without retryAfter", async () => {
-            axiosMockAdapter.onPost(testUrl).reply(429, { retryAfter: undefined });
+            fetchMockSandbox.post(testUrl, { status: 429, body: { retryAfter: undefined } });
             await assert.rejects(restWrapper.post(testUrl, { test: "payload" }), {
                 canRetry: true,
                 errorType: DriverErrorType.genericNetworkError,
             });
         });
         it("throws a non-retriable error on 404", async () => {
-            axiosMockAdapter.onPost(testUrl).reply(404);
+            fetchMockSandbox.post(testUrl, 404);
             await assert.rejects(restWrapper.post(testUrl, { test: "payload" }), {
                 canRetry: false,
                 errorType: R11sErrorType.fileNotFoundOrAccessDeniedError,
@@ -161,21 +171,21 @@ describe("RouterliciousDriverRestWrapper", () => {
     describe("patch()", () => {
         it("sends a request with auth headers", async () => {
             validToken = token1;
-            axiosMockAdapter.onPatch(testUrl).reply(replyWithAuth);
+            fetchMockSandbox.patch(testUrl, replyWithAuth);
             await assert.doesNotReject(restWrapper.patch(testUrl, { test: "payload" }));
         });
         it("retries a request with fresh auth headers on 401", async () => {
             validToken = token1;
-            axiosMockAdapter.onPatch(testUrl).reply(replyWithAuth);
+            fetchMockSandbox.patch(testUrl, replyWithAuth);
             await assert.doesNotReject(restWrapper.patch(testUrl, { test: "payload" }));
         });
         it("throws a non-retriable error on 2nd 401", async () => {
             validToken = token1;
-            axiosMockAdapter.onPatch(testUrl).reply(replyWithAuth);
+            fetchMockSandbox.patch(testUrl, replyWithAuth);
             await assert.doesNotReject(restWrapper.patch(testUrl, { test: "payload" }));
         });
         it("throws a retriable error on 500", async () => {
-            axiosMockAdapter.onPatch(testUrl).reply(500);
+            fetchMockSandbox.patch(testUrl, 500);
             await assert.rejects(restWrapper.patch(testUrl, { test: "payload" }), {
                 canRetry: true,
                 errorType: DriverErrorType.genericNetworkError,
@@ -183,18 +193,18 @@ describe("RouterliciousDriverRestWrapper", () => {
         });
         it("retries with delay on 429 with retryAfter", async () => {
             throttle();
-            axiosMockAdapter.onPatch(testUrl).reply(replyWithThrottling);
+            fetchMockSandbox.patch(testUrl, replyWithThrottling);
             await assert.doesNotReject(restWrapper.patch(testUrl, { test: "payload" }));
         });
         it("throws a retriable error on 429 without retryAfter", async () => {
-            axiosMockAdapter.onPatch(testUrl).reply(429, { retryAfter: undefined });
+            fetchMockSandbox.patch(testUrl, { status: 429, body: { retryAfter: undefined } });
             await assert.rejects(restWrapper.patch(testUrl, { test: "payload" }), {
                 canRetry: true,
                 errorType: DriverErrorType.genericNetworkError,
             });
         });
         it("throws a non-retriable error on 404", async () => {
-            axiosMockAdapter.onPatch(testUrl).reply(404);
+            fetchMockSandbox.patch(testUrl, 404);
             await assert.rejects(restWrapper.patch(testUrl, { test: "payload" }), {
                 canRetry: false,
                 errorType: R11sErrorType.fileNotFoundOrAccessDeniedError,
@@ -205,21 +215,21 @@ describe("RouterliciousDriverRestWrapper", () => {
     describe("delete()", () => {
         it("sends a request with auth headers", async () => {
             validToken = token1;
-            axiosMockAdapter.onDelete(testUrl).reply(replyWithAuth);
+            fetchMockSandbox.delete(testUrl, replyWithAuth);
             await assert.doesNotReject(restWrapper.delete(testUrl));
         });
         it("retries a request with fresh auth headers on 401", async () => {
             validToken = token1;
-            axiosMockAdapter.onDelete(testUrl).reply(replyWithAuth);
+            fetchMockSandbox.delete(testUrl, replyWithAuth);
             await assert.doesNotReject(restWrapper.delete(testUrl));
         });
         it("throws a non-retriable error on 2nd 401", async () => {
             validToken = token1;
-            axiosMockAdapter.onDelete(testUrl).reply(replyWithAuth);
+            fetchMockSandbox.delete(testUrl, replyWithAuth);
             await assert.doesNotReject(restWrapper.delete(testUrl));
         });
         it("throws a retriable error on 500", async () => {
-            axiosMockAdapter.onDelete(testUrl).reply(500);
+            fetchMockSandbox.delete(testUrl, 500);
             await assert.rejects(restWrapper.delete(testUrl), {
                 canRetry: true,
                 errorType: DriverErrorType.genericNetworkError,
@@ -227,18 +237,18 @@ describe("RouterliciousDriverRestWrapper", () => {
         });
         it("retries with delay on 429 with retryAfter", async () => {
             throttle();
-            axiosMockAdapter.onDelete(testUrl).reply(replyWithThrottling);
+            fetchMockSandbox.delete(testUrl, replyWithThrottling);
             await assert.doesNotReject(restWrapper.delete(testUrl));
         });
         it("throws a retriable error on 429 without retryAfter", async () => {
-            axiosMockAdapter.onDelete(testUrl).reply(429, { retryAfter: undefined });
+            fetchMockSandbox.delete(testUrl, { status: 429, body: { retryAfter: undefined } });
             await assert.rejects(restWrapper.delete(testUrl), {
                 canRetry: true,
                 errorType: DriverErrorType.genericNetworkError,
             });
         });
         it("throws a non-retriable error on 404", async () => {
-            axiosMockAdapter.onDelete(testUrl).reply(404);
+            fetchMockSandbox.delete(testUrl, 404);
             await assert.rejects(restWrapper.delete(testUrl), {
                 canRetry: false,
                 errorType: R11sErrorType.fileNotFoundOrAccessDeniedError,

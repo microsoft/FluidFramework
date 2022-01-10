@@ -7,7 +7,6 @@ import { EventEmitter } from "events";
 import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     FluidObject,
-    IFluidConfiguration,
     IFluidHandle,
     IFluidHandleContext,
     IFluidObject,
@@ -77,7 +76,7 @@ import {
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
     IGarbageCollectionData,
-    IGarbageCollectionSummaryDetails,
+    IGarbageCollectionDetailsBase,
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelope,
@@ -1036,14 +1035,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
                     summarizeInternal: SummarizeInternalFn,
                     getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-                    getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+                    getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
                 ) => this.summarizerNode.createChild(
                     summarizeInternal,
                     id,
                     createParam,
                     undefined,
                     getGCDataFn,
-                    getInitialGCSummaryDetailsFn,
+                    getBaseGCDetailsFn,
                 ),
             (id: string) => this.summarizerNode.deleteChild(id),
             this.mc.logger,
@@ -1251,10 +1250,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return undefined;
     }
 
-    public get IFluidConfiguration(): IFluidConfiguration {
-        return this.context.configuration;
-    }
-
     /**
      * Notifies this object about the request made to the container.
      * @param request - Request made to the handler.
@@ -1361,7 +1356,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const dataStoreContext = await this.dataStores.getDataStore(id, wait);
         // The data store is referenced if used routes in the initial summary has a route to self.
         // Older documents may not have used routes in the summary. They are considered referenced.
-        const usedRoutes = (await dataStoreContext.getInitialGCSummaryDetails()).usedRoutes;
+        const usedRoutes = (await dataStoreContext.getBaseGCDetails()).usedRoutes;
         if (usedRoutes === undefined || usedRoutes.includes("") || usedRoutes.includes("/")) {
             return dataStoreContext.realize();
         }
@@ -1871,6 +1866,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             0x12f /* "Container Runtime's summarize should always return a tree" */);
 
         return summarizeResult as ISummaryTreeWithStats;
+    }
+
+    /**
+     * Implementation of IGarbageCollectionRuntime::updateStateBeforeGC.
+     * Before GC runs, called by the garbage collector to update any pending GC state. This is mainly used to notify
+     * the garbage collector of references detected since the last GC run. Most references are notified immediately
+     * but there can be some for which async operation is required (such as detecting new root data stores).
+     */
+    public async updateStateBeforeGC() {
+        return this.dataStores.updateStateBeforeGC();
     }
 
     /**

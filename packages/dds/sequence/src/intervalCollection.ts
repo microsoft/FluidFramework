@@ -650,7 +650,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     public serialize() {
         const client = this.client;
         const intervals = this.intervalTree.intervals.keys();
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return intervals.map((interval) => interval.serialize(client));
     }
 }
@@ -671,7 +670,6 @@ class SequenceIntervalCollectionFactory
     }
 
     public store(value: IntervalCollection<SequenceInterval>): ISerializedInterval[] {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return value.serializeInternal();
     }
 }
@@ -756,7 +754,6 @@ class IntervalCollectionFactory
     }
 
     public store(value: IntervalCollection<Interval>): ISerializedInterval[] {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return value.serializeInternal();
     }
 }
@@ -1205,7 +1202,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             throw new Error("attachSequence must be called");
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.localCollection.serialize();
     }
 

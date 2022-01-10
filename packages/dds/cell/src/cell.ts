@@ -4,15 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
-
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-    TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
@@ -20,8 +12,9 @@ import {
     IChannelFactory,
     Serializable,
 } from "@fluidframework/datastore-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
+import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { ISharedCell, ISharedCellEvents } from "./interfaces";
 
@@ -159,7 +152,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
 
         // Serialize the value if required.
         const operationValue: ICellValue = {
-            value: this.serializer.replaceHandles(value, this.handle),
+            value: this.serializer.encode(value, this.handle),
         };
 
         // Set the value locally.
@@ -203,30 +196,13 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     }
 
     /**
-     * Create a snapshot for the cell
+     * Create a summary for the cell
      *
-     * @returns the snapshot of the current state of the cell
+     * @returns the summary of the current state of the cell
      */
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
-        const content: ICellValue = {
-            value: this.data,
-        };
-
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: snapshotFileName,
-                    type: TreeEntry.Blob,
-                    value: {
-                        contents: serializer.stringify(content, this.handle),
-                        encoding: "utf-8",
-                    },
-                },
-            ],
-        };
-
-        return tree;
+    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+        const content: ICellValue = { value: this.data };
+        return createSingleBlobSummary(snapshotFileName, serializer.stringify(content, this.handle));
     }
 
     /**
@@ -311,17 +287,8 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
 
     private decode(cellValue: ICellValue) {
         const value = cellValue.value;
-
-        if (this.serializer.decode !== undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return this.serializer.decode(value);
-        }
-
-        // This code can be removed once IFluidSerializer.decode is not optional
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return value !== undefined
-            ? this.serializer.parse(JSON.stringify(value))
-            : value;
+        return this.serializer.decode(value);
     }
 
     protected applyStashedOp() {

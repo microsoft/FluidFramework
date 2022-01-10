@@ -4,20 +4,15 @@
  */
 
 import { assert , bufferToString, unreachableCase } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-    TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
-import { SharedObject } from "@fluidframework/shared-object-base";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import {
     ConsensusCallback,
@@ -184,36 +179,17 @@ export class ConsensusOrderedCollection<T = any>
         } while (!(await this.acquire(callback)));
     }
 
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
+    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
         // If we are transitioning from unattached to attached mode,
         // then we are losing all checked out work!
         this.removeClient(idForLocalUnattachedClient);
 
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: snapshotFileNameData,
-                    type: TreeEntry.Blob,
-                    value: {
-                        contents: this.serializeValue(this.data.asArray(), serializer),
-                        encoding: "utf-8",
-                    },
-                },
-            ],
-        };
-
-        tree.entries.push({
-            mode: FileMode.File,
-            path: snapshotFileNameTracking,
-            type: TreeEntry.Blob,
-            value: {
-                contents: this.serializeValue(Array.from(this.jobTracking.entries()), serializer),
-                encoding: "utf-8",
-            },
-        });
-
-        return tree;
+        const builder = new SummaryTreeBuilder();
+        let blobContent = this.serializeValue(this.data.asArray(), serializer);
+        builder.addBlob(snapshotFileNameData, blobContent);
+        blobContent = this.serializeValue(Array.from(this.jobTracking.entries()), serializer);
+        builder.addBlob(snapshotFileNameTracking, blobContent);
+        return builder.getSummaryTree();
     }
 
     protected isActive() {
