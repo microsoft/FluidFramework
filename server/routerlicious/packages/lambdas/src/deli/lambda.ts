@@ -754,6 +754,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                     this.logSessionStartMetrics(!controlContents.success);
                 }
 
+                // fallthrough
                 default:
                 // ignore unknown control messages
             }
