@@ -141,6 +141,9 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         this.refreshSummarizer();
     };
 
+    private static readonly isStartingOrRunning = (state: SummaryManagerState) =>
+        state === SummaryManagerState.Starting || state === SummaryManagerState.Running;
+
     private getShouldSummarizeState(): ShouldSummarizeState {
         if (!this.connectedState.connected) {
             return { shouldSummarize: false, stopReason: "parentNotConnected" };
@@ -253,7 +256,9 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                 // Note that summarizer may keep going (like doing last summary).
                 // Ideally we await stopping process, but this code path is due to a bug
                 // that needs to be fixed either way.
-                this.stop("summarizerException");
+                if (SummaryManager.isStartingOrRunning(this.state)) {
+                    this.stop("summarizerException");
+                }
             }
         }).finally(() => {
             assert(this.state !== SummaryManagerState.Off, 0x264 /* "Expected: Not Off" */);
@@ -273,8 +278,9 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 
     private stop(reason: SummarizerStopReason) {
-        assert(this.state === SummaryManagerState.Running || this.state === SummaryManagerState.Starting,
-            0x265 /* "Expected: Starting or Running" */);
+        if (!SummaryManager.isStartingOrRunning(this.state)) {
+            return;
+        }
         this.state = SummaryManagerState.Stopping;
 
         // Stopping the running summarizer client should trigger a change
