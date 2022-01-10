@@ -408,6 +408,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _dirtyContainer = false;
 
     private lastVisible: number | undefined;
+    private readonly visibilityEventHandler: (() => void) | undefined;
     private readonly connectionStateHandler: ConnectionStateHandler;
 
     private setAutoReconnectTime = performance.now();
@@ -651,14 +652,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // keep track of last time page was visible for telemetry
         if (isDomAvailable) {
             this.lastVisible = document.hidden ? performance.now() : undefined;
-            document.addEventListener("visibilitychange", () => {
+            this.visibilityEventHandler = () => {
                 if (document.hidden) {
                     this.lastVisible = performance.now();
                 } else {
                     // settimeout so this will hopefully fire after disconnect event if being hidden caused it
                     setTimeout(() => this.lastVisible = undefined, 0);
                 }
-            });
+            };
+            document.addEventListener("visibilitychange", this.visibilityEventHandler);
         }
 
         // We observed that most users of platform do not check Container.connected event on load, causing bugs.
@@ -746,6 +748,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.emit("closed", error);
 
             this.removeAllListeners();
+            if (this.visibilityEventHandler !== undefined) {
+                document.removeEventListener("visibilitychange", this.visibilityEventHandler);
+            }
         } finally {
             this._lifecycleState = "closed";
         }
