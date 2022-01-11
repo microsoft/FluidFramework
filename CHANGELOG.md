@@ -1,5 +1,17 @@
 # Change Log
 
+## 16.8.2
+
+* build: update fluidframework to 0.54
+  * Associated pull request: [37076](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/37076)
+  * Commit: [4c5e7dfd47378435b51c526e351ad22d69a43b2d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4c5e7dfd47378435b51c526e351ad22d69a43b2d)
+* build: updates package dependencies (except typescript, colors)
+  * Associated pull request: [37075](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/37075)
+  * Commit: [ad6a0313b4e786a903f17cfee242918254793498](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/ad6a0313b4e786a903f17cfee242918254793498)
+* merge: `releases/2022.01.1` into `master`
+  * Associated pull request: [36947](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/36947)
+  * Commit: [d1d7d2a1d0c155912ea58920ebb6379d328ebdb5](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d1d7d2a1d0c155912ea58920ebb6379d328ebdb5)
+
 ## 16.7.1
 
 * build: updates package dependencies (except typescript)
