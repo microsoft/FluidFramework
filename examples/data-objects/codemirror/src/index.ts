@@ -5,11 +5,10 @@
 
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
 import { fluidExport as smde } from "./codemirror";
 
 const defaultComponentId = "default";
@@ -27,15 +26,11 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
             [smde.type, Promise.resolve(smde)],
         ]);
 
-        const innerRequestHandler = async (request: IRequest, runtimeFactory: IContainerRuntimeBase) =>
-            runtimeFactory.IFluidHandleContext.resolveHandle(request);
-
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             registry,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
-                innerRequestHandler,
             ),
             undefined, // runtimeOptions
             undefined, // containerScope
