@@ -90,7 +90,7 @@ export class GridView {
         const refreshGrid = scheduler.coalesce(scheduler.onLayout, this.refreshCells);
         const invalidateCells = (rowStart: number, colStart: number, rowCount: number, colCount: number) => {
             for (let row = rowStart; row < rowStart + rowCount; row++) {
-                for (let col = colStart; col < colCount + colCount; col++) {
+                for (let col = colStart; col < colStart + colCount; col++) {
                     this.sheetlet.invalidate(row, col);
                 }
             }
