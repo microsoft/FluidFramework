@@ -72,6 +72,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     get connected(): boolean;
     // (undocumented)
     get connectionState(): ConnectionState;
+    // (undocumented)
+    get containerTracker(): ContainerTracker | undefined;
     static createDetached(loader: Loader, codeDetails: IFluidCodeDetails): Promise<Container>;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -117,6 +119,31 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     subLogger: TelemetryLogger;
     // (undocumented)
     static version: string;
+    }
+
+// @public (undocumented)
+export interface ContainerRecord {
+    // (undocumented)
+    lastProposal: number;
+    // (undocumented)
+    paused: boolean;
+    // (undocumented)
+    startTrailingNoOps: number;
+    // (undocumented)
+    trailingNoOps: number;
+}
+
+// @public (undocumented)
+export class ContainerTracker implements IContainerTracker {
+    constructor(container: IContainer);
+    // (undocumented)
+    containerRecord: ContainerRecord;
+    pauseProcessing(): Promise<void>;
+    processIncoming(): Promise<void>;
+    processOutgoing(): Promise<void>;
+    reset(): void;
+    resumeProcessing(): IContainer | undefined;
+    waitForAnyInboundOps(): Promise<void>;
 }
 
 // @public @deprecated (undocumented)
@@ -141,6 +168,18 @@ export interface IContainerLoadOptions {
     // (undocumented)
     resolvedUrl: IFluidResolvedUrl;
     version: string | undefined;
+}
+
+// @public (undocumented)
+export interface IContainerTracker {
+    // (undocumented)
+    pauseProcessing(): Promise<void>;
+    // (undocumented)
+    processIncoming(): Promise<void>;
+    // (undocumented)
+    processOutgoing(): Promise<void>;
+    // (undocumented)
+    resumeProcessing(): void;
 }
 
 // @public

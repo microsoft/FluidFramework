@@ -110,6 +110,7 @@ import { getSnapshotTreeFromSerializedContainer } from "./utils";
 import { QuorumProxy } from "./quorum";
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
+import { ContainerTracker } from "./containerTracker";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -395,6 +396,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Attempted to access protocolHandler before it was defined");
         }
         return this._protocolHandler;
+    }
+
+    private readonly _containerTracker: ContainerTracker | undefined;
+    public get containerTracker() {
+        return this._containerTracker;
     }
 
     private resumedOpProcessingAfterLoad = false;
@@ -697,6 +703,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.mc.logger.sendErrorEvent({ eventName: "RaiseConnectedEventError" }, error);
             });
         });
+
+        this._containerTracker = new ContainerTracker(this);
     }
 
     /**
