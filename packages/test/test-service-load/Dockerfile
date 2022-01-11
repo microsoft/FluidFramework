@@ -28,7 +28,7 @@ COPY package-lock.json .
 COPY lerna.json .
 COPY lerna-package-lock.json .
 
-# Install and build. Explicit postinstall is required for node 14
+# Install and build. Explicit postinstall is required for node 14.
 RUN npm install
 RUN npm run postinstall
 RUN npm run build:ci
