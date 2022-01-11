@@ -5,17 +5,14 @@
 
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 const crypto = require("crypto");
-const { IRequest } = require("@fluidframework/core-interfaces");
 const { LocalResolver, LocalDocumentServiceFactory } = require("@fluidframework/local-driver");
 const { requestFluidObject } = require("@fluidframework/runtime-utils");
-const { IContainerRuntimeBase } = require("@fluidframework/runtime-definitions");
 const { LocalDeltaConnectionServer } = require("@fluidframework/server-local-server");
 const {
   createAndAttachContainer,
   createLoader,
   LoaderContainerTracker,
   TestFluidObjectFactory,
-  TestContainerRuntimeFactory,
 } = require("@fluidframework/test-utils");
 const { DeterministicRandomGenerator } = require("@fluid-experimental/property-common");
 const _ = require("lodash");
