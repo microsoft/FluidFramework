@@ -40,12 +40,18 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
         ? error.message as string
         : String(error);
 
-    const safeProps: { message: string; errorType?: string; stack?: string } = {
+    const safeProps: {
+        message: string;
+        errorType?: string;
+        stack?: string;
+        canRetry?: boolean,
+        retryAfterSeconds?: number,
+    } = {
         message,
     };
 
     if (isRegularObject(error)) {
-        const { errorType, stack, name } = error;
+        const { errorType, stack, name, canRetry, retryAfterSeconds } = error;
 
         if (typeof errorType === "string") {
             safeProps.errorType = errorType;
@@ -54,6 +60,14 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
         if (typeof stack === "string") {
             const errorName = (typeof name === "string") ? name : undefined;
             safeProps.stack = removeMessageFromStack(stack, errorName);
+        }
+
+        if (typeof canRetry === "boolean") {
+            safeProps.canRetry = canRetry;
+        }
+
+        if (typeof retryAfterSeconds === "number") {
+            safeProps.retryAfterSeconds = retryAfterSeconds;
         }
     }
 
@@ -110,7 +124,8 @@ export function normalizeError(
     }
 
     // We have to construct a new Fluid Error, copying safe properties over
-    const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
+    const { message, stack, canRetry, retryAfterSeconds } =
+        extractLogSafeErrorProperties(error, false /* sanitizeStack */);
     const fluidError: IFluidErrorBase = new SimpleFluidError({
         errorType: "genericError", // Match Container/Driver generic error type
         fluidErrorCode: "",
@@ -118,13 +133,16 @@ export function normalizeError(
         stack,
     });
 
+    // copy over canRetry and retryAfterSeconds which are inspected in a non-typesafe way in places
+    Object.assign(fluidError, {canRetry, retryAfterSeconds});
+
     fluidError.addTelemetryProperties({
         ...annotations.props,
         untrustedOrigin: 1, // This will let us filter to errors not originated by our own code
     });
 
+    // This is only interesting for non-objects
     if (typeof(error) !== "object") {
-        // This is only interesting for non-objects
         fluidError.addTelemetryProperties({ typeofError: typeof(error) });
     }
     return fluidError;

@@ -481,19 +481,7 @@ export class ConnectionManager implements IConnectionManager {
                     connection = undefined;
                 }
             } catch (origError) {
-                if (typeof origError === "object" && origError !== null &&
-                    origError?.errorType === DeltaStreamConnectionForbiddenError.errorType) {
-                    connection = new NoDeltaStream();
-                    requestedMode = "read";
-                    break;
-                }
-
-                // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
-                if (!canRetryOnError(origError)) {
-                    const error = normalizeError(origError, { props: fatalConnectErrorProp });
-                    this.props.closeHandler(error);
-                    throw error;
-                }
+                const error = normalizeError(origError);
 
                 // Log error once - we get too many errors in logs when we are offline,
                 // and unfortunately there is no reliable way to detect that.
@@ -505,16 +493,29 @@ export class ConnectionManager implements IConnectionManager {
                             eventName: "DeltaConnectionFailureToConnect",
                             duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
                         },
-                        origError);
+                        error);
                 }
 
-                lastError = origError;
+                if (error.errorType === DeltaStreamConnectionForbiddenError.errorType) {
+                    connection = new NoDeltaStream();
+                    requestedMode = "read";
+                    break;
+                }
 
-                const retryDelayFromError = getRetryDelayFromError(origError);
+                // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
+                if (!canRetryOnError(error)) {
+                    error.addTelemetryProperties(fatalConnectErrorProp);
+                    this.props.closeHandler(error);
+                    throw error;
+                }
+
+                lastError = error;
+
+                const retryDelayFromError = getRetryDelayFromError(error);
                 delayMs = retryDelayFromError ?? Math.min(delayMs * 2, MaxReconnectDelayInMs);
 
                 if (retryDelayFromError !== undefined) {
-                    this.props.reconnectionDelayHandler(retryDelayFromError, origError);
+                    this.props.reconnectionDelayHandler(retryDelayFromError, error);
                 }
                 await waitForConnectedState(delayMs);
             }
