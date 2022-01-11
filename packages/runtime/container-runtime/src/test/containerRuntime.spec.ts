@@ -54,12 +54,12 @@ describe("Runtime", () => {
                 });
 
                 it("Can't call flush() inside orderSequentially's callback", () => {
-                    containerRuntime.orderSequentially(() => containerRuntime.flush());
+                    assert.throws(() => containerRuntime.orderSequentially(() => containerRuntime.flush()));
                     assert.strictEqual(getSingleContainerError().errorType, "dataProcessingError");
                 });
 
                 it("Can't call flush() inside orderSequentially's callback when nested", () => {
-                    containerRuntime.orderSequentially(
+                    assert.throws(
                         () => containerRuntime.orderSequentially(
                             () => containerRuntime.orderSequentially(
                                 () => containerRuntime.flush())));
@@ -68,9 +68,11 @@ describe("Runtime", () => {
                 });
 
                 it("Errors propagate to the container", () => {
-                    containerRuntime.orderSequentially(() => {
-                        throw new Error("Any");
-                    });
+                    assert.throws(
+                        () => containerRuntime.orderSequentially(
+                            () => {
+                                throw new Error("Any");
+                            }));
 
                     const error = getSingleContainerError();
                     assert.strictEqual(error.errorType, "dataProcessingError");
