@@ -4,7 +4,7 @@
  */
 
 import { Template } from "@fluid-example/flow-util-lib";
-import { TableDocument, TableDocumentType } from "@fluid-example/table-document";
+import { SharedMatrix } from "@fluidframework/matrix";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
@@ -32,7 +32,7 @@ const template = new Template({
     ],
 });
 
-const innerDocKey = "innerDoc";
+const matrixKey = "matrixKey";
 
 export class TableView extends DataObject implements IFluidHTMLView {
     public static getFactory() { return factory; }
@@ -53,12 +53,12 @@ export class TableView extends DataObject implements IFluidHTMLView {
         elm.append(this.templateRoot);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const tableDocumentHandle = this.root.get<IFluidHandle<TableDocument>>(innerDocKey)!;
+        const tableMatrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(matrixKey)!;
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        tableDocumentHandle.get().then((doc) => {
+        tableMatrixHandle.get().then((matrix) => {
             const grid = template.get(this.templateRoot, "grid");
-            const gridView = new GridView(doc, this);
+            const gridView = new GridView(matrix, this);
             grid.appendChild(gridView.root);
 
             this._formulaInput.addEventListener("keypress", gridView.formulaKeypress);
@@ -66,22 +66,22 @@ export class TableView extends DataObject implements IFluidHTMLView {
 
             const addRowBtn = template.get(this.templateRoot, "addRow");
             addRowBtn.addEventListener("click", () => {
-                doc.insertRows(doc.numRows, 1);
+                matrix.insertRows(matrix.rowCount, 1);
             });
 
             const addRowsBtn = template.get(this.templateRoot, "addRows");
             addRowsBtn.addEventListener("click", () => {
-                doc.insertRows(doc.numRows, 10 /* 1048576 */);
+                matrix.insertRows(matrix.rowCount, 10 /* 1048576 */);
             });
 
             const addColBtn = template.get(this.templateRoot, "addCol");
             addColBtn.addEventListener("click", () => {
-                doc.insertCols(doc.numCols, 1);
+                matrix.insertCols(matrix.colCount, 1);
             });
 
             const addColsBtn = template.get(this.templateRoot, "addCols");
             addColsBtn.addEventListener("click", () => {
-                doc.insertCols(doc.numCols, 10 /* 16384 */);
+                matrix.insertCols(matrix.colCount, 10 /* 16384 */);
             });
 
             const gotoInput = template.get(this.templateRoot, "goto") as HTMLInputElement;
@@ -93,19 +93,17 @@ export class TableView extends DataObject implements IFluidHTMLView {
     // #endregion IFluidHTMLView
 
     protected async initializingFirstTime() {
-        // Set up internal table doc
-        const doc = await TableDocument.getFactory().createChildInstance(this.context);
-        this.root.set(innerDocKey, doc.handle);
-        doc.insertRows(0, 5);
-        doc.insertCols(0, 8);
+        const matrix = SharedMatrix.create(this.runtime);
+        this.root.set(matrixKey, matrix.handle);
+        matrix.insertRows(0, 5);
+        matrix.insertCols(0, 8);
     }
 }
 
 const factory = new DataObjectFactory(
     tableViewType,
     TableView,
-    [],
-    {},
     [
-        [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
-    ]);
+        SharedMatrix.getFactory(),
+    ],
+    {});
