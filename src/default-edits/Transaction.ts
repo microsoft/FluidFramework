@@ -67,12 +67,28 @@ export namespace Transaction {
 	 * The policy followed by a {@link Transaction}.
 	 */
 	export class Policy implements GenericTransactionPolicy<ChangeInternal, Failure> {
+		/**
+		 * Maps detached sequences of nodes to their NodeIds
+		 */
 		protected readonly detached: Map<DetachedSequenceId, readonly NodeId[]> = new Map();
 
+		/**
+		 * Resolves change with Result.Ok
+		 *
+		 * @param state - Unused
+		 * @param change - Change to resolve
+		 * @returns Result.Ok which contains change
+		 */
 		public tryResolveChange(state: ValidState, change: ChangeInternal): Result.Ok<ChangeInternal> {
 			return Result.ok(change);
 		}
 
+		/**
+		 * Validates the transaction when it is closed
+		 *
+		 * @param state - Current state
+		 * @returns a {@link ChangeResult} containing either the change result or a Failure
+		 */
 		public validateOnClose(state: ValidState): ChangeResult<Failure> {
 			// Making the policy choice that storing a detached sequences in an edit but not using it is an error.
 			return this.detached.size !== 0
@@ -86,6 +102,13 @@ export namespace Transaction {
 				: Result.ok(state.view);
 		}
 
+		/**
+		 * Applies a given change
+		 *
+		 * @param state - Current state
+		 * @param change - Change to apply
+		 * @returns a {@link ChangeResult} containing either the change result or a Failure
+		 */
 		public dispatchChange(state: ValidState, change: ChangeInternal): ChangeResult<Failure> {
 			switch (change.type) {
 				case ChangeTypeInternal.Build:
@@ -423,14 +446,41 @@ export namespace Transaction {
 	 * The kinds of failures that a transaction might encounter.
 	 */
 	export enum FailureKind {
+		/**
+		 * Transaction has an unused DetachedSequenceId
+		 */
 		UnusedDetachedSequence = 'UnusedDetachedSequence',
+		/**
+		 * Transaction has a build operation using an already in use DetachedSequenceID.
+		 */
 		DetachedSequenceIdAlreadyInUse = 'DetachedSequenceIdAlreadyInUse',
+		/**
+		 * Transaction tries to operate on an unknown DetachedSequenceID
+		 */
 		DetachedSequenceNotFound = 'DetachedSequenceNotFound',
+		/**
+		 * Transaction has a build which uses a duplicated NodeId
+		 */
 		DuplicateIdInBuild = 'DuplicateIdInBuild',
+		/**
+		 * Transaction tries to build a node using an ID which is already used in the current state
+		 */
 		IdAlreadyInUse = 'IdAlreadyInUse',
+		/**
+		 * Transaction tries to set value of an unknown node
+		 */
 		UnknownId = 'UnknownId',
+		/**
+		 * Transaction tries to insert in an invalid Place
+		 */
 		BadPlace = 'BadPlace',
+		/**
+		 * Transaction tries to detach an invalid Range
+		 */
 		BadRange = 'BadRange',
+		/**
+		 * Transaction has an invalid constraint
+		 */
 		ConstraintViolation = 'ConstraintViolation',
 	}
 
@@ -448,61 +498,175 @@ export namespace Transaction {
 		| BadRangeFailure
 		| ConstraintViolationFailure;
 
+	/**
+	 * Error returned when a transaction is closed while there is an unused detached sequence.
+	 */
 	export interface UnusedDetachedSequenceFailure {
+		/**
+		 * Failure kind (will always be FailureKind.UnusedDetachedSequence)
+		 */
 		readonly kind: FailureKind.UnusedDetachedSequence;
+		/**
+		 * The unused DetachedSequenceId
+		 */
 		readonly sequenceId: DetachedSequenceId;
 	}
 
+	/**
+	 * Error thrown when a transaction encounters a build operation using an already in use DetachedSequenceID.
+	 */
 	export interface DetachedSequenceIdAlreadyInUseFailure {
+		/**
+		 * Failure kind (will always be FailureKind.DetachedSequenceIdAlreadyInUse)
+		 */
 		readonly kind: FailureKind.DetachedSequenceIdAlreadyInUse;
+		/**
+		 * Faulting Change
+		 */
 		readonly change: ChangeInternal;
+		/**
+		 * The DetachedSequenceId that is already in use
+		 */
 		readonly sequenceId: DetachedSequenceId;
 	}
 
+	/**
+	 * Error thrown when a transaction tries to operate on an unknown DetachedSequenceID
+	 */
 	export interface DetachedSequenceNotFoundFailure {
+		/**
+		 * Failure kind (will always be FailureKind.DetachedSequenceNotFound)
+		 */
 		readonly kind: FailureKind.DetachedSequenceNotFound;
+		/**
+		 * Faulting Change
+		 */
 		readonly change: ChangeInternal;
+		/**
+		 * The DetachedSequenceId that wasn't found
+		 */
 		readonly sequenceId: DetachedSequenceId;
 	}
 
+	/**
+	 * Error thrown when a build uses a duplicated NodeId
+	 */
 	export interface DuplicateIdInBuildFailure {
+		/**
+		 * Failure kind (will always be FailureKind.DuplicateIdInBuild)
+		 */
 		readonly kind: FailureKind.DuplicateIdInBuild;
+		/**
+		 * Faulting Change
+		 */
 		readonly change: ChangeInternal;
+		/**
+		 * ID of duplicated node
+		 */
 		readonly id: NodeId;
 	}
 
+	/**
+	 * Error thrown when a build node ID is already used in the current state
+	 */
 	export interface IdAlreadyInUseFailure {
+		/**
+		 * Failure kind (will always be FailureKind.IdAlreadyInUse)
+		 */
 		readonly kind: FailureKind.IdAlreadyInUse;
+		/**
+		 * Faulting Change
+		 */
 		readonly change: ChangeInternal;
+		/**
+		 * ID of already in use node
+		 */
 		readonly id: NodeId;
 	}
 
+	/**
+	 * Error thrown when a change is attempted on an unknown NodeId
+	 */
 	export interface UnknownIdFailure {
+		/**
+		 * Failure kind (will always be FailureKind.UnknownId)
+		 */
 		readonly kind: FailureKind.UnknownId;
+		/**
+		 * Faulting Change
+		 */
 		readonly change: ChangeInternal;
+		/**
+		 * The unknown ID
+		 */
 		readonly id: NodeId;
 	}
 
+	/**
+	 * Error thrown when an insert change uses an invalid Place
+	 */
 	export interface BadPlaceFailure {
+		/**
+		 * Failure kind (will always be FailureKind.BadPlace)
+		 */
 		readonly kind: FailureKind.BadPlace;
+		/**
+		 * Faulting Change
+		 */
 		readonly change: ChangeInternal;
+		/**
+		 * The faulting place
+		 */
 		readonly place: StablePlace;
+		/**
+		 * The reason for the failure
+		 */
 		readonly placeFailure: BadPlaceValidationResult;
 	}
 
+	/**
+	 * Error thrown when a detach operation is given an invalid or malformed Range
+	 */
 	export interface BadRangeFailure {
+		/**
+		 * Failure kind (will always be FailureKind.BadRange)
+		 */
 		readonly kind: FailureKind.BadRange;
+		/**
+		 * Faulting Change
+		 */
 		readonly change: ChangeInternal;
+		/**
+		 * Faulting range
+		 */
 		readonly range: StableRange;
+		/**
+		 * The reason for the failure
+		 */
 		readonly rangeFailure: BadRangeValidationResult;
 	}
 
+	/**
+	 * Error thrown when a constraint fails to apply
+	 */
 	export interface ConstraintViolationFailure {
+		/**
+		 * Failure kind (will always be FailureKind.ConstraintViolation)
+		 */
 		readonly kind: FailureKind.ConstraintViolation;
+		/**
+		 * Faulting Change
+		 */
 		readonly constraint: ConstraintInternal;
+		/**
+		 * The first violation the constraint encounters (there may be others).
+		 */
 		readonly violation: ConstraintViolationResult;
 	}
 
+	/**
+	 * The details of what kind of constraint was violated and caused a ConstraintViolationFailure error to occur
+	 */
 	export type ConstraintViolationResult =
 		| {
 				readonly kind: ConstraintViolationKind.BadRange;
@@ -521,10 +685,25 @@ export namespace Transaction {
 				readonly actual: TraitLabel;
 		  };
 
+	/**
+	 * Enum of possible kinds of constraint violations that can be encountered
+	 */
 	export enum ConstraintViolationKind {
+		/**
+		 * The constraint failed because it applies to an invalid range
+		 */
 		BadRange = 'BadRange',
+		/**
+		 * The constraint failed because the length prescribed by the constraint does not match the length of range being constrained
+		 */
 		BadLength = 'BadLength',
+		/**
+		 * The constraint failed because the parent prescribed by the constraint does not match the actual parent of the range being constrained
+		 */
 		BadParent = 'BadParent',
+		/**
+		 * The constraint failed because the trait label prescribed by the constraint does not match the actual trait label of the range being constrained
+		 */
 		BadLabel = 'BadLabel',
 	}
 }
