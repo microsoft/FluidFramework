@@ -63,7 +63,7 @@
 		"@fluidframework/test-drivers": "^0.50.1",
 		"@fluidframework/test-runtime-utils": "^0.50.1",
 		"@fluidframework/test-utils": "^0.50.1",
-		"@microsoft/api-extractor": "7.19.3",
+		"@microsoft/api-extractor": "7.19.4",
 		"@types/lru-cache": "^5.1.1",
 		"@types/socket.io-client": "^1.4.36",
 		"@typescript-eslint/parser": "^4.33.0",
