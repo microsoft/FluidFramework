@@ -127,7 +127,9 @@ export abstract class Checkout<TChange, TChangeInternal, TFailure = unknown>
 		currentView: RevisionView,
 		onEditCommitted: EditCommittedHandler<GenericSharedTree<TChange, TChangeInternal, TFailure>>
 	) {
-		super();
+		super((_event, error: unknown) => {
+			this.tree.emit('error', error);
+		});
 		this.tree = tree;
 		if (tree.logViewer instanceof CachingLogViewer) {
 			this.cachingLogViewer = tree.logViewer;

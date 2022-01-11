@@ -4,9 +4,8 @@
  */
 
 import BTree from 'sorted-btree';
-import { IsoBuffer } from '@fluidframework/common-utils';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { IsoBuffer, TypedEventEmitter } from '@fluidframework/common-utils';
+import { IEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
 import { assert, assertNotUndefined, compareArrays, fail } from './Common';
 import { Edit, EditWithoutId, SharedTreeDiagnosticEvent } from './generic';
 import { EditId } from './Identifiers';
@@ -205,13 +204,21 @@ const loadedChunkCacheSize = Number.POSITIVE_INFINITY;
 export type EditAddedHandler<TChange> = (edit: Edit<TChange>, isLocal: boolean, wasLocal: boolean) => void;
 
 /**
+ * Events which may be emitted by `EditLog`.
+ * @public
+ */
+export interface IEditLogEvents extends IEvent {
+	(event: 'unexpectedHistoryChunk', listener: () => void);
+}
+
+/**
  * The edit history log for SharedTree.
  * Contains only completed edits (no in-progress edits).
  * Ordered first by locality (acked or local), then by time of insertion.
  * May not contain more than one edit with the same ID.
  * @sealed
  */
-export class EditLog<TChange = unknown> extends EventEmitterWithErrorHandling implements OrderedEditSet<TChange> {
+export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents> implements OrderedEditSet<TChange> {
 	private localEditSequence = 0;
 	private _minSequenceNumber = 0;
 
