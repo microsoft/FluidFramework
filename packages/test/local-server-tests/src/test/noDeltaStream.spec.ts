@@ -25,6 +25,7 @@ import {
 import { Container, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
+import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 
 describe("No Delta Stream", () => {
     const documentId = "localServerTest";
@@ -36,7 +37,7 @@ describe("No Delta Stream", () => {
     };
     const factory = new TestContainerRuntimeFactory(
         "",
-        new TestFluidObjectFactory([[stringId, SharedString.getFactory()]]));
+        new TestFluidObjectFactory([[stringId, SharedString.getFactory()]]), {}, [rootDataStoreRequestHandler]);
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let loaderContainerTracker: LoaderContainerTracker;

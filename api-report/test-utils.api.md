@@ -38,6 +38,7 @@ import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITestDriver } from '@fluidframework/test-driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { Loader } from '@fluidframework/container-loader';
+import { RuntimeRequestHandler } from '@fluidframework/request-handler';
 
 // @public (undocumented)
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
@@ -53,10 +54,11 @@ export function createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidE
 
 // @public
 export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof ContainerRuntime) => {
-    new (type: string, dataStoreFactory: IFluidDataStoreFactory, runtimeOptions?: IContainerRuntimeOptions): {
+    new (type: string, dataStoreFactory: IFluidDataStoreFactory, runtimeOptions?: IContainerRuntimeOptions, requestHandlers?: RuntimeRequestHandler[]): {
         type: string;
         dataStoreFactory: IFluidDataStoreFactory;
         runtimeOptions: IContainerRuntimeOptions;
+        requestHandlers: RuntimeRequestHandler[];
         instantiateFirstTime(runtime: ContainerRuntime): Promise<void>;
         instantiateFromExisting(runtime: ContainerRuntime): Promise<void>;
         preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & IContainerRuntime>;
@@ -185,10 +187,11 @@ export type SupportedExportInterfaces = Partial<IProvideRuntimeFactory & IProvid
 
 // @public
 export const TestContainerRuntimeFactory: {
-    new (type: string, dataStoreFactory: IFluidDataStoreFactory, runtimeOptions?: IContainerRuntimeOptions): {
+    new (type: string, dataStoreFactory: IFluidDataStoreFactory, runtimeOptions?: IContainerRuntimeOptions, requestHandlers?: RuntimeRequestHandler[]): {
         type: string;
         dataStoreFactory: IFluidDataStoreFactory;
         runtimeOptions: IContainerRuntimeOptions;
+        requestHandlers: RuntimeRequestHandler[];
         instantiateFirstTime(runtime: ContainerRuntime): Promise<void>;
         instantiateFromExisting(runtime: ContainerRuntime): Promise<void>;
         preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & IContainerRuntime>;

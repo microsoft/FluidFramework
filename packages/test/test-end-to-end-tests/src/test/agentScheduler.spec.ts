@@ -13,9 +13,14 @@ import {
     TestContainerRuntimeFactory,
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 
 const runtimeFactory: IProvideRuntimeFactory = {
-    IRuntimeFactory: new TestContainerRuntimeFactory(AgentSchedulerFactory.type, new AgentSchedulerFactory()),
+    IRuntimeFactory: new TestContainerRuntimeFactory(
+        AgentSchedulerFactory.type,
+        new AgentSchedulerFactory(),
+        {},
+        [rootDataStoreRequestHandler]),
 };
 
 // By default, the container loads in read mode.  However, pick() attempts silently fail if not in write
