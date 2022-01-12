@@ -2,7 +2,7 @@
 
 ## 16.8.2
 
-* build: update fluidframework to 0.54
+* build: BREAKING CHANGE: update fluidframework to 0.54
   * Associated pull request: [37076](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/37076)
   * Commit: [4c5e7dfd47378435b51c526e351ad22d69a43b2d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4c5e7dfd47378435b51c526e351ad22d69a43b2d)
 * build: updates package dependencies (except typescript, colors)
