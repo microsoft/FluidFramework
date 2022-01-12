@@ -134,7 +134,12 @@ export function normalizeError(
     });
 
     // copy over canRetry and retryAfterSeconds which are inspected in a non-typesafe way in places
-    Object.assign(fluidError, {canRetry, retryAfterSeconds});
+    if (canRetry !== undefined) {
+        (fluidError as any).canRetry = canRetry;
+    }
+    if (retryAfterSeconds !== undefined) {
+        (fluidError as any).retryAfterSeconds = retryAfterSeconds;
+    }
 
     fluidError.addTelemetryProperties({
         ...annotations.props,
