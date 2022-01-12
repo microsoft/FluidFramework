@@ -10,21 +10,21 @@ import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
 
-const componentId = "modelComponent";
+const dataStoreId = "modelDataStore";
 
 export type ViewCallback<T> = (fluidModel: T) => any;
 
 const makeViewRequestHandler = <T>(viewCallback: ViewCallback<T>): RuntimeRequestHandler =>
     async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length === 0) {
-            const clickerRequest = RequestParser.create({
+            const objectRequest = RequestParser.create({
                 url: ``,
                 headers: request.headers,
             });
             // TODO type the requestFluidObject
             const fluidObject = await requestFluidObject<T>(
-                await runtime.getRootDataStore(componentId),
-                clickerRequest);
+                await runtime.getRootDataStore(dataStoreId),
+                objectRequest);
             const viewResponse = viewCallback(fluidObject);
             return { status: 200, mimeType: "fluid/view", value: viewResponse };
         }
@@ -54,6 +54,6 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
      * it requires to produce that default view.  We'll create a single data store of the specified type.
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        await runtime.createRootDataStore(this.dataStoreFactory.type, componentId);
+        await runtime.createRootDataStore(this.dataStoreFactory.type, dataStoreId);
     }
 }

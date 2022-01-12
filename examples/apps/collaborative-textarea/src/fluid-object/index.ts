@@ -6,20 +6,20 @@
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import React from "react";
-import ReactDOM from "react-dom";
-import { CollaborativeTextView } from "../view";
 
 /**
  * CollaborativeText uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
  */
-export class CollaborativeText extends DataObject implements IFluidHTMLView {
+export class CollaborativeText extends DataObject {
     private readonly textKey = "textKey";
 
-    private text: SharedString | undefined;
-
-    public get IFluidHTMLView() { return this; }
+    private _text: SharedString | undefined;
+    public get text() {
+        if (this._text === undefined) {
+            throw new Error("The SharedString was not initialized correctly");
+        }
+        return this._text;
+    }
 
     public static get Name() { return "@fluid-example/collaborative-textarea"; }
 
@@ -43,22 +43,7 @@ export class CollaborativeText extends DataObject implements IFluidHTMLView {
 
     protected async hasInitialized() {
         // Store the text if we are loading the first time or loading from existing
-        this.text = await this.root.get<IFluidHandle<SharedString>>(this.textKey)?.get();
-    }
-
-    /**
-     * Renders a new view into the provided div
-     */
-    public render(div: HTMLElement) {
-        if (this.text === undefined) {
-            throw new Error("The SharedString was not initialized correctly");
-        }
-
-        ReactDOM.render(
-            <CollaborativeTextView text={this.text} />,
-            div,
-        );
-        return div;
+        this._text = await this.root.get<IFluidHandle<SharedString>>(this.textKey)?.get();
     }
 }
 
