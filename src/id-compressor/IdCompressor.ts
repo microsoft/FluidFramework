@@ -7,7 +7,16 @@
 
 import BTree from 'sorted-btree';
 import { CompressedId } from '..';
-import { assert, assertNotUndefined, compareMaps, fail, Mutable, setPropertyIfDefined } from '../Common';
+import {
+	assert,
+	assertNotUndefined,
+	compareFiniteNumbers,
+	compareMaps,
+	compareStrings,
+	fail,
+	Mutable,
+	setPropertyIfDefined,
+} from '../Common';
 import {
 	LocalCompressedId,
 	FinalCompressedId,
@@ -17,7 +26,6 @@ import {
 	OpSpaceCompressedId,
 	SessionId,
 } from '../Identifiers';
-import { compareFiniteNumbers, compareStrings } from '../TreeViewUtilities';
 import { AppendOnlyDoublySortedMap, AppendOnlySortedMap } from './AppendOnlySortedMap';
 import { AttributionInfo, IdRange, UnackedLocalId } from './IdRange';
 import {

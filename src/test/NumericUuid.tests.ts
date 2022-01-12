@@ -8,7 +8,7 @@
 import { expect } from 'chai';
 import Prando from 'prando';
 import { StableId } from '../Identifiers';
-import { assert } from '../Common';
+import { assert, compareStrings } from '../Common';
 import {
 	numericUuidEquals,
 	createSessionId,
@@ -23,7 +23,6 @@ import {
 	assertIsStableId,
 	isMinimalUuidString,
 } from '../id-compressor/NumericUuid';
-import { compareStrings } from '../TreeViewUtilities';
 import { integerToStableId } from './utilities/IdCompressorTestUtilities';
 
 describe('NumericUuid', () => {

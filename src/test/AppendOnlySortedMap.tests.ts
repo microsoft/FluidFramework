@@ -6,9 +6,8 @@
 /* eslint-disable no-bitwise */
 
 import { expect } from 'chai';
-import { assertNotUndefined } from '../Common';
+import { assertNotUndefined, compareFiniteNumbers } from '../Common';
 import { AppendOnlyDoublySortedMap, AppendOnlySortedMap } from '../id-compressor/AppendOnlySortedMap';
-import { compareFiniteNumbers } from '../TreeViewUtilities';
 
 function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, number>) {
 	it('detects out-of-order keys', () => {

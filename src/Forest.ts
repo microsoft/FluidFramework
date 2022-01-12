@@ -4,10 +4,9 @@
  */
 
 import BTree from 'sorted-btree';
-import { fail, assert, comparePayloads, copyPropertyIfDefined, compareBtrees } from './Common';
+import { fail, assert, comparePayloads, copyPropertyIfDefined, compareBtrees, compareStrings } from './Common';
 import { NodeData, Payload } from './generic';
 import { NodeId, TraitLabel } from './Identifiers';
-import { compareStrings } from './TreeViewUtilities';
 
 type Optional<T> = {
 	[P in keyof T]: T[P] | undefined;

@@ -49,6 +49,22 @@ class SharedTreeAssertionError extends Error {
 }
 
 /**
+ * Compares finite numbers to form a strict partial ordering.
+ *
+ * Handles +/-0 like Map: -0 is equal to +0.
+ */
+export function compareFiniteNumbers<T extends number>(a: T, b: T): number {
+	return a - b;
+}
+
+/**
+ * Compares strings lexically to form a strict partial ordering.
+ */
+export function compareStrings<T extends string>(a: T, b: T): number {
+	return a > b ? 1 : a === b ? 0 : -1;
+}
+
+/**
  * @returns true if two `Payloads` are identical.
  * May return false for equivalent payloads encoded differently.
  *

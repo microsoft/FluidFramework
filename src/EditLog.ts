@@ -6,10 +6,9 @@
 import BTree from 'sorted-btree';
 import { IsoBuffer, TypedEventEmitter } from '@fluidframework/common-utils';
 import { IEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
-import { assert, assertNotUndefined, compareArrays, fail } from './Common';
+import { assert, assertNotUndefined, compareArrays, compareFiniteNumbers, fail } from './Common';
 import { Edit, EditWithoutId, SharedTreeDiagnosticEvent } from './generic';
 import { EditId } from './Identifiers';
-import { compareFiniteNumbers } from './TreeViewUtilities';
 
 /**
  * An ordered set of Edits associated with a SharedTree.

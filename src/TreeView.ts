@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert, copyPropertyIfDefined, fail } from './Common';
+import { assert, copyPropertyIfDefined, fail, memoizeGetter } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
-import { getChangeNodeFromView } from './TreeViewUtilities';
 import { Delta, Forest } from './Forest';
-import { ChangeNode, NodeData, Payload, TraitLocation } from './generic';
+import { ChangeNode, NodeData, Payload, TraitLocation, TraitMap } from './generic';
 
 /**
  * An immutable view of a distributed tree node.
@@ -104,7 +103,7 @@ export abstract class TreeView {
 
 	/** Return a tree of JSON-compatible `ChangeNode`s representing the current state of this view */
 	public getChangeNodeTree(): ChangeNode {
-		return getChangeNodeFromView(this, this.rootNode);
+		return this.getChangeNodeFromViewNode(this.rootNode);
 	}
 
 	/** @returns the number of nodes in this view */
@@ -119,13 +118,13 @@ export abstract class TreeView {
 
 	/** @returns a `ChangeNode` derived from the node in this view with the given id. Fails if the node does not exist in this view. */
 	public getChangeNode(id: NodeId): ChangeNode {
-		return getChangeNodeFromView(this, this.getViewNode(id));
+		return this.getChangeNodeFromViewNode(this.getViewNode(id));
 	}
 
 	/** @returns a `ChangeNode` derived from the node in this view with the given id, or undefined if no such node exists */
 	public tryGetChangeNode(id: NodeId): ChangeNode | undefined {
 		const viewNode = this.tryGetViewNode(id);
-		return viewNode === undefined ? undefined : getChangeNodeFromView(this, viewNode);
+		return viewNode === undefined ? undefined : this.getChangeNodeFromViewNode(viewNode);
 	}
 
 	/**
@@ -325,6 +324,63 @@ export abstract class TreeView {
 	public delta(view: TreeView): Delta<NodeId> {
 		assert(this.root === view.root, 'Delta can only be calculated between views that share a root');
 		return this.forest.delta(view.forest);
+	}
+
+	/**
+	 * Converts a node in this tree view to an equivalent `ChangeNode`.
+	 * @param node - the node to convert
+	 * @param lazyTraits - whether or not traits should be populated lazily. If true, the subtrees under each trait will not be read until
+	 * the trait is first accessed.
+	 */
+	public getChangeNodeFromViewNode(node: TreeViewNode, lazyTraits = false): ChangeNode {
+		const nodeData = {
+			definition: node.definition,
+			identifier: node.identifier,
+		};
+		copyPropertyIfDefined(node, nodeData, 'payload');
+
+		if (lazyTraits) {
+			const makeTraits = this.makeTraits.bind(this);
+			return {
+				...nodeData,
+				get traits() {
+					return memoizeGetter(this, 'traits', makeTraits(node.traits, lazyTraits));
+				},
+			};
+		}
+
+		return {
+			...nodeData,
+			traits: this.makeTraits(node.traits, lazyTraits),
+		};
+	}
+
+	/** Given the traits of a TreeViewNode, return the corresponding traits on a Node */
+	private makeTraits(traits: ReadonlyMap<TraitLabel, readonly NodeId[]>, lazyTraits = false): TraitMap<ChangeNode> {
+		const traitMap = {};
+		for (const [label, trait] of traits.entries()) {
+			if (lazyTraits) {
+				const getChangeNodeFromViewNode = this.getChangeNodeFromViewNode.bind(this);
+				const getViewNode = this.getViewNode.bind(this);
+				Object.defineProperty(traitMap, label, {
+					get() {
+						const treeNodeTrait = trait.map((node) =>
+							getChangeNodeFromViewNode(getViewNode(node), lazyTraits)
+						);
+						return memoizeGetter(this as TraitMap<ChangeNode>, label, treeNodeTrait);
+					},
+					configurable: true,
+					enumerable: true,
+				});
+			} else {
+				Object.defineProperty(traitMap, label, {
+					value: trait.map((node) => this.getChangeNodeFromViewNode(this.getViewNode(node), lazyTraits)),
+					enumerable: true,
+				});
+			}
+		}
+
+		return traitMap;
 	}
 }
 
