@@ -9,6 +9,7 @@ import {
     ILoader,
     IRuntime,
     IRuntimeFactory,
+    ICodeDetailsLoader,
 } from "@fluidframework/container-definitions";
 import {
     FluidObject,
@@ -23,7 +24,6 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { Container } from "../container";
 import { ContainerContext } from "../containerContext";
-import { ICodeDetailsLoader } from "../loader";
 
 describe("ContainerContext Tests", () => {
     let sandbox: Sinon.SinonSandbox;
