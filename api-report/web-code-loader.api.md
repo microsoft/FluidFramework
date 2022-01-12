@@ -9,8 +9,8 @@ import { ICodeLoader } from '@fluidframework/container-definitions';
 import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
 import { IFluidCodeResolver } from '@fluidframework/container-definitions';
 import { IFluidModule } from '@fluidframework/container-definitions';
-import { IFluidPackage } from '@fluidframework/core-interfaces';
-import { IFluidPackageEnvironment } from '@fluidframework/core-interfaces';
+import { IFluidPackage } from '@fluidframework/container-definitions';
+import { IFluidPackageEnvironment } from '@fluidframework/container-definitions';
 import { IResolvedFluidCodeDetails } from '@fluidframework/container-definitions';
 
 // @public
