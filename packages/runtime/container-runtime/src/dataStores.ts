@@ -237,10 +237,6 @@ export class DataStores implements IDisposable {
             pkg);
 
         this.contexts.addBoundOrRemoted(remotedFluidDataStoreContext);
-
-        // Equivalent of nextTick() - Prefetch once all current ops have completed
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        Promise.resolve().then(async () => remotedFluidDataStoreContext.realize());
     }
 
     public processAliasMessage(
