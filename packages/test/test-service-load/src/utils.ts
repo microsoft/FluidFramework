@@ -154,6 +154,9 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
     const testId = Date.now().toString();
     const request = testDriver.createCreateNewRequest(testId);
     await container.attach(request);
+    assert(container.resolvedUrl !== undefined, "Container missing resolved URL after attach");
+    assert(container.resolvedUrl.type === "fluid", "Container has a non-fluid resolved URL after attach");
+    const containerId = container.resolvedUrl.id;
     container.close();
 
     if ((testConfig.detachedBlobCount ?? 0) > 0) {
@@ -161,7 +164,7 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
         const url = (testDriver as OdspTestDriver).getUrlFromItemId((container.resolvedUrl as any).itemId);
         return url;
     }
-    return testDriver.createContainerUrl(testId);
+    return testDriver.createContainerUrl(containerId);
 }
 
 export async function createTestDriver(
