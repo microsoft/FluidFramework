@@ -58,6 +58,7 @@ interface IConnectedClient {
     connectVersions: string[];
 }
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function getRoomId(room: IRoom) {
     return `${room.tenantId}/${room.documentId}`;
 }

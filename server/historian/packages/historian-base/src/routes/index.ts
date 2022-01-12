@@ -36,6 +36,7 @@ export interface IRoutes {
     summaries: Router;
 }
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function create(
     config: nconf.Provider,
     tenantService: ITenantService,
