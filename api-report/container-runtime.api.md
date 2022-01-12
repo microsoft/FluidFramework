@@ -92,7 +92,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
-    createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
+    createDataStore(pkg: string | string[]): Promise<IDataStore>;
     // (undocumented)
     _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IFluidRouter>;
     // (undocumented)
@@ -171,6 +171,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     snapshot(): Promise<ITree>;
     // (undocumented)
     get storage(): IDocumentStorageService;
+    // (undocumented)
+    submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void;
     // (undocumented)
     submitDataStoreOp(id: string, contents: any, localOpMetadata?: unknown): void;
     // (undocumented)
@@ -328,6 +330,12 @@ export interface IContainerRuntimeOptions {
     loadSequenceNumberVerification?: "close" | "log" | "bypass";
     // (undocumented)
     summaryOptions?: ISummaryRuntimeOptions;
+    useDataStoreAliasing?: boolean;
+}
+
+// @public
+export interface IDataStore extends IFluidRouter {
+    trySetAlias(alias: string): Promise<boolean>;
 }
 
 // @public

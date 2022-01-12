@@ -16,6 +16,7 @@ export {
     agentSchedulerId,
     ContainerRuntime,
 } from "./containerRuntime";
+export { IDataStore } from "./dataStore";
 export * from "./deltaScheduler";
 export * from "./dataStoreRegistry";
 export {

@@ -148,6 +148,7 @@ import {
     IGCStats,
     IUsedStateStats,
 } from "./garbageCollection";
+import { IDataStore, IDataStoreAliasMessage, isDataStoreAliasMessage, routerToDataStore } from "./dataStore";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -284,6 +285,11 @@ export interface IContainerRuntimeOptions {
      * 3. "bypass" will skip the check entirely. This is not recommended.
      */
     loadSequenceNumberVerification?: "close" | "log" | "bypass";
+    /**
+     * Should the runtime use data store aliasing for creating root datastores.
+     * In case of aliasing conflict, the runtime will raise an exception.
+     */
+    useDataStoreAliasing?: boolean;
 }
 
 type IRuntimeMessageMetadata = undefined | {
@@ -292,6 +298,7 @@ type IRuntimeMessageMetadata = undefined | {
 
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
+const useDataStoreAliasingKey = "Fluid.ContainerRuntime.UseDataStoreAliasing";
 
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     switch (message.type) {
@@ -651,6 +658,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryOptions = {},
             gcOptions = {},
             loadSequenceNumberVerification = "close",
+            useDataStoreAliasing = false,
         } = runtimeOptions;
 
         // We pack at data store level only. If isolated channels are disabled,
@@ -744,6 +752,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 summaryOptions,
                 gcOptions,
                 loadSequenceNumberVerification,
+                useDataStoreAliasing,
             },
             containerScope,
             logger,
@@ -848,6 +857,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly summaryCollection: SummaryCollection;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
+    private readonly _aliasingEnabled: boolean;
 
     private _orderSequentiallyCalls: number = 0;
     private _flushMode: FlushMode;
@@ -977,6 +987,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._flushMode =
             this.mc.config.getBoolean(turnBasedFlushModeKey) ?? false
             ? FlushMode.TurnBased : FlushMode.Immediate;
+
+        this._aliasingEnabled =
+            (this.mc.config.getBoolean(useDataStoreAliasingKey) ?? false) ||
+            (runtimeOptions.useDataStoreAliasing ?? false);
 
         /**
          * Function that return the current server timestamp. This is used by the garbage collector to set the
@@ -1677,14 +1691,42 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    public async createDataStore(pkg: string | string[]): Promise<IFluidRouter> {
-        return this._createDataStore(pkg, false /* isRoot */);
+    private async createDataStoreCore(
+        pkg: string | string[],
+        isRoot: boolean,
+        id: string,
+        props?: any,
+    ): Promise<IFluidDataStoreChannel> {
+        const fluidDataStore = await this._createDataStore(pkg, isRoot, id, props);
+        if (isRoot) {
+            fluidDataStore.bindToContext();
+        }
+
+        return fluidDataStore;
+    }
+
+    public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
+        const internalId = uuid();
+        return routerToDataStore(await this.createDataStoreCore(pkg, false /* isRoot */, internalId), internalId, this);
+    }
+
+    private async createAndAliasDataStore(pkg: string | string[], alias: string, props?: any): Promise<IDataStore> {
+        const internalId = uuid();
+        const dataStore = await this.createDataStoreCore(pkg, false /* isRoot */, internalId, props);
+        dataStore.bindToContext();
+        const aliasedDataStore = routerToDataStore(dataStore, internalId, this);
+        const result = await aliasedDataStore.trySetAlias(alias);
+        if (!result) {
+            throw new GenericError("dataStoreAliasConflict");
+        }
+
+        return aliasedDataStore;
     }
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
-        const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
-        fluidDataStore.bindToContext();
-        return fluidDataStore;
+        return this._aliasingEnabled === true && this.attachState === AttachState.Attached ?
+            this.createAndAliasDataStore(pkg, rootDataStoreId) :
+            this.createDataStoreCore(pkg, true /* isRoot */, rootDataStoreId);
     }
 
     public createDetachedRootDataStore(
@@ -1704,20 +1746,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         id = uuid(),
         isRoot = false,
     ): Promise<IFluidRouter> {
-        const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
-            Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
-        if (isRoot) {
-            fluidDataStore.bindToContext();
-        }
-        return fluidDataStore;
+        return this._aliasingEnabled === true && isRoot && this.attachState === AttachState.Attached ?
+            this.createAndAliasDataStore(pkg, id, props) :
+            this.createDataStoreCore(pkg, isRoot, id, props);
     }
 
     private async _createDataStore(
         pkg: string | string[],
         isRoot: boolean,
         id = uuid(),
+        props?: any,
     ): Promise<IFluidDataStoreChannel> {
-        return this.dataStores._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot).realize();
+        return this.dataStores
+            ._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
     }
 
     private canSendOps() {
@@ -2177,6 +2218,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             contents,
         };
         this.submit(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
+    }
+
+    public submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void {
+        const aliasMessage = contents as IDataStoreAliasMessage;
+        if (!isDataStoreAliasMessage(aliasMessage)) {
+            throw new DataCorruptionError(
+                "malformedDataStoreAliasMessage",
+                {
+                    ...extractSafePropertiesFromMessage(contents),
+                },
+            );
+        }
+        this.submit(ContainerMessageType.Alias, contents, localOpMetadata);
     }
 
     public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
