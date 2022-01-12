@@ -226,7 +226,7 @@ class DataStructureAnalyzer implements IMessageAnalyzer {
     private readonly dataType = new Map<string, string>();
     private readonly dataTypeStats = new Map<string, [number, number]>();
     private readonly objectStats = new Map<string, [number, number]>();
-    private readonly chunkMap = new Map<string, [string[], number]>();
+    private readonly chunkMap = new Map<string, {chunks: string[], totalSize: number}>();
 
     public processOp(message: ISequencedDocumentMessage, msgSize: number, skipMessage: boolean): void {
         if (!skipMessage) {
@@ -479,7 +479,7 @@ function processOp(
     msgSize: number,
     dataTypeStats: Map<string, [number, number]>,
     messageTypeStats: Map<string, [number, number]>,
-    chunkMap: Map<string, [string[], number]>) {
+    chunkMap: Map<string, {chunks: string[], totalSize: number}>) {
     let type = message.type;
     let recorded = false;
     let totalMsgSize = msgSize;
@@ -499,7 +499,7 @@ function processOp(
             case ContainerMessageType.ChunkedOp: {
                 const chunk = runtimeMessage.contents as IChunkedOp;
                 if (!chunkMap.has(runtimeMessage.clientId)) {
-                    chunkMap.set(runtimeMessage.clientId, [new Array<string>(chunk.totalChunks), 0]);
+                    chunkMap.set(runtimeMessage.clientId, {chunks: new Array<string>(chunk.totalChunks), totalSize:0});
                 }
                 const value = chunkMap.get(runtimeMessage.clientId);
                 assert(value !== undefined, "Chunk should be set in map");
