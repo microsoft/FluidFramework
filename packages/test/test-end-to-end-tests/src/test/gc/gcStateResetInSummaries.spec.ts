@@ -9,7 +9,6 @@ import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
     ContainerRuntime,
-    gcTreeKey,
     IAckedSummary,
     IContainerRuntimeOptions,
     SummaryCollection,
@@ -46,7 +45,6 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
     };
 
     const logger = new TelemetryNullLogger();
-    const dataStoreAttributesBlobName = ".component";
 
     // Stores the latest summary uploaded to the server.
     let latestUploadedSummary: ISummaryTree | undefined;
@@ -112,7 +110,7 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
     async function getSummaryChannelsTree(
         summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
     ) {
-        const summaryResult = await submitAndAckSummary(provider, summarizerClient, logger, true /* fullTree */);
+        const summaryResult = await submitAndAckSummary(provider, summarizerClient, logger);
         latestAckedSummary = summaryResult.ackedSummary;
 
         assert(
@@ -121,28 +119,38 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
             `Actual: ${latestSummaryContext?.referenceSequenceNumber}.`,
         );
         assert(latestUploadedSummary !== undefined, "Did not get a summary");
-
-        return (latestUploadedSummary.tree[channelsTreeName] as ISummaryTree)?.tree ?? latestUploadedSummary.tree;
+        return (latestUploadedSummary.tree[channelsTreeName] as ISummaryTree).tree;
     }
 
     /**
-     * Validates that GC ran by asserting that the summary has GC blob.
-     * If unreferencedDataStoreId is provided, all node entries for that data store and its children in the GC blob
-     * should have unreferenced timestamp. Also, the data store's summary tree should be marked unreferenced.
-     * All other nodes should be referenced and should not have unreferenced timestamp.
+     * Generated a summary for the given client and validates the GC state in the summary as per the params:
+     * @param shouldGCRun - Whether GC should run or not. If true, validates that the summary contains a GC tree.
+     * @param shouldRegenerateSummary - Whether the summary should be regenerated. If true, validates that all data
+     * store entries in the summary are of type ISummaryTree.
+     * @param unreferencedDataStoreIds - A list of data store IDs that should be unreferenced in the summary. Validates
+     * that all these data store's summary tree is marked unreferenced. If shouldRunGC is true, also validates that the
+     * GC state for these have an unreferenced timestamp.
      */
-    async function validateGCRan(
+    async function validateGCState(
         summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
-        unreferencedDataStoreId?: string,
+        shouldGCRun: boolean,
+        shouldRegenerateSummary: boolean,
+        unreferencedDataStoreIds: string[] = [],
     ) {
         const channelsTree = await getSummaryChannelsTree(summarizerClient);
         assert(latestUploadedSummary !== undefined, "Did not get a summary");
 
         const gcState = getGCStateFromSummary(latestUploadedSummary);
+        if (gcState === undefined) {
+            assert(!shouldGCRun, `If GC tree is not present in summary, GC should not have run.`);
+            return;
+        }
+
         for (const [nodeId, nodeData] of Object.entries(gcState.gcNodes)) {
-            // All nodes belonging to the data store with id unreferencedDataStoreId should have unreferenced timestamp.
+            // All nodes belonging to the data store in unreferencedDataStoreIds should have unreferenced timestamp.
             // All other nodes should not have unreferenced timestamp.
-            if (unreferencedDataStoreId !== undefined && nodeId.startsWith(`/${unreferencedDataStoreId}`)) {
+            const dsId = nodeId.split("/")[1];
+            if (unreferencedDataStoreIds.includes(dsId)) {
                 assert(
                     nodeData.unreferencedTimestampMs !== undefined,
                     `Node ${nodeId} should have unreferenced timestamp`,
@@ -156,39 +164,16 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
         }
 
         for (const [ id, summaryObject ] of Object.entries(channelsTree)) {
-            // Filter out non data store entries.
-            if (summaryObject.type !== SummaryType.Tree
-                || summaryObject.tree[dataStoreAttributesBlobName] === undefined) {
+            if (summaryObject.type !== SummaryType.Tree) {
+                assert(!shouldRegenerateSummary, `DataStore ${id}'s entry should be a tree if summary was regenerated`);
                 continue;
             }
 
-            if (id === unreferencedDataStoreId) {
+            if (unreferencedDataStoreIds.includes(id)) {
                 assert(summaryObject.unreferenced === true, `DataStore ${id} should be unreferenced`);
             } else {
                 assert(summaryObject.unreferenced !== true, `DataStore ${id} should be referenced`);
             }
-        }
-    }
-
-    /**
-     * Validates that GC did not run by asserting that the summary does not have GC blob.
-     * All data stores should be referenced.
-     */
-    async function validateGCDidNotRun(
-        summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
-    ) {
-        const channelsTree = await getSummaryChannelsTree(summarizerClient);
-        assert(latestUploadedSummary !== undefined, "Did not get a summary");
-        const gcSummaryTree = latestUploadedSummary.tree[gcTreeKey];
-        assert(gcSummaryTree === undefined, `GC tree should not be present in summary if GC did not run.`);
-
-        for (const [ id, summaryObject ] of Object.entries(channelsTree)) {
-            // Filter out non data store entries.
-            if (summaryObject.type !== SummaryType.Tree
-                || summaryObject.tree[dataStoreAttributesBlobName] === undefined) {
-                continue;
-            }
-            assert(summaryObject.unreferenced !== true, `DataStore ${id} should be referenced`);
         }
     }
 
@@ -228,23 +213,52 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
         const newDataStore = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
         mainDataStore._root.set("newDataStore", newDataStore.handle);
 
-        // Validate that GC ran.
-        await validateGCRan(summarizerClient);
-
-        // Mark the data store as unreferenced by deleting its handle from the DDS. Validate that GC ran and the
-        // unreferenced data store is marked as such in GC state.
+        // Mark the data store as unreferenced by deleting its handle from the DDS.
         mainDataStore._root.delete("newDataStore");
-        await validateGCRan(summarizerClient, newDataStore.id);
 
-        // Load a new summarizer from the last summary with GC disabled. Validate that GC did not run and that
-        // previous GC state is removed expect for used routes which marks all data stores as referenced.
+        // Validate that GC ran and the unreferenced data store is marked as such in GC state.
+        await validateGCState(
+            summarizerClient,
+            true /* shouldGCRun */,
+            false /* shouldRegenerateSummary */,
+            [newDataStore.id],
+        );
+
+        // Load a new summarizer from the last summary with GC disabled.
         assert(latestAckedSummary !== undefined, "Summary ack isn't available as expected");
         const summarizerClient2 = await getNewSummarizer(
             true /* disableGC */,
             undefined /* gcAllowed */,
             latestAckedSummary.summaryAck.contents.handle,
         );
-        await validateGCDidNotRun(summarizerClient2);
+        // Validate that GC does not run and the summary is regenerated because GC was disabled.
+        await validateGCState(
+            summarizerClient2,
+            false /* shouldGCRun */,
+            true /* shouldRegenerateSummary */,
+        );
+
+        // Validate that GC does not run and the summary should be regenerated again. The summary is regenerated only
+        // the first time GC is disabled after it was enabled before.
+        await validateGCState(
+            summarizerClient2,
+            false /* shouldGCRun */,
+            false /* shouldRegenerateSummary */,
+        );
+
+        // Load a new summarizer from the last summary with GC still disabled. Validate that summary is NOT regenerated
+        // by this client since the summary doesn't have any GC state.
+        const summarizerClient3 = await getNewSummarizer(
+            true /* disableGC */,
+            undefined /* gcAllowed */,
+            latestAckedSummary.summaryAck.contents.handle,
+        );
+        // Validate that GC does not run and the summary is regenerated because GC was disabled.
+        await validateGCState(
+            summarizerClient3,
+            false /* shouldGCRun */,
+            false /* shouldRegenerateSummary */,
+        );
     });
 
     it("keeps GC enabled throughout the lifetime of a document", async () => {
@@ -262,7 +276,11 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
 
         // Validate that GC ran even though gcAllowed was set to false. Whether GC runs or not is determined by the
         // gcAllowed flag when the document was created.
-        await validateGCRan(summarizerClient);
+        await validateGCState(
+            summarizerClient,
+            true /* shouldGCRun */,
+            false /* shouldRegenerateSummary */,
+        );
     });
 
     it("keeps GC disabled throughout the lifetime of a document", async () => {
@@ -280,6 +298,10 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
 
         // Validate that GC did not run even though gcAllowed is set to ture. Whether GC runs or not is determined by
         // the gcAllowed flag when the document was created.
-        await validateGCDidNotRun(summarizerClient);
+        await validateGCState(
+            summarizerClient,
+            false /* shouldGCRun */,
+            false /* shouldRegenerateSummary */,
+        );
     });
 });
