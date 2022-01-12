@@ -7,17 +7,12 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
-import React from "react";
-import ReactDOM from "react-dom";
-import { AppView } from "@fluid-experimental/bubblebench-common";
 import { AppState } from "./state";
 
-export class Bubblebench extends DataObject implements IFluidHTMLView {
+export class Bubblebench extends DataObject {
     public static get Name() { return "@fluid-experimental/bubblebench-baseline"; }
     private state?: AppState;
-    public get IFluidHTMLView() { return this; }
 
     protected async hasInitialized() {
         this.state = new AppState(
@@ -27,12 +22,8 @@ export class Bubblebench extends DataObject implements IFluidHTMLView {
         );
     }
 
-    public render(div: HTMLElement) {
-        ReactDOM.render(<AppView app={this.clientManager}></AppView>, div);
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    private get clientManager() { return this.state!; }
+    public get clientManager() { return this.state!; }
 }
 
 /**

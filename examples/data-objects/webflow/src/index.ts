@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
+
 export { FlowDocument } from "./document";
 export { Editor, IFluidHTMLViewFactory } from "./editor";
+import { WebFlow, WebflowView } from "./host";
 export { htmlFormatter } from "./html/formatters";
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { WebFlow } from "./host";
-import { hostType } from "./package";
+const webFlowViewCallback = (webFlow: WebFlow) => new WebflowView(webFlow.getFlowDocument());
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    WebFlow.getFactory(),
-    [[hostType, Promise.resolve(WebFlow.getFactory())]],
-);
+export const fluidExport = new ContainerViewRuntimeFactory(WebFlow.getFactory(), webFlowViewCallback);

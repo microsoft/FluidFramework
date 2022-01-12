@@ -6,7 +6,7 @@
 import { IFluidCodeDetails, FluidObject, IFluidPackage } from "@fluidframework/core-interfaces";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader";
 
 /**
@@ -14,17 +14,22 @@ import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader
  * it once found.
  */
 async function getFluidObjectAndRenderCore(loader: Loader, url: string, div: HTMLDivElement) {
-    const response = await loader.request({ url });
+    const response = await loader.request({
+        headers: {
+            mountableView: true,
+        },
+        url,
+    });
 
     if (response.status !== 200 || response.mimeType !== "fluid/object") {
         return;
     }
 
-    const fluidObject: FluidObject<IFluidHTMLView> = response.value;
+    const fluidObject: FluidObject<IFluidMountableView> = response.value;
     // Try to render the Fluid object if it is a view
-    const view: IFluidHTMLView | undefined = fluidObject.IFluidHTMLView;
+    const view: IFluidMountableView | undefined = fluidObject.IFluidMountableView;
     if (view !== undefined) {
-        view.render(div, { display: "block" });
+        view.mount(div);
     }
 }
 

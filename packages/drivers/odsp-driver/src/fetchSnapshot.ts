@@ -95,6 +95,7 @@ export async function fetchSnapshotWithRedeem(
         logger,
         snapshotDownloader,
         putInCache,
+        enableRedeemFallback,
     ).catch(async (error) => {
         if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
             // Execute the redeem fallback
@@ -171,6 +172,7 @@ async function fetchLatestSnapshotCore(
             controller?: AbortController,
         ) => Promise<ISnapshotRequestAndResponseOptions>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
+    enableRedeemFallback?: boolean,
 ): Promise<ISnapshotContents> {
     return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
         const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest", true);
@@ -187,6 +189,8 @@ async function fetchLatestSnapshotCore(
         const perfEvent = {
             eventName: "TreesLatest",
             attempts: tokenFetchOptions.refresh ? 2 : 1,
+            shareLinkPresent: odspResolvedUrl.sharingLinkToRedeem !== undefined,
+            redeemFallbackEnabled: enableRedeemFallback,
         };
         if (snapshotOptions !== undefined) {
             Object.entries(snapshotOptions).forEach(([key, value]) => {
