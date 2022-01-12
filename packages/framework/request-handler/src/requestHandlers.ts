@@ -26,19 +26,6 @@ export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainer
     => Promise<IResponse | undefined>;
 
 /**
- * @deprecated - please avoid adding new references to this API!  Instead prefer rootDataObjectRequestHandler.
- * It exposes internal container guts to external world, which is not ideal.
- * It also relies heavily on internal routing schema (formation of handle URIs) which will change in future
- * And last, but not least, it does not allow any policy to be implemented around GC of data stores exposed
- * through internal URIs. I.e. if there are no other references to such objects, they will be GC'd and
- * external links would get broken. Maybe that's what is needed in some cases, but better, more centralized
- * handling of external URI to internal handle is required (in future, we will support weak handle references,
- * that will allow any GC policy to be implemented by container authors.)
- */
-export const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-    runtime.IFluidHandleContext.resolveHandle(request);
-
-/**
  * A request handler to expose access to all root data stores in the container by id.
  * @param request - the request for the root data store.  The first path part must be the data store's ID.
  * @param runtime - the container runtime

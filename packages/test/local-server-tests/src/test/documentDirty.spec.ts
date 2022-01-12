@@ -8,7 +8,7 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { IContainer } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import {
     LocalDocumentServiceFactory,
     LocalResolver,
@@ -23,6 +23,7 @@ import {
     LocalCodeLoader,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 describe("Document Dirty", () => {
     const documentId = "documentDirtyTest";
@@ -103,12 +104,16 @@ describe("Document Dirty", () => {
             "default",
         );
 
+        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+            runtime.IFluidHandleContext.resolveHandle(request);
         const runtimeFactory =
             new ContainerRuntimeFactoryWithDefaultDataStore(
                 factory,
                 [
                     [factory.type, Promise.resolve(factory)],
                 ],
+                undefined,
+                [innerRequestHandler],
             );
 
         const urlResolver = new LocalResolver();
