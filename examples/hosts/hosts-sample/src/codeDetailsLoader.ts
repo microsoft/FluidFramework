@@ -7,8 +7,7 @@ import {
     IFluidCodeDetails,
     IFluidCodeDetailsComparer,
 } from "@fluidframework/core-interfaces";
-import { IFluidModuleWithDetails } from "@fluidframework/container-loader";
-import { ICodeDetailsLoader } from "@fluidframework/container-definitions";
+import { ICodeDetailsLoader, IFluidModuleWithDetails } from "@fluidframework/container-definitions";
 import { fluidExport } from "./fauxComponent";
 import { parsePackageDetails } from "./utils";
 

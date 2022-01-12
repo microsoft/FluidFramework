@@ -28,6 +28,7 @@ import {
     ICodeLoader,
     ICodeDetailsLoader,
     IProvideRuntimeFactory,
+    IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -46,7 +47,6 @@ import {
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { Container } from "./container";
-import { IFluidModuleWithDetails } from "./loader";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
