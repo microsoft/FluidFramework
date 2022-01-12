@@ -6,7 +6,7 @@
 
 import { ICodeAllowList } from '@fluidframework/container-definitions';
 import { ICodeLoader } from '@fluidframework/container-definitions';
-import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
+import { IFluidCodeDetails } from '@fluidframework/container-definitions';
 import { IFluidCodeResolver } from '@fluidframework/container-definitions';
 import { IFluidModule } from '@fluidframework/container-definitions';
 import { IFluidPackage } from '@fluidframework/container-definitions';

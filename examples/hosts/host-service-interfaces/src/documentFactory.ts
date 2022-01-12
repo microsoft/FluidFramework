@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 
 export const IDocumentFactory: keyof IProvideDocumentFactory = "IDocumentFactory";
 

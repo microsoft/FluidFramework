@@ -15,6 +15,8 @@ import {
     isFluidBrowserPackage,
     IProvideRuntimeFactory,
     IContainer,
+    IFluidPackage,
+    IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
@@ -27,7 +29,7 @@ import {
     resolveFluidPackageEnvironment,
     WebCodeLoader,
 } from "@fluidframework/web-code-loader";
-import { IFluidPackage, IFluidCodeDetails, FluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { RequestParser, createDataStoreFactory } from "@fluidframework/runtime-utils";

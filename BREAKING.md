@@ -277,7 +277,6 @@ Moved the following interfaces and const from `@fluidframework/core-interface` t
 - `IFluidPackage`
 - `isFluidPackage`
 - `IFluidCodeDetailsConfig`
-- `IFluidCodeDetailsConfig`
 - `IFluidCodeDetails`
 - `IFluidCodeDetailsComparer`
 - `IProvideFluidCodeDetailsComparer`

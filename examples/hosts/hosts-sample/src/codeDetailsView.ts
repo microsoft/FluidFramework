@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { getCodeDetailsFromQuorum, parsePackageDetails } from "./utils";
 
 /**

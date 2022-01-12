@@ -4,10 +4,11 @@
  */
 import * as semver from "semver";
 import {
+    ICodeDetailsLoader,
     IFluidCodeDetails,
     IFluidCodeDetailsComparer,
-} from "@fluidframework/core-interfaces";
-import { ICodeDetailsLoader, IFluidModuleWithDetails } from "@fluidframework/container-definitions";
+    IFluidModuleWithDetails,
+} from "@fluidframework/container-definitions";
 import { fluidExport } from "./fauxComponent";
 import { parsePackageDetails } from "./utils";
 

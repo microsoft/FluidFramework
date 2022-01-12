@@ -10,11 +10,9 @@ import {
     IRuntime,
     IRuntimeFactory,
     ICodeDetailsLoader,
-} from "@fluidframework/container-definitions";
-import {
-    FluidObject,
     IFluidCodeDetails,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/container-definitions";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import {
     IQuorum,
 } from "@fluidframework/protocol-definitions";

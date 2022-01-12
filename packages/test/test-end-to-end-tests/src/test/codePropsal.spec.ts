@@ -4,13 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
 import {
+    IContainer,
     IFluidCodeDetails,
     IFluidCodeDetailsComparer,
     IFluidPackage,
     isFluidPackage,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/container-definitions";
 import {
     createAndAttachContainer,
     createDocumentId,

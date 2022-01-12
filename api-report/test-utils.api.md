@@ -14,7 +14,7 @@ import { IContainerRuntime } from '@fluidframework/container-runtime-definitions
 import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
 import { IDetachedBlobStorage } from '@fluidframework/container-loader';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
+import { IFluidCodeDetails } from '@fluidframework/container-definitions';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
@@ -24,7 +24,7 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidModule } from '@fluidframework/container-definitions';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
-import { IProvideFluidCodeDetailsComparer } from '@fluidframework/core-interfaces';
+import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IProvideRuntimeFactory } from '@fluidframework/container-definitions';

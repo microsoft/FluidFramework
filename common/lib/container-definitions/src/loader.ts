@@ -7,9 +7,6 @@ import {
     IRequest,
     IResponse,
     IFluidRouter,
-    IFluidCodeDetails,
-    IFluidPackage,
-    IProvideFluidCodeDetailsComparer,
 } from "@fluidframework/core-interfaces";
 import {
     IClientDetails,
@@ -25,6 +22,7 @@ import { IDeltaManager, ReadOnlyInfo } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { IFluidModule } from "./fluidModule";
 import { AttachState } from "./runtime";
+import { IFluidPackage, IProvideFluidCodeDetailsComparer, IFluidCodeDetails } from "./fluidPackage";
 
 /**
  * Code loading interface

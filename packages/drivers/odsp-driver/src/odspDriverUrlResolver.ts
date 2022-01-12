@@ -4,9 +4,10 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl, ShareLinkTypes, ShareLinkInfoType } from "@fluidframework/odsp-driver-definitions";
+import { IFluidCodeDetails, isFluidPackage } from "@fluidframework/container-definitions";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { getOdspResolvedUrl } from "./odspUtils";

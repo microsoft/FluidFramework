@@ -13,11 +13,10 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
-    IFluidCodeDetails,
     FluidObject,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
-import { IContainerContext, ILoader } from "@fluidframework/container-definitions";
+import { IContainerContext, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IDocumentFactory } from "@fluid-example/host-service-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";

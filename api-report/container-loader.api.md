@@ -11,7 +11,6 @@ import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { ICodeDetailsLoader } from '@fluidframework/container-definitions';
 import { ICodeLoader } from '@fluidframework/container-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IContainer } from '@fluidframework/container-definitions';
@@ -22,12 +21,14 @@ import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
+import { IFluidCodeDetails } from '@fluidframework/container-definitions';
+import { IFluidModule } from '@fluidframework/container-definitions';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
+import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IProxyLoaderFactory } from '@fluidframework/container-definitions';
 import { IQuorum } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -118,6 +119,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     static version: string;
     }
 
+// @public @deprecated (undocumented)
+export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
+    load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
+}
+
 // @public (undocumented)
 export interface IContainerConfig {
     // (undocumented)
@@ -142,6 +148,12 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
     size: number;
     getBlobIds(): string[];
 };
+
+// @public @deprecated (undocumented)
+export interface IFluidModuleWithDetails {
+    details: IFluidCodeDetails;
+    module: IFluidModule;
+}
 
 // @public (undocumented)
 export interface ILoaderOptions extends ILoaderOptions_2 {

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 

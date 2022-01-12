@@ -4,12 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IGenericError,
     IPendingLocalState,
     ContainerErrorType,
     LoaderHeader,
+    IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import {
     Container,

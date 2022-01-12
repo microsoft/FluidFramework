@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader, ILoaderOptions, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IDetachedBlobStorage, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IFluidCodeDetails, IRequestHeader } from "@fluidframework/core-interfaces";
+import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";

@@ -4,8 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import {
     createLocalResolverCreateNewRequest,
     LocalDocumentServiceFactory,

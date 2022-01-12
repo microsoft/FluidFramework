@@ -9,7 +9,7 @@ import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions';
 import { IdentityType } from '@fluidframework/odsp-driver-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
+import { IFluidCodeDetails } from '@fluidframework/container-definitions';
 import { IOdspResolvedUrl } from '@fluidframework/odsp-driver-definitions';
 import { IOdspUrlParts } from '@fluidframework/odsp-driver-definitions';
 import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';

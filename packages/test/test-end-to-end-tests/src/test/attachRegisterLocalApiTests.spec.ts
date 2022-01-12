@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { AttachState } from "@fluidframework/container-definitions";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { AttachState, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import {
     LocalCodeLoader,

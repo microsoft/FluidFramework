@@ -4,7 +4,7 @@
  */
 
 import * as url from "url";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { ITokenClaims, IUser } from "@fluidframework/protocol-definitions";

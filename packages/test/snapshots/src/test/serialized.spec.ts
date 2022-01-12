@@ -18,7 +18,7 @@ import {
     LocalDocumentServiceFactory,
     LocalResolver,
 } from "@fluidframework/local-driver";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";

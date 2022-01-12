@@ -9,9 +9,6 @@ import {
     IFluidConfiguration,
     IRequest,
     IResponse,
-    IFluidCodeDetails,
-    IFluidCodeDetailsComparer,
-    IProvideFluidCodeDetailsComparer,
     FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
@@ -29,6 +26,9 @@ import {
     ICodeDetailsLoader,
     IProvideRuntimeFactory,
     IFluidModuleWithDetails,
+    IFluidCodeDetails,
+    IFluidCodeDetailsComparer,
+    IProvideFluidCodeDetailsComparer,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {

@@ -4,8 +4,9 @@
  */
 
 import * as Comlink from "comlink";
-import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IUrlResolver, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { MakeThinProxy } from "./proxyUtils";
 
 export interface IUrlResolverProxy {

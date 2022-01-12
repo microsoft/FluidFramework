@@ -4,7 +4,8 @@
  */
 
 import { PromiseCache } from "@fluidframework/common-utils";
-import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, isFluidPackage } from "@fluidframework/container-definitions";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { NonRetryableError } from "@fluidframework/driver-utils";
