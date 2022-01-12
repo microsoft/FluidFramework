@@ -211,7 +211,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
             assert("clientSequenceNumber" in deltaManager, "no clientSequenceNumber");
             assert("clientSequenceNumberObserved" in deltaManager, "no clientSequenceNumber");
             return deltaManager.clientSequenceNumber ===
-                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                 (deltaManager.clientSequenceNumberObserved as number) + trailingNoOps;
         });
 
@@ -285,8 +284,8 @@ export class LoaderContainerTracker implements IOpProcessingController {
      * Resume all queue activities on all paused tracked containers and return them
      */
     public resumeProcessing(...containers: IContainer[]) {
-        const resumed: IContainer[] = [];
-        containers.forEach((container: IContainer) => {
+        const containersToApply = this.getContainers(containers);
+        containersToApply.forEach((container: IContainer) => {
             const resumedContainer = (container as Container).containerTracker?.resumeProcessing();
             if (resumedContainer !== undefined) { resumed.push(resumedContainer); }
         });
