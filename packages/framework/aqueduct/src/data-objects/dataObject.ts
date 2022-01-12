@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
 import {
-    IFluidObject,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -87,24 +85,3 @@ export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> ex
         return `${item} must be initialized before being accessed.`;
     }
 }
-
-/**
- * @deprecated - This type is meant to ease the transition from the old DataObject type to the new.
- * please migrate to DataObject.
- *
- * DataObject is a base data store that is primed with a root directory. It
- * ensures that it is created and ready before you can access it.
- *
- * Having a single root directory allows for easier development. Instead of creating
- * and registering channels with the runtime any new DDS that is set on the root
- * will automatically be registered.
- *
- * @typeParam O - represents a type that will define optional providers that will be injected
- * @typeParam S - the initial state type that the produced data object may take during creation
- * @typeParam E - represents events that will be available in the EventForwarder
- */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export abstract class LegacyDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
-    extends DataObject<{OptionalProviders: O, InitialState: S, Events: E}> {
-
-    }

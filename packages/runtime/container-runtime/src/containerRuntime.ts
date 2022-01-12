@@ -1664,6 +1664,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.setFlushMode(savedFlushMode);
         } catch(error) {
             this.closeFn(CreateProcessingError(error, "orderSequentially"));
+            throw error; // throw the original error for the consumer of the runtime
         }
     }
 

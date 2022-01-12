@@ -20,7 +20,6 @@ import { FluidObjectHandle } from "@fluidframework/datastore";
 import { IDirectory } from "@fluidframework/map";
 import { assert, EventForwarder } from "@fluidframework/common-utils";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
-import { IEvent } from "@fluidframework/common-definitions";
 import { serviceRoutePathRoot } from "../container-services";
 import { defaultFluidObjectRequestHandler } from "../request-handlers";
 import { DataObjectTypes, DataObjectType, IDataObjectProps } from "./types";
@@ -158,7 +157,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     }
 
     /**
-     * Retreive Fluid object using the handle get or the older requestFluidObject_UNSAFE call to fetch by ID
+     * Retrieve Fluid object using the handle get or the older requestFluidObject_UNSAFE call to fetch by ID
      *
      * @param key - key that object (handle/id) is stored with in the directory
      * @param directory - directory containing the object
@@ -233,22 +232,4 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     public dispose(): void {
         super.dispose();
     }
-}
-
-/**
- * @deprecated - This type is meant to ease the transition from the old PureDataObject type to the new.
- * please migrate to PureDataObject.
- *
- * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
- * You probably don't want to inherit from this data store directly unless
- * you are creating another base data store class
- *
- * @typeParam O - represents a type that will define optional providers that will be injected
- * @typeParam S - the initial state type that the produced data object may take during creation
- * @typeParam E - represents events that will be available in the EventForwarder
- */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export abstract class LegacyPureDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
-extends PureDataObject<{OptionalProviders: O, InitialState: S, Events: E}> {
-
 }
