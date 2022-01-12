@@ -95,10 +95,16 @@ export function decomposeClassDeclaration(typeChecker: TypeChecker, node: ClassD
                     member.getTypeParameters().map((tp) => tp.getType()),
                     ", ",
                 );
+                member.getTypeParameters();
                 mergeIntoSet(replacedTypes, typeArgsResult.replacedTypes);
                 requiredGenerics.merge(typeArgsResult.requiredGenerics);
                 typeArgsString = `<${typeArgsResult.typeAsString}>`;
             }
+
+            // cases where param default value causes breaking changes:
+            // 1. default value is added in the new version but not present in the old
+            // version (param now optional, method signature changed)
+            // 2. default value type changed (code behavior will differ)
 
             // Handle parameters
             let paramsString = "";
@@ -106,6 +112,12 @@ export function decomposeClassDeclaration(typeChecker: TypeChecker, node: ClassD
                 const subResult = decomposeType(typeChecker, p.getType());
                 mergeIntoSet(replacedTypes, subResult.replacedTypes);
                 requiredGenerics.merge(subResult.requiredGenerics);
+
+                // pass in param as optional (with ? token)
+                if(p.hasInitializer()){
+                    return `${p.getName()}?: ${subResult.typeAsString}`;
+                }
+
                 return `${p.getName()}: ${subResult.typeAsString}`;
             }).join(", ");
 

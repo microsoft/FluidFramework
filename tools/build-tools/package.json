@@ -19,7 +19,8 @@
     "fluid-type-validator": "bin/fluid-type-validator"
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -b && npm run build:test",
+    "build:test": "tsc --project ./src/test/tsconfig.json",
     "debug:layer-check": "node --inspect-brk dist/layerCheck/layerCheck.js --root ../..",
     "layer-check": "node dist/layerCheck/layerCheck.js --root ../..",
     "layer-check:doc": "node dist/layerCheck/layerCheck.js --root ../.. --md",
@@ -28,7 +29,7 @@
     "policy-check:debug": "cd ../.. && node --inspect-brk tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js ",
     "policy-check:fix": "npm run policy-check -- -r",
     "policy-check:fix:debug": "cd ../.. && node --inspect-brk tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -r",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha --recursive dist/test --unhandled-rejections=strict"
   },
   "dependencies": {
     "@fluidframework/bundle-size-tools": "^0.0.8505",
@@ -63,6 +64,7 @@
     "@types/semver": "^7.1.0",
     "@types/shelljs": "^0.8.8",
     "@types/webpack": "^4.41.22",
+    "mocha": "^8.4.0",
     "typescript": "~4.1.3"
   },
   "peerDependencies": {

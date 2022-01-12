@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Type, TypeChecker } from "ts-morph";
+import { Type, TypeChecker, Expression } from "ts-morph";
+import has from 'lodash/has';
 
 export interface DecompositionResult {
     /**
@@ -105,6 +106,34 @@ export function decomposeType(
         requiredGenerics: new GenericsInfo(),
     };
 
+    // instance where default value is supplied
+    // the initial value of class propety
+    // make sure determine which cases default value is relevant for breaking changes
+    // maybe not relevanet, but if it is, then should be reflected in the output
+    // function myFunc (param : string | boolean = "asg") : void {
+
+    // }
+    // const defaultType = node.getDefault();
+    // console.log("node.getText() will return: ");
+    // console.log(node.getText());
+    // console.log();
+    // compat 1 version
+    // swap out version of the api, think about where consumers might break
+    // convert it to optional param
+    // if there is a default val, make sure it's reflected as optional param in our code
+    // default type parameters in ts (get familiar)
+    // adding optional param is forward compatible
+    // adding optional param = minor breaking change for backward compat
+    //
+
+    // 4th scenarios
+    // reflecting optional param in our code
+    // unit test, breaking change none?
+    // if (hasInitializer) {
+        // if there is a default val, make sure it's reflected as optional param in our code
+    // }
+
+
     // don't try to decompose literals because they don't need to be converted to strings
     // booleans because they are a union of false | true but not aliased
     // (the enum/boolean checks don't actually catch when they're unioned with another
@@ -125,7 +154,6 @@ export function decomposeType(
     }
 
     node = node as Type;
-
     // intersections bind more strongly than unions so split those second
     if (node.isUnion()) {
         return decomposeTypes(checker, node.getUnionTypes(), " | ");
