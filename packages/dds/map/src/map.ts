@@ -210,6 +210,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 
     /**
      * {@inheritDoc ISharedMap.wait}
+     * @deprecated 0.55 - This method will be removed in an upcoming release.  See BREAKING.md for migration options.
      */
     public async wait<T = any>(key: string): Promise<T> {
         return this.kernel.wait<T>(key);

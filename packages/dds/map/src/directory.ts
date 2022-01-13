@@ -420,6 +420,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 
     /**
      * {@inheritDoc IDirectory.wait}
+     * @deprecated 0.55 - This method will be removed in an upcoming release.  See BREAKING.md for migration options.
      */
     public async wait<T = any>(key: string): Promise<T> {
         return this.root.wait<T>(key);
@@ -903,6 +904,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
     /**
      * {@inheritDoc IDirectory.wait}
+     * @deprecated 0.55 - This method will be removed in an upcoming release.  See BREAKING.md for migration options.
      */
     public async wait<T = any>(key: string): Promise<T> {
         // Return immediately if the value already exists
