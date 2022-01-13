@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { runWithRetry } from "../runWithRetry";
+import { canRetryOnError, copyRetryProps, getRetryDelayFromError, getRetryDelaySecondsFromError } from "../network";
 
 const _setTimeout = global.setTimeout;
 const fastSetTimeout: any =
@@ -17,6 +18,28 @@ async function  runWithFastSetTimeout<T>(callback: () => Promise<T>): Promise<T>
         global.setTimeout = _setTimeout;
     });
 }
+
+describe("retry error helpers", () => {
+    it("canRetryOnError", async () => {
+        assert(canRetryOnError({canRetry: true}));
+        assert(!canRetryOnError({}));
+        assert(!canRetryOnError(undefined));
+    });
+    it("getRetryDelayFromError", async () => {
+        assert(getRetryDelaySecondsFromError({retryAfterSeconds: 2}) === 2);
+        assert(getRetryDelayFromError({retryAfterSeconds: 2}) === 2000);
+        assert(getRetryDelayFromError({}) === undefined);
+        assert(getRetryDelayFromError(undefined) === undefined);
+    });
+    it("copyRetryProps", async () => {
+        const supportsRetry = {};
+        copyRetryProps(supportsRetry, { canRetry: true, retryAfterSeconds: 2 });
+        const noRetry = {};
+        copyRetryProps(noRetry, { });
+        assert(canRetryOnError(supportsRetry) && getRetryDelaySecondsFromError(supportsRetry) === 2);
+        assert(!canRetryOnError(noRetry) && getRetryDelaySecondsFromError(supportsRetry) === undefined);
+    });
+});
 
 describe("runWithRetry Tests", () => {
     const logger = new TelemetryNullLogger();
