@@ -59,8 +59,6 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
     message: string;
     errorType?: string | undefined;
     stack?: string | undefined;
-    canRetry?: boolean | undefined;
-    retryAfterSeconds?: number | undefined;
 };
 
 // @public
