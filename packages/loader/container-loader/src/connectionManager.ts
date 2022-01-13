@@ -483,6 +483,13 @@ export class ConnectionManager implements IConnectionManager {
             } catch (origError) {
                 const error = normalizeError(origError);
 
+                if (error.errorType === DeltaStreamConnectionForbiddenError.errorType) {
+                    connection = new NoDeltaStream();
+                    requestedMode = "read";
+                    this.logger.sendTelemetryEvent({ eventName: "StorageOnlyModeForced" }, error);
+                    break;
+                }
+
                 // Log error once - we get too many errors in logs when we are offline,
                 // and unfortunately there is no reliable way to detect that.
                 if (connectRepeatCount === 1) {
@@ -494,12 +501,6 @@ export class ConnectionManager implements IConnectionManager {
                             duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
                         },
                         error);
-                }
-
-                if (error.errorType === DeltaStreamConnectionForbiddenError.errorType) {
-                    connection = new NoDeltaStream();
-                    requestedMode = "read";
-                    break;
                 }
 
                 // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
