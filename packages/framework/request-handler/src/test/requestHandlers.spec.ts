@@ -92,7 +92,6 @@ describe("RequestParser", () => {
         it("Data store request with sub route", async () => {
             const requestParser = RequestParser.create({ url: "/objectId/route", headers: { wait: true } });
             const response = await rootDataStoreRequestHandler(requestParser, runtime);
-            console.log("response--------", response);
             assert.equal(response?.status, 200);
             assert.equal(response.value.route, "/route");
         });
