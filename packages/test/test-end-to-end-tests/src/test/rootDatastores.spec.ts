@@ -151,11 +151,13 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         });
 
         it("Create a root data store with an existing alias as an id breaks the container", async () => {
-            const dataCorruption = anyDataCorruption([container1]);
+            const dataCorruption = anyDataCorruption([container1, container2]);
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
             assert(await ds1.trySetAlias(alias));
 
-            await createRootDataStore(dataObject1, alias);
+            await provider.ensureSynchronized();
+
+            await createRootDataStore(dataObject2, alias);
 
             assert(await dataCorruption);
         });
