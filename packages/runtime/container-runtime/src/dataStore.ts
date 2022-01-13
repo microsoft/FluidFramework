@@ -7,6 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { ContainerRuntime } from "./containerRuntime";
 
 /**
@@ -47,16 +48,18 @@ export interface IDataStoreAliasMessage {
     trySetAlias(alias: string): Promise<boolean>;
 }
 
-export const routerToDataStore = (
-    router: IFluidRouter,
+export const channelToDataStore = (
+    fluidDataStoreChannel: IFluidDataStoreChannel,
     internalId: string,
     runtime: ContainerRuntime,
     logger: ITelemetryLogger,
-): IDataStore => new DataStore(router, internalId, runtime, logger);
+): IDataStore => new DataStore(fluidDataStoreChannel, internalId, runtime, logger);
 
 class DataStore implements IDataStore {
     async trySetAlias(alias: string): Promise<boolean> {
         assert(this.runtime.attachState === AttachState.Attached, "Trying to submit message while detached!");
+
+        this.fluidDataStoreChannel.bindToContext();
 
         const message: IDataStoreAliasMessage = {
             internalId: this.internalId,
@@ -72,16 +75,16 @@ class DataStore implements IDataStore {
     }
 
     async request(request: IRequest): Promise<IResponse> {
-        return this.router.request(request);
+        return this.fluidDataStoreChannel.request(request);
     }
 
     constructor(
-        private readonly router: IFluidRouter,
+        private readonly fluidDataStoreChannel: IFluidDataStoreChannel,
         private readonly internalId: string,
         private readonly runtime: ContainerRuntime,
         private readonly logger: ITelemetryLogger,
     ) { }
-    public get IFluidRouter() { return this.router; }
+    public get IFluidRouter() { return this.fluidDataStoreChannel; }
 
     private async ackBasedPromise<T>(
         executor: (resolve: (value: T | PromiseLike<T>) => void,

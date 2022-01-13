@@ -149,10 +149,10 @@ import {
     IUsedStateStats,
 } from "./garbageCollection";
 import {
+    channelToDataStore,
     IDataStore,
     IDataStoreAliasMessage,
     isDataStoreAliasMessage,
-    routerToDataStore,
 } from "./dataStore";
 
 export enum ContainerMessageType {
@@ -1712,7 +1712,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
         const internalId = uuid();
-        return routerToDataStore(
+        return channelToDataStore(
             await this.createDataStoreCore(pkg, false /* isRoot */, internalId),
             internalId,
             this,
@@ -1723,7 +1723,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const internalId = uuid();
         const dataStore = await this.createDataStoreCore(pkg, false /* isRoot */, internalId, props);
         dataStore.bindToContext();
-        const aliasedDataStore = routerToDataStore(dataStore, internalId, this, this.mc.logger);
+        const aliasedDataStore = channelToDataStore(dataStore, internalId, this, this.mc.logger);
         const result = await aliasedDataStore.trySetAlias(alias);
         if (!result) {
             throw new GenericError("dataStoreAliasConflict");
