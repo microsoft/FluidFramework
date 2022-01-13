@@ -5,10 +5,31 @@
 import { strict as assert } from "assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
+import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
 import { AzureClient } from "../AzureClient";
 import { createAzureClient } from "./AzureClientFactory";
 import { TestDataObject } from "./TestDataObject";
+
+const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
+    const maybeValue = map.get<T>(key);
+    if (maybeValue !== undefined) {
+        return maybeValue;
+    }
+
+    return new Promise((resolve) => {
+        const handler = (changed: IValueChanged) => {
+            if (changed.key === key) {
+                map.off("valueChanged", handler);
+                const value = map.get<T>(changed.key);
+                if (value === undefined) {
+                    throw new Error("Unexpected valueChanged result");
+                }
+                resolve(value);
+            }
+        };
+        map.on("valueChanged", handler);
+    });
+};
 
 describe("AzureClient", () => {
     let client: AzureClient;
@@ -202,7 +223,7 @@ describe("AzureClient", () => {
 
         const containerGet = (await client.getContainer(containerId, schema)).container;
         const map1Get = containerGet.initialObjects.map1 as SharedMap;
-        const valueGet = await map1Get.wait("new-key");
+        const valueGet = await mapWait(map1Get, "new-key");
         assert.strictEqual(valueGet, valueCreate, "container can't change initial objects");
     });
 
