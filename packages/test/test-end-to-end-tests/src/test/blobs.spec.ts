@@ -89,7 +89,9 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         const container2 = await provider.loadTestContainer(testContainerConfig);
         const dataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
 
-        const blobHandle = await dataStore2._root.wait<IFluidHandle<ArrayBufferLike>>(testKey);
+        await provider.ensureSynchronized();
+
+        const blobHandle = dataStore2._root.get<IFluidHandle<ArrayBufferLike>>(testKey);
         assert(blobHandle);
         assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), testString);
     });
@@ -168,7 +170,8 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         // validate on remote container, local container, and container loaded from summary
         for (const container of [container1, container2, await provider.loadTestContainer(testContainerConfig)]) {
             const dataStore2 = await requestFluidObject<ITestDataObject>(container, "default");
-            const handle = await dataStore2._root.wait<IFluidHandle<SharedString>>("sharedString");
+            await provider.ensureSynchronized();
+            const handle = dataStore2._root.get<IFluidHandle<SharedString>>("sharedString");
             assert(handle);
             const sharedString2 = await handle.get();
 
@@ -236,7 +239,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), text);
 
         dataStore._root.set("my blob", blobHandle);
-        assert.strictEqual(bufferToString(await (await dataStore._root.wait("my blob")).get(), "utf-8"), text);
+        assert.strictEqual(bufferToString(await (dataStore._root.get("my blob")).get(), "utf-8"), text);
 
         const attachP = container.attach(provider.driver.createCreateNewRequest(provider.documentId));
         if (provider.driver.type !== "odsp") {
@@ -252,7 +255,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         // old handle still works
         assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), text);
         // new handle works
-        assert.strictEqual(bufferToString(await (await dataStore._root.wait("my blob")).get(), "utf-8"), text);
+        assert.strictEqual(bufferToString(await (dataStore._root.get("my blob")).get(), "utf-8"), text);
     });
 
     it("serialize/rehydrate container with blobs", async function() {
@@ -265,7 +268,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), text);
 
         serializeDataStore._root.set("my blob", blobHandle);
-        assert.strictEqual(bufferToString(await (await serializeDataStore._root.wait("my blob")).get(), "utf-8"), text);
+        assert.strictEqual(bufferToString(await (serializeDataStore._root.get("my blob")).get(), "utf-8"), text);
 
         const snapshot = serializeContainer.serialize();
         const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
@@ -301,7 +304,8 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         const attachedContainer = await provider.makeTestLoader(testContainerConfig).resolve({ url });
 
         const attachedDataStore = await requestFluidObject<ITestDataObject>(attachedContainer, "default");
-        assert.strictEqual(bufferToString(await (await attachedDataStore._root.wait("my blob")).get(), "utf-8"), text);
+        await provider.ensureSynchronized();
+        assert.strictEqual(bufferToString(await (attachedDataStore._root.get("my blob")).get(), "utf-8"), text);
     });
 
     it("serialize/rehydrate then attach", async function() {
@@ -327,7 +331,8 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         const url = getUrlFromItemId((rehydratedContainer.resolvedUrl as IOdspResolvedUrl).itemId, provider);
         const attachedContainer = await provider.makeTestLoader(testContainerConfig).resolve({ url });
         const attachedDataStore = await requestFluidObject<ITestDataObject>(attachedContainer, "default");
-        assert.strictEqual(bufferToString(await (await attachedDataStore._root.wait("my blob")).get(), "utf-8"), text);
+        await provider.ensureSynchronized();
+        assert.strictEqual(bufferToString(await (attachedDataStore._root.get("my blob")).get(), "utf-8"), text);
     });
 
     it("serialize/rehydrate multiple times then attach", async function() {
@@ -356,7 +361,8 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         const url = getUrlFromItemId((container.resolvedUrl as IOdspResolvedUrl).itemId, provider);
         const attachedContainer = await provider.makeTestLoader(testContainerConfig).resolve({ url });
         const attachedDataStore = await requestFluidObject<ITestDataObject>(attachedContainer, "default");
-        assert.strictEqual(bufferToString(await (await attachedDataStore._root.wait("my blob")).get(), "utf-8"), text);
+        await provider.ensureSynchronized();
+        assert.strictEqual(bufferToString(await (attachedDataStore._root.get("my blob")).get(), "utf-8"), text);
     });
 
     it("rehydrating without detached blob storage results in error", async function() {

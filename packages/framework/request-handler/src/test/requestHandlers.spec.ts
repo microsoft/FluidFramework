@@ -70,7 +70,7 @@ describe("RequestParser", () => {
             const response = await rootDataStoreRequestHandler(
                 requestParser,
                 runtime);
-            assert.equal(response.status, 404);
+            assert.equal(response?.status, undefined);
         });
 
         it("Data store request without wait", async () => {
@@ -92,7 +92,7 @@ describe("RequestParser", () => {
         it("Data store request with sub route", async () => {
             const requestParser = RequestParser.create({ url: "/objectId/route", headers: { wait: true } });
             const response = await rootDataStoreRequestHandler(requestParser, runtime);
-            assert.equal(response.status, 200);
+            assert.equal(response?.status, 200);
             assert.equal(response.value.route, "/route");
         });
 
