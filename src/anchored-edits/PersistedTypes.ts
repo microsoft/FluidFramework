@@ -10,7 +10,7 @@
 // persisted types (as documented below) is followed.
 import { DetachedSequenceId, NodeId, TraitLabel, UuidString } from '../Identifiers';
 import { Side } from '../TreeView';
-import { BuildNode, NodeData, Payload, TraitLocation, TreeNodeSequence } from '../generic';
+import { BuildNode, NodeData, Payload, StableTraitLocation, TreeNodeSequence } from '../generic';
 import {
 	SetValueInternal,
 	DetachInternal,
@@ -251,14 +251,14 @@ export const PlaceAnchor = {
 	 * @returns The location at the start of `trait`.
 	 */
 	atStartOf: (
-		trait: TraitLocation,
+		trait: StableTraitLocation,
 		semantics: PlaceAnchorSemanticsChoice = PlaceAnchorSemanticsChoice.RelativeToNode
 	): PlaceAnchor => ({ side: Side.After, referenceTrait: trait, semantics }),
 	/**
 	 * @returns The location at the end of `trait`.
 	 */
 	atEndOf: (
-		trait: TraitLocation,
+		trait: StableTraitLocation,
 		semantics: PlaceAnchorSemanticsChoice = PlaceAnchorSemanticsChoice.RelativeToNode
 	): PlaceAnchor => ({ side: Side.Before, referenceTrait: trait, semantics }),
 };
@@ -287,5 +287,5 @@ export const RangeAnchor = {
 	 * This is anchored using the provided `trait`, and is independent of the actual contents of the trait:
 	 * it does not use sibling anchoring.
 	 */
-	all: StableRange.all as (trait: TraitLocation) => RangeAnchor,
+	all: StableRange.all as (trait: StableTraitLocation) => RangeAnchor,
 };

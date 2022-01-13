@@ -6,7 +6,7 @@
 import { expect } from 'chai';
 import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
 import { NodeId } from '../Identifiers';
-import { ChangeNode, TraitLocation } from '../generic';
+import { ChangeNode, StableTraitLocation } from '../generic';
 import { StablePlace, StableRange, ConstraintEffect, revert } from '../default-edits';
 import {
 	AnchoredChange,
@@ -628,7 +628,7 @@ function expectChangedTraits(treeA: SharedTreeWithAnchors, treeB: SharedTreeWith
 	expect(tryGetTrait(treeB, rightTraitLocation)).deep.equal(rightIds);
 }
 
-function tryGetTrait(tree: SharedTreeWithAnchors, location: TraitLocation): readonly NodeId[] {
+function tryGetTrait(tree: SharedTreeWithAnchors, location: StableTraitLocation): readonly NodeId[] {
 	return tree.currentView.hasNode(location.parent) ? tree.currentView.getTrait(location) : [];
 }
 

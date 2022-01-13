@@ -148,11 +148,17 @@ export interface TreeNode<TChild> extends NodeData {
 export type PlaceholderTree<TPlaceholder = never> = TreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
 
 /**
+ * Specifies the location of a trait (a labeled sequence of nodes) within the tree. Safe to persist/serialize.
+ * @public
+ */
+export type StableTraitLocation = TraitLocation<NodeId>;
+
+/**
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
  * @public
  */
-export interface TraitLocation {
-	readonly parent: NodeId;
+export interface TraitLocation<TId> {
+	readonly parent: TId;
 	readonly label: TraitLabel;
 }
 

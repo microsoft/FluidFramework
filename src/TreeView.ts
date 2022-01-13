@@ -6,7 +6,7 @@
 import { assert, copyPropertyIfDefined, fail, memoizeGetter } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
 import { Delta, Forest } from './Forest';
-import { ChangeNode, NodeData, Payload, TraitLocation, TraitMap } from './generic';
+import { ChangeNode, NodeData, Payload, StableTraitLocation, TraitMap } from './generic';
 
 /**
  * An immutable view of a distributed tree node.
@@ -42,7 +42,7 @@ export type TraitNodeIndex = number & { readonly TraitNodeIndex: unique symbol }
 export interface TreeViewPlace {
 	readonly sibling?: NodeId;
 	readonly side: Side;
-	readonly trait: TraitLocation;
+	readonly trait: StableTraitLocation;
 }
 
 /**
@@ -196,7 +196,7 @@ export abstract class TreeView {
 	 * @returns the trait location of the node with the given id. Fails if the node does not exist in this view or of it is the root
 	 * node
 	 */
-	public getTraitLocation(id: NodeId): TraitLocation {
+	public getTraitLocation(id: NodeId): StableTraitLocation {
 		const parentData = this.forest.getParent(id);
 		return {
 			parent: parentData.parentId,
@@ -208,7 +208,7 @@ export abstract class TreeView {
 	 * @returns the trait location of the node with the given id, or undefined if the node does not exist in this view or if it is the root
 	 * node
 	 */
-	public tryGetTraitLocation(id: NodeId): TraitLocation | undefined {
+	public tryGetTraitLocation(id: NodeId): StableTraitLocation | undefined {
 		const parentData = this.forest.tryGetParent(id);
 		if (parentData === undefined) {
 			return undefined;
@@ -272,7 +272,7 @@ export abstract class TreeView {
 	/**
 	 * @returns the trait at the given location. If no such trait exists, returns an empty trait.
 	 */
-	public getTrait(traitLocation: TraitLocation): readonly NodeId[] {
+	public getTrait(traitLocation: StableTraitLocation): readonly NodeId[] {
 		return this.getViewNode(traitLocation.parent).traits.get(traitLocation.label) ?? [];
 	}
 
@@ -311,7 +311,7 @@ export abstract class TreeView {
 		}
 	}
 
-	private getIndexOfSide(side: Side, traitLocation: TraitLocation): PlaceIndex {
+	private getIndexOfSide(side: Side, traitLocation: StableTraitLocation): PlaceIndex {
 		return side === Side.After ? (0 as PlaceIndex) : (this.getTrait(traitLocation).length as PlaceIndex);
 	}
 
@@ -510,6 +510,6 @@ function getIndex(side: Side, index: TraitNodeIndex): PlaceIndex {
  * @public
  */
 export interface NodeInTrait {
-	readonly trait: TraitLocation;
+	readonly trait: StableTraitLocation;
 	readonly index: TraitNodeIndex;
 }

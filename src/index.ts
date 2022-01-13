@@ -102,6 +102,7 @@ export {
 	BuildNode,
 	EditStatus,
 	TraitLocation,
+	StableTraitLocation,
 	GenericTransaction,
 	GenericTransactionPolicy,
 	TransactionFailure,
@@ -122,5 +123,5 @@ export {
 	UploadedEditChunkContents,
 	getUploadedEditChunkContents,
 	saveUploadedEditChunkContents,
-	RecursiveTreeNode,
+	PlaceholderTree,
 } from './generic';

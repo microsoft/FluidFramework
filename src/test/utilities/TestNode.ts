@@ -4,7 +4,7 @@
  */
 
 import { memoizeGetter, fail } from '../../Common';
-import { ChangeNode, TraitLocation, TraitMap } from '../../generic';
+import { ChangeNode, StableTraitLocation, TraitMap } from '../../generic';
 import { Definition, NodeId, TraitLabel } from '../../Identifiers';
 import { RevisionView } from '../../TreeView';
 import { testTrait } from './TestUtilities';
@@ -16,7 +16,7 @@ export interface TestNode extends ChangeNode {
 	/** The label of the trait under which this node resides */
 	traitLabel: TraitLabel;
 	/** The trait location at which this node resides */
-	traitLocation: TraitLocation;
+	traitLocation: StableTraitLocation;
 	/** A revision view of this node */
 	view: RevisionView;
 }
@@ -116,7 +116,7 @@ export class SimpleTestTree implements TestTree {
 		return this.root.traitLabel;
 	}
 
-	public get traitLocation(): TraitLocation {
+	public get traitLocation(): StableTraitLocation {
 		return this.root.traitLocation;
 	}
 
@@ -173,7 +173,7 @@ export class RefreshingTestTree<T extends TestTree> implements TestTree {
 		return this.testTree.traitLabel;
 	}
 
-	public get traitLocation(): TraitLocation {
+	public get traitLocation(): StableTraitLocation {
 		return this.testTree.traitLocation;
 	}
 

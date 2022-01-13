@@ -6,7 +6,7 @@
 import { DetachedSequenceId, NodeId, TraitLabel, UuidString } from '../Identifiers';
 import { TreeView, TransactionView, TreeViewPlace, TreeViewRange } from '../TreeView';
 import { assert, assertNotUndefined, fail } from '../Common';
-import { BuildNode, Payload, TraitLocation, TreeNodeSequence } from '../generic';
+import { BuildNode, Payload, StableTraitLocation, TreeNodeSequence } from '../generic';
 import { ChangeInternal, StablePlace, StableRange } from './PersistedTypes';
 
 /**
@@ -281,7 +281,7 @@ export const Move = {
  * Create a sequence of changes that resets the contents of `trait`.
  * @public
  */
-export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<BuildNode>): Change[] {
+export function setTrait(trait: StableTraitLocation, nodes: TreeNodeSequence<BuildNode>): Change[] {
 	const id = 0 as DetachedSequenceId;
 	const traitContents = StableRange.all(trait);
 	return [Change.detach(traitContents), Change.build(nodes, id), Change.insert(id, traitContents.start)];
@@ -291,7 +291,7 @@ export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<BuildNode
  * Create a sequence of changes that resets the contents of `trait`.
  * @internal
  */
-export function setTraitInternal(trait: TraitLocation, nodes: TreeNodeSequence<BuildNode>): ChangeInternal[] {
+export function setTraitInternal(trait: StableTraitLocation, nodes: TreeNodeSequence<BuildNode>): ChangeInternal[] {
 	const id = 0 as DetachedSequenceId;
 	const traitContents = StableRange.all(trait);
 	return [
@@ -428,7 +428,7 @@ export type BadRangeValidationResult = Exclude<RangeValidationResult, RangeValid
  * @param view - the `TreeView` within which to retrieve the trait location
  * @param range - must be well formed and valid
  */
-function getTraitLocationOfRange(view: TreeView, range: StableRange): TraitLocation {
+function getTraitLocationOfRange(view: TreeView, range: StableRange): StableTraitLocation {
 	const referenceTrait = range.start.referenceTrait ?? range.end.referenceTrait;
 	if (referenceTrait) {
 		return referenceTrait;
@@ -452,7 +452,7 @@ enum SideOfRange {
 	End = 1,
 }
 
-function sideOfRange(range: StableRange, sideOfRange: SideOfRange, trait: TraitLocation): TreeViewPlace {
+function sideOfRange(range: StableRange, sideOfRange: SideOfRange, trait: StableTraitLocation): TreeViewPlace {
 	const siblingRelative = sideOfRange === SideOfRange.Start ? range.start : range.end;
 	return {
 		trait,
@@ -495,7 +495,7 @@ export function placeFromStablePlace(view: TreeView, stablePlace: StablePlace): 
 /**
  * Check if two TraitLocations are equal.
  */
-function compareTraits(traitA: TraitLocation, traitB: TraitLocation): boolean {
+function compareTraits(traitA: StableTraitLocation, traitB: StableTraitLocation): boolean {
 	if (traitA.label !== traitB.label || traitA.parent !== traitB.parent) {
 		return false;
 	}

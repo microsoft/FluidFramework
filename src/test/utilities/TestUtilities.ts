@@ -41,7 +41,7 @@ import {
 	NodeData,
 	SharedTreeDiagnosticEvent,
 	SharedTreeSummaryWriteFormat,
-	TraitLocation,
+	StableTraitLocation,
 } from '../../generic';
 import { SharedTreeWithAnchors, SharedTreeWithAnchorsFactory } from '../../anchored-edits';
 import { RevisionView } from '../../TreeView';
@@ -204,7 +204,7 @@ export const simpleRevisionViewWithValidation = RevisionView.fromTree(simpleTest
  */
 export const initialRevisionViewWithValidation = RevisionView.fromTree(initialTree, true);
 
-export const testTrait: TraitLocation = {
+export const testTrait: StableTraitLocation = {
 	parent: initialRevisionView.root,
 	label: 'e276f382-fa99-49a1-ae81-42001791c733' as TraitLabel,
 };

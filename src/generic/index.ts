@@ -34,8 +34,9 @@ export {
 	BuildNode,
 	EditStatus,
 	TraitLocation,
+	StableTraitLocation,
 	SharedTreeOpType,
-	PlaceholderTree as RecursiveTreeNode,
+	PlaceholderTree,
 } from './PersistedTypes';
 export {
 	newEdit,

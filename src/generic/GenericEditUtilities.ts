@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { copyPropertyIfDefined, fail, Mutable } from '../Common';
 import { StablePlace, StableRange } from '../default-edits';
 import { EditId, TraitLabel } from '../Identifiers';
-import { Edit, NodeData, PlaceholderTree, TraitLocation, TraitMap, TreeNode } from './PersistedTypes';
+import { Edit, NodeData, PlaceholderTree, StableTraitLocation, TraitMap, TreeNode } from './PersistedTypes';
 
 /**
  * Functions for constructing and comparing Edits.
@@ -25,7 +25,7 @@ export function compareEdits(editIdA: EditId, editIdB: EditId): boolean {
 /**
  * Check if two TraitLocations are equal.
  */
-export function compareTraits(traitA: TraitLocation, traitB: TraitLocation): boolean {
+export function compareTraits(traitA: StableTraitLocation, traitB: StableTraitLocation): boolean {
 	if (traitA.label !== traitB.label || traitA.parent !== traitB.parent) {
 		return false;
 	}
