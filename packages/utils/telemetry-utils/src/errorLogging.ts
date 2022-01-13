@@ -146,8 +146,8 @@ export function normalizeError(
         untrustedOrigin: 1, // This will let us filter to errors not originated by our own code
     });
 
-    // This is only interesting for non-objects
     if (typeof(error) !== "object") {
+        // This is only interesting for non-objects
         fluidError.addTelemetryProperties({ typeofError: typeof(error) });
     }
     return fluidError;
