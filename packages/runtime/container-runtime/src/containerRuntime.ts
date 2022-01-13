@@ -148,7 +148,12 @@ import {
     IGCStats,
     IUsedStateStats,
 } from "./garbageCollection";
-import { IDataStore, IDataStoreAliasMessage, isDataStoreAliasMessage, routerToDataStore } from "./dataStore";
+import {
+    IDataStore,
+    IDataStoreAliasMessage,
+    isDataStoreAliasMessage,
+    routerToDataStore,
+} from "./dataStore";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -1707,14 +1712,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
         const internalId = uuid();
-        return routerToDataStore(await this.createDataStoreCore(pkg, false /* isRoot */, internalId), internalId, this);
+        return routerToDataStore(
+            await this.createDataStoreCore(pkg, false /* isRoot */, internalId),
+            internalId,
+            this,
+            this.mc.logger);
     }
 
     private async createAndAliasDataStore(pkg: string | string[], alias: string, props?: any): Promise<IDataStore> {
         const internalId = uuid();
         const dataStore = await this.createDataStoreCore(pkg, false /* isRoot */, internalId, props);
         dataStore.bindToContext();
-        const aliasedDataStore = routerToDataStore(dataStore, internalId, this);
+        const aliasedDataStore = routerToDataStore(dataStore, internalId, this, this.mc.logger);
         const result = await aliasedDataStore.trySetAlias(alias);
         if (!result) {
             throw new GenericError("dataStoreAliasConflict");
@@ -2223,13 +2232,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void {
         const aliasMessage = contents as IDataStoreAliasMessage;
         if (!isDataStoreAliasMessage(aliasMessage)) {
-            throw new DataCorruptionError(
-                "malformedDataStoreAliasMessage",
-                {
-                    ...extractSafePropertiesFromMessage(contents),
-                },
-            );
+            throw new UsageError("malformedDataStoreAliasMessage");
         }
+
         this.submit(ContainerMessageType.Alias, contents, localOpMetadata);
     }
 

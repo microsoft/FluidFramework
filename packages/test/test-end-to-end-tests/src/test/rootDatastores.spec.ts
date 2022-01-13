@@ -14,14 +14,11 @@ import {
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { ContainerErrorType, IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
-    ContainerMessageType,
     ContainerRuntime,
     IAckedSummary,
     SummaryCollection,
 } from "@fluidframework/container-runtime";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { IFluidRouter } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -79,26 +76,11 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     const getRootDataStore = async (dataObject: ITestFluidObject, id: string) =>
         runtimeOf(dataObject).getRootDataStore(id);
 
-    const sendAliasMessage = async (runtime: ContainerRuntime, message: any) =>
+    const trySetAliasBadly = async (runtime: ContainerRuntime, alias: string): Promise<boolean | Error> =>
         new Promise<boolean>((resolve, reject) => {
             runtime.once("dispose", () => reject(new Error("Runtime disposed")));
-            // Temporary solution to be able to submit generic container runtime ops
-            // until we add this alias op to the API surface
-            (runtime as any).submit(ContainerMessageType.Alias, message, resolve);
-        }).catch(() => undefined);
-
-    const trySetAlias = async (runtime: ContainerRuntime, datastore: IFluidRouter, alias: string) => {
-        const channel = datastore as IFluidDataStoreChannel;
-        const message = {
-            internalId: channel.id,
-            alias,
-        };
-
-        return sendAliasMessage(runtime, message);
-    };
-
-    const sendMalformedMessage = async (runtime: ContainerRuntime, alias: string) =>
-        sendAliasMessage(runtime, { notAnAlias: alias });
+            runtime.submitDataStoreAliasOp({ id: alias }, resolve);
+        }).catch((error) => new Error(error.fluidErrorCode));
 
     describe("Name conflict expected failures", () => {
         beforeEach(async () => setupContainers(testContainerConfig));
@@ -148,42 +130,35 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
         const alias = "alias";
 
-        it("Assign multiple data stores to the same alias, first write wins, same container", async () => {
-            const ds1 = await createRootDataStore(dataObject1, "1");
-            const ds2 = await createRootDataStore(dataObject1, "2");
+        // it("Assign multiple data stores to the same alias, first write wins, same container", async () => {
+        //     const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
+        //     const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
 
-            const aliasResult1 = await trySetAlias(runtimeOf(dataObject1), ds1, alias);
-            const aliasResult2 = await trySetAlias(runtimeOf(dataObject1), ds2, alias);
+        //     const aliasResult1 = await ds1.trySetAlias(alias);
+        //     const aliasResult2 = await ds2.trySetAlias(alias);
 
-            assert(aliasResult1);
-            assert(!aliasResult2);
+        //     assert(aliasResult1);
+        //     assert(!aliasResult2);
 
-            assert.ok(await getRootDataStore(dataObject1, alias));
-        });
+        //     assert.ok(await getRootDataStore(dataObject1, alias));
+        // });
 
-        it("Assign regular datastore to alias", async () => {
-            const ds = await runtimeOf(dataObject1).createDataStore(packageName);
-
-            const aliasResult = await trySetAlias(runtimeOf(dataObject1), ds, alias);
-            assert(aliasResult);
-        });
-
-        it("Sending a bad alias message breaks the container", async () => {
-            const dataCorruption = anyDataCorruption([container1]);
-            await sendMalformedMessage(runtimeOf(dataObject1), alias);
-
-            assert(await dataCorruption);
+        it("Attempt to assign a regular datastore to alias with broken op", async () => {
+            const aliasResult = await trySetAliasBadly(runtimeOf(dataObject1), alias);
+            assert.equal((aliasResult as Error).message, "malformedDataStoreAliasMessage");
         });
 
         it("Assign multiple data stores to the same alias, first write wins, different containers", async () => {
-            const ds1 = await createRootDataStore(dataObject1, "1");
-            const ds2 = await createRootDataStore(dataObject2, "2");
+            const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
+            const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
 
-            const aliasResult1 = await trySetAlias(runtimeOf(dataObject1), ds1, alias);
-            const aliasResult2 = await trySetAlias(runtimeOf(dataObject1), ds2, alias);
+            const aliasResult1 = await ds1.trySetAlias(alias);
+            const aliasResult2 = await ds2.trySetAlias(alias);
 
             assert(aliasResult1);
             assert(!aliasResult2);
+
+            await provider.ensureSynchronized();
 
             const container3 = await provider.loadTestContainer(testContainerConfig);
             const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
@@ -193,8 +168,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         it("Assign an alias which has previously been assigned as id by the legacy API, " +
         "different containers", async () => {
             await createRootDataStore(dataObject1, alias);
-            const ds2 = await createRootDataStore(dataObject2, "2");
-            const aliasResult2 = await trySetAlias(runtimeOf(dataObject1), ds2, alias);
+            const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
+            const aliasResult2 = await ds2.trySetAlias(alias);
             assert(!aliasResult2);
 
             assert.ok(await getRootDataStore(dataObject2, alias));
@@ -216,11 +191,11 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             };
 
             const sc = new SummaryCollection(container1.deltaManager, new TelemetryNullLogger());
-            const ds1 = await createRootDataStore(dataObject1, "1");
-            const ds2 = await createRootDataStore(dataObject2, "2");
+            const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
+            const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
 
-            const aliasResult1 = await trySetAlias(runtimeOf(dataObject1), ds1, alias);
-            const aliasResult2 = await trySetAlias(runtimeOf(dataObject1), ds2, alias);
+            const aliasResult1 = await ds1.trySetAlias(alias);
+            const aliasResult2 = await ds2.trySetAlias(alias);
 
             assert(aliasResult1);
             assert(!aliasResult2);
@@ -235,8 +210,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                 }, // requestHeader
             );
             const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
-            const ds3 = await createRootDataStore(dataObject3, "3");
-            const aliasResult3 = await trySetAlias(runtimeOf(dataObject3), ds3, alias);
+            const ds3 = await runtimeOf(dataObject3).createDataStore(packageName);
+            const aliasResult3 = await ds3.trySetAlias(alias);
 
             assert(!aliasResult3);
             assert.ok(await getRootDataStore(dataObject3, alias));

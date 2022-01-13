@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
@@ -50,7 +51,8 @@ export const routerToDataStore = (
     router: IFluidRouter,
     internalId: string,
     runtime: ContainerRuntime,
-): IDataStore => new DataStore(router, internalId, runtime);
+    logger: ITelemetryLogger,
+): IDataStore => new DataStore(router, internalId, runtime, logger);
 
 class DataStore implements IDataStore {
     async trySetAlias(alias: string): Promise<boolean> {
@@ -63,7 +65,10 @@ class DataStore implements IDataStore {
 
         return this.ackBasedPromise<boolean>((resolve) => {
             this.runtime.submitDataStoreAliasOp(message, resolve);
-        }).catch(() => false);
+        }).catch((error) => {
+            this.logger.sendErrorEvent({ eventName: "AliasingException" }, error);
+            return false;
+        });
     }
 
     async request(request: IRequest): Promise<IResponse> {
@@ -74,6 +79,7 @@ class DataStore implements IDataStore {
         private readonly router: IFluidRouter,
         private readonly internalId: string,
         private readonly runtime: ContainerRuntime,
+        private readonly logger: ITelemetryLogger,
     ) { }
     public get IFluidRouter() { return this.router; }
 
