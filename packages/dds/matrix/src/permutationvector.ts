@@ -21,11 +21,11 @@ import {
     ReferenceType,
 } from "@fluidframework/merge-tree";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { FileMode, TreeEntry, ITree } from "@fluidframework/protocol-definitions";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { HandleTable, Handle, isHandleValid } from "./handletable";
-import { serializeBlob, deserializeBlob } from "./serialization";
+import { deserializeBlob } from "./serialization";
 import { HandleCache } from "./handlecache";
 import { VectorUndoProvider } from "./undoprovider";
 
@@ -286,19 +286,13 @@ export class PermutationVector extends Client {
         return this.findReconnectionPostition(containingSegment, localSeq) + containingOffset!;
     }
 
-    // Constructs an ITreeEntry for the cell data.
-    public snapshot(runtime: IFluidDataStoreRuntime, handle: IFluidHandle, serializer: IFluidSerializer): ITree {
-        return {
-            entries: [
-                {
-                    mode: FileMode.Directory,
-                    path: SnapshotPath.segments,
-                    type: TreeEntry.Tree,
-                    value: super.snapshot(runtime, handle, serializer, /* catchUpMsgs: */[]),
-                },
-                serializeBlob(handle, SnapshotPath.handleTable, this.handleTable.snapshot(), serializer),
-            ],
-        };
+    // Constructs an ISummaryTreeWithStats for the cell data.
+    public summarize(runtime: IFluidDataStoreRuntime, handle: IFluidHandle, serializer: IFluidSerializer):
+        ISummaryTreeWithStats {
+        const builder = new SummaryTreeBuilder();
+        builder.addWithStats(SnapshotPath.segments, super.summarize(runtime, handle, serializer, /* catchUpMsgs: */[]));
+        builder.addBlob(SnapshotPath.handleTable, serializer.stringify(this.handleTable.getSummaryContent(), handle));
+        return builder.getSummaryTree();
     }
 
     public async load(

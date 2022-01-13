@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
-import { ISequencedDocumentMessage, ITree, MessageType } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISummaryTree, MessageType } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import random from "random-js";
@@ -54,15 +54,15 @@ export class TestClient extends Client {
         const snapshot = new SnapshotLegacy(client1.mergeTree, DebugLogger.create("fluid:snapshot"));
         snapshot.extractSync();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const snapshotTree = snapshot.emit([], TestClient.serializer, undefined!);
-        return TestClient.createFromSnapshot(snapshotTree, newLongClientId, client1.specToSegment);
+        const summaryTree = snapshot.emit([], TestClient.serializer, undefined!).summary;
+        return TestClient.createFromSummary(summaryTree, newLongClientId, client1.specToSegment);
     }
 
-    public static async createFromSnapshot(
-        snapshotTree: ITree,
+    public static async createFromSummary(
+        summaryTree: ISummaryTree,
         newLongClientId: string,
         specToSeg: (spec: IJSONSegment) => ISegment): Promise<TestClient> {
-        const services = new MockStorage(snapshotTree);
+        const services = MockStorage.createFromSummary(summaryTree);
 
         const client2 = new TestClient(undefined, specToSeg);
         const { catchupOpsP } = await client2.load(
