@@ -38,7 +38,11 @@ export const rootDataStoreRequestHandler = async (request: IRequest, runtime: IC
     try {
         // getRootDataStore currently throws if the data store is not found
         const rootDataStore = await runtime.getRootDataStore(id, wait);
-        return rootDataStore.IFluidRouter.request(requestParser.createSubRequest(1));
+        try {
+            return rootDataStore.IFluidRouter.request(requestParser.createSubRequest(1));
+        } catch (error) {
+            return { status: 500, value: error };
+        }
     } catch (error) {
         return undefined; // continue search
     }
