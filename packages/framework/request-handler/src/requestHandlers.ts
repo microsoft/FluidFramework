@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { create404Response, RequestParser } from "@fluidframework/runtime-utils";
+import { RequestParser } from "@fluidframework/runtime-utils";
 
 /**
  * A request handler for the container runtime. Each handler should handle a specific request, and return undefined
@@ -40,7 +40,7 @@ export const rootDataStoreRequestHandler = async (request: IRequest, runtime: IC
         const rootDataStore = await runtime.getRootDataStore(id, wait);
         return rootDataStore.IFluidRouter.request(requestParser.createSubRequest(1));
     } catch (error) {
-        return create404Response(request);
+        return undefined; // continue search
     }
 };
 
