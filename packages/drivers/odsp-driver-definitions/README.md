@@ -1,6 +1,6 @@
 # @fluidframework/odsp-driver-definitions
 
-Definitions for @fluidframework/odsp-driver pakcage.
+Definitions for @fluidframework/odsp-driver package.
 Currently it contains all the contracts for driver factory.
 
-Though the host is responsible for implementing the IPersistedCache, snapshot entries will only be persisted for 2 days. The ODSP driver will remove all entries if it recieves a snapshot entry two days or older.
+Though the host is responsible for implementing the IPersistedCache, snapshot cached entries will be disregarded if they are older than 2 days, which is based on `defaultCacheExpiryTimeoutMs`. The ODSP driver will delete all entries if it interacts with such a file.
