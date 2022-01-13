@@ -118,19 +118,20 @@ export class SnapshotV1 {
         const headerChunk = chunks.shift()!;
         headerChunk.headerMetadata = this.header;
         headerChunk.headerMetadata.orderedChunkMetadata = [{ id: SnapshotLegacy.header }];
-        const builder = new SummaryTreeBuilder();
+        const blobs: [key: string, content: string][] = [];
         chunks.forEach((chunk, index) => {
             const id = `${SnapshotLegacy.body}_${index}`;
             this.header.orderedChunkMetadata.push({ id });
-            builder.addBlob(id, serializeAsMaxSupportedVersion(
+            blobs.push([id, serializeAsMaxSupportedVersion(
                 id,
                 chunk,
                 this.logger,
                 this.mergeTree.options,
                 serializer,
-                bind));
+                bind)]);
         });
 
+        const builder = new SummaryTreeBuilder();
         builder.addBlob(SnapshotLegacy.header, serializeAsMaxSupportedVersion(
             SnapshotLegacy.header,
             headerChunk,
@@ -138,6 +139,9 @@ export class SnapshotV1 {
             this.mergeTree.options,
             serializer,
             bind));
+        blobs.forEach((value) => {
+            builder.addBlob(value[0], value[1]);
+        });
 
         return builder.getSummaryTree();
     }
