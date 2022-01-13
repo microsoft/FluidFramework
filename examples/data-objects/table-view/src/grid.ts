@@ -4,8 +4,8 @@
  */
 
 import { KeyCode, Scheduler, Template } from "@fluid-example/flow-util-lib";
-import { colIndexToName, TableDocument } from "@fluid-example/table-document";
-import { SequenceDeltaEvent } from "@fluidframework/sequence";
+import { colIndexToName } from "@fluid-example/table-document";
+import { SharedMatrix } from "@fluidframework/matrix";
 import { ISheetlet, createSheetletProducer } from "@tiny-calc/micro";
 import { BorderRect } from "./borderstyle";
 import * as styles from "./index.css";
@@ -40,10 +40,9 @@ const cellInputTemplate = new Template({ tag: "input", props: { className: style
 
 // eslint-disable-next-line unicorn/no-unsafe-regex
 const numberExp = /^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$/;
-
 export class GridView {
-    private get numRows() { return this.doc.numRows; }
-    private get numCols() { return this.doc.numCols; }
+    private get numRows() { return this.matrix.rowCount; }
+    private get numCols() { return this.matrix.colCount; }
     public readonly root = tableTemplate.clone();
 
     private _startRow = 0;
@@ -65,62 +64,52 @@ export class GridView {
     ]);
     private readonly maxRows = 10;
 
-    private readonly invalidate: (ev: SequenceDeltaEvent) => void;
-
     private readonly sheetlet: ISheetlet;
 
     constructor(
-        private readonly doc: TableDocument,
+        private readonly matrix: SharedMatrix,
         private readonly tableView: TableView,
     ) {
-        const scheduler = new Scheduler();
-
-        const refreshGrid = scheduler.coalesce(scheduler.onLayout, this.refreshCells);
-
-        this.invalidate = (ev: SequenceDeltaEvent) => {
-            if (!ev.isLocal) {
-                // Temporarily, we invalidate the entire matrix when we receive a remote op.
-                // This can be improved w/the new SparseMatrix, which makes it easier to decode
-                // the range of cells impacted by matrix ops.
-                for (let row = 0; row < this.doc.numRows; row++) {
-                    for (let col = 0; col < this.doc.numCols; col++) {
-                        this.sheetlet.invalidate(row, col);
-                    }
-                }
-            }
-            refreshGrid();
-        };
-
         this.root.addEventListener("click", this.onGridClick as EventListener);
         this.tbody.addEventListener("pointerdown", this.cellPointerDown as EventListener);
         this.tbody.addEventListener("pointermove", this.cellPointerMove as EventListener);
         this.inputBox.addEventListener("keydown", this.cellKeyDown);
         this.inputBox.addEventListener("input", this.cellInput);
 
-        this.doc.on("sequenceDelta", this.invalidate);
-
         const blank = headerTemplate.clone();
         this.cols.appendChild(blank);
 
-        const producer = {
-            get rowCount() { return doc.numRows; },
-            get colCount() { return doc.numCols; },
-            getCell: (row, col) => {
-                const raw = doc.getCellValue(row, col);
+        this.sheetlet = createSheetletProducer(matrix);
 
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return typeof raw === "object"
-                    ? undefined
-                    : raw;
-            },
-            openMatrix() { return this; },
-            closeMatrix() { },
-            get matrixProducer() { return this; },
+        this.setupMatrixConsumer();
+        this.refreshCells();
+    }
+
+    private setupMatrixConsumer() {
+        const scheduler = new Scheduler();
+        const refreshGrid = scheduler.coalesce(scheduler.onLayout, this.refreshCells);
+        const invalidateCells = (rowStart: number, colStart: number, rowCount: number, colCount: number) => {
+            for (let row = rowStart; row < rowStart + rowCount; row++) {
+                for (let col = colStart; col < colStart + colCount; col++) {
+                    this.sheetlet.invalidate(row, col);
+                }
+            }
+            refreshGrid();
         };
 
-        this.sheetlet = createSheetletProducer(producer);
+        const matrixReader = {
+            rowsChanged() {
+                refreshGrid();
+            },
+            colsChanged() {
+                refreshGrid();
+            },
+            cellsChanged(rowStart: number, colStart: number, rowCount: number, colCount: number) {
+                invalidateCells(rowStart, colStart, rowCount, colCount);
+            },
+        };
 
-        this.refreshCells();
+        this.matrix.openMatrix(matrixReader);
     }
 
     private refreshCell(td: HTMLTableCellElement, row: number, col: number) {
@@ -277,10 +266,10 @@ export class GridView {
         const maybeParent = this.inputBox.parentElement as HTMLTableCellElement | null;
         if (maybeParent) {
             const [row, col] = this.getRowColFromTd(maybeParent);
-            const previous = this.doc.getCellValue(row, col);
+            const previous = this.matrix.getCell(row, col);
             const current = this.parseInput(this.inputBox.value);
             if (previous !== current) {
-                this.doc.setCellValue(row, col, current);
+                this.matrix.setCell(row, col, current);
                 this.sheetlet.invalidate(row, col);
             }
             this.refreshCell(maybeParent, row, col);
@@ -296,7 +285,7 @@ export class GridView {
             this.tdText = newParent.firstChild!;
             console.assert(this.tdText.nodeType === Node.TEXT_NODE, "TableData text has wrong node type!");
 
-            const value = this.doc.getCellValue(row, col);
+            const value = this.matrix.getCell(row, col);
             this.inputBox.value = `${value ?? ""}`;
             newParent.appendChild(this.inputBox);
             this.cellInput();
@@ -419,7 +408,7 @@ export class GridView {
             const [row, col] = this.selection.start;
             // The formula bar should always show raw values, but when a cell is
             // selected for edit it will be showing the raw value
-            const cellValue = this.doc.getCellValue(row, col);
+            const cellValue = this.matrix.getCell(row, col);
             this.tableView.formulaInput = `${cellValue ?? ""}`;
         } else {
             this.tableView.formulaInput = "<multiple selection>";
@@ -432,11 +421,11 @@ export class GridView {
             const [row, col] = this.selection.start;
             const selectedCell = this.getTdFromRowCol(row, col) as HTMLTableDataCellElement;
             if (selectedCell) {
-                const previous = this.doc.getCellValue(row, col);
+                const previous = this.matrix.getCell(row, col);
                 const current = this.parseInput(this.tableView.formulaInput);
                 if (previous !== current) {
                     selectedCell.textContent = `\u200B${current}`;
-                    this.doc.setCellValue(row, col, current);
+                    this.matrix.setCell(row, col, current);
                     this.sheetlet.invalidate(row, col);
                 }
             }

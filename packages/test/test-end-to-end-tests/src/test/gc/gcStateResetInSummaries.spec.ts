@@ -19,10 +19,11 @@ import {
     ISummaryTree,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { channelsTreeName } from "@fluidframework/runtime-definitions";
+import { channelsTreeName, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
 import { getGCStateFromSummary, loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSummarizerClient";
 
@@ -56,6 +57,9 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
 
     let mainContainer: IContainer;
 
+    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+        runtime.IFluidHandleContext.resolveHandle(request);
+
     /** Creates a new container with the GC enabled / disabled as per gcAllowed param. */
     const createContainer = async (gcAllowed?: boolean): Promise<IContainer> => {
         const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
@@ -64,7 +68,7 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
                 [dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
             ],
             undefined,
-            undefined,
+            [innerRequestHandler],
             { ...defaultRuntimeOptions, gcOptions: { gcAllowed, writeDataAtRoot: true } },
         );
         return provider.createContainer(runtimeFactory);
@@ -78,7 +82,7 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
                 [dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
             ],
             undefined,
-            undefined,
+            [innerRequestHandler],
             { ...defaultRuntimeOptions, gcOptions: { gcAllowed, disableGC, writeDataAtRoot: true } },
         );
         return loadSummarizer(

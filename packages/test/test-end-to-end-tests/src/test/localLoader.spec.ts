@@ -4,12 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct";
+import {
+    ContainerRuntimeFactoryWithDefaultDataStore,
+    DataObject,
+    DataObjectFactory,
+    IDataObjectProps } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
-import { IFluidHandle, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import {
@@ -106,8 +110,18 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
     });
 
     async function createContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
+        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+            runtime.IFluidHandleContext.resolveHandle(request);
+        const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+            factory,
+            [
+                [factory.type, Promise.resolve(factory)],
+            ],
+            undefined,
+            [innerRequestHandler],
+        );
         const loader = createLoader(
-            [[codeDetails, factory]],
+            [[codeDetails, runtimeFactory]],
             provider.documentServiceFactory,
             provider.urlResolver,
             provider.logger,
@@ -122,8 +136,18 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
     async function loadContainer(
         documentId: string, containerUrl: IResolvedUrl | undefined, factory: IFluidDataStoreFactory,
     ): Promise<IContainer> {
+        const inner = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+            runtime.IFluidHandleContext.resolveHandle(request);
+        const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+            factory,
+            [
+                [factory.type, Promise.resolve(factory)],
+            ],
+            undefined,
+            [inner],
+        );
         const loader = createLoader(
-            [[codeDetails, factory]],
+            [[codeDetails, runtimeFactory]],
             provider.documentServiceFactory,
             provider.urlResolver,
             provider.logger,

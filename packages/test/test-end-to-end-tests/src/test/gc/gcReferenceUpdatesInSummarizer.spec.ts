@@ -21,6 +21,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -94,13 +95,15 @@ describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider)
             gcAllowed: true,
         },
     };
+    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+        runtime.IFluidHandleContext.resolveHandle(request);
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         factory,
         [
             [factory.type, Promise.resolve(factory)],
         ],
         undefined,
-        undefined,
+        [innerRequestHandler],
         runtimeOptions,
     );
 

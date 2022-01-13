@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { create404Response, RequestParser } from "@fluidframework/runtime-utils";
+import { RequestParser } from "@fluidframework/runtime-utils";
 
 /**
  * A request handler for the container runtime. Each handler should handle a specific request, and return undefined
@@ -24,19 +24,6 @@ import { create404Response, RequestParser } from "@fluidframework/runtime-utils"
  */
 export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime)
     => Promise<IResponse | undefined>;
-
-/**
- * @deprecated - please avoid adding new references to this API!  Instead prefer rootDataObjectRequestHandler.
- * It exposes internal container guts to external world, which is not ideal.
- * It also relies heavily on internal routing schema (formation of handle URIs) which will change in future
- * And last, but not least, it does not allow any policy to be implemented around GC of data stores exposed
- * through internal URIs. I.e. if there are no other references to such objects, they will be GC'd and
- * external links would get broken. Maybe that's what is needed in some cases, but better, more centralized
- * handling of external URI to internal handle is required (in future, we will support weak handle references,
- * that will allow any GC policy to be implemented by container authors.)
- */
-export const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-    runtime.IFluidHandleContext.resolveHandle(request);
 
 /**
  * A request handler to expose access to all root data stores in the container by id.
@@ -53,7 +40,7 @@ export const rootDataStoreRequestHandler = async (request: IRequest, runtime: IC
         const rootDataStore = await runtime.getRootDataStore(id, wait);
         return rootDataStore.IFluidRouter.request(requestParser.createSubRequest(1));
     } catch (error) {
-        return create404Response(request);
+        return undefined; // continue search
     }
 };
 

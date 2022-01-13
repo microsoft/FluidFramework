@@ -16,6 +16,7 @@ import { IRequest, IResponse, IRequestHeader } from "@fluidframework/core-interf
 import { createAndAttachContainer, ITestObjectProvider } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 class TestSharedDataObject1 extends DataObject {
     public get _root() {
@@ -116,6 +117,9 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
     let loader: IHostLoader;
     let container: IContainer;
 
+    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+        runtime.IFluidHandleContext.resolveHandle(request);
+
     const runtimeFactory =
         new ContainerRuntimeFactoryWithDefaultDataStore(
             testSharedDataObjectFactory1,
@@ -124,6 +128,8 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
                 [testSharedDataObjectFactory2.type, Promise.resolve(testSharedDataObjectFactory2)],
                 [testFactoryWithRequestHeaders.type, Promise.resolve(testFactoryWithRequestHeaders)],
             ],
+            undefined,
+            [innerRequestHandler],
         );
 
     beforeEach(async () => {

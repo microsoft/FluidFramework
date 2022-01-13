@@ -171,12 +171,6 @@ class UnreferencedStateTracker {
 }
 
 /**
- * This sets the default session expiry. We have session expiry for GC purposes. Once the session expiry is
- * set, we should not be able to change this value. Please look at TODO: link to GC readme.
- */
- export const defaultSessionExpiryMs = 30 * 24 * 60 * 60 * 1000; // 30 days
-
-/**
  * The garbage collector for the container runtime. It consolidates the garbage collection functionality and maintains
  * its state across summaries.
  */
