@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /**
  * This format is meant to capture enough edit information to make it possible to either rebase those edits (onto other
  * edits also expressed in this format) or determine that the edits are conflicted.

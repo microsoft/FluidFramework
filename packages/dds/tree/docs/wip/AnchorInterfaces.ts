@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /**
  * This file describes the interfaces one might use to characterize the degrees of freedom of anchors.
  */
