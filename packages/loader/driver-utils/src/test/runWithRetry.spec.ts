@@ -37,7 +37,7 @@ describe("retry error helpers", () => {
         const noRetry = {};
         copyRetryProps(noRetry, { });
         assert(canRetryOnError(supportsRetry) && getRetryDelaySecondsFromError(supportsRetry) === 2);
-        assert(!canRetryOnError(noRetry) && getRetryDelaySecondsFromError(supportsRetry) === undefined);
+        assert(!canRetryOnError(noRetry) && getRetryDelaySecondsFromError(noRetry) === undefined);
     });
 });
 
