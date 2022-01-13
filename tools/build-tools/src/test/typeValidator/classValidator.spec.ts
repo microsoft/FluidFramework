@@ -36,6 +36,43 @@ describe("Class", () => {
         return typeData!;
     }
 
+    function checkIncrement(
+        project: Project,
+        pkgDir: string,
+        oldTypeData: DecompositionTypeData,
+        newTypeData: DecompositionTypeData,
+    ): BreakingIncrement {
+        let increment = checkMajorIncrement(project, pkgDir, oldTypeData, newTypeData);
+        if (increment === BreakingIncrement.none) {
+            increment = checkMinorIncrement(project, pkgDir, oldTypeData, newTypeData);
+        }
+        return increment;
+    }
+
+    // scenario: added new method
+    // expected result: major breaking change
+    it("new method", () => {
+        const classOld =
+        `
+        export class asdf {}
+        `;
+        const oldSourceFile = project.createSourceFile(`${pkgDir}/src/classOld.ts`, classOld);
+        const oldTypeData = getTypeDataForSource(oldSourceFile);
+
+        const classNew =
+        `
+        export class asdf {
+        public qwer() { return false; };
+        }
+        `;
+        const newSourceFile = project.createSourceFile(`${pkgDir}/src/classNew.ts`, classNew);
+        const newTypeData = getTypeDataForSource(newSourceFile);
+
+        let increment = checkIncrement(project, pkgDir, oldTypeData, newTypeData);
+        assert(increment === BreakingIncrement.major);
+
+    }).timeout(10000);
+
     // scenario: added new default param (method signature changed but won't break existing code)
     // expected result: minor breaking change
     it("new default value added", () => {
@@ -58,10 +95,7 @@ describe("Class", () => {
         const newSourceFile = project.createSourceFile(`${pkgDir}/src/classNew.ts`, classNew);
         const newTypeData = getTypeDataForSource(newSourceFile);
 
-        let increment = checkMajorIncrement(project, pkgDir, oldTypeData, newTypeData);
-        assert(increment === BreakingIncrement.none);
-
-        increment = checkMinorIncrement(project, pkgDir, oldTypeData, newTypeData);
+        let increment = checkIncrement(project, pkgDir, oldTypeData, newTypeData);
         assert(increment == BreakingIncrement.minor);
 
     }).timeout(15000);
@@ -89,11 +123,8 @@ describe("Class", () => {
         const newSourceFile = project.createSourceFile(`${pkgDir}/src/classNew.ts`, classNew);
         const newTypeData = getTypeDataForSource(newSourceFile);
 
-        let increment = checkMajorIncrement(project, pkgDir, oldTypeData, newTypeData);
-        assert(increment === BreakingIncrement.major);
-
-        increment = checkMinorIncrement(project, pkgDir, oldTypeData, newTypeData);
-        assert(increment == BreakingIncrement.minor);
+        let increment = checkIncrement(project, pkgDir, oldTypeData, newTypeData);
+        assert(increment == BreakingIncrement.major);
 
     }).timeout(15000);
 
@@ -121,10 +152,7 @@ describe("Class", () => {
         const newSourceFile = project.createSourceFile(`${pkgDir}/src/classNew.ts`, classNew);
         const newTypeData = getTypeDataForSource(newSourceFile);
 
-        let increment = checkMajorIncrement(project, pkgDir, oldTypeData, newTypeData);
-        assert(increment === BreakingIncrement.none);
-
-        increment = checkMinorIncrement(project, pkgDir, oldTypeData, newTypeData);
+        let increment = checkIncrement(project, pkgDir, oldTypeData, newTypeData);
         assert(increment == BreakingIncrement.minor);
 
     }).timeout(15000);
