@@ -43,6 +43,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     canRetryOnError,
+    copyRetryProps,
     createWriteError,
     createGenericNetworkError,
     getRetryDelayFromError,
@@ -482,6 +483,7 @@ export class ConnectionManager implements IConnectionManager {
                 }
             } catch (origError) {
                 const error = normalizeError(origError);
+                copyRetryProps(error, origError);
 
                 if (error.errorType === DeltaStreamConnectionForbiddenError.errorType) {
                     connection = new NoDeltaStream();

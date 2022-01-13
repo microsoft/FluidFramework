@@ -116,6 +116,9 @@ export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolS
 export function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl | undefined>;
 
 // @public (undocumented)
+export function copyRetryProps(target: any, source: any): void;
+
+// @public (undocumented)
 export function createGenericNetworkError(fluidErrorCode: string, message: string | undefined, canRetry: boolean, retryAfterMs?: number, props?: ITelemetryProperties): ThrottlingError | GenericNetworkError;
 
 // @public (undocumented)

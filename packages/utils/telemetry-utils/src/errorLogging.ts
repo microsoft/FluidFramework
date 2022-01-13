@@ -40,18 +40,12 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
         ? error.message as string
         : String(error);
 
-    const safeProps: {
-        message: string;
-        errorType?: string;
-        stack?: string;
-        canRetry?: boolean,
-        retryAfterSeconds?: number,
-    } = {
+    const safeProps: { message: string; errorType?: string; stack?: string; } = {
         message,
     };
 
     if (isRegularObject(error)) {
-        const { errorType, stack, name, canRetry, retryAfterSeconds } = error;
+        const { errorType, stack, name } = error;
 
         if (typeof errorType === "string") {
             safeProps.errorType = errorType;
@@ -60,14 +54,6 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
         if (typeof stack === "string") {
             const errorName = (typeof name === "string") ? name : undefined;
             safeProps.stack = removeMessageFromStack(stack, errorName);
-        }
-
-        if (typeof canRetry === "boolean") {
-            safeProps.canRetry = canRetry;
-        }
-
-        if (typeof retryAfterSeconds === "number") {
-            safeProps.retryAfterSeconds = retryAfterSeconds;
         }
     }
 
@@ -124,22 +110,13 @@ export function normalizeError(
     }
 
     // We have to construct a new Fluid Error, copying safe properties over
-    const { message, stack, canRetry, retryAfterSeconds } =
-        extractLogSafeErrorProperties(error, false /* sanitizeStack */);
+    const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
     const fluidError: IFluidErrorBase = new SimpleFluidError({
         errorType: "genericError", // Match Container/Driver generic error type
         fluidErrorCode: "",
         message,
         stack,
     });
-
-    // copy over canRetry and retryAfterSeconds which are inspected in a non-typesafe way in places
-    if (canRetry !== undefined) {
-        (fluidError as any).canRetry = canRetry;
-    }
-    if (retryAfterSeconds !== undefined) {
-        (fluidError as any).retryAfterSeconds = retryAfterSeconds;
-    }
 
     fluidError.addTelemetryProperties({
         ...annotations.props,

@@ -158,3 +158,17 @@ export const getRetryDelaySecondsFromError = (error: any): number | undefined =>
 
 export const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds !== undefined ?
     error.retryAfterSeconds * 1000 : undefined;
+
+/**
+ * Copy over canRetry and retryAfterSeconds if set
+ * @param target - target error to set the props on
+ * @param source - source error that may have these props set
+ */
+export function copyRetryProps(target: any, source: any) {
+    if (source?.canRetry !== undefined) {
+        target.canRetry = source.canRetry;
+    }
+    if (source?.retryAfterSeconds !== undefined) {
+        target.retryAfterSeconds = source.retryAfterSeconds;
+    }
+}
