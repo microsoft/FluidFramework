@@ -28,7 +28,7 @@ export const createFluidObjectResponse: (fluidObject: FluidObject) => {
 export function handleFromLegacyUri<T = IFluidObject & FluidObject & IFluidLoadable>(uri: string, runtime: IContainerRuntimeBase): IFluidHandle<T>;
 
 // @public
-export const rootDataStoreRequestHandler: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
+export const rootDataStoreRequestHandler: (request: IRequest, runtime: IContainerRuntime) => Promise<any>;
 
 // @public
 export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse | undefined>;

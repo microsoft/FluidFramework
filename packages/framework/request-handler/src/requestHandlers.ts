@@ -35,16 +35,18 @@ export const rootDataStoreRequestHandler = async (request: IRequest, runtime: IC
     const requestParser = RequestParser.create(request);
     const id = requestParser.pathParts[0];
     const wait = typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
+    let rootDataStore;
     try {
         // getRootDataStore currently throws if the data store is not found
-        const rootDataStore = await runtime.getRootDataStore(id, wait);
-        try {
-            return rootDataStore.IFluidRouter.request(requestParser.createSubRequest(1));
-        } catch (error) {
-            return { status: 500, value: error };
-        }
+        rootDataStore = await runtime.getRootDataStore(id, wait);
     } catch (error) {
         return undefined; // continue search
+    }
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return rootDataStore.IFluidRouter.request(requestParser.createSubRequest(1));
+    } catch (error) {
+        return { status: 500, value: error };
     }
 };
 
