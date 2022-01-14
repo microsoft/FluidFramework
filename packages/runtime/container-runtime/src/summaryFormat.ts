@@ -69,7 +69,6 @@ export function getAttributesFormatVersion(attributes: ReadFluidDataStoreAttribu
     return 0;
 }
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): boolean {
     return !!attributes.summaryFormatVersion && !attributes.disableIsolatedChannels;
 }
@@ -122,7 +121,6 @@ export const extractSummaryMetadataMessage = (
     type: message.type,
 };
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function getMetadataFormatVersion(metadata?: IContainerRuntimeMetadata): number {
     /**
      * Version 2+: Introduces runtime sequence number for data verification.
@@ -143,7 +141,6 @@ export const chunksBlobName = ".chunks";
 export const electedSummarizerBlobName = ".electedSummarizer";
 export const blobsTreeName = ".blobs";
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function rootHasIsolatedChannels(metadata?: IContainerRuntimeMetadata): boolean {
     return !!metadata && !metadata.disableIsolatedChannels;
 }

@@ -12,7 +12,6 @@ import {copy as cloneDeep} from "fastest-json-copy";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	ISequencedDocumentMessage,
-	ITree,
 	MessageType,
 	FileMode,
 	TreeEntry,
@@ -27,8 +26,8 @@ import {
 
 import { bufferToString, assert } from "@fluidframework/common-utils";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 
 import {
 	ChangeSet,
@@ -399,7 +398,7 @@ export class SharedPropertyTree extends SharedObject {
 			numChunks: 0,
 		};
 
-		const chunks: ITreeEntry[] = [];
+		const builder = new SummaryTreeBuilder();
 		if (!this.useMH) {
 			// If the MH is not used, we have to include the tip view, the remote changes and the received
 			// deltas to the summary
@@ -416,7 +415,7 @@ export class SharedPropertyTree extends SharedObject {
 			// the chunking code below could create chunks which are bigger than the
 			// allowed limit after encoding the JSON via UTF8 encoding. To make sure
 			// the encoded string stays within the size limit, we replace unicode characters
-			// with the cooresponding escapes. This way, it won't change size when encoded as
+			// with the corresponding escapes. This way, it won't change size when encoded as
 			// utf8
 			serializedSummary = serializedSummary.replace(
 				/[\u007F-\uFFFF]/g,
@@ -425,37 +424,15 @@ export class SharedPropertyTree extends SharedObject {
 			);
 
 			for (let pos = 0, i = 0; pos < serializedSummary.length; pos += chunkSize, i++) {
-				chunks.push({
-					path: `summaryChunk_${i}`,
-					mode: FileMode.File,
-					type: TreeEntry.Blob,
-					value: {
-						contents: serializedSummary.substr(pos, chunkSize),
-						encoding: "utf-8",
-					},
-				});
+				builder.addBlob(`summaryChunk_${i}`, serializedSummary.substr(pos, chunkSize));
+				snapshot.numChunks++;
 			}
-			snapshot.numChunks = chunks.length;
 		}
 
-		return convertToSummaryTreeWithStats({
-			entries: [
-				{
-					path: "properties",
-					mode: FileMode.File,
-					type: TreeEntry.Blob,
-					value: {
-						contents:
-							serializer !== undefined
-								? serializer.stringify(snapshot, this.handle)
-								: JSON.stringify(snapshot),
-						encoding: "utf-8",
-					},
-				},
-				...chunks,
-			],
-			id: undefined,
-		}, fullTree);
+		builder.addBlob("properties", serializer !== undefined
+			? serializer.stringify(snapshot, this.handle)
+			: JSON.stringify(snapshot));
+		return builder.getSummaryTree();
 	}
 
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {

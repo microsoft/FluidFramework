@@ -124,6 +124,7 @@ export class SharedSegmentSequenceRevertible implements IRevertible {
                                     tracked.propertyDelta,
                                     undefined);
                             }
+                        // fallthrough
                         default:
                             throw new Error("operationt type not revertible");
                     }

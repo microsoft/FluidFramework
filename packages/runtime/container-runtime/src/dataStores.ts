@@ -202,7 +202,7 @@ export class DataStores implements IDisposable {
         }
 
          // If a non-local operation then go and create the object, otherwise mark it as officially attached.
-        if (this.contexts.has(attachMessage.id)) {
+        if (this.alreadyProcessed(attachMessage.id)) {
             // TODO: dataStoreId may require a different tag from PackageData #7488
             const error = new DataCorruptionError(
                 "duplicateDataStoreCreatedWithExistingId",
@@ -275,15 +275,7 @@ export class DataStores implements IDisposable {
     }
 
     private processAliasMessageCore(aliasMessage: IDataStoreAliasMessage): boolean {
-        const existingMapping = this.aliasMap.get(aliasMessage.alias);
-        if (existingMapping !== undefined) {
-            return false;
-        }
-
-        // Unlikely scenario, but we may receive an alias OP with the alias value
-        // equal to one of the ids supplied to `createRootDataStore` in the past
-        const maybeContextWithAliasAsId = this.contexts.get(aliasMessage.alias);
-        if (maybeContextWithAliasAsId !== undefined) {
+        if (this.alreadyProcessed(aliasMessage.alias)) {
             return false;
         }
 
@@ -299,6 +291,10 @@ export class DataStores implements IDisposable {
         this.aliasMap.set(aliasMessage.alias, currentContext.id);
         currentContext.setRoot();
         return true;
+    }
+
+    private alreadyProcessed(id: string): boolean {
+        return this.aliasMap.get(id) !== undefined || this.contexts.get(id) !== undefined;
     }
 
     public bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {

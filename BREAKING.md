@@ -33,7 +33,8 @@ The `getQuorum()` method on `IContainer` and the `quorum` member of `IContainerC
 
 ### `SharedObject` summary and GC API changes
 
-`SharedObject.snapshotCore` is renamed to `summarizeCore` and returns `ISummaryTreeWithStats`. A temporary way to fix this up quickly is to call `convertToSummaryTreeWithStats` on the `ITree` previously returned, but `convertToSummaryTreeWithStats` will be deprecated in the future and `ISummaryTreeWithStats` should be created directly.
+`SharedObject.snapshotCore` is renamed to `summarizeCore` and returns `ISummaryTreeWithStats`. Use
+`SummaryTreeBuilder` to create a summary instead of `ITree`.
 
 `SharedObject.getGCDataCore` is renamed to `processGCDataCore` and a `SummarySerializer` is passed as a parameter. The method should run the serializer over the handles as before and does not need to return anything. The caller will extract the GC data from the serializer.
 

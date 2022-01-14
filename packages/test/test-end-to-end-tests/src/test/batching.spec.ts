@@ -73,7 +73,6 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
         return messages.filter((m) => m.type === ContainerMessageType.FluidDataStoreOp);
     };
 
-    // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
     async function waitForCleanContainers(...dataStores: ITestFluidObject[]) {
         return Promise.all(dataStores.map(async (dataStore) => {
             const runtime = dataStore.context.containerRuntime as IContainerRuntime;

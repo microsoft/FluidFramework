@@ -2496,13 +2496,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 const waitForSeq = async (
     deltaManager: IDeltaManager<Pick<ISequencedDocumentMessage, "sequenceNumber">, unknown>,
     targetSeq: number,
-): Promise<void> => new Promise<void>((accept, reject) => {
+): Promise<void> => new Promise<void>((resolve, reject) => {
     // TODO: remove cast to any when actual event is determined
     deltaManager.on("closed" as any, reject);
 
     const handleOp = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
         if (message.sequenceNumber >= targetSeq) {
-            accept();
+            resolve();
             deltaManager.off("op", handleOp);
         }
     };

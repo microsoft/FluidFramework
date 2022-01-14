@@ -46,6 +46,7 @@ export class TableView extends DataObject implements IFluidHTMLView {
     public set formulaInput(val: string) { this._formulaInput.value = val; }
 
     private _selectionSummary = template.get(this.templateRoot, "selectionSummary");
+    // eslint-disable-next-line accessor-pairs
     public set selectionSummary(val: string) { this._selectionSummary.textContent = val; }
 
     // #region IFluidHTMLView
