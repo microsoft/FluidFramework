@@ -154,14 +154,16 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
     const testId = Date.now().toString();
     const request = testDriver.createCreateNewRequest(testId);
     await container.attach(request);
+    assert(container.resolvedUrl !== undefined, "Container missing resolved URL after attach");
+    const resolvedUrl = container.resolvedUrl;
     container.close();
 
     if ((testConfig.detachedBlobCount ?? 0) > 0) {
         // TODO: #7684 this should be driver-agnostic
-        const url = (testDriver as OdspTestDriver).getUrlFromItemId((container.resolvedUrl as any).itemId);
+        const url = (testDriver as OdspTestDriver).getUrlFromItemId((resolvedUrl as any).itemId);
         return url;
     }
-    return testDriver.createContainerUrl(testId);
+    return testDriver.createContainerUrl(testId, resolvedUrl);
 }
 
 export async function createTestDriver(
