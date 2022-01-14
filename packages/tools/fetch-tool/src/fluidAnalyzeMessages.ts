@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
     ISequencedDocumentMessage,
     ISummaryProposal,
@@ -12,9 +12,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions";
 import {
-    ContainerMessageType,
     IChunkedOp,
     isRuntimeMessage,
+    RuntimeMessage,
     unpackRuntimeMessage,
 } from "@fluidframework/container-runtime";
 import { DataStoreMessageType } from "@fluidframework/datastore";
@@ -486,43 +486,48 @@ function processOp(
     let opCount = 1;
     if (isRuntimeMessage(message)) {
         let runtimeMessage = unpackRuntimeMessage(message);
-        switch (runtimeMessage.type) {
-            case ContainerMessageType.Attach: {
+        const messageType = runtimeMessage.type as RuntimeMessage;
+        switch (messageType) {
+            case RuntimeMessage.Attach: {
                 const attachMessage = runtimeMessage.contents as IAttachMessage;
                 processDataStoreAttachOp(attachMessage, dataType);
                 break;
             }
             // skip for now because these ops do not have contents
-            case ContainerMessageType.BlobAttach: {
+            case RuntimeMessage.BlobAttach: {
                 break;
             }
-            case ContainerMessageType.ChunkedOp: {
+            case RuntimeMessage.ChunkedOp: {
                 const chunk = runtimeMessage.contents as IChunkedOp;
                 if (!chunkMap.has(runtimeMessage.clientId)) {
                     chunkMap.set(runtimeMessage.clientId, {chunks: new Array<string>(chunk.totalChunks), totalSize:0});
                 }
                 const value = chunkMap.get(runtimeMessage.clientId);
                 assert(value !== undefined, "Chunk should be set in map");
-                const chunks = value[0];
+                const chunks = value.chunks;
                 const chunkIndex = chunk.chunkId - 1;
                 if (chunks[chunkIndex] !== undefined) {
                     throw new Error("Chunk already assigned");
                 }
                 chunks[chunkIndex] = chunk.contents;
-                value[1] += msgSize;
+                value.totalSize += msgSize;
                 if (chunk.chunkId === chunk.totalChunks) {
                     opCount = chunk.totalChunks; // 1 op for each chunk.
                     runtimeMessage = Object.create(runtimeMessage);
                     runtimeMessage.contents = chunks.join("");
                     runtimeMessage.type = chunk.originalType;
                     type = chunk.originalType;
-                    totalMsgSize = value[1];
+                    totalMsgSize = value.totalSize;
                     chunkMap.delete(runtimeMessage.clientId);
                 } else {
                     return;
                 }
             }
-            default: {
+            case RuntimeMessage.FluidDataStoreOp:
+            case RuntimeMessage.Alias:
+            case RuntimeMessage.Rejoin:
+            case RuntimeMessage.Operation:
+            {
                 let envelope = runtimeMessage.contents as IEnvelope;
                 // TODO: Legacy?
                 if (envelope && typeof envelope === "string") {
@@ -582,7 +587,10 @@ function processOp(
                         type = `${type} (${objectType})`;
                     }
                 }
+                break;
             }
+            default:
+                unreachableCase(messageType, "Message type not recognized!");
         }
     }
 
