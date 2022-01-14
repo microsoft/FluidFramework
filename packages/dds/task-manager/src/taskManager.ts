@@ -263,7 +263,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         }
 
         // This promise works even if we already have an outstanding volunteer op.
-        const lockAcquireP = new Promise<void>((res, rej) => {
+        const lockAcquireP = new Promise<void>((resolve, reject) => {
             const checkIfAcquiredLock = (eventTaskId: string) => {
                 if (eventTaskId !== taskId) {
                     return;
@@ -276,7 +276,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                     this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                     this.abandonWatcher.off("abandon", checkIfAbandoned);
                     this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
-                    res();
+                    resolve();
                 }
             };
 
@@ -288,14 +288,14 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
                 this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
-                rej(new Error(`Abandoned before acquiring lock: ${taskId}`));
+                reject(new Error(`Abandoned before acquiring lock: ${taskId}`));
             };
 
             const rejectOnDisconnect = () => {
                 this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
                 this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
-                rej(new Error(`Disconnected before acquiring lock: ${taskId}`));
+                reject(new Error(`Disconnected before acquiring lock: ${taskId}`));
             };
 
             this.queueWatcher.on("queueChange", checkIfAcquiredLock);

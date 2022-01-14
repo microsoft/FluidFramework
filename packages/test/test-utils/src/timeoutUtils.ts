@@ -5,26 +5,25 @@
 
 export const defaultTimeoutDurationMs = 250;
 
- export interface TimeoutWithError{
+export interface TimeoutWithError {
     durationMs?: number;
     reject?: true;
     errorMsg?: string;
- }
- export interface TimeoutWithValue<T = void>{
+}
+export interface TimeoutWithValue<T = void> {
     durationMs?: number;
     reject: false;
     value: T;
- }
+}
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export async function timeoutAwait<T = void>(
     promise: PromiseLike<T>,
     timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
 ) {
-    return Promise.race([promise, timeoutPromise<T>(()=>{}, timeoutOptions)]);
+    return Promise.race([promise, timeoutPromise<T>(() => { }, timeoutOptions)]);
 }
 
- export async function timeoutPromise<T = void>(
+export async function timeoutPromise<T = void>(
     executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void,
     timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
 ): Promise<T> {
@@ -33,19 +32,19 @@ export async function timeoutAwait<T = void>(
     const err = timeoutOptions.reject === false
         ? undefined
         : new Error(timeoutOptions.errorMsg ?? "Timeout");
-    return new Promise<T>((res,rej)=>{
+    return new Promise<T>((resolve, reject) => {
         const timeout = setTimeout(
-            ()=>timeoutOptions.reject === false ? res(timeoutOptions.value) : rej(err),
+            () => timeoutOptions.reject === false ? resolve(timeoutOptions.value) : reject(err),
             timeoutOptions.durationMs ?? defaultTimeoutDurationMs);
 
         executor(
             (value) => {
                 clearTimeout(timeout);
-                res(value);
+                resolve(value);
             },
             (reason) => {
                 clearTimeout(timeout);
-                rej(reason);
+                reject(reason);
             });
     });
 }

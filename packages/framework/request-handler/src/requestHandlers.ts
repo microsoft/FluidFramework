@@ -81,7 +81,6 @@ class LegacyUriHandle<T = IFluidObject & FluidObject & IFluidLoadable> implement
     }
 }
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function handleFromLegacyUri<T = IFluidObject & FluidObject & IFluidLoadable>(
     uri: string,
     runtime: IContainerRuntimeBase,

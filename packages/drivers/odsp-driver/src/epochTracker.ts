@@ -429,8 +429,8 @@ export class EpochTrackerWithRedemption extends EpochTracker {
             async (event) => {
                 const timeoutRes = 51; // anything will work here
                 let timer: ReturnType<typeof setTimeout>;
-                const timeoutP = new Promise<number>((accept) => {
-                    timer = setTimeout(() => { accept(timeoutRes); }, 15000);
+                const timeoutP = new Promise<number>((resolve) => {
+                    timer = setTimeout(() => { resolve(timeoutRes); }, 15000);
                 });
                 const res = await Promise.race([
                     timeoutP,

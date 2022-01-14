@@ -25,7 +25,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "coverage": "npx nyc --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test && npx nyc --no-clean --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test:changeset && npx nyc --no-clean --cwd .. --nycrc-path `pwd`/.nycrc npm run test:common",
     "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --format stylish src --fix",
+    "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",

@@ -4448,7 +4448,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const text = this.sharedString.getText();
         const nonWhitespace = text.split(/\s+/g);
         console.log(`non ws count: ${nonWhitespace.length}`);
-        const obj = new Object();
+        const obj = {};
         for (const nws of nonWhitespace) {
             if (!obj[nws]) {
                 obj[nws] = 1;
