@@ -948,16 +948,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._storage!;
     }
 
-    public get reSubmitFn(): (
-        type: ContainerMessageType,
-        content: any,
-        localOpMetadata: unknown,
-        opMetadata: Record<string, unknown> | undefined,
-    ) => void {
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        return this.reSubmit;
-    }
-
     public get closeFn(): (error?: ICriticalContainerError) => void {
         return this.context.closeFn;
     }
@@ -1221,8 +1211,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.deltaSender = this.deltaManager;
 
         this.pendingStateManager = new PendingStateManager(
-            this,
-            async (type, content) => this.applyStashedOp(type, content),
+            {
+                applyStashedOp: this.applyStashedOp.bind(this),
+                clientId: ()=>this.clientId,
+                close: this.closeFn,
+                connected: ()=>this.connected,
+                flush: this.flush.bind(this),
+                flushMode: ()=>this.flushMode,
+                reSubmit: this.reSubmit.bind(this),
+                rollback: this.rollback.bind(this),
+                setFlushMode: (mode)=>this.setFlushMode(mode),
+            },
             this._flushMode,
             pendingRuntimeState?.pending);
 
@@ -1835,20 +1834,26 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const savedFlushMode = this.flushMode;
         this.setFlushMode(FlushMode.TurnBased);
 
-        this.trackOrderSequentiallyCalls(callback);
-        this.flush();
-        this.setFlushMode(savedFlushMode);
+        try {
+            this.trackOrderSequentiallyCalls(callback);
+            this.flush();
+        } finally{
+            this.setFlushMode(savedFlushMode);
+        }
     }
 
     private trackOrderSequentiallyCalls(callback: () => void): void {
+        const checkpoint = this.pendingStateManager.checkpoint();
         try {
             this._orderSequentiallyCalls++;
             callback();
-        } catch (error) {
+        } catch(e) {
+            checkpoint.rollback();
             // pre-0.58 error message: orderSequentiallyCallbackException
-            this.closeFn(new GenericError("orderSequentially callback exception", error));
-            throw error; // throw the original error for the consumer of the runtime
-        } finally {
+            // this.closeFn(new GenericError("orderSequentially callback exception", error));
+            throw e;
+        }
+        finally {
             this._orderSequentiallyCalls--;
         }
     }
@@ -2784,6 +2789,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 break;
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
+        }
+    }
+
+    private rollback(
+        type: ContainerMessageType,
+        content: any,
+        localOpMetadata: unknown,
+        opMetadata: Record<string, unknown> | undefined,
+    ) {
+        switch (type) {
+            case ContainerMessageType.FluidDataStoreOp:
+                // For Operations, call resubmitDataStoreOp which will find the right store
+                // and trigger resubmission on it.
+                this.dataStores.rollbackDataStoreOp(content, localOpMetadata);
+                break;
+            default:
+                unreachableCase(type as never, `Unknown ContainerMessageType: ${type}`);
         }
     }
 

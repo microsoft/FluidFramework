@@ -80,6 +80,8 @@ export interface IDeltaHandler {
     reSubmit(message: any, localOpMetadata: unknown): void;
 
     applyStashedOp(message: any): unknown;
+
+    rollback?(message: any, localOpMetadata: unknown): void;
 }
 
 /**

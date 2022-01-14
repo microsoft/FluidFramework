@@ -857,6 +857,24 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
     }
 
+    public rollback(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
+        this.verifyNotClosed();
+
+        switch (type) {
+            case DataStoreMessageType.ChannelOp:
+                {
+                    // For Operations, find the right channel and trigger resubmission on it.
+                    const envelope = content as IEnvelope;
+                    const channelContext = this.contexts.get(envelope.address);
+                    assert(!!channelContext, 0x183 /* "There should be a channel context for the op" */);
+                    channelContext.rollback(envelope.contents, localOpMetadata);
+                    break;
+                }
+            default:
+                unreachableCase(type as never);
+        }
+    }
+
     public async applyStashedOp(content: any): Promise<unknown> {
         const envelope = content as IEnvelope;
         const channelContext = this.contexts.get(envelope.address);

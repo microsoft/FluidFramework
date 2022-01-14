@@ -355,6 +355,9 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             applyStashedOp: (content: any): unknown => {
                 return this.applyStashedOp(content);
             },
+            rollback:  (content: any, localOpMetadata: unknown) => {
+                this.rollback(content, localOpMetadata);
+            },
         });
 
         // Trigger initial state
@@ -411,6 +414,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
      */
     private reSubmit(content: any, localOpMetadata: unknown) {
         this.reSubmitCore(content, localOpMetadata);
+    }
+
+    protected rollback(content: any, localOpMetadata: unknown) {
+        throw new Error("rollback not supported");
     }
 
     protected abstract applyStashedOp(content: any): unknown;
