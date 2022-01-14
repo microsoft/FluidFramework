@@ -5,9 +5,9 @@
 
 import * as Comlink from "comlink";
 import { assert } from "@fluidframework/common-utils";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IUrlResolverProxy, IUrlResolverProxyKey } from "./outerUrlResolver";
 import { MakeThinProxy } from "./proxyUtils";
 
