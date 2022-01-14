@@ -293,19 +293,21 @@ type IRuntimeMessageMetadata = undefined | {
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
 
+export enum RuntimeMessage {
+    FluidDataStoreOp = "component",
+    Attach = "attach",
+    ChunkedOp = "chunkedOp",
+    BlobAttach = "blobAttach",
+    Rejoin = "rejoin",
+    Alias = "alias",
+    Operation = "op",
+}
+
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-    switch (message.type) {
-        case ContainerMessageType.FluidDataStoreOp:
-        case ContainerMessageType.ChunkedOp:
-        case ContainerMessageType.Attach:
-        case ContainerMessageType.Alias:
-        case ContainerMessageType.BlobAttach:
-        case ContainerMessageType.Rejoin:
-        case MessageType.Operation:
-            return true;
-        default:
-            return false;
+    if ((Object.values(RuntimeMessage) as string[]).includes(message.type)) {
+        return true;
     }
+    return false;
 }
 
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {

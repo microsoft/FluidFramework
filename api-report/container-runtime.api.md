@@ -653,6 +653,24 @@ export class PendingStateManager implements IDisposable {
     replayPendingStates(): void;
 }
 
+// @public (undocumented)
+export enum RuntimeMessage {
+    // (undocumented)
+    Alias = "alias",
+    // (undocumented)
+    Attach = "attach",
+    // (undocumented)
+    BlobAttach = "blobAttach",
+    // (undocumented)
+    ChunkedOp = "chunkedOp",
+    // (undocumented)
+    FluidDataStoreOp = "component",
+    // (undocumented)
+    Operation = "op",
+    // (undocumented)
+    Rejoin = "rejoin"
+}
+
 // @public
 export class ScheduleManager {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, logger: ITelemetryLogger);
