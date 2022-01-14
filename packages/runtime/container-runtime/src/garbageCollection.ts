@@ -760,7 +760,8 @@ export class GarbageCollector implements IGarbageCollector {
      * @param currentGCData - The GC data (reference graph) from the current GC run.
      */
     private validateReferenceCorrectness(currentGCData: IGarbageCollectionData) {
-        assert(this.gcDataFromLastRun !== undefined, 0x2b7 /* "Can't validate correctness without GC data from last run" */);
+        assert(this.gcDataFromLastRun !== undefined, 0x2b7
+            /* "Can't validate correctness without GC data from last run" */);
 
         // Get a list of all the outbound routes (or references) in the current GC data.
         const currentReferences: string[] = [];
