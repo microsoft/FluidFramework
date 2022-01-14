@@ -11,10 +11,11 @@ import {
     IFluidHandle,
     IFluidLoadable,
     FluidObject,
+    IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { create404Response, RequestParser } from "@fluidframework/runtime-utils";
+import { RequestParser } from "@fluidframework/runtime-utils";
 
 /**
  * A request handler for the container runtime. Each handler should handle a specific request, and return undefined
@@ -35,12 +36,17 @@ export const rootDataStoreRequestHandler = async (request: IRequest, runtime: IC
     const requestParser = RequestParser.create(request);
     const id = requestParser.pathParts[0];
     const wait = typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
+    let rootDataStore: IFluidRouter;
     try {
         // getRootDataStore currently throws if the data store is not found
-        const rootDataStore = await runtime.getRootDataStore(id, wait);
+        rootDataStore = await runtime.getRootDataStore(id, wait);
+    } catch (error) {
+        return undefined; // continue search
+    }
+    try {
         return rootDataStore.IFluidRouter.request(requestParser.createSubRequest(1));
     } catch (error) {
-        return create404Response(request);
+        return { status: 500, mimeType: "fluid/object", value: error };
     }
 };
 
