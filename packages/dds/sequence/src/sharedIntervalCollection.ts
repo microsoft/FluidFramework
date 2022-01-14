@@ -145,7 +145,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         return sharedCollection;
     }
 
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         return createSingleBlobSummary(snapshotFileName, this.intervalMapKernel.serialize(serializer));
     }
 

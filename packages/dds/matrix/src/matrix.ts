@@ -424,7 +424,7 @@ export class SharedMatrix<T = any>
         }
     }
 
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         const builder = new SummaryTreeBuilder();
         builder.addWithStats(SnapshotPath.rows, this.rows.summarize(this.runtime, this.handle, serializer));
         builder.addWithStats(SnapshotPath.cols, this.cols.summarize(this.runtime, this.handle, serializer));

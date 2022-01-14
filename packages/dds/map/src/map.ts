@@ -253,7 +253,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
      * @internal
      */
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         let currentSize = 0;
         let counter = 0;
         let headerBlob: IMapDataObjectSerializable = {};

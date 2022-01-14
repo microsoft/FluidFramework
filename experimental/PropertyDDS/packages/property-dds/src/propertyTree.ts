@@ -389,7 +389,7 @@ export class SharedPropertyTree extends SharedObject {
 		this.remoteChanges = remoteChanges;
 		this.unrebasedRemoteChanges = unrebasedRemoteChanges;
 	}
-	public summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+	public summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		this.pruneHistory();
 		const snapshot: ISnapshot = {
 			branchGuid: this.handle.absolutePath.split("/").pop() as string,

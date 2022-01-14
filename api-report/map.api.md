@@ -204,7 +204,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     // @internal
     submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void;
     // @internal (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
     // @deprecated
     wait<T = any>(key: string): Promise<T>;
@@ -239,7 +239,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     set(key: string, value: any): this;
     get size(): number;
     // @internal (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
     // @deprecated
     wait<T = any>(key: string): Promise<T>;

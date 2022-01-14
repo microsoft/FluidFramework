@@ -422,7 +422,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return sharedCollection;
     }
 
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         const builder = new SummaryTreeBuilder();
 
         // conditionally write the interval collection blob

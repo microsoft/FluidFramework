@@ -180,7 +180,7 @@ export class ConsensusRegisterCollection<T>
         return [...this.data.keys()];
     }
 
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         const dataObj: { [key: string]: ILocalData<T> } = {};
         this.data.forEach((v, k) => { dataObj[k] = v; });
 
