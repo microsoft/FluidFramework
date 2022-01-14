@@ -488,7 +488,7 @@ export class DataStores implements IDisposable {
     public async updateStateBeforeGC(): Promise<void> {
         for (const id of this.dataStoresSinceLastGC) {
             const context = this.contexts.get(id);
-            assert(context !== undefined, `Missing data store context with id ${id}`);
+            assert(context !== undefined, 0x2b6 /* `Missing data store context with id ${id}` */);
             if (await context.isRoot()) {
                 // A root data store is basically a reference from the container runtime to the data store.
                 const handle = new FluidObjectHandle(context, id, this.runtime.IFluidHandleContext);
