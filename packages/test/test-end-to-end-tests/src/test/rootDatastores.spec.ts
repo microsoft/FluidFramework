@@ -89,6 +89,9 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     const createRootDataStore = async (dataObject: ITestFluidObject, id: string) =>
         runtimeOf(dataObject).createRootDataStore(packageName, id);
 
+    const createDataStoreWithProps = async (dataObject: ITestFluidObject, id: string, root: boolean) =>
+        runtimeOf(dataObject)._createDataStoreWithProps(packageName, {}, id, root);
+
     const getRootDataStore = async (dataObject: ITestFluidObject, id: string) =>
         runtimeOf(dataObject).getRootDataStore(id);
 
@@ -132,6 +135,14 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(await dataCorruption);
         });
 
+        it("Root datastore creation with the same id and legacy API breaks container", async () => {
+            const dataCorruption = anyDataCorruption([container1, container2]);
+            await createRootDataStore(dataObject1, "2");
+            await createDataStoreWithProps(dataObject2, "2", true /* root */);
+
+            assert(await dataCorruption);
+        });
+
         it("Root datastore creation with aliasing turned on throws exception", async () => {
             settings["Fluid.ContainerRuntime.UseDataStoreAliasing"] = "true";
             // Containers need to be recreated in order for the settings to be picked up
@@ -142,6 +153,25 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             let error: Error | undefined;
             try {
                 await createRootDataStore(dataObject2, "2");
+            } catch (err) {
+                error = err as Error;
+            }
+
+            assert(error);
+            assert.ok(await getRootDataStore(dataObject1, "2"));
+            settings["Fluid.ContainerRuntime.UseDataStoreAliasing"] = "";
+        });
+
+        it("Root datastore creation with aliasing turned on and legacy API throws exception", async () => {
+            settings["Fluid.ContainerRuntime.UseDataStoreAliasing"] = "true";
+            // Containers need to be recreated in order for the settings to be picked up
+            await reset();
+            await setupContainers(testContainerConfig);
+
+            await createRootDataStore(dataObject1, "2");
+            let error: Error | undefined;
+            try {
+                await createDataStoreWithProps(dataObject2, "2", true /* root */);
             } catch (err) {
                 error = err as Error;
             }
