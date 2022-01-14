@@ -148,6 +148,9 @@ export class MessageFactory {
         return objectMessage;
     }
 
+    /**
+     * @deprecated Do not use save ops - See issue #8288
+     */
     public createSave(): ISequencedOperationMessage {
         const operation: IDocumentMessage = {
             clientSequenceNumber: this.clientSequenceNumber++,

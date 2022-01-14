@@ -201,13 +201,8 @@ export class RunningSummarizer implements IDisposable {
         }
         this.heuristicData.lastOpSequenceNumber = sequenceNumber;
 
-        if (this.tryRunEnqueuedSummary()) {
-            // Intentionally do nothing; check for enqueued on-demand summaries
-        } else if (type === MessageType.Save) {
-            // Check for ops requesting summary
-            // Note: as const is only required until TypeScript version 4.3
-            this.trySummarize(`save;${clientId}: ${contents}` as const);
-        } else {
+        // Check for enqueued on-demand summaries; Intentionally do nothing otherwise
+        if (!this.tryRunEnqueuedSummary()) {
             this.heuristicRunner?.run();
         }
     }

@@ -646,7 +646,7 @@ export enum MessageType {
     RemoteHelp = "remoteHelp",
     // (undocumented)
     RoundTrip = "tripComplete",
-    // (undocumented)
+    // @deprecated
     Save = "saveOp",
     // (undocumented)
     Summarize = "summarize",

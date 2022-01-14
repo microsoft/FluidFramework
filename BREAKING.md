@@ -10,6 +10,12 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.56 Breaking Changes
+- [`Save` operation type removed from `SummarizeReason`](#save-operation-type-removed-from-summarizeReason)
+
+### `Save` operation type removed from `SummarizeReason`
+The `Save` operation type was deprecated and has now been removed from `SummarizeReason` in the `container-runtime` package. Additionally, `MessageType.Save` and `MessageFactory.createSave()` have been deprecated from `protocol-definitions` and `server-test-utils` respectively. Both will be removed in a future release.
+
 ## 0.55 Breaking changes
 - [`container-loader` interfaces return `IQuorumClients` rather than `IQuorum`](#container-loader-interfaces-return-IQuorumClients-rather-than-IQuorum)
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)
@@ -102,11 +108,11 @@ As-written above, these promises will silently remain pending forever if the key
 
 ### Remove Legacy Data Object and Factories
 
-In order to ease migration to the new Aqueduct Data Object and Data Object Factory generic arguments we added legacy versions of those classes in version 0.53. 
+In order to ease migration to the new Aqueduct Data Object and Data Object Factory generic arguments we added legacy versions of those classes in version 0.53.
 
 In this release we remove those legacy classes: LegacyDataObject, LegacyPureDataObject, LegacyDataObjectFactory, and LegacyPureDataObjectFactory
 
-It is recommend you migrate to the new generic arguments before consuming this release. 
+It is recommend you migrate to the new generic arguments before consuming this release.
 Details are here: [0.53: Generic Argument Changes to DataObjects and Factories](#Generic-Argument-Changes-to-DataObjects-and-Factories)
 
 ### Removed `innerRequestHandler`
