@@ -175,6 +175,15 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(await dataCorruption);
         });
 
+        it("Create root datastore using a previously used alias breaks the container", async () => {
+            const dataCorruption = anyDataCorruption([container1, container2]);
+            const ds1 = await createRootDataStore(dataObject1, "1");
+            await trySetAlias(runtimeOf(dataObject1), ds1, alias);
+
+            await createRootDataStore(dataObject2, alias);
+            assert(await dataCorruption);
+        });
+
         it("Assign multiple data stores to the same alias, first write wins, different containers", async () => {
             const ds1 = await createRootDataStore(dataObject1, "1");
             const ds2 = await createRootDataStore(dataObject2, "2");

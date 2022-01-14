@@ -11,6 +11,7 @@ import {
     IFluidHandle,
     IFluidLoadable,
     FluidObject,
+    IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -35,12 +36,17 @@ export const rootDataStoreRequestHandler = async (request: IRequest, runtime: IC
     const requestParser = RequestParser.create(request);
     const id = requestParser.pathParts[0];
     const wait = typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
+    let rootDataStore: IFluidRouter;
     try {
         // getRootDataStore currently throws if the data store is not found
-        const rootDataStore = await runtime.getRootDataStore(id, wait);
-        return rootDataStore.IFluidRouter.request(requestParser.createSubRequest(1));
+        rootDataStore = await runtime.getRootDataStore(id, wait);
     } catch (error) {
         return undefined; // continue search
+    }
+    try {
+        return rootDataStore.IFluidRouter.request(requestParser.createSubRequest(1));
+    } catch (error) {
+        return { status: 500, mimeType: "fluid/object", value: error };
     }
 };
 
