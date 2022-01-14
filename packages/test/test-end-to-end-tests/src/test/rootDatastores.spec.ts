@@ -21,6 +21,21 @@ import {
 } from "@fluidframework/container-runtime";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 
+const getMockStore = ((store: Record<string, string>): Storage => {
+    return {
+        getItem: (key: string): string | null => store[key],
+        length: Object.keys(store).length,
+        clear: () => { },
+        // eslint-disable-next-line no-null/no-null
+        key: (_index: number): string | null => null,
+        removeItem: (_key: string) => { },
+        setItem: (_key: string, _value: string) => { },
+    };
+});
+
+const settings: Record<string, string> = {};
+global.sessionStorage = getMockStore(settings);
+
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
@@ -109,12 +124,31 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(await dataCorruption);
         });
 
-        it("Root datastore creation fails when already attached", async () => {
+        it("Root datastore creation with the same id breaks container", async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             await createRootDataStore(dataObject1, "2");
             await createRootDataStore(dataObject2, "2");
 
             assert(await dataCorruption);
+        });
+
+        it("Root datastore creation with aliasing turned on throws exception", async () => {
+            settings["Fluid.ContainerRuntime.UseDataStoreAliasing"] = "true";
+            // Containers need to be recreated in order for the settings to be picked up
+            await reset();
+            await setupContainers(testContainerConfig);
+
+            await createRootDataStore(dataObject1, "2");
+            let error: Error | undefined;
+            try {
+                await createRootDataStore(dataObject2, "2");
+            } catch (err) {
+                error = err as Error;
+            }
+
+            assert(error);
+            assert.ok(await getRootDataStore(dataObject1, "2"));
+            settings["Fluid.ContainerRuntime.UseDataStoreAliasing"] = "";
         });
 
         it("Root datastore creation fails when already attached - same container", async () => {
