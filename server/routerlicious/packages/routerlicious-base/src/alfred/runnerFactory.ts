@@ -155,7 +155,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
 
         // Database connection
-        const factory = await services.DbFactoryFactory.create(config);
+        const serviceFactory = new services.RouterlicousDbFactoryFactory(config);
+        const factory = await serviceFactory.create();
         const mongoManager = new core.MongoManager(factory);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
 

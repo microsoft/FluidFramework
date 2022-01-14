@@ -5,7 +5,7 @@
 
 import { ScribeLambdaFactory } from "@fluidframework/server-lambdas";
 import { createDocumentRouter } from "@fluidframework/server-routerlicious-base";
-import { createProducer, DbFactoryFactory, TenantManager } from "@fluidframework/server-services";
+import { createProducer, RouterlicousDbFactoryFactory, TenantManager } from "@fluidframework/server-services";
 import {
     DefaultServiceConfiguration,
     IDocument,
@@ -36,8 +36,8 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     const tenantManager = new TenantManager(authEndpoint);
 
     // Access Mongo storage for pending summaries
-    const factory = await DbFactoryFactory.create(config);
-
+    const serviceFactory = new RouterlicousDbFactoryFactory(config);
+    const factory = await serviceFactory.create();
     const mongoManager = new MongoManager(factory, false);
     const client = await mongoManager.getDatabase();
 

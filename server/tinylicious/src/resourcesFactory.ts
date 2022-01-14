@@ -16,10 +16,10 @@ import { Server } from "socket.io";
 import winston from "winston";
 import { TinyliciousResources } from "./resources";
 import {
-    DbFactory,
     PubSubPublisher,
     TaskMessageSender,
     TenantManager,
+    TinyliciousDbFactoryFactory,
     WebServerFactory,
 } from "./services";
 
@@ -32,7 +32,9 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
         const collectionNames = config.get("mongo:collectionNames");
 
         const tenantManager = new TenantManager(`http://localhost:${port}`);
-        const dbFactory = new DbFactory(config);
+        const dbFactoryFactory = new TinyliciousDbFactoryFactory(config);
+
+        const dbFactory = await dbFactoryFactory.create();
         const taskMessageSender = new TaskMessageSender();
         const mongoManager = new MongoManager(dbFactory);
         const databaseManager = new MongoDatabaseManager(

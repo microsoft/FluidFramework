@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "console";
 import * as core from "@fluidframework/server-services-core";
 import { AggregationCursor, Collection, MongoClient, MongoClientOptions } from "mongodb";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -155,8 +156,21 @@ export class MongoDb implements core.IDb {
     }
 }
 
+interface IMongoDBConfig {
+    endpoint: string;
+    bufferMaxEntries: number | undefined;
+}
+
 export class MongoDbFactory implements core.IDbFactory {
-    constructor(private readonly endpoint: string, private readonly bufferMaxEntries?: number) {
+    private readonly endpoint: string;
+    private readonly bufferMaxEntries?: number;
+    constructor(config: IMongoDBConfig,
+    ) {
+        const mongoUrl = config.endpoint;
+        const bufferMaxEntries = config.bufferMaxEntries;
+        assert(!!mongoUrl, `No endpoint provided`);
+        this.endpoint = mongoUrl;
+        this.bufferMaxEntries = bufferMaxEntries;
     }
 
     public async connect(): Promise<core.IDb> {

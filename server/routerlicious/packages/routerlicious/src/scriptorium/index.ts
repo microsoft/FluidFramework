@@ -14,7 +14,8 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
     const createCosmosDBIndexes = config.get("mongo:createCosmosDBIndexes") as boolean;
-    const factory = await services.DbFactoryFactory.create(config);
+    const serviceFactory = new services.RouterlicousDbFactoryFactory(config);
+    const factory = await serviceFactory.create();
 
     const softDeletionRetentionPeriodMs = config.get("mongo:softDeletionRetentionPeriodMs") as number;
     const offlineWindowMs = config.get("mongo:offlineWindowMs") as number;
@@ -47,7 +48,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
 
     if (mongoExpireAfterSeconds > 0) {
         if (createCosmosDBIndexes) {
-            await opCollection.createTTLIndex({_ts:1}, mongoExpireAfterSeconds);
+            await opCollection.createTTLIndex({ _ts: 1 }, mongoExpireAfterSeconds);
         } else {
             await opCollection.createTTLIndex(
                 {

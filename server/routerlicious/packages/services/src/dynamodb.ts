@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { assert } from "console";
 import * as core from "@fluidframework/server-services-core";
 import * as charwise from "charwise";
 import {
@@ -460,10 +461,24 @@ export class DynamoDB extends EventEmitter implements core.IDb {
     }
 }
 
+interface IDynamoDBConfig {
+    endpoint: string,
+    region: string,
+    table: string,
+}
 export class DynamoDbFactory implements core.IDbFactory {
-    constructor(private readonly endpoint: string,
-        private readonly region: string, private readonly table_name: string) {
+    private readonly endpoint: string;
+    private readonly region: string;
+    private readonly table_name: string;
 
+    constructor(config: IDynamoDBConfig) {
+        assert(!!config.endpoint, `No endpoint provided`);
+        assert(!!config.region, `No region provided`);
+        assert(!!config.table, `No table name proved`);
+
+        this.endpoint = config.endpoint;
+        this.region = config.region;
+        this.table_name = config.table;
     }
 
     public async connect(): Promise<core.IDb> {

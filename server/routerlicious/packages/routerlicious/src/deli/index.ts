@@ -34,7 +34,8 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const tenantManager = new services.TenantManager(authEndpoint);
 
     // Connection to stored document details
-    const factory = await services.DbFactoryFactory.create(config);
+    const serviceFactory = new services.RouterlicousDbFactoryFactory(config);
+    const factory = await serviceFactory.create();
 
     const mongoManager = new core.MongoManager(factory, false);
     const client = await mongoManager.getDatabase();
