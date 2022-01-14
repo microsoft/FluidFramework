@@ -99,7 +99,9 @@ export interface IDocumentStorageServicePolicies {
     // Blobs that are smaller than that size should be aggregated into bigger blobs
     readonly minBlobSize?: number;
 
-    // This policy is required to be defined to run GC.
+    /**
+     * This policy tells the runtime that the driver will not use cached snapshots older than this value.
+     */
     readonly snapshotCacheExpiryTimeoutMs?: number;
 }
 
