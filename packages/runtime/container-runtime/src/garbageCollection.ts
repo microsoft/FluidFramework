@@ -792,10 +792,14 @@ export class GarbageCollector implements IGarbageCollector {
             if (route.split("/").length === 2 && !explicitReferences.includes(route)) {
                 // We should ideally throw a data corruption error here. However, send an error for now until we have
                 // implemented sweep and have reasonable confidence in the sweep process.
+
+                // To be enabled when this issue is fixed - https://github.com/microsoft/FluidFramework/issues/8672
+                /**
                 this.mc.logger.sendErrorEvent({
                     eventName: "gcUnknownOutboundRoute",
                     route,
                 });
+                */
             }
         });
     }
