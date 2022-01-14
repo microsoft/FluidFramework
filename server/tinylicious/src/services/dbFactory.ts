@@ -3,20 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IDb, IDbFactory } from "@fluidframework/server-services-core";
+import { DbFactoryFactory } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
-import { InMemoryDb } from "./inMemorydb";
-import { LevelDb } from "./levelDb";
+import { LevelDbFactory } from "./levelDb";
+import { InMemoryDbFactory } from "./inMemorydb";
 
-export class DbFactory implements IDbFactory {
-    private readonly db;
-
+export class TinyliciousDbFactoryFactory extends DbFactoryFactory {
     constructor(config: Provider) {
-        this.db = config.get("db:inMemory") ? new InMemoryDb() : new LevelDb(config.get("db:path"));
-    }
-
-    public async connect(): Promise<IDb> {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.db;
+        const defaultBackend = config.get("db:inMemory") ? "InMemoryDb" : "LevelDb";
+        super(config, [
+            { name: "LevelDb", factory: async () => new LevelDbFactory(config.get("db:path")) },
+            { name: "InMemoryDb", factory: async () => new InMemoryDbFactory() },
+        ], defaultBackend);
     }
 }
