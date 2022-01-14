@@ -11,10 +11,10 @@ There are a few steps you can take to write a good change note and avoid needing
 - Consider providing code examples as part of guidance for non-trivial changes.
 
 ## 0.56 Breaking Changes
-- [`Save` operation type removed from `SummarizeReason`](#save-operation-type-removed-from-summarizeReason)
+- [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
 
-### `Save` operation type removed from `SummarizeReason`
-The `Save` operation type was deprecated and has now been removed from `SummarizeReason` in the `container-runtime` package. Additionally, `MessageType.Save` and `MessageFactory.createSave()` have been deprecated from `protocol-definitions` and `server-test-utils` respectively. Both will be removed in a future release.
+### `MessageType.Save` and code that handled it was removed
+The `Save` operation type was deprecated and has now been removed. This removes `MessageType.Save` from `protocol-definitions`, `save;${string}: ${string}` from `SummarizeReason` in the `container-runtime` package, and `MessageFactory.createSave()` from and `server-test-utils`.
 
 ## 0.55 Breaking changes
 - [`container-loader` interfaces return `IQuorumClients` rather than `IQuorum`](#container-loader-interfaces-return-IQuorumClients-rather-than-IQuorum)

@@ -31,12 +31,6 @@ export enum MessageType {
     // Channel operation.
     Operation = "op",
 
-    /**
-     * Forced snapshot
-     * @deprecated Do not use save ops - See issue #8288
-     */
-    Save = "saveOp",
-
     // Message to indicate the need of a remote agent for a document.
     RemoteHelp = "remoteHelp",
 
