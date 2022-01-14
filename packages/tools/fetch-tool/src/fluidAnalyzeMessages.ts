@@ -522,6 +522,7 @@ function processOp(
                 } else {
                     return;
                 }
+                // eslint-disable-next-line no-fallthrough
             }
             case RuntimeMessage.FluidDataStoreOp:
             case RuntimeMessage.Alias:
