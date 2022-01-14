@@ -344,30 +344,9 @@ async function fetchSnapshotContentsCoreV1(
 ): Promise<ISnapshotRequestAndResponseOptions> {
     const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
     const url = `${snapshotUrl}/trees/latest?ump=1`;
-    const formBoundary = uuid();
-    const formParams: string[] = [];
-    formParams.push(`--${formBoundary}`);
-    formParams.push(`Authorization: Bearer ${storageToken}`);
-    formParams.push(`X-HTTP-Method-Override: GET`);
-    if (snapshotOptions !== undefined) {
-        Object.entries(snapshotOptions).forEach(([key, value]) => {
-            if (value !== undefined) {
-                formParams.push(`${key}: ${value}`);
-            }
-        });
-    }
-    if (odspResolvedUrl.sharingLinkToRedeem) {
-        formParams.push(`sl: ${odspResolvedUrl.sharingLinkToRedeem}`);
-    }
-    formParams.push(`_post: 1`);
-    formParams.push(`\r\n--${formBoundary}--`);
-    const postBody = formParams.join("\r\n");
-    const headers: {[index: string]: any} = {
-        "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
-    };
-
+    const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, storageToken, snapshotOptions);
     const fetchOptions = {
-        body: postBody,
+        body,
         headers,
         signal: controller?.signal,
         method: "POST",
@@ -401,28 +380,55 @@ async function fetchSnapshotContentsCoreV2(
     epochTracker?: EpochTracker,
 ): Promise<ISnapshotRequestAndResponseOptions> {
     const fullUrl = `${odspResolvedUrl.siteUrl}/_api/v2.1/drives/${odspResolvedUrl.driveId}/items/${
-        odspResolvedUrl.itemId}/opStream/attachments/latest/content`;
-    const queryParams = { ...snapshotOptions };
-    if (odspResolvedUrl.sharingLinkToRedeem) {
-        // eslint-disable-next-line @typescript-eslint/dot-notation
-        queryParams["sl"] = odspResolvedUrl.sharingLinkToRedeem;
-    }
-    const queryString = getQueryString(queryParams);
-    const { url, headers } = getUrlAndHeadersWithAuth(`${fullUrl}${queryString}`, storageToken);
+        odspResolvedUrl.itemId}/opStream/attachments/latest/content?ump=1`;
+
+    const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, storageToken, snapshotOptions);
     const fetchOptions = {
+        body,
         headers,
         signal: controller?.signal,
+        method: "POST",
     };
-    const response = await (epochTracker?.fetchArray(url, fetchOptions, "treesLatest") ??
-        fetchArray(url, fetchOptions));
+
+    const response = await (epochTracker?.fetchArray(fullUrl, fetchOptions, "treesLatest", true) ??
+        fetchArray(fullUrl, fetchOptions));
     const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
         new ReadBuffer(new Uint8Array(response.content)));
     const finalSnapshotContents: IOdspResponse<ISnapshotContents> = { ...response, content: snapshotContents };
     return  {
         odspSnapshotResponse: finalSnapshotContents,
         requestHeaders: headers,
-        requestUrl: url,
+        requestUrl: fullUrl,
     };
+}
+
+function getFormBodyAndHeaders(
+    odspResolvedUrl: IOdspResolvedUrl,
+    storageToken: string,
+    snapshotOptions: ISnapshotOptions | undefined,
+) {
+    const formBoundary = uuid();
+    const formParams: string[] = [];
+    formParams.push(`--${formBoundary}`);
+    formParams.push(`Authorization: Bearer ${storageToken}`);
+    formParams.push(`X-HTTP-Method-Override: GET`);
+    if (snapshotOptions !== undefined) {
+        Object.entries(snapshotOptions).forEach(([key, value]) => {
+            if (value !== undefined) {
+                formParams.push(`${key}: ${value}`);
+            }
+        });
+    }
+    if (odspResolvedUrl.sharingLinkToRedeem) {
+        formParams.push(`sl: ${odspResolvedUrl.sharingLinkToRedeem}`);
+    }
+    formParams.push(`_post: 1`);
+    formParams.push(`\r\n--${formBoundary}--`);
+    const postBody = formParams.join("\r\n");
+    const headers: {[index: string]: any} = {
+        "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
+    };
+    return { body: postBody, headers };
 }
 
 function validateAndEvalBlobsAndTrees(snapshot: ISnapshotContents) {
