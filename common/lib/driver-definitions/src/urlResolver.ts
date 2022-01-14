@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IRequest } from "@fluidframework/core-interfaces";
 
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
