@@ -220,7 +220,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(await ds1.trySetAlias(alias));
 
             await provider.ensureSynchronized();
-
             await createRootDataStore(dataObject2, alias);
 
             assert(await dataCorruption);

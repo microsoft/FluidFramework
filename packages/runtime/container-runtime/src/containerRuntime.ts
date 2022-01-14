@@ -292,7 +292,8 @@ export interface IContainerRuntimeOptions {
     loadSequenceNumberVerification?: "close" | "log" | "bypass";
     /**
      * Should the runtime use data store aliasing for creating root datastores.
-     * In case of aliasing conflict, the runtime will raise an exception.
+     * In case of aliasing conflicts, the runtime will raise an exception which does
+     * not effect the status of the container.
      */
     useDataStoreAliasing?: boolean;
 }
