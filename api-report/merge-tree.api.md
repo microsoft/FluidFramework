@@ -9,8 +9,8 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { ITree } from '@fluidframework/protocol-definitions';
 import { Trace } from '@fluidframework/common-utils';
 
 // @public (undocumented)
@@ -190,11 +190,11 @@ export class Client {
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
     serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void;
     // (undocumented)
-    snapshot(runtime: IFluidDataStoreRuntime, handle: IFluidHandle, serializer: IFluidSerializer, catchUpMsgs: ISequencedDocumentMessage[]): ITree;
-    // (undocumented)
     readonly specToSegment: (spec: IJSONSegment) => ISegment;
     // (undocumented)
     startOrUpdateCollaboration(longClientId: string | undefined, minSeq?: number, currentSeq?: number): void;
+    // (undocumented)
+    summarize(runtime: IFluidDataStoreRuntime, handle: IFluidHandle, serializer: IFluidSerializer, catchUpMsgs: ISequencedDocumentMessage[]): ISummaryTreeWithStats;
     // (undocumented)
     updateConsensusProperty(op: IMergeTreeAnnotateMsg, msg: ISequencedDocumentMessage): void;
     // (undocumented)
@@ -1448,7 +1448,7 @@ export class SnapshotLegacy {
     constructor(mergeTree: MergeTree, logger: ITelemetryLogger, filename?: string | undefined, onCompletion?: (() => void) | undefined);
     // (undocumented)
     static readonly body = "body";
-    emit(catchUpMsgs: ISequencedDocumentMessage[], serializer: IFluidSerializer, bind: IFluidHandle): ITree;
+    emit(catchUpMsgs: ISequencedDocumentMessage[], serializer: IFluidSerializer, bind: IFluidHandle): ISummaryTreeWithStats;
     // (undocumented)
     extractSync(): IJSONSegment[];
     // (undocumented)

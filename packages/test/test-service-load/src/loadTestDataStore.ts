@@ -9,7 +9,7 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import {ISharedCounter, SharedCounter} from "@fluidframework/counter";
+import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { ITaskManager, TaskManager } from "@fluid-experimental/task-manager";
 import { IDirectory, ISharedDirectory } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -137,31 +137,31 @@ export class LoadTestDataStoreModel {
     ) {
         await LoadTestDataStoreModel.waitForCatchup(runtime);
 
-        if(!root.hasSubDirectory(config.runId.toString())) {
+        if (!root.hasSubDirectory(config.runId.toString())) {
             root.createSubDirectory(config.runId.toString());
         }
         const runDir = root.getSubDirectory(config.runId.toString());
-        if(runDir === undefined) {
+        if (runDir === undefined) {
             throw new Error(`runDir for runId ${config.runId} not available`);
         }
 
-        if(!runDir.has(counterKey)) {
+        if (!runDir.has(counterKey)) {
             runDir.set(counterKey, SharedCounter.create(runtime).handle);
             runDir.set(startTimeKey, Date.now());
         }
         const counter = await runDir.get<IFluidHandle<ISharedCounter>>(counterKey)?.get();
         const taskmanager = await root.get<IFluidHandle<ITaskManager>>(taskManagerKey)?.get();
 
-        if(counter === undefined) {
+        if (counter === undefined) {
             throw new Error("counter not available");
         }
-        if(taskmanager === undefined) {
+        if (taskmanager === undefined) {
             throw new Error("taskmanager not available");
         }
 
         const gcDataStore = await this.getGCDataStore(config, root, containerRuntime);
 
-        const dataModel =  new LoadTestDataStoreModel(
+        const dataModel = new LoadTestDataStoreModel(
             root,
             config,
             runtime,
@@ -172,13 +172,13 @@ export class LoadTestDataStoreModel {
             gcDataStore.handle,
         );
 
-        if(reset) {
+        if (reset) {
             await LoadTestDataStoreModel.waitForCatchup(runtime);
-            runDir.set(startTimeKey,Date.now());
+            runDir.set(startTimeKey, Date.now());
             runDir.delete(taskTimeKey);
             counter.increment(-1 * counter.value);
             const partnerCounter = await dataModel.getPartnerCounter();
-            if(partnerCounter !== undefined && partnerCounter.value > 0) {
+            if (partnerCounter !== undefined && partnerCounter.value > 0) {
                 partnerCounter.increment(-1 * partnerCounter.value);
             }
         }
@@ -207,8 +207,8 @@ export class LoadTestDataStoreModel {
         // The runners are paired up and each pair shares a single taskId
         this.taskId = `op_sender${config.runId % halfClients}`;
         this.partnerId = (this.config.runId + halfClients) % this.config.testConfig.numClients;
-        const changed = (taskId)=>{
-            if(taskId === this.taskId && this.taskStartTime !== 0) {
+        const changed = (taskId) => {
+            if (taskId === this.taskId && this.taskStartTime !== 0) {
                 this.dir.set(taskTimeKey, this.totalTaskTime);
                 this.taskStartTime = 0;
             }
@@ -265,7 +265,7 @@ export class LoadTestDataStoreModel {
         return (this.dir.get<number>(taskTimeKey) ?? 0) + this.currentTaskTime;
     }
     public get currentTaskTime(): number {
-        return Date.now() - (this.haveTaskLock() ?  this.taskStartTime : this.startTime);
+        return Date.now() - (this.haveTaskLock() ? this.taskStartTime : this.startTime);
     }
 
     private blobKey(id): string { return `blob_${this.config.runId}_${id}`; }
@@ -292,29 +292,29 @@ export class LoadTestDataStoreModel {
     }
 
     public async getPartnerCounter() {
-        if(this.runtime.disposed) {
+        if (this.runtime.disposed) {
             return undefined;
         }
         const dir = this.root.getSubDirectory(this.partnerId.toString());
-        if(dir === undefined) {
+        if (dir === undefined) {
             return undefined;
         }
         const handle = dir.get<IFluidHandle<ISharedCounter>>(counterKey);
-        if(handle === undefined) {
+        if (handle === undefined) {
             return undefined;
         }
         return handle.get();
     }
 
     public haveTaskLock() {
-        if(this.runtime.disposed) {
+        if (this.runtime.disposed) {
             return false;
         }
         return this.taskManager.haveTaskLock(this.taskId);
     }
 
     public abandonTask() {
-        if(this.haveTaskLock()) {
+        if (this.haveTaskLock()) {
             // We are becoming the reader. Remove the reference to the GC data store.
             this.runDir.delete(gcDataStoreKey);
             this.taskManager.abandon(this.taskId);
@@ -322,26 +322,26 @@ export class LoadTestDataStoreModel {
     }
 
     public async lockTask() {
-        if(this.runtime.disposed) {
+        if (this.runtime.disposed) {
             return;
         }
-        if(!this.haveTaskLock()) {
-            try{
-                if(!this.runtime.connected) {
-                    await new Promise<void>((res,rej)=>{
-                        const resAndClear = ()=>{
-                            res();
+        if (!this.haveTaskLock()) {
+            try {
+                if (!this.runtime.connected) {
+                    await new Promise<void>((resolve, reject) => {
+                        const resAndClear = () => {
+                            resolve();
                             this.runtime.off("connected", resAndClear);
                             this.runtime.off("disconnected", rejAndClear);
                             this.runtime.off("dispose", rejAndClear);
                         };
-                        const rejAndClear = ()=>{
-                            rej(new Error("failed to connect"));
+                        const rejAndClear = () => {
+                            reject(new Error("failed to connect"));
                             resAndClear();
                         };
-                        this.runtime.once("connected",resAndClear);
-                        this.runtime.once("dispose",rejAndClear);
-                        this.runtime.once("disconnected",rejAndClear);
+                        this.runtime.once("connected", resAndClear);
+                        this.runtime.once("dispose", rejAndClear);
+                        this.runtime.once("disconnected", rejAndClear);
                     });
                 }
                 await this.taskManager.lockTask(this.taskId);
@@ -351,8 +351,8 @@ export class LoadTestDataStoreModel {
                 if (!this.runDir.has(gcDataStoreKey)) {
                     this.runDir.set(gcDataStoreKey, this.gcDataStoreHandle);
                 }
-            }catch(e) {
-                if(this.runtime.disposed || !this.runtime.connected) {
+            } catch (e) {
+                if (this.runtime.disposed || !this.runtime.connected) {
                     return;
                 }
                 throw e;
@@ -370,7 +370,7 @@ export class LoadTestDataStoreModel {
             const now = Date.now();
             const totalMin = (now - this.startTime) / 60000;
             const taskMin = this.totalTaskTime / 60000;
-            const opCount  = this.runtime.deltaManager.lastKnownSeqNumber;
+            const opCount = this.runtime.deltaManager.lastKnownSeqNumber;
             const opRate = Math.floor(this.runtime.deltaManager.lastKnownSeqNumber / totalMin);
             const sendRate = Math.floor(this.counter.value / taskMin);
             const disposed = this.runtime.disposed;
@@ -411,14 +411,14 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         const leaderElection = new LeaderElection(this.runtime);
         leaderElection.setupLeaderElection();
 
-         // At every moment, we want half the client to be concurrent writers, and start and stop
+        // At every moment, we want half the client to be concurrent writers, and start and stop
         // in a rotation fashion for every cycle.
         // To set that up we start each client in a staggered way, each will independently go thru write
         // and listen cycles
 
         const cycleMs = config.testConfig.readWriteCycleMs;
         let t: NodeJS.Timeout | undefined;
-        if(config.verbose) {
+        if (config.verbose) {
             const printProgress = () => {
                 dataModel.printStatus();
                 t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
@@ -434,29 +434,29 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                 // this enables a quick ramp down. due to restart, some clients can lag
                 // leading to a slow ramp down. so if there are less than half the clients
                 // and it's partner is done, return true to complete the runner.
-                if(this.runtime.getAudience().getMembers().size < config.testConfig.numClients / 2
+                if (this.runtime.getAudience().getMembers().size < config.testConfig.numClients / 2
                     && ((await dataModel.getPartnerCounter())?.value ?? 0) >= clientSendCount) {
                     return true;
                 }
 
-                if(dataModel.haveTaskLock()) {
+                if (dataModel.haveTaskLock()) {
                     dataModel.counter.increment(1);
                     if (dataModel.counter.value % opsPerCycle === 0) {
                         await dataModel.blobFinish();
                         dataModel.abandonTask();
                         // give our partner a half cycle to get the task
                         await delay(cycleMs / 2);
-                    }else{
+                    } else {
                         // Random jitter of +- 50% of opWaitMs
                         await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
                     }
-                }else{
+                } else {
                     await dataModel.lockTask();
                 }
             }
             return !this.runtime.disposed;
-        }finally{
-            if(t !== undefined) {
+        } finally {
+            if (t !== undefined) {
                 clearTimeout(t);
             }
             dataModel.printStatus();

@@ -251,7 +251,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return PerformanceEvent.timedExecAsync(
             container.mc.logger,
             { eventName: "Load" },
-            async (event) => new Promise<Container>((res, rej) => {
+            async (event) => new Promise<Container>((resolve, reject) => {
                 container._lifecycleState = "loading";
                 const version = loadOptions.version;
 
@@ -263,7 +263,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
-                    rej(err ?? new GenericError("containerClosedWithoutErrorDuringLoad"));
+                    reject(err ?? new GenericError("containerClosedWithoutErrorDuringLoad"));
                 };
                 container.on("closed", onClosed);
 
@@ -273,7 +273,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     })
                     .then((props) => {
                         event.end({ ...props, ...loadOptions.loadMode });
-                        res(container);
+                        resolve(container);
                     },
                     (error) => {
                         const err = normalizeError(error);

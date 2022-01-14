@@ -13,7 +13,6 @@ import {
 } from "./utils";
 
 describe("FluidSerializer", () => {
-    // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
     function printHandle(target: any) {
         return JSON.stringify(target, (key, value) => {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return

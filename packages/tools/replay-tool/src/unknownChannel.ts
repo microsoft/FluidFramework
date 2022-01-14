@@ -110,7 +110,6 @@ class ObjectRegistryWithUnknownChannels implements ISharedObjectRegistry {
     }
 }
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function mixinDataStoreWithAnyChannel(
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
 {

@@ -177,7 +177,8 @@ export class PartialSequenceLengths {
                     // Find next earliest sequence number
                     if (indices[k] < childPartialsCounts[k]) {
                         const cpLen = childPartials[k].partialLengths[indices[k]];
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        // eslint-disable-next-line max-len
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
                         if ((outerIndexOfEarliest < 0) || (cpLen.seq < earliestPartialLength!.seq)) {
                             outerIndexOfEarliest = k;
                             earliestPartialLength = cpLen;
@@ -185,7 +186,8 @@ export class PartialSequenceLengths {
                     }
                 }
                 if (outerIndexOfEarliest >= 0) {
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    // eslint-disable-next-line max-len
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
                     addNext(earliestPartialLength!);
                     indices[outerIndexOfEarliest]++;
                 }

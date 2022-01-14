@@ -26,7 +26,6 @@ interface ISingleHandleItem {
     handle: IFluidHandle;
 }
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function createSingleHandleItem(subFactory: IFluidDataStoreFactory) {
     return async (context: IFluidDataStoreContext): Promise<ISingleHandleItem> => {
         const packagePath = [...context.packagePath, subFactory.type];
