@@ -503,7 +503,7 @@ function processOp(
                     chunkMap.set(runtimeMessage.clientId, {chunks: new Array<string>(chunk.totalChunks), totalSize:0});
                 }
                 const value = chunkMap.get(runtimeMessage.clientId);
-                assert(value !== undefined, "Chunk should be set in map");
+                assert(value !== undefined, 0x2b8 /* "Chunk should be set in map" */);
                 const chunks = value.chunks;
                 const chunkIndex = chunk.chunkId - 1;
                 if (chunks[chunkIndex] !== undefined) {
