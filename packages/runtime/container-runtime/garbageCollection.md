@@ -8,7 +8,7 @@ Before understanding the details of how GC works, lets take a look at how to add
   - Create them as `root`. These objects are always referenced and cannot be marked unreferenced later. For example, `root` data stores are always referenced.
 
     `Root` objects can never be deleted so be careful and only create them if they should live forever.
-  - Store a handle to the object ([IFluidHandle](../../../common/lib/core-interfaces/src/handles.ts)) in a referenced DDS that supports handle in its data. For example, a data store's handle can be stored in a referenced `SharedMap` DDS.
+  - Store a handle ([IFluidHandle](../../../common/lib/core-interfaces/src/handles.ts)) to the object in a referenced DDS that supports handle in its data. For example, a data store's handle can be stored in a referenced `SharedMap` DDS.
 - All references to unused Fluid objects should be removed so that they can be deleted by GC. To remove an object's reference, all its handles should be removed from referenced DDSs.
 
 > Note that there should be at least one `root` data store with one or more DDSs in a Fluid document so that other objects' handles can be stored in it.
