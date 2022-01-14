@@ -167,6 +167,8 @@ export interface IDocumentStorageServicePolicies {
     readonly caching?: LoaderCachingPolicy;
     // (undocumented)
     readonly minBlobSize?: number;
+    // (undocumented)
+    readonly snapshotCacheExpiryTimeoutMs?: number;
 }
 
 // @public
@@ -282,7 +284,6 @@ export enum LoaderCachingPolicy {
     NoCaching = 0,
     Prefetch = 1
 }
-
 
 // (No @packageDocumentation comment for this package)
 
