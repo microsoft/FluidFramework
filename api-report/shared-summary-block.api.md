@@ -40,7 +40,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     protected registerCore(): void;
     set<T>(key: string, value: Jsonable<T>): void;
     // (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
 
 // @public @sealed

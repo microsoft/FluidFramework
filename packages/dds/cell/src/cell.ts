@@ -200,7 +200,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      *
      * @returns the summary of the current state of the cell
      */
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         const content: ICellValue = { value: this.data };
         return createSingleBlobSummary(snapshotFileName, serializer.stringify(content, this.handle));
     }
