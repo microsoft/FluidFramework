@@ -15,7 +15,6 @@ import {
 import {
     RuntimeRequestHandler,
     buildRuntimeRequestHandler,
-    innerRequestHandler,
 } from "@fluidframework/request-handler";
 import {
     IFluidDataStoreRegistry,
@@ -78,8 +77,7 @@ export class BaseContainerRuntimeFactory
             context,
             this.registryEntries,
             buildRuntimeRequestHandler(
-                ...this.requestHandlers,
-                innerRequestHandler),
+                ...this.requestHandlers),
             this.runtimeOptions,
             scope,
             existing,

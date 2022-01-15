@@ -721,7 +721,8 @@ describe("Garbage Collection Tests", () => {
          * Validates that we log an error since B is detected as a referenced node but its reference was notified
          * to GC.
          */
-        it(`Scenario 7 - Reference added without notifying GC`, async () => {
+        // To be enabled when this issue is fixed - https://github.com/microsoft/FluidFramework/issues/8672
+        it.skip(`Scenario 7 - Reference added without notifying GC`, async () => {
             // Initialize node A.
             defaultGCData.gcNodes["/"] = [ nodeA ];
             defaultGCData.gcNodes[nodeA] = [];

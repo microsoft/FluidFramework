@@ -16,7 +16,7 @@ module.exports = {
         "@typescript-eslint/no-unsafe-return": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "@typescript-eslint/restrict-plus-operands": "off",
-        "prefer-rest-params": "off"
-
+        "prefer-arrow-callback": "off",
+        "prefer-rest-params": "off",
     }
 }

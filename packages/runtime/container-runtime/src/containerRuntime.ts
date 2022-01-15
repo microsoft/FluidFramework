@@ -293,19 +293,21 @@ type IRuntimeMessageMetadata = undefined | {
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
 
+export enum RuntimeMessage {
+    FluidDataStoreOp = "component",
+    Attach = "attach",
+    ChunkedOp = "chunkedOp",
+    BlobAttach = "blobAttach",
+    Rejoin = "rejoin",
+    Alias = "alias",
+    Operation = "op",
+}
+
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-    switch (message.type) {
-        case ContainerMessageType.FluidDataStoreOp:
-        case ContainerMessageType.ChunkedOp:
-        case ContainerMessageType.Attach:
-        case ContainerMessageType.Alias:
-        case ContainerMessageType.BlobAttach:
-        case ContainerMessageType.Rejoin:
-        case MessageType.Operation:
-            return true;
-        default:
-            return false;
+    if ((Object.values(RuntimeMessage) as string[]).includes(message.type)) {
+        return true;
     }
+    return false;
 }
 
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
@@ -1664,6 +1666,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.setFlushMode(savedFlushMode);
         } catch(error) {
             this.closeFn(CreateProcessingError(error, "orderSequentially"));
+            throw error; // throw the original error for the consumer of the runtime
         }
     }
 
@@ -2495,13 +2498,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 const waitForSeq = async (
     deltaManager: IDeltaManager<Pick<ISequencedDocumentMessage, "sequenceNumber">, unknown>,
     targetSeq: number,
-): Promise<void> => new Promise<void>((accept, reject) => {
+): Promise<void> => new Promise<void>((resolve, reject) => {
     // TODO: remove cast to any when actual event is determined
     deltaManager.on("closed" as any, reject);
 
     const handleOp = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
         if (message.sequenceNumber >= targetSeq) {
-            accept();
+            resolve();
             deltaManager.off("op", handleOp);
         }
     };

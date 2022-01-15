@@ -96,7 +96,6 @@ export function createResponseError(status: number, value: string, request: IReq
 
 export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function createDataStoreFactory(
     type: string,
     factory: Factory | Promise<Factory>,

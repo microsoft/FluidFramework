@@ -19,6 +19,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [`IFluidConfiguration` deprecated and `IFluidConfiguration` member removed from `ContainerRuntime`](#IFluidConfiguration-deprecated-and-IFluidConfiguration-member-removed-from-ContainerRuntime)
 - [`wait()` methods deprecated on map and directory](#wait()-methods-deprecated-on-map-and-directory)
 - [Remove Legacy Data Object and Factories](#Remove-Legacy-Data-Object-and-Factories)
+- [Removed `innerRequestHandler`](#Removed-innerRequestHandler)
 
 ### `container-loader` interfaces return `IQuorumClients` rather than `IQuorum`
 
@@ -26,7 +27,8 @@ The `getQuorum()` method on `IContainer` and the `quorum` member of `IContainerC
 
 ### `SharedObject` summary and GC API changes
 
-`SharedObject.snapshotCore` is renamed to `summarizeCore` and returns `ISummaryTreeWithStats`. A temporary way to fix this up quickly is to call `convertToSummaryTreeWithStats` on the `ITree` previously returned, but `convertToSummaryTreeWithStats` will be deprecated in the future and `ISummaryTreeWithStats` should be created directly.
+`SharedObject.snapshotCore` is renamed to `summarizeCore` and returns `ISummaryTreeWithStats`. Use
+`SummaryTreeBuilder` to create a summary instead of `ITree`.
 
 `SharedObject.getGCDataCore` is renamed to `processGCDataCore` and a `SummarySerializer` is passed as a parameter. The method should run the serializer over the handles as before and does not need to return anything. The caller will extract the GC data from the serializer.
 
@@ -101,12 +103,19 @@ As-written above, these promises will silently remain pending forever if the key
 
 ### Remove Legacy Data Object and Factories
 
-In order to ease migration to the new Aqueduct Data Object and Data Object Factory generic arguments we added legacy versions of those classes in version 0.53. 
+In order to ease migration to the new Aqueduct Data Object and Data Object Factory generic arguments we added legacy versions of those classes in version 0.53.
 
 In this release we remove those legacy classes: LegacyDataObject, LegacyPureDataObject, LegacyDataObjectFactory, and LegacyPureDataObjectFactory
 
-It is recommend you migrate to the new generic arguments before consuming this release. 
+It is recommend you migrate to the new generic arguments before consuming this release.
 Details are here: [0.53: Generic Argument Changes to DataObjects and Factories](#Generic-Argument-Changes-to-DataObjects-and-Factories)
+
+### Removed `innerRequestHandler`
+`innerRequestHandler` is removed from `@fluidframework/request-handlers` package, and its usage is removed from `BaseContainerRuntimeFactory` and `ContainerRuntimeFactoryWithDefaultDataStore`.  If you are using these container runtime factories, attempting to access internal data stores via `request()` will result in 404 responses.
+
+If you rely on `request()` access to internal root data stores, you can add `rootDataStoreRequestHandler` to your list of request handlers on the runtime factory.
+
+It is not recommended to provide `request()` access to non-root data stores, but if you currently rely on this functionality you can add a custom request handler that calls `runtime.IFluidHandleContext.resolveHandle(request)` just like `innerRequestHandler` used to do.
 
 ## 0.54 Breaking changes
 - [Removed `readAndParseFromBlobs` from `driver-utils`](#Removed-readAndParseFromBlobs-from-driver-utils)

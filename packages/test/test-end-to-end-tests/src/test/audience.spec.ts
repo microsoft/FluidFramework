@@ -13,6 +13,8 @@ import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, timeoutPromise } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -27,13 +29,15 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
         TestDataObject,
         [],
         []);
+    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+        runtime.IFluidHandleContext.resolveHandle(request);
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         dataObjectFactory,
         [
             [dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
         ],
         undefined,
-        undefined,
+        [innerRequestHandler],
         // Disable summaries so the summarizer client doesn't interfere with the audience
         { summaryOptions: { disableSummaries: true }},
     );

@@ -66,8 +66,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     const reset = async () => provider.reset();
 
     const anyDataCorruption = async (containers: IContainer[]) => Promise.race(
-        containers.map(async (c) => new Promise<boolean>((res) => c.once("closed", (error) => {
-            res(error?.errorType === ContainerErrorType.dataCorruptionError);
+        containers.map(async (c) => new Promise<boolean>((resolve) => c.once("closed", (error) => {
+            resolve(error?.errorType === ContainerErrorType.dataCorruptionError);
         }))));
 
     const runtimeOf = (dataObject: ITestFluidObject): ContainerRuntime =>
@@ -172,6 +172,15 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const dataCorruption = anyDataCorruption([container1]);
             await sendMalformedMessage(runtimeOf(dataObject1), alias);
 
+            assert(await dataCorruption);
+        });
+
+        it("Create root datastore using a previously used alias breaks the container", async () => {
+            const dataCorruption = anyDataCorruption([container1, container2]);
+            const ds1 = await createRootDataStore(dataObject1, "1");
+            await trySetAlias(runtimeOf(dataObject1), ds1, alias);
+
+            await createRootDataStore(dataObject2, alias);
             assert(await dataCorruption);
         });
 

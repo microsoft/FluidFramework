@@ -22,9 +22,10 @@ import {
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { Container, waitContainerToCatchUp } from "@fluidframework/container-loader";
+import { Container } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
+import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 
 describe("No Delta Stream", () => {
     const documentId = "localServerTest";
@@ -36,7 +37,7 @@ describe("No Delta Stream", () => {
     };
     const factory = new TestContainerRuntimeFactory(
         "",
-        new TestFluidObjectFactory([[stringId, SharedString.getFactory()]]));
+        new TestFluidObjectFactory([[stringId, SharedString.getFactory()]]), {}, [rootDataStoreRequestHandler]);
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let loaderContainerTracker: LoaderContainerTracker;
@@ -136,14 +137,14 @@ describe("No Delta Stream", () => {
         const normalDataObject2 = await requestFluidObject<ITestFluidObject>(normalContainer2, "default");
         normalDataObject1.root.set("fluid", "great");
         normalDataObject2.root.set("prague", "a city in europe");
-        assert.strictEqual(await normalDataObject1.root.wait("prague"), "a city in europe");
-        assert.strictEqual(await normalDataObject2.root.wait("fluid"), "great");
+        await loaderContainerTracker.ensureSynchronized();
+        assert.strictEqual(normalDataObject1.root.get("prague"), "a city in europe");
+        assert.strictEqual(normalDataObject2.root.get("fluid"), "great");
 
         const storageOnlyContainer = await loadContainer(true);
-        await waitContainerToCatchUp(storageOnlyContainer as Container);
         const storageOnlyDataObject = await requestFluidObject<ITestFluidObject>(storageOnlyContainer, "default");
-        assert.strictEqual(await storageOnlyDataObject.root.wait("prague"), "a city in europe");
-        assert.strictEqual(await storageOnlyDataObject.root.wait("fluid"), "great");
+        assert.strictEqual(storageOnlyDataObject.root.get("prague"), "a city in europe");
+        assert.strictEqual(storageOnlyDataObject.root.get("fluid"), "great");
     });
 
     it("loads in storage-only mode on error thrown from connectToDeltaStream()", async () => {

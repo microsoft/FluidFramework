@@ -70,10 +70,10 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             await collection1.write("key1", "value1");
             await collection1.write("key2", "value2");
 
-            const [collection2Handle, collection3Handle] = await Promise.all([
-                sharedMap2.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
-                sharedMap3.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
-            ]);
+            await provider.ensureSynchronized();
+
+            const collection2Handle = sharedMap2.get<IFluidHandle<IConsensusRegisterCollection>>("collection");
+            const collection3Handle = sharedMap3.get<IFluidHandle<IConsensusRegisterCollection>>("collection");
             assert(collection2Handle);
             assert(collection3Handle);
             const collection2 = await collection2Handle.get();
@@ -96,11 +96,10 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         it("Should store all concurrent writings on a key in sequenced order", async () => {
             const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
+            await provider.ensureSynchronized();
 
-            const [collection2Handle, collection3Handle] = await Promise.all([
-                sharedMap2.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
-                sharedMap3.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
-            ]);
+            const collection2Handle = sharedMap2.get<IFluidHandle<IConsensusRegisterCollection>>("collection");
+            const collection3Handle = sharedMap3.get<IFluidHandle<IConsensusRegisterCollection>>("collection");
             assert(collection2Handle);
             assert(collection3Handle);
             const collection2 = await collection2Handle.get();
@@ -137,11 +136,10 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         it("Happened after updates should overwrite previous versions", async () => {
             const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
+            await provider.ensureSynchronized();
 
-            const [collection2Handle, collection3Handle] = await Promise.all([
-                sharedMap2.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
-                sharedMap3.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
-            ]);
+            const collection2Handle = sharedMap2.get<IFluidHandle<IConsensusRegisterCollection>>("collection");
+            const collection3Handle = sharedMap3.get<IFluidHandle<IConsensusRegisterCollection>>("collection");
             assert(collection2Handle);
             assert(collection3Handle);
             const collection2 = await collection2Handle.get();
@@ -215,9 +213,10 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             await collection1.write("handleA", sharedMap1.handle);
             await collection1.write("handleB", sharedMap1.handle);
 
+            await provider.ensureSynchronized();
+
             // Pull the collection off of the 2nd container
-            const collection2Handle =
-                await sharedMap2.wait<IFluidHandle<IConsensusRegisterCollection>>("collection");
+            const collection2Handle = sharedMap2.get<IFluidHandle<IConsensusRegisterCollection>>("collection");
             assert(collection2Handle);
             const collection2 = await collection2Handle.get();
 

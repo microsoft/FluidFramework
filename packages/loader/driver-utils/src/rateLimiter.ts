@@ -31,8 +31,8 @@ export class RateLimiter {
             return;
         }
 
-        return new Promise<void>((res) => {
-            this.tasks.push(res);
+        return new Promise<void>((resolve) => {
+            this.tasks.push(resolve);
         });
     }
 
