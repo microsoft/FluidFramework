@@ -186,7 +186,7 @@ export class ContainerTracker implements IContainerTracker {
 
         while (resumed.some((resumedQueue) => !resumedQueue.idle)) {
             debugWait("Wait until queue is idle");
-            await new Promise<void>((resolve) => { setTimeout(res, 0); });
+            await new Promise<void>((resolve) => { setTimeout(resolve, 0); });
         }
 
         // Make sure all the op that we sent out are acked first
@@ -212,7 +212,7 @@ export class ContainerTracker implements IContainerTracker {
         return new Promise<void>((resolve) => {
             const handler = () => {
                 this.container.deltaManager.inbound.off("push", handler);
-                res();
+                resolve();
             };
             this.container.deltaManager.inbound.on("push", handler);
         });
