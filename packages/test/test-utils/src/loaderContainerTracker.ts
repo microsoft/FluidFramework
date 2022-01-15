@@ -271,14 +271,18 @@ export class LoaderContainerTracker implements IOpProcessingController {
      * Utility to wait for any inbound ops from a set of containers
      * @param containersToApply - the set of containers to wait for any inbound ops for
      */
-    private async waitForAnyInboundOps(containersToApply: IContainer[]) {
-        const promises: (Promise<void> | undefined)[] = [];
-        containersToApply.forEach(
-            (container) => promises.push(
-                (container as Container).containerTracker?.waitForAnyInboundOps(),
-            ),
-        );
-        await Promise.all(promises);
+     private async waitForAnyInboundOps(containersToApply: IContainer[]) {
+        return new Promise<void>((resolve) => {
+            const handler = () => {
+                containersToApply.map((c) => {
+                    c.deltaManager.inbound.off("push", handler);
+                });
+                resolve();
+            };
+            containersToApply.map((c) => {
+                c.deltaManager.inbound.on("push", handler);
+            });
+        });
     }
 
     /**
