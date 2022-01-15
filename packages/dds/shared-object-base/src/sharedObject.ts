@@ -435,7 +435,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 }
 
 /**
- * SharedObject with simplified, synchronous summarization and GC
+ * SharedObject with simplified, synchronous summarization and GC.
+ * DDS implementations with async and incremental summarization should extend SharedObjectCore directly instead.
  */
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
     extends SharedObjectCore<TEvent> {
@@ -467,7 +468,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param runtime - The IFluidDataStoreRuntime which contains the shared object
      * @param attributes - Attributes of the shared object
      */
-     constructor(
+    constructor(
         id: string,
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes)
