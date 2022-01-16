@@ -88,7 +88,6 @@ export async function fetchSnapshotWithRedeem(
     removeEntries: () => Promise<void>,
     enableRedeemFallback?: boolean,
 ): Promise<ISnapshotContents> {
-
     // For back. compatibility purposes. To be removed with #8784.
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
     if(sharingLinkToRedeem) {
@@ -472,7 +471,6 @@ export async function downloadSnapshot(
     controller?: AbortController,
     epochTracker?: EpochTracker,
 ): Promise<ISnapshotRequestAndResponseOptions> {
-
     // For back. compatibility purposes. To be removed with #8784.
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
     if(sharingLinkToRedeem) {
@@ -489,8 +487,7 @@ export async function downloadSnapshot(
 }
 
 function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any) {
-    const sharingLinkToRedeem = odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem;
-    if (sharingLinkToRedeem !== undefined
+    if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined
         && (typeof error === "object" && error !== null)
         && (error.errorType === DriverErrorType.authorizationError
         || error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError)) {
