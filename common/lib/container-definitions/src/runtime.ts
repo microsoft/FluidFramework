@@ -25,9 +25,10 @@ import {
     IDocumentMessage,
     IQuorumClients,
 } from "@fluidframework/protocol-definitions";
+import { ContainerWarning } from ".";
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
-import { ICriticalContainerError, ContainerWarning } from "./error";
+import { ICriticalContainerError } from "./error";
 import { ILoader, ILoaderOptions } from "./loader";
 
 /**
@@ -168,7 +169,7 @@ export interface IContainerContext extends IDisposable {
      */
     readonly scope: IFluidObject & FluidObject;
 
-    raiseContainerWarning(warning: ContainerWarning): void;
+    raiseContainerWarning?(warning: ContainerWarning): void;
 
     /**
      * Get an absolute url for a provided container-relative request.

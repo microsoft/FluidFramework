@@ -1734,7 +1734,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     // @deprecated Needs to become private
-    public readonly raiseContainerWarning = (warning: ContainerWarning) => {
+    private readonly raiseContainerWarning = (warning: ContainerWarning) => {
         this.context.raiseContainerWarning(warning);
     };
 

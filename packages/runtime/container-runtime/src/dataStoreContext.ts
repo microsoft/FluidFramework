@@ -13,7 +13,6 @@ import {
 import {
     IAudience,
     IDeltaManager,
-    ContainerWarning,
     BindState,
     AttachState,
     ILoaderOptions,
@@ -579,11 +578,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.verifyNotClosed();
         assert(!!this.channel, 0x147 /* "Channel must exist on submitting signal" */);
         return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
-    }
-
-    // @deprecated Warnings are being deprecated
-    public raiseContainerWarning(warning: ContainerWarning): void {
-        this.containerRuntime.raiseContainerWarning(warning);
     }
 
     protected bindRuntime(channel: IFluidDataStoreChannel) {
