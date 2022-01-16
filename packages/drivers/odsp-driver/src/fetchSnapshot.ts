@@ -88,6 +88,13 @@ export async function fetchSnapshotWithRedeem(
     removeEntries: () => Promise<void>,
     enableRedeemFallback?: boolean,
 ): Promise<ISnapshotContents> {
+
+    // For back. compatibility purposes. To be removed with #8784.
+    const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
+    if(sharingLinkToRedeem) {
+        odspResolvedUrl.shareLinkInfo = {...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem}
+    }
+
     return fetchLatestSnapshotCore(
         odspResolvedUrl,
         storageTokenFetcher,
@@ -105,14 +112,12 @@ export async function fetchSnapshotWithRedeem(
             }, error);
             await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
             const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
-                { ...odspResolvedUrl, sharingLinkToRedeem: undefined };
-
-            if(odspResolvedUrlWithoutShareLink.shareLinkInfo) {
-                odspResolvedUrlWithoutShareLink.shareLinkInfo = {
-                    ...odspResolvedUrlWithoutShareLink.shareLinkInfo,
-                    sharingLinkToRedeem: undefined,
+                { ...odspResolvedUrl,
+                    shareLinkInfo: {
+                        ...odspResolvedUrl.shareLinkInfo,
+                        sharingLinkToRedeem: undefined
+                    }
                 };
-            }
 
             return fetchLatestSnapshotCore(
                 odspResolvedUrlWithoutShareLink,
@@ -148,10 +153,10 @@ async function redeemSharingLink(
             eventName: "RedeemShareLink",
         },
         async () => getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-                assert(!!odspResolvedUrl.sharingLinkToRedeem,
+                assert(!!odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
                     0x1ed /* "Share link should be present" */);
                 const storageToken = await storageTokenFetcher(tokenFetchOptions, "RedeemShareLink");
-                const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.sharingLinkToRedeem);
+                const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem);
                 const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
                 const { url, headers } = getUrlAndHeadersWithAuth(redeemUrl, storageToken);
                 headers.prefer = "redeemSharingLink";
@@ -189,7 +194,7 @@ async function fetchLatestSnapshotCore(
         const perfEvent = {
             eventName: "TreesLatest",
             attempts: tokenFetchOptions.refresh ? 2 : 1,
-            shareLinkPresent: odspResolvedUrl.sharingLinkToRedeem !== undefined,
+            shareLinkPresent: odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined,
             redeemFallbackEnabled: enableRedeemFallback,
         };
         if (snapshotOptions !== undefined) {
@@ -423,8 +428,8 @@ function getFormBodyAndHeaders(
             }
         });
     }
-    if (odspResolvedUrl.sharingLinkToRedeem) {
-        formParams.push(`sl: ${odspResolvedUrl.sharingLinkToRedeem}`);
+    if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem) {
+        formParams.push(`sl: ${odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem}`);
     }
     formParams.push(`_post: 1`);
     formParams.push(`\r\n--${formBoundary}--`);
@@ -467,6 +472,13 @@ export async function downloadSnapshot(
     controller?: AbortController,
     epochTracker?: EpochTracker,
 ): Promise<ISnapshotRequestAndResponseOptions> {
+
+    // For back. compatibility purposes. To be removed with #8784.
+    const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
+    if(sharingLinkToRedeem) {
+        odspResolvedUrl.shareLinkInfo = {...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem}
+    }
+
     if (fetchBinarySnapshotFormat) {
         // Logging an event here as it is not supposed to be used in production yet and only in experimental mode.
         logger.sendTelemetryEvent({ eventName: "BinarySnapshotFetched" });
@@ -477,7 +489,8 @@ export async function downloadSnapshot(
 }
 
 function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any) {
-    if (odspResolvedUrl.sharingLinkToRedeem !== undefined
+    const sharingLinkToRedeem = odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem;
+    if (sharingLinkToRedeem !== undefined
         && (typeof error === "object" && error !== null)
         && (error.errorType === DriverErrorType.authorizationError
         || error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError)) {
