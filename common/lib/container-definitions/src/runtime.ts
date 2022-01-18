@@ -25,7 +25,6 @@ import {
     IDocumentMessage,
     IQuorumClients,
 } from "@fluidframework/protocol-definitions";
-import { ContainerWarning } from ".";
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError } from "./error";
