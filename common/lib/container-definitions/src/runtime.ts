@@ -169,8 +169,6 @@ export interface IContainerContext extends IDisposable {
      */
     readonly scope: IFluidObject & FluidObject;
 
-    raiseContainerWarning?(warning: ContainerWarning): void;
-
     /**
      * Get an absolute url for a provided container-relative request.
      * @param relativeUrl - A relative request within the container

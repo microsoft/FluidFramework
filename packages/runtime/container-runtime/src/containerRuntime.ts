@@ -1163,7 +1163,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     },
                     this.runtimeOptions.summaryOptions.summarizerOptions,
                 );
-                this.summaryManager.on("summarizerWarning", this.raiseContainerWarning);
+                this.summaryManager.on("summarizerWarning", (warning: ContainerWarning) =>
+                    this.emit("summarizerWarning", warning));
                 this.summaryManager.start();
             }
         }
@@ -1229,7 +1230,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }, error);
 
         if (this.summaryManager !== undefined) {
-            this.summaryManager.off("summarizerWarning", this.raiseContainerWarning);
+            this.summaryManager.off("summarizerWarning", (warning: ContainerWarning) =>
+                this.emit("summarizerWarning", warning));
             this.summaryManager.dispose();
         }
         this.garbageCollector.dispose();
@@ -1732,11 +1734,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.context.audience!;
     }
-
-    // @deprecated Needs to become private
-    private readonly raiseContainerWarning = (warning: ContainerWarning) => {
-        this.context.raiseContainerWarning(warning);
-    };
 
     /**
      * Returns true of container is dirty, i.e. there are some pending local changes that

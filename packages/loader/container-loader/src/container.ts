@@ -1592,7 +1592,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         deltaManager.on("throttled", (warning: IThrottlingWarning) => {
-            this.raiseContainerWarning(warning);
+            let containerWarning = warning as ContainerWarning;
+            if (containerWarning.logged !== true) {
+                this.logContainerError(containerWarning);
+            }
+            this.emit("warning", containerWarning);
         });
 
         deltaManager.on("readonly", (readonly) => {
@@ -1884,7 +1888,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     // Please avoid calling it directly.
-    // raiseContainerWarning() is the right flow for most cases
     private logContainerError(warning: ContainerWarning) {
         this.mc.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
     }
