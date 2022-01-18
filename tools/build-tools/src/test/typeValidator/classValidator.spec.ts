@@ -112,7 +112,6 @@ describe("Class", () => {
         `;
         const oldSourceFile = project.createSourceFile(`${pkgDir}/src/classOld.ts`, classOld);
         const oldTypeData = getTypeDataForSource(oldSourceFile);
-        // cont oldClassData = decomposeClassDeclaration(project.getTypeChecker(), oldSourceFile);
 
         const classNew =
         `
@@ -141,7 +140,6 @@ describe("Class", () => {
         `;
         const oldSourceFile = project.createSourceFile(`${pkgDir}/src/classOld.ts`, classOld);
         const oldTypeData = getTypeDataForSource(oldSourceFile);
-        // cont oldClassData = decomposeClassDeclaration(project.getTypeChecker(), oldSourceFile);
 
         const classNew =
         `
@@ -153,7 +151,7 @@ describe("Class", () => {
         const newTypeData = getTypeDataForSource(newSourceFile);
 
         let increment = checkIncrement(project, pkgDir, oldTypeData, newTypeData);
-        assert(increment == BreakingIncrement.minor);
+        assert(increment == BreakingIncrement.major);
 
     }).timeout(15000);
 });
