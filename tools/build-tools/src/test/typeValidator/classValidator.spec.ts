@@ -129,8 +129,8 @@ describe("Class", () => {
 
     // scenario: new version removes the default value from the param, changing
     // the method signature. (optional param now required)
-    // expected result: A minor breaking change
-    it("default value removed", () => {
+    // expected result: A major breaking change
+    it.skip("default value removed", () => {
         const classOld =
         `
         export class asdf {
