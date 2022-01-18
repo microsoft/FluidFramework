@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/*
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import {
@@ -14,11 +15,13 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { TestDataObject } from "./mockSummarizerClient";
+*/
 
 /**
  * Validates this scenario: When a client session expires, that the container throws the ClientSessionExpiry error
  * when GC sweep is running.
  */
+/*
  describeNoCompat("GC Session Expiry", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const timeoutMs = 100;
@@ -106,3 +109,4 @@ import { TestDataObject } from "./mockSummarizerClient";
         assert(container3.closed, "Container3 should be closed as it has reached its expiry.");
     });
 });
+*/
