@@ -1166,7 +1166,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.runtimeOptions.summaryOptions.summarizerOptions,
                 );
                 this.summaryManager.on("summarizerWarning", (warning: ContainerWarning) =>
-                    this.emit("summarizerWarning", warning));
+                    this.mc.logger.sendTelemetryEvent({ eventName: "summarizerWarning" }, warning));
                 this.summaryManager.start();
             }
         }
@@ -1233,7 +1233,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         if (this.summaryManager !== undefined) {
             this.summaryManager.off("summarizerWarning", (warning: ContainerWarning) =>
-                this.emit("summarizerWarning", warning));
+                this.mc.logger.sendTelemetryEvent({ eventName: "summarizerWarning" }, warning));
             this.summaryManager.dispose();
         }
         this.garbageCollector.dispose();
