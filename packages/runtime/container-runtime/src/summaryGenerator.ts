@@ -77,11 +77,6 @@ export type SummarizeReason =
      */
     | "maxOps"
     /**
-     * Special case to generate a summary in response to a Save op.
-     * @deprecated - do not use save ops
-     */
-    | `save;${string}: ${string}`
-    /**
      * Special case to attempt to summarize one last time before the
      * summarizer client closes itself. This is to prevent cases where
      * the summarizer client never gets a chance to summarize, because
