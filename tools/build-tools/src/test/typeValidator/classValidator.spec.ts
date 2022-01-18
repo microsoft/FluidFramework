@@ -84,7 +84,6 @@ describe("Class", () => {
         `;
         const oldSourceFile = project.createSourceFile(`${pkgDir}/src/classOld.ts`, classOld);
         const oldTypeData = getTypeDataForSource(oldSourceFile);
-        // cont oldClassData = decomposeClassDeclaration(project.getTypeChecker(), oldSourceFile);
 
         const classNew =
         `
