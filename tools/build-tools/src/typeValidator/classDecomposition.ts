@@ -95,7 +95,6 @@ export function decomposeClassDeclaration(typeChecker: TypeChecker, node: ClassD
                     member.getTypeParameters().map((tp) => tp.getType()),
                     ", ",
                 );
-                member.getTypeParameters();
                 mergeIntoSet(replacedTypes, typeArgsResult.replacedTypes);
                 requiredGenerics.merge(typeArgsResult.requiredGenerics);
                 typeArgsString = `<${typeArgsResult.typeAsString}>`;

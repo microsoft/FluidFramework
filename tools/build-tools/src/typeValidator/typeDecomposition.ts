@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Type, TypeChecker, Expression } from "ts-morph";
-import has from 'lodash/has';
+import { Type, TypeChecker } from "ts-morph";
 
 export interface DecompositionResult {
     /**
