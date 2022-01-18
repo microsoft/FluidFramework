@@ -267,8 +267,6 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     readonly maxMessageSize: number;
     readonly minimumSequenceNumber: number;
     readonly outbound: IDeltaQueue<U[]>;
-    // @deprecated
-    readonly readonly?: boolean;
     // (undocumented)
     readonly readOnlyInfo: ReadOnlyInfo;
     readonly serviceConfiguration: IClientConfiguration | undefined;

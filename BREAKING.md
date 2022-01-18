@@ -12,9 +12,13 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ## 0.56 Breaking Changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
+- [`readonly` removed from `DeltaManager` and `IDeltaManager`](#readonly-removed-from-DeltaManager-and-IDeltaManager)
 
 ### `MessageType.Save` and code that handled it was removed
 The `Save` operation type was deprecated and has now been removed. This removes `MessageType.Save` from `protocol-definitions`, `save;${string}: ${string}` from `SummarizeReason` in the `container-runtime` package, and `MessageFactory.createSave()` from and `server-test-utils`.
+
+### `readonly` removed from `DeltaManager` and `IDeltaManager`
+The `readonly` property was deprecated and has now been removed from `IDeltaManager` and `DeltaManager` from `container-definitions` and `container-loader` respectively. To replace its functionality, use `readOnlyInfo.readonly` instead.
 
 ## 0.55 Breaking changes
 - [`container-loader` interfaces return `IQuorumClients` rather than `IQuorum`](#container-loader-interfaces-return-IQuorumClients-rather-than-IQuorum)
