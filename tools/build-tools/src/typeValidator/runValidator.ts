@@ -15,7 +15,7 @@ program
     .option('-v|--verbose', 'Verbose logging mode')
     .parse(process.argv);
 
-const logForPackages: Set<string> | undefined = new Set(program.packages);
+const logForPackages: Set<string> | undefined = new Set([program.packages]);
 if (program.verbose !== undefined) {
     enableLogging(true);
 }
