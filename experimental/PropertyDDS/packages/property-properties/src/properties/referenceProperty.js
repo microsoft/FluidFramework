@@ -32,12 +32,10 @@ export class ReferenceProperty extends ValueProperty {
     * @category Properties
     */
     constructor(in_params) {
-        super({ typeid: 'Reference', ...in_params });
+        super(in_params);
         // default for this property type is an empty string
         this._data = '';
     };
-
-    _castFunctor = _castFunctors.String;
 
     /**
      * Evaluates Reference properties as primitives.
@@ -214,3 +212,5 @@ export class ReferenceProperty extends ValueProperty {
     }
 
 }
+ReferenceProperty.prototype._castFunctor = _castFunctors.String;
+ReferenceProperty.prototype._typeid = "Reference";

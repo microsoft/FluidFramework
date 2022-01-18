@@ -31,7 +31,7 @@ export class SharedXTree extends SharedObject
         return runtime.createChannel(id, SharedXTreeFactory.Type) as SharedXTree;
     }
 
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         throw new Error("not implemented");
     }
 

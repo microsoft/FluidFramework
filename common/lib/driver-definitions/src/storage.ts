@@ -98,6 +98,11 @@ export interface IDocumentStorageServicePolicies {
     // If this policy is provided, it tells runtime on ideal size for blobs
     // Blobs that are smaller than that size should be aggregated into bigger blobs
     readonly minBlobSize?: number;
+
+    /**
+     * This policy tells the runtime that the driver will not use cached snapshots older than this value.
+     */
+    readonly snapshotCacheExpiryTimeoutMs?: number;
 }
 
 /**
