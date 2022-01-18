@@ -1,5 +1,22 @@
 # Change Log
 
+## 18.0.0
+
+* refactor: BREAKING CHANGE: Template TraitLocation over ID
+  * Associated pull request: [37156](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/37156)
+  * Commit: [d6081263a30e1c263d6664392d994e96d9499784](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d6081263a30e1c263d6664392d994e96d9499784)
+* refactor: Move `getChangeNodeFromView()` into TreeView
+  * Associated pull request: [37146](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/37146)
+  * Commit: [e78754e8a838a5fcff7e28508a46a08ef96eefb8](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/e78754e8a838a5fcff7e28508a46a08ef96eefb8)
+* build: BREAKING CHANGE: dummy change to make up for PR37076
+  * Associated pull request: [37113](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/37113)
+  * Commit: [03b8c9cdccc37f0d335d6fac45ea2e7af435ac4d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/03b8c9cdccc37f0d335d6fac45ea2e7af435ac4d)
+* Merge remote-tracking branch 'origin/releases/2022.01.2' into user/achardy/merge-2022.01.2-to-master
+  * Commit: [7e403faa3e443e6817ea38c3baf8668c90f684b0](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/7e403faa3e443e6817ea38c3baf8668c90f684b0)
+* docs: adds documentation to the exported types and functions in Transaction.ts
+  * Associated pull request: [36315](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/36315)
+  * Commit: [990f29fc12443dd48493cdaaa11bc36b1c134b95](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/990f29fc12443dd48493cdaaa11bc36b1c134b95)
+
 ## 16.8.2
 
 * build: BREAKING CHANGE: update fluidframework to 0.54
