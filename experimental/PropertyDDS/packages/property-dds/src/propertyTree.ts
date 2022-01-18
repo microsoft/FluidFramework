@@ -413,7 +413,8 @@ export class SharedPropertyTree extends SharedObject {
 			const serializedSummary = packr.pack(summary);
 
 			for (let pos = 0, i = 0; pos < serializedSummary.length; pos += chunkSize, i++) {
-				builder.addBlob(`summaryChunk_${i}`, bufferToString(serializedSummary.slice(pos, pos + chunkSize), "base64"));
+				builder.addBlob(`summaryChunk_${i}`,
+								bufferToString(serializedSummary.slice(pos, pos + chunkSize), "base64"));
 				snapshot.numChunks++;
 			}
 		}
