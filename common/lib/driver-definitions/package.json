@@ -117,6 +117,27 @@
         },
         "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IDriverBasicError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IThrottlingWarning": {
+          "backCompat": false
+        },
+        "EnumDeclaration_DriverErrorType": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IGenericNetworkError": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_DriverError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IAuthorizationError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDriverErrorBase": {
+          "backCompat": false
         }
       },
       "0.41.0": {
@@ -131,6 +152,27 @@
         },
         "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IDriverBasicError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IThrottlingWarning": {
+          "backCompat": false
+        },
+        "EnumDeclaration_DriverErrorType": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IGenericNetworkError": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_DriverError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IAuthorizationError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDriverErrorBase": {
+          "backCompat": false
         }
       },
       "0.42.0": {
@@ -141,6 +183,50 @@
           "backCompat": false
         },
         "InterfaceDeclaration_IDocumentServiceFactory": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDriverBasicError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IThrottlingWarning": {
+          "backCompat": false
+        },
+        "EnumDeclaration_DriverErrorType": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IGenericNetworkError": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_DriverError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IAuthorizationError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDriverErrorBase": {
+          "backCompat": false
+        }
+      },
+      "0.43.0": {
+        "InterfaceDeclaration_IDriverBasicError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IThrottlingWarning": {
+          "backCompat": false
+        },
+        "EnumDeclaration_DriverErrorType": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IGenericNetworkError": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_DriverError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IAuthorizationError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDriverErrorBase": {
           "backCompat": false
         }
       }

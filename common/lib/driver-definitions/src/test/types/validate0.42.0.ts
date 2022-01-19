@@ -31,6 +31,7 @@ declare function get_current_TypeAliasDeclaration_DriverError():
 declare function use_old_TypeAliasDeclaration_DriverError(
     use: old.DriverError);
 use_old_TypeAliasDeclaration_DriverError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_DriverError());
 
 /*
@@ -55,6 +56,7 @@ declare function get_current_EnumDeclaration_DriverErrorType():
 declare function use_old_EnumDeclaration_DriverErrorType(
     use: old.DriverErrorType);
 use_old_EnumDeclaration_DriverErrorType(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_DriverErrorType());
 
 /*
@@ -127,6 +129,7 @@ declare function get_current_InterfaceDeclaration_IAuthorizationError():
 declare function use_old_InterfaceDeclaration_IAuthorizationError(
     use: old.IAuthorizationError);
 use_old_InterfaceDeclaration_IAuthorizationError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAuthorizationError());
 
 /*
@@ -394,6 +397,7 @@ declare function get_current_InterfaceDeclaration_IDriverBasicError():
 declare function use_old_InterfaceDeclaration_IDriverBasicError(
     use: old.IDriverBasicError);
 use_old_InterfaceDeclaration_IDriverBasicError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDriverBasicError());
 
 /*
@@ -418,6 +422,7 @@ declare function get_current_InterfaceDeclaration_IDriverErrorBase():
 declare function use_old_InterfaceDeclaration_IDriverErrorBase(
     use: old.IDriverErrorBase);
 use_old_InterfaceDeclaration_IDriverErrorBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDriverErrorBase());
 
 /*
@@ -490,6 +495,7 @@ declare function get_current_InterfaceDeclaration_IGenericNetworkError():
 declare function use_old_InterfaceDeclaration_IGenericNetworkError(
     use: old.IGenericNetworkError);
 use_old_InterfaceDeclaration_IGenericNetworkError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGenericNetworkError());
 
 /*
@@ -634,6 +640,7 @@ declare function get_current_InterfaceDeclaration_IThrottlingWarning():
 declare function use_old_InterfaceDeclaration_IThrottlingWarning(
     use: old.IThrottlingWarning);
 use_old_InterfaceDeclaration_IThrottlingWarning(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IThrottlingWarning());
 
 /*

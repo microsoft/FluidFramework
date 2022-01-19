@@ -20,6 +20,11 @@ export enum DriverErrorType {
     genericNetworkError = "genericNetworkError",
 
     /**
+     * Error indicating an API is being used improperly resulting in an invalid operation.
+     */
+    usageError = "driverUsageError",
+
+    /**
      * Access denied - user does not have enough privileges to open a file, or continue to operate on a file
      */
     authorizationError = "authorizationError",
@@ -110,6 +115,7 @@ export interface IAuthorizationError extends IDriverErrorBase {
 export interface IDriverBasicError extends IDriverErrorBase {
     readonly errorType:
     DriverErrorType.genericError
+    | DriverErrorType.usageError
     | DriverErrorType.fileNotFoundOrAccessDeniedError
     | DriverErrorType.offlineError
     | DriverErrorType.unsupportedClientProtocolVersion
