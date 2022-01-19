@@ -18,13 +18,14 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { PerformanceEvent, isFluidError, normalizeError } from "@fluidframework/telemetry-utils";
-import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse } from "./odspUtils";
+import { fetchAndParseAsJSONHelper, fetchArray, getOdspResolvedUrl, IOdspResponse } from "./odspUtils";
 import {
     IOdspCache,
     INonPersistentCache,
     IPersistedFileCache,
  } from "./odspCache";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
+import { ClpCompliantAppHeader } from "./contractsPublic";
 
 export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" |
     "treesLatest" | "uploadSummary" | "push" | "versions";
@@ -250,6 +251,10 @@ export class EpochTracker implements IPersistedFileCache {
             headers["X-RequestStats"] = clientCorrelationId;
             if (this.fluidEpoch !== undefined) {
                 headers["x-fluid-epoch"] = this.fluidEpoch;
+            }
+            const isClpCompliantApp = getOdspResolvedUrl(this.fileEntry.resolvedUrl).isClpCompliantApp;
+            if (isClpCompliantApp) {
+                headers[ClpCompliantAppHeader.isClpCompliantApp] = isClpCompliantApp.toString();
             }
             this.addParamInBody(fetchOptions, headers);
         } else {
