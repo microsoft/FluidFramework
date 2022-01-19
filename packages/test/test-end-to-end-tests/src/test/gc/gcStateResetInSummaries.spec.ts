@@ -238,22 +238,22 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
             true /* shouldRegenerateSummary */,
         );
 
-        // Validate that GC does not run and the summary should be regenerated again. The summary is regenerated only
-        // the first time GC is disabled after it was enabled before.
+        // Validate that GC does not run and the summary is not regenerated again. The summary is regenerated
+        // only the first time GC is disabled after it was enabled before.
         await validateGCState(
             summarizerClient2,
             false /* shouldGCRun */,
             false /* shouldRegenerateSummary */,
         );
 
-        // Load a new summarizer from the last summary with GC still disabled. Validate that summary is NOT regenerated
-        // by this client since the summary doesn't have any GC state.
+        // Load a new summarizer from the last summary with GC still disabled.
         const summarizerClient3 = await getNewSummarizer(
             true /* disableGC */,
             undefined /* gcAllowed */,
             latestAckedSummary.summaryAck.contents.handle,
         );
-        // Validate that GC does not run and the summary is regenerated because GC was disabled.
+        // Validate that GC does not run and the summary is not regenerated again in a new client as well. The
+        // summary is regenerated only the first time GC is disabled after it was enabled before.
         await validateGCState(
             summarizerClient3,
             false /* shouldGCRun */,
