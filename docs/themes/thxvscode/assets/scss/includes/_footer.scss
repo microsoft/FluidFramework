@@ -88,7 +88,7 @@ footer {
 }
 
 .ctas {
-  height: $ctaHeight;
+  min-height: $ctaHeight;
   width: 100%;
   position: absolute;
   bottom: $footerheight;
@@ -99,6 +99,15 @@ footer {
   align-content: center;
   flex-wrap: wrap;
   flex-direction: row;
+
+  p a {
+    color: $banner-link-color;
+  }
+}
+
+.cta-icon-wrapper {
+  display: flex;
+  flex-flow: column;
 }
 
 // under 767px
@@ -116,9 +125,18 @@ footer {
   //   display: block;
   //   margin-left: 0;
   // }
+  .cta-icon-wrapper {
+    display: flex;
+    flex-flow: column;
+  }
   .ctas {
-    height: $ctaHeight;
+    min-height: $ctaHeight;
     bottom: $footerheight;
+
+    .cta {
+      padding-top: 0;
+      padding-bottom: 0;
+    }
   }
 }
 
@@ -155,7 +173,7 @@ footer {
   //   margin-left: 0;
   // }
   .ctas {
-    height: $ctaHeight;
+    min-height: $ctaHeight;
     // min-height: $ctaHeight;
     bottom: $footerheight;
   }

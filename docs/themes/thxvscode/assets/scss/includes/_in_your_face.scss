@@ -4,6 +4,9 @@
     background-color: $header-background;
     color: white;
     padding: 0;
+    a {
+      color: $banner-link-color;
+    }
     &.home {
       text-align: center;
       overflow: visible;
