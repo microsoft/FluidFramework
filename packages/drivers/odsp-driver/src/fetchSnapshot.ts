@@ -88,7 +88,7 @@ export async function fetchSnapshotWithRedeem(
     removeEntries: () => Promise<void>,
     enableRedeemFallback?: boolean,
 ): Promise<ISnapshotContents> {
-    // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are 0.51+
+    // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
     if(sharingLinkToRedeem) {
         odspResolvedUrl.shareLinkInfo = {...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem}
@@ -471,7 +471,7 @@ export async function downloadSnapshot(
     controller?: AbortController,
     epochTracker?: EpochTracker,
 ): Promise<ISnapshotRequestAndResponseOptions> {
-    // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are 0.51+
+    // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
     if(sharingLinkToRedeem) {
         odspResolvedUrl.shareLinkInfo = {...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem}
