@@ -1805,7 +1805,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async fetchSnapshotTree(specifiedVersion: string | undefined):
         Promise<{snapshot?: ISnapshotTree; versionId?: string}>
     {
-        const version = await this.getVersion(specifiedVersion ?? null);
+        const version = await this.getVersion(specifiedVersion ?? this._resolvedUrl?.id ?? null);
 
         if (version === undefined && specifiedVersion !== undefined) {
             // We should have a defined version to load from if specified version requested
