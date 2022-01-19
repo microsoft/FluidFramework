@@ -125,7 +125,6 @@ export class SharedSegmentSequenceRevertible implements IRevertible {
                                     undefined);
                             }
                             break;
-                        // fallthrough
                         default:
                             throw new Error("operationt type not revertible");
                     }
