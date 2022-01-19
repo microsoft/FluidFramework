@@ -76,8 +76,8 @@ describe("Loader", () => {
                     processSignal() { },
                 });
 
-                await new Promise((accept) => {
-                    deltaManager.on("connect", accept);
+                await new Promise((resolve) => {
+                    deltaManager.on("connect", resolve);
                     deltaManager.connect({ reason: "test" });
                 });
             }

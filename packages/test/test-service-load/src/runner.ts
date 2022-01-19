@@ -291,14 +291,14 @@ function scheduleContainerClose(
     runConfig: IRunConfig,
     faultInjectionMinMs: number,
     faultInjectionMaxMs: number) {
-    new Promise<void>((res) => {
+    new Promise<void>((resolve) => {
         // wait for the container to connect write
-        container.once("closed", () => res);
+        container.once("closed", () => resolve);
         // TODO: Remove null check after next release #8523
         if (container.connected !== undefined && !container.connected && !container.closed) {
             container.once("connected", () => {
-                res();
-                container.off("closed", () => res);
+                resolve();
+                container.off("closed", () => resolve);
             });
         }
     }).then(() => {

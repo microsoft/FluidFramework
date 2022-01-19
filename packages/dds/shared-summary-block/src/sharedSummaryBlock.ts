@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
@@ -16,6 +15,7 @@ import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     createSingleBlobSummary,
+    IFluidSerializer,
     SharedObject,
 } from "@fluidframework/shared-object-base";
 import { SharedSummaryBlockFactory } from "./sharedSummaryBlockFactory";
@@ -92,7 +92,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
      */
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         const contentsBlob: ISharedSummaryBlockDataSerializable = {};
         this.data.forEach((value, key) => {
             contentsBlob[key] = value;

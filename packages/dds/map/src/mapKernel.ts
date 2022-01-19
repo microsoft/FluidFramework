@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
-import { ValueType } from "@fluidframework/shared-object-base";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ISerializableValue,
@@ -262,6 +262,7 @@ export class MapKernel {
 
     /**
      * {@inheritDoc ISharedMap.wait}
+     * @deprecated 0.55 - This method will be removed in an upcoming release.  See BREAKING.md for migration options.
      */
     public async wait<T = any>(key: string): Promise<T> {
         // Return immediately if the value already exists

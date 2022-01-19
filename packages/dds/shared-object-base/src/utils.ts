@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IFluidHandle,
-    IFluidSerializer,
-} from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { IFluidSerializer } from "./serializer";
 
 /**
  * Given a mostly-plain object that may have handle objects embedded within, return a string representation of an object
@@ -19,7 +17,6 @@ import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
  * @param bind - Bind any other handles we find in the object against this given handle.
  * @returns Result of strigifying an object
  */
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function serializeHandles(
     value: any,
     serializer: IFluidSerializer,
@@ -45,14 +42,13 @@ export function serializeHandles(
  * @param bind - Bind any other handles we find in the object against this given handle.
  * @returns The fully-plain object
  */
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function makeHandlesSerializable(
     value: any,
     serializer: IFluidSerializer,
     bind: IFluidHandle,
 ) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return serializer.replaceHandles(
+    return serializer.encode(
         value,
         bind);
 }
@@ -65,7 +61,6 @@ export function makeHandlesSerializable(
  * @param context - The handle context for the container
  * @returns The mostly-plain object with handle objects within
  */
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function parseHandles(
     value: any,
     serializer: IFluidSerializer,

@@ -4,7 +4,6 @@
  */
 
 import { assert, bufferToString } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
@@ -12,7 +11,7 @@ import {
     IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { createSingleBlobSummary, SharedObject } from "@fluidframework/shared-object-base";
+import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 
 interface ISequencedOpInfo<TOp> {
     client: string;
@@ -74,7 +73,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
      */
     protected abstract transform(input: TOp, transform: TOp): TOp;
 
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         // Summarizer must not have locally pending changes.
         assert(this.pendingOps.length === 0, 0);
 

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IFluidDataStoreRuntime,
@@ -11,6 +10,7 @@ import {
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import {
+    IFluidSerializer,
     SharedObject,
 } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
@@ -31,7 +31,7 @@ export class SharedXTree extends SharedObject
         return runtime.createChannel(id, SharedXTreeFactory.Type) as SharedXTree;
     }
 
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         throw new Error("not implemented");
     }
 

@@ -127,7 +127,10 @@ export interface IContainerContext extends IDisposable {
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: ILoaderOptions;
-    readonly configuration: IFluidConfiguration;
+    /**
+     * @deprecated 0.45 - Configuration is not recommended to be used and will be removed in an upcoming release.
+     */
+    readonly configuration?: IFluidConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly storage: IDocumentStorageService;

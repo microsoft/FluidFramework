@@ -133,6 +133,9 @@ export class ContainerContext implements IContainerContext {
         return this.container.options;
     }
 
+    /**
+     * @deprecated 0.55 - Configuration is not recommended to be used and will be removed in an upcoming release.
+     */
     public get configuration(): IFluidConfiguration {
         const config: Partial<IFluidConfiguration> = {
             scopes: this.container.scopes,

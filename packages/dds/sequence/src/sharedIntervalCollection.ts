@@ -4,7 +4,6 @@
  */
 
 import { bufferToString } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
@@ -16,6 +15,7 @@ import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
     createSingleBlobSummary,
+    IFluidSerializer,
     SharedObject,
 } from "@fluidframework/shared-object-base";
 import {
@@ -145,7 +145,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         return sharedCollection;
     }
 
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         return createSingleBlobSummary(snapshotFileName, this.intervalMapKernel.serialize(serializer));
     }
 

@@ -104,9 +104,10 @@ interface ISerializeOptions {
  */
 export abstract class BaseProperty {
     protected _id: string | undefined;
-    protected _isConstant: boolean = false;
+    protected _isConstant: boolean;
     protected _dirty: MODIFIED_STATE_FLAGS;
     protected _typeid: string;
+    protected _context: string;
     protected _parent: BaseProperty | undefined;
     protected _noDirtyInBase: boolean;
 
@@ -116,25 +117,24 @@ export abstract class BaseProperty {
 
     constructor(in_params: IBasePropertyParams) {
         // Pre-conditions
-        ConsoleUtils.assert(in_params, MSG.PROP_CONSTRUCTOR_EXPECTS_OBJECTS);
-
-        const defaultParams = {
-            typeid: 'BaseProperty'
-        };
-
-        in_params = _.merge(defaultParams, in_params);
+        // This test has been disabled for performance reasons, if it would be incorrect,
+        // the next line will throw anyways
+        // ConsoleUtils.assert(in_params, MSG.PROP_CONSTRUCTOR_EXPECTS_OBJECTS);
 
         if (this._id !== in_params.id) {
             this._id = in_params.id;
         }
 
         // Makes sure context value is fine
-        ConsoleUtils.assert(!in_params.context || in_params.context === this._context,
-            MSG.CONTEXT_NOT_AS_EXPECTED + this._context + ' != ' + in_params.context);
+        // This assertion has been disabled for performance reasons. This is not a user facing
+        // constructor function and therefore we rely on PropertyFactory to correctly provide the context.
+        /* ConsoleUtils.assert(!in_params.context || in_params.context === this._context,
+            MSG.CONTEXT_NOT_AS_EXPECTED + this._context + ' != ' + in_params.context); */
 
         // Sets typeid if default value is not fine
-        if (in_params.typeid && in_params.typeid !== this._typeid) {
-            this._typeid = in_params.typeid;
+        let typeId = in_params.typeid || 'BaseProperty';
+        if (typeId !== this._typeid) {
+            this._typeid = typeId;
         }
 
         this._parent = undefined;
@@ -147,10 +147,6 @@ export abstract class BaseProperty {
     static MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS;
     static REFERENCE_RESOLUTION = REFERENCE_RESOLUTION;
     static PATH_TOKENS = PATH_TOKENS;
-
-    get _context() {
-        return 'single';
-    }
 
     /**
      * @returns The typeid of this property
@@ -1321,3 +1317,7 @@ export abstract class BaseProperty {
     }
 
 }
+
+(BaseProperty as any).prototype._isConstant = false;
+(BaseProperty as any).prototype._context = 'single';
+(BaseProperty as any).prototype._typeid = 'BaseProperty';

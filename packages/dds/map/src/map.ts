@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
@@ -15,6 +14,7 @@ import {
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
+    IFluidSerializer,
     SharedObject,
 } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
@@ -210,6 +210,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 
     /**
      * {@inheritDoc ISharedMap.wait}
+     * @deprecated 0.55 - This method will be removed in an upcoming release.  See BREAKING.md for migration options.
      */
     public async wait<T = any>(key: string): Promise<T> {
         return this.kernel.wait<T>(key);
@@ -252,7 +253,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
      * @internal
      */
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         let currentSize = 0;
         let counter = 0;
         let headerBlob: IMapDataObjectSerializable = {};

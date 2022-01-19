@@ -4,15 +4,14 @@
  */
 
 import { assert , bufferToString, unreachableCase } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { SharedObject } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import {
@@ -180,7 +179,7 @@ export class ConsensusOrderedCollection<T = any>
         } while (!(await this.acquire(callback)));
     }
 
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         // If we are transitioning from unattached to attached mode,
         // then we are losing all checked out work!
         this.removeClient(idForLocalUnattachedClient);

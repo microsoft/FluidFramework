@@ -10,7 +10,7 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
+import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IMatrixConsumer } from '@tiny-calc/nano';
 import { IMatrixProducer } from '@tiny-calc/nano';
 import { IMatrixReader } from '@tiny-calc/nano';
@@ -93,7 +93,7 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     // (undocumented)
     protected submitLocalMessage(message: any, localOpMetadata?: any): void;
     // (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     // (undocumented)
     toString(): string;
     // @internal (undocumented)

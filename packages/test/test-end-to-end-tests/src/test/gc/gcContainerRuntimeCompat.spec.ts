@@ -15,11 +15,14 @@ import {
 } from "@fluidframework/container-runtime";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { channelsTreeName, IGarbageCollectionDetailsBase } from "@fluidframework/runtime-definitions";
+import {
+    channelsTreeName,
+    IContainerRuntimeBase,
+    IGarbageCollectionDetailsBase } from "@fluidframework/runtime-definitions";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
-
 import { pkgVersion } from "../../packageVersion";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
 import { loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSummarizerClient";
@@ -44,13 +47,15 @@ describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => 
         gcOptions: { gcAllowed: true },
     };
 
+    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+        runtime.IFluidHandleContext.resolveHandle(request);
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         dataObjectFactory,
         [
             [dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
         ],
         undefined,
-        undefined,
+        [innerRequestHandler],
         runtimeOptions,
     );
     const logger = new TelemetryNullLogger();
@@ -104,7 +109,7 @@ describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => 
                 [dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
             ],
             undefined,
-            undefined,
+            [innerRequestHandler],
             runtimeOptions,
         );
     }

@@ -6,7 +6,6 @@
 import { EventEmitter } from "events";
 
 import { assert } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
@@ -16,7 +15,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { createSingleBlobSummary, SharedObject } from "@fluidframework/shared-object-base";
+import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { TaskManagerFactory } from "./taskManagerFactory";
 import { ITaskManager, ITaskManagerEvents } from "./interfaces";
 
@@ -264,7 +263,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         }
 
         // This promise works even if we already have an outstanding volunteer op.
-        const lockAcquireP = new Promise<void>((res, rej) => {
+        const lockAcquireP = new Promise<void>((resolve, reject) => {
             const checkIfAcquiredLock = (eventTaskId: string) => {
                 if (eventTaskId !== taskId) {
                     return;
@@ -277,7 +276,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                     this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                     this.abandonWatcher.off("abandon", checkIfAbandoned);
                     this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
-                    res();
+                    resolve();
                 }
             };
 
@@ -289,14 +288,14 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
                 this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
-                rej(new Error(`Abandoned before acquiring lock: ${taskId}`));
+                reject(new Error(`Abandoned before acquiring lock: ${taskId}`));
             };
 
             const rejectOnDisconnect = () => {
                 this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
                 this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
-                rej(new Error(`Disconnected before acquiring lock: ${taskId}`));
+                reject(new Error(`Disconnected before acquiring lock: ${taskId}`));
             };
 
             this.queueWatcher.on("queueChange", checkIfAcquiredLock);
@@ -364,7 +363,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * @returns the summary of the current state of the task manager
      * @internal
      */
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         // TODO filter out tasks with no clients, some are still getting in.
         const content = [...this.taskQueues.entries()];
         return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
