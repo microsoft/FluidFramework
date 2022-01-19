@@ -11,6 +11,7 @@ export {
     ISummaryRuntimeOptions,
     IContainerRuntimeOptions,
     isRuntimeMessage,
+    RuntimeMessage,
     unpackRuntimeMessage,
     ScheduleManager,
     agentSchedulerId,

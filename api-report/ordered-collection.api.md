@@ -48,7 +48,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
     // (undocumented)
     protected releaseCore(acquireId: string): void;
     // (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
 }
 

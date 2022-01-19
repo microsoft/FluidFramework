@@ -102,7 +102,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     // @internal
     protected reSubmitCore(): void;
     // @internal
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     }
 
 

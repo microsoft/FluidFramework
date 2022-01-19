@@ -92,7 +92,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
      */
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         const contentsBlob: ISharedSummaryBlockDataSerializable = {};
         this.data.forEach((value, key) => {
             contentsBlob[key] = value;

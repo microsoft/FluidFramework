@@ -10,6 +10,12 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.56 Breaking Changes
+- [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
+
+### `MessageType.Save` and code that handled it was removed
+The `Save` operation type was deprecated and has now been removed. This removes `MessageType.Save` from `protocol-definitions`, `save;${string}: ${string}` from `SummarizeReason` in the `container-runtime` package, and `MessageFactory.createSave()` from and `server-test-utils`.
+
 ## 0.55 Breaking changes
 - [`container-loader` interfaces return `IQuorumClients` rather than `IQuorum`](#container-loader-interfaces-return-IQuorumClients-rather-than-IQuorum)
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)

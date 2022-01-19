@@ -8,6 +8,7 @@ import isEmpty from "lodash/isEmpty";
 import findIndex from "lodash/findIndex";
 import range from "lodash/range";
 import {copy as cloneDeep} from "fastest-json-copy";
+import { Packr } from "msgpackr";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import {
@@ -24,7 +25,7 @@ import {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 
-import { bufferToString, assert } from "@fluidframework/common-utils";
+import { bufferToString, stringToBuffer, assert } from "@fluidframework/common-utils";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
@@ -389,7 +390,7 @@ export class SharedPropertyTree extends SharedObject {
 		this.remoteChanges = remoteChanges;
 		this.unrebasedRemoteChanges = unrebasedRemoteChanges;
 	}
-	public summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+	public summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		this.pruneHistory();
 		const snapshot: ISnapshot = {
 			branchGuid: this.handle.absolutePath.split("/").pop() as string,
@@ -408,23 +409,12 @@ export class SharedPropertyTree extends SharedObject {
 				unrebasedRemoteChanges: this.unrebasedRemoteChanges,
 			};
 			const chunkSize = 5000 * 1024; // Default limit seems to be 5MB
-			let serializedSummary = JSON.stringify(summary);
-				// serializer !== undefined ? serializer.stringify(summary, this.handle) : JSON.stringify(summary);
-
-			// JSON.stringify does not escape unicode characters. As a consequence,
-			// the chunking code below could create chunks which are bigger than the
-			// allowed limit after encoding the JSON via UTF8 encoding. To make sure
-			// the encoded string stays within the size limit, we replace unicode characters
-			// with the corresponding escapes. This way, it won't change size when encoded as
-			// utf8
-			serializedSummary = serializedSummary.replace(
-				/[\u007F-\uFFFF]/g,
-				// eslint-disable-next-line prefer-template
-				(c) => `\\u${("0000" + c.charCodeAt(0).toString(16)).substr(-4)}`,
-			);
+			const packr = new Packr();
+			const serializedSummary = packr.pack(summary);
 
 			for (let pos = 0, i = 0; pos < serializedSummary.length; pos += chunkSize, i++) {
-				builder.addBlob(`summaryChunk_${i}`, serializedSummary.substr(pos, chunkSize));
+				builder.addBlob(`summaryChunk_${i}`,
+								bufferToString(serializedSummary.slice(pos, pos + chunkSize), "base64"));
 				snapshot.numChunks++;
 			}
 		}
@@ -446,15 +436,22 @@ export class SharedPropertyTree extends SharedObject {
 		try {
 			if (!snapshot.useMH) {
 				// We load all chunks
-				const chunks: string[] = await Promise.all(
+				const chunks: ArrayBufferLike[] = await Promise.all(
 					range(snapshot.numChunks).map(async (i) => {
-						return bufferToString(await storage.readBlob(`summaryChunk_${i}`), "utf8");
+						const buffer = bufferToString(await storage.readBlob(`summaryChunk_${i}`), "utf8");
+						return stringToBuffer(buffer, "base64");
 					}),
 				);
 
-				const serializedSummary = chunks.reduce((a, b) => a + b, "");
-				const snapshotSummary: ISnapshotSummary = JSON.parse(serializedSummary);
-					// serializer !== undefined ? serializer.parse(serializedSummary) : JSON.parse(serializedSummary);
+				const totalLength = chunks.reduce((a, b) => a + b.byteLength, 0);
+				const serializedSummary = new Uint8Array(totalLength);
+				chunks.reduce((offset, chunk) => {
+					serializedSummary.set(new Uint8Array(chunk), offset);
+					return offset + chunk.byteLength;
+				}, 0);
+
+				const packr = new Packr();
+				const snapshotSummary = packr.unpack(serializedSummary);
 				if (
 					snapshotSummary.remoteChanges === undefined ||
 					snapshotSummary.remoteTipView === undefined ||

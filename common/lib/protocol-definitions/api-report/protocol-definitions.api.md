@@ -647,8 +647,6 @@ export enum MessageType {
     // (undocumented)
     RoundTrip = "tripComplete",
     // (undocumented)
-    Save = "saveOp",
-    // (undocumented)
     Summarize = "summarize",
     // (undocumented)
     SummaryAck = "summaryAck",

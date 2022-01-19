@@ -42,7 +42,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     // @internal (undocumented)
     protected registerCore(): void;
     // @internal
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     get value(): number;
     }
 
