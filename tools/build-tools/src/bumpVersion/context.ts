@@ -17,7 +17,7 @@ import { logVerbose } from "../common/logging";
 
 import * as semver from "semver";
 
-export type VersionBumpType = "minor" | "patch";
+export type VersionBumpType = "major" | "minor" | "patch";
 export type VersionChangeType = VersionBumpType | semver.SemVer;
 
 export class Context {
