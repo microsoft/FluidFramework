@@ -29,7 +29,7 @@ export interface PackageResult {
     brokenTypes: BrokenTypes,
 }
 
-interface DecompositionTypeData extends TypeData {
+export interface DecompositionTypeData extends TypeData {
     classData?: ClassData,
 }
 
@@ -118,7 +118,7 @@ export function validatePackage(
     return { increment: pkgIncrement, brokenTypes: pkgBrokenTypes };
 }
 
-function tryDecomposeTypeData(typeChecker: TypeChecker, typeData: DecompositionTypeData): boolean {
+export function tryDecomposeTypeData(typeChecker: TypeChecker, typeData: DecompositionTypeData): boolean {
     if (typeData.classData !== undefined) {
         return true;
     } else if (Node.isClassDeclaration(typeData.node)) {
@@ -129,7 +129,7 @@ function tryDecomposeTypeData(typeChecker: TypeChecker, typeData: DecompositionT
     return true;
 }
 
-function checkMajorIncrement(
+export function checkMajorIncrement(
     project: Project,
     pkgDir: string,
     oldTypeData: DecompositionTypeData,
@@ -169,7 +169,7 @@ function checkMajorIncrement(
     return BreakingIncrement.none;
 }
 
-function checkMinorIncrement(
+export function checkMinorIncrement(
     project: Project,
     pkgDir: string,
     oldTypeData: DecompositionTypeData,

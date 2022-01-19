@@ -11,7 +11,11 @@ There are a few steps you can take to write a good change note and avoid needing
 - Consider providing code examples as part of guidance for non-trivial changes.
 
 ## 0.56 Breaking changes
+- [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
 - [Removed `IOdspResolvedUrl.sharingLinkToRedeem`](#Removed-IOdspResolvedUrl.sharingLinkToRedeem)
+
+### `MessageType.Save` and code that handled it was removed
+The `Save` operation type was deprecated and has now been removed. This removes `MessageType.Save` from `protocol-definitions`, `save;${string}: ${string}` from `SummarizeReason` in the `container-runtime` package, and `MessageFactory.createSave()` from and `server-test-utils`.
 
 ### Removed `IOdspResolvedUrl.sharingLinkToRedeem`
 The `sharingLinkToRedeem` property is removed from the `IOdspResolvedUrl` interface. The property can be accesed from `IOdspResolvedUrl.shareLinkInfo` instead.
