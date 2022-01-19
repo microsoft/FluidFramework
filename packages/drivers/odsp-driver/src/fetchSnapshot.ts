@@ -39,6 +39,7 @@ import { EpochTracker } from "./epochTracker";
  * @param storageFetchWrapper - Implementation of the get/post methods used to fetch the snapshot
  * @param versionId - id of specific snapshot to be fetched
  * @param fetchFullSnapshot - whether we want to fetch full snapshot(with blobs)
+ * @param forceAccessTokenViaAuthorizationHeader - whether to force passing given token via authorization header
  * @returns A promise of the snapshot and the status code of the response
  */
 export async function fetchSnapshot(
@@ -46,6 +47,7 @@ export async function fetchSnapshot(
     token: string | null,
     versionId: string,
     fetchFullSnapshot: boolean,
+    forceAccessTokenViaAuthorizationHeader: boolean,
     logger: ITelemetryLogger,
     snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshotContents> {
@@ -61,7 +63,8 @@ export async function fetchSnapshot(
     }
 
     const queryString = getQueryString(queryParams);
-    const { url, headers } = getUrlAndHeadersWithAuth(`${snapshotUrl}${path}${queryString}`, token);
+    const { url, headers } = getUrlAndHeadersWithAuth(
+        `${snapshotUrl}${path}${queryString}`, token, forceAccessTokenViaAuthorizationHeader);
     const response = await PerformanceEvent.timedExecAsync(
         logger,
         {
@@ -77,6 +80,7 @@ export async function fetchSnapshotWithRedeem(
     odspResolvedUrl: IOdspResolvedUrl,
     storageTokenFetcher: InstrumentedStorageTokenFetcher,
     snapshotOptions: ISnapshotOptions | undefined,
+    forceAccessTokenViaAuthorizationHeader: boolean,
     logger: ITelemetryLogger,
     snapshotDownloader: (
             finalOdspResolvedUrl: IOdspResolvedUrl,
@@ -103,7 +107,8 @@ export async function fetchSnapshotWithRedeem(
                 eventName: "RedeemFallback",
                 errorType: error.errorType,
             }, error);
-            await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
+            await redeemSharingLink(
+                odspResolvedUrl, storageTokenFetcher, logger, forceAccessTokenViaAuthorizationHeader);
             const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
                 { ...odspResolvedUrl, sharingLinkToRedeem: undefined };
 
@@ -141,6 +146,7 @@ async function redeemSharingLink(
     odspResolvedUrl: IOdspResolvedUrl,
     storageTokenFetcher: InstrumentedStorageTokenFetcher,
     logger: ITelemetryLogger,
+    forceAccessTokenViaAuthorizationHeader: boolean,
 ) {
     return PerformanceEvent.timedExecAsync(
         logger,
@@ -153,7 +159,8 @@ async function redeemSharingLink(
                 const storageToken = await storageTokenFetcher(tokenFetchOptions, "RedeemShareLink");
                 const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.sharingLinkToRedeem);
                 const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
-                const { url, headers } = getUrlAndHeadersWithAuth(redeemUrl, storageToken);
+                const { url, headers } = getUrlAndHeadersWithAuth(
+                    redeemUrl, storageToken, forceAccessTokenViaAuthorizationHeader);
                 headers.prefer = "redeemSharingLink";
                 return fetchAndParseAsJSONHelper(url, { headers });
         }),

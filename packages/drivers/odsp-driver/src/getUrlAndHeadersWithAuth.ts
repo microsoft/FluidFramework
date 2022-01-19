@@ -17,8 +17,11 @@ function getQueryStringLength(url: string): number {
     return url.length - queryParamStart - 1;
 }
 
-// eslint-disable-next-line max-len
-export function getUrlAndHeadersWithAuth(url: string, token: string | null): { url: string, headers: { [index: string]: string } } {
+export function getUrlAndHeadersWithAuth(
+    url: string,
+    token: string | null,
+    forceAccessTokenViaAuthorizationHeader: boolean,
+): { url: string, headers: { [index: string]: string } } {
     if (!token || token.length === 0) {
         return { url, headers: {} };
     }
@@ -32,7 +35,7 @@ export function getUrlAndHeadersWithAuth(url: string, token: string | null): { u
     if (tokenIsQueryParam) {
         // The token itself is a query param
         tokenQueryParam += token.substring(1);
-    } else {
+    } else if (!forceAccessTokenViaAuthorizationHeader) {
         tokenQueryParam += `access_token=${encodeURIComponent(token)}`;
     }
 
@@ -40,7 +43,8 @@ export function getUrlAndHeadersWithAuth(url: string, token: string | null): { u
     // We try to stick the access token in the URL to make it a simple XHR request and avoid an options call.
     // If the query string exceeds 2048, we have to fall back to sending the access token as a header, which
     // has a negative performance implication as it adds a performance overhead.
-    if (tokenIsQueryParam || getQueryStringLength(url + tokenQueryParam) <= 2048) {
+    if (tokenIsQueryParam ||
+        (!forceAccessTokenViaAuthorizationHeader && getQueryStringLength(url + tokenQueryParam) <= 2048)) {
         return {
             headers: {},
             url: url + tokenQueryParam,

@@ -8,7 +8,7 @@ import { assert, Uint8ArrayToString, unreachableCase } from "@fluidframework/com
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
-import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
+import { HostStoragePolicy, InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import { loggerToMonitoringContext, MonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IOdspSummaryPayload,
@@ -38,6 +38,7 @@ export class OdspSummaryUploadManager {
         private readonly getStorageToken: InstrumentedStorageTokenFetcher,
         logger: ITelemetryLogger,
         private readonly epochTracker: EpochTracker,
+        private readonly hostPolicy: HostStoragePolicy,
     ) {
         this.mc = loggerToMonitoringContext(logger);
     }
@@ -84,7 +85,11 @@ export class OdspSummaryUploadManager {
         return getWithRetryForTokenRefresh(async (options) => {
             const storageToken = await this.getStorageToken(options, "WriteSummaryTree");
 
-            const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/snapshot`, storageToken);
+            const { url, headers } = getUrlAndHeadersWithAuth(
+                `${this.snapshotUrl}/snapshot`,
+                storageToken,
+                !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+            );
             headers["Content-Type"] = "application/json";
             if (parentHandle) {
                 headers["If-Match"] = `fluid:containerid=${parentHandle}`;
