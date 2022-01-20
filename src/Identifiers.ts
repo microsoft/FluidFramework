@@ -16,18 +16,10 @@
 export type UuidString = string & { readonly UuidString: '9d40d0ae-90d9-44b1-9482-9f55d59d5465' };
 
 /**
- * A 128-bit Universally Unique IDentifier. Represented here
- * with a string of the form xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx,
- * where x is a lowercase hex digit.
- * @public
- */
-export type MinimalUuidString = string & { readonly MinimalUuidString: '1b423880d0bb474c9207966fb613c1e2' };
-
-/**
- * A version 4, variant 2 uuid (https://datatracker.ietf.org/doc/html/rfc4122) that has had its hyphens removed.
+ * A version 4, variant 2 uuid (https://datatracker.ietf.org/doc/html/rfc4122).
  * @internal
  */
-export type StableId = MinimalUuidString & { readonly StableId: '53172b0da3d541eabd75b43839c97f5a' };
+export type StableId = UuidString & { readonly StableId: '53172b0d-a3d5-41ea-bd75-b43839c97f5a' };
 
 /**
  * A StableId which is suitable for use as a session identifier

@@ -8,4 +8,3 @@
  */
 
 export * from './IdCompressor';
-export { expandUuidString, minimizeUuidString } from './NumericUuid';

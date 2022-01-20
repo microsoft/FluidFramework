@@ -6,15 +6,14 @@
 /* eslint-disable no-bitwise */
 
 import { v4 } from 'uuid';
-import { MinimalUuidString, SessionId } from '..';
 import { assert, fail } from '../Common';
-import { StableId, UuidString } from '../Identifiers';
+import { SessionId, StableId } from '../Identifiers';
 
 /**
  * A UUID (128 bit identifier) optimized for use as a 128 bit unsigned integer with fast addition and toString operations.
  * The string entry is the upper 76 bits of the uuid and the integer entry holds the lower 52 bits:
  * UUUUUUUU-UUUU-VUUU-vUUU-UUUUUUUUUUUU - the uuid
- * SSSSSSSS SSSS SSSS SSS               - array[0]: string
+ * SSSSSSSS-SSSS-SSSS-SSS               - array[0]: string
  *                       N NNNNNNNNNNNN - array[1]: integer
  * The integer keeps the common case cost of incrementing and computing deltas very low.
  * The string optimizes toString by caching the the majority of the resulting string.
@@ -25,7 +24,7 @@ export type NumericUuid = readonly [string, number] & {
 
 const bitsInNumericUuidInteger = 52; // Not tunable. Do not change.
 const nibblesInNumericUuidInteger = bitsInNumericUuidInteger / 4;
-const nibblesInNumericString = 32 - nibblesInNumericUuidInteger;
+const stringEntryLength = 22;
 const maxNumericUuidInteger = 2 ** bitsInNumericUuidInteger - 1;
 const fiftyThirdBit = 2 ** 52;
 
@@ -37,10 +36,10 @@ const fiftyThirdBit = 2 ** 52;
  * @returns undefined if the delta is negative or greater than `maxDelta`
  */
 export function getPositiveDelta(a: NumericUuid, b: NumericUuid, maxDelta: number): number | undefined {
-	const [stringA, lowNumberA] = a;
-	const [stringB, lowNumberB] = b;
+	const [stringEntryA, lowNumberA] = a;
+	const [stringEntryB, lowNumberB] = b;
 
-	if (stringA === stringB) {
+	if (stringEntryA === stringEntryB) {
 		const difference = lowNumberA - lowNumberB;
 		if (difference >= 0 && difference <= maxDelta) {
 			return difference;
@@ -48,8 +47,8 @@ export function getPositiveDelta(a: NumericUuid, b: NumericUuid, maxDelta: numbe
 		return undefined;
 	}
 
-	const highNumberA = Number.parseInt(stringA.substr(0, 12), 16);
-	const highNumberB = Number.parseInt(stringB.substr(0, 12), 16);
+	const highNumberA = Number.parseInt(ChunkMath.Upper.parse(stringEntryA), 16);
+	const highNumberB = Number.parseInt(ChunkMath.Upper.parse(stringEntryB), 16);
 
 	let subtractHigh = highNumberA - highNumberB;
 	if (Math.abs(subtractHigh) > 1) {
@@ -57,8 +56,8 @@ export function getPositiveDelta(a: NumericUuid, b: NumericUuid, maxDelta: numbe
 		return undefined;
 	}
 
-	let midNumberA = VariantChunk.getNumericValue(VariantChunk.getVariantChunk(stringA));
-	const midNumberB = VariantChunk.getNumericValue(VariantChunk.getVariantChunk(stringB));
+	let midNumberA = ChunkMath.getNumericValue(ChunkMath.Variant.parse(stringEntryA));
+	const midNumberB = ChunkMath.getNumericValue(ChunkMath.Variant.parse(stringEntryB));
 
 	let subtractLow = lowNumberA - lowNumberB;
 	if (subtractLow < 0) {
@@ -69,7 +68,7 @@ export function getPositiveDelta(a: NumericUuid, b: NumericUuid, maxDelta: numbe
 	let subtractMid = midNumberA - midNumberB;
 	if (subtractMid < 0) {
 		subtractHigh -= 1;
-		subtractMid += VariantChunk.twentyThirdBit;
+		subtractMid += ChunkMath.twentyThirdBit;
 	}
 
 	if (subtractHigh !== 0) {
@@ -105,51 +104,10 @@ export function stableIdFromNumericUuid(uuid: NumericUuid, offset = 0): StableId
 	const lowerAdd = uuid[1] + offset;
 	// Common fast-path
 	if (lowerAdd <= maxNumericUuidInteger) {
-		return (uuid[0] + padToLengthWithZeros(lowerAdd.toString(16), nibblesInNumericUuidInteger)) as StableId;
+		const lowerString = padToLengthWithZeros(lowerAdd.toString(16), nibblesInNumericUuidInteger);
+		return `${uuid[0] + lowerString.slice(0, 1)}-${lowerString.slice(1)}` as StableId;
 	}
 	return stableIdFromNumericUuid(incrementUuid(uuid, offset));
-}
-
-/**
- * @returns the supplied uuid with added separators.
- */
-export function expandUuidString(uuid: MinimalUuidString): UuidString {
-	if (uuid.length !== 32) {
-		if (uuid.length !== 36) {
-			fail(`${uuid} is not a uuid.`);
-		}
-		return uuid as unknown as UuidString;
-	}
-	return `${uuid.slice(0, 8)}-${uuid.slice(8, 12)}-${uuid.slice(12, 16)}-${uuid.slice(16, 20)}-${uuid.slice(
-		20,
-		32
-	)}` as UuidString;
-}
-
-/**
- * @returns the supplied uuid with "-" separators removed.
- */
-export function minimizeUuidString(uuid: string): MinimalUuidString {
-	if (uuid.length !== 32) {
-		if (uuid.length !== 36) {
-			fail(`${uuid} is not a uuid.`);
-		}
-		return `${uuid.slice(0, 8)}${uuid.slice(9, 13)}${uuid.slice(14, 18)}${uuid.slice(19, 23)}${uuid.slice(
-			24,
-			36
-		)}` as StableId;
-	}
-	return uuid as unknown as MinimalUuidString;
-}
-
-/**
- * @returns if the supplied string is a minimal uuid.
- */
-export function isMinimalUuidString(uuid: string): uuid is MinimalUuidString {
-	if (uuid.length !== 32) {
-		return false;
-	}
-	return true;
 }
 
 /**
@@ -158,8 +116,8 @@ export function isMinimalUuidString(uuid: string): uuid is MinimalUuidString {
  */
 export function numericUuidFromStableId(stableId: StableId): NumericUuid {
 	const uuid: (string | number)[] = new Array(2);
-	uuid[0] = stableId.substr(0, nibblesInNumericString);
-	uuid[1] = Number.parseInt(stableId.substr(nibblesInNumericString, nibblesInNumericUuidInteger), 16);
+	uuid[0] = stableId.slice(0, stringEntryLength);
+	uuid[1] = Number.parseInt(ChunkMath.Lower.parse(stableId), 16);
 	return uuid as readonly (number | string)[] as NumericUuid;
 }
 
@@ -167,28 +125,67 @@ export function numericUuidFromStableId(stableId: StableId): NumericUuid {
  * Asserts that the supplied uuid is a stable ID.
  */
 export function assertIsStableId(uuid: string): StableId {
-	assert(isMinimalUuidString(uuid));
-	assert(isStableId(uuid));
+	assert(isStableId(uuid), `${uuid} is not a StableId.`);
 	return uuid;
 }
 
+const charCode0 = '0'.charCodeAt(0);
+const charCode9 = '9'.charCodeAt(0);
+const charCodea = 'a'.charCodeAt(0);
+const charCodef = 'f'.charCodeAt(0);
+const charCodeA = 'A'.charCodeAt(0);
+const charCodeF = 'F'.charCodeAt(0);
+
 /**
- * Returns whether the supplied uuid is a v4 variant 2 uuid without separators.
+ * Returns whether the supplied string is a v4 variant 2 uuid.
  */
-export function isStableId(uuid: MinimalUuidString): uuid is StableId {
-	if (uuid.length !== 32) {
+export function isStableId(str: string): str is StableId {
+	if (str.length !== 36) {
 		return false;
 	}
 
-	const versionNibble = uuid.charAt(12);
-	if (versionNibble !== '4') {
-		return false;
+	for (let i = 0; i < str.length; i++) {
+		switch (i) {
+			case 8:
+			case 13:
+			case 18:
+			case 23: {
+				if (str.charAt(i) !== '-') {
+					return false;
+				}
+				break;
+			}
+
+			case 14: {
+				if (str.charAt(i) !== '4') {
+					return false;
+				}
+				break;
+			}
+
+			case 19: {
+				const c = str.charAt(i);
+				if (c !== '8' && c !== '9' && c !== 'a' && c !== 'b') {
+					return false;
+				}
+				break;
+			}
+
+			default: {
+				const code = str.charCodeAt(i);
+				const isUuidChar =
+					(code >= charCode0 && code <= charCode9) ||
+					(code >= charCodea && code <= charCodef) ||
+					(code >= charCodeA && code <= charCodeF);
+
+				if (!isUuidChar) {
+					return false;
+				}
+				break;
+			}
+		}
 	}
 
-	const variantNibble = uuid.charAt(16);
-	if (variantNibble !== '8' && variantNibble !== '9' && variantNibble !== 'a' && variantNibble !== 'b') {
-		return false;
-	}
 	return true;
 }
 
@@ -197,7 +194,7 @@ export function isStableId(uuid: MinimalUuidString): uuid is StableId {
  * This method (rather than standard uuid generation methods) should be used to generate session IDs.
  */
 export function createSessionId(): SessionId {
-	const uuid = assertIsStableId(minimizeUuidString(v4()));
+	const uuid = assertIsStableId(v4());
 	return ensureSessionUuid(uuid);
 }
 
@@ -234,12 +231,12 @@ export function incrementUuid(uuid: NumericUuid, amount: number): NumericUuid {
 		// The numeric UUID's number region has overflowed. We will need to carry the overflow into the variant chunk (see `VariantChunk`).
 		/** The amount left over after filling up the rest of the uuid's number region with the increment amount */
 		const remainder = amount - (maxNumericUuidInteger - uuid[1]) - 1;
-		const uuidString = uuid[0];
-		const [newVariantChunkString, carried] = VariantChunk.increment(uuidString);
+		const stringEntry = uuid[0];
+		const [newVariantChunkString, carried] = ChunkMath.increment(stringEntry);
 
 		if (carried) {
 			// The variant chunk itself also overflowed. We'll need to carry the overflow further, into the upper string region of the UUID.
-			const upperString = uuidString.substr(0, 12);
+			const upperString = ChunkMath.Upper.parse(stringEntry);
 			const upperNumber = Number.parseInt(upperString, 16);
 			assert(upperNumber <= maxUpperNumber);
 			const newUpperNumber = upperNumber + 1;
@@ -247,21 +244,27 @@ export function incrementUuid(uuid: NumericUuid, amount: number): NumericUuid {
 				fail('Exceeded maximum numeric UUID');
 			} else {
 				// The variant chunk overflowed but the upper string region did not. Splice in the incremented string region.
+				const newUpperChunk = padToLengthWithZeros(newUpperNumber.toString(16), 12);
 				newUuid = [
-					`${padToLengthWithZeros(newUpperNumber.toString(16), 12)}4${newVariantChunkString}`,
+					`${ChunkMath.Upper.hyphenate(newUpperChunk)}-4${ChunkMath.Variant.hyphenate(
+						newVariantChunkString
+					)}`,
 					remainder,
 				];
 			}
 		} else {
 			// The variant chunk did not overflow, so just splice it back in.
-			newUuid = [`${uuidString.substr(0, 12)}4${newVariantChunkString}`, remainder];
+			newUuid = [
+				`${ChunkMath.Upper.slice(stringEntry)}-4${ChunkMath.Variant.hyphenate(newVariantChunkString)}`,
+				remainder,
+			];
 		}
 	}
 
 	return newUuid as readonly [string, number] as NumericUuid;
 }
 
-namespace VariantChunk {
+namespace ChunkMath {
 	/*
 	 * Recall the UUID diagram from the top of this file which describes the layout of a Numeric UUID. To implement addition, we define
 	 * another region called the "variant chunk" which overlaps with the "string" region. Note that it is just beneath the required v4 uuid
@@ -294,6 +297,43 @@ namespace VariantChunk {
 
 	export const twentyThirdBit = 2 ** 22;
 
+	/** the upper chunk, denoted by 'U's in UUUUUUUU-UUUU-VVVV-vVVL-LLLLLLLLLLLL */
+	export namespace Upper {
+		export function parse(stringEntry: string): string {
+			return stringEntry.slice(0, 8) + stringEntry.slice(9, 13);
+		}
+
+		export function hyphenate(upperChunk: string): string {
+			return `${upperChunk.slice(0, 8)}-${upperChunk.slice(8)}`;
+		}
+
+		export function slice(stringEntry: string): string {
+			return stringEntry.slice(0, 13);
+		}
+	}
+
+	/** the variant chunk, denoted by 'V's in UUUUUUUU-UUUU-VVVV-vVVL-LLLLLLLLLLLL */
+	export namespace Variant {
+		export function parse(stringEntry: string): string {
+			return stringEntry.slice(15, 18) + stringEntry.slice(19, 22);
+		}
+
+		export function hyphenate(variantChunk: string): string {
+			return `${variantChunk.slice(0, 3)}-${variantChunk.slice(3)}`;
+		}
+	}
+
+	/** the lower chunk, denoted by 'L's in UUUUUUUU-UUUU-VVVV-vVVL-LLLLLLLLLLLL */
+	export namespace Lower {
+		export function parse(stableId: StableId): string {
+			return stableId.slice(stringEntryLength, stringEntryLength + 1) + stableId.slice(stringEntryLength + 2);
+		}
+
+		export function hyphenate(lowerChunk: string): string {
+			return `${lowerChunk.slice(0, 1)}-${lowerChunk.slice(1)}`;
+		}
+	}
+
 	/**
 	 * Returns the number representation of the given bits corresponding to the variant chunk. The value is derived by parsing all bits
 	 * except for reserved bits (i.e. the variant bits).
@@ -307,16 +347,12 @@ namespace VariantChunk {
 		return upperVariantBits + middleVariantBits + lowerVariantBits;
 	}
 
-	export function getVariantChunk(uuidString: string): string {
-		return uuidString.substr(13, 6);
-	}
-
 	/**
-	 * Given a hex string representing the variant chunk, add one to it.
+	 * Given the string portion of a numeric uuid, add one to it.
 	 * @returns the resulting hex string and whether or not the new value overflowed, i.e. it exceeds `maxVariantNumber`. In this case,
 	 * the resulting hex string will wrap around to its minimum value '000b00'
 	 */
-	export function increment(numericUuidString: string): [newVariantChunk: string, overflowed: boolean] {
+	export function increment(stringEntry: string): [newVariantChunk: string, overflowed: boolean] {
 		// To implement addition, the variant identifier bits are extracted from the variant chunk, the chunk is interpreted as a number,
 		// that number is incremented by 1, and then the variant identifier bits are returned as we convert the number back into a hex
 		// string.
@@ -333,7 +369,7 @@ namespace VariantChunk {
 
 		// 1. The variant chunk is given as a 6 character (6 nibble) hex string, where the fourth nibble contains the variant bits
 		// 2. The numerically important bits (i.e. not the variant identifier bits vv which are constant) are extracted into a single number
-		const variantChunk = getVariantChunk(numericUuidString);
+		const variantChunk = Variant.parse(stringEntry);
 		const variantNumber = getNumericValue(variantChunk);
 		assert(variantNumber <= maxVariantNumber);
 		// 3. Add one to the variant number to produce our new variant number.
@@ -348,9 +384,12 @@ namespace VariantChunk {
 	}
 }
 
-const maxUpperUuid = 'ffffffffffff4fff';
-const maxUpperUuidVersionIndex = maxUpperUuid.indexOf('4');
-const newNibbles = ['7', 'B', 'D', 'E'];
+const maxUpperUuid = 'ffffffff-ffff-4fff-bf';
+const maxNibbleCount = [...maxUpperUuid].filter((n) => n === 'f').length;
+const newNibbles = ['7', 'b', 'd', 'e'];
+function isMaxUpperNibble(index: number): boolean {
+	return maxUpperUuid.charAt(index) === 'f';
+}
 
 /**
  * Any session uuid with all of its highish bits set is in danger of overflowing after fewer than 2^53 increments.
@@ -358,12 +397,16 @@ const newNibbles = ['7', 'B', 'D', 'E'];
  */
 export function ensureSessionUuid(uuid: StableId): SessionId {
 	if (uuid.startsWith(maxUpperUuid)) {
-		let nibbleIndex = Math.floor(Math.random() * (maxUpperUuid.length - 1));
-		if (nibbleIndex >= maxUpperUuidVersionIndex) {
-			nibbleIndex += 1;
+		const targetNibble = Math.floor(Math.random() * maxNibbleCount);
+		let actualIndex = 0;
+		for (let nibbleIndex = 0; nibbleIndex < targetNibble && !isMaxUpperNibble(actualIndex); actualIndex += 1) {
+			if (isMaxUpperNibble(actualIndex)) {
+				nibbleIndex++;
+			}
 		}
+
 		const newNibble = newNibbles[Math.floor(Math.random() * newNibbles.length)]; // Randomly choose a bit to zero
-		const newUuid = uuid.slice(0, nibbleIndex) + newNibble + uuid.slice(nibbleIndex + 1);
+		const newUuid = uuid.slice(0, actualIndex) + newNibble + uuid.slice(actualIndex + 1);
 		return newUuid as SessionId;
 	}
 

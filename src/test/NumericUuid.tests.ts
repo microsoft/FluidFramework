@@ -7,7 +7,7 @@
 
 import { expect } from 'chai';
 import Prando from 'prando';
-import { assert, compareStrings } from '../Common';
+import { compareStrings } from '../Common';
 import {
 	numericUuidEquals,
 	createSessionId,
@@ -15,36 +15,30 @@ import {
 	incrementUuid,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
-	minimizeUuidString,
-	expandUuidString,
 	ensureSessionUuid,
 	isStableId,
 	assertIsStableId,
-	isMinimalUuidString,
 } from '../id-compressor/NumericUuid';
 import { StableId } from '../Identifiers';
 import { integerToStableId } from './utilities/IdCompressorTestUtilities';
 
 describe('NumericUuid', () => {
-	it('can detect non-v4 variant 2 uuids', () => {
-		expect(isStableId(minimizeUuidString('00000000000000000000000000000000'))).to.be.false;
-		expect(isStableId(minimizeUuidString('ffffffffffffffffffffffffffffffff'))).to.be.false;
-		expect(isStableId(minimizeUuidString('8e8fec9a10ea4d158308ed35bc7f1e66'))).to.be.true;
+	it('can detect non-v4 variant 2 UUIDs', () => {
+		expect(isStableId('00000000-0000-0000-0000-000000000000')).to.be.false;
+		expect(isStableId('ffffffff-ffff-ffff-ffff-ffffffffffff')).to.be.false;
+		expect(isStableId('8e8fec9a10ea4d158308ed35bc7f1e66')).to.be.false;
+		expect(isStableId('8e8fec9a-10ea-4d15-8308-ed35bc7f1e66')).to.be.true;
 		[...new Array(16).keys()]
 			.map((n) => [n, n.toString(16)])
 			.forEach(([n, char]) => {
-				const expectUuidVersion = expect(
-					isStableId(minimizeUuidString(`000000000000${char}000b000000000000000`))
-				);
+				const expectUuidVersion = expect(isStableId(`00000000-0000-${char}000-b000-000000000000`));
 				if (char === '4') {
 					expectUuidVersion.to.be.true;
 				} else {
 					expectUuidVersion.to.be.false;
 				}
 
-				const expectUuidVariant = expect(
-					isStableId(minimizeUuidString(`0000000000004000${char}000000000000000`))
-				);
+				const expectUuidVariant = expect(isStableId(`00000000-0000-4000-${char}000-000000000000`));
 				if (n >= 8 && n <= 11) {
 					expectUuidVariant.to.be.true;
 				} else {
@@ -53,7 +47,7 @@ describe('NumericUuid', () => {
 			});
 	});
 
-	const maxStableId = assertIsStableId('ffffffffffff4fffbfffffffffffffff');
+	const maxStableId = assertIsStableId('ffffffff-ffff-4fff-bfff-ffffffffffff');
 
 	it('detects increment overflow', () => {
 		const uuid = numericUuidFromStableId(maxStableId);
@@ -67,16 +61,16 @@ describe('NumericUuid', () => {
 		);
 	});
 
-	it('can rehydrate a valid session uuid', () => {
-		const uuid = assertIsStableId('44f95a8bc52b4828a0000000f0000003');
+	it('can rehydrate a valid session UUID', () => {
+		const uuid = assertIsStableId('44f95a8b-c52b-4828-a000-0000f0000003');
 		const sessionUuid = numericUuidFromStableId(uuid);
 		expect(stableIdFromNumericUuid(sessionUuid)).to.equal(uuid);
 	});
 
-	it('can create valid session uuids', () => {
+	it('can create valid session UUIDs', () => {
 		for (let i = 0; i < 100; i++) {
 			const sessionId = createSessionId();
-			expect(sessionId.length).to.equal(32);
+			expect(sessionId.length).to.equal(36);
 			expect(() => {
 				const sessionNumericUuid = numericUuidFromStableId(sessionId);
 				expect(stableIdFromNumericUuid(sessionNumericUuid)).to.equal(sessionId);
@@ -86,27 +80,47 @@ describe('NumericUuid', () => {
 
 	const maxUuidBigint = bigIntFromStableId(maxStableId);
 
-	it('ensures that session uuids are resistant to overflow', () => {
-		const uuid = assertIsStableId('ffffffffffff4fffbfffffffffffffff');
-		for (let i = 0; i < 100; i++) {
+	it('ensures that session UUIDs are resistant to overflow', () => {
+		const uuid = assertIsStableId('ffffffff-ffff-4fff-bfff-ffffffffffff');
+		for (let i = 0; i < 128; i++) {
 			const ensuredUuid = ensureSessionUuid(uuid);
+			expect(isStableId(ensuredUuid)).to.be.true;
 			const ensuredBigint = bigIntFromStableId(ensuredUuid);
 			expect(maxUuidBigint - ensuredBigint > Number.MAX_SAFE_INTEGER).to.be.true;
 		}
 	});
 
+	it('correctly adjusts session UUIDs that are in danger of overflow', () => {
+		const dangerous = [
+			assertIsStableId('ffffffff-ffff-4fff-bfff-ffffffffffff'),
+			assertIsStableId('ffffffff-ffff-4fff-bff0-000000000000'),
+			assertIsStableId('ffffffff-ffff-4fff-bf00-000000000000'),
+		];
+
+		const safe = [
+			assertIsStableId('ffffffff-ffff-4fff-beff-ffffffffffff'),
+			assertIsStableId('ffffffff-ffff-4fff-bef0-000000000000'),
+			assertIsStableId('ffffffff-ffff-4fff-be00-000000000000'),
+		];
+
+		dangerous.forEach((stableId) => expect(ensureSessionUuid(stableId)).to.not.equal(stableId));
+		safe.forEach((stableId) => expect(ensureSessionUuid(stableId)).to.equal(stableId));
+	});
+
 	const stableIds = [
-		assertIsStableId('748540cab7c54c99831fc1b8e02c09d6'),
-		assertIsStableId('0002c79eb5364776b000000266c252d5'),
-		assertIsStableId('082533b96d054068a008fe2cc43543f7'),
-		assertIsStableId('2c9fa1f848d54554a466000000000000'),
-		assertIsStableId('2c9fa1f848d54000a000000000000000'),
-		assertIsStableId('1000000000004000b000000000000000'),
-		assertIsStableId('1000000000004000b020000000000000'), // 2^52
-		assertIsStableId('1000000000004000b00fffffffffffff'),
-		assertIsStableId('1000000000004000b040000000000000'),
-		assertIsStableId('f0000000000040008000000000000000'),
-		assertIsStableId('efffffffffff4fffbfffffffffffffff'),
+		assertIsStableId('748540ca-b7c5-4c99-83ff-c1b8e02c09d6'),
+		assertIsStableId('748540ca-b7c5-4c99-83ef-c1b8e02c09d6'),
+		assertIsStableId('748540ca-b7c5-4c99-831f-c1b8e02c09d6'),
+		assertIsStableId('0002c79e-b536-4776-b000-000266c252d5'),
+		assertIsStableId('082533b9-6d05-4068-a008-fe2cc43543f7'),
+		assertIsStableId('2c9fa1f8-48d5-4554-a466-000000000000'),
+		assertIsStableId('2c9fa1f8-48d5-4000-a000-000000000000'),
+		assertIsStableId('10000000-0000-4000-b000-000000000000'),
+		assertIsStableId('10000000-0000-4000-b020-000000000000'), // 2^52
+		assertIsStableId('10000000-0000-4000-b00f-ffffffffffff'),
+		assertIsStableId('10000000-0000-4000-b040-000000000000'),
+		assertIsStableId('f0000000-0000-4000-8000-000000000000'),
+		assertIsStableId('efffffff-ffff-4fff-bfff-ffffffffffff'),
 		integerToStableId(0),
 		integerToStableId(1),
 		integerToStableId(77),
@@ -162,14 +176,6 @@ describe('NumericUuid', () => {
 		});
 	});
 
-	it('can minimize and expand uuid strings', () => {
-		const withSep = '3dbfc668-7f10-4c18-8f78-109ed0dd5982';
-		const withoutSep = '3dbfc6687f104c188f78109ed0dd5982';
-		assert(isMinimalUuidString(withoutSep));
-		expect(minimizeUuidString(withSep)).to.equal(withoutSep);
-		expect(expandUuidString(withoutSep)).to.equal(withSep);
-	});
-
 	it('can round trip between stable ID and uuid', () => {
 		stableIds.forEach((stableId) => {
 			const uuid = numericUuidFromStableId(stableId);
@@ -192,14 +198,15 @@ describe('NumericUuid', () => {
 });
 
 function bigIntFromStableId(id: StableId): bigint {
-	//      UUID | xxxxxxxxx-xxxx-Vxxx-vxxx-xxxxxxxxxxxx | The StableId passed to this function, shown here in standard UUID notation
-	//   nibbles | hhhhhhhhh hhhh  mmm llll llllllllllll | Whether or not each nibble is part of the "high", "middle" or "low" group below
-	// bit count | 444444444-4444-0444-2444-444444444444 | The number of bits per nibble that are used to encode the number
+	const minimized = id.replace(/-/g, '');
+	//      UUID | xxxxxxxx-xxxx-Vxxx-vxxx-xxxxxxxxxxxx | The StableId passed to this function, shown here in standard UUID notation
+	//   nibbles | hhhhhhhh hhhh  mmm llll llllllllllll | Whether or not each nibble is part of the "high", "middle" or "low" group below
+	// bit count | 44444444-4444-0444-2444-444444444444 | The number of bits per nibble that are used to encode the number
 
 	// Interpret numerically...
-	const highNibbles = BigInt(`0x${id.substr(0, 12)}`); // ...all nibbles above the version nibble,
-	const midNibbles = BigInt(`0x${id.substr(13, 3)}`); //  the nibbles below the version nibble and above the variant nibble,
-	const lowNibbles = BigInt(`0x${id.substr(16, 16)}`); // and the variant nibble and all nibbles below
+	const highNibbles = BigInt(`0x${minimized.substr(0, 12)}`); // ...all nibbles above the version nibble,
+	const midNibbles = BigInt(`0x${minimized.substr(13, 3)}`); //  the nibbles below the version nibble and above the variant nibble,
+	const lowNibbles = BigInt(`0x${minimized.substr(16, 16)}`); // and the variant nibble and all nibbles below
 	// Count the number of bits that contribute to the number (i.e. are not reserved for version/variant) in...
 	const lowBitCount = BigInt(62); // ...the low nibbles
 	const midBitCount = BigInt(12); // and the mid nibbles

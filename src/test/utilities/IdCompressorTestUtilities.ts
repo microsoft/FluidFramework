@@ -20,12 +20,11 @@ import {
 	assertIsStableId,
 	createSessionId,
 	ensureSessionUuid,
-	minimizeUuidString,
 	NumericUuid,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from '../../id-compressor/NumericUuid';
-import { MinimalUuidString, SessionId, StableId, SessionSpaceCompressedId } from '../../Identifiers';
+import { SessionId, StableId, SessionSpaceCompressedId } from '../../Identifiers';
 import { IdRange } from '../../id-compressor/IdRange';
 import { FinalCompressedId } from '../..';
 
@@ -81,7 +80,7 @@ function makeSessionIds(): ClientMap<SessionId> {
 	for (let i = 0; i < clients.length; i++) {
 		// Place session uuids roughly in the middle of uuid space to increase odds of encountering interesting
 		// orderings in sorted collections
-		const sessionId = ensureSessionUuid(assertIsStableId(`8888888888884888b${i}88888888888888`));
+		const sessionId = ensureSessionUuid(assertIsStableId(`88888888-8888-4888-b${i}88-888888888888`));
 		stableIds.set(clients[i], sessionId);
 	}
 	return stableIds as ClientMap<SessionId>;
@@ -113,7 +112,7 @@ export interface TestIdData {
 	readonly originatingClient: Client;
 	readonly sessionId: SessionId;
 	readonly sessionNumericUuid: NumericUuid;
-	readonly expectedOverride: MinimalUuidString | undefined;
+	readonly expectedOverride: string | undefined;
 	readonly isSequenced: boolean;
 }
 
@@ -215,7 +214,7 @@ export class IdCompressorTestNetwork {
 	private addNewId(
 		client: Client,
 		id: SessionSpaceCompressedId,
-		expectedOverride: MinimalUuidString | undefined,
+		expectedOverride: string | undefined,
 		originatingClient: Client,
 		isSequenced: boolean
 	): void {
@@ -240,16 +239,12 @@ export class IdCompressorTestNetwork {
 	 * Allocates a new range of local IDs and enqueues them for future delivery via a `testIdDelivery` action.
 	 * Calls to this method determine the total order of delivery, regardless of when `deliverOperations` is called.
 	 */
-	public allocateAndSendIds(
-		client: Client,
-		numIds: number,
-		overrides: { [index: number]: MinimalUuidString } = {}
-	): IdRange {
+	public allocateAndSendIds(client: Client, numIds: number, overrides: { [index: number]: string } = {}): IdRange {
 		assert(numIds > 0, 'Must allocate a non-zero number of IDs');
 		const compressor = this.compressors.get(client);
 		let nextExplicitIndex = 0;
 		for (const [overrideIndex, uuid] of Object.entries(overrides)
-			.map(([id, uuid]) => [Number.parseInt(id, 10), uuid] as [number, MinimalUuidString])
+			.map(([id, uuid]) => [Number.parseInt(id, 10), uuid] as [number, string])
 			.sort(([a], [b]) => a - b)) {
 			while (nextExplicitIndex < overrideIndex) {
 				this.addNewId(client, compressor.generateCompressedId(), undefined, client, false);
@@ -286,7 +281,7 @@ export class IdCompressorTestNetwork {
 						let overrideIndex = 0;
 						const overrides = explicits.overrides;
 						for (let id = explicits.first; id >= explicits.last; id--) {
-							let override: MinimalUuidString | undefined;
+							let override: string | undefined;
 							if (overrides !== undefined && id === overrides[overrideIndex][0]) {
 								override = overrides[overrideIndex][1];
 								overrideIndex++;
@@ -337,7 +332,7 @@ export class IdCompressorTestNetwork {
 			return undefined;
 		}
 
-		const uuids = new Set<MinimalUuidString>();
+		const uuids = new Set<string>();
 		const finalIds = new Set<FinalCompressedId>();
 		const idIndicesAggregator = new Map<Client, number>();
 
@@ -367,7 +362,7 @@ export class IdCompressorTestNetwork {
 		}
 
 		for (let i = 0; i < maxLogLength; i++) {
-			const creator: [creator: Client, override?: MinimalUuidString][] = [];
+			const creator: [creator: Client, override?: string][] = [];
 			let originatingClient: Client | undefined;
 			let localCount = 0;
 			let rowCount = 0;
@@ -624,11 +619,11 @@ export function performFuzzActions(
 				const client = rand.nextArrayItem(activeClients);
 				const maxIdsPerUsage = clusterSize * 2;
 				const numIds = Math.floor(rand.next(0, 1) ** 2 * maxIdsPerUsage) + 1;
-				const overrides: { [index: number]: MinimalUuidString } = {};
+				const overrides: { [index: number]: string } = {};
 				if (includeOverrides && /* 25% chance: */ rand.nextInt(0, 3) === 0) {
 					for (let j = 0; j < numIds; j++) {
 						if (/* 33% chance: */ rand.nextInt(0, 2) === 0) {
-							overrides[j] = minimizeUuidString(v5((uuidNum++).toString(), uuidNamespace));
+							overrides[j] = v5((uuidNum++).toString(), uuidNamespace);
 						}
 					}
 				}
@@ -643,7 +638,7 @@ export function performFuzzActions(
 			case Operation.GenerateUnifyingIds: {
 				const clientA = rand.nextArrayItem(activeClients);
 				const clientB = rand.nextArrayItem(activeClients.filter((c) => c !== clientA));
-				const uuid = minimizeUuidString(v5((uuidNum++).toString(), uuidNamespace));
+				const uuid = v5((uuidNum++).toString(), uuidNamespace);
 				network.allocateAndSendIds(clientA, 1, { 0: uuid });
 				network.allocateAndSendIds(clientB, 1, { 0: uuid });
 				break;
@@ -679,7 +674,9 @@ export function integerToStableId(num: number | bigint): StableId {
 	const middleString = `4${padToLength(middle.toString(16), '0', 3)}`;
 	const lowerString = padToLength((BigInt('0x8000000000000000') | BigInt(lower)).toString(16), '0', 16);
 	const uuid = upperString + middleString + lowerString;
-	return assertIsStableId(uuid);
+	return assertIsStableId(
+		`${uuid.substr(0, 8)}-${uuid.substr(8, 4)}-${uuid.substr(12, 4)}-${uuid.substr(16, 4)}-${uuid.substr(20)}`
+	);
 }
 
 /**

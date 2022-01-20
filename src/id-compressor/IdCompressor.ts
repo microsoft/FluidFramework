@@ -22,7 +22,6 @@ import {
 	FinalCompressedId,
 	SessionSpaceCompressedId,
 	StableId,
-	MinimalUuidString,
 	OpSpaceCompressedId,
 	SessionId,
 } from '../Identifiers';
@@ -42,9 +41,9 @@ import {
 
 /**
  * A cluster of final (sequenced via consensus), sequentially allocated compressed IDs.
- * A final ID in a cluster decompresses to a uuid that is one of the following:
- * 1. A sequentially allocated uuid that is the result of adding its offset within the cluster to `baseUuid`.
- * 2. An override uuid (stored in `overrides`) specified at allocation time.
+ * A final ID in a cluster decompresses to a UUID that is one of the following:
+ * 1. A sequentially allocated UUID that is the result of adding its offset within the cluster to `baseUuid`.
+ * 2. An override string (stored in `overrides`) specified at allocation time.
  */
 interface IdCluster {
 	/**
@@ -69,19 +68,19 @@ interface IdCluster {
 	readonly session: Session;
 
 	/**
-	 * Final IDs assigned override UUIDs within this cluster.
+	 * Final IDs assigned override strings within this cluster.
 	 * These are one of the following:
-	 * 1. The override UUID string
-	 * 2. The override UUID string and external override details. This occurs when local IDs corresponding to the same override UUID
+	 * 1. The override string
+	 * 2. The override string and external override details. This occurs when local IDs corresponding to the same override
 	 * 		string are created by different sessions before any have been finalized. This can occur due to concurrency or offline.
-	 * 		In this case, the UUID is stored for the final ID that got sequenced first, and that final ID is stored associated with
-	 * 		all subsequent final IDs with the same UUID.
+	 * 		In this case, the string is stored for the final ID that got sequenced first, and that final ID is stored associated with
+	 * 		all subsequent final IDs with the same override.
 	 */
-	overrides?: Map<FinalCompressedId, MinimalUuidString | UnifiedOverride>;
+	overrides?: Map<FinalCompressedId, string | UnifiedOverride>;
 }
 
-type UnifiedOverride = HasOverriddenIds & {
-	uuid: MinimalUuidString;
+type UnifiedOverride = OverrideCompressionDetails & {
+	override: string;
 };
 
 /**
@@ -120,10 +119,10 @@ export const defaultClusterCapacity = 512;
 export const reservedIdCount = 1024;
 
 /**
- * The base uuid for the reserved id cluster.
+ * The base UUID for the reserved id cluster.
  * This should not be changed without consideration to compatibility.
  */
-export const reservedSessionId = ensureSessionUuid(assertIsStableId('24e26f0b3c1a47f8a7a1e8461ddb69ce'));
+export const reservedSessionId = ensureSessionUuid(assertIsStableId('24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce'));
 
 /**
  * The range of statically reserved IDs.
@@ -164,16 +163,23 @@ export interface ImplicitIdRange {
 }
 
 /**
- * An entry in the uuid-to-ID map, which maps the first stable ID in a cluster to the cluster itself.
+ * A cluster in `clustersAndOverridesInversion`, which is mapped from the first stable ID in a cluster.
  */
 interface ClusterInfo {
 	readonly clusterBase: FinalCompressedId;
 	readonly cluster: IdCluster;
 }
 
-interface HasOverriddenIds {
+interface OverrideCompressionDetails {
 	readonly originalOverridingFinal: FinalCompressedId;
 	readonly associatedLocalId?: LocalCompressedId;
+}
+
+interface OverriddenCompressedId {
+	// This property is set when IDs are first generated locally or first received from another client.
+	// This way, the override can be queried at any point in the future as to whether or not it is a StableId
+	// without having to call `isStableId()` again, which is somewhat slow.
+	readonly isStableId?: boolean;
 }
 
 /**
@@ -182,33 +188,38 @@ interface HasOverriddenIds {
  * `associatedLocalId` is present on this type when a local ID in this session is associated with the override.
  *
  * It may be present even when `overriddenFinalId` was created by another session. This occurs when local IDs corresponding to the
- * same override UUID string are created by different sessions before any have been finalized. `overriddenFinalId` will be set to
- * the *first* finalized ID with that uuid, but `associatedLocal` will be set to the local session's local ID for that uuid. This is
- * done to preserve the invariant that a uuid will always compress into the same session-space ID for the lifetime of the session.
+ * same override string are created by different sessions before any have been finalized. `overriddenFinalId` will be set to
+ * the *first* finalized ID with that string, but `associatedLocal` will be set to the local session's local ID for that string. This is
+ * done to preserve the invariant that an override will always compress into the same session-space ID for the lifetime of the session.
  */
-type FinalizedOverride = {
+interface FinalizedOverride extends OverrideCompressionDetails, OverriddenCompressedId {
 	readonly cluster: IdCluster;
-} & HasOverriddenIds;
+}
+
+interface UnfinalizedOverride extends OverriddenCompressedId {
+	readonly unackedLocal: UnackedLocalId;
+}
 
 /**
- * An entry in the uuid-to-ID map, which maps an override to the cluster containing it (if finalized) or the local ID corresponding to it.
+ * The value of a mapping in `clustersAndOverridesInversion`, which maps an override to the cluster containing it (if finalized) or the
+ * local ID corresponding to it (if unfinalized).
  *
- * Override uuids associated with local IDs stored in `uuidStringToId` are *always* replaced immediately upon finalizing, and thus it is
- * typed as op-space (unacked local).
+ * Override strings associated with local IDs stored in `clustersAndOverridesInversion` are *always* replaced immediately upon finalizing,
+ * and thus it is typed as op-space (unacked local).
  */
-type UuidOverride = UnackedLocalId | FinalizedOverride;
+type Override = UnfinalizedOverride | FinalizedOverride;
 
-type CompressionMapping = ClusterInfo | UuidOverride;
+type CompressionMapping = ClusterInfo | Override;
 
 /**
- * A distributed uuid generator and compressor.
+ * A distributed UUID generator and compressor.
  *
  * Generates arbitrary non-colliding v4 UUIDs, called stable IDs, for multiple "sessions" (which can be distributed across the network),
  * providing each session with the ability to map these UUIDs to `numbers`.
  *
  * A session is a unique identifier that denotes a single compressor. New IDs are created through a single compressor API
- * which should then sent in ranges to the server for total ordering (and are subsequently relayed to other clients). When a new ID is created,
- * it is said to be created by the compressor's "local" session.
+ * which should then sent in ranges to the server for total ordering (and are subsequently relayed to other clients). When a new ID is
+ * created it is said to be created by the compressor's "local" session.
  *
  * For each stable ID created, two numeric IDs are provided by the compressor:
  * 	1. A local ID, which is stable for the lifetime of the session (which could be longer than that of the compressor object, as it may
@@ -221,24 +232,24 @@ type CompressionMapping = ClusterInfo | UuidOverride;
  * Compressors will allocate UUIDs in non-random ways to reduce entropy allowing for optimized storage of the data needed
  * to map the UUIDs to the numbers.
  *
- * A compressor allows a client to supply a predetermined UUID when generating IDs, explicitly overriding the UUID that
- * would otherwise be associated with the local/final ID.
+ * A client may optionally supply an "override" for any generated ID, associating an arbitrary string with the local/final ID rather than
+ * the UUID that would otherwise be created.
  *
  * The following invariants are upheld by IdCompressor:
- * 1. Local IDs will always decompress to the same UUIDs for the lifetime of the session.
- * 2. Final IDs will always decompress to the same UUIDs.
+ * 1. Local IDs will always decompress to the same UUIDs (or override string) for the lifetime of the session.
+ * 2. Final IDs will always decompress to the same UUIDs (or override string).
  * 3. After a server-processed range of local IDs (from any session) is received by a compressor, any of those local IDs may be
- * 		translated by the compressor into its corresponding final ID. For any given local ID, this translation will always yield the
+ * 		translated by the compressor into the corresponding final ID. For any given local ID, this translation will always yield the
  * 		same final ID.
- * 4. A uuid will always compress into the same session-space ID for the lifetime of the session.
+ * 4. A UUID (or override string) will always compress into the same session-space ID for the lifetime of the session.
  *
  * Local IDs are sent across the wire in efficiently-represented ranges. These ranges are created by querying the compressor, and *must*
  * be ordered (i.e. sent to the server) in the order they are created in order to preserve the above invariants.
  *
  * Session-local IDs can be used immediately after creation, but will eventually (after being sequenced) have a corresponding final ID. This
  * could make reasoning about equality of those two forms (the local and final) difficult. For example, if a cache is keyed off of a
- * local ID but is later queried using the final ID (which is semantically equal, as it decompresses to the same UUID) it will produce a
- * cache miss. In order to make using collections of both remotely created and locally created IDs easy, regardless of whether the
+ * local ID but is later queried using the final ID (which is semantically equal, as it decompresses to the same UUID/string) it will
+ * produce a cache miss. In order to make using collections of both remotely created and locally created IDs easy, regardless of whether the
  * session-local IDs have been finalized, the compressor defines two "spaces" of IDs:
  *
  * 1. Session space: in this space, all IDs are normalized to their "most local form". This means that all IDs created by the local session
@@ -255,7 +266,7 @@ type CompressionMapping = ClusterInfo | UuidOverride;
  * incorrect to use this type for a runtime variable. This is an asymmetry that does not affect session space, as local IDs are always as
  * "local as possible".
  *
- * These two spaces naturally define a rule: consumers of compressed IDs should use session-space IDs and serialized forms such as ops
+ * These two spaces naturally define a rule: consumers of compressed IDs should use session-space IDs, but serialized forms such as ops
  * should use op-space IDs.
  *
  */
@@ -321,12 +332,10 @@ export class IdCompressor {
 	private lastTakenLocalId: LocalCompressedId | undefined;
 
 	/**
-	 * Maps local IDs to override uuids. This will contain an entry for every override assigned to a local ID generated during
+	 * Maps local IDs to override strings. This will contain an entry for every override assigned to a local ID generated during
 	 * the current session, and retains entries for the lifetime of this compressor.
 	 */
-	private readonly localOverrides = new AppendOnlySortedMap<LocalCompressedId, MinimalUuidString>(
-		compareFiniteNumbersReversed
-	);
+	private readonly localOverrides = new AppendOnlySortedMap<LocalCompressedId, string>(compareFiniteNumbersReversed);
 
 	/**
 	 * Maps local IDs to the cluster they belong to (if any). This can be used to efficiently convert a local ID to a
@@ -344,15 +353,14 @@ export class IdCompressor {
 	);
 
 	/**
-	 * Maps uuid strings to the compressed form of that uuid.
-	 * Contains entries for cluster base uuids and override uuids (both local and final).
-	 * As a performance optimization, entries for finalized uuids also include the cluster object itself.
+	 * Contains entries for cluster base UUIDs and override strings (both local and final).
+	 * As a performance optimization, entries for finalized strings also include the containing cluster object.
 	 * This can be viewed as three separate tables: the inverse table for `localOverrides`, the inverse table for the union of all
-	 * the `explicitIds` of the clusters in `finalIdToCluster`, and the inverse lookup of cluster base uuids to their clusters.
+	 * the overrides of the clusters in `finalIdToCluster`, and the inverse lookup of cluster base UUIDs to their clusters.
 	 * This is unified as a performance optimization, as the common case does not have overridden IDs. It is a btree due to the need
 	 * to make range queries.
 	 */
-	private readonly uuidStringToId: BTree<MinimalUuidString, CompressionMapping> = new BTree(
+	private readonly clustersAndOverridesInversion: BTree<string, CompressionMapping> = new BTree(
 		undefined,
 		compareStrings
 	);
@@ -393,10 +401,10 @@ export class IdCompressor {
 		if (existingSession !== undefined) {
 			fail('createSession must only be called once for each session ID.');
 		}
-		const uuid = numericUuidFromStableId(sessionId);
-		assert(!this.uuidStringToId.has(sessionId));
+		const sessionUuid = numericUuidFromStableId(sessionId);
+		assert(!this.clustersAndOverridesInversion.has(sessionId));
 		const session: Session = {
-			sessionUuid: uuid,
+			sessionUuid,
 			currentClusterDetails: undefined,
 			lastFinalizedLocalId: undefined,
 		};
@@ -659,7 +667,7 @@ export class IdCompressor {
 				remainingCount -= remainingCapacity;
 			}
 		} else {
-			// Session has never made a cluster, form a new one with the session uuid as the baseUuid
+			// Session has never made a cluster, form a new one with the session UUID as the baseUuid
 			newBaseUuid = session.sessionUuid;
 		}
 
@@ -671,7 +679,7 @@ export class IdCompressor {
 		let newCluster: IdCluster | undefined;
 		let newBaseFinalId: FinalCompressedId | undefined;
 		// The first local ID that will be finalized into a new cluster, if there is one.
-		// This lets us quickly compare which cluster an override UUID will go into.
+		// This lets us quickly compare which cluster an override string will go into.
 		let localIdPivot: LocalCompressedId | undefined;
 
 		// Need to make a new cluster
@@ -699,7 +707,7 @@ export class IdCompressor {
 			}
 
 			this.checkClusterForCollision(newCluster);
-			this.uuidStringToId.set(stableIdFromNumericUuid(newCluster.baseUuid), {
+			this.clustersAndOverridesInversion.set(stableIdFromNumericUuid(newCluster.baseUuid), {
 				clusterBase: newBaseFinalId,
 				cluster: newCluster,
 			});
@@ -716,7 +724,7 @@ export class IdCompressor {
 		const overrides = explicits?.overrides;
 		if (overrides !== undefined) {
 			for (let i = 0; i < overrides.length; i++) {
-				const [overriddenLocal, overrideUuid] = overrides[i];
+				const [overriddenLocal, override] = overrides[i];
 				// Note: recall that local IDs are negative
 				assert(i === 0 || overriddenLocal < overrides[i - 1][0], 'Override IDs must be in sorted order.');
 				assert(overriddenLocal < normalizedLastFinalized, 'Ranges finalized out of order.');
@@ -748,8 +756,9 @@ export class IdCompressor {
 				}
 				cluster.overrides ??= new Map();
 
-				const existingIds = this.getExistingIdsForNewOverride(overrideUuid);
-				let overrideForCluster: MinimalUuidString | FinalCompressedId;
+				const couldCollide = isStableId(override);
+				const existingIds = this.getExistingIdsForNewOverride(override, couldCollide);
+				let overrideForCluster: string | FinalCompressedId;
 				let associatedLocal: LocalCompressedId | undefined;
 				if (existingIds !== undefined) {
 					let mostFinalExistingOverride: CompressedId;
@@ -767,49 +776,50 @@ export class IdCompressor {
 					} else {
 						assert(
 							!isLocal || mostFinalExistingOverride === overriddenLocal,
-							'Cannot have multiple local IDs with identical override UUIDs.'
+							'Cannot have multiple local IDs with identical overrides.'
 						);
 						// This session has created an ID with this override before, but has not finalized it yet. The incoming
-						// range "wins" and will contain the final ID associated with that uuid, regardless of if that range was
+						// range "wins" and will contain the final ID associated with that override, regardless of if that range was
 						// made by this session or not.
-						overrideForCluster = overrideUuid;
+						overrideForCluster = override;
 					}
 				} else {
-					// This is the first time this uuid has been associated with any ID
-					overrideForCluster = overrideUuid;
+					// This is the first time this override has been associated with any ID
+					overrideForCluster = override;
 				}
 
-				assert(!cluster.overrides.has(overriddenFinal), 'Cannot add a second override UUID for final id');
-				const hasAssociatedLocal = associatedLocal !== undefined;
+				assert(!cluster.overrides.has(overriddenFinal), 'Cannot add a second override for final id');
 				if (typeof overrideForCluster === 'string') {
 					if (isLocal || associatedLocal === undefined) {
-						cluster.overrides.set(overriddenFinal, overrideUuid);
+						cluster.overrides.set(overriddenFinal, override);
 					} else {
 						cluster.overrides.set(overriddenFinal, {
-							uuid: overrideUuid,
+							override,
 							originalOverridingFinal: overriddenFinal,
 							associatedLocalId: associatedLocal,
 						});
 					}
 				} else {
-					const override: Mutable<UnifiedOverride> = {
-						uuid: overrideUuid,
+					const unifiedOverride: UnifiedOverride = {
+						override,
 						originalOverridingFinal: overrideForCluster,
 					};
-					if (hasAssociatedLocal) {
-						override.associatedLocalId = associatedLocal;
-					}
-					cluster.overrides.set(overriddenFinal, override);
+					setPropertyIfDefined(associatedLocal, unifiedOverride, 'associatedLocalId');
+					cluster.overrides.set(overriddenFinal, unifiedOverride);
 				}
-				const overrideObj: Mutable<FinalizedOverride> = { cluster, originalOverridingFinal: overriddenFinal };
-				if (hasAssociatedLocal) {
-					overrideObj.associatedLocalId = associatedLocal;
+				const finalizedOverride: Mutable<FinalizedOverride> = {
+					cluster,
+					originalOverridingFinal: overriddenFinal,
+				};
+				if (couldCollide) {
+					finalizedOverride.isStableId = true;
 				}
-				const currentOverride = this.uuidStringToId.get(overrideUuid);
-				if (currentOverride === undefined || typeof currentOverride === 'number') {
-					// Update the map to contained a finalized override, but never update it with future finalized overrides with
-					// the same uuid as those should decompress to the first final ID with that override.
-					this.uuidStringToId.set(overrideUuid, overrideObj);
+				setPropertyIfDefined(associatedLocal, finalizedOverride, 'associatedLocalId');
+				const currentOverride = this.clustersAndOverridesInversion.get(override);
+				if (currentOverride === undefined || IdCompressor.isUnfinalizedOverride(currentOverride)) {
+					// Update the map to containe a finalized override, but never update it with future finalized overrides with
+					// the same string; those should decompress to the first final ID with that override.
+					this.clustersAndOverridesInversion.set(override, finalizedOverride);
 				}
 			}
 		}
@@ -820,63 +830,71 @@ export class IdCompressor {
 	private checkClusterForCollision(cluster: IdCluster): void {
 		const maxClusterUuid = incrementUuid(cluster.baseUuid, cluster.capacity - 1);
 		const maxClusterStableId = stableIdFromNumericUuid(maxClusterUuid);
-		const closestMatch = this.uuidStringToId.getPairOrNextLower(maxClusterStableId);
+		const closestMatch = this.clustersAndOverridesInversion.getPairOrNextLower(maxClusterStableId);
 		if (closestMatch !== undefined) {
-			const [foundUuidString, compressionMapping] = closestMatch;
+			const [inversionKey, compressionMapping] = closestMatch;
 			if (!IdCompressor.isClusterInfo(compressionMapping)) {
 				if (
-					isStableId(foundUuidString) &&
-					IdCompressor.uuidsMightCollide(foundUuidString, maxClusterStableId, cluster.capacity)
+					isStableId(inversionKey) &&
+					IdCompressor.uuidsMightCollide(inversionKey, maxClusterStableId, cluster.capacity)
 				) {
-					const numericOverride = numericUuidFromStableId(foundUuidString);
+					const numericOverride = numericUuidFromStableId(inversionKey);
 					const delta = getPositiveDelta(maxClusterUuid, numericOverride, cluster.capacity - 1);
 					if (delta !== undefined) {
-						IdCompressor.failWithCollidingOverride(foundUuidString);
+						IdCompressor.failWithCollidingOverride(inversionKey);
 					}
 				}
 			}
 		}
 	}
 
-	private static failWithCollidingOverride(override: MinimalUuidString): void {
-		fail(`Override ID ${override} collides with another allocated uuid.`);
+	private static failWithCollidingOverride(override: string): void {
+		fail(`Override '${override}' collides with another allocated UUID.`);
 	}
 
 	private static isClusterInfo(compressionMapping: CompressionMapping): compressionMapping is ClusterInfo {
 		return (compressionMapping as ClusterInfo).clusterBase !== undefined;
 	}
 
+	private static isUnfinalizedOverride(
+		compressionMapping: CompressionMapping
+	): compressionMapping is UnfinalizedOverride {
+		return (compressionMapping as UnfinalizedOverride).unackedLocal !== undefined;
+	}
+
 	/**
-	 * Returns an existing ID associated with an override UUID, or undefined if none exists.
+	 * Returns an existing ID associated with an override, or undefined if none exists.
 	 */
 	private getExistingIdsForNewOverride(
-		overrideUuid: MinimalUuidString
+		override: string,
+		isStableId: boolean
 	): SessionSpaceCompressedId | [LocalCompressedId, FinalCompressedId] | undefined {
-		const closestMatch = this.uuidStringToId.getPairOrNextLower(overrideUuid, reusedArray);
+		const closestMatch = this.clustersAndOverridesInversion.getPairOrNextLower(override, reusedArray);
 		if (closestMatch !== undefined) {
-			const [foundUuidString, compressionMapping] = closestMatch;
+			const [inversionKey, compressionMapping] = closestMatch;
 			if (!IdCompressor.isClusterInfo(compressionMapping)) {
-				if (foundUuidString !== overrideUuid) {
+				if (inversionKey !== override) {
 					return undefined;
 				}
-				if (typeof compressionMapping === 'number') {
-					return compressionMapping;
+				if (IdCompressor.isUnfinalizedOverride(compressionMapping)) {
+					return compressionMapping.unackedLocal;
 				}
 				const finalizedOverride = compressionMapping;
 				return finalizedOverride.associatedLocalId !== undefined
 					? [finalizedOverride.associatedLocalId, finalizedOverride.originalOverridingFinal]
 					: (finalizedOverride.originalOverridingFinal as SessionSpaceCompressedId);
-			} else if (isStableId(overrideUuid)) {
+			} else if (isStableId) {
+				const stableOverride = override as StableId;
 				const cluster = compressionMapping.cluster;
-				if (!IdCompressor.uuidsMightCollide(foundUuidString as StableId, overrideUuid, cluster.capacity)) {
+				if (!IdCompressor.uuidsMightCollide(inversionKey as StableId, stableOverride, cluster.capacity)) {
 					return undefined;
 				}
-				const numericOverride = numericUuidFromStableId(overrideUuid);
+				const numericOverride = numericUuidFromStableId(stableOverride);
 				const delta = getPositiveDelta(numericOverride, cluster.baseUuid, cluster.capacity - 1);
 				if (delta === undefined) {
 					return undefined;
 				}
-				IdCompressor.failWithCollidingOverride(overrideUuid);
+				IdCompressor.failWithCollidingOverride(override);
 			}
 		}
 		return undefined;
@@ -900,9 +918,9 @@ export class IdCompressor {
 	}
 
 	/**
-	 * Helper for retrieving an uuid override.
+	 * Helper for retrieving an override.
 	 */
-	private static tryGetOverride(cluster: IdCluster, finalId: FinalCompressedId): MinimalUuidString | undefined {
+	private static tryGetOverride(cluster: IdCluster, finalId: FinalCompressedId): string | undefined {
 		const override = cluster.overrides?.get(finalId);
 		if (override === undefined) {
 			return undefined;
@@ -910,27 +928,34 @@ export class IdCompressor {
 		if (typeof override === 'string') {
 			return override;
 		}
-		return override.uuid;
+		return override.override;
 	}
 
 	/**
 	 * Generates a new compressed ID or returns an existing one.
 	 * This should ONLY be called to generate IDs for local operations.
-	 * @param override Specifies a specific uuid to be associated with the returned compressed ID.
-	 * Performance note: assigning override UUIDs incurs a performance overhead.
+	 * @param override Specifies a specific string to be associated with the returned compressed ID.
+	 * Performance note: assigning override strings incurs a performance overhead.
 	 * @returns an existing ID if one already exists for `override`, and a new local ID otherwise. The returned ID is in session space.
 	 */
-	public generateCompressedId(override?: MinimalUuidString): SessionSpaceCompressedId {
+	public generateCompressedId(override?: string): SessionSpaceCompressedId {
 		// If any ID exists for this override (locally or remotely allocated), return it (after ensuring it is in session-space).
-		if (override) {
-			const existingIds = this.getExistingIdsForNewOverride(override);
+		if (override !== undefined) {
+			const couldCollide = isStableId(override);
+			const existingIds = this.getExistingIdsForNewOverride(override, couldCollide);
 			if (existingIds !== undefined) {
 				return typeof existingIds === 'number' ? existingIds : existingIds[0];
 			} else {
 				const newLocalId = this.generateNextLocalId();
 				this.localOverrides.append(newLocalId, override);
 				// Since the local ID was just created, it is in both session and op space
-				this.uuidStringToId.set(override, newLocalId as UnackedLocalId);
+				const compressionMapping: Mutable<CompressionMapping> = {
+					unackedLocal: newLocalId as UnackedLocalId,
+				};
+				if (couldCollide) {
+					compressionMapping.isStableId = true;
+				}
+				this.clustersAndOverridesInversion.set(override, compressionMapping);
 				return newLocalId;
 			}
 		} else {
@@ -943,11 +968,11 @@ export class IdCompressor {
 	}
 
 	/**
-	 * Decompresses a previously compressed ID into a uuid.
+	 * Decompresses a previously compressed ID into a UUID or override string.
 	 * @param id the compressed ID to be decompressed.
-	 * @returns the uuid associated with the compressed ID
+	 * @returns the UUID or override string associated with the compressed ID
 	 */
-	public decompress(id: SessionSpaceCompressedId | FinalCompressedId): MinimalUuidString {
+	public decompress(id: SessionSpaceCompressedId | FinalCompressedId): StableId | string {
 		if (isFinalId(id)) {
 			const possibleCluster = this.getClusterForFinalId(id);
 			if (possibleCluster === undefined) {
@@ -970,8 +995,8 @@ export class IdCompressor {
 			}
 
 			// If this is a local ID with an override, then it must have been allocated on this machine and will be contained in
-			// `localOverrides`s. Otherwise, it is a sequential allocation from the session uuid and can simply be negated and
-			// added to that uuid to obtain the stable ID associated with it.
+			// `localOverrides`s. Otherwise, it is a sequential allocation from the session UUID and can simply be negated and
+			// added to that UUID to obtain the stable ID associated with it.
 			const localOverride = this.localOverrides?.get(id);
 			if (localOverride !== undefined) {
 				return localOverride;
@@ -982,30 +1007,30 @@ export class IdCompressor {
 	}
 
 	/**
-	 * Recompresses a decompressed uuid.
-	 * @param uncompressedUuid the uuid to recompress.
-	 * @returns the `CompressedId` associated with the uuid or undefined if it has not been previously compressed by this compressor.
+	 * Recompresses a decompressed ID, which could be a UUID or an override string.
+	 * @param uncompressed the UUID or override string to recompress.
+	 * @returns the `CompressedId` associated with `uncompressed` or undefined if it has not been previously compressed by this compressor.
 	 */
-	public compress(uncompressedUuid: MinimalUuidString): SessionSpaceCompressedId | undefined {
-		return this.compressInternal(uncompressedUuid);
+	public compress(uncompressed: string): SessionSpaceCompressedId | undefined {
+		return this.compressInternal(uncompressed);
 	}
 
 	/**
-	 * Helper to compress an uncompressed uuid. It can optionally be supplied with the numeric form of `uncompressedUuid` as a
+	 * Helper to compress an uncompressed UUID. It can optionally be supplied with the numeric form of `uncompressedUuid` as a
 	 * performance optimization.
 	 */
 	private compressInternal(
-		uncompressedUuid: MinimalUuidString,
+		uncompressed: string,
 		uncompressedUuidNumeric?: NumericUuid
 	): SessionSpaceCompressedId | undefined {
 		let numericUuid = uncompressedUuidNumeric;
-		const closestMatch = this.uuidStringToId.getPairOrNextLower(uncompressedUuid, reusedArray);
+		const closestMatch = this.clustersAndOverridesInversion.getPairOrNextLower(uncompressed, reusedArray);
 		if (closestMatch !== undefined) {
-			const [foundUuidString, compressionMapping] = closestMatch;
+			const [inversionKey, compressionMapping] = closestMatch;
 			if (!IdCompressor.isClusterInfo(compressionMapping)) {
-				if (foundUuidString === uncompressedUuid) {
-					if (typeof compressionMapping === 'number') {
-						return compressionMapping;
+				if (inversionKey === uncompressed) {
+					if (IdCompressor.isUnfinalizedOverride(compressionMapping)) {
+						return compressionMapping.unackedLocal;
 					} else {
 						const cluster = compressionMapping.cluster;
 						assert(
@@ -1020,11 +1045,11 @@ export class IdCompressor {
 					}
 				}
 			} else {
-				if (!isStableId(uncompressedUuid)) {
+				if (!isStableId(uncompressed)) {
 					return undefined;
 				}
 				const { clusterBase: closestBaseFinalId, cluster: closestCluster } = compressionMapping;
-				numericUuid ??= numericUuidFromStableId(uncompressedUuid);
+				numericUuid ??= numericUuidFromStableId(uncompressed);
 				const uuidOffset = getPositiveDelta(numericUuid, closestCluster.baseUuid, closestCluster.count - 1);
 				if (uuidOffset !== undefined) {
 					let targetFinalId = (closestBaseFinalId + uuidOffset) as FinalCompressedId;
@@ -1033,7 +1058,7 @@ export class IdCompressor {
 						if (override.associatedLocalId !== undefined) {
 							return override.associatedLocalId;
 						}
-						// This may be a uuid that should actually compress into a different final ID that it aligns with, due to
+						// This may be a UUID that should actually compress into a different final ID that it aligns with, due to
 						// another session having an identical override (see `IdCluster` for more).
 						targetFinalId = override.originalOverridingFinal;
 					}
@@ -1042,9 +1067,9 @@ export class IdCompressor {
 			}
 		}
 
-		if (isStableId(uncompressedUuid)) {
-			// May have already computed the numeric uuid, so avoid recomputing if possible
-			numericUuid ??= numericUuidFromStableId(uncompressedUuid);
+		if (isStableId(uncompressed)) {
+			// May have already computed the numeric UUID, so avoid recomputing if possible
+			numericUuid ??= numericUuidFromStableId(uncompressed);
 			const offset = getPositiveDelta(numericUuid, this.localSession.sessionUuid, this.localIdCount - 1);
 			if (offset !== undefined) {
 				return (-offset - 1) as LocalCompressedId;
@@ -1078,7 +1103,7 @@ export class IdCompressor {
 		if (cluster.overrides) {
 			const override = cluster.overrides.get(correspondingFinal);
 			if (typeof override === 'object' && override.originalOverridingFinal !== undefined) {
-				// Rare case of two local IDs with same override UUIDs are created concurrently. See `IdCluster` for more.
+				// Rare case of two local IDs with same overrides are created concurrently. See `IdCluster` for more.
 				return override.originalOverridingFinal;
 			}
 		}
@@ -1135,24 +1160,24 @@ export class IdCompressor {
 	}
 
 	/**
-	 * Returns the session-space compressed ID corresponding to the numeric uuid, or undefined if it is not known to this compressor.
+	 * Returns the session-space compressed ID corresponding to the numeric UUID, or undefined if it is not known to this compressor.
 	 * Typically, it will return the session-space ID sequentially aligned with it (which will be local if `numericUuid` was made by
-	 * the local session, or final otherwise). However, in the event that the aligned session-space ID was overridden with a uuid
-	 * *and* that override uuid was concurrently used in an older ID (earlier, w.r.t. sequencing), this method can return the first
+	 * the local session, or final otherwise). However, in the event that the aligned session-space ID was overridden with a UUID
+	 * *and* that override UUID was concurrently used in an older ID (earlier, w.r.t. sequencing), this method can return the first
 	 * ID to correspond to that override.
 	 *
 	 * As an example, consider the following two clients:
-	 * ClientA, session uuid: A0000000000000000000000000000000
-	 * ClientB, session uuid: B0000000000000000000000000000000
+	 * ClientA, session UUID: A0000000-0000-0000-0000-000000000000
+	 * ClientB, session UUID: B0000000-0000-0000-0000-000000000000
 	 *
 	 * If concurrently, two clients performed:
-	 * ClientA: generateCompressedId(override: 'X0000000000000000000000000000000') // aligned with A0000000000000000000000000000000
+	 * ClientA: generateCompressedId(override: 'X0000000-0000-0000-0000-000000000000') // aligned with A0000000-0000-0000-0000-000000000000
 	 *
-	 * ClientB: generateCompressedId() // aligned with B0000000000000000000000000000000
-	 * ClientB: generateCompressedId(override: 'X0000000000000000000000000000000') // aligned with B0000000000000000000000000000001
+	 * ClientB: generateCompressedId() // aligned with B0000000-0000-0000-0000-000000000000
+	 * ClientB: generateCompressedId(override: 'X0000000-0000-0000-0000-000000000000') // aligned with B0000000-0000-0000-0000-000000000001
 	 *
-	 * After sequencing, calling this method and passing the numeric uuid for B0000000000000000000000000000001 would return the
-	 * session-space ID corresponding to A0000000000000000000000000000000 (with override X0000000000000000000000000000000).
+	 * After sequencing, calling this method and passing the numeric UUID for B0000000-0000-0000-0000-000000000001 would return the
+	 * session-space ID corresponding to A0000000-0000-0000-0000-000000000000 (with override X0000000-0000-0000-0000-000000000000).
 	 */
 	private compressNumericUuid(numericUuid: NumericUuid): SessionSpaceCompressedId | undefined {
 		const stableId = stableIdFromNumericUuid(numericUuid);
@@ -1236,20 +1261,25 @@ export class IdCompressor {
 			return false;
 		}
 
-		const missingInOne = (_: MinimalUuidString, value: CompressionMapping): { break: boolean } | undefined => {
-			if (!compareLocalState && typeof value === 'number') {
+		const missingInOne = (_: string, value: CompressionMapping): { break: boolean } | undefined => {
+			if (!compareLocalState && IdCompressor.isUnfinalizedOverride(value)) {
 				return undefined;
 			}
 			return { break: true };
 		};
 
 		const compareCompressionMappings = (a, b) => {
-			if (typeof a === 'number' || typeof b === 'number') {
-				if (a !== b) {
-					return false;
+			const unfinalizedA = IdCompressor.isUnfinalizedOverride(a);
+			const unfinalizedB = IdCompressor.isUnfinalizedOverride(b);
+			if (unfinalizedA) {
+				if (unfinalizedB) {
+					return a.unackedLocal === b.unackedLocal;
 				}
-				return true;
+				return false;
+			} else if (unfinalizedB) {
+				return false;
 			}
+
 			if (IdCompressor.isClusterInfo(a)) {
 				if (!IdCompressor.isClusterInfo(b) || a.clusterBase !== b.clusterBase) {
 					return false;
@@ -1269,8 +1299,8 @@ export class IdCompressor {
 			return true;
 		};
 
-		const diff = this.uuidStringToId.diffAgainst(
-			other.uuidStringToId,
+		const diff = this.clustersAndOverridesInversion.diffAgainst(
+			other.clustersAndOverridesInversion,
 			missingInOne,
 			missingInOne,
 			(_, valA, valB) => {
@@ -1331,14 +1361,14 @@ export class IdCompressor {
 							return a === b;
 						}
 						const overridesEqual =
-							a.uuid === b.uuid &&
+							a.override === b.override &&
 							a.originalOverridingFinal === b.originalOverridingFinal &&
 							(!compareLocalState || a.associatedLocalId === b.associatedLocalId);
 						return overridesEqual;
 					}
 
-					const uuidA = typeof a === 'string' ? a : a.uuid;
-					const uuidB = typeof b === 'string' ? b : b.uuid;
+					const uuidA = typeof a === 'string' ? a : a.override;
+					const uuidB = typeof b === 'string' ? b : b.override;
 					if (
 						typeof a !== 'string' &&
 						typeof b !== 'string' &&
@@ -1398,7 +1428,7 @@ export class IdCompressor {
 			if (sessionId !== reservedSessionId) {
 				const sessionIndex =
 					sessionIdToSessionIndex.get(sessionId) ??
-					fail('Session object contains wrong session numeric uuid');
+					fail('Session object contains wrong session numeric UUID');
 
 				const serializedCluster: Mutable<SerializedCluster> = [sessionIndex, cluster.capacity];
 				if (cluster.count !== cluster.capacity) {
@@ -1411,9 +1441,9 @@ export class IdCompressor {
 						if (typeof override === 'string') {
 							serializedOverrides.push([finalId, override]);
 						} else if (override.originalOverridingFinal === finalId) {
-							serializedOverrides.push([finalId, override.uuid]);
+							serializedOverrides.push([finalId, override.override]);
 						} else {
-							serializedOverrides.push([finalId, override.uuid, override.originalOverridingFinal]);
+							serializedOverrides.push([finalId, override.override, override.originalOverridingFinal]);
 						}
 					}
 					serializedCluster.push(serializedOverrides);
@@ -1494,7 +1524,7 @@ export class IdCompressor {
 		const compressor = new IdCompressor(localSessionId, attributionInfo);
 		compressor.clusterCapacity = serialized.clusterCapacity;
 
-		const localOverridesInverse = new Map<MinimalUuidString, LocalCompressedId>();
+		const localOverridesInverse = new Map<string, LocalCompressedId>();
 		if (serializedLocalState !== undefined) {
 			// Do this part of local rehydration first since the cluster map population needs to query to local overrides
 			compressor.localIdCount = serializedLocalState.localIdCount;
@@ -1504,7 +1534,10 @@ export class IdCompressor {
 				for (const [localId, override] of serializedLocalState.overrides) {
 					compressor.localOverrides.append(localId, override);
 					localOverridesInverse.set(override, localId);
-					compressor.uuidStringToId.set(override, localId as UnackedLocalId);
+					compressor.clustersAndOverridesInversion.set(override, {
+						unackedLocal: localId as UnackedLocalId,
+						isStableId: isStableId(override),
+					});
 				}
 			}
 		}
@@ -1550,45 +1583,50 @@ export class IdCompressor {
 			session.currentClusterDetails = { clusterBase, cluster };
 			compressor.nextClusterBaseFinalId = (compressor.nextClusterBaseFinalId + capacity) as FinalCompressedId;
 			compressor.finalIdToCluster.append(clusterBase, cluster);
-			compressor.uuidStringToId.set(stableIdFromNumericUuid(cluster.baseUuid), {
+			compressor.clustersAndOverridesInversion.set(stableIdFromNumericUuid(cluster.baseUuid), {
 				clusterBase,
 				cluster,
 			});
 
 			if (overrides !== undefined) {
 				cluster.overrides = new Map();
-				for (const [finalId, uuid, originalOverridingFinal] of overrides) {
+				for (const [finalId, override, originalOverridingFinal] of overrides) {
 					if (originalOverridingFinal !== undefined) {
 						const unifiedOverride: Mutable<UnifiedOverride> = {
-							uuid,
+							override,
 							originalOverridingFinal,
 						};
 						if (serializedLocalState !== undefined) {
-							setPropertyIfDefined(localOverridesInverse.get(uuid), unifiedOverride, 'associatedLocalId');
+							setPropertyIfDefined(
+								localOverridesInverse.get(override),
+								unifiedOverride,
+								'associatedLocalId'
+							);
 						}
 						cluster.overrides.set(finalId, unifiedOverride);
 					} else {
-						const associatedLocal = localOverridesInverse.get(uuid);
+						const associatedLocal = localOverridesInverse.get(override);
 						if (associatedLocal !== undefined && sessionId !== localSessionId) {
 							// In this case, there is a local ID associated with this override, but this is the first cluster to contain
 							// that override (because only the first cluster will have the string serialized). In this case, the override
 							// needs to hold that local value.
 							cluster.overrides.set(finalId, {
-								uuid,
+								override,
 								originalOverridingFinal: finalId,
 								associatedLocalId: associatedLocal,
 							});
 						} else {
-							cluster.overrides.set(finalId, uuid);
+							cluster.overrides.set(finalId, override);
 						}
 						const finalizedOverride: Mutable<FinalizedOverride> = {
 							cluster,
 							originalOverridingFinal: finalId,
+							isStableId: isStableId(override),
 						};
 						if (serializedLocalState !== undefined) {
 							setPropertyIfDefined(associatedLocal, finalizedOverride, 'associatedLocalId');
 						}
-						compressor.uuidStringToId.set(uuid, finalizedOverride);
+						compressor.clustersAndOverridesInversion.set(override, finalizedOverride);
 					}
 				}
 			}
@@ -1689,7 +1727,7 @@ export interface SerializedIdCompressorWithOngoingSession extends SerializedIdCo
 	readonly localState?: SerializedLocalState;
 }
 
-type SerializedLocalOverrides = readonly [LocalCompressedId, MinimalUuidString][];
+type SerializedLocalOverrides = readonly [LocalCompressedId, string][];
 
 interface SerializedLocalState {
 	/**
@@ -1697,7 +1735,7 @@ interface SerializedLocalState {
 	 */
 	localIdCount: number;
 	/**
-	 * Override UUIDs overriding sequential UUIDs in this session. Omitted if no local overrides exist in the session.
+	 * Overrides generated by this session. Omitted if no local overrides exist in the session.
 	 */
 	overrides?: SerializedLocalOverrides;
 
@@ -1729,8 +1767,8 @@ type SerializedSessionData = readonly [
 
 type SerializedClusterOverrides = readonly [
 	overriddenFinal: FinalCompressedId,
-	uuid: MinimalUuidString,
-	override?: FinalCompressedId
+	override: string,
+	overriddenId?: FinalCompressedId
 ][];
 
 /**
@@ -1751,12 +1789,12 @@ type SerializedCluster = readonly [
 	/**
 	 * The number of IDs in the cluster. Omitted if count === capacity.
 	 * --OR--
-	 * The uuids overriding sequential IDs in this cluster. Omitted if no overrides exist in the cluster.
+	 * The overrides in this cluster. Omitted if no overrides exist in the cluster.
 	 */
 	countOrOverrides?: number | SerializedClusterOverrides,
 
 	/**
-	 * Uuids overriding sequential IDs in this cluster. Omitted if no overrides exist in the cluster.
+	 * Overrides in this cluster. Omitted if no overrides exist in the cluster.
 	 */
 	overrides?: SerializedClusterOverrides
 ];

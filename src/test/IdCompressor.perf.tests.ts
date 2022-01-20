@@ -5,7 +5,6 @@
 
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { v4 } from 'uuid';
-import { CompressedId, FinalCompressedId, MinimalUuidString } from '..';
 import { fail } from '../Common';
 import {
 	defaultClusterCapacity,
@@ -15,13 +14,8 @@ import {
 	SerializedIdCompressorWithNoSession,
 } from '../id-compressor/IdCompressor';
 import { IdRange } from '../id-compressor/IdRange';
-import {
-	createSessionId,
-	minimizeUuidString,
-	numericUuidFromStableId,
-	stableIdFromNumericUuid,
-} from '../id-compressor/NumericUuid';
-import { LocalCompressedId, OpSpaceCompressedId } from '../Identifiers';
+import { createSessionId, numericUuidFromStableId, stableIdFromNumericUuid } from '../id-compressor/NumericUuid';
+import { CompressedId, FinalCompressedId, LocalCompressedId, OpSpaceCompressedId } from '../Identifiers';
 import {
 	Client,
 	IdCompressorTestNetwork,
@@ -41,40 +35,36 @@ describe('IdCompressor Perf', () => {
 	function setupCompressors(
 		clusterSize: number,
 		allowLocal: boolean,
-		includeExplicitIds: boolean
+		includeOverrides: boolean
 	): IdCompressorTestNetwork {
 		const network = new IdCompressorTestNetwork(clusterSize);
-		[compressor] = createPerfCompressor(network, allowLocal, includeExplicitIds, localClient);
-		[remoteCompressor] = createPerfCompressor(network, allowLocal, includeExplicitIds, remoteClient);
+		[compressor] = createPerfCompressor(network, allowLocal, includeOverrides, localClient);
+		[remoteCompressor] = createPerfCompressor(network, allowLocal, includeOverrides, remoteClient);
 		return network;
 	}
 
 	function createPerfCompressor(
 		network: IdCompressorTestNetwork,
 		allowLocal: boolean,
-		includeExplicitIds: boolean,
+		includeOverrides: boolean,
 		client: Client
 	): [IdCompressor, readonly TestIdData[]] {
-		performFuzzActions(network, Math.E, includeExplicitIds, client, allowLocal ? false : true);
+		performFuzzActions(network, Math.E, includeOverrides, client, allowLocal ? false : true);
 		return [network.getCompressorUnsafe(client), network.getIdLog(client)];
 	}
 
-	function setupCompressorWithId(local: boolean, override: boolean, clusterHasOtherExplicits: boolean): CompressedId {
+	function setupCompressorWithId(local: boolean, override: boolean, clusterHasOtherOverrides: boolean): CompressedId {
 		const clusterCapacity = defaultClusterCapacity;
 		const network = setupCompressors(clusterCapacity, true, true);
-		if (!clusterHasOtherExplicits) {
+		if (!clusterHasOtherOverrides) {
 			network.allocateAndSendIds(localClient, clusterCapacity);
 		} else {
 			network.allocateAndSendIds(localClient, 2, {
-				0: minimizeUuidString('d3157abcbe514f2897e102bc8beb5a22'),
-				1: minimizeUuidString('74be5c8609ef4408b08e6de4741242fb'),
+				0: 'override1',
+				1: 'override2',
 			});
 		}
-		network.allocateAndSendIds(
-			localClient,
-			1,
-			override ? { 0: minimizeUuidString('1003797e4c474cb1a83d266f10872687') } : undefined
-		);
+		network.allocateAndSendIds(localClient, 1, override ? { 0: 'override3' } : undefined);
 
 		if (!local) {
 			network.deliverOperations(localClient);
@@ -85,11 +75,11 @@ describe('IdCompressor Perf', () => {
 		return lastId;
 	}
 
-	function benchmarkWithIdTypes(creator: (local: boolean, explicit: boolean, titleSuffix: string) => void) {
+	function benchmarkWithIdTypes(creator: (local: boolean, override: boolean, titleSuffix: string) => void) {
 		for (const local of [true, false]) {
-			for (const explicit of [true, false]) {
-				const titleSuffix = ` (${explicit ? 'explicit' : 'sequential'})`;
-				creator(local, explicit, titleSuffix);
+			for (const override of [true, false]) {
+				const titleSuffix = ` (${override ? 'override' : 'sequential'})`;
+				creator(local, override, titleSuffix);
 			}
 		}
 	}
@@ -118,35 +108,34 @@ describe('IdCompressor Perf', () => {
 		});
 	});
 
-	[true, false].forEach((explicit) => {
+	[true, false].forEach((override) => {
 		const numericSource = numericUuidFromStableId(createSessionId());
-		let explicitIndex = 0;
+		let overrideIndex = 0;
 		benchmark({
 			type,
-			title: `allocate local ID (${explicit ? 'explicit' : 'sequential'})`,
+			title: `allocate local ID (${override ? 'override' : 'sequential'})`,
 			before: () => {
 				setupCompressors(defaultClusterCapacity, true, false);
 			},
 			benchmarkFn: () => {
 				compressor.generateCompressedId(
-					explicit ? stableIdFromNumericUuid(numericSource, explicitIndex++) : undefined
+					override ? stableIdFromNumericUuid(numericSource, overrideIndex++) : undefined
 				);
 			},
 		});
 	});
 
-	[true, false].forEach((explicit) => {
+	[true, false].forEach((override) => {
 		for (const clusterSize of [1, 10, 500, 1000]) {
 			const implicitCount = 5;
-			const explicitCount = 3;
+			const overrideCount = 3;
 			let client = remoteClient;
 			let lastFinalizedLocalId1 = 0 as LocalCompressedId;
 			let lastFinalizedLocalId2 = 0 as LocalCompressedId;
-			const numericSource = numericUuidFromStableId(createSessionId());
-			let explicitIndex = 0;
+			let overrideIndex = 0;
 			benchmark({
 				type,
-				title: `finalize a range of IDs (cluster size =${clusterSize}${explicit ? ', explicits present' : ''})`,
+				title: `finalize a range of IDs (cluster size =${clusterSize}${override ? ', overrides present' : ''})`,
 				before: () => {
 					setupCompressors(clusterSize, true, false);
 				},
@@ -156,23 +145,23 @@ describe('IdCompressor Perf', () => {
 					let firstImplicitLocal = ((client === remoteClient
 						? lastFinalizedLocalId1
 						: lastFinalizedLocalId2) - 1) as LocalCompressedId & OpSpaceCompressedId;
-					let explicits: [LocalCompressedId & OpSpaceCompressedId, MinimalUuidString][] | undefined;
-					const actualExplicitCount = explicit ? explicitCount : 0;
-					if (actualExplicitCount > 0) {
-						explicits = [];
-						for (let i = 0; i < actualExplicitCount; i++) {
-							explicits.push([
+					let overrides: [LocalCompressedId & OpSpaceCompressedId, string][] | undefined;
+					const actualOverrideCount = override ? overrideCount : 0;
+					if (actualOverrideCount > 0) {
+						overrides = [];
+						for (let i = 0; i < actualOverrideCount; i++) {
+							overrides.push([
 								(firstImplicitLocal - i) as LocalCompressedId & OpSpaceCompressedId,
-								stableIdFromNumericUuid(numericSource, explicitIndex++),
+								`override${overrideIndex++}`,
 							]);
 						}
-						firstImplicitLocal = (firstImplicitLocal - actualExplicitCount) as LocalCompressedId &
+						firstImplicitLocal = (firstImplicitLocal - actualOverrideCount) as LocalCompressedId &
 							OpSpaceCompressedId;
 					}
 
 					const range = {
 						sessionId: sessionIds.get(client),
-						explicitIds: explicits,
+						explicitIds: overrides,
 						implicitIds: { firstImplicitLocal, implicitCount },
 					};
 
@@ -191,27 +180,27 @@ describe('IdCompressor Perf', () => {
 		}
 	});
 
-	[true, false].forEach((explicit) => {
+	[true, false].forEach((override) => {
 		const implicitCount = 5;
 		benchmark({
 			type,
-			title: `creates an ID range (${explicit ? 'with explicits' : ''})`,
+			title: `creates an ID range (${override ? 'with overrides' : ''})`,
 			before: () => {
 				setupCompressors(defaultClusterCapacity, true, false);
 			},
 			benchmarkFn: () => {
-				if (explicit) {
-					compressor.generateCompressedId(minimizeUuidString(v4()));
+				if (override) {
+					compressor.generateCompressedId(v4());
 				}
 				compressor.takeNextRange(implicitCount);
 			},
 		});
 	});
 
-	benchmarkWithIdTypes((local, explicit, titleSuffix) => {
+	benchmarkWithIdTypes((local, override, titleSuffix) => {
 		let idToDecompress!: CompressedId;
 		const before = () => {
-			idToDecompress = setupCompressorWithId(local, explicit, true);
+			idToDecompress = setupCompressorWithId(local, override, true);
 		};
 		const benchmarkFn = () => {
 			compressor.decompress(idToDecompress);
@@ -225,7 +214,7 @@ describe('IdCompressor Perf', () => {
 			});
 		} else {
 			const titleBase = 'decompress final ID into stable IDs';
-			if (explicit) {
+			if (override) {
 				benchmark({
 					type,
 					title: titleBase + titleSuffix,
@@ -233,14 +222,14 @@ describe('IdCompressor Perf', () => {
 					benchmarkFn,
 				});
 			} else {
-				for (const clusterHasExplicitId of [true, false]) {
+				for (const clusterHasOverride of [true, false]) {
 					benchmark({
 						type,
-						title: `${titleBase} (sequential, explicit IDs ${
-							clusterHasExplicitId ? 'present' : 'not present'
+						title: `${titleBase} (sequential, overrides ${
+							clusterHasOverride ? 'present' : 'not present'
 						} in owning cluster)`,
 						before: () => {
-							idToDecompress = setupCompressorWithId(local, explicit, clusterHasExplicitId);
+							idToDecompress = setupCompressorWithId(local, override, clusterHasOverride);
 						},
 						benchmarkFn,
 					});
@@ -249,13 +238,13 @@ describe('IdCompressor Perf', () => {
 		}
 	});
 
-	benchmarkWithIdTypes((local, explicit, titleSuffix) => {
-		let stableToCompress!: MinimalUuidString;
+	benchmarkWithIdTypes((local, override, titleSuffix) => {
+		let stableToCompress!: string;
 		benchmark({
 			type,
 			title: `compress a stable ID to a ${local ? 'local' : 'final'} ID${titleSuffix}`,
 			before: () => {
-				const idAdded = setupCompressorWithId(local, explicit, true);
+				const idAdded = setupCompressorWithId(local, override, true);
 				stableToCompress = compressor.decompress(idAdded);
 			},
 			benchmarkFn: () => {
@@ -317,13 +306,13 @@ describe('IdCompressor Perf', () => {
 		},
 	});
 
-	for (const explicitInClusters of [true, false]) {
-		const titleSuffix = ` (${explicitInClusters ? 'with' : 'without'} explicit IDs)`;
+	for (const overrideInClusters of [true, false]) {
+		const titleSuffix = ` (${overrideInClusters ? 'with' : 'without'} overrides)`;
 		benchmark({
 			type,
 			title: `serialize an IdCompressor${titleSuffix}`,
 			before: () => {
-				setupCompressors(defaultClusterCapacity, false, explicitInClusters);
+				setupCompressors(defaultClusterCapacity, false, overrideInClusters);
 			},
 			benchmarkFn: () => {
 				compressor.serialize(false);
@@ -336,7 +325,7 @@ describe('IdCompressor Perf', () => {
 			type,
 			title: `deserialize an IdCompressor${titleSuffix}`,
 			before: () => {
-				setupCompressors(defaultClusterCapacity, false, explicitInClusters);
+				setupCompressors(defaultClusterCapacity, false, overrideInClusters);
 				serialized = compressor.serialize(false);
 			},
 			benchmarkFn: () => {

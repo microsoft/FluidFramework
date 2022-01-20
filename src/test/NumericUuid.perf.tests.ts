@@ -11,16 +11,17 @@ import {
 	incrementUuid,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
-	minimizeUuidString,
 	assertIsStableId,
 } from '../id-compressor/NumericUuid';
 import { UuidString } from '../Identifiers';
 
 describe('NumericUuid Perf', () => {
-	const stableId = assertIsStableId('4779fbf220124510b4f028a99a9f8946');
-	const stableId2 = assertIsStableId('5ccf492c6a82438c9129d76467525912');
+	const stableId = assertIsStableId('4779fbf2-2012-4510-b4f0-28a99a9f8946');
+	const stableId2 = assertIsStableId('5ccf492c-6a82-438c-9129-d76467525912');
+	const stableId3 = assertIsStableId('5ccf492c-6a82-438c-9129-d76467515912');
 	const uuid = numericUuidFromStableId(stableId);
 	const uuid2 = numericUuidFromStableId(stableId2);
+	const uuid3 = numericUuidFromStableId(stableId3);
 	const deltaMax = 2 ** 52 - 1;
 	const type = BenchmarkType.Measurement;
 	benchmark({
@@ -53,16 +54,23 @@ describe('NumericUuid Perf', () => {
 	});
 	benchmark({
 		type,
-		title: `compute the delta between two numeric uuids`,
+		title: `compute the delta between two distant numeric uuids`,
 		benchmarkFn: () => {
 			getPositiveDelta(uuid, uuid2, deltaMax);
 		},
 	});
 	benchmark({
 		type,
+		title: `compute the delta between two close numeric uuids`,
+		benchmarkFn: () => {
+			getPositiveDelta(uuid2, uuid3, deltaMax);
+		},
+	});
+	benchmark({
+		type,
 		title: `generate a random v4 uuid string and remove separators`,
 		benchmarkFn: () => {
-			minimizeUuidString(v4() as UuidString);
+			v4() as UuidString;
 		},
 	});
 });

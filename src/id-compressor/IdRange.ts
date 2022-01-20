@@ -6,7 +6,7 @@
 import { assert } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { fail } from '../Common';
-import { LocalCompressedId, MinimalUuidString, OpSpaceCompressedId, SessionId } from '../Identifiers';
+import { LocalCompressedId, OpSpaceCompressedId, SessionId } from '../Identifiers';
 
 /**
  * Extensible attribution info associated with a session.
@@ -17,8 +17,8 @@ export type AttributionInfo = Serializable;
  * Data describing a range of session-local IDs (from a remote or local session).
  *
  * A range is composed of two adjacent sub-ranges of local IDs:
- * 1. A range of local IDs that were explicitly generated. Some of these may have overriding UUIDs.
- * 2. A subsequent run of implicitly-generated local IDs, which never have uuid overrides.
+ * 1. A range of local IDs that were explicitly generated. Some of these may have overrides.
+ * 2. A subsequent run of implicitly-generated local IDs, which never have overrides.
  *
  * @example
  * Suppose an IdCompressor generated a sequence of local IDs as follows:
@@ -83,7 +83,7 @@ export namespace IdRange {
 		readonly last: UnackedLocalId;
 	}
 
-	export type Override = readonly [id: UnackedLocalId, override: MinimalUuidString];
+	export type Override = readonly [id: UnackedLocalId, override: string];
 	export type Overrides = readonly [Override, ...Override[]];
 
 	export function getExplicits(
