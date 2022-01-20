@@ -18,7 +18,7 @@ import { FlushMode } from "@fluidframework/runtime-definitions";
 describe("Runtime", () => {
     describe("Container Runtime", () => {
         describe("ContainerRuntime", () =>
-            [FlushMode.Immediate, FlushMode.TurnBased].forEach(function (flushMode: FlushMode) {
+            Object.keys(FlushMode).map(x => FlushMode[x]).forEach((flushMode: FlushMode) => {
                 describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
                     let containerRuntime: ContainerRuntime;
                     const containerErrors: ICriticalContainerError[] = [];
@@ -82,8 +82,7 @@ describe("Runtime", () => {
                         assert.ok(error.message.includes("Any"));
                     });
                 });
-            }
-        ));
+            }));
 
 
         describe("ScheduleManager", () => {
@@ -141,7 +140,7 @@ describe("Runtime", () => {
                 /**
                  * awaits until all ops that could be processed are processed.
                  */
-                 async function processOps() {
+                async function processOps() {
                     const inbound = deltaManager.inbound;
                     while (!inbound.paused && inbound.length > 0) {
                         await Promise.resolve();
