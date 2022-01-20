@@ -335,7 +335,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
         const outgoingP: Promise<void>[] = [];
         (containers as Container[]).forEach((container) => {
             if (container.containerTracker !== undefined) {
-                outgoingP.push(container.containerTracker.processIncoming());
+                outgoingP.push(container.containerTracker.processOutgoing());
             }
         });
         await Promise.all(outgoingP);
