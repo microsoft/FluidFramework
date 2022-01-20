@@ -13,73 +13,78 @@ import {
 import { IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
 import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
-        describe("ContainerRuntime", () => {
-            describe("orderSequentially", () => {
-                let containerRuntime: ContainerRuntime;
-                const containerErrors: ICriticalContainerError[] = [];
-                const getMockContext = ((): Partial<IContainerContext> => {
-                    return {
-                        deltaManager: new MockDeltaManager(),
-                        quorum: new MockQuorum(),
-                        logger: new MockLogger(),
-                        clientDetails: { capabilities: { interactive: true } },
-                        closeFn: (error?: ICriticalContainerError): void => {
-                            if (error !== undefined) {
-                                containerErrors.push(error);
-                            }
-                        },
-                    };
-                });
-
-                const getSingleContainerError = (): ICriticalContainerError => {
-                    assert.strictEqual(containerErrors.length, 1);
-                    return containerErrors[0];
-                };
-
-                beforeEach(async () => {
-                    containerRuntime = await ContainerRuntime.load(
-                        getMockContext() as IContainerContext,
-                        [],
-                        undefined, // requestHandler
-                        {
-                            summaryOptions: {
-                                disableSummaries: true,
+        describe("ContainerRuntime", () =>
+            [FlushMode.Immediate, FlushMode.TurnBased].forEach(function (flushMode: FlushMode) {
+                describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
+                    let containerRuntime: ContainerRuntime;
+                    const containerErrors: ICriticalContainerError[] = [];
+                    const getMockContext = ((): Partial<IContainerContext> => {
+                        return {
+                            deltaManager: new MockDeltaManager(),
+                            quorum: new MockQuorum(),
+                            logger: new MockLogger(),
+                            clientDetails: { capabilities: { interactive: true } },
+                            closeFn: (error?: ICriticalContainerError): void => {
+                                if (error !== undefined) {
+                                    containerErrors.push(error);
+                                }
                             },
-                        },
-                    );
-                    containerErrors.length = 0;
-                });
+                        };
+                    });
 
-                it("Can't call flush() inside orderSequentially's callback", () => {
-                    assert.throws(() => containerRuntime.orderSequentially(() => containerRuntime.flush()));
-                    assert.strictEqual(getSingleContainerError().errorType, "dataProcessingError");
-                });
+                    const getSingleContainerError = (): ICriticalContainerError => {
+                        assert.strictEqual(containerErrors.length, 1);
+                        return containerErrors[0];
+                    };
 
-                it("Can't call flush() inside orderSequentially's callback when nested", () => {
-                    assert.throws(
-                        () => containerRuntime.orderSequentially(
+                    beforeEach(async () => {
+                        containerRuntime = await ContainerRuntime.load(
+                            getMockContext() as IContainerContext,
+                            [],
+                            undefined, // requestHandler
+                            {
+                                summaryOptions: {
+                                    disableSummaries: true,
+                                },
+                            },
+                        );
+                        containerRuntime.setFlushMode(flushMode);
+                        containerErrors.length = 0;
+                    });
+
+                    it("Can't call flush() inside orderSequentially's callback", () => {
+                        assert.throws(() => containerRuntime.orderSequentially(() => containerRuntime.flush()));
+                        assert.strictEqual(getSingleContainerError().errorType, "dataProcessingError");
+                    });
+
+                    it("Can't call flush() inside orderSequentially's callback when nested", () => {
+                        assert.throws(
                             () => containerRuntime.orderSequentially(
-                                () => containerRuntime.flush())));
+                                () => containerRuntime.orderSequentially(
+                                    () => containerRuntime.flush())));
 
-                    assert.strictEqual(getSingleContainerError().errorType, "dataProcessingError");
+                        assert.strictEqual(getSingleContainerError().errorType, "dataProcessingError");
+                    });
+
+                    it("Errors propagate to the container", () => {
+                        assert.throws(
+                            () => containerRuntime.orderSequentially(
+                                () => {
+                                    throw new Error("Any");
+                                }));
+
+                        const error = getSingleContainerError();
+                        assert.strictEqual(error.errorType, "dataProcessingError");
+                        assert.ok(error.message.includes("Any"));
+                    });
                 });
+            }
+        ));
 
-                it("Errors propagate to the container", () => {
-                    assert.throws(
-                        () => containerRuntime.orderSequentially(
-                            () => {
-                                throw new Error("Any");
-                            }));
-
-                    const error = getSingleContainerError();
-                    assert.strictEqual(error.errorType, "dataProcessingError");
-                    assert.ok(error.message.includes("Any"));
-                });
-            });
-        });
 
         describe("ScheduleManager", () => {
             describe("Batch processing events", () => {
