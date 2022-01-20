@@ -95,7 +95,6 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents>
     implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     public get disposed() { return undefined; }
 
-    public readonly readonly = false;
     public readOnlyInfo: ReadOnlyInfo = { readonly: false };
     public readonly clientType: string;
     public readonly clientDetails: IClientDetails;
