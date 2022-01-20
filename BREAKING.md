@@ -13,12 +13,20 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 0.56 Breaking changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
 - [Removed `IOdspResolvedUrl.sharingLinkToRedeem`](#Removed-IOdspResolvedUrl.sharingLinkToRedeem)
+- [Removed `PureDataObject.requestFluidObject_UNSAFE`](#Removed-PureDataObject.requestFluidObject_UNSAFE)
+- [Modified `PureDataObject.getFluidObjectFromDirectory`](#Modified-PureDataObject.getFluidObjectFromDirectory)
 
 ### `MessageType.Save` and code that handled it was removed
 The `Save` operation type was deprecated and has now been removed. This removes `MessageType.Save` from `protocol-definitions`, `save;${string}: ${string}` from `SummarizeReason` in the `container-runtime` package, and `MessageFactory.createSave()` from and `server-test-utils`.
 
 ### Removed `IOdspResolvedUrl.sharingLinkToRedeem`
 The `sharingLinkToRedeem` property is removed from the `IOdspResolvedUrl` interface. The property can be accesed from `IOdspResolvedUrl.shareLinkInfo` instead.
+
+### Removed `PureDataObject.requestFluidObject_UNSAFE`
+The `requestFluidObject_UNSAFE` property is removed from the `PureDataObject`.
+
+### Modified `PureDataObject.getFluidObjectFromDirectory`
+The `getFluidObjectFromDirectory` now expects callback that is only returning `IFluidHandle` or `undefined`. Returnig id (as `string`) is not supported as we want to encourage retreiving shared objects only via handles.
 
 ## 0.55 Breaking changes
 - [`container-loader` interfaces return `IQuorumClients` rather than `IQuorum`](#container-loader-interfaces-return-IQuorumClients-rather-than-IQuorum)
