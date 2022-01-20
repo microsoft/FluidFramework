@@ -39,7 +39,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/build-tools": "^0.2.46657",
-    "@fluidframework/eslint-config-fluid": "^0.25.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.25.0",
     "@fluidframework/protocol-definitions-0.1024.0": "npm:@fluidframework/protocol-definitions@0.1024.0",
     "@fluidframework/protocol-definitions-0.1025.1": "npm:@fluidframework/protocol-definitions@0.1025.1",
     "@fluidframework/protocol-definitions-0.1026.0": "npm:@fluidframework/protocol-definitions@0.1026.0",
@@ -81,6 +81,9 @@
         },
         "InterfaceDeclaration_ISummaryNack": {
           "backCompat": false
+        },
+        "EnumDeclaration_MessageType": {
+          "forwardCompat": false
         }
       },
       "0.1025.1": {
@@ -89,11 +92,17 @@
         },
         "InterfaceDeclaration_ISummaryNack": {
           "backCompat": false
+        },
+        "EnumDeclaration_MessageType": {
+          "forwardCompat": false
         }
       },
       "0.1026.0": {
         "InterfaceDeclaration_ISummaryNack": {
           "backCompat": false
+        },
+        "EnumDeclaration_MessageType": {
+          "forwardCompat": false
         }
       }
     }

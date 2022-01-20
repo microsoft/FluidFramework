@@ -363,7 +363,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * @returns the summary of the current state of the task manager
      * @internal
      */
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         // TODO filter out tasks with no clients, some are still getting in.
         const content = [...this.taskQueues.entries()];
         return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));

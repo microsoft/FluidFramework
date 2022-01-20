@@ -93,7 +93,7 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     // (undocumented)
     protected submitLocalMessage(message: any, localOpMetadata?: any): void;
     // (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     // (undocumented)
     toString(): string;
     // @internal (undocumented)
