@@ -19,7 +19,7 @@ describe("Runtime", () => {
     describe("Container Runtime", () => {
         describe("ContainerRuntime", () =>
             Object.keys(FlushMode).map(x => FlushMode[x]).forEach((flushMode: FlushMode) => {
-                describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
+                describe(`orderSequentially with flush mode: ${flushMode}`, () => {
                     let containerRuntime: ContainerRuntime;
                     const containerErrors: ICriticalContainerError[] = [];
                     const getMockContext = ((): Partial<IContainerContext> => {
