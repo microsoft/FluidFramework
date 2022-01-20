@@ -18,8 +18,8 @@ import { FlushMode } from "@fluidframework/runtime-definitions";
 describe("Runtime", () => {
     describe("Container Runtime", () => {
         describe("ContainerRuntime", () =>
-            Object.keys(FlushMode).map(x => FlushMode[x]).forEach((flushMode: FlushMode) => {
-                describe(`orderSequentially with flush mode: ${flushMode}`, () => {
+            [FlushMode.TurnBased, FlushMode.Immediate].forEach((flushMode: FlushMode) => {
+                describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
                     let containerRuntime: ContainerRuntime;
                     const containerErrors: ICriticalContainerError[] = [];
                     const getMockContext = ((): Partial<IContainerContext> => {
@@ -36,8 +36,8 @@ describe("Runtime", () => {
                         };
                     });
 
-                    const getSingleContainerError = (): ICriticalContainerError => {
-                        assert.strictEqual(containerErrors.length, 1);
+                    const getFirstContainerError = (): ICriticalContainerError => {
+                        assert.ok(containerErrors.length > 0, "Container should have errors");
                         return containerErrors[0];
                     };
 
@@ -58,7 +58,7 @@ describe("Runtime", () => {
 
                     it("Can't call flush() inside orderSequentially's callback", () => {
                         assert.throws(() => containerRuntime.orderSequentially(() => containerRuntime.flush()));
-                        assert.strictEqual(getSingleContainerError().errorType, "dataProcessingError");
+                        assert.strictEqual(getFirstContainerError().errorType, "dataProcessingError");
                     });
 
                     it("Can't call flush() inside orderSequentially's callback when nested", () => {
@@ -67,7 +67,19 @@ describe("Runtime", () => {
                                 () => containerRuntime.orderSequentially(
                                     () => containerRuntime.flush())));
 
-                        assert.strictEqual(getSingleContainerError().errorType, "dataProcessingError");
+                        assert.strictEqual(getFirstContainerError().errorType, "dataProcessingError");
+                    });
+
+                    it("Can't call flush() inside orderSequentially's callback when nested ignoring exceptions", () => {
+                        containerRuntime.orderSequentially(() => {
+                            try {
+                                containerRuntime.orderSequentially(() => containerRuntime.flush());
+                            } catch (e) {
+                                // ignore
+                            }
+                        });
+
+                        assert.strictEqual(getFirstContainerError().errorType, "dataProcessingError");
                     });
 
                     it("Errors propagate to the container", () => {
@@ -77,7 +89,20 @@ describe("Runtime", () => {
                                     throw new Error("Any");
                                 }));
 
-                        const error = getSingleContainerError();
+                        const error = getFirstContainerError();
+                        assert.strictEqual(error.errorType, "dataProcessingError");
+                        assert.ok(error.message.includes("Any"));
+                    });
+
+                    it("Errors propagate to the container when nested", () => {
+                        assert.throws(
+                            () => containerRuntime.orderSequentially(
+                                () => containerRuntime.orderSequentially(
+                                    () => {
+                                        throw new Error("Any");
+                                    })));
+
+                        const error = getFirstContainerError();
                         assert.strictEqual(error.errorType, "dataProcessingError");
                         assert.ok(error.message.includes("Any"));
                     });

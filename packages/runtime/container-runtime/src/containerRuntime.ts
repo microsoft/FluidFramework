@@ -1670,11 +1670,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._orderSequentiallyCalls++;
             callback();
         } catch (error) {
-            if (this._orderSequentiallyCalls === 1) {
-                // In case of nesting, only the top level call should close the container
-                this.closeFn(CreateProcessingError(error, "orderSequentially"));
-            }
-
+            this.closeFn(CreateProcessingError(error, "orderSequentially"));
             throw error; // throw the original error for the consumer of the runtime
         } finally {
             this._orderSequentiallyCalls--;
