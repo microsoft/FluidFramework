@@ -14,6 +14,7 @@ import { IContainerContext, ICriticalContainerError } from "@fluidframework/cont
 import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
 import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
 import { FlushMode } from "@fluidframework/runtime-definitions";
+import { GenericError } from "@fluidframework/container-utils";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
@@ -41,6 +42,8 @@ describe("Runtime", () => {
                         return containerErrors[0];
                     };
 
+                    const expectedOrderSequentiallyErrorCode = "orderSequentiallyCallbackException";
+
                     beforeEach(async () => {
                         containerRuntime = await ContainerRuntime.load(
                             getMockContext() as IContainerContext,
@@ -58,7 +61,10 @@ describe("Runtime", () => {
 
                     it("Can't call flush() inside orderSequentially's callback", () => {
                         assert.throws(() => containerRuntime.orderSequentially(() => containerRuntime.flush()));
-                        assert.strictEqual(getFirstContainerError().errorType, "dataProcessingError");
+
+                        const error = getFirstContainerError();
+                        assert.ok(error instanceof GenericError);
+                        assert.strictEqual(error.fluidErrorCode, expectedOrderSequentiallyErrorCode);
                     });
 
                     it("Can't call flush() inside orderSequentially's callback when nested", () => {
@@ -67,7 +73,9 @@ describe("Runtime", () => {
                                 () => containerRuntime.orderSequentially(
                                     () => containerRuntime.flush())));
 
-                        assert.strictEqual(getFirstContainerError().errorType, "dataProcessingError");
+                        const error = getFirstContainerError();
+                        assert.ok(error instanceof GenericError);
+                        assert.strictEqual(error.fluidErrorCode, expectedOrderSequentiallyErrorCode);
                     });
 
                     it("Can't call flush() inside orderSequentially's callback when nested ignoring exceptions", () => {
@@ -79,7 +87,9 @@ describe("Runtime", () => {
                             }
                         });
 
-                        assert.strictEqual(getFirstContainerError().errorType, "dataProcessingError");
+                        const error = getFirstContainerError();
+                        assert.ok(error instanceof GenericError);
+                        assert.strictEqual(error.fluidErrorCode, expectedOrderSequentiallyErrorCode);
                     });
 
                     it("Errors propagate to the container", () => {
@@ -90,8 +100,9 @@ describe("Runtime", () => {
                                 }));
 
                         const error = getFirstContainerError();
-                        assert.strictEqual(error.errorType, "dataProcessingError");
-                        assert.ok(error.message.includes("Any"));
+                        assert.ok(error instanceof GenericError);
+                        assert.strictEqual(error.fluidErrorCode, expectedOrderSequentiallyErrorCode);
+                        assert.strictEqual(error.error.message, "Any");
                     });
 
                     it("Errors propagate to the container when nested", () => {
@@ -103,8 +114,9 @@ describe("Runtime", () => {
                                     })));
 
                         const error = getFirstContainerError();
-                        assert.strictEqual(error.errorType, "dataProcessingError");
-                        assert.ok(error.message.includes("Any"));
+                        assert.ok(error instanceof GenericError);
+                        assert.strictEqual(error.fluidErrorCode, expectedOrderSequentiallyErrorCode);
+                        assert.strictEqual(error.error.message, "Any");
                     });
                 });
             }));

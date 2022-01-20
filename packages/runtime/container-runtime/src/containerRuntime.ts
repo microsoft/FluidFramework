@@ -50,7 +50,6 @@ import {
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
 import {
-    CreateProcessingError,
     DataCorruptionError,
     GenericError,
     UsageError,
@@ -1670,7 +1669,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._orderSequentiallyCalls++;
             callback();
         } catch (error) {
-            this.closeFn(CreateProcessingError(error, "orderSequentially"));
+            this.closeFn(new GenericError("orderSequentiallyCallbackException", error));
             throw error; // throw the original error for the consumer of the runtime
         } finally {
             this._orderSequentiallyCalls--;
