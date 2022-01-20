@@ -123,9 +123,7 @@ export function decomposeType(
     if (node.isTypeParameter()) {
         return result;
     }
-
     node = node as Type;
-
     // intersections bind more strongly than unions so split those second
     if (node.isUnion()) {
         return decomposeTypes(checker, node.getUnionTypes(), " | ");

@@ -24,7 +24,6 @@ import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
-import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
@@ -49,7 +48,6 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
-import { LoggingError } from '@fluidframework/telemetry-utils';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
@@ -202,9 +200,6 @@ export interface ContainerRuntimeMessage {
     // (undocumented)
     type: ContainerMessageType;
 }
-
-// @public (undocumented)
-export const createSummarizingWarning: (errorCode: string, logged: boolean) => SummarizingWarning;
 
 // @public
 export class DeltaScheduler {
@@ -460,30 +455,6 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 }
 
 // @public
-export interface ISummarizeAttempt {
-    readonly refSequenceNumber: number;
-    summarySequenceNumber?: number;
-    readonly summaryTime: number;
-}
-
-// @public
-export interface ISummarizeHeuristicData {
-    initialize(lastSummary: ISummarizeAttempt): void;
-    readonly lastAttempt: ISummarizeAttempt;
-    lastOpSequenceNumber: number;
-    readonly lastSuccessfulSummary: Readonly<ISummarizeAttempt>;
-    markLastAttemptAsSuccessful(): void;
-    recordAttempt(referenceSequenceNumber?: number): void;
-}
-
-// @public
-export interface ISummarizeHeuristicRunner {
-    dispose(): void;
-    run(): void;
-    shouldRunLastSummary(): boolean;
-}
-
-// @public
 export interface ISummarizeOptions {
     readonly fullTree?: boolean;
     readonly refreshLatestAck?: boolean;
@@ -632,27 +603,6 @@ export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 // @public (undocumented)
 export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
 
-// @public
-export class PendingStateManager implements IDisposable {
-    constructor(containerRuntime: ContainerRuntime, applyStashedOp: (type: any, content: any) => Promise<unknown>, initialState: IPendingLocalState | undefined);
-    applyStashedOpsAt(seqNum: number): Promise<void>;
-    // (undocumented)
-    readonly dispose: () => void;
-    // (undocumented)
-    get disposed(): boolean;
-    // (undocumented)
-    getLocalState(): IPendingLocalState | undefined;
-    hasPendingMessages(): boolean;
-    onFlush(): void;
-    onFlushModeUpdated(flushMode: FlushMode): void;
-    onSubmitMessage(type: ContainerMessageType, clientSequenceNumber: number, referenceSequenceNumber: number, content: any, localOpMetadata: unknown, opMetadata: Record<string, unknown> | undefined): void;
-    processMessage(message: ISequencedDocumentMessage, local: boolean): {
-        localAck: boolean;
-        localOpMetadata: unknown;
-    };
-    replayPendingStates(): void;
-}
-
 // @public (undocumented)
 export enum RuntimeMessage {
     // (undocumented)
@@ -734,21 +684,6 @@ export type SummarizerStopReason =
  | "parentShouldNotSummarize"
 /** Summarizer client was disconnected */
  | "summarizerClientDisconnected" | "summarizerException";
-
-// @public (undocumented)
-export class SummarizingWarning extends LoggingError implements ISummarizingWarning, IFluidErrorBase {
-    constructor(errorMessage: string, fluidErrorCode: string, logged?: boolean);
-    // (undocumented)
-    readonly canRetry = true;
-    // (undocumented)
-    readonly errorType = "summarizingError";
-    // (undocumented)
-    readonly fluidErrorCode: string;
-    // (undocumented)
-    readonly logged: boolean;
-    // (undocumented)
-    static wrap(error: any, errorCode: string, logged: boolean | undefined, logger: ITelemetryLogger): SummarizingWarning;
-}
 
 // @public
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
