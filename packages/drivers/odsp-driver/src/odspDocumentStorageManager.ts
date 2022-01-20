@@ -224,7 +224,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
         this.attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
         this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
-        this.odspSummaryUploadManager = new OdspSummaryUploadManager(this.snapshotUrl, getStorageToken, logger, epochTracker, this.hostPolicy);
+        this.odspSummaryUploadManager = new OdspSummaryUploadManager(
+            this.snapshotUrl,
+            getStorageToken,
+            logger,
+            epochTracker,
+            !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+        );
     }
 
     public get repositoryUrl(): string {
