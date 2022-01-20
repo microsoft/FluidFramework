@@ -21,7 +21,7 @@ The `Save` operation type was deprecated and has now been removed. This removes 
 ### Removed `IOdspResolvedUrl.sharingLinkToRedeem`
 The `sharingLinkToRedeem` property is removed from the `IOdspResolvedUrl` interface. The property can be accesed from `IOdspResolvedUrl.shareLinkInfo` instead.
 
-### `readonly` removed from `IDeltaManager`, `DeltaManager`, and `DeltaManagerProxy`
+### readonly removed from IDeltaManager, DeltaManager, and DeltaManagerProxy
 The `readonly` property was deprecated and has now been removed from `IDeltaManager` from `container-definitions`. Additionally, `readonly` has been removed from the implementations in `DeltaManager` and `DeltaManagerProxy` from `container-loader`. To replace its functionality, use `readOnlyInfo.readonly` instead.
 
 ## 0.55 Breaking changes
