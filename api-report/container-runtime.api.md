@@ -130,8 +130,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     // (undocumented)
     get IContainerRuntime(): this;
-    // @deprecated (undocumented)
-    get id(): string;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     // (undocumented)
@@ -144,7 +142,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
-    // (undocumented)
+    // @deprecated (undocumented)
     get options(): ILoaderOptions;
     // (undocumented)
     orderSequentially(callback: () => void): void;
