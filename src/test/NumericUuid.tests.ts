@@ -7,7 +7,6 @@
 
 import { expect } from 'chai';
 import Prando from 'prando';
-import { StableId } from '../Identifiers';
 import { assert, compareStrings } from '../Common';
 import {
 	numericUuidEquals,
@@ -23,6 +22,7 @@ import {
 	assertIsStableId,
 	isMinimalUuidString,
 } from '../id-compressor/NumericUuid';
+import { StableId } from '../Identifiers';
 import { integerToStableId } from './utilities/IdCompressorTestUtilities';
 
 describe('NumericUuid', () => {
@@ -96,7 +96,7 @@ describe('NumericUuid', () => {
 	});
 
 	const stableIds = [
-		assertIsStableId('748540cab7c54c9983ffc1b8e02c09d6'),
+		assertIsStableId('748540cab7c54c99831fc1b8e02c09d6'),
 		assertIsStableId('0002c79eb5364776b000000266c252d5'),
 		assertIsStableId('082533b96d054068a008fe2cc43543f7'),
 		assertIsStableId('2c9fa1f848d54554a466000000000000'),
@@ -104,14 +104,17 @@ describe('NumericUuid', () => {
 		assertIsStableId('1000000000004000b000000000000000'),
 		assertIsStableId('1000000000004000b020000000000000'), // 2^52
 		assertIsStableId('1000000000004000b00fffffffffffff'),
+		assertIsStableId('1000000000004000b040000000000000'),
+		assertIsStableId('f0000000000040008000000000000000'),
+		assertIsStableId('efffffffffff4fffbfffffffffffffff'),
 		integerToStableId(0),
 		integerToStableId(1),
 		integerToStableId(77),
 		integerToStableId(1024),
 		integerToStableId(2 ** 32 - 1),
 		integerToStableId(2 ** 52 - 1),
-		integerToStableId(Number.MAX_SAFE_INTEGER), // 1fff...ffff
-		integerToStableId(Number.MAX_SAFE_INTEGER - 1), // 1fff...fffe
+		integerToStableId(Number.MAX_SAFE_INTEGER),
+		integerToStableId(Number.MAX_SAFE_INTEGER - 1),
 	];
 
 	describe('incrementing', () => {
@@ -189,9 +192,22 @@ describe('NumericUuid', () => {
 });
 
 function bigIntFromStableId(id: StableId): bigint {
-	return (
-		(BigInt(`0x${id.substr(0, 12)}`) << BigInt(74)) +
-		(BigInt(`0x${id.substr(13, 3)}`) << BigInt(62)) +
-		(BigInt(`0x${id.substr(16, 16)}`) & BigInt(`0x3fffffffffffffff`))
-	);
+	//      UUID | xxxxxxxxx-xxxx-Vxxx-vxxx-xxxxxxxxxxxx | The StableId passed to this function, shown here in standard UUID notation
+	//   nibbles | hhhhhhhhh hhhh  mmm llll llllllllllll | Whether or not each nibble is part of the "high", "middle" or "low" group below
+	// bit count | 444444444-4444-0444-2444-444444444444 | The number of bits per nibble that are used to encode the number
+
+	// Interpret numerically...
+	const highNibbles = BigInt(`0x${id.substr(0, 12)}`); // ...all nibbles above the version nibble,
+	const midNibbles = BigInt(`0x${id.substr(13, 3)}`); //  the nibbles below the version nibble and above the variant nibble,
+	const lowNibbles = BigInt(`0x${id.substr(16, 16)}`); // and the variant nibble and all nibbles below
+	// Count the number of bits that contribute to the number (i.e. are not reserved for version/variant) in...
+	const lowBitCount = BigInt(62); // ...the low nibbles
+	const midBitCount = BigInt(12); // and the mid nibbles
+	// Shift the values of each region by the appropriate number of bits
+	const highNumber = highNibbles << (midBitCount + lowBitCount);
+	const midNumber = midNibbles << lowBitCount;
+	// The low nibbles include the variant nibble because its two low bits are numerical (but its two upper bits are not). So mask them out:
+	const lowNumber = lowNibbles & BigInt('0x3fffffffffffffff'); // A nibble '0011' followed by 15 nibbles '1111'.
+	// Now that high and mid are shifted correctly, the final number is their sum:
+	return highNumber + midNumber + lowNumber;
 }

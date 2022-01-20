@@ -1026,7 +1026,7 @@ export class IdCompressor {
 				const { clusterBase: closestBaseFinalId, cluster: closestCluster } = compressionMapping;
 				numericUuid ??= numericUuidFromStableId(uncompressedUuid);
 				const uuidOffset = getPositiveDelta(numericUuid, closestCluster.baseUuid, closestCluster.count - 1);
-				if (uuidOffset !== undefined && uuidOffset !== undefined) {
+				if (uuidOffset !== undefined) {
 					let targetFinalId = (closestBaseFinalId + uuidOffset) as FinalCompressedId;
 					const override = closestCluster.overrides?.get(targetFinalId);
 					if (typeof override === 'object') {

@@ -27,7 +27,6 @@ const bitsInNumericUuidInteger = 52; // Not tunable. Do not change.
 const nibblesInNumericUuidInteger = bitsInNumericUuidInteger / 4;
 const nibblesInNumericString = 32 - nibblesInNumericUuidInteger;
 const maxNumericUuidInteger = 2 ** bitsInNumericUuidInteger - 1;
-const nonOverlappingStringLength = 18;
 const fiftyThirdBit = 2 ** 52;
 
 /**
@@ -41,42 +40,49 @@ export function getPositiveDelta(a: NumericUuid, b: NumericUuid, maxDelta: numbe
 	const [stringA, lowNumberA] = a;
 	const [stringB, lowNumberB] = b;
 
-	if (!stringA.startsWith(stringB.slice(0, nonOverlappingStringLength))) {
+	if (stringA === stringB) {
+		const difference = lowNumberA - lowNumberB;
+		if (difference >= 0 && difference <= maxDelta) {
+			return difference;
+		}
 		return undefined;
 	}
 
-	const lowestStringNibbleA = Number.parseInt(stringA.charAt(nonOverlappingStringLength), 16);
-	const lowestStringNibbleB = Number.parseInt(stringB.charAt(nonOverlappingStringLength), 16);
-	// If the lowest bit in each string is set - which corresponds to 2^52 - selectively add that amount to our numbers.
-	const numberA = (lowestStringNibbleA & 0x1 ? fiftyThirdBit : 0) + lowNumberA;
-	const numberB = (lowestStringNibbleB & 0x1 ? fiftyThirdBit : 0) + lowNumberB;
-	const numberDelta = numberA - numberB;
+	const highNumberA = Number.parseInt(stringA.substr(0, 12), 16);
+	const highNumberB = Number.parseInt(stringB.substr(0, 12), 16);
 
-	// This switch compares the values of the 54th (low order) bits of `a` and `b`. The 54th bit corresponds to a delta of 2^53 between
-	// `a` and `b`. We can't safely add it into our numbers like we did with the 52nd bit above, because that might exceed MAX_SAFE_INTEGER.
-	switch (((lowestStringNibbleA & 0x2) >> 1) - ((lowestStringNibbleB & 0x2) >> 1)) {
-		case 1: {
-			if (numberDelta >= 0) {
-				// We know that `a` exceeds `b` by more than 2^53, which is greater than MAX_SAFE_INTEGER and thus invalid.
-				return undefined;
-			}
+	let subtractHigh = highNumberA - highNumberB;
+	if (Math.abs(subtractHigh) > 1) {
+		// If the high bits differ by more than 1, then there is no chance that any lower bits could compensate
+		return undefined;
+	}
 
-			// `a` exceeds `b` by some value less than or equal to 2^53, so compute what that value is.
-			const result = Number.MAX_SAFE_INTEGER + (numberDelta + 1);
-			if (result > maxDelta) {
-				return undefined;
-			}
+	let midNumberA = VariantChunk.getNumericValue(VariantChunk.getVariantChunk(stringA));
+	const midNumberB = VariantChunk.getNumericValue(VariantChunk.getVariantChunk(stringB));
 
-			return result;
-		}
-		case 0: {
-			if (numberDelta < 0 || numberDelta > maxDelta) {
-				return undefined;
-			}
-			return numberDelta;
-		}
-		default:
-			return undefined;
+	let subtractLow = lowNumberA - lowNumberB;
+	if (subtractLow < 0) {
+		midNumberA -= 1;
+		subtractLow += fiftyThirdBit;
+	}
+
+	let subtractMid = midNumberA - midNumberB;
+	if (subtractMid < 0) {
+		subtractHigh -= 1;
+		subtractMid += VariantChunk.twentyThirdBit;
+	}
+
+	if (subtractHigh !== 0) {
+		// a < b, no positive delta, or
+		// a > b by much more than MAX_SAFE_INTEGER
+		return undefined;
+	}
+
+	if (subtractMid > 1) {
+		return undefined;
+	} else {
+		const trueDelta = fiftyThirdBit * subtractMid + subtractLow;
+		return trueDelta > maxDelta ? undefined : trueDelta;
 	}
 }
 
@@ -227,10 +233,9 @@ export function incrementUuid(uuid: NumericUuid, amount: number): NumericUuid {
 	} else {
 		// The numeric UUID's number region has overflowed. We will need to carry the overflow into the variant chunk (see `VariantChunk`).
 		/** The amount left over after filling up the rest of the uuid's number region with the increment amount */
-		const overflow = amount - (maxNumericUuidInteger - uuid[1]) - 1;
+		const remainder = amount - (maxNumericUuidInteger - uuid[1]) - 1;
 		const uuidString = uuid[0];
-		const variantChunkString = uuidString.substr(13, 6);
-		const [newVariantChunkString, carried] = VariantChunk.increment(variantChunkString);
+		const [newVariantChunkString, carried] = VariantChunk.increment(uuidString);
 
 		if (carried) {
 			// The variant chunk itself also overflowed. We'll need to carry the overflow further, into the upper string region of the UUID.
@@ -242,11 +247,14 @@ export function incrementUuid(uuid: NumericUuid, amount: number): NumericUuid {
 				fail('Exceeded maximum numeric UUID');
 			} else {
 				// The variant chunk overflowed but the upper string region did not. Splice in the incremented string region.
-				newUuid = [`${padToLengthWithZeros(upperString, 12)}4${newVariantChunkString}`, overflow];
+				newUuid = [
+					`${padToLengthWithZeros(newUpperNumber.toString(16), 12)}4${newVariantChunkString}`,
+					remainder,
+				];
 			}
 		} else {
 			// The variant chunk did not overflow, so just splice it back in.
-			newUuid = [`${uuidString.substr(0, 12)}4${newVariantChunkString}`, overflow];
+			newUuid = [`${uuidString.substr(0, 12)}4${newVariantChunkString}`, remainder];
 		}
 	}
 
@@ -284,12 +292,31 @@ namespace VariantChunk {
 	/** The maximum numeric value that can be represented by the numerically relevant bits in the variant chunk */
 	const maxVariantNumber = 2 ** 22 - 1;
 
+	export const twentyThirdBit = 2 ** 22;
+
+	/**
+	 * Returns the number representation of the given bits corresponding to the variant chunk. The value is derived by parsing all bits
+	 * except for reserved bits (i.e. the variant bits).
+	 * @param variantChunkBits
+	 */
+	export function getNumericValue(variantChunk: string): number {
+		const variantChunkBits = Number.parseInt(variantChunk, 16);
+		const upperVariantBits = (variantChunkBits & upperVariantChunkMask) >> 2;
+		const middleVariantBits = variantChunkBits & middleVariantChunkMask;
+		const lowerVariantBits = variantChunkBits & lowerVariantChunkMask;
+		return upperVariantBits + middleVariantBits + lowerVariantBits;
+	}
+
+	export function getVariantChunk(uuidString: string): string {
+		return uuidString.substr(13, 6);
+	}
+
 	/**
 	 * Given a hex string representing the variant chunk, add one to it.
 	 * @returns the resulting hex string and whether or not the new value overflowed, i.e. it exceeds `maxVariantNumber`. In this case,
 	 * the resulting hex string will wrap around to its minimum value '000b00'
 	 */
-	export function increment(variantChunk: string): [newVariantChunk: string, overflowed: boolean] {
+	export function increment(numericUuidString: string): [newVariantChunk: string, overflowed: boolean] {
 		// To implement addition, the variant identifier bits are extracted from the variant chunk, the chunk is interpreted as a number,
 		// that number is incremented by 1, and then the variant identifier bits are returned as we convert the number back into a hex
 		// string.
@@ -305,12 +332,9 @@ namespace VariantChunk {
 		// 4. GGGG HHHH IIII vvJJ JJKK KKLL
 
 		// 1. The variant chunk is given as a 6 character (6 nibble) hex string, where the fourth nibble contains the variant bits
-		const variantChunkBits = Number.parseInt(variantChunk, 16);
-		// 2. The numerically important bits (i.e. not the variant identifier bits _vv_ which are constant) are extracted into a single number
-		const upperVariantBits = (variantChunkBits & upperVariantChunkMask) >> 2;
-		const middleVariantBits = variantChunkBits & middleVariantChunkMask;
-		const lowerVariantBits = variantChunkBits & lowerVariantChunkMask;
-		const variantNumber = upperVariantBits + middleVariantBits + lowerVariantBits;
+		// 2. The numerically important bits (i.e. not the variant identifier bits vv which are constant) are extracted into a single number
+		const variantChunk = getVariantChunk(numericUuidString);
+		const variantNumber = getNumericValue(variantChunk);
 		assert(variantNumber <= maxVariantNumber);
 		// 3. Add one to the variant number to produce our new variant number.
 		const newVariantNumber = variantNumber + 1;
