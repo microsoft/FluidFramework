@@ -109,6 +109,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         assert(latestUploadedSummary !== undefined, "Did not get a summary");
 
         const gcState = getGCStateFromSummary(latestUploadedSummary);
+        assert(gcState !== undefined, "GC tree is not available in the summary");
         const nodeTimestamps: Map<string, number | undefined> = new Map();
         for (const [nodeId, nodeData] of Object.entries(gcState.gcNodes)) {
             nodeTimestamps.set(nodeId.slice(1), nodeData.unreferencedTimestampMs);
