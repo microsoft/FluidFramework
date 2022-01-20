@@ -4,11 +4,11 @@ title: Welcome to the Fluid Community
 
 {{< in_your_face
     lead=`Community`
-    subText=`
-We believe that an **open, inclusive, and respectful** community will help shape a better future for this project. That's why Fluid Framework is **Open Source**. Below you will find various ways to get **involved**.
-
-Fluid Framework is made available as an **Open Source** project under
-the [MIT license](https://github.com/microsoft/FluidFramework/blob/main/LICENSE).
+    subtext=`
+We believe that an **open, inclusive, and respectful** community will help shape a better future for this project.
+That's why Fluid Framework is is made available as an **Open Source** project under the
+[MIT license](https://github.com/microsoft/FluidFramework/blob/main/LICENSE). Below you will find various ways to get
+**involved**.
 
 This project has adopted the [Microsoft Open Source Code of
 Conduct](https://opensource.microsoft.com/codeofconduct/).

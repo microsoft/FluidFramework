@@ -47,6 +47,7 @@
       padding: 8px 8px;
       margin-top: 1.5rem;
       position: relative;
+      min-height: 180px;
       &::after {
         $triangle-size: 1.4rem;
         content: '';
