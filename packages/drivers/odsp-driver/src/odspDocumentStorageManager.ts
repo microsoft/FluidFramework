@@ -40,7 +40,7 @@ import {
     getWithRetryForTokenRefresh,
     ISnapshotContents,
 } from "./odspUtils";
-import { EpochTracker } from "./epochTracker";
+import { defaultCacheExpiryTimeoutMs, EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { FlushResult } from "./odspDocumentDeltaConnection";
 
@@ -167,6 +167,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         // Note that duplication of content should not have significant impact for bytes over wire as
         // compression of http payload mostly takes care of it, but it does impact storage size and in-memory sizes.
         minBlobSize: 2048,
+        maximumCacheDurationMs: defaultCacheExpiryTimeoutMs,
     };
 
     private readonly commitCache: Map<string, api.ISnapshotTree> = new Map();
