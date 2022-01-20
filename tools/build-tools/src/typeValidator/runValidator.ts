@@ -34,7 +34,7 @@ async function main() {
         .option("-d|--dep", "Bump consumers' dependencies on packages with breaking changes")
         .parse(process.argv);
 
-    const includeOnly: Set<string> | undefined = new Set(program.packages);
+    const includeOnly: Set<string> | undefined = program.packages ? new Set(program.packages) : undefined;
     if (program.verbose !== undefined) {
         enableLogging(true);
     }
