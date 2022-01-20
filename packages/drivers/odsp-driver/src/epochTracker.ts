@@ -246,13 +246,13 @@ export class EpochTracker implements IPersistedFileCache {
         addInBody: boolean,
         clientCorrelationId: string,
     ) {
+        const isClpCompliantApp = getOdspResolvedUrl(this.fileEntry.resolvedUrl).isClpCompliantApp;
         if (addInBody) {
             const headers: {[key: string]: string} = {};
             headers["X-RequestStats"] = clientCorrelationId;
             if (this.fluidEpoch !== undefined) {
                 headers["x-fluid-epoch"] = this.fluidEpoch;
             }
-            const isClpCompliantApp = getOdspResolvedUrl(this.fileEntry.resolvedUrl).isClpCompliantApp;
             if (isClpCompliantApp) {
                 headers[ClpCompliantAppHeader.isClpCompliantApp] = isClpCompliantApp.toString();
             }
@@ -268,6 +268,9 @@ export class EpochTracker implements IPersistedFileCache {
             addHeader("X-RequestStats", clientCorrelationId);
             if (this.fluidEpoch !== undefined) {
                 addHeader("x-fluid-epoch", this.fluidEpoch);
+            }
+            if (isClpCompliantApp) {
+                addHeader(ClpCompliantAppHeader.isClpCompliantApp, isClpCompliantApp.toString());
             }
         }
     }
