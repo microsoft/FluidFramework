@@ -33,7 +33,8 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
                     tenantId,
                 },
                 reconnection: false,
-                transports: ["websocket"],
+                // Enable long-polling as a downgrade option
+                transports: ["websocket", "polling"],
                 timeout: timeoutMs,
             });
 
