@@ -47,8 +47,6 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     hasSubDirectory(subdirName: string): boolean;
     set<T = any>(key: string, value: T): this;
     subdirectories(): IterableIterator<[string, IDirectory]>;
-    // @deprecated
-    wait<T = any>(key: string): Promise<T>;
 }
 
 // @public
@@ -120,8 +118,6 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     get<T = any>(key: string): T | undefined;
     set<T = any>(key: string, value: T): this;
-    // @deprecated
-    wait<T = any>(key: string): Promise<T>;
 }
 
 // @public
@@ -206,8 +202,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     // @internal (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
-    // @deprecated
-    wait<T = any>(key: string): Promise<T>;
 }
 
 // @public
@@ -241,8 +235,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     // @internal (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
-    // @deprecated
-    wait<T = any>(key: string): Promise<T>;
 }
 
 
