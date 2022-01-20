@@ -1103,6 +1103,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Save attributes for the document
         const documentAttributes = {
+            branch: this._resolvedUrl?.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             sequenceNumber: this._deltaManager.lastSequenceNumber,
             term: this._deltaManager.referenceTerm,
