@@ -430,9 +430,6 @@ function getFormBodyAndHeaders(
     if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem) {
         formParams.push(`sl: ${odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem}`);
     }
-    if (odspResolvedUrl.isClpCompliantApp) {
-        formParams.push(`X-CLP-Compliant-App: ${odspResolvedUrl.isClpCompliantApp}`);
-    }
     formParams.push(`_post: 1`);
     formParams.push(`\r\n--${formBoundary}--`);
     const postBody = formParams.join("\r\n");
