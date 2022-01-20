@@ -72,8 +72,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     get connected(): boolean;
     // (undocumented)
     get connectionState(): ConnectionState;
-    // (undocumented)
-    get containerTracker(): ContainerTracker | undefined;
     static createDetached(loader: Loader, codeDetails: IFluidCodeDetails): Promise<Container>;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -91,6 +89,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: unknown): Promise<Container>;
     // (undocumented)
     get loadedFromVersion(): IVersion | undefined;
+    // (undocumented)
+    get opController(): ContainerOpController | undefined;
     // (undocumented)
     readonly options: ILoaderOptions;
     // (undocumented)
@@ -122,19 +122,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
 // @public (undocumented)
-export interface ContainerRecord {
-    // (undocumented)
-    lastProposal: number;
-    // (undocumented)
-    paused: boolean;
-    // (undocumented)
-    startTrailingNoOps: number;
-    // (undocumented)
-    trailingNoOps: number;
-}
-
-// @public (undocumented)
-export class ContainerTracker implements IContainerTracker {
+export class ContainerOpController implements IContainerOpController {
     constructor(container: IContainer);
     // (undocumented)
     containerRecord: ContainerRecord;
@@ -144,6 +132,18 @@ export class ContainerTracker implements IContainerTracker {
     reset(): void;
     resumeProcessing(): IContainer | undefined;
     waitForAnyInboundOps(): Promise<void>;
+}
+
+// @public (undocumented)
+export interface ContainerRecord {
+    // (undocumented)
+    lastProposal: number;
+    // (undocumented)
+    paused: boolean;
+    // (undocumented)
+    startTrailingNoOps: number;
+    // (undocumented)
+    trailingNoOps: number;
 }
 
 // @public @deprecated (undocumented)
@@ -171,7 +171,7 @@ export interface IContainerLoadOptions {
 }
 
 // @public (undocumented)
-export interface IContainerTracker {
+export interface IContainerOpController {
     // (undocumented)
     pauseProcessing(): Promise<void>;
     // (undocumented)

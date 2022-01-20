@@ -110,7 +110,7 @@ import { getSnapshotTreeFromSerializedContainer } from "./utils";
 import { QuorumProxy } from "./quorum";
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
-import { ContainerTracker } from "./containerTracker";
+import { ContainerOpController } from "./containerOpController";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -398,9 +398,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._protocolHandler;
     }
 
-    private readonly _containerTracker: ContainerTracker | undefined;
-    public get containerTracker() {
-        return this._containerTracker;
+    private readonly _opController: ContainerOpController | undefined;
+    public get opController() {
+        return this._opController;
     }
 
     private resumedOpProcessingAfterLoad = false;
@@ -704,7 +704,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             });
         });
 
-        this._containerTracker = new ContainerTracker(this);
+        this._opController = new ContainerOpController(this);
     }
 
     /**

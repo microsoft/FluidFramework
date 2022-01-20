@@ -51,13 +51,13 @@ export class LoaderContainerTracker implements IOpProcessingController {
         // don't add container that is already tracked
         if (
             this.containers.has(container)
-            || container.containerTracker === undefined
-            || container.containerTracker.containerRecord === undefined)
+            || container.opController === undefined
+            || container.opController.containerRecord === undefined)
             { return; }
 
         const record = {
             index: this.containers.size,
-            containerRecord: container.containerTracker?.containerRecord,
+            containerRecord: container.opController?.containerRecord,
         };
         this.containers.set(container, record);
         this.trackLastProposal(container);
@@ -77,7 +77,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
     public reset() {
         this.lastProposalSeqNum = 0;
         for (const container of this.containers.keys()) {
-            container.containerTracker?.reset();
+            container.opController?.reset();
         }
         this.containers.clear();
 
@@ -289,7 +289,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
         const resumed: IContainer[] = [];
         const containersToApply = this.getContainers(containers);
         containersToApply.forEach((container: IContainer) => {
-            const resumedContainer = (container as Container).containerTracker?.resumeProcessing();
+            const resumedContainer = (container as Container).opController?.resumeProcessing();
             if (resumedContainer !== undefined) { resumed.push(resumedContainer); }
         });
         return resumed;
@@ -303,9 +303,9 @@ export class LoaderContainerTracker implements IOpProcessingController {
         const pauseP: Promise<void>[] = [];
         const containersToApply = this.getContainers(containers);
         for (const container of containersToApply) {
-            if ((container as Container).containerTracker !== undefined) {
+            if ((container as Container).opController !== undefined) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                pauseP.push((container as Container).containerTracker!.pauseProcessing());
+                pauseP.push((container as Container).opController!.pauseProcessing());
             }
         }
         await Promise.all(pauseP);
@@ -319,8 +319,8 @@ export class LoaderContainerTracker implements IOpProcessingController {
     public async processIncoming(...containers: IContainer[]) {
         const incomingP: Promise<void>[] = [];
         (containers as Container[]).forEach((container) => {
-            if (container.containerTracker !== undefined) {
-                incomingP.push(container.containerTracker.processIncoming());
+            if (container.opController !== undefined) {
+                incomingP.push(container.opController.processIncoming());
             }
         });
         await Promise.all(incomingP);
@@ -334,8 +334,8 @@ export class LoaderContainerTracker implements IOpProcessingController {
     public async processOutgoing(...containers: IContainer[]) {
         const outgoingP: Promise<void>[] = [];
         (containers as Container[]).forEach((container) => {
-            if (container.containerTracker !== undefined) {
-                outgoingP.push(container.containerTracker.processOutgoing());
+            if (container.opController !== undefined) {
+                outgoingP.push(container.opController.processOutgoing());
             }
         });
         await Promise.all(outgoingP);

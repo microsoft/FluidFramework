@@ -178,7 +178,7 @@ describe("No Delta Stream", () => {
         assert.strictEqual(dataObject.root.get("test"), "key", "mapKey");
 
         container.close();
-    }).timeout(6000);
+    });
 
     afterEach(async () => {
         await deltaConnectionServer.webSocketServer.close();

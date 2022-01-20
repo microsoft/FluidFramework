@@ -11,7 +11,7 @@ import { debug } from "./debug";
 const debugOp = debug.extend("ops");
 const debugWait = debug.extend("wait");
 
-export interface IContainerTracker {
+export interface IContainerOpController {
     processIncoming(): Promise<void>;
     processOutgoing(): Promise<void>;
     pauseProcessing(): Promise<void>;
@@ -31,7 +31,7 @@ export interface ContainerRecord {
     lastProposal: number;
 }
 
-export class ContainerTracker implements IContainerTracker {
+export class ContainerOpController implements IContainerOpController {
     public containerRecord!: ContainerRecord;
 
     constructor(private readonly container: IContainer) {
