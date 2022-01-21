@@ -22,8 +22,10 @@ export function getUrlAndHeadersWithAuth(
         // ODSP APIs have a limitation that the query string cannot exceed 2048 characters.
         // If the query string exceeds 2048, we have to fall back to sending the access token as a header, which
         // has a negative performance implication as it adds a performance overhead.
-        // NOTE: URL.search.length value includes '?' symbol so comparing length against 2049 (2048 + 1)
-        if (urlWithAccessTokenInQueryString.search.length <= 2049) {
+        // NOTE: URL.search.length value includes '?' symbol and it is unclear whether backend logic which enforces
+        // query length limit accounts for it. This logic errs on side of caution and includes that key in overall
+        // query length.
+        if (urlWithAccessTokenInQueryString.search.length <= 2048) {
             return {
                 headers: {},
                 url: urlWithAccessTokenInQueryString.href,

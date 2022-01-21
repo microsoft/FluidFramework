@@ -11,7 +11,8 @@ describe("getUrlAndHeadersWithAuth", () => {
     const urlWithoutParams = new URL(baseUrl);
     const urlWithSingleParam = new URL(`${baseUrl}?someParam=someValue`);
     const urlWithMultipleParams = new URL(`${baseUrl}?param1=value1&param2=value2`);
-    const maxQueryParamLength = 2048 - "access_token=".length;
+    // decrement by 1 to account for '?' character included in query string
+    const maxTokenLength = 2048 - "access_token=".length - 1;
     const shortToken = generateToken(10);
 
     function generateToken(length: number) {
@@ -66,21 +67,21 @@ describe("getUrlAndHeadersWithAuth", () => {
         validateTokenEmbeddedIntoQueryString(
             urlWithMultipleParams, shortToken, getUrlAndHeadersWithAuth(urlWithMultipleParams.href, shortToken, false));
 
-        const longTokenForUrlWithoutParams = generateToken(maxQueryParamLength);
+        const longTokenForUrlWithoutParams = generateToken(maxTokenLength);
         validateTokenEmbeddedIntoQueryString(
             urlWithoutParams,
             longTokenForUrlWithoutParams,
             getUrlAndHeadersWithAuth(urlWithoutParams.href, longTokenForUrlWithoutParams, false),
         );
 
-        const longTokenForUrlWithSingleParam = generateToken(maxQueryParamLength - urlWithSingleParam.search.length);
+        const longTokenForUrlWithSingleParam = generateToken(maxTokenLength - urlWithSingleParam.search.length);
         validateTokenEmbeddedIntoQueryString(
             urlWithSingleParam,
             longTokenForUrlWithSingleParam,
             getUrlAndHeadersWithAuth(urlWithSingleParam.href, longTokenForUrlWithSingleParam, false),
         );
 
-        const longTokenForUrlMultipleParams = generateToken(maxQueryParamLength - urlWithMultipleParams.search.length);
+        const longTokenForUrlMultipleParams = generateToken(maxTokenLength - urlWithMultipleParams.search.length);
         validateTokenEmbeddedIntoQueryString(
             urlWithMultipleParams,
             longTokenForUrlMultipleParams,
@@ -90,27 +91,36 @@ describe("getUrlAndHeadersWithAuth", () => {
 
     // eslint-disable-next-line max-len
     it("returns headers with token embedded in Authorization header when overall query string exceeds 2048 characters", async () => {
-        const longTokenForUrlWithoutParams = generateToken(maxQueryParamLength + 1);
+        const longTokenForUrlWithoutParams = generateToken(maxTokenLength + 1);
         validateTokenEmbeddedIntoHeaders(
             urlWithoutParams,
             longTokenForUrlWithoutParams,
             getUrlAndHeadersWithAuth(urlWithoutParams.href, longTokenForUrlWithoutParams, false),
         );
 
-        const longTokenForUrlWithSingleParam = generateToken(
-            maxQueryParamLength - urlWithSingleParam.search.length + 1);
+        const longTokenForUrlWithSingleParam = generateToken(maxTokenLength - urlWithSingleParam.search.length + 1);
         validateTokenEmbeddedIntoHeaders(
             urlWithSingleParam,
             longTokenForUrlWithSingleParam,
             getUrlAndHeadersWithAuth(urlWithSingleParam.href, longTokenForUrlWithSingleParam, false),
         );
 
-        const longTokenForUrlMultipleParams = generateToken(
-            maxQueryParamLength - urlWithMultipleParams.search.length + 1);
+        const longTokenForUrlMultipleParams = generateToken(maxTokenLength - urlWithMultipleParams.search.length + 1);
         validateTokenEmbeddedIntoHeaders(
             urlWithMultipleParams,
             longTokenForUrlMultipleParams,
             getUrlAndHeadersWithAuth(urlWithMultipleParams.href, longTokenForUrlMultipleParams, false),
         );
+    });
+
+    it("returns headers with token embedded in Authorization header when forced", async () => {
+        validateTokenEmbeddedIntoHeaders(
+            urlWithoutParams, shortToken, getUrlAndHeadersWithAuth(urlWithoutParams.href, shortToken, true));
+
+        validateTokenEmbeddedIntoHeaders(
+            urlWithSingleParam, shortToken, getUrlAndHeadersWithAuth(urlWithSingleParam.href, shortToken, true));
+
+        validateTokenEmbeddedIntoHeaders(
+            urlWithMultipleParams, shortToken, getUrlAndHeadersWithAuth(urlWithMultipleParams.href, shortToken, true));
     });
 });
