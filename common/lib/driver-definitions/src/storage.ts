@@ -157,7 +157,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
 }
 
-export interface IDocumentDeltaConnectionEvents<TErrorExt> extends IErrorEvent {
+export interface IDocumentDeltaConnectionEvents<TErrorExt = never> extends IErrorEvent {
     (event: "nack", listener: (documentId: string, message: INack[]) => void);
     (event: "disconnect", listener: (reason: DriverError<TErrorExt>) => void);
     (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void);
@@ -166,7 +166,7 @@ export interface IDocumentDeltaConnectionEvents<TErrorExt> extends IErrorEvent {
     (event: "error", listener: (error: DriverError<TErrorExt>) => void);
 }
 
-export interface IDocumentDeltaConnection<TErrorExt>
+export interface IDocumentDeltaConnection<TErrorExt = never>
     extends IDisposable, IEventProvider<IDocumentDeltaConnectionEvents<TErrorExt>>
 {
     /**

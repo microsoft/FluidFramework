@@ -224,7 +224,7 @@ export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErr
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(documentServiceFactories: IDocumentServiceFactory[]);
     // (undocumented)
-    static create(documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[]): IDocumentServiceFactory;
+    static create(documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[]): IDocumentServiceFactory<never>;
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
     // (undocumented)
@@ -294,6 +294,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
     get policies(): {
         caching: LoaderCachingPolicy;
         minBlobSize?: number | undefined;
+        maximumCacheDurationMs?: number | undefined;
     } | undefined;
     // (undocumented)
     readBlob(blobId: string): Promise<ArrayBufferLike>;

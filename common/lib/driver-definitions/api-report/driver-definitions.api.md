@@ -27,7 +27,7 @@ import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
-export type DriverError<T> = IThrottlingWarning<T> | IGenericNetworkError<T> | IAuthorizationError<T> | IDriverBasicError<T>;
+export type DriverError<T = never> = IThrottlingWarning | IGenericNetworkError | IAuthorizationError | IDriverBasicError<T>;
 
 // @public
 export enum DriverErrorType {
@@ -64,7 +64,7 @@ export interface DriverPreCheckInfo {
 }
 
 // @public (undocumented)
-export interface IAuthorizationError<T> extends IDriverErrorBase<T> {
+export interface IAuthorizationError extends IDriverErrorBase {
     // (undocumented)
     readonly claims?: string;
     // (undocumented)
@@ -87,7 +87,7 @@ export interface IDeltaStorageService {
 }
 
 // @public (undocumented)
-export interface IDocumentDeltaConnection<TErrorExt> extends IDisposable, IEventProvider<IDocumentDeltaConnectionEvents<TErrorExt>> {
+export interface IDocumentDeltaConnection<TErrorExt = never> extends IDisposable, IEventProvider<IDocumentDeltaConnectionEvents<TErrorExt>> {
     checkpointSequenceNumber?: number;
     claims: ITokenClaims;
     clientId: string;
@@ -104,7 +104,7 @@ export interface IDocumentDeltaConnection<TErrorExt> extends IDisposable, IEvent
 }
 
 // @public (undocumented)
-export interface IDocumentDeltaConnectionEvents<TErrorExt> extends IErrorEvent {
+export interface IDocumentDeltaConnectionEvents<TErrorExt = never> extends IErrorEvent {
     // (undocumented)
     (event: "nack", listener: (documentId: string, message: INack[]) => void): any;
     // (undocumented)
@@ -179,7 +179,7 @@ export interface IDriverBasicError<T> extends IDriverErrorBase<T> {
 }
 
 // @public
-export interface IDriverErrorBase<TErrorTypeExt> {
+export interface IDriverErrorBase<TErrorTypeExt = never> {
     // (undocumented)
     canRetry: boolean;
     // (undocumented)
@@ -216,7 +216,7 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
 }
 
 // @public (undocumented)
-export interface IGenericNetworkError<T> extends IDriverErrorBase<T> {
+export interface IGenericNetworkError extends IDriverErrorBase {
     // (undocumented)
     readonly errorType: DriverErrorType.genericNetworkError;
     // (undocumented)
@@ -255,7 +255,7 @@ export interface ISummaryContext {
 }
 
 // @public (undocumented)
-export interface IThrottlingWarning<T> extends IDriverErrorBase<T> {
+export interface IThrottlingWarning extends IDriverErrorBase {
     // (undocumented)
     readonly errorType: DriverErrorType.throttlingError;
     // (undocumented)

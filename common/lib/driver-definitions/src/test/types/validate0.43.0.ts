@@ -17,7 +17,7 @@ import * as current from "../../index";
 declare function get_old_TypeAliasDeclaration_DriverError():
     old.DriverError;
 declare function use_current_TypeAliasDeclaration_DriverError(
-    use: current.DriverError<any>);
+    use: current.DriverError);
 use_current_TypeAliasDeclaration_DriverError(
     get_old_TypeAliasDeclaration_DriverError());
 
@@ -27,7 +27,7 @@ use_current_TypeAliasDeclaration_DriverError(
 * "TypeAliasDeclaration_DriverError": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_DriverError():
-    current.DriverError<any>;
+    current.DriverError;
 declare function use_old_TypeAliasDeclaration_DriverError(
     use: old.DriverError);
 use_old_TypeAliasDeclaration_DriverError(
@@ -113,7 +113,7 @@ use_old_InterfaceDeclaration_DriverPreCheckInfo(
 declare function get_old_InterfaceDeclaration_IAuthorizationError():
     old.IAuthorizationError;
 declare function use_current_InterfaceDeclaration_IAuthorizationError(
-    use: current.IAuthorizationError<any>);
+    use: current.IAuthorizationError);
 use_current_InterfaceDeclaration_IAuthorizationError(
     get_old_InterfaceDeclaration_IAuthorizationError());
 
@@ -123,7 +123,7 @@ use_current_InterfaceDeclaration_IAuthorizationError(
 * "InterfaceDeclaration_IAuthorizationError": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IAuthorizationError():
-    current.IAuthorizationError<any>;
+    current.IAuthorizationError;
 declare function use_old_InterfaceDeclaration_IAuthorizationError(
     use: old.IAuthorizationError);
 use_old_InterfaceDeclaration_IAuthorizationError(
@@ -185,7 +185,7 @@ use_old_InterfaceDeclaration_IDeltaStorageService(
 declare function get_old_InterfaceDeclaration_IDocumentDeltaConnection():
     old.IDocumentDeltaConnection;
 declare function use_current_InterfaceDeclaration_IDocumentDeltaConnection(
-    use: current.IDocumentDeltaConnection<any>);
+    use: current.IDocumentDeltaConnection);
 use_current_InterfaceDeclaration_IDocumentDeltaConnection(
     get_old_InterfaceDeclaration_IDocumentDeltaConnection());
 
@@ -195,7 +195,7 @@ use_current_InterfaceDeclaration_IDocumentDeltaConnection(
 * "InterfaceDeclaration_IDocumentDeltaConnection": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDocumentDeltaConnection():
-    current.IDocumentDeltaConnection<any>;
+    current.IDocumentDeltaConnection;
 declare function use_old_InterfaceDeclaration_IDocumentDeltaConnection(
     use: old.IDocumentDeltaConnection);
 use_old_InterfaceDeclaration_IDocumentDeltaConnection(
@@ -209,7 +209,7 @@ use_old_InterfaceDeclaration_IDocumentDeltaConnection(
 declare function get_old_InterfaceDeclaration_IDocumentDeltaConnectionEvents():
     old.IDocumentDeltaConnectionEvents;
 declare function use_current_InterfaceDeclaration_IDocumentDeltaConnectionEvents(
-    use: current.IDocumentDeltaConnectionEvents<any>);
+    use: current.IDocumentDeltaConnectionEvents);
 use_current_InterfaceDeclaration_IDocumentDeltaConnectionEvents(
     get_old_InterfaceDeclaration_IDocumentDeltaConnectionEvents());
 
@@ -219,7 +219,7 @@ use_current_InterfaceDeclaration_IDocumentDeltaConnectionEvents(
 * "InterfaceDeclaration_IDocumentDeltaConnectionEvents": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDocumentDeltaConnectionEvents():
-    current.IDocumentDeltaConnectionEvents<any>;
+    current.IDocumentDeltaConnectionEvents;
 declare function use_old_InterfaceDeclaration_IDocumentDeltaConnectionEvents(
     use: old.IDocumentDeltaConnectionEvents);
 use_old_InterfaceDeclaration_IDocumentDeltaConnectionEvents(
@@ -401,7 +401,7 @@ use_old_InterfaceDeclaration_IDriverBasicError(
 declare function get_old_InterfaceDeclaration_IDriverErrorBase():
     old.IDriverErrorBase;
 declare function use_current_InterfaceDeclaration_IDriverErrorBase(
-    use: current.IDriverErrorBase<any>);
+    use: current.IDriverErrorBase);
 use_current_InterfaceDeclaration_IDriverErrorBase(
     get_old_InterfaceDeclaration_IDriverErrorBase());
 
@@ -411,7 +411,7 @@ use_current_InterfaceDeclaration_IDriverErrorBase(
 * "InterfaceDeclaration_IDriverErrorBase": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDriverErrorBase():
-    current.IDriverErrorBase<any>;
+    current.IDriverErrorBase;
 declare function use_old_InterfaceDeclaration_IDriverErrorBase(
     use: old.IDriverErrorBase);
 use_old_InterfaceDeclaration_IDriverErrorBase(
@@ -473,7 +473,7 @@ use_old_InterfaceDeclaration_IFluidResolvedUrl(
 declare function get_old_InterfaceDeclaration_IGenericNetworkError():
     old.IGenericNetworkError;
 declare function use_current_InterfaceDeclaration_IGenericNetworkError(
-    use: current.IGenericNetworkError<any>);
+    use: current.IGenericNetworkError);
 use_current_InterfaceDeclaration_IGenericNetworkError(
     get_old_InterfaceDeclaration_IGenericNetworkError());
 
@@ -483,7 +483,7 @@ use_current_InterfaceDeclaration_IGenericNetworkError(
 * "InterfaceDeclaration_IGenericNetworkError": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IGenericNetworkError():
-    current.IGenericNetworkError<any>;
+    current.IGenericNetworkError;
 declare function use_old_InterfaceDeclaration_IGenericNetworkError(
     use: old.IGenericNetworkError);
 use_old_InterfaceDeclaration_IGenericNetworkError(
@@ -617,7 +617,7 @@ use_old_InterfaceDeclaration_ISummaryContext(
 declare function get_old_InterfaceDeclaration_IThrottlingWarning():
     old.IThrottlingWarning;
 declare function use_current_InterfaceDeclaration_IThrottlingWarning(
-    use: current.IThrottlingWarning<any>);
+    use: current.IThrottlingWarning);
 use_current_InterfaceDeclaration_IThrottlingWarning(
     get_old_InterfaceDeclaration_IThrottlingWarning());
 
@@ -627,7 +627,7 @@ use_current_InterfaceDeclaration_IThrottlingWarning(
 * "InterfaceDeclaration_IThrottlingWarning": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IThrottlingWarning():
-    current.IThrottlingWarning<any>;
+    current.IThrottlingWarning;
 declare function use_old_InterfaceDeclaration_IThrottlingWarning(
     use: old.IThrottlingWarning);
 use_old_InterfaceDeclaration_IThrottlingWarning(

@@ -80,24 +80,24 @@ export enum DriverErrorType {
 /**
  * Base interface for all errors and warnings
  */
-export interface IDriverErrorBase<TErrorTypeExt> {
+export interface IDriverErrorBase<TErrorTypeExt = never> {
     readonly errorType: DriverErrorType | TErrorTypeExt;
     readonly message: string;
     canRetry: boolean;
     online?: string;
 }
 
-export interface IThrottlingWarning<T> extends IDriverErrorBase<T> {
+export interface IThrottlingWarning extends IDriverErrorBase {
     readonly errorType: DriverErrorType.throttlingError;
     readonly retryAfterSeconds: number;
 }
 
-export interface IGenericNetworkError<T> extends IDriverErrorBase<T> {
+export interface IGenericNetworkError extends IDriverErrorBase {
     readonly errorType: DriverErrorType.genericNetworkError;
     readonly statusCode?: number;
 }
 
-export interface IAuthorizationError<T> extends IDriverErrorBase<T> {
+export interface IAuthorizationError extends IDriverErrorBase {
     readonly errorType: DriverErrorType.authorizationError;
     readonly claims?: string;
     readonly tenantId?: string;
@@ -121,22 +121,22 @@ export interface IDriverBasicError<T> extends IDriverErrorBase<T> {
     readonly statusCode?: number;
 }
 
-export type DriverError<T> =
-    | IThrottlingWarning<T>
-    | IGenericNetworkError<T>
-    | IAuthorizationError<T>
+export type DriverError<T = never> =
+    | IThrottlingWarning
+    | IGenericNetworkError
+    | IAuthorizationError
     | IDriverBasicError<T>;
 
 // enum Special{ foo = "foo" };
 
-// function foo(e: DriverError<never>) {
+// function foo(e: DriverError<never>, s: DriverError<Special>) {
 //     if (e.errorType === DriverErrorType.authorizationError) {
 //         return e.tenantId;
 //     }
 //     if (e.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
 //         return e.statusCode;
 //     }
-//     // if (e.errorType === Special.foo) {
-//     //     return e.statusCode;
-//     // }
+//     if (s.errorType === Special.foo) {
+//         return s.statusCode;
+//     }
 // }
