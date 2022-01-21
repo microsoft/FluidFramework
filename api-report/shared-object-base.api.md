@@ -121,8 +121,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     get IFluidLoadable(): this;
     initializeLocal(): void;
     protected initializeLocalCore(): void;
-    // (undocumented)
-    static is(obj: any): obj is SharedObjectCore;
     isAttached(): boolean;
     // (undocumented)
     get ISharedObject(): this;

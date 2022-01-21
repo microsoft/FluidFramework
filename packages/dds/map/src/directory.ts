@@ -664,12 +664,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         subdirsToRegisterFrom.push(this.root);
 
         for (const currentSubDir of subdirsToRegisterFrom) {
-            for (const value of currentSubDir.values()) {
-                if (SharedObject.is(value)) {
-                    value.bindToContext();
-                }
-            }
-
             for (const [, subdir] of currentSubDir.subdirectories()) {
                 subdirsToRegisterFrom.push(subdir as SubDirectory);
             }

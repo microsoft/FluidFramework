@@ -378,11 +378,5 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
      * @internal
      */
-    protected registerCore() {
-        for (const value of this.values()) {
-            if (SharedObject.is(value)) {
-                value.bindToContext();
-            }
-        }
-    }
+    protected registerCore() {}
 }

@@ -31,14 +31,6 @@ import { ISharedObject, ISharedObjectEvents } from "./types";
  */
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
     extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
-    /**
-     * @param obj - The thing to check if it is a SharedObject
-     * @returns Returns true if the thing is a SharedObject
-     */
-    public static is(obj: any): obj is SharedObjectCore {
-        return obj?.ISharedObject !== undefined;
-    }
-
     public get ISharedObject() { return this; }
     public get IChannel() { return this; }
     public get IFluidLoadable() { return this; }

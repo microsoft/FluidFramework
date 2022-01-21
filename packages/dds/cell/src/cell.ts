@@ -146,10 +146,6 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * {@inheritDoc ISharedCell.set}
      */
     public set(value: Serializable<T>) {
-        if (SharedObject.is(value)) {
-            throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
-        }
-
         // Serialize the value if required.
         const operationValue: ICellValue = {
             value: this.serializer.encode(value, this.handle),
@@ -224,11 +220,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     /**
      * Process the cell value on register
      */
-    protected registerCore() {
-        if (SharedObject.is(this.data)) {
-            this.data.bindToContext();
-        }
-    }
+    protected registerCore() {}
 
     /**
      * Call back on disconnect

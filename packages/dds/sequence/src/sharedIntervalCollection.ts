@@ -170,13 +170,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         }
     }
 
-    protected registerCore() {
-        for (const value of this.intervalMapKernel.values()) {
-            if (SharedObject.is(value)) {
-                value.bindToContext();
-            }
-        }
-    }
+    protected registerCore() {}
 
     /**
      * Creates the full path of the intervalCollection label
