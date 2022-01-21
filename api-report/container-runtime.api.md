@@ -22,20 +22,18 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
-import { IFluidConfiguration } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
-import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { IFluidTokenProvider } from '@fluidframework/container-definitions';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
-import { IQuorum } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
@@ -50,7 +48,6 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
-import { LoggingError } from '@fluidframework/telemetry-utils';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
@@ -60,6 +57,8 @@ export const agentSchedulerId = "_scheduler";
 
 // @public (undocumented)
 export enum ContainerMessageType {
+    // (undocumented)
+    Alias = "alias",
     // (undocumented)
     Attach = "attach",
     // (undocumented)
@@ -74,6 +73,7 @@ export enum ContainerMessageType {
 
 // @public
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IContainerRuntime, IGarbageCollectionRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider {
+    addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     // (undocumented)
     get attachState(): AttachState;
     // (undocumented)
@@ -123,23 +123,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     getPendingLocalState(): IPendingLocalState | undefined;
     // (undocumented)
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
     // (undocumented)
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     // (undocumented)
     get IContainerRuntime(): this;
-    // (undocumented)
+    // @deprecated (undocumented)
     get id(): string;
-    // (undocumented)
-    get IFluidConfiguration(): IFluidConfiguration;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     // (undocumented)
-    readonly IFluidHandleContext: IFluidHandleContext;
+    get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)
     get IFluidRouter(): this;
-    // (undocumented)
-    readonly IFluidSerializer: IFluidSerializer;
     // (undocumented)
     get IFluidTokenProvider(): IFluidTokenProvider | undefined;
     get isDirty(): boolean;
@@ -161,8 +157,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
     get reSubmitFn(): (type: ContainerMessageType, content: any, localOpMetadata: unknown, opMetadata: Record<string, unknown> | undefined) => void;
-    // @internal @deprecated (undocumented)
-    readonly runtimeVersion: string;
     // (undocumented)
     get scope(): IFluidObject & FluidObject;
     // (undocumented)
@@ -181,8 +175,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     submitDataStoreSignal(address: string, type: string, content: any): void;
     submitSignal(type: string, content: any): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
-    // (undocumented)
-    summariesDisabled(): boolean;
     summarize(options: {
         summaryLogger: ITelemetryLogger;
         fullTree?: boolean;
@@ -194,7 +186,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
-    updateUsedRoutes(usedRoutes: string[]): IUsedStateStats;
+    updateStateBeforeGC(): Promise<void>;
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     }
@@ -206,9 +199,6 @@ export interface ContainerRuntimeMessage {
     // (undocumented)
     type: ContainerMessageType;
 }
-
-// @public (undocumented)
-export const createSummarizingWarning: (errorCode: string, logged: boolean) => SummarizingWarning;
 
 // @public
 export class DeltaScheduler {
@@ -240,6 +230,12 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
     // (undocumented)
     get IFluidDataStoreRegistry(): this;
     }
+
+// @public (undocumented)
+export const gcBlobPrefix = "__gc";
+
+// @public (undocumented)
+export const gcTreeKey = "gc";
 
 // @public
 export interface IAckedSummary {
@@ -337,7 +333,8 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 // @public
 export interface IGarbageCollectionRuntime {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
-    updateUsedRoutes(usedRoutes: string[]): IUsedStateStats;
+    updateStateBeforeGC(): Promise<void>;
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
 }
 
 // @public (undocumented)
@@ -457,30 +454,6 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 }
 
 // @public
-export interface ISummarizeAttempt {
-    readonly refSequenceNumber: number;
-    summarySequenceNumber?: number;
-    readonly summaryTime: number;
-}
-
-// @public
-export interface ISummarizeHeuristicData {
-    initialize(lastSummary: ISummarizeAttempt): void;
-    readonly lastAttempt: ISummarizeAttempt;
-    lastOpSequenceNumber: number;
-    readonly lastSuccessfulSummary: Readonly<ISummarizeAttempt>;
-    markLastAttemptAsSuccessful(): void;
-    recordAttempt(referenceSequenceNumber?: number): void;
-}
-
-// @public
-export interface ISummarizeHeuristicRunner {
-    dispose(): void;
-    run(): void;
-    shouldRunLastSummary(): boolean;
-}
-
-// @public
 export interface ISummarizeOptions {
     readonly fullTree?: boolean;
     readonly refreshLatestAck?: boolean;
@@ -490,13 +463,13 @@ export interface ISummarizeOptions {
 export const ISummarizer: keyof IProvideSummarizer;
 
 // @public (undocumented)
-export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidLoadable, Partial<IProvideSummarizer> {
+export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer> {
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     // (undocumented)
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
     // (undocumented)
     stop(reason: SummarizerStopReason): void;
-    summarizeOnDemand(options: IOnDemandSummarizeOptions): OnDemandSummarizeResult;
+    summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
 }
 
 // @public (undocumented)
@@ -624,38 +597,28 @@ export interface IUsedStateStats {
 export const neverCancelledSummaryToken: ISummaryCancellationToken;
 
 // @public (undocumented)
-export type OnDemandSummarizeResult = (ISummarizeResults & {
-    readonly alreadyRunning?: undefined;
-}) | {
-    readonly alreadyRunning: Promise<void>;
-};
-
-// @public (undocumented)
 export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 // @public (undocumented)
 export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
 
-// @public
-export class PendingStateManager implements IDisposable {
-    constructor(containerRuntime: ContainerRuntime, applyStashedOp: (type: any, content: any) => Promise<unknown>, initialState: IPendingLocalState | undefined);
-    applyStashedOpsAt(seqNum: number): Promise<void>;
+// @public (undocumented)
+export enum RuntimeMessage {
     // (undocumented)
-    readonly dispose: () => void;
+    Alias = "alias",
     // (undocumented)
-    get disposed(): boolean;
+    Attach = "attach",
     // (undocumented)
-    getLocalState(): IPendingLocalState | undefined;
-    hasPendingMessages(): boolean;
-    onFlush(): void;
-    onFlushModeUpdated(flushMode: FlushMode): void;
-    onSubmitMessage(type: ContainerMessageType, clientSequenceNumber: number, referenceSequenceNumber: number, content: any, localOpMetadata: unknown, opMetadata: Record<string, unknown> | undefined): void;
-    processMessage(message: ISequencedDocumentMessage, local: boolean): {
-        localAck: boolean;
-        localOpMetadata: unknown;
-    };
-    replayPendingStates(): void;
-    }
+    BlobAttach = "blobAttach",
+    // (undocumented)
+    ChunkedOp = "chunkedOp",
+    // (undocumented)
+    FluidDataStoreOp = "component",
+    // (undocumented)
+    Operation = "op",
+    // (undocumented)
+    Rejoin = "rejoin"
+}
 
 // @public
 export class ScheduleManager {
@@ -674,6 +637,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     constructor(url: string,
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
     internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
+    static create(loader: ILoader, url: string): Promise<ISummarizer>;
     dispose(): void;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
@@ -682,11 +646,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     // (undocumented)
     get IFluidLoadable(): this;
     // (undocumented)
-    get IFluidRouter(): this;
-    // (undocumented)
     get ISummarizer(): this;
-    // (undocumented)
-    request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
     stop(reason: SummarizerStopReason): void;
@@ -723,21 +683,6 @@ export type SummarizerStopReason =
  | "parentShouldNotSummarize"
 /** Summarizer client was disconnected */
  | "summarizerClientDisconnected" | "summarizerException";
-
-// @public (undocumented)
-export class SummarizingWarning extends LoggingError implements ISummarizingWarning, IFluidErrorBase {
-    constructor(errorMessage: string, fluidErrorCode: string, logged?: boolean);
-    // (undocumented)
-    readonly canRetry = true;
-    // (undocumented)
-    readonly errorType = "summarizingError";
-    // (undocumented)
-    readonly fluidErrorCode: string;
-    // (undocumented)
-    readonly logged: boolean;
-    // (undocumented)
-    static wrap(error: any, errorCode: string, logged: boolean | undefined, logger: ITelemetryLogger): SummarizingWarning;
-}
 
 // @public
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {

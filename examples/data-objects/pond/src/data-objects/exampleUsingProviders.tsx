@@ -3,19 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
+import {
+    DataObject,
+    DataObjectFactory,
+} from "@fluidframework/aqueduct";
 import { SharedMap } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { IFluidUserInformation } from "../interfaces";
-
 /**
  * Basic example that takes a container provider
  */
 export class ExampleUsingProviders
-    extends DataObject<IFluidUserInformation>
+    extends DataObject<{OptionalProviders: IFluidUserInformation}>
     implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 
@@ -49,7 +50,7 @@ export class ExampleUsingProviders
     public static getFactory() { return ExampleUsingProviders.factory; }
 
     private static readonly factory =
-        new DataObjectFactory<ExampleUsingProviders, IFluidUserInformation, undefined, IEvent>(
+        new DataObjectFactory(
             ExampleUsingProviders.ComponentName,
             ExampleUsingProviders,
             [SharedMap.getFactory()],

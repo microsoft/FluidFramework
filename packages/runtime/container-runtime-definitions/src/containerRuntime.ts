@@ -15,7 +15,6 @@ import {
     IResponse,
     IFluidObject,
     IFluidRouter,
-    IFluidCodeDetails,
     FluidObject,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -23,7 +22,6 @@ import {
     IClientDetails,
     IDocumentMessage,
     IHelpMessage,
-    IPendingProposal,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -60,7 +58,6 @@ export interface IProvideContainerRuntime {
 }
 
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
-    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
     (
         event: "dirty" | "disconnected" | "dispose" | "saved" | "attached",
         listener: () => void);
@@ -69,7 +66,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 }
 
 export type IContainerRuntimeBaseWithCombinedEvents =
-    IContainerRuntimeBase &  IEventProvider<IContainerRuntimeEvents>;
+    IContainerRuntimeBase & IEventProvider<IContainerRuntimeEvents>;
 
 /*
  * Represents the runtime of the container. Contains helper functions/state of the container.
@@ -78,6 +75,10 @@ export interface IContainerRuntime extends
     IProvideContainerRuntime,
     IProvideFluidDataStoreRegistry,
     IContainerRuntimeBaseWithCombinedEvents {
+
+    /**
+    * @deprecated This will be removed in a later release. Deprecated in 0.53
+    */
     readonly id: string;
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;

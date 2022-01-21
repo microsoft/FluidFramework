@@ -1,7 +1,7 @@
 {
     "logger": {
         "colorize": true,
-        "morganFormat": "dev",
+        "morganFormat": "json",
         "json": false,
         "level": "info",
         "timestamp": true,
@@ -115,6 +115,9 @@
         "kafkaClientId": "scribe"
     },
     "system": {
+        "httpServer": {
+            "connectionTimeoutMs": 0
+        },
         "topics": {
             "send": "deltas"
         }

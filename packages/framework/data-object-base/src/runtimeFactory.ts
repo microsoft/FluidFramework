@@ -10,7 +10,6 @@ import {
 import {
     buildRuntimeRequestHandler,
     RuntimeRequestHandler,
-    innerRequestHandler,
 } from "@fluidframework/request-handler";
 import {
     NamedFluidDataStoreRegistryEntries,
@@ -50,8 +49,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
             context,
             this.registry,
             buildRuntimeRequestHandler(
-                ...this.requestHandlers,
-                innerRequestHandler),
+                ...this.requestHandlers),
             undefined, // runtimeOptions
             undefined, // containerScope
             existing,

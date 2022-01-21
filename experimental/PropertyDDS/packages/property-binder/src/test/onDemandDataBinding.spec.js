@@ -11,10 +11,10 @@
  * we plan to get rid of modificationSet mid-term, it makes no sense to try and fix those.
  *
  */
-import _ from 'underscore';
-import { DataBinding } from '../../src/data_binder/data_binding';
-import { DataBinder } from '../../src/data_binder/data_binder';
-import { unregisterAllOnPathListeners } from '../../src/data_binder/internal_utils';
+import _ from 'lodash';
+import { DataBinding } from '../../src/data_binder/dataBinding';
+import { DataBinder } from '../../src/data_binder/dataBinder';
+import { unregisterAllOnPathListeners } from '../../src/data_binder/internalUtils';
 import {
   registerTestTemplates, ParentTemplate, ChildTemplate,
   InheritedChildTemplate,
@@ -26,8 +26,8 @@ import {
   PrimitiveChildrenDataBinding,
   InheritedChildDataBinding
 } from './testDataBindings';
-import { catchConsoleErrors } from './catch_console_errors';
-import { MockSharedPropertyTree } from './mock_shared_property_tree';
+import { catchConsoleErrors } from './catchConsoleError';
+import { MockSharedPropertyTree } from './mockSharedPropertyTree';
 import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
 
 describe('on demand DataBindings', function() {

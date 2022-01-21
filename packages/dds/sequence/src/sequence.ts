@@ -3,14 +3,10 @@
  * Licensed under the MIT License.
  */
 import { Deferred, bufferToString, assert } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
-    FileMode,
     ISequencedDocumentMessage,
-    ITree,
     MessageType,
-    TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
@@ -42,8 +38,9 @@ import {
     ReferenceType,
     SegmentGroup,
 } from "@fluidframework/merge-tree";
-import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
+import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
+    IFluidSerializer,
     makeHandlesSerializable,
     parseHandles,
     SharedObject,
@@ -51,7 +48,7 @@ import {
     SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
 import {
     IntervalCollection,
@@ -425,55 +422,30 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return sharedCollection;
     }
 
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
-        const entries = [];
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+        const builder = new SummaryTreeBuilder();
+
         // conditionally write the interval collection blob
         // only if it has entries
         if (this.intervalMapKernel.size > 0) {
-            entries.push(
-                {
-                    mode: FileMode.File,
-                    path: snapshotFileName,
-                    type: TreeEntry.Blob,
-                    value: {
-                        contents: this.intervalMapKernel.serialize(serializer),
-                        encoding: "utf-8",
-                    },
-                });
+            builder.addBlob(snapshotFileName, this.intervalMapKernel.serialize(serializer));
         }
-        entries.push(
-            {
-                mode: FileMode.Directory,
-                path: contentPath,
-                type: TreeEntry.Tree,
-                value: this.snapshotMergeTree(serializer),
-            });
-        const tree: ITree = {
-            entries,
-        };
 
-        return tree;
+        builder.addWithStats(contentPath, this.summarizeMergeTree(serializer));
+
+        return builder.getSummaryTree();
     }
 
     /**
-     * Returns the GC data for this SharedMatrix. All the IFluidHandle's represent routes to other objects.
+     * Runs serializer over the GC data for this SharedMatrix.
+     * All the IFluidHandle's represent routes to other objects.
      */
-    protected getGCDataCore(): IGarbageCollectionData {
-        // Create a SummarySerializer and use it to serialize all the cells. It keeps track of all IFluidHandles that it
-        // serializes.
-        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
-
+    protected processGCDataCore(serializer: SummarySerializer) {
         if (this.intervalMapKernel.size > 0) {
             this.intervalMapKernel.serialize(serializer);
         }
 
         this.client.serializeGCData(this.handle, serializer);
-
-        return {
-            gcNodes:{
-                ["/"]: serializer.getSerializedRoutes(),
-            },
-        };
     }
 
     /**
@@ -616,7 +588,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         this.loadFinished();
     }
 
-    private snapshotMergeTree(serializer: IFluidSerializer): ITree {
+    private summarizeMergeTree(serializer: IFluidSerializer): ISummaryTreeWithStats {
         // Are we fully loaded? If not, things will go south
         assert(this.loadedDeferred.isCompleted, 0x074 /* "Snapshot called when not fully loaded" */);
         const minSeq = this.runtime.deltaManager.minimumSequenceNumber;
@@ -625,7 +597,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
         this.messagesSinceMSNChange.forEach((m) => m.minimumSequenceNumber = minSeq);
 
-        return this.client.snapshot(this.runtime, this.handle, serializer, this.messagesSinceMSNChange);
+        return this.client.summarize(this.runtime, this.handle, serializer, this.messagesSinceMSNChange);
     }
 
     private processMergeTreeMsg(

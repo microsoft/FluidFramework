@@ -15,11 +15,11 @@ import * as nconf from "nconf";
 import split = require("split");
 import * as winston from "winston";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
-import { CommonProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { logRequestMetric, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { RestLessServer } from "@fluidframework/server-services-shared";
 import * as routes from "./routes";
 import { ICache, ITenantService } from "./services";
-import { getTenantIdFromRequest } from "./utils";
+import { getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to
@@ -53,21 +53,21 @@ export function create(
     const loggerFormat = config.get("logger:morganFormat");
     if (loggerFormat === "json") {
         app.use(morgan((tokens, req, res) => {
+            const tenantId = getTenantIdFromRequest(req.params);
             const messageMetaData = {
                 method: tokens.method(req, res),
+                pathCategory: `${req.baseUrl}${req.route ? req.route.path : "PATH_UNAVAILABLE"}`,
                 url: tokens.url(req, res),
                 status: tokens.status(req, res),
                 contentLength: tokens.res(req, res, "content-length"),
                 responseTime: tokens["response-time"](req, res),
-                tenantId: getTenantIdFromRequest(req.params),
+                tenantId,
+                documentId: getDocumentIdFromRequest(tenantId, req.get("Authorization")),
                 serviceName: "historian",
                 eventName: "http_requests",
              };
              winston.info("request log generated", { messageMetaData });
-             Lumberjack.info("request log generated", {
-                 ...messageMetaData,
-                 [CommonProperties.telemetryGroupName]: messageMetaData.eventName,
-             });
+             logRequestMetric(messageMetaData);
              return undefined;
         }, { stream }));
     } else {

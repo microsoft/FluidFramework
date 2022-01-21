@@ -53,7 +53,7 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/protocol-definitions": "^0.1026.0-0",
+    "@fluidframework/protocol-definitions": "^0.1026.0",
     "@fluidframework/server-lambdas": "^0.1035.0",
     "@fluidframework/server-memory-orderer": "^0.1035.0",
     "@fluidframework/server-services-client": "^0.1035.0",
@@ -70,7 +70,7 @@
     "@types/jsrsasign": "^8.0.8",
     "@types/mocha": "^8.2.2",
     "@types/nock": "^9.3.0",
-    "@types/node": "^12.19.0",
+    "@types/node": "^14.18.0",
     "@types/webpack": "^4.41.2",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",

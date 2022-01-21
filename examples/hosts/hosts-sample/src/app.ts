@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Container, Loader } from "@fluidframework/container-loader";
+import { IContainer } from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
 import {
     IUser,
 } from "@fluidframework/protocol-definitions";
@@ -79,7 +80,7 @@ async function start() {
 
     // Request URL associated with the document.
     let url: string;
-    let container: Container;
+    let container: IContainer;
 
     // when the document ID is not provided, create a new one.
     const shouldCreateNew = location.hash.length === 0;

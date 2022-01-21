@@ -14,8 +14,9 @@ import {
     IResolvedFluidCodeDetails,
     isFluidBrowserPackage,
     IProvideRuntimeFactory,
+    IContainer,
 } from "@fluidframework/container-definitions";
-import { Container, Loader } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
@@ -199,7 +200,7 @@ async function createWebLoader(
     });
 }
 
-const containers: Container[] = [];
+const containers: IContainer[] = [];
 // A function for testing to make sure the containers are not dirty and in sync (at the same seq num)
 export function isSynchronized() {
     if (containers.length === 0) { return true; }
@@ -248,7 +249,7 @@ export async function start(
         testOrderer,
         odspPersistantCache);
 
-    let container1: Container;
+    let container1: IContainer;
     if (autoAttach || manualAttach) {
         // For new documents, create a detached container which will be attached later.
         container1 = await loader1.createDetachedContainer(codeDetails);
@@ -331,7 +332,7 @@ export async function start(
     }
 }
 
-async function getFluidObjectAndRender(container: Container, url: string, div: HTMLDivElement) {
+async function getFluidObjectAndRender(container: IContainer, url: string, div: HTMLDivElement) {
     const response = await container.request({
         headers: {
             mountableView: true,
@@ -375,7 +376,7 @@ async function getFluidObjectAndRender(container: Container, url: string, div: H
  */
 async function attachContainer(
     loader: Loader,
-    container: Container,
+    container: IContainer,
     fluidObjectUrl: string,
     urlResolver: MultiUrlResolver,
     documentId: string,

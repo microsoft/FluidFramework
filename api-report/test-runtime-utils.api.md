@@ -10,7 +10,6 @@ import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions';
 import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { FluidSerializer } from '@fluidframework/runtime-utils';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -33,10 +32,12 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionSummaryDetails } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorum } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedClient } from '@fluidframework/protocol-definitions';
@@ -69,7 +70,7 @@ export interface IMockContainerRuntimePendingMessage {
 export class InsecureTokenProvider implements ITokenProvider {
     constructor(tenantKey: string, user: IUser);
     // (undocumented)
-    fetchOrdererToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
+    fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
     }
@@ -204,8 +205,6 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     // (undocumented)
     get outbound(): MockDeltaQueue<IDocumentMessage[]>;
     // (undocumented)
-    readonly readonly = false;
-    // (undocumented)
     readOnlyInfo: ReadOnlyInfo;
     // (undocumented)
     get serviceConfiguration(): IClientConfiguration;
@@ -295,11 +294,13 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     getAudience(): IAudience;
     // (undocumented)
+    getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
+    // (undocumented)
     getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
     // (undocumented)
     getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
     // (undocumented)
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
     // (undocumented)
@@ -308,8 +309,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     IFluidHandleContext: IFluidHandleContext;
     // (undocumented)
     isLocalDataStore: boolean;
-    // @deprecated (undocumented)
-    loader: ILoader;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
@@ -342,6 +341,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
     // (undocumented)
     get absolutePath(): string;
+    // (undocumented)
+    addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     // (undocumented)
     applyStashedOp(content: any): Promise<void>;
     // (undocumented)
@@ -387,15 +388,13 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     getGCData(): Promise<IGarbageCollectionData>;
     // (undocumented)
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)
     get IFluidRouter(): this;
-    // (undocumented)
-    readonly IFluidSerializer: FluidSerializer;
     // (undocumented)
     get isAttached(): boolean;
     // (undocumented)

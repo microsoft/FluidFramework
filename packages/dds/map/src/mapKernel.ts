@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ValueType } from "@fluidframework/shared-object-base";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ISerializableValue,
@@ -27,14 +26,12 @@ interface IMapMessageHandler {
      * Apply the given operation.
      * @param op - The map operation to apply
      * @param local - Whether the message originated from the local client
-     * @param message - The full message. Not provided for stashed ops.
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      */
     process(
         op: IMapOperation,
         local: boolean,
-        message: ISequencedDocumentMessage | undefined,
         localOpMetadata: unknown,
     ): void;
 
@@ -265,6 +262,7 @@ export class MapKernel {
 
     /**
      * {@inheritDoc ISharedMap.wait}
+     * @deprecated 0.55 - This method will be removed in an upcoming release.  See BREAKING.md for migration options.
      */
     public async wait<T = any>(key: string): Promise<T> {
         // Return immediately if the value already exists
@@ -317,7 +315,6 @@ export class MapKernel {
             key,
             localValue,
             true,
-            undefined,
         );
 
         // If we are not attached, don't submit the op.
@@ -340,7 +337,7 @@ export class MapKernel {
      */
     public delete(key: string): boolean {
         // Delete the key locally first.
-        const successfullyRemoved = this.deleteCore(key, true, undefined);
+        const successfullyRemoved = this.deleteCore(key, true);
 
         // If we are not attached, don't submit the op.
         if (!this.isAttached()) {
@@ -361,7 +358,7 @@ export class MapKernel {
      */
     public clear(): void {
         // Clear the data locally first.
-        this.clearCore(true, undefined);
+        this.clearCore(true);
 
         // If we are not attached, don't submit the op.
         if (!this.isAttached()) {
@@ -456,14 +453,13 @@ export class MapKernel {
     public tryProcessMessage(
         op: IMapOperation,
         local: boolean,
-        message: ISequencedDocumentMessage | undefined,
         localOpMetadata: unknown,
     ): boolean {
         if (this.messageHandlers.has(op.type)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.messageHandlers
                 .get(op.type)!
-                .process(op, local, message, localOpMetadata);
+                .process(op, local, localOpMetadata);
             return true;
         }
         return false;
@@ -476,11 +472,11 @@ export class MapKernel {
      * @param local - Whether the message originated from the local client
      * @param op - The message if from a remote set, or null if from a local set
      */
-    private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage | undefined): void {
+    private setCore(key: string, value: ILocalValue, local: boolean): void {
         const previousValue = this.get(key);
         this.data.set(key, value);
         const event: IValueChanged = { key, previousValue };
-        this.eventEmitter.emit("valueChanged", event, local, op, this.eventEmitter);
+        this.eventEmitter.emit("valueChanged", event, local, this.eventEmitter);
     }
 
     /**
@@ -488,9 +484,9 @@ export class MapKernel {
      * @param local - Whether the message originated from the local client
      * @param op - The message if from a remote clear, or null if from a local clear
      */
-    private clearCore(local: boolean, op: ISequencedDocumentMessage | undefined): void {
+    private clearCore(local: boolean): void {
         this.data.clear();
-        this.eventEmitter.emit("clear", local, op, this.eventEmitter);
+        this.eventEmitter.emit("clear", local, this.eventEmitter);
     }
 
     /**
@@ -500,12 +496,12 @@ export class MapKernel {
      * @param op - The message if from a remote delete, or null if from a local delete
      * @returns True if the key existed and was deleted, false if it did not exist
      */
-    private deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage | undefined): boolean {
+    private deleteCore(key: string, local: boolean): boolean {
         const previousValue = this.get(key);
         const successfullyRemoved = this.data.delete(key);
         if (successfullyRemoved) {
             const event: IValueChanged = { key, previousValue };
-            this.eventEmitter.emit("valueChanged", event, local, op, this.eventEmitter);
+            this.eventEmitter.emit("valueChanged", event, local, this.eventEmitter);
         }
         return successfullyRemoved;
     }
@@ -597,7 +593,7 @@ export class MapKernel {
         messageHandlers.set(
             "clear",
             {
-                process: (op: IMapClearOperation, local, message, localOpMetadata) => {
+                process: (op: IMapClearOperation, local, localOpMetadata) => {
                     if (local) {
                         assert(localOpMetadata !== undefined,
                             0x015 /* "pendingMessageId is missing from the local client's clear operation" */);
@@ -611,7 +607,7 @@ export class MapKernel {
                         this.clearExceptPendingKeys();
                         return;
                     }
-                    this.clearCore(local, message);
+                    this.clearCore(local);
                 },
                 submit: (op: IMapClearOperation, localOpMetadata: unknown) => {
                     // We don't reuse the metadata but send a new one on each submit.
@@ -625,11 +621,11 @@ export class MapKernel {
         messageHandlers.set(
             "delete",
             {
-                process: (op: IMapDeleteOperation, local, message, localOpMetadata) => {
+                process: (op: IMapDeleteOperation, local, localOpMetadata) => {
                     if (!this.needProcessKeyOperation(op, local, localOpMetadata)) {
                         return;
                     }
-                    this.deleteCore(op.key, local, message);
+                    this.deleteCore(op.key, local);
                 },
                 submit: (op: IMapDeleteOperation, localOpMetadata: unknown) => {
                     // We don't reuse the metadata but send a new one on each submit.
@@ -643,14 +639,14 @@ export class MapKernel {
         messageHandlers.set(
             "set",
             {
-                process: (op: IMapSetOperation, local, message, localOpMetadata) => {
+                process: (op: IMapSetOperation, local, localOpMetadata) => {
                     if (!this.needProcessKeyOperation(op, local, localOpMetadata)) {
                         return;
                     }
 
                     // needProcessKeyOperation should have returned false if local is true
                     const context = this.makeLocal(op.key, op.value);
-                    this.setCore(op.key, context, local, message);
+                    this.setCore(op.key, context, local);
                 },
                 submit: (op: IMapSetOperation, localOpMetadata: unknown) => {
                     // We don't reuse the metadata but send a new one on each submit.

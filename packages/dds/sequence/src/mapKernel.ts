@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";
+import { IFluidSerializer, makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ILocalValue,

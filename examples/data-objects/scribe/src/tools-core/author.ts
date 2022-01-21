@@ -231,7 +231,6 @@ export async function typeFile(
 /**
  * Types the given file into the shared string - starting at the end of the string
  */
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export async function typeChunk(
     a: IAuthor,
     runtime: IFluidDataStoreRuntime,

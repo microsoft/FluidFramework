@@ -3,8 +3,8 @@
     "compilerOptions": {
         "declaration": false,
         "declarationMap": false,
-        "rootDir": "./",
-        "outDir": "../../dist/test",
+        "rootDir": "../",
+        "outDir": "../../dist",
         "types": [
             "mocha",
             "@fluidframework/test-driver-definitions",

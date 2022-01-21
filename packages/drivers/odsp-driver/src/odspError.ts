@@ -11,9 +11,13 @@ import { IOdspSocketError } from "./contracts";
  */
 export function errorObjectFromSocketError(socketError: IOdspSocketError, handler: string) {
     const message = `OdspSocketError (${handler}): ${socketError.message}`;
-    return createOdspNetworkError(
+    const error = createOdspNetworkError(
         `odspSocketError [${handler}]`,
         message,
         socketError.code,
         socketError.retryAfter);
+
+    error.addTelemetryProperties({ odspError: true, relayServiceError: true });
+
+    return error;
 }

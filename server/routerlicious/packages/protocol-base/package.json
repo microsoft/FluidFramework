@@ -56,7 +56,7 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/gitresources": "^0.1035.0",
-    "@fluidframework/protocol-definitions": "^0.1026.0-0",
+    "@fluidframework/protocol-definitions": "^0.1026.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
@@ -66,7 +66,7 @@
     "@types/assert": "^1.5.1",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^8.2.2",
-    "@types/node": "^12.19.0",
+    "@types/node": "^14.18.0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
     "concurrently": "^6.2.0",

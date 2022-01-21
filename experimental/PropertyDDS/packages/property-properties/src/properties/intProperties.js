@@ -31,13 +31,13 @@ export class Int8Property extends ValueProperty {
      * @category Value Properties
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Int8' });
+        super(in_params);
         // default for this property type is '0'
         this._data = 0;
     };
-    _castFunctor = _castFunctors.Int8;
 }
-
+Int8Property.prototype._typeid = 'Int8';
+Int8Property.prototype._castFunctor = _castFunctors.Int8;
 
 /**
  * A primitive property for an signed 16 bit integer value.
@@ -52,14 +52,14 @@ export class Int16Property extends ValueProperty {
      * @category Value Properties
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Int16' });
+        super(in_params);
         // default for this property type is '0'
         this._data = 0;
 
     };
-    _castFunctor = _castFunctors.Int16;
-
 }
+Int16Property.prototype._typeid = 'Int16';
+Int16Property.prototype._castFunctor = _castFunctors.Int16;
 
 /**
  * A primitive property for an signed 32 bit integer value.
@@ -74,13 +74,15 @@ export class Int32Property extends ValueProperty {
      * @category Value Properties
      */
     constructor(in_params) {
-        super({ typeid: 'Int32', ...in_params });
+        super(in_params);
         // default for this property type is '0'
         this._data = 0;
 
     };
-    _castFunctor = _castFunctors.Int32;
 }
+Int32Property.prototype._typeid = 'Int32';
+Int32Property.prototype._castFunctor = _castFunctors.Int32;
+
 /**
  * A primitive property base class for big integer values.
  */
@@ -284,11 +286,11 @@ export class Int64Property extends Integer64Property {
      * @category Value Properties
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Int64' }, Int64);
+        super(in_params, Int64);
     };
-
-    _castFunctor = _castFunctors.Int64;
 }
+Int64Property.prototype._typeid = 'Int64';
+Int64Property.prototype._castFunctor = _castFunctors.Int64;
 
 /**
  * A primitive property class for big unsingned integer values.
@@ -303,8 +305,8 @@ export class Uint64Property extends Integer64Property {
      * @category Value Properties
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Uint64' }, Uint64);
+        super(in_params, Uint64);
     };
-
-    _castFunctor = _castFunctors.Uint64;
 };
+Uint64Property.prototype._typeid = 'Uint64';
+Uint64Property.prototype._castFunctor = _castFunctors.Uint64;

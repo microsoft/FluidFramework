@@ -8,9 +8,9 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedDirectory } from "@fluidframework/map";
+import { DependencyContainer } from "@fluidframework/synthesize";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import {
@@ -105,7 +105,7 @@ export class Pond extends DataObject implements IFluidHTMLView {
 
     public static getFactory() { return Pond.factory; }
 
-    private static readonly factory = new DataObjectFactory<Pond, undefined, undefined, IEvent>(
+    private static readonly factory = new DataObjectFactory(
         PondName,
         Pond,
         [SharedDirectory.getFactory()],
@@ -119,14 +119,13 @@ export class Pond extends DataObject implements IFluidHTMLView {
 
 // ----- CONTAINER SETUP STUFF -----
 
+const dependencyContainer = new DependencyContainer();
+dependencyContainer.register(IFluidUserInformation, async (dc) => userInfoFactory(dc));
+
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     Pond.getFactory(),
     new Map([
         Pond.getFactory().registryEntry,
     ]),
-    [
-        {
-            type: IFluidUserInformation,
-            provider: async (dc) => userInfoFactory(dc),
-        },
-    ]);
+    dependencyContainer,
+);

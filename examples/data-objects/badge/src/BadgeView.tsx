@@ -4,15 +4,10 @@
  */
 import React, { useState, useMemo } from "react";
 import {
-    ActivityItem,
     DefaultButton,
     PrimaryButton,
-    DirectionalHint,
     Dialog,
     DialogFooter,
-    HoverCard,
-    HoverCardType,
-    Icon,
     initializeIcons,
     ColorPicker,
     getColorFromString,
@@ -25,7 +20,6 @@ import { MotionAnimations } from "@uifabric/fluent-theme";
 import { IBadgeViewProps, IBadgeType } from "./Badge.types";
 import {
     getItemsFromOptionsMap,
-    getRelativeDate,
     getButtonStyles,
 } from "./helpers";
 
@@ -38,7 +32,6 @@ initializeIcons();
 export const BadgeView: React.FC<IBadgeViewProps> = (props: IBadgeViewProps) => {
     const {
         options,
-        historyItems,
         selectedOption,
         addOption,
         changeSelectedOption,
@@ -89,22 +82,6 @@ export const BadgeView: React.FC<IBadgeViewProps> = (props: IBadgeViewProps) => 
         setCustomStatusText(newValue ?? "");
     };
 
-    // Create the content for the history card
-    const historyCardContent = (): JSX.Element => {
-        const history = historyItems.map((x, i) => {
-            return (
-                <ActivityItem
-                    key={i}
-                    activityDescription={`Set to ${x.value.text}`}
-                    timeStamp={getRelativeDate(x.timestamp)}
-                    activityIcon={<Icon {...x.value.iconProps} />}
-                />
-            );
-        });
-
-        return <div style={{ padding: "16px 24px" }}>{history}</div>;
-    };
-
     // Only recompute button styles when current option changes
     const buttonStyles = useMemo(
         () => getButtonStyles(currentOption.iconProps.style.color),
@@ -119,27 +96,19 @@ export const BadgeView: React.FC<IBadgeViewProps> = (props: IBadgeViewProps) => 
                 display: "inline-block",
             }}
         >
-            <HoverCard
-                plainCardProps={{
-                    onRenderPlainCard: historyCardContent,
-                    directionalHint: DirectionalHint.rightTopEdge,
+            <DefaultButton
+                text={currentOption.text}
+                iconProps={{
+                    iconName: currentOption.iconProps.iconName,
                 }}
-                type={HoverCardType.plain}
-            >
-                <DefaultButton
-                    text={currentOption.text}
-                    iconProps={{
-                        iconName: currentOption.iconProps.iconName,
-                    }}
-                    menuProps={{
-                        isBeakVisible: false,
-                        shouldFocusOnMount: true,
-                        items: getItemsFromOptionsMap(options),
-                        onItemClick: onStatusClick,
-                    }}
-                    styles={buttonStyles}
-                />
-            </HoverCard>
+                menuProps={{
+                    isBeakVisible: false,
+                    shouldFocusOnMount: true,
+                    items: getItemsFromOptionsMap(options),
+                    onItemClick: onStatusClick,
+                }}
+                styles={buttonStyles}
+            />
 
             <Dialog
                 hidden={!isCustomStatusVisible}

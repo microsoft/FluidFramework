@@ -46,8 +46,7 @@
 *
 * The SharedSegmentSequenceUndoRedoHandler generates IRevertible objects,
 * SharedSegmentSequenceRevertible for any SharedSegmentSequence based
-* distributed datastructures like SharedString, SharedObjectSequence, and
-* SharedNumberSequence.
+* distributed data structures like SharedString.
 *
 * This handler pushes an SharedSegmentSequenceRevertible for every local Insert,
 * Remove, and Annotate operations made to the sequence. The objects are created

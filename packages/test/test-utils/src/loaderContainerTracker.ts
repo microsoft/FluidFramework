@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { IContainer, IDeltaQueue, IHostLoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
@@ -46,11 +47,8 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 return container;
             };
         };
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         loader.resolve = patch(loader.resolve);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         loader.createDetachedContainer = patch(loader.createDetachedContainer);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         loader.rehydrateDetachedContainerFromSnapshot = patch(loader.rehydrateDetachedContainerFromSnapshot);
     }
 
@@ -191,11 +189,11 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 debugWait(`Waiting container to be saved ${dirtyContainers.map((c) => this.containers.get(c)!.index)}`);
                 waitingSequenceNumberSynchronized = false;
-                await Promise.all(dirtyContainers.map(async (c) => new Promise((res) => c.once("saved", res))));
+                await Promise.all(dirtyContainers.map(async (c) => new Promise((resolve) => c.once("saved", resolve))));
             }
 
             // yield a turn to allow side effect of the ops we just processed execute before we check again
-            await new Promise<void>((res) => { setTimeout(res, 0); });
+            await new Promise<void>((resolve) => { setTimeout(resolve, 0); });
         }
 
         // Pause all container that was resumed
@@ -258,9 +256,15 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 return true;
             }
             // Note that in read only mode, the op won't be submitted
-            const deltaManager = (container.deltaManager as any);
+            let deltaManager = (container.deltaManager as any);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const { trailingNoOps } = this.containers.get(container)!;
+            // Back-compat: clientSequenceNumber & clientSequenceNumberObserved moved to ConnectionManager in 0.53
+            if (!("clientSequenceNumber" in deltaManager)) {
+                deltaManager = deltaManager.connectionManager;
+            }
+            assert("clientSequenceNumber" in deltaManager, "no clientSequenceNumber");
+            assert("clientSequenceNumberObserved" in deltaManager, "no clientSequenceNumber");
             return deltaManager.clientSequenceNumber ===
                 (deltaManager.clientSequenceNumberObserved as number) + trailingNoOps;
         });
@@ -292,7 +296,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
         const unconnectedClients =
             Array.from(this.containers.keys()).filter((c) => !c.closed && !(c as Container).connected);
         return Promise.all(pendingClients.map(async ([container, pendingClientId]) => {
-            return new Promise<void>((res) => {
+            return new Promise<void>((resolve) => {
                 const cleanup = () => {
                     unconnectedClients.forEach((c) => c.off("connected", handler));
                     container.getQuorum().off("removeMember", handler);
@@ -301,7 +305,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
                     pendingClientId.delete(clientId);
                     if (pendingClientId.size === 0) {
                         cleanup();
-                        res();
+                        resolve();
                     }
                 };
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -311,7 +315,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 container.getQuorum().on("removeMember", handler);
                 container.on("closed", () => {
                     cleanup();
-                    res();
+                    resolve();
                 });
             });
         }));
@@ -322,12 +326,12 @@ export class LoaderContainerTracker implements IOpProcessingController {
      * @param containersToApply - the set of containers to wait for any inbound ops for
      */
     private async waitForAnyInboundOps(containersToApply: IContainer[]) {
-        return new Promise<void>((res) => {
+        return new Promise<void>((resolve) => {
             const handler = () => {
                 containersToApply.map((c) => {
                     c.deltaManager.inbound.off("push", handler);
                 });
-                res();
+                resolve();
             };
             containersToApply.map((c) => {
                 c.deltaManager.inbound.on("push", handler);
@@ -413,7 +417,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 
         while (resumed.some((queue) => !queue.idle)) {
             debugWait("Wait until queue is idle");
-            await new Promise<void>((res) => { setTimeout(res, 0); });
+            await new Promise<void>((resolve) => { setTimeout(resolve, 0); });
         }
 
         // Make sure all the op that we sent out are acked first

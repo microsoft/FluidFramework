@@ -29,7 +29,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ typeid: 'Reference', ...in_params, });
+        super(in_params);
     };
 
     /**
@@ -252,3 +252,4 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
     };
 
 }
+ReferenceArrayProperty.prototype._typeid = 'Reference';

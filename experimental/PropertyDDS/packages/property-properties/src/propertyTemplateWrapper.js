@@ -48,9 +48,6 @@ export class PropertyTemplateWrapper {
          */
         this._compiledPropertyTemplate = undefined;
 
-        /** Constants saved in a tree like structure */
-        this.constantTree = undefined;
-
         /* What type of base object is created for this template*/
         this._objectCreationType = undefined;
 
@@ -328,114 +325,5 @@ export class PropertyTemplateWrapper {
 
         mergeSubProperties(in_childProperty, in_parentProperty, 'properties');
         mergeSubProperties(in_childProperty, in_parentProperty, 'constants');
-    };
-
-
-    /**
-     * @return {Boolean} true if a constant tree was already created and stored here
-     */
-    hasConstantTree() {
-        return this.constantTree !== undefined;
-    };
-
-    /**
-     * Creates the constant tree if it doesn't exist yet, then apply it to the passed in property
-     * @param {property-properties.BaseProperty} in_property The property which will have constants applied to
-     */
-    loadConstants(in_property) {
-        if (this.hasConstantTree()) {
-            this._applyConstants(in_property);
-        } else {
-            this._saveConstants(in_property);
-            this._applyConstants(in_property);
-        }
-    };
-
-    /**
-     * Begins the process of creating and saving the constant tree.
-     * @param {property-properties.BaseProperty} in_property The property which has constants to be saved
-     */
-    _saveConstants(in_property) {
-        this._saveConstantsRecursive(in_property, {});
-        // Object.freeze(this.constantTree);
-    };
-
-    /**
-     * Recursive function which extracts all constants from in_property and saves them.
-     * @param {property-properties.BaseProperty} in_property The property whose constants will be saved
-     * @param {Object} out_property A tree like series of nested objects which holds all constants of in_property
-     * @return {Boolean} returns true if there is a constant within the subtree passed in as in_property
-     */
-    _saveConstantsRecursive(in_property, out_property) {
-        if (in_property instanceof ContainerProperty) {
-            const children = in_property._staticChildren;
-            let isConstant = false;
-            if (children !== undefined) {
-                if (out_property._constantChildren === undefined) {
-                    out_property._constantChildren = {};
-                }
-                if (out_property._staticChildren === undefined) {
-                    out_property._staticChildren = {};
-                }
-                const keys = Object.keys(children);
-                for (let i = 0; i < keys.length; ++i) {
-                    const key = keys[i];
-                    const child = children[key];
-                    if (child._isConstant) {
-
-                        child._cleanDirty();
-                        if (child._parent && !child._parent._isConstant) {
-                            child._parent = undefined;
-                        }
-                        out_property._constantChildren[key] = child;
-                        // Object.freeze(out_property._constantChildren[key]);
-                        isConstant = true;
-                        delete in_property._staticChildren[key];
-                    } else {
-                        out_property._staticChildren[key] = {};
-                        const isThereAConstantInChild = this._saveConstantsRecursive(
-                            child,
-                            out_property._staticChildren[key]);
-
-                        isConstant = isConstant || isThereAConstantInChild;
-                        if (!isThereAConstantInChild) {
-                            delete out_property._staticChildren[key];
-                        }
-                    }
-                }
-            }
-            this.constantTree = out_property;
-            return isConstant;
-        }
-        return false;
-    };
-
-    /**
-      * Applies save constants to the property passed in
-      * @param {property-properties.BaseProperty} in_property The property that constants are being applied to
-      */
-    _applyConstants(in_property) {
-        this._applyConstantsRecursive(this.constantTree, in_property);
-    };
-
-    /**
-     * Applies constants from the in_property on to the out_property
-     * @param {Object} in_property The property whose constants will be transfered
-     * @param {property-properties.BaseProperty} out_property The property that constants are being applied to
-     */
-    _applyConstantsRecursive(in_property, out_property) {
-        if (out_property instanceof ContainerProperty) {
-            if (in_property._constantChildren) {
-                out_property._setConstants(in_property._constantChildren);
-            }
-            const children = in_property._staticChildren;
-            if (!_.isUndefined(children)) {
-                const keys = Object.keys(children);
-                for (let i = 0; i < keys.length; ++i) {
-                    const key = keys[i];
-                    this._applyConstantsRecursive(children[key], out_property.get([key]));
-                }
-            }
-        }
     };
 }
