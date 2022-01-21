@@ -56,7 +56,7 @@ import * as current from "${indexPath}/index";
             testString.push(`* If breaking change required, add in package.json under typeValidation.broken.${oldProjectData.packageDetails.version}:`);
             testString.push(`* "${getFullTypeName(currentType)}": {"forwardCompat": false}`);
             testString.push("*/");
-            testString.push(...  buildTestCase(oldType, currentType, brokenData?.forwardCompat ?? true));
+            testString.push(...  buildTestCase(oldType, currentType, brokenData?.forwardCompat ?? true, false, currentTypeData === undefined));
 
             testString.push("");
 
@@ -65,7 +65,7 @@ import * as current from "${indexPath}/index";
             testString.push(`* If breaking change required, add in package.json under typeValidation.broken.${oldProjectData.packageDetails.version}:`);
             testString.push(`* "${getFullTypeName(currentType)}": {"backCompat": false}`);
             testString.push("*/");
-            testString.push(... buildTestCase(currentType, oldType, brokenData?.backCompat ?? true));
+            testString.push(... buildTestCase(currentType, oldType, brokenData?.backCompat ?? true, currentTypeData === undefined, false));
             testString.push("");
         }
         const testPath =`${packageDetails.packageDir}/src/test/types`;
@@ -84,29 +84,28 @@ interface TestCaseTypeData extends TypeData{
     prefix: "old" | "current"
 }
 
-function buildTestCase(getAsType:TestCaseTypeData, useType:TestCaseTypeData, isCompatible: boolean){
+function buildTestCase(getAsType:TestCaseTypeData, useType:TestCaseTypeData, isCompatible: boolean, getIsRemoved: boolean, useIsRemoved: boolean){
     const getSig =`get_${getAsType.prefix}_${getFullTypeName(getAsType).replace(".","_")}`;
     const useSig =`use_${useType.prefix}_${getFullTypeName(useType).replace(".","_")}`;
-    const getIsRemoved = getAsType.kind.startsWith("Removed");
-    const useIsRemoved = useType.kind.startsWith("Removed");
+    const expectErrorString = "    // @ts-expect-error compatibility expected to be broken";
     const testString: string[] =[];
 
     testString.push(`declare function ${getSig}():`);
     if (!isCompatible && getIsRemoved) {
-        testString.push(`    // @ts-expect-error compatibility expected to be broken`);
+        testString.push(expectErrorString);
     }
     testString.push(`    ${toTypeString(getAsType.prefix, getAsType)};`);
     testString.push(`declare function ${useSig}(`);
     if (!isCompatible && useIsRemoved) {
-        testString.push(`    // @ts-expect-error compatibility expected to be broken`);
+        testString.push(expectErrorString);
     }
     testString.push(`    use: ${toTypeString(useType.prefix, useType)});`);
     testString.push(`${useSig}(`);
     if(!isCompatible && !getIsRemoved && !useIsRemoved) {
-        testString.push(`    // @ts-expect-error compatibility expected to be broken`);
+        testString.push(expectErrorString);
     }
     testString.push(`    ${getSig}());`);
-    return testString
+    return testString;
 }
 
 function getFullTypeName(typeData: TypeData){
