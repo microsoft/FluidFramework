@@ -7,7 +7,6 @@ import { IFluidObject } from "@fluidframework/core-interfaces";
 import {
     AsyncFluidObjectProvider,
     FluidObjectSymbolProvider,
-    FluidObjectProvider,
     FluidObjectKey,
 } from "./types";
 
@@ -31,27 +30,6 @@ export interface IProvideFluidDependencySynthesizer {
  * and required types.
  */
 export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynthesizer {
-    /**
-     * @deprecated - This will only be available on DependencyContainer
-     * All the registered types available
-     */
-    readonly registeredTypes: Iterable<(keyof IFluidObject)>;
-
-    /**
-     * @deprecated - This will only be available on DependencyContainer
-     * Add a new provider
-     * @param type - Name of the Type T being provided
-     * @param provider - A provider that will resolve the T correctly when asked
-     * @throws - If passing a type that's already registered
-     */
-    register<T extends keyof IFluidObject>(type: T, provider: FluidObjectProvider<T>): void;
-
-    /**
-     * @deprecated - This will only be available on DependencyContainer
-     * Remove a provider
-     * @param type - Name of the provider to remove
-     */
-    unregister<T extends keyof IFluidObject>(type: T): void;
 
     /**
      * synthesize takes optional and required types and returns an object that will fulfill the
@@ -72,11 +50,4 @@ export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynt
      * @param type - Type to check
      */
     has(type: (keyof IFluidObject)): boolean;
-
-    /**
-     * @deprecated - This will be removed. Use synthesize or has instead
-     * Get a provider. undefined if not available.
-     * @param type - Type to get
-     */
-    getProvider<T extends keyof IFluidObject>(type: T): FluidObjectProvider<T> | undefined;
 }

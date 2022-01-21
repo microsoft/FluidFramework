@@ -26,14 +26,6 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
     private readonly parents: IFluidDependencySynthesizer[];
     public get IFluidDependencySynthesizer() { return this; }
 
-    /**
-     * @deprecated - use has instead
-     * {@inheritDoc (IFluidDependencySynthesizer:interface).registeredTypes}
-     */
-    public get registeredTypes(): Iterable<(keyof IFluidObject)> {
-        return this.providers.keys();
-    }
-
     public constructor(... parents: (IFluidDependencySynthesizer | undefined)[]) {
         this.parents = parents.filter((v): v is IFluidDependencySynthesizer => v !== undefined);
     }
@@ -87,28 +79,6 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
             return this.parents.some((p: IFluidDependencySynthesizer) => p.has(type));
         }
         return false;
-    }
-
-    /**
-     * @deprecated - use synthesize or has instead
-     *
-     * {@inheritDoc (IFluidDependencySynthesizer:interface).getProvider}
-     */
-    public getProvider<T extends keyof IFluidObject>(type: T): FluidObjectProvider<T> | undefined {
-        // If we have the provider return it
-        const provider = this.providers.get(type);
-        if (provider) {
-            return provider;
-        }
-
-        for(const parent of this.parents) {
-            const p = parent.getProvider(type);
-            if (p !== undefined) {
-                return p;
-            }
-        }
-
-        return undefined;
     }
 
     private generateRequired<T extends IFluidObject>(

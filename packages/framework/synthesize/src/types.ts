@@ -55,18 +55,3 @@ export type FluidObjectProvider<T extends keyof IFluidObject> =
     | Promise<NonNullableFluidObject<T>>
     | ((dependencyContainer: IFluidDependencySynthesizer) => NonNullableFluidObject<T>)
     | ((dependencyContainer: IFluidDependencySynthesizer) => Promise<NonNullableFluidObject<T>>);
-
-/**
- * @deprecated - create a new DependencyContainer instead
- * ProviderEntry is a mapping of the type to the Provider
- */
-export interface ProviderEntry<T extends keyof IFluidObject> {
-    type: T;
-    provider: FluidObjectProvider<T>
-}
-
-/**
- * @deprecated - create a new DependencyContainer instead
- * A mapping of ProviderEntries
- */
-export type DependencyContainerRegistry = Iterable<ProviderEntry<any>>;
