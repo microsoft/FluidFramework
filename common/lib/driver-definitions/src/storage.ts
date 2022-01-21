@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IEventProvider, IErrorEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { IDisposable, IEventProvider, IEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -157,7 +157,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
 }
 
-export interface IDocumentDeltaConnectionEvents<TErrorExt = never> extends IErrorEvent {
+export interface IDocumentDeltaConnectionEvents<TErrorExt = never> extends IEvent {
     (event: "nack", listener: (documentId: string, message: INack[]) => void);
     (event: "disconnect", listener: (reason: DriverError<TErrorExt>) => void);
     (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void);

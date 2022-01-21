@@ -378,7 +378,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private readonly clientDetailsOverride: IClientDetails | undefined;
-    private readonly _deltaManager: DeltaManager<ConnectionManager>;
+    private readonly _deltaManager: DeltaManager<ConnectionManager<never>>;
     private service: IDocumentService | undefined;
     private readonly _audience: Audience;
 
@@ -1553,7 +1553,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private createDeltaManager() {
         const serviceProvider = () => this.service;
-        const deltaManager = new DeltaManager<ConnectionManager>(
+        const deltaManager = new DeltaManager<ConnectionManager<never>>(
             serviceProvider,
             ChildLogger.create(this.subLogger, "DeltaManager"),
             () => this.activeConnection(),

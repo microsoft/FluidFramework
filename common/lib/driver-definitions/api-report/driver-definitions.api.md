@@ -10,7 +10,7 @@ import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IErrorEvent } from '@fluidframework/common-definitions';
+import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
 import { INack } from '@fluidframework/protocol-definitions';
@@ -104,7 +104,7 @@ export interface IDocumentDeltaConnection<TErrorExt = never> extends IDisposable
 }
 
 // @public (undocumented)
-export interface IDocumentDeltaConnectionEvents<TErrorExt = never> extends IErrorEvent {
+export interface IDocumentDeltaConnectionEvents<TErrorExt = never> extends IEvent {
     // (undocumented)
     (event: "nack", listener: (documentId: string, message: INack[]) => void): any;
     // (undocumented)

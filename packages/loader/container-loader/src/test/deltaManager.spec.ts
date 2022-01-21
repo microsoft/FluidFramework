@@ -19,7 +19,7 @@ describe("Loader", () => {
     describe("Container Loader", () => {
         describe("Delta Manager", () => {
             let clock: SinonFakeTimers;
-            let deltaManager: DeltaManager<ConnectionManager>;
+            let deltaManager: DeltaManager<ConnectionManager<never>>;
             let logger: ITelemetryLogger;
             let deltaConnection: MockDocumentDeltaConnection;
             let clientSeqNumber = 0;
@@ -48,7 +48,7 @@ describe("Loader", () => {
                 );
                 const client: Partial<IClient> = { mode: "write", details: { capabilities: { interactive: true } } };
 
-                deltaManager = new DeltaManager<ConnectionManager>(
+                deltaManager = new DeltaManager<ConnectionManager<never>>(
                     () => service,
                     logger,
                     () => false,

@@ -75,7 +75,7 @@ function getNackReconnectInfo(nackContent: INackContent) {
         `nack [${nackContent.code}]`, message, canRetry, retryAfterMs, { statusCode: nackContent.code });
 }
 
-const createReconnectError = (fluidErrorCode: string, err: any) =>
+const createReconnectError = <TErrExt> (fluidErrorCode: string, err: DriverError<TErrExt>) =>
     wrapError(
         err,
         (errorMessage: string) => new GenericNetworkError(fluidErrorCode, errorMessage, true /* canRetry */),
@@ -131,12 +131,12 @@ class NoDeltaStream
  * Implements constant connectivity to relay service, by reconnecting in case of loast connection or error.
  * Exposes various controls to influecen this process, including manual reconnects, forced read-only mode, etc.
  */
-export class ConnectionManager implements IConnectionManager {
+export class ConnectionManager<TErrExt> implements IConnectionManager {
     /** Connection mode used when reconnecting on error or disconnect. */
     private readonly defaultReconnectionMode: ConnectionMode;
 
     private pendingConnection = false;
-    private connection: IDocumentDeltaConnection | undefined;
+    private connection: IDocumentDeltaConnection<TErrExt> | undefined;
 
     /** file ACL - whether user has only read-only access to a file */
     private _readonlyPermissions: boolean | undefined;
@@ -275,7 +275,7 @@ export class ConnectionManager implements IConnectionManager {
         return { readonly: this._readonlyPermissions };
     }
 
-    private static detailsFromConnection(connection: IDocumentDeltaConnection): IConnectionDetails {
+    private static detailsFromConnection<TErrExt>(connection: IDocumentDeltaConnection<TErrExt>): IConnectionDetails {
         return {
             claims: connection.claims,
             clientId: connection.clientId,
@@ -289,7 +289,7 @@ export class ConnectionManager implements IConnectionManager {
     }
 
     constructor(
-        private readonly serviceProvider: () => IDocumentService | undefined,
+        private readonly serviceProvider: () => IDocumentService<TErrExt> | undefined,
         private client: IClient,
         reconnectAllowed: boolean,
         private readonly logger: ITelemetryLogger,
@@ -445,7 +445,7 @@ export class ConnectionManager implements IConnectionManager {
         const docService = this.serviceProvider();
         assert(docService !== undefined, 0x2a7 /* "Container is not attached" */);
 
-        let connection: IDocumentDeltaConnection | undefined;
+        let connection: IDocumentDeltaConnection<TErrExt> | undefined;
 
         if (docService.policies?.storageOnly === true) {
             connection = new NoDeltaStream();
@@ -591,7 +591,8 @@ export class ConnectionManager implements IConnectionManager {
      * initial messages.
      * @param connection - The newly established connection
      */
-     private setupNewSuccessfulConnection(connection: IDocumentDeltaConnection, requestedMode: ConnectionMode) {
+     private setupNewSuccessfulConnection(
+         connection: IDocumentDeltaConnection<TErrExt>, requestedMode: ConnectionMode) {
         // Old connection should have been cleaned up before establishing a new one
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
         assert(!connection.disposed, 0x28a /* "can't be disposed - Callers need to ensure that!" */);
@@ -694,7 +695,7 @@ export class ConnectionManager implements IConnectionManager {
      */
      private reconnectOnError(
         requestedMode: ConnectionMode,
-        error: DriverError,
+        error: DriverError<TErrExt>,
     ) {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.reconnectOnErrorCore(
@@ -713,7 +714,7 @@ export class ConnectionManager implements IConnectionManager {
     private async reconnectOnErrorCore(
         requestedMode: ConnectionMode,
         disconnectMessage: string,
-        error?: DriverError,
+        error?: DriverError<TErrExt>,
     ) {
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
@@ -874,7 +875,7 @@ export class ConnectionManager implements IConnectionManager {
     };
 
     // Connection mode is always read on disconnect/error unless the system mode was write.
-    private readonly disconnectHandlerInternal = (disconnectReason) => {
+    private readonly disconnectHandlerInternal = (disconnectReason: DriverError<TErrExt>) => {
         // Note: we might get multiple disconnect calls on same socket, as early disconnect notification
         // ("server_disconnect", ODSP-specific) is mapped to "disconnect"
         this.reconnectOnError(
@@ -883,7 +884,7 @@ export class ConnectionManager implements IConnectionManager {
         );
     };
 
-    private readonly errorHandler = (error) => {
+    private readonly errorHandler = (error: DriverError<TErrExt>) => {
         this.reconnectOnError(
             this.defaultReconnectionMode,
             createReconnectError("dmDocumentDeltaConnectionError", error),
