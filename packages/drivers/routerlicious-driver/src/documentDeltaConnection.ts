@@ -32,11 +32,17 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
                     documentId: id,
                     tenantId,
                 },
-                reconnection: false,
+                // Allow 1 reconnection attempt so that polling can be tried
+                reconnection: true,
+                reconnectionAttempts: 1,
                 // Enable long-polling as a downgrade option
                 transports: ["websocket", "polling"],
                 timeout: timeoutMs,
             });
+        socket.on("connect_error", () => {
+            // Fallback to polling upgrade mechanism on connection failure
+            socket.io.opts.transports = ["polling", "websocket"];
+        });
 
         const connectMessage: IConnect = {
             client,

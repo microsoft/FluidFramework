@@ -71,6 +71,8 @@ export class DocumentDeltaConnection
 
     private _details: IConnected | undefined;
 
+    private reconnectAttempts: number = 0;
+
     // Listeners only needed while the connection is in progress
     private readonly connectionListeners: Map<string, (...args: any[]) => void> = new Map();
     // Listeners used throughout the lifetime of the DocumentDeltaConnection
@@ -369,7 +371,13 @@ export class DocumentDeltaConnection
                         description.target = undefined;
                     }
                 } catch(_e) {}
-                fail(true, this.createErrorObject("connectError", error));
+                if (!this.socket.io.opts.reconnection ||
+                    this.reconnectAttempts >= (this.socket.io.opts.reconnectionAttempts ?? 0)) {
+                    // Reconnection is disabled or maximum reconnect attempts have been reached.
+                    fail(true, this.createErrorObject("connectError", error));
+                } else {
+                    this.reconnectAttempts++;
+                }
             });
 
             // Listen for timeouts
