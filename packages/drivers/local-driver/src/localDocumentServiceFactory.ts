@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
 import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentService,
@@ -88,8 +87,8 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 
-        const parsedUrl = parse(resolvedUrl.url);
-        const [, tenantId, documentId] = parsedUrl.path ? parsedUrl.path.split("/") : [];
+        const parsedUrl = new URL(resolvedUrl.url);
+        const [, tenantId, documentId] = parsedUrl.pathname ? parsedUrl.pathname.split("/") : [];
         if (!documentId || !tenantId) {
             throw new Error(`Couldn't parse resolved url. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
