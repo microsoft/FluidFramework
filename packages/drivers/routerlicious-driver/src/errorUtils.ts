@@ -44,7 +44,7 @@ export interface IR11sError {
     canRetry: boolean;
 }
 
-export type R11sError = DriverError | IR11sError;
+export type R11sError = DriverError<R11sErrorType>;
 
 export function createR11sNetworkError(
     fluidErrorCode: string,
