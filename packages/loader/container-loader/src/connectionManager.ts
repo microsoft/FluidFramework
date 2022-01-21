@@ -17,14 +17,12 @@ import { assert, performance, TypedEventEmitter } from "@fluidframework/common-u
 import {
     TelemetryLogger,
     normalizeError,
-    wrapError,
 } from "@fluidframework/telemetry-utils";
 import {
     IDocumentService,
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
     DriverError,
-    IDriverErrorBase,
 } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
@@ -89,6 +87,7 @@ const createReconnectError = (fluidErrorCode: string, err: any) =>
     // wrapError(
     //     err,
     //     (errorMessage: string) =>
+    // eslint-disable-next-line max-len
     //         new GenericNetworkError(fluidErrorCode, errorMessage, true /* canRetry */,  { driverVersion: undefined }),
     // );
 
@@ -762,7 +761,7 @@ export class ConnectionManager implements IConnectionManager {
     public prepareMessageToSend(message: Omit<IDocumentMessage, "clientSequenceNumber">): IDocumentMessage | undefined {
         if (this.readonly === true) {
             assert(this.readOnlyInfo.readonly === true, 0x1f0 /* "Unexpected mismatch in readonly" */);
-            const error = createWriteError("deltaManagerReadonlySubmit");
+            const error = createWriteError("deltaManagerReadonlySubmit", { driverVersion: undefined });
             error.addTelemetryProperties({
                 readonly: this.readOnlyInfo.readonly,
                 forcedReadonly: this.readOnlyInfo.forced,
