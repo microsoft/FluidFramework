@@ -180,7 +180,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
         const isClientSequenceNumberSynchronized = containersToApply.every((container) => {
             
             const opController = (container as Container).opController;
-            if (opController === undefined) {
+            if (opController === undefined || container.readOnlyInfo.readonly === true) {
                 // Ignore readonly container. the clientSeqNum and clientSeqNumObserved might be out of sync
                 // because we transition to readonly when outbound is not empty or the in transit op got lost
                 return true;
