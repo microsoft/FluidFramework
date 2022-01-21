@@ -87,14 +87,25 @@ interface TestCaseTypeData extends TypeData{
 function buildTestCase(getAsType:TestCaseTypeData, useType:TestCaseTypeData, isCompatible: boolean){
     const getSig =`get_${getAsType.prefix}_${getFullTypeName(getAsType).replace(".","_")}`;
     const useSig =`use_${useType.prefix}_${getFullTypeName(useType).replace(".","_")}`;
+    const getIsRemoved = getAsType.kind.startsWith("Removed");
+    const useIsRemoved = useType.kind.startsWith("Removed");
     const testString: string[] =[];
-    testString.push(`declare function ${getSig}():\n    ${toTypeString(getAsType.prefix, getAsType)};`);
-    testString.push(`declare function ${useSig}(\n    use: ${toTypeString(useType.prefix, useType)});`);
-    testString.push(`${useSig}(`);
-    if(!isCompatible){
+
+    testString.push(`declare function ${getSig}():`);
+    if (!isCompatible && getIsRemoved) {
         testString.push(`    // @ts-expect-error compatibility expected to be broken`);
     }
-    testString.push(`    ${getSig}());`)
+    testString.push(`    ${toTypeString(getAsType.prefix, getAsType)};`);
+    testString.push(`declare function ${useSig}(`);
+    if (!isCompatible && useIsRemoved) {
+        testString.push(`    // @ts-expect-error compatibility expected to be broken`);
+    }
+    testString.push(`    use: ${toTypeString(useType.prefix, useType)});`);
+    testString.push(`${useSig}(`);
+    if(!isCompatible && !getIsRemoved && !useIsRemoved) {
+        testString.push(`    // @ts-expect-error compatibility expected to be broken`);
+    }
+    testString.push(`    ${getSig}());`);
     return testString
 }
 
