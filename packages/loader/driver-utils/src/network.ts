@@ -29,22 +29,10 @@ export function isOnline(): OnlineStatus {
     return OnlineStatus.Unknown;
 }
 
-/** Base class for driver errors for shared functionality on top of LoggingError base class */
-export abstract class DriverErrorBase extends LoggingError {
-    /**
-     * Tack on a driverVersion telemetry prop, can be called like this:
-     *   throw new FooError().withDriverVersion(pkgVersion)
-     * */
-    withDriverVersion(driverVersion: string) {
-        this.addTelemetryProperties({ driverVersion });
-        return this;
-    }
-}
-
 /**
  * Generic network error class.
  */
-export class GenericNetworkError extends DriverErrorBase implements IDriverErrorBase, IFluidErrorBase {
+export class GenericNetworkError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
     readonly errorType = DriverErrorType.genericNetworkError;
 
     constructor(
@@ -63,7 +51,7 @@ export class GenericNetworkError extends DriverErrorBase implements IDriverError
 // DriverErrorType strategy so that it supports extension with optional
 // value.
 const deltaStreamConnectionForbiddenStr = "deltaStreamConnectionForbidden";
-export class DeltaStreamConnectionForbiddenError extends DriverErrorBase implements IFluidErrorBase {
+export class DeltaStreamConnectionForbiddenError extends LoggingError implements IFluidErrorBase {
     static readonly errorType: string =
         DriverErrorType[deltaStreamConnectionForbiddenStr] ?? deltaStreamConnectionForbiddenStr;
     readonly errorType: string = DeltaStreamConnectionForbiddenError.errorType;
@@ -74,7 +62,7 @@ export class DeltaStreamConnectionForbiddenError extends DriverErrorBase impleme
     }
 }
 
-export class AuthorizationError extends DriverErrorBase implements IAuthorizationError, IFluidErrorBase {
+export class AuthorizationError extends LoggingError implements IAuthorizationError, IFluidErrorBase {
     readonly errorType = DriverErrorType.authorizationError;
     readonly canRetry = false;
 
@@ -90,7 +78,7 @@ export class AuthorizationError extends DriverErrorBase implements IAuthorizatio
     }
 }
 
-export class NetworkErrorBasic<T extends string> extends DriverErrorBase implements IFluidErrorBase {
+export class NetworkErrorBasic<T extends string> extends LoggingError implements IFluidErrorBase {
     constructor(
         readonly fluidErrorCode: string,
         message: string,
@@ -128,7 +116,7 @@ export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
 /**
  * Throttling error class - used to communicate all throttling errors
  */
-export class ThrottlingError extends DriverErrorBase implements IThrottlingWarning, IFluidErrorBase {
+export class ThrottlingError extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
     readonly errorType = DriverErrorType.throttlingError;
     readonly canRetry = true;
 
