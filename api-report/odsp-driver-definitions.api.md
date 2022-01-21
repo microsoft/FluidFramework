@@ -91,6 +91,8 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
     // (undocumented)
     hashedDocumentId: string;
     // (undocumented)
+    isClpCompliantApp?: boolean;
+    // (undocumented)
     odspResolvedUrl: true;
     shareLinkInfo?: ShareLinkInfoType;
     // (undocumented)

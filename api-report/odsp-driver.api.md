@@ -26,6 +26,12 @@ import { TokenFetcher } from '@fluidframework/odsp-driver-definitions';
 // @public
 export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined;
 
+// @public (undocumented)
+export enum ClpCompliantAppHeader {
+    // (undocumented)
+    isClpCompliantApp = "X-CLP-Compliant-App"
+}
+
 // @public
 export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createLinkType?: ShareLinkTypes): IRequest;
 
@@ -46,6 +52,12 @@ export function getLocatorFromOdspUrl(url: URL): OdspFluidDataStoreLocator | und
 
 // @public
 export function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefined>;
+
+// @public (undocumented)
+export interface IClpCompliantAppHeader {
+    // (undocumented)
+    [ClpCompliantAppHeader.isClpCompliantApp]: boolean;
+}
 
 // @public (undocumented)
 export interface ISharingLinkHeader {
