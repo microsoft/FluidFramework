@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
 import { IBlob, ITree } from "@fluidframework/protocol-definitions";
-import { gcBlobKey, getNormalizedSnapshot, ISnapshotNormalizerConfig } from "../snapshotNormalizer";
+import { gcBlobPrefix, getNormalizedSnapshot, ISnapshotNormalizerConfig } from "../snapshotNormalizer";
 
 describe("Snapshot Normalizer", () => {
     it ("can normalize tree entries", () => {
@@ -43,6 +43,8 @@ describe("Snapshot Normalizer", () => {
                 node2: [ "/", "node1"],
             },
         };
+        const gcBlobName1 = `${gcBlobPrefix}_1`;
+        const gcBlobName2 = `${gcBlobPrefix}_2`;
         // Snapshot with couple of GC blobs at different layers.
         const snapshot: ITree = {
             id: "root",
@@ -50,15 +52,15 @@ describe("Snapshot Normalizer", () => {
                 new TreeTreeEntry("tree", {
                     id: "subTree",
                     entries: [
-                        new BlobTreeEntry(gcBlobKey, JSON.stringify(gcDetails)),
+                        new BlobTreeEntry(gcBlobName1, JSON.stringify(gcDetails)),
                     ],
                 }),
-                new BlobTreeEntry(gcBlobKey, JSON.stringify(gcDetails)),
+                new BlobTreeEntry(gcBlobName2, JSON.stringify(gcDetails)),
             ],
         };
 
         const normalizedSnapshot = getNormalizedSnapshot(snapshot);
-        assert.strictEqual(normalizedSnapshot.entries[0].path, gcBlobKey, "Snapshot tree entries not sorted");
+        assert.strictEqual(normalizedSnapshot.entries[0].path, gcBlobName2, "Snapshot tree entries not sorted");
         const gcBlob = normalizedSnapshot.entries[0].value as IBlob;
         assert.deepStrictEqual(JSON.parse(gcBlob.contents), normalizedGCDetails, "GC blob not normalized");
 

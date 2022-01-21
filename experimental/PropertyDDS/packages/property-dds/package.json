@@ -54,7 +54,6 @@
     "@fluidframework/eslint-config-fluid": "^0.25.0",
     "@fluidframework/local-driver": "^0.56.0",
     "@fluidframework/mocha-test-setup": "^0.56.0",
-    "@fluidframework/runtime-utils": "^0.55.0",
     "@fluidframework/sequence": "^0.56.0",
     "@fluidframework/server-local-server": "^0.1034.0",
     "@fluidframework/test-runtime-utils": "^0.56.0",

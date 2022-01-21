@@ -190,8 +190,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
-    get writeGCDataAtRoot(): boolean;
-}
+    }
 
 // @public (undocumented)
 export interface ContainerRuntimeMessage {

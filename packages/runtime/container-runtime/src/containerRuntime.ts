@@ -902,14 +902,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly dataStores: DataStores;
 
     /**
-     * True, if GC data should be written at root of the summary tree.
-     * False, if data stores should write GC blobs in their summary tree.
-     */
-    public get writeGCDataAtRoot(): boolean {
-        return this.garbageCollector.writeDataAtRoot;
-    }
-
-    /**
      * True if generating summaries with isolated channels is
      * explicitly disabled. This only affects how summaries are written,
      * and is the single source of truth for this container.
@@ -1382,7 +1374,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return convertSummaryTreeToITree(summaryResult.summary);
     }
 
-    private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
+    private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats) {
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
         if (this.chunkMap.size > 0) {
             const content = JSON.stringify([...this.chunkMap]);
@@ -1407,11 +1399,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
         }
 
-        if (this.writeGCDataAtRoot) {
-            const gcSummary = this.garbageCollector.summarize();
-            if (gcSummary !== undefined) {
-                addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
-            }
+        const gcSummary = this.garbageCollector.summarize();
+        if (gcSummary !== undefined) {
+            addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
         }
     }
 
@@ -1720,7 +1710,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private canSendOps() {
-        return this.connected && !this.deltaManager.readonly;
+        return this.connected && !this.deltaManager.readOnlyInfo.readonly;
     }
 
     public getQuorum(): IQuorumClients {
@@ -1807,7 +1797,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Wrap data store summaries in .channels subtree.
             wrapSummaryInChannelsTree(summarizeResult);
         }
-        this.addContainerBlobsToSummary(summarizeResult);
+        this.addContainerStateToSummary(summarizeResult);
         return summarizeResult.summary;
     }
 
@@ -1830,7 +1820,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             wrapSummaryInChannelsTree(summarizeResult);
             pathPartsForChildren = [channelsTreeName];
         }
-        this.addContainerBlobsToSummary(summarizeResult);
+        this.addContainerStateToSummary(summarizeResult);
         return {
             ...summarizeResult,
             id: "",
@@ -2015,10 +2005,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             try {
                 summarizeResult = await this.summarize({
                     summaryLogger,
-                    // If the GC version changed since the last summary was submitted, we need to regenerate summary by
-                    // running full summary. This is used to handle scenarios where we upgrade the GC version because we
-                    // cannot trust the data from the previous GC version anymore.
-                    fullTree: fullTree || this.garbageCollector.hasGCVersionChanged,
+                    // If the GC state needs to be reset, we need to regenerate the summary and update the unreferenced
+                    // state of all the nodes.
+                    fullTree: fullTree || this.garbageCollector.summaryStateNeedsReset,
                     trackState: true,
                     runGC: this.garbageCollector.shouldRunGC,
                 });
