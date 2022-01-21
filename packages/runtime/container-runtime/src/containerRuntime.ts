@@ -289,9 +289,6 @@ type IRuntimeMessageMetadata = undefined | {
     batch?: boolean;
 };
 
-// Local storage key to set the default flush mode to TurnBased
-const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
-
 export enum RuntimeMessage {
     FluidDataStoreOp = "component",
     Attach = "attach",
@@ -851,7 +848,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
     private _orderSequentiallyCalls: number = 0;
-    private _flushMode: FlushMode;
+    private _flushMode: FlushMode = FlushMode.TurnBased;
     private needsFlush = false;
     private flushTrigger = false;
 
@@ -966,10 +963,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(this.logger, "ContainerRuntime"));
-
-        this._flushMode =
-            this.mc.config.getBoolean(turnBasedFlushModeKey) ?? false
-            ? FlushMode.TurnBased : FlushMode.Immediate;
 
         /**
          * Function that return the current server timestamp. This is used by the garbage collector to set the

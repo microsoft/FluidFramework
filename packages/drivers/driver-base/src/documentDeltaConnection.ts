@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
@@ -29,9 +29,6 @@ import {
     loggerToMonitoringContext,
     MonitoringContext,
 } from "@fluidframework/telemetry-utils";
-
-// Local storage key to disable the BatchManager
-const batchManagerDisabledKey = "Fluid.Driver.BaseDocumentDeltaConnection.DisableBatchManager";
 
 /**
  * Represents a connection to a stream of delta updates
@@ -65,8 +62,6 @@ export class DocumentDeltaConnection
 
     private socketConnectionTimeout: ReturnType<typeof setTimeout> | undefined;
 
-    protected readonly submitManager: BatchManager<IDocumentMessage[]>;
-
     private _details: IConnected | undefined;
 
     // Listeners only needed while the connection is in progress
@@ -88,7 +83,6 @@ export class DocumentDeltaConnection
      */
     protected _disposed: boolean = false;
     private readonly mc: MonitoringContext;
-    protected readonly isBatchManagerDisabled: boolean = false;
     /**
      * @deprecated - Implementors should manage their own logger or monitoring context
      */
@@ -117,9 +111,6 @@ export class DocumentDeltaConnection
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(logger, "DeltaConnection"));
 
-        this.submitManager = new BatchManager<IDocumentMessage[]>(
-            (submitType, work) => this.emitMessages(submitType, work));
-
         this.on("newListener", (event, listener) => {
             assert(!this.disposed, 0x20a /* "register for event on disposed object" */);
 
@@ -147,8 +138,6 @@ export class DocumentDeltaConnection
                     });
             }
         });
-
-        this.isBatchManagerDisabled = this.mc.config.getBoolean(batchManagerDisabledKey) === true;
     }
 
     /**
@@ -280,11 +269,7 @@ export class DocumentDeltaConnection
     }
 
     protected submitCore(type: string, messages: IDocumentMessage[]) {
-        if (this.isBatchManagerDisabled) {
-            this.emitMessages(type, [messages]);
-        } else {
-            this.submitManager.add(type, messages);
-        }
+        this.emitMessages(type, [messages]);
     }
 
     /**
