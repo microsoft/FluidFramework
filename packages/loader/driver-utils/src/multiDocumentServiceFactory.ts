@@ -14,9 +14,9 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ensureFluidResolvedUrl } from "./fluidResolvedUrl";
 
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
-    public static create(documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[]) {
+    public static create(documentServiceFactory: IDocumentServiceFactory<any> | IDocumentServiceFactory<any>[]) {
         if (Array.isArray(documentServiceFactory)) {
-            const factories: IDocumentServiceFactory[] = [];
+            const factories: IDocumentServiceFactory<any>[] = [];
             documentServiceFactory.forEach((factory) => {
                 const maybeMulti = factory as MultiDocumentServiceFactory;
                 if (maybeMulti.protocolToDocumentFactoryMap !== undefined) {
@@ -26,11 +26,11 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
                 }
             });
             if (factories.length === 1) {
-                return factories[0];
+                return factories[0] as IDocumentServiceFactory<never>;
             }
-            return new MultiDocumentServiceFactory(factories);
+            return new MultiDocumentServiceFactory(factories as IDocumentServiceFactory<never>[]);
         }
-        return documentServiceFactory;
+        return documentServiceFactory as IDocumentServiceFactory<never>;
     }
 
     private readonly protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>;

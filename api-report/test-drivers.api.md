@@ -21,6 +21,8 @@ import { LocalDocumentServiceFactory } from '@fluidframework/local-driver';
 import { LocalResolver } from '@fluidframework/local-driver';
 import { OdspDocumentServiceFactory } from '@fluidframework/odsp-driver';
 import { OdspDriverUrlResolver } from '@fluidframework/odsp-driver';
+import type { OdspErrorType } from '@fluidframework/odsp-driver-definitions';
+import { R11sErrorType } from '@fluidframework/routerlicious-driver';
 import { RouterliciousDocumentServiceFactory } from '@fluidframework/routerlicious-driver';
 import { TestDriverTypes } from '@fluidframework/test-driver-definitions';
 
@@ -98,12 +100,12 @@ export const OdspDriverApi: {
 export type OdspDriverApiType = typeof OdspDriverApi;
 
 // @public (undocumented)
-export class OdspTestDriver implements ITestDriver {
+export class OdspTestDriver implements ITestDriver<OdspErrorType> {
     createContainerUrl(testId: string): Promise<string>;
     // (undocumented)
     createCreateNewRequest(testId: string): IRequest;
     // (undocumented)
-    createDocumentServiceFactory(): IDocumentServiceFactory;
+    createDocumentServiceFactory(): IDocumentServiceFactory<OdspErrorType>;
     // (undocumented)
     static createFromEnv(config?: {
         directory?: string;
@@ -137,7 +139,7 @@ export const RouterliciousDriverApi: {
 export type RouterliciousDriverApiType = typeof RouterliciousDriverApi;
 
 // @public (undocumented)
-export class RouterliciousTestDriver implements ITestDriver {
+export class RouterliciousTestDriver implements ITestDriver<R11sErrorType> {
     // (undocumented)
     createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string>;
     // (undocumented)

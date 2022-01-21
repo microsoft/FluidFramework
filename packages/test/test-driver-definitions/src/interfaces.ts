@@ -8,7 +8,7 @@ import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframe
 
 export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
-export interface ITestDriver{
+export interface ITestDriver<TErrExt = never> {
     /**
      * The type of server the test driver executes against
      */
@@ -39,7 +39,7 @@ export interface ITestDriver{
     /**
      * Creates a document service factory targetting the server
      */
-    createDocumentServiceFactory(): IDocumentServiceFactory;
+    createDocumentServiceFactory(): IDocumentServiceFactory<TErrExt>;
 
     /**
      * Creates a url resolver targetting the server

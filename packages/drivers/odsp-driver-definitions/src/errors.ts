@@ -48,7 +48,7 @@ export enum OdspErrorType {
     serviceReadOnly = "serviceReadOnly",
 }
 
-//* IOdspError is now unused except to expose serverEpoch
+//* Probably get rid or or rename this. It is now unused except to expose serverEpoch
 /**
  * Base interface for all ODSP specific errors and warnings
  */
@@ -58,13 +58,3 @@ export interface IOdspError extends IDriverErrorBase<OdspErrorType> {
 }
 
 export type OdspError = DriverError<OdspErrorType>;
-    // | DriverError
-    // | IOdspError;  // Formerly a clone of IDriverErrorBase but with specialized errorType
-
-// function a (de: DriverError<never>) {
-
-// }
-
-// const param: DriverError<OdspErrorType> = {} as any;
-
-// a(param as DriverError<never>);

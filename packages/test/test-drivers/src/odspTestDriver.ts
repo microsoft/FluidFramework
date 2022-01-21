@@ -11,7 +11,8 @@ import {
     IDocumentServiceFactory,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import type { OdspResourceTokenFetchOptions, HostStoragePolicy } from "@fluidframework/odsp-driver-definitions";
+// eslint-disable-next-line max-len
+import type { OdspResourceTokenFetchOptions, HostStoragePolicy, OdspErrorType } from "@fluidframework/odsp-driver-definitions";
 import {
     OdspTokenConfig,
     OdspTokenManager,
@@ -99,7 +100,7 @@ function getCredentials(tenantIndex: number, requestedUserName?: string) {
     return creds;
 }
 
-export class OdspTestDriver implements ITestDriver {
+export class OdspTestDriver implements ITestDriver<OdspErrorType> {
     // Share the tokens and driverId across multiple instance of the test driver
     private static readonly odspTokenManager = new OdspTokenManager(odspTokensCache);
     private static readonly driveIdPCache = new Map<string, Promise<string>>();
@@ -311,7 +312,7 @@ export class OdspTestDriver implements ITestDriver {
         return this.testIdToUrl.get(testId)!;
     }
 
-    createDocumentServiceFactory(): IDocumentServiceFactory {
+    createDocumentServiceFactory(): IDocumentServiceFactory<OdspErrorType> {
         return new this.api.OdspDocumentServiceFactory(
             this.getStorageToken.bind(this),
             this.getPushToken.bind(this),

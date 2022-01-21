@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
+
 import { URL } from "url";
 import child_process from "child_process";
 import { AzureUrlResolver } from "@fluidframework/azure-client/dist/AzureUrlResolver";
@@ -10,7 +12,7 @@ import {
     generateTestUser,
     InsecureTokenProvider,
 } from "@fluidframework/test-client-utils";
-import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { IDocumentService, IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { configurableUrlResolver } from "@fluidframework/driver-utils";
 import { FluidAppOdspUrlResolver } from "@fluid-tools/fluidapp-odsp-urlresolver";
 import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-doclib-utils";
@@ -151,11 +153,11 @@ export async function fluidFetchInit(urlStr: string) {
     const protocol = new URL(resolvedUrl.url).protocol;
     if (protocol === "fluid-odsp:") {
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-        return initializeODSPCore(odspResolvedUrl, new URL(odspResolvedUrl.siteUrl).host, getMicrosoftConfiguration());
+        return initializeODSPCore(odspResolvedUrl, new URL(odspResolvedUrl.siteUrl).host, getMicrosoftConfiguration()) as Promise<IDocumentService>;
     } else if (protocol === "fluid:") {
         const url = new URL(urlStr);
         const server = url.hostname.toLowerCase();
-        return initializeR11s(server, url.pathname, resolvedUrl);
+        return initializeR11s(server, url.pathname, resolvedUrl) as Promise<IDocumentService>;
     } else if (resolvedUrl.url.includes("fluidrelay.azure.com")) {
         const url = new URL(urlStr);
         const tenantId = url.searchParams.get("tenantId");

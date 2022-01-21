@@ -224,7 +224,7 @@ export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErr
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(documentServiceFactories: IDocumentServiceFactory[]);
     // (undocumented)
-    static create(documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[]): IDocumentServiceFactory<never>;
+    static create(documentServiceFactory: IDocumentServiceFactory<any> | IDocumentServiceFactory<any>[]): IDocumentServiceFactory<never>;
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
     // (undocumented)

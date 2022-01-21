@@ -126,17 +126,3 @@ export type DriverError<T = never> =
     | IGenericNetworkError
     | IAuthorizationError
     | IDriverBasicError<T>;
-
-// enum Special{ foo = "foo" };
-
-// function foo(e: DriverError<never>, s: DriverError<Special>) {
-//     if (e.errorType === DriverErrorType.authorizationError) {
-//         return e.tenantId;
-//     }
-//     if (e.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
-//         return e.statusCode;
-//     }
-//     if (s.errorType === Special.foo) {
-//         return s.statusCode;
-//     }
-// }

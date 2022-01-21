@@ -9,7 +9,7 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { v4 as uuid } from "uuid";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { IRouterliciousDriverPolicies } from "@fluidframework/routerlicious-driver";
+import { IRouterliciousDriverPolicies, R11sErrorType } from "@fluidframework/routerlicious-driver";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
 
@@ -84,7 +84,7 @@ function getConfigFromEnv(r11sEndpointName?: string) {
     return getEndpointConfigFromEnv(r11sEndpointName);
 }
 
-export class RouterliciousTestDriver implements ITestDriver {
+export class RouterliciousTestDriver implements ITestDriver<R11sErrorType> {
     public static createFromEnv(config?: { r11sEndpointName?: string },
         api: RouterliciousDriverApiType = RouterliciousDriverApi,
     ) {

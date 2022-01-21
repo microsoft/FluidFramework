@@ -10,4 +10,5 @@ export * from "./documentServiceFactory";
 export * from "./documentStorageService";
 export * from "./nullBlobStorageService";
 export * from "./policies";
+export * from "./r11sErrorType";
 export * from "./tokens";

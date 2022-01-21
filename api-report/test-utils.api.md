@@ -248,7 +248,7 @@ export class TestObjectProvider {
     // (undocumented)
     get documentId(): string;
     // (undocumented)
-    get documentServiceFactory(): IDocumentServiceFactory;
+    get documentServiceFactory(): IDocumentServiceFactory<never>;
     // (undocumented)
     readonly driver: ITestDriver;
     // (undocumented)

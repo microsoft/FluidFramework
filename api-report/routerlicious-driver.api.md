@@ -136,6 +136,12 @@ export class NullBlobStorageService implements IDocumentStorageService {
     write(tree: api_2.ITree, parents: string[], message: string, ref: string): Promise<api_2.IVersion>;
 }
 
+// @public (undocumented)
+export enum R11sErrorType {
+    // (undocumented)
+    fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError"
+}
+
 // @public
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(tokenProvider: ITokenProvider, driverPolicies?: Partial<IRouterliciousDriverPolicies>);
