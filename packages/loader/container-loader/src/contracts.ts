@@ -10,6 +10,7 @@ import {
     IDeltaQueue,
     ReadOnlyInfo,
     IConnectionDetails,
+    ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import {
     ConnectionMode,
@@ -128,7 +129,7 @@ export interface IConnectionManagerFactoryArgs {
      * Called by connection manager whwnever critical error happens and container should be closed.
      * Expects dispose() call in respose to this call.
      */
-    readonly closeHandler: (error?: any) => void,
+    readonly closeHandler: (error?: ICriticalContainerError) => void,
 
     /**
      * Called whenever connection to relay service is lost.
