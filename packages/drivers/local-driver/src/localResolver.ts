@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
 import { assert } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
@@ -64,11 +63,11 @@ export class LocalResolver implements IUrlResolver {
     public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
         let url = relativeUrl;
         if (url.startsWith("/")) {
-            url = url.substr(1);
+            url = url.substring(1);
         }
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
-        const parsedUrl = parse(fluidResolvedUrl.url);
+        const parsedUrl = new URL(fluidResolvedUrl.url);
         // eslint-disable-next-line no-null/no-null
         if (parsedUrl.pathname === null) {
             throw new Error("Url should contain tenant and docId!!");
