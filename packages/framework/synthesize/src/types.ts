@@ -17,13 +17,6 @@ export type FluidObjectSymbolProvider<T> = {
     [P in keyof T]: P;
 };
 
-export type KeysInBoth<T, M, TProp = keyof T | keyof M> =
-TProp extends keyof T
-    ? TProp extends keyof M
-        ? TProp
-        : never
-    :never;
-
 /**
  * This is a condensed version of Record that requires the object has all
  * the IFluidObject properties as its type mapped to an object that implements
