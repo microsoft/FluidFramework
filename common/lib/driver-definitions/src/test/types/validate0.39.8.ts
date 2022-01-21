@@ -262,7 +262,7 @@ use_old_InterfaceDeclaration_IDocumentDeltaStorageService(
 declare function get_old_InterfaceDeclaration_IDocumentService():
     old.IDocumentService;
 declare function use_current_InterfaceDeclaration_IDocumentService(
-    use: current.IDocumentService<any>);
+    use: current.IDocumentService);
 use_current_InterfaceDeclaration_IDocumentService(
     // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDocumentService());
@@ -273,7 +273,7 @@ use_current_InterfaceDeclaration_IDocumentService(
 * "InterfaceDeclaration_IDocumentService": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDocumentService():
-    current.IDocumentService<any>;
+    current.IDocumentService;
 declare function use_old_InterfaceDeclaration_IDocumentService(
     use: old.IDocumentService);
 use_old_InterfaceDeclaration_IDocumentService(
@@ -288,7 +288,7 @@ use_old_InterfaceDeclaration_IDocumentService(
 declare function get_old_InterfaceDeclaration_IDocumentServiceFactory():
     old.IDocumentServiceFactory;
 declare function use_current_InterfaceDeclaration_IDocumentServiceFactory(
-    use: current.IDocumentServiceFactory<any>);
+    use: current.IDocumentServiceFactory);
 use_current_InterfaceDeclaration_IDocumentServiceFactory(
     // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDocumentServiceFactory());
@@ -299,7 +299,7 @@ use_current_InterfaceDeclaration_IDocumentServiceFactory(
 * "InterfaceDeclaration_IDocumentServiceFactory": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDocumentServiceFactory():
-    current.IDocumentServiceFactory<any>;
+    current.IDocumentServiceFactory;
 declare function use_old_InterfaceDeclaration_IDocumentServiceFactory(
     use: old.IDocumentServiceFactory);
 use_old_InterfaceDeclaration_IDocumentServiceFactory(

@@ -127,16 +127,16 @@ export type DriverError<T> =
     | IAuthorizationError<T>
     | IDriverBasicError<T>;
 
-// enum Empty{ foo = "foo" }
+// enum Special{ foo = "foo" };
 
-// function foo(e: DriverError<Empty>) {
+// function foo(e: DriverError<never>) {
 //     if (e.errorType === DriverErrorType.authorizationError) {
 //         return e.tenantId;
 //     }
 //     if (e.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
 //         return e.statusCode;
 //     }
-//     if (e.errorType === Empty.foo) {
-//         return e.statusCode;
-//     }
+//     // if (e.errorType === Special.foo) {
+//     //     return e.statusCode;
+//     // }
 // }

@@ -261,7 +261,7 @@ export interface IDocumentServicePolicies {
     readonly storageOnly?: boolean;
 }
 
-export interface IDocumentService<TErrorExt> {
+export interface IDocumentService<TErrorExt = never> {
 
     resolvedUrl: IResolvedUrl;
 
@@ -298,7 +298,7 @@ export interface IDocumentService<TErrorExt> {
     dispose(error?: any): void;
 }
 
-export interface IDocumentServiceFactory<TErrorExt> {
+export interface IDocumentServiceFactory<TErrorExt = never> {
     /**
      * Name of the protocol used by factory
      */

@@ -125,7 +125,7 @@ export interface IDocumentDeltaStorageService {
 }
 
 // @public (undocumented)
-export interface IDocumentService<TErrorExt> {
+export interface IDocumentService<TErrorExt = never> {
     connectToDeltaStorage(): Promise<IDocumentDeltaStorageService>;
     connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection<TErrorExt>>;
     connectToStorage(): Promise<IDocumentStorageService>;
@@ -136,7 +136,7 @@ export interface IDocumentService<TErrorExt> {
 }
 
 // @public (undocumented)
-export interface IDocumentServiceFactory<TErrorExt> {
+export interface IDocumentServiceFactory<TErrorExt = never> {
     createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService<TErrorExt>>;
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService<TErrorExt>>;
     protocolName: string;

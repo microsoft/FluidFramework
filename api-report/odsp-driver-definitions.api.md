@@ -5,6 +5,7 @@
 ```ts
 
 import { DriverError } from '@fluidframework/driver-definitions';
+import { IDriverErrorBase } from '@fluidframework/driver-definitions';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 
 // @public (undocumented)
@@ -58,15 +59,9 @@ export interface IFileEntry {
 export type InstrumentedStorageTokenFetcher = (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) => Promise<string | null>;
 
 // @public
-export interface IOdspError {
-    // (undocumented)
-    canRetry: boolean;
+export interface IOdspError extends IDriverErrorBase<OdspErrorType> {
     // (undocumented)
     readonly errorType: OdspErrorType;
-    // (undocumented)
-    readonly message: string;
-    // (undocumented)
-    online?: string;
     // (undocumented)
     serverEpoch?: string;
 }
@@ -145,7 +140,7 @@ export interface ISnapshotOptions {
 export const isTokenFromCache: (tokenResponse: string | TokenResponse | null) => boolean | undefined;
 
 // @public (undocumented)
-export type OdspError = DriverError | IOdspError;
+export type OdspError = DriverError<OdspErrorType>;
 
 // @public (undocumented)
 export enum OdspErrorType {
