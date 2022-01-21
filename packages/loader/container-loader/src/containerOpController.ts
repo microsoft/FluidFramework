@@ -53,7 +53,9 @@ export class ContainerOpController implements IContainerOpController {
      * Reset the tracker, closing all containers and stop tracking them.
      */
     public reset() {
-        this.container.close();
+        if (this.container.deltaManager.clientDetails.capabilities.interactive) {
+            this.container.close();
+        }
     }
 
     /**

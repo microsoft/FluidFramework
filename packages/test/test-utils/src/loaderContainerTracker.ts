@@ -59,10 +59,10 @@ export class LoaderContainerTracker implements IOpProcessingController {
         });
     }
 
-    /**
+     /**
      * Reset the tracker, closing all containers and stop tracking them.
      */
-    public reset() {
+      public reset() {
         this.lastProposalSeqNum = 0;
         for (const container of this.containers.keys()) {
             (container as Container).opController?.reset();
@@ -293,10 +293,10 @@ export class LoaderContainerTracker implements IOpProcessingController {
         const containersToApply = this.getContainers(containers);
         for (const container of containersToApply) {
             const index = this.containers.get(container);
-            if (index !== undefined && !(container as Container).opController?.containerRecord.paused) {
+            const opController = (container as Container).opController;
+            if (index !== undefined && opController && opController.containerRecord.paused) {
                 debugWait(`${index}: container paused`);
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                pauseP.push((container as Container).opController!.pauseProcessing());
+                pauseP.push(opController.pauseProcessing());
             }
         }
         await Promise.all(pauseP);
