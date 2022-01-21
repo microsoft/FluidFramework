@@ -257,6 +257,10 @@ export function throwOdspNetworkError(
     throw networkError;
 }
 
+export function addOdspDriverVersion(error: IFluidErrorBase) {
+    error.addTelemetryProperties({ driverVersion: pkgVersion });
+}
+
 function numberFromHeader(header: string | null): number | undefined {
     // eslint-disable-next-line no-null/no-null
     if (header === null) {
