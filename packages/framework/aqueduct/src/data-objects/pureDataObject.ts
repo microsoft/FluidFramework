@@ -13,7 +13,7 @@ import {
     IResponse,
     FluidObject,
 } from "@fluidframework/core-interfaces";
-import { AsyncFluidObjectProvider, FluidObjectKey } from "@fluidframework/synthesize";
+import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { FluidObjectHandle } from "@fluidframework/datastore";
@@ -55,8 +55,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
      * To define providers set IFluidObject interfaces in the generic O type for your data store
      */
     protected readonly providers:
-        // eslint-disable-next-line @typescript-eslint/ban-types
-        AsyncFluidObjectProvider<FluidObjectKey<DataObjectType<I, "OptionalProviders">>, FluidObjectKey<object>>;
+        AsyncFluidObjectProvider<DataObjectType<I, "OptionalProviders">>;
 
     protected initProps?: DataObjectType<I, "InitialState">;
 

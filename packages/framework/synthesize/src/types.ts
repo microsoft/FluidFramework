@@ -2,10 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IFluidDependencySynthesizer } from ".";
 
-export type FluidObjectKey<T extends IFluidObject> = keyof T & keyof IFluidObject;
+// export type FluidObjectKey<T extends IFluidObject> = keyof T & keyof IFluidObject;
 
 /**
  * This is a condensed version of Record that requires the object has all
@@ -14,17 +13,24 @@ export type FluidObjectKey<T extends IFluidObject> = keyof T & keyof IFluidObjec
  *
  * @example - \{ IFoo: "IFoo" \}
  */
-export type FluidObjectSymbolProvider<T extends IFluidObject> = {
-    [P in FluidObjectKey<T>]: FluidObjectKey<T> & P;
+export type FluidObjectSymbolProvider<T> = {
+    [P in keyof T]: P;
 };
+
+export type KeysInBoth<T, M, TProp = keyof T | keyof M> =
+TProp extends keyof T
+    ? TProp extends keyof M
+        ? TProp
+        : never
+    :never;
 
 /**
  * This is a condensed version of Record that requires the object has all
  * the IFluidObject properties as its type mapped to an object that implements
  * the property.
  */
-export type AsyncRequiredFluidObjectProvider<T extends keyof IFluidObject> = {
-    [P in T]: Promise<NonNullable<IFluidObject[P]>>
+export type AsyncRequiredFluidObjectProvider<T> =  T extends undefined ? Record<string, never> : {
+    [P in keyof T]: Promise<NonNullable<Exclude<T[P], undefined | null>>>
 };
 
 /**
@@ -32,26 +38,26 @@ export type AsyncRequiredFluidObjectProvider<T extends keyof IFluidObject> = {
  * the IFluidObject properties as its type, mapped to an object that implements
  * the property or undefined.
  */
-export type AsyncOptionalFluidObjectProvider<T extends keyof IFluidObject> = {
-    [P in T]: Promise<IFluidObject[P] | undefined>;
+export type AsyncOptionalFluidObjectProvider<T> =  T extends undefined ? Record<string, never> : {
+    [P in keyof T]?: Promise<T[P] | undefined>;
 };
 
 /**
  * Combined type for Optional and Required Async Fluid object Providers
  */
-export type AsyncFluidObjectProvider<O extends keyof IFluidObject, R extends keyof IFluidObject>
-    = AsyncOptionalFluidObjectProvider<O> & AsyncRequiredFluidObjectProvider<R>;
+export type AsyncFluidObjectProvider<O, R=undefined>
+= AsyncOptionalFluidObjectProvider<O> & AsyncRequiredFluidObjectProvider<R>;
 
 /**
  * Provided a keyof IFluidObject will ensure the type is an instance of that type
  */
-export type NonNullableFluidObject<T extends keyof IFluidObject> = NonNullable<IFluidObject[T]>;
+// export type NonNullableFluidObject<T extends keyof IFluidObject> = NonNullable<IFluidObject[T]>;
 
 /**
  * Multiple ways to provide a Fluid object.
  */
-export type FluidObjectProvider<T extends keyof IFluidObject> =
-    NonNullableFluidObject<T>
-    | Promise<NonNullableFluidObject<T>>
-    | ((dependencyContainer: IFluidDependencySynthesizer) => NonNullableFluidObject<T>)
-    | ((dependencyContainer: IFluidDependencySynthesizer) => Promise<NonNullableFluidObject<T>>);
+export type FluidObjectProvider<T> =
+    NonNullable<T>
+    | Promise<NonNullable<T>>
+    | ((dependencyContainer: IFluidDependencySynthesizer) => NonNullable<T>)
+    | ((dependencyContainer: IFluidDependencySynthesizer) => Promise<NonNullable<T>>);

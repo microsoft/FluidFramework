@@ -3,13 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/core-interfaces";
-
 import {
     AsyncFluidObjectProvider,
     FluidObjectSymbolProvider,
     FluidObjectProvider,
-    FluidObjectKey,
     AsyncOptionalFluidObjectProvider,
     AsyncRequiredFluidObjectProvider,
 } from "./types";
@@ -21,8 +18,8 @@ import {
  * DependencyContainer is similar to a IoC Container. It takes providers and will
  * synthesize an object based on them when requested.
  */
-export class DependencyContainer implements IFluidDependencySynthesizer {
-    private readonly providers = new Map<keyof IFluidObject, FluidObjectProvider<any>>();
+export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
+    private readonly providers = new Map<keyof TMap, FluidObjectProvider<any>>();
     private readonly parents: IFluidDependencySynthesizer[];
     public get IFluidDependencySynthesizer() { return this; }
 
@@ -33,7 +30,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
     /**
      * {@inheritDoc (IFluidDependencySynthesizer:interface).register}
      */
-    public register<T extends keyof IFluidObject>(type: T, provider: FluidObjectProvider<T>): void {
+    public register<T extends keyof TMap = keyof TMap>(type: T, provider: FluidObjectProvider<Pick<TMap,T>>): void {
         if (this.providers.has(type)) {
             throw new Error(`Attempting to register a provider of type ${type} that already exists`);
         }
@@ -44,23 +41,23 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
     /**
      * {@inheritDoc (IFluidDependencySynthesizer:interface).unregister}
      */
-    public unregister<T extends keyof IFluidObject>(type: T): void {
+    public unregister(type: keyof TMap): void {
         if (this.providers.has(type)) {
             this.providers.delete(type);
         }
     }
 
+
     /**
      * {@inheritDoc (IFluidDependencySynthesizer:interface).synthesize}
      */
     public synthesize<
-        O extends IFluidObject,
-        // eslint-disable-next-line @typescript-eslint/ban-types
-        R extends IFluidObject = {}>(
-            optionalTypes: FluidObjectSymbolProvider<O>,
+        O,
+        R = undefined | Record<string, never>>(
+            optionalTypes: Partial<FluidObjectSymbolProvider<O>>,
             requiredTypes: FluidObjectSymbolProvider<R>,
-    ): AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<R>> {
-        const base: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<R>> = {} as any;
+    ): AsyncFluidObjectProvider<O, R> {
+        const base: AsyncFluidObjectProvider<O, R> = {} as any;
         this.generateRequired<R>(base, requiredTypes);
         this.generateOptional<O>(base, optionalTypes);
         Object.defineProperty(base, IFluidDependencySynthesizer, { get: () => this });
@@ -71,8 +68,8 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
      * {@inheritDoc (IFluidDependencySynthesizer:interface).has}
      * @param excludeParents - If true, exclude checking parent registries
      */
-    public has(type: (keyof IFluidObject), excludeParents?: boolean): boolean {
-        if (this.providers.has(type)) {
+    public has(type: string, excludeParents?: boolean): boolean {
+        if (this.providers.has(type as keyof TMap)) {
             return true;
         }
         if (excludeParents !== true) {
@@ -81,11 +78,12 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
         return false;
     }
 
-    private generateRequired<T extends IFluidObject>(
-        base: AsyncRequiredFluidObjectProvider<FluidObjectKey<T>>,
+    private generateRequired<T>(
+        base: AsyncRequiredFluidObjectProvider<T>,
         types: FluidObjectSymbolProvider<T>,
     ) {
-        for(const key of Object.keys(types) as unknown as (keyof IFluidObject)[]) {
+        if(types === undefined) return;
+        for(const key of Object.keys(types) as unknown as (keyof TMap)[]) {
             const provider = this.resolveProvider(key);
             if(provider === undefined) {
                 throw new Error(`Object attempted to be created without registered required provider ${key}`);
@@ -98,11 +96,11 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
         }
     }
 
-    private generateOptional<T extends IFluidObject>(
-        base: AsyncOptionalFluidObjectProvider<FluidObjectKey<T>>,
-        types: FluidObjectSymbolProvider<T>,
+    private generateOptional<T>(
+        base: AsyncOptionalFluidObjectProvider<T>,
+        types: Partial<FluidObjectSymbolProvider<T>>,
     ) {
-        for(const key of Object.keys(types) as unknown as (keyof IFluidObject)[]) {
+        for(const key of Object.keys(types) as unknown as (keyof TMap)[]) {
             const provider = this.resolveProvider(key);
             if(provider !== undefined) {
                 Object.defineProperty(
@@ -114,15 +112,13 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
         }
     }
 
-    private resolveProvider<T extends keyof IFluidObject>(t: T): PropertyDescriptor | undefined {
+    private resolveProvider<T extends keyof TMap>(t: T): PropertyDescriptor | undefined {
         // If we have the provider return it
         const provider = this.providers.get(t);
         if (provider === undefined) {
             for(const parent of this.parents) {
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                const sp = { [t]: t } as FluidObjectSymbolProvider<Pick<IFluidObject, T>>;
-                // eslint-disable-next-line @typescript-eslint/ban-types
-                const syn = parent.synthesize<Pick<IFluidObject, T>,{}>(
+                const sp = { [t]: t } as FluidObjectSymbolProvider<Pick<TMap, T>>;
+                const syn = parent.synthesize<Pick<TMap, T>,{}>(
                     sp,
                     {});
                 const descriptor = Object.getOwnPropertyDescriptor(syn, t);
