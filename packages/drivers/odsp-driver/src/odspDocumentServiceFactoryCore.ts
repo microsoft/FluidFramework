@@ -22,6 +22,7 @@ import {
     IPersistedCache,
     HostStoragePolicy,
     IFileEntry,
+    OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
 import { v4 as uuid } from "uuid";
 import {
@@ -43,7 +44,7 @@ import { createNewFluidFile } from "./createFile";
  * This constructor should be used by environments that support dynamic imports and that wish
  * to leverage code splitting as a means to keep bundles as small as possible.
  */
-export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
+export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory<OdspErrorType> {
     public readonly protocolName = "fluid-odsp:";
 
     private readonly nonPersistentCache = new NonPersistentCache();
@@ -53,7 +54,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
-    ): Promise<IDocumentService> {
+    ): Promise<IDocumentService<OdspErrorType>> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
 
         let odspResolvedUrl = getOdspResolvedUrl(createNewResolvedUrl);
@@ -139,7 +140,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
-    ): Promise<IDocumentService> {
+    ): Promise<IDocumentService<OdspErrorType>> {
         return this.createDocumentServiceCore(resolvedUrl, createOdspLogger(logger));
     }
 
@@ -147,7 +148,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         resolvedUrl: IResolvedUrl,
         odspLogger: TelemetryLogger,
         cacheAndTrackerArg?: ICacheAndTracker,
-    ): Promise<IDocumentService> {
+    ): Promise<IDocumentService<OdspErrorType>> {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
         const cacheAndTracker = cacheAndTrackerArg ?? createOdspCacheAndTracker(
             this.persistedCache,

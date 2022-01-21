@@ -8,7 +8,7 @@ import { DriverErrorType, IDocumentService } from "@fluidframework/driver-defini
 import { IRequest } from "@fluidframework/core-interfaces";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { IOdspResolvedUrl, OdspErrorType } from "@fluidframework/odsp-driver-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
 import { getOdspResolvedUrl } from "../odspUtils";
@@ -71,7 +71,7 @@ describe("Odsp Create Container Test", () => {
     const createService = async (
         summary: ISummaryTree,
         resolved: IOdspResolvedUrl,
-    ): Promise<IDocumentService> => odspDocumentServiceFactory.createContainer(
+    ): Promise<IDocumentService<OdspErrorType>> => odspDocumentServiceFactory.createContainer(
         summary,
         resolved,
         new TelemetryUTLogger());

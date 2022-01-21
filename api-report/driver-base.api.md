@@ -22,20 +22,20 @@ import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
-export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
+export class DocumentDeltaConnection<TErrExt> extends TypedEventEmitter<IDocumentDeltaConnectionEvents<TErrExt>> implements IDocumentDeltaConnection<TErrExt>, IDisposable {
     protected constructor(socket: SocketIOClient.Socket, documentId: string, logger: ITelemetryLogger);
     // (undocumented)
     protected addTrackedListener(event: string, listener: (...args: any[]) => void): void;
     checkpointSequenceNumber: number | undefined;
     get claims(): ITokenClaims;
     get clientId(): string;
-    protected createErrorObject(handler: string, error?: any, canRetry?: boolean): DriverError;
+    protected createErrorObject(handler: string, error?: any, canRetry?: boolean): DriverError<TErrExt>;
     // (undocumented)
     get details(): IConnected;
-    protected disconnect(socketProtocolError: boolean, reason: DriverError): void;
+    protected disconnect(socketProtocolError: boolean, reason: DriverError<TErrExt>): void;
     dispose(): void;
     // (undocumented)
-    protected disposeCore(socketProtocolError: boolean, err: DriverError): void;
+    protected disposeCore(socketProtocolError: boolean, err: DriverError<TErrExt>): void;
     // (undocumented)
     get disposed(): boolean;
     protected _disposed: boolean;

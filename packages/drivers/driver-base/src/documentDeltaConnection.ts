@@ -36,9 +36,9 @@ const batchManagerDisabledKey = "Fluid.Driver.BaseDocumentDeltaConnection.Disabl
 /**
  * Represents a connection to a stream of delta updates
  */
-export class DocumentDeltaConnection
-    extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-    implements IDocumentDeltaConnection, IDisposable {
+export class DocumentDeltaConnection<TErrExt>
+    extends TypedEventEmitter<IDocumentDeltaConnectionEvents<TErrExt>>
+    implements IDocumentDeltaConnection<TErrExt>, IDisposable {
     static readonly eventsToForward = ["nack", "op", "signal", "pong"];
 
     // WARNING: These are critical events that we can't miss, so registration for them has to be in place at all times!
@@ -316,7 +316,7 @@ export class DocumentDeltaConnection
             createGenericNetworkError("clientClosingConnection", undefined, true /* canRetry */));
     }
 
-    protected disposeCore(socketProtocolError: boolean, err: DriverError) {
+    protected disposeCore(socketProtocolError: boolean, err: DriverError<TErrExt>) {
         // Can't check this.disposed here, as we get here on socket closure,
         // so _disposed & socket.connected might be not in sync while processing
         // "dispose" event.
@@ -341,7 +341,7 @@ export class DocumentDeltaConnection
      *  (not on Fluid protocol level)
      * @param reason - reason for disconnect
      */
-    protected disconnect(socketProtocolError: boolean, reason: DriverError) {
+    protected disconnect(socketProtocolError: boolean, reason: DriverError<TErrExt>) {
         this.socket.disconnect();
     }
 
@@ -351,7 +351,7 @@ export class DocumentDeltaConnection
         this.earlyOpHandlerAttached = true;
 
         this._details = await new Promise<IConnected>((resolve, reject) => {
-            const fail = (socketProtocolError: boolean, err: DriverError) => {
+            const fail = (socketProtocolError: boolean, err: DriverError<TErrExt>) => {
                 this.disposeCore(socketProtocolError, err);
                 reject(err);
             };
@@ -515,7 +515,7 @@ export class DocumentDeltaConnection
     /**
      * Error raising for socket.io issues
      */
-    protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
+    protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError<TErrExt> {
         // Note: we suspect the incoming error object is either:
         // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
         // - an Error object thrown by socket.io engine. Be careful with not recording PII!

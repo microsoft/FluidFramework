@@ -9,6 +9,7 @@ import {
     TokenFetcher,
     IPersistedCache,
     HostStoragePolicy,
+    OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
 import { getSocketIo } from "./getSocketIo";
@@ -19,7 +20,7 @@ import { getSocketIo } from "./getSocketIo";
  */
 export class OdspDocumentServiceFactory
     extends OdspDocumentServiceFactoryCore
-    implements IDocumentServiceFactory {
+    implements IDocumentServiceFactory<OdspErrorType> {
     constructor(
         getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
         getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,

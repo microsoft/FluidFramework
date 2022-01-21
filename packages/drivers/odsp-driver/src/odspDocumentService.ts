@@ -49,7 +49,7 @@ import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter";
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
-export class OdspDocumentService implements IDocumentService {
+export class OdspDocumentService implements IDocumentService<OdspErrorType> {
     private _policies: IDocumentServicePolicies;
 
     /**
@@ -76,7 +76,7 @@ export class OdspDocumentService implements IDocumentService {
         hostPolicy: HostStoragePolicy,
         epochTracker: EpochTracker,
         socketReferenceKeyPrefix?: string,
-    ): Promise<IDocumentService> {
+    ): Promise<IDocumentService<OdspErrorType>> {
         return new OdspDocumentService(
             getOdspResolvedUrl(resolvedUrl),
             getStorageToken,
@@ -226,9 +226,9 @@ export class OdspDocumentService implements IDocumentService {
      *
      * @returns returns the document delta stream service for onedrive/sharepoint driver.
      */
-    public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+    public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection<OdspErrorType>> {
         // Attempt to connect twice, in case we used expired token.
-        return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (options) => {
+        return getWithRetryForTokenRefresh<IDocumentDeltaConnection<OdspErrorType>>(async (options) => {
             // Presence of getWebsocketToken callback dictates whether callback is used for fetching
             // websocket token or whether it is returned with joinSession response payload
             const requestWebsocketTokenFromJoinSession = this.getWebsocketToken === undefined;

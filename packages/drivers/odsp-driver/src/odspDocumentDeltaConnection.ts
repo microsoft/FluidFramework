@@ -7,7 +7,7 @@ import { ITelemetryLogger, IEvent } from "@fluidframework/common-definitions";
 import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { DriverError } from "@fluidframework/driver-definitions";
-import { OdspError } from "@fluidframework/odsp-driver-definitions";
+import { OdspError, OdspErrorType } from "@fluidframework/odsp-driver-definitions";
 import { loggerToMonitoringContext, LoggingError } from "@fluidframework/telemetry-utils";
 import {
     IClient,
@@ -176,7 +176,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 /**
  * Represents a connection to a stream of delta updates
  */
-export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
+export class OdspDocumentDeltaConnection extends DocumentDeltaConnection<OdspErrorType> {
     /**
      * Create a OdspDocumentDeltaConnection
      * If url #1 fails to connect, will try url #2 if applicable.
@@ -284,12 +284,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     /**
      * Error raising for socket.io issues
      */
-    protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
+    protected createErrorObject(handler: string, error?: any, canRetry = true): OdspError {
         // Note: we suspect the incoming error object is either:
         // - a socketError: add it to the OdspError object for driver to be able to parse it and reason over it.
         // - anything else: let base class handle it
         if (canRetry && Number.isInteger(error?.code) && typeof error?.message === "string") {
-            return errorObjectFromSocketError(error as IOdspSocketError, handler) as DriverError;
+            return errorObjectFromSocketError(error as IOdspSocketError, handler);
         } else {
             return super.createErrorObject(handler, error, canRetry);
         }
@@ -437,9 +437,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         return this.flushDeferred.promise;
     }
 
-    //* Here we have an ODSP error being passed to generic driver error handling code
     protected serverDisconnectHandler = (error: LoggingError & OdspError) => {
-        this.disposeCore(true, error as unknown as DriverError);  //* Nope
+        this.disposeCore(true, error);
     };
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
