@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 import { IFluidDependencySynthesizer } from ".";
-
-// export type FluidObjectKey<T extends IFluidObject> = keyof T & keyof IFluidObject;
-
 /**
  * This is a condensed version of Record that requires the object has all
  * the IFluidObject properties as its type mapped to a string representation
@@ -40,11 +37,6 @@ export type AsyncOptionalFluidObjectProvider<T> =  T extends undefined ? Record<
  */
 export type AsyncFluidObjectProvider<O, R=undefined>
 = AsyncOptionalFluidObjectProvider<O> & AsyncRequiredFluidObjectProvider<R>;
-
-/**
- * Provided a keyof IFluidObject will ensure the type is an instance of that type
- */
-// export type NonNullableFluidObject<T extends keyof IFluidObject> = NonNullable<IFluidObject[T]>;
 
 /**
  * Multiple ways to provide a Fluid object.

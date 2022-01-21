@@ -22,7 +22,8 @@ import { assert, EventForwarder } from "@fluidframework/common-utils";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { serviceRoutePathRoot } from "../container-services";
 import { defaultFluidObjectRequestHandler } from "../request-handlers";
-import { DataObjectTypes, DataObjectType, IDataObjectProps } from "./types";
+import { DataObjectTypes, IDataObjectProps } from "./types";
+import { IEvent } from "@fluidframework/common-definitions";
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
@@ -32,8 +33,8 @@ import { DataObjectTypes, DataObjectType, IDataObjectProps } from "./types";
  * @typeParam I - The optional input types used to strongly type the data object
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
-    extends EventForwarder<DataObjectType<I, "Events">>
-    implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IFluidObject {
+    extends EventForwarder<I["Events"] & IEvent>
+    implements IFluidLoadable, IFluidRouter, IProvideFluidHandle {
     private readonly innerHandle: IFluidHandle<this>;
     private _disposed = false;
 
@@ -46,7 +47,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
      * This context is used to talk up to the ContainerRuntime
      */
     protected readonly context: IFluidDataStoreContext;
-
+    
     /**
      * Providers are IFluidObject keyed objects that provide back
      * a promise to the corresponding IFluidObject or undefined.
@@ -55,9 +56,9 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
      * To define providers set IFluidObject interfaces in the generic O type for your data store
      */
     protected readonly providers:
-        AsyncFluidObjectProvider<DataObjectType<I, "OptionalProviders">>;
+        AsyncFluidObjectProvider<I["OptionalProviders"]>;
 
-    protected initProps?: DataObjectType<I, "InitialState">;
+    protected initProps?: I["InitialState"];
 
     protected initializeP: Promise<void> | undefined;
 
@@ -150,7 +151,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
             await this.initializingFromExisting();
         } else {
             await this.initializingFirstTime(
-                this.context.createProps as DataObjectType<I, "InitialState"> ?? this.initProps);
+                this.context.createProps as I["InitialState"] ?? this.initProps);
         }
         await this.hasInitialized();
     }
@@ -212,7 +213,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
      *
      * @param props - Optional props to be passed in on create
      */
-    protected async initializingFirstTime(props?: DataObjectType<I, "InitialState">): Promise<void> { }
+    protected async initializingFirstTime(props?: I["InitialState"]): Promise<void> { }
 
     /**
      * Called every time but the first time the data store is initialized (creations

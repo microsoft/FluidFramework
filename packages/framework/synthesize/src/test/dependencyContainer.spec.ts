@@ -13,6 +13,7 @@ import {
     IProvideFluidLoadable,
     IProvideFluidConfiguration,
     IProvideFluidHandle,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 
@@ -48,7 +49,7 @@ describe("Routerlicious", () => {
     describe("Aqueduct", () => {
         describe("DependencyContainer", () => {
             it(`One Optional Provider registered via value`, async () => {
-                const dc = new DependencyContainer<IProvideFluidLoadable>();
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 const mock = new MockLoadable();
                 dc.register(IFluidLoadable, mock);
 
@@ -60,7 +61,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Optional Provider registered via Promise value`, async () => {
-                const dc = new DependencyContainer<IProvideFluidLoadable>();
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 const mock = new MockLoadable();
                 dc.register(IFluidLoadable, Promise.resolve(mock));
 
@@ -72,7 +73,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Optional Provider registered via factory`, async () => {
-                const dc = new DependencyContainer<IProvideFluidLoadable>();
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 const mock = new MockLoadable();
                 const factory = () => mock;
                 dc.register(IFluidLoadable, factory);
@@ -85,7 +86,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Optional Provider registered via Promise factory`, async () => {
-                const dc = new DependencyContainer<IProvideFluidLoadable>();
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 const mock = new MockLoadable();
                 const factory = async () => mock;
                 dc.register(IFluidLoadable, factory);
@@ -98,7 +99,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Required Provider registered via value`, async () => {
-                const dc = new DependencyContainer<IProvideFluidLoadable>();
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 const mock = new MockLoadable();
                 dc.register(IFluidLoadable, mock);
 
@@ -111,7 +112,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Required Provider registered via Promise value`, async () => {
-                const dc = new DependencyContainer<IProvideFluidLoadable>();
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 const mock = new MockLoadable();
                 dc.register(IFluidLoadable, Promise.resolve(mock));
 
@@ -123,7 +124,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Required Provider registered via factory`, async () => {
-                const dc = new DependencyContainer<IProvideFluidLoadable>();
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 const mock = new MockLoadable();
                 const factory = () => mock;
                 dc.register(IFluidLoadable, factory);
@@ -137,7 +138,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Required Provider registered via Promise factory`, async () => {
-                const dc = new DependencyContainer<IProvideFluidLoadable>();
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 const mock = new MockLoadable();
                 const factory = async () => mock;
                 dc.register(IFluidLoadable, factory);
@@ -151,7 +152,7 @@ describe("Routerlicious", () => {
             });
 
             it(`Two Optional Modules all registered`, async () => {
-                const dc = new DependencyContainer<IProvideFluidLoadable & IProvideFluidConfiguration>();
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable & IFluidConfiguration>>();
                 const loadableMock = new MockLoadable();
                 dc.register(IFluidLoadable, loadableMock);
                 const configMock = new MockFluidConfiguration();
@@ -169,7 +170,7 @@ describe("Routerlicious", () => {
             });
 
             it(`Two Optional Modules one registered`, async () => {
-                const dc = new DependencyContainer<IProvideFluidLoadable & IProvideFluidConfiguration>();
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable & IFluidConfiguration>>();
                 const loadableMock = new MockLoadable();
                 dc.register(IFluidLoadable, loadableMock);
 
@@ -184,7 +185,7 @@ describe("Routerlicious", () => {
             });
 
             it(`Two Optional Modules none registered`, async () => {
-                const dc = new DependencyContainer<IProvideFluidLoadable & IProvideFluidConfiguration>();
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable & IFluidConfiguration>>();
 
                 const s = dc.synthesize<IFluidLoadable & IFluidConfiguration>(
                     { IFluidLoadable, IFluidConfiguration }, undefined);
@@ -195,7 +196,7 @@ describe("Routerlicious", () => {
             });
 
             it(`Two Required Modules all registered`, async () => {
-                const dc = new DependencyContainer<IProvideFluidLoadable & IProvideFluidConfiguration>();
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable & IFluidConfiguration>>();
                 const loadableMock = new MockLoadable();
                 dc.register(IFluidLoadable, loadableMock);
                 const configMock = new MockFluidConfiguration();
@@ -213,7 +214,7 @@ describe("Routerlicious", () => {
             });
 
             it(`Required Provider not registered should throw`, async () => {
-                const dc = new DependencyContainer<IProvideFluidLoadable>();
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
 
                 assert.throws(() => dc.synthesize<undefined, IProvideFluidLoadable>(
                     undefined,
@@ -222,7 +223,7 @@ describe("Routerlicious", () => {
             });
 
             it(`Optional Provider found in Parent`, async () => {
-                const parentDc = new DependencyContainer<IProvideFluidLoadable>();
+                const parentDc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 const mock = new MockLoadable();
                 parentDc.register(IFluidLoadable, mock);
                 const dc = new DependencyContainer(parentDc);
@@ -235,10 +236,10 @@ describe("Routerlicious", () => {
             });
 
             it(`Optional Modules found in Parent and Child`, async () => {
-                const parentDc = new DependencyContainer<IProvideFluidLoadable>();
+                const parentDc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 const loadableMock = new MockLoadable();
                 parentDc.register(IFluidLoadable, loadableMock);
-                const dc = new DependencyContainer<IProvideFluidConfiguration>(parentDc);
+                const dc = new DependencyContainer<FluidObject<IFluidConfiguration>>(parentDc);
                 const configMock = new MockFluidConfiguration();
                 dc.register(IFluidConfiguration, configMock);
 
@@ -254,9 +255,9 @@ describe("Routerlicious", () => {
             });
 
             it(`Optional Provider found in Parent and Child resolves Child`, async () => {
-                const parentDc = new DependencyContainer<IProvideFluidLoadable>();
+                const parentDc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 parentDc.register(IFluidLoadable, new MockLoadable());
-                const dc = new DependencyContainer<IProvideFluidLoadable>(parentDc);
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable>>(parentDc);
                 const loadableMock = new MockLoadable();
                 dc.register(IFluidLoadable, loadableMock);
 
@@ -267,7 +268,7 @@ describe("Routerlicious", () => {
             });
 
             it(`Required Provider found in Parent`, async () => {
-                const parentDc = new DependencyContainer<IProvideFluidLoadable>();
+                const parentDc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 const mock = new MockLoadable();
                 parentDc.register(IFluidLoadable, mock);
                 const dc = new DependencyContainer(parentDc);
@@ -280,10 +281,10 @@ describe("Routerlicious", () => {
             });
 
             it(`Required Modules found in Parent and Child`, async () => {
-                const parentDc = new DependencyContainer<IProvideFluidLoadable>();
+                const parentDc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 const loadableMock = new MockLoadable();
                 parentDc.register(IFluidLoadable, loadableMock);
-                const dc = new DependencyContainer<IProvideFluidConfiguration>(parentDc);
+                const dc = new DependencyContainer<FluidObject<IFluidConfiguration>>(parentDc);
                 const configMock = new MockFluidConfiguration();
                 dc.register(IFluidConfiguration, configMock);
 
@@ -299,9 +300,9 @@ describe("Routerlicious", () => {
             });
 
             it(`Required Provider found in Parent and Child resolves Child`, async () => {
-                const parentDc = new DependencyContainer<IProvideFluidLoadable>();
+                const parentDc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 parentDc.register(IFluidLoadable, new MockLoadable());
-                const dc = new DependencyContainer<IProvideFluidLoadable>(parentDc);
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable>>(parentDc);
                 const loadableMock = new MockLoadable();
                 dc.register(IFluidLoadable, loadableMock);
 
@@ -312,26 +313,26 @@ describe("Routerlicious", () => {
             });
 
             it(`Registering`, async () => {
-                const dc = new DependencyContainer<IProvideFluidLoadable>();
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 dc.register(IFluidLoadable, new MockLoadable());
                 assert(dc.has(IFluidLoadable), "DependencyContainer has IFluidLoadable");
             });
 
             it(`Registering the same type twice throws`, async () => {
-                const dc = new DependencyContainer<IProvideFluidLoadable>();
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 dc.register(IFluidLoadable, new MockLoadable());
                 assert.throws(() => dc.register(IFluidLoadable, new MockLoadable()), Error);
             });
 
             it(`Registering then Unregistering`, async () => {
-                const dc = new DependencyContainer<IProvideFluidLoadable>();
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 dc.register(IFluidLoadable, new MockLoadable());
                 dc.unregister(IFluidLoadable);
                 assert(!dc.has(IFluidLoadable), "DependencyContainer doesn't have IFluidLoadable");
             });
 
             it(`Registering then Unregistering then Registering`, async () => {
-                const dc = new DependencyContainer<IProvideFluidLoadable>();
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 dc.register(IFluidLoadable, new MockLoadable());
                 dc.unregister(IFluidLoadable);
                 dc.register(IFluidLoadable, new MockLoadable());
@@ -339,7 +340,7 @@ describe("Routerlicious", () => {
             });
 
             it(`has() resolves correctly in all variations`, async () => {
-                const dc = new DependencyContainer<IProvideFluidLoadable & IProvideFluidConfiguration>();
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable & IFluidConfiguration>>();
                 dc.register(IFluidLoadable, new MockLoadable());
                 dc.register(IFluidConfiguration, new MockFluidConfiguration());
                 assert(dc.has(IFluidLoadable), "Manager has IFluidLoadable");
@@ -351,10 +352,10 @@ describe("Routerlicious", () => {
 
 
             it(`Child has Parent modules`, async () => {
-                const parentDc = new DependencyContainer<IProvideFluidLoadable>();
+                const parentDc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 const loadableMock = new MockLoadable();
                 parentDc.register(IFluidLoadable, loadableMock);
-                const dc = new DependencyContainer<IProvideFluidConfiguration>(parentDc);
+                const dc = new DependencyContainer<FluidObject<IFluidConfiguration>>(parentDc);
                 const configMock = new MockFluidConfiguration();
                 dc.register(IFluidConfiguration, configMock);
 
@@ -365,7 +366,7 @@ describe("Routerlicious", () => {
             });
 
             it(`Parent Resolved from Child`, async () => {
-                const parentDc = new DependencyContainer<IProvideFluidHandle>();
+                const parentDc = new DependencyContainer<FluidObject<IFluidHandle>>();
                 const loadableToHandle: FluidObjectProvider<IProvideFluidHandle> =
                     async (fds: IFluidDependencySynthesizer) => {
         
@@ -374,7 +375,7 @@ describe("Routerlicious", () => {
                     };
                 parentDc.register(IFluidHandle, loadableToHandle);
 
-                const dc = new DependencyContainer<IFluidLoadable>(parentDc);
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable>>(parentDc);
                 const loadableMock = new MockLoadable();
                 dc.register(IFluidLoadable, loadableMock);
 
