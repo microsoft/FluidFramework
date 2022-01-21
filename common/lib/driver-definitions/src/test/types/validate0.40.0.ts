@@ -84,26 +84,28 @@ use_old_EnumDeclaration_DriverHeader(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
-* "InterfaceDeclaration_DriverPreCheckInfo": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_DriverPreCheckInfo": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_DriverPreCheckInfo():
     old.DriverPreCheckInfo;
-declare function use_current_InterfaceDeclaration_DriverPreCheckInfo(
+declare function use_current_RemovedInterfaceDeclaration_DriverPreCheckInfo(
+    // @ts-expect-error compatibility expected to be broken
     use: current.DriverPreCheckInfo);
-use_current_InterfaceDeclaration_DriverPreCheckInfo(
+use_current_RemovedInterfaceDeclaration_DriverPreCheckInfo(
     get_old_InterfaceDeclaration_DriverPreCheckInfo());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
-* "InterfaceDeclaration_DriverPreCheckInfo": {"backCompat": false}
+* "RemovedInterfaceDeclaration_DriverPreCheckInfo": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_DriverPreCheckInfo():
+declare function get_current_RemovedInterfaceDeclaration_DriverPreCheckInfo():
+    // @ts-expect-error compatibility expected to be broken
     current.DriverPreCheckInfo;
 declare function use_old_InterfaceDeclaration_DriverPreCheckInfo(
     use: old.DriverPreCheckInfo);
 use_old_InterfaceDeclaration_DriverPreCheckInfo(
-    get_current_InterfaceDeclaration_DriverPreCheckInfo());
+    get_current_RemovedInterfaceDeclaration_DriverPreCheckInfo());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -55,14 +55,6 @@ export enum DriverHeader {
     summarizingClient = "fluid-client-summarizer"
 }
 
-// @public
-export interface DriverPreCheckInfo {
-    codeDetailsHint?: string;
-    // @deprecated (undocumented)
-    containerPath: string;
-    criticalBootDomains?: string[];
-}
-
 // @public (undocumented)
 export interface IAuthorizationError extends IDriverErrorBase {
     // (undocumented)
@@ -283,6 +275,7 @@ export enum LoaderCachingPolicy {
     NoCaching = 0,
     Prefetch = 1
 }
+
 
 // (No @packageDocumentation comment for this package)
 

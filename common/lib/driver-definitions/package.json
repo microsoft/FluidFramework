@@ -11,7 +11,7 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run build:gen && concurrently npm:build:compile npm:lint && npm run build:docs",
+    "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
@@ -103,6 +103,10 @@
         },
         "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
           "backCompat": false
+        },
+        "RemovedInterfaceDeclaration_DriverPreCheckInfo": {
+          "backCompat": false,
+          "forwardCompat": false
         }
       },
       "0.40.0": {
@@ -117,6 +121,10 @@
         },
         "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
           "backCompat": false
+        },
+        "RemovedInterfaceDeclaration_DriverPreCheckInfo": {
+          "backCompat": false,
+          "forwardCompat": false
         }
       },
       "0.41.0": {
@@ -131,6 +139,10 @@
         },
         "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
           "backCompat": false
+        },
+        "RemovedInterfaceDeclaration_DriverPreCheckInfo": {
+          "backCompat": false,
+          "forwardCompat": false
         }
       },
       "0.42.0": {
@@ -142,6 +154,16 @@
         },
         "InterfaceDeclaration_IDocumentServiceFactory": {
           "backCompat": false
+        },
+        "RemovedInterfaceDeclaration_DriverPreCheckInfo": {
+          "backCompat": false,
+          "forwardCompat": false
+        }
+      },
+      "0.43.0": {
+        "RemovedInterfaceDeclaration_DriverPreCheckInfo": {
+          "backCompat": false,
+          "forwardCompat": false
         }
       }
     }
