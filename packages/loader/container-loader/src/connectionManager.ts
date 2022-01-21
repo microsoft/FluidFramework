@@ -24,6 +24,7 @@ import {
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
     DriverError,
+    IDriverErrorBase,
 } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
@@ -49,11 +50,7 @@ import {
     logNetworkFailure,
     waitForConnectedState,
     DeltaStreamConnectionForbiddenError,
-    GenericNetworkError,
 } from "@fluidframework/driver-utils";
-import {
-    GenericError,
-} from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 import {
     ReconnectMode,
@@ -68,6 +65,12 @@ const DefaultChunkSize = 16 * 1024;
 const fatalConnectErrorProp = { fatalConnectError: true };
 
 function getNackReconnectInfo(nackContent: INackContent) {
+    // check message.content for Back-compat with old service.
+    if (nackContent === undefined) {
+        return createGenericNetworkError(
+            "nackReasonUnknown", undefined, { canRetry: true }, { driverVersion: undefined });
+    }
+
     const message = `Nack (${nackContent.type}): ${nackContent.message}`;
     const canRetry = nackContent.code !== 403;
     const retryAfterMs = nackContent.retryAfter !== undefined ? nackContent.retryAfter * 1000 : undefined;
@@ -79,11 +82,15 @@ function getNackReconnectInfo(nackContent: INackContent) {
 }
 
 const createReconnectError = (fluidErrorCode: string, err: any) =>
-    wrapError(
-        err,
-        (errorMessage: string) =>
-            new GenericNetworkError(fluidErrorCode, errorMessage, true /* canRetry */,  { driverVersion: undefined }),
-    );
+    //* Fixes the bug with canRetry stuck as true.
+    //* As for fluidErrorCode, it doesn't appear in logs.
+    //* Because it's always retried!  :(
+    err;
+    // wrapError(
+    //     err,
+    //     (errorMessage: string) =>
+    //         new GenericNetworkError(fluidErrorCode, errorMessage, true /* canRetry */,  { driverVersion: undefined }),
+    // );
 
 /**
  * Implementation of IDocumentDeltaConnection that does not support submitting
@@ -726,7 +733,7 @@ export class ConnectionManager implements IConnectionManager {
 
         this.disconnectFromDeltaStream(disconnectMessage);
 
-        const canRetry = error !== undefined ? canRetryOnError(error) : true;
+        const canRetry = (error === undefined) || canRetryOnError(error);
 
         // If reconnection is not an option, close the DeltaManager
         if (!canRetry) {
@@ -743,7 +750,7 @@ export class ConnectionManager implements IConnectionManager {
             return;
         }
 
-        const delayMs = error !== undefined ? getRetryDelayFromError(error) : undefined;
+        const delayMs = getRetryDelayFromError(error);
         if (delayMs !== undefined) {
             this.props.reconnectionDelayHandler(delayMs, error);
             await waitForConnectedState(delayMs);
@@ -755,7 +762,8 @@ export class ConnectionManager implements IConnectionManager {
     public prepareMessageToSend(message: Omit<IDocumentMessage, "clientSequenceNumber">): IDocumentMessage | undefined {
         if (this.readonly === true) {
             assert(this.readOnlyInfo.readonly === true, 0x1f0 /* "Unexpected mismatch in readonly" */);
-            const error = new GenericError("deltaManagerReadonlySubmit", undefined /* error */, {
+            const error = createWriteError("deltaManagerReadonlySubmit");
+            error.addTelemetryProperties({
                 readonly: this.readOnlyInfo.readonly,
                 forcedReadonly: this.readOnlyInfo.forced,
                 readonlyPermissions: this.readOnlyInfo.permissions,
@@ -866,14 +874,9 @@ export class ConnectionManager implements IConnectionManager {
             this.props.closeHandler(createWriteError("writeOnReadOnlyDocument",  { driverVersion: undefined }));
         }
 
-        // check message.content for Back-compat with old service.
-        const reconnectInfo = message.content !== undefined
-            ? getNackReconnectInfo(message.content) :
-            createGenericNetworkError("nackReasonUnknown", undefined, { canRetry: true }, { driverVersion: undefined });
-
         this.reconnectOnError(
             "write",
-            reconnectInfo,
+            getNackReconnectInfo(message.content),
         );
     };
 
