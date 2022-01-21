@@ -31,6 +31,10 @@ export function isOnline(): OnlineStatus {
 
 /** Base class for driver errors for shared functionality on top of LoggingError base class */
 export abstract class DriverErrorBase extends LoggingError {
+    /**
+     * Tack on a driverVersion telemetry prop, can be called like this:
+     *   throw new FooError().withDriverVersion(pkgVersion)
+     * */
     withDriverVersion(driverVersion: string) {
         this.addTelemetryProperties({ driverVersion });
         return this;
