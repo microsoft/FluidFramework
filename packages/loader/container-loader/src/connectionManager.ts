@@ -130,8 +130,12 @@ class NoDeltaStream
  * Implementation of IConnectionManager, used by Container class
  * Implements constant connectivity to relay service, by reconnecting in case of loast connection or error.
  * Exposes various controls to influecen this process, including manual reconnects, forced read-only mode, etc.
+ *
+ * Generic param TErrExt specifies how the DriverError type may be extended. Default value of never means just
+ * model strongly typed errors as vanilla DriverError (even though in reality they could be unique to the
+ * specific driver implementation used)
  */
-export class ConnectionManager<TErrExt> implements IConnectionManager {
+export class ConnectionManager<TErrExt = never> implements IConnectionManager {
     /** Connection mode used when reconnecting on error or disconnect. */
     private readonly defaultReconnectionMode: ConnectionMode;
 

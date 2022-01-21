@@ -281,7 +281,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             signalHandler: (message: ISignalMessage) => this._inboundSignal.push(message),
             reconnectionDelayHandler: (delayMs: number, error: unknown) =>
                 this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
-            closeHandler: (error: any) => this.close(error),
+            closeHandler: (error?: ICriticalContainerError) => this.close(error),
             disconnectHandler: (reason: string) => this.disconnectHandler(reason),
             connectHandler: (connection: IConnectionDetails) => this.connectHandler(connection),
             pongHandler: (latency: number) => this.emit("pong", latency),
