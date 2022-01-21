@@ -18,11 +18,6 @@ interface ContainerRecord {
     // LoaderContainerTracker paused state
     paused: boolean;
 
-    // Tracking trailing no-op that may or may be acked by the server so we can discount them
-    // See issue #5629
-    startTrailingNoOps: number;
-    trailingNoOps: number;
-
     // Track last proposal to ensure no unresolved proposal
     lastProposal: number;
 }
@@ -65,8 +60,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
         const record = {
             index: this.containers.size,
             paused: false,
-            startTrailingNoOps: 0,
-            trailingNoOps: 0,
             lastProposal: 0,
         };
         this.containers.set(container, record);
@@ -201,15 +194,15 @@ export class LoaderContainerTracker implements IOpProcessingController {
         //   the ops in the first place, clientSequenceNumber is not assigned
 
         const isClientSequenceNumberSynchronized = containersToApply.every((container) => {
-            if (container.deltaManager.readOnlyInfo.readonly === true) {
+            const opController = (container as Container).opController;
+            if (container.deltaManager.readOnlyInfo.readonly === true || opController === undefined) {
                 // Ignore readonly container. the clientSeqNum and clientSeqNumObserved might be out of sync
                 // because we transition to readonly when outbound is not empty or the in transit op got lost
                 return true;
             }
             // Note that in read only mode, the op won't be submitted
             let deltaManager = (container.deltaManager as any);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const { trailingNoOps } = this.containers.get(container)!;
+            const { trailingNoOps } = opController.containerRecord;
             // Back-compat: clientSequenceNumber & clientSequenceNumberObserved moved to ConnectionManager in 0.53
             if (!("clientSequenceNumber" in deltaManager)) {
                 deltaManager = deltaManager.connectionManager;
