@@ -9,7 +9,6 @@ footer {
 
 .ctas {
     font-size: 2rem;
-    font-family: #000000;
     text-align: center;
     background-color: #404049;
 }
@@ -72,7 +71,6 @@ footer {
     margin-left: auto;
     margin-right: auto;
     margin-bottom: 1rem;
-    display: block;
 }
 
 .cta-icon.get-started {
