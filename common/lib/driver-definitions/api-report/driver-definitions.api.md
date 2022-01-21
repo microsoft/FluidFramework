@@ -27,7 +27,7 @@ import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
-export type DriverError = IThrottlingWarning | IGenericNetworkError | IAuthorizationError | IDriverBasicError;
+export type DriverError<T> = IThrottlingWarning<T> | IGenericNetworkError<T> | IAuthorizationError<T> | IDriverBasicError<T>;
 
 // @public
 export enum DriverErrorType {
@@ -64,7 +64,7 @@ export interface DriverPreCheckInfo {
 }
 
 // @public (undocumented)
-export interface IAuthorizationError extends IDriverErrorBase {
+export interface IAuthorizationError<T> extends IDriverErrorBase<T> {
     // (undocumented)
     readonly claims?: string;
     // (undocumented)
@@ -87,7 +87,7 @@ export interface IDeltaStorageService {
 }
 
 // @public (undocumented)
-export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<IDocumentDeltaConnectionEvents> {
+export interface IDocumentDeltaConnection<TErrorExt> extends IDisposable, IEventProvider<IDocumentDeltaConnectionEvents<TErrorExt>> {
     checkpointSequenceNumber?: number;
     claims: ITokenClaims;
     clientId: string;
@@ -104,11 +104,11 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
 }
 
 // @public (undocumented)
-export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
+export interface IDocumentDeltaConnectionEvents<TErrorExt> extends IErrorEvent {
     // (undocumented)
     (event: "nack", listener: (documentId: string, message: INack[]) => void): any;
     // (undocumented)
-    (event: "disconnect", listener: (reason: any) => void): any;
+    (event: "disconnect", listener: (reason: DriverError<TErrorExt>) => void): any;
     // (undocumented)
     (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void): any;
     // (undocumented)
@@ -116,7 +116,7 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     // (undocumented)
     (event: "pong", listener: (latency: number) => void): any;
     // (undocumented)
-    (event: "error", listener: (error: any) => void): any;
+    (event: "error", listener: (error: DriverError<TErrorExt>) => void): any;
 }
 
 // @public
@@ -125,9 +125,9 @@ export interface IDocumentDeltaStorageService {
 }
 
 // @public (undocumented)
-export interface IDocumentService {
+export interface IDocumentService<TErrorExt> {
     connectToDeltaStorage(): Promise<IDocumentDeltaStorageService>;
-    connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
+    connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection<TErrorExt>>;
     connectToStorage(): Promise<IDocumentStorageService>;
     dispose(error?: any): void;
     policies?: IDocumentServicePolicies;
@@ -136,9 +136,9 @@ export interface IDocumentService {
 }
 
 // @public (undocumented)
-export interface IDocumentServiceFactory {
-    createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+export interface IDocumentServiceFactory<TErrorExt> {
+    createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService<TErrorExt>>;
+    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService<TErrorExt>>;
     protocolName: string;
 }
 
@@ -171,19 +171,19 @@ export interface IDocumentStorageServicePolicies {
 }
 
 // @public
-export interface IDriverBasicError extends IDriverErrorBase {
+export interface IDriverBasicError<T> extends IDriverErrorBase<T> {
     // (undocumented)
-    readonly errorType: DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage;
+    readonly errorType: T | DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage;
     // (undocumented)
     readonly statusCode?: number;
 }
 
 // @public
-export interface IDriverErrorBase {
+export interface IDriverErrorBase<TErrorTypeExt> {
     // (undocumented)
     canRetry: boolean;
     // (undocumented)
-    readonly errorType: DriverErrorType;
+    readonly errorType: DriverErrorType | TErrorTypeExt;
     // (undocumented)
     readonly message: string;
     // (undocumented)
@@ -216,7 +216,7 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
 }
 
 // @public (undocumented)
-export interface IGenericNetworkError extends IDriverErrorBase {
+export interface IGenericNetworkError<T> extends IDriverErrorBase<T> {
     // (undocumented)
     readonly errorType: DriverErrorType.genericNetworkError;
     // (undocumented)
@@ -255,7 +255,7 @@ export interface ISummaryContext {
 }
 
 // @public (undocumented)
-export interface IThrottlingWarning extends IDriverErrorBase {
+export interface IThrottlingWarning<T> extends IDriverErrorBase<T> {
     // (undocumented)
     readonly errorType: DriverErrorType.throttlingError;
     // (undocumented)
@@ -283,6 +283,7 @@ export enum LoaderCachingPolicy {
     NoCaching = 0,
     Prefetch = 1
 }
+
 
 // (No @packageDocumentation comment for this package)
 

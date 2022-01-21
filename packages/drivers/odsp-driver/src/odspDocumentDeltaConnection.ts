@@ -437,8 +437,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         return this.flushDeferred.promise;
     }
 
+    //* Here we have an ODSP error being passed to generic driver error handling code
     protected serverDisconnectHandler = (error: LoggingError & OdspError) => {
-        this.disposeCore(true, error);
+        this.disposeCore(true, error as unknown as DriverError);  //* Nope
     };
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
@@ -567,7 +568,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     /**
      * Disconnect from the websocket
      */
-    protected disconnect(socketProtocolError: boolean, reason: any) {
+    protected disconnect(socketProtocolError: boolean, reason: DriverError) {
         const socket = this.socketReference;
         assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
         this.socketReference = undefined;

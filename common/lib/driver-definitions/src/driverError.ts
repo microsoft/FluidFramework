@@ -80,24 +80,24 @@ export enum DriverErrorType {
 /**
  * Base interface for all errors and warnings
  */
-export interface IDriverErrorBase {
-    readonly errorType: DriverErrorType;
+export interface IDriverErrorBase<TErrorTypeExt> {
+    readonly errorType: DriverErrorType | TErrorTypeExt;
     readonly message: string;
     canRetry: boolean;
     online?: string;
 }
 
-export interface IThrottlingWarning extends IDriverErrorBase {
+export interface IThrottlingWarning<T> extends IDriverErrorBase<T> {
     readonly errorType: DriverErrorType.throttlingError;
     readonly retryAfterSeconds: number;
 }
 
-export interface IGenericNetworkError extends IDriverErrorBase {
+export interface IGenericNetworkError<T> extends IDriverErrorBase<T> {
     readonly errorType: DriverErrorType.genericNetworkError;
     readonly statusCode?: number;
 }
 
-export interface IAuthorizationError extends IDriverErrorBase {
+export interface IAuthorizationError<T> extends IDriverErrorBase<T> {
     readonly errorType: DriverErrorType.authorizationError;
     readonly claims?: string;
     readonly tenantId?: string;
@@ -107,21 +107,36 @@ export interface IAuthorizationError extends IDriverErrorBase {
  * Having this uber interface without types that have their own interfaces
  * allows compiler to differentiate interfaces based on error type
  */
-export interface IDriverBasicError extends IDriverErrorBase {
+export interface IDriverBasicError<T> extends IDriverErrorBase<T> {
     readonly errorType:
-    DriverErrorType.genericError
-    | DriverErrorType.fileNotFoundOrAccessDeniedError
-    | DriverErrorType.offlineError
-    | DriverErrorType.unsupportedClientProtocolVersion
-    | DriverErrorType.writeError
-    | DriverErrorType.fetchFailure
-    | DriverErrorType.incorrectServerResponse
-    | DriverErrorType.fileOverwrittenInStorage;
+        T
+        | DriverErrorType.genericError
+        | DriverErrorType.fileNotFoundOrAccessDeniedError
+        | DriverErrorType.offlineError
+        | DriverErrorType.unsupportedClientProtocolVersion
+        | DriverErrorType.writeError
+        | DriverErrorType.fetchFailure
+        | DriverErrorType.incorrectServerResponse
+        | DriverErrorType.fileOverwrittenInStorage;
     readonly statusCode?: number;
 }
 
-export type DriverError =
-    | IThrottlingWarning
-    | IGenericNetworkError
-    | IAuthorizationError
-    | IDriverBasicError;
+export type DriverError<T> =
+    | IThrottlingWarning<T>
+    | IGenericNetworkError<T>
+    | IAuthorizationError<T>
+    | IDriverBasicError<T>;
+
+// enum Empty{ foo = "foo" }
+
+// function foo(e: DriverError<Empty>) {
+//     if (e.errorType === DriverErrorType.authorizationError) {
+//         return e.tenantId;
+//     }
+//     if (e.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
+//         return e.statusCode;
+//     }
+//     if (e.errorType === Empty.foo) {
+//         return e.statusCode;
+//     }
+// }

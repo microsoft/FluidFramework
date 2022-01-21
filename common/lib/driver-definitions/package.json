@@ -89,12 +89,6 @@
           "forwardCompat": false,
           "backCompat": false
         },
-        "InterfaceDeclaration_IDriverBasicError": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_IDriverErrorBase": {
-          "backCompat": false
-        },
         "InterfaceDeclaration_IGenericNetworkError": {
           "backCompat": false
         },

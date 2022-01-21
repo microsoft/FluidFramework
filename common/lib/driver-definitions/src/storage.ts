@@ -21,6 +21,7 @@ import {
     ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
+import { DriverError } from "./driverError";
 import { IResolvedUrl } from "./urlResolver";
 
 export interface IDeltasFetchResult {
@@ -156,16 +157,18 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
 }
 
-export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
+export interface IDocumentDeltaConnectionEvents<TErrorExt> extends IErrorEvent {
     (event: "nack", listener: (documentId: string, message: INack[]) => void);
-    (event: "disconnect", listener: (reason: any) => void);
+    (event: "disconnect", listener: (reason: DriverError<TErrorExt>) => void);
     (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void);
     (event: "signal", listener: (message: ISignalMessage) => void);
     (event: "pong", listener: (latency: number) => void);
-    (event: "error", listener: (error: any) => void);
+    (event: "error", listener: (error: DriverError<TErrorExt>) => void);
 }
 
-export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<IDocumentDeltaConnectionEvents> {
+export interface IDocumentDeltaConnection<TErrorExt>
+    extends IDisposable, IEventProvider<IDocumentDeltaConnectionEvents<TErrorExt>>
+{
     /**
      * ClientID for the connection
      */
@@ -258,7 +261,7 @@ export interface IDocumentServicePolicies {
     readonly storageOnly?: boolean;
 }
 
-export interface IDocumentService {
+export interface IDocumentService<TErrorExt> {
 
     resolvedUrl: IResolvedUrl;
 
@@ -280,7 +283,7 @@ export interface IDocumentService {
     /**
      * Subscribes to the document delta stream
      */
-    connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
+    connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection<TErrorExt>>;
 
     /**
      * Dispose storage. Called by storage consumer (Container) when it's done with storage (Container closed).
@@ -295,7 +298,7 @@ export interface IDocumentService {
     dispose(error?: any): void;
 }
 
-export interface IDocumentServiceFactory {
+export interface IDocumentServiceFactory<TErrorExt> {
     /**
      * Name of the protocol used by factory
      */
@@ -304,7 +307,8 @@ export interface IDocumentServiceFactory {
     /**
      * Returns an instance of IDocumentService
      */
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger):
+        Promise<IDocumentService<TErrorExt>>;
 
     /**
      * Creates a new document with the provided options. Returns the document service.
@@ -315,7 +319,7 @@ export interface IDocumentServiceFactory {
         createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
-    ): Promise<IDocumentService>;
+    ): Promise<IDocumentService<TErrorExt>>;
 }
 
 /**

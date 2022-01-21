@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import  { DriverError } from "@fluidframework/driver-definitions";
+import  { DriverError, IDriverErrorBase } from "@fluidframework/driver-definitions";
 
 export enum OdspErrorType {
     /**
@@ -49,14 +49,10 @@ export enum OdspErrorType {
 }
 
 /**
- * Base interface for all errors and warnings
- * Superset of IDriverErrorBase, but with Odsp-specific errorType
+ * Base interface for all ODSP specific errors and warnings
  */
-export interface IOdspError {
+export interface IOdspError extends IDriverErrorBase<OdspErrorType> {
     readonly errorType: OdspErrorType;
-    readonly message: string;
-    canRetry: boolean;
-    online?: string;
     serverEpoch?: string;
 }
 
