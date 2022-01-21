@@ -5,22 +5,14 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import { Container, ContainerRecord } from "@fluidframework/container-loader";
+import { Container } from "@fluidframework/container-loader";
 import { debug } from "./debug";
 import { IOpProcessingController } from "./testObjectProvider";
 
 const debugWait = debug.extend("wait");
 
-interface ContainerLoaderRecord {
-    // A short number for debug output
-    index: number;
-
-    // LoaderContainerTracker paused state
-    containerRecord: ContainerRecord;
-}
-
 export class LoaderContainerTracker implements IOpProcessingController {
-    private readonly containers = new Map<Container, ContainerLoaderRecord>();
+    private readonly containers = new Map<IContainer, number>();
     private lastProposalSeqNum: number = 0;
 
     /**
@@ -33,7 +25,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
             const boundFn = fn.bind(loader);
             return async (...args: T[]) => {
                 const container = await boundFn(...args);
-                this.addContainer(container as unknown as Container);
+                this.addContainer(container);
                 return container;
             };
         };
@@ -47,21 +39,17 @@ export class LoaderContainerTracker implements IOpProcessingController {
      *
      * @param container - container to add
      */
-    private addContainer(container: Container) {
-        // don't add container that is already tracked
-        if (
-            this.containers.has(container)
-            || container.opController === undefined
-            || container.opController.containerRecord === undefined)
-            { return; }
+    private addContainer(container: IContainer) {
+        // ignore summarizer
+        if (!container.deltaManager.clientDetails.capabilities.interactive) { return; }
 
-        const record = {
-            index: this.containers.size,
-            containerRecord: container.opController?.containerRecord,
-        };
-        this.containers.set(container, record);
+        // don't add container that is already tracked
+        if (this.containers.has(container)) { return; }
+
+        this.containers.set(container, this.containers.size);
         this.trackLastProposal(container);
     }
+
 
     private trackLastProposal(container: IContainer) {
         container.getQuorum().on("addProposal", (proposal) => {
@@ -77,7 +65,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
     public reset() {
         this.lastProposalSeqNum = 0;
         for (const container of this.containers.keys()) {
-            container.opController?.reset();
+            (container as Container).opController?.reset();
         }
         this.containers.clear();
 
@@ -127,9 +115,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 }
             } else {
                 // Wait for all the containers to be saved
-                debugWait(
-                    `Waiting container to be saved ${dirtyContainers
-                        .map((c)=> this.containers.get(c as Container)?.index)}`);
+                debugWait(`Waiting container to be saved ${dirtyContainers.map((c) => this.containers.get(c))}`);
                 waitingSequenceNumberSynchronized = false;
                 await Promise.all(dirtyContainers.map(async (c) => new Promise((resolve) => c.once("saved", resolve))));
             }
@@ -141,7 +127,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
         // Pause all container that was resumed
         // don't call pause if resumed is empty and pause everything, which is not what we want
         if (resumed.length !== 0) {
-            await this.pauseProcessing(...resumed as Container[]);
+            await this.pauseProcessing(...resumed);
         }
 
         debugWait("Synchronized");
@@ -157,7 +143,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
         // All the clientId we track should be a superset of the quorum, otherwise, we are missing
         // leave messages
         const openedDocuments = Array.from(this.containers.keys()).filter((c) => !c.closed);
-        const openedClientId = openedDocuments.map((container) => container.clientId);
+        const openedClientId = openedDocuments.map((container) => (container as Container).clientId);
 
         const pendingClients: [IContainer, Set<string>][] = [];
         containersToApply.forEach((container) => {
@@ -192,15 +178,16 @@ export class LoaderContainerTracker implements IOpProcessingController {
         //   the ops in the first place, clientSequenceNumber is not assigned
 
         const isClientSequenceNumberSynchronized = containersToApply.every((container) => {
-            if (container.readOnlyInfo.readonly === true) {
+            
+            const opController = (container as Container).opController;
+            if (opController === undefined) {
                 // Ignore readonly container. the clientSeqNum and clientSeqNumObserved might be out of sync
                 // because we transition to readonly when outbound is not empty or the in transit op got lost
                 return true;
             }
             // Note that in read only mode, the op won't be submitted
             let deltaManager = (container.deltaManager as any);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const { trailingNoOps } = this.containers.get(container as Container)!.containerRecord;
+            const { trailingNoOps } = opController.containerRecord;
             // Back-compat: clientSequenceNumber & clientSequenceNumberObserved moved to ConnectionManager in 0.53
             if (!("clientSequenceNumber" in deltaManager)) {
                 deltaManager = deltaManager.connectionManager;
@@ -208,7 +195,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
             assert("clientSequenceNumber" in deltaManager, "no clientSequenceNumber");
             assert("clientSequenceNumberObserved" in deltaManager, "no clientSequenceNumber");
             return deltaManager.clientSequenceNumber ===
-                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                 (deltaManager.clientSequenceNumberObserved as number) + trailingNoOps;
         });
 
@@ -237,7 +223,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
      */
     private async waitForPendingClients(pendingClients: [IContainer, Set<string>][]) {
         const unconnectedClients =
-            Array.from(this.containers.keys()).filter((c) => !c.closed && !(c).connected);
+            Array.from(this.containers.keys()).filter((c) => !c.closed && !(c as Container).connected);
         return Promise.all(pendingClients.map(async ([container, pendingClientId]) => {
             return new Promise<void>((resolve) => {
                 const cleanup = () => {
@@ -251,8 +237,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
                         resolve();
                     }
                 };
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                const index = this.containers.get(container as Container)!.index;
+                const index = this.containers.get(container);
                 debugWait(`${index}: Waiting for pending clients ${Array.from(pendingClientId.keys())}`);
                 unconnectedClients.forEach((c) => c.on("connected", handler));
                 container.getQuorum().on("removeMember", handler);
@@ -288,10 +273,14 @@ export class LoaderContainerTracker implements IOpProcessingController {
     public resumeProcessing(...containers: IContainer[]) {
         const resumed: IContainer[] = [];
         const containersToApply = this.getContainers(containers);
-        containersToApply.forEach((container: IContainer) => {
-            const resumedContainer = (container as Container).opController?.resumeProcessing();
-            if (resumedContainer !== undefined) { resumed.push(resumedContainer); }
-        });
+        for (const container of containersToApply) {
+            const index = this.containers.get(container);
+            if (index !== undefined && (container as Container).opController?.containerRecord.paused) {
+                debugWait(`${index}: container resumed`);
+                (container as Container).opController?.resumeProcessing()
+                resumed.push(container);
+            }
+        }
         return resumed;
     }
 
@@ -303,7 +292,9 @@ export class LoaderContainerTracker implements IOpProcessingController {
         const pauseP: Promise<void>[] = [];
         const containersToApply = this.getContainers(containers);
         for (const container of containersToApply) {
-            if ((container as Container).opController !== undefined) {
+            const index = this.containers.get(container);
+            if (index !== undefined && !(container as Container).opController?.containerRecord.paused) {
+                debugWait(`${index}: container paused`);
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 pauseP.push((container as Container).opController!.pauseProcessing());
             }
@@ -316,7 +307,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
      * inbound to process ops until it is idle. All queues are left in the paused state
      * after the function
      */
-    public async processIncoming(...containers: IContainer[]) {
+     public async processIncoming(...containers: IContainer[]) {
         const incomingP: Promise<void>[] = [];
         (containers as Container[]).forEach((container) => {
             if (container.opController !== undefined) {

@@ -131,7 +131,7 @@ describe('SharedTree history virtualization', () => {
 		// Make sure the trees are still the same
 		expect(sharedTree.equals(sharedTree2)).to.be.true;
 		expect(sharedTree.equals(sharedTree3)).to.be.true;
-	}).timeout(6000);
+	});
 
 	it("doesn't upload incomplete chunks", async () => {
 		const edit = newEdit(setTrait(testTrait, [makeTestNode()]));
