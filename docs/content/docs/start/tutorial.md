@@ -117,7 +117,7 @@ diceTemplate.innerHTML = `
   </div>
 `
 function renderDiceRoller(diceMap, elem) {
-    elem.appendChild(template.content.cloneNode(true));
+    elem.appendChild(diceTemplate.content.cloneNode(true));
     const rollButton = elem.querySelector(".roll");
     const dice = elem.querySelector(".dice");
 
