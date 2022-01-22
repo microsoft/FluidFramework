@@ -7,7 +7,7 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
-    IDisposable,
+    IDisposable, ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -94,6 +94,7 @@ import {
     normalizeError,
     MonitoringContext,
     loggerToMonitoringContext,
+    logIfFalse,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
@@ -212,32 +213,20 @@ class LifecycleStateHandler {
      * Transitions the container's lifecycle state
      */
     public changeState(newState: LifecycleState) {
-        assert(newState !== LifecycleState.Created, 0x000 /* "Changing container state to created is not allowed" */);
+        if (logIfFalse(this.isStateChangeAllowed(newState), this.logger, "InvalidStateChange")) {
+            this._state = newState;
+        }
+    }
 
+    constructor(private readonly logger: ITelemetryLogger) {}
+
+    private isStateChangeAllowed(newState: LifecycleState): boolean {
         switch (newState) {
-            case LifecycleState.Loading:
-                assert(this._state !== LifecycleState.Created,
-                    0x000 /* "Must be in created state before loading" */);
-                this._state = newState;
-                break;
-            case LifecycleState.Loaded:
-                // loaded - not created
-                assert(this._state !== LifecycleState.Created,
-                    0x27e /* "Must go through loading state before loaded" */);
-
-                // It's conceivable the container could be closed when this is called
-                // Only transition states if currently loading
-                if (this._state === LifecycleState.Loading) {
-                    this._state = newState;
-                }
-                break;
-            case LifecycleState.Closed:
-                assert(this._state !== LifecycleState.Closing,
-                    0x000 /* "Must go through closing state before closed" */);
-                this._state = newState;
-                break;
-            default:
-                this._state = newState;
+            case LifecycleState.Created: return false;
+            case LifecycleState.Loading: return this._state === LifecycleState.Created;
+            case LifecycleState.Loaded: return this._state === LifecycleState.Loading;
+            case LifecycleState.Closed: return this._state === LifecycleState.Closing;
+            default: return true;
         }
     }
 
@@ -334,7 +323,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             container.mc.logger,
             { eventName: "Load" },
             async (event) => new Promise<Container>((resolve, reject) => {
-                container._stateHandler.changeState(LifecycleState.Loading);
+                container.lifecycleStateHandler.changeState(LifecycleState.Loading);
                 const version = loadOptions.version;
 
                 // always load unpaused with pending ops!
@@ -385,7 +374,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             container.mc.logger,
             { eventName: "CreateDetached" },
             async (_event) => {
-                container._stateHandler.changeState(LifecycleState.Loading);
+                container.lifecycleStateHandler.changeState(LifecycleState.Loading);
                 await container.createDetached(codeDetails);
                 return container;
             },
@@ -408,7 +397,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             { eventName: "RehydrateDetachedFromSnapshot" },
             async (_event) => {
                 const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
-                container._stateHandler.changeState(LifecycleState.Loading);
+                container.lifecycleStateHandler.changeState(LifecycleState.Loading);
                 await container.rehydrateDetachedFromSnapshot(deserializedSummary);
                 return container;
             },
@@ -423,10 +412,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly mc: MonitoringContext;
 
-    private readonly _stateHandler: LifecycleStateHandler = new LifecycleStateHandler();
+    private readonly lifecycleStateHandler: LifecycleStateHandler;
 
     public get closed(): boolean {
-        return this._stateHandler.isClosed();
+        return this.lifecycleStateHandler.isClosed();
     }
 
     private _attachState = AttachState.Detached;
@@ -625,7 +614,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     containerId: uuid(),
                     docId: () => this._resolvedUrl?.id ?? undefined,
                     containerAttachState: () => this._attachState,
-                    containerLifecycleState: () => this._stateHandler.state,
+                    containerLifecycleState: () => this.lifecycleStateHandler.state,
                     containerConnectionState: () => ConnectionState[this.connectionState],
                 },
                 // we need to be judicious with our logging here to avoid generating too much data
@@ -658,6 +647,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             summarizeProtocolTree,
         };
 
+        this.lifecycleStateHandler = new LifecycleStateHandler(this.mc.logger);
+
         this.connectionStateHandler = new ConnectionStateHandler(
             {
                 protocolHandler: () => this._protocolHandler,
@@ -674,7 +665,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     });
                 },
                 connectionStateChanged: () => {
-                    if (this._stateHandler.isLoaded()) {
+                    if (this.lifecycleStateHandler.isLoaded()) {
                         this.propagateConnectionState();
                     }
                 },
@@ -769,7 +760,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         try {
-            this._stateHandler.changeState(LifecycleState.Closing);
+            this.lifecycleStateHandler.changeState(LifecycleState.Closing);
 
             // Ensure that we raise all key events even if one of these throws
             try {
@@ -809,7 +800,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 document.removeEventListener("visibilitychange", this.visibilityEventHandler);
             }
         } finally {
-            this._stateHandler.changeState(LifecycleState.Closed);
+            this.lifecycleStateHandler.changeState(LifecycleState.Closed);
         }
     }
 
@@ -850,8 +841,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public async attach(request: IRequest): Promise<void> {
         await PerformanceEvent.timedExecAsync(this.mc.logger, { eventName: "Attach" }, async () => {
-            if (this._stateHandler.state !== LifecycleState.Loaded) {
-                throw new UsageError(`containerNotValidForAttach [${this._stateHandler.state}]`);
+            if (this.lifecycleStateHandler.state !== LifecycleState.Loaded) {
+                throw new UsageError(`containerNotValidForAttach [${this.lifecycleStateHandler.state}]`);
             }
 
             // If container is already attached or attach is in progress, throw an error.
@@ -1289,7 +1280,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.propagateConnectionState();
 
         // Internal context is fully loaded at this point
-        this._stateHandler.changeState(LifecycleState.Loaded);
+        this.lifecycleStateHandler.changeState(LifecycleState.Loaded);
 
         // We might have hit some failure that did not manifest itself in exception in this flow,
         // do not start op processing in such case - static version of Container.load() will handle it correctly.
@@ -1371,7 +1362,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.propagateConnectionState();
 
-        this._stateHandler.changeState(LifecycleState.Loaded);
+        this.lifecycleStateHandler.changeState(LifecycleState.Loaded);
     }
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
@@ -1397,7 +1388,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             snapshotTree,
         );
 
-        this._stateHandler.changeState(LifecycleState.Loaded);
+        this.lifecycleStateHandler.changeState(LifecycleState.Loaded);
 
         this.propagateConnectionState();
     }
