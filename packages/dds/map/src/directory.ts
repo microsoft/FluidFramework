@@ -1519,6 +1519,16 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
                     this.serializer,
                     posix.join(this.absolutePath, subdirName)),
             );
+
+            const event: IDirectoryValueChanged = {
+                key: subdirName,
+                path: this.absolutePath,
+                previousValue: undefined,
+            };
+            this.directory.emit("valueChanged", event, local, this.directory);
+
+            const containedEvent: IValueChanged = { key: subdirName, previousValue: undefined };
+            this.emit("containedValueChanged", containedEvent, local, this);
         }
     }
 
@@ -1529,8 +1539,27 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @param op - The message if from a remote delete, or null if from a local delete
      */
     private deleteSubDirectoryCore(subdirName: string, local: boolean) {
-        // This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
-        // Might want to consider cleaning out the structure more exhaustively though?
-        return this._subdirectories.delete(subdirName);
+        if (this.hasSubDirectory(subdirName)) {
+            const previousValue = this.getSubDirectory(subdirName);
+
+            // This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
+            // Might want to consider cleaning out the structure more exhaustively though?
+            const successfullyRemoved = this._subdirectories.delete(subdirName);
+            if (successfullyRemoved) {
+                const event: IDirectoryValueChanged = {
+                    key: subdirName,
+                    path: this.absolutePath,
+                    previousValue,
+                };
+                this.directory.emit("valueChanged", event, local, this.directory);
+
+                const containedEvent:IValueChanged = { key: subdirName, previousValue };
+                this.emit("containedValueChanged", containedEvent, local, this);
+            }
+
+            return successfullyRemoved;
+        }
+
+        return true;
     }
 }

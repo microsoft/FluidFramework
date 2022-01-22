@@ -136,6 +136,22 @@ describe("Directory", () => {
                 assert.equal(valueChangedExpected, false, "missing valueChangedExpected event");
                 assert.equal(containedValueChangedExpected, false, "missing containedValueChanged event");
 
+                // Test createSubDirectory
+                previousValue = undefined;
+                valueChangedExpected = true;
+                containedValueChangedExpected = true;
+                directory.createSubDirectory("dwayne");
+                assert.equal(valueChangedExpected, false, "missing valueChangedExpected event");
+                assert.equal(containedValueChangedExpected, false, "missing containedValueChanged event");
+
+                // Test deleteSubDirectory
+                previousValue = directory.getSubDirectory("dwayne");
+                valueChangedExpected = true;
+                containedValueChangedExpected = true;
+                directory.deleteSubDirectory("dwayne");
+                assert.equal(valueChangedExpected, false, "missing valueChangedExpected event");
+                assert.equal(containedValueChangedExpected, false, "missing containedValueChanged event");
+
                 // Test clear
                 clearExpected = true;
                 directory.clear();
