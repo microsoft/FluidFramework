@@ -164,7 +164,7 @@ export enum ConnectionState {
 
 enum LifecycleState {
     /**
-     * The container has been created
+     * The container has been created but not yet loaded
      */
     Created = "created",
 
@@ -190,10 +190,6 @@ enum LifecycleState {
 }
 
 class LifecycleStateHandler {
-    constructor(state: LifecycleState) {
-        this._state = state;
-    }
-
     public get state(): LifecycleState {
         return this._state;
     }
@@ -216,9 +212,16 @@ class LifecycleStateHandler {
      * Transitions the container's lifecycle state
      */
     public changeState(newState: LifecycleState) {
-        // TODO: Figure our the possible state transitions...
+        assert(newState !== LifecycleState.Created, 0x000 /* "Changing container state to created is not allowed" */);
+
         switch (newState) {
+            case LifecycleState.Loading:
+                assert(this._state !== LifecycleState.Created,
+                    0x000 /* "Must be in created state before loading" */);
+                this._state = newState;
+                break;
             case LifecycleState.Loaded:
+                // loaded - not created
                 assert(this._state !== LifecycleState.Created,
                     0x27e /* "Must go through loading state before loaded" */);
 
@@ -228,12 +231,17 @@ class LifecycleStateHandler {
                     this._state = newState;
                 }
                 break;
+            case LifecycleState.Closed:
+                assert(this._state !== LifecycleState.Closing,
+                    0x000 /* "Must go through closing state before closed" */);
+                this._state = newState;
+                break;
             default:
                 this._state = newState;
         }
     }
 
-    private _state: LifecycleState;
+    private _state: LifecycleState = LifecycleState.Created;
 }
 
 /**
@@ -415,16 +423,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly mc: MonitoringContext;
 
-    private readonly _stateHandler: LifecycleStateHandler = new LifecycleStateHandler(LifecycleState.Created);
-
-    private get loaded(): boolean {
-        return this._stateHandler.isLoaded();
-    }
-
-    private set loaded(t: boolean) {
-        assert(t, 0x27d /* "Setting loaded state to false is not supported" */);
-        this._stateHandler.changeState(LifecycleState.Loaded);
-    }
+    private readonly _stateHandler: LifecycleStateHandler = new LifecycleStateHandler();
 
     public get closed(): boolean {
         return this._stateHandler.isClosed();
@@ -675,7 +674,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     });
                 },
                 connectionStateChanged: () => {
-                    if (this.loaded) {
+                    if (this._stateHandler.isLoaded()) {
                         this.propagateConnectionState();
                     }
                 },
@@ -1290,7 +1289,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.propagateConnectionState();
 
         // Internal context is fully loaded at this point
-        this.loaded = true;
+        this._stateHandler.changeState(LifecycleState.Loaded);
 
         // We might have hit some failure that did not manifest itself in exception in this flow,
         // do not start op processing in such case - static version of Container.load() will handle it correctly.
@@ -1372,7 +1371,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.propagateConnectionState();
 
-        this.loaded = true;
+        this._stateHandler.changeState(LifecycleState.Loaded);
     }
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
@@ -1398,7 +1397,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             snapshotTree,
         );
 
-        this.loaded = true;
+        this._stateHandler.changeState(LifecycleState.Loaded);
 
         this.propagateConnectionState();
     }
