@@ -58,7 +58,7 @@
     "markdownlint-rule-emphasis-style": "^1.0.1",
     "markdownlint-rule-github-internal-links": "^0.0.2",
     "markdownlint-rule-helpers": "^0.15.0",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^3.1.1",
     "replace-in-file": "^6.2.0",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.5",
