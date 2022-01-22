@@ -140,7 +140,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
-    // @deprecated (undocumented)
+    // (undocumented)
     get options(): ILoaderOptions;
     // (undocumented)
     orderSequentially(callback: () => void): void;

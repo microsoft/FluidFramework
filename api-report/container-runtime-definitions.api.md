@@ -47,7 +47,7 @@ export interface IContainerRuntime extends IProvideContainerRuntime, IProvideFlu
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     readonly isDirty: boolean;
-    // @deprecated (undocumented)
+    // (undocumented)
     readonly options: ILoaderOptions;
     // @deprecated
     raiseContainerWarning(warning: ContainerWarning): void;
