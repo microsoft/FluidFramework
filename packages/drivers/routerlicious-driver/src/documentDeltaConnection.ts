@@ -8,6 +8,7 @@ import { IDocumentDeltaConnection, DriverError } from "@fluidframework/driver-de
 import { IClient, IConnect } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { errorObjectFromSocketError, IR11sSocketError } from "./errorUtils";
+import { pkgVersion } from "./packageVersion";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -46,7 +47,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
             versions: protocolVersions,
         };
 
-        const deltaConnection = new R11sDocumentDeltaConnection(socket, id, logger);
+        const deltaConnection = new R11sDocumentDeltaConnection(socket, id, logger, pkgVersion);
 
         await deltaConnection.initialize(connectMessage, timeoutMs);
         return deltaConnection;
