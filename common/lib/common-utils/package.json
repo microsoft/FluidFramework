@@ -132,6 +132,9 @@
         "ClassDeclaration_EventForwarder": {
           "forwardCompat": false,
           "backCompat": false
+        },
+        "RemovedClassDeclaration_BatchManager": {
+          "backCompat": false
         }
       }
     }
