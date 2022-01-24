@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.46657",
+    "@fluidframework/build-tools": "^0.2.49276",
     "@fluidframework/datastore-definitions-0.51.1": "npm:@fluidframework/datastore-definitions@0.51.1",
     "@fluidframework/datastore-definitions-0.52.0": "npm:@fluidframework/datastore-definitions@0.52.0",
     "@fluidframework/datastore-definitions-0.53.0": "npm:@fluidframework/datastore-definitions@0.53.0",
