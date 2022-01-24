@@ -98,8 +98,9 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 
     private generateOptional<T>(
         base: AsyncOptionalFluidObjectProvider<T>,
-        types: Partial<FluidObjectSymbolProvider<T>>,
+        types: FluidObjectSymbolProvider<T>,
     ) {
+        if(types === undefined) return;
         for(const key of Object.keys(types) as unknown as (keyof TMap)[]) {
             const provider = this.resolveProvider(key);
             if(provider !== undefined) {
