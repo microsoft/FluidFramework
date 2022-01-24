@@ -17,7 +17,7 @@ import {
     Clicker,
     ExampleUsingProviders,
 } from "./data-objects";
-import { IFluidUserInformation, IProvideFluidUserInformation } from "./interfaces";
+import { IFluidUserInformation } from "./interfaces";
 import { userInfoFactory } from "./providers";
 
 export const PondName = "Pond";
@@ -119,7 +119,7 @@ export class Pond extends DataObject implements IFluidHTMLView {
 
 // ----- CONTAINER SETUP STUFF -----
 
-const dependencyContainer = new DependencyContainer<IProvideFluidUserInformation>();
+const dependencyContainer = new DependencyContainer();
 dependencyContainer.register(IFluidUserInformation, async (dc) => userInfoFactory(dc));
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
