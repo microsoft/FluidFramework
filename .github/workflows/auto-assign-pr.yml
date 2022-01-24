@@ -10,7 +10,16 @@ jobs:
   assign_reviewer:
     runs-on: ubuntu-latest
     steps:
-    - uses: shufo/auto-assign-reviewer-by-files@v1.1.1
+    - uses: mszostok/codeowners-validator@v0.6.0
       with:
-        config: '.github/code_owners.yml'
-        token: ${{ secrets.GITHUB_TOKEN }}
+        experimental_checks: "notowned"
+        github_access_token: "${{ secrets.GITHUB_TOKEN }}"
+      env: # Add environment variables here
+        OWNER_CHECKER_IGNORED_OWNERS: "nedalhy,ruiterr"
+        NOT_OWNED_CHECKER_SKIP_PATTERNS: "/*.*"
+    - uses: open-telemetry/assign-reviewers-action@main
+      with:
+        config-file: '.github/code_owners.yml'
+        # repo-token: ${{ secrets.GITHUB_TOKEN }}
+        assign-users: false
+        request-user-reviews: false

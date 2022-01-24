@@ -79,7 +79,7 @@ api-report/web-code-loader.api.md                                         @micro
 /docs/                                                                    @microsoft/fluid-cr-docs
 
 /examples/                                                                @microsoft/fluid-cr-framework
-/experimental/                                                                @microsoft/fluid-cr-framework
+/experimental/                                                            @microsoft/fluid-cr-framework
 /experimental/PropertyDDS/                                                @evaliyev @karlbom @nedalhy @ruiterr
 /experimental/dds/tree/                                                   @microsoft/fluid-cr-tree
 /packages/dds/                                                            @microsoft/fluid-cr-dds
