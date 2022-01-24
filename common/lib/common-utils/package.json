@@ -134,6 +134,7 @@
           "backCompat": false
         },
         "RemovedClassDeclaration_BatchManager": {
+          "forwardCompat": false,
           "backCompat": false
         }
       }
