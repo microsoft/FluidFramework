@@ -48,7 +48,7 @@ export const IFluidDependencySynthesizer: keyof IProvideFluidDependencySynthesiz
 // @public
 export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynthesizer {
     has(type: string): boolean;
-    synthesize<O, R = undefined | Record<string, never>>(optionalTypes: FluidObjectSymbolProvider<O>, requiredTypes: FluidObjectSymbolProvider<R>): AsyncFluidObjectProvider<O, R>;
+    synthesize<O, R = undefined | Record<string, never>>(optionalTypes: FluidObjectSymbolProvider<O>, requiredTypes: Required<FluidObjectSymbolProvider<R>>): AsyncFluidObjectProvider<O, R>;
 }
 
 // @public (undocumented)
