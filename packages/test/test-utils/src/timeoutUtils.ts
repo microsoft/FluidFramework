@@ -37,19 +37,19 @@ export async function timeoutPromise<T = void>(
     const err = timeoutOptions.reject === false
         ? undefined
         : new Error(timeoutOptions.errorMsg ?? `Timed out after ${timeout} ms`);
-    return new Promise<T>((res,rej)=>{
+    return new Promise<T>((resolve,reject)=>{
         const timer = setTimeout(
-            ()=>timeoutOptions.reject === false ? res(timeoutOptions.value) : rej(err),
+            ()=>timeoutOptions.reject === false ? resolve(timeoutOptions.value) : reject(err),
             timeout);
 
         executor(
             (value) => {
                 clearTimeout(timer);
-                res(value);
+                resolve(value);
             },
             (reason) => {
                 clearTimeout(timer);
-                rej(reason);
+                reject(reason);
             });
     });
 }

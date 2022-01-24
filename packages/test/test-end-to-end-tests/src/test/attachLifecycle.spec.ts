@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/test-utils";
 
 import {generatePairwiseOptions} from "@fluidframework/test-pairwise-generator";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -24,7 +24,7 @@ const testConfigs =
         ddsAttachPoint: [2,... sharedPoints],
     });
 
-describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
+describeNoCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
     for(const testConfig of testConfigs.filter((tc)=>
         tc.containerAttachPoint !== tc.datastoreAttachPoint
         && tc.containerAttachPoint !== tc.ddsAttachPoint
