@@ -11,24 +11,28 @@ import {
 } from "@fluidframework/test-utils";
 
 import {generatePairwiseOptions} from "@fluidframework/test-pairwise-generator";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
+//these points are all after creation of all object at which any object can be attached
 const sharedPoints = [3,4,5];
+
 const testConfigs =
     generatePairwiseOptions({
         containerAttachPoint:[0, ... sharedPoints],
-        datastoreAttachPoint: [1,... sharedPoints],
-        ddsAttachPoint: [2,... sharedPoints],
+        datastoreAttachPoint: [1, ... sharedPoints],
+        ddsAttachPoint: [2, ... sharedPoints],
     });
 
-describeNoCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
+describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
+    //enumerate test cases, but filter duplicates
     for(const testConfig of testConfigs.filter((tc)=>
         tc.containerAttachPoint !== tc.datastoreAttachPoint
         && tc.containerAttachPoint !== tc.ddsAttachPoint
-        && tc.datastoreAttachPoint !== tc.ddsAttachPoint)) {
+        && tc.datastoreAttachPoint !== tc.ddsAttachPoint)
+    ) {
         it.only(`Validate attach orders: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
             const provider  = getTestObjectProvider();
             let containerUrl: IResolvedUrl | undefined;
@@ -41,7 +45,7 @@ describeNoCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
 
                 const initContainer = await initLoader.createDetachedContainer(provider.defaultCodeDetails);
                 if(testConfig.containerAttachPoint === 0) {
-                    // point 0
+                    // point 0 - at container create
                     await initContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
                     containerUrl = initContainer.resolvedUrl;
                 }
@@ -51,13 +55,13 @@ describeNoCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                 const ds = await initDataObject.context.containerRuntime.createDataStore("default");
                 const newDataObj = await requestFluidObject<ITestFluidObject>(ds, "/");
                 if(testConfig.datastoreAttachPoint === 1) {
-                    // point 1
+                    // point 1 - at datastore create
                     initDataObject.root.set("ds", newDataObj.handle);
                 }
 
                 const newMap = SharedMap.create(newDataObj.runtime);
                 if(testConfig.ddsAttachPoint === 2) {
-                    // point 2
+                    // point 2 - at dds create
                     newDataObj.root.set("map",newMap.handle);
                 }
 
@@ -77,6 +81,10 @@ describeNoCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                         newDataObj.root.set("map",newMap.handle);
                     }
                 }
+                //wait for all ops to round trip
+                while(initContainer.isDirty){
+                    await new Promise<void>((resolve)=>initContainer.once("saved", ()=>resolve()));
+                }
                 initContainer.close();
             }
             {
@@ -90,10 +98,12 @@ describeNoCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                 });
 
                 const initDataObject = await requestFluidObject<ITestFluidObject>(validationContainer, "default");
+
                 const newds = await (await timeoutAwait(
-                        initDataObject.root.wait<IFluidHandle<ITestFluidObject>>("ds"),
-                        {durationMs: this.timeout() / 2,errorMsg:"Datastore not available before timeout"})
-                    ).get();
+                    initDataObject.root.wait<IFluidHandle<ITestFluidObject>>("ds"),
+                    {durationMs: this.timeout() / 2,errorMsg:"Datastore not available before timeout"})
+                ).get();
+
                 const newMap = await (await timeoutAwait(
                         newds.root.wait<IFluidHandle<ISharedMap>>("map"),
                         {durationMs: this.timeout() / 2,errorMsg:"Map not available before timeout"})
