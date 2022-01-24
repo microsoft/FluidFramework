@@ -54,8 +54,8 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     public synthesize<
         O,
         R = undefined | Record<string, never>>(
-            optionalTypes: Partial<FluidObjectSymbolProvider<O>>,
-            requiredTypes: FluidObjectSymbolProvider<R>,
+            optionalTypes: FluidObjectSymbolProvider<O>,
+            requiredTypes: Required<FluidObjectSymbolProvider<R>>,
     ): AsyncFluidObjectProvider<O, R> {
         const base: AsyncFluidObjectProvider<O, R> = {} as any;
         this.generateRequired<R>(base, requiredTypes);
@@ -80,7 +80,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 
     private generateRequired<T>(
         base: AsyncRequiredFluidObjectProvider<T>,
-        types: FluidObjectSymbolProvider<T>,
+        types: Required<FluidObjectSymbolProvider<T>>,
     ) {
         if(types === undefined) return;
         for(const key of Object.keys(types) as unknown as (keyof TMap)[]) {

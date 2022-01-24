@@ -11,7 +11,7 @@ import { IFluidDependencySynthesizer } from ".";
  * @example - \{ IFoo: "IFoo" \}
  */
 export type FluidObjectSymbolProvider<T> = {
-    [P in keyof T]: P;
+    [P in keyof T]?: P;
 };
 
 /**

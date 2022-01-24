@@ -54,7 +54,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
      *
      * To define providers set IFluidObject interfaces in the generic O type for your data store
      */
-    protected readonly providers:AsyncFluidObjectProvider<DataObjectType<I, "OptionalProviders">>;
+    protected readonly providers: AsyncFluidObjectProvider<DataObjectType<I, "OptionalProviders">>;
 
     protected initProps?: DataObjectType<I, "InitialState">;
 

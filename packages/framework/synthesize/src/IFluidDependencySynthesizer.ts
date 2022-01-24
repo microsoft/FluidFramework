@@ -33,7 +33,7 @@ export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynt
         O,
         R = undefined  | Record<string, never>>(
             optionalTypes: FluidObjectSymbolProvider<O>,
-            requiredTypes: FluidObjectSymbolProvider<R>,
+            requiredTypes: Required<FluidObjectSymbolProvider<R>>,
     ): AsyncFluidObjectProvider<O, R>;
 
     /**

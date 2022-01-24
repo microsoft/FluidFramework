@@ -11,12 +11,12 @@ import { SharedMap } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
-import { IFluidUserInformation, IProvideFluidUserInformation } from "../interfaces";
+import { IFluidUserInformation } from "../interfaces";
 /**
  * Basic example that takes a container provider
  */
 export class ExampleUsingProviders
-    extends DataObject<{OptionalProviders: IProvideFluidUserInformation}>
+    extends DataObject<{OptionalProviders: IFluidUserInformation}>
     implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 

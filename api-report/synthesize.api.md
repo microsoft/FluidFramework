@@ -27,7 +27,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     //
     // (undocumented)
     register<T extends keyof TMap = keyof TMap>(type: T, provider: FluidObjectProvider<Pick<TMap, T>>): void;
-    synthesize<O, R = undefined | Record<string, never>>(optionalTypes: Partial<FluidObjectSymbolProvider<O>>, requiredTypes: FluidObjectSymbolProvider<R>): AsyncFluidObjectProvider<O, R>;
+    synthesize<O, R = undefined | Record<string, never>>(optionalTypes: FluidObjectSymbolProvider<O>, requiredTypes: Required<FluidObjectSymbolProvider<R>>): AsyncFluidObjectProvider<O, R>;
     // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: No member was found with name "unregister"
     //
     // (undocumented)
@@ -39,7 +39,7 @@ export type FluidObjectProvider<T> = NonNullable<T> | Promise<NonNullable<T>> | 
 
 // @public
 export type FluidObjectSymbolProvider<T> = {
-    [P in keyof T]: P;
+    [P in keyof T]?: P;
 };
 
 // @public (undocumented)
