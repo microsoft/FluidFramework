@@ -6,6 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ClientSessionExpiredError } from "@fluidframework/container-utils";
 import {
     cloneGCData,
     concatGarbageCollectionStates,
@@ -312,15 +313,11 @@ export class GarbageCollector implements IGarbageCollector {
 
         // If session expiry is enabled, we need to close the container when the timeout expires
         if (this.sessionExpiryTimeoutMs !== undefined) {
-            // TODO: Change to ClientSessionExpiredError, issue https://github.com/microsoft/FluidFramework/issues/8605
-            // this.sessionExpiryTimer = setTimeout(() => this.closeFn(
-            //     new ClientSessionExpiredError(`Client expired, it has lasted ${this.sessionExpiryTimeoutMs} ms.`,
-            //     this.sessionExpiryTimeoutMs)),
-            //     this.sessionExpiryTimeoutMs);
-            this.sessionExpiryTimer = setTimeout(() => this.closeFn({
-                errorType: "clientSessionExpiredError",
-                message: `The client has reached the expiry time of ${this.sessionExpiryTimeoutMs} ms.`,
-            }), this.sessionExpiryTimeoutMs);
+            const expiryMs = this.sessionExpiryTimeoutMs;
+            this.sessionExpiryTimer = setTimeout(() => this.closeFn(
+                new ClientSessionExpiredError(`Client expired, it has lasted ${this.sessionExpiryTimeoutMs} ms.`,
+                expiryMs)),
+                this.sessionExpiryTimeoutMs);
         }
 
         // For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
