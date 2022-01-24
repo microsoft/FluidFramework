@@ -16,3 +16,4 @@ jobs:
         # repo-token: ${{ secrets.GITHUB_TOKEN }}
         assign-users: false
         request-reviews: false
+        request-user-reviews: false
