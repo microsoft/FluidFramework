@@ -33,6 +33,7 @@ import * as current from "${indexPath}/index";
             const oldType: TestCaseTypeData = {
                 prefix: "old",
                 ... oldTypeData,
+                removed: false
             }
             const currentTypeData = currentTypeMap.get(getFullTypeName(oldTypeData));
             // if the current package is missing a type, we will use the old type data.
@@ -44,10 +45,12 @@ import * as current from "${indexPath}/index";
                 prefix: "current",
                 ... oldTypeData,
                 kind:`Removed${oldTypeData.kind}`,
+                removed: true
             }
             :{
                 prefix: "current",
                 ... currentTypeData,
+                removed: false
             };
             const brokenData = currentProjectData.packageDetails.broken?.[oldProjectData.packageDetails.version]?.[getFullTypeName(currentType)];
 
@@ -56,7 +59,7 @@ import * as current from "${indexPath}/index";
             testString.push(`* If breaking change required, add in package.json under typeValidation.broken.${oldProjectData.packageDetails.version}:`);
             testString.push(`* "${getFullTypeName(currentType)}": {"forwardCompat": false}`);
             testString.push("*/");
-            testString.push(...  buildTestCase(oldType, currentType, brokenData?.forwardCompat ?? true, false, currentTypeData === undefined));
+            testString.push(...  buildTestCase(oldType, currentType, brokenData?.forwardCompat ?? true));
 
             testString.push("");
 
@@ -65,7 +68,7 @@ import * as current from "${indexPath}/index";
             testString.push(`* If breaking change required, add in package.json under typeValidation.broken.${oldProjectData.packageDetails.version}:`);
             testString.push(`* "${getFullTypeName(currentType)}": {"backCompat": false}`);
             testString.push("*/");
-            testString.push(... buildTestCase(currentType, oldType, brokenData?.backCompat ?? true, currentTypeData === undefined, false));
+            testString.push(... buildTestCase(currentType, oldType, brokenData?.backCompat ?? true));
             testString.push("");
         }
         const testPath =`${packageDetails.packageDir}/src/test/types`;
@@ -81,27 +84,28 @@ import * as current from "${indexPath}/index";
 
 
 interface TestCaseTypeData extends TypeData{
-    prefix: "old" | "current"
+    prefix: "old" | "current",
+    removed: boolean
 }
 
-function buildTestCase(getAsType:TestCaseTypeData, useType:TestCaseTypeData, isCompatible: boolean, getIsRemoved: boolean, useIsRemoved: boolean){
+function buildTestCase(getAsType:TestCaseTypeData, useType:TestCaseTypeData, isCompatible: boolean){
     const getSig =`get_${getAsType.prefix}_${getFullTypeName(getAsType).replace(".","_")}`;
     const useSig =`use_${useType.prefix}_${getFullTypeName(useType).replace(".","_")}`;
     const expectErrorString = "    // @ts-expect-error compatibility expected to be broken";
     const testString: string[] =[];
 
     testString.push(`declare function ${getSig}():`);
-    if (!isCompatible && getIsRemoved) {
+    if (!isCompatible && getAsType.removed) {
         testString.push(expectErrorString);
     }
     testString.push(`    ${toTypeString(getAsType.prefix, getAsType)};`);
     testString.push(`declare function ${useSig}(`);
-    if (!isCompatible && useIsRemoved) {
+    if (!isCompatible && useType.removed) {
         testString.push(expectErrorString);
     }
     testString.push(`    use: ${toTypeString(useType.prefix, useType)});`);
     testString.push(`${useSig}(`);
-    if(!isCompatible && !getIsRemoved && !useIsRemoved) {
+    if(!isCompatible && !getAsType.removed && !useType.removed) {
         testString.push(expectErrorString);
     }
     testString.push(`    ${getSig}());`);
