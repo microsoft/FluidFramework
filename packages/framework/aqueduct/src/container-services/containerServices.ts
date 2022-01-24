@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IResponse, IFluidObject, IFluidRouter, IRequest, FluidObject } from "@fluidframework/core-interfaces";
+import { IResponse, IFluidRouter, IRequest, FluidObject } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import {
@@ -16,7 +16,7 @@ import {
 export const serviceRoutePathRoot = "_services";
 
 export type ContainerServiceRegistryEntries = Iterable<[string, (runtime: IContainerRuntime) =>
-    Promise<IFluidObject & FluidObject>]>;
+    Promise<FluidObject>]>;
 
 /**
  * This class is a simple starter class for building a Container Service. It simply provides routing
@@ -46,7 +46,7 @@ class SingletonContainerServiceFactory {
         private readonly serviceFn: (runtime: IContainerRuntime) => Promise<FluidObject>,
     ) { }
 
-    public async getService(runtime: IContainerRuntime): Promise<IFluidObject & FluidObject> {
+    public async getService(runtime: IContainerRuntime): Promise<FluidObject<IFluidRouter>> {
         if (!this.service) {
             this.service = this.serviceFn(runtime);
         }
