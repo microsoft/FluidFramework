@@ -128,6 +128,7 @@ export function createOdspNetworkError(
             props.innerMostErrorCode = innerMostErrorCode;
         }
     }
+
     // odsp-doclib-utils and odsp-driver will always release together and share the same pkgVersion
     const driverVersion = pkgVersion;
 

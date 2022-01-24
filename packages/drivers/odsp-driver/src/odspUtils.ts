@@ -241,6 +241,7 @@ export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
                     driverVersion: pkgVersion,
                 },
             }),
+        // Stash driverVersion here for adding to errors thrown from shared driver code
         { driverVersion: pkgVersion });
 
 export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
