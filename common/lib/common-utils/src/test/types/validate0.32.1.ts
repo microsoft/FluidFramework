@@ -65,9 +65,9 @@ use_old_ClassDeclaration_BaseTelemetryNullLogger(
 declare function get_old_ClassDeclaration_BatchManager():
     Omit<old.BatchManager<any>,"">;
 declare function use_current_RemovedClassDeclaration_BatchManager(
+    // @ts-expect-error compatibility expected to be broken
     use: Omit<current.BatchManager<any>,"">);
 use_current_RemovedClassDeclaration_BatchManager(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_BatchManager());
 
 /*
@@ -76,11 +76,11 @@ use_current_RemovedClassDeclaration_BatchManager(
 * "RemovedClassDeclaration_BatchManager": {"backCompat": false}
 */
 declare function get_current_RemovedClassDeclaration_BatchManager():
+    // @ts-expect-error compatibility expected to be broken
     Omit<current.BatchManager<any>,"">;
 declare function use_old_ClassDeclaration_BatchManager(
     use: Omit<old.BatchManager<any>,"">);
 use_old_ClassDeclaration_BatchManager(
-    // @ts-expect-error compatibility expected to be broken
     get_current_RemovedClassDeclaration_BatchManager());
 
 /*
