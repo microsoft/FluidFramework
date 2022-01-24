@@ -4,38 +4,7 @@
  */
 
 import { globals } from "../jest.config";
-
-// [TODO] add to test-utils
-async function retry<T>(
-    callback: () => Promise<T>,
-    defaultValue: T,
-    maxTries: number,
-    currentTry: number,
-    backOffMs: number,
-): Promise<T> {
-    if (currentTry >= maxTries) {
-        return Promise.resolve(defaultValue);
-    }
-
-    await delay(currentTry * backOffMs);
-    return callback()
-        .catch(async (e) => retry(callback, defaultValue, maxTries, currentTry + 1, backOffMs));
-}
-
-const retryWithEventualValue = async <T>(
-    callback: () => Promise<T>,
-    check: (value: T) => boolean,
-    defaultValue: T,
-    maxTries = 20,
-    backOffMs = 50,
-): Promise<T> => retry(async () => {
-    const value = await callback();
-    if (check(value)) {
-        return value;
-    }
-
-    throw Error("Not ready");
-}, defaultValue, maxTries, 0, backOffMs);
+import { retryWithEventualValue } from "@fluidframework/test-utils";
 
 describe("ToDo", () => {
     const getItemUrl = async (index: number) =>
