@@ -53,7 +53,7 @@ The following members have been removed from IFluidDependencySynthesizer:
  - unregister - create new DependencyContainer and add existing as parent
  - getProvider - use `has` and `synthesize` to check or get provider respectively 
 
- The following types have been removed or changed. These changes should only affect direct usages which should be rare. Exiting synthesizer api usage is backwards compatible:
+ The following types have been removed or changed. These changes should only affect direct usages which should be rare. Existing synthesizer api usage is backwards compatible:
  - FluidObjectKey - removed as IFluidObject is deprecated
  - NonNullableFluidObject - removed as IFluidObject is deprecated. use typescripts NonNullable instead
  - AsyncRequiredFluidObjectProvider - Takes FluidObject types rather than keys
