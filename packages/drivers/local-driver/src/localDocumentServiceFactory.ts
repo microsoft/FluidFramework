@@ -88,7 +88,8 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
         ensureFluidResolvedUrl(resolvedUrl);
 
         const parsedUrl = new URL(resolvedUrl.url);
-        const [, tenantId, documentId] = parsedUrl.pathname ? parsedUrl.pathname.split("/") : [];
+        const parsedUrlPath = parsedUrl.pathname + parsedUrl.search;
+        const [, tenantId, documentId] = parsedUrlPath ? parsedUrlPath.split("/") : [];
         if (!documentId || !tenantId) {
             throw new Error(`Couldn't parse resolved url. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
