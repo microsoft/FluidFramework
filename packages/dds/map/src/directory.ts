@@ -659,16 +659,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
      * @internal
      */
-    protected registerCore(): void {
-        const subdirsToRegisterFrom = new Array<SubDirectory>();
-        subdirsToRegisterFrom.push(this.root);
-
-        for (const currentSubDir of subdirsToRegisterFrom) {
-            for (const [, subdir] of currentSubDir.subdirectories()) {
-                subdirsToRegisterFrom.push(subdir as SubDirectory);
-            }
-        }
-    }
+    protected registerCore(): void {}
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
