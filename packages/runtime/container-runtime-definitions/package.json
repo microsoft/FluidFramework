@@ -103,6 +103,14 @@
         "InterfaceDeclaration_IProvideContainerRuntime": {
           "backCompat": false
         }
+      },
+      "0.54.0":{
+        "InterfaceDeclaration_IContainerRuntime": {"backCompat": false},
+        "InterfaceDeclaration_IProvideContainerRuntime": {"backCompat": false}
+      },
+      "0.55.0":{
+        "InterfaceDeclaration_IContainerRuntime": {"backCompat": false},
+        "InterfaceDeclaration_IProvideContainerRuntime": {"backCompat": false}
       }
     }
   }
