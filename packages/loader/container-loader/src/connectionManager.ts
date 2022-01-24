@@ -72,13 +72,18 @@ function getNackReconnectInfo(nackContent: INackContent) {
     const canRetry = nackContent.code !== 403;
     const retryAfterMs = nackContent.retryAfter !== undefined ? nackContent.retryAfter * 1000 : undefined;
     return createGenericNetworkError(
-        `nack [${nackContent.code}]`, message, canRetry, retryAfterMs, { statusCode: nackContent.code });
+        `nack [${nackContent.code}]`,
+        message,
+        { canRetry, retryAfterMs },
+        "" /* driverVersion */,
+        { statusCode: nackContent.code });
 }
 
 const createReconnectError = (fluidErrorCode: string, err: any) =>
     wrapError(
         err,
-        (errorMessage: string) => new GenericNetworkError(fluidErrorCode, errorMessage, true /* canRetry */),
+        (errorMessage: string) =>
+            new GenericNetworkError(fluidErrorCode, errorMessage, true /* canRetry */,  "" /* driverVersion */),
     );
 
 /**
@@ -859,13 +864,13 @@ export class ConnectionManager implements IConnectionManager {
         // TODO: we should remove this check when service updates?
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (this._readonlyPermissions) {
-            this.props.closeHandler(createWriteError("writeOnReadOnlyDocument"));
+            this.props.closeHandler(createWriteError("writeOnReadOnlyDocument",  "" /* driverVersion */));
         }
 
         // check message.content for Back-compat with old service.
         const reconnectInfo = message.content !== undefined
             ? getNackReconnectInfo(message.content) :
-            createGenericNetworkError("nackReasonUnknown", undefined, true);
+            createGenericNetworkError("nackReasonUnknown", undefined, { canRetry: true }, "" /* driverVersion */);
 
         this.reconnectOnError(
             "write",

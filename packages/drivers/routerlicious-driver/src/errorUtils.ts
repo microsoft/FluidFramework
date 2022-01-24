@@ -10,6 +10,7 @@ import {
     createGenericNetworkError,
     AuthorizationError,
 } from "@fluidframework/driver-utils";
+import { pkgVersion } from "./packageVersion";
 
 export enum R11sErrorType {
     fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
@@ -58,21 +59,22 @@ export function createR11sNetworkError(
             // a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
             // the error message will start with NetworkError as defined in restWrapper.ts
             return new GenericNetworkError(
-                fluidErrorCode, errorMessage, errorMessage.startsWith("NetworkError"), { statusCode });
+                fluidErrorCode, errorMessage, errorMessage.startsWith("NetworkError"), pkgVersion, { statusCode });
         case 401:
         case 403:
-            return new AuthorizationError(fluidErrorCode, errorMessage, undefined, undefined, { statusCode });
+            return new AuthorizationError(
+                fluidErrorCode, errorMessage, undefined, undefined, pkgVersion, { statusCode });
         case 404:
-            return new NonRetryableError(
-                fluidErrorCode, errorMessage, R11sErrorType.fileNotFoundOrAccessDeniedError, { statusCode });
+            const errorType = R11sErrorType.fileNotFoundOrAccessDeniedError;
+            return new NonRetryableError(fluidErrorCode, errorMessage, errorType, pkgVersion, { statusCode });
         case 429:
             return createGenericNetworkError(
-                fluidErrorCode, errorMessage, true, retryAfterMs, { statusCode });
+                fluidErrorCode, errorMessage, { canRetry: true, retryAfterMs }, pkgVersion, { statusCode });
         case 500:
-            return new GenericNetworkError(fluidErrorCode, errorMessage, true, { statusCode });
+            return new GenericNetworkError(fluidErrorCode, errorMessage, true, pkgVersion, { statusCode });
         default:
-            return createGenericNetworkError(
-                fluidErrorCode, errorMessage, retryAfterMs !== undefined, retryAfterMs, { statusCode });
+            const retryInfo = { canRetry: retryAfterMs !== undefined, retryAfterMs };
+            return createGenericNetworkError(fluidErrorCode, errorMessage, retryInfo, pkgVersion, { statusCode });
     }
 }
 

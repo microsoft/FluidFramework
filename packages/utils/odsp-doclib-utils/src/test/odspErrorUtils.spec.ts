@@ -11,6 +11,7 @@ import { createWriteError, GenericNetworkError } from "@fluidframework/driver-ut
 import { OdspErrorType, OdspError, IOdspError } from "@fluidframework/odsp-driver-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
 import { createOdspNetworkError, enrichOdspError } from "../odspErrorUtils";
+import { pkgVersion } from "../packageVersion";
 
 describe("OdspErrorUtils", () => {
     function assertCustomPropertySupport(err: any) {
@@ -124,7 +125,7 @@ describe("OdspErrorUtils", () => {
 
     describe("enrichError", () => {
         it("enriched with online flag", () => {
-            const error = new GenericNetworkError("someErrorCode", "Some message", false) as GenericNetworkError & OdspError;
+            const error = new GenericNetworkError("someErrorCode", "Some message", false, pkgVersion) as GenericNetworkError & OdspError;
             enrichOdspError(error);
 
             assert(typeof error.online === "string");
@@ -180,7 +181,7 @@ describe("OdspErrorUtils", () => {
     });
 
     it("WriteError Test", () => {
-        const writeError = createWriteError("Test Error");
+        const writeError = createWriteError("Test Error", pkgVersion);
         assertCustomPropertySupport(writeError);
         assert(writeError.errorType === DriverErrorType.writeError, "Error should be a writeError");
         assert.equal(writeError.canRetry, false, "Error should be critical");

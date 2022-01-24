@@ -17,6 +17,7 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { fetchHelper, getWithRetryForTokenRefresh } from "./odspUtils";
+import { pkgVersion } from "./packageVersion";
 
 // Store cached responses for the lifetime of web session as file link remains the same for given file item
 const fileLinkCache = new Map<string, Promise<string>>();
@@ -126,7 +127,8 @@ async function getFileLinkCore(
                     throw new NonRetryableError(
                         "getFileLinkCoreMalformedResponse",
                         "Malformed GetSharingInformation response",
-                        DriverErrorType.incorrectServerResponse);
+                        DriverErrorType.incorrectServerResponse,
+                        pkgVersion);
                 }
                 return directUrl;
             });
@@ -182,7 +184,8 @@ async function getFileItemLite(
                     throw new NonRetryableError(
                         "getFileItemLiteMalformedResponse",
                         "Malformed getFileItemLite response",
-                        DriverErrorType.incorrectServerResponse);
+                        DriverErrorType.incorrectServerResponse,
+                        pkgVersion);
                 }
                 return responseJson;
             });

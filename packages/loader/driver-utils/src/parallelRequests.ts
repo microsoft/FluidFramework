@@ -402,8 +402,8 @@ async function getSingleOpBatch(
                 throw createGenericNetworkError(
                     "failedToRetrieveOpsFromStorage:TooManyRetries",
                     undefined,
-                    false /* canRetry */,
-                    undefined /* retryAfterSeconds */,
+                    { canRetry: false },
+                    (logger as any).driverVersion ?? "", // createOdspLogger stashes driverVersion on the logger
                     {
                         retry,
                         ...props,

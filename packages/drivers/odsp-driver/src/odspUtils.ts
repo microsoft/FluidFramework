@@ -105,7 +105,8 @@ export async function fetchHelper(
             throw new NonRetryableError(
                 "odspFetchErrorNoResponse",
                 "No response from fetch call",
-                DriverErrorType.incorrectServerResponse);
+                DriverErrorType.incorrectServerResponse,
+                pkgVersion);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
@@ -130,11 +131,13 @@ export async function fetchHelper(
         }
         // This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
         if (error.name === "AbortError") {
-            throw new RetryableError("fetchAbort", "Fetch Timeout (AbortError)", OdspErrorType.fetchTimeout);
+            throw new RetryableError(
+                "fetchAbort", "Fetch Timeout (AbortError)", OdspErrorType.fetchTimeout, pkgVersion);
         }
         // TCP/IP timeout
         if (errorText.indexOf("ETIMEDOUT") !== -1) {
-            throw new RetryableError("fetchETimedout", "Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout);
+            throw new RetryableError(
+                "fetchETimedout", "Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout, pkgVersion);
         }
 
         //
@@ -143,9 +146,11 @@ export async function fetchHelper(
         // It is also non-serializable object due to circular references.
         //
         if (online === OnlineStatus.Offline) {
-            throw new RetryableError("OdspFetchOffline", `Offline: ${errorText}`, DriverErrorType.offlineError);
+            throw new RetryableError(
+                "OdspFetchOffline", `Offline: ${errorText}`, DriverErrorType.offlineError, pkgVersion);
         } else {
-            throw new RetryableError("OdspFetchError", `Fetch error: ${errorText}`, DriverErrorType.fetchFailure);
+            throw new RetryableError(
+                "OdspFetchError", `Fetch error: ${errorText}`, DriverErrorType.fetchFailure, pkgVersion);
         }
     });
 }
@@ -227,14 +232,16 @@ export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl 
 }
 
 export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
-    ChildLogger.create(
-        logger,
-        "OdspDriver",
-        { all :
-            {
-                driverVersion: pkgVersion,
-            },
-        });
+    Object.assign(
+        ChildLogger.create(
+            logger,
+            "OdspDriver",
+            { all :
+                {
+                    driverVersion: pkgVersion,
+                },
+            }),
+        { driverVersion: pkgVersion });
 
 export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
     let numTrees = 0;
@@ -298,6 +305,7 @@ export function toInstrumentedOdspTokenFetcher(
                         "storageTokenIsNull",
                         `Token is null for ${name} call`,
                         OdspErrorType.fetchTokenError,
+                        pkgVersion,
                         { method: name });
                 }
                 return token;
@@ -308,6 +316,7 @@ export function toInstrumentedOdspTokenFetcher(
                         "tokenFetcherFailed",
                         errorMessage,
                         OdspErrorType.fetchTokenError,
+                        pkgVersion,
                         { method: name }));
                 throw tokenError;
             }),

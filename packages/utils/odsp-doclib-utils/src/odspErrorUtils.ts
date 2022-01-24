@@ -128,39 +128,36 @@ export function createOdspNetworkError(
             props.innerMostErrorCode = innerMostErrorCode;
         }
     }
-    props.statusCode = statusCode;
-    props.driverVersion = pkgVersion;
+    // odsp-doclib-utils and odsp-driver will always release together and share the same pkgVersion
+    const driverVersion = pkgVersion;
+
     switch (statusCode) {
         case 400:
             error = new NonRetryableError(
-                fluidErrorCode, errorMessage, DriverErrorType.genericNetworkError);
+                fluidErrorCode, errorMessage, DriverErrorType.genericNetworkError, driverVersion);
             break;
         case 401:
         case 403:
             // The server throws 403 status code with innerMostError code as "serviceReadOnly" for cases where the
             // database on server becomes readonly. The driver retries for such cases with exponential backup logic.
             if (innerMostErrorCode === OdspServiceReadOnlyErrorCode) {
-                error = new RetryableError(
-                    fluidErrorCode,
-                    errorMessage,
-                    OdspErrorType.serviceReadOnly,
-                );
+                error = new RetryableError(fluidErrorCode, errorMessage, OdspErrorType.serviceReadOnly, driverVersion);
             } else {
                 const claims = response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
                 const tenantId = response?.headers ? parseAuthErrorTenant(response.headers) : undefined;
-                error = new AuthorizationError(fluidErrorCode, errorMessage, claims, tenantId);
+                error = new AuthorizationError(fluidErrorCode, errorMessage, claims, tenantId, driverVersion);
             }
             break;
         case 404:
             error = new NonRetryableError(
-                fluidErrorCode, errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError);
+                fluidErrorCode, errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, driverVersion);
             break;
         case 406:
             error = new NonRetryableError(
-                fluidErrorCode, errorMessage, DriverErrorType.unsupportedClientProtocolVersion);
+                fluidErrorCode, errorMessage, DriverErrorType.unsupportedClientProtocolVersion, driverVersion);
             break;
         case 410:
-            error = new NonRetryableError(fluidErrorCode, errorMessage, OdspErrorType.cannotCatchUp);
+            error = new NonRetryableError(fluidErrorCode, errorMessage, OdspErrorType.cannotCatchUp,driverVersion);
             break;
         case 409:
             // This status code is sent by the server when the client and server epoch mismatches.
@@ -168,41 +165,44 @@ export function createOdspNetworkError(
             // with the server epoch version, the server throws this error code.
             // This indicates that the file/container has been modified externally.
             error = new NonRetryableError(
-                fluidErrorCode, errorMessage, DriverErrorType.fileOverwrittenInStorage);
+                fluidErrorCode, errorMessage, DriverErrorType.fileOverwrittenInStorage, driverVersion);
             break;
         case 412:
             // "Precondition Failed" error - happens when uploadSummaryWithContext uses wrong parent.
             // Resubmitting same payload is not going to help, so this is non-recoverable failure!
             error = new NonRetryableError(
-                fluidErrorCode, errorMessage, DriverErrorType.genericNetworkError);
+                fluidErrorCode, errorMessage, DriverErrorType.genericNetworkError, driverVersion);
             break;
         case 413:
-            error = new NonRetryableError(fluidErrorCode, errorMessage, OdspErrorType.snapshotTooBig);
+            error = new NonRetryableError(fluidErrorCode, errorMessage, OdspErrorType.snapshotTooBig, driverVersion);
             break;
         case 414:
             error = new NonRetryableError(
-                fluidErrorCode, errorMessage, OdspErrorType.invalidFileNameError);
+                fluidErrorCode, errorMessage, OdspErrorType.invalidFileNameError, driverVersion);
             break;
         case 500:
             error = new RetryableError(
-                fluidErrorCode, errorMessage, DriverErrorType.genericNetworkError);
+                fluidErrorCode, errorMessage, DriverErrorType.genericNetworkError, driverVersion);
             break;
         case 501:
-            error = new NonRetryableError(fluidErrorCode, errorMessage, OdspErrorType.fluidNotEnabled);
+            error = new NonRetryableError(fluidErrorCode, errorMessage, OdspErrorType.fluidNotEnabled, driverVersion);
             break;
         case 507:
             error = new NonRetryableError(
-                fluidErrorCode, errorMessage, OdspErrorType.outOfStorageError);
+                fluidErrorCode, errorMessage, OdspErrorType.outOfStorageError, driverVersion);
             break;
         case fetchIncorrectResponse:
             // Note that getWithRetryForTokenRefresh will retry it once, then it becomes non-retryable error
-            error = new NonRetryableError(fluidErrorCode, errorMessage, DriverErrorType.incorrectServerResponse);
+            error = new NonRetryableError(
+                fluidErrorCode, errorMessage, DriverErrorType.incorrectServerResponse, driverVersion);
             break;
         default:
             const retryAfterMs = retryAfterSeconds !== undefined ? retryAfterSeconds * 1000 : undefined;
-            error = createGenericNetworkError(fluidErrorCode, errorMessage, true, retryAfterMs);
+            error = createGenericNetworkError(
+                fluidErrorCode, errorMessage, { canRetry: true, retryAfterMs }, driverVersion);
             break;
     }
+    props.statusCode = statusCode;
     enrichOdspError(error, response, facetCodes, props);
     return error;
 }
@@ -255,10 +255,6 @@ export function throwOdspNetworkError(
 
     // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw networkError;
-}
-
-export function addOdspDriverVersion(error: IFluidErrorBase) {
-    error.addTelemetryProperties({ driverVersion: pkgVersion });
 }
 
 function numberFromHeader(header: string | null): number | undefined {
