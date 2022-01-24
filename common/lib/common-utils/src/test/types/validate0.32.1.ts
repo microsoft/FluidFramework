@@ -79,6 +79,7 @@ declare function get_current_RemovedClassDeclaration_BatchManager():
 declare function use_old_ClassDeclaration_BatchManager(
     use: Omit<old.BatchManager<any>,"">);
 use_old_ClassDeclaration_BatchManager(
+    // @ts-expect-error compatibility expected to be broken
     get_current_RemovedClassDeclaration_BatchManager());
 
 /*
