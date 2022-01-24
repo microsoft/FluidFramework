@@ -114,16 +114,12 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     readonly handle: IFluidHandle;
     protected handleDecoded(decodedHandle: IFluidHandle): void;
     // (undocumented)
-    get IChannel(): this;
-    // (undocumented)
     id: string;
     // (undocumented)
     get IFluidLoadable(): this;
     initializeLocal(): void;
     protected initializeLocalCore(): void;
     isAttached(): boolean;
-    // (undocumented)
-    get ISharedObject(): this;
     load(services: IChannelServices): Promise<void>;
     protected abstract loadCore(services: IChannelStorageService): Promise<void>;
     protected readonly logger: ITelemetryLogger;

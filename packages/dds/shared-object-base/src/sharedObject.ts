@@ -31,8 +31,6 @@ import { ISharedObject, ISharedObjectEvents } from "./types";
  */
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
     extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
-    public get ISharedObject() { return this; }
-    public get IChannel() { return this; }
     public get IFluidLoadable() { return this; }
 
     /**
