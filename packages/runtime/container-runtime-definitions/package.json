@@ -34,7 +34,7 @@
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/container-definitions": "^0.44.0",
     "@fluidframework/core-interfaces": "^0.41.0",
-    "@fluidframework/driver-definitions": "^0.43.0",
+    "@fluidframework/driver-definitions": "^0.44.0-0",
     "@fluidframework/protocol-definitions": "^0.1026.0",
     "@fluidframework/runtime-definitions": "^0.56.0",
     "@types/node": "^14.18.0"
@@ -103,6 +103,14 @@
         "InterfaceDeclaration_IProvideContainerRuntime": {
           "backCompat": false
         }
+      },
+      "0.54.0":{
+        "InterfaceDeclaration_IContainerRuntime": {"backCompat": false},
+        "InterfaceDeclaration_IProvideContainerRuntime": {"backCompat": false}
+      },
+      "0.55.0":{
+        "InterfaceDeclaration_IContainerRuntime": {"backCompat": false},
+        "InterfaceDeclaration_IProvideContainerRuntime": {"backCompat": false}
       }
     }
   }

@@ -36,6 +36,7 @@ export interface ICacheEntry extends IEntry {
 
 // @public (undocumented)
 export interface ICollabSessionOptions {
+    forceAccessTokenViaAuthorizationHeader?: boolean;
     unauthenticatedUserDisplayName?: string;
 }
 
@@ -90,6 +91,8 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
     fileVersion: string | undefined;
     // (undocumented)
     hashedDocumentId: string;
+    // (undocumented)
+    isClpCompliantApp?: boolean;
     // (undocumented)
     odspResolvedUrl: true;
     shareLinkInfo?: ShareLinkInfoType;
