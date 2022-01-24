@@ -128,8 +128,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     // (undocumented)
     get IContainerRuntime(): this;
-    // @deprecated (undocumented)
-    get id(): string;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     // (undocumented)
