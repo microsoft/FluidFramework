@@ -164,10 +164,6 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         this._dataArrayCreate(length);
     };
 
-
-    get _context() { return 'array'; }
-    _staticChildren = {};
-
     /**
      * Returns the path segment for a child
      *
@@ -376,7 +372,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                         prop = in_values[i];
                     } else {
                         prop = Property.PropertyFactory._createProperty(
-                            in_values[i].typeid || this._typeid, null, in_values[i].value, this._getScope(), !in_initial);
+                            in_values[i].typeid || this._typeid, null, in_values[i].value, this._getScope());
                     }
                     arr.push(prop);
                 }
@@ -951,7 +947,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                         var scope = this._getScope();
                         for (var i = 0; i < propertyDescriptions.length; ++i) {
                             var createdProperty = Property.PropertyFactory._createProperty(
-                                propertyDescriptions[i]['typeid'], null, undefined, scope, true);
+                                propertyDescriptions[i]['typeid'], null, undefined, scope);
                             // Set parent so scope is defined for deserialization
                             createdProperty._setParent(this);
                             createdProperty._deserialize(propertyDescriptions[i], false);
@@ -1780,3 +1776,6 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         throw new Error(MSG.MODIFY_READ_ONLY);
     }
 }
+
+ArrayProperty.prototype._staticChildren = {};
+ArrayProperty.prototype._context = 'array';

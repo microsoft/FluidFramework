@@ -5,7 +5,6 @@
 
 import { OldestClientObserver } from "@fluid-experimental/task-manager";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 
 import { IDiceRoller } from "./interface";
@@ -107,7 +106,7 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
 export const OldestClientDiceRollerInstantiationFactory =
-    new DataObjectFactory<OldestClientDiceRoller, undefined, undefined, IEvent>
+    new DataObjectFactory
 (
     "@fluid-example/oldest-client-dice-roller",
     OldestClientDiceRoller,

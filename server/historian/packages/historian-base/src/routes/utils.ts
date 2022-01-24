@@ -9,6 +9,7 @@ import * as jwt from "jsonwebtoken";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { ICache, ITenantService, RestGitService, ITenantCustomDataExternal } from "../services";
+import { parseToken } from "../utils";
 
 /**
  * Helper function to handle a promise that should be returned to the user
@@ -31,7 +32,14 @@ export function handleResponse<T>(
             response.status(status).json(result);
         },
         (error) => {
-            response.status(error?.code ?? 400).json(error?.message ?? error);
+            if (error instanceof Error && error?.name === "NetworkError") {
+                const networkError = error as NetworkError;
+                response
+                    .status(networkError.code ?? 400)
+                    .json(networkError.details ?? error);
+            } else {
+                response.status(error?.code ?? 400).json(error?.message ?? error);
+            }
         });
 }
 
@@ -57,28 +65,6 @@ export async function createGitService(
          asyncLocalStorage);
 
     return service;
-}
-
-export function parseToken(tenantId: string, authorization: string): string {
-    let token: string;
-    if (authorization) {
-        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
-        const base64TokenMatch = authorization.match(/Basic (.+)/);
-        if (!base64TokenMatch) {
-            throw new NetworkError(403, "Malformed authorization token");
-        }
-        const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
-
-        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
-        const tokenMatch = encoded.match(/(.+):(.+)/);
-        if (!tokenMatch || tenantId !== tokenMatch[1]) {
-            throw new NetworkError(403, "Malformed authorization token");
-        }
-
-        token = tokenMatch[2];
-    }
-
-    return token;
 }
 
 /**

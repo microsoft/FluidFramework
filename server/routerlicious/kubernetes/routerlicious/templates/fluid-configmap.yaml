@@ -13,7 +13,7 @@ data:
     {
         "logger": {
             "colorize": false,
-            "morganFormat": "short",
+            "morganFormat": "json",
             "json": true,
             "level": "info",
             "timestamp": false,
@@ -118,6 +118,9 @@ data:
             "kafkaClientId": "{{ template "scribe.fullname" . }}"
         },
         "system": {
+            "httpServer": {
+                "connectionTimeout": {{ .Values.system.httpServer.connectionTimeout }}
+            },
             "topics": {
                 "send": "{{ .Values.kafka.topics.deltas }}"
             }

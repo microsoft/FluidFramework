@@ -25,10 +25,6 @@ export interface IConnectionDetails {
     mode: ConnectionMode;
     version: string;
     initialClients: ISignalClient[];
-    /**
-     * @deprecated - please use `serviceConfiguration.maxMessageSize`
-     */
-    maxMessageSize: number;
     serviceConfiguration: IClientConfiguration;
     /**
      * Last known sequence number to ordering service at the time of connection
@@ -152,24 +148,9 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     /** Flag to indicate whether the client can write or not. */
     readonly active: boolean;
 
-    /**
-     * Tells if container is in read-only mode.
-     * Data stores should listen for "readonly" notifications and disallow user making changes to data stores.
-     * Readonly state can be because of no storage write permission,
-     * or due to host forcing readonly mode for container.
-     *
-     * We do not differentiate here between no write access to storage vs. host disallowing changes to container -
-     * in all cases container runtime and data stores should respect readonly state and not allow local changes.
-     *
-     * It is undefined if we have not yet established websocket connection
-     * and do not know if user has write access to a file.
-     * @deprecated - use readOnlyInfo
-     */
-    readonly readonly?: boolean;
-
     readonly readOnlyInfo: ReadOnlyInfo;
 
-    /** Terminate the connection to storage */
+    /** @deprecated - Use Container.close() or IContainerContext.closeFn() */
     close(): void;
 
     /** Submit a signal to the service to be broadcast to other connected clients, but not persisted */

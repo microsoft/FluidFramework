@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { compare } from "semver";
 import { bufferToString } from "@fluidframework/common-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
     LocalCodeLoader,
@@ -96,7 +97,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
     const loaderContainerTracker = new LoaderContainerTracker();
 
     async function createDetachedContainerAndGetRootDataStore() {
-        const container = await loader.createDetachedContainer(codeDetails);
+        const container: IContainer = await loader.createDetachedContainer(codeDetails);
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         const defaultDataStore = response.value as TestFluidObject;
@@ -145,7 +146,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
     };
 
     const getSnapshotTreeFromSerializedSnapshot = (
-        container: Container,
+        container: IContainer,
     ) => {
         return getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
     };
@@ -359,7 +360,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
                 await createDetachedContainerAndGetRootDataStore();
 
             const snapshotTree = container.serialize();
-            assert(container.storage !== undefined, "Storage should be present in detached container");
+            assert((container as Container).storage !== undefined, "Storage should be present in detached container");
             const response = await container.request({ url: "/" });
             const defaultDataStore = response.value as TestFluidObject;
             assert(defaultDataStore.context.storage !== undefined,
@@ -368,8 +369,11 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             await defaultDataStore.context.storage.getSnapshotTree(undefined).catch((err) => success1 = false);
             assert(success1 === false, "Snapshot fetch should not be allowed in detached data store");
 
-            const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
-            assert(container2.storage !== undefined, "Storage should be present in rehydrated container");
+            const container2: IContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+            assert(
+                (container2 as Container).storage !== undefined,
+                "Storage should be present in rehydrated container",
+            );
             const response2 = await container2.request({ url: "/" });
             const defaultDataStore2 = response2.value as TestFluidObject;
             assert(defaultDataStore2.context.storage !== undefined,
@@ -437,9 +441,6 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
                         assert.strictEqual(intervalsAfter.getIntervalById(id), undefined,
                             "Interval not deleted");
                     }
-                }
-                else {
-                    intervalsAfter.delete(interval.start.getOffset(), interval.end.getOffset());
                 }
             }
             for (const interval of intervalsAfter) {

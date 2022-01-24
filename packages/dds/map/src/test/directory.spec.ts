@@ -42,7 +42,7 @@ async function populate(directory: SharedDirectory, content: object) {
 }
 
 function serialize(directory1: SharedDirectory): string {
-    const summaryTree = directory1.summarize().summary;
+    const summaryTree = directory1.getAttachSummary().summary;
     const summaryObjectKeys = Object.keys(summaryTree.tree);
     assert.strictEqual(summaryObjectKeys.length, 1, "summary tree should only have one blob");
     assert.strictEqual(summaryObjectKeys[0], "header", "summary should have a header blob");
@@ -88,7 +88,7 @@ describe("Directory", () => {
                 directory.on("op", (arg1, arg2, arg3) => {
                     assert.fail("shouldn't receive an op event");
                 });
-                directory.on("valueChanged", (changed, local, op, target) => {
+                directory.on("valueChanged", (changed, local, target) => {
                     assert.equal(valueChangedExpected, true, "valueChange event not expected");
                     valueChangedExpected = false;
 
@@ -97,7 +97,6 @@ describe("Directory", () => {
                     assert.equal(changed.path, directory.absolutePath);
 
                     assert.equal(local, true, "local should be true for local action for valueChanged event");
-                    assert.equal(op, null, "op should be null for local actions for valueChanged event");
                     assert.equal(target, directory, "target should be the directory for valueChanged event");
                 });
                 directory.on("containedValueChanged", (changed, local, target) => {
@@ -111,12 +110,11 @@ describe("Directory", () => {
                     assert.equal(local, true, "local should be true for local action for containedValueChanged event");
                     assert.equal(target, directory, "target should be the directory for containedValueChanged event");
                 });
-                directory.on("clear", (local, op, target) => {
+                directory.on("clear", (local, target) => {
                     assert.equal(clearExpected, true, "clear event not expected");
                     clearExpected = false;
 
                     assert.equal(local, true, "local should be true for local action for clear event");
-                    assert.equal(op, null, "op should be null for local actions for clear event");
                     assert.equal(target, directory, "target should be the directory for clear event");
                 });
                 directory.on("error", (error) => {
@@ -354,7 +352,7 @@ describe("Directory", () => {
                 nestedDirectory.set("deepKey1", "deepValue1");
                 nestedDirectory.set("long2", logWord2);
 
-                const summarizeResult = directory.summarize();
+                const summarizeResult = directory.getAttachSummary();
                 const summaryTree = summarizeResult.summary;
                 assert.strictEqual(summaryTree.type, SummaryType.Tree, "summary should be a tree");
 
@@ -411,7 +409,7 @@ describe("Directory", () => {
                 const containerRuntimeFactory = new MockContainerRuntimeFactory();
                 const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
                 const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-                const services2 = MockSharedObjectServices.createFromSummary(directory.summarize().summary);
+                const services2 = MockSharedObjectServices.createFromSummary(directory.getAttachSummary().summary);
                 services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
                 const directory2 = new SharedDirectory("directory2", dataStoreRuntime2, DirectoryFactory.Attributes);
@@ -454,7 +452,7 @@ describe("Directory", () => {
                 const containerRuntimeFactory = new MockContainerRuntimeFactory();
                 const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
                 const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-                const services2 = MockSharedObjectServices.createFromSummary(directory.summarize().summary);
+                const services2 = MockSharedObjectServices.createFromSummary(directory.getAttachSummary().summary);
                 services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
                 const directory2 = new SharedDirectory("directory2", dataStoreRuntime2, DirectoryFactory.Attributes);

@@ -36,8 +36,6 @@ export class ValueArrayProperty extends ArrayProperty {
         super(in_params, true);
     };
 
-    _isPrimitive = true;
-
     /**
      * returns the value at in_position for a primitive array
      * @param {number} in_position the array index
@@ -110,6 +108,7 @@ export class ValueArrayProperty extends ArrayProperty {
         return in_serializedObj;
     };
 }
+ValueArrayProperty.prototype._isPrimitive = true;
 
 /**
  * An ArrayProperty which stores Float32 values
@@ -125,7 +124,7 @@ export class Float32ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Float32' });
+        super(in_params);
     };
 
     /**
@@ -136,6 +135,7 @@ export class Float32ArrayProperty extends ValueArrayProperty {
         this._dataArrayRef = new BaseDataArray(Float32Array, in_length);
     };
 }
+Float32ArrayProperty.prototype._typeid = 'Float32';
 
 /**
  * An ArrayProperty which stores Float64 values
@@ -151,7 +151,7 @@ export class Float64ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Float64' });
+        super(in_params);
     };
 
     /**
@@ -162,6 +162,7 @@ export class Float64ArrayProperty extends ValueArrayProperty {
         this._dataArrayRef = new BaseDataArray(Float64Array, in_length);
     };
 }
+Float64ArrayProperty.prototype._typeid = 'Float64';
 
 /**
  * An ArrayProperty which stores Uint8 values
@@ -177,7 +178,7 @@ export class Uint8ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Uint8' });
+        super(in_params);
     };
 
     /**
@@ -188,6 +189,7 @@ export class Uint8ArrayProperty extends ValueArrayProperty {
         this._dataArrayRef = new BaseDataArray(Uint8Array, in_length);
     };
 }
+Uint8ArrayProperty.prototype._typeid = 'Uint8';
 
 /**
  * An ArrayProperty which stores Int8 values
@@ -204,7 +206,7 @@ export class Int8ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Int8' });
+        super(in_params);
     };
 
     /**
@@ -214,8 +216,8 @@ export class Int8ArrayProperty extends ValueArrayProperty {
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Int8Array, in_length);
     };
-
 }
+Int8ArrayProperty.prototype._typeid = 'Int8';
 
 /**
  * An ArrayProperty which stores Uint16 values
@@ -231,7 +233,7 @@ export class Uint16ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Uint16' });
+        super(in_params);
     };
 
     /**
@@ -242,7 +244,7 @@ export class Uint16ArrayProperty extends ValueArrayProperty {
         this._dataArrayRef = new BaseDataArray(Uint16Array, in_length);
     };
 }
-
+Uint16ArrayProperty.prototype._typeid = 'Uint16';
 
 /**
  * An ArrayProperty which stores Int16 values
@@ -258,7 +260,7 @@ export class Int16ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Int16' });
+        super(in_params);
     };
 
     /**
@@ -268,8 +270,8 @@ export class Int16ArrayProperty extends ValueArrayProperty {
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Int16Array, in_length);
     };
-
 }
+Int16ArrayProperty.prototype._typeid = 'Int16';
 
 /**
  * An ArrayProperty which stores Uint32 values
@@ -284,7 +286,7 @@ export class Uint32ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Uint32' });
+        super(in_params);
     };
 
 
@@ -296,7 +298,7 @@ export class Uint32ArrayProperty extends ValueArrayProperty {
         this._dataArrayRef = new BaseDataArray(Uint32Array, in_length);
     };
 }
-
+Uint32ArrayProperty.prototype._typeid = 'Uint32';
 
 /**
  * An ArrayProperty which stores Int32 values
@@ -312,7 +314,7 @@ export class Int32ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Int32' });
+        super(in_params);
     };
 
     /**
@@ -323,6 +325,7 @@ export class Int32ArrayProperty extends ValueArrayProperty {
         this._dataArrayRef = new BaseDataArray(Int32Array, in_length);
     };
 }
+Int32ArrayProperty.prototype._typeid = 'Int32';
 
 /**
  * An ArrayProperty which stores Int64 values
@@ -425,7 +428,7 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Int64' });
+        super(in_params);
     };
 
     /**
@@ -487,6 +490,7 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
     };
 
 }
+Int64ArrayProperty.prototype._typeid = 'Int64';
 
 /**
  * An ArrayProperty which stores Uint64 values
@@ -502,7 +506,7 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Uint64' });
+        super(in_params);
     };
 
     /**
@@ -562,8 +566,8 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
             this._dataArraySetValue(i, new Uint64());
         }
     };
-
 }
+Uint64ArrayProperty.prototype._typeid = 'Uint64';
 
 /**
  * An ArrayProperty which stores String values
@@ -579,7 +583,7 @@ export class StringArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'String' });
+        super(in_params);
     };
 
     /**
@@ -594,6 +598,7 @@ export class StringArrayProperty extends ValueArrayProperty {
     };
 
 }
+StringArrayProperty.prototype._typeid = 'String';
 
 /**
  * An ArrayProperty which stores Boolean values
@@ -609,7 +614,7 @@ export class BoolArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Bool' }, Array, true);
+        super(in_params, Array, true);
     };
 
     /**
@@ -623,3 +628,4 @@ export class BoolArrayProperty extends ValueArrayProperty {
         }
     };
 }
+BoolArrayProperty.prototype._typeid = 'Bool';

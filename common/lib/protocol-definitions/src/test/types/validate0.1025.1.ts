@@ -1256,6 +1256,7 @@ declare function get_current_InterfaceDeclaration_ISummaryNack():
 declare function use_old_InterfaceDeclaration_ISummaryNack(
     use: old.ISummaryNack);
 use_old_InterfaceDeclaration_ISummaryNack(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummaryNack());
 
 /*
@@ -1556,6 +1557,7 @@ declare function get_old_EnumDeclaration_MessageType():
 declare function use_current_EnumDeclaration_MessageType(
     use: current.MessageType);
 use_current_EnumDeclaration_MessageType(
+    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_MessageType());
 
 /*

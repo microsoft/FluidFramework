@@ -25,8 +25,7 @@ export interface RootDataObjectProps {
     initialObjects: LoadableObjectClassRecord;
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-export class RootDataObject extends DataObject<{}, RootDataObjectProps> {
+export class RootDataObject extends DataObject<{InitialState: RootDataObjectProps}> {
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
 
@@ -114,15 +113,14 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
     constructor(schema: ContainerSchema) {
         const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
         const rootDataObjectFactory =
-            // eslint-disable-next-line @typescript-eslint/ban-types
-            new DataObjectFactory<RootDataObject, {}, RootDataObjectProps>(
+            new DataObjectFactory(
                 "rootDO",
                 RootDataObject,
                 sharedObjects,
                 {},
                 registryEntries,
             );
-        super([rootDataObjectFactory.registryEntry], [], [defaultRouteRequestHandler(rootDataStoreId)]);
+        super([rootDataObjectFactory.registryEntry], undefined, [defaultRouteRequestHandler(rootDataStoreId)]);
         this.rootDataObjectFactory = rootDataObjectFactory;
         this.initialObjects = schema.initialObjects;
     }

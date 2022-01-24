@@ -95,8 +95,6 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
     initialClients: ISignalClient[];
     initialMessages: ISequencedDocumentMessage[];
     initialSignals: ISignalMessage[];
-    // @deprecated
-    maxMessageSize: number;
     mode: ConnectionMode;
     relayServiceAgent?: string;
     serviceConfiguration: IClientConfiguration;
@@ -167,6 +165,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 export interface IDocumentStorageServicePolicies {
     // (undocumented)
     readonly caching?: LoaderCachingPolicy;
+    readonly maximumCacheDurationMs?: number;
     // (undocumented)
     readonly minBlobSize?: number;
 }
@@ -284,7 +283,6 @@ export enum LoaderCachingPolicy {
     NoCaching = 0,
     Prefetch = 1
 }
-
 
 // (No @packageDocumentation comment for this package)
 

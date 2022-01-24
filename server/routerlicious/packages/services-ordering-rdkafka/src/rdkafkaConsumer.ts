@@ -6,8 +6,14 @@
 import type * as kafkaTypes from "node-rdkafka";
 
 import { Deferred } from "@fluidframework/common-utils";
-import { IConsumer, IPartition, IPartitionWithEpoch, IQueuedMessage } from "@fluidframework/server-services-core";
-import { ZookeeperClient } from "@fluidframework/server-services-ordering-zookeeper";
+import {
+	IConsumer,
+	IPartition,
+	IPartitionWithEpoch,
+	IQueuedMessage,
+	IZookeeperClient,
+	ZookeeperClientConstructor,
+} from "@fluidframework/server-services-core";
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 
 export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
@@ -18,6 +24,7 @@ export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 	automaticConsume: boolean;
 	maxConsumerCommitRetries: number;
 	additionalOptions?: kafkaTypes.ConsumerGlobalConfig;
+	zooKeeperClientConstructor?: ZookeeperClientConstructor;
 }
 
 /**
@@ -26,7 +33,7 @@ export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private readonly consumerOptions: IKafkaConsumerOptions;
 	private consumer?: kafkaTypes.KafkaConsumer;
-	private zooKeeperClient?: ZookeeperClient;
+	private zooKeeperClient?: IZookeeperClient;
 	private closed = false;
 	private isRebalancing = true;
 	private assignedPartitions: Set<number> = new Set();
@@ -41,6 +48,15 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		public readonly groupId: string,
 		options?: Partial<IKafkaConsumerOptions>) {
 		super(endpoints, clientId, topic, options);
+
+        this.defaultRestartOnKafkaErrorCodes = [
+            this.kafka.CODES.ERRORS.ERR__TRANSPORT,
+            this.kafka.CODES.ERRORS.ERR__MSG_TIMED_OUT,
+            this.kafka.CODES.ERRORS.ERR__ALL_BROKERS_DOWN,
+            this.kafka.CODES.ERRORS.ERR__TIMED_OUT,
+            this.kafka.CODES.ERRORS.ERR__SSL,
+            this.kafka.CODES.ERRORS.ERR_COORDINATOR_LOAD_IN_PROGRESS,
+        ];
 
 		this.consumerOptions = {
 			...options,
@@ -73,9 +89,9 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		}
 
 		const zookeeperEndpoints = this.endpoints.zooKeeper;
-		if (zookeeperEndpoints && zookeeperEndpoints.length > 0) {
+		if (zookeeperEndpoints && zookeeperEndpoints.length > 0 && this.consumerOptions.zooKeeperClientConstructor) {
 			const zooKeeperEndpoint = zookeeperEndpoints[Math.floor(Math.random() % zookeeperEndpoints.length)];
-			this.zooKeeperClient = new ZookeeperClient(zooKeeperEndpoint);
+			this.zooKeeperClient = new this.consumerOptions.zooKeeperClientConstructor(zooKeeperEndpoint);
 		}
 
 		const options: kafkaTypes.ConsumerGlobalConfig = {

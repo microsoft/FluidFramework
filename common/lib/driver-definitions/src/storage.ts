@@ -98,6 +98,11 @@ export interface IDocumentStorageServicePolicies {
     // If this policy is provided, it tells runtime on ideal size for blobs
     // Blobs that are smaller than that size should be aggregated into bigger blobs
     readonly minBlobSize?: number;
+
+    /**
+     * This policy tells the runtime that the driver will not use cached snapshots older than this value.
+     */
+    readonly maximumCacheDurationMs?: number;
 }
 
 /**
@@ -180,13 +185,6 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
      * Whether the connection was made to a new or existing document
      */
     existing: boolean;
-
-    /**
-     * Maximum size of a message that can be sent to the server. Messages larger than this size must be chunked.
-     *
-     * @deprecated - please use `serviceConfiguration.maxMessageSize`
-     */
-    maxMessageSize: number;
 
     /**
      * Protocol version being used with the service

@@ -21,10 +21,12 @@ import {
 import { readAndParse } from "@fluidframework/driver-utils";
 import { CreateProcessingError } from "@fluidframework/container-utils";
 import { assert, Lazy } from "@fluidframework/common-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     createServiceEndpoints,
     IChannelContext,
     summarizeChannel,
+    summarizeChannelAsync,
 } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
@@ -97,7 +99,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
      */
     public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummarizeResult> {
         assert(this.isLoaded && this.channel !== undefined, 0x18c /* "Channel should be loaded to summarize" */);
-        return summarizeChannel(this.channel, fullTree, trackState);
+        return summarizeChannelAsync(this.channel, fullTree, trackState);
     }
 
     public getAttachSummary(): ISummarizeResult {
@@ -153,6 +155,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
         storageService: IDocumentStorageService,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
+        addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
         private readonly snapshotTree: ISnapshotTree,
     ) {
         super(id, registry, runtime, () => this.services);
@@ -171,6 +174,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
                 dataStoreContext.connected,
                 submitFn,
                 this.dirtyFn,
+                addedGCOutboundReferenceFn,
                 storageService,
                 clonedSnapshotTree,
                 blobMap,
@@ -267,6 +271,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
         storageService: IDocumentStorageService,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
+        addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
     ) {
         super(id, registry, runtime, () => this.services);
         assert(type !== undefined, 0x209 /* "Factory Type should be defined" */);
@@ -281,6 +286,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
                 dataStoreContext.connected,
                 submitFn,
                 this.dirtyFn,
+                addedGCOutboundReferenceFn,
                 storageService,
             );
         });

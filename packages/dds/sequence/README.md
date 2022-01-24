@@ -1,15 +1,10 @@
 # @fluidframework/sequence
 
-The **SharedSequence** distributed data structures are a set of list-like data structures. They offer similar
-capabilities and differ largely based on the type of data that is stored within the sequence. There are several
-different sequence types:
+The **@fluidframework/sequence** packages supports distributed data structures which are list-like.  It includes
+SharedString for storing storing and simultaneously editing a sequence of text. Note that SharedString is a sequence
+DDS but it has additional specialized features and behaviors for working with text.
 
-- SharedNumberSequence for storing and simultaneously editing a sequence of numbers.
-- SharedObjectSequence for storing and simultaneously editing a sequence of JSON-serializable objects.
-- SharedString for storing storing and simultaneously editing a sequence of text. Note that SharedString is a sequence
-  DDS but it has additional specialized features and behaviors for working with text.
-
-All the sequence DDSes share a common base class, SharedSegmentSequence. For the remainder of this document, the term
+Sequence DDSes share a common base class, SharedSegmentSequence. For the remainder of this document, the term
 *sequence* refers to this base class.
 
 *Item*s are the individual units that are stored within the sequence (i.e. in a SharedString the items are characters),
@@ -22,19 +17,19 @@ with internally, and contain items within them. Thus, every segment has a length
 at least one item -- and segments may be split and merged arbitrarily as the sequence is edited. This means the length
 of the sequence is not the number of segments, but rather the sum of the length of all the segments.
 
-For example, consider a SharedNumberSequence that is initially empty. User A adds the numbers 0, 1 and 2 to the
+For example, consider a SharedString that is initially empty. User A adds the characters a, b, and c to the
 sequence. Its length is now 3 -- it contains 3 items. Internally, however, the sequence could have either 1, 2, or 3
 segments.
 
 ```bash
 Segments: [S1] [S2] [S3]
-   Items:  0    1    2
+   Items:  a    b    c
 
 Segments: [  S1  ]  [S2]
-   Items:  0    1    2
+   Items:  a    b    c
 
 Segments: [    S1     ]
-   Items:  0    1    2
+   Items:  a    b    c
 ```
 
 In typical use, the splitting and merging of segments is an implementation detail that is not relevant to using the
@@ -237,18 +232,6 @@ operations, and the merge resolution is straightforward -- the data is removed.
 As mentioned above, annotate operations behave like operations on SharedMaps. The merge strategy used is last writer
 wins. If two collaborators set the same key on the annotate properties the operation that gets ordered last will
 determine the value.
-
-## SharedObjectSequence and SharedNumberSequence
-
-SharedObjectSequence and SharedNumberSequence are very similar distributed data structures. The only difference is the
-type of content they support. SharedNumberSequence only supports numbers as content, while SharedObjectSequence supports
-any JSON serializable object. Both DDSes support inserting, removing, and annotating content. Each item -- that is, each
-number or object -- will occupy a single position in the sequence.
-
-An important note is that, unlike an array, positions are not guaranteed remain constant. The position of an item can
-change as content is added or removed from the sequence. To track or pass a reference to a specific piece of content
-within the sequence you should find its segment via `segment = s.getContainingSegment(position)` and then use
-`pos = s.getPosition(segment)` to get its current position in the tree.
 
 ## SharedString
 

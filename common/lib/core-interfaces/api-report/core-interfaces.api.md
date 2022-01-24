@@ -17,33 +17,33 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 // @internal
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Exclude<T[TProp], undefined> ? TProp : never;
 
-// @public
+// @public @deprecated (undocumented)
 export interface IFluidCodeDetails {
     readonly config?: IFluidCodeDetailsConfig;
     readonly package: string | Readonly<IFluidPackage>;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer;
 
-// @public
+// @public @deprecated (undocumented)
 export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsComparer {
     compare(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<number | undefined>;
     satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean>;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface IFluidCodeDetailsConfig {
     // (undocumented)
     readonly [key: string]: string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IFluidConfiguration: keyof IProvideFluidConfiguration;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IFluidConfiguration extends IProvideFluidConfiguration {
-    // (undocumented)
+    // @deprecated (undocumented)
     scopes: string[];
 }
 
@@ -100,7 +100,7 @@ export interface IFluidObject {
     readonly IFluidSerializer?: IFluidSerializer;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface IFluidPackage {
     [key: string]: unknown;
     fluid: {
@@ -109,7 +109,7 @@ export interface IFluidPackage {
     name: string;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface IFluidPackageEnvironment {
     [target: string]: undefined | {
         files: string[];
@@ -137,10 +137,10 @@ export interface IFluidRunnable {
     stop(reason?: string): void;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IFluidSerializer: keyof IProvideFluidSerializer;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IFluidSerializer extends IProvideFluidSerializer {
     decode?(input: any): any;
     parse(value: string): any;
@@ -148,15 +148,15 @@ export interface IFluidSerializer extends IProvideFluidSerializer {
     stringify(value: any, bind: IFluidHandle): string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IProvideFluidCodeDetailsComparer {
     // (undocumented)
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IProvideFluidConfiguration {
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly IFluidConfiguration: IFluidConfiguration;
 }
 
@@ -190,7 +190,7 @@ export interface IProvideFluidRunnable {
     readonly IFluidRunnable: IFluidRunnable;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IProvideFluidSerializer {
     // (undocumented)
     readonly IFluidSerializer: IFluidSerializer;
@@ -226,7 +226,7 @@ export interface IResponse {
     value: any;
 }
 
-// @public
+// @public @deprecated
 export interface ISerializedHandle {
     // (undocumented)
     type: "__fluid_handle__";
@@ -234,10 +234,10 @@ export interface ISerializedHandle {
     url: string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
 
-// @public
+// @public @deprecated (undocumented)
 export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
 
 

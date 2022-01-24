@@ -7,12 +7,12 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
-import {
-    IFluidHandle,
-    IFluidSerializer,
-} from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import {
     ISegment,
@@ -89,57 +89,38 @@ export class SnapshotLegacy {
     }
 
     /**
-     * Emits the snapshot to an ITree. If provided the optional IFluidSerializer will be used when serializing
-     * the summary data rather than JSON.stringify.
+     * Emits the snapshot to an ISummarizeResult. If provided the optional IFluidSerializer will be used when
+     * serializing the summary data rather than JSON.stringify.
      */
     emit(
         catchUpMsgs: ISequencedDocumentMessage[],
         serializer: IFluidSerializer,
         bind: IFluidHandle,
-    ): ITree {
+    ): ISummaryTreeWithStats {
         const chunk1 = this.getSeqLengthSegs(this.segments!, this.segmentLengths!, this.chunkSize);
         let length: number = chunk1.chunkLengthChars;
         let segments: number = chunk1.chunkSegmentCount;
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: SnapshotLegacy.header,
-                    type: TreeEntry.Blob,
-                    value: {
-                        contents: serializeAsMinSupportedVersion(
-                            SnapshotLegacy.header,
-                            chunk1,
-                            this.logger,
-                            this.mergeTree.options,
-                            serializer,
-                            bind),
-                        encoding: "utf-8",
-                    },
-                },
-            ],
-        };
+        const builder = new SummaryTreeBuilder();
+        builder.addBlob(SnapshotLegacy.header, serializeAsMinSupportedVersion(
+            SnapshotLegacy.header,
+            chunk1,
+            this.logger,
+            this.mergeTree.options,
+            serializer,
+            bind));
 
         if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount!) {
             const chunk2 = this.getSeqLengthSegs(this.segments!, this.segmentLengths!,
                 this.header!.segmentsTotalLength, chunk1.chunkSegmentCount);
             length += chunk2.chunkLengthChars;
             segments += chunk2.chunkSegmentCount;
-            tree.entries.push({
-                mode: FileMode.File,
-                path: SnapshotLegacy.body,
-                type: TreeEntry.Blob,
-                value: {
-                    contents: serializeAsMinSupportedVersion(
-                        SnapshotLegacy.body,
-                        chunk2,
-                        this.logger,
-                        this.mergeTree.options,
-                        serializer,
-                        bind),
-                    encoding: "utf-8",
-                },
-            });
+            builder.addBlob(SnapshotLegacy.body, serializeAsMinSupportedVersion(
+                SnapshotLegacy.body,
+                chunk2,
+                this.logger,
+                this.mergeTree.options,
+                serializer,
+                bind));
         }
 
         assert(
@@ -151,18 +132,12 @@ export class SnapshotLegacy {
             0x05e /* "emit: mismatch in totalSegmentCount" */);
 
         if(catchUpMsgs !== undefined && catchUpMsgs.length > 0) {
-            tree.entries.push({
-                mode: FileMode.File,
-                path: this.mergeTree.options?.catchUpBlobName ?? SnapshotLegacy.catchupOps,
-                type: TreeEntry.Blob,
-                value: {
-                    contents: serializer ? serializer.stringify(catchUpMsgs, bind) : JSON.stringify(catchUpMsgs),
-                    encoding: "utf-8",
-                },
-            });
+            builder.addBlob(
+                this.mergeTree.options?.catchUpBlobName ?? SnapshotLegacy.catchupOps,
+                serializer ? serializer.stringify(catchUpMsgs, bind) : JSON.stringify(catchUpMsgs));
         }
 
-        return tree;
+        return builder.getSummaryTree();
     }
 
     extractSync() {

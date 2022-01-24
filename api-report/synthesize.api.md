@@ -21,27 +21,29 @@ export type AsyncRequiredFluidObjectProvider<T extends keyof IFluidObject> = {
 
 // @public
 export class DependencyContainer implements IFluidDependencySynthesizer {
-    constructor(parent?: IFluidDependencySynthesizer | undefined);
+    constructor(...parents: (IFluidDependencySynthesizer | undefined)[]);
+    // @deprecated (undocumented)
     getProvider<T extends keyof IFluidObject>(type: T): FluidObjectProvider<T> | undefined;
-    has(...types: (keyof IFluidObject)[]): boolean;
+    has(type: (keyof IFluidObject), excludeParents?: boolean): boolean;
     // (undocumented)
     get IFluidDependencySynthesizer(): this;
     // (undocumented)
-    parent: IFluidDependencySynthesizer | undefined;
     register<T extends keyof IFluidObject>(type: T, provider: FluidObjectProvider<T>): void;
+    // @deprecated (undocumented)
     get registeredTypes(): Iterable<(keyof IFluidObject)>;
     synthesize<O extends IFluidObject, R extends IFluidObject = {}>(optionalTypes: FluidObjectSymbolProvider<O>, requiredTypes: FluidObjectSymbolProvider<R>): AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<R>>;
+    // (undocumented)
     unregister<T extends keyof IFluidObject>(type: T): void;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export type DependencyContainerRegistry = Iterable<ProviderEntry<any>>;
 
 // @public (undocumented)
 export type FluidObjectKey<T extends IFluidObject> = keyof T & keyof IFluidObject;
 
 // @public
-export type FluidObjectProvider<T extends keyof IFluidObject> = NonNullableFluidObject<T> | Promise<NonNullableFluidObject<T>> | ((dependencyContainer: DependencyContainer) => NonNullableFluidObject<T>) | ((dependencyContainer: DependencyContainer) => Promise<NonNullableFluidObject<T>>);
+export type FluidObjectProvider<T extends keyof IFluidObject> = NonNullableFluidObject<T> | Promise<NonNullableFluidObject<T>> | ((dependencyContainer: IFluidDependencySynthesizer) => NonNullableFluidObject<T>) | ((dependencyContainer: IFluidDependencySynthesizer) => Promise<NonNullableFluidObject<T>>);
 
 // @public
 export type FluidObjectSymbolProvider<T extends IFluidObject> = {
@@ -53,11 +55,15 @@ export const IFluidDependencySynthesizer: keyof IProvideFluidDependencySynthesiz
 
 // @public
 export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynthesizer {
+    // @deprecated (undocumented)
     getProvider<T extends keyof IFluidObject>(type: T): FluidObjectProvider<T> | undefined;
-    has(...types: (keyof IFluidObject)[]): boolean;
+    has(type: (keyof IFluidObject)): boolean;
+    // @deprecated (undocumented)
     register<T extends keyof IFluidObject>(type: T, provider: FluidObjectProvider<T>): void;
+    // @deprecated (undocumented)
     readonly registeredTypes: Iterable<(keyof IFluidObject)>;
     synthesize<O extends IFluidObject, R extends IFluidObject>(optionalTypes: FluidObjectSymbolProvider<O>, requiredTypes: FluidObjectSymbolProvider<R>): AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<R>>;
+    // @deprecated (undocumented)
     unregister<T extends keyof IFluidObject>(type: T): void;
 }
 
@@ -70,7 +76,7 @@ export interface IProvideFluidDependencySynthesizer {
 // @public
 export type NonNullableFluidObject<T extends keyof IFluidObject> = NonNullable<IFluidObject[T]>;
 
-// @public
+// @public @deprecated (undocumented)
 export interface ProviderEntry<T extends keyof IFluidObject> {
     // (undocumented)
     provider: FluidObjectProvider<T>;
