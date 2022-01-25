@@ -12,7 +12,7 @@ import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframe
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
-import { ChildLogger, MultiSinkLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, IConfigProviderBase, MultiSinkLogger } from "@fluidframework/telemetry-utils";
 import { LoaderContainerTracker } from "./loaderContainerTracker";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
@@ -92,6 +92,7 @@ export interface ITestContainerConfig {
 // new interface to help inject custom loggers to tests
 export interface ITestLoaderOptions extends ILoaderOptions {
     logger?: ITelemetryBaseLogger;
+    configProvider?: IConfigProviderBase;
 }
 
 export const createDocumentId = (): string => uuid();
@@ -219,6 +220,7 @@ export class TestObjectProvider {
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
             logger: multiSinkLogger,
+            configProvider: options?.configProvider,
             options,
             detachedBlobStorage,
         });
