@@ -1,10 +1,11 @@
 name: "Auto Assign Pull Request"
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened]
     branches:
     - main
     - release/*
+    - test/*
 
 jobs:
   assign_reviewer:
