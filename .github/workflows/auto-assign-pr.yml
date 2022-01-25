@@ -5,16 +5,12 @@ on:
     branches:
     - main
     - release/*
-    - test/*
 
 jobs:
   assign_reviewer:
     runs-on: ubuntu-latest
     steps:
-    - uses: open-telemetry/assign-reviewers-action@main
+    - uses: shufo/auto-assign-reviewer-by-files@v1.1.1
       with:
-        config-file: '.github/code_owners.yml'
-        # repo-token: ${{ secrets.GITHUB_TOKEN }}
-        assign-users: false
-        request-reviews: false
-        request-user-reviews: false
+        config: '.github/code_owners.yml'
+        token: ${{ secrets.GITHUB_TOKEN }}
