@@ -100,10 +100,6 @@ export class ContainerContext implements IContainerContext {
         return this.taggedLogger;
     }
 
-    public get id(): string {
-        return this.container.id;
-    }
-
     public get clientId(): string | undefined {
         return this.container.clientId;
     }

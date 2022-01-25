@@ -453,39 +453,6 @@ describe("Map", () => {
                     assert.equal(set.size, 0);
                 });
             });
-
-            describe(".wait()", () => {
-                it("Should resolve returned promise for existing keys", async () => {
-                    map1.set("test", "resolved");
-                    assert.ok(map1.has("test"));
-
-                    containerRuntimeFactory.processAllMessages();
-
-                    // Verify the local SharedMap
-                    assert.equal(await map1.wait("test"), "resolved", "promise not resolved for existing key");
-
-                    // Verify the remote SharedMap
-                    assert.equal(
-                        await map2.wait("test"), "resolved", "promise not resolved for existing key in remote map");
-                });
-
-                it("Should resolve returned promise once unavailable key is available", async () => {
-                    assert.ok(!map1.has("test"));
-
-                    const waitP = map1.wait("test");
-                    const waitP2 = map2.wait("test");
-
-                    map1.set("test", "resolved");
-
-                    containerRuntimeFactory.processAllMessages();
-
-                    // Verify the local SharedMap
-                    assert.equal(await waitP, "resolved", "promise not resolved after key is available");
-
-                    // Verify the remote SharedMap
-                    assert.equal(await waitP2, "resolved", "promise not resolved after key is available in remote map");
-                });
-            });
         });
     });
 
