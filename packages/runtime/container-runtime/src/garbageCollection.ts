@@ -53,12 +53,14 @@ export const gcTreeKey = "gc";
 // They prefix for GC blobs in the GC tree in summary.
 export const gcBlobPrefix = "__gc";
 
-// Local storage key to turn GC on / off.
+// Feature gate key to turn GC on / off.
 const runGCKey = "Fluid.GarbageCollection.RunGC";
-// Local storage key to turn GC test mode on / off.
+// Feature gate key to turn GC test mode on / off.
 const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
-// Local storage key to turn GC sweep on / off.
+// Feature gate key to turn GC sweep on / off.
 const runSweepKey = "Fluid.GarbageCollection.RunSweep";
+// Feature gate key to write GC data at the root of the summary tree.
+const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -100,6 +102,8 @@ export interface IGarbageCollector {
     readonly gcSummaryFeatureVersion: number;
     /** Tells whether the GC state in summary needs to be reset in the next summary. */
     readonly summaryStateNeedsReset: boolean;
+    /** Tells whether GC data should be written to the root of the summary tree. */
+    readonly writeDataAtRoot: boolean;
     /** Run garbage collection and update the reference / used state of the system. */
     collectGarbage(
         options: { logger?: ITelemetryLogger, runGC?: boolean, runSweep?: boolean, fullGC?: boolean },
@@ -241,6 +245,14 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly mc: MonitoringContext;
 
     /**
+     * Tells whether the GC data should be written to the root of the summary tree.
+     */
+    private _writeDataAtRoot: boolean = false;
+    public get writeDataAtRoot(): boolean {
+        return this._writeDataAtRoot;
+     }
+
+    /**
      * Tells whether the initial GC state needs to be reset. This can happen under 2 conditions:
      * 1. The base snapshot contains GC state but GC is disabled. This will happen the first time GC is disabled after
      *    it was enabled before. GC state needs to be removed from summary and all nodes should be marked referenced.
@@ -349,6 +361,10 @@ export class GarbageCollector implements IGarbageCollector {
         const gcTreePresent = baseSnapshot?.trees[gcTreeKey] !== undefined;
         this.initialStateNeedsReset = gcTreePresent ? !this.shouldRunGC : this.shouldRunGC;
 
+        // If `writeDataAtRoot` setting is true, write the GC data into the root of the summary tree. We do this so that
+        // the roll out can be staged. Once its rolled out everywhere, we will start writing at root by default.
+        this._writeDataAtRoot = this.mc.config.getBoolean(writeAtRootKey) ?? this.gcOptions.writeDataAtRoot === true;
+
         // Get the GC state from the GC blob in the base snapshot. Use LazyPromise because we only want to do
         // this once since it involves fetching blobs from storage which is expensive.
         const baseSummaryStateP = new LazyPromise<IGarbageCollectionState | undefined>(async () => {
@@ -359,6 +375,8 @@ export class GarbageCollector implements IGarbageCollector {
             // For newer documents, GC data should be present in the GC tree in the root of the snapshot.
             const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
             if (gcSnapshotTree !== undefined) {
+                // If the GC tree is written at root, we should also do the same.
+                this._writeDataAtRoot = true;
                 return getGCStateFromSnapshot(gcSnapshotTree, readAndParseBlob);
             }
 
@@ -765,6 +783,17 @@ export class GarbageCollector implements IGarbageCollector {
      * @param currentGCData - The GC data (reference graph) from the current GC run.
      */
     private validateReferenceCorrectness(currentGCData: IGarbageCollectionData) {
+        /**
+         * We cannot validate reference correctness until the following issue is resolved -
+         * https://github.com/microsoft/FluidFramework/issues/8878.
+         * It is because of this bug - https://github.com/microsoft/FluidFramework/issues/8672. This bug will not happen
+         * when GC data is written at the root of the summary tree. However, that change is behind a feature flag and we
+         * have to wait until it is written to the root by default.
+         */
+        if (!this._writeDataAtRoot) {
+            return;
+        }
+
         assert(this.gcDataFromLastRun !== undefined, 0x2b7
             /* "Can't validate correctness without GC data from last run" */);
 
