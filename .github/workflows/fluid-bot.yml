@@ -10,9 +10,8 @@ jobs:
   validate-codeowners:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v2
     - uses: mszostok/codeowners-validator@v0.6.0
       with:
         github_access_token: "${{ secrets.GITHUB_TOKEN }}"
-      # env: # Add environment variables here
-      #   OWNER_CHECKER_IGNORED_OWNERS: "nedalhy,ruiterr"
-      #   NOT_OWNED_CHECKER_SKIP_PATTERNS: "/*.*"
+        checks: "files,duppatterns,syntax"
