@@ -13,19 +13,16 @@ import {
     IContainerRuntimeOptions,
     SummaryCollection,
 } from "@fluidframework/container-runtime";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import {
-    channelsTreeName,
-    IContainerRuntimeBase,
-    IGarbageCollectionDetailsBase } from "@fluidframework/runtime-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
+import { ISummaryContext } from "@fluidframework/driver-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
 import { pkgVersion } from "../../packageVersion";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
-import { loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSummarizerClient";
+import { loadSummarizer, TestDataObject, submitAndAckSummary, getGCStateFromSummary } from "./mockSummarizerClient";
 
 /**
  * These tests validate the compatibility of the GC data in the summary tree across the past 2 container runtime
@@ -44,7 +41,7 @@ describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => 
         []);
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: { disableSummaries: true },
-        gcOptions: { gcAllowed: true },
+        gcOptions: { gcAllowed: true, writeDataAtRoot: true },
     };
 
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
@@ -150,7 +147,7 @@ describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => 
         async function getUnreferencedTimestamps(
             summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
         ) {
-            const summary = await submitAndAckSummary(provider, summarizerClient, logger, true /* fullTree */);
+            const summary = await submitAndAckSummary(provider, summarizerClient, logger);
             latestAckedSummary = summary.ackedSummary;
             assert(
                 latestSummaryContext
@@ -159,18 +156,12 @@ describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => 
                 `Actual: ${latestSummaryContext?.referenceSequenceNumber}.`,
             );
             assert(latestUploadedSummary !== undefined, "Did not get a summary");
-            const channelsTree = (latestUploadedSummary.tree[channelsTreeName] as ISummaryTree)?.tree;
 
+            const gcState = getGCStateFromSummary(latestUploadedSummary);
+            assert(gcState !== undefined, "GC tree is not available in the summary");
             const nodeTimestamps: Map<string, number | undefined> = new Map();
-            for (const [ id, summaryObject ] of Object.entries(channelsTree)) {
-                assert(
-                    summaryObject.type === SummaryType.Tree,
-                    `Channel summary ${id} is not a tree`,
-                );
-                const gcBlob = summaryObject.tree.gc;
-                assert(gcBlob?.type === SummaryType.Blob, `Data store ${id} does not have GC blob`);
-                const gcSummaryDetails = JSON.parse(gcBlob.content as string) as IGarbageCollectionDetailsBase;
-                nodeTimestamps.set(id, gcSummaryDetails.unrefTimestamp);
+            for (const [nodeId, nodeData] of Object.entries(gcState.gcNodes)) {
+                nodeTimestamps.set(nodeId.slice(1), nodeData.unreferencedTimestampMs);
             }
             return nodeTimestamps;
         }

@@ -108,9 +108,12 @@ export async function submitAndAckSummary(
     return { ackedSummary, summarySequenceNumber };
 }
 
-export function getGCStateFromSummary(summary: ISummaryTree): IGarbageCollectionState {
+export function getGCStateFromSummary(summary: ISummaryTree): IGarbageCollectionState | undefined {
     const rootGCTree = summary.tree[gcTreeKey];
-    assert(rootGCTree?.type === SummaryType.Tree, `GC tree not available`);
+    if (rootGCTree === undefined) {
+        return undefined;
+    }
+    assert(rootGCTree.type === SummaryType.Tree, `GC state should be a tree`);
 
     let rootGCState: IGarbageCollectionState = { gcNodes: {} };
     for (const key of Object.keys(rootGCTree.tree)) {
