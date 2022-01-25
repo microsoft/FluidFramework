@@ -59,7 +59,7 @@
     "@fluidframework/container-definitions": "^0.44.0",
     "@fluidframework/core-interfaces": "^0.41.0",
     "@fluidframework/datastore-definitions": "^0.56.0",
-    "@fluidframework/driver-definitions": "^0.43.0",
+    "@fluidframework/driver-definitions": "^0.44.0-0",
     "@fluidframework/driver-utils": "^0.56.0",
     "@fluidframework/protocol-definitions": "^0.1026.0",
     "@fluidframework/routerlicious-driver": "^0.56.0",
@@ -71,7 +71,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.25.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.25.0",
     "@fluidframework/mocha-test-setup": "^0.56.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",

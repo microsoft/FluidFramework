@@ -183,8 +183,6 @@ export interface IContainerContext extends IDisposable {
     getLoadedFromVersion(): IVersion | undefined;
     // @deprecated (undocumented)
     getSpecifiedCodeDetails?(): IFluidCodeDetails_2 | undefined;
-    // @deprecated (undocumented)
-    readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
     // @deprecated (undocumented)
@@ -265,8 +263,6 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     readonly maxMessageSize: number;
     readonly minimumSequenceNumber: number;
     readonly outbound: IDeltaQueue<U[]>;
-    // @deprecated
-    readonly readonly?: boolean;
     // (undocumented)
     readonly readOnlyInfo: ReadOnlyInfo;
     readonly serviceConfiguration: IClientConfiguration | undefined;
