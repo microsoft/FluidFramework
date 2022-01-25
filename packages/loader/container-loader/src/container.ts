@@ -1593,11 +1593,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         deltaManager.on("throttled", (warning: IThrottlingWarning) => {
-            let containerWarning = warning as ContainerWarning;
-            if (containerWarning.logged !== true) {
-                this.logContainerError(containerWarning);
-            }
-            this.emit("warning", containerWarning);
+            this.raiseContainerWarning(warning);
         });
 
         deltaManager.on("readonly", (readonly) => {
