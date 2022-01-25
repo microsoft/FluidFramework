@@ -10,7 +10,7 @@ export async function lint(message: WorkerMessage): Promise<WorkerExecResult> {
     const oldCwd = process.cwd();
     try {
         // Load the eslint version that is in the cwd scope
-        const eslintPath = require.resolve("eslint/lib/cli", { paths: [message.cwd] });
+        const eslintPath = require.resolve("eslint", { paths: [message.cwd] });
         const eslint = require(eslintPath);
 
         // TODO: better parsing, assume split delimited for now.
@@ -21,7 +21,28 @@ export async function lint(message: WorkerMessage): Promise<WorkerExecResult> {
         // So just overwrite our argv
         process.argv = [process.argv0, eslintPath, ...argv.slice(1)];
         process.chdir(message.cwd);
-        return { code: await eslint.execute(process.argv) };
+
+        // assume "eslint --format stylish src"
+        const engine = new eslint.ESLint();
+        const results = await engine.lintFiles("src");
+        let formatter;
+        try {
+            formatter = await engine.loadFormatter("stylish");
+        } catch (e) {
+            console.error(e.message);
+            return { code: 2 };
+        }
+
+        const output = await formatter.format(results);
+
+        if (output) {
+            console.info(output);
+        }
+        let code = 0;
+        for (const result of results) {
+            code += result.errorCount;
+        }
+        return { code };
     } finally {
         process.argv = oldArgv;
         process.chdir(oldCwd);

@@ -71,6 +71,7 @@ describe("Odsp Driver Resolver", () => {
             summarizer: false,
             codeHint: { containerPackageName: undefined },
             shareLinkInfo: undefined,
+            isClpCompliantApp: undefined,
         };
         assert.deepStrictEqual(resolvedUrl, expected);
         const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore");
