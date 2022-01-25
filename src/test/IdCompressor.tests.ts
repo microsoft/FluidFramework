@@ -9,10 +9,8 @@ import {
 	IdCompressor,
 	isFinalId,
 	isLocalId,
-	reservedIdCount,
-	reservedSessionId,
-	reservedIdRange,
 	hasOngoingSession,
+	sharedTreeInitialTreeId,
 } from '../id-compressor/IdCompressor';
 import { LocalCompressedId, FinalCompressedId, SessionSpaceCompressedId, OpSpaceCompressedId } from '../Identifiers';
 import { assert, assertNotUndefined, fail } from '../Common';
@@ -51,8 +49,17 @@ describe('IdCompressor', () => {
 
 	it('reports the proper session ID', () => {
 		const sessionId = createSessionId();
-		const compressor = new IdCompressor(sessionId);
+		const compressor = new IdCompressor(sessionId, 0);
 		expect(compressor.localSessionId).to.equal(sessionId);
+	});
+
+	it('accepts different numbers of reserved IDs', () => {
+		for (const reservedIdCount of [0, 1, 5]) {
+			const compressor = new IdCompressor(createSessionId(), reservedIdCount);
+			if (reservedIdCount > 0) {
+				expect(compressor.decompress(compressor.getReservedId(0))).to.equal(sharedTreeInitialTreeId);
+			}
+		}
 	});
 
 	describe('ID Generation', () => {
@@ -85,7 +92,7 @@ describe('IdCompressor', () => {
 			expect(() => compressor.decompress(-1 as LocalCompressedId)).to.throw(
 				'Cannot decompress ID which is not known to this compressor'
 			);
-			expect(() => compressor.decompress(reservedIdCount as FinalCompressedId)).to.throw(
+			expect(() => compressor.decompress(compressor.reservedIdCount as FinalCompressedId)).to.throw(
 				'Cannot decompress ID which is not known to this compressor'
 			);
 		});
@@ -341,7 +348,7 @@ describe('IdCompressor', () => {
 			expect(compressor.compress(override)).to.equal(id);
 		});
 
-		it('can re-compress uuids from a remote client it has finalized', () => {
+		it('can re-compress overrides from a remote client it has finalized', () => {
 			const compressor = createCompressor(Client.Client1);
 			const id = compressor.generateCompressedId();
 			const override = 'override';
@@ -359,7 +366,7 @@ describe('IdCompressor', () => {
 			expect(isFinalId(finalId2)).to.be.true;
 		});
 
-		it('will not compress a uuid it never compressed or finalized', () => {
+		it('will not compress an override it never compressed or finalized', () => {
 			const compressor = createCompressor(Client.Client1, 5);
 			// Leading zeroes to exploit calls to getOrNextLower on uuid maps, as it will be before test session uuids
 			const override = 'override';
@@ -385,25 +392,22 @@ describe('IdCompressor', () => {
 
 		it('can decompress reserved IDs', () => {
 			// This is a glass box test in that it increments UUIDs
-			const reservedSessionUuid = numericUuidFromStableId(reservedSessionId);
 			const compressor = createCompressor(Client.Client1);
-			const reservedIds = compressor.getImplicitIdsFromRange(reservedIdRange);
-			for (let i = 0; i < reservedIdCount; i++) {
-				const reservedId = reservedIds.get(i);
+			expect(compressor.decompress(compressor.getReservedId(0))).to.equal(sharedTreeInitialTreeId);
+			const reservedSessionUuid = numericUuidFromStableId(
+				assertIsStableId(compressor.decompress(compressor.getReservedId(1)))
+			);
+			for (let i = 1; i < compressor.reservedIdCount; i++) {
+				const reservedId = compressor.getReservedId(i);
 				const stable = compressor.decompress(reservedId);
-				expect(stable).to.equal(stableIdFromNumericUuid(incrementUuid(reservedSessionUuid, i)));
-				const finalIdForReserved = compressor.compress(stable);
-				if (finalIdForReserved === undefined) {
-					expect.fail();
-				}
-				if (isLocalId(finalIdForReserved)) {
-					expect.fail();
-				}
+				expect(stable).to.equal(stableIdFromNumericUuid(incrementUuid(reservedSessionUuid, i - 1)));
+				const finalIdForReserved = expectDefined(compressor.compress(stable));
+				expect(isLocalId(finalIdForReserved)).to.be.false;
 				expect(finalIdForReserved).to.equal(reservedId);
 			}
-			const outOfBoundsError = 'Index out of bounds of implicit range.';
-			expect(() => reservedIds.get(-1)).to.throw(outOfBoundsError);
-			expect(() => reservedIds.get(reservedIdCount)).to.throw(outOfBoundsError);
+			const outOfBoundsError = 'Reserved Id index out of bounds';
+			expect(() => compressor.getReservedId(-1)).to.throw(outOfBoundsError);
+			expect(() => compressor.getReservedId(compressor.reservedIdCount)).to.throw(outOfBoundsError);
 		});
 
 		it('can decompress a final ID', () => {
@@ -430,6 +434,31 @@ describe('IdCompressor', () => {
 			}
 			const uuid = compressor.decompress(finalId);
 			expect(uuid).to.equal(override);
+		});
+
+		it('can decompress an override that is an UUID', () => {
+			const compressor = createCompressor(Client.Client1, 5);
+			const uuid = 'd1302ab1-3c08-4e79-a49a-4c39ac369c16';
+			const id = compressor.generateCompressedId(uuid);
+			expect(compressor.decompress(id)).to.equal(uuid);
+		});
+
+		it('properly sorts UUID-like overrides separately from true UUIDs', () => {
+			// This is a glass box test that ensures overrides which would sort in between a cluster base UUID and an UUID higher up in the
+			// same cluster are not accidentally retrieved during cluster ID lookup.
+			const compressor = createCompressor(Client.Client1, 5);
+			const override = `${compressor.localSessionId}6`;
+			const id = compressor.generateCompressedId();
+			compressor.generateCompressedId(override);
+			const decompressedId = compressor.decompress(id);
+			expect(compressor.compress(decompressedId)).to.equal(id);
+		});
+
+		it('can decompress an override that starts with the reserved prefix character', () => {
+			const compressor = createCompressor(Client.Client1, 5);
+			const override = `\ue15e${compressor.localSessionId}`;
+			const id = compressor.generateCompressedId(override);
+			expect(compressor.decompress(id)).to.equal(override);
 		});
 	});
 
@@ -884,27 +913,27 @@ describe('IdCompressor', () => {
 		});
 
 		itNetwork('can set the cluster size via constructor', 2, (network) => {
-			const compressor1 = network.getCompressor(Client.Client1);
+			const compressor = network.getCompressor(Client.Client1);
 			network.allocateAndSendIds(Client.Client1, 1);
 			const range = network.allocateAndSendIds(Client.Client2, 2);
 			network.deliverOperations(DestinationClient.All);
-			const id = compressor1.getImplicitIdsFromRange(range).get(0);
+			const id = compressor.getImplicitIdsFromRange(range).get(0);
 			// Glass box test, as it knows the order of final IDs
-			expect(id).to.equal(reservedIdCount + compressor1.clusterCapacity);
+			expect(id).to.equal(compressor.reservedIdCount + compressor.clusterCapacity);
 		});
 
 		itNetwork('can set the cluster size via API', 2, (network) => {
-			const compressor1 = network.getCompressor(Client.Client1);
-			const initialClusterCapacity = compressor1.clusterCapacity;
+			const compressor = network.getCompressor(Client.Client1);
+			const initialClusterCapacity = compressor.clusterCapacity;
 			network.allocateAndSendIds(Client.Client1, initialClusterCapacity);
 			network.allocateAndSendIds(Client.Client2, initialClusterCapacity);
 			network.enqueueCapacityChange(5);
 			network.allocateAndSendIds(Client.Client1, 1);
 			const range = network.allocateAndSendIds(Client.Client2, 1);
 			network.deliverOperations(DestinationClient.All);
-			const id = compressor1.getImplicitIdsFromRange(range).get(0);
+			const id = compressor.getImplicitIdsFromRange(range).get(0);
 			// Glass box test, as it knows the order of final IDs
-			expect(id).to.equal(reservedIdCount + initialClusterCapacity * 2 + compressor1.clusterCapacity);
+			expect(id).to.equal(compressor.reservedIdCount + initialClusterCapacity * 2 + compressor.clusterCapacity);
 		});
 
 		describe('can get IDs from ranges', () => {
@@ -957,12 +986,12 @@ describe('IdCompressor', () => {
 
 				const idsFullCluster = compressor.getImplicitIdsFromRange(rangeFullCluster);
 				for (let i = 0; i < idsFullCluster.length; i++) {
-					expect(idsFullCluster.get(i)).to.equal(reservedIdCount + clusterCapacity + i);
+					expect(idsFullCluster.get(i)).to.equal(compressor.reservedIdCount + clusterCapacity + i);
 				}
 
 				const idsMiddleCluster = compressor.getImplicitIdsFromRange(rangeMiddleCluster);
 				for (let i = 0; i < idsMiddleCluster.length; i++) {
-					expect(idsMiddleCluster.get(i)).to.equal(reservedIdCount + clusterCapacity * 2 + 1 + i);
+					expect(idsMiddleCluster.get(i)).to.equal(compressor.reservedIdCount + clusterCapacity * 2 + 1 + i);
 				}
 			});
 
@@ -977,10 +1006,12 @@ describe('IdCompressor', () => {
 
 				const idsSpanningClusters = compressor.getImplicitIdsFromRange(rangeSpanningClusters);
 				for (let i = 0; i < 2; i++) {
-					expect(idsSpanningClusters.get(i)).to.equal(reservedIdCount + clusterCapacity + 3 + i);
+					expect(idsSpanningClusters.get(i)).to.equal(compressor.reservedIdCount + clusterCapacity + 3 + i);
 				}
 				for (let i = 2; i < idsSpanningClusters.length; i++) {
-					expect(idsSpanningClusters.get(i)).to.equal(reservedIdCount + clusterCapacity * 2 + 3 + i);
+					expect(idsSpanningClusters.get(i)).to.equal(
+						compressor.reservedIdCount + clusterCapacity * 2 + 3 + i
+					);
 				}
 			});
 		});

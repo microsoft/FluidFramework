@@ -64,7 +64,7 @@ export function createCompressor<T>(
 	clusterCapacity = 5,
 	attributionInfo?: Serializable<T>
 ): IdCompressor {
-	const compressor = new IdCompressor(sessionIds.get(client), attributionInfo);
+	const compressor = new IdCompressor(sessionIds.get(client), 1024, attributionInfo);
 	compressor.clusterCapacity = clusterCapacity;
 	return compressor;
 }

@@ -63,6 +63,10 @@ const initialSummary: SharedTreeSummary<unknown> = {
 	},
 };
 
+/** The number of IDs that a SharedTree reserves for current or future internal use */
+// This value must never change
+export const reservedIdCount = 1024;
+
 /**
  * An event emitted by a `SharedTree` to indicate a state change. See {@link ISharedTreeEvents} for event argument information.
  * @public

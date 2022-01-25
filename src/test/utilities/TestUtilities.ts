@@ -48,6 +48,7 @@ import { RevisionView } from '../../TreeView';
 import { EditLog } from '../../EditLog';
 import { IdCompressor } from '../../id-compressor';
 import { createSessionId } from '../../id-compressor/NumericUuid';
+import { reservedIdCount } from '../../generic/GenericSharedTree';
 import { RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
 
 /** Objects returned by setUpTestSharedTree */
@@ -803,7 +804,7 @@ const versionComparator = (versionA: string, versionB: string): number => {
  * Create a {@link SimpleTestTree} from the given {@link SharedTree} or {@link IdCompressor}
  */
 export function setUpTestTree(idSource?: IdCompressor | SharedTree | SharedTreeWithAnchors): TestTree {
-	const source = idSource ?? new IdCompressor(createSessionId());
+	const source = idSource ?? new IdCompressor(createSessionId(), reservedIdCount);
 	if (source instanceof IdCompressor) {
 		// TODO:#62125: Re-implement this case to return compressed ids created by the IdCompressor
 		return new SimpleTestTree(() => v4() as NodeId);
@@ -821,7 +822,7 @@ export function refreshTestTree(
 	idSourceFactory?: (() => IdCompressor) | (() => SharedTree | SharedTreeWithAnchors),
 	fn?: (testTree: TestTree) => void
 ): TestTree {
-	const factory = idSourceFactory ?? (() => new IdCompressor(createSessionId()));
+	const factory = idSourceFactory ?? (() => new IdCompressor(createSessionId(), reservedIdCount));
 	return new RefreshingTestTree(() => {
 		return setUpTestTree(factory());
 	}, fn);
