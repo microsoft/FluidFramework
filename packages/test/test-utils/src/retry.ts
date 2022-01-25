@@ -5,13 +5,13 @@
 
 import { delay } from "@fluidframework/common-utils";
 
-async function retry<T>(
+const retry = async <T>(
     callback: () => Promise<T>,
     defaultValue: T,
     maxTries: number,
     currentTry: number,
     backOffMs: number,
-): Promise<T> {
+): Promise<T> => {
     if (currentTry >= maxTries) {
         return Promise.resolve(defaultValue);
     }
