@@ -28,15 +28,17 @@ export type AsyncRequiredFluidObjectProvider<T> =  T extends undefined ? Record<
  * the IFluidObject properties as its type, mapped to an object that implements
  * the property or undefined.
  */
-export type AsyncOptionalFluidObjectProvider<T> =  T extends undefined ? Record<string, never> : {
-    [P in keyof T]?: Promise<T[P] | undefined>;
-};
+export type AsyncOptionalFluidObjectProvider<T> = T extends undefined
+    ? Record<string, never>
+    : {
+        [P in keyof T]?: Promise<T[P] | undefined>;
+    };
 
 /**
  * Combined type for Optional and Required Async Fluid object Providers
  */
-export type AsyncFluidObjectProvider<O, R=undefined>
-= AsyncOptionalFluidObjectProvider<O> & AsyncRequiredFluidObjectProvider<R>;
+export type AsyncFluidObjectProvider<O, R = undefined>
+    = AsyncOptionalFluidObjectProvider<O> & AsyncRequiredFluidObjectProvider<R>;
 
 /**
  * Multiple ways to provide a Fluid object.
