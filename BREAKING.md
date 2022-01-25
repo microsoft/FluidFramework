@@ -15,6 +15,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Removed `IOdspResolvedUrl.sharingLinkToRedeem`](#Removed-IOdspResolvedUrl.sharingLinkToRedeem)
 - [`readonly` removed from `IDeltaManager`, `DeltaManager`, and `DeltaManagerProxy`](#readonly-removed-from-IDeltaManager-and-DeltaManager-DeltaManagerProxy)
 - [codeDetails removed from Container](#codeDetails-removed-from-Container)
+- [wait() methods removed from map and directory](#wait-methods-removed-from-map-and-directory)
 
 ### `MessageType.Save` and code that handled it was removed
 The `Save` operation type was deprecated and has now been removed. This removes `MessageType.Save` from `protocol-definitions`, `save;${string}: ${string}` from `SummarizeReason` in the `container-runtime` package, and `MessageFactory.createSave()` from and `server-test-utils`.
@@ -29,13 +30,17 @@ The `readonly` property was deprecated and has now been removed from `IDeltaMana
 
 In release 0.53, the `codeDetails` member was removed from `IContainer`.  It is now also removed from `Container`.  To inspect the code details of a container, instead use the `getSpecifiedCodeDetails()` and `getLoadedCodeDetails()` methods.
 
+### `wait()` methods removed from map and directory
+
+The `wait()` methods on `ISharedMap` and `IDirectory` were deprecated in 0.55 and have now been removed.  See the [deprecation notice](#wait-methods-deprecated-on-map-and-directory) for migration advice if you currently use these APIs.
+
 ## 0.55 Breaking changes
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)
 - [`IChannel.summarize` split into sync and async](#IChannel.summarize-split-into-sync-and-async)
 - [`IFluidSerializer` moved to shared-object-base](#IFluidSerializer-moved-to-shared-object-base)
 - [Removed `IFluidSerializer` from `IFluidDataStoreRuntime`](#Removed-IFluidSerializer-from-IFluidDataStoreRuntime)
 - [`IFluidConfiguration` deprecated and `IFluidConfiguration` member removed from `ContainerRuntime`](#IFluidConfiguration-deprecated-and-IFluidConfiguration-member-removed-from-ContainerRuntime)
-- [`wait()` methods deprecated on map and directory](#wait()-methods-deprecated-on-map-and-directory)
+- [`wait()` methods deprecated on map and directory](#wait-methods-deprecated-on-map-and-directory)
 - [Remove Legacy Data Object and Factories](#Remove-Legacy-Data-Object-and-Factories)
 - [Removed `innerRequestHandler`](#Removed-innerRequestHandler)
 
