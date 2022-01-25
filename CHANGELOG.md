@@ -1,5 +1,20 @@
 # Change Log
 
+## 18.2.2
+
+* fix: correctly sort InversionKeys
+  * Associated pull request: [37447](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/37447)
+  * Commit: [181daa4d64b2d00a3b02914c78f964290d667d40](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/181daa4d64b2d00a3b02914c78f964290d667d40)
+* perf: Compress final IDs of overrides in serialized IdCompressor and remove override cluster optimization
+  * Associated pull request: [37440](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/37440)
+  * Commit: [e01149033daf0f1adb07ea0972268de44123fe1c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/e01149033daf0f1adb07ea0972268de44123fe1c)
+* feat: IdCompressor may use arbitrary strings as overrides
+  * Associated pull request: [37347](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/37347)
+  * Commit: [9b8892f6d6077efa354bc3e5a68764f2aa4c456f](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/9b8892f6d6077efa354bc3e5a68764f2aa4c456f)
+* fix: NumericUuid carrying
+  * Associated pull request: [37325](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/37325)
+  * Commit: [59b8b2bbaf9ae65cec421d35ccb30501ea7c06b8](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/59b8b2bbaf9ae65cec421d35ccb30501ea7c06b8)
+
 ## 18.0.0
 
 * refactor: BREAKING CHANGE: Template TraitLocation over ID
