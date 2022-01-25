@@ -100,11 +100,6 @@ export class ContainerContext implements IContainerContext {
         return this.taggedLogger;
     }
 
-    // will be removed after 0.55
-    public get id(): string {
-        return "";
-    }
-
     public get clientId(): string | undefined {
         return this.container.clientId;
     }
