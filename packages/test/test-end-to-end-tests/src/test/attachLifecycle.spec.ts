@@ -8,6 +8,7 @@ import {
     createLoader,
     ITestFluidObject,
     timeoutAwait,
+    timeoutPromise,
 } from "@fluidframework/test-utils";
 
 import {generatePairwiseOptions} from "@fluidframework/test-pairwise-generator";
@@ -15,6 +16,7 @@ import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { AttachState } from "@fluidframework/container-definitions";
 
 //these points are all after creation of all object at which any object can be attached
 const sharedPoints = [3,4,5];
@@ -23,7 +25,9 @@ const testConfigs =
     generatePairwiseOptions({
         containerAttachPoint:[0, ... sharedPoints],
         datastoreAttachPoint: [1, ... sharedPoints],
+        datastoreSaveAfterAttach: [true, false],
         ddsAttachPoint: [2, ... sharedPoints],
+        ddsSaveAfterAttach: [true, false],
     });
 
 describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
@@ -33,7 +37,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
         && tc.containerAttachPoint !== tc.ddsAttachPoint
         && tc.datastoreAttachPoint !== tc.ddsAttachPoint)
     ) {
-        it.only(`Validate attach orders: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
+        it(`Validate attach orders: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
             const provider  = getTestObjectProvider();
             let containerUrl: IResolvedUrl | undefined;
             {
@@ -54,15 +58,35 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
 
                 const ds = await initDataObject.context.containerRuntime.createDataStore("default");
                 const newDataObj = await requestFluidObject<ITestFluidObject>(ds, "/");
+                const attachDatastore = async ()=>{
+                    initDataObject.root.set("ds", newDataObj.handle);
+                    while(testConfig.datastoreSaveAfterAttach
+                        && initContainer.isDirty 
+                        && initContainer.attachState !== AttachState.Detached){
+                        await timeoutPromise<void>(
+                            (resolve)=>initContainer.once("saved", ()=>resolve()),
+                            {durationMs: this.timeout() / 2,errorMsg:"datastoreSaveAfterAttach timeout"});
+                    }
+                }
                 if(testConfig.datastoreAttachPoint === 1) {
                     // point 1 - at datastore create
-                    initDataObject.root.set("ds", newDataObj.handle);
+                    await attachDatastore()
                 }
 
                 const newMap = SharedMap.create(newDataObj.runtime);
+                const attachDds= async()=>{
+                    newDataObj.root.set("map",newMap.handle);
+                    while(testConfig.ddsSaveAfterAttach 
+                        && initContainer.isDirty 
+                        && initContainer.attachState !== AttachState.Detached){
+                            await timeoutPromise<void>(
+                                (resolve)=>initContainer.once("saved", ()=>resolve()),
+                                {durationMs: this.timeout() / 2,errorMsg:"ddsSaveAfterAttach timeout"});
+                    }
+                }
                 if(testConfig.ddsAttachPoint === 2) {
                     // point 2 - at dds create
-                    newDataObj.root.set("map",newMap.handle);
+                    await attachDds();
                 }
 
                 for(const i of sharedPoints) {
@@ -75,16 +99,18 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                         containerUrl = initContainer.resolvedUrl;
                     }
                     if(testConfig.datastoreAttachPoint === i) {
-                        initDataObject.root.set("ds", newDataObj.handle);
+                        await attachDatastore()
                     }
                     if(testConfig.ddsAttachPoint === i) {
-                        newDataObj.root.set("map",newMap.handle);
+                        await attachDds();
                     }
                 }
-                //wait for all ops to round trip
                 while(initContainer.isDirty){
-                    await new Promise<void>((resolve)=>initContainer.once("saved", ()=>resolve()));
+                    await timeoutPromise<void>(
+                        (resolve)=>initContainer.once("saved", ()=>resolve()),
+                        {durationMs: this.timeout() / 2,errorMsg:"final save timeout"});
                 }
+
                 initContainer.close();
             }
             {
