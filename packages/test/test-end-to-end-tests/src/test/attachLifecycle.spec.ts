@@ -14,7 +14,7 @@ import {
 import {generatePairwiseOptions} from "@fluidframework/test-pairwise-generator";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
 
@@ -125,24 +125,32 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
 
                 const initDataObject = await requestFluidObject<ITestFluidObject>(validationContainer, "default");
 
-                const newds = await (await timeoutAwait(
-                    initDataObject.root.wait<IFluidHandle<ITestFluidObject>>("ds"),
-                    {durationMs: this.timeout() / 2,errorMsg:"Datastore not available before timeout"})
-                ).get();
-
-                const newMap = await (await timeoutAwait(
-                        newds.root.wait<IFluidHandle<ISharedMap>>("map"),
-                        {durationMs: this.timeout() / 2,errorMsg:"Map not available before timeout"})
-                    ).get();
-
+                const newds =await (await waitKey<IFluidHandle<ITestFluidObject>>(initDataObject.root,"ds", this.timeout())).get();
+                
+                const newMap = await (await waitKey<IFluidHandle<ISharedMap>>( newds.root,"map", this.timeout())).get();
+                
                 for(const i of sharedPoints) {
                     assert.equal(
-                        await timeoutAwait(
-                            newMap.wait<number>(i.toString()),
-                            {durationMs: this.timeout() / 2,errorMsg:"Key not available before timeout"}),
+                        await waitKey<number>(newMap, i.toString(), this.timeout()),
                         i);
                 }
             }
         });
     }
 });
+
+
+async function waitKey<T>(map: ISharedMap, key:string, testTimeout: number): Promise<T>{
+    return timeoutPromise((resolve)=>{
+        if(!map.has(key)){
+            const waitFunc=(changed: IValueChanged)=>{
+                if(changed.key === key){
+                    map.off("valueChanged", waitFunc);
+                }
+            }
+            map.on("valueChanged", waitFunc);
+        }
+        return map.get<T>(key)
+    },
+    {durationMs: testTimeout / 2,errorMsg:`${key} not available before timeout`}));
+}
