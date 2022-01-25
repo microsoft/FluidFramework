@@ -166,7 +166,6 @@ export interface IContainerContext extends IDisposable {
 
     /**
      * @deprecated 0.56, will be removed in the next release
-     * @param warning
      */
     raiseContainerWarning(warning: ContainerWarning): void;
 

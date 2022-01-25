@@ -123,6 +123,11 @@
           "backCompat": false,
           "forwardCompat": false
         }
+      },
+      "0.55.0": {
+        "InterfaceDeclaration_IFluidDataStoreRuntime": {
+          "backCompat": false
+        }
       }
     }
   }

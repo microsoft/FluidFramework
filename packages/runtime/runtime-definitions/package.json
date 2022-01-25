@@ -155,6 +155,17 @@
         "InterfaceDeclaration_IFluidDataStoreContextDetached": {
           "backCompat": false
         }
+      },
+      "0.55.0": {
+        "InterfaceDeclaration_IContainerRuntimeBase": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IFluidDataStoreContext": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IFluidDataStoreContextDetached": {
+          "backCompat": false
+        }
       }
     }
   }
