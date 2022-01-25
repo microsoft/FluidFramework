@@ -23,14 +23,8 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     has(type: string, excludeParents?: boolean): boolean;
     // (undocumented)
     get IFluidDependencySynthesizer(): this;
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: No member was found with name "register"
-    //
-    // (undocumented)
     register<T extends keyof TMap = keyof TMap>(type: T, provider: FluidObjectProvider<Pick<TMap, T>>): void;
     synthesize<O, R = undefined | Record<string, never>>(optionalTypes: FluidObjectSymbolProvider<O>, requiredTypes: Required<FluidObjectSymbolProvider<R>>): AsyncFluidObjectProvider<O, R>;
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: No member was found with name "unregister"
-    //
-    // (undocumented)
     unregister(type: keyof TMap): void;
 }
 
