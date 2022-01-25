@@ -205,8 +205,6 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     // (undocumented)
     get outbound(): MockDeltaQueue<IDocumentMessage[]>;
     // (undocumented)
-    readonly readonly = false;
-    // (undocumented)
     readOnlyInfo: ReadOnlyInfo;
     // (undocumented)
     get serviceConfiguration(): IClientConfiguration;

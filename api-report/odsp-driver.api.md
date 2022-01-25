@@ -26,6 +26,12 @@ import { TokenFetcher } from '@fluidframework/odsp-driver-definitions';
 // @public
 export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined;
 
+// @public (undocumented)
+export enum ClpCompliantAppHeader {
+    // (undocumented)
+    isClpCompliantApp = "X-CLP-Compliant-App"
+}
+
 // @public
 export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createLinkType?: ShareLinkTypes): IRequest;
 
@@ -46,6 +52,12 @@ export function getLocatorFromOdspUrl(url: URL): OdspFluidDataStoreLocator | und
 
 // @public
 export function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefined>;
+
+// @public (undocumented)
+export interface IClpCompliantAppHeader {
+    // (undocumented)
+    [ClpCompliantAppHeader.isClpCompliantApp]: boolean;
+}
 
 // @public (undocumented)
 export interface ISharingLinkHeader {
@@ -126,7 +138,7 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
 }
 
 // @public
-export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, fetchBinarySnapshotFormat?: boolean): Promise<boolean>;
+export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, fetchBinarySnapshotFormat?: boolean): Promise<boolean>;
 
 // @public
 export interface ShareLinkFetcherProps {

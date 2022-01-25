@@ -84,11 +84,6 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
 
     summarizer: boolean;
 
-    /**
-     * @deprecated Use shareLinkInfo.sharingLinkToRedeem instead
-     */
-     sharingLinkToRedeem?: string;
-
     codeHint?: {
         // containerPackageName is used for adding the package name to the request headers.
         // This may be used for preloading the container package when loading Fluid content.
@@ -102,5 +97,7 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
      * Contains information about either sharing link created while creating a new file or
      * a redeemable share link created when loading an existing file
      */
-    shareLinkInfo?: ShareLinkInfoType
+    shareLinkInfo?: ShareLinkInfoType;
+
+    isClpCompliantApp?: boolean;
 }

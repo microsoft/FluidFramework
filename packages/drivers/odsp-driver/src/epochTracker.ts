@@ -18,13 +18,14 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { PerformanceEvent, isFluidError, normalizeError } from "@fluidframework/telemetry-utils";
-import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse } from "./odspUtils";
+import { fetchAndParseAsJSONHelper, fetchArray, getOdspResolvedUrl, IOdspResponse } from "./odspUtils";
 import {
     IOdspCache,
     INonPersistentCache,
     IPersistedFileCache,
  } from "./odspCache";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
+import { ClpCompliantAppHeader } from "./contractsPublic";
 
 export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" |
     "treesLatest" | "uploadSummary" | "push" | "versions";
@@ -245,11 +246,15 @@ export class EpochTracker implements IPersistedFileCache {
         addInBody: boolean,
         clientCorrelationId: string,
     ) {
+        const isClpCompliantApp = getOdspResolvedUrl(this.fileEntry.resolvedUrl).isClpCompliantApp;
         if (addInBody) {
             const headers: {[key: string]: string} = {};
             headers["X-RequestStats"] = clientCorrelationId;
             if (this.fluidEpoch !== undefined) {
                 headers["x-fluid-epoch"] = this.fluidEpoch;
+            }
+            if (isClpCompliantApp) {
+                headers[ClpCompliantAppHeader.isClpCompliantApp] = isClpCompliantApp.toString();
             }
             this.addParamInBody(fetchOptions, headers);
         } else {
@@ -263,6 +268,9 @@ export class EpochTracker implements IPersistedFileCache {
             addHeader("X-RequestStats", clientCorrelationId);
             if (this.fluidEpoch !== undefined) {
                 addHeader("x-fluid-epoch", this.fluidEpoch);
+            }
+            if (isClpCompliantApp) {
+                addHeader(ClpCompliantAppHeader.isClpCompliantApp, isClpCompliantApp.toString());
             }
         }
     }
