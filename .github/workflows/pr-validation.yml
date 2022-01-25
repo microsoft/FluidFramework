@@ -1,6 +1,6 @@
 name: "Fluid PR Validation"
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened]
     branches:
     - main
@@ -15,3 +15,13 @@ jobs:
       with:
         github_access_token: "${{ secrets.GITHUB_TOKEN }}"
         checks: "files,duppatterns,syntax"
+  assign_reviewer:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: open-telemetry/assign-reviewers-action@main
+      with:
+        config-file: '.github/code_owners.yml'
+        # repo-token: ${{ secrets.GITHUB_TOKEN }}
+        assign-users: false
+        request-reviews: false
+        request-user-reviews: false
