@@ -23,7 +23,7 @@ The `Save` operation type was deprecated and has now been removed. This removes 
 The `sharingLinkToRedeem` property is removed from the `IOdspResolvedUrl` interface. The property can be accesed from `IOdspResolvedUrl.shareLinkInfo` instead.
 
 ### Removed `PureDataObject.requestFluidObject_UNSAFE`
-The `requestFluidObject_UNSAFE` property is removed from the `PureDataObject`.
+The `requestFluidObject_UNSAFE` property is removed from the `PureDataObject`. If you still need to fallback on using URIs, you can utilize `handleFromLegacyUri`.
 
 ### Modified `PureDataObject.getFluidObjectFromDirectory`
 The `getFluidObjectFromDirectory` now expects callback that is only returning `IFluidHandle` or `undefined`. Returnig id (as `string`) is not supported as we want to encourage retreiving shared objects only via handles.
