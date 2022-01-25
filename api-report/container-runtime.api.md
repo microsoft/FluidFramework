@@ -128,8 +128,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     // (undocumented)
     get IContainerRuntime(): this;
-    // @deprecated (undocumented)
-    get id(): string;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     // (undocumented)
@@ -190,8 +188,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
-    get writeGCDataAtRoot(): boolean;
-}
+    }
 
 // @public (undocumented)
 export interface ContainerRuntimeMessage {
