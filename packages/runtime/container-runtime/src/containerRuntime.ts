@@ -1679,32 +1679,30 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    private async createDataStoreCore(
-        pkg: string | string[],
-        isRoot: boolean,
-        id: string,
-        props?: any,
-    ): Promise<IFluidDataStoreChannel> {
-        const fluidDataStore = await this._createDataStore(pkg, isRoot, id, props);
-        if (isRoot) {
-            fluidDataStore.bindToContext();
-        }
-
-        return fluidDataStore;
-    }
-
     public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
         const internalId = uuid();
         return channelToDataStore(
-            await this.createDataStoreCore(pkg, false /* isRoot */, internalId),
+            await this._createDataStore(pkg, false /* isRoot */, internalId),
             internalId,
             this,
             this.mc.logger);
     }
 
-    private async createAndAliasDataStore(pkg: string | string[], alias: string, props?: any): Promise<IDataStore> {
+    private async createRootDataStoreLegacy(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
+        const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
+        fluidDataStore.bindToContext();
+        return fluidDataStore;
+    }
+
+    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
+        return this._aliasingEnabled === true && this.attachState !== AttachState.Detached ?
+            this.createAndAliasDataStore(pkg, rootDataStoreId) :
+            this.createRootDataStoreLegacy(pkg, rootDataStoreId);
+    }
+
+    private async createAndAliasDataStore(pkg: string | string[], alias: string, props?: any): Promise<IFluidRouter> {
         const internalId = uuid();
-        const dataStore = await this.createDataStoreCore(pkg, false /* isRoot */, internalId, props);
+        const dataStore = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
         dataStore.bindToContext();
         const aliasedDataStore = channelToDataStore(dataStore, internalId, this, this.mc.logger);
         const result = await aliasedDataStore.trySetAlias(alias);
@@ -1713,12 +1711,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         return aliasedDataStore;
-    }
-
-    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
-        return this._aliasingEnabled === true && this.attachState === AttachState.Attached ?
-            this.createAndAliasDataStore(pkg, rootDataStoreId) :
-            this.createDataStoreCore(pkg, true /* isRoot */, rootDataStoreId);
     }
 
     public createDetachedRootDataStore(
@@ -1732,15 +1724,29 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.dataStores.createDetachedDataStoreCore(pkg, false);
     }
 
+    private async _createDataStoreWithPropsLegacy(
+        pkg: string | string[],
+        props?: any,
+        id = uuid(),
+        isRoot = false,
+    ): Promise<IFluidRouter> {
+        const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
+            Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
+        if (isRoot) {
+            fluidDataStore.bindToContext();
+        }
+        return fluidDataStore;
+    }
+
     public async _createDataStoreWithProps(
         pkg: string | string[],
         props?: any,
         id = uuid(),
         isRoot = false,
     ): Promise<IFluidRouter> {
-        return this._aliasingEnabled === true && isRoot && this.attachState === AttachState.Attached ?
+        return this._aliasingEnabled === true && isRoot && this.attachState !== AttachState.Detached ?
             this.createAndAliasDataStore(pkg, id, props) :
-            this.createDataStoreCore(pkg, isRoot, id, props);
+            this._createDataStoreWithPropsLegacy(pkg, props, id, isRoot);
     }
 
     private async _createDataStore(
@@ -1750,7 +1756,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         props?: any,
     ): Promise<IFluidDataStoreChannel> {
         return this.dataStores
-            ._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
+            ._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props)
+            .realize();
     }
 
     private canSendOps() {
