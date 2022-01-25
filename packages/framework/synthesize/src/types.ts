@@ -37,8 +37,8 @@ export type AsyncOptionalFluidObjectProvider<T> = T extends undefined
 /**
  * Combined type for Optional and Required Async Fluid object Providers
  */
-export type AsyncFluidObjectProvider<O, R=undefined>
-= AsyncOptionalFluidObjectProvider<O> & AsyncRequiredFluidObjectProvider<R>;
+export type AsyncFluidObjectProvider<O, R = undefined>
+    = AsyncOptionalFluidObjectProvider<O> & AsyncRequiredFluidObjectProvider<R>;
 
 /**
  * Multiple ways to provide a Fluid object.
