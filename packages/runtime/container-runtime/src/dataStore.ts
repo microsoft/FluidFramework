@@ -55,10 +55,22 @@ export const channelToDataStore = (
     logger: ITelemetryLogger,
 ): IDataStore => new DataStore(fluidDataStoreChannel, internalId, runtime, logger);
 
+enum AliasState {
+    Aliased = "Aliased",
+    Aliasing = "Aliasing",
+    None = "None",
+}
+
 class DataStore implements IDataStore {
+    private state: AliasState = AliasState.None;
+
     async trySetAlias(alias: string): Promise<boolean> {
         assert(this.runtime.attachState === AttachState.Attached, "Trying to submit message while detached!");
+        if (this.state !== AliasState.None) {
+            return false;
+        }
 
+        this.state = AliasState.Aliasing;
         this.fluidDataStoreChannel.bindToContext();
 
         const message: IDataStoreAliasMessage = {
@@ -68,8 +80,12 @@ class DataStore implements IDataStore {
 
         return this.ackBasedPromise<boolean>((resolve) => {
             this.runtime.submitDataStoreAliasOp(message, resolve);
+        }).then((result) => {
+            this.state = result ? AliasState.Aliased : AliasState.None;
+            return result;
         }).catch((error) => {
             this.logger.sendErrorEvent({ eventName: "AliasingException" }, error);
+            this.state = AliasState.None;
             return false;
         });
     }

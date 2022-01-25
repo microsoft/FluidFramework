@@ -214,7 +214,47 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
 
-        it("Create a root data store with an existing alias as an id breaks the container", async () => {
+        it("Aliasing a datastore twice will fail", async () => {
+            const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
+
+            const aliasResult1 = await ds1.trySetAlias(alias);
+            const aliasResult2 = await ds1.trySetAlias(alias);
+
+            assert(aliasResult1);
+            assert(!aliasResult2);
+
+            assert.ok(await getRootDataStore(dataObject1, alias));
+        });
+
+        it("Aliasing a previously aliased datastore will fail", async () => {
+            const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
+
+            const aliasResult1 = await ds1.trySetAlias(alias);
+            const aliasResult2 = await ds1.trySetAlias(alias + alias);
+
+            assert(aliasResult1);
+            assert(!aliasResult2);
+
+            assert.ok(await getRootDataStore(dataObject1, alias));
+        });
+
+        it("Aliasing a datastore which previously failed to alias will succeed", async () => {
+            const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
+            const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
+
+            const aliasResult1 = await ds1.trySetAlias(alias);
+            const aliasResult2 = await ds2.trySetAlias(alias);
+            const aliasResult3 = await ds2.trySetAlias(alias + alias);
+
+            assert(aliasResult1);
+            assert(!aliasResult2);
+            assert(aliasResult3);
+
+            assert.ok(await getRootDataStore(dataObject1, alias));
+            assert.ok(await getRootDataStore(dataObject1, alias + alias));
+        });
+
+        it("Creating a root data store with an existing alias as an id breaks the container", async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
             assert(await ds1.trySetAlias(alias));
@@ -236,7 +276,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(await dataCorruption);
         });
 
-        it("Create root datastore using a previously used alias breaks the container", async () => {
+        it("Creating a root datastore using a previously used alias breaks the container", async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             const ds = await runtimeOf(dataObject1).createDataStore(packageName);
             await ds.trySetAlias(alias);
