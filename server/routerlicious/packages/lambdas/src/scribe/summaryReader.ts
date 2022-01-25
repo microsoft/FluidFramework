@@ -33,18 +33,28 @@ export class SummaryReader implements ISummaryReader {
                 const wholeFlatSummary = await this.summaryStorage.getSummary(existingRef.object.sha);
                 const normalizedSummary = convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary);
 
-                // Parse specific fields from the downloaded summary
+                // Obtain IDs of specific fields from the downloaded summary
                 const attributesBlobId = normalizedSummary.snapshotTree.trees[".protocol"].blobs.attributes;
+                const scribeBlobId = normalizedSummary.snapshotTree.trees[".serviceProtocol"]?.blobs?.scribe;
+                const deliBlobId = normalizedSummary.snapshotTree.trees[".serviceProtocol"]?.blobs?.deli;
+                const opsBlobId = normalizedSummary.snapshotTree.trees[".logTail"]?.blobs?.logTail;
+
+                // The initial summary uploaded by Alfred has only .protocol. In other words, .serviceProtocol
+                // and .logTail would be both missing in that scenario and we should return the default summary
+                // state if that is the case.
+                if (!scribeBlobId && !deliBlobId && !opsBlobId) {
+                    summaryReaderMetric.success(`Returning default summary when trying to read initial whole summary`);
+                    return this.getDefaultSummaryState();
+                }
+
+                // Parse specific fields from the downloaded summary
                 const attributesContent = normalizedSummary.blobs.get(attributesBlobId);
-                const scribeBlobId = normalizedSummary.snapshotTree.trees[".serviceProtocol"].blobs.scribe;
                 const scribeContent = normalizedSummary.blobs.get(scribeBlobId);
-                const deliBlobId = normalizedSummary.snapshotTree.trees[".serviceProtocol"].blobs.deli;
                 const deliContent = normalizedSummary.blobs.get(deliBlobId);
-                const opsBlobId = normalizedSummary.snapshotTree.trees[".logTail"].blobs.logTail;
                 const opsContent = normalizedSummary.blobs.get(opsBlobId);
 
                 if (!attributesContent || !scribeContent || !deliContent || !opsContent) {
-                    throw new Error("Possible data corruption; summary data is missing important information.");
+                    throw new Error("Possible data corruption; whole summary data is missing important information");
                 }
 
                 const attributes = JSON.parse(bufferToString(attributesContent, "utf8")) as IDocumentAttributes;
@@ -72,7 +82,7 @@ export class SummaryReader implements ISummaryReader {
                     fromSummary: true,
                 };
             } catch (error: any) {
-                summaryReaderMetric.error(`Returning default summary`, error);
+                summaryReaderMetric.error(`Returning default summary due to error when reading whole summary`, error);
                 return this.getDefaultSummaryState();
             }
         } else {
@@ -80,10 +90,27 @@ export class SummaryReader implements ISummaryReader {
                 const existingRef = await this.summaryStorage.getRef(encodeURIComponent(this.documentId));
                 const [attributesContent, scribeContent, deliContent, opsContent] = await Promise.all([
                     this.summaryStorage.getContent(existingRef.object.sha, ".protocol/attributes"),
-                    this.summaryStorage.getContent(existingRef.object.sha, ".serviceProtocol/scribe"),
-                    this.summaryStorage.getContent(existingRef.object.sha, ".serviceProtocol/deli"),
-                    this.summaryStorage.getContent(existingRef.object.sha, ".logTail/logTail"),
+                    this.summaryStorage.getContent(existingRef.object.sha, ".serviceProtocol/scribe")
+                        .catch(() => undefined),
+                    this.summaryStorage.getContent(existingRef.object.sha, ".serviceProtocol/deli")
+                        .catch(() => undefined),
+                    this.summaryStorage.getContent(existingRef.object.sha, ".logTail/logTail")
+                        .catch(() => undefined),
                 ]);
+
+                // The initial summary uploaded by Alfred has only .protocol. In other words, .serviceProtocol
+                // and .logTail would be both missing in that scenario and we should return the default summary
+                // state if that is the case.
+                if (!scribeContent && !deliContent && !opsContent) {
+                    summaryReaderMetric.success(`Returning default summary when trying to read initial summary`);
+                    return this.getDefaultSummaryState();
+                }
+
+                // If only part of .serviceProtocol or .logTail are missing, then it means we have an error.
+                if (!scribeContent || !deliContent || !opsContent) {
+                    throw new Error("Possible data corruption; summary data is missing important information");
+                }
+
                 const attributes = JSON.parse(
                     toUtf8(attributesContent.content, attributesContent.encoding)) as IDocumentAttributes;
                 const scribe = toUtf8(scribeContent.content, scribeContent.encoding);
@@ -111,7 +138,7 @@ export class SummaryReader implements ISummaryReader {
                     fromSummary: true,
                 };
             } catch (error: any) {
-                summaryReaderMetric.error(`Returning default summary`, error);
+                summaryReaderMetric.error(`Returning default summary due to error when reading summary`, error);
                 return this.getDefaultSummaryState();
             }
         }
