@@ -417,14 +417,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc IDirectory.wait}
-     * @deprecated 0.55 - This method will be removed in an upcoming release.  See BREAKING.md for migration options.
-     */
-    public async wait<T = any>(key: string): Promise<T> {
-        return this.root.wait<T>(key);
-    }
-
-    /**
      * {@inheritDoc IDirectory.set}
      */
     public set<T = any>(key: string, value: T): this {
@@ -897,31 +889,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      */
     public get<T = any>(key: string): T | undefined {
         return this._storage.get(key)?.value as T | undefined;
-    }
-
-    /**
-     * {@inheritDoc IDirectory.wait}
-     * @deprecated 0.55 - This method will be removed in an upcoming release.  See BREAKING.md for migration options.
-     */
-    public async wait<T = any>(key: string): Promise<T> {
-        // Return immediately if the value already exists
-        if (this._storage.has(key)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this._storage.get(key)!.value as T;
-        }
-
-        // Otherwise subscribe to changes
-        return new Promise<T>((resolve, reject) => {
-            const callback = (changed: IDirectoryValueChanged) => {
-                if (this.absolutePath === changed.path && key === changed.key) {
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    resolve(this._storage.get(key)!.value as T);
-                    this.directory.removeListener("valueChanged", callback);
-                }
-            };
-
-            this.directory.on("valueChanged", callback);
-        });
     }
 
     /**
