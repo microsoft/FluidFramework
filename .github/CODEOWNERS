@@ -7,9 +7,6 @@
 # Files in the root
 /*.*                                                                      @microsoft/fluid-cr-core
 
-# CODEOWNERS anywhere in the repo
-CODEOWNERS                                                                @microsoft/fluid-cr-infra
-
 /.devcontainer/                                                           @microsoft/fluid-cr-infra
 /.github/                                                                 @microsoft/fluid-cr-infra
 /.github/ISSUE_TEMPLATE/                                                  @microsoft/fluid-cr-docs
