@@ -97,5 +97,7 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
      * Contains information about either sharing link created while creating a new file or
      * a redeemable share link created when loading an existing file
      */
-    shareLinkInfo?: ShareLinkInfoType
+    shareLinkInfo?: ShareLinkInfoType;
+
+    isClpCompliantApp?: boolean;
 }

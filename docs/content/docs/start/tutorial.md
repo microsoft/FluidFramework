@@ -87,7 +87,7 @@ Because both the `getContainer` and `createContainer` methods are async, the `st
 ```js
 async function start() {
   if (location.hash) {
-    await loadExistingDice(location.hash.substring[1])
+    await loadExistingDice(location.hash.substring(1))
   } else {
     const id = await createNewDice();
     location.hash = id;
@@ -117,7 +117,7 @@ diceTemplate.innerHTML = `
   </div>
 `
 function renderDiceRoller(diceMap, elem) {
-    elem.appendChild(template.content.cloneNode(true));
+    elem.appendChild(diceTemplate.content.cloneNode(true));
     const rollButton = elem.querySelector(".roll");
     const dice = elem.querySelector(".dice");
 

@@ -3,48 +3,34 @@
  * Licensed under the MIT License.
  */
 
-/**
- * Gets the length of the query string portion of a url.
- * @param url The full url
- */
-function getQueryStringLength(url: string): number {
-    const queryParamStart = url.indexOf("?");
-
-    if (queryParamStart === -1) {
-        return 0;
-    }
-
-    return url.length - queryParamStart - 1;
-}
-
-// eslint-disable-next-line max-len
-export function getUrlAndHeadersWithAuth(url: string, token: string | null): { url: string, headers: { [index: string]: string } } {
+export function getUrlAndHeadersWithAuth(
+    url: string,
+    token: string | null,
+    forceAccessTokenViaAuthorizationHeader: boolean,
+): { url: string, headers: { [index: string]: string } } {
     if (!token || token.length === 0) {
         return { url, headers: {} };
     }
 
-    const queryParamStart = url.indexOf("?");
-
-    // Determine if we need to add ?, &, or nothing (if the url ends with ?)
-    let tokenQueryParam = queryParamStart === -1 ? "?" : (queryParamStart !== url.length - 1 ? `&` : "");
-
-    const tokenIsQueryParam = token.startsWith("?");
-    if (tokenIsQueryParam) {
-        // The token itself is a query param
-        tokenQueryParam += token.substring(1);
-    } else {
-        tokenQueryParam += `access_token=${encodeURIComponent(token)}`;
-    }
-
-    // ODSP APIs have a limitation that the query string cannot exceed 2048 characters.
-    // We try to stick the access token in the URL to make it a simple XHR request and avoid an options call.
-    // If the query string exceeds 2048, we have to fall back to sending the access token as a header, which
-    // has a negative performance implication as it adds a performance overhead.
-    if (tokenIsQueryParam || getQueryStringLength(url + tokenQueryParam) <= 2048) {
-        return {
-            headers: {},
-            url: url + tokenQueryParam,
-        };
+    if (!forceAccessTokenViaAuthorizationHeader) {
+        // Pass access token via query string: this will make request be treated as 'simple' request
+        // which does not require OPTIONS call as part of CORS check.
+        const urlWithAccessTokenInQueryString = new URL(url);
+        // IMPORTANT: Do not apply encodeURIComponent to token, param value is automatically encoded
+        // when set via URLSearchParams class
+        urlWithAccessTokenInQueryString.searchParams.set("access_token", token);
+        // ODSP APIs have a limitation that the query string cannot exceed 2048 characters.
+        // If the query string exceeds 2048, we have to fall back to sending the access token as a header, which
+        // has a negative performance implication as it adds a performance overhead.
+        // NOTE: URL.search.length value includes '?' symbol and it is unclear whether backend logic which enforces
+        // query length limit accounts for it. This logic errs on side of caution and includes that key in overall
+        // query length.
+        if (urlWithAccessTokenInQueryString.search.length <= 2048) {
+            return {
+                headers: {},
+                url: urlWithAccessTokenInQueryString.href,
+            };
+        }
     }
 
     return {

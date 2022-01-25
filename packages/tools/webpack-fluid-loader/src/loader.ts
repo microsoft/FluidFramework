@@ -266,6 +266,7 @@ export async function start(
                 await urlResolver.resolve({ url: documentUrl }),
                 async () => options.odspAccessToken,
                 odspPersistantCache,
+                false /** forceAccessTokenViaAuthorizationHeader */,
                 new BaseTelemetryNullLogger(),
                 undefined,
             );

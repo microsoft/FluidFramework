@@ -182,20 +182,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get readOnlyInfo() { return this.connectionManager.readOnlyInfo; }
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
-    /**
-     * Tells if container is in read-only mode.
-     * Data stores should listen for "readonly" notifications and disallow user
-     * making changes to data stores.
-     * Readonly state can be because of no storage write permission,
-     * or due to host forcing readonly mode for container.
-     * It is undefined if we have not yet established websocket connection
-     * and do not know if user has write access to a file.
-     * @deprecated - use readOnlyInfo
-     */
-    public get readonly() {
-        return this.readOnlyInfo.readonly;
-    }
-
     public submit(type: MessageType, contents: any, batch = false, metadata?: any) {
         // Start adding trace for the op.
         const traces: ITrace[] = [
