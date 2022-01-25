@@ -29,22 +29,21 @@ The `readonly` property was deprecated and has now been removed from `IDeltaMana
 DependencyContainer now takes a generic argument, as it is no longer directly couple to IFluidObject. The ideal pattern here would be directly pass the provider or FluidObject interfaces you will register. As a short term solution you could also pass IFluidObject, but IFluidObject is deprecated, so will need to be removed if used here. 
 Examples:
 ``` typescript
-    // the old way
-    const dc = new DependencyContainer();
-    dc.register(IFluidHTMLView, MockLoadable());
+// the old way
+const dc = new DependencyContainer();
+dc.register(IFluidHTMLView, MockLoadable());
 
-    // FluidObject option
-    const dc = new DependencyContainer<FluidObject<IFluidHTMLView>>();
-    dc.register(IFluidHTMLView, MockLoadable());
+// FluidObject option
+const dc = new DependencyContainer<FluidObject<IFluidHTMLView>>();
+dc.register(IFluidHTMLView, MockLoadable());
 
-    // Provider option
-    const dc = new DependencyContainer<IProvideFluidHTMLView>();
-    dc.register(IFluidHTMLView, MockLoadable());
+// Provider option
+const dc = new DependencyContainer<IProvideFluidHTMLView>();
+dc.register(IFluidHTMLView, MockLoadable());
 
-    // Short term IFluidObject option
-    const dc = new DependencyContainer<IFluidObject>();
-    dc.register(IFluidHTMLView, MockLoadable());
-
+// Short term IFluidObject option
+const dc = new DependencyContainer<IFluidObject>();
+dc.register(IFluidHTMLView, MockLoadable());
 ```
 
 The following members have been removed from IFluidDependencySynthesizer:
