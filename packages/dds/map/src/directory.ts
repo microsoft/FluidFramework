@@ -4,12 +4,9 @@
  */
 
 import { assert,TypedEventEmitter } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
-    ITree,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -19,7 +16,9 @@ import {
     IChannelServices,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { IFluidSerializer, SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import * as path from "path-browserify";
 import {
     IDirectory,
@@ -204,10 +203,10 @@ export interface IDirectoryNewStorageFormat {
     content: IDirectoryDataObject;
 }
 
-function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): ITree {
+function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): ISummaryTreeWithStats {
     const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
 
-    const tree: ITree = { entries: [] };
+    const builder = new SummaryTreeBuilder();
     let counter = 0;
     const blobs: string[] = [];
 
@@ -241,7 +240,7 @@ function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): I
                 const blobName = `blob${counter}`;
                 counter++;
                 blobs.push(blobName);
-                addBlobToTree(tree, blobName, extraContent);
+                builder.addBlob(blobName, JSON.stringify(extraContent));
             } else {
                 currentSubDirObject.storage[key] = result;
             }
@@ -261,9 +260,9 @@ function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): I
         blobs,
         content,
     };
-    addBlobToTree(tree, snapshotFileName, newFormat);
+    builder.addBlob(snapshotFileName, JSON.stringify(newFormat));
 
-    return tree;
+    return builder.getSummaryTree();
 }
 
 /**
@@ -419,6 +418,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 
     /**
      * {@inheritDoc IDirectory.wait}
+     * @deprecated 0.55 - This method will be removed in an upcoming release.  See BREAKING.md for migration options.
      */
     public async wait<T = any>(key: string): Promise<T> {
         return this.root.wait<T>(key);
@@ -560,10 +560,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
      * @internal
      */
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         return serializeDirectory(this.root, serializer);
     }
 
@@ -901,6 +901,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
     /**
      * {@inheritDoc IDirectory.wait}
+     * @deprecated 0.55 - This method will be removed in an upcoming release.  See BREAKING.md for migration options.
      */
     public async wait<T = any>(key: string): Promise<T> {
         // Return immediately if the value already exists

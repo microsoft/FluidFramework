@@ -19,6 +19,8 @@ import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
 import { loadSummarizer, TestDataObject, submitAndAckSummary, getGCStateFromSummary } from "./mockSummarizerClient";
 
@@ -38,13 +40,15 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         summaryOptions: { disableSummaries: true },
         gcOptions: { gcAllowed: true, writeDataAtRoot: true },
     };
+    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+        runtime.IFluidHandleContext.resolveHandle(request);
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         dataObjectFactory,
         [
             [dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
         ],
         undefined,
-        undefined,
+        [innerRequestHandler],
         runtimeOptions,
     );
 
@@ -105,6 +109,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         assert(latestUploadedSummary !== undefined, "Did not get a summary");
 
         const gcState = getGCStateFromSummary(latestUploadedSummary);
+        assert(gcState !== undefined, "GC tree is not available in the summary");
         const nodeTimestamps: Map<string, number | undefined> = new Map();
         for (const [nodeId, nodeData] of Object.entries(gcState.gcNodes)) {
             nodeTimestamps.set(nodeId.slice(1), nodeData.unreferencedTimestampMs);

@@ -13,11 +13,11 @@ import { IEventProvider } from '@fluidframework/common-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
+import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ITree } from '@fluidframework/protocol-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public @sealed
@@ -47,6 +47,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     hasSubDirectory(subdirName: string): boolean;
     set<T = any>(key: string, value: T): this;
     subdirectories(): IterableIterator<[string, IDirectory]>;
+    // @deprecated
     wait<T = any>(key: string): Promise<T>;
 }
 
@@ -119,6 +120,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     get<T = any>(key: string): T | undefined;
     set<T = any>(key: string, value: T): this;
+    // @deprecated
     wait<T = any>(key: string): Promise<T>;
 }
 
@@ -198,12 +200,13 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     set<T = any>(key: string, value: T): this;
     get size(): number;
-    // @internal (undocumented)
-    protected snapshotCore(serializer: IFluidSerializer): ITree;
     subdirectories(): IterableIterator<[string, IDirectory]>;
     // @internal
     submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void;
+    // @internal (undocumented)
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
+    // @deprecated
     wait<T = any>(key: string): Promise<T>;
 }
 
@@ -236,8 +239,9 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     set(key: string, value: any): this;
     get size(): number;
     // @internal (undocumented)
-    protected snapshotCore(serializer: IFluidSerializer): ITree;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
+    // @deprecated
     wait<T = any>(key: string): Promise<T>;
 }
 

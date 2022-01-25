@@ -1557,6 +1557,7 @@ declare function get_old_EnumDeclaration_MessageType():
 declare function use_current_EnumDeclaration_MessageType(
     use: current.MessageType);
 use_current_EnumDeclaration_MessageType(
+    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_MessageType());
 
 /*

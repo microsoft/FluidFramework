@@ -11,6 +11,7 @@ import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { getOdspResolvedUrl } from "./odspUtils";
 import { getHashedDocumentId } from "./odspPublicUtils";
+import { ClpCompliantAppHeader } from "./contractsPublic";
 
 function getUrlBase(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
     const siteOrigin = new URL(siteUrl).origin;
@@ -101,6 +102,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 },
                 fileVersion: undefined,
                 shareLinkInfo,
+                isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
             };
         }
         const { siteUrl, driveId, itemId, path, containerPackageName, fileVersion } = decodeOdspUrl(request.url);
@@ -142,6 +144,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 containerPackageName,
             },
             fileVersion,
+            isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
         };
     }
 

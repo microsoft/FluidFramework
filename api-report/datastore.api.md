@@ -20,7 +20,6 @@ import { IFluidDataStoreRuntimeEvents } from '@fluidframework/datastore-definiti
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
@@ -86,8 +85,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get IFluidHandleContext(): this;
     // (undocumented)
     get IFluidRouter(): this;
-    // (undocumented)
-    get IFluidSerializer(): IFluidSerializer;
     // (undocumented)
     get isAttached(): boolean;
     static load(context: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean): FluidDataStoreRuntime;

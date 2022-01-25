@@ -43,7 +43,6 @@ import {
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
     FluidDataStoreRegistryEntry,
-    gcBlobKey,
     IAttachMessage,
     IFluidDataStoreChannel,
     IFluidDataStoreContext,
@@ -51,6 +50,7 @@ import {
     IFluidDataStoreContextEvents,
     IFluidDataStoreRegistry,
     IGarbageCollectionData,
+    IGarbageCollectionDetailsBase,
     IGarbageCollectionSummaryDetails,
     IInboundSignalMessage,
     IProvideFluidDataStoreFactory,
@@ -189,11 +189,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.disableIsolatedChannels;
     }
 
-    /** Tells whether GC data will be written at the root of the summary tree. If so, data store should not write it. */
-    protected get writeGCDataAtRoot(): boolean {
-        return this._containerRuntime.writeGCDataAtRoot;
-    }
-
     protected registry: IFluidDataStoreRegistry | undefined;
 
     protected detachedRuntimeCreation = false;
@@ -248,7 +243,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
             async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
-            async () => this.getInitialGCSummaryDetails(),
+            async () => this.getBaseGCDetails(),
         );
 
         this.subLogger = ChildLogger.create(this.logger, "FluidDataStoreContext");
@@ -421,11 +416,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
         const attributes = createAttributes(pkg, isRootDataStore, this.disableIsolatedChannels);
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
-
-        // Add GC data to the summary if it's not written at the root.
-        if (!this.writeGCDataAtRoot) {
-            addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(this.summarizerNode.getGCSummaryDetails()));
-        }
 
         // If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob
         // size in the summary stats with the blobs size of this data store.
@@ -652,7 +642,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      */
     public abstract setRoot(): void;
 
+    /**
+     * @deprecated - Renamed to getBaseGCDetails().
+     */
     public abstract getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
+
+    public abstract getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
         assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
@@ -679,7 +674,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return (
             summarizeInternal: SummarizeInternalFn,
             getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-            getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+            getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
         ) => this.summarizerNode.createChild(
             summarizeInternal,
             id,
@@ -687,7 +682,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             // DDS will not create failure summaries
             { throwOnFailure: true },
             getGCDataFn,
-            getInitialGCSummaryDetailsFn,
+            getBaseGCDetailsFn,
         );
     }
 
@@ -698,11 +693,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
 export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     private isRootDataStore: boolean | undefined;
+    private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
 
     constructor(
         id: string,
         private readonly initSnapshotValue: ISnapshotTree | string | undefined,
-        private readonly getBaseSummaryGCDetails: () => Promise<IGarbageCollectionSummaryDetails | undefined>,
+        getBaseGCDetails: () => Promise<IGarbageCollectionDetailsBase | undefined>,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: FluidObject,
@@ -723,6 +719,10 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             },
             pkg,
         );
+
+        this.baseGCDetailsP = new LazyPromise<IGarbageCollectionDetailsBase>(async () => {
+            return (await getBaseGCDetails()) ?? {};
+        });
     }
 
     private readonly initialSnapshotDetailsP =  new LazyPromise<ISnapshotDetails>(async () => {
@@ -787,16 +787,19 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         };
     });
 
-    private readonly gcDetailsInInitialSummaryP = new LazyPromise<IGarbageCollectionSummaryDetails>(async () => {
-        return (await this.getBaseSummaryGCDetails()) ?? {};
-    });
-
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         return this.initialSnapshotDetailsP;
     }
 
+    /**
+     * @deprecated - Renamed to getBaseGCDetails.
+     */
     public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
-        return this.gcDetailsInInitialSummaryP;
+        return this.getBaseGCDetails();
+    }
+
+    public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
+        return this.baseGCDetailsP;
     }
 
     public generateAttachMessage(): IAttachMessage {
@@ -878,11 +881,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         );
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
-        // Add GC data to the summary if it's not written at the root.
-        if (!this.writeGCDataAtRoot) {
-            addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(this.summarizerNode.getGCSummaryDetails()));
-        }
-
         // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
         const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
 
@@ -926,7 +924,15 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         };
     }
 
+    /**
+     * @deprecated - Renamed to getBaseGCDetails.
+     */
     public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
+        // Local data store does not have initial summary.
+        return {};
+    }
+
+    public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
         // Local data store does not have initial summary.
         return {};
     }

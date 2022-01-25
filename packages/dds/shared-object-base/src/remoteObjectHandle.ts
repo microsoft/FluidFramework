@@ -12,7 +12,7 @@ import {
     FluidObject,
     IFluidRouter,
 } from "@fluidframework/core-interfaces";
-import { create404Response, exceptionToResponse, responseToException } from "./dataStoreHelpers";
+import { create404Response, exceptionToResponse, responseToException } from "@fluidframework/runtime-utils";
 
 /**
  * This handle is used to dynamically load a Fluid object on a remote client and is created on parsing a serialized

@@ -58,11 +58,11 @@
     "markdownlint-rule-emphasis-style": "^1.0.1",
     "markdownlint-rule-github-internal-links": "^0.0.2",
     "markdownlint-rule-helpers": "^0.15.0",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^2.6.7",
     "replace-in-file": "^6.2.0",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.5",
     "serve": "^12.0.0",
-    "shelljs": "^0.8.4"
+    "shelljs": "^0.8.5"
   }
 }

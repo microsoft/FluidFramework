@@ -37,8 +37,6 @@ export class EnumProperty extends Int32Property {
         this._data = this._enumDictionary ? this._enumDictionary.defaultValue : 0;
     };
 
-    _castFunctor = _castFunctors.Int32;
-
     /**
      * Evaluates enum properties as primitives.
      * @return {boolean} true since Enum properties are primitives.
@@ -119,3 +117,5 @@ export class EnumProperty extends Int32Property {
         return this._enumDictionary.enumEntriesById;
     };
 }
+EnumProperty.prototype._typeid = 'Enum';
+EnumProperty.prototype._castFunctor = _castFunctors.Int32;

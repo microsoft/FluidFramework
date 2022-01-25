@@ -40,7 +40,7 @@ import {
     getWithRetryForTokenRefresh,
     ISnapshotContents,
 } from "./odspUtils";
-import { EpochTracker } from "./epochTracker";
+import { defaultCacheExpiryTimeoutMs, EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { FlushResult } from "./odspDocumentDeltaConnection";
 
@@ -167,6 +167,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         // Note that duplication of content should not have significant impact for bytes over wire as
         // compression of http payload mostly takes care of it, but it does impact storage size and in-memory sizes.
         minBlobSize: 2048,
+        maximumCacheDurationMs: defaultCacheExpiryTimeoutMs,
     };
 
     private readonly commitCache: Map<string, api.ISnapshotTree> = new Map();
@@ -224,7 +225,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
         this.attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
         this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
-        this.odspSummaryUploadManager = new OdspSummaryUploadManager(this.snapshotUrl, getStorageToken, logger, epochTracker);
+        this.odspSummaryUploadManager = new OdspSummaryUploadManager(
+            this.snapshotUrl,
+            getStorageToken,
+            logger,
+            epochTracker,
+            !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+        );
     }
 
     public get repositoryUrl(): string {
@@ -236,7 +243,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         const response = await getWithRetryForTokenRefresh(async (options) => {
             const storageToken = await this.getStorageToken(options, "CreateBlob");
-            const { url, headers } = getUrlAndHeadersWithAuth(`${this.attachmentPOSTUrl}/content`, storageToken);
+            const { url, headers } = getUrlAndHeadersWithAuth(
+                `${this.attachmentPOSTUrl}/content`,
+                storageToken,
+                !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+            );
             headers["Content-Type"] = "application/octet-stream";
 
             return PerformanceEvent.timedExecAsync(
@@ -279,7 +290,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             blob = await getWithRetryForTokenRefresh(async (options) => {
                 const storageToken = await this.getStorageToken(options, "GetBlob");
                 const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobId)}/content`;
-                const { url, headers } = getUrlAndHeadersWithAuth(unAuthedUrl, storageToken);
+                const { url, headers } = getUrlAndHeadersWithAuth(
+                    unAuthedUrl,
+                    storageToken,
+                    !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                );
 
                 return PerformanceEvent.timedExecAsync(
                     this.logger,
@@ -495,7 +510,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         return getWithRetryForTokenRefresh(async (options) => {
             const storageToken = await this.getStorageToken(options, "GetVersions");
-            const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`, storageToken);
+            const { url, headers } = getUrlAndHeadersWithAuth(
+                `${this.snapshotUrl}/versions?count=${count}`,
+                storageToken,
+                !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+            );
 
             // Fetch the latest snapshot versions for the document
             const response = await PerformanceEvent.timedExecAsync(
@@ -594,11 +613,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.odspResolvedUrl,
                 this.getStorageToken,
                 snapshotOptions,
+                !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
                 this.logger,
                 snapshotDownloader,
                 putInCache,
                 removeEntries,
-                this.hostPolicy.enableRedeemFallback);
+                this.hostPolicy.enableRedeemFallback,
+            );
             return odspSnapshot;
         } catch (error) {
             const errorType = error.errorType;
@@ -617,11 +638,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     this.odspResolvedUrl,
                     this.getStorageToken,
                     snapshotOptionsWithoutBlobs,
+                    !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
                     this.logger,
                     snapshotDownloader,
                     putInCache,
                     removeEntries,
-                    this.hostPolicy.enableRedeemFallback);
+                    this.hostPolicy.enableRedeemFallback,
+                );
                 return odspSnapshot;
             }
             throw error;
@@ -729,7 +752,15 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         "snapshotTree",
                     );
                 };
-                const snapshot = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger, snapshotDownloader);
+                const snapshot = await fetchSnapshot(
+                    this.snapshotUrl!,
+                    storageToken,
+                    id,
+                    this.fetchFullSnapshot,
+                    !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                    this.logger,
+                    snapshotDownloader,
+                );
                 let treeId = "";
                 if (snapshot.snapshotTree) {
                     assert(snapshot.snapshotTree.id !== undefined, 0x222 /* "Root tree should contain the id!!" */);

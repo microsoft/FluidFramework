@@ -5,9 +5,11 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage, ITree, MessageType } from "@fluidframework/protocol-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Trace } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
@@ -873,29 +875,27 @@ export class Client {
         return new MergeTreeTextHelper(this.mergeTree);
     }
 
-    // TODO: Remove `catchUpMsgs` once new snapshot format is adopted as default.
-    //       (See https://github.com/microsoft/FluidFramework/issues/84)
-    public snapshot(
+    public summarize(
         runtime: IFluidDataStoreRuntime,
         handle: IFluidHandle,
         serializer: IFluidSerializer,
         catchUpMsgs: ISequencedDocumentMessage[],
-    ): ITree {
+    ): ISummaryTreeWithStats {
         const deltaManager = runtime.deltaManager;
         const minSeq = deltaManager.minimumSequenceNumber;
 
         // Catch up to latest MSN, if we have not had a chance to do it.
         // Required for case where FluidDataStoreRuntime.attachChannel()
-        // generates snapshot right after loading data store.
+        // generates summary right after loading data store.
 
         this.updateSeqNumbers(minSeq, deltaManager.lastSequenceNumber);
 
-        // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
+        // One of the summaries (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
         // Not sure why - need to catch it sooner
         assert(this.getCollabWindow().minSeq === minSeq,
             0x03e /* "minSeq mismatch between collab window and delta manager!" */);
 
-        // TODO: Remove options flag once new snapshot format is adopted as default.
+        // Must continue to support legacy
         //       (See https://github.com/microsoft/FluidFramework/issues/84)
         if (this.mergeTree.options?.newMergeTreeSnapshotFormat === true) {
             assert(

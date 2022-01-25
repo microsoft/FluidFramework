@@ -130,7 +130,7 @@ function createCachedResolver(resolver: IUrlResolver) {
 }
 
 export interface ILoaderOptions extends ILoaderOptions1{
-    summarizeProtocolTree?: true,
+    summarizeProtocolTree?: boolean,
 }
 
 /**
@@ -179,7 +179,7 @@ export interface ILoaderProps {
     readonly urlResolver: IUrlResolver;
     /**
      * The document service factory take the Fluid url provided
-     * by the resolved url and constucts all the necessary services
+     * by the resolved url and constructs all the necessary services
      * for communication with the container's server.
      */
     readonly documentServiceFactory: IDocumentServiceFactory;
@@ -235,7 +235,7 @@ export interface ILoaderServices {
     readonly urlResolver: IUrlResolver;
     /**
      * The document service factory take the Fluid url provided
-     * by the resolved url and constucts all the necessary services
+     * by the resolved url and constructs all the necessary services
      * for communication with the container's server.
      */
     readonly documentServiceFactory: IDocumentServiceFactory;

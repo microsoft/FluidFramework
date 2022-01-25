@@ -4,7 +4,7 @@
  */
 
 import { LeafTask } from "./leafTask";
-import { TscTask, TscDependentTask } from "./tscTask";
+import { TscDependentTask } from "./tscTask";
 import { existsSync, readFileSync } from "fs";
 import * as path from "path";
 import * as JSON5 from "json5";
@@ -82,8 +82,11 @@ export class EsLintTask extends LintBaseTask {
     }
 
     protected get useWorker() {
-        // eslint can't use worker thread as it needs to change the current working directory
-        return this.node.buildContext.workerPool?.useWorkerThreads === false;
+        if (this.command === "eslint --format stylish src") {
+            // eslint can't use worker thread as it needs to change the current working directory
+            return this.node.buildContext.workerPool?.useWorkerThreads === false;
+        }
+        return false;
     }
 }
 

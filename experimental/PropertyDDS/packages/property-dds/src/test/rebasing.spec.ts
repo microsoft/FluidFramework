@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import * as crypto from "crypto";
 import { expect } from "chai";
-import { IContainer, ILoader, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";

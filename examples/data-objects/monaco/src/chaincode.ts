@@ -127,7 +127,10 @@ export class MonacoRunner extends DataObject implements
         // outputDiv.style.width = "50%";
         // hostWrapper.appendChild(outputDiv);
 
-        const textHandle = await this.root.wait<IFluidHandle<SharedString>>("text");
+        const textHandle = this.root.get<IFluidHandle<SharedString>>("text");
+        if (textHandle === undefined) {
+            throw new Error("Text improperly initialized");
+        }
         const text = await textHandle.get();
 
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);

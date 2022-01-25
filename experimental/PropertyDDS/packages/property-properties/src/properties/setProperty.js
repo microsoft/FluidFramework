@@ -32,7 +32,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
      * @category Other Collections
      */
     constructor(in_params, in_scope) {
-        super({ typeid: 'NamedProperty', ...in_params });
+        super(in_params);
 
         this._scope = in_scope;
 
@@ -40,8 +40,6 @@ export class SetProperty extends IndexedCollectionBaseProperty {
         this._dynamicChildren = {};
     };
 
-
-    get _context() { return 'set'; }
     // A set property falls back to NamedProperty, if none is specified
 
     /**
@@ -353,3 +351,6 @@ export class SetProperty extends IndexedCollectionBaseProperty {
     };
 
 }
+
+SetProperty.prototype._typeid = 'NamedProperty';
+SetProperty.prototype._context = 'set';

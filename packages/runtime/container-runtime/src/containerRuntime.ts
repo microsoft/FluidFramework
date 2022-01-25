@@ -7,7 +7,6 @@ import { EventEmitter } from "events";
 import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     FluidObject,
-    IFluidConfiguration,
     IFluidHandle,
     IFluidHandleContext,
     IFluidObject,
@@ -51,7 +50,6 @@ import {
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
 import {
-    CreateProcessingError,
     DataCorruptionError,
     GenericError,
     UsageError,
@@ -77,7 +75,7 @@ import {
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
     IGarbageCollectionData,
-    IGarbageCollectionSummaryDetails,
+    IGarbageCollectionDetailsBase,
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelope,
@@ -294,19 +292,21 @@ type IRuntimeMessageMetadata = undefined | {
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
 
+export enum RuntimeMessage {
+    FluidDataStoreOp = "component",
+    Attach = "attach",
+    ChunkedOp = "chunkedOp",
+    BlobAttach = "blobAttach",
+    Rejoin = "rejoin",
+    Alias = "alias",
+    Operation = "op",
+}
+
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-    switch (message.type) {
-        case ContainerMessageType.FluidDataStoreOp:
-        case ContainerMessageType.ChunkedOp:
-        case ContainerMessageType.Attach:
-        case ContainerMessageType.Alias:
-        case ContainerMessageType.BlobAttach:
-        case ContainerMessageType.Rejoin:
-        case MessageType.Operation:
-            return true;
-        default:
-            return false;
+    if ((Object.values(RuntimeMessage) as string[]).includes(message.type)) {
+        return true;
     }
+    return false;
 }
 
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
@@ -608,6 +608,7 @@ export function getDeviceSpec() {
     }
     return {};
 }
+
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
@@ -756,13 +757,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return runtime;
     }
 
-    /**
-    * @deprecated This will be removed in a later release. Deprecated in 0.53
-    */
-    public get id(): string {
-        return this.context.id;
-    }
-
     public get options(): ILoaderOptions {
         return this.context.options;
     }
@@ -901,14 +895,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly dataStores: DataStores;
 
     /**
-     * True, if GC data should be written at root of the summary tree.
-     * False, if data stores should write GC blobs in their summary tree.
-     */
-    public get writeGCDataAtRoot(): boolean {
-        return this.garbageCollector.writeDataAtRoot;
-    }
-
-    /**
      * True if generating summaries with isolated channels is
      * explicitly disabled. This only affects how summaries are written,
      * and is the single source of truth for this container.
@@ -995,6 +981,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.runtimeOptions.gcOptions,
             (unusedRoutes: string[]) => this.dataStores.deleteUnusedRoutes(unusedRoutes),
             getCurrentTimestamp,
+            this.closeFn,
             context.baseSnapshot,
             async <T>(id: string) => readAndParse<T>(this.storage, id),
             this.mc.logger,
@@ -1034,14 +1021,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
                     summarizeInternal: SummarizeInternalFn,
                     getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-                    getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+                    getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
                 ) => this.summarizerNode.createChild(
                     summarizeInternal,
                     id,
                     createParam,
                     undefined,
                     getGCDataFn,
-                    getInitialGCSummaryDetailsFn,
+                    getBaseGCDetailsFn,
                 ),
             (id: string) => this.summarizerNode.deleteChild(id),
             this.mc.logger,
@@ -1231,10 +1218,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.summaryManager.off("summarizerWarning", this.raiseContainerWarning);
             this.summaryManager.dispose();
         }
+        this.garbageCollector.dispose();
         this._summarizer?.dispose();
         this.dataStores.dispose();
         this.pendingStateManager.dispose();
-
         this.emit("dispose");
         this.removeAllListeners();
     }
@@ -1247,10 +1234,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             } as IFluidTokenProvider;
         }
         return undefined;
-    }
-
-    public get IFluidConfiguration(): IFluidConfiguration {
-        return this.context.configuration;
     }
 
     /**
@@ -1343,6 +1326,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // The last message processed at the time of summary. If there are no messages, nothing has changed from
             // the base summary we loaded from. So, use the message from its metadata blob.
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.baseSummaryMessage,
+            sessionExpiryTimeoutMs: this.garbageCollector.sessionExpiryTimeoutMs,
         };
     }
 
@@ -1358,7 +1342,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const dataStoreContext = await this.dataStores.getDataStore(id, wait);
         // The data store is referenced if used routes in the initial summary has a route to self.
         // Older documents may not have used routes in the summary. They are considered referenced.
-        const usedRoutes = (await dataStoreContext.getInitialGCSummaryDetails()).usedRoutes;
+        const usedRoutes = (await dataStoreContext.getBaseGCDetails()).usedRoutes;
         if (usedRoutes === undefined || usedRoutes.includes("") || usedRoutes.includes("/")) {
             return dataStoreContext.realize();
         }
@@ -1383,7 +1367,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return convertSummaryTreeToITree(summaryResult.summary);
     }
 
-    private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
+    private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats) {
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
         if (this.chunkMap.size > 0) {
             const content = JSON.stringify([...this.chunkMap]);
@@ -1408,11 +1392,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
         }
 
-        if (this.writeGCDataAtRoot) {
-            const gcSummary = this.garbageCollector.summarize();
-            if (gcSummary !== undefined) {
-                addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
-            }
+        const gcSummary = this.garbageCollector.summarize();
+        if (gcSummary !== undefined) {
+            addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
         }
     }
 
@@ -1660,19 +1642,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const savedFlushMode = this.flushMode;
         this.setFlushMode(FlushMode.TurnBased);
 
-        try {
-            this.trackOrderSequentiallyCalls(callback);
-            this.flush();
-            this.setFlushMode(savedFlushMode);
-        } catch(error) {
-            this.closeFn(CreateProcessingError(error, "orderSequentially"));
-        }
+        this.trackOrderSequentiallyCalls(callback);
+        this.flush();
+        this.setFlushMode(savedFlushMode);
     }
 
     private trackOrderSequentiallyCalls(callback: () => void): void {
         try {
             this._orderSequentiallyCalls++;
             callback();
+        } catch (error) {
+            this.closeFn(new GenericError("orderSequentiallyCallbackException", error));
+            throw error; // throw the original error for the consumer of the runtime
         } finally {
             this._orderSequentiallyCalls--;
         }
@@ -1722,7 +1703,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private canSendOps() {
-        return this.connected && !this.deltaManager.readonly;
+        return this.connected && !this.deltaManager.readOnlyInfo.readonly;
     }
 
     public getQuorum(): IQuorumClients {
@@ -1809,7 +1790,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Wrap data store summaries in .channels subtree.
             wrapSummaryInChannelsTree(summarizeResult);
         }
-        this.addContainerBlobsToSummary(summarizeResult);
+        this.addContainerStateToSummary(summarizeResult);
         return summarizeResult.summary;
     }
 
@@ -1832,7 +1813,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             wrapSummaryInChannelsTree(summarizeResult);
             pathPartsForChildren = [channelsTreeName];
         }
-        this.addContainerBlobsToSummary(summarizeResult);
+        this.addContainerStateToSummary(summarizeResult);
         return {
             ...summarizeResult,
             id: "",
@@ -1868,6 +1849,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             0x12f /* "Container Runtime's summarize should always return a tree" */);
 
         return summarizeResult as ISummaryTreeWithStats;
+    }
+
+    /**
+     * Implementation of IGarbageCollectionRuntime::updateStateBeforeGC.
+     * Before GC runs, called by the garbage collector to update any pending GC state. This is mainly used to notify
+     * the garbage collector of references detected since the last GC run. Most references are notified immediately
+     * but there can be some for which async operation is required (such as detecting new root data stores).
+     */
+    public async updateStateBeforeGC() {
+        return this.dataStores.updateStateBeforeGC();
     }
 
     /**
@@ -2007,10 +1998,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             try {
                 summarizeResult = await this.summarize({
                     summaryLogger,
-                    // If the GC version changed since the last summary was submitted, we need to regenerate summary by
-                    // running full summary. This is used to handle scenarios where we upgrade the GC version because we
-                    // cannot trust the data from the previous GC version anymore.
-                    fullTree: fullTree || this.garbageCollector.hasGCVersionChanged,
+                    // If the GC state needs to be reset, we need to regenerate the summary and update the unreferenced
+                    // state of all the nodes.
+                    fullTree: fullTree || this.garbageCollector.summaryStateNeedsReset,
                     trackState: true,
                     runGC: this.garbageCollector.shouldRunGC,
                 });
@@ -2487,13 +2477,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 const waitForSeq = async (
     deltaManager: IDeltaManager<Pick<ISequencedDocumentMessage, "sequenceNumber">, unknown>,
     targetSeq: number,
-): Promise<void> => new Promise<void>((accept, reject) => {
+): Promise<void> => new Promise<void>((resolve, reject) => {
     // TODO: remove cast to any when actual event is determined
     deltaManager.on("closed" as any, reject);
 
     const handleOp = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
         if (message.sequenceNumber >= targetSeq) {
-            accept();
+            resolve();
             deltaManager.off("op", handleOp);
         }
     };

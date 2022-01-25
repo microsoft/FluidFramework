@@ -1,5 +1,9 @@
 {
-  "parser": "babel-eslint",
+  "parser": "@babel/eslint-parser",
+  "parserOptions": {
+    "requireConfigFile": false,
+    "sourceType": "module"
+  },
   "rules": {
     "linebreak-style": 0,
     "prefer-const": ["warn"],

@@ -7,7 +7,6 @@ import * as readline from "readline";
 import { IKeyValue } from "@fluid-example/key-value-cache";
 import { FluidObject } from "@fluidframework/core-interfaces";
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 async function readlineAsync(input: readline.ReadLine, prompt: string): Promise<string> {
     return new Promise<string>((resolve) => {
         input.question(prompt, (answer) => resolve(answer));

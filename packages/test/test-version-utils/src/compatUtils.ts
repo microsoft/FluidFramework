@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
+import {
+    IContainerRuntimeBase,
+    IFluidDataStoreContext,
+    IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map";
 import { unreachableCase } from "@fluidframework/common-utils";
@@ -108,12 +111,15 @@ export async function getVersionedTestObjectProvider(
     const containerRuntimeApi = getContainerRuntimeApi(baseVersion, runtimeVersion);
     const dataRuntimeApi = getDataRuntimeApi(baseVersion, dataRuntimeVersion);
     const driver = await createVersionedFluidTestDriver(baseVersion, driverConfig);
+    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+        runtime.IFluidHandleContext.resolveHandle(request);
 
     const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(dataRuntimeApi);
     const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
         const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
         const factoryCtor = createTestContainerRuntimeFactory(containerRuntimeApi.ContainerRuntime);
-        return new factoryCtor(TestDataObjectType, dataStoreFactory, containerOptions?.runtimeOptions);
+        return new factoryCtor(TestDataObjectType, dataStoreFactory, containerOptions?.runtimeOptions,
+            [innerRequestHandler]);
     };
 
     return new TestObjectProvider(loaderApi.Loader, driver, containerFactoryFn);

@@ -39,6 +39,7 @@ import {
     TestDataObjectType,
     describeNoCompat,
 } from "@fluidframework/test-version-utils";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
@@ -252,9 +253,13 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     });
 
     it("Delta manager receives readonly event when calling container.forceReadonly()", async () => {
+        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+            runtime.IFluidHandleContext.resolveHandle(request);
         const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
             TestDataObjectType,
-            getDataStoreFactory());
+            getDataStoreFactory(),
+            {},
+            [innerRequestHandler]);
 
         const localTestObjectProvider = new TestObjectProvider(
             Loader,
