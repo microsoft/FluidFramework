@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { IDetachedBlobStorage, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
+import { IDetachedBlobStorage, ILoaderProps, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails, IRequestHeader } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
-import { ChildLogger, IConfigProviderBase, MultiSinkLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, MultiSinkLogger } from "@fluidframework/telemetry-utils";
 import { LoaderContainerTracker } from "./loaderContainerTracker";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
@@ -34,13 +34,13 @@ export interface ITestObjectProvider {
     createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
     createLoader(
         packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
-        options?: ITestLoaderOptions,
+        loaderProps?: Partial<ILoaderProps>,
         detachedBlobStorage?: IDetachedBlobStorage,
     ): IHostLoader;
-    createContainer(entryPoint: fluidEntryPoint, options?: ITestLoaderOptions): Promise<IContainer>;
+    createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
     loadContainer(
         entryPoint: fluidEntryPoint,
-        options?: ITestLoaderOptions,
+        loaderProps?: Partial<ILoaderProps>,
         requestHeader?: IRequestHeader,
     ): Promise<IContainer>;
 
@@ -86,13 +86,7 @@ export interface ITestContainerConfig {
     runtimeOptions?: IContainerRuntimeOptions,
 
     /** Loader options for the loader used to create containers */
-    loaderOptions?: ITestLoaderOptions,
-}
-
-// new interface to help inject custom loggers to tests
-export interface ITestLoaderOptions extends ILoaderOptions {
-    logger?: ITelemetryBaseLogger;
-    configProvider?: IConfigProviderBase;
+    loaderProps?: Partial<ILoaderProps>,
 }
 
 export const createDocumentId = (): string => uuid();
@@ -205,13 +199,13 @@ export class TestObjectProvider {
      */
     public createLoader(
         packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
-        options?: ITestLoaderOptions,
+        loaderProps?: Partial<ILoaderProps>,
         detachedBlobStorage?: IDetachedBlobStorage,
     ) {
         const multiSinkLogger = new MultiSinkLogger();
         multiSinkLogger.addLogger(this.logger);
-        if (options?.logger !== undefined) {
-            multiSinkLogger.addLogger(options.logger);
+        if (loaderProps?.logger !== undefined) {
+            multiSinkLogger.addLogger(loaderProps.logger);
         }
 
         const codeLoader = new LocalCodeLoader(packageEntries);
@@ -220,8 +214,8 @@ export class TestObjectProvider {
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
             logger: multiSinkLogger,
-            configProvider: options?.configProvider,
-            options,
+            configProvider: loaderProps?.configProvider,
+            options: loaderProps?.options,
             detachedBlobStorage,
         });
         this._loaderContainerTracker.add(loader);
@@ -237,12 +231,12 @@ export class TestObjectProvider {
      *
      * @param packageEntries - list of code details and fluidEntryPoint pairs.
      */
-    public async createContainer(entryPoint: fluidEntryPoint, options?: ITestLoaderOptions) {
+    public async createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>) {
         if (this._documentCreated) {
             throw new Error(
                 "Only one container/document can be created. To load the container/document use loadContainer");
         }
-        const loader = this.createLoader([[defaultCodeDetails, entryPoint]], options);
+        const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
         const container = await createAndAttachContainer(
             defaultCodeDetails,
             loader,
@@ -255,9 +249,11 @@ export class TestObjectProvider {
         return container;
     }
 
-    public async loadContainer(entryPoint: fluidEntryPoint, options?: ITestLoaderOptions,
+    public async loadContainer(
+        entryPoint: fluidEntryPoint,
+        loaderProps?: Partial<ILoaderProps>,
         requestHeader?: IRequestHeader): Promise<IContainer> {
-        const loader = this.createLoader([[defaultCodeDetails, entryPoint]], options);
+        const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
         return loader.resolve({ url: await this.driver.createContainerUrl(this.documentId), headers: requestHeader });
     }
 
@@ -269,7 +265,7 @@ export class TestObjectProvider {
     public makeTestLoader(testContainerConfig?: ITestContainerConfig, detachedBlobStorage?: IDetachedBlobStorage) {
         return this.createLoader(
             [[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]],
-            testContainerConfig?.loaderOptions,
+            testContainerConfig?.loaderProps,
             detachedBlobStorage,
         );
     }
