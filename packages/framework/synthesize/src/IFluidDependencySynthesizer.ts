@@ -29,9 +29,7 @@ export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynt
      * @param optionalTypes - optional types to be in the Scope object
      * @param requiredTypes - required types that need to be in the Scope object
      */
-    synthesize<
-        O,
-        R = undefined  | Record<string, never>>(
+    synthesize<O, R = undefined  | Record<string, never>>(
             optionalTypes: FluidObjectSymbolProvider<O>,
             requiredTypes: Required<FluidObjectSymbolProvider<R>>,
     ): AsyncFluidObjectProvider<O, R>;
