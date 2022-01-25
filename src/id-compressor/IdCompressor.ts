@@ -638,18 +638,13 @@ export class IdCompressor {
 			const remainingCapacity = currentCluster.capacity - initialClusterCount;
 			const overflow = remainingCount - remainingCapacity;
 			const hasRoom = overflow <= 0;
-			if (
-				hasRoom ||
-				(currentCluster.overrides === undefined && currentBaseFinalId === this.finalIdToCluster.maxKey())
-			) {
+			if (hasRoom || currentBaseFinalId === this.finalIdToCluster.maxKey()) {
 				currentCluster.count += remainingCount;
 				remainingCount = 0;
 				// The common case is that there is room in the cluster, and the new final IDs can simply be added to it
 				if (!hasRoom) {
 					// The cluster is full but is the last in the list of clusters.
 					// This allows it to be expanded instead of allocating a new one.
-					// Note from the condition above that this is heuristically done only if the cluster to be expanded does
-					// not have any overridden IDs, as they slow down operations for all IDs in the cluster.
 					const expansionAmount = this.newClusterCapacity + overflow;
 					currentCluster.capacity += expansionAmount;
 					this.nextClusterBaseFinalId = (this.nextClusterBaseFinalId + expansionAmount) as FinalCompressedId;
@@ -1423,7 +1418,7 @@ export class IdCompressor {
 		}
 
 		const serializedClusters: SerializedCluster[] = [];
-		for (const cluster of this.finalIdToCluster.values()) {
+		for (const [baseFinalId, cluster] of this.finalIdToCluster.entries()) {
 			const sessionId = stableIdFromNumericUuid(cluster.session.sessionUuid) as SessionId;
 			if (sessionId !== reservedSessionId) {
 				const sessionIndex =
@@ -1438,12 +1433,17 @@ export class IdCompressor {
 				if (cluster.overrides !== undefined) {
 					const serializedOverrides: Mutable<SerializedClusterOverrides> = [];
 					for (const [finalId, override] of cluster.overrides) {
+						const finalIdIndex = finalId - baseFinalId;
 						if (typeof override === 'string') {
-							serializedOverrides.push([finalId, override]);
+							serializedOverrides.push([finalIdIndex, override]);
 						} else if (override.originalOverridingFinal === finalId) {
-							serializedOverrides.push([finalId, override.override]);
+							serializedOverrides.push([finalIdIndex, override.override]);
 						} else {
-							serializedOverrides.push([finalId, override.override, override.originalOverridingFinal]);
+							serializedOverrides.push([
+								finalIdIndex,
+								override.override,
+								override.originalOverridingFinal,
+							]);
 						}
 					}
 					serializedCluster.push(serializedOverrides);
@@ -1590,7 +1590,8 @@ export class IdCompressor {
 
 			if (overrides !== undefined) {
 				cluster.overrides = new Map();
-				for (const [finalId, override, originalOverridingFinal] of overrides) {
+				for (const [finalIdIndex, override, originalOverridingFinal] of overrides) {
+					const finalId = (clusterBase + finalIdIndex) as FinalCompressedId;
 					if (originalOverridingFinal !== undefined) {
 						const unifiedOverride: Mutable<UnifiedOverride> = {
 							override,
@@ -1766,8 +1767,11 @@ type SerializedSessionData = readonly [
 ];
 
 type SerializedClusterOverrides = readonly [
-	overriddenFinal: FinalCompressedId,
+	/** The overridden final ID, represented as an index into the cluster's ID range */
+	overriddenFinalIndex: number, // A cluster with base UUID '...beef' and an `overriddenFinalIndex` of 3 would correspond to '...bef2'
+	/** The override string */
 	override: string,
+	/** The first ID that was finalized and associated with this override, set only if different than the `overriddenFinalIndex` */
 	overriddenId?: FinalCompressedId
 ][];
 

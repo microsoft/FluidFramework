@@ -1134,24 +1134,6 @@ describe('IdCompressor', () => {
 				}
 			);
 
-			itNetwork('does not pack IDs into a single cluster when overrides are present', 3, (network) => {
-				network.allocateAndSendIds(Client.Client1, 20, {
-					10: 'override',
-				});
-				network.allocateAndSendIds(Client.Client1, 20);
-				network.deliverOperations(DestinationClient.All);
-				const [serialized1WithNoSession, serialized1WithSession] = expectSerializes(
-					network.getCompressor(Client.Client1)
-				);
-				expect(serialized1WithNoSession.clusters.length).to.equal(2);
-				expect(serialized1WithSession.clusters.length).to.equal(2);
-				const [serialized3WithNoSession, serialized3WithSession] = expectSerializes(
-					network.getCompressor(Client.Client3)
-				);
-				expect(serialized3WithNoSession.clusters.length).to.equal(2);
-				expect(serialized3WithSession.clusters.length).to.equal(2);
-			});
-
 			itNetwork('serializes correctly after unifying duplicate overrides', 3, (network) => {
 				const override = 'override';
 				network.allocateAndSendIds(Client.Client1, 1, { 0: override });
@@ -1195,6 +1177,16 @@ describe('IdCompressor', () => {
 				expectSerializes(network.getCompressor(Client.Client1));
 				expectSerializes(network.getCompressor(Client.Client2));
 				expectSerializes(network.getCompressor(Client.Client3));
+			});
+
+			itNetwork('stores override indices relative to their clusters', 3, (network) => {
+				network.allocateAndSendIds(Client.Client1, 3, { 0: 'cluster1' });
+				network.allocateAndSendIds(Client.Client2, 3, { 0: 'cluster2' });
+				network.deliverOperations(Client.Client1);
+				const serialized = network.getCompressor(Client.Client1).serialize(false);
+				expect(serialized.clusters.length).to.equal(2);
+				expect(serialized.clusters[0][2]?.[0][0]).to.equal(0);
+				expect(serialized.clusters[1][2]?.[0][0]).to.equal(0);
 			});
 		});
 	});
