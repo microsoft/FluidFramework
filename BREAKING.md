@@ -10,14 +10,44 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.56 Breaking changes
+- [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
+- [Removed `IOdspResolvedUrl.sharingLinkToRedeem`](#Removed-IOdspResolvedUrl.sharingLinkToRedeem)
+- [Removed url from ICreateBlobResponse](#removed-url-from-ICreateBlobResponse)
+- [`readonly` removed from `IDeltaManager`, `DeltaManager`, and `DeltaManagerProxy`](#readonly-removed-from-IDeltaManager-and-DeltaManager-DeltaManagerProxy)
+- [codeDetails removed from Container](#codeDetails-removed-from-Container)
+- [wait() methods removed from map and directory](#wait-methods-removed-from-map-and-directory)
+
+### `MessageType.Save` and code that handled it was removed
+The `Save` operation type was deprecated and has now been removed. This removes `MessageType.Save` from `protocol-definitions`, `save;${string}: ${string}` from `SummarizeReason` in the `container-runtime` package, and `MessageFactory.createSave()` from and `server-test-utils`.
+
+### Removed `IOdspResolvedUrl.sharingLinkToRedeem`
+The `sharingLinkToRedeem` property is removed from the `IOdspResolvedUrl` interface. The property can be accesed from `IOdspResolvedUrl.shareLinkInfo` instead.
+
+### Removed `url` from ICreateBlobResponse
+The unused `url` property of `ICreateBlobResponse` in `@fluidframework/protocol-definitions` has been removed
+
+### readonly removed from IDeltaManager, DeltaManager, and DeltaManagerProxy
+The `readonly` property was deprecated and has now been removed from `IDeltaManager` from `container-definitions`. Additionally, `readonly` has been removed from the implementations in `DeltaManager` and `DeltaManagerProxy` from `container-loader`. To replace its functionality, use `readOnlyInfo.readonly` instead.
+
+### codeDetails removed from Container
+
+In release 0.53, the `codeDetails` member was removed from `IContainer`.  It is now also removed from `Container`.  To inspect the code details of a container, instead use the `getSpecifiedCodeDetails()` and `getLoadedCodeDetails()` methods.
+
+### `wait()` methods removed from map and directory
+
+The `wait()` methods on `ISharedMap` and `IDirectory` were deprecated in 0.55 and have now been removed.  See the [deprecation notice](#wait-methods-deprecated-on-map-and-directory) for migration advice if you currently use these APIs.
+
+
 ## 0.55 Breaking changes
-- [`container-loader` interfaces return `IQuorumClients` rather than `IQuorum`](#container-loader-interfaces-return-IQuorumClients-rather-than-IQuorum)
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)
 - [`IChannel.summarize` split into sync and async](#IChannel.summarize-split-into-sync-and-async)
 - [`IFluidSerializer` moved to shared-object-base](#IFluidSerializer-moved-to-shared-object-base)
 - [Removed `IFluidSerializer` from `IFluidDataStoreRuntime`](#Removed-IFluidSerializer-from-IFluidDataStoreRuntime)
 - [`IFluidConfiguration` deprecated and `IFluidConfiguration` member removed from `ContainerRuntime`](#IFluidConfiguration-deprecated-and-IFluidConfiguration-member-removed-from-ContainerRuntime)
-- [`wait()` methods deprecated on map and directory](#wait()-methods-deprecated-on-map-and-directory)
+- [`wait()` methods deprecated on map and directory](#wait-methods-deprecated-on-map-and-directory)
+- [Remove Legacy Data Object and Factories](#Remove-Legacy-Data-Object-and-Factories)
+- [Removed `innerRequestHandler`](#Removed-innerRequestHandler)
 
 ### `container-loader` interfaces return `IQuorumClients` rather than `IQuorum`
 
@@ -25,7 +55,8 @@ The `getQuorum()` method on `IContainer` and the `quorum` member of `IContainerC
 
 ### `SharedObject` summary and GC API changes
 
-`SharedObject.snapshotCore` is renamed to `summarizeCore` and returns `ISummaryTreeWithStats`. A temporary way to fix this up quickly is to call `convertToSummaryTreeWithStats` on the `ITree` previously returned, but `convertToSummaryTreeWithStats` will be deprecated in the future and `ISummaryTreeWithStats` should be created directly.
+`SharedObject.snapshotCore` is renamed to `summarizeCore` and returns `ISummaryTreeWithStats`. Use
+`SummaryTreeBuilder` to create a summary instead of `ITree`.
 
 `SharedObject.getGCDataCore` is renamed to `processGCDataCore` and a `SummarySerializer` is passed as a parameter. The method should run the serializer over the handles as before and does not need to return anything. The caller will extract the GC data from the serializer.
 
@@ -97,6 +128,22 @@ const bar = await mapWait<Bar>(someSharedMap, barKey);
 ```
 
 As-written above, these promises will silently remain pending forever if the key is never set (similar to current `wait()` functionality).  For production use, consider adding timeouts, telemetry, or other failure flow support to detect and handle failure cases appropriately.
+
+### Remove Legacy Data Object and Factories
+
+In order to ease migration to the new Aqueduct Data Object and Data Object Factory generic arguments we added legacy versions of those classes in version 0.53.
+
+In this release we remove those legacy classes: LegacyDataObject, LegacyPureDataObject, LegacyDataObjectFactory, and LegacyPureDataObjectFactory
+
+It is recommend you migrate to the new generic arguments before consuming this release.
+Details are here: [0.53: Generic Argument Changes to DataObjects and Factories](#Generic-Argument-Changes-to-DataObjects-and-Factories)
+
+### Removed `innerRequestHandler`
+`innerRequestHandler` is removed from `@fluidframework/request-handlers` package, and its usage is removed from `BaseContainerRuntimeFactory` and `ContainerRuntimeFactoryWithDefaultDataStore`.  If you are using these container runtime factories, attempting to access internal data stores via `request()` will result in 404 responses.
+
+If you rely on `request()` access to internal root data stores, you can add `rootDataStoreRequestHandler` to your list of request handlers on the runtime factory.
+
+It is not recommended to provide `request()` access to non-root data stores, but if you currently rely on this functionality you can add a custom request handler that calls `runtime.IFluidHandleContext.resolveHandle(request)` just like `innerRequestHandler` used to do.
 
 ## 0.54 Breaking changes
 - [Removed `readAndParseFromBlobs` from `driver-utils`](#Removed-readAndParseFromBlobs-from-driver-utils)

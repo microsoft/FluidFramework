@@ -342,6 +342,7 @@ export class ClientReplayTool {
                                         }
                                     }
                                 }
+                            // fallthrough
                             default:
                         }
                     }

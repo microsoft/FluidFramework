@@ -10,8 +10,9 @@ import {
     IProvideRuntimeFactory,
     IFluidModule,
 } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails, IProvideFluidCodeDetailsComparer } from "@fluidframework/core-interfaces";
-import { IProvideFluidDataStoreFactory, IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
+import { IFluidCodeDetails, IProvideFluidCodeDetailsComparer, IRequest } from "@fluidframework/core-interfaces";
+import { IContainerRuntimeBase, IProvideFluidDataStoreFactory,
+    IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 
@@ -56,6 +57,8 @@ export class LocalCodeLoader implements ICodeLoader {
                 } else {
                     assert(maybeExport.IFluidDataStoreFactory !== undefined);
                     const defaultFactory = createDataStoreFactory("default", maybeExport.IFluidDataStoreFactory);
+                    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+                        runtime.IFluidHandleContext.resolveHandle(request);
                     fluidModule = {
                         fluidExport: {
                             ... maybeExport,
@@ -64,7 +67,7 @@ export class LocalCodeLoader implements ICodeLoader {
                                     defaultFactory,
                                     [[defaultFactory.type, Promise.resolve(defaultFactory)]],
                                     undefined,
-                                    undefined,
+                                    [innerRequestHandler],
                                     runtimeOptions,
                                 ),
                         },

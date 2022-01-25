@@ -234,7 +234,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
         // Reference to this client supporting get_ops flow.
         connectMessage.supportedFeatures = { };
-        if (mc.config.getBoolean("Fluid.Driver.Odsp.GetOpsEnabled") === true) {
+        if (mc.config.getBoolean("Fluid.Driver.Odsp.GetOpsEnabled") !== false) {
             connectMessage.supportedFeatures[feature_get_ops] = true;
         }
 

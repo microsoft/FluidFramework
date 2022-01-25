@@ -26,8 +26,8 @@ describe("snapshot", () => {
         const snapshot = new SnapshotLegacy(client1.mergeTree, client1.logger);
         snapshot.extractSync();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const snapshotTree = snapshot.emit([], serializer, undefined!);
-        const services = new MockStorage(snapshotTree);
+        const summaryTree = snapshot.emit([], serializer, undefined!);
+        const services = MockStorage.createFromSummary(summaryTree.summary);
 
         const client2 = new TestClient(undefined);
         const runtime: Partial<IFluidDataStoreRuntime> = {
@@ -59,8 +59,8 @@ describe("snapshot", () => {
             const snapshot = new SnapshotLegacy(client1.mergeTree, client1.logger);
             snapshot.extractSync();
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const snapshotTree = snapshot.emit([], serializer, undefined!);
-            const services = new MockStorage(snapshotTree);
+            const summaryTree = snapshot.emit([], serializer, undefined!);
+            const services = MockStorage.createFromSummary(summaryTree.summary);
             const runtime: Partial<IFluidDataStoreRuntime> = {
                 logger: client2.logger,
                 clientId: (i + 1).toString(),

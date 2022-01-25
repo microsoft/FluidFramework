@@ -11,7 +11,7 @@ import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
-    innerRequestHandler,
+    rootDataStoreRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
@@ -56,7 +56,7 @@ class SharedTextContainerRuntimeFactory extends RuntimeFactoryHelper {
             ],
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(DefaultComponentName),
-                innerRequestHandler,
+                rootDataStoreRequestHandler,
             ),
             undefined, // runtimeOptions
             undefined, // containerScope

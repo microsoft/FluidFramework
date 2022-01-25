@@ -154,8 +154,6 @@ export interface IConnected {
 export interface ICreateBlobResponse {
     // (undocumented)
     id: string;
-    // @deprecated (undocumented)
-    url: string;
 }
 
 // @public (undocumented)
@@ -646,8 +644,6 @@ export enum MessageType {
     RemoteHelp = "remoteHelp",
     // (undocumented)
     RoundTrip = "tripComplete",
-    // (undocumented)
-    Save = "saveOp",
     // (undocumented)
     Summarize = "summarize",
     // (undocumented)
