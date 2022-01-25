@@ -35,13 +35,17 @@ export class SummaryReader implements ISummaryReader {
 
                 // Parse specific fields from the downloaded summary
                 const attributesBlobId = normalizedSummary.snapshotTree.trees[".protocol"].blobs.attributes;
-                const attributesContent = normalizedSummary.blobs[attributesBlobId];
+                const attributesContent = normalizedSummary.blobs.get(attributesBlobId);
                 const scribeBlobId = normalizedSummary.snapshotTree.trees[".serviceProtocol"].blobs.scribe;
-                const scribeContent = normalizedSummary.blobs[scribeBlobId];
+                const scribeContent = normalizedSummary.blobs.get(scribeBlobId);
                 const deliBlobId = normalizedSummary.snapshotTree.trees[".serviceProtocol"].blobs.deli;
-                const deliContent = normalizedSummary.blobs[deliBlobId];
+                const deliContent = normalizedSummary.blobs.get(deliBlobId);
                 const opsBlobId = normalizedSummary.snapshotTree.trees[".logTail"].blobs.logTail;
-                const opsContent = normalizedSummary.blobs[opsBlobId];
+                const opsContent = normalizedSummary.blobs.get(opsBlobId);
+
+                if (!attributesContent || !scribeContent || !deliContent || !opsContent) {
+                    throw new Error("Possible data corruption; summary data is missing important information.");
+                }
 
                 const attributes = JSON.parse(bufferToString(attributesContent, "utf8")) as IDocumentAttributes;
                 const scribe = bufferToString(scribeContent, "utf8");
@@ -67,8 +71,8 @@ export class SummaryReader implements ISummaryReader {
                     messages,
                     fromSummary: true,
                 };
-            } catch {
-                summaryReaderMetric.success(`Returning default summary`);
+            } catch (error: any) {
+                summaryReaderMetric.error(`Returning default summary`, error);
                 return this.getDefaultSummaryState();
             }
         } else {
@@ -106,8 +110,8 @@ export class SummaryReader implements ISummaryReader {
                     messages,
                     fromSummary: true,
                 };
-            } catch {
-                summaryReaderMetric.success(`Returning default summary`);
+            } catch (error: any) {
+                summaryReaderMetric.error(`Returning default summary`, error);
                 return this.getDefaultSummaryState();
             }
         }
