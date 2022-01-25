@@ -30,7 +30,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     /**
      * {@inheritDoc (IFluidDependencySynthesizer:interface).register}
      */
-    public register<T extends keyof TMap = keyof TMap>(type: T, provider: FluidObjectProvider<Pick<TMap,T>>): void {
+    public register<T extends keyof TMap = keyof TMap>(type: T, provider: FluidObjectProvider<Pick<TMap, T>>): void {
         if (this.providers.has(type)) {
             throw new Error(`Attempting to register a provider of type ${type} that already exists`);
         }
