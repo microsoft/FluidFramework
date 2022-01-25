@@ -133,6 +133,8 @@ export interface IFlowDocumentEvents extends IEvent {
     (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: SharedString) => void);
 }
 
+const textId = "text";
+
 export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDocumentEvents> {
     private static readonly factory = new LazyLoadedDataObjectFactory<FlowDocument>(
         documentType,
@@ -146,8 +148,6 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
         return FlowDocument.factory.create(parentContext, props);
     }
 
-    private get sharedString() { return this.maybeSharedString; }
-
     public get length() {
         return this.sharedString.getLength();
     }
@@ -160,28 +160,27 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
         [reservedRangeLabelsKey]: [DocSegmentKind.beginTags],
     });
 
-    private maybeSharedString?: SharedString;
+    private sharedString: SharedString;
 
     public create() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
         Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
 
-        this.maybeSharedString = SharedString.create(this.runtime, "text");
-        this.root.set("text", this.maybeSharedString.handle);
-        if (this.maybeSharedString !== undefined) {
-            this.forwardEvent(this.maybeSharedString, "sequenceDelta", "maintenance");
-        }
+        this.sharedString = SharedString.create(this.runtime);
+        this.root.set(textId, this.sharedString.handle);
+        this.forwardEvent(this.sharedString, "sequenceDelta", "maintenance");
     }
 
     public async load() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
         Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
 
-        const handle = await this.root.wait<IFluidHandle<SharedString>>("text");
-        this.maybeSharedString = await handle.get();
-        if (this.maybeSharedString !== undefined) {
-            this.forwardEvent(this.maybeSharedString, "sequenceDelta", "maintenance");
+        const handle = this.root.get<IFluidHandle<SharedString>>(textId);
+        if (handle === undefined) {
+            throw new Error("String not initialized properly");
         }
+        this.sharedString = await handle.get();
+        this.forwardEvent(this.sharedString, "sequenceDelta", "maintenance");
     }
 
     public async getComponentFromMarker(marker: Marker) {

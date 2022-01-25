@@ -11,12 +11,12 @@ import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
+import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ITree } from '@fluidframework/protocol-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
@@ -102,7 +102,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     // @internal
     protected reSubmitCore(): void;
     // @internal
-    protected snapshotCore(serializer: IFluidSerializer): ITree;
+    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
     }
 
 

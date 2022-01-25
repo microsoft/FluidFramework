@@ -22,7 +22,6 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
-import { IFluidConfiguration } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
@@ -133,8 +132,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get IContainerRuntime(): this;
     // @deprecated (undocumented)
     get id(): string;
-    // (undocumented)
-    get IFluidConfiguration(): IFluidConfiguration;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     // (undocumented)

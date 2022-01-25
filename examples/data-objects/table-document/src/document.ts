@@ -49,14 +49,12 @@ export class TableDocument extends DataObject<{Events: ITableDocumentEvents}> im
         ],
     );
 
-    public get numCols() { return this.maybeCols.getLength(); }
+    public get numCols() { return this.cols.getLength(); }
     public get numRows() { return this.matrix.numRows; }
 
-    private get matrix(): SparseMatrix { return this.maybeMatrix; }
-
-    private maybeRows?: SharedNumberSequence;
-    private maybeCols?: SharedNumberSequence;
-    private maybeMatrix?: SparseMatrix;
+    private rows: SharedNumberSequence;
+    private cols: SharedNumberSequence;
+    private matrix: SparseMatrix;
 
     public getCellValue(row: number, col: number): TableDocumentItem {
         return this.matrix.getItem(row, col);
@@ -88,19 +86,19 @@ export class TableDocument extends DataObject<{Events: ITableDocumentEvents}> im
     }
 
     public annotateRows(startRow: number, endRow: number, properties: PropertySet, op?: ICombiningOp) {
-        this.maybeRows.annotateRange(startRow, endRow, properties, op);
+        this.rows.annotateRange(startRow, endRow, properties, op);
     }
 
     public getRowProperties(row: number): PropertySet {
-        return this.maybeRows.getPropertiesAtPosition(row);
+        return this.rows.getPropertiesAtPosition(row);
     }
 
     public annotateCols(startCol: number, endCol: number, properties: PropertySet, op?: ICombiningOp) {
-        this.maybeCols.annotateRange(startCol, endCol, properties, op);
+        this.cols.annotateRange(startCol, endCol, properties, op);
     }
 
     public getColProperties(col: number): PropertySet {
-        return this.maybeCols.getPropertiesAtPosition(col);
+        return this.cols.getPropertiesAtPosition(col);
     }
 
     public annotateCell(row: number, col: number, properties: PropertySet) {
@@ -122,22 +120,22 @@ export class TableDocument extends DataObject<{Events: ITableDocumentEvents}> im
 
     public insertRows(startRow: number, numRows: number) {
         this.matrix.insertRows(startRow, numRows);
-        this.maybeRows.insert(startRow, new Array(numRows).fill(0));
+        this.rows.insert(startRow, new Array(numRows).fill(0));
     }
 
     public removeRows(startRow: number, numRows: number) {
         this.matrix.removeRows(startRow, numRows);
-        this.maybeRows.remove(startRow, startRow + numRows);
+        this.rows.remove(startRow, startRow + numRows);
     }
 
     public insertCols(startCol: number, numCols: number) {
         this.matrix.insertCols(startCol, numCols);
-        this.maybeCols.insert(startCol, new Array(numCols).fill(0));
+        this.cols.insert(startCol, new Array(numCols).fill(0));
     }
 
     public removeCols(startCol: number, numCols: number) {
         this.matrix.removeCols(startCol, numCols);
-        this.maybeCols.remove(startCol, startCol + numCols);
+        this.cols.remove(startCol, startCol + numCols);
     }
 
     protected async initializingFirstTime() {
@@ -154,18 +152,12 @@ export class TableDocument extends DataObject<{Events: ITableDocumentEvents}> im
     }
 
     protected async hasInitialized() {
-        const [maybeMatrixHandle, maybeRowsHandle, maybeColsHandle] = await Promise.all([
-            this.root.wait<IFluidHandle<SparseMatrix>>("matrix"),
-            this.root.wait<IFluidHandle<SharedNumberSequence>>("rows"),
-            this.root.wait<IFluidHandle<SharedNumberSequence>>("cols"),
-        ]);
+        this.matrix = await this.root.get<IFluidHandle<SparseMatrix>>("matrix").get();
+        this.rows = await this.root.get<IFluidHandle<SharedNumberSequence>>("rows").get();
+        this.cols = await this.root.get<IFluidHandle<SharedNumberSequence>>("cols").get();
 
-        this.maybeMatrix = await maybeMatrixHandle.get();
-        this.maybeRows = await maybeRowsHandle.get();
-        this.maybeCols = await maybeColsHandle.get();
-
-        this.forwardEvent(this.maybeCols, "op", "sequenceDelta");
-        this.forwardEvent(this.maybeRows, "op", "sequenceDelta");
+        this.forwardEvent(this.cols, "op", "sequenceDelta");
+        this.forwardEvent(this.rows, "op", "sequenceDelta");
         this.forwardEvent(this.matrix, "op", "sequenceDelta");
     }
 

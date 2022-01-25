@@ -56,7 +56,7 @@ describe("SharedString", () => {
         }
 
         function verifyAndReturnSummaryTree(): ISummaryTree {
-            const summarizeResult = sharedString.summarize();
+            const summarizeResult = sharedString.getAttachSummary();
             const summaryObjectKeys = Object.keys(summarizeResult.summary.tree);
             assert.strictEqual(summaryObjectKeys.length, 1, "summary should have one entries");
             assert.strictEqual(summaryObjectKeys[0], "content", "content not present in summary");
@@ -259,7 +259,7 @@ describe("SharedString", () => {
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
-                objectStorage: MockStorage.createFromSummary(sharedString.summarize().summary),
+                objectStorage: MockStorage.createFromSummary(sharedString.getAttachSummary().summary),
             };
 
             const sharedString2 =

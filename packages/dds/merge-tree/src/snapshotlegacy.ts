@@ -7,10 +7,8 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
-import {
-    IFluidHandle,
-    IFluidSerializer,
-} from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";

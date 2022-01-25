@@ -3,21 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-    TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage,  MessageType } from "@fluidframework/protocol-definitions";
 import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { CounterFactory } from "./counterFactory";
 import { ISharedCounter, ISharedCounterEvents } from "./interfaces";
 
@@ -125,33 +119,19 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     }
 
     /**
-     * Create a snapshot for the counter
+     * Create a summary for the counter
      *
-     * @returns the snapshot of the current state of the counter
+     * @returns the summary of the current state of the counter
      * @internal
      */
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
+    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
         // Get a serializable form of data
         const content: ICounterSnapshotFormat = {
             value: this.value,
         };
 
-        // And then construct the tree for it
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: snapshotFileName,
-                    type: TreeEntry.Blob,
-                    value: {
-                        contents: JSON.stringify(content),
-                        encoding: "utf-8",
-                    },
-                },
-            ],
-        };
-
-        return tree;
+        // And then construct the summary for it
+        return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
     }
 
     /**

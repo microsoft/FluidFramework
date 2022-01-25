@@ -7,7 +7,6 @@ import { EventEmitter } from "events";
 import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     FluidObject,
-    IFluidConfiguration,
     IFluidHandle,
     IFluidHandleContext,
     IFluidObject,
@@ -1249,10 +1248,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             } as IFluidTokenProvider;
         }
         return undefined;
-    }
-
-    public get IFluidConfiguration(): IFluidConfiguration {
-        return this.context.configuration;
     }
 
     /**
