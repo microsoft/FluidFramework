@@ -371,13 +371,15 @@ export class DocumentDeltaConnection
                         description.target = undefined;
                     }
                 } catch(_e) {}
-                if (!this.socket.io.opts.reconnection ||
-                    this.reconnectAttempts >= (this.socket.io.opts.reconnectionAttempts ?? 0)) {
+                if (!this.socket.io.reconnection() ||
+                    this.reconnectAttempts >= (this.socket.io.reconnectionAttempts() ?? 0)) {
                     // Reconnection is disabled or maximum reconnect attempts have been reached.
                     fail(true, this.createErrorObject("connectError", error));
-                } else {
-                    this.reconnectAttempts++;
                 }
+            });
+
+            this.addConnectionListener("reconnect_attempt", () => {
+                this.reconnectAttempts++;
             });
 
             // Listen for timeouts
