@@ -63,10 +63,6 @@ The following members have been removed from IFluidDependencySynthesizer:
  - ProviderEntry - no longer used
  - DependencyContainerRegistry - no longer used
 
-
-
-
-
 ## 0.55 Breaking changes
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)
 - [`IChannel.summarize` split into sync and async](#IChannel.summarize-split-into-sync-and-async)
