@@ -629,7 +629,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.mc.logger,
         );
 
-        this.on("saved", () => {
+        this.on(savedContainerEvent, () => {
             this.connectionStateHandler.containerSaved();
         });
 
