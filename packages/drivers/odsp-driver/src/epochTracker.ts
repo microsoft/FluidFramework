@@ -171,8 +171,9 @@ export class EpochTracker implements IPersistedFileCache {
         fetchOptions: RequestInit,
         fetchType: FetchType,
         addInBody: boolean = false,
+        fetchReason?: string,
     ): Promise<IOdspResponse<T>> {
-        const clientCorrelationId = this.formatClientCorrelationId();
+        const clientCorrelationId = this.formatClientCorrelationId(fetchReason);
         // Add epoch in fetch request.
         this.addEpochInRequest(fetchOptions, addInBody, clientCorrelationId);
         let epochFromResponse: string | undefined;
@@ -212,8 +213,9 @@ export class EpochTracker implements IPersistedFileCache {
         fetchOptions: {[index: string]: any},
         fetchType: FetchType,
         addInBody: boolean = false,
+        fetchReason?: string,
     ) {
-        const clientCorrelationId = this.formatClientCorrelationId();
+        const clientCorrelationId = this.formatClientCorrelationId(fetchReason);
         // Add epoch in fetch request.
         this.addEpochInRequest(fetchOptions, addInBody, clientCorrelationId);
         let epochFromResponse: string | undefined;
@@ -293,8 +295,12 @@ export class EpochTracker implements IPersistedFileCache {
         fetchOptions.body = formParams.join("\r\n");
     }
 
-    private formatClientCorrelationId() {
-        return `driverId=${this.driverId}, RequestNumber=${this.networkCallNumber++}`;
+    private formatClientCorrelationId(fetchReason?: string) {
+        let clientCorrelationId = `driverId=${this.driverId}, RequestNumber=${this.networkCallNumber++}`;
+        if (fetchReason !== undefined) {
+            clientCorrelationId += `, fetchReason=${fetchReason}`;
+        }
+        return clientCorrelationId;
     }
 
     protected validateEpochFromResponse(
