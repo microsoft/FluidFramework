@@ -2253,12 +2253,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.submit(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
     }
 
-    /**
-     * Submits an aliasing message relative to a datastore
-     *
-     * @param contents - Message contents. Expected to be an @see IDataStoreAliasMessage
-     * @param localOpMetadata - Local op metadata. It is expected to be a Promise resolve callback.
-     */
     public submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void {
         const aliasMessage = contents as IDataStoreAliasMessage;
         if (!isDataStoreAliasMessage(aliasMessage)) {
