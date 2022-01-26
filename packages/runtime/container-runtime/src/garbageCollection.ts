@@ -315,9 +315,7 @@ export class GarbageCollector implements IGarbageCollector {
         if (this.sessionExpiryTimeoutMs !== undefined) {
             const expiryMs = this.sessionExpiryTimeoutMs;
             this.sessionExpiryTimer = setTimeout(() => this.closeFn(
-                new ClientSessionExpiredError(`Client expired, it has lasted ${expiryMs} ms.`,
-                expiryMs)),
-                expiryMs);
+                new ClientSessionExpiredError(`Client session expired.`,expiryMs)), expiryMs);
         }
 
         // For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
