@@ -51,7 +51,6 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
         }
     }
 
-
     /**
      * {@inheritDoc (IFluidDependencySynthesizer:interface).synthesize}
      */
