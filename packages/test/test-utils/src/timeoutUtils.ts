@@ -36,7 +36,7 @@ export async function timeoutPromise<T = void>(
     // the original call site, this makes it easier to debug
     const err = timeoutOptions.reject === false
         ? undefined
-        : new Error(timeoutOptions.errorMsg ?? `Timed out after ${timeout} ms`);
+        : new Error(`${timeoutOptions.errorMsg ?? "Timed out"}(${timeout}ms)`);
     return new Promise<T>((resolve,reject)=>{
         const timer = setTimeout(
             ()=>timeoutOptions.reject === false ? resolve(timeoutOptions.value) : reject(err),
