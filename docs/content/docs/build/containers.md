@@ -147,7 +147,7 @@ A container is considered **dirty** if it has local changes that have not yet be
 
 A container is considered dirty in the following cases:
 
-1. The container has been created in the detached state, and either it has not been attached yet or it is in the process of being attached (container is in `attaching` state). Changes are not sent to the service until the container is *attached*. If container is closed prior to being attached, host may never know if the file was created or not.
+1. The container has been created in the detached state, and either it has not been attached yet or it is in the process of being attached (container is in `attaching` state). If container is closed prior to being attached, host may never know if the file was created or not.
 2. The container was attached, but it has local changes that have not yet been saved to service endpoint. This occurs as part of normal op flow where pending operation (changes) are awaiting acknowledgement from the service. In some cases this can be due to lack of network connection. If the network connection is down, it needs to be restored for the pending changes to be acknowledged.
 
 In terms of user experience, keep in mind that `isDirty` flag will flicker as pending changes are awaiting and being acknowledgement. Therefore, the host may choose to incorporate some delay before interpreting the flag again, when basing the user experience off of its state.
