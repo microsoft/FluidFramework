@@ -103,9 +103,11 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
         assert(!!this.docTree, 0x0b0 /* "Missing document snapshot tree!" */);
     }
 
-    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
-        if (this.docId === undefined || this.docId === versionId) {
-            this.docId = versionId;
+    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+        if (this.docId === undefined || this.docId === versionId || versionId === null) {
+            if (versionId !== null){
+                this.docId = versionId;
+            }
             return [{ id: "latest", treeId: "" }];
         }
         return this.storage.getVersions(versionId, count);

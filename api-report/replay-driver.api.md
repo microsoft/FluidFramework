@@ -133,7 +133,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
     // (undocumented)
     getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null>;
     // (undocumented)
-    getVersions(versionId: string, count: number): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
     // (undocumented)
     readBlob(blobId: string): Promise<ArrayBufferLike>;
     // (undocumented)

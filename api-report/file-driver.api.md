@@ -104,7 +104,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
     // (undocumented)
     protected docTree: api.ISnapshotTree | null;
     getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
-    getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
+    getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
     // (undocumented)
     readBlob(sha: string): Promise<ArrayBufferLike>;
     }

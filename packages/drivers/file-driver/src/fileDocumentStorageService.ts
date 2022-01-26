@@ -76,8 +76,11 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
      * @param versionId - version ID.
      * @param count - Number of versions to be returned.
      */
-    public async getVersions(versionId: string, count: number): Promise<api.IVersion[]> {
-        if (versionId === FileStorageDocumentName) {
+    public async getVersions(versionId: string | null, count: number): Promise<api.IVersion[]> {
+        if (versionId === null){
+            return [{ id: "latest", treeId: FileStorageVersionTreeId }];
+        }
+        else if (versionId === FileStorageDocumentName) {
             if (this.docTree || this.versionName !== undefined) {
                 return [{ id: "latest", treeId: FileStorageVersionTreeId }];
             }
