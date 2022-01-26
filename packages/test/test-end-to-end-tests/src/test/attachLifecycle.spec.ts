@@ -36,6 +36,15 @@ const testConfigs =
     });
 
 describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
+    before(function (){
+        const provider  = getTestObjectProvider();
+        switch(provider.driver.type){
+            case "local":
+                break;
+            default:
+                this.skip();
+        }
+    });
     for(const testConfig of testConfigs) {
         it(`Validate attach orders: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
             // setup shared states
