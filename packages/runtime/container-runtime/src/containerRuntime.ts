@@ -1841,6 +1841,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         /** True to run GC sweep phase after the mark phase */
         runSweep?: boolean,
     }): Promise<ISummaryTreeWithStats> {
+        this.verifyNotClosed();
+
         const { summaryLogger, fullTree = false, trackState = true, runGC = true, runSweep, fullGC } = options;
 
         if (runGC) {
