@@ -8,23 +8,16 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IValueChanged } from "@fluidframework/map";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-
-import React from "react";
-import ReactDOM from "react-dom";
 
 import { IDiceRoller } from "./interface";
-import { DiceRollerView } from "./view";
 
 const diceValueKey = "diceValue";
 
 /**
  * The DiceRoller is our implementation of the IDiceRoller interface.
  */
-export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLView {
+export class DiceRoller extends DataObject implements IDiceRoller {
     public static get Name() { return "@fluid-example/dice-roller"; }
-
-    public get IFluidHTMLView() { return this; }
 
     /**
      * initializingFirstTime is called only once, it is executed only by the first client to open the
@@ -42,16 +35,6 @@ export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLVie
                 this.emit("diceRolled");
             }
         });
-    }
-
-    /**
-     * Render the dice.
-     */
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            React.createElement(DiceRollerView, { model: this }),
-            div,
-        );
     }
 
     public get value() {

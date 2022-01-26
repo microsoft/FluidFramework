@@ -18,13 +18,14 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { PerformanceEvent, isFluidError, normalizeError } from "@fluidframework/telemetry-utils";
-import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse } from "./odspUtils";
+import { fetchAndParseAsJSONHelper, fetchArray, getOdspResolvedUrl, IOdspResponse } from "./odspUtils";
 import {
     IOdspCache,
     INonPersistentCache,
     IPersistedFileCache,
  } from "./odspCache";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
+import { ClpCompliantAppHeader } from "./contractsPublic";
 
 export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" |
     "treesLatest" | "uploadSummary" | "push" | "versions";
@@ -33,6 +34,7 @@ export type FetchTypeInternal = FetchType | "cache";
 
 export const Odsp409Error = "Odsp409Error";
 
+// Please update the README file in odsp-driver-definitions if you change the defaultCacheExpiryTimeoutMs.
 export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000;
 
 /**
@@ -244,11 +246,15 @@ export class EpochTracker implements IPersistedFileCache {
         addInBody: boolean,
         clientCorrelationId: string,
     ) {
+        const isClpCompliantApp = getOdspResolvedUrl(this.fileEntry.resolvedUrl).isClpCompliantApp;
         if (addInBody) {
             const headers: {[key: string]: string} = {};
             headers["X-RequestStats"] = clientCorrelationId;
             if (this.fluidEpoch !== undefined) {
                 headers["x-fluid-epoch"] = this.fluidEpoch;
+            }
+            if (isClpCompliantApp) {
+                headers[ClpCompliantAppHeader.isClpCompliantApp] = isClpCompliantApp.toString();
             }
             this.addParamInBody(fetchOptions, headers);
         } else {
@@ -262,6 +268,9 @@ export class EpochTracker implements IPersistedFileCache {
             addHeader("X-RequestStats", clientCorrelationId);
             if (this.fluidEpoch !== undefined) {
                 addHeader("x-fluid-epoch", this.fluidEpoch);
+            }
+            if (isClpCompliantApp) {
+                addHeader(ClpCompliantAppHeader.isClpCompliantApp, isClpCompliantApp.toString());
             }
         }
     }
@@ -428,8 +437,8 @@ export class EpochTrackerWithRedemption extends EpochTracker {
             async (event) => {
                 const timeoutRes = 51; // anything will work here
                 let timer: ReturnType<typeof setTimeout>;
-                const timeoutP = new Promise<number>((accept) => {
-                    timer = setTimeout(() => { accept(timeoutRes); }, 15000);
+                const timeoutP = new Promise<number>((resolve) => {
+                    timer = setTimeout(() => { resolve(timeoutRes); }, 15000);
                 });
                 const res = await Promise.race([
                     timeoutP,

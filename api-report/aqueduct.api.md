@@ -9,7 +9,6 @@ import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { EventForwarder } from '@fluidframework/common-utils';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { FluidObjectKey } from '@fluidframework/synthesize';
 import { FluidObjectSymbolProvider } from '@fluidframework/synthesize';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
@@ -140,7 +139,7 @@ export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
     // Warning: (ae-incompatible-release-tags) The symbol "providers" is marked as @public, but its signature references "DataObjectType" which is marked as @internal
     //
     // (undocumented)
-    readonly providers: AsyncFluidObjectProvider<FluidObjectKey<DataObjectType<I, "OptionalProviders">>, FluidObjectKey<object>>;
+    readonly providers: AsyncFluidObjectProvider<DataObjectType<I, "OptionalProviders">>;
     // (undocumented)
     readonly runtime: IFluidDataStoreRuntime;
 }
@@ -149,38 +148,6 @@ export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
 export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
     // (undocumented)
     createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime): Promise<IFluidRouter>;
-}
-
-// @public @deprecated (undocumented)
-export abstract class LegacyDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent> extends DataObject<{
-    OptionalProviders: O;
-    InitialState: S;
-    Events: E;
-}> {
-}
-
-// @public @deprecated (undocumented)
-export class LegacyDataObjectFactory<TObj extends LegacyDataObject<O, S, E>, O, S, E extends IEvent = IEvent> extends DataObjectFactory<TObj, {
-    OptionalProviders: O;
-    InitialState: S;
-    Events: E;
-}> {
-}
-
-// @public @deprecated (undocumented)
-export abstract class LegacyPureDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent> extends PureDataObject<{
-    OptionalProviders: O;
-    InitialState: S;
-    Events: E;
-}> {
-}
-
-// @public @deprecated (undocumented)
-export class LegacyPureDataObjectFactory<TObj extends LegacyPureDataObject<O, S, E>, O, S, E extends IEvent = IEvent> extends PureDataObjectFactory<TObj, {
-    OptionalProviders: O;
-    InitialState: S;
-    Events: E;
-}> {
 }
 
 // @public
@@ -218,7 +185,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     // (undocumented)
     protected initProps?: DataObjectType<I, "InitialState">;
     protected preInitialize(): Promise<void>;
-    protected readonly providers: AsyncFluidObjectProvider<FluidObjectKey<DataObjectType<I, "OptionalProviders">>, FluidObjectKey<object>>;
+    protected readonly providers: AsyncFluidObjectProvider<DataObjectType<I, "OptionalProviders">>;
     request(req: IRequest): Promise<IResponse>;
     // @deprecated (undocumented)
     protected requestFluidObject_UNSAFE<T extends IFluidObject>(id: string): Promise<T>;

@@ -50,10 +50,6 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
         };
     };
 
-
-    /** Specifies, whether this is a collection of base types or of registered templates */
-    _containsPrimitiveTypes = false;
-
     /**
      * Removes the dirtiness flag from this property
      *
@@ -754,3 +750,5 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
         BaseProperty.prototype._setDirty.call(this, in_reportToView, in_callingChild);
     };
 }
+/** Specifies, whether this is a collection of base types or of registered templates */
+IndexedCollectionBaseProperty.prototype._containsPrimitiveTypes = false;

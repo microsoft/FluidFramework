@@ -261,30 +261,6 @@ export class MapKernel {
     }
 
     /**
-     * {@inheritDoc ISharedMap.wait}
-     */
-    public async wait<T = any>(key: string): Promise<T> {
-        // Return immediately if the value already exists
-        if (this.has(key)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.get<T>(key)!;
-        }
-
-        // Otherwise subscribe to changes
-        return new Promise<T>((resolve) => {
-            const callback = (changed: IValueChanged) => {
-                if (key === changed.key) {
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    resolve(this.get<T>(changed.key)!);
-                    this.eventEmitter.removeListener("valueChanged", callback);
-                }
-            };
-
-            this.eventEmitter.on("valueChanged", callback);
-        });
-    }
-
-    /**
      * Check if a key exists in the map.
      * @param key - The key to check
      * @returns True if the key exists, false otherwise

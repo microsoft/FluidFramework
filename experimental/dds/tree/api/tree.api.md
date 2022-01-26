@@ -12,13 +12,13 @@ import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
+import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { ITree } from '@fluidframework/protocol-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
@@ -279,7 +279,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
     // @internal
     saveSummary(): SharedTreeSummaryBase;
     // (undocumented)
-    snapshotCore(serializer: IFluidSerializer): ITree;
+    summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
     // (undocumented)
     protected readonly summarizeHistory: boolean;
     // (undocumented)

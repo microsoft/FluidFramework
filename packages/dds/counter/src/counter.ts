@@ -124,7 +124,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * @returns the summary of the current state of the counter
      * @internal
      */
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         // Get a serializable form of data
         const content: ICounterSnapshotFormat = {
             value: this.value,

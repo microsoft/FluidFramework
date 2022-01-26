@@ -14,141 +14,185 @@ import {
 import { AttachState, IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
 import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
+import { FlushMode } from "@fluidframework/runtime-definitions";
+import { GenericError } from "@fluidframework/container-utils";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
-        describe("ContainerRuntime", () => {
-            describe("Dirty flag", () => {
-                const createMockContext =
-                    (attachState: AttachState, addPendingMsg: boolean): Partial<IContainerContext> => {
-                    const pendingMessage = {
-                        type: "message",
-                        content: {},
-                    };
-
-                    return {
-                        deltaManager: new MockDeltaManager(),
-                        quorum: new MockQuorum(),
-                        logger: new MockLogger(),
-                        clientDetails: { capabilities: { interactive: true } },
-                        updateDirtyContainerState: (dirty: boolean) => {},
-                        attachState,
-                        pendingLocalState: addPendingMsg ? {pendingStates: [pendingMessage]} : undefined,
-                    };
-                };
-
-                it("should NOT be set to dirty if context is attached with no pending ops", async () => {
-                    const mockContext = createMockContext(AttachState.Attached, false);
-                    const updateDirtyStateStub = stub(mockContext, "updateDirtyContainerState");
-                    await ContainerRuntime.load(
-                        mockContext as IContainerContext,
-                        [],
-                        undefined,
-                        {},
-                    );
-                    assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
-                    assert.deepStrictEqual(updateDirtyStateStub.args, [[false]]);
-                });
-
-                it("should be set to dirty if context is attached with pending ops", async () => {
-                    const mockContext = createMockContext(AttachState.Attached, true);
-                    const updateDirtyStateStub = stub(mockContext, "updateDirtyContainerState");
-                    await ContainerRuntime.load(
-                        mockContext as IContainerContext,
-                        [],
-                        undefined,
-                        {},
-                    );
-                    assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
-                    assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
-                });
-
-                it("should be set to dirty if context is attaching", async () => {
-                    const mockContext = createMockContext(AttachState.Attaching, false);
-                    const updateDirtyStateStub = stub(mockContext, "updateDirtyContainerState");
-                    await ContainerRuntime.load(
-                        mockContext as IContainerContext,
-                        [],
-                        undefined,
-                        {},
-                    );
-                    assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
-                    assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
-                });
-
-                it("should be set to dirty if context is detached", async () => {
-                    const mockContext = createMockContext(AttachState.Detached, false);
-                    const updateDirtyStateStub = stub(mockContext, "updateDirtyContainerState");
-                    await ContainerRuntime.load(
-                        mockContext as IContainerContext,
-                        [],
-                        undefined,
-                        {},
-                    );
-                    assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
-                    assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
-                });
-            });
-            describe("orderSequentially", () => {
-                let containerRuntime: ContainerRuntime;
-                const containerErrors: ICriticalContainerError[] = [];
-                const getMockContext = ((): Partial<IContainerContext> => {
-                    return {
-                        deltaManager: new MockDeltaManager(),
-                        quorum: new MockQuorum(),
-                        logger: new MockLogger(),
-                        clientDetails: { capabilities: { interactive: true } },
-                        closeFn: (error?: ICriticalContainerError): void => {
-                            if (error !== undefined) {
-                                containerErrors.push(error);
-                            }
-                        },
-                        updateDirtyContainerState: (dirty: boolean) => {},
-                    };
-                });
-
-                const getSingleContainerError = (): ICriticalContainerError => {
-                    assert.strictEqual(containerErrors.length, 1);
-                    return containerErrors[0];
-                };
-
-                beforeEach(async () => {
-                    containerRuntime = await ContainerRuntime.load(
-                        getMockContext() as IContainerContext,
-                        [],
-                        undefined, // requestHandler
-                        {
-                            summaryOptions: {
-                                disableSummaries: true,
+        describe("orderSequentially", () =>
+            [FlushMode.TurnBased, FlushMode.Immediate].forEach((flushMode: FlushMode) => {
+                describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
+                    let containerRuntime: ContainerRuntime;
+                    const containerErrors: ICriticalContainerError[] = [];
+                    const getMockContext = ((): Partial<IContainerContext> => {
+                        return {
+                            deltaManager: new MockDeltaManager(),
+                            quorum: new MockQuorum(),
+                            logger: new MockLogger(),
+                            clientDetails: { capabilities: { interactive: true } },
+                            closeFn: (error?: ICriticalContainerError): void => {
+                                if (error !== undefined) {
+                                    containerErrors.push(error);
+                                }
                             },
-                        },
-                    );
-                    containerErrors.length = 0;
-                });
-
-                it("Can't call flush() inside orderSequentially's callback", () => {
-                    containerRuntime.orderSequentially(() => containerRuntime.flush());
-                    assert.strictEqual(getSingleContainerError().errorType, "dataProcessingError");
-                });
-
-                it("Can't call flush() inside orderSequentially's callback when nested", () => {
-                    containerRuntime.orderSequentially(
-                        () => containerRuntime.orderSequentially(
-                            () => containerRuntime.orderSequentially(
-                                () => containerRuntime.flush())));
-
-                    assert.strictEqual(getSingleContainerError().errorType, "dataProcessingError");
-                });
-
-                it("Errors propagate to the container", () => {
-                    containerRuntime.orderSequentially(() => {
-                        throw new Error("Any");
+                            updateDirtyContainerState: (dirty: boolean) => {},
+                        };
                     });
 
-                    const error = getSingleContainerError();
-                    assert.strictEqual(error.errorType, "dataProcessingError");
-                    assert.ok(error.message.includes("Any"));
+                    const getFirstContainerError = (): ICriticalContainerError => {
+                        assert.ok(containerErrors.length > 0, "Container should have errors");
+                        return containerErrors[0];
+                    };
+
+                    const expectedOrderSequentiallyErrorCode = "orderSequentiallyCallbackException";
+
+                    beforeEach(async () => {
+                        containerRuntime = await ContainerRuntime.load(
+                            getMockContext() as IContainerContext,
+                            [],
+                            undefined, // requestHandler
+                            {
+                                summaryOptions: {
+                                    disableSummaries: true,
+                                },
+                            },
+                        );
+                        containerRuntime.setFlushMode(flushMode);
+                        containerErrors.length = 0;
+                    });
+
+                    it("Can't call flush() inside orderSequentially's callback", () => {
+                        assert.throws(() => containerRuntime.orderSequentially(() => containerRuntime.flush()));
+
+                        const error = getFirstContainerError();
+                        assert.ok(error instanceof GenericError);
+                        assert.strictEqual(error.fluidErrorCode, expectedOrderSequentiallyErrorCode);
+                    });
+
+                    it("Can't call flush() inside orderSequentially's callback when nested", () => {
+                        assert.throws(
+                            () => containerRuntime.orderSequentially(
+                                () => containerRuntime.orderSequentially(
+                                    () => containerRuntime.flush())));
+
+                        const error = getFirstContainerError();
+                        assert.ok(error instanceof GenericError);
+                        assert.strictEqual(error.fluidErrorCode, expectedOrderSequentiallyErrorCode);
+                    });
+
+                    it("Can't call flush() inside orderSequentially's callback when nested ignoring exceptions", () => {
+                        containerRuntime.orderSequentially(() => {
+                            try {
+                                containerRuntime.orderSequentially(() => containerRuntime.flush());
+                            } catch (e) {
+                                // ignore
+                            }
+                        });
+
+                        const error = getFirstContainerError();
+                        assert.ok(error instanceof GenericError);
+                        assert.strictEqual(error.fluidErrorCode, expectedOrderSequentiallyErrorCode);
+                    });
+
+                    it("Errors propagate to the container", () => {
+                        assert.throws(
+                            () => containerRuntime.orderSequentially(
+                                () => {
+                                    throw new Error("Any");
+                                }));
+
+                        const error = getFirstContainerError();
+                        assert.ok(error instanceof GenericError);
+                        assert.strictEqual(error.fluidErrorCode, expectedOrderSequentiallyErrorCode);
+                        assert.strictEqual(error.error.message, "Any");
+                    });
+
+                    it("Errors propagate to the container when nested", () => {
+                        assert.throws(
+                            () => containerRuntime.orderSequentially(
+                                () => containerRuntime.orderSequentially(
+                                    () => {
+                                        throw new Error("Any");
+                                    })));
+
+                        const error = getFirstContainerError();
+                        assert.ok(error instanceof GenericError);
+                        assert.strictEqual(error.fluidErrorCode, expectedOrderSequentiallyErrorCode);
+                        assert.strictEqual(error.error.message, "Any");
+                    });
                 });
+            }));
+
+
+        describe("Dirty flag", () => {
+            const createMockContext =
+                (attachState: AttachState, addPendingMsg: boolean): Partial<IContainerContext> => {
+                const pendingMessage = {
+                    type: "message",
+                    content: {},
+                };
+
+                return {
+                    deltaManager: new MockDeltaManager(),
+                    quorum: new MockQuorum(),
+                    logger: new MockLogger(),
+                    clientDetails: { capabilities: { interactive: true } },
+                    updateDirtyContainerState: (dirty: boolean) => {},
+                    attachState,
+                    pendingLocalState: addPendingMsg ? {pendingStates: [pendingMessage]} : undefined,
+                };
+            };
+
+            it("should NOT be set to dirty if context is attached with no pending ops", async () => {
+                const mockContext = createMockContext(AttachState.Attached, false);
+                const updateDirtyStateStub = stub(mockContext, "updateDirtyContainerState");
+                await ContainerRuntime.load(
+                    mockContext as IContainerContext,
+                    [],
+                    undefined,
+                    {},
+                );
+                assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
+                assert.deepStrictEqual(updateDirtyStateStub.args, [[false]]);
+            });
+
+            it("should be set to dirty if context is attached with pending ops", async () => {
+                const mockContext = createMockContext(AttachState.Attached, true);
+                const updateDirtyStateStub = stub(mockContext, "updateDirtyContainerState");
+                await ContainerRuntime.load(
+                    mockContext as IContainerContext,
+                    [],
+                    undefined,
+                    {},
+                );
+                assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
+                assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
+            });
+
+            it("should be set to dirty if context is attaching", async () => {
+                const mockContext = createMockContext(AttachState.Attaching, false);
+                const updateDirtyStateStub = stub(mockContext, "updateDirtyContainerState");
+                await ContainerRuntime.load(
+                    mockContext as IContainerContext,
+                    [],
+                    undefined,
+                    {},
+                );
+                assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
+                assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
+            });
+
+            it("should be set to dirty if context is detached", async () => {
+                const mockContext = createMockContext(AttachState.Detached, false);
+                const updateDirtyStateStub = stub(mockContext, "updateDirtyContainerState");
+                await ContainerRuntime.load(
+                    mockContext as IContainerContext,
+                    [],
+                    undefined,
+                    {},
+                );
+                assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
+                assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
             });
         });
 
@@ -207,7 +251,7 @@ describe("Runtime", () => {
                 /**
                  * awaits until all ops that could be processed are processed.
                  */
-                 async function processOps() {
+                async function processOps() {
                     const inbound = deltaManager.inbound;
                     while (!inbound.paused && inbound.length > 0) {
                         await Promise.resolve();

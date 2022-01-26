@@ -21,6 +21,7 @@ import {
     INack,
     NackErrorType,
 } from "@fluidframework/protocol-definitions";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
     private  readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
@@ -157,10 +158,11 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
     }
 }
 
-export class FaultInjectionError extends Error {
+export class FaultInjectionError extends LoggingError {
     constructor(
         message: string,
         public readonly canRetry: boolean | undefined) {
-            super(message);
+            super(message, {testCategoryOverride: "generic"});
     }
+
 }

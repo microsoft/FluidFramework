@@ -41,14 +41,6 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     get<T = any>(key: string): T | undefined;
 
     /**
-     * A form of get except it will only resolve the promise once the key exists in the directory.
-     * @param key - Key to retrieve from
-     * @returns The stored value once available
-     * @deprecated 0.55 - This method will be removed in an upcoming release.  See BREAKING.md for migration options.
-     */
-    wait<T = any>(key: string): Promise<T>;
-
-    /**
      * Sets the value stored at key to the provided value.
      * @param key - Key to set at
      * @param value - Value to set
@@ -264,14 +256,6 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
      * @returns The stored value, or undefined if the key is not set
      */
     get<T = any>(key: string): T | undefined;
-
-    /**
-     * A form of get except it will only resolve the promise once the key exists in the map.
-     * @param key - Key to retrieve from
-     * @returns The stored value once available
-     * @deprecated 0.55 - This method will be removed in an upcoming release.  See BREAKING.md for migration options.
-     */
-    wait<T = any>(key: string): Promise<T>;
 
     /**
      * Sets the value stored at key to the provided value.
