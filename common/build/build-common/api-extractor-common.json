@@ -110,20 +110,40 @@
      */
     "extractorMessageReporting": {
       "default": {
-        "logLevel": "error"
-        // "addToApiReviewFile": false
-      },
-      "ae-forgotten-export": {
-        "logLevel": "error"
+        "logLevel": "error",
+        "addToApiReportFile": false
       },
       "ae-extra-release-tag": {
-        "logLevel": "warning"
+        "logLevel": "error",
+        "addToApiReportFile": false
+      },
+      "ae-forgotten-export": {
+        "logLevel": "error",
+        "addToApiReportFile": false
+      },
+      "ae-incompatible-release-tags": {
+        "logLevel": "error",
+        "addToApiReportFile": true
+      },
+      "ae-internal-missing-underscore": {
+        "logLevel": "none",
+        "addToApiReportFile": false
+      },
+      "ae-internal-mixed-release-tag": {
+        "logLevel": "error",
+        "addToApiReportFile": false
       },
       "ae-missing-release-tag": {
-        "logLevel": "none"
+        "logLevel": "none",
+        "addToApiReportFile": false
+      },
+      "ae-unresolved-inheritdoc-base": {
+        "logLevel": "error",
+        "addToApiReportFile": false
       },
       "ae-unresolved-inheritdoc-reference": {
-        "logLevel": "error"
+        "logLevel": "error",
+        "addToApiReportFile": false
       }
     },
 
