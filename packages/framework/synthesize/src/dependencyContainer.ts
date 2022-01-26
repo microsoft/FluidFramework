@@ -28,9 +28,12 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     }
 
     /**
-     * {@inheritDoc (IFluidDependencySynthesizer:interface).register}
+     * Add a new provider
+     * @param type - Name of the Type T being provided
+     * @param provider - A provider that will resolve the T correctly when asked
+     * @throws - If passing a type that's already registered
      */
-    public register<T extends keyof TMap = keyof TMap>(type: T, provider: FluidObjectProvider<Pick<TMap,T>>): void {
+    public register<T extends keyof TMap = keyof TMap>(type: T, provider: FluidObjectProvider<Pick<TMap, T>>): void {
         if (this.providers.has(type)) {
             throw new Error(`Attempting to register a provider of type ${type} that already exists`);
         }
@@ -39,7 +42,8 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     }
 
     /**
-     * {@inheritDoc (IFluidDependencySynthesizer:interface).unregister}
+     * Remove a provider
+     * @param type - Name of the provider to remove
      */
     public unregister(type: keyof TMap): void {
         if (this.providers.has(type)) {
@@ -51,11 +55,9 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     /**
      * {@inheritDoc (IFluidDependencySynthesizer:interface).synthesize}
      */
-    public synthesize<
-        O,
-        R = undefined | Record<string, never>>(
-            optionalTypes: FluidObjectSymbolProvider<O>,
-            requiredTypes: Required<FluidObjectSymbolProvider<R>>,
+    public synthesize<O, R = undefined | Record<string, never>>(
+        optionalTypes: FluidObjectSymbolProvider<O>,
+        requiredTypes: Required<FluidObjectSymbolProvider<R>>,
     ): AsyncFluidObjectProvider<O, R> {
         const base: AsyncFluidObjectProvider<O, R> = {} as any;
         this.generateRequired<R>(base, requiredTypes);
