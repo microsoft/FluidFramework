@@ -4,6 +4,7 @@
 
 ```ts
 
+import { DriverPreCheckInfo } from '@fluidframework/driver-definitions';
 import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions';
 import { IdentityType } from '@fluidframework/odsp-driver-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
@@ -22,7 +23,7 @@ import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-defin
 import { ShareLinkTypes } from '@fluidframework/odsp-driver-definitions';
 import { TokenFetcher } from '@fluidframework/odsp-driver-definitions';
 
-// @public @deprecated
+// @public
 export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined;
 
 // @public (undocumented)
@@ -36,12 +37,6 @@ export function createOdspCreateContainerRequest(siteUrl: string, driveId: strin
 
 // @public
 export function createOdspUrl(l: OdspFluidDataStoreLocator): string;
-
-// @public
-export interface DriverPreCheckInfo {
-    codeDetailsHint?: string;
-    criticalBootDomains?: string[];
-}
 
 // @public
 export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocator): string;

@@ -55,6 +55,12 @@ export enum DriverHeader {
     summarizingClient = "fluid-client-summarizer"
 }
 
+// @public
+export interface DriverPreCheckInfo {
+    codeDetailsHint?: string;
+    criticalBootDomains?: string[];
+}
+
 // @public (undocumented)
 export interface IAuthorizationError extends IDriverErrorBase {
     // (undocumented)
