@@ -296,11 +296,11 @@ export class EpochTracker implements IPersistedFileCache {
     }
 
     private formatClientCorrelationId(fetchReason?: string) {
-        let clientCorrelationId = `driverId=${this.driverId}, RequestNumber=${this.networkCallNumber++}`;
+        const items: string[] = [`driverId=${this.driverId}`, `RequestNumber=${this.networkCallNumber++}`];
         if (fetchReason !== undefined) {
-            clientCorrelationId += `, fetchReason=${fetchReason}`;
+            items.push(`fetchReason=${fetchReason}`);
         }
-        return clientCorrelationId;
+        return items.join(", ");
     }
 
     protected validateEpochFromResponse(
