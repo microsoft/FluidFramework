@@ -64,24 +64,24 @@ import {
     ICommittedProposal,
     IDocumentAttributes,
     IDocumentMessage,
+    IPendingProposal,
     IProcessMessageResult,
-    IQuorum,
+    IQuorumClients,
+    IQuorumProposals,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
     ISignalClient,
     ISignalMessage,
     ISnapshotTree,
+    ISummaryContent,
+    ISummaryTree,
     ITree,
     ITreeEntry,
     IVersion,
     MessageType,
-    TreeEntry,
-    ISummaryTree,
-    IPendingProposal,
     SummaryType,
-    ISummaryContent,
-    IQuorumProposals,
+    TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
     ChildLogger,
@@ -488,16 +488,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
-     * The current code details for the container's runtime
-     * @deprecated use getSpecifiedCodeDetails for the code details currently specified for this container, or
-     * getLoadedCodeDetails for the code details that the container's context was loaded with.
-     * To be removed after getSpecifiedCodeDetails and getLoadedCodeDetails become ubiquitous.
-     */
-    public get codeDetails(): IFluidCodeDetails | undefined {
-        return this._context?.codeDetails ?? this.getCodeDetailsFromQuorum();
-    }
-
-    /**
      * Get the code details that are currently specified for the container.
      * @returns The current code details if any are specified, undefined if none are specified.
      */
@@ -629,6 +619,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.mc.logger,
         );
 
+        this.on(savedContainerEvent, () => {
+            this.connectionStateHandler.containerSaved();
+        });
+
         this._deltaManager = this.createDeltaManager();
         this._storage = new ContainerStorageAdapter(
             () => {
@@ -702,7 +696,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     /**
      * Retrieves the quorum associated with the document
      */
-    public getQuorum(): IQuorum {
+    public getQuorum(): IQuorumClients {
         return this.protocolHandler.quorum;
     }
 
@@ -1107,7 +1101,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Save attributes for the document
         const documentAttributes = {
-            branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             sequenceNumber: this._deltaManager.lastSequenceNumber,
             term: this._deltaManager.referenceTerm,

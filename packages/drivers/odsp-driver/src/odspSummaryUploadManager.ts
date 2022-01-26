@@ -38,6 +38,7 @@ export class OdspSummaryUploadManager {
         private readonly getStorageToken: InstrumentedStorageTokenFetcher,
         logger: ITelemetryLogger,
         private readonly epochTracker: EpochTracker,
+        private readonly forceAccessTokenViaAuthorizationHeader: boolean,
     ) {
         this.mc = loggerToMonitoringContext(logger);
     }
@@ -84,7 +85,11 @@ export class OdspSummaryUploadManager {
         return getWithRetryForTokenRefresh(async (options) => {
             const storageToken = await this.getStorageToken(options, "WriteSummaryTree");
 
-            const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/snapshot`, storageToken);
+            const { url, headers } = getUrlAndHeadersWithAuth(
+                `${this.snapshotUrl}/snapshot`,
+                storageToken,
+                this.forceAccessTokenViaAuthorizationHeader,
+            );
             headers["Content-Type"] = "application/json";
             if (parentHandle) {
                 headers["If-Match"] = `fluid:containerid=${parentHandle}`;

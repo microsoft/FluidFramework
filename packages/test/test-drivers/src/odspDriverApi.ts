@@ -49,6 +49,7 @@ const odspOpsCaching: OptionsMatrix<IOpsCachingPolicy> = {
 
 const odspSessionOptions: OptionsMatrix<ICollabSessionOptions> = {
     unauthenticatedUserDisplayName: [undefined],
+    forceAccessTokenViaAuthorizationHeader: [undefined],
 };
 
 export const generateOdspHostStoragePolicy = (seed: number) => {

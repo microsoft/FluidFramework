@@ -33,6 +33,7 @@ import * as current from "${indexPath}/index";
             const oldType: TestCaseTypeData = {
                 prefix: "old",
                 ... oldTypeData,
+                removed: false
             }
             const currentTypeData = currentTypeMap.get(getFullTypeName(oldTypeData));
             // if the current package is missing a type, we will use the old type data.
@@ -44,10 +45,12 @@ import * as current from "${indexPath}/index";
                 prefix: "current",
                 ... oldTypeData,
                 kind:`Removed${oldTypeData.kind}`,
+                removed: true
             }
             :{
                 prefix: "current",
                 ... currentTypeData,
+                removed: false
             };
             const brokenData = currentProjectData.packageDetails.broken?.[oldProjectData.packageDetails.version]?.[getFullTypeName(currentType)];
 
@@ -81,21 +84,32 @@ import * as current from "${indexPath}/index";
 
 
 interface TestCaseTypeData extends TypeData{
-    prefix: "old" | "current"
+    prefix: "old" | "current",
+    removed: boolean
 }
 
 function buildTestCase(getAsType:TestCaseTypeData, useType:TestCaseTypeData, isCompatible: boolean){
     const getSig =`get_${getAsType.prefix}_${getFullTypeName(getAsType).replace(".","_")}`;
     const useSig =`use_${useType.prefix}_${getFullTypeName(useType).replace(".","_")}`;
+    const expectErrorString = "    // @ts-expect-error compatibility expected to be broken";
     const testString: string[] =[];
-    testString.push(`declare function ${getSig}():\n    ${toTypeString(getAsType.prefix, getAsType)};`);
-    testString.push(`declare function ${useSig}(\n    use: ${toTypeString(useType.prefix, useType)});`);
-    testString.push(`${useSig}(`);
-    if(!isCompatible){
-        testString.push(`    // @ts-expect-error compatibility expected to be broken`);
+
+    testString.push(`declare function ${getSig}():`);
+    if (!isCompatible && getAsType.removed) {
+        testString.push(expectErrorString);
     }
-    testString.push(`    ${getSig}());`)
-    return testString
+    testString.push(`    ${toTypeString(getAsType.prefix, getAsType)};`);
+    testString.push(`declare function ${useSig}(`);
+    if (!isCompatible && useType.removed) {
+        testString.push(expectErrorString);
+    }
+    testString.push(`    use: ${toTypeString(useType.prefix, useType)});`);
+    testString.push(`${useSig}(`);
+    if(!isCompatible && !getAsType.removed && !useType.removed) {
+        testString.push(expectErrorString);
+    }
+    testString.push(`    ${getSig}());`);
+    return testString;
 }
 
 function getFullTypeName(typeData: TypeData){

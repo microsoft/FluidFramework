@@ -84,7 +84,7 @@ async function getFileLinkCore(
     identityType: IdentityType,
     logger: ITelemetryLogger,
 ): Promise<string> {
-    const fileItem = await getFileItemLite(getToken, odspUrlParts, logger);
+    const fileItem = await getFileItemLite(getToken, odspUrlParts, logger, identityType === "Consumer");
 
     // ODC canonical link does not require any additional processing
     if (identityType === "Consumer") {
@@ -104,7 +104,10 @@ async function getFileLinkCore(
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     `${odspUrlParts.siteUrl}/_api/web/GetFileByUrl(@a1)/ListItemAllFields/GetSharingInformation?@a1=${
                         encodeURIComponent(`'${fileItem.webDavUrl}'`)
-                    }`, tokenFromResponse(token));
+                    }`,
+                    tokenFromResponse(token),
+                    false,
+                );
                 const requestInit = {
                     method: "POST",
                     headers: {
@@ -152,6 +155,7 @@ async function getFileItemLite(
     getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
     odspUrlParts: IOdspUrlParts,
     logger: ITelemetryLogger,
+    forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<FileItemLite> {
     return PerformanceEvent.timedExecAsync(
         logger,
@@ -166,6 +170,7 @@ async function getFileItemLite(
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     `${siteUrl}/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl`,
                     tokenFromResponse(token),
+                    forceAccessTokenViaAuthorizationHeader,
                 );
                 const requestInit = { method: "GET", headers };
                 const response = await fetchHelper(url, requestInit);

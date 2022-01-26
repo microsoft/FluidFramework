@@ -50,7 +50,6 @@ import {
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
 import {
-    CreateProcessingError,
     DataCorruptionError,
     GenericError,
     UsageError,
@@ -758,13 +757,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return runtime;
     }
 
-    /**
-    * @deprecated This will be removed in a later release. Deprecated in 0.53
-    */
-    public get id(): string {
-        return this.context.id;
-    }
-
     public get options(): ILoaderOptions {
         return this.context.options;
     }
@@ -1043,6 +1035,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             async () => this.garbageCollector.getDataStoreBaseGCDetails(),
             (id: string) => this.garbageCollector.nodeChanged(id),
             new Map<string, string>(dataStoreAliasMap),
+            this.garbageCollector.writeDataAtRoot,
         );
 
         this.blobManager = new BlobManager(
@@ -1400,9 +1393,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
         }
 
-        const gcSummary = this.garbageCollector.summarize();
-        if (gcSummary !== undefined) {
-            addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
+        if (this.garbageCollector.writeDataAtRoot) {
+            const gcSummary = this.garbageCollector.summarize();
+            if (gcSummary !== undefined) {
+                addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
+            }
         }
     }
 
@@ -1650,20 +1645,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const savedFlushMode = this.flushMode;
         this.setFlushMode(FlushMode.TurnBased);
 
-        try {
-            this.trackOrderSequentiallyCalls(callback);
-            this.flush();
-            this.setFlushMode(savedFlushMode);
-        } catch(error) {
-            this.closeFn(CreateProcessingError(error, "orderSequentially"));
-            throw error; // throw the original error for the consumer of the runtime
-        }
+        this.trackOrderSequentiallyCalls(callback);
+        this.flush();
+        this.setFlushMode(savedFlushMode);
     }
 
     private trackOrderSequentiallyCalls(callback: () => void): void {
         try {
             this._orderSequentiallyCalls++;
             callback();
+        } catch (error) {
+            this.closeFn(new GenericError("orderSequentiallyCallbackException", error));
+            throw error; // throw the original error for the consumer of the runtime
         } finally {
             this._orderSequentiallyCalls--;
         }

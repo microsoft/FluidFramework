@@ -8,6 +8,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { gcTreeKey } from "./garbageCollection";
 
 type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 interface IFluidDataStoreAttributes0 {
@@ -161,7 +162,7 @@ export const protocolTreeName = ".protocol";
  * isolated data stores namespace. Without the namespace, this must
  * be used to prevent name collisions with data store IDs.
  */
-export const nonDataStorePaths = [protocolTreeName, ".logTail", ".serviceProtocol", blobsTreeName];
+export const nonDataStorePaths = [protocolTreeName, ".logTail", ".serviceProtocol", blobsTreeName, gcTreeKey];
 
 export const dataStoreAttributesBlobName = ".component";
 
