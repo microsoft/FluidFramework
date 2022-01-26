@@ -79,7 +79,7 @@ export const FileSnapshotWriterClassFactory: <TBase extends ReaderConstructor>(B
         onCommitHandler(dataStoreName: string, tree: api.ITree): void;
         onSnapshotHandler(snapshot: IFileSnapshot): void;
         readBlob(sha: string): Promise<ArrayBufferLike>;
-        getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
+        getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
         getSnapshotTree(version?: api.IVersion | undefined): Promise<api.ISnapshotTree | null>;
         write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion>;
         writeOutFullSnapshot(tree: api.ITree): Promise<void>;
@@ -122,7 +122,7 @@ export const FluidFetchReaderFileSnapshotWriter: {
         onCommitHandler(dataStoreName: string, tree: api.ITree): void;
         onSnapshotHandler(snapshot: IFileSnapshot): void;
         readBlob(sha: string): Promise<ArrayBufferLike>;
-        getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
+        getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
         getSnapshotTree(version?: api.IVersion | undefined): Promise<api.ISnapshotTree | null>;
         write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion>;
         writeOutFullSnapshot(tree: api.ITree): Promise<void>;

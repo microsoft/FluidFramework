@@ -39,7 +39,7 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
     // (undocumented)
     getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null>;
     // (undocumented)
-    getVersions(versionId: string, count: number): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
     // (undocumented)
     readBlob(blobId: string): Promise<ArrayBufferLike>;
     // (undocumented)
@@ -63,7 +63,7 @@ export class OpStorage extends ReadDocumentStorageServiceBase {
     // (undocumented)
     getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
     // (undocumented)
-    getVersions(versionId: string, count: number): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
     // (undocumented)
     readBlob(blobId: string): Promise<ArrayBufferLike>;
 }
@@ -77,7 +77,7 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
     // (undocumented)
     abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
     // (undocumented)
-    abstract getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
+    abstract getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
     // (undocumented)
     abstract readBlob(blobId: string): Promise<ArrayBufferLike>;
     // (undocumented)

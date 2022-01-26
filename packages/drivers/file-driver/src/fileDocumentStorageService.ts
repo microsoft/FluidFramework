@@ -77,10 +77,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
      * @param count - Number of versions to be returned.
      */
     public async getVersions(versionId: string | null, count: number): Promise<api.IVersion[]> {
-        if (versionId === null){
-            return [{ id: "latest", treeId: FileStorageVersionTreeId }];
-        }
-        else if (versionId === FileStorageDocumentName) {
+        if (versionId === FileStorageDocumentName || versionId === null) {
             if (this.docTree || this.versionName !== undefined) {
                 return [{ id: "latest", treeId: FileStorageVersionTreeId }];
             }
@@ -146,17 +143,18 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
             return super.readBlob(sha);
         }
 
-        public async getVersions(versionId: string, count: number): Promise<api.IVersion[]> {
+        public async getVersions(versionId: string | null, count: number): Promise<api.IVersion[]> {
             // If we already saved document, that means we are getting here because of snapshot generation.
             // Not returning tree ensures that ContainerRuntime.snapshot() would regenerate subtrees for
             // each unchanged data store.
             // If we want to change that, we would need to capture docId on first call and return this.latestWriterTree
             // when latest is requested.
+            if (this.latestWriterTree && (this.docId === versionId || versionId === undefined) || versionId === null) {
+                return [{ id: "latest", treeId: FileStorageVersionTreeId }];
+            }
+
             if (this.docId === undefined && versionId !== undefined) {
                 this.docId = versionId;
-            }
-            if (this.latestWriterTree && (this.docId === versionId || versionId === undefined)) {
-                return [{ id: "latest", treeId: FileStorageVersionTreeId }];
             }
 
             if (this.commitsWriter[versionId] !== undefined) {
