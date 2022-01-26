@@ -409,13 +409,14 @@ export class EpochTrackerWithRedemption extends EpochTracker {
         fetchOptions: {[index: string]: any},
         fetchType: FetchType,
         addInBody: boolean = false,
+        fetchReason?: string,
     ): Promise<IOdspResponse<T>> {
         // Optimize the flow if we know that treesLatestDeferral was already completed by the timer we started
         // joinSession call. If we did - there is no reason to repeat the call as it will fail with same error.
         const completed = this.treesLatestDeferral.isCompleted;
 
         try {
-            return await super.fetchAndParseAsJSON<T>(url, fetchOptions, fetchType, addInBody);
+            return await super.fetchAndParseAsJSON<T>(url, fetchOptions, fetchType, addInBody, fetchReason);
         } catch (error) {
             // Only handling here treesLatest. If createFile failed, we should never try to do joinSession.
             // Similar, if getVersions failed, we should not do any further storage calls.
