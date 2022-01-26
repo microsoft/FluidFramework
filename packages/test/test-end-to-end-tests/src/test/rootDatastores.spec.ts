@@ -20,6 +20,8 @@ import {
     SummaryCollection,
 } from "@fluidframework/container-runtime";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { GenericError } from "@fluidframework/container-utils";
+import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 
 const getMockStore = ((store: Record<string, string>): Storage => {
     return {
@@ -157,7 +159,13 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                 error = err as Error;
             }
 
-            assert(error);
+            assert.ok(error instanceof GenericError);
+            assert.deepEqual(
+                error.getTelemetryProperties().alias,
+                {
+                    value: "2",
+                    tag: TelemetryDataTag.UserData,
+                });
             assert.ok(await getRootDataStore(dataObject1, "2"));
             settings["Fluid.ContainerRuntime.UseDataStoreAliasing"] = "";
         });
@@ -176,7 +184,13 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                 error = err as Error;
             }
 
-            assert(error);
+            assert.ok(error instanceof GenericError);
+            assert.deepEqual(
+                error.getTelemetryProperties().alias,
+                {
+                    value: "2",
+                    tag: TelemetryDataTag.UserData,
+                });
             assert.ok(await getRootDataStore(dataObject1, "2"));
             settings["Fluid.ContainerRuntime.UseDataStoreAliasing"] = "";
         });
@@ -214,14 +228,14 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
 
-        it("Aliasing a datastore twice will fail", async () => {
+        it("Aliasing a datastore is idempotent", async () => {
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 
             const aliasResult1 = await ds1.trySetAlias(alias);
             const aliasResult2 = await ds1.trySetAlias(alias);
 
             assert(aliasResult1);
-            assert(!aliasResult2);
+            assert(aliasResult2);
 
             assert.ok(await getRootDataStore(dataObject1, alias));
         });

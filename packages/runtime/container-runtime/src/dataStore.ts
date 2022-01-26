@@ -4,10 +4,11 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "./containerRuntime";
 
 /**
@@ -62,15 +63,24 @@ enum AliasState {
 }
 
 class DataStore implements IDataStore {
-    private state: AliasState = AliasState.None;
+    private aliasState: AliasState = AliasState.None;
+    private alias: string | undefined;
 
     async trySetAlias(alias: string): Promise<boolean> {
-        assert(this.runtime.attachState === AttachState.Attached, "Trying to submit message while detached!");
-        if (this.state !== AliasState.None) {
-            return false;
+        assert(this.runtime.attachState === AttachState.Attached, "Trying to alias when not attached!");
+        switch (this.aliasState) {
+            // If we're already aliasing, fail the current function call
+            case AliasState.Aliasing: return false;
+            // If this datastore is already aliased, return true only if this
+            // is a repeated call for the same alias
+            case AliasState.Aliased: return this.alias === alias;
+            // There is no current or past alias operation for this datastore,
+            // it is safe to continue execution
+            case AliasState.None: break;
+            default: unreachableCase(this.aliasState);
         }
 
-        this.state = AliasState.Aliasing;
+        this.aliasState = AliasState.Aliasing;
         this.fluidDataStoreChannel.bindToContext();
 
         const message: IDataStoreAliasMessage = {
@@ -80,12 +90,28 @@ class DataStore implements IDataStore {
 
         return this.ackBasedPromise<boolean>((resolve) => {
             this.runtime.submitDataStoreAliasOp(message, resolve);
-        }).then((result) => {
-            this.state = result ? AliasState.Aliased : AliasState.None;
-            return result;
+        }).then((succeeded) => {
+            if (succeeded) {
+                this.aliasState = AliasState.Aliased;
+                this.alias = alias;
+            } else {
+                this.aliasState = AliasState.None;
+            }
+
+            return succeeded;
         }).catch((error) => {
-            this.logger.sendErrorEvent({ eventName: "AliasingException" }, error);
-            this.state = AliasState.None;
+            this.logger.sendErrorEvent({
+                eventName: "AliasingException",
+                alias: {
+                    value: alias,
+                    tag: TelemetryDataTag.UserData,
+                },
+                internalId: {
+                    value: this.internalId,
+                    tag: TelemetryDataTag.PackageData,
+                },
+            }, error);
+            this.aliasState = AliasState.None;
             return false;
         });
     }

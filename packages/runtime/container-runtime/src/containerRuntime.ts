@@ -46,6 +46,7 @@ import {
     TaggedLoggerAdapter,
     MonitoringContext,
     loggerToMonitoringContext,
+    TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
@@ -1688,6 +1689,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.mc.logger);
     }
 
+    /**
+     * Creates a root datastore directly with a user generated id and attaches it to storage.
+     * It is vulnerable to name collisions and should not be used.
+     *
+     * This method will be removed. See #6465.
+     */
     private async createRootDataStoreLegacy(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
         const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
         fluidDataStore.bindToContext();
@@ -1700,14 +1707,36 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.createRootDataStoreLegacy(pkg, rootDataStoreId);
     }
 
+    /**
+     * Creates a data store then attempts to alias it.
+     * If aliasing fails, it will raise an exception.
+     *
+     * This method will be removed. See #6465.
+     *
+     * @param pkg - Package name of the data store
+     * @param alias - Alias to be assigned to the data store
+     * @param props - Properties for the data store
+     * @returns - An aliased data store which can can be found / loaded by alias.
+     */
     private async createAndAliasDataStore(pkg: string | string[], alias: string, props?: any): Promise<IFluidRouter> {
         const internalId = uuid();
         const dataStore = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
-        dataStore.bindToContext();
         const aliasedDataStore = channelToDataStore(dataStore, internalId, this, this.mc.logger);
         const result = await aliasedDataStore.trySetAlias(alias);
         if (!result) {
-            throw new GenericError("dataStoreAliasConflict");
+            throw new GenericError(
+                "dataStoreAliasConflict",
+                undefined /* error */,
+                {
+                    alias: {
+                        value: alias,
+                        tag: TelemetryDataTag.UserData,
+                    },
+                    internalId: {
+                        value: internalId,
+                        tag: TelemetryDataTag.PackageData,
+                    },
+                });
         }
 
         return aliasedDataStore;
@@ -1724,6 +1753,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.dataStores.createDetachedDataStoreCore(pkg, false);
     }
 
+    /**
+     * Creates a possibly root datastore directly with a possibly user generated id and attaches it to storage.
+     * It is vulnerable to name collisions if both aforementioned conditions are true, and should not be used.
+     *
+     * This method will be removed. See #6465.
+     */
     private async _createDataStoreWithPropsLegacy(
         pkg: string | string[],
         props?: any,
@@ -2218,6 +2253,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.submit(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
     }
 
+    /**
+     * Submits an aliasing message relative to a datastore
+     *
+     * @param contents - Message contents. Expected to be an @see IDataStoreAliasMessage
+     * @param localOpMetadata - Local op metadata. It is expected to be a Promise resolve callback.
+     */
     public submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void {
         const aliasMessage = contents as IDataStoreAliasMessage;
         if (!isDataStoreAliasMessage(aliasMessage)) {
