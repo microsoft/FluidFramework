@@ -123,7 +123,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
     }
 
     private trackLastProposal(container: IContainer) {
-        container.getQuorum().on("addProposal", (proposal) => {
+        container.on("codeDetailsProposed", (value, proposal) => {
             if (proposal.sequenceNumber > this.lastProposalSeqNum) {
                 this.lastProposalSeqNum = proposal.sequenceNumber;
             }

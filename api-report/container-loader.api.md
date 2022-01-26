@@ -66,8 +66,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     closeAndGetPendingLocalState(): string;
     // (undocumented)
     get closed(): boolean;
-    // @deprecated
-    get codeDetails(): IFluidCodeDetails | undefined;
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
@@ -117,7 +115,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     subLogger: TelemetryLogger;
     // (undocumented)
     static version: string;
-}
+    }
 
 // @public @deprecated (undocumented)
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {

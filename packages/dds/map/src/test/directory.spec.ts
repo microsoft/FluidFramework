@@ -585,37 +585,6 @@ describe("Directory", () => {
                 assert.equal(directory2.get("testKey"), "testValue4");
                 assert.equal(directory2.get("testKey2"), undefined);
             });
-
-            it("Should resolve returned promise for existing keys", async () => {
-                directory1.set("test", "resolved");
-
-                containerRuntimeFactory.processAllMessages();
-
-                // Verify the local SharedDirectory
-                assert.ok(directory1.has("test"));
-                await directory1.wait("test");
-
-                // Verify the remote SharedDirectory
-                assert.ok(directory2.has("test"));
-                await directory2.wait("test");
-            });
-
-            it("Should resolve returned promise once unavailable key is available", async () => {
-                assert.ok(!directory1.has("test"));
-
-                const waitP = directory1.wait("test");
-                const waitP2 = directory2.wait("test");
-
-                directory1.set("test", "resolved");
-
-                containerRuntimeFactory.processAllMessages();
-
-                // Verify the local SharedDirectory
-                await waitP;
-
-                // Verify the remote SharedDirectory
-                await waitP2;
-            });
         });
 
         describe("SubDirectory", () => {
