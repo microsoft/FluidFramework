@@ -10,7 +10,7 @@ import {
 import {
     ICodeDetailsLoader,
     IFluidModuleWithDetails,
-} from "@fluidframework/container-loader";
+} from "@fluidframework/container-definitions";
 import { fluidExport } from "./fauxComponent";
 import { parsePackageDetails } from "./utils";
 
