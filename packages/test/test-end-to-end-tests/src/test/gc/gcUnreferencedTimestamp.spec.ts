@@ -22,6 +22,7 @@ import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
+import { mockConfigProvider } from "./mockConfigProivder";
 import { loadSummarizer, TestDataObject, submitAndAckSummary, getGCStateFromSummary } from "./mockSummarizerClient";
 
 /**
@@ -51,8 +52,11 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         [innerRequestHandler],
         runtimeOptions,
     );
-
     const logger = new TelemetryNullLogger();
+
+    // Enable config provider setting to write GC data at the root.
+    const settings = { "Fluid.GarbageCollection.WriteDataAtRoot": "true" };
+    const configProvider = mockConfigProvider(settings);
 
     // Stores the latest summary uploaded to the server.
     let latestUploadedSummary: ISummaryTree | undefined;
@@ -65,11 +69,17 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
     let dataStoreA: TestDataObject;
 
     const createContainer = async (): Promise<IContainer> => {
-        return provider.createContainer(runtimeFactory);
+        return provider.createContainer(runtimeFactory, { configProvider });
     };
 
     const getNewSummarizer = async (summaryVersion?: string) => {
-        return loadSummarizer(provider, runtimeFactory, mainContainer.deltaManager.lastSequenceNumber, summaryVersion);
+        return loadSummarizer(
+            provider,
+            runtimeFactory,
+            mainContainer.deltaManager.lastSequenceNumber,
+            summaryVersion,
+            { configProvider },
+            );
     };
 
     /**
@@ -146,7 +156,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         latestUploadedSummary = undefined;
     });
 
-    describe("unreferenced timestamp in in summary", () => {
+    describe("unreferenced timestamp in summary", () => {
         it("adds / removes unreferenced timestamp from data stores correctly", async () => {
             const summarizerClient = await getNewSummarizer();
 
