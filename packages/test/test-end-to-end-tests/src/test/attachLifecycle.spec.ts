@@ -18,11 +18,12 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
 
 //these points are all after creation of all object at which any object can be attached
-const sharedPoints = [3,4,5];
+const sharedPoints = [3, 4, 5];
 
 const testConfigs =
     generatePairwiseOptions({
         containerAttachPoint:[0, ... sharedPoints],
+        containerSaveAfterAttach: [true, false],
         datastoreAttachPoint: [1, ... sharedPoints],
         datastoreSaveAfterAttach: [true, false],
         ddsAttachPoint: [2, ... sharedPoints],
@@ -30,15 +31,13 @@ const testConfigs =
     });
 
 describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
-    //enumerate test cases, but filter duplicates
-    for(const testConfig of testConfigs.filter((tc)=>
-        tc.containerAttachPoint !== tc.datastoreAttachPoint
-        && tc.containerAttachPoint !== tc.ddsAttachPoint
-        && tc.datastoreAttachPoint !== tc.ddsAttachPoint)
-    ) {
+    for(const testConfig of testConfigs) {
         it(`Validate attach orders: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
+            // setup shared states
             const provider  = getTestObjectProvider();
             let containerUrl: IResolvedUrl | undefined;
+
+            // act code block
             {
                 const initLoader = createLoader(
                     [[provider.defaultCodeDetails, provider.createFluidEntryPoint()]],
@@ -47,11 +46,16 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                 );
 
                 const initContainer = await initLoader.createDetachedContainer(provider.defaultCodeDetails);
+                const attachContainer = async ()=>{
+                    const attachP =  initContainer.attach(provider.driver.createCreateNewRequest(provider.documentId))
+                    if(testConfig.containerSaveAfterAttach){
+                        await attachP;
+                    }
+                }
                 if(testConfig.containerAttachPoint === 0) {
                     // point 0 - at container create
-                    await initContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
-                    containerUrl = initContainer.resolvedUrl;
-                }
+                    await attachContainer();
+                }   
 
                 const initDataObject = await requestFluidObject<ITestFluidObject>(initContainer, "default");
 
@@ -94,8 +98,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                     newMap.set(i.toString(),i);
 
                     if(testConfig.containerAttachPoint === i) {
-                        await initContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
-                        containerUrl = initContainer.resolvedUrl;
+                        await attachContainer();
                     }
                     if(testConfig.datastoreAttachPoint === i) {
                         await attachDatastore()
@@ -104,14 +107,18 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                         await attachDds();
                     }
                 }
-                while(initContainer.isDirty){
+                while(initContainer.isDirty 
+                    || initContainer.attachState !== AttachState.Attached){
                     await timeoutPromise<void>(
                         (resolve)=>initContainer.once("saved", ()=>resolve()),
-                        {durationMs: this.timeout() / 2,errorMsg:"final save timeout"});
+                        {durationMs: this.timeout() / 2, errorMsg:"final save timeout"});
                 }
+                containerUrl = initContainer.resolvedUrl;
 
                 initContainer.close();
             }
+
+            // validation code block
             {
                 const validationLoader = createLoader(
                     [[provider.defaultCodeDetails, provider.createFluidEntryPoint()]],
@@ -124,7 +131,8 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
 
                 const initDataObject = await requestFluidObject<ITestFluidObject>(validationContainer, "default");
 
-                const newds =await (await waitKey<IFluidHandle<ITestFluidObject>>(initDataObject.root,"ds", this.timeout())).get();
+                const newds =
+                    await (await waitKey<IFluidHandle<ITestFluidObject>>(initDataObject.root,"ds", this.timeout())).get();
                 
                 const newMap = await (await waitKey<IFluidHandle<ISharedMap>>( newds.root,"map", this.timeout())).get();
                 
