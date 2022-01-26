@@ -22,7 +22,7 @@ const sharedPoints = [3, 4, 5];
 
 const testConfigs =
     generatePairwiseOptions({
-        containerAttachPoint:[0, ... sharedPoints],
+        containerAttachPoint:[0, 1, ... sharedPoints],
         containerSaveAfterAttach: [true, false],
         datastoreAttachPoint: [1, ... sharedPoints],
         datastoreSaveAfterAttach: [true, false],
@@ -53,7 +53,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                     }
                 }
                 if(testConfig.containerAttachPoint === 0) {
-                    // point 0 - at container create
+                    // point 0 - at container create, datastore and dss don't exist
                     await attachContainer();
                 }   
 
@@ -72,8 +72,12 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                     }
                 }
                 if(testConfig.datastoreAttachPoint === 1) {
-                    // point 1 - at datastore create
+                    // point 1 - at datastore create, dds does not exist
                     await attachDatastore()
+                }
+                if(testConfig.containerAttachPoint === 1){
+                    // point 1 - datastore exists as least locally, but dds does not.
+                    await attachContainer();
                 }
 
                 const newMap = SharedMap.create(newDataObj.runtime);
@@ -92,6 +96,8 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                     await attachDds();
                 }
 
+                // all objects, container, datastore, and dds are created, at least in memory at this point
+                // so now we can attach whatever is not in the presence of all the others
                 for(const i of sharedPoints) {
                     // also send an op at these points
                     // we'll use these to validate
@@ -131,10 +137,11 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
 
                 const initDataObject = await requestFluidObject<ITestFluidObject>(validationContainer, "default");
 
-                const newds =
-                    await (await waitKey<IFluidHandle<ITestFluidObject>>(initDataObject.root,"ds", this.timeout())).get();
+                const newDatastore =await (await waitKey<IFluidHandle<ITestFluidObject>>(
+                    initDataObject.root,"ds", this.timeout())).get();
                 
-                const newMap = await (await waitKey<IFluidHandle<ISharedMap>>( newds.root,"map", this.timeout())).get();
+                const newMap = await (await waitKey<IFluidHandle<ISharedMap>>(
+                    newDatastore.root,"map", this.timeout())).get();
                 
                 for(const i of sharedPoints) {
                     assert.equal(
