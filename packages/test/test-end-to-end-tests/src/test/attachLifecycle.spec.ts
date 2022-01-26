@@ -40,6 +40,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
         it(`Validate attach orders: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
             // setup shared states
             const provider  = getTestObjectProvider();
+            const timeoutDurationMs = this.timeout() / 2;
             let containerUrl: IResolvedUrl | undefined;
 
             // act code block
@@ -73,7 +74,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                         && initContainer.attachState !== AttachState.Detached){
                         await timeoutPromise<void>(
                             (resolve)=>initContainer.once("saved", ()=>resolve()),
-                            {durationMs: this.timeout() / 2,errorMsg:"datastoreSaveAfterAttach timeout"});
+                            {durationMs: timeoutDurationMs, errorMsg:"datastoreSaveAfterAttach timeout"});
                     }
                 }
                 if(testConfig.datastoreAttachPoint === DatastoreCreated) {
@@ -93,7 +94,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                         && initContainer.attachState !== AttachState.Detached){
                             await timeoutPromise<void>(
                                 (resolve)=>initContainer.once("saved", ()=>resolve()),
-                                {durationMs: this.timeout() / 2,errorMsg:"ddsSaveAfterAttach timeout"});
+                                {durationMs: timeoutDurationMs,errorMsg:"ddsSaveAfterAttach timeout"});
                     }
                 }
                 if(testConfig.mapAttachPoint === 2) {
@@ -122,7 +123,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                     || initContainer.attachState !== AttachState.Attached){
                     await timeoutPromise<void>(
                         (resolve)=>initContainer.once("saved", ()=>resolve()),
-                        {durationMs: this.timeout() / 2, errorMsg:"final save timeout"});
+                        {durationMs: timeoutDurationMs, errorMsg:"final save timeout"});
                 }
                 containerUrl = initContainer.resolvedUrl;
 
@@ -143,14 +144,14 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                 const initDataObject = await requestFluidObject<ITestFluidObject>(validationContainer, "default");
 
                 const newDatastore =await (await waitKey<IFluidHandle<ITestFluidObject>>(
-                    initDataObject.root,"ds", this.timeout())).get();
+                    initDataObject.root,"ds", timeoutDurationMs)).get();
                 
                 const newMap = await (await waitKey<IFluidHandle<ISharedMap>>(
-                    newDatastore.root,"map", this.timeout())).get();
+                    newDatastore.root,"map", timeoutDurationMs)).get();
                 
                 for(const i of sharedPoints) {
                     assert.equal(
-                        await waitKey<number>(newMap, i.toString(), this.timeout()),
+                        await waitKey<number>(newMap, i.toString(), timeoutDurationMs),
                         i);
                 }
             }
@@ -159,7 +160,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
 });
 
 
-async function waitKey<T>(map: ISharedMap, key:string, testTimeout: number): Promise<T>{
+async function waitKey<T>(map: ISharedMap, key:string, timeoutDurationMs: number): Promise<T>{
     return timeoutPromise<T>((resolve)=>{
         if(map.has(key)){
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -175,5 +176,5 @@ async function waitKey<T>(map: ISharedMap, key:string, testTimeout: number): Pro
         map.on("valueChanged", waitFunc);
         
     },
-    {durationMs: testTimeout / 2,errorMsg:`${key} not available before timeout`});
+    {durationMs: timeoutDurationMs,errorMsg:`${key} not available before timeout`});
 }
