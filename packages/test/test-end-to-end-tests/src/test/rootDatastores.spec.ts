@@ -21,22 +21,7 @@ import {
 } from "@fluidframework/container-runtime";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { GenericError } from "@fluidframework/container-utils";
-import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
-
-const getMockStore = ((store: Record<string, string>): Storage => {
-    return {
-        getItem: (key: string): string | null => store[key],
-        length: Object.keys(store).length,
-        clear: () => { },
-        // eslint-disable-next-line no-null/no-null
-        key: (_index: number): string | null => null,
-        removeItem: (_key: string) => { },
-        setItem: (_key: string, _value: string) => { },
-    };
-});
-
-const settings: Record<string, string> = {};
-global.sessionStorage = getMockStore(settings);
+import { ConfigTypes, IConfigProviderBase, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -68,11 +53,24 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         },
     };
 
-    const setupContainers = async (containerConfig: ITestContainerConfig = testContainerConfig) => {
-        container1 = await provider.makeTestContainer(containerConfig);
+    const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => {
+        return {
+            getRawConfig: (name: string): ConfigTypes => settings[name],
+        };
+    });
+
+    const setupContainers = async (
+        containerConfig: ITestContainerConfig = testContainerConfig,
+        featureGates: Record<string, ConfigTypes> = {},
+    ) => {
+        const configWithFeatureGates = {
+            ...containerConfig,
+            loaderProps: { configProvider: configProvider(featureGates) }
+        };
+        container1 = await provider.makeTestContainer(configWithFeatureGates);
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "/");
 
-        container2 = await provider.loadTestContainer(containerConfig);
+        container2 = await provider.loadTestContainer(configWithFeatureGates);
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "/");
 
         await provider.ensureSynchronized();
@@ -129,6 +127,22 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(await dataCorruption);
         });
 
+        it("Root datastore creation with props fails at attach op", async () => {
+            const dataCorruption = anyDataCorruption([container1, container2]);
+            // Isolate inbound communication
+            await container1.deltaManager.inbound.pause();
+            await container2.deltaManager.inbound.pause();
+
+            await createDataStoreWithProps(dataObject1, "1", true /* root */);
+            await createDataStoreWithProps(dataObject2, "1", true /* root */);
+            // Restore inbound communications
+            // At this point, two `ContainerMessageType.Attach` messages will be sent and processed.
+            container1.deltaManager.inbound.resume();
+            container2.deltaManager.inbound.resume();
+
+            assert(await dataCorruption);
+        });
+
         it("Root datastore creation with the same id breaks container", async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             await createRootDataStore(dataObject1, "2");
@@ -146,10 +160,9 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         });
 
         it("Root datastore creation with aliasing turned on throws exception", async () => {
-            settings["Fluid.ContainerRuntime.UseDataStoreAliasing"] = "true";
             // Containers need to be recreated in order for the settings to be picked up
             await reset();
-            await setupContainers(testContainerConfig);
+            await setupContainers(testContainerConfig, { "Fluid.ContainerRuntime.UseDataStoreAliasing": "true" });
 
             await createRootDataStore(dataObject1, "2");
             let error: Error | undefined;
@@ -167,14 +180,12 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                     tag: TelemetryDataTag.UserData,
                 });
             assert.ok(await getRootDataStore(dataObject1, "2"));
-            settings["Fluid.ContainerRuntime.UseDataStoreAliasing"] = "";
         });
 
         it("Root datastore creation with aliasing turned on and legacy API throws exception", async () => {
-            settings["Fluid.ContainerRuntime.UseDataStoreAliasing"] = "true";
             // Containers need to be recreated in order for the settings to be picked up
             await reset();
-            await setupContainers(testContainerConfig);
+            await setupContainers(testContainerConfig, { "Fluid.ContainerRuntime.UseDataStoreAliasing": "true" });
 
             await createRootDataStore(dataObject1, "2");
             let error: Error | undefined;
@@ -192,7 +203,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                     tag: TelemetryDataTag.UserData,
                 });
             assert.ok(await getRootDataStore(dataObject1, "2"));
-            settings["Fluid.ContainerRuntime.UseDataStoreAliasing"] = "";
         });
 
         it("Root datastore creation fails when already attached - same container", async () => {
