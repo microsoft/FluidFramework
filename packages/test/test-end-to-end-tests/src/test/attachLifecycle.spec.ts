@@ -17,17 +17,22 @@ import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
 
-//these points are all after creation of all object at which any object can be attached
+// during these point succeeding objects won't even exist locally
+const ContainerCreated = 0
+const DatastoreCreated = 1;
+const MapCreated = 2
+
+//these points are after all objects at least exist locally
 const sharedPoints = [3, 4, 5];
 
 const testConfigs =
     generatePairwiseOptions({
-        containerAttachPoint:[0, 1, ... sharedPoints],
+        containerAttachPoint:[ContainerCreated, DatastoreCreated, ... sharedPoints],
         containerSaveAfterAttach: [true, false],
-        datastoreAttachPoint: [1, ... sharedPoints],
+        datastoreAttachPoint: [DatastoreCreated, ... sharedPoints],
         datastoreSaveAfterAttach: [true, false],
-        ddsAttachPoint: [2, ... sharedPoints],
-        ddsSaveAfterAttach: [true, false],
+        mapAttachPoint: [MapCreated, ... sharedPoints],
+        mapSaveAfterAttach: [true, false],
     });
 
 describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
@@ -52,7 +57,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                         await attachP;
                     }
                 }
-                if(testConfig.containerAttachPoint === 0) {
+                if(testConfig.containerAttachPoint === ContainerCreated) {
                     // point 0 - at container create, datastore and dss don't exist
                     await attachContainer();
                 }   
@@ -71,11 +76,11 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                             {durationMs: this.timeout() / 2,errorMsg:"datastoreSaveAfterAttach timeout"});
                     }
                 }
-                if(testConfig.datastoreAttachPoint === 1) {
+                if(testConfig.datastoreAttachPoint === DatastoreCreated) {
                     // point 1 - at datastore create, dds does not exist
                     await attachDatastore()
                 }
-                if(testConfig.containerAttachPoint === 1){
+                if(testConfig.containerAttachPoint === DatastoreCreated){
                     // point 1 - datastore exists as least locally, but dds does not.
                     await attachContainer();
                 }
@@ -83,7 +88,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                 const newMap = SharedMap.create(newDataObj.runtime);
                 const attachDds= async()=>{
                     newDataObj.root.set("map",newMap.handle);
-                    while(testConfig.ddsSaveAfterAttach 
+                    while(testConfig.mapSaveAfterAttach 
                         && initContainer.isDirty 
                         && initContainer.attachState !== AttachState.Detached){
                             await timeoutPromise<void>(
@@ -91,7 +96,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                                 {durationMs: this.timeout() / 2,errorMsg:"ddsSaveAfterAttach timeout"});
                     }
                 }
-                if(testConfig.ddsAttachPoint === 2) {
+                if(testConfig.mapAttachPoint === 2) {
                     // point 2 - at dds create
                     await attachDds();
                 }
@@ -109,7 +114,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                     if(testConfig.datastoreAttachPoint === i) {
                         await attachDatastore()
                     }
-                    if(testConfig.ddsAttachPoint === i) {
+                    if(testConfig.mapAttachPoint === i) {
                         await attachDds();
                     }
                 }
@@ -157,11 +162,13 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
 async function waitKey<T>(map: ISharedMap, key:string, testTimeout: number): Promise<T>{
     return timeoutPromise<T>((resolve)=>{
         if(map.has(key)){
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             resolve(map.get<T>(key)!)
         }
         const waitFunc = (changed: IValueChanged)=>{
             if(changed.key === key){
                 map.off("valueChanged", waitFunc);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 resolve(map.get<T>(key)!);
             }
         }
