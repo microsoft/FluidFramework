@@ -7,7 +7,6 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     createLoader,
     ITestFluidObject,
-    timeoutAwait,
     timeoutPromise,
 } from "@fluidframework/test-utils";
 
@@ -141,16 +140,18 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
 
 
 async function waitKey<T>(map: ISharedMap, key:string, testTimeout: number): Promise<T>{
-    return timeoutPromise((resolve)=>{
-        if(!map.has(key)){
-            const waitFunc=(changed: IValueChanged)=>{
-                if(changed.key === key){
-                    map.off("valueChanged", waitFunc);
-                }
-            }
-            map.on("valueChanged", waitFunc);
+    return timeoutPromise<T>((resolve)=>{
+        if(map.has(key)){
+            resolve(map.get<T>(key)!)
         }
-        return map.get<T>(key)
+        const waitFunc = (changed: IValueChanged)=>{
+            if(changed.key === key){
+                map.off("valueChanged", waitFunc);
+                resolve(map.get<T>(key)!);
+            }
+        }
+        map.on("valueChanged", waitFunc);
+        
     },
-    {durationMs: testTimeout / 2,errorMsg:`${key} not available before timeout`}));
+    {durationMs: testTimeout / 2,errorMsg:`${key} not available before timeout`});
 }
