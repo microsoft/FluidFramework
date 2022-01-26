@@ -18,6 +18,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Synthesize Decoupled from IFluidObject and Deprecations Removed](Synthesize-Decoupled-from-IFluidObject-and-Deprecations-Removed)
 - [codeDetails removed from Container](#codeDetails-removed-from-Container)
 - [wait() methods removed from map and directory](#wait-methods-removed-from-map-and-directory)
+- [Remove IFluidObject from Aqueduct](#Remove-IFluidObject-from-Aqueduct)
 
 ### `MessageType.Save` and code that handled it was removed
 The `Save` operation type was deprecated and has now been removed. This removes `MessageType.Save` from `protocol-definitions`, `save;${string}: ${string}` from `SummarizeReason` in the `container-runtime` package, and `MessageFactory.createSave()` from and `server-test-utils`.
@@ -76,6 +77,18 @@ In release 0.53, the `codeDetails` member was removed from `IContainer`.  It is 
 
 The `wait()` methods on `ISharedMap` and `IDirectory` were deprecated in 0.55 and have now been removed.  See the [deprecation notice](#wait-methods-deprecated-on-map-and-directory) for migration advice if you currently use these APIs.
 
+### Remove IFluidObject from Aqueduct
+
+[IFluidObject is deprecated](#Deprecate-IFluidObject-and-introduce-FluidObject). In this release we have removed all IFluidObject from the aqueduct package. 
+This impacts the following public apis:
+ - getDefaultObjectFromContainer
+ - getObjectWithIdFromContainer
+ - getObjectFromContainer
+ - PureDataObject.getFluidObjectFromDirectory
+ - ContainerServiceRegistryEntries
+ - SingletonContainerServiceFactory.getService
+
+ In general the impact of these changes should be transparent. If you see compile errors related to Fluid object provider types with the above apis, you should transition those usages to [FluidObject](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts#L61) which is the replacement for the deprecated IFluidObject.
 
 ## 0.55 Breaking changes
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)
