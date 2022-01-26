@@ -38,11 +38,11 @@ type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: Sha
 // load container, pause, create (local) ops from callback, then optionally send ops before closing container
 const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
     const container = await args.loadTestContainer(testContainerConfig);
-    await new Promise<void>((res) => {
+    await new Promise<void>((resolve) => {
         if ((container as any).connected) {
-            res();
+            resolve();
         } else {
-            container.on("connected", () => res());
+            container.on("connected", () => resolve());
         }
     });
     const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
