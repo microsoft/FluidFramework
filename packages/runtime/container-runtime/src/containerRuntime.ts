@@ -1035,6 +1035,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             async () => this.garbageCollector.getDataStoreBaseGCDetails(),
             (id: string) => this.garbageCollector.nodeChanged(id),
             new Map<string, string>(dataStoreAliasMap),
+            this.garbageCollector.writeDataAtRoot,
         );
 
         this.blobManager = new BlobManager(
@@ -1392,9 +1393,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
         }
 
-        const gcSummary = this.garbageCollector.summarize();
-        if (gcSummary !== undefined) {
-            addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
+        if (this.garbageCollector.writeDataAtRoot) {
+            const gcSummary = this.garbageCollector.summarize();
+            if (gcSummary !== undefined) {
+                addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
+            }
         }
     }
 
