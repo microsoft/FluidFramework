@@ -149,15 +149,15 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
             // each unchanged data store.
             // If we want to change that, we would need to capture docId on first call and return this.latestWriterTree
             // when latest is requested.
-            if (this.latestWriterTree && (this.docId === versionId || versionId === undefined) || versionId === null) {
+            if (this.latestWriterTree && (this.docId === versionId || versionId === null)) {
                 return [{ id: "latest", treeId: FileStorageVersionTreeId }];
             }
 
-            if (this.docId === undefined && versionId !== undefined) {
+            if (this.docId === undefined && versionId !== null) {
                 this.docId = versionId;
             }
 
-            if (this.commitsWriter[versionId] !== undefined) {
+            if (versionId !== null && this.commitsWriter[versionId] !== undefined) {
                 // PrefetchDocumentStorageService likes to prefetch everything!
                 // Skip, as Container does not really need it.
                 throw new Error("Not supporting commit loading");
