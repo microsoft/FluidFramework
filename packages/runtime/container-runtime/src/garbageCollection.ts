@@ -783,17 +783,6 @@ export class GarbageCollector implements IGarbageCollector {
      * @param currentGCData - The GC data (reference graph) from the current GC run.
      */
     private validateReferenceCorrectness(currentGCData: IGarbageCollectionData) {
-        /**
-         * We cannot validate reference correctness until the following issue is resolved -
-         * https://github.com/microsoft/FluidFramework/issues/8878.
-         * It is because of this bug - https://github.com/microsoft/FluidFramework/issues/8672. This bug will not happen
-         * when GC data is written at the root of the summary tree. However, that change is behind a feature flag and we
-         * have to wait until it is written to the root by default.
-         */
-        if (!this._writeDataAtRoot) {
-            return;
-        }
-
         assert(this.gcDataFromLastRun !== undefined, 0x2b7
             /* "Can't validate correctness without GC data from last run" */);
 

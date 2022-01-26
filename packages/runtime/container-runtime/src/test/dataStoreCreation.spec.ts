@@ -121,7 +121,9 @@ describe("Data Store Creation Tests", () => {
                 getCreateSummarizerNodeFn(dataStoreId),
                 attachCb,
                 undefined,
-                false /* isRootDataStore */);
+                false /* isRootDataStore */,
+                true /* writeGCDataAtRoot */,
+            );
 
             try {
                 await context.realize();
@@ -145,7 +147,9 @@ describe("Data Store Creation Tests", () => {
                 getCreateSummarizerNodeFn(dataStoreId),
                 attachCb,
                 undefined,
-                false /* isRootDataStore */);
+                false /* isRootDataStore */,
+                true /* writeGCDataAtRoot */,
+            );
 
             try {
                 await context.realize();
@@ -169,7 +173,9 @@ describe("Data Store Creation Tests", () => {
                 getCreateSummarizerNodeFn(dataStoreId),
                 attachCb,
                 undefined,
-                false /* isRootDataStore */);
+                false /* isRootDataStore */,
+                true /* writeGCDataAtRoot */,
+            );
 
             try {
                 await contextA.realize();
@@ -193,7 +199,9 @@ describe("Data Store Creation Tests", () => {
                 getCreateSummarizerNodeFn(dataStoreId),
                 attachCb,
                 undefined,
-                false /* isRootDataStore */);
+                false /* isRootDataStore */,
+                true /* writeGCDataAtRoot */,
+            );
 
             try {
                 await contextB.realize();
@@ -217,7 +225,9 @@ describe("Data Store Creation Tests", () => {
                 getCreateSummarizerNodeFn(dataStoreBId),
                 attachCb,
                 undefined,
-                false /* isRootDataStore */);
+                false /* isRootDataStore */,
+                true /* writeGCDataAtRoot */,
+            );
 
             try {
                 await contextB.realize();
@@ -238,7 +248,9 @@ describe("Data Store Creation Tests", () => {
                 getCreateSummarizerNodeFn(dataStoreCId),
                 attachCb,
                 undefined,
-                false /* isRootDataStore */);
+                false /* isRootDataStore */,
+                true /* writeGCDataAtRoot */,
+            );
 
             try {
                 await contextC.realize();
@@ -262,7 +274,9 @@ describe("Data Store Creation Tests", () => {
                 getCreateSummarizerNodeFn(dataStoreId),
                 attachCb,
                 undefined,
-                false /* isRootDataStore */);
+                false /* isRootDataStore */,
+                true /* writeGCDataAtRoot */,
+            );
 
             try {
                 await contextFake.realize();
@@ -286,7 +300,9 @@ describe("Data Store Creation Tests", () => {
                 getCreateSummarizerNodeFn(dataStoreId),
                 attachCb,
                 undefined,
-                false /* isRootDataStore */);
+                false /* isRootDataStore */,
+                true /* writeGCDataAtRoot */,
+            );
 
             try {
                 await contextFake.realize();
@@ -310,7 +326,9 @@ describe("Data Store Creation Tests", () => {
                 getCreateSummarizerNodeFn(dataStoreId),
                 attachCb,
                 undefined,
-                false /* isRootDataStore */);
+                false /* isRootDataStore */,
+                true /* writeGCDataAtRoot */,
+            );
 
             try {
                 await contextC.realize();

@@ -190,11 +190,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.disableIsolatedChannels;
     }
 
-    /** Tells whether GC data will be written at the root of the summary tree. If so, data store should not write it. */
-    protected get writeGCDataAtRoot(): boolean {
-       return this._containerRuntime.writeGCDataAtRoot;
-    }
-
     protected registry: IFluidDataStoreRegistry | undefined;
 
     protected detachedRuntimeCreation = false;
@@ -224,6 +219,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         private bindState: BindState,
         public readonly isLocalDataStore: boolean,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
+        private writeGCDataAtRoot: boolean,
         protected pkg?: readonly string[],
     ) {
         super();
@@ -714,6 +710,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         storage: IDocumentStorageService,
         scope: FluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
+        writeGCDataAtRoot: boolean,
         pkg?: string[],
     ) {
         super(
@@ -728,6 +725,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             () => {
                 throw new Error("Already attached");
             },
+            writeGCDataAtRoot,
             pkg,
         );
 
@@ -841,6 +839,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
         protected isRootDataStore: boolean | undefined,
+        writeGCDataAtRoot: boolean,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
@@ -856,6 +855,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             snapshotTree ? BindState.Bound : BindState.NotBound,
             true,
             bindChannel,
+            writeGCDataAtRoot,
             pkg);
         this.attachListeners();
     }
@@ -975,6 +975,7 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         snapshotTree: ISnapshotTree | undefined,
         isRootDataStore: boolean | undefined,
+        writeGCDataAtRoot: boolean,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
@@ -990,6 +991,7 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
             bindChannel,
             snapshotTree,
             isRootDataStore,
+            writeGCDataAtRoot,
             createProps);
     }
 }
@@ -1013,6 +1015,7 @@ export class LocalDetachedFluidDataStoreContext
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         isRootDataStore: boolean,
+        writeGCDataAtRoot: boolean,
     ) {
         super(
             id,
@@ -1024,6 +1027,7 @@ export class LocalDetachedFluidDataStoreContext
             bindChannel,
             undefined,
             isRootDataStore,
+            writeGCDataAtRoot,
         );
         this.detachedRuntimeCreation = true;
     }
