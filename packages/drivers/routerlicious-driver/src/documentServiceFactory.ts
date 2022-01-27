@@ -25,6 +25,7 @@ import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath } from "./urlUtils";
 import { InMemoryCache } from "./cache";
+import { pkgVersion } from "./packageVersion";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -147,7 +148,9 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 `Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
 
-        const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
+        const logger2 = ChildLogger.create(logger, "RouterliciousDriver", { all: { driverVersion: pkgVersion }});
+        // Stash driverVersion here for adding to errors thrown from shared driver code
+        (logger2 as any).driverVersion = pkgVersion;
 
         return new DocumentService(
             fluidResolvedUrl,

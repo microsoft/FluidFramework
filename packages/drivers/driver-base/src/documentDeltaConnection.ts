@@ -107,13 +107,11 @@ export class DocumentDeltaConnection
      * @param socket - websocket to be used
      * @param documentId - ID of the document
      * @param logger - for reporting telemetry events
-     * @param driverVersion - driverVersion to use when raising errors
      */
     protected constructor(
         protected readonly socket: SocketIOClient.Socket,
         public documentId: string,
         logger: ITelemetryLogger,
-        private driverVersion: string,
     ) {
         super();
 
@@ -314,10 +312,12 @@ export class DocumentDeltaConnection
      * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection.
      */
     public dispose() {
+        // The logger may have driverVersion stashed on there for including on errors raised
+        const driverVersion = (this.mc.logger as any).driverVersion ?? "";
         this.disposeCore(
             false, // socketProtocolError
             createGenericNetworkError(
-                "clientClosingConnection", undefined, { canRetry: true }, { driverVersion: this.driverVersion }));
+                "clientClosingConnection", undefined, { canRetry: true }, { driverVersion }));
     }
 
     protected disposeCore(socketProtocolError: boolean, err: any) {
@@ -538,11 +538,13 @@ export class DocumentDeltaConnection
         } else {
             message = `${message}: [object omitted]`;
         }
+        // The logger may have driverVersion stashed on there for including on errors raised
+        const driverVersion = (this.mc.logger as any).driverVersion ?? "";
         const errorObj = createGenericNetworkError(
             `socketError [${handler}]`,
             message,
             { canRetry },
-            { driverVersion: this.driverVersion },
+            { driverVersion },
         );
 
         return errorObj;
