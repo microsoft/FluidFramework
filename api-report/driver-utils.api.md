@@ -39,8 +39,8 @@ import { LoaderCachingPolicy } from '@fluidframework/driver-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
 // @public (undocumented)
-export class AuthorizationError extends DriverErrorWithVersion implements IAuthorizationError, IFluidErrorBase {
-    constructor(fluidErrorCode: string, message: string, claims: string | undefined, tenantId: string | undefined, driverVersion: string, props?: ITelemetryProperties);
+export class AuthorizationError extends LoggingError implements IAuthorizationError, IFluidErrorBase {
+    constructor(fluidErrorCode: string, message: string, claims: string | undefined, tenantId: string | undefined, props: DriverErrorTelemetryProps);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
@@ -119,14 +119,14 @@ export function configurableUrlResolver(resolversList: IUrlResolver[], request: 
 export function createGenericNetworkError(fluidErrorCode: string, message: string | undefined, retryInfo: {
     canRetry: boolean;
     retryAfterMs?: number;
-}, driverVersion: string, props?: ITelemetryProperties): ThrottlingError | GenericNetworkError;
+}, props: DriverErrorTelemetryProps): ThrottlingError | GenericNetworkError;
 
 // @public (undocumented)
-export const createWriteError: (fluidErrorCode: string, driverVersion: string) => NonRetryableError<DriverErrorType.writeError>;
+export const createWriteError: (fluidErrorCode: string, props: DriverErrorTelemetryProps) => NonRetryableError<DriverErrorType.writeError>;
 
 // @public (undocumented)
-export class DeltaStreamConnectionForbiddenError extends DriverErrorWithVersion implements IFluidErrorBase {
-    constructor(fluidErrorCode: string, driverVersion: string);
+export class DeltaStreamConnectionForbiddenError extends LoggingError implements IFluidErrorBase {
+    constructor(fluidErrorCode: string, props: DriverErrorTelemetryProps);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
@@ -163,10 +163,10 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
 
-// @public
-export abstract class DriverErrorWithVersion extends LoggingError {
-    protected constructor(message: string, props: ITelemetryProperties, driverVersion: string, omitPropsFromLogging?: Set<string>);
-}
+// @public (undocumented)
+export type DriverErrorTelemetryProps = ITelemetryProperties & {
+    driverVersion: string;
+};
 
 // @public (undocumented)
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]>;
@@ -175,8 +175,8 @@ export const emptyMessageStream: IStream<ISequencedDocumentMessage[]>;
 export function ensureFluidResolvedUrl(resolved: IResolvedUrl | undefined): asserts resolved is IFluidResolvedUrl;
 
 // @public
-export class GenericNetworkError extends DriverErrorWithVersion implements IDriverErrorBase, IFluidErrorBase {
-    constructor(fluidErrorCode: string, message: string, canRetry: boolean, driverVersion: string, props?: ITelemetryProperties);
+export class GenericNetworkError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
+    constructor(fluidErrorCode: string, message: string, canRetry: boolean, props: DriverErrorTelemetryProps);
     // (undocumented)
     readonly canRetry: boolean;
     // (undocumented)
@@ -247,8 +247,8 @@ export class MultiUrlResolver implements IUrlResolver {
     }
 
 // @public (undocumented)
-export class NetworkErrorBasic<T extends string> extends DriverErrorWithVersion implements IFluidErrorBase {
-    constructor(fluidErrorCode: string, message: string, errorType: T, canRetry: boolean, driverVersion: string, props?: ITelemetryProperties);
+export class NetworkErrorBasic<T extends string> extends LoggingError implements IFluidErrorBase {
+    constructor(fluidErrorCode: string, message: string, errorType: T, canRetry: boolean, props: DriverErrorTelemetryProps);
     // (undocumented)
     readonly canRetry: boolean;
     // (undocumented)
@@ -259,7 +259,7 @@ export class NetworkErrorBasic<T extends string> extends DriverErrorWithVersion 
 
 // @public (undocumented)
 export class NonRetryableError<T extends string> extends NetworkErrorBasic<T> {
-    constructor(fluidErrorCode: string, message: string | undefined, errorType: T, driverVersion: string, props?: ITelemetryProperties);
+    constructor(fluidErrorCode: string, message: string | undefined, errorType: T, props: DriverErrorTelemetryProps);
     // (undocumented)
     readonly errorType: T;
 }
@@ -340,7 +340,7 @@ export function requestOps(get: (from: number, to: number, telemetryProps: ITele
 
 // @public (undocumented)
 export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
-    constructor(fluidErrorCode: string, message: string | undefined, errorType: T, driverVersion: string, props?: ITelemetryProperties);
+    constructor(fluidErrorCode: string, message: string | undefined, errorType: T, props: DriverErrorTelemetryProps);
     // (undocumented)
     readonly errorType: T;
 }
@@ -373,8 +373,8 @@ export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessag
 export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamResult<T>) => void): IStream<T>;
 
 // @public
-export class ThrottlingError extends DriverErrorWithVersion implements IThrottlingWarning, IFluidErrorBase {
-    constructor(fluidErrorCode: string, message: string, retryAfterSeconds: number, driverVersion: string, props?: ITelemetryProperties);
+export class ThrottlingError extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
+    constructor(fluidErrorCode: string, message: string, retryAfterSeconds: number, props: DriverErrorTelemetryProps);
     // (undocumented)
     readonly canRetry = true;
     // (undocumented)
