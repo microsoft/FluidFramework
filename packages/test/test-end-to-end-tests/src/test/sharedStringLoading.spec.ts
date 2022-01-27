@@ -102,8 +102,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                                     "notFound",
                                     "Not Found",
                                     "someErrorType",
-                                    pkgVersion,
-                                    { statusCode: 404 });
+                                    { statusCode: 404, driverVersion: pkgVersion });
                             }
                             return blob;
                         };
