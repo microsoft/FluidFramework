@@ -13,7 +13,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { LocalWebSocketServer } from "@fluidframework/server-local-server";
 import * as core from "@fluidframework/server-services-core";
-import { pkgVersion } from "./packageVersion";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -60,7 +59,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
     }
 
     constructor(socket: SocketIOClient.Socket, documentId: string) {
-          super(socket, documentId, new TelemetryNullLogger(), pkgVersion);
+          super(socket, documentId, new TelemetryNullLogger());
     }
 
     protected submitCore(type: string, messages: IDocumentMessage[]) {
