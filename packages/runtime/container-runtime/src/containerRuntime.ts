@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     FluidObject,
     IFluidHandle,
@@ -287,6 +287,16 @@ export interface IContainerRuntimeOptions {
 
 type IRuntimeMessageMetadata = undefined | {
     batch?: boolean;
+};
+
+/**
+ * @deprecated
+ * Untagged logger is unsupported going forward. There are old loaders with old ContainerContexts that only
+ * have the untagged logger, so to accommodate that scenario the below interface is used. It can be removed once
+ * its usage is removed from TaggedLoggerAdapter fallback.
+ */
+interface OldContainerContextWithLogger extends IContainerContext {
+    logger: ITelemetryBaseLogger;
 };
 
 // Local storage key to set the default flush mode to TurnBased
@@ -641,7 +651,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         existing?: boolean,
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
-        const passLogger = context.taggedLogger  ?? new TaggedLoggerAdapter(context.logger);
+        // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
+        const passLogger = context.taggedLogger  ?? new TaggedLoggerAdapter((context as
+            OldContainerContextWithLogger).logger);
         const logger = ChildLogger.create(passLogger, undefined, {
             all: {
                 runtimeVersion: pkgVersion,
@@ -1035,6 +1047,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             async () => this.garbageCollector.getDataStoreBaseGCDetails(),
             (id: string) => this.garbageCollector.nodeChanged(id),
             new Map<string, string>(dataStoreAliasMap),
+            this.garbageCollector.writeDataAtRoot,
         );
 
         this.blobManager = new BlobManager(
@@ -1392,9 +1405,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
         }
 
-        const gcSummary = this.garbageCollector.summarize();
-        if (gcSummary !== undefined) {
-            addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
+        if (this.garbageCollector.writeDataAtRoot) {
+            const gcSummary = this.garbageCollector.summarize();
+            if (gcSummary !== undefined) {
+                addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
+            }
         }
     }
 
@@ -1838,6 +1853,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         /** True to run GC sweep phase after the mark phase */
         runSweep?: boolean,
     }): Promise<ISummaryTreeWithStats> {
+        this.verifyNotClosed();
+
         const { summaryLogger, fullTree = false, trackState = true, runGC = true, runSweep, fullGC } = options;
 
         if (runGC) {

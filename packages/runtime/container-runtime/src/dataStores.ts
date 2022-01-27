@@ -117,6 +117,7 @@ export class DataStores implements IDisposable {
         getBaseGCDetails: () => Promise<Map<string, IGarbageCollectionDetailsBase>>,
         private readonly dataStoreChanged: (id: string) => void,
         private readonly aliasMap: Map<string, string>,
+        private readonly writeGCDataAtRoot: boolean,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
         this.logger = ChildLogger.create(baseLogger);
@@ -157,7 +158,9 @@ export class DataStores implements IDisposable {
                     this.runtime,
                     this.runtime.storage,
                     this.runtime.scope,
-                    this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }));
+                    this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
+                    this.writeGCDataAtRoot,
+                );
             } else {
                 if (typeof value !== "object") {
                     throw new Error("Snapshot should be there to load from!!");
@@ -173,6 +176,7 @@ export class DataStores implements IDisposable {
                     (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
                     snapshotTree,
                     undefined,
+                    this.writeGCDataAtRoot,
                 );
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
@@ -247,7 +251,9 @@ export class DataStores implements IDisposable {
                         )],
                     },
                 }),
-            pkg);
+            this.writeGCDataAtRoot,
+            pkg,
+        );
 
         this.contexts.addBoundOrRemoted(remotedFluidDataStoreContext);
     }
@@ -331,6 +337,7 @@ export class DataStores implements IDisposable {
             this.getCreateChildSummarizerNodeFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             isRoot,
+            this.writeGCDataAtRoot,
         );
         this.contexts.addUnbound(context);
         return context;
@@ -347,6 +354,7 @@ export class DataStores implements IDisposable {
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
             undefined,
             isRoot,
+            this.writeGCDataAtRoot,
             props,
         );
         this.contexts.addUnbound(context);

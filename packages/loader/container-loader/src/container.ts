@@ -64,24 +64,24 @@ import {
     ICommittedProposal,
     IDocumentAttributes,
     IDocumentMessage,
+    IPendingProposal,
     IProcessMessageResult,
-    IQuorum,
+    IQuorumClients,
+    IQuorumProposals,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
     ISignalClient,
     ISignalMessage,
     ISnapshotTree,
+    ISummaryContent,
+    ISummaryTree,
     ITree,
     ITreeEntry,
     IVersion,
     MessageType,
-    TreeEntry,
-    ISummaryTree,
-    IPendingProposal,
     SummaryType,
-    ISummaryContent,
-    IQuorumProposals,
+    TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
     ChildLogger,
@@ -615,6 +615,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.mc.logger,
         );
 
+        this.on(savedContainerEvent, () => {
+            this.connectionStateHandler.containerSaved();
+        });
+
         this._deltaManager = this.createDeltaManager();
         this._storage = new ContainerStorageAdapter(
             () => {
@@ -688,7 +692,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     /**
      * Retrieves the quorum associated with the document
      */
-    public getQuorum(): IQuorum {
+    public getQuorum(): IQuorumClients {
         return this.protocolHandler.quorum;
     }
 
@@ -1795,7 +1799,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async fetchSnapshotTree(specifiedVersion: string | undefined):
         Promise<{snapshot?: ISnapshotTree; versionId?: string}>
     {
-        const version = await this.getVersion(specifiedVersion ?? this._resolvedUrl?.id ?? "");
+        const version = await this.getVersion(specifiedVersion ?? null);
 
         if (version === undefined && specifiedVersion !== undefined) {
             // We should have a defined version to load from if specified version requested

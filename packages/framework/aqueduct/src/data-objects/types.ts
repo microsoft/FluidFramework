@@ -6,7 +6,7 @@
 import {
     FluidObject,
 } from "@fluidframework/core-interfaces";
-import { AsyncFluidObjectProvider, FluidObjectKey } from "@fluidframework/synthesize";
+import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IEvent } from "@fluidframework/common-definitions";
@@ -39,8 +39,6 @@ export type DataObjectType<T extends DataObjectTypes, P extends keyof DataObject
 export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
     readonly runtime: IFluidDataStoreRuntime;
     readonly context: IFluidDataStoreContext;
-    readonly providers:
-        // eslint-disable-next-line @typescript-eslint/ban-types
-        AsyncFluidObjectProvider<FluidObjectKey<DataObjectType<I, "OptionalProviders">>, FluidObjectKey<object>>;
+    readonly providers: AsyncFluidObjectProvider<DataObjectType<I, "OptionalProviders">>;
     readonly initProps?: DataObjectType<I, "InitialState">;
 }

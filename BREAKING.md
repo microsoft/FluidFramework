@@ -15,8 +15,10 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Removed `IOdspResolvedUrl.sharingLinkToRedeem`](#Removed-IOdspResolvedUrl.sharingLinkToRedeem)
 - [Removed url from ICreateBlobResponse](#removed-url-from-ICreateBlobResponse)
 - [`readonly` removed from `IDeltaManager`, `DeltaManager`, and `DeltaManagerProxy`](#readonly-removed-from-IDeltaManager-and-DeltaManager-DeltaManagerProxy)
+- [Synthesize Decoupled from IFluidObject and Deprecations Removed](Synthesize-Decoupled-from-IFluidObject-and-Deprecations-Removed)
 - [codeDetails removed from Container](#codeDetails-removed-from-Container)
 - [wait() methods removed from map and directory](#wait-methods-removed-from-map-and-directory)
+- [Removed containerPath from DriverPreCheckInfo](#removed-containerPath-from-DriverPreCheckInfo)
 
 ### `MessageType.Save` and code that handled it was removed
 The `Save` operation type was deprecated and has now been removed. This removes `MessageType.Save` from `protocol-definitions`, `save;${string}: ${string}` from `SummarizeReason` in the `container-runtime` package, and `MessageFactory.createSave()` from and `server-test-utils`.
@@ -30,6 +32,43 @@ The unused `url` property of `ICreateBlobResponse` in `@fluidframework/protocol-
 ### readonly removed from IDeltaManager, DeltaManager, and DeltaManagerProxy
 The `readonly` property was deprecated and has now been removed from `IDeltaManager` from `container-definitions`. Additionally, `readonly` has been removed from the implementations in `DeltaManager` and `DeltaManagerProxy` from `container-loader`. To replace its functionality, use `readOnlyInfo.readonly` instead.
 
+### Synthesize Decoupled from IFluidObject and Deprecations Removed
+DependencyContainer now takes a generic argument, as it is no longer directly couple to IFluidObject. The ideal pattern here would be directly pass the provider or FluidObject interfaces you will register. As a short term solution you could also pass IFluidObject, but IFluidObject is deprecated, so will need to be removed if used here. 
+Examples:
+``` typescript
+// the old way
+const dc = new DependencyContainer();
+dc.register(IFluidHTMLView, MockLoadable());
+
+// FluidObject option
+const dc = new DependencyContainer<FluidObject<IFluidHTMLView>>();
+dc.register(IFluidHTMLView, MockLoadable());
+
+// Provider option
+const dc = new DependencyContainer<IProvideFluidHTMLView>();
+dc.register(IFluidHTMLView, MockLoadable());
+
+// Short term IFluidObject option
+const dc = new DependencyContainer<IFluidObject>();
+dc.register(IFluidHTMLView, MockLoadable());
+```
+
+The following members have been removed from IFluidDependencySynthesizer:
+ - registeredTypes - unused and no longer supported. `has` can replace most possible usages
+ - register - create new DependencyContainer and add existing as parent
+ - unregister - create new DependencyContainer and add existing as parent
+ - getProvider - use `has` and `synthesize` to check or get provider respectively 
+
+ The following types have been removed or changed. These changes should only affect direct usages which should be rare. Existing synthesizer api usage is backwards compatible:
+ - FluidObjectKey - removed as IFluidObject is deprecated
+ - NonNullableFluidObject - removed as IFluidObject is deprecated. use typescripts NonNullable instead
+ - AsyncRequiredFluidObjectProvider - Takes FluidObject types rather than keys
+ - AsyncOptionalFluidObjectProvider - Takes FluidObject types rather than keys
+ - AsyncFluidObjectProvider - Takes FluidObject types rather than keys
+ - FluidObjectProvider - Takes FluidObject types rather than keys
+ - ProviderEntry - no longer used
+ - DependencyContainerRegistry - no longer used
+ 
 ### codeDetails removed from Container
 
 In release 0.53, the `codeDetails` member was removed from `IContainer`.  It is now also removed from `Container`.  To inspect the code details of a container, instead use the `getSpecifiedCodeDetails()` and `getLoadedCodeDetails()` methods.
@@ -38,6 +77,8 @@ In release 0.53, the `codeDetails` member was removed from `IContainer`.  It is 
 
 The `wait()` methods on `ISharedMap` and `IDirectory` were deprecated in 0.55 and have now been removed.  See the [deprecation notice](#wait-methods-deprecated-on-map-and-directory) for migration advice if you currently use these APIs.
 
+### Removed containerPath from DriverPreCheckInfo
+The `containerPath` property of `DriverPreCheckInfo` was deprecated and has now been removed. To replace its functionality, use `Loader.request()`.
 
 ## 0.55 Breaking changes
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)
