@@ -103,7 +103,6 @@ export class BlobManager {
             this.routeContext,
             async () => this.getStorage().readBlob(storageId),
         );
-
     }
 
     public async createBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {

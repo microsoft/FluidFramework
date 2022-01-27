@@ -32,7 +32,6 @@ import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
 import { ChannelStorageService } from "./channelStorageService";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 /**
  * Channel context for a locally created channel
