@@ -64,24 +64,24 @@ import {
     ICommittedProposal,
     IDocumentAttributes,
     IDocumentMessage,
+    IPendingProposal,
     IProcessMessageResult,
-    IQuorum,
+    IQuorumClients,
+    IQuorumProposals,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
     ISignalClient,
     ISignalMessage,
     ISnapshotTree,
+    ISummaryContent,
+    ISummaryTree,
     ITree,
     ITreeEntry,
     IVersion,
     MessageType,
-    TreeEntry,
-    ISummaryTree,
-    IPendingProposal,
     SummaryType,
-    ISummaryContent,
-    IQuorumProposals,
+    TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
     ChildLogger,
@@ -619,6 +619,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.mc.logger,
         );
 
+        this.on(savedContainerEvent, () => {
+            this.connectionStateHandler.containerSaved();
+        });
+
         this._deltaManager = this.createDeltaManager();
         this._storage = new ContainerStorageAdapter(
             () => {
@@ -692,7 +696,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     /**
      * Retrieves the quorum associated with the document
      */
-    public getQuorum(): IQuorum {
+    public getQuorum(): IQuorumClients {
         return this.protocolHandler.quorum;
     }
 

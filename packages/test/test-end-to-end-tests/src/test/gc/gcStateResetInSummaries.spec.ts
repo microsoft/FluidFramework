@@ -24,6 +24,7 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
+import { mockConfigProvider } from "./mockConfigProivder";
 import { getGCStateFromSummary, loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSummarizerClient";
 
 /**
@@ -43,8 +44,10 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
     const defaultRuntimeOptions: IContainerRuntimeOptions = {
         summaryOptions: { disableSummaries: true },
     };
-
     const logger = new TelemetryNullLogger();
+    // Enable config provider setting to write GC data at the root.
+    const settings = { "Fluid.GarbageCollection.WriteDataAtRoot": "true" };
+    const configProvider = mockConfigProvider(settings);
 
     // Stores the latest summary uploaded to the server.
     let latestUploadedSummary: ISummaryTree | undefined;
@@ -69,7 +72,7 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
             [innerRequestHandler],
             { ...defaultRuntimeOptions, gcOptions: { gcAllowed, writeDataAtRoot: true } },
         );
-        return provider.createContainer(runtimeFactory);
+        return provider.createContainer(runtimeFactory, { configProvider });
     };
 
     /** Loads a summarizer client with the given version (if any). Also enables / disables GC as per disableGC param. */
@@ -84,7 +87,12 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
             { ...defaultRuntimeOptions, gcOptions: { gcAllowed, disableGC, writeDataAtRoot: true } },
         );
         return loadSummarizer(
-            provider, runtimeFactory, mainContainer.deltaManager.lastSequenceNumber, summaryVersion);
+            provider,
+            runtimeFactory,
+            mainContainer.deltaManager.lastSequenceNumber,
+            summaryVersion,
+            { configProvider },
+        );
     };
 
     /**
