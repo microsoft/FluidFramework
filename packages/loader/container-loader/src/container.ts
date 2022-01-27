@@ -443,10 +443,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._deltaManager.connectionManager.forceReadonly(readonly);
     }
 
-    public get id(): string {
-        return this._resolvedUrl?.id ?? "";
-    }
-
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
         return this._deltaManager;
     }
@@ -560,7 +556,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 all: {
                     clientType, // Differentiating summarizer container from main container
                     containerId: uuid(),
-                    docId: () => this.id,
+                    docId: () => this._resolvedUrl?.id ?? undefined,
                     containerAttachState: () => this._attachState,
                     containerLifecycleState: () => this._lifecycleState,
                     containerConnectionState: () => ConnectionState[this.connectionState],
