@@ -31,6 +31,8 @@ import {
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
 import { ChannelStorageService } from "./channelStorageService";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 /**
  * Channel context for a locally created channel
@@ -153,6 +155,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
         runtime: IFluidDataStoreRuntime,
         dataStoreContext: IFluidDataStoreContext,
         storageService: IDocumentStorageService,
+        logger: ITelemetryLogger,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
         addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
@@ -176,6 +179,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
                 this.dirtyFn,
                 addedGCOutboundReferenceFn,
                 storageService,
+                logger,
                 clonedSnapshotTree,
                 blobMap,
             );
@@ -269,6 +273,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
         runtime: IFluidDataStoreRuntime,
         dataStoreContext: IFluidDataStoreContext,
         storageService: IDocumentStorageService,
+        logger: ITelemetryLogger,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
         addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
@@ -288,6 +293,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
                 this.dirtyFn,
                 addedGCOutboundReferenceFn,
                 storageService,
+                logger,
             );
         });
         this.dirtyFn = () => { dirtyFn(id); };

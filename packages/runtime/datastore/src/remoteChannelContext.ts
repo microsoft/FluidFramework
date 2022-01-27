@@ -68,6 +68,8 @@ export class RemoteChannelContext implements IChannelContext {
         getBaseGCDetails: () => Promise<IGarbageCollectionDetailsBase>,
         private readonly attachMessageType?: string,
     ) {
+        this.subLogger = ChildLogger.create(this.runtime.logger, "RemoteChannelContext");
+
         this.services = createServiceEndpoints(
             this.id,
             this.dataStoreContext.connected,
@@ -75,6 +77,7 @@ export class RemoteChannelContext implements IChannelContext {
             () => dirtyFn(this.id),
             addedGCOutboundReferenceFn,
             storageService,
+            this.subLogger,
             baseSnapshot,
             extraBlobs);
 
@@ -87,7 +90,7 @@ export class RemoteChannelContext implements IChannelContext {
             async () => getBaseGCDetails(),
         );
 
-        this.subLogger = ChildLogger.create(this.runtime.logger, "RemoteChannelContext");
+
         this.thresholdOpsCounter = new ThresholdCounter(
             RemoteChannelContext.pendingOpsCountThreshold,
             this.subLogger,

@@ -218,6 +218,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         this,
                         this.dataStoreContext,
                         this.dataStoreContext.storage,
+                        this.logger,
                         (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
                         (address: string) => this.setChannelDirty(address),
                         (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
@@ -344,6 +345,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this,
             this.dataStoreContext,
             this.dataStoreContext.storage,
+            this.logger,
             (content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
             (address: string) => this.setChannelDirty(address),
             (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
