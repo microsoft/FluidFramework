@@ -395,6 +395,9 @@ async function getSingleOpBatch(
             if (lastSuccessTime === undefined) {
                 lastSuccessTime = performance.now();
             } else if (performance.now() - lastSuccessTime > 30000) {
+                // createOdspLogger stashes driverVersion on the logger
+                const driverVersion = (logger as any).driverVersion ?? "";
+
                 // If we are connected and receiving proper responses from server, but can't get any ops back,
                 // then give up after some time. This likely indicates the issue with ordering service not flushing
                 // ops to storage quick enough, and possibly waiting for summaries, while summarizer can't get
@@ -403,9 +406,9 @@ async function getSingleOpBatch(
                     "failedToRetrieveOpsFromStorage:TooManyRetries",
                     undefined,
                     { canRetry: false },
-                    (logger as any).driverVersion ?? "", // createOdspLogger stashes driverVersion on the logger
                     {
                         retry,
+                        driverVersion,
                         ...props,
                     },
                 );

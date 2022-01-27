@@ -60,8 +60,9 @@ export async function createNewFluidFile(
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
+        const driverVersion = pkgVersion;
         throw new NonRetryableError(
-            "createNewInvalidFilename", "Invalid filename", OdspErrorType.invalidFileNameError, pkgVersion);
+            "createNewInvalidFilename", "Invalid filename", OdspErrorType.invalidFileNameError, { driverVersion });
     }
 
     let itemId: string;
@@ -157,7 +158,7 @@ export async function createNewEmptyFluidFile(
                         "createEmptyFileNoItemId",
                         "ODSP CreateFile call returned no item ID",
                         DriverErrorType.incorrectServerResponse,
-                        pkgVersion);
+                        { driverVersion: pkgVersion });
                 }
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
@@ -218,7 +219,7 @@ export async function createNewFluidFileFromSummary(
                         "createFileNoItemId",
                         "ODSP CreateFile call returned no item ID",
                         DriverErrorType.incorrectServerResponse,
-                        pkgVersion);
+                        { driverVersion: pkgVersion });
                 }
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,

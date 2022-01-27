@@ -317,7 +317,7 @@ export class DocumentDeltaConnection
         this.disposeCore(
             false, // socketProtocolError
             createGenericNetworkError(
-                "clientClosingConnection", undefined, { canRetry: true }, this.driverVersion));
+                "clientClosingConnection", undefined, { canRetry: true }, { driverVersion: this.driverVersion }));
     }
 
     protected disposeCore(socketProtocolError: boolean, err: any) {
@@ -542,7 +542,7 @@ export class DocumentDeltaConnection
             `socketError [${handler}]`,
             message,
             { canRetry },
-            this.driverVersion,
+            { driverVersion: this.driverVersion },
         );
 
         return errorObj;

@@ -167,7 +167,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
                             "shareLinkTokenIsNull",
                             "Token callback returned null",
                             OdspErrorType.fetchTokenError,
-                            pkgVersion);
+                            { driverVersion: pkgVersion });
                     }
                     event.end({ fromCache: isTokenFromCache(tokenResponse) });
                     return tokenResponse;

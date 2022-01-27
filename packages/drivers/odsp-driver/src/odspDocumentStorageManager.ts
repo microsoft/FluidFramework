@@ -532,14 +532,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     "getVersionsReturnedNoResponse",
                     "No response from /versions endpoint",
                     DriverErrorType.genericNetworkError,
-                    pkgVersion);
+                    { driverVersion: pkgVersion });
             }
             if (!Array.isArray(versionsResponse.value)) {
                 throw new NonRetryableError(
                     "getVersionsReturnedNonArrayResponse",
                     "Incorrect response from /versions endpoint",
                     DriverErrorType.genericNetworkError,
-                    pkgVersion);
+                    { driverVersion: pkgVersion });
             }
             return versionsResponse.value.map((version) => {
                 // Parse the date from the message
@@ -719,7 +719,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 "noSnapshotUrlProvided",
                 "Method failed because no snapshot url was available",
                 DriverErrorType.genericError,
-                pkgVersion);
+                { driverVersion: pkgVersion });
         }
     }
 
@@ -729,7 +729,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 "noAttachmentPOSTUrlProvided",
                 "Method failed because no attachment POST url was available",
                 DriverErrorType.genericError,
-                pkgVersion);
+                { driverVersion: pkgVersion });
         }
     }
 
@@ -739,7 +739,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 "noAttachmentGETUrlWasProvided",
                 "Method failed because no attachment GET url was available",
                 DriverErrorType.genericError,
-                pkgVersion);
+                { driverVersion: pkgVersion });
         }
     }
 

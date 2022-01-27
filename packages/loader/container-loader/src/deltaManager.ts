@@ -730,12 +730,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                             "twoMessagesWithSameSeqNumAndDifferentPayload",
                             undefined,
                             DriverErrorType.fileOverwrittenInStorage,
-                            "" /* driverVersion */,
                             {
                                 clientId: this.connectionManager.clientId,
                                 sequenceNumber: message.sequenceNumber,
                                 message1,
                                 message2,
+                                driverVersion: "",
                             },
                         );
                         this.close(error);

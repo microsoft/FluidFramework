@@ -141,7 +141,7 @@ describe("Odsp Error", () => {
                     "code",
                     "some message",
                     DriverErrorType.incorrectServerResponse,
-                    pkgVersion);
+                    { driverVersion: pkgVersion });
             }
         });
         assert.equal(res, 1, "did not successfully retried with new token");

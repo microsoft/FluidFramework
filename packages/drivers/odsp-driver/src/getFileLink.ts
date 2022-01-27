@@ -128,7 +128,7 @@ async function getFileLinkCore(
                         "getFileLinkCoreMalformedResponse",
                         "Malformed GetSharingInformation response",
                         DriverErrorType.incorrectServerResponse,
-                        pkgVersion);
+                        { driverVersion: pkgVersion });
                 }
                 return directUrl;
             });
@@ -185,7 +185,7 @@ async function getFileItemLite(
                         "getFileItemLiteMalformedResponse",
                         "Malformed getFileItemLite response",
                         DriverErrorType.incorrectServerResponse,
-                        pkgVersion);
+                        { driverVersion: pkgVersion });
                 }
                 return responseJson;
             });

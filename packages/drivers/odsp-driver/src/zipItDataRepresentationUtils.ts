@@ -483,10 +483,10 @@ function throwBufferParseException(
         "bufferParsingException",
         message,
         DriverErrorType.incorrectServerResponse,
-        pkgVersion,
         {
             nodeType: getNodeType(node),
             expectedNodeType,
+            driverVersion: pkgVersion,
         });
 }
 

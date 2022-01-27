@@ -53,28 +53,29 @@ export function createR11sNetworkError(
     statusCode?: number,
     retryAfterMs?: number,
 ): R11sError {
+    const driverVersion = pkgVersion;
     switch (statusCode) {
         case undefined:
             // If a service is temporarily down or a browser resource limit is reached, RestWrapper will throw
             // a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
             // the error message will start with NetworkError as defined in restWrapper.ts
             return new GenericNetworkError(
-                fluidErrorCode, errorMessage, errorMessage.startsWith("NetworkError"), pkgVersion, { statusCode });
+                fluidErrorCode, errorMessage, errorMessage.startsWith("NetworkError"), { statusCode, driverVersion });
         case 401:
         case 403:
             return new AuthorizationError(
-                fluidErrorCode, errorMessage, undefined, undefined, pkgVersion, { statusCode });
+                fluidErrorCode, errorMessage, undefined, undefined, { statusCode, driverVersion });
         case 404:
             const errorType = R11sErrorType.fileNotFoundOrAccessDeniedError;
-            return new NonRetryableError(fluidErrorCode, errorMessage, errorType, pkgVersion, { statusCode });
+            return new NonRetryableError(fluidErrorCode, errorMessage, errorType, { statusCode, driverVersion });
         case 429:
             return createGenericNetworkError(
-                fluidErrorCode, errorMessage, { canRetry: true, retryAfterMs }, pkgVersion, { statusCode });
+                fluidErrorCode, errorMessage, { canRetry: true, retryAfterMs }, { statusCode, driverVersion });
         case 500:
-            return new GenericNetworkError(fluidErrorCode, errorMessage, true, pkgVersion, { statusCode });
+            return new GenericNetworkError(fluidErrorCode, errorMessage, true, { statusCode, driverVersion });
         default:
             const retryInfo = { canRetry: retryAfterMs !== undefined, retryAfterMs };
-            return createGenericNetworkError(fluidErrorCode, errorMessage, retryInfo, pkgVersion, { statusCode });
+            return createGenericNetworkError(fluidErrorCode, errorMessage, retryInfo, { statusCode, driverVersion });
     }
 }
 

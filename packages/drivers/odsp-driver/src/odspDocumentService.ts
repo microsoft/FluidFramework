@@ -249,7 +249,7 @@ export class OdspDocumentService implements IDocumentService {
                                 // DeltaManager will recognize this error
                                 // and load without a delta stream connection.
                                 this._policies = {...this._policies,storageOnly: true};
-                                throw new DeltaStreamConnectionForbiddenError(code, pkgVersion);
+                                throw new DeltaStreamConnectionForbiddenError(code, { driverVersion: pkgVersion });
                             default:
                                 continue;
                         }
@@ -271,7 +271,7 @@ export class OdspDocumentService implements IDocumentService {
                     "pushTokenIsNull",
                     "Websocket token is null",
                     OdspErrorType.fetchTokenError,
-                    pkgVersion);
+                    { driverVersion: pkgVersion });
             }
             try {
                 const connection = await this.connectToDeltaStreamWithRetry(

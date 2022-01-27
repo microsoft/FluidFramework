@@ -106,7 +106,7 @@ export async function fetchHelper(
                 "odspFetchErrorNoResponse",
                 "No response from fetch call",
                 DriverErrorType.incorrectServerResponse,
-                pkgVersion);
+                { driverVersion: pkgVersion });
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
@@ -121,6 +121,8 @@ export async function fetchHelper(
             duration: performance.now() - start,
         };
     }, (error) => {
+        const driverVersion = pkgVersion;
+
         // While we do not know for sure whether computer is offline, this error is not actionable and
         // is pretty good indicator we are offline. Treating it as offline scenario will make it
         // easier to see other errors in telemetry.
@@ -132,12 +134,12 @@ export async function fetchHelper(
         // This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
         if (error.name === "AbortError") {
             throw new RetryableError(
-                "fetchAbort", "Fetch Timeout (AbortError)", OdspErrorType.fetchTimeout, pkgVersion);
+                "fetchAbort", "Fetch Timeout (AbortError)", OdspErrorType.fetchTimeout, { driverVersion });
         }
         // TCP/IP timeout
         if (errorText.indexOf("ETIMEDOUT") !== -1) {
             throw new RetryableError(
-                "fetchETimedout", "Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout, pkgVersion);
+                "fetchETimedout", "Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout, { driverVersion });
         }
 
         //
@@ -147,10 +149,10 @@ export async function fetchHelper(
         //
         if (online === OnlineStatus.Offline) {
             throw new RetryableError(
-                "OdspFetchOffline", `Offline: ${errorText}`, DriverErrorType.offlineError, pkgVersion);
+                "OdspFetchOffline", `Offline: ${errorText}`, DriverErrorType.offlineError, { driverVersion });
         } else {
             throw new RetryableError(
-                "OdspFetchError", `Fetch error: ${errorText}`, DriverErrorType.fetchFailure, pkgVersion);
+                "OdspFetchError", `Fetch error: ${errorText}`, DriverErrorType.fetchFailure, { driverVersion });
         }
     });
 }
@@ -306,8 +308,7 @@ export function toInstrumentedOdspTokenFetcher(
                         "storageTokenIsNull",
                         `Token is null for ${name} call`,
                         OdspErrorType.fetchTokenError,
-                        pkgVersion,
-                        { method: name });
+                        { method: name, driverVersion: pkgVersion });
                 }
                 return token;
             }, (error) => {
@@ -317,8 +318,7 @@ export function toInstrumentedOdspTokenFetcher(
                         "tokenFetcherFailed",
                         errorMessage,
                         OdspErrorType.fetchTokenError,
-                        pkgVersion,
-                        { method: name }));
+                        { method: name, driverVersion: pkgVersion }));
                 throw tokenError;
             }),
             { cancel: "generic" });
