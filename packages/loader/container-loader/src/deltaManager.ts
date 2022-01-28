@@ -735,7 +735,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                                 sequenceNumber: message.sequenceNumber,
                                 message1,
                                 message2,
-                                driverVersion: "",
+                                driverVersion: undefined,
                             },
                         );
                         this.close(error);

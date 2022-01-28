@@ -9,6 +9,8 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
 import { waitForConnectedState, logNetworkFailure } from "./networkUtils";
+// For now, this package is versioned and released in unison with the specific drivers
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 const MaxFetchDelayInMs = 10000;
 const MissingFetchDelayInMs = 100;
@@ -395,9 +397,6 @@ async function getSingleOpBatch(
             if (lastSuccessTime === undefined) {
                 lastSuccessTime = performance.now();
             } else if (performance.now() - lastSuccessTime > 30000) {
-                // createOdspLogger stashes driverVersion on the logger
-                const driverVersion = (logger as any).driverVersion ?? "";
-
                 // If we are connected and receiving proper responses from server, but can't get any ops back,
                 // then give up after some time. This likely indicates the issue with ordering service not flushing
                 // ops to storage quick enough, and possibly waiting for summaries, while summarizer can't get

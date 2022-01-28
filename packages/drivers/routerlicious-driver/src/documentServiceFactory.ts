@@ -149,8 +149,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
 
         const logger2 = ChildLogger.create(logger, "RouterliciousDriver", { all: { driverVersion }});
-        // Stash driverVersion here for adding to errors thrown from shared driver code
-        (logger2 as any).driverVersion = driverVersion;
 
         return new DocumentService(
             fluidResolvedUrl,

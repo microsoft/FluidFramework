@@ -29,6 +29,8 @@ import {
     loggerToMonitoringContext,
     MonitoringContext,
 } from "@fluidframework/telemetry-utils";
+// For now, this package is versioned and released in unison with the specific drivers
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 // Local storage key to disable the BatchManager
 const batchManagerDisabledKey = "Fluid.Driver.BaseDocumentDeltaConnection.DisableBatchManager";
@@ -312,8 +314,6 @@ export class DocumentDeltaConnection
      * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection.
      */
     public dispose() {
-        // The logger may have driverVersion stashed on there for including on errors raised
-        const driverVersion = (this.mc.logger as any).driverVersion ?? "";
         this.disposeCore(
             false, // socketProtocolError
             createGenericNetworkError(
@@ -538,8 +538,6 @@ export class DocumentDeltaConnection
         } else {
             message = `${message}: [object omitted]`;
         }
-        // The logger may have driverVersion stashed on there for including on errors raised
-        const driverVersion = (this.mc.logger as any).driverVersion ?? "";
         const errorObj = createGenericNetworkError(
             `socketError [${handler}]`,
             message,

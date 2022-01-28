@@ -232,17 +232,14 @@ export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl 
 }
 
 export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
-    Object.assign(
-        ChildLogger.create(
-            logger,
-            "OdspDriver",
-            { all :
-                {
-                    driverVersion,
-                },
-            }),
-        // Stash driverVersion here for adding to errors thrown from shared driver code
-        { driverVersion });
+    ChildLogger.create(
+        logger,
+        "OdspDriver",
+        { all :
+            {
+                driverVersion,
+            },
+        });
 
 export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
     let numTrees = 0;

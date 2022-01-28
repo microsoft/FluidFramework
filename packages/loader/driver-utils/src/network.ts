@@ -29,7 +29,7 @@ export function isOnline(): OnlineStatus {
     return OnlineStatus.Unknown;
 }
 
-export type DriverErrorTelemetryProps = ITelemetryProperties & { driverVersion: string };
+export type DriverErrorTelemetryProps = ITelemetryProperties & { driverVersion: string  | undefined };
 
 /**
  * Generic network error class.
@@ -60,7 +60,7 @@ export class DeltaStreamConnectionForbiddenError extends LoggingError implements
     readonly canRetry = false;
 
     constructor(readonly fluidErrorCode: string, props: DriverErrorTelemetryProps) {
-        super(fluidErrorCode, { statusCode: 400 });
+        super(fluidErrorCode, { ...props, statusCode: 400 });
     }
 }
 
