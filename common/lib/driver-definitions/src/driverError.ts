@@ -9,7 +9,7 @@
  */
 export enum DriverErrorType {
     /**
-     * @deprecated - use genericNetworkError or add a new specific errorType if needed
+     * Some error, most likely an exception caught by runtime and propagated to container as critical error
      */
     genericError = "genericError",
 
