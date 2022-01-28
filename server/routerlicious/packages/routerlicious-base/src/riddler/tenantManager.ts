@@ -7,8 +7,10 @@ import * as crypto from "crypto";
 import {
     ITenantConfig,
     ITenantCustomData,
+    ITenantKeys,
     ITenantOrderer,
     ITenantStorage,
+    KeyName,
     MongoManager,
     ISecretManager,
 } from "@fluidframework/server-services-core";
@@ -28,6 +30,9 @@ export interface ITenantDocument {
 
     // API key for the given tenant
     key: string;
+
+    // second key for the given tenant
+    secondaryKey: string;
 
     // Storage provider details
     storage: ITenantStorage;
@@ -139,17 +144,26 @@ export class TenantManager {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
-        const tenantKey = this.generateTenantKey();
-        const encryptedTenantKey = this.secretManager.encryptSecret(tenantKey);
-        if (encryptedTenantKey == null) {
-            winston.error("Tenant key encryption failed.");
-            Lumberjack.error("Tenant key encryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
-            return Promise.reject(new Error("Tenant key encryption failed."));
+        const tenantKey1 = this.generateTenantKey();
+        const encryptedTenantKey1 = this.secretManager.encryptSecret(tenantKey1);
+        if (encryptedTenantKey1 == null) {
+            winston.error("Tenant key1 encryption failed.");
+            Lumberjack.error("Tenant key1 encryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            return Promise.reject(new Error("Tenant key1 encryption failed."));
+        }
+
+        const tenantKey2 = this.generateTenantKey();
+        const encryptedTenantKey2 = this.secretManager.encryptSecret(tenantKey2);
+        if (encryptedTenantKey2 == null) {
+            winston.error("Tenant key2 encryption failed.");
+            Lumberjack.error("Tenant key2 encryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            return Promise.reject(new Error("Tenant key2 encryption failed."));
         }
 
         const id = await collection.insertOne({
             _id: tenantId,
-            key: encryptedTenantKey,
+            key: encryptedTenantKey1,
+            secondaryKey: encryptedTenantKey2,
             orderer,
             storage,
             customData,
@@ -157,7 +171,7 @@ export class TenantManager {
         });
 
         const tenant = await this.getTenant(id);
-        return _.extend(tenant, { key: tenantKey });
+        return _.extend(tenant, { key: tenantKey1, secondaryKey: tenantKey2 });
     }
 
     /**
@@ -202,36 +216,97 @@ export class TenantManager {
     /**
      * Retrieves the secret for the given tenant
      */
-    public async getTenantKey(tenantId: string, includeDisabledTenant = false): Promise<string> {
-        const encryptedTenantKey = (await this.getTenantDocument(tenantId, includeDisabledTenant)).key;
-        const tenantKey = this.secretManager.decryptSecret(encryptedTenantKey);
-        if (tenantKey == null) {
-            winston.error("Tenant key decryption failed.");
-            Lumberjack.error("Tenant key decryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
-            return Promise.reject(new Error("Tenant key decryption failed."));
+    public async getTenantKey(tenantId: string, includeDisabledTenant = false): Promise<ITenantKeys> {
+        const tenantDocument = await this.getTenantDocument(tenantId, includeDisabledTenant);
+        
+        const encryptedTenantKey1 = tenantDocument.key;
+        const tenantKey1 = this.secretManager.decryptSecret(encryptedTenantKey1);
+        if (tenantKey1 == null) {
+            winston.error("Tenant key1 decryption failed.");
+            Lumberjack.error("Tenant key1 decryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            return Promise.reject(new Error("Tenant key1 decryption failed."));
         }
 
-        return tenantKey;
+        const encryptedTenantKey2 = tenantDocument.secondaryKey;
+        if (!encryptedTenantKey2) {
+            winston.info("Tenant key2 doesn't exist.");
+            Lumberjack.info("Tenant key2 doesn't exist.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            return {
+                key1: tenantKey1,
+                key2: "dummy-key",
+            };
+        }
+
+        const tenantKey2 = this.secretManager.decryptSecret(encryptedTenantKey2);
+        if (tenantKey2 == null) {
+            winston.error("Tenant key2 decryption failed.");
+            Lumberjack.error("Tenant key2 decryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            return Promise.reject(new Error("Tenant key2 decryption failed."));
+        }
+
+        return {
+            key1: tenantKey1,
+            key2: tenantKey2,
+        };
     }
 
     /**
      * Generates a new key for a tenant
      */
-    public async refreshTenantKey(tenantId: string): Promise<string> {
-        const db = await this.mongoManager.getDatabase();
-        const collection = db.collection<ITenantDocument>(this.collectionName);
-
-        const tenantKey = this.generateTenantKey();
-        const encryptedTenantKey = this.secretManager.encryptSecret(tenantKey);
-        if (encryptedTenantKey == null) {
+    public async refreshTenantKey(tenantId: string, keyName: KeyName): Promise<ITenantKeys> {
+        const tenantDocument = await this.getTenantDocument(tenantId, false);
+        
+        const newTenantKey = this.generateTenantKey();
+        const encryptedNewTenantKey = this.secretManager.encryptSecret(newTenantKey);
+        if (encryptedNewTenantKey == null) {
             winston.error("Tenant key encryption failed.");
             Lumberjack.error("Tenant key encryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
             return Promise.reject(new Error("Tenant key encryption failed."));
         }
 
-        await collection.update({ _id: tenantId }, { key: encryptedTenantKey }, null);
+        const tenantKeys = await this.getUpdatedTenantKeys(tenantDocument.key, tenantDocument.secondaryKey, keyName, newTenantKey, tenantId);
 
-        return tenantKey;
+        const updateKey = keyName === KeyName.key2 ? { secondaryKey: encryptedNewTenantKey } : { key: encryptedNewTenantKey };
+        const db = await this.mongoManager.getDatabase();
+        const collection = db.collection<ITenantDocument>(this.collectionName);
+        await collection.update({ _id: tenantId }, updateKey, null);
+
+        return tenantKeys;
+    }
+
+    private async getUpdatedTenantKeys(key1: string, key2: string, keyName: KeyName, newTenantKey: string, tenantId: string): Promise<ITenantKeys> {
+        if (keyName === KeyName.key2) {
+            const decryptedTenantKey1 = this.secretManager.decryptSecret(key1);
+            if (decryptedTenantKey1 == null) {
+                winston.error("Tenant key1 decryption failed.");
+                Lumberjack.error("Tenant key1 decryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
+                return Promise.reject(new Error("Tenant key1 decryption failed."));
+            }
+            return {
+                key1: decryptedTenantKey1,
+                key2: newTenantKey,
+            };
+        }
+
+        if (!key2) {
+            winston.info("Tenant key2 doesn't exist.");
+            Lumberjack.info("Tenant key2 doesn't exist.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            return {
+                key1: newTenantKey,
+                key2: "",
+            };
+        }
+
+        const decryptedTenantKey2 = this.secretManager.decryptSecret(key2);
+        if (decryptedTenantKey2 == null) {
+            winston.error("Tenant key2 decryption failed.");
+            Lumberjack.error("Tenant key2 decryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            return Promise.reject(new Error("Tenant key2 decryption failed."));
+        }
+        return {
+            key1: newTenantKey,
+            key2: decryptedTenantKey2,
+        };
     }
 
     /**
