@@ -164,6 +164,9 @@ export interface IContainerContext extends IDisposable {
      */
     readonly scope: IFluidObject & FluidObject;
 
+    /**
+     * @deprecated 0.56, will be removed in the next release
+     */
     raiseContainerWarning(warning: ContainerWarning): void;
 
     /**

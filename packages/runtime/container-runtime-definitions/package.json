@@ -108,6 +108,9 @@
         "InterfaceDeclaration_IContainerRuntime": {
           "backCompat": false
         },
+        "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
+          "backCompat": false
+        },
         "InterfaceDeclaration_IProvideContainerRuntime": {
           "backCompat": false
         }
@@ -117,6 +120,9 @@
           "backCompat": false
         },
         "InterfaceDeclaration_IProvideContainerRuntime": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
           "backCompat": false
         }
       }
