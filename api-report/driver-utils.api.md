@@ -165,7 +165,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 
 // @public (undocumented)
 export type DriverErrorTelemetryProps = ITelemetryProperties & {
-    driverVersion: string;
+    driverVersion: string | undefined;
 };
 
 // @public (undocumented)
