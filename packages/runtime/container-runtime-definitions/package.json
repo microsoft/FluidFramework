@@ -33,7 +33,7 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/container-definitions": "^0.45.0-0",
-    "@fluidframework/core-interfaces": "^0.41.0",
+    "@fluidframework/core-interfaces": "^0.42.0-0",
     "@fluidframework/driver-definitions": "^0.44.0-0",
     "@fluidframework/protocol-definitions": "^0.1026.0",
     "@fluidframework/runtime-definitions": "^0.56.0",
@@ -84,46 +84,58 @@
       },
       "0.52.0": {
         "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IProvideContainerRuntime": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IContainerRuntime": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         }
       },
       "0.53.0": {
-        "InterfaceDeclaration_IContainerRuntime": {
-          "backCompat": false
-        },
         "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IProvideContainerRuntime": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IContainerRuntime": {
+          "backCompat": false,
+          "forwardCompat": false
         }
       },
       "0.54.0": {
-        "InterfaceDeclaration_IContainerRuntime": {
-          "backCompat": false
-        },
         "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IProvideContainerRuntime": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IContainerRuntime": {
+          "backCompat": false,
+          "forwardCompat": false
         }
       },
       "0.55.0": {
-        "InterfaceDeclaration_IContainerRuntime": {
-          "backCompat": false
+        "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IProvideContainerRuntime": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
-        "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
-          "backCompat": false
+        "InterfaceDeclaration_IContainerRuntime": {
+          "backCompat": false,
+          "forwardCompat": false
         }
       }
     }
