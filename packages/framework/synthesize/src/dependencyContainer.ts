@@ -147,9 +147,9 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
         const provider = this.providers.get(t);
         if (provider === undefined) {
             for(const parent of this.parents) {
-                // eslint-disable-next-line @typescript-eslint/ban-types 
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 const sp = { [t]: t } as FluidObjectSymbolProvider<Pick<IFluidObject, T>>;
-                // eslint-disable-next-line @typescript-eslint/ban-types 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 const syn = parent.synthesize<Pick<IFluidObject, T>,{}>(
                     sp,
                     {});
