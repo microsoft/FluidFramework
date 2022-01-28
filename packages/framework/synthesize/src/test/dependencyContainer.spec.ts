@@ -99,7 +99,7 @@ describe("Routerlicious", () => {
                 const mock = new MockLoadable();
                 dc.register(IFluidLoadable, mock);
 
-                 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 const s = dc.synthesize<{}, IFluidLoadable>({}, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
@@ -112,7 +112,7 @@ describe("Routerlicious", () => {
                 const mock = new MockLoadable();
                 dc.register(IFluidLoadable, Promise.resolve(mock));
 
-                 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 const s = dc.synthesize<{}, IFluidLoadable>({}, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
@@ -126,7 +126,7 @@ describe("Routerlicious", () => {
                 const factory = () => mock;
                 dc.register(IFluidLoadable, factory);
 
-                 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 const s = dc.synthesize<{}, IFluidLoadable>({}, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
@@ -140,7 +140,7 @@ describe("Routerlicious", () => {
                 const factory = async () => mock;
                 dc.register(IFluidLoadable, factory);
 
-                 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 const s = dc.synthesize<{}, IFluidLoadable>({}, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
@@ -199,7 +199,7 @@ describe("Routerlicious", () => {
                 const configMock = new MockFluidConfiguration();
                 dc.register(IFluidConfiguration, configMock);
 
-                 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 const s = dc.synthesize<{}, IFluidLoadable & IFluidConfiguration>(
                     {}, { IFluidLoadable, IFluidConfiguration });
                 const loadable = await s.IFluidLoadable;
@@ -214,7 +214,7 @@ describe("Routerlicious", () => {
             it(`Required Provider not registered should throw`, async () => {
                 const dc = new DependencyContainer();
 
-                 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 assert.throws(() => dc.synthesize<{}, IFluidLoadable>(
                     {},
                     { IFluidLoadable },
@@ -272,7 +272,7 @@ describe("Routerlicious", () => {
                 parentDc.register(IFluidLoadable, mock);
                 const dc = new DependencyContainer(parentDc);
 
-                 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 const s = dc.synthesize<{}, IFluidLoadable>({}, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
@@ -288,7 +288,7 @@ describe("Routerlicious", () => {
                 const configMock = new MockFluidConfiguration();
                 dc.register(IFluidConfiguration, configMock);
 
-                 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 const s = dc.synthesize<{}, IFluidLoadable & IFluidConfiguration>(
                     {}, { IFluidLoadable, IFluidConfiguration });
                 const loadable = await s.IFluidLoadable;
@@ -307,7 +307,7 @@ describe("Routerlicious", () => {
                 const loadableMock = new MockLoadable();
                 dc.register(IFluidLoadable, loadableMock);
 
-                 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 const s = dc.synthesize<{}, IFluidLoadable>({}, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
@@ -383,7 +383,7 @@ describe("Routerlicious", () => {
                 const parentDc = new DependencyContainer();
                 const loadableToHandle: FluidObjectProvider<"IFluidHandle"> =
                     async (fds: IFluidDependencySynthesizer) => {
-                         
+                        // eslint-disable-next-line @typescript-eslint/ban-types
                         const loadable = fds.synthesize<{},IFluidLoadable>({},{IFluidLoadable});
                         return (await loadable.IFluidLoadable).handle;
                     };
@@ -396,7 +396,6 @@ describe("Routerlicious", () => {
                 const deps = dc.synthesize<IFluidHandle>({IFluidHandle}, {});
                 assert(await deps.IFluidHandle !== undefined, "handle undefined");
             });
-
             
             it(`Undefined Provider is not Undefined`, async () => {
                 const dc = new DependencyContainer();
