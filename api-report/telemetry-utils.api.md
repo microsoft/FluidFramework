@@ -107,6 +107,7 @@ export interface IFluidErrorBase extends Error {
     addTelemetryProperties: (props: ITelemetryProperties) => void;
     readonly errorInstanceId: string;
     readonly errorType: string;
+    // @deprecated (undocumented)
     readonly fluidErrorCode: string;
     getTelemetryProperties(): ITelemetryProperties;
     readonly message: string;
