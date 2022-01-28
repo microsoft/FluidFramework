@@ -443,10 +443,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._deltaManager.connectionManager.forceReadonly(readonly);
     }
 
-    public get id(): string {
-        return this._resolvedUrl?.id ?? "";
-    }
-
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
         return this._deltaManager;
     }
@@ -560,7 +556,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 all: {
                     clientType, // Differentiating summarizer container from main container
                     containerId: uuid(),
-                    docId: () => this.id,
+                    docId: () => this._resolvedUrl?.id ?? undefined,
                     containerAttachState: () => this._attachState,
                     containerLifecycleState: () => this._lifecycleState,
                     containerConnectionState: () => ConnectionState[this.connectionState],
@@ -1059,7 +1055,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const message = `Commit @${deltaDetails} ${tagMessage}`;
 
         // Pull in the prior version and snapshot tree to store against
-        const lastVersion = await this.getVersion(this.id);
+        const lastVersion = await this.getVersion(null);
 
         const parents = lastVersion !== undefined ? [lastVersion.id] : [];
 
@@ -1123,7 +1119,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return root;
     }
 
-    private async getVersion(version: string): Promise<IVersion | undefined> {
+    private async getVersion(version: string | null): Promise<IVersion | undefined> {
         const versions = await this.storageService.getVersions(version, 1);
         return versions[0];
     }
@@ -1803,7 +1799,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async fetchSnapshotTree(specifiedVersion: string | undefined):
         Promise<{snapshot?: ISnapshotTree; versionId?: string}>
     {
-        const version = await this.getVersion(specifiedVersion ?? this.id);
+        const version = await this.getVersion(specifiedVersion ?? null);
 
         if (version === undefined && specifiedVersion !== undefined) {
             // We should have a defined version to load from if specified version requested

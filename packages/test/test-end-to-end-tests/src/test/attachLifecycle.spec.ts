@@ -40,6 +40,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
         const provider  = getTestObjectProvider();
         switch(provider.driver.type){
             case "local":
+            case "tinylicious":
                 break;
             default:
                 this.skip();
@@ -128,8 +129,14 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                         await attachDds();
                     }
                 }
-                while(initContainer.isDirty 
-                    || initContainer.attachState !== AttachState.Attached){
+
+                while(initContainer.attachState !== AttachState.Attached){
+                    await timeoutPromise<void>(
+                        (resolve)=>initContainer.once("attached", ()=>resolve()),
+                        {durationMs: timeoutDurationMs, errorMsg:"container attach timeout"});
+                }
+
+                while(initContainer.isDirty){
                     await timeoutPromise<void>(
                         (resolve)=>initContainer.once("saved", ()=>resolve()),
                         {durationMs: timeoutDurationMs, errorMsg:"final save timeout"});

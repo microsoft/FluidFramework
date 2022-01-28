@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.0",
-    "@fluidframework/core-interfaces": "^0.41.0",
+    "@fluidframework/core-interfaces": "^0.42.0-0",
     "@fluidframework/protocol-definitions": "^0.1026.0"
   },
   "devDependencies": {
@@ -103,6 +103,9 @@
         },
         "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_DriverPreCheckInfo": {
+          "backCompat": false
         }
       },
       "0.40.0": {
@@ -116,6 +119,9 @@
           "backCompat": false
         },
         "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_DriverPreCheckInfo": {
           "backCompat": false
         }
       },
@@ -131,6 +137,9 @@
         },
         "get_current_InterfaceDeclaration_IDocumentDeltaConnection": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_DriverPreCheckInfo": {
+          "backCompat": false
         }
       },
       "0.42.0": {
@@ -141,6 +150,14 @@
           "backCompat": false
         },
         "InterfaceDeclaration_IDocumentServiceFactory": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_DriverPreCheckInfo": {
+          "backCompat": false
+        }
+      },
+      "0.43.0": {
+        "InterfaceDeclaration_DriverPreCheckInfo": {
           "backCompat": false
         }
       }

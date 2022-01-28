@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.0",
-    "@fluidframework/core-interfaces": "^0.41.0",
+    "@fluidframework/core-interfaces": "^0.42.0-0",
     "@fluidframework/driver-definitions": "^0.44.0-0",
     "@fluidframework/protocol-definitions": "^0.1026.0"
   },
@@ -297,10 +297,12 @@
           "backCompat": false
         },
         "InterfaceDeclaration_ICodeLoader": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IFluidModule": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         }
       },
       "0.43.0": {
@@ -341,16 +343,20 @@
           "forwardCompat": false
         },
         "InterfaceDeclaration_ICodeDetailsLoader": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_ICodeLoader": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IFluidModule": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IFluidModuleWithDetails": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IProvideRuntimeFactory": {
           "backCompat": false,
@@ -366,10 +372,12 @@
           "backCompat": false
         },
         "InterfaceDeclaration_ICodeDetailsLoader": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_ICodeLoader": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IContainer": {
           "backCompat": false,
@@ -380,10 +388,12 @@
           "forwardCompat": false
         },
         "InterfaceDeclaration_IFluidModule": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IFluidModuleWithDetails": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IGenericError": {
           "backCompat": false
