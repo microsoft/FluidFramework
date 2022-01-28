@@ -28,7 +28,7 @@ import {
     InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { fetch } from "./fetch";
-import { pkgVersion } from "./packageVersion";
+import { pkgVersion as driverVersion } from "./packageVersion";
 import { IOdspSnapshot } from "./contracts";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
@@ -106,7 +106,7 @@ export async function fetchHelper(
                 "odspFetchErrorNoResponse",
                 "No response from fetch call",
                 DriverErrorType.incorrectServerResponse,
-                { driverVersion: pkgVersion });
+                { driverVersion });
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
@@ -121,8 +121,6 @@ export async function fetchHelper(
             duration: performance.now() - start,
         };
     }, (error) => {
-        const driverVersion = pkgVersion;
-
         // While we do not know for sure whether computer is offline, this error is not actionable and
         // is pretty good indicator we are offline. Treating it as offline scenario will make it
         // easier to see other errors in telemetry.
@@ -240,11 +238,11 @@ export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
             "OdspDriver",
             { all :
                 {
-                    driverVersion: pkgVersion,
+                    driverVersion,
                 },
             }),
         // Stash driverVersion here for adding to errors thrown from shared driver code
-        { driverVersion: pkgVersion });
+        { driverVersion });
 
 export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
     let numTrees = 0;
@@ -308,7 +306,7 @@ export function toInstrumentedOdspTokenFetcher(
                         "storageTokenIsNull",
                         `Token is null for ${name} call`,
                         OdspErrorType.fetchTokenError,
-                        { method: name, driverVersion: pkgVersion });
+                        { method: name, driverVersion });
                 }
                 return token;
             }, (error) => {
@@ -318,7 +316,7 @@ export function toInstrumentedOdspTokenFetcher(
                         "tokenFetcherFailed",
                         errorMessage,
                         OdspErrorType.fetchTokenError,
-                        { method: name, driverVersion: pkgVersion }));
+                        { method: name, driverVersion }));
                 throw tokenError;
             }),
             { cancel: "generic" });

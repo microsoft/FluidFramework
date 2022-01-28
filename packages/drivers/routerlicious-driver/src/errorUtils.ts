@@ -10,7 +10,7 @@ import {
     createGenericNetworkError,
     AuthorizationError,
 } from "@fluidframework/driver-utils";
-import { pkgVersion } from "./packageVersion";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 export enum R11sErrorType {
     fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
@@ -53,7 +53,6 @@ export function createR11sNetworkError(
     statusCode?: number,
     retryAfterMs?: number,
 ): R11sError {
-    const driverVersion = pkgVersion;
     switch (statusCode) {
         case undefined:
             // If a service is temporarily down or a browser resource limit is reached, RestWrapper will throw

@@ -17,7 +17,8 @@ import {
 import { OdspErrorType, OdspError, IOdspError } from "@fluidframework/odsp-driver-definitions";
 import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
 import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
-import { pkgVersion } from "./packageVersion";
+// odsp-doclib-utils and odsp-driver will always release together and share the same pkgVersion
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 // no response, or can't parse response
 export const fetchIncorrectResponse = 712;
@@ -129,8 +130,7 @@ export function createOdspNetworkError(
         }
     }
 
-    // odsp-doclib-utils and odsp-driver will always release together and share the same pkgVersion
-    const driverProps = { ...props, driverVersion: pkgVersion, statusCode };
+    const driverProps = { driverVersion, statusCode, ...props };
 
     switch (statusCode) {
         case 400:
