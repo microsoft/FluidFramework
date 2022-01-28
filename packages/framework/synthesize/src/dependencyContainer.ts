@@ -133,14 +133,12 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
         types: FluidObjectSymbolProvider<T>,
     ) {
         for(const key of Object.keys(types) as unknown as (keyof IFluidObject)[]) {
-            const provider = this.resolveProvider(key);
-            if(provider !== undefined) {
-                Object.defineProperty(
-                    base,
-                    key,
-                    provider,
-                );
-            }
+            const provider = this.resolveProvider(key) ?? {get:()=>Promise.resolve(undefined)};
+            Object.defineProperty(
+                base,
+                key,
+                provider,
+            );
         }
     }
 

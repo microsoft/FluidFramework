@@ -396,6 +396,13 @@ describe("Routerlicious", () => {
                 const deps = dc.synthesize<IFluidHandle>({IFluidHandle}, {});
                 assert(await deps.IFluidHandle !== undefined, "handle undefined");
             });
+            
+            it(`Undefined Provider is not Undefined`, async () => {
+                const dc = new DependencyContainer();
+                const deps = dc.synthesize<IFluidLoadable>({IFluidLoadable}, {});
+                assert(deps.IFluidLoadable !== undefined, "handle undefined");
+                assert(await deps.IFluidLoadable === undefined, "handle undefined");
+            });
         });
     });
 });
