@@ -153,7 +153,7 @@ export interface IContainerContext extends IDisposable {
      * IContainerContext will retain both options, but hosts must now support tags as the loader
      * will soon plumb taggedLogger's events (potentially tagged) to the host's logger.
      */
-    readonly logger: ITelemetryBaseLogger;
+    readonly logger?: ITelemetryBaseLogger;
     // The logger implementation, which would support tagged events, should be provided by the loader.
     readonly taggedLogger?: ITelemetryBaseLogger;
     readonly serviceConfiguration: IClientConfiguration | undefined;
@@ -164,6 +164,9 @@ export interface IContainerContext extends IDisposable {
      */
     readonly scope: IFluidObject & FluidObject;
 
+    /**
+     * @deprecated 0.56, will be removed in the next release
+     */
     raiseContainerWarning(warning: ContainerWarning): void;
 
     /**

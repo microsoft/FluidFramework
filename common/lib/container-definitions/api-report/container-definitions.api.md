@@ -186,14 +186,14 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly loader: ILoader;
     // @deprecated (undocumented)
-    readonly logger: ITelemetryBaseLogger;
+    readonly logger?: ITelemetryBaseLogger;
     // (undocumented)
     readonly options: ILoaderOptions;
     // (undocumented)
     pendingLocalState?: unknown;
     // (undocumented)
     readonly quorum: IQuorumClients;
-    // (undocumented)
+    // @deprecated (undocumented)
     raiseContainerWarning(warning: ContainerWarning): void;
     readonly scope: IFluidObject & FluidObject;
     // (undocumented)
