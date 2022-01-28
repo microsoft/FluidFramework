@@ -38,7 +38,7 @@
     "@fluidframework/aqueduct": "^0.56.0",
     "@fluidframework/cell": "^0.56.0",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/core-interfaces": "^0.41.0",
+    "@fluidframework/core-interfaces": "^0.42.0-0",
     "@fluidframework/datastore-definitions": "^0.56.0",
     "@fluidframework/map": "^0.56.0",
     "@uifabric/fluent-theme": "^7.1.3",
