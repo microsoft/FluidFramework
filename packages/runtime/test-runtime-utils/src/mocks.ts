@@ -17,7 +17,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    ContainerWarning,
     ILoader,
     AttachState,
     ILoaderOptions,
@@ -550,8 +549,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public async requestDataStore(request: IRequest): Promise<IResponse> {
         return null;
     }
-
-    public raiseContainerWarning(warning: ContainerWarning): void { }
 
     public reSubmit(content: any, localOpMetadata: unknown) {
         return;

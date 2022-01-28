@@ -889,6 +889,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private dirtyContainer = false;
     private emitDirtyDocumentEvent = true;
+
+    private summarizerWarning = (warning: ContainerWarning) =>
+        this.mc.logger.sendTelemetryEvent({ eventName: "summarizerWarning" }, warning);
     /**
      * Summarizer is responsible for coordinating when to send generate and send summaries.
      * It is the main entry point for summary work.
@@ -1162,7 +1165,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     },
                     this.runtimeOptions.summaryOptions.summarizerOptions,
                 );
-                this.summaryManager.on("summarizerWarning", this.raiseContainerWarning);
+                this.summaryManager.on("summarizerWarning", this.summarizerWarning);
                 this.summaryManager.start();
             }
         }
@@ -1228,7 +1231,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }, error);
 
         if (this.summaryManager !== undefined) {
-            this.summaryManager.off("summarizerWarning", this.raiseContainerWarning);
+            this.summaryManager.off("summarizerWarning", this.summarizerWarning);
             this.summaryManager.dispose();
         }
         this.garbageCollector.dispose();
@@ -1729,11 +1732,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.context.audience!;
     }
-
-    // @deprecated Needs to become private
-    public readonly raiseContainerWarning = (warning: ContainerWarning) => {
-        this.context.raiseContainerWarning(warning);
-    };
 
     /**
      * Returns true of container is dirty, i.e. there are some pending local changes that

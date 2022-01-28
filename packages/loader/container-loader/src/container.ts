@@ -980,6 +980,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
+     * @deprecated 0.56, will be removed in next release from IContainerContext
      * Raise non-critical error to host. Calling this API will not close container.
      * For critical errors, please call Container.close(error).
      * @param error - an error to raise
@@ -1872,8 +1873,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.emit("contextChanged", codeDetails);
     }
 
-    // Please avoid calling it directly.
-    // raiseContainerWarning() is the right flow for most cases
     private logContainerError(warning: ContainerWarning) {
         this.mc.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
     }
