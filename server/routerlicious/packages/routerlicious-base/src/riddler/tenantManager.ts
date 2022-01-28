@@ -274,7 +274,11 @@ export class TenantManager {
         return tenantKeys;
     }
 
+    /**
+     * Gets updated 2 tenant keys after refresh.
+     */
     private async getUpdatedTenantKeys(key1: string, key2: string, keyName: KeyName, newTenantKey: string, tenantId: string): Promise<ITenantKeys> {
+        // if key2 is to be refreshed
         if (keyName === KeyName.key2) {
             const decryptedTenantKey1 = this.secretManager.decryptSecret(key1);
             if (decryptedTenantKey1 == null) {
@@ -288,6 +292,8 @@ export class TenantManager {
             };
         }
 
+        // below is if key1 is to be refreshed or keyName is undefined
+        // if key2 doesn't exist, no need to decrypt
         if (!key2) {
             winston.info("Tenant key2 doesn't exist.");
             Lumberjack.info("Tenant key2 doesn't exist.", { [BaseTelemetryProperties.tenantId]: tenantId });
@@ -297,6 +303,7 @@ export class TenantManager {
             };
         }
 
+        // if key2 exists, refresh key1 and return
         const decryptedTenantKey2 = this.secretManager.decryptSecret(key2);
         if (decryptedTenantKey2 == null) {
             winston.error("Tenant key2 decryption failed.");
