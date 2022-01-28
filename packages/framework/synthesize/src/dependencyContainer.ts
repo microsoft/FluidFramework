@@ -63,7 +63,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
      */
     public synthesize<
         O extends IFluidObject,
-        // eslint-disable-next-line @typescript-eslint/ban-types
+         
         R extends IFluidObject = {}>(
             optionalTypes: FluidObjectSymbolProvider<O>,
             requiredTypes: FluidObjectSymbolProvider<R>,
@@ -133,14 +133,12 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
         types: FluidObjectSymbolProvider<T>,
     ) {
         for(const key of Object.keys(types) as unknown as (keyof IFluidObject)[]) {
-            const provider = this.resolveProvider(key);
-            if(provider !== undefined) {
-                Object.defineProperty(
-                    base,
-                    key,
-                    provider,
-                );
-            }
+            const provider = this.resolveProvider(key) ?? {get:()=>Promise.resolve(undefined)};
+            Object.defineProperty(
+                base,
+                key,
+                provider,
+            );
         }
     }
 
@@ -149,9 +147,9 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
         const provider = this.providers.get(t);
         if (provider === undefined) {
             for(const parent of this.parents) {
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                 
                 const sp = { [t]: t } as FluidObjectSymbolProvider<Pick<IFluidObject, T>>;
-                // eslint-disable-next-line @typescript-eslint/ban-types
+                 
                 const syn = parent.synthesize<Pick<IFluidObject, T>,{}>(
                     sp,
                     {});
