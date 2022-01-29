@@ -565,10 +565,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         }
     }
 
-    protected registerCore() {
-        this.client.startOrUpdateCollaboration(this.runtime.clientId);
-    }
-
     protected didAttach() {
         // If we are not local, and we've attached we need to start generating and sending ops
         // so start collaboration and provide a default client id incase we are not connected

@@ -181,9 +181,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 
         this._isBoundToContext = true;
 
-        // Allow derived classes to perform custom processing prior to registering this object
-        this.registerCore();
-
         this.runtime.bindChannel(this);
     }
 
@@ -241,11 +238,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected initializeLocalCore() {
         return;
     }
-
-    /**
-     * Allows the distributed data type the ability to perform custom processing once an attach has happened.
-     */
-    protected abstract registerCore();
 
     /**
      * Allows the distributive data type the ability to perform custom processing once an attach has happened.

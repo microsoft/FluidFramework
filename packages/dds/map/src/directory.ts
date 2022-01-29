@@ -648,12 +648,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
-     * @internal
-     */
-    protected registerCore(): void {}
-
-    /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
      * @internal
      */

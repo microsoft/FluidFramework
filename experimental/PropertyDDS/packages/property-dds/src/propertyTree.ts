@@ -548,7 +548,6 @@ export class SharedPropertyTree extends SharedObject {
 		}
 	}
 
-	protected registerCore() { }
 	protected onDisconnect() { }
 
 	private _applyLocalChangeSet(change: IPropertyTreeMessage) {

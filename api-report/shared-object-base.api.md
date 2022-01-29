@@ -127,7 +127,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected onConnect(): void;
     protected abstract onDisconnect(): any;
     protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): any;
-    protected abstract registerCore(): any;
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     protected runtime: IFluidDataStoreRuntime;

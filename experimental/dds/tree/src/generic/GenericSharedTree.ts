@@ -513,13 +513,6 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
-	 */
-	protected registerCore(): void {
-		// Do nothing
-	}
-
-	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
 	 */
 	protected onDisconnect(): void {

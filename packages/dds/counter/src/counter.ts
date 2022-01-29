@@ -145,13 +145,6 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
-     * @internal
-     */
-    protected registerCore() {
-    }
-
-    /**
      * Called when the object has disconnected from the delta stream.
      * @internal
      */

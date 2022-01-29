@@ -218,11 +218,6 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     }
 
     /**
-     * Process the cell value on register
-     */
-    protected registerCore() {}
-
-    /**
      * Call back on disconnect
      */
     protected onDisconnect() {}

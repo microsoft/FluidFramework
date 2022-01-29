@@ -170,8 +170,6 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         }
     }
 
-    protected registerCore() {}
-
     /**
      * Creates the full path of the intervalCollection label
      * @param label - the incoming lable
