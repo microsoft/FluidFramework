@@ -105,6 +105,7 @@ declare function get_current_InterfaceDeclaration_DriverPreCheckInfo():
 declare function use_old_InterfaceDeclaration_DriverPreCheckInfo(
     use: old.DriverPreCheckInfo);
 use_old_InterfaceDeclaration_DriverPreCheckInfo(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_DriverPreCheckInfo());
 
 /*

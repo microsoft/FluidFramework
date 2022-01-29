@@ -6,6 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ClientSessionExpiredError } from "@fluidframework/container-utils";
 import {
     cloneGCData,
     concatGarbageCollectionStates,
@@ -53,12 +54,14 @@ export const gcTreeKey = "gc";
 // They prefix for GC blobs in the GC tree in summary.
 export const gcBlobPrefix = "__gc";
 
-// Local storage key to turn GC on / off.
+// Feature gate key to turn GC on / off.
 const runGCKey = "Fluid.GarbageCollection.RunGC";
-// Local storage key to turn GC test mode on / off.
+// Feature gate key to turn GC test mode on / off.
 const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
-// Local storage key to turn GC sweep on / off.
+// Feature gate key to turn GC sweep on / off.
 const runSweepKey = "Fluid.GarbageCollection.RunSweep";
+// Feature gate key to write GC data at the root of the summary tree.
+const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -98,8 +101,8 @@ export interface IGarbageCollector {
      * 2. If GC is enabled, the version of GC used to generate the GC data written in a summary.
      */
     readonly gcSummaryFeatureVersion: number;
-    /** Tells whether the GC version has changed compared to the version in the latest summary. */
-    readonly hasGCVersionChanged: boolean;
+    /** Tells whether the GC state in summary needs to be reset in the next summary. */
+    readonly summaryStateNeedsReset: boolean;
     /** Tells whether GC data should be written to the root of the summary tree. */
     readonly writeDataAtRoot: boolean;
     /** Run garbage collection and update the reference / used state of the system. */
@@ -114,9 +117,9 @@ export interface IGarbageCollector {
     latestSummaryStateRefreshed(result: RefreshSummaryResult, readAndParseBlob: ReadAndParseBlob): Promise<void>;
     /** Called when a node is changed. Used to detect and log when an inactive node is changed. */
     nodeChanged(id: string): void;
-    dispose(): void;
     /** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
     addedOutboundReference(fromNodeId: string, toNodeId: string): void;
+    dispose(): void;
 }
 
 /**
@@ -221,13 +224,16 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Tells whether the GC version has changed compared to the version in the latest summary.
+     * Tells whether the GC state needs to be reset in the next summary. We need to do this if:
+     * 1. GC was enabled and is now disabled. The GC state needs to be removed and everything becomes referenced.
+     * 2. GC was disabled and is now enabled. The GC state needs to be regenerated and added to summary.
+     * 3. The GC version in the latest summary is different from the current GC version. This can happen if:
+     *    3.1. The summary this client loaded with has data from a different GC version.
+     *    3.2. This client's latest summary was updated from a snapshot that has a different GC version.
      */
-    public get hasGCVersionChanged(): boolean {
-        // The current version can differ from the latest summary version in two cases:
-        // 1. The summary this client loaded with has data from a different GC version.
-        // 2. This client's latest summary was updated from a snapshot that has a different GC version.
-        return this.shouldRunGC && this.latestSummaryGCVersion !== this.currentGCVersion;
+    public get summaryStateNeedsReset(): boolean {
+        return this.initialStateNeedsReset ||
+            (this.shouldRunGC && this.latestSummaryGCVersion !== this.currentGCVersion);
     }
 
     /**
@@ -240,15 +246,24 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly mc: MonitoringContext;
 
     /**
-     * Tells whether the GC data should be written to the root of the summary tree. We do this under 2 conditions:
-     * 1. If `writeDataAtRoot` GC option is enabled.
-     * 2. If the base summary has the GC data written at the root. This is to support forward compatibility where when
-     *    we start writing the GC data at root, older versions can detect that and write at root too.
+     * Tells whether the GC data should be written to the root of the summary tree.
      */
     private _writeDataAtRoot: boolean = false;
     public get writeDataAtRoot(): boolean {
         return this._writeDataAtRoot;
-    }
+     }
+
+    /**
+     * Tells whether the initial GC state needs to be reset. This can happen under 2 conditions:
+     * 1. The base snapshot contains GC state but GC is disabled. This will happen the first time GC is disabled after
+     *    it was enabled before. GC state needs to be removed from summary and all nodes should be marked referenced.
+     * 2. The base snapshot does not have GC state but GC is enabled. This will happen the very first time GC runs on
+     *    a document and the first time GC is enabled after is was disabled before.
+     *
+     * Note that the state needs reset only for the very first time summary is generated by this client. After that, the
+     * state will be up-to-date and this flag will be reset.
+    */
+    private initialStateNeedsReset: boolean = false;
 
     // The current GC version that this container is running.
     private readonly currentGCVersion = GCVersion;
@@ -310,15 +325,9 @@ export class GarbageCollector implements IGarbageCollector {
 
         // If session expiry is enabled, we need to close the container when the timeout expires
         if (this.sessionExpiryTimeoutMs !== undefined) {
-            // TODO: Change to ClientSessionExpiredError, issue https://github.com/microsoft/FluidFramework/issues/8605
-            // this.sessionExpiryTimer = setTimeout(() => this.closeFn(
-            //     new ClientSessionExpiredError(`Client expired, it has lasted ${this.sessionExpiryTimeoutMs} ms.`,
-            //     this.sessionExpiryTimeoutMs)),
-            //     this.sessionExpiryTimeoutMs);
-            this.sessionExpiryTimer = setTimeout(() => this.closeFn({
-                errorType: "clientSessionExpiredError",
-                message: `The client has reached the expiry time of ${this.sessionExpiryTimeoutMs} ms.`,
-            }), this.sessionExpiryTimeoutMs);
+            const expiryMs = this.sessionExpiryTimeoutMs;
+            this.sessionExpiryTimer = setTimeout(() => this.closeFn(
+                new ClientSessionExpiredError(`Client session expired.`, expiryMs)), expiryMs);
         }
 
         // For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
@@ -342,9 +351,19 @@ export class GarbageCollector implements IGarbageCollector {
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
         this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
 
-        // If `writeDataAtRoot` GC option is true, we should write the GC data into the root of the summary tree. This
-        // GC option is used for testing only. It will be removed once we start writing GC data into root by default.
-        this._writeDataAtRoot = this.gcOptions.writeDataAtRoot === true;
+        /**
+         * Enable resetting initial state once the following issue is resolved:
+         * https://github.com/microsoft/FluidFramework/issues/8878.
+         * Currently, the GC tree is not written at root, so we don't know if the base snapshot contains GC tree or not.
+         */
+        // The GC state needs to be reset if the base snapshot contains GC tree and GC is disabled or it doesn't contain
+        // GC tree and GC is enabled.
+        // const gcTreePresent = baseSnapshot?.trees[gcTreeKey] !== undefined;
+        // this.initialStateNeedsReset = gcTreePresent ? !this.shouldRunGC : this.shouldRunGC;
+
+        // If `writeDataAtRoot` setting is true, write the GC data into the root of the summary tree. We do this so that
+        // the roll out can be staged. Once its rolled out everywhere, we will start writing at root by default.
+        this._writeDataAtRoot = this.mc.config.getBoolean(writeAtRootKey) ?? this.gcOptions.writeDataAtRoot === true;
 
         // Get the GC state from the GC blob in the base snapshot. Use LazyPromise because we only want to do
         // this once since it involves fetching blobs from storage which is expensive.
@@ -356,7 +375,7 @@ export class GarbageCollector implements IGarbageCollector {
             // For newer documents, GC data should be present in the GC tree in the root of the snapshot.
             const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
             if (gcSnapshotTree !== undefined) {
-                // forward-compat - If a newer version has written the GC tree at root, we should also do the same.
+                // If the GC tree is written at root, we should also do the same.
                 this._writeDataAtRoot = true;
                 return getGCStateFromSnapshot(gcSnapshotTree, readAndParseBlob);
             }
@@ -488,7 +507,7 @@ export class GarbageCollector implements IGarbageCollector {
         const {
             logger = this.mc.logger,
             runSweep = this.shouldRunSweep,
-            fullGC = this.gcOptions.runFullGC === true || this.hasGCVersionChanged,
+            fullGC = this.gcOptions.runFullGC === true || this.summaryStateNeedsReset,
         } = options;
 
         return PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
@@ -582,6 +601,10 @@ export class GarbageCollector implements IGarbageCollector {
         result: RefreshSummaryResult,
         readAndParseBlob: ReadAndParseBlob,
     ): Promise<void> {
+        // After a summary is successfully submitted and ack'd by this client, the GC state should have been reset in
+        // the summary and doesn't need to be reset anymore.
+        this.initialStateNeedsReset = false;
+
         if (!this.shouldRunGC || !result.latestSummaryUpdated) {
             return;
         }
@@ -791,16 +814,16 @@ export class GarbageCollector implements IGarbageCollector {
             // Validate references for data stores only whose routes are of the format "/dataStoreId". Currently, layers
             // below data stores don't have GC implemented so there is no guarantee their references will be notified.
             if (route.split("/").length === 2 && !explicitReferences.includes(route)) {
+                /**
+                 * The following log will be enabled once this issue is resolved:
+                 * https://github.com/microsoft/FluidFramework/issues/8878.
+                 */
                 // We should ideally throw a data corruption error here. However, send an error for now until we have
                 // implemented sweep and have reasonable confidence in the sweep process.
-
-                // To be enabled when this issue is fixed - https://github.com/microsoft/FluidFramework/issues/8672
-                /**
-                this.mc.logger.sendErrorEvent({
-                    eventName: "gcUnknownOutboundRoute",
-                    route,
-                });
-                */
+                // this.mc.logger.sendErrorEvent({
+                //     eventName: "gcUnknownOutboundRoute",
+                //     route,
+                // });
             }
         });
     }

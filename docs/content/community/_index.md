@@ -4,10 +4,19 @@ title: Welcome to the Fluid Community
 
 {{< in_your_face
     lead=`Community`
-    subText=`We believe that an <strong>open, inclusive, and respectful</strong> community will help shape a better
-        future for this project. That's why Fluid Framework is <strong>Open Source</strong>. Below you will find various
-        ways to get <strong>involved</strong>.`
->}}
+    subtext=`
+We believe that an **open, inclusive, and respectful** community will help shape a better future for this project.
+That's why Fluid Framework is is made available as an **Open Source** project under the
+[MIT license](https://github.com/microsoft/FluidFramework/blob/main/LICENSE). Below you will find various ways to get
+**involved**.
+
+This project has adopted the [Microsoft Open Source Code of
+Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct
+FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
+contact [Microsoft](mailto:opencode@microsoft.com)
+with any additional questions or comments.`
+    >}}
 
 {{< cta_container  >}}
   {{< cta
@@ -23,8 +32,7 @@ title: Welcome to the Fluid Community
     linkURL="https://www.github.com/Microsoft/fluidframework/discussions"
     iconClasses="gh-discussions"
     linkText="Ask Technical Questions"
-    subtext=`Our GitHub Discussions are a great way to participate. Feel free to ask questions or,
-        if you can, give us a hand by answering some.`
+    subtext=`Our GitHub Discussions are a great way to participate. Feel free to ask questions or, if you can, give us a hand by answering some.`
   >}}
 
   {{< cta
@@ -36,22 +44,3 @@ title: Welcome to the Fluid Community
   >}}
 {{< /cta_container  >}}
 
-<div class="omt">
-<div class="container">
-<div class="row">
-<div class="col-sm-12 col-xs-12 no-gutters">
-
-Fluid Framework is made available as an **Open Source** project under
-the [MIT license](https://github.com/microsoft/FluidFramework/blob/main/LICENSE).
-
-This project has adopted the [Microsoft Open Source Code of
-Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct
-FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [Microsoft](mailto:opencode@microsoft.com)
-with any additional questions or comments.
-
-</div>
-</div>
-</div>
-</div>

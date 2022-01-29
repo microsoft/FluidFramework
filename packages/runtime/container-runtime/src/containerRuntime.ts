@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     FluidObject,
     IFluidHandle,
@@ -50,7 +50,6 @@ import {
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
 import {
-    CreateProcessingError,
     DataCorruptionError,
     GenericError,
     UsageError,
@@ -288,6 +287,16 @@ export interface IContainerRuntimeOptions {
 
 type IRuntimeMessageMetadata = undefined | {
     batch?: boolean;
+};
+
+/**
+ * @deprecated
+ * Untagged logger is unsupported going forward. There are old loaders with old ContainerContexts that only
+ * have the untagged logger, so to accommodate that scenario the below interface is used. It can be removed once
+ * its usage is removed from TaggedLoggerAdapter fallback.
+ */
+interface OldContainerContextWithLogger extends IContainerContext {
+    logger: ITelemetryBaseLogger;
 };
 
 // Local storage key to set the default flush mode to TurnBased
@@ -642,7 +651,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         existing?: boolean,
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
-        const passLogger = context.taggedLogger  ?? new TaggedLoggerAdapter(context.logger);
+        // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
+        const passLogger = context.taggedLogger  ?? new TaggedLoggerAdapter((context as
+            OldContainerContextWithLogger).logger);
         const logger = ChildLogger.create(passLogger, undefined, {
             all: {
                 runtimeVersion: pkgVersion,
@@ -756,13 +767,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         );
 
         return runtime;
-    }
-
-    /**
-    * @deprecated This will be removed in a later release. Deprecated in 0.53
-    */
-    public get id(): string {
-        return this.context.id;
     }
 
     public get options(): ILoaderOptions {
@@ -885,6 +889,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private dirtyContainer = false;
     private emitDirtyDocumentEvent = true;
+
+    private summarizerWarning = (warning: ContainerWarning) =>
+        this.mc.logger.sendTelemetryEvent({ eventName: "summarizerWarning" }, warning);
     /**
      * Summarizer is responsible for coordinating when to send generate and send summaries.
      * It is the main entry point for summary work.
@@ -901,14 +908,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly chunkMap: Map<string, string[]>;
 
     private readonly dataStores: DataStores;
-
-    /**
-     * True, if GC data should be written at root of the summary tree.
-     * False, if data stores should write GC blobs in their summary tree.
-     */
-    public get writeGCDataAtRoot(): boolean {
-        return this.garbageCollector.writeDataAtRoot;
-    }
 
     /**
      * True if generating summaries with isolated channels is
@@ -1051,6 +1050,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             async () => this.garbageCollector.getDataStoreBaseGCDetails(),
             (id: string) => this.garbageCollector.nodeChanged(id),
             new Map<string, string>(dataStoreAliasMap),
+            this.garbageCollector.writeDataAtRoot,
         );
 
         this.blobManager = new BlobManager(
@@ -1165,7 +1165,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     },
                     this.runtimeOptions.summaryOptions.summarizerOptions,
                 );
-                this.summaryManager.on("summarizerWarning", this.raiseContainerWarning);
+                this.summaryManager.on("summarizerWarning", this.summarizerWarning);
                 this.summaryManager.start();
             }
         }
@@ -1231,7 +1231,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }, error);
 
         if (this.summaryManager !== undefined) {
-            this.summaryManager.off("summarizerWarning", this.raiseContainerWarning);
+            this.summaryManager.off("summarizerWarning", this.summarizerWarning);
             this.summaryManager.dispose();
         }
         this.garbageCollector.dispose();
@@ -1383,7 +1383,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return convertSummaryTreeToITree(summaryResult.summary);
     }
 
-    private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
+    private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats) {
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
         if (this.chunkMap.size > 0) {
             const content = JSON.stringify([...this.chunkMap]);
@@ -1408,7 +1408,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
         }
 
-        if (this.writeGCDataAtRoot) {
+        if (this.garbageCollector.writeDataAtRoot) {
             const gcSummary = this.garbageCollector.summarize();
             if (gcSummary !== undefined) {
                 addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
@@ -1660,20 +1660,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const savedFlushMode = this.flushMode;
         this.setFlushMode(FlushMode.TurnBased);
 
-        try {
-            this.trackOrderSequentiallyCalls(callback);
-            this.flush();
-            this.setFlushMode(savedFlushMode);
-        } catch(error) {
-            this.closeFn(CreateProcessingError(error, "orderSequentially"));
-            throw error; // throw the original error for the consumer of the runtime
-        }
+        this.trackOrderSequentiallyCalls(callback);
+        this.flush();
+        this.setFlushMode(savedFlushMode);
     }
 
     private trackOrderSequentiallyCalls(callback: () => void): void {
         try {
             this._orderSequentiallyCalls++;
             callback();
+        } catch (error) {
+            this.closeFn(new GenericError("orderSequentiallyCallbackException", error));
+            throw error; // throw the original error for the consumer of the runtime
         } finally {
             this._orderSequentiallyCalls--;
         }
@@ -1723,7 +1721,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private canSendOps() {
-        return this.connected && !this.deltaManager.readonly;
+        return this.connected && !this.deltaManager.readOnlyInfo.readonly;
     }
 
     public getQuorum(): IQuorumClients {
@@ -1734,11 +1732,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.context.audience!;
     }
-
-    // @deprecated Needs to become private
-    public readonly raiseContainerWarning = (warning: ContainerWarning) => {
-        this.context.raiseContainerWarning(warning);
-    };
 
     /**
      * Returns true of container is dirty, i.e. there are some pending local changes that
@@ -1810,7 +1803,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Wrap data store summaries in .channels subtree.
             wrapSummaryInChannelsTree(summarizeResult);
         }
-        this.addContainerBlobsToSummary(summarizeResult);
+        this.addContainerStateToSummary(summarizeResult);
         return summarizeResult.summary;
     }
 
@@ -1833,7 +1826,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             wrapSummaryInChannelsTree(summarizeResult);
             pathPartsForChildren = [channelsTreeName];
         }
-        this.addContainerBlobsToSummary(summarizeResult);
+        this.addContainerStateToSummary(summarizeResult);
         return {
             ...summarizeResult,
             id: "",
@@ -1858,6 +1851,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         /** True to run GC sweep phase after the mark phase */
         runSweep?: boolean,
     }): Promise<ISummaryTreeWithStats> {
+        this.verifyNotClosed();
+
         const { summaryLogger, fullTree = false, trackState = true, runGC = true, runSweep, fullGC } = options;
 
         if (runGC) {
@@ -2018,10 +2013,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             try {
                 summarizeResult = await this.summarize({
                     summaryLogger,
-                    // If the GC version changed since the last summary was submitted, we need to regenerate summary by
-                    // running full summary. This is used to handle scenarios where we upgrade the GC version because we
-                    // cannot trust the data from the previous GC version anymore.
-                    fullTree: fullTree || this.garbageCollector.hasGCVersionChanged,
+                    // If the GC state needs to be reset, we need to regenerate the summary and update the unreferenced
+                    // state of all the nodes.
+                    fullTree: fullTree || this.garbageCollector.summaryStateNeedsReset,
                     trackState: true,
                     runGC: this.garbageCollector.shouldRunGC,
                 });
