@@ -7,13 +7,12 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
     IFluidHandleContext,
-    IFluidObject,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IDeltaManager,
     ContainerWarning,
-    ILoader,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -22,7 +21,7 @@ import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
     IClientDetails,
     IDocumentMessage,
-    IQuorum,
+    IQuorumClients,
     ISequencedDocumentMessage,
     ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
@@ -32,6 +31,7 @@ import {
     IContainerRuntimeBase,
     IFluidDataStoreContext,
     IFluidDataStoreRegistry,
+    IGarbageCollectionDetailsBase,
     IGarbageCollectionSummaryDetails,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
@@ -53,11 +53,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     public IFluidHandleContext: IFluidHandleContext;
 
     /**
-     * @deprecated 0.37 Containers created using a loader will make automatically it
-     * available through scope instead
-     */
-    public loader: ILoader;
-    /**
      * Indicates the attachment state of the data store to a host service.
      */
     public attachState: AttachState;
@@ -66,7 +61,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
      * @deprecated 0.16 Issue #1635, #3631
      */
     public createProps?: any;
-    public scope: IFluidObject;
+    public scope: FluidObject;
 
     constructor(
         public readonly id: string = uuid(),
@@ -92,7 +87,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
         throw new Error("Method not implemented.");
     }
 
-    public getQuorum(): IQuorum {
+    public getQuorum(): IQuorumClients {
         return;
     }
 
@@ -136,6 +131,10 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     }
 
     public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
+        throw new Error("Method not implemented.");
+    }
+
+    public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
         throw new Error("Method not implemented.");
     }
 }

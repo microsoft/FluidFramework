@@ -19,8 +19,6 @@ const componentFactory = new DataObjectFactory(
     MonacoRunner,
     [
         sequence.SharedString.getFactory(),
-        sequence.SharedObjectSequence.getFactory(),
-        sequence.SharedNumberSequence.getFactory(),
     ],
     {},
 );

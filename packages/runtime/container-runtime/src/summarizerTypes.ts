@@ -9,7 +9,6 @@ import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import {
-    IFluidRouter,
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
@@ -22,13 +21,25 @@ import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
 
 declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideSummarizer>> { }
+    export interface IFluidObject {
+        /** @deprecated - use `FluidObject<ISummarizer>` instead */
+        readonly ISummarizer?: ISummarizer;
+
+     }
 }
 
+/**
+ * @deprecated - This will be removed in a later release.
+ */
 export const ISummarizer: keyof IProvideSummarizer = "ISummarizer";
 
+/**
+ * @deprecated - This will be removed in a later release.
+ */
 export interface IProvideSummarizer {
+    /**
+     * @deprecated - This will be removed in a later release.
+     */
     readonly ISummarizer: ISummarizer;
 }
 
@@ -227,14 +238,6 @@ export interface ISummarizeResults {
     readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult, INackSummaryResult>>;
 }
 
-export type OnDemandSummarizeResult = (ISummarizeResults & {
-    /** Indicates that an already running summarize attempt does not exist. */
-    readonly alreadyRunning?: undefined;
-}) | {
-    /** Resolves when an already running summarize attempt completes. */
-    readonly alreadyRunning: Promise<void>;
-};
-
 export type EnqueueSummarizeResult = (ISummarizeResults & {
     /**
      * Indicates that another summarize attempt is not already enqueued,
@@ -283,8 +286,10 @@ export interface ISummarizerEvents extends IEvent {
     (event: "summarizingError", listener: (error: ISummarizingWarning) => void);
 }
 
-export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidLoadable {
+export interface ISummarizer extends
+    IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer>{
     stop(reason: SummarizerStopReason): void;
+
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
 
     /**
@@ -296,7 +301,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRo
      * that resolve as the summarize attempt progresses. They will resolve with success
      * false if a failure is encountered.
      */
-    summarizeOnDemand(options: IOnDemandSummarizeOptions): OnDemandSummarizeResult;
+    summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
     /**
      * Enqueue an attempt to summarize after the specified sequence number.
      * If afterSequenceNumber is provided, the summarize attempt is "enqueued"

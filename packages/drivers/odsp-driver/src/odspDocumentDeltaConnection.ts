@@ -8,7 +8,7 @@ import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframewor
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { DriverError } from "@fluidframework/driver-definitions";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { loggerToMonitoringContext, LoggingError } from "@fluidframework/telemetry-utils";
 import {
     IClient,
     IConnect,
@@ -20,6 +20,7 @@ import { v4 as uuid } from "uuid";
 import { IOdspSocketError, IGetOpsResponse, IFlushOpsResponse } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { errorObjectFromSocketError } from "./odspError";
+import { pkgVersion } from "./packageVersion";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
@@ -203,6 +204,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         timeoutMs: number,
         epochTracker: EpochTracker,
         socketReferenceKeyPrefix: string | undefined): Promise<OdspDocumentDeltaConnection> {
+        const mc = loggerToMonitoringContext(telemetryLogger);
+
         // enable multiplexing when the websocket url does not include the tenant/document id
         const parsedUrl = new URL(url);
         const enableMultiplexing = !parsedUrl.searchParams.has("documentId") && !parsedUrl.searchParams.has("tenantId");
@@ -226,11 +229,14 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             versions: protocolVersions,
             nonce: uuid(),
             epoch: epochTracker.fluidEpoch,
+            relayUserAgent: [client.details.environment, ` driverVersion:${pkgVersion}`].join(";"),
         };
 
         // Reference to this client supporting get_ops flow.
-        // back-compat: remove cast to any once new definition of IConnect comes through.
-        (connectMessage as any).supportedFeatures = { [feature_get_ops]: true };
+        connectMessage.supportedFeatures = { };
+        if (mc.config.getBoolean("Fluid.Driver.Odsp.GetOpsEnabled") !== false) {
+            connectMessage.supportedFeatures[feature_get_ops] = true;
+        }
 
         const deltaConnection = new OdspDocumentDeltaConnection(
             socket,

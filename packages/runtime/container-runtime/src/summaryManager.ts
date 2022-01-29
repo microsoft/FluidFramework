@@ -6,14 +6,16 @@
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
-import { LoaderHeader } from "@fluidframework/container-definitions";
-import { DriverHeader, DriverErrorType } from "@fluidframework/driver-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { createSummarizingWarning } from "./summarizer";
-import { ISummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
+import { ISummarizerClientElection } from "./summarizerClientElection";
 import { IThrottler } from "./throttler";
-import { ISummarizer, ISummarizerOptions, ISummarizingWarning, SummarizerStopReason } from "./summarizerTypes";
+import {
+    ISummarizer,
+    ISummarizerOptions,
+    ISummarizingWarning,
+    SummarizerStopReason,
+} from "./summarizerTypes";
 import { SummaryCollection } from "./summaryCollection";
 
 const defaultInitialDelayMs = 5000;
@@ -139,6 +141,9 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         this.refreshSummarizer();
     };
 
+    private static readonly isStartingOrRunning = (state: SummaryManagerState) =>
+        state === SummaryManagerState.Starting || state === SummaryManagerState.Running;
+
     private getShouldSummarizeState(): ShouldSummarizeState {
         if (!this.connectedState.connected) {
             return { shouldSummarize: false, stopReason: "parentNotConnected" };
@@ -251,7 +256,9 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                 // Note that summarizer may keep going (like doing last summary).
                 // Ideally we await stopping process, but this code path is due to a bug
                 // that needs to be fixed either way.
-                this.stop("summarizerException");
+                if (SummaryManager.isStartingOrRunning(this.state)) {
+                    this.stop("summarizerException");
+                }
             }
         }).finally(() => {
             assert(this.state !== SummaryManagerState.Off, 0x264 /* "Expected: Not Off" */);
@@ -271,8 +278,9 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 
     private stop(reason: SummarizerStopReason) {
-        assert(this.state === SummaryManagerState.Running || this.state === SummaryManagerState.Starting,
-            0x265 /* "Expected: Starting or Running" */);
+        if (!SummaryManager.isStartingOrRunning(this.state)) {
+            return;
+        }
         this.state = SummaryManagerState.Stopping;
 
         // Stopping the running summarizer client should trigger a change
@@ -366,47 +374,3 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         this._disposed = true;
     }
 }
-
-export interface ISummarizerRequestOptions {
-    cache: boolean,
-    reconnect: boolean,
-    summarizingClient: boolean,
-}
-
-/**
- * Forms a function that will request a Summarizer.
- * @param loaderRouter - the loader acting as an IFluidRouter
- * @param lastSequenceNumber - the last sequence number (e.g., from DeltaManager)
- * @param cache - use cache to retrieve summarizer
- * @param summarizingClient - is summarizer client
- * @param reconnect - can reconnect on connection loss
- */
-export const formRequestSummarizerFn = (
-    loaderRouter: IFluidRouter,
-    lastSequenceNumber: number,
-    { cache, reconnect, summarizingClient }: ISummarizerRequestOptions,
-) => async () => {
-    // TODO eventually we may wish to spawn an execution context from which to run this
-    const request: IRequest = {
-        headers: {
-            [LoaderHeader.cache]: cache,
-            [LoaderHeader.clientDetails]: {
-                capabilities: { interactive: false },
-                type: summarizerClientType,
-            },
-            [DriverHeader.summarizingClient]: summarizingClient,
-            [LoaderHeader.reconnect]: reconnect,
-            [LoaderHeader.sequenceNumber]: lastSequenceNumber,
-        },
-        url: "/_summarizer",
-    };
-
-    const fluidObject = await requestFluidObject(loaderRouter, request);
-    const summarizer = fluidObject.ISummarizer;
-
-    if (!summarizer) {
-        return Promise.reject(new Error("Fluid object does not implement ISummarizer"));
-    }
-
-    return summarizer;
-};

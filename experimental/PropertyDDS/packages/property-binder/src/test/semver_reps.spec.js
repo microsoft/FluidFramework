@@ -8,7 +8,7 @@
 
 import { registerTestTemplates } from './testTemplates';
 import { DataBinder, UpgradeType } from '../../src/index';
-import { MockSharedPropertyTree } from './mock_shared_property_tree';
+import { MockSharedPropertyTree } from './mockSharedPropertyTree';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 class VersionedRepresentation100 {
 }

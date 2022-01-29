@@ -5,7 +5,8 @@
 
 import { strict } from "assert";
 import fs from "fs";
-import { Container, Loader } from "@fluidframework/container-loader";
+import { IContainer } from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
     IDocumentServiceFactory,
@@ -71,7 +72,7 @@ export async function loadContainer(
     documentServiceFactory: IDocumentServiceFactory,
     documentName: string,
     logger?: TelemetryLogger,
-): Promise<Container> {
+): Promise<IContainer> {
     const resolved: IFluidResolvedUrl = {
         endpoints: {
             deltaStorageUrl: "example.com",
@@ -115,7 +116,7 @@ export async function loadContainer(
     // Older snapshots may not contain summary acks, so the summarizer will throw error in case it faces more
     // ops than "maxOpsSinceLastSummary". So set it to a higher number to suppress those errors and run tests.
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { generateSummaries: false, maxOpsSinceLastSummary: 100000 },
+        summaryOptions: { disableSummaries: true, maxOpsSinceLastSummary: 100000 },
     };
     const codeLoader = new ReplayCodeLoader(new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries));
 

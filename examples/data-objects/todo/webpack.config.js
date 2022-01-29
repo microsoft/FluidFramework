@@ -23,11 +23,11 @@ module.exports = env => {
         module: {
             rules: [{
                 test: /\.tsx?$/,
-                loader: "ts-loader"
+                loader: require.resolve("ts-loader")
             },
             {
                 test: /\.js$/,
-                use: ["source-map-loader"],
+                use: [require.resolve("source-map-loader")],
                 enforce: "pre"
             },
             ]

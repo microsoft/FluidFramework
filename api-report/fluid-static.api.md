@@ -6,11 +6,11 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
-import { Container } from '@fluidframework/container-loader';
 import { DataObject } from '@fluidframework/aqueduct';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
+import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IDirectory } from '@fluidframework/map';
 import { IEvent } from '@fluidframework/common-definitions';
@@ -43,7 +43,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 
 // @public
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
-    constructor(container: Container, rootDataObject: RootDataObject);
+    constructor(container: IContainer, rootDataObject: RootDataObject);
     attach(): Promise<string>;
     get attachState(): AttachState;
     get connected(): boolean;
@@ -114,7 +114,9 @@ export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 export type ObjectFactory = (objectType: LoadableObjectClass<any>, props?: any) => Promise<IFluidLoadable>;
 
 // @public (undocumented)
-export class RootDataObject extends DataObject<{}, RootDataObjectProps> {
+export class RootDataObject extends DataObject<{
+    InitialState: RootDataObjectProps;
+}> {
     // (undocumented)
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>, props?: any): Promise<T>;
     // (undocumented)
@@ -140,11 +142,11 @@ export const rootDataStoreId = "rootDOId";
 
 // @public
 export abstract class ServiceAudience<M extends IMember = IMember> extends TypedEventEmitter<IServiceAudienceEvents<M>> implements IServiceAudience<M> {
-    constructor(container: Container);
+    constructor(container: IContainer);
     // (undocumented)
     protected readonly audience: IAudience;
     // (undocumented)
-    protected readonly container: Container;
+    protected readonly container: IContainer;
     // (undocumented)
     protected abstract createServiceMember(audienceMember: IClient): M;
     getMembers(): Map<string, M>;

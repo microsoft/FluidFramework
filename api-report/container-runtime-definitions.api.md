@@ -6,6 +6,7 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
@@ -14,19 +15,17 @@ import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
-import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHelpMessage } from '@fluidframework/protocol-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
-import { IPendingProposal } from '@fluidframework/protocol-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IContainerRuntime: keyof IProvideContainerRuntime;
 
 // @public (undocumented)
@@ -47,7 +46,7 @@ export interface IContainerRuntime extends IProvideContainerRuntime, IProvideFlu
     readonly flushMode: FlushMode;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly id: string;
     readonly isDirty: boolean;
     // (undocumented)
@@ -56,7 +55,7 @@ export interface IContainerRuntime extends IProvideContainerRuntime, IProvideFlu
     raiseContainerWarning(warning: ContainerWarning): void;
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    readonly scope: IFluidObject;
+    readonly scope: IFluidObject & FluidObject;
     // (undocumented)
     readonly storage: IDocumentStorageService;
 }
@@ -67,8 +66,6 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase & IE
 // @public (undocumented)
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     // (undocumented)
-    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void): any;
-    // (undocumented)
     (event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void): any;
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
@@ -76,9 +73,9 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     (event: "localHelp", listener: (message: IHelpMessage) => void): any;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IProvideContainerRuntime {
-    // (undocumented)
+    // @deprecated (undocumented)
     IContainerRuntime: IContainerRuntime;
 }
 

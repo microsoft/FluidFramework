@@ -4,8 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IAudience } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { IServiceAudience, IServiceAudienceEvents, IMember } from "./types";
 
@@ -34,7 +33,7 @@ export abstract class ServiceAudience<M extends IMember = IMember>
   protected lastMembers: Map<string, M> = new Map();
 
   constructor(
-      protected readonly container: Container,
+      protected readonly container: IContainer,
   ) {
     super();
     this.audience = container.audience;
@@ -57,6 +56,8 @@ export abstract class ServiceAudience<M extends IMember = IMember>
         this.emit("membersChanged");
       }
     });
+
+    this.container.on("connected", () => this.emit("membersChanged"));
   }
 
   protected abstract createServiceMember(audienceMember: IClient): M;

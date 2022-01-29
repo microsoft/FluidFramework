@@ -7,6 +7,7 @@
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { EventForwarder } from '@fluidframework/common-utils';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
@@ -57,7 +58,7 @@ export abstract class LazyLoadedDataObject<TRoot extends ISharedObject = IShared
 export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> implements IFluidDataStoreFactory {
     constructor(type: string, ctor: new (context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, root: ISharedObject) => T, root: IChannelFactory, sharedObjects?: readonly IChannelFactory[], storeFactories?: readonly IFluidDataStoreFactory[]);
     // (undocumented)
-    create(parentContext: IFluidDataStoreContext, props?: any): Promise<IFluidObject>;
+    create(parentContext: IFluidDataStoreContext, props?: any): Promise<IFluidObject & FluidObject>;
     // (undocumented)
     get IFluidDataStoreFactory(): this;
     // (undocumented)

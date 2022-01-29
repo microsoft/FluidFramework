@@ -16,6 +16,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { IAckedSummary, IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { TestDataObject } from "./mockSummarizerClient";
 
 /**
@@ -39,7 +40,6 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
     };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
-            generateSummaries: true,
             initialSummarizerDelayMs: 10,
             summaryConfigOverrides,
         },
@@ -47,13 +47,15 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
             gcAllowed: true,
         },
     };
+    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+        runtime.IFluidHandleContext.resolveHandle(request);
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         dataObjectFactory,
         [
             [dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
         ],
         undefined,
-        undefined,
+        [innerRequestHandler],
         runtimeOptions,
     );
 
@@ -202,7 +204,6 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         // dataStore2 will have it marked as unreferenced.
         const gcDisabledRuntimeOptions: IContainerRuntimeOptions = {
             summaryOptions: {
-                generateSummaries: true,
                 initialSummarizerDelayMs: 10,
                 summaryConfigOverrides,
             },
@@ -216,7 +217,7 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
                 [dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
             ],
             undefined,
-            undefined,
+            [innerRequestHandler],
             gcDisabledRuntimeOptions,
         );
         const container2 = await loadContainer(summaryVersion, gcDisabledRuntimeFactory);

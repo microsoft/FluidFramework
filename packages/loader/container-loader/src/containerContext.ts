@@ -12,6 +12,7 @@ import {
     IFluidCodeDetails,
     IFluidCodeDetailsComparer,
     IProvideFluidCodeDetailsComparer,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -51,7 +52,7 @@ const PackageNotFactoryError = "Code package does not implement IRuntimeFactory"
 export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
-        scope: IFluidObject,
+        scope: FluidObject,
         codeLoader: ICodeDetailsLoader | ICodeLoader,
         codeDetails: IFluidCodeDetails,
         baseSnapshot: ISnapshotTree | undefined,
@@ -131,6 +132,9 @@ export class ContainerContext implements IContainerContext {
         return this.container.options;
     }
 
+    /**
+     * @deprecated 0.55 - Configuration is not recommended to be used and will be removed in an upcoming release.
+     */
     public get configuration(): IFluidConfiguration {
         const config: Partial<IFluidConfiguration> = {
             scopes: this.container.scopes,
@@ -162,16 +166,20 @@ export class ContainerContext implements IContainerContext {
 
     public get codeDetails() { return this._codeDetails; }
 
+    private readonly _quorum: IQuorum;
+    // Update to return IQuorumClients after 0.45 container definitions are picked up.
+    public get quorum(): IQuorum { return this._quorum; }
+
     private readonly _fluidModuleP: Promise<IFluidModuleWithDetails>;
 
     constructor(
         private readonly container: Container,
-        public readonly scope: IFluidObject,
+        public readonly scope: IFluidObject & FluidObject,
         private readonly codeLoader: ICodeDetailsLoader | ICodeLoader,
         private readonly _codeDetails: IFluidCodeDetails,
         private readonly _baseSnapshot: ISnapshotTree | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        public readonly quorum: IQuorum,
+        quorum: IQuorum,
         public readonly loader: ILoader,
         public readonly raiseContainerWarning: (warning: ContainerWarning) => void,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
@@ -183,11 +191,16 @@ export class ContainerContext implements IContainerContext {
         public readonly pendingLocalState?: unknown,
 
     ) {
+        this._quorum = quorum;
         this.taggedLogger = container.subLogger;
         this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
             async () => this.loadCodeModule(_codeDetails),
         );
         this.attachListener();
+    }
+
+    public getSpecifiedCodeDetails(): IFluidCodeDetails | undefined {
+        return (this._quorum.get("code") ?? this._quorum.get("code2")) as IFluidCodeDetails | undefined;
     }
 
     public dispose(error?: Error): void {
@@ -197,7 +210,7 @@ export class ContainerContext implements IContainerContext {
         this._disposed = true;
 
         this.runtime.dispose(error);
-        this.quorum.dispose();
+        this._quorum.dispose();
         this.deltaManager.dispose();
     }
 
@@ -299,7 +312,7 @@ export class ContainerContext implements IContainerContext {
     // #region private
 
     private async getRuntimeFactory(): Promise<IRuntimeFactory> {
-        const fluidExport: Partial<IProvideRuntimeFactory> | undefined =
+        const fluidExport: FluidObject<IProvideRuntimeFactory> | undefined =
             (await this._fluidModuleP).module?.fluidExport;
         const runtimeFactory = fluidExport?.IRuntimeFactory;
         if (runtimeFactory === undefined) {

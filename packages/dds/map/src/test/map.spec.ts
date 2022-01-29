@@ -61,7 +61,7 @@ describe("Map", () => {
                 dummyMap.on("op", (arg1, arg2, arg3) => {
                     assert.fail("shouldn't receive an op event");
                 });
-                dummyMap.on("valueChanged", (changed, local, op, target) => {
+                dummyMap.on("valueChanged", (changed, local, target) => {
                     assert.equal(valueChangedExpected, true, "valueChange event not expected");
                     valueChangedExpected = false;
 
@@ -69,15 +69,13 @@ describe("Map", () => {
                     assert.equal(changed.previousValue, previousValue);
 
                     assert.equal(local, true, "local should be true for local action for valueChanged event");
-                    assert.equal(op, undefined, "op should be undefined for local actions for valueChanged event");
                     assert.equal(target, dummyMap, "target should be the map for valueChanged event");
                 });
-                dummyMap.on("clear", (local, op, target) => {
+                dummyMap.on("clear", (local, target) => {
                     assert.equal(clearExpected, true, "clear event not expected");
                     clearExpected = false;
 
                     assert.equal(local, true, "local should be true for local action  for clear event");
-                    assert.equal(op, undefined, "op should be undefined for local actions for clear event");
                     assert.equal(target, dummyMap, "target should be the map for clear event");
                 });
                 dummyMap.on("error", (error) => {
@@ -124,7 +122,7 @@ describe("Map", () => {
                 const subMap = createLocalMap("subMap");
                 map.set("object", subMap.handle);
 
-                const summaryContent = (map.summarize().summary.tree.header as ISummaryBlob).content;
+                const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob).content;
                 const subMapHandleUrl = subMap.handle.absolutePath;
                 // eslint-disable-next-line max-len
                 assert.equal(summaryContent, `{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`);
@@ -138,7 +136,7 @@ describe("Map", () => {
                 const subMap = createLocalMap("subMap");
                 map.set("object", subMap.handle);
 
-                const summaryContent = (map.summarize().summary.tree.header as ISummaryBlob).content;
+                const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob).content;
                 const subMapHandleUrl = subMap.handle.absolutePath;
                 // eslint-disable-next-line max-len
                 assert.equal(summaryContent, `{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`);
@@ -157,7 +155,7 @@ describe("Map", () => {
 
                 const subMapHandleUrl = subMap.handle.absolutePath;
                 const subMap2HandleUrl = subMap2.handle.absolutePath;
-                const summaryContent = (map.summarize().summary.tree.header as ISummaryBlob).content;
+                const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob).content;
                 // eslint-disable-next-line max-len
                 assert.equal(summaryContent, `{"blobs":[],"content":{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}}}}}`);
             });
@@ -183,7 +181,7 @@ describe("Map", () => {
             it("new serialization format for small maps", async () => {
                 map.set("key", "value");
 
-                const summaryTree = map.summarize().summary;
+                const summaryTree = map.getAttachSummary().summary;
                 assert.strictEqual(
                     Object.keys(summaryTree.tree).length, 1, "summary tree should only have one blob");
                 const summaryContent = (summaryTree.tree.header as ISummaryBlob)?.content;
@@ -217,7 +215,7 @@ describe("Map", () => {
                 map.set("longValue", longString);
                 map.set("zzz", "the end");
 
-                const summaryTree = map.summarize().summary;
+                const summaryTree = map.getAttachSummary().summary;
                 assert.strictEqual(
                     Object.keys(summaryTree.tree).length, 2, "There should be 2 entries in the summary tree");
                 const expectedContent1 = JSON.stringify({
@@ -284,7 +282,7 @@ describe("Map", () => {
                 const containerRuntimeFactory = new MockContainerRuntimeFactory();
                 const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
                 const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-                const services2 = MockSharedObjectServices.createFromSummary(map1.summarize().summary);
+                const services2 = MockSharedObjectServices.createFromSummary(map1.getAttachSummary().summary);
                 services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
                 const map2 = new SharedMap("testMap2", dataStoreRuntime2, MapFactory.Attributes);

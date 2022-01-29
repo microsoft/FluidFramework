@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { AttachState } from "@fluidframework/container-definitions";
-import { ConnectionState, Loader } from "@fluidframework/container-loader";
+import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import { ConnectionState, Container, Loader } from "@fluidframework/container-loader";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import {
     ITestContainerConfig,
@@ -32,7 +32,7 @@ import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -84,15 +84,14 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
     });
 
     it("Create detached container", async () => {
-        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+        const container: IContainer = (await loader.createDetachedContainer(provider.defaultCodeDetails));
         assert.strictEqual(container.attachState, AttachState.Detached, "Container should be detached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
         assert.strictEqual(container.getQuorum().getMembers().size, 0, "Quorum should not contain any members");
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
             "Container should be in disconnected state!!");
-        assert.strictEqual(container.codeDetails?.package, provider.defaultCodeDetails.package,
-            "Loaded package should be same as provided");
+
         if (container.getSpecifiedCodeDetails !== undefined) {
             assert.strictEqual(container.getSpecifiedCodeDetails()?.package, provider.defaultCodeDetails.package,
             "Specified package should be same as provided");
@@ -101,8 +100,12 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
             assert.strictEqual(container.getLoadedCodeDetails()?.package, provider.defaultCodeDetails.package,
             "Loaded package should be same as provided");
         }
-        assert.strictEqual(container.id, "", "Detached container's id should be empty string");
-        assert.strictEqual(container.clientDetails.capabilities.interactive, true,
+        assert.strictEqual(
+            (container as Container).id,
+            "",
+            "Detached container's id should be empty string",
+        );
+        assert.strictEqual((container as Container).clientDetails.capabilities.interactive, true,
             "Client details should be set with interactive as true");
     });
 
@@ -112,9 +115,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         assert.strictEqual(container.attachState, AttachState.Attached, "Container should be attached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
-        assert.ok(container.id, "No container ID");
+        const containerId = (container.resolvedUrl as IFluidResolvedUrl).id;
+        assert.ok(container, "No container ID");
         if (provider.driver.type === "local") {
-            assert.strictEqual(container.id, provider.documentId, "Doc id is not matching!!");
+            assert.strictEqual(containerId, provider.documentId, "Doc id is not matching!!");
         }
     });
 
@@ -385,6 +389,34 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         await defPromise.promise;
     });
 
+    it("Fire ops during container attach for shared cell", async () => {
+        const op = { type: "setCell", value: { value: "b" } };
+        const defPromise = new Deferred<void>();
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+        (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
+            assert.strictEqual(contents.contents.contents.content.address,
+                sharedCellId, "Address should be shared directory");
+            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
+                JSON.stringify(op), "Op should be same");
+            defPromise.resolve();
+            return 0;
+        };
+
+        // Get the root dataStore from the detached container.
+        const response = await container.request({ url: "/" });
+        const dataStore = response.value as ITestFluidObject;
+        const testChannel1 = await dataStore.getSharedObject<SharedCell>(sharedCellId);
+
+        // Fire op before attaching the container
+        testChannel1.set("a");
+        const containerP = container.attach(request);
+
+        // Fire op after the summary is taken and before it is attached.
+        testChannel1.set("b");
+        await containerP;
+        await defPromise.promise;
+    });
+
     it("Fire ops during container attach for shared ink", async () => {
         const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
@@ -537,35 +569,6 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         loader = provider.makeTestLoader(testContainerConfig) as Loader;
     });
 
-    // SharedCell op format had a breaking change. This should be moved back to compat tests in two versions.
-    it("Fire ops during container attach for shared cell", async () => {
-        const op = { type: "setCell", value: { value: "b" } };
-        const defPromise = new Deferred<void>();
-        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.contents.content.address,
-                sharedCellId, "Address should be shared directory");
-            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
-                JSON.stringify(op), "Op should be same");
-            defPromise.resolve();
-            return 0;
-        };
-
-        // Get the root dataStore from the detached container.
-        const response = await container.request({ url: "/" });
-        const dataStore = response.value as ITestFluidObject;
-        const testChannel1 = await dataStore.getSharedObject<SharedCell>(sharedCellId);
-
-        // Fire op before attaching the container
-        testChannel1.set("a");
-        const containerP = container.attach(request);
-
-        // Fire op after the summary is taken and before it is attached.
-        testChannel1.set("b");
-        await containerP;
-        await defPromise.promise;
-    });
-
     it("Retry attaching detached container", async () => {
         let retryTimes = 1;
         const documentServiceFactory: IDocumentServiceFactory = {
@@ -599,9 +602,10 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         assert.strictEqual(container.attachState, AttachState.Attached, "Container should be attached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
-        assert.ok(container.id, "No container ID");
+        const containerId = (container.resolvedUrl as IFluidResolvedUrl).id;
+        assert.ok(containerId, "No container ID");
         if (provider.driver.type === "local") {
-            assert.strictEqual(container.id, provider.documentId, "Doc id is not matching!!");
+            assert.strictEqual(containerId, provider.documentId, "Doc id is not matching!!");
         }
         assert.strictEqual(retryTimes, 0, "Should not succeed at first time");
     }).timeout(5000);

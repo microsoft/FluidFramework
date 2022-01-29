@@ -2,12 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Container, Loader } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader";
 import {
     IDocumentServiceFactory,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import {
     createTinyliciousCreateNewRequest,
@@ -108,7 +108,7 @@ export class TinyliciousClient {
 
     // #region private
     private getContainerServices(
-        container: Container,
+        container: IContainer,
     ): TinyliciousContainerServices {
         return {
             audience: new TinyliciousAudience(container),

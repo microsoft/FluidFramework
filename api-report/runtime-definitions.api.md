@@ -6,6 +6,7 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
@@ -19,7 +20,7 @@ import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IQuorum } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -86,7 +87,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;
@@ -135,6 +136,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
 
 // @public
 export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry>, IProvideFluidHandleContext {
+    addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     readonly attachState: AttachState;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
@@ -153,12 +155,14 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
+    getBaseGCDetails?(): Promise<IGarbageCollectionDetailsBase>;
     // (undocumented)
     getCreateChildSummarizerNodeFn(
     id: string,
     createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
+    // @deprecated (undocumented)
     getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
     readonly isLocalDataStore: boolean;
@@ -168,7 +172,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly options: ILoaderOptions;
     readonly packagePath: readonly string[];
     raiseContainerWarning(warning: ContainerWarning): void;
-    readonly scope: IFluidObject;
+    readonly scope: IFluidObject & FluidObject;
     setChannelDirty(address: string): void;
     // (undocumented)
     readonly storage: IDocumentStorageService;
@@ -215,11 +219,28 @@ export interface IGarbageCollectionData {
 }
 
 // @public
-export interface IGarbageCollectionSummaryDetails {
+export interface IGarbageCollectionDetailsBase {
     gcData?: IGarbageCollectionData;
     unrefTimestamp?: number;
     usedRoutes?: string[];
 }
+
+// @public
+export interface IGarbageCollectionNodeData {
+    outboundRoutes: string[];
+    unreferencedTimestampMs?: number;
+}
+
+// @public
+export interface IGarbageCollectionState {
+    // (undocumented)
+    gcNodes: {
+        [id: string]: IGarbageCollectionNodeData;
+    };
+}
+
+// @public @deprecated (undocumented)
+export type IGarbageCollectionSummaryDetails = IGarbageCollectionDetailsBase;
 
 // @public
 export interface IInboundSignalMessage extends ISignalMessage {
@@ -298,7 +319,6 @@ export interface ISummarizerNodeConfig {
 // @public (undocumented)
 export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
     readonly gcDisabled?: boolean;
-    readonly maxUnreferencedDurationMs?: number;
 }
 
 // @public
@@ -310,9 +330,11 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     createParam: CreateChildSummarizerNodeParam,
     config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>): ISummarizerNodeWithGC;
     deleteChild(id: string): void;
+    getBaseGCDetails?(): IGarbageCollectionDetailsBase;
     // (undocumented)
     getChild(id: string): ISummarizerNodeWithGC | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    // @deprecated (undocumented)
     getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
     isReferenced(): boolean;
     // (undocumented)

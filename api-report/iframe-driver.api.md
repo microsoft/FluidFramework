@@ -82,8 +82,6 @@ export const IDocumentServiceFactoryProxyKey = "IDocumentServiceFactoryProxy";
 export class InnerDocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
     get claims(): ITokenClaims;
     get clientId(): string;
-    // (undocumented)
-    close(): void;
     static create(connection: IConnected, outerProxy: IOuterDocumentDeltaConnectionProxy): Promise<IDocumentDeltaConnection>;
     // (undocumented)
     details: IConnected;

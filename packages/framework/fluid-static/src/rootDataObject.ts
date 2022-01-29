@@ -21,8 +21,7 @@ export interface RootDataObjectProps {
     initialObjects: LoadableObjectClassRecord;
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-export class RootDataObject extends DataObject<{}, RootDataObjectProps> {
+export class RootDataObject extends DataObject<{InitialState: RootDataObjectProps}> {
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
 

@@ -5,8 +5,10 @@
 
 import * as Comlink from "comlink";
 import { fluidExport as TodoContainer } from "@fluid-example/todo";
-import { Container, Loader } from "@fluidframework/container-loader";
-import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { IContainer } from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import {
     InnerDocumentServiceFactory,
     InnerUrlResolver,
@@ -15,14 +17,14 @@ import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFrameInnerApi } from "./inframehost";
 
 let innerPort: MessagePort;
-const containers: Map<string, Container> = new Map();
+const containers: Map<string, IContainer> = new Map();
 
-async function getFluidObjectAndRender(container: Container, div: HTMLDivElement) {
+async function getFluidObjectAndRender(container: IContainer, div: HTMLDivElement) {
     const response = await container.request({ url: "/" });
     if (response.status !== 200 || response.mimeType !== "fluid/object") {
         return undefined;
     }
-    const fluidObject = response.value as IFluidObject;
+    const fluidObject: FluidObject = response.value;
 
     // Render the Fluid object with an HTMLViewAdapter to abstract the UI framework used by the Fluid object
     const view = new HTMLViewAdapter(fluidObject);
@@ -31,7 +33,7 @@ async function getFluidObjectAndRender(container: Container, div: HTMLDivElement
 
 async function loadFluidObject(
     divId: string,
-    container: Container,
+    container: IContainer,
 ) {
     const componentDiv = document.getElementById(divId) as HTMLDivElement;
     await getFluidObjectAndRender(container, componentDiv).catch(() => { });
@@ -58,12 +60,12 @@ async function loadContainer(
         codeLoader,
     });
 
-    let container: Container;
+    let container: IContainer;
 
     // TODO: drive new/existing creation entirely from outer
     if (createNew) {
         // We're not actually using the code proposal (our code loader always loads the same module regardless of the
-        // proposal), but the Container will only give us a NullRuntime if there's no proposal.  So we'll use a fake
+        // proposal), but the IContainer will only give us a NullRuntime if there's no proposal.  So we'll use a fake
         // proposal.
         container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
         // Caller is responsible for attaching the created container
@@ -73,9 +75,10 @@ async function loadContainer(
     }
 
     await loadFluidObject(divId, container);
-    containers.set(container.id, container);
+    const containerId = (container.resolvedUrl as IFluidResolvedUrl).id;
+    containers.set(containerId, container);
 
-    return container.id;
+    return containerId;
 }
 
 async function attachContainer(

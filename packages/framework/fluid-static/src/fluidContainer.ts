@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { Container } from "@fluidframework/container-loader";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { LoadableObjectClass, LoadableObjectRecord } from "./types";
 import { RootDataObject } from "./rootDataObject";
 
@@ -143,7 +142,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     private readonly dirtyHandler = () => this.emit("dirty");
 
     public constructor(
-        private readonly container: Container,
+        private readonly container: IContainer,
         private readonly rootDataObject: RootDataObject,
     ) {
         super();

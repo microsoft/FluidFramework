@@ -8,9 +8,10 @@
         "target": "es6",
         "module": "esnext",
         "outDir": "dist",
-        "types": []
+        "jsx": "react",
+        "types": ["react"]
     },
     "include": [
-        "src/**/*.ts"
+        "src/**/*"
     ]
 }

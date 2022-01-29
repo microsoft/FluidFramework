@@ -9,7 +9,6 @@ import { IFluidErrorBase, TelemetryLogger } from "@fluidframework/telemetry-util
 import {
     AuthorizationError,
     createGenericNetworkError,
-    GenericNetworkError,
     isOnline,
     RetryableError,
     NonRetryableError,
@@ -19,21 +18,8 @@ import { OdspErrorType, OdspError, IOdspError } from "@fluidframework/odsp-drive
 import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
 import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
 
-export const offlineFetchFailureStatusCode: number = 709;
-export const fetchFailureStatusCode: number = 710;
-// Status code for invalid file name error in odsp driver.
-export const invalidFileNameStatusCode: number = 711;
 // no response, or can't parse response
 export const fetchIncorrectResponse = 712;
-// Fetch request took more time then limit.
-export const fetchTimeoutStatusCode = 713;
-// This status code is sent by the server when the client and server epoch mismatches.
-// The client sets its epoch version in the calls it makes to the server and if that mismatches
-// with the server epoch version, the server throws this error code.
-// This indicates that the file/container has been modified externally.
-export const fluidEpochMismatchError = 409;
-// Error code for when the fetched token is null.
-export const fetchTokenErrorCode = 724;
 // Error code for when the server state is read only and client tries to write. This code is set by the server
 // and is not likely to change.
 export const OdspServiceReadOnlyErrorCode = "serviceReadOnly";
@@ -143,7 +129,8 @@ export function createOdspNetworkError(
     }
     switch (statusCode) {
         case 400:
-            error = new GenericNetworkError(fluidErrorCode, errorMessage, false, { statusCode });
+            error = new NonRetryableError(
+                fluidErrorCode, errorMessage, DriverErrorType.genericNetworkError, { statusCode });
             break;
         case 401:
         case 403:
@@ -172,7 +159,11 @@ export function createOdspNetworkError(
         case 410:
             error = new NonRetryableError(fluidErrorCode, errorMessage, OdspErrorType.cannotCatchUp, { statusCode });
             break;
-        case fluidEpochMismatchError:
+        case 409:
+            // This status code is sent by the server when the client and server epoch mismatches.
+            // The client sets its epoch version in the calls it makes to the server and if that mismatches
+            // with the server epoch version, the server throws this error code.
+            // This indicates that the file/container has been modified externally.
             error = new NonRetryableError(
                 fluidErrorCode, errorMessage, DriverErrorType.fileOverwrittenInStorage, { statusCode });
             break;
@@ -186,12 +177,12 @@ export function createOdspNetworkError(
             error = new NonRetryableError(fluidErrorCode, errorMessage, OdspErrorType.snapshotTooBig, { statusCode });
             break;
         case 414:
-        case invalidFileNameStatusCode:
             error = new NonRetryableError(
                 fluidErrorCode, errorMessage, OdspErrorType.invalidFileNameError, { statusCode });
             break;
         case 500:
-            error = new GenericNetworkError(fluidErrorCode, errorMessage, true, { statusCode });
+            error = new RetryableError(
+                fluidErrorCode, errorMessage, DriverErrorType.genericNetworkError, { statusCode });
             break;
         case 501:
             error = new NonRetryableError(fluidErrorCode, errorMessage, OdspErrorType.fluidNotEnabled, { statusCode });
@@ -200,22 +191,9 @@ export function createOdspNetworkError(
             error = new NonRetryableError(
                 fluidErrorCode, errorMessage, OdspErrorType.outOfStorageError, { statusCode });
             break;
-        case offlineFetchFailureStatusCode:
-            error = new RetryableError(fluidErrorCode, errorMessage, DriverErrorType.offlineError, { statusCode });
-            break;
-        case fetchFailureStatusCode:
-            error = new RetryableError(fluidErrorCode, errorMessage, DriverErrorType.fetchFailure, { statusCode });
-            break;
         case fetchIncorrectResponse:
             // Note that getWithRetryForTokenRefresh will retry it once, then it becomes non-retryable error
-            error = new NonRetryableError(
-                fluidErrorCode, errorMessage, DriverErrorType.incorrectServerResponse, { statusCode });
-            break;
-        case fetchTimeoutStatusCode:
-            error = new RetryableError(fluidErrorCode, errorMessage, OdspErrorType.fetchTimeout, { statusCode });
-            break;
-        case fetchTokenErrorCode:
-            error = new NonRetryableError(fluidErrorCode, errorMessage, OdspErrorType.fetchTokenError, { statusCode });
+            error = new NonRetryableError(fluidErrorCode, errorMessage, DriverErrorType.incorrectServerResponse);
             break;
         default:
             const retryAfterMs = retryAfterSeconds !== undefined ? retryAfterSeconds * 1000 : undefined;
@@ -257,18 +235,20 @@ export function enrichOdspError(
 export function throwOdspNetworkError(
     fluidErrorCode: string,
     statusCode: number,
-    response?: Response,
+    response: Response,
     responseText?: string,
     props?: ITelemetryProperties,
 ): never {
     const networkError = createOdspNetworkError(
         fluidErrorCode,
-        response && response.statusText !== "" ? `${fluidErrorCode} (${response.statusText})` : fluidErrorCode,
+        response.statusText !== "" ? `${fluidErrorCode} (${response.statusText})` : fluidErrorCode,
         statusCode,
-        response ? numberFromHeader(response.headers.get("retry-after")) : undefined, /* retryAfterSeconds */
+        numberFromHeader(response.headers.get("retry-after")), /* retryAfterSeconds */
         response,
         responseText,
         props);
+
+    networkError.addTelemetryProperties({ odspError: true, storageServiceError: true });
 
     // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw networkError;

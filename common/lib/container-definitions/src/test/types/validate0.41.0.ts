@@ -79,6 +79,7 @@ declare function get_current_EnumDeclaration_ContainerErrorType():
 declare function use_old_EnumDeclaration_ContainerErrorType(
     use: old.ContainerErrorType);
 use_old_EnumDeclaration_ContainerErrorType(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_ContainerErrorType());
 
 /*
@@ -163,6 +164,7 @@ declare function get_old_InterfaceDeclaration_ICodeLoader():
 declare function use_current_InterfaceDeclaration_ICodeLoader(
     use: current.ICodeLoader);
 use_current_InterfaceDeclaration_ICodeLoader(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ICodeLoader());
 
 /*
@@ -175,6 +177,7 @@ declare function get_current_InterfaceDeclaration_ICodeLoader():
 declare function use_old_InterfaceDeclaration_ICodeLoader(
     use: old.ICodeLoader);
 use_old_InterfaceDeclaration_ICodeLoader(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ICodeLoader());
 
 /*
@@ -199,6 +202,7 @@ declare function get_current_InterfaceDeclaration_IConnectionDetails():
 declare function use_old_InterfaceDeclaration_IConnectionDetails(
     use: old.IConnectionDetails);
 use_old_InterfaceDeclaration_IConnectionDetails(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnectionDetails());
 
 /*
@@ -211,6 +215,7 @@ declare function get_old_InterfaceDeclaration_IContainer():
 declare function use_current_InterfaceDeclaration_IContainer(
     use: current.IContainer);
 use_current_InterfaceDeclaration_IContainer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainer());
 
 /*
@@ -223,6 +228,7 @@ declare function get_current_InterfaceDeclaration_IContainer():
 declare function use_old_InterfaceDeclaration_IContainer(
     use: old.IContainer);
 use_old_InterfaceDeclaration_IContainer(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainer());
 
 /*
@@ -235,6 +241,7 @@ declare function get_old_InterfaceDeclaration_IContainerContext():
 declare function use_current_InterfaceDeclaration_IContainerContext(
     use: current.IContainerContext);
 use_current_InterfaceDeclaration_IContainerContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerContext());
 
 /*
@@ -247,6 +254,7 @@ declare function get_current_InterfaceDeclaration_IContainerContext():
 declare function use_old_InterfaceDeclaration_IContainerContext(
     use: old.IContainerContext);
 use_old_InterfaceDeclaration_IContainerContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerContext());
 
 /*
@@ -367,6 +375,7 @@ declare function get_current_InterfaceDeclaration_IDeltaManager():
 declare function use_old_InterfaceDeclaration_IDeltaManager(
     use: old.IDeltaManager<any,any>);
 use_old_InterfaceDeclaration_IDeltaManager(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDeltaManager());
 
 /*
@@ -595,6 +604,7 @@ declare function get_old_InterfaceDeclaration_IFluidModule():
 declare function use_current_InterfaceDeclaration_IFluidModule(
     use: current.IFluidModule);
 use_current_InterfaceDeclaration_IFluidModule(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidModule());
 
 /*
@@ -607,6 +617,7 @@ declare function get_current_InterfaceDeclaration_IFluidModule():
 declare function use_old_InterfaceDeclaration_IFluidModule(
     use: old.IFluidModule);
 use_old_InterfaceDeclaration_IFluidModule(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidModule());
 
 /*
@@ -679,6 +690,7 @@ declare function get_current_InterfaceDeclaration_IGenericError():
 declare function use_old_InterfaceDeclaration_IGenericError(
     use: old.IGenericError);
 use_old_InterfaceDeclaration_IGenericError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGenericError());
 
 /*
@@ -691,6 +703,7 @@ declare function get_old_InterfaceDeclaration_IHostLoader():
 declare function use_current_InterfaceDeclaration_IHostLoader(
     use: current.IHostLoader);
 use_current_InterfaceDeclaration_IHostLoader(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IHostLoader());
 
 /*
@@ -703,6 +716,7 @@ declare function get_current_InterfaceDeclaration_IHostLoader():
 declare function use_old_InterfaceDeclaration_IHostLoader(
     use: old.IHostLoader);
 use_old_InterfaceDeclaration_IHostLoader(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IHostLoader());
 
 /*
@@ -715,6 +729,7 @@ declare function get_old_InterfaceDeclaration_ILoader():
 declare function use_current_InterfaceDeclaration_ILoader(
     use: current.ILoader);
 use_current_InterfaceDeclaration_ILoader(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ILoader());
 
 /*
@@ -727,6 +742,7 @@ declare function get_current_InterfaceDeclaration_ILoader():
 declare function use_old_InterfaceDeclaration_ILoader(
     use: old.ILoader);
 use_old_InterfaceDeclaration_ILoader(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILoader());
 
 /*
@@ -859,6 +875,7 @@ declare function get_old_InterfaceDeclaration_IProvideRuntimeFactory():
 declare function use_current_InterfaceDeclaration_IProvideRuntimeFactory(
     use: current.IProvideRuntimeFactory);
 use_current_InterfaceDeclaration_IProvideRuntimeFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideRuntimeFactory());
 
 /*
@@ -871,6 +888,7 @@ declare function get_current_InterfaceDeclaration_IProvideRuntimeFactory():
 declare function use_old_InterfaceDeclaration_IProvideRuntimeFactory(
     use: old.IProvideRuntimeFactory);
 use_old_InterfaceDeclaration_IProvideRuntimeFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProvideRuntimeFactory());
 
 /*
@@ -883,6 +901,7 @@ declare function get_old_InterfaceDeclaration_IProxyLoaderFactory():
 declare function use_current_InterfaceDeclaration_IProxyLoaderFactory(
     use: current.IProxyLoaderFactory);
 use_current_InterfaceDeclaration_IProxyLoaderFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProxyLoaderFactory());
 
 /*
@@ -895,6 +914,7 @@ declare function get_current_InterfaceDeclaration_IProxyLoaderFactory():
 declare function use_old_InterfaceDeclaration_IProxyLoaderFactory(
     use: old.IProxyLoaderFactory);
 use_old_InterfaceDeclaration_IProxyLoaderFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProxyLoaderFactory());
 
 /*
@@ -979,6 +999,7 @@ declare function get_old_InterfaceDeclaration_IRuntimeFactory():
 declare function use_current_InterfaceDeclaration_IRuntimeFactory(
     use: current.IRuntimeFactory);
 use_current_InterfaceDeclaration_IRuntimeFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRuntimeFactory());
 
 /*
@@ -991,6 +1012,7 @@ declare function get_current_InterfaceDeclaration_IRuntimeFactory():
 declare function use_old_InterfaceDeclaration_IRuntimeFactory(
     use: old.IRuntimeFactory);
 use_old_InterfaceDeclaration_IRuntimeFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IRuntimeFactory());
 
 /*
@@ -1039,6 +1061,7 @@ declare function get_current_InterfaceDeclaration_IThrottlingWarning():
 declare function use_old_InterfaceDeclaration_IThrottlingWarning(
     use: old.IThrottlingWarning);
 use_old_InterfaceDeclaration_IThrottlingWarning(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IThrottlingWarning());
 
 /*
@@ -1063,6 +1086,7 @@ declare function get_current_InterfaceDeclaration_IUsageError():
 declare function use_old_InterfaceDeclaration_IUsageError(
     use: old.IUsageError);
 use_old_InterfaceDeclaration_IUsageError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IUsageError());
 
 /*

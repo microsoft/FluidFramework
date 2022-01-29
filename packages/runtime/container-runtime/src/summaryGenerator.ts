@@ -77,11 +77,6 @@ export type SummarizeReason =
      */
     | "maxOps"
     /**
-     * Special case to generate a summary in response to a Save op.
-     * @deprecated - do not use save ops
-     */
-    | `save;${string}: ${string}`
-    /**
      * Special case to attempt to summarize one last time before the
      * summarizer client closes itself. This is to prevent cases where
      * the summarizer client never gets a chance to summarize, because
@@ -346,10 +341,9 @@ export class SummaryGenerator {
                 }});
             } else {
                 // Check for retryDelay in summaryNack response.
-                // back-compat: cast needed until dep on protocol-definitions version bump
                 assert(ackNackOp.type === MessageType.SummaryNack, 0x274 /* "type check" */);
-                const summaryNack = ackNackOp.contents as { message?: string; retryAfter?: number; };
-                const message = summaryNack.message ?? ackNackOp.contents.errorMessage;
+                const summaryNack = ackNackOp.contents;
+                const message = summaryNack?.message;
                 const retryAfterSeconds = summaryNack?.retryAfter;
 
                 const error = new LoggingError(`summaryNack: ${message}`, { retryAfterSeconds });

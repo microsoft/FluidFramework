@@ -14,6 +14,8 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { TestDataObject } from "./mockSummarizerClient";
 
 /**
@@ -29,16 +31,18 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
             [],
             []);
         const runtimeOptions: IContainerRuntimeOptions = {
-            summaryOptions: { generateSummaries: false },
+            summaryOptions: { disableSummaries: true },
             gcOptions: { gcAllowed: true, runGCInTestMode: deleteUnreferencedContent },
         };
+        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+            runtime.IFluidHandleContext.resolveHandle(request);
         const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
             dataObjectFactory,
             [
                 [dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
             ],
             undefined,
-            undefined,
+            [innerRequestHandler],
             runtimeOptions,
         );
 

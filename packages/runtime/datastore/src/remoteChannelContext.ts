@@ -6,6 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { DataCorruptionError } from "@fluidframework/container-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     IChannel,
     IChannelAttributes,
@@ -22,7 +23,7 @@ import {
     CreateChildSummarizerNodeFn,
     IFluidDataStoreContext,
     IGarbageCollectionData,
-    IGarbageCollectionSummaryDetails,
+    IGarbageCollectionDetailsBase,
     ISummarizeInternalResult,
     ISummarizeResult,
     ISummarizerNodeWithGC,
@@ -32,7 +33,7 @@ import {
     attributesBlobKey,
     createServiceEndpoints,
     IChannelContext,
-    summarizeChannel,
+    summarizeChannelAsync,
 } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
@@ -58,12 +59,13 @@ export class RemoteChannelContext implements IChannelContext {
         storageService: IDocumentStorageService,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
+        addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
         private readonly id: string,
         baseSnapshot:  ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
         extraBlobs: Map<string, ArrayBufferLike> | undefined,
         createSummarizerNode: CreateChildSummarizerNodeFn,
-        gcDetailsInInitialSummary: () => Promise<IGarbageCollectionSummaryDetails>,
+        getBaseGCDetails: () => Promise<IGarbageCollectionDetailsBase>,
         private readonly attachMessageType?: string,
     ) {
         this.services = createServiceEndpoints(
@@ -71,6 +73,7 @@ export class RemoteChannelContext implements IChannelContext {
             this.dataStoreContext.connected,
             submitFn,
             () => dirtyFn(this.id),
+            addedGCOutboundReferenceFn,
             storageService,
             baseSnapshot,
             extraBlobs);
@@ -81,7 +84,7 @@ export class RemoteChannelContext implements IChannelContext {
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
             async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
-            async () => gcDetailsInInitialSummary(),
+            async () => getBaseGCDetails(),
         );
 
         this.subLogger = ChildLogger.create(this.runtime.logger, "RemoteChannelContext");
@@ -144,7 +147,7 @@ export class RemoteChannelContext implements IChannelContext {
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const channel = await this.getChannel();
-        const summarizeResult = summarizeChannel(channel, fullTree, trackState);
+        const summarizeResult = await summarizeChannelAsync(channel, fullTree, trackState);
         return { ...summarizeResult, id: this.id };
     }
 

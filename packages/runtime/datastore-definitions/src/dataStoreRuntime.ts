@@ -6,7 +6,6 @@
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandleContext,
-    IFluidSerializer,
     IFluidRouter,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
@@ -19,7 +18,7 @@ import {
 } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
-    IQuorum,
+    IQuorumClients,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { IInboundSignalMessage, IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
@@ -46,8 +45,6 @@ export interface IFluidDataStoreRuntime extends
     Partial<IProvideFluidDataStoreRegistry> {
 
     readonly id: string;
-
-    readonly IFluidSerializer: IFluidSerializer;
 
     readonly IFluidHandleContext: IFluidHandleContext;
 
@@ -105,7 +102,7 @@ export interface IFluidDataStoreRuntime extends
     /**
      * Returns the current quorum.
      */
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
 
     /**
      * Returns the current audience.

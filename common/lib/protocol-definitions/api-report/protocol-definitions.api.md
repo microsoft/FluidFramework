@@ -500,8 +500,6 @@ export interface ISummaryHandle {
 // @public
 export interface ISummaryNack {
     code?: number;
-    // @deprecated
-    errorMessage: string;
     message?: string;
     retryAfter?: number;
     summaryProposal: ISummaryProposal;
@@ -648,8 +646,6 @@ export enum MessageType {
     RemoteHelp = "remoteHelp",
     // (undocumented)
     RoundTrip = "tripComplete",
-    // (undocumented)
-    Save = "saveOp",
     // (undocumented)
     Summarize = "summarize",
     // (undocumented)

@@ -25,10 +25,6 @@ export interface IConnectionDetails {
     mode: ConnectionMode;
     version: string;
     initialClients: ISignalClient[];
-    /**
-     * @deprecated - please use `serviceConfiguration.maxMessageSize`
-     */
-    maxMessageSize: number;
     serviceConfiguration: IClientConfiguration;
     /**
      * Last known sequence number to ordering service at the time of connection
@@ -56,13 +52,24 @@ export interface IDeltaHandlerStrategy {
 }
 
 declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    interface IFluidObject extends Readonly<Partial<IProvideDeltaSender>> { }
+    interface IFluidObject  {
+        /** @deprecated - use `FluidObject<IDeltaSender>` instead */
+        readonly IDeltaSender?: IDeltaSender
+     }
 }
 
+/**
+ * @deprecated - This will be removed in a later release.
+ */
 export const IDeltaSender: keyof IProvideDeltaSender = "IDeltaSender";
 
+/**
+ * @deprecated - This will be removed in a later release.
+ */
 export interface IProvideDeltaSender {
+    /**
+     * @deprecated - This will be removed in a later release.
+     */
     readonly IDeltaSender: IDeltaSender;
 }
 
@@ -158,7 +165,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 
     readonly readOnlyInfo: ReadOnlyInfo;
 
-    /** Terminate the connection to storage */
+    /** @deprecated - Use Container.close() or IContainerContext.closeFn() */
     close(): void;
 
     /** Submit a signal to the service to be broadcast to other connected clients, but not persisted */

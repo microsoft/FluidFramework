@@ -4,7 +4,6 @@
  */
 
 import {
-    IFluidObject,
     IFluidRouter,
     IRequest,
     IResponse,
@@ -20,10 +19,7 @@ import {
 import {
     IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import {
-    innerRequestHandler,
-    buildRuntimeRequestHandler,
-} from "@fluidframework/request-handler";
+import { buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
@@ -41,12 +37,7 @@ export interface IKeyValue extends IProvideKeyValue {
     delete(key: string): boolean;
 }
 
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideKeyValue>> { }
-}
-
-class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
+class KeyValue implements IKeyValue, IFluidRouter {
     public static async load(runtime: IFluidDataStoreRuntime, _context: IFluidDataStoreContext, existing: boolean) {
         const kevValue = new KeyValue(runtime);
         await kevValue.initialize(existing);
@@ -139,7 +130,6 @@ export class KeyValueFactoryComponent
             new Map([[this.type, Promise.resolve(this)]]),
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(this.defaultComponentId),
-                innerRequestHandler,
             ),
             undefined, // runtimeOptions
             undefined, // containerScope

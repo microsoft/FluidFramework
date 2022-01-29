@@ -18,11 +18,11 @@ module.exports = env => {
         module: {
             rules: [{
                 test: /\.tsx?$/,
-                loader: "ts-loader"
+                loader: require.resolve("ts-loader")
             },
             {
                 test: /\.css$/i,
-                use: ['style-loader', 'css-loader'],
+                use: [require.resolve('style-loader'), require.resolve('css-loader')],
             }]
         },
         output: {

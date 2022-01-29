@@ -8,13 +8,13 @@ import { DriverErrorType, IDocumentService } from "@fluidframework/driver-defini
 import { IRequest } from "@fluidframework/core-interfaces";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { fetchIncorrectResponse } from "@fluidframework/odsp-doclib-utils";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
 import { getOdspResolvedUrl } from "../odspUtils";
 import { getHashedDocumentId } from "../odspPublicUtils";
 import { LocalPersistentCache } from "../odspCache";
+import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest";
 import { mockFetchOk, mockFetchMultiple, okResponse } from "./mockFetch";
 
 describe("Odsp Create Container Test", () => {
@@ -78,7 +78,7 @@ describe("Odsp Create Container Test", () => {
 
     beforeEach(() => {
         resolver = new OdspDriverUrlResolver();
-        request = resolver.createCreateNewRequest(siteUrl, driveId, filePath, fileName);
+        request = createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     });
 
     it("Check Document Service Successfully", async () => {
@@ -132,10 +132,11 @@ describe("Odsp Create Container Test", () => {
                 ],
             );
         } catch (error) {
-            assert.strictEqual(error.statusCode, fetchIncorrectResponse, "Wrong error code");
+            assert.strictEqual(error.statusCode, undefined, "Wrong error code");
             assert.strictEqual(error.errorType, DriverErrorType.incorrectServerResponse,
                 "Error type should be correct");
-            assert.strictEqual(error.message, "couldNotParseItemFromVroomResponse", "Message should be correct");
+            assert.strictEqual(error.fluidErrorCode, "createFileNoItemId", "fluidErrorCode should be correct");
+            assert.strictEqual(error.message, "ODSP CreateFile call returned no item ID", "Message should be correct");
         }
     });
 });

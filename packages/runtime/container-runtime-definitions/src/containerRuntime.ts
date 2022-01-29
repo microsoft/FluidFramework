@@ -15,14 +15,13 @@ import {
     IResponse,
     IFluidObject,
     IFluidRouter,
-    IFluidCodeDetails,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
     IDocumentMessage,
     IHelpMessage,
-    IPendingProposal,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -34,18 +33,31 @@ import {
  } from "@fluidframework/runtime-definitions";
 
 declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideContainerRuntime>> { }
+    export interface IFluidObject {
+        /**
+         * @deprecated - use `FluidObject<IContainerRuntime>` instead
+         */
+        readonly IContainerRuntime?: IContainerRuntime;
+
+     }
 }
 
+/**
+ * @deprecated - This will be removed in a later release.
+ */
 export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
 
+/**
+ * @deprecated - This will be removed in a later release.
+ */
 export interface IProvideContainerRuntime {
+    /**
+     * @deprecated - This will be removed in a later release.
+     */
     IContainerRuntime: IContainerRuntime;
 }
 
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
-    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
     (
         event: "dirty" | "disconnected" | "dispose" | "saved" | "attached",
         listener: () => void);
@@ -54,7 +66,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 }
 
 export type IContainerRuntimeBaseWithCombinedEvents =
-    IContainerRuntimeBase &  IEventProvider<IContainerRuntimeEvents>;
+    IContainerRuntimeBase & IEventProvider<IContainerRuntimeEvents>;
 
 /*
  * Represents the runtime of the container. Contains helper functions/state of the container.
@@ -63,6 +75,10 @@ export interface IContainerRuntime extends
     IProvideContainerRuntime,
     IProvideFluidDataStoreRegistry,
     IContainerRuntimeBaseWithCombinedEvents {
+
+    /**
+    * @deprecated This will be removed in a later release. Deprecated in 0.53
+    */
     readonly id: string;
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
@@ -71,7 +87,7 @@ export interface IContainerRuntime extends
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     readonly flushMode: FlushMode;
-    readonly scope: IFluidObject;
+    readonly scope: IFluidObject & FluidObject;
     /**
      * Indicates the attachment state of the container to a host service.
      */

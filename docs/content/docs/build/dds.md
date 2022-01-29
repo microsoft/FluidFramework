@@ -75,7 +75,7 @@ These behavioral guarantees cannot be implemented in an optimistic way. The cost
 part of what makes Fluid so fast, so using optimistic DDSes is almost always preferred, but you can trade performance
 for behavioral guarantees.
 
-An example of a consensus-based DDS in Fluid Framework is the [TaskManager]][].
+An example of a consensus-based DDS in Fluid Framework is the **TaskManager**.
 
 #### Why consensus-based DDSes are useful
 
@@ -106,7 +106,8 @@ see [Using handles to store and retrieve shared objects][handles-example].
 
 That's all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles,
 see [Fluid handles]({{< relref "handles.md" >}}).
-[handles-example]: {{< relref "data-modeling.md#using-handles-to-store-and-retrieve-fluid-objects" >}}
+
+[handles-example]: {{< relref "data-modeling.md#using-handles-to-store-and-retrieve-shared-objects" >}}
 
 ## Events
 
@@ -185,13 +186,6 @@ These DDSes are used for storing key-value data. They are all optimistic and use
 
 * [SharedMap][] -- a basic key-value distributed data structure.
 
-### Sequences
-
-These DDSes are used for storing sequential data. They are all optimistic.
-
-* [SharedNumberSequence][] -- a distributed sequence of numbers.
-* [SharedObjectSequence][] -- a distributed sequence of objects.
-
 ### Specialized data structures
 
 * [SharedCounter][] -- a distributed counter.
@@ -210,8 +204,6 @@ These DDSes are used for storing sequential data. They are all optimistic.
 [IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
-[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
-[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedSequence]: {{< relref "sequences.md" >}}
 [SharedString]: {{< relref "string.md" >}}
 

@@ -10,7 +10,11 @@ import {
     ISnapshotTree,
     ITree,
 } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, IGarbageCollectionSummaryDetails } from "./garbageCollection";
+import {
+    IGarbageCollectionData,
+    IGarbageCollectionDetailsBase,
+    IGarbageCollectionSummaryDetails,
+} from "./garbageCollection";
 
 export interface ISummaryStats {
     treeNodeCount: number;
@@ -34,6 +38,22 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
     id: string;
     /** Additional path parts between this node's ID and its children's IDs. */
     pathPartsForChildren?: string[];
+}
+
+/** The garbage collection data of each node in the reference graph. */
+export interface IGarbageCollectionNodeData {
+    /** The set of routes to other nodes in the graph. */
+    outboundRoutes: string[];
+    /** If the node is unreferenced, the timestamp of when it was marked unreferenced. */
+    unreferencedTimestampMs?: number;
+}
+
+/**
+ * The garbage collection state of the reference graph. It contains a list of all the nodes in the graph and their
+ * GC data.
+ */
+export interface IGarbageCollectionState {
+    gcNodes: { [ id: string ]: IGarbageCollectionNodeData };
 }
 
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
@@ -62,8 +82,6 @@ export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
      * This is propagated to all child nodes.
      */
     readonly gcDisabled?: boolean;
-    /** The max duration for which a node can be unreferenced before it is eligible for deletion. */
-    readonly maxUnreferencedDurationMs?: number;
 }
 
 export enum CreateSummarizerNodeSource {
@@ -205,8 +223,14 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
      */
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 
-    /** Returns the GC details that may be added to this node's summary. */
+    /**
+     * @deprecated - Renamed to getBaseGCDetails.
+     * Returns the GC details that may be added to this node's summary.
+     */
     getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
+
+    /** Returns the GC details to be added to this node's summary and is used to initialize new nodes' GC state. */
+    getBaseGCDetails?(): IGarbageCollectionDetailsBase;
 }
 
 export const channelsTreeName = ".channels";

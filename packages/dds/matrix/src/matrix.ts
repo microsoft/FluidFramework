@@ -4,13 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
@@ -18,13 +12,14 @@ import {
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import {
+    IFluidSerializer,
     makeHandlesSerializable,
     parseHandles,
     SharedObject,
     SummarySerializer,
 } from "@fluidframework/shared-object-base";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
-import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
     IMatrixProducer,
     IMatrixConsumer,
@@ -37,7 +32,7 @@ import { PermutationVector, PermutationSegment } from "./permutationvector";
 import { SparseArray2D } from "./sparsearray2d";
 import { SharedMatrixFactory } from "./runtime";
 import { Handle, isHandleValid } from "./handletable";
-import { deserializeBlob, serializeBlob } from "./serialization";
+import { deserializeBlob } from "./serialization";
 import { ensureRange } from "./range";
 import { IUndoConsumer } from "./types";
 import { MatrixUndoProvider } from "./undoprovider";
@@ -429,55 +424,28 @@ export class SharedMatrix<T = any>
         }
     }
 
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.Directory,
-                    path: SnapshotPath.rows,
-                    type: TreeEntry.Tree,
-                    value: this.rows.snapshot(this.runtime, this.handle, serializer),
-                },
-                {
-                    mode: FileMode.Directory,
-                    path: SnapshotPath.cols,
-                    type: TreeEntry.Tree,
-                    value: this.cols.snapshot(this.runtime, this.handle, serializer),
-                },
-                serializeBlob(
-                    this.handle,
-                    SnapshotPath.cells,
-                    [
-                        this.cells.snapshot(),
-                        this.pending.snapshot(),
-                    ],
-                    serializer),
-            ],
-        };
-
-        return tree;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+        const builder = new SummaryTreeBuilder();
+        builder.addWithStats(SnapshotPath.rows, this.rows.summarize(this.runtime, this.handle, serializer));
+        builder.addWithStats(SnapshotPath.cols, this.cols.summarize(this.runtime, this.handle, serializer));
+        builder.addBlob(SnapshotPath.cells,
+            serializer.stringify([
+                this.cells.snapshot(),
+                this.pending.snapshot(),
+            ], this.handle));
+        return builder.getSummaryTree();
     }
 
     /**
-     * Returns the GC data for this SharedMatrix. All the IFluidHandle's stored in the cells represent routes to other
-     * objects.
+     * Runs serializer on the GC data for this SharedMatrix.
+     * All the IFluidHandle's stored in the cells represent routes to other objects.
      */
-    protected getGCDataCore(): IGarbageCollectionData {
-        // Create a SummarySerializer and use it to serialize all the cells. It keeps track of all IFluidHandles that it
-        // serializes.
-        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
-
+    protected processGCDataCore(serializer: SummarySerializer) {
         for (let row = 0; row < this.rowCount; row++) {
             for (let col = 0; col < this.colCount; col++) {
                 serializer.stringify(this.getCell(row, col), this.handle);
             }
         }
-
-        return {
-            gcNodes:{
-                ["/"]: serializer.getSerializedRoutes(),
-            },
-        };
     }
 
     /**

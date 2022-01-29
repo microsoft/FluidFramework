@@ -15,7 +15,6 @@ import {
 import {
     RuntimeRequestHandler,
     buildRuntimeRequestHandler,
-    innerRequestHandler,
 } from "@fluidframework/request-handler";
 import {
     IFluidDataStoreRegistry,
@@ -24,10 +23,11 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
     DependencyContainer,
-    DependencyContainerRegistry,
+    IFluidDependencySynthesizer,
     IProvideFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { FluidObject } from "@fluidframework/core-interfaces";
 
 /**
  * BaseContainerRuntimeFactory produces container runtimes with a given data store and service registry, as well as
@@ -48,7 +48,7 @@ export class BaseContainerRuntimeFactory
      */
     constructor(
         private readonly registryEntries: NamedFluidDataStoreRegistryEntries,
-        private readonly providerEntries: DependencyContainerRegistry = [],
+        private readonly dependencyContainer?: IFluidDependencySynthesizer,
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
         private readonly runtimeOptions?: IContainerRuntimeOptions,
     ) {
@@ -69,20 +69,15 @@ export class BaseContainerRuntimeFactory
         context: IContainerContext,
         existing: boolean,
     ): Promise<ContainerRuntime> {
-        const scope: Partial<IProvideFluidDependencySynthesizer> = context.scope;
-        const parentDependencyContainer = scope.IFluidDependencySynthesizer;
-        const dc = new DependencyContainer(parentDependencyContainer);
-        for (const entry of Array.from(this.providerEntries)) {
-            dc.register(entry.type, entry.provider);
-        }
+        const scope: FluidObject<IProvideFluidDependencySynthesizer> = context.scope;
+        const dc = new DependencyContainer(this.dependencyContainer, scope.IFluidDependencySynthesizer);
         scope.IFluidDependencySynthesizer = dc;
 
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             this.registryEntries,
             buildRuntimeRequestHandler(
-                ...this.requestHandlers,
-                innerRequestHandler),
+                ...this.requestHandlers),
             this.runtimeOptions,
             scope,
             existing,

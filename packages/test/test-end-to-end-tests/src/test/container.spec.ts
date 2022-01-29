@@ -39,6 +39,7 @@ import {
     TestDataObjectType,
     describeNoCompat,
 } from "@fluidframework/test-version-utils";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
@@ -170,11 +171,20 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             "Container should be in Connecting state");
         // Note: this will create infinite loop of reconnects as every reconnect would bring closed connection.
         // Only closing container will break that cycle.
-        deltaConnection.close();
-        assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
-            "Container should be in Disconnected state");
-        deltaConnection.removeAllListeners();
-        container.close();
+        deltaConnection.dispose();
+        try {
+            assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
+                "Container should be in Disconnected state");
+
+            // 'disconnected' event listener should be invoked right after registration
+            let disconnectedEventArgs;
+            container.on("disconnected", (...args) => { disconnectedEventArgs = args; });
+            await Promise.resolve();
+            assert.deepEqual(disconnectedEventArgs, []);
+        } finally {
+            deltaConnection.removeAllListeners();
+            container.close();
+        }
     });
 
     it("Raise connection error event", async () => {
@@ -204,13 +214,16 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         // Note: this will create infinite loop of reconnects as every reconnect would bring closed connection.
         // Only closing container will break that cycle.
         deltaConnection.emitError(err);
-        assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
-            "Container should be in Disconnected state");
-        // All errors on socket are not critical!
-        assert.strictEqual(container.closed, false, "Container should not be closed");
-        assert.strictEqual(errorRaised, false, "Error event should not be raised.");
-        deltaConnection.removeAllListeners();
-        container.close();
+        try {
+            assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
+                "Container should be in Disconnected state");
+            // All errors on socket are not critical!
+            assert.strictEqual(container.closed, false, "Container should not be closed");
+            assert.strictEqual(errorRaised, false, "Error event should not be raised.");
+        } finally {
+            deltaConnection.removeAllListeners();
+            container.close();
+        }
     });
 
     it("Close called on container", async () => {
@@ -240,9 +253,13 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     });
 
     it("Delta manager receives readonly event when calling container.forceReadonly()", async () => {
+        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+            runtime.IFluidHandleContext.resolveHandle(request);
         const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
             TestDataObjectType,
-            getDataStoreFactory());
+            getDataStoreFactory(),
+            {},
+            [innerRequestHandler]);
 
         const localTestObjectProvider = new TestObjectProvider(
             Loader,

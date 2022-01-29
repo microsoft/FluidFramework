@@ -6,7 +6,7 @@
 import * as SearchMenu from "@fluid-example/search-menu";
 import { performance } from "@fluidframework/common-utils";
 import {
-    IFluidObject,
+    FluidObject,
     IFluidHandle,
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
@@ -36,7 +36,7 @@ import {
 } from "./layout";
 
 interface IPersistentElement extends HTMLDivElement {
-    component: IFluidObject;
+    component: FluidObject;
 }
 
 function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
@@ -50,7 +50,7 @@ function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
 
 interface IBlockViewMarker extends MergeTree.Marker {
     instanceP?: Promise<IFluidHTMLView>;
-    instance?: IFluidHTMLView & IFluidObject;
+    instance?: IFluidHTMLView & FluidObject<IViewLayout>;
 }
 
 interface IFluidViewMarker extends MergeTree.Marker {
@@ -193,18 +193,6 @@ const commands: IFlowViewCmd[] = [
             f.createBookmarks(5000);
         },
         key: "bookmark test: 5000",
-    },
-    {
-        exec: (c, p, f) => {
-            f.addSequenceEntry();
-        },
-        key: "seq +",
-    },
-    {
-        exec: (c, p, f) => {
-            f.showSequenceEntries();
-        },
-        key: "seq show",
     },
     {
         exec: (c, p, f) => {
@@ -2190,9 +2178,9 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 if (!newBlock.instanceP) {
                     newBlock.instanceP = newBlock.properties.leafId.get()
-                        .then(async (component: IFluidObject) => {
+                        .then(async (component: FluidObject) => {
                             // TODO below is a temporary workaround. Should every QI interface also implement
-                            // IFluidObject. Then you can go from IFluidHTMLView to IViewLayout.
+                            // FluidObject. Then you can go from IFluidHTMLView to IViewLayout.
                             // Or should you query for each one individually.
                             if (!HTMLViewAdapter.canAdapt(component)) {
                                 return Promise.reject(new Error("component is not viewable"));
@@ -2835,13 +2823,8 @@ export interface IFlowViewModes {
     showCursorLocation?: boolean;
 }
 
-export interface ISeqTestItem {
-    x: string;
-    v: number;
-}
-
 export class PersistentComponent {
-    constructor(public component: IFluidObject, public elm: HTMLDivElement) {
+    constructor(public component: FluidObject, public elm: HTMLDivElement) {
     }
 }
 
@@ -2870,9 +2853,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public bookmarks: Sequence.IntervalCollection<Sequence.SequenceInterval>;
     public tempBookmarks: Sequence.SequenceInterval[];
     public comments: Sequence.IntervalCollection<Sequence.SequenceInterval>;
-    public sequenceTest: Sequence.SharedNumberSequence;
-    public persistentComponents: Map<IFluidObject, PersistentComponent>;
-    public sequenceObjTest: Sequence.SharedObjectSequence<ISeqTestItem>;
+    public persistentComponents: Map<FluidObject, PersistentComponent>;
     public presenceSignal: PresenceSignal;
     public presenceVector: Map<string, ILocalPresenceInfo> = new Map();
     public docRoot: types.ISharedMap;
@@ -2996,9 +2977,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     // Remember an element to give to a component; element will be absolutely positioned during render, if needed
-    public addPersistentComponent(elm: HTMLDivElement, component: IFluidObject) {
+    public addPersistentComponent(elm: HTMLDivElement, component: FluidObject) {
         if (!this.persistentComponents) {
-            this.persistentComponents = new Map<IFluidObject, PersistentComponent>();
+            this.persistentComponents = new Map<FluidObject, PersistentComponent>();
         }
         (elm as IPersistentElement).component = component;
         this.persistentComponents.set(component, new PersistentComponent(component, elm));
@@ -3011,7 +2992,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public getPersistentComponent(component: IFluidObject) {
+    public getPersistentComponent(component: FluidObject) {
         if (this.persistentComponents) {
             return this.persistentComponents.get(component);
         }
@@ -3087,25 +3068,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 presenceInfo.cursor.refresh();
             }
         }
-    }
-
-    public addSeqObjEntry() {
-        const len = this.sequenceObjTest.getItemCount();
-        const pos = Math.floor(Math.random() * len);
-        const item = <ISeqTestItem>{ x: "veal", v: Math.floor(Math.random() * 10) };
-        this.sequenceObjTest.insert(pos, [item]);
-    }
-
-    public addSequenceEntry() {
-        const len = this.sequenceTest.getItemCount();
-        const pos = Math.floor(Math.random() * len);
-        const item = Math.floor(Math.random() * 10);
-        this.sequenceTest.insert(pos, [item]);
-    }
-
-    public showSequenceEntries() {
-        const items = this.sequenceTest.getItems(0);
-        this.statusMessage("seq", `seq: ${items.toString()}`);
     }
 
     public addPresenceSignal(presenceSignal: PresenceSignal) {
@@ -4198,7 +4160,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     public async insertComponentNew(prefix: string, chaincode: string, inline = false) {
         const router = await this.context.containerRuntime.createDataStore(chaincode);
-        const object = await requestFluidObject(router, "");
+        const object: FluidObject<IFluidLoadable> = await requestFluidObject(router, "");
         const loadable = object.IFluidLoadable;
 
         const props = {
@@ -4486,7 +4448,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const text = this.sharedString.getText();
         const nonWhitespace = text.split(/\s+/g);
         console.log(`non ws count: ${nonWhitespace.length}`);
-        const obj = new Object();
+        const obj = {};
         for (const nws of nonWhitespace) {
             if (!obj[nws]) {
                 obj[nws] = 1;
@@ -4623,12 +4585,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         // For examples of showing the API we do interval adds on the collection with comments.
         this.comments = this.sharedString.getIntervalCollection("comments");
 
-        this.sequenceTest = await this.docRoot
-            .get<IFluidHandle<Sequence.SharedNumberSequence>>("sequence-test")
-            .get();
-        this.sequenceTest.on("sequenceDelta", (ev: Sequence.SequenceDeltaEvent) => {
-            this.showSequenceEntries();
-        });
         this.render(0, true);
         if (clockStart > 0) {
             // eslint-disable-next-line max-len

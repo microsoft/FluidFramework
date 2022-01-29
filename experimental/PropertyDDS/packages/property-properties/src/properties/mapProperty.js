@@ -48,8 +48,6 @@ export class MapProperty extends IndexedCollectionBaseProperty {
         this._dynamicChildren = {};
     };
 
-    get _context() { return 'map'; }
-
     /**
      * Returns the full property type identifier for the ChangeSet including the enum type id
      * @param  {boolean} [in_hideCollection=false] - if true the collection type (if applicable) will be omitted
@@ -412,3 +410,6 @@ export class MapProperty extends IndexedCollectionBaseProperty {
     };
 
 }
+
+MapProperty.prototype._typeid = 'BaseProperty';
+MapProperty.prototype._context = 'map';

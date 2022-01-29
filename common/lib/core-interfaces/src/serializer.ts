@@ -6,6 +6,7 @@ import { IFluidHandle } from "./handles";
 
 /**
  * JSON serialized form of an IFluidHandle
+ * @deprecated - Moved to fluidframework/shared-object-base package
  */
 export interface ISerializedHandle {
     // Marker to indicate to JSON.parse that the object is a Fluid handle
@@ -15,12 +16,21 @@ export interface ISerializedHandle {
     url: string;
 }
 
+/**
+ * @deprecated - Moved to fluidframework/shared-object-base package
+ */
 export const IFluidSerializer: keyof IProvideFluidSerializer = "IFluidSerializer";
 
+/**
+ * @deprecated - Moved to fluidframework/shared-object-base package
+ */
 export interface IProvideFluidSerializer {
     readonly IFluidSerializer: IFluidSerializer;
 }
 
+/**
+ * @deprecated - Moved to fluidframework/shared-object-base package
+ */
 export interface IFluidSerializer extends IProvideFluidSerializer {
     /**
      * Given a mostly-plain object that may have handle objects embedded within, will return a fully-plain object

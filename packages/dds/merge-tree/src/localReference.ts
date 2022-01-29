@@ -110,7 +110,6 @@ export class LocalReference implements ReferencePosition {
     }
 
     public getOffset() {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         if (this.segment?.removedSeq) {
             return 0;
         }
@@ -122,7 +121,7 @@ export class LocalReference implements ReferencePosition {
     }
 }
 
-interface IRefsAtOffest {
+interface IRefsAtOffset {
     before?: LocalReference[];
     at?: LocalReference[];
     after?: LocalReference[];
@@ -139,12 +138,12 @@ export class LocalReferenceCollection {
     }
 
     public hierRefCount: number = 0;
-    private readonly refsByOffset: (IRefsAtOffest | undefined)[];
+    private readonly refsByOffset: (IRefsAtOffset | undefined)[];
     private refCount: number = 0;
 
     constructor(
         private readonly segment: ISegment,
-        initialRefsByfOffset = new Array<IRefsAtOffest | undefined>(segment.cachedLength)) {
+        initialRefsByfOffset = new Array<IRefsAtOffset | undefined>(segment.cachedLength)) {
         // Since javascript arrays are sparse the above won't populate any of the
         // indicies, but it will ensure the length property of the array matches
         // the length of the segment.

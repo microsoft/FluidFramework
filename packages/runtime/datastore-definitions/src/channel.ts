@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { IChannelAttributes } from "./storage";
@@ -20,10 +20,17 @@ export interface IChannel extends IFluidLoadable {
     readonly attributes: IChannelAttributes;
 
     /**
-     * Generates summary of the channel.
+     * Generates summary of the channel synchronously.
      * @returns A tree representing the summary of the channel.
      */
-    summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+
+    /**
+     * Generates summary of the channel asynchronously.
+     * This should not be called where the channel can be modified while summarization is in progress.
+     * @returns A tree representing the summary of the channel.
+     */
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 
     /**
      * True if the data structure is attached to storage.
@@ -100,6 +107,14 @@ export interface IDeltaConnection {
      * that needs to be part of the summary but does not generate ops.
      */
     dirty(): void;
+
+    /**
+     * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+     * all references added in the system.
+     * @param srcHandle - The handle of the node that added the reference.
+     * @param outboundHandle - The handle of the outbound node that is referenced.
+     */
+    addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
 }
 
 /**

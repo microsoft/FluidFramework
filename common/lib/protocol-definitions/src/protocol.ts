@@ -31,9 +31,6 @@ export enum MessageType {
     // Channel operation.
     Operation = "op",
 
-    // Forced snapshot
-    Save = "saveOp",
-
     // Message to indicate the need of a remote agent for a document.
     RemoteHelp = "remoteHelp",
 
@@ -255,13 +252,6 @@ export interface ISummaryNack {
      * Information about the proposed summary op.
      */
     summaryProposal: ISummaryProposal;
-
-    /**
-     * Message describing the error.
-     * @deprecated - Use "message" instead. Clients should check for message ?? errorMessage.
-     * Once all servers & clients are all updated, we can remove that errorMessage property
-     */
-    errorMessage: string;
 
     /**
      * An error code number that represents the error. It will be a valid HTTP error code.
