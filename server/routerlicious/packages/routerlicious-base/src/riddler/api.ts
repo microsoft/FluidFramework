@@ -10,6 +10,7 @@ import {
     ITenantStorage,
     ITenantOrderer,
     ITenantCustomData,
+    KeyName,
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { getParam } from "@fluidframework/server-services-utils";
@@ -103,7 +104,8 @@ export function create(
      */
     router.put("/tenants/:id/key", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const refreshKeyP = manager.refreshTenantKey(tenantId);
+        const keyName = request.header("keyName") || KeyName.key1;
+        const refreshKeyP = manager.refreshTenantKey(tenantId, keyName);
         return handleResponse(refreshKeyP, response);
     });
 
