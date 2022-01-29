@@ -89,6 +89,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     readonly options: ILoaderOptions;
     // (undocumented)
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
+    // @deprecated (undocumented)
     raiseContainerWarning(warning: ContainerWarning): void;
     // (undocumented)
     get readOnlyInfo(): ReadOnlyInfo;
