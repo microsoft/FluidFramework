@@ -6,13 +6,17 @@
 import fs from "fs";
 import { assert } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { FileStorageDocumentName } from "@fluidframework/file-driver";
 import { ISequencedDocumentMessage, TreeEntry } from "@fluidframework/protocol-definitions";
 import {
     IFileSnapshot,
     StaticStorageDocumentServiceFactory,
 } from "@fluidframework/replay-driver";
+import { create404Response } from "@fluidframework/runtime-utils";
 import { compareWithReferenceSnapshot, getNormalizedFileSnapshot, loadContainer } from "@fluid-internal/replay-tool";
 import { SnapshotStorageService } from "./snapshotStorageService";
 
@@ -75,11 +79,30 @@ export async function validateSnapshots(
                 reportError,
             );
         const storage = new SnapshotStorageService(JSON.parse(srcContent) as IFileSnapshot, onSnapshotCb);
+        const runtimeResolver = async (request: IRequest, runtime: IContainerRuntime) => {
+            if (request.url === "/containerRuntime") {
+                return { mimeType: "fluid/object", status: 200, value: runtime };
+            } else {
+                return create404Response(request);
+            }
+        };
         container = await loadContainer(
             new StaticStorageDocumentServiceFactory(storage),
             FileStorageDocumentName,
+            undefined,
+            [runtimeResolver],
+            { summarizeProtocolTree: true }, // ILoaderOptions
         );
-        await (container as Container).snapshot(file.name, true /* fullTree */);
+
+        const response = await container.request({ url: "/containerRuntime" })
+        const runtime = response.value as ContainerRuntime;
+        const summaryResult = await runtime.getSummary();
+        const summaryContext: ISummaryContext = {
+            referenceSequenceNumber: 0,
+            proposalHandle: undefined,
+            ackHandle: undefined,
+        }
+        await runtime.storage.uploadSummaryWithContext(summaryResult.summary, summaryContext)
     }
 
     if (errors.length !== 0) {

@@ -12,6 +12,10 @@ import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import {
+    buildRuntimeRequestHandler,
+    RuntimeRequestHandler,
+} from "@fluidframework/request-handler";
+import {
     FluidDataStoreRegistryEntry,
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
@@ -31,7 +35,8 @@ import {
 export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
     constructor(
         private readonly runtimeOptions: IContainerRuntimeOptions,
-        private readonly registries: NamedFluidDataStoreRegistryEntries) {
+        private readonly registries: NamedFluidDataStoreRegistryEntries,
+        private readonly requestHandlers: RuntimeRequestHandler[] = []) {
         super();
     }
 
@@ -42,7 +47,8 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
         return ContainerRuntime.load(
             context,
             this.registries,
-            undefined,
+            buildRuntimeRequestHandler(
+                ...this.requestHandlers),
             this.runtimeOptions,
             undefined, // containerScope
             existing,

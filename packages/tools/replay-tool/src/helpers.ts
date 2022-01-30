@@ -6,7 +6,7 @@
 import { strict } from "assert";
 import fs from "fs";
 import { IContainer } from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+import { ILoaderOptions, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
     IDocumentServiceFactory,
@@ -14,6 +14,7 @@ import {
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { IFileSnapshot } from "@fluidframework/replay-driver";
+import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
 import { ReplayDataStoreFactory, ReplayRuntimeFactory } from "./replayFluidFactories";
@@ -72,6 +73,8 @@ export async function loadContainer(
     documentServiceFactory: IDocumentServiceFactory,
     documentName: string,
     logger?: TelemetryLogger,
+    requestHandlers?: RuntimeRequestHandler[],
+    loaderOptions?: ILoaderOptions,
 ): Promise<IContainer> {
     const resolved: IFluidResolvedUrl = {
         endpoints: {
@@ -119,14 +122,15 @@ export async function loadContainer(
         summaryOptions: { disableSummaries: true, maxOpsSinceLastSummary: 100000 },
         gcOptions: { writeDataAtRoot: true },
     };
-    const codeLoader = new ReplayCodeLoader(new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries));
+    const codeLoader = new ReplayCodeLoader(
+        new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries, requestHandlers));
 
     // Load the Fluid document
     const loader = new Loader({
         urlResolver,
         documentServiceFactory,
         codeLoader,
-        options: {},
+        options: loaderOptions ?? {},
         logger,
     });
 

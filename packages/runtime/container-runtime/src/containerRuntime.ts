@@ -99,7 +99,6 @@ import {
     requestFluidObject,
     responseToException,
     seqFromTree,
-    convertSummaryTreeToITree,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -1373,14 +1372,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @deprecated - Use summarize to get summary of the container runtime.
      */
     public async snapshot(): Promise<ITree> {
-        const summaryResult = await this.summarize({
+        throw new Error("Do not call this API, to be removed in the following release.");
+    }
+
+    public async getSummary(): Promise<ISummaryTreeWithStats> {
+        return await this.summarize({
             summaryLogger: this.logger,
             fullTree: true,
             trackState: false,
             runGC: this.garbageCollector.shouldRunGC,
             fullGC: true,
         });
-        return convertSummaryTreeToITree(summaryResult.summary);
     }
 
     private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats) {
@@ -2403,20 +2405,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private async fetchSnapshotFromStorage(
         versionId: string | null, logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
-        return PerformanceEvent.timedExecAsync(logger, event, async (perfEvent) => {
-            const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
-            const trace = Trace.start();
+        return PerformanceEvent.timedExecAsync(
+            logger, event, async (perfEvent: {
+                end: (arg0: {
+                    getVersionDuration?: number | undefined;
+                    getSnapshotDuration?: number | undefined;
+                }) => void; }) => {
+                    const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
+                    const trace = Trace.start();
 
-            const versions = await this.storage.getVersions(versionId, 1);
-            assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
-            stats.getVersionDuration = trace.trace().duration;
+                    const versions = await this.storage.getVersions(versionId, 1);
+                    assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
+                    stats.getVersionDuration = trace.trace().duration;
 
-            const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
-            assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
-            stats.getSnapshotDuration = trace.trace().duration;
+                    const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
+                    assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
+                    stats.getSnapshotDuration = trace.trace().duration;
 
-            perfEvent.end(stats);
-            return maybeSnapshot;
+                    perfEvent.end(stats);
+                    return maybeSnapshot;
         });
     }
 

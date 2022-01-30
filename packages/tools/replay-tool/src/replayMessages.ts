@@ -9,7 +9,10 @@ import fs from "fs";
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     FileDeltaStorageService,
@@ -31,6 +34,7 @@ import {
     FileSnapshotReader,
     IFileSnapshot,
 } from "@fluidframework/replay-driver";
+import { create404Response } from "@fluidframework/runtime-utils";
 import { compareWithReferenceSnapshot, getNormalizedFileSnapshot, loadContainer } from "./helpers";
 import { ReplayArgs } from "./replayArgs";
 
@@ -189,10 +193,20 @@ class Document {
             deltaConnection);
 
         this.docLogger = ChildLogger.create(new Logger(this.containerDescription, errorHandler));
+        const runtimeResolver = async (request: IRequest, runtime: IContainerRuntime) => {
+            if (request.url === "/containerRuntime") {
+                return { mimeType: "fluid/object", status: 200, value: runtime };
+            } else {
+                return create404Response(request);
+            }
+        };
         this.container = await loadContainer(
             documentServiceFactory,
             FileStorageDocumentName,
-            this.docLogger);
+            this.docLogger,
+            [runtimeResolver],
+            { summarizeProtocolTree: true }, // ILoaderOptions
+        );
 
         this.from = this.container.deltaManager.lastSequenceNumber;
         this.replayer = deltaConnection.getReplayer();
@@ -230,10 +244,16 @@ class Document {
         }
     }
 
-    public async snapshot() {
-        return (this.container as Container).snapshot(
-            `ReplayTool Snapshot: op ${this.currentOp}, ${this.getFileName()}`,
-            !this.args.incremental /* generateFullTreeNoOtimizations */);
+    public async summarize() {
+        const response = await this.container.request({ url: "/containerRuntime" })
+        const runtime = response.value as ContainerRuntime;
+        const summaryResult = await runtime.getSummary();
+        const summaryContext: ISummaryContext = {
+            referenceSequenceNumber: 0,
+            proposalHandle: undefined,
+            ackHandle: undefined,
+        }
+        return runtime.storage.uploadSummaryWithContext(summaryResult.summary, summaryContext)
     }
 
     public extractContent(): ContainerContent {
@@ -535,14 +555,14 @@ export class ReplayTool {
             }
 
             const final = this.mainDocument.currentOp < replayTo || this.args.to <= this.mainDocument.currentOp;
-            await this.generateSnapshot(final);
+            await this.generateSummary(final);
             if (final) {
                 break;
             }
         }
     }
 
-    private async generateMainSnapshot(dir: string, final: boolean): Promise<ContainerContent> {
+    private async generateMainSummary(dir: string, final: boolean): Promise<ContainerContent> {
         const op = this.mainDocument.currentOp;
 
         const content = this.mainDocument.extractContent();
@@ -570,7 +590,7 @@ export class ReplayTool {
             }
         }
 
-        await this.mainDocument.snapshot();
+        await this.mainDocument.summarize();
         if (final) {
             this.mainDocument.close();
         }
@@ -649,11 +669,11 @@ export class ReplayTool {
         await this.saveAndVerify(this.documentPriorWindow, dir, content, final);
     }
 
-    private async generateSnapshot(final: boolean) {
+    private async generateSummary(final: boolean) {
         const op = this.mainDocument.currentOp;
         const dir = this.args.outDirName; // `${this.args.outDirName}/${op}`;
 
-        const content = await this.generateMainSnapshot(dir, final);
+        const content = await this.generateMainSummary(dir, final);
         if (content.snapshot === undefined) {
             // Snapshots are not created if there is no "code" proposal
             // It takes some number of ops to get there (join, propose)
@@ -702,7 +722,7 @@ export class ReplayTool {
             content2.snapshot = snapshot;
         };
 
-        await document2.snapshot();
+        await document2.summarize();
         if (final) {
             document2.close();
         }
