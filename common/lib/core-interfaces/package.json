@@ -62,6 +62,63 @@
   },
   "typeValidation": {
     "version": "0.43.0",
-    "broken": {}
+    "broken": {
+      "0.39.8": {
+        "RemovedVariableDeclaration_IFluidConfiguration": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "RemovedInterfaceDeclaration_IFluidConfiguration": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "RemovedInterfaceDeclaration_IProvideFluidConfiguration": {
+          "backCompat": false,
+          "forwardCompat": false
+        }
+      },
+      "0.40.0": {
+        "RemovedVariableDeclaration_IFluidConfiguration": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "RemovedInterfaceDeclaration_IFluidConfiguration": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "RemovedInterfaceDeclaration_IProvideFluidConfiguration": {
+          "backCompat": false,
+          "forwardCompat": false
+        }
+      },
+      "0.41.0": {
+        "RemovedVariableDeclaration_IFluidConfiguration": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "RemovedInterfaceDeclaration_IFluidConfiguration": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "RemovedInterfaceDeclaration_IProvideFluidConfiguration": {
+          "backCompat": false,
+          "forwardCompat": false
+        }
+      },
+      "0.42.0": {
+        "RemovedVariableDeclaration_IFluidConfiguration": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "RemovedInterfaceDeclaration_IFluidConfiguration": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "RemovedInterfaceDeclaration_IProvideFluidConfiguration": {
+          "backCompat": false,
+          "forwardCompat": false
+        }
+      }
+    }
   }
 }
