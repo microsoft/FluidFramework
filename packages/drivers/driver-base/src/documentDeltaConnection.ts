@@ -116,6 +116,7 @@ export class DocumentDeltaConnection
         protected readonly socket: SocketIOClient.Socket,
         public documentId: string,
         logger: ITelemetryLogger,
+        private readonly enableLongPollingDowngrades: boolean = false,
     ) {
         super();
 
@@ -371,6 +372,15 @@ export class DocumentDeltaConnection
                         description.target = undefined;
                     }
                 } catch(_e) {}
+                if (this.enableLongPollingDowngrades) {
+                    if (error?.type === "TransportError" && typeof error?.description === "object") {
+                        // The connection error is a WebSocket transport error.
+                        // Allow single reconnection attempt using polling upgrade mechanism.
+                        this.socket.io.reconnection(true);
+                        this.socket.io.reconnectionAttempts(1);
+                        this.socket.io.opts.transports = ["polling", "websocket"];
+                    }
+                }
                 if (!this.socket.io.reconnection() ||
                     this.reconnectAttempts >= (this.socket.io.reconnectionAttempts() ?? 0)) {
                     // Reconnection is disabled or maximum reconnect attempts have been reached.

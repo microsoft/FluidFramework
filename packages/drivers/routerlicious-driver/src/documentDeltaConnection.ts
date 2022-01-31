@@ -33,25 +33,10 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
                     tenantId,
                 },
                 reconnection: false,
-                // Enable long-polling as a downgrade option when WebSockets are not available
-                transports: ["websocket", "polling"],
+                // Default to websocket connection, with long-polling disabled
+                transports: ["websocket"],
                 timeout: timeoutMs,
             });
-        // Socket.io-client and underlying engine.io-client both
-        // use `component-emitter` (@socket.io/component-emitter in engine.io-client v6)
-        // to implement event listening. Listeners are evoked in the order they are added,
-        // so we can alter the socket config before it reaches DocumentDeltaConnection's
-        // connect_error handler.
-        socket.on("connect_error", (err) => {
-            // Allow 1 reconnection attempt so that polling can be tried
-            if (err?.type === "TransportError" && typeof err?.description === "object") {
-                // The connection error is a WebSocket transport error
-                // Allow single reconnection attempt using polling upgrade mechanism
-                socket.io.reconnection(true);
-                socket.io.reconnectionAttempts(1);
-                socket.io.opts.transports = ["polling", "websocket"];
-            }
-        });
 
         const connectMessage: IConnect = {
             client,
@@ -62,7 +47,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
             versions: protocolVersions,
         };
 
-        const deltaConnection = new R11sDocumentDeltaConnection(socket, id, logger);
+        const deltaConnection = new R11sDocumentDeltaConnection(socket, id, logger, true);
 
         await deltaConnection.initialize(connectMessage, timeoutMs);
         return deltaConnection;
