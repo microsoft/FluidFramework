@@ -57,7 +57,7 @@ export class ReplayControllerStatic extends ReplayController {
         return true;
     }
 
-    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
+    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
         return [];
     }
 

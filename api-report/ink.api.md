@@ -94,7 +94,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     // (undocumented)
     protected registerCore(): void;
     // (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
 
 // @public (undocumented)

@@ -58,8 +58,6 @@ export enum DriverHeader {
 // @public
 export interface DriverPreCheckInfo {
     codeDetailsHint?: string;
-    // @deprecated (undocumented)
-    containerPath: string;
     criticalBootDomains?: string[];
 }
 
@@ -165,6 +163,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 export interface IDocumentStorageServicePolicies {
     // (undocumented)
     readonly caching?: LoaderCachingPolicy;
+    readonly maximumCacheDurationMs?: number;
     // (undocumented)
     readonly minBlobSize?: number;
 }

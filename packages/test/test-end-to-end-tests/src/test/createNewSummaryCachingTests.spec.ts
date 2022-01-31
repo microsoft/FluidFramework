@@ -84,8 +84,10 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
         const container2 = await provider.loadContainer(runtimeFactory, { logger: mockLogger });
         const defaultDataStore = await requestFluidObject<TestDataObject>(container2, "default");
 
+        await provider.ensureSynchronized();
+
         // getting the non-default data store and validate it is loaded
-        const handle2 = await defaultDataStore._root.wait("dataStore2");
+        const handle2 = defaultDataStore._root.get("dataStore2");
         const testDataStore: TestDataObject = await handle2.get();
         assert(testDataStore !== undefined, "2nd data store within loaded container is not loaded");
 
@@ -119,8 +121,10 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
         const container2 = await provider.loadContainer(runtimeFactory, { logger: mockLogger });
         const defaultDataStore = await requestFluidObject<TestDataObject>(container2, "default");
 
+        await provider.ensureSynchronized();
+
         // getting the non-default data store and validate it is loaded
-        const handle2 = await defaultDataStore._root.wait("dataStore2");
+        const handle2 = defaultDataStore._root.get("dataStore2");
         const testDataStore: TestDataObject = await handle2.get();
         assert(testDataStore !== undefined, "2nd data store within loaded container is not loaded");
 

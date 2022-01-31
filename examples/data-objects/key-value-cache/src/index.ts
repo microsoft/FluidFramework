@@ -19,10 +19,7 @@ import {
 import {
     IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import {
-    innerRequestHandler,
-    buildRuntimeRequestHandler,
-} from "@fluidframework/request-handler";
+import { buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
@@ -133,7 +130,6 @@ export class KeyValueFactoryComponent
             new Map([[this.type, Promise.resolve(this)]]),
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(this.defaultComponentId),
-                innerRequestHandler,
             ),
             undefined, // runtimeOptions
             undefined, // containerScope

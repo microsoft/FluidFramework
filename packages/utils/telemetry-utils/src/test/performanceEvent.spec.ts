@@ -27,15 +27,15 @@ describe("PerformanceEvent", () => {
 
     it("Cancel then End", async () => {
         const callback = async (event: PerformanceEvent) => {
-            const outerPromise: Promise<string> = new Promise((res, rej) => {
+            const outerPromise: Promise<string> = new Promise((resolve, reject) => {
                 Promise.resolve("A")
                     .finally(() => {
-                        rej(new Error("B"));
+                        reject(new Error("B"));
                     })
                     .then(
                         (val) => {
                             event.end({ val });
-                            res("C");
+                            resolve("C");
                         })
                     .catch(() => {});
             });

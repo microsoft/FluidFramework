@@ -209,13 +209,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-     * {@inheritDoc ISharedMap.wait}
-     */
-    public async wait<T = any>(key: string): Promise<T> {
-        return this.kernel.wait<T>(key);
-    }
-
-    /**
      * Check if a key exists in the map.
      * @param key - The key to check
      * @returns True if the key exists, false otherwise
@@ -252,7 +245,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
      * @internal
      */
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         let currentSize = 0;
         let counter = 0;
         let headerBlob: IMapDataObjectSerializable = {};

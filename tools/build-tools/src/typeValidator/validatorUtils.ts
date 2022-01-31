@@ -8,7 +8,7 @@ export function enableLogging(enable: boolean) {
     shouldLog = enable;
 }
 
-export function log(output: string) {
+export function log(output: any) {
     if (shouldLog) {
         console.log(output);
     }

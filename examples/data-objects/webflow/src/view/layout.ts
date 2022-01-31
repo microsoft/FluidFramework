@@ -557,7 +557,7 @@ export class Layout extends EventEmitter {
         this.endInvalid = updateRef(doc, this.endInvalid, _end);
         this.scheduleRender();
 
-        this.renderPromise = new Promise((accept) => { this.renderResolver = accept; });
+        this.renderPromise = new Promise((resolve) => { this.renderResolver = resolve; });
     }
 
     private render() {

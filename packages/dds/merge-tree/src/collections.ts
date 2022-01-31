@@ -61,6 +61,7 @@ export class List<T> {
     public next: List<T>;
     public prev: List<T>;
 
+    // eslint-disable-next-line @typescript-eslint/prefer-readonly
     constructor(public isHead: boolean, private data: T | undefined) {
         this.prev = this;
         this.next = this;

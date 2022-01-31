@@ -47,8 +47,6 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     hasSubDirectory(subdirName: string): boolean;
     set<T = any>(key: string, value: T): this;
     subdirectories(): IterableIterator<[string, IDirectory]>;
-    // @deprecated
-    wait<T = any>(key: string): Promise<T>;
 }
 
 // @public
@@ -120,8 +118,6 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     get<T = any>(key: string): T | undefined;
     set<T = any>(key: string, value: T): this;
-    // @deprecated
-    wait<T = any>(key: string): Promise<T>;
 }
 
 // @public
@@ -204,9 +200,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     // @internal
     submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void;
     // @internal (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
-    wait<T = any>(key: string): Promise<T>;
 }
 
 // @public
@@ -238,9 +233,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     set(key: string, value: any): this;
     get size(): number;
     // @internal (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
-    wait<T = any>(key: string): Promise<T>;
 }
 
 

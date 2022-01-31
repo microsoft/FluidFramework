@@ -4,9 +4,12 @@
  */
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 import { getTinyliciousContainer } from "@fluid-experimental/get-container";
+import React from "react";
+import ReactDOM from "react-dom";
 
-import { CollaborativeText } from "./fluid-object";
 import { CollaborativeTextContainer } from "./container";
+import { CollaborativeText } from "./fluid-object";
+import { CollaborativeTextView } from "./view";
 
 // Re-export everything
 export { CollaborativeText as CollaborativeTextExample, CollaborativeTextContainer };
@@ -31,11 +34,11 @@ async function start() {
     // Get the Default Object from the Container
     const defaultObject = await getDefaultObjectFromContainer<CollaborativeText>(container);
 
-    // For now we will just reach into the FluidObject to render it
+    // Render it
     const contentDiv = document.getElementById("content");
     // eslint-disable-next-line no-null/no-null
     if (contentDiv !== null) {
-        defaultObject.render(contentDiv);
+        ReactDOM.render(React.createElement(CollaborativeTextView, { text: defaultObject.text }), contentDiv);
     }
 
     // Setting "fluidStarted" is just for our test automation

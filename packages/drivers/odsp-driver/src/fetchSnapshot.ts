@@ -39,6 +39,7 @@ import { EpochTracker } from "./epochTracker";
  * @param storageFetchWrapper - Implementation of the get/post methods used to fetch the snapshot
  * @param versionId - id of specific snapshot to be fetched
  * @param fetchFullSnapshot - whether we want to fetch full snapshot(with blobs)
+ * @param forceAccessTokenViaAuthorizationHeader - whether to force passing given token via authorization header
  * @returns A promise of the snapshot and the status code of the response
  */
 export async function fetchSnapshot(
@@ -46,6 +47,7 @@ export async function fetchSnapshot(
     token: string | null,
     versionId: string,
     fetchFullSnapshot: boolean,
+    forceAccessTokenViaAuthorizationHeader: boolean,
     logger: ITelemetryLogger,
     snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshotContents> {
@@ -61,7 +63,8 @@ export async function fetchSnapshot(
     }
 
     const queryString = getQueryString(queryParams);
-    const { url, headers } = getUrlAndHeadersWithAuth(`${snapshotUrl}${path}${queryString}`, token);
+    const { url, headers } = getUrlAndHeadersWithAuth(
+        `${snapshotUrl}${path}${queryString}`, token, forceAccessTokenViaAuthorizationHeader);
     const response = await PerformanceEvent.timedExecAsync(
         logger,
         {
@@ -77,6 +80,7 @@ export async function fetchSnapshotWithRedeem(
     odspResolvedUrl: IOdspResolvedUrl,
     storageTokenFetcher: InstrumentedStorageTokenFetcher,
     snapshotOptions: ISnapshotOptions | undefined,
+    forceAccessTokenViaAuthorizationHeader: boolean,
     logger: ITelemetryLogger,
     snapshotDownloader: (
             finalOdspResolvedUrl: IOdspResolvedUrl,
@@ -88,6 +92,12 @@ export async function fetchSnapshotWithRedeem(
     removeEntries: () => Promise<void>,
     enableRedeemFallback?: boolean,
 ): Promise<ISnapshotContents> {
+    // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
+    const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
+    if(sharingLinkToRedeem) {
+        odspResolvedUrl.shareLinkInfo = {...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem}
+    }
+
     return fetchLatestSnapshotCore(
         odspResolvedUrl,
         storageTokenFetcher,
@@ -95,6 +105,7 @@ export async function fetchSnapshotWithRedeem(
         logger,
         snapshotDownloader,
         putInCache,
+        enableRedeemFallback,
     ).catch(async (error) => {
         if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
             // Execute the redeem fallback
@@ -102,16 +113,15 @@ export async function fetchSnapshotWithRedeem(
                 eventName: "RedeemFallback",
                 errorType: error.errorType,
             }, error);
-            await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
+            await redeemSharingLink(
+                odspResolvedUrl, storageTokenFetcher, logger, forceAccessTokenViaAuthorizationHeader);
             const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
-                { ...odspResolvedUrl, sharingLinkToRedeem: undefined };
-
-            if(odspResolvedUrlWithoutShareLink.shareLinkInfo) {
-                odspResolvedUrlWithoutShareLink.shareLinkInfo = {
-                    ...odspResolvedUrlWithoutShareLink.shareLinkInfo,
-                    sharingLinkToRedeem: undefined,
+                { ...odspResolvedUrl,
+                    shareLinkInfo: {
+                        ...odspResolvedUrl.shareLinkInfo,
+                        sharingLinkToRedeem: undefined
+                    }
                 };
-            }
 
             return fetchLatestSnapshotCore(
                 odspResolvedUrlWithoutShareLink,
@@ -140,6 +150,7 @@ async function redeemSharingLink(
     odspResolvedUrl: IOdspResolvedUrl,
     storageTokenFetcher: InstrumentedStorageTokenFetcher,
     logger: ITelemetryLogger,
+    forceAccessTokenViaAuthorizationHeader: boolean,
 ) {
     return PerformanceEvent.timedExecAsync(
         logger,
@@ -147,12 +158,13 @@ async function redeemSharingLink(
             eventName: "RedeemShareLink",
         },
         async () => getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-                assert(!!odspResolvedUrl.sharingLinkToRedeem,
+                assert(!!odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
                     0x1ed /* "Share link should be present" */);
                 const storageToken = await storageTokenFetcher(tokenFetchOptions, "RedeemShareLink");
-                const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.sharingLinkToRedeem);
+                const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem);
                 const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
-                const { url, headers } = getUrlAndHeadersWithAuth(redeemUrl, storageToken);
+                const { url, headers } = getUrlAndHeadersWithAuth(
+                    redeemUrl, storageToken, forceAccessTokenViaAuthorizationHeader);
                 headers.prefer = "redeemSharingLink";
                 return fetchAndParseAsJSONHelper(url, { headers });
         }),
@@ -171,6 +183,7 @@ async function fetchLatestSnapshotCore(
             controller?: AbortController,
         ) => Promise<ISnapshotRequestAndResponseOptions>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
+    enableRedeemFallback?: boolean,
 ): Promise<ISnapshotContents> {
     return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
         const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest", true);
@@ -187,6 +200,8 @@ async function fetchLatestSnapshotCore(
         const perfEvent = {
             eventName: "TreesLatest",
             attempts: tokenFetchOptions.refresh ? 2 : 1,
+            shareLinkPresent: odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined,
+            redeemFallbackEnabled: enableRedeemFallback,
         };
         if (snapshotOptions !== undefined) {
             Object.entries(snapshotOptions).forEach(([key, value]) => {
@@ -344,30 +359,9 @@ async function fetchSnapshotContentsCoreV1(
 ): Promise<ISnapshotRequestAndResponseOptions> {
     const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
     const url = `${snapshotUrl}/trees/latest?ump=1`;
-    const formBoundary = uuid();
-    const formParams: string[] = [];
-    formParams.push(`--${formBoundary}`);
-    formParams.push(`Authorization: Bearer ${storageToken}`);
-    formParams.push(`X-HTTP-Method-Override: GET`);
-    if (snapshotOptions !== undefined) {
-        Object.entries(snapshotOptions).forEach(([key, value]) => {
-            if (value !== undefined) {
-                formParams.push(`${key}: ${value}`);
-            }
-        });
-    }
-    if (odspResolvedUrl.sharingLinkToRedeem) {
-        formParams.push(`sl: ${odspResolvedUrl.sharingLinkToRedeem}`);
-    }
-    formParams.push(`_post: 1`);
-    formParams.push(`\r\n--${formBoundary}--`);
-    const postBody = formParams.join("\r\n");
-    const headers: {[index: string]: any} = {
-        "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
-    };
-
+    const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, storageToken, snapshotOptions);
     const fetchOptions = {
-        body: postBody,
+        body,
         headers,
         signal: controller?.signal,
         method: "POST",
@@ -401,28 +395,55 @@ async function fetchSnapshotContentsCoreV2(
     epochTracker?: EpochTracker,
 ): Promise<ISnapshotRequestAndResponseOptions> {
     const fullUrl = `${odspResolvedUrl.siteUrl}/_api/v2.1/drives/${odspResolvedUrl.driveId}/items/${
-        odspResolvedUrl.itemId}/opStream/attachments/latest/content`;
-    const queryParams = { ...snapshotOptions };
-    if (odspResolvedUrl.sharingLinkToRedeem) {
-        // eslint-disable-next-line @typescript-eslint/dot-notation
-        queryParams["sl"] = odspResolvedUrl.sharingLinkToRedeem;
-    }
-    const queryString = getQueryString(queryParams);
-    const { url, headers } = getUrlAndHeadersWithAuth(`${fullUrl}${queryString}`, storageToken);
+        odspResolvedUrl.itemId}/opStream/attachments/latest/content?ump=1`;
+
+    const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, storageToken, snapshotOptions);
     const fetchOptions = {
+        body,
         headers,
         signal: controller?.signal,
+        method: "POST",
     };
-    const response = await (epochTracker?.fetchArray(url, fetchOptions, "treesLatest") ??
-        fetchArray(url, fetchOptions));
+
+    const response = await (epochTracker?.fetchArray(fullUrl, fetchOptions, "treesLatest", true) ??
+        fetchArray(fullUrl, fetchOptions));
     const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
         new ReadBuffer(new Uint8Array(response.content)));
     const finalSnapshotContents: IOdspResponse<ISnapshotContents> = { ...response, content: snapshotContents };
     return  {
         odspSnapshotResponse: finalSnapshotContents,
         requestHeaders: headers,
-        requestUrl: url,
+        requestUrl: fullUrl,
     };
+}
+
+function getFormBodyAndHeaders(
+    odspResolvedUrl: IOdspResolvedUrl,
+    storageToken: string,
+    snapshotOptions: ISnapshotOptions | undefined,
+) {
+    const formBoundary = uuid();
+    const formParams: string[] = [];
+    formParams.push(`--${formBoundary}`);
+    formParams.push(`Authorization: Bearer ${storageToken}`);
+    formParams.push(`X-HTTP-Method-Override: GET`);
+    if (snapshotOptions !== undefined) {
+        Object.entries(snapshotOptions).forEach(([key, value]) => {
+            if (value !== undefined) {
+                formParams.push(`${key}: ${value}`);
+            }
+        });
+    }
+    if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem) {
+        formParams.push(`sl: ${odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem}`);
+    }
+    formParams.push(`_post: 1`);
+    formParams.push(`\r\n--${formBoundary}--`);
+    const postBody = formParams.join("\r\n");
+    const headers: {[index: string]: any} = {
+        "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
+    };
+    return { body: postBody, headers };
 }
 
 function validateAndEvalBlobsAndTrees(snapshot: ISnapshotContents) {
@@ -457,6 +478,12 @@ export async function downloadSnapshot(
     controller?: AbortController,
     epochTracker?: EpochTracker,
 ): Promise<ISnapshotRequestAndResponseOptions> {
+    // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
+    const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
+    if(sharingLinkToRedeem) {
+        odspResolvedUrl.shareLinkInfo = {...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem}
+    }
+
     if (fetchBinarySnapshotFormat) {
         // Logging an event here as it is not supposed to be used in production yet and only in experimental mode.
         logger.sendTelemetryEvent({ eventName: "BinarySnapshotFetched" });
@@ -467,7 +494,7 @@ export async function downloadSnapshot(
 }
 
 function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any) {
-    if (odspResolvedUrl.sharingLinkToRedeem !== undefined
+    if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined
         && (typeof error === "object" && error !== null)
         && (error.errorType === DriverErrorType.authorizationError
         || error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError)) {
