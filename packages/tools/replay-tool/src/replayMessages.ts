@@ -9,10 +9,6 @@ import fs from "fs";
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     FileDeltaStorageService,
@@ -34,8 +30,13 @@ import {
     FileSnapshotReader,
     IFileSnapshot,
 } from "@fluidframework/replay-driver";
-import { create404Response } from "@fluidframework/runtime-utils";
-import { compareWithReferenceSnapshot, getNormalizedFileSnapshot, loadContainer } from "./helpers";
+import { 
+    compareWithReferenceSnapshot,
+    containerRuntimeResolver,
+    getNormalizedFileSnapshot, 
+    loadContainer, 
+    uploadContainerSummary,
+} from "./helpers";
 import { ReplayArgs } from "./replayArgs";
 
 // "worker_threads" does not resolve without --experimental-worker flag on command line
@@ -193,18 +194,11 @@ class Document {
             deltaConnection);
 
         this.docLogger = ChildLogger.create(new Logger(this.containerDescription, errorHandler));
-        const runtimeResolver = async (request: IRequest, runtime: IContainerRuntime) => {
-            if (request.url === "/containerRuntime") {
-                return { mimeType: "fluid/object", status: 200, value: runtime };
-            } else {
-                return create404Response(request);
-            }
-        };
         this.container = await loadContainer(
             documentServiceFactory,
             FileStorageDocumentName,
             this.docLogger,
-            [runtimeResolver],
+            [containerRuntimeResolver],
             { summarizeProtocolTree: true }, // ILoaderOptions
         );
 
@@ -245,15 +239,7 @@ class Document {
     }
 
     public async summarize() {
-        const response = await this.container.request({ url: "/containerRuntime" })
-        const runtime = response.value as ContainerRuntime;
-        const summaryResult = await runtime.getSummary();
-        const summaryContext: ISummaryContext = {
-            referenceSequenceNumber: 0,
-            proposalHandle: undefined,
-            ackHandle: undefined,
-        }
-        return runtime.storage.uploadSummaryWithContext(summaryResult.summary, summaryContext)
+        await uploadContainerSummary(this.container);
     }
 
     public extractContent(): ContainerContent {

@@ -5,9 +5,11 @@
 
 import { strict } from "assert";
 import fs from "fs";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ILoaderOptions, Loader } from "@fluidframework/container-loader";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -15,6 +17,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import { IFileSnapshot } from "@fluidframework/replay-driver";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { create404Response } from "@fluidframework/runtime-utils";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
 import { ReplayDataStoreFactory, ReplayRuntimeFactory } from "./replayFluidFactories";
@@ -135,4 +138,23 @@ export async function loadContainer(
     });
 
     return loader.resolve({ url: resolved.url });
+}
+
+export async function containerRuntimeResolver(request: IRequest, runtime: IContainerRuntime){
+    if (request.url === "/containerRuntime") {
+        return { mimeType: "fluid/object", status: 200, value: runtime };
+    } else {
+        return create404Response(request);
+    }
+};
+
+export async function uploadContainerSummary(container: IContainer) {
+    const response = await container.request({ url: "/containerRuntime" })
+    const runtime = response.value as ContainerRuntime;
+    const summaryResult = await runtime.getSummary();
+    return runtime.storage.uploadSummaryWithContext(summaryResult.summary, {
+        referenceSequenceNumber: 0,
+        proposalHandle: undefined,
+        ackHandle: undefined,
+    })
 }
