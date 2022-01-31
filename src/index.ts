@@ -72,8 +72,6 @@ export {
 	RangeValidationResultKind,
 	RangeValidationResult,
 	BadRangeValidationResult,
-	rangeFromStableRange,
-	placeFromStablePlace,
 	Transaction,
 	isDetachedSequenceId,
 } from './default-edits';

@@ -9,7 +9,6 @@ import {
 	ChangeInternal,
 	ChangeTypeInternal,
 	DetachInternal,
-	placeFromStablePlace,
 	PlaceValidationResult,
 	RangeValidationResult,
 	RangeValidationResultKind,
@@ -540,9 +539,9 @@ export function updateRelativePlaceAnchorForChange(
 			detach: change,
 		});
 	}
-	const targetPlace = placeFromStablePlace(before, place);
-	const startPlace = placeFromStablePlace(before, change.source.start);
-	const endPlace = placeFromStablePlace(before, change.source.end);
+	const targetPlace = before.placeFromStablePlace(place);
+	const startPlace = before.placeFromStablePlace(change.source.start);
+	const endPlace = before.placeFromStablePlace(change.source.end);
 	if (targetPlace.trait.parent !== startPlace.trait.parent) {
 		// The target place was detached indirectly by detaching its parent.
 		// The anchor cannot recover.

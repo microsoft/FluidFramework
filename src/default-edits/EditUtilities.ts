@@ -4,8 +4,8 @@
  */
 
 import { DetachedSequenceId, NodeId, TraitLabel, UuidString } from '../Identifiers';
-import { TreeView, TransactionView, TreeViewPlace, TreeViewRange } from '../TreeView';
-import { assert, assertNotUndefined, fail } from '../Common';
+import { TreeView, TransactionView } from '../TreeView';
+import { assertNotUndefined } from '../Common';
 import { BuildNode, Payload, StableTraitLocation, TreeNodeSequence } from '../generic';
 import { ChangeInternal, StablePlace, StableRange } from './PersistedTypes';
 
@@ -389,7 +389,7 @@ export function validateStableRange(view: TreeView, range: StableRange): RangeVa
 		return RangeValidationResultKind.PlacesInDifferentTraits;
 	}
 
-	const { start: startPlace, end: endPlace } = rangeFromStableRange(view, range);
+	const { start: startPlace, end: endPlace } = view.rangeFromStableRange(range);
 	const startIndex = view.findIndexWithinTrait(startPlace);
 	const endIndex = view.findIndexWithinTrait(endPlace);
 
@@ -425,74 +425,6 @@ export type RangeValidationResult =
 export type BadRangeValidationResult = Exclude<RangeValidationResult, RangeValidationResultKind.Valid>;
 
 /**
- * @param view - the `TreeView` within which to retrieve the trait location
- * @param range - must be well formed and valid
- */
-function getTraitLocationOfRange(view: TreeView, range: StableRange): StableTraitLocation {
-	const referenceTrait = range.start.referenceTrait ?? range.end.referenceTrait;
-	if (referenceTrait) {
-		return referenceTrait;
-	}
-	const sibling =
-		range.start.referenceSibling ?? range.end.referenceSibling ?? fail('malformed range does not indicate trait');
-	return view.getTraitLocation(sibling);
-}
-
-/**
- * Describes the side of a range.
- */
-enum SideOfRange {
-	/**
-	 * The start of the range
-	 */
-	Start = 0,
-	/**
-	 * The end of the range
-	 */
-	End = 1,
-}
-
-function sideOfRange(range: StableRange, sideOfRange: SideOfRange, trait: StableTraitLocation): TreeViewPlace {
-	const siblingRelative = sideOfRange === SideOfRange.Start ? range.start : range.end;
-	return {
-		trait,
-		side: siblingRelative.side,
-		sibling: siblingRelative.referenceSibling,
-	};
-}
-
-/**
- * Express the given `StableRange` as a `Range`
- */
-export function rangeFromStableRange(view: TreeView, range: StableRange): TreeViewRange {
-	const location = getTraitLocationOfRange(view, range);
-	// This can be optimized for better constant factors.
-	return {
-		start: sideOfRange(range, SideOfRange.Start, location),
-		end: sideOfRange(range, SideOfRange.End, location),
-	};
-}
-
-/**
- * Express the given `StablePlace` as a `Place`
- */
-export function placeFromStablePlace(view: TreeView, stablePlace: StablePlace): TreeViewPlace {
-	const { side } = stablePlace;
-	if (stablePlace.referenceSibling === undefined) {
-		assert(stablePlace.referenceTrait !== undefined);
-		return {
-			trait: stablePlace.referenceTrait,
-			side,
-		};
-	}
-	return {
-		trait: view.getTraitLocation(stablePlace.referenceSibling),
-		side: stablePlace.side,
-		sibling: stablePlace.referenceSibling,
-	};
-}
-
-/**
  * Check if two TraitLocations are equal.
  */
 function compareTraits(traitA: StableTraitLocation, traitB: StableTraitLocation): boolean {
@@ -513,7 +445,7 @@ export function insertIntoTrait(
 	nodesToInsert: readonly NodeId[],
 	placeToInsert: StablePlace
 ): TransactionView {
-	return view.attachRange(nodesToInsert, placeFromStablePlace(view, placeToInsert));
+	return view.attachRange(nodesToInsert, view.placeFromStablePlace(placeToInsert));
 }
 
 /**
@@ -524,7 +456,7 @@ export function detachRange(
 	view: TransactionView,
 	rangeToDetach: StableRange
 ): { view: TransactionView; detached: readonly NodeId[] } {
-	return view.detachRange(rangeFromStableRange(view, rangeToDetach));
+	return view.detachRange(view.rangeFromStableRange(rangeToDetach));
 }
 
 /**

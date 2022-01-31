@@ -17,7 +17,7 @@ import {
 	InsertInternal,
 } from './PersistedTypes';
 import { Transaction } from './Transaction';
-import { isDetachedSequenceId, rangeFromStableRange } from './EditUtilities';
+import { isDetachedSequenceId } from './EditUtilities';
 import { RangeValidationResultKind, validateStableRange } from '.';
 
 /**
@@ -193,7 +193,7 @@ function createInvertedDetach(
 		return undefined;
 	}
 
-	const { start, end } = rangeFromStableRange(viewBeforeChange, source);
+	const { start, end } = viewBeforeChange.rangeFromStableRange(source);
 	const { trait: referenceTrait } = start;
 	const nodes = viewBeforeChange.getTrait(referenceTrait);
 

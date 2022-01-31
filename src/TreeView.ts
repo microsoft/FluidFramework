@@ -7,6 +7,7 @@ import { assert, copyPropertyIfDefined, fail, memoizeGetter } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
 import { Delta, Forest } from './Forest';
 import { ChangeNode, NodeData, Payload, StableTraitLocation, TraitMap } from './generic';
+import { StablePlace, StableRange } from './default-edits';
 
 /**
  * An immutable view of a distributed tree node.
@@ -77,6 +78,15 @@ export enum Side {
 export interface TreeViewRange {
 	readonly start: TreeViewPlace;
 	readonly end: TreeViewPlace;
+}
+
+/**
+ * Contains some redundant information. Use only in computations between edits. Do not store.
+ * @public
+ */
+export interface NodeInTrait {
+	readonly trait: StableTraitLocation;
+	readonly index: TraitNodeIndex;
 }
 
 /**
@@ -382,6 +392,53 @@ export abstract class TreeView {
 
 		return traitMap;
 	}
+
+	/**
+	 * Express the given `StableRange` as a `Range`
+	 */
+	public rangeFromStableRange(range: StableRange): TreeViewRange {
+		const location = this.getTraitLocationOfRange(range);
+		// This can be optimized for better constant factors.
+		return {
+			start: sideOfRange(range, SideOfRange.Start, location),
+			end: sideOfRange(range, SideOfRange.End, location),
+		};
+	}
+
+	/**
+	 * Express the given `StablePlace` as a `Place`
+	 */
+	public placeFromStablePlace(stablePlace: StablePlace): TreeViewPlace {
+		const { side } = stablePlace;
+		if (stablePlace.referenceSibling === undefined) {
+			assert(stablePlace.referenceTrait !== undefined);
+			return {
+				trait: stablePlace.referenceTrait,
+				side,
+			};
+		}
+		return {
+			trait: this.getTraitLocation(stablePlace.referenceSibling),
+			side: stablePlace.side,
+			sibling: stablePlace.referenceSibling,
+		};
+	}
+
+	/**
+	 * @param view - the `TreeView` within which to retrieve the trait location
+	 * @param range - must be well formed and valid
+	 */
+	private getTraitLocationOfRange(range: StableRange): StableTraitLocation {
+		const referenceTrait = range.start.referenceTrait ?? range.end.referenceTrait;
+		if (referenceTrait) {
+			return referenceTrait;
+		}
+		const sibling =
+			range.start.referenceSibling ??
+			range.end.referenceSibling ??
+			fail('malformed range does not indicate trait');
+		return this.getTraitLocation(sibling);
+	}
 }
 
 /**
@@ -506,10 +563,24 @@ function getIndex(side: Side, index: TraitNodeIndex): PlaceIndex {
 }
 
 /**
- * Contains some redundant information. Use only in computations between edits. Do not store.
- * @public
+ * Describes the side of a range.
  */
-export interface NodeInTrait {
-	readonly trait: StableTraitLocation;
-	readonly index: TraitNodeIndex;
+enum SideOfRange {
+	/**
+	 * The start of the range
+	 */
+	Start = 0,
+	/**
+	 * The end of the range
+	 */
+	End = 1,
+}
+
+function sideOfRange(range: StableRange, sideOfRange: SideOfRange, trait: StableTraitLocation): TreeViewPlace {
+	const siblingRelative = sideOfRange === SideOfRange.Start ? range.start : range.end;
+	return {
+		trait,
+		side: siblingRelative.side,
+		sibling: siblingRelative.referenceSibling,
+	};
 }

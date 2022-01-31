@@ -28,7 +28,6 @@ import {
 import {
 	detachRange,
 	insertIntoTrait,
-	rangeFromStableRange,
 	validateStablePlace,
 	validateStableRange,
 	isDetachedSequenceId,
@@ -301,7 +300,7 @@ export namespace Transaction {
 					  });
 			}
 
-			const { start, end } = rangeFromStableRange(state.view, change.toConstrain);
+			const { start, end } = state.view.rangeFromStableRange(change.toConstrain);
 			const startIndex = state.view.findIndexWithinTrait(start);
 			const endIndex = state.view.findIndexWithinTrait(end);
 
