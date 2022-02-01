@@ -163,7 +163,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
 
-// @public (undocumented)
+// @public
 export type DriverErrorTelemetryProps = ITelemetryProperties & {
     driverVersion: string | undefined;
 };
@@ -196,6 +196,18 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 
 // @public (undocumented)
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
+
+// @public
+export interface IAnyDriverError<TErrType extends string = string> {
+    // (undocumented)
+    canRetry: boolean;
+    // (undocumented)
+    readonly errorType: DriverErrorType | TErrType;
+    // (undocumented)
+    readonly message: string;
+    // (undocumented)
+    online?: string;
+}
 
 // @public
 export class InsecureUrlResolver implements IUrlResolver {

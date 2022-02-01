@@ -7,9 +7,8 @@ import { assert, BatchManager, TypedEventEmitter } from "@fluidframework/common-
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
-    DriverError,
 } from "@fluidframework/driver-definitions";
-import { createGenericNetworkError } from "@fluidframework/driver-utils";
+import { createGenericNetworkError, IAnyDriverError } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
     IClientConfiguration,
@@ -355,7 +354,7 @@ export class DocumentDeltaConnection
         this.earlyOpHandlerAttached = true;
 
         this._details = await new Promise<IConnected>((resolve, reject) => {
-            const fail = (socketProtocolError: boolean, err: DriverError) => {
+            const fail = (socketProtocolError: boolean, err: IAnyDriverError) => {
                 this.disposeCore(socketProtocolError, err);
                 reject(err);
             };
@@ -519,7 +518,7 @@ export class DocumentDeltaConnection
     /**
      * Error raising for socket.io issues
      */
-    protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
+    protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
         // Note: we suspect the incoming error object is either:
         // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
         // - an Error object thrown by socket.io engine. Be careful with not recording PII!

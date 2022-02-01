@@ -29,6 +29,18 @@ export function isOnline(): OnlineStatus {
     return OnlineStatus.Unknown;
 }
 
+/**
+ * Base interface for all errors and warnings raised by any driver code,
+ * with generic type param for a specific driver's errorType enum.
+ */
+ export interface IAnyDriverError<TErrType extends string = string> {
+    readonly errorType: DriverErrorType | TErrType;
+    readonly message: string;
+    canRetry: boolean;
+    online?: string;
+}
+
+/** Telemetry props with driver-specific required properties */
 export type DriverErrorTelemetryProps = ITelemetryProperties & { driverVersion: string  | undefined };
 
 /**

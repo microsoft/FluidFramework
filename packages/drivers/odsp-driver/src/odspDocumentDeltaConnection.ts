@@ -6,7 +6,6 @@
 import { ITelemetryLogger, IEvent } from "@fluidframework/common-definitions";
 import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
-import { DriverError } from "@fluidframework/driver-definitions";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
 import { loggerToMonitoringContext, LoggingError } from "@fluidframework/telemetry-utils";
 import {
@@ -21,6 +20,7 @@ import { IOdspSocketError, IGetOpsResponse, IFlushOpsResponse } from "./contract
 import { EpochTracker } from "./epochTracker";
 import { errorObjectFromSocketError } from "./odspError";
 import { pkgVersion } from "./packageVersion";
+import { IAnyDriverError } from "@fluidframework/driver-utils";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
@@ -284,12 +284,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     /**
      * Error raising for socket.io issues
      */
-    protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
+    protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
         // Note: we suspect the incoming error object is either:
         // - a socketError: add it to the OdspError object for driver to be able to parse it and reason over it.
         // - anything else: let base class handle it
         if (canRetry && Number.isInteger(error?.code) && typeof error?.message === "string") {
-            return errorObjectFromSocketError(error as IOdspSocketError, handler) as DriverError;
+            return errorObjectFromSocketError(error as IOdspSocketError, handler);
         } else {
             return super.createErrorObject(handler, error, canRetry);
         }
