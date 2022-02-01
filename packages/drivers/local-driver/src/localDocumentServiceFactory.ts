@@ -88,6 +88,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 
+        console.error(`input URL: ${resolvedUrl.url}`);
         const parsedUrlOld = parse(resolvedUrl.url);
         const [, tenantIdOld, documentIdOld] = parsedUrlOld.path ? parsedUrlOld.path.split("/") : [];
         console.error(`Old parsedUrlPath: ${parsedUrlOld.path}`);
@@ -96,12 +97,13 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
         const parsedUrl = new URL(resolvedUrl.url);
         const parsedUrlPath = parsedUrl.pathname + parsedUrl.search;
         const [, tenantId, documentId] = parsedUrlPath ? parsedUrlPath.split("/") : [];
+        console.error(`parsedUrlPath: ${parsedUrlPath}`);
+        console.error(`New tenantId: ${tenantId} | documentId: ${documentId}`);
+
         if (!documentId || !tenantId) {
             throw new Error(`Couldn't parse resolved url. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
 
-        console.error(`parsedUrlPath: ${parsedUrlPath}`);
-        console.error(`New tenantId: ${tenantId} | documentId: ${documentId}`);
 
         const fluidResolvedUrl = resolvedUrl;
         const jwtToken = fluidResolvedUrl.tokens.jwt;
