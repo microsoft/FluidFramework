@@ -6,7 +6,7 @@
 /* eslint-disable no-null/no-null */
 
 import { strict as assert } from "assert";
-import { areStringsEquivalent } from "../string";
+import { areStringsEquivalent } from "../util";
 
 function test(left: string | undefined | null, right: string | undefined | null) {
     const isLeftEmpty = left === "" || left === null || left === undefined;
