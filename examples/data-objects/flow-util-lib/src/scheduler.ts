@@ -9,7 +9,6 @@ type TaskQueue = (callback: TaskCallback) => void;
 export class Scheduler {
     private static readonly done = Promise.resolve();
     private readonly turnTasks: TaskCallback[] = [];
-    private readonly layoutTasks: TaskCallback[] = [];
 
     public readonly onTurnEnd = (callback: TaskCallback) => {
         if (this.turnTasks.push(callback) === 1) {
@@ -17,17 +16,6 @@ export class Scheduler {
             Scheduler.done.then(this.processTurnTasks);
         }
     };
-
-    public readonly onLayout = (callback: TaskCallback) => {
-        this.layoutTasks.push(callback);
-        if (this.layoutQueueLength === 1) {
-            requestAnimationFrame(this.processLayoutTasks);
-        }
-    };
-
-    private get layoutQueueLength() {
-        return this.layoutTasks.length;
-    }
 
     public coalesce(queue: TaskQueue, callback: TaskCallback) {
         let scheduled = false;
@@ -65,9 +53,5 @@ export class Scheduler {
 
     private readonly processTurnTasks = () => {
         this.dispatch(this.turnTasks);
-    };
-
-    private readonly processLayoutTasks = () => {
-        this.dispatch(this.layoutTasks);
     };
 }
