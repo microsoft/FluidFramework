@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+export { ICommand } from "./command";
 export { Dom } from "./dom";
+export { randomId } from "./random";
 export { getSegmentRange } from "./segment";
 export { findToken, TokenList } from "./tokenlist";
 

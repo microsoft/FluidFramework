@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICommand, KeyCode, Template, TagName } from "@fluid-example/flow-util-lib";
+import { KeyCode, Template, TagName } from "@fluid-example/flow-util-lib";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { FlowDocument } from "../document";
 import { Editor } from "../editor";
@@ -13,6 +13,7 @@ import { IFormatterState, RootFormatter } from "../view/formatter";
 import { debug } from "./debug";
 import * as styles from "./index.css";
 import { SearchMenuView } from "./searchmenu";
+import { ICommand } from "../util";
 
 const template = new Template(
     {
