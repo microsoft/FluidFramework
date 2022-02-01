@@ -4,6 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
+import { URL } from "whatwg-url";
 import {
     assert,
     stringToBuffer,
