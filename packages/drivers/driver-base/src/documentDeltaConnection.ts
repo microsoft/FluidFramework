@@ -370,11 +370,11 @@ export class DocumentDeltaConnection
                 try {
                     const description = error?.description;
                     if (description && typeof description === "object") {
-                        // That's a WebSocket. Clear it as we can't log it.
-                        description.target = undefined;
                         if (error.type === "TransportError") {
                             isWebSocketTransportError = true;
                         }
+                        // That's a WebSocket. Clear it as we can't log it.
+                        description.target = undefined;
                     }
                 } catch(_e) {}
 
