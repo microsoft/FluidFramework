@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { KeyCode, Template, View } from "@fluid-example/flow-util-lib";
+import { KeyCode, Template } from "@fluid-example/flow-util-lib";
 import { Dom, ICommand, randomId } from "../../util";
 import { debug } from "../debug";
 import * as style from "./index.css";
+import { View } from "./view";
 
 interface ISearchMenuProps {
     commands: ICommand[];
