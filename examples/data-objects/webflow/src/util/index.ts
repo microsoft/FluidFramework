@@ -5,6 +5,7 @@
 
 export { Dom } from "./dom";
 export { getSegmentRange } from "./segment";
+export { findToken, TokenList } from "./tokenlist";
 
 export const done = Promise.resolve();
 export const emptyObject = Object.freeze({});

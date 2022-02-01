@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export { CharCode } from "./charcode";
 export { KeyCode } from "./keycode";
 export { Scheduler } from "./scheduler";
 export { Template } from "./template";
 export { IView, View } from "./view";
-export { TokenList } from "./tokenlist";
 export { randomId } from "./random";
 export { ICommand } from "./command";
 export { ICaretBounds, ICaretEvent, CaretEventType, Caret } from "./caret";
