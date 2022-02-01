@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Template } from "@fluid-example/flow-util-lib";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -13,25 +12,6 @@ import * as styles from "./index.css";
 
 export const tableViewType = "@fluid-example/table-view";
 
-const template = new Template({
-    tag: "div",
-    children: [
-        { tag: "button", ref: "addRow", props: { textContent: "R+" } },
-        { tag: "button", ref: "addCol", props: { textContent: "C+" } },
-        { tag: "button", ref: "addRows", props: { textContent: "R++" } },
-        { tag: "button", ref: "addCols", props: { textContent: "C++" } },
-        {
-            tag: "div",
-            children: [
-                { tag: "input", ref: "formula", props: { placeholder: "Formula input" } },
-                { tag: "div", ref: "grid", props: { className: styles.grid } },
-                { tag: "span", ref: "selectionSummary" },
-            ],
-        },
-        { tag: "input", ref: "goto" },
-    ],
-});
-
 const matrixKey = "matrixKey";
 
 export class TableView extends DataObject implements IFluidHTMLView {
@@ -39,13 +19,13 @@ export class TableView extends DataObject implements IFluidHTMLView {
 
     public get IFluidHTMLView() { return this; }
 
-    private readonly templateRoot = template.clone();
+    private templateRoot: HTMLDivElement | undefined;
 
-    private _formulaInput = template.get(this.templateRoot, "formula") as HTMLInputElement;
+    private readonly _formulaInput = document.createElement("input");
     public get formulaInput(): string { return this._formulaInput.value; }
     public set formulaInput(val: string) { this._formulaInput.value = val; }
 
-    private _selectionSummary = template.get(this.templateRoot, "selectionSummary");
+    private readonly _selectionSummary = document.createElement("span");
     // eslint-disable-next-line accessor-pairs
     public set selectionSummary(val: string) { this._selectionSummary.textContent = val; }
 
@@ -57,41 +37,64 @@ export class TableView extends DataObject implements IFluidHTMLView {
         return this._tableMatrix;
     }
 
-    // #region IFluidHTMLView
-    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
-        elm.append(this.templateRoot);
+    private generateView() {
+        const root = document.createElement("div");
 
-        const grid = template.get(this.templateRoot, "grid");
-        const gridView = new GridView(this.tableMatrix, this);
-        grid.appendChild(gridView.root);
-
-        this._formulaInput.addEventListener("keypress", gridView.formulaKeypress);
-        this._formulaInput.addEventListener("focusout", gridView.formulaFocusOut);
-
-        const addRowBtn = template.get(this.templateRoot, "addRow");
+        const addRowBtn = document.createElement("button");
+        addRowBtn.textContent = "R+";
         addRowBtn.addEventListener("click", () => {
             this.tableMatrix.insertRows(this.tableMatrix.rowCount, 1);
         });
 
-        const addRowsBtn = template.get(this.templateRoot, "addRows");
-        addRowsBtn.addEventListener("click", () => {
-            this.tableMatrix.insertRows(this.tableMatrix.rowCount, 10 /* 1048576 */);
-        });
-
-        const addColBtn = template.get(this.templateRoot, "addCol");
+        const addColBtn = document.createElement("button");
+        addColBtn.textContent = "C+";
         addColBtn.addEventListener("click", () => {
             this.tableMatrix.insertCols(this.tableMatrix.colCount, 1);
         });
 
-        const addColsBtn = template.get(this.templateRoot, "addCols");
+        const addRowsBtn = document.createElement("button");
+        addRowsBtn.textContent = "R++";
+        addRowsBtn.addEventListener("click", () => {
+            this.tableMatrix.insertRows(this.tableMatrix.rowCount, 10 /* 1048576 */);
+        });
+
+        const addColsBtn = document.createElement("button");
+        addColsBtn.textContent = "C++";
         addColsBtn.addEventListener("click", () => {
             this.tableMatrix.insertCols(this.tableMatrix.colCount, 10 /* 16384 */);
         });
 
-        const gotoInput = template.get(this.templateRoot, "goto") as HTMLInputElement;
+        const gridGroup = document.createElement("div");
+
+        this._formulaInput.placeholder = "Formula input";
+
+        const grid = document.createElement("div");
+        grid.classList.add(styles.grid);
+
+        const gridView = new GridView(this.tableMatrix, this);
+        grid.append(gridView.root);
+
+        this._formulaInput.addEventListener("keypress", gridView.formulaKeypress);
+        this._formulaInput.addEventListener("focusout", gridView.formulaFocusOut);
+
+        gridGroup.append(this._formulaInput, grid, this._selectionSummary);
+
+        const gotoInput = document.createElement("input");
         gotoInput.addEventListener("change", () => {
             gridView.startRow = parseInt(gotoInput.value, 10) - 1;
         });
+
+        root.append(addRowBtn, addColBtn, addRowsBtn, addColsBtn, gridGroup, gotoInput);
+
+        return root;
+    }
+
+    // #region IFluidHTMLView
+    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
+        if (this.templateRoot === undefined) {
+            this.templateRoot = this.generateView();
+        }
+        elm.append(this.templateRoot);
     }
     // #endregion IFluidHTMLView
 
