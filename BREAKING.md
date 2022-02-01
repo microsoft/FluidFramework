@@ -13,6 +13,7 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 0.57 Breaking changes
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)
 - [Driver error constructors' signatures have changed](#driver-error-constructors-signatures-have-changed)
+- [IFluidObject removed from IFluidDataStoreContext scope](#IFluidObject-removed-from-IFluidDataStoreContext-scope)
 
 ### IFluidConfiguration removed
 
@@ -26,6 +27,20 @@ Same for helper functions that return new error objects.
 
 Additionally, `createGenericNetworkError`'s signature was refactored to combine `canRetry` and `retryAfterMs` into a single
 required parameter `retryInfo`.
+
+### IFluidObject removed from IFluidDataStoreContext scope
+IFluidObject is deprecated and being replaced with [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject). IFluidObject is now removed from IFluidDataStoreContext's scope:
+
+``` diff
+- readonly scope: IFluidObject & FluidObject;
++ readonly scope: FluidObject;
+```
+
+Additionally, the following deprecated fields have been removed from IFluidObject:
+- IFluidDataStoreFactory
+- IFluidDataStoreRegistry
+
+Use [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) instead.
 
 ## 0.56 Breaking changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
