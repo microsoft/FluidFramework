@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
 import {
     IDocumentServiceFactory,
     IResolvedUrl,
@@ -11,6 +10,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { URL } from "whatwg-url";
 import { ensureFluidResolvedUrl } from "./fluidResolvedUrl";
 
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
@@ -44,7 +44,7 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "none:";
     async createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
-        const urlObj = parse(resolvedUrl.url);
+        const urlObj = new URL(resolvedUrl.url);
         // eslint-disable-next-line no-null/no-null
         if (urlObj.protocol === undefined || urlObj.protocol === null) {
             throw new Error("No protocol provided");
@@ -63,7 +63,7 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
-        const urlObj = parse(createNewResolvedUrl.url);
+        const urlObj = new URL(createNewResolvedUrl.url);
         // eslint-disable-next-line no-null/no-null
         if (urlObj.protocol === undefined || urlObj.protocol === null) {
             throw new Error("No protocol provided");
