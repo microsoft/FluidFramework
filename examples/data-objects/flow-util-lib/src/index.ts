@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { Scheduler } from "./scheduler";
 export { Template } from "./template";

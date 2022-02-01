@@ -104,7 +104,7 @@ export class Layout extends EventEmitter {
             Promise.resolve().then(() => {
                 scheduled = false;
                 this.render();
-            });
+            }).catch(console.error);
 
             scheduled = true;
         }

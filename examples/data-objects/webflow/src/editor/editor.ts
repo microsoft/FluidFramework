@@ -42,7 +42,7 @@ export class Editor {
             Promise.resolve().then(() => {
                 scheduled = false;
                 this.caret.sync();
-            });
+            }).catch(console.error);
 
             scheduled = true;
         }
