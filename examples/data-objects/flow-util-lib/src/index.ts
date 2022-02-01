@@ -9,6 +9,5 @@ export { Template } from "./template";
 export { IView, View } from "./view";
 export { ICaretBounds, ICaretEvent, CaretEventType, Caret } from "./caret";
 export { Direction, getDeltaX, getDeltaY, getTabDirection, TabDirection } from "./direction";
-export { areStringsEquivalent } from "./string";
 export { IRect, Rect } from "./rect";
 export { hasTagName, isElementNode, isTextNode, TagName } from "./tag";
