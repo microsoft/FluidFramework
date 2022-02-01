@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Scheduler, Template } from "@fluid-example/flow-util-lib";
+import { Template } from "@fluid-example/flow-util-lib";
 import { colIndexToName } from "@fluid-example/table-document";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISheetlet, createSheetletProducer } from "@tiny-calc/micro";
@@ -97,23 +97,35 @@ export class GridView {
     }
 
     private setupMatrixConsumer() {
-        const scheduler = new Scheduler();
-        const refreshGrid = scheduler.coalesce(scheduler.onLayout, this.refreshCells);
+        let scheduled = false;
+        const scheduleGridRefresh = () => {
+            if (scheduled) {
+                return;
+            }
+
+            requestAnimationFrame(() => {
+                scheduled = false;
+                this.refreshCells();
+            });
+
+            scheduled = true;
+        }
+
         const invalidateCells = (rowStart: number, colStart: number, rowCount: number, colCount: number) => {
             for (let row = rowStart; row < rowStart + rowCount; row++) {
                 for (let col = colStart; col < colStart + colCount; col++) {
                     this.sheetlet.invalidate(row, col);
                 }
             }
-            refreshGrid();
+            scheduleGridRefresh();
         };
 
         const matrixReader = {
             rowsChanged() {
-                refreshGrid();
+                scheduleGridRefresh();
             },
             colsChanged() {
-                refreshGrid();
+                scheduleGridRefresh();
             },
             cellsChanged(rowStart: number, colStart: number, rowCount: number, colCount: number) {
                 invalidateCells(rowStart, colStart, rowCount, colCount);
