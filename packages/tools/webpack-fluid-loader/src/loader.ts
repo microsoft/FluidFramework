@@ -32,7 +32,7 @@ import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-de
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { RequestParser, createDataStoreFactory } from "@fluidframework/runtime-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { MultiUrlResolver } from "./multiResolver";
 import { deltaConns, getDocumentServiceFactory } from "./multiDocumentServiceFactory";
 import { OdspPersistentCache } from "./odspPersistantCache";
@@ -91,9 +91,10 @@ export type RouteOptions =
     | IOdspRouteOptions;
 
 function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModule): IFluidModule {
-    const fluidExport: Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory> = fluidModule.fluidExport;
-    if (fluidExport.IRuntimeFactory === undefined) {
-        const dataStoreFactory = fluidExport.IFluidDataStoreFactory;
+    const fluidModuleExport: FluidObject<IProvideRuntimeFactory & IFluidDataStoreFactory> = 
+        fluidModule.fluidExport;
+    if (fluidModuleExport.IRuntimeFactory === undefined) {
+        const dataStoreFactory = fluidModuleExport.IFluidDataStoreFactory;
 
         const defaultFactory = createDataStoreFactory(packageJson.name, dataStoreFactory);
 
@@ -103,12 +104,11 @@ function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule:
                 [defaultFactory.type, Promise.resolve(defaultFactory)],
             ]),
         );
-        return {
-            fluidExport: {
-                IRuntimeFactory: runtimeFactory,
-                IFluidDataStoreFactory: dataStoreFactory,
-            },
+        const fluidExport: IFluidModule["fluidExport"] & FluidObject<IFluidDataStoreFactory> = {
+            IRuntimeFactory: runtimeFactory,
+            IFluidDataStoreFactory: dataStoreFactory,
         };
+        return { fluidExport};
     }
     return fluidModule;
 }
