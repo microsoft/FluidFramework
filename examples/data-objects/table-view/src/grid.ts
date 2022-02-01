@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { KeyCode, Scheduler, Template } from "@fluid-example/flow-util-lib";
+import { Scheduler, Template } from "@fluid-example/flow-util-lib";
 import { colIndexToName } from "@fluid-example/table-document";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISheetlet, createSheetletProducer } from "@tiny-calc/micro";
@@ -40,6 +40,17 @@ const cellInputTemplate = new Template({ tag: "input", props: { className: style
 
 // eslint-disable-next-line unicorn/no-unsafe-regex
 const numberExp = /^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$/;
+
+const enum KeyCode {
+    tab = "Tab",                    // 9
+    enter = "Enter",                // 13
+    escape = "Escape",              // 27
+    arrowLeft = "ArrowLeft",      // 37
+    arrowUp = "ArrowUp",        // 38
+    arrowRight = "ArrowRight",     // 39
+    arrowDown = "ArrowDown",      // 40
+}
+
 export class GridView {
     private get numRows() { return this.matrix.rowCount; }
     private get numCols() { return this.matrix.colCount; }

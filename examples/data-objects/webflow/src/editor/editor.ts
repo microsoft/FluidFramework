@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { KeyCode, Scheduler } from "@fluid-example/flow-util-lib";
+import { Scheduler } from "@fluid-example/flow-util-lib";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { paste } from "../clipboard/paste";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
-import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY } from "../util";
+import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode } from "../util";
 import { ownsNode } from "../util/event";
 import { IFormatterState, RootFormatter } from "../view/formatter";
 import { Layout } from "../view/layout";

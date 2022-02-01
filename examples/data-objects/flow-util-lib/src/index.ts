@@ -3,6 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { KeyCode } from "./keycode";
 export { Scheduler } from "./scheduler";
 export { Template } from "./template";

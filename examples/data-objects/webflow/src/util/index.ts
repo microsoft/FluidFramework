@@ -7,6 +7,7 @@ export { ICaretBounds, ICaretEvent, CaretEventType, Caret } from "./caret";
 export { ICommand } from "./command";
 export { Direction, getDeltaX, getDeltaY, getTabDirection, TabDirection } from "./direction";
 export { Dom } from "./dom";
+export { KeyCode } from "./keycode";
 export { randomId } from "./random";
 export { IRect, Rect } from "./rect";
 export { getSegmentRange } from "./segment";
