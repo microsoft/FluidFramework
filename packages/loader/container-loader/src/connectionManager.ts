@@ -45,6 +45,7 @@ import {
     createWriteError,
     createGenericNetworkError,
     getRetryDelayFromError,
+    IAnyDriverError,
     logNetworkFailure,
     waitForConnectedState,
     DeltaStreamConnectionForbiddenError,
@@ -78,18 +79,6 @@ function getNackReconnectInfo(nackContent: INackContent) {
         { canRetry, retryAfterMs },
         { statusCode: nackContent.code, driverVersion: undefined });
 }
-
-const createReconnectError = (fluidErrorCode: string, err: any) =>
-    //* Fixes the bug with canRetry stuck as true.
-    //* As for fluidErrorCode, it doesn't appear in logs.
-    //* Because it's always retried!  :(
-    err;
-    // wrapError(
-    //     err,
-    //     (errorMessage: string) =>
-    // eslint-disable-next-line max-len
-    //         new GenericNetworkError(fluidErrorCode, errorMessage, true /* canRetry */,  { driverVersion: undefined }),
-    // );
 
 /**
  * Implementation of IDocumentDeltaConnection that does not support submitting
@@ -704,7 +693,7 @@ export class ConnectionManager implements IConnectionManager {
      */
      private reconnectOnError(
         requestedMode: ConnectionMode,
-        error: DriverError,
+        error: IAnyDriverError,
     ) {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.reconnectOnErrorCore(
@@ -723,7 +712,7 @@ export class ConnectionManager implements IConnectionManager {
     private async reconnectOnErrorCore(
         requestedMode: ConnectionMode,
         disconnectMessage: string,
-        error?: DriverError,
+        error?: IAnyDriverError,
     ) {
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
@@ -750,7 +739,7 @@ export class ConnectionManager implements IConnectionManager {
         }
 
         const delayMs = getRetryDelayFromError(error);
-        if (delayMs !== undefined) {
+        if (error !== undefined && delayMs !== undefined) {
             this.props.reconnectionDelayHandler(delayMs, error);
             await waitForConnectedState(delayMs);
         }
@@ -880,19 +869,19 @@ export class ConnectionManager implements IConnectionManager {
     };
 
     // Connection mode is always read on disconnect/error unless the system mode was write.
-    private readonly disconnectHandlerInternal = (disconnectReason) => {
+    private readonly disconnectHandlerInternal = (disconnectReason: IAnyDriverError) => {
         // Note: we might get multiple disconnect calls on same socket, as early disconnect notification
         // ("server_disconnect", ODSP-specific) is mapped to "disconnect"
         this.reconnectOnError(
             this.defaultReconnectionMode,
-            createReconnectError("dmDocumentDeltaConnectionDisconnected", disconnectReason),
+            disconnectReason,
         );
     };
 
-    private readonly errorHandler = (error) => {
+    private readonly errorHandler = (error: IAnyDriverError) => {
         this.reconnectOnError(
             this.defaultReconnectionMode,
-            createReconnectError("dmDocumentDeltaConnectionError", error),
+            error,
         );
     };
 }

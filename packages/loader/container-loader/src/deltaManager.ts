@@ -49,6 +49,7 @@ import {
     IConnectionManagerFactoryArgs,
     IConnectionManager,
  } from "./contracts";
+import { IAnyDriverError } from "@fluidframework/driver-utils";
 
 export interface IConnectionArgs {
     mode?: ConnectionMode;
@@ -275,7 +276,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             incomingOpHandler:(messages: ISequencedDocumentMessage[], reason: string) =>
                 this.enqueueMessages(messages, reason),
             signalHandler: (message: ISignalMessage) => this._inboundSignal.push(message),
-            reconnectionDelayHandler: (delayMs: number, error: unknown) =>
+            reconnectionDelayHandler: (delayMs: number, error: IAnyDriverError) =>
                 this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
             closeHandler: (error: any) => this.close(error),
             disconnectHandler: (reason: string) => this.disconnectHandler(reason),
@@ -593,7 +594,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
      * @param delayMs - Duration of the delay
      * @param error - error object indicating the throttling
      */
-    public emitDelayInfo(id: string, delayMs: number, error: unknown) {
+    public emitDelayInfo(id: string, delayMs: number, error: IAnyDriverError) {
         const timeNow = Date.now();
         this.throttlingIdSet.add(id);
         if (delayMs > 0 && (timeNow + delayMs > this.timeTillThrottling)) {

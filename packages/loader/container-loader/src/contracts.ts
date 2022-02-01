@@ -11,6 +11,7 @@ import {
     ReadOnlyInfo,
     IConnectionDetails,
 } from "@fluidframework/container-definitions";
+import { IAnyDriverError } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
     IDocumentMessage,
@@ -122,7 +123,7 @@ export interface IConnectionManagerFactoryArgs {
      * Can be called many times while not connected.
      * Situation is considered resolved when connection is established and connectHandler is called.
      */
-    readonly reconnectionDelayHandler: (delayMs: number, error: unknown) => void,
+    readonly reconnectionDelayHandler: (delayMs: number, error: IAnyDriverError) => void,
 
     /**
      * Called by connection manager whwnever critical error happens and container should be closed.
