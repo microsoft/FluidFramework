@@ -29,10 +29,10 @@ import {
 	right,
 	leftTraitLabel,
 	leftTraitLocation,
-	rightTraitLocation,
 	simpleTestTree,
 	rootNodeId,
 	makeTestNode,
+	rightTraitLocation,
 } from './utilities/TestUtilities';
 
 async function setupHeartbeat(initialTree: ChangeNode = simpleTestTree) {
@@ -189,47 +189,14 @@ describe('SharedTreeMergeHealthTelemetryHeartbeat', () => {
 			},
 		});
 
-		itAggregates('failures for the parent of a parent-based place being deleted', {
-			concurrentEdits: [[Delete.create(StableRange.only(left))]],
-			edits: [Insert.create([makeEmptyNode()], StablePlace.atStartOf(traitUnderLeftNode))],
-			action: (event) => {
-				expect(event.failedEditCount).equals(1);
-				expect(event.badPlaceCount).equals(1);
-				expect(event.deletedSiblingBadPlaceCount).equals(0);
-				expect(event.deletedAncestorBadPlaceCount).equals(1);
-			},
-		});
-
 		itAggregates('failures for the parent of a sibling-based place being deleted', {
 			concurrentEdits: [[Delete.create(StableRange.only(rootNodeId))]],
 			edits: [Insert.create([makeEmptyNode()], StablePlace.after(left))],
 			action: (event) => {
 				expect(event.failedEditCount).equals(1);
 				expect(event.badPlaceCount).equals(1);
-				expect(event.deletedSiblingBadPlaceCount).equals(0);
-				expect(event.deletedAncestorBadPlaceCount).equals(1);
-			},
-		});
-
-		itAggregates('preventable range failures', {
-			concurrentEdits: [[Delete.create(StableRange.only(left))]],
-			edits: [[Delete.create(StableRange.only(left))]],
-			action: (event) => {
-				expect(event.failedEditCount).equals(1);
-				expect(event.badRangeCount).equals(1);
-				expect(event.deletedSiblingBadRangeCount).equals(1);
-				expect(event.deletedAncestorBadRangeCount).equals(0);
-			},
-		});
-
-		itAggregates('failures for the parent of a range being deleted', {
-			concurrentEdits: [[Delete.create(StableRange.only(left))]],
-			edits: [[Delete.create(StableRange.all(traitUnderLeftNode))]],
-			action: (event) => {
-				expect(event.failedEditCount).equals(1);
-				expect(event.badRangeCount).equals(1);
-				expect(event.deletedSiblingBadRangeCount).equals(0);
-				expect(event.deletedAncestorBadRangeCount).equals(1);
+				expect(event.deletedSiblingBadPlaceCount).equals(1);
+				expect(event.deletedAncestorBadPlaceCount).equals(0);
 			},
 		});
 
@@ -262,6 +229,26 @@ describe('SharedTreeMergeHealthTelemetryHeartbeat', () => {
 				expect(event.badRangeCount).equals(1);
 				expect(event.deletedSiblingBadRangeCount).equals(0);
 				expect(event.updatedRangeInvertedCount).equals(1);
+			},
+		});
+
+		itAggregates('failures for the parent of a parent-based place being deleted', {
+			concurrentEdits: [[Delete.create(StableRange.only(left))]],
+			edits: [Insert.create([makeEmptyNode()], StablePlace.atStartOf(traitUnderLeftNode))],
+			action: (event) => {
+				expect(event.failedEditCount).equals(1);
+				expect(event.badPlaceCount).equals(1);
+				expect(event.deletedSiblingBadPlaceCount).equals(0);
+				expect(event.deletedAncestorBadPlaceCount).equals(1);
+			},
+		});
+
+		itAggregates('preventable range failures', {
+			concurrentEdits: [[Delete.create(StableRange.only(left))]],
+			edits: [[Delete.create(StableRange.only(left))]],
+			action: (event) => {
+				expect(event.failedEditCount).equals(1);
+				expect(event.badRangeCount).equals(1);
 			},
 		});
 

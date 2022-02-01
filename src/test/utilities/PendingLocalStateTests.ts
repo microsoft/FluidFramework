@@ -9,6 +9,7 @@ import { requestFluidObject } from '@fluidframework/runtime-utils';
 import { ITestFluidObject, ITestObjectProvider } from '@fluidframework/test-utils';
 import {
 	EditCommittedEventArguments,
+	GenericSharedTree,
 	Insert,
 	newEdit,
 	SharedTree,
@@ -17,7 +18,6 @@ import {
 	StablePlace,
 } from '../..';
 import { fail } from '../../Common';
-import type { SharedTreeWithAnchors } from '../../anchored-edits';
 import { SharedTreeOp, SharedTreeOpType } from '../../generic/PersistedTypes';
 import type { EditLog } from '../../EditLog';
 import {
@@ -51,7 +51,7 @@ async function withContainerOffline<TReturn>(
  * See documentation on `applyStashedOp`.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
  */
-export function runPendingLocalStateTests<TSharedTree extends SharedTree | SharedTreeWithAnchors>(
+export function runPendingLocalStateTests<TSharedTree extends SharedTree>(
 	title: string,
 	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents<TSharedTree>,
 	setUpLocalServerTestSharedTree: (
@@ -71,7 +71,7 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree | Share
 
 			it('applies edit ops locally', async () => {
 				const tree = makeTree();
-				const editCommittedLog: EditCommittedEventArguments<TSharedTree>[] = [];
+				const editCommittedLog: EditCommittedEventArguments<GenericSharedTree<any, any, any>>[] = [];
 				tree.on(SharedTreeEvent.EditCommitted, (args) => {
 					editCommittedLog.push(args);
 				});

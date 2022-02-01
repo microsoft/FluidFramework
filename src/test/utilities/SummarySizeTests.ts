@@ -8,7 +8,6 @@ import { IsoBuffer } from '@fluidframework/common-utils';
 // KLUDGE:#62681: Remove eslint ignore due to unresolved import false positive
 import { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
 import { expect } from 'chai';
-import { SharedTreeWithAnchors } from '../../anchored-edits';
 import {
 	Change,
 	ChangeInternal,
@@ -115,7 +114,7 @@ const summarySizeTests: SummarySizeTestEntry[] = [
  * Runs a test suite for summaries on `SharedTree` that verifies their sizes do not exceed the defined limits.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
  */
-export function runSummarySizeTests<TSharedTree extends SharedTree | SharedTreeWithAnchors>(
+export function runSummarySizeTests<TSharedTree extends SharedTree>(
 	title: string,
 	setUpLocalServerTestSharedTree: (
 		options: LocalServerSharedTreeTestingOptions

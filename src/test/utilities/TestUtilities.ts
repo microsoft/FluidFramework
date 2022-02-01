@@ -43,7 +43,6 @@ import {
 	SharedTreeSummaryWriteFormat,
 	StableTraitLocation,
 } from '../../generic';
-import { SharedTreeWithAnchors, SharedTreeWithAnchorsFactory } from '../../anchored-edits';
 import { RevisionView } from '../../TreeView';
 import { EditLog } from '../../EditLog';
 import { IdCompressor } from '../../id-compressor';
@@ -215,18 +214,8 @@ export function setUpTestSharedTree(options?: SharedTreeTestingOptions): SharedT
 	return setUpTestSharedTreeGeneric(SharedTree.getFactory, options);
 }
 
-/** Sets up and returns an object of components useful for testing SharedTreeWithAnchors. */
-export function setUpTestSharedTreeWithAnchors(
-	options?: SharedTreeTestingOptions
-): SharedTreeTestingComponents<SharedTreeWithAnchors> {
-	return setUpTestSharedTreeGeneric(SharedTreeWithAnchors.getFactory, options);
-}
-
 /** Sets up and returns an object of components useful for testing a GenericSharedTree. */
-function setUpTestSharedTreeGeneric<
-	TSharedTree extends SharedTree | SharedTreeWithAnchors,
-	TSharedTreeFactory extends SharedTreeFactory | SharedTreeWithAnchorsFactory
->(
+function setUpTestSharedTreeGeneric<TSharedTree extends SharedTree, TSharedTreeFactory extends SharedTreeFactory>(
 	factoryGetter: (
 		summarizeHistory?: boolean,
 		writeSummaryFormat?: SharedTreeSummaryWriteFormat
@@ -358,26 +347,14 @@ export async function setUpLocalServerTestSharedTree(
 }
 
 /**
- * Sets up and returns an object of components useful for testing SharedTreeWithAnchors with a local server.
- * Required for tests that involve the uploadBlob API.
- *
- * Any TestObjectProvider created by this function will be reset after the test completes (via afterEach) hook.
- */
-export async function setUpLocalServerTestSharedTreeWithAnchors(
-	options: LocalServerSharedTreeTestingOptions
-): Promise<LocalServerSharedTreeTestingComponents<SharedTreeWithAnchors>> {
-	return setUpLocalServerTestSharedTreeGeneric(SharedTreeWithAnchors.getFactory, options);
-}
-
-/**
  * Sets up and returns an object of components useful for testing a GenericSharedTree with a local server.
  * Required for tests that involve the uploadBlob API.
  *
  * Any TestObjectProvider created by this function will be reset after the test completes (via afterEach) hook.
  */
 async function setUpLocalServerTestSharedTreeGeneric<
-	TSharedTree extends SharedTree | SharedTreeWithAnchors,
-	TSharedTreeFactory extends SharedTreeFactory | SharedTreeWithAnchorsFactory
+	TSharedTree extends SharedTree,
+	TSharedTreeFactory extends SharedTreeFactory
 >(
 	factoryGetter: (
 		summarizeHistory?: boolean,
@@ -449,7 +426,7 @@ async function setUpLocalServerTestSharedTreeGeneric<
 }
 
 /** Sets testTrait to contain `node`. */
-function setTestTree(tree: SharedTree | SharedTreeWithAnchors, node: ChangeNode, overrideId?: EditId): EditId {
+function setTestTree(tree: SharedTree, node: ChangeNode, overrideId?: EditId): EditId {
 	if (overrideId === undefined) {
 		return tree.applyEdit(...setTrait(testTrait, [node])).id;
 	} else {
@@ -803,7 +780,7 @@ const versionComparator = (versionA: string, versionB: string): number => {
 /**
  * Create a {@link SimpleTestTree} from the given {@link SharedTree} or {@link IdCompressor}
  */
-export function setUpTestTree(idSource?: IdCompressor | SharedTree | SharedTreeWithAnchors): TestTree {
+export function setUpTestTree(idSource?: IdCompressor | SharedTree): TestTree {
 	const source = idSource ?? new IdCompressor(createSessionId(), reservedIdCount);
 	if (source instanceof IdCompressor) {
 		// TODO:#62125: Re-implement this case to return compressed ids created by the IdCompressor
@@ -819,7 +796,7 @@ export function setUpTestTree(idSource?: IdCompressor | SharedTree | SharedTreeW
  * Create a {@link SimpleTestTree} before each test
  */
 export function refreshTestTree(
-	idSourceFactory?: (() => IdCompressor) | (() => SharedTree | SharedTreeWithAnchors),
+	idSourceFactory?: (() => IdCompressor) | (() => SharedTree),
 	fn?: (testTree: TestTree) => void
 ): TestTree {
 	const factory = idSourceFactory ?? (() => new IdCompressor(createSessionId(), reservedIdCount));

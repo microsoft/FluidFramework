@@ -5,7 +5,6 @@
 
 import { expect } from 'chai';
 import { SharedTreeDiagnosticEvent, SharedTreeSummaryWriteFormat } from '../..';
-import { SharedTreeWithAnchors } from '../../anchored-edits';
 import { Insert, setTrait, SharedTree, StablePlace } from '../../default-edits';
 import { EditLog } from '../../EditLog';
 import { left, makeTestNode, SharedTreeTestingComponents, SharedTreeTestingOptions, testTrait } from './TestUtilities';
@@ -14,7 +13,7 @@ import { left, makeTestNode, SharedTreeTestingComponents, SharedTreeTestingOptio
  * Runs a test suite for operations on `SharedTree` that depend on correct versioning.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
  */
-export function runSharedTreeVersioningTests<TSharedTree extends SharedTree | SharedTreeWithAnchors>(
+export function runSharedTreeVersioningTests<TSharedTree extends SharedTree>(
 	title: string,
 	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents<TSharedTree>
 ) {

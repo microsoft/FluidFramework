@@ -5,7 +5,6 @@
 
 import * as fs from 'fs';
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
-import { SharedTreeWithAnchors } from '../../anchored-edits';
 import { SharedTree } from '../../default-edits';
 import { EditId } from '../../Identifiers';
 import { deserialize } from '../../SummaryBackCompatibility';
@@ -22,7 +21,7 @@ import { TestFluidSerializer } from './TestSerializer';
  * Runs a test suite for summary load perf on `SharedTree`.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
  */
-export function runSummaryLoadPerfTests<TSharedTree extends SharedTree | SharedTreeWithAnchors>(
+export function runSummaryLoadPerfTests<TSharedTree extends SharedTree>(
 	setUpLocalServerTestSharedTree: (
 		options: LocalServerSharedTreeTestingOptions
 	) => Promise<LocalServerSharedTreeTestingComponents<TSharedTree>>

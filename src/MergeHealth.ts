@@ -4,14 +4,7 @@
  */
 
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { assertNotUndefined, fail, Result } from './Common';
-import {
-	PlaceAnchorSemanticsChoice,
-	PlaceUpdateFailureKind,
-	RangeUpdateFailureKind,
-	resolvePlaceAnchor,
-	resolveRangeAnchor,
-} from './anchored-edits';
+import { assertNotUndefined, fail } from './Common';
 import { PlaceValidationResult, RangeValidationResultKind, SharedTree, Transaction } from './default-edits';
 import { EditStatus, GenericSharedTree, SequencedEditAppliedEventArguments, SharedTreeEvent } from './generic';
 
@@ -352,16 +345,7 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 					case Transaction.FailureKind.BadPlace: {
 						tally.badPlaceCount += 1;
 						if (outcome.failure.placeFailure === PlaceValidationResult.MissingSibling) {
-							const result = resolvePlaceAnchor(
-								{ ...outcome.failure.place, semantics: PlaceAnchorSemanticsChoice.RelativeToNode },
-								tree.currentView,
-								reconciliationPath
-							);
-							if (Result.isOk(result)) {
-								tally.deletedSiblingBadPlaceCount += 1;
-							} else if (result.error.placeFailure.kind === PlaceUpdateFailureKind.DeletedParent) {
-								tally.deletedAncestorBadPlaceCount += 1;
-							}
+							tally.deletedSiblingBadPlaceCount += 1;
 						} else if (outcome.failure.placeFailure === PlaceValidationResult.MissingParent) {
 							tally.deletedAncestorBadPlaceCount += 1;
 						}
@@ -369,40 +353,18 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 					}
 					case Transaction.FailureKind.BadRange: {
 						tally.badRangeCount += 1;
-						const range = outcome.failure.range;
-						const result = resolveRangeAnchor(
-							{
-								start: { ...range.start, semantics: PlaceAnchorSemanticsChoice.RelativeToNode },
-								end: { ...range.end, semantics: PlaceAnchorSemanticsChoice.RelativeToNode },
-							},
-							tree.currentView,
-							reconciliationPath
-						);
-						if (Result.isOk(result)) {
-							tally.deletedSiblingBadRangeCount += 1;
-						} else if (
-							result.error.rangeFailure.kind === RangeUpdateFailureKind.ResolvedPlacesMakeBadRange
-						) {
-							const failure = result.error.rangeFailure.rangeFailure;
-							if (failure === RangeValidationResultKind.Inverted) {
+						switch (outcome.failure.rangeFailure) {
+							case RangeValidationResultKind.Inverted:
 								tally.updatedRangeInvertedCount += 1;
-							} else if (failure === RangeValidationResultKind.PlacesInDifferentTraits) {
+								break;
+							case RangeValidationResultKind.PlacesInDifferentTraits:
 								tally.updatedRangeHasPlacesInDifferentTraitsCount += 1;
-							} else if (failure.kind === RangeValidationResultKind.BadPlace) {
-								// This should not happen because place resolution is expected to either return a valid place or fail.
+								break;
+							case RangeValidationResultKind.BadPlace:
 								tally.updatedRangeBadPlaceCount += 1;
-							}
-						} else {
-							// result.error.rangeFailure.kind === RangeUpdateFailureKind.PlaceUpdateFailure
-							if (result.error.rangeFailure.placeFailure.kind === PlaceUpdateFailureKind.DeletedParent) {
-								tally.deletedAncestorBadRangeCount += 1;
-							} else if (
-								result.error.rangeFailure.placeFailure.kind ===
-								PlaceUpdateFailureKind.PlaceWasNeverValid
-							) {
-								// This should not happen because only valid changes should be sent for sequencing
-								tally.updatedRangeNeverValidPlaceCount += 1;
-							}
+								break;
+							default:
+								break;
 						}
 						break;
 					}
@@ -411,23 +373,6 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 						switch (outcome.failure.violation.kind) {
 							case Transaction.ConstraintViolationKind.BadRange: {
 								tally.rangeConstraintViolationCount += 1;
-								const result = resolveRangeAnchor(
-									outcome.failure.constraint.toConstrain,
-									tree.currentView,
-									reconciliationPath
-								);
-								if (Result.isOk(result)) {
-									tally.deletedSiblingBadRangeCount += 1;
-								} else if (
-									result.error.rangeFailure.kind === RangeUpdateFailureKind.ResolvedPlacesMakeBadRange
-								) {
-									tally.updatedRangeInvertedCount += 1;
-								} else if (
-									result.error.rangeFailure.placeFailure.kind === PlaceUpdateFailureKind.DeletedParent
-								) {
-									tally.deletedAncestorBadRangeCount += 1;
-								}
-								break;
 							}
 							case Transaction.ConstraintViolationKind.BadLength: {
 								tally.lengthConstraintViolationCount += 1;

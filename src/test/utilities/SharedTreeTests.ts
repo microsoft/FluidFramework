@@ -25,7 +25,6 @@ import { EditLog } from '../../EditLog';
 import { initialTree } from '../../InitialTree';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
 import { deserialize, SharedTreeSummary_0_0_2 } from '../../SummaryBackCompatibility';
-import { SharedTreeWithAnchors } from '../../anchored-edits';
 import { RevisionView } from '../../TreeView';
 import { useFailedSequencedEditTelemetry } from '../../MergeHealth';
 import {
@@ -58,7 +57,7 @@ const undoRedoOptions = {
  * Runs a test suite for operations on `SharedTree`.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
  */
-export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | SharedTreeWithAnchors>(
+export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 	title: string,
 	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents<TSharedTree>
 ) {
