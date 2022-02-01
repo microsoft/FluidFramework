@@ -198,11 +198,11 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
 
 // @public
-export interface IAnyDriverError<TErrType extends string = string> {
+export interface IAnyDriverError {
     // (undocumented)
     canRetry: boolean;
     // (undocumented)
-    readonly errorType: DriverErrorType | TErrType;
+    readonly errorType: string;
     // (undocumented)
     readonly message: string;
     // (undocumented)

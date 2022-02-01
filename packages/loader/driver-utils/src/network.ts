@@ -30,11 +30,11 @@ export function isOnline(): OnlineStatus {
 }
 
 /**
- * Base interface for all errors and warnings raised by any driver code,
- * with generic type param for a specific driver's errorType enum.
+ * Interface describing errors and warnings raised by any driver code.
+ * errorType would be either DriverErrorType or the specific driver's specialized error type enum
  */
- export interface IAnyDriverError<TErrType extends string = string> {
-    readonly errorType: DriverErrorType | TErrType;
+ export interface IAnyDriverError {
+    readonly errorType: string;
     readonly message: string;
     canRetry: boolean;
     online?: string;

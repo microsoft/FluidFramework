@@ -22,7 +22,6 @@ import {
     IDocumentService,
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
-    DriverError,
 } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
@@ -50,6 +49,9 @@ import {
     waitForConnectedState,
     DeltaStreamConnectionForbiddenError,
 } from "@fluidframework/driver-utils";
+import {
+    GenericError,
+} from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 import {
     ReconnectMode,
@@ -750,8 +752,7 @@ export class ConnectionManager implements IConnectionManager {
     public prepareMessageToSend(message: Omit<IDocumentMessage, "clientSequenceNumber">): IDocumentMessage | undefined {
         if (this.readonly === true) {
             assert(this.readOnlyInfo.readonly === true, 0x1f0 /* "Unexpected mismatch in readonly" */);
-            const error = createWriteError("deltaManagerReadonlySubmit", { driverVersion: undefined });
-            error.addTelemetryProperties({
+            const error = new GenericError("deltaManagerReadonlySubmit", undefined /* error */, {
                 readonly: this.readOnlyInfo.readonly,
                 forcedReadonly: this.readOnlyInfo.forced,
                 readonlyPermissions: this.readOnlyInfo.permissions,

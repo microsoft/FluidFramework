@@ -7,6 +7,7 @@ import { ITelemetryLogger, IEvent } from "@fluidframework/common-definitions";
 import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
+import { IAnyDriverError } from "@fluidframework/driver-utils";
 import { loggerToMonitoringContext, LoggingError } from "@fluidframework/telemetry-utils";
 import {
     IClient,
@@ -20,7 +21,6 @@ import { IOdspSocketError, IGetOpsResponse, IFlushOpsResponse } from "./contract
 import { EpochTracker } from "./epochTracker";
 import { errorObjectFromSocketError } from "./odspError";
 import { pkgVersion } from "./packageVersion";
-import { IAnyDriverError } from "@fluidframework/driver-utils";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
