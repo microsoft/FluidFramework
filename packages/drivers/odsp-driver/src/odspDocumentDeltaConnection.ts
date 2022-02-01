@@ -8,7 +8,7 @@ import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframewor
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
 import { IAnyDriverError } from "@fluidframework/driver-utils";
-import { loggerToMonitoringContext, LoggingError } from "@fluidframework/telemetry-utils";
+import { IFluidErrorBase, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
     IClient,
     IConnect,
@@ -36,7 +36,7 @@ export interface FlushResult {
 const socketReferenceBufferTime = 2000;
 
 export interface ISocketEvents extends IEvent {
-    (event: "server_disconnect", listener: (error: LoggingError & OdspError) => void);
+    (event: "server_disconnect", listener: (error: IFluidErrorBase & OdspError) => void);
 }
 
 class SocketReference extends TypedEventEmitter<ISocketEvents> {
@@ -126,7 +126,8 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
             // comes in from "disconnect" listener below, before we close socket.
             this.isPendingInitialConnection = false;
 
-            this.emit("server_disconnect", error);
+            // Explicitly cast error to the specified event args type to ensure type compatibility
+            this.emit("server_disconnect", error as IFluidErrorBase & OdspError);
             this.closeSocket();
         });
     }
@@ -437,7 +438,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         return this.flushDeferred.promise;
     }
 
-    protected serverDisconnectHandler = (error: LoggingError & OdspError) => {
+    protected serverDisconnectHandler = (error: IFluidErrorBase & OdspError) => {
         this.disposeCore(true, error);
     };
 
@@ -567,7 +568,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     /**
      * Disconnect from the websocket
      */
-    protected disconnect(socketProtocolError: boolean, reason: any) {
+    protected disconnect(socketProtocolError: boolean, reason: IAnyDriverError) {
         const socket = this.socketReference;
         assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
         this.socketReference = undefined;

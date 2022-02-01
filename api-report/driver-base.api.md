@@ -32,10 +32,10 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     protected createErrorObject(handler: string, error?: any, canRetry?: boolean): IAnyDriverError;
     // (undocumented)
     get details(): IConnected;
-    protected disconnect(socketProtocolError: boolean, reason: any): void;
+    protected disconnect(socketProtocolError: boolean, reason: IAnyDriverError): void;
     dispose(): void;
     // (undocumented)
-    protected disposeCore(socketProtocolError: boolean, err: any): void;
+    protected disposeCore(socketProtocolError: boolean, err: IAnyDriverError): void;
     // (undocumented)
     get disposed(): boolean;
     protected _disposed: boolean;

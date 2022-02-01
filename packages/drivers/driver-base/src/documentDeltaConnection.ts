@@ -319,7 +319,7 @@ export class DocumentDeltaConnection
                 "clientClosingConnection", undefined, { canRetry: true }, { driverVersion }));
     }
 
-    protected disposeCore(socketProtocolError: boolean, err: any) {
+    protected disposeCore(socketProtocolError: boolean, err: IAnyDriverError) {
         // Can't check this.disposed here, as we get here on socket closure,
         // so _disposed & socket.connected might be not in sync while processing
         // "dispose" event.
@@ -344,7 +344,7 @@ export class DocumentDeltaConnection
      *  (not on Fluid protocol level)
      * @param reason - reason for disconnect
      */
-    protected disconnect(socketProtocolError: boolean, reason: any) {
+    protected disconnect(socketProtocolError: boolean, reason: IAnyDriverError) {
         this.socket.disconnect();
     }
 

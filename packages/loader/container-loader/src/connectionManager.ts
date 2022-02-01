@@ -12,6 +12,7 @@ import {
     IDeltaQueue,
     ReadOnlyInfo,
     IConnectionDetails,
+    ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
@@ -315,7 +316,7 @@ export class ConnectionManager implements IConnectionManager {
         });
     }
 
-    public dispose(error: any) {
+    public dispose(error?: ICriticalContainerError) {
         if (this.closed) {
             return;
         }
