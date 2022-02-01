@@ -1788,6 +1788,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 0x12e /* "Container Context should already be in attached state" */);
             this.emit("attached");
         }
+
+        if (attachState === AttachState.Attached && !this.pendingStateManager.hasPendingMessages()) {
+            this.updateDocumentDirtyState(false);
+        }
         this.dataStores.setAttachState(attachState);
     }
 

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
-import { stub } from "sinon";
+import { createSandbox } from "sinon";
 import { DebugLogger, MockLogger } from "@fluidframework/telemetry-utils";
 import {
     ISequencedDocumentMessage,
@@ -125,6 +125,7 @@ describe("Runtime", () => {
 
 
         describe("Dirty flag", () => {
+            const sandbox = createSandbox();
             const createMockContext =
                 (attachState: AttachState, addPendingMsg: boolean): Partial<IContainerContext> => {
                 const pendingMessage = {
@@ -145,7 +146,7 @@ describe("Runtime", () => {
 
             it("should NOT be set to dirty if context is attached with no pending ops", async () => {
                 const mockContext = createMockContext(AttachState.Attached, false);
-                const updateDirtyStateStub = stub(mockContext, "updateDirtyContainerState");
+                const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
                 await ContainerRuntime.load(
                     mockContext as IContainerContext,
                     [],
@@ -158,7 +159,7 @@ describe("Runtime", () => {
 
             it("should be set to dirty if context is attached with pending ops", async () => {
                 const mockContext = createMockContext(AttachState.Attached, true);
-                const updateDirtyStateStub = stub(mockContext, "updateDirtyContainerState");
+                const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
                 await ContainerRuntime.load(
                     mockContext as IContainerContext,
                     [],
@@ -171,7 +172,7 @@ describe("Runtime", () => {
 
             it("should be set to dirty if context is attaching", async () => {
                 const mockContext = createMockContext(AttachState.Attaching, false);
-                const updateDirtyStateStub = stub(mockContext, "updateDirtyContainerState");
+                const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
                 await ContainerRuntime.load(
                     mockContext as IContainerContext,
                     [],
@@ -184,7 +185,7 @@ describe("Runtime", () => {
 
             it("should be set to dirty if context is detached", async () => {
                 const mockContext = createMockContext(AttachState.Detached, false);
-                const updateDirtyStateStub = stub(mockContext, "updateDirtyContainerState");
+                const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
                 await ContainerRuntime.load(
                     mockContext as IContainerContext,
                     [],

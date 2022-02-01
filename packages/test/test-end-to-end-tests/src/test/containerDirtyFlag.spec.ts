@@ -149,5 +149,15 @@ describeNoCompat("Container dirty flag", (getTestObjectProvider) => {
 
             await verifyDirtyStateTransitions(container2);
         });
+
+        it("handles container that had no requests to process", async function() {
+            const container = await createAndAttachContainer(
+                provider.defaultCodeDetails,
+                loader,
+                provider.driver.createCreateNewRequest(provider.documentId));
+
+            assert.strictEqual(container.isDirty, false, "Container should not be dirty");
+            await provider.ensureSynchronized();
+        });
     });
 });
