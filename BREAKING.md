@@ -12,10 +12,20 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ## 0.57 Breaking changes
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)
+- [Driver error constructors' signatures have changed](#driver-error-constructors-signatures-have-changed)
 
 ### IFluidConfiguration removed
 
 The `IFluidConfiguration` interface and related properties were deprecated in 0.55, and have now been removed.  This includes the `configuration` member of `IContainerContext` and `ContainerContext`.
+
+### Driver error constructors' signatures have changed
+
+All error classes defined in @fluidframework/driver-utils now require the `props` parameter in their constructors,
+and `props` must include the property `driverVersion: string | undefined` (via type `DriverErrorTelemetryProps`).
+Same for helper functions that return new error objects.
+
+Additionally, `createGenericNetworkError`'s signature was refactored to combine `canRetry` and `retryAfterMs` into a single
+required parameter `retryInfo`.
 
 ## 0.56 Breaking changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
@@ -40,7 +50,7 @@ The unused `url` property of `ICreateBlobResponse` in `@fluidframework/protocol-
 The `readonly` property was deprecated and has now been removed from `IDeltaManager` from `container-definitions`. Additionally, `readonly` has been removed from the implementations in `DeltaManager` and `DeltaManagerProxy` from `container-loader`. To replace its functionality, use `readOnlyInfo.readonly` instead.
 
 ### Synthesize Decoupled from IFluidObject and Deprecations Removed
-DependencyContainer now takes a generic argument, as it is no longer directly couple to IFluidObject. The ideal pattern here would be directly pass the provider or FluidObject interfaces you will register. As a short term solution you could also pass IFluidObject, but IFluidObject is deprecated, so will need to be removed if used here. 
+DependencyContainer now takes a generic argument, as it is no longer directly couple to IFluidObject. The ideal pattern here would be directly pass the provider or FluidObject interfaces you will register. As a short term solution you could also pass IFluidObject, but IFluidObject is deprecated, so will need to be removed if used here.
 Examples:
 ``` typescript
 // the old way
@@ -64,7 +74,7 @@ The following members have been removed from IFluidDependencySynthesizer:
  - registeredTypes - unused and no longer supported. `has` can replace most possible usages
  - register - create new DependencyContainer and add existing as parent
  - unregister - create new DependencyContainer and add existing as parent
- - getProvider - use `has` and `synthesize` to check or get provider respectively 
+ - getProvider - use `has` and `synthesize` to check or get provider respectively
 
  The following types have been removed or changed. These changes should only affect direct usages which should be rare. Existing synthesizer api usage is backwards compatible:
  - FluidObjectKey - removed as IFluidObject is deprecated
@@ -75,7 +85,7 @@ The following members have been removed from IFluidDependencySynthesizer:
  - FluidObjectProvider - Takes FluidObject types rather than keys
  - ProviderEntry - no longer used
  - DependencyContainerRegistry - no longer used
- 
+
 ### codeDetails removed from Container
 
 In release 0.53, the `codeDetails` member was removed from `IContainer`.  It is now also removed from `Container`.  To inspect the code details of a container, instead use the `getSpecifiedCodeDetails()` and `getLoadedCodeDetails()` methods.
