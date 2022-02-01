@@ -20,9 +20,9 @@ import {
 } from "@fluidframework/driver-utils";
 import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
 import { defaultHash } from "@fluidframework/server-services-client";
+import { URL } from "whatwg-url";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection";
 import { createLocalDocumentService } from "./localDocumentService";
-import { parse } from "url";
 
 /**
  * Implementation of document service factory for local use.
@@ -88,22 +88,12 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 
-        console.error(`input URL: ${resolvedUrl.url}`);
-        const parsedUrlOld = parse(resolvedUrl.url);
-        const [, tenantIdOld, documentIdOld] = parsedUrlOld.path ? parsedUrlOld.path.split("/") : [];
-        console.error(`Old parsedUrlPath: ${parsedUrlOld.path}`);
-        console.error(`Old tenantId: ${tenantIdOld} | documentId: ${documentIdOld}`);
-
         const parsedUrl = new URL(resolvedUrl.url);
         const parsedUrlPath = parsedUrl.pathname + parsedUrl.search;
         const [, tenantId, documentId] = parsedUrlPath ? parsedUrlPath.split("/") : [];
-        console.error(`parsedUrlPath: ${parsedUrlPath}`);
-        console.error(`New tenantId: ${tenantId} | documentId: ${documentId}`);
-
         if (!documentId || !tenantId) {
             throw new Error(`Couldn't parse resolved url. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
-
 
         const fluidResolvedUrl = resolvedUrl;
         const jwtToken = fluidResolvedUrl.tokens.jwt;

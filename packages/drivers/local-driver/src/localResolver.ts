@@ -12,6 +12,7 @@ import {
     DriverHeader,
 } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/protocol-definitions";
+import { URL } from "whatwg-url";
 import { generateToken } from "./auth";
 
 export function createLocalResolverCreateNewRequest(documentId: string): IRequest {
