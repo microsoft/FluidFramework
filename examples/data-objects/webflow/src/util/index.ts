@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
+export { ICaretBounds, ICaretEvent, CaretEventType, Caret } from "./caret";
 export { ICommand } from "./command";
+export { Direction, getDeltaX, getDeltaY, getTabDirection, TabDirection } from "./direction";
 export { Dom } from "./dom";
 export { randomId } from "./random";
+export { IRect, Rect } from "./rect";
 export { getSegmentRange } from "./segment";
 export { areStringsEquivalent } from "./string";
 export { hasTagName, isElementNode, isTextNode, TagName } from "./tagName";

@@ -4,13 +4,12 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Caret as CaretUtil, Direction, Rect } from "@fluid-example/flow-util-lib";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { Marker, TextSegment } from "@fluidframework/merge-tree";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../document";
 import * as styles from "../editor/index.css";
-import { emptyObject, TagName } from "../util";
+import { Caret as CaretUtil, Direction, emptyObject, Rect, TagName } from "../util";
 import { getAttrs, syncAttrs } from "../util/attr";
 
 import { Formatter, IFormatterState, RootFormatter } from "../view/formatter";

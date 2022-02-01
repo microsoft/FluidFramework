@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { CaretEventType, Direction, getDeltaX, getDeltaY, ICaretEvent } from "@fluid-example/flow-util-lib";
 import { LocalReference } from "@fluidframework/merge-tree";
 import { DocSegmentKind, getDocSegmentKind } from "../document";
-import { clamp, Dom, hasTagName, TagName } from "../util";
+import { CaretEventType, clamp, Direction, Dom, getDeltaX, getDeltaY, hasTagName, ICaretEvent, TagName } from "../util";
 import { ownsNode } from "../util/event";
 import { updateRef } from "../util/localref";
 
