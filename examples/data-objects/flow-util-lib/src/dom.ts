@@ -4,22 +4,11 @@
  */
 
 import { bsearch2 } from "./bsearch2";
-import { isBrowser } from "./isbrowser";
 
 const isElement = (node: Node): node is Element => node.nodeType === Node.ELEMENT_NODE;
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Dom {
-    public static readonly caretPositionFromPoint = isBrowser && document.caretRangeFromPoint
-        ? (x: number, y: number) => {
-            // CH74/SF12
-            const range = document.caretRangeFromPoint(x, y);
-            return { offsetNode: range.startContainer, offset: range.startOffset };
-        }
-        : (x: number, y: number) =>
-            // FF66
-            document.caretPositionFromPoint(x, y);
-
     // Returns true if the given 'node' follows the specified 'previous' node in the 'parent' node's children.
     public static isAfterNode(parent: Node, node: Node, previous: Node | null) {
         return previous
