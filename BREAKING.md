@@ -31,11 +31,11 @@ required parameter `retryInfo`.
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
 - [Removed `IOdspResolvedUrl.sharingLinkToRedeem`](#Removed-IOdspResolvedUrl.sharingLinkToRedeem)
 - [Removed url from ICreateBlobResponse](#removed-url-from-ICreateBlobResponse)
-- [`readonly` removed from `IDeltaManager`, `DeltaManager`, and `DeltaManagerProxy`](#readonly-removed-from-IDeltaManager-and-DeltaManager-DeltaManagerProxy)
-- [Synthesize Decoupled from IFluidObject and Deprecations Removed](Synthesize-Decoupled-from-IFluidObject-and-Deprecations-Removed)
+- [`readonly` removed from `IDeltaManager`, `DeltaManager`, and `DeltaManagerProxy`](#readonly-removed-from-IDeltaManager-and-DeltaManager-DeltaManagerProxy)(Synthesize-Decoupled-from-IFluidObject-and-Deprecations-Removed)
 - [codeDetails removed from Container](#codeDetails-removed-from-Container)
 - [wait() methods removed from map and directory](#wait-methods-removed-from-map-and-directory)
 - [Removed containerPath from DriverPreCheckInfo](#removed-containerPath-from-DriverPreCheckInfo)
+- [Removed SharedObject.is](#Removed-SharedObject.is)
 
 ### `MessageType.Save` and code that handled it was removed
 The `Save` operation type was deprecated and has now been removed. This removes `MessageType.Save` from `protocol-definitions`, `save;${string}: ${string}` from `SummarizeReason` in the `container-runtime` package, and `MessageFactory.createSave()` from and `server-test-utils`.
@@ -96,6 +96,9 @@ The `wait()` methods on `ISharedMap` and `IDirectory` were deprecated in 0.55 an
 
 ### Removed containerPath from DriverPreCheckInfo
 The `containerPath` property of `DriverPreCheckInfo` was deprecated and has now been removed. To replace its functionality, use `Loader.request()`.
+
+### Removed `SharedObject.is`
+The `is` method is removed from SharedObject. This was being used to detect SharedObjects stored inside other SharedObjects (and then binding them), which should not be happening anymore. Instead, use handles to SharedObjects.
 
 ## 0.55 Breaking changes
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)
