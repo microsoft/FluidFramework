@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
 import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentService,
@@ -21,6 +20,7 @@ import {
 } from "@fluidframework/driver-utils";
 import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
 import { defaultHash } from "@fluidframework/server-services-client";
+import { URL } from "whatwg-url";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection";
 import { createLocalDocumentService } from "./localDocumentService";
 
@@ -88,8 +88,9 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 
-        const parsedUrl = parse(resolvedUrl.url);
-        const [, tenantId, documentId] = parsedUrl.path ? parsedUrl.path.split("/") : [];
+        const parsedUrl = new URL(resolvedUrl.url);
+        const parsedUrlPath = parsedUrl.pathname + parsedUrl.search;
+        const [, tenantId, documentId] = parsedUrlPath ? parsedUrlPath.split("/") : [];
         if (!documentId || !tenantId) {
             throw new Error(`Couldn't parse resolved url. [documentId:${documentId}][tenantId:${tenantId}]`);
         }

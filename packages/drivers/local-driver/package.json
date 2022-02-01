@@ -65,7 +65,8 @@
     "@fluidframework/server-services-core": "^0.1034.0",
     "@fluidframework/server-test-utils": "^0.1034.0",
     "jsrsasign": "^10.2.0",
-    "uuid": "^8.3.1"
+    "uuid": "^8.3.1",
+    "whatwg-url": "^11.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
@@ -75,6 +76,7 @@
     "@types/jsrsasign": "^8.0.8",
     "@types/mocha": "^8.2.2",
     "@types/node": "^14.18.0",
+    "@types/whatwg-url": "^8.2.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
     "concurrently": "^6.2.0",
