@@ -33,11 +33,6 @@ const tableTemplate = new Template({
     ],
 });
 
-const rowTemplate = new Template({ tag: "tr" });
-const headerTemplate = new Template({ tag: "th" });
-const cellTemplate = new Template({ tag: "td" });
-const cellInputTemplate = new Template({ tag: "input", props: { className: styles.inputBox } });
-
 // eslint-disable-next-line unicorn/no-unsafe-regex
 const numberExp = /^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$/;
 
@@ -66,7 +61,7 @@ export class GridView {
 
     private readonly cols = tableTemplate.get(this.root, "cols");
     private readonly tbody = tableTemplate.get(this.root, "body");
-    private readonly inputBox = cellInputTemplate.clone() as HTMLInputElement;
+    private readonly inputBox = document.createElement("input");
     private tdText?: Node;
     private readonly selection = new BorderRect([
         [`${styles.selectedTL}`, `${styles.selectedT}`, `${styles.selectedTR}`],
@@ -84,10 +79,11 @@ export class GridView {
         this.root.addEventListener("click", this.onGridClick as EventListener);
         this.tbody.addEventListener("pointerdown", this.cellPointerDown as EventListener);
         this.tbody.addEventListener("pointermove", this.cellPointerMove as EventListener);
+        this.inputBox.classList.add(styles.inputBox);
         this.inputBox.addEventListener("keydown", this.cellKeyDown);
         this.inputBox.addEventListener("input", this.cellInput);
 
-        const blank = headerTemplate.clone();
+        const blank = document.createElement("th");
         this.cols.appendChild(blank);
 
         this.sheetlet = createSheetletProducer(matrix);
@@ -175,7 +171,7 @@ export class GridView {
 
                     // Append any missing columns
                     for (; col < this.numCols; col++) {
-                        const td = cellTemplate.clone() as HTMLTableCellElement;
+                        const td = document.createElement("td");
                         this.refreshCell(td, row, col);
                         tr.appendChild(td);
                     }
@@ -190,13 +186,13 @@ export class GridView {
 
         // Append any missing rows
         for (; row < numRows; row++) {
-            const tr = rowTemplate.clone();
-            const th = headerTemplate.clone();
+            const tr = document.createElement("tr");
+            const th = document.createElement("th");
             th.textContent = `${row + 1}`;
             tr.appendChild(th);
 
             for (let col = 0; col < this.numCols; col++) {
-                const td = cellTemplate.clone() as HTMLTableCellElement;
+                const td = document.createElement("td");
                 this.refreshCell(td, row, col);
                 tr.appendChild(td);
             }
@@ -206,7 +202,7 @@ export class GridView {
 
         // Append any missing col headers
         for (let col = this.cols.childElementCount - 1; col < this.numCols; col++) {
-            const th = headerTemplate.clone();
+            const th = document.createElement("th");
             // Skip placeholder <th> above the row number column.
             if (col >= 0) {
                 th.textContent = `${colIndexToName(col)}`;

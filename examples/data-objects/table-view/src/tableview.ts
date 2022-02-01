@@ -49,46 +49,48 @@ export class TableView extends DataObject implements IFluidHTMLView {
     // eslint-disable-next-line accessor-pairs
     public set selectionSummary(val: string) { this._selectionSummary.textContent = val; }
 
+    private _tableMatrix: SharedMatrix | undefined;
+    public get tableMatrix() {
+        if (this._tableMatrix === undefined) {
+            throw new Error("Table matrix not fully initialized");
+        }
+        return this._tableMatrix;
+    }
+
     // #region IFluidHTMLView
     public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         elm.append(this.templateRoot);
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const tableMatrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(matrixKey)!;
+        const grid = template.get(this.templateRoot, "grid");
+        const gridView = new GridView(this.tableMatrix, this);
+        grid.appendChild(gridView.root);
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        tableMatrixHandle.get().then((matrix) => {
-            const grid = template.get(this.templateRoot, "grid");
-            const gridView = new GridView(matrix, this);
-            grid.appendChild(gridView.root);
+        this._formulaInput.addEventListener("keypress", gridView.formulaKeypress);
+        this._formulaInput.addEventListener("focusout", gridView.formulaFocusOut);
 
-            this._formulaInput.addEventListener("keypress", gridView.formulaKeypress);
-            this._formulaInput.addEventListener("focusout", gridView.formulaFocusOut);
+        const addRowBtn = template.get(this.templateRoot, "addRow");
+        addRowBtn.addEventListener("click", () => {
+            this.tableMatrix.insertRows(this.tableMatrix.rowCount, 1);
+        });
 
-            const addRowBtn = template.get(this.templateRoot, "addRow");
-            addRowBtn.addEventListener("click", () => {
-                matrix.insertRows(matrix.rowCount, 1);
-            });
+        const addRowsBtn = template.get(this.templateRoot, "addRows");
+        addRowsBtn.addEventListener("click", () => {
+            this.tableMatrix.insertRows(this.tableMatrix.rowCount, 10 /* 1048576 */);
+        });
 
-            const addRowsBtn = template.get(this.templateRoot, "addRows");
-            addRowsBtn.addEventListener("click", () => {
-                matrix.insertRows(matrix.rowCount, 10 /* 1048576 */);
-            });
+        const addColBtn = template.get(this.templateRoot, "addCol");
+        addColBtn.addEventListener("click", () => {
+            this.tableMatrix.insertCols(this.tableMatrix.colCount, 1);
+        });
 
-            const addColBtn = template.get(this.templateRoot, "addCol");
-            addColBtn.addEventListener("click", () => {
-                matrix.insertCols(matrix.colCount, 1);
-            });
+        const addColsBtn = template.get(this.templateRoot, "addCols");
+        addColsBtn.addEventListener("click", () => {
+            this.tableMatrix.insertCols(this.tableMatrix.colCount, 10 /* 16384 */);
+        });
 
-            const addColsBtn = template.get(this.templateRoot, "addCols");
-            addColsBtn.addEventListener("click", () => {
-                matrix.insertCols(matrix.colCount, 10 /* 16384 */);
-            });
-
-            const gotoInput = template.get(this.templateRoot, "goto") as HTMLInputElement;
-            gotoInput.addEventListener("change", () => {
-                gridView.startRow = parseInt(gotoInput.value, 10) - 1;
-            });
+        const gotoInput = template.get(this.templateRoot, "goto") as HTMLInputElement;
+        gotoInput.addEventListener("change", () => {
+            gridView.startRow = parseInt(gotoInput.value, 10) - 1;
         });
     }
     // #endregion IFluidHTMLView
@@ -98,6 +100,10 @@ export class TableView extends DataObject implements IFluidHTMLView {
         this.root.set(matrixKey, matrix.handle);
         matrix.insertRows(0, 5);
         matrix.insertCols(0, 8);
+    }
+
+    protected async hasInitialized(): Promise<void> {
+        this._tableMatrix = await this.root.get<IFluidHandle<SharedMatrix>>(matrixKey)?.get();
     }
 }
 
