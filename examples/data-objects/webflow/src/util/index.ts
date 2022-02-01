@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { Dom } from "./dom";
 export { getSegmentRange } from "./segment";
 
 export const done = Promise.resolve();

@@ -4,7 +4,6 @@
  */
 
 export { CharCode } from "./charcode";
-export { Dom } from "./dom";
 export { KeyCode } from "./keycode";
 export { Scheduler } from "./scheduler";
 export { Template } from "./template";

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Dom, ICommand, KeyCode, randomId, Template, View } from "@fluid-example/flow-util-lib";
+import { ICommand, KeyCode, randomId, Template, View } from "@fluid-example/flow-util-lib";
+import { Dom } from "../../util";
 import { debug } from "../debug";
 import * as style from "./index.css";
 
