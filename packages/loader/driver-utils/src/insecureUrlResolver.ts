@@ -12,6 +12,7 @@ import {
     DriverHeader,
 } from "@fluidframework/driver-definitions";
 import Axios from "axios";
+import { URL, URLSearchParams } from "whatwg-url";
 
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier

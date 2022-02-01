@@ -10,6 +10,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { URL } from "whatwg-url";
 import { ensureFluidResolvedUrl } from "./fluidResolvedUrl";
 
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
