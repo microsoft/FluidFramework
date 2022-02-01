@@ -10,6 +10,23 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.57 Breaking changes
+- [IFluidConfiguration removed](#IFluidConfiguration-removed)
+- [Driver error constructors' signatures have changed](#driver-error-constructors-signatures-have-changed)
+
+### IFluidConfiguration removed
+
+The `IFluidConfiguration` interface and related properties were deprecated in 0.55, and have now been removed.  This includes the `configuration` member of `IContainerContext` and `ContainerContext`.
+
+### Driver error constructors' signatures have changed
+
+All error classes defined in @fluidframework/driver-utils now require the `props` parameter in their constructors,
+and `props` must include the property `driverVersion: string | undefined` (via type `DriverErrorTelemetryProps`).
+Same for helper functions that return new error objects.
+
+Additionally, `createGenericNetworkError`'s signature was refactored to combine `canRetry` and `retryAfterMs` into a single
+required parameter `retryInfo`.
+
 ## 0.56 Breaking changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
 - [Removed `IOdspResolvedUrl.sharingLinkToRedeem`](#Removed-IOdspResolvedUrl.sharingLinkToRedeem)
@@ -18,7 +35,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Synthesize Decoupled from IFluidObject and Deprecations Removed](Synthesize-Decoupled-from-IFluidObject-and-Deprecations-Removed)
 - [codeDetails removed from Container](#codeDetails-removed-from-Container)
 - [wait() methods removed from map and directory](#wait-methods-removed-from-map-and-directory)
-- [Driver error constructors' signatures have changed](#driver-error-constructors-signatures-have-changed)
+- [Removed containerPath from DriverPreCheckInfo](#removed-containerPath-from-DriverPreCheckInfo)
 
 ### `MessageType.Save` and code that handled it was removed
 The `Save` operation type was deprecated and has now been removed. This removes `MessageType.Save` from `protocol-definitions`, `save;${string}: ${string}` from `SummarizeReason` in the `container-runtime` package, and `MessageFactory.createSave()` from and `server-test-utils`.
@@ -77,13 +94,8 @@ In release 0.53, the `codeDetails` member was removed from `IContainer`.  It is 
 
 The `wait()` methods on `ISharedMap` and `IDirectory` were deprecated in 0.55 and have now been removed.  See the [deprecation notice](#wait-methods-deprecated-on-map-and-directory) for migration advice if you currently use these APIs.
 
-### Driver error constructors' signatures have changed
-All error classes defined in @fluidframework/driver-utils now require the `props` parameter in their constructors,
-and `props` must include a string property `driverVersion` (via type `DriverErrorTelemetryProps`).
-Same for helper functions that return new error objects.
-
-Additionally, `createGenericNetworkError`'s signature was refactored to combine `canRetry` and `retryAfterMs` into a single
-required parameter `retryInfo`.
+### Removed containerPath from DriverPreCheckInfo
+The `containerPath` property of `DriverPreCheckInfo` was deprecated and has now been removed. To replace its functionality, use `Loader.request()`.
 
 ## 0.55 Breaking changes
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)

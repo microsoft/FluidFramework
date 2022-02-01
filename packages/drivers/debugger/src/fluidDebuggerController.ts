@@ -258,7 +258,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public async getVersions(
-        versionId: string,
+        versionId: string | null,
         count: number): Promise<IVersion[]> {
         if (this.storage !== undefined) {
             return this.storage.getVersions(versionId, count);
