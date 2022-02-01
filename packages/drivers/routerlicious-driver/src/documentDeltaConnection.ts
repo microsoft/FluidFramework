@@ -47,7 +47,9 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
             versions: protocolVersions,
         };
 
-        const deltaConnection = new R11sDocumentDeltaConnection(socket, id, logger, true);
+        // TODO: expose to host at factory level
+        const enableLongPollingDowngrades = true;
+        const deltaConnection = new R11sDocumentDeltaConnection(socket, id, logger, enableLongPollingDowngrades);
 
         await deltaConnection.initialize(connectMessage, timeoutMs);
         return deltaConnection;

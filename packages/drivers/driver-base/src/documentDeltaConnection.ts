@@ -111,6 +111,7 @@ export class DocumentDeltaConnection
      * @param socket - websocket to be used
      * @param documentId - ID of the document
      * @param logger - for reporting telemetry events
+     * @param enableLongPollingDowngrades - allow connection to be downgraded to long-polling on websocket failure
      */
     protected constructor(
         protected readonly socket: SocketIOClient.Socket,
@@ -365,27 +366,40 @@ export class DocumentDeltaConnection
 
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
+                let isWebSocketTransportError = false;
                 try {
                     const description = error?.description;
                     if (description && typeof description === "object") {
                         // That's a WebSocket. Clear it as we can't log it.
                         description.target = undefined;
+                        if (error.type === "TransportError") {
+                            isWebSocketTransportError = true;
+                        }
                     }
                 } catch(_e) {}
-                if (this.enableLongPollingDowngrades) {
-                    if (error?.type === "TransportError" && typeof error?.description === "object") {
-                        // The connection error is a WebSocket transport error.
+
+                // Handle socket transport downgrading.
+                if (isWebSocketTransportError &&
+                    this.enableLongPollingDowngrades &&
+                    this.socket.io.opts.transports?.[0] !== "polling") {
+                    // Downgrade transports to polling upgrade mechanism.
+                    this.socket.io.opts.transports = ["polling", "websocket"];
+                    // Don't alter reconnection behavior if already enabled.
+                    if (!this.socket.io.reconnection()) {
                         // Allow single reconnection attempt using polling upgrade mechanism.
                         this.socket.io.reconnection(true);
                         this.socket.io.reconnectionAttempts(1);
-                        this.socket.io.opts.transports = ["polling", "websocket"];
                     }
                 }
-                if (!this.socket.io.reconnection() ||
-                    this.reconnectAttempts >= (this.socket.io.reconnectionAttempts() ?? 0)) {
-                    // Reconnection is disabled or maximum reconnect attempts have been reached.
-                    fail(true, this.createErrorObject("connectError", error));
+
+                // Allow built-in socket.io reconnection handling.
+                if (this.socket.io.reconnection() &&
+                    this.reconnectAttempts < this.socket.io.reconnectionAttempts()) {
+                    // Reconnection is enabled and maximum reconnect attempts have not been reached.
+                    return;
                 }
+
+                fail(true, this.createErrorObject("connectError", error));
             });
 
             this.addConnectionListener("reconnect_attempt", () => {
