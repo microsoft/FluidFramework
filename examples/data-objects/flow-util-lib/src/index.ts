@@ -7,8 +7,6 @@ export { CharCode } from "./charcode";
 export { KeyCode } from "./keycode";
 export { Scheduler } from "./scheduler";
 export { Template } from "./template";
-export { bsearch } from "./bsearch";
-export { bsearch2 } from "./bsearch2";
 export { IView, View } from "./view";
 export { TokenList } from "./tokenlist";
 export { randomId } from "./random";
