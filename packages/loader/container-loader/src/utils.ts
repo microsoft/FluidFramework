@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
 import { v4 as uuid } from "uuid";
+import { URL } from "whatwg-url";
 import {
     assert,
     stringToBuffer,
@@ -33,15 +33,20 @@ export interface IParsedUrl {
 }
 
 export function parseUrl(url: string): IParsedUrl | undefined {
-    const parsed = parse(url, true);
+    const parsed = new URL(url);
     if (typeof parsed.pathname !== "string") {
         throw new Error("Failed to parse pathname");
     }
-    const query = parsed.search ?? "";
+
+    // TODO: this is inelegant... is there a better way?
+    let queryParamCount = 0;
+    parsed.searchParams.forEach(() => queryParamCount++);
+
+    const query = queryParamCount > 0 ? "?" + parsed.searchParams.toString() : "";
     const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
     const match = regex.exec(parsed.pathname);
     return (match?.length === 3)
-        ? { id: match[1], path: match[2], query, version: parsed.query.version as string }
+        ? { id: match[1], path: match[2], query, version: parsed.searchParams.get("version") }
         : undefined;
 }
 
