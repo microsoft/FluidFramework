@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export { Char } from "./char";
 export { CharCode } from "./charcode";
 export { Dom } from "./dom";
-export { KeyCode, Modifier } from "./keycode";
-export { lis } from "./lis";
+export { KeyCode } from "./keycode";
 export { Scheduler } from "./scheduler";
 export { Template } from "./template";
 export { bsearch } from "./bsearch";
