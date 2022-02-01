@@ -17,7 +17,6 @@ import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidCodeDetails as IFluidCodeDetails_2 } from '@fluidframework/core-interfaces';
-import { IFluidConfiguration } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidPackage as IFluidPackage_2 } from '@fluidframework/core-interfaces';
 import { IFluidPackageEnvironment as IFluidPackageEnvironment_2 } from '@fluidframework/core-interfaces';
@@ -170,8 +169,6 @@ export interface IContainerContext extends IDisposable {
     readonly clientId: string | undefined;
     // (undocumented)
     readonly closeFn: (error?: ICriticalContainerError) => void;
-    // @deprecated (undocumented)
-    readonly configuration?: IFluidConfiguration;
     // (undocumented)
     readonly connected: boolean;
     // (undocumented)
@@ -186,14 +183,14 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly loader: ILoader;
     // @deprecated (undocumented)
-    readonly logger: ITelemetryBaseLogger;
+    readonly logger?: ITelemetryBaseLogger;
     // (undocumented)
     readonly options: ILoaderOptions;
     // (undocumented)
     pendingLocalState?: unknown;
     // (undocumented)
     readonly quorum: IQuorumClients;
-    // (undocumented)
+    // @deprecated (undocumented)
     raiseContainerWarning(warning: ContainerWarning): void;
     readonly scope: IFluidObject & FluidObject;
     // (undocumented)

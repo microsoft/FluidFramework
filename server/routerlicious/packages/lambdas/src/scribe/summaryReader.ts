@@ -7,18 +7,26 @@ import { bufferToString, toUtf8 } from "@fluidframework/common-utils";
 import { IDocumentAttributes, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { convertWholeFlatSummaryToSnapshotTreeAndBlobs, IGitManager } from "@fluidframework/server-services-client";
 import { IDeliState } from "@fluidframework/server-services-core";
-import { CommonProperties, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+    CommonProperties,
+    getLumberBaseProperties,
+    LumberEventName,
+    Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import { ILatestSummaryState, ISummaryReader } from "./interfaces";
 
 /**
  * Git specific implementation of ISummaryReader
  */
 export class SummaryReader implements ISummaryReader {
+    private readonly lumberProperties: Record<string, any>;
     constructor(
+        private readonly tenantId: string,
         private readonly documentId: string,
         private readonly summaryStorage: IGitManager,
         private readonly enableWholeSummaryUpload: boolean,
     ) {
+        this.lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
     }
 
     /**
@@ -27,27 +35,37 @@ export class SummaryReader implements ISummaryReader {
     */
     public async readLastSummary(): Promise<ILatestSummaryState> {
         const summaryReaderMetric = Lumberjack.newLumberMetric(LumberEventName.SummaryReader);
+        summaryReaderMetric.setProperties(this.lumberProperties);
+
         if (this.enableWholeSummaryUpload) {
             try {
                 const existingRef = await this.summaryStorage.getRef(encodeURIComponent(this.documentId));
                 const wholeFlatSummary = await this.summaryStorage.getSummary(existingRef.object.sha);
                 const normalizedSummary = convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary);
 
-                // Parse specific fields from the downloaded summary
-                const attributesBlobId = normalizedSummary.snapshotTree.trees[".protocol"].blobs.attributes;
-                const attributesContent = normalizedSummary.blobs[attributesBlobId];
-                const scribeBlobId = normalizedSummary.snapshotTree.trees[".serviceProtocol"].blobs.scribe;
-                const scribeContent = normalizedSummary.blobs[scribeBlobId];
-                const deliBlobId = normalizedSummary.snapshotTree.trees[".serviceProtocol"].blobs.deli;
-                const deliContent = normalizedSummary.blobs[deliBlobId];
-                const opsBlobId = normalizedSummary.snapshotTree.trees[".logTail"].blobs.logTail;
-                const opsContent = normalizedSummary.blobs[opsBlobId];
+                // Obtain IDs of specific fields from the downloaded summary
+                const attributesBlobId = normalizedSummary.snapshotTree.trees[".protocol"]?.blobs?.attributes;
+                const scribeBlobId = normalizedSummary.snapshotTree.trees[".serviceProtocol"]?.blobs?.scribe;
+                const deliBlobId = normalizedSummary.snapshotTree.trees[".serviceProtocol"]?.blobs?.deli;
+                const opsBlobId = normalizedSummary.snapshotTree.trees[".logTail"]?.blobs?.logTail;
 
-                const attributes = JSON.parse(bufferToString(attributesContent, "utf8")) as IDocumentAttributes;
-                const scribe = bufferToString(scribeContent, "utf8");
-                const deli = JSON.parse(bufferToString(deliContent, "utf8")) as IDeliState;
+                // Parse specific fields from the downloaded summary
+                const attributesContent = attributesBlobId ? normalizedSummary.blobs.get(attributesBlobId) : undefined;
+                const scribeContent = scribeBlobId ? normalizedSummary.blobs.get(scribeBlobId) : undefined;
+                const deliContent = deliBlobId ? normalizedSummary.blobs.get(deliBlobId) : undefined;
+                const opsContent = opsBlobId ? normalizedSummary.blobs.get(opsBlobId) : undefined;
+
+                const attributes = attributesContent ?
+                    JSON.parse(bufferToString(attributesContent, "utf8")) as IDocumentAttributes :
+                    this.getDefaultAttributes();
+                const scribe = scribeContent ? bufferToString(scribeContent, "utf8") : this.getDefaultScribe();
+                const deli = deliContent ?
+                    JSON.parse(bufferToString(deliContent, "utf8")) as IDeliState :
+                    this.getDefaultDeli();
                 const term = deli.term;
-                const messages = JSON.parse(bufferToString(opsContent, "utf8")) as ISequencedDocumentMessage[];
+                const messages = opsContent ?
+                    JSON.parse(bufferToString(opsContent, "utf8")) as ISequencedDocumentMessage[] :
+                    this.getDefaultMesages();
 
                 summaryReaderMetric.setProperties({
                     [CommonProperties.minLogtailSequenceNumber]: Math.min(...messages.map(
@@ -67,26 +85,37 @@ export class SummaryReader implements ISummaryReader {
                     messages,
                     fromSummary: true,
                 };
-            } catch {
-                summaryReaderMetric.success(`Returning default summary`);
+            } catch (error: any) {
+                summaryReaderMetric.error(`Returning default summary due to error when reading whole summary`, error);
                 return this.getDefaultSummaryState();
             }
         } else {
             try {
                 const existingRef = await this.summaryStorage.getRef(encodeURIComponent(this.documentId));
                 const [attributesContent, scribeContent, deliContent, opsContent] = await Promise.all([
-                    this.summaryStorage.getContent(existingRef.object.sha, ".protocol/attributes"),
-                    this.summaryStorage.getContent(existingRef.object.sha, ".serviceProtocol/scribe"),
-                    this.summaryStorage.getContent(existingRef.object.sha, ".serviceProtocol/deli"),
-                    this.summaryStorage.getContent(existingRef.object.sha, ".logTail/logTail"),
+                    this.summaryStorage.getContent(existingRef.object.sha, ".protocol/attributes")
+                        .catch(() => undefined),
+                    this.summaryStorage.getContent(existingRef.object.sha, ".serviceProtocol/scribe")
+                        .catch(() => undefined),
+                    this.summaryStorage.getContent(existingRef.object.sha, ".serviceProtocol/deli")
+                        .catch(() => undefined),
+                    this.summaryStorage.getContent(existingRef.object.sha, ".logTail/logTail")
+                        .catch(() => undefined),
                 ]);
-                const attributes = JSON.parse(
-                    toUtf8(attributesContent.content, attributesContent.encoding)) as IDocumentAttributes;
-                const scribe = toUtf8(scribeContent.content, scribeContent.encoding);
-                const deli = JSON.parse(toUtf8(deliContent.content, deliContent.encoding)) as IDeliState;
+
+                const attributes = attributesContent ?
+                    JSON.parse(toUtf8(attributesContent.content, attributesContent.encoding)) as IDocumentAttributes :
+                    this.getDefaultAttributes();
+                const scribe = scribeContent ?
+                    toUtf8(scribeContent.content, scribeContent.encoding) :
+                    this.getDefaultScribe();
+                const deli = deliContent ?
+                    JSON.parse(toUtf8(deliContent.content, deliContent.encoding)) as IDeliState :
+                    this.getDefaultDeli();
                 const term = deli.term;
-                const messages = JSON.parse(
-                    toUtf8(opsContent.content, opsContent.encoding)) as ISequencedDocumentMessage[];
+                const messages = opsContent ?
+                    JSON.parse(toUtf8(opsContent.content, opsContent.encoding)) as ISequencedDocumentMessage[] :
+                    this.getDefaultMesages();
 
                 summaryReaderMetric.setProperties({
                     [CommonProperties.minLogtailSequenceNumber]: Math.min(...messages.map(
@@ -106,8 +135,8 @@ export class SummaryReader implements ISummaryReader {
                     messages,
                     fromSummary: true,
                 };
-            } catch {
-                summaryReaderMetric.success(`Returning default summary`);
+            } catch (error: any) {
+                summaryReaderMetric.error(`Returning default summary due to error when reading summary`, error);
                 return this.getDefaultSummaryState();
             }
         }
@@ -121,5 +150,40 @@ export class SummaryReader implements ISummaryReader {
             messages: [],
             fromSummary: false,
         };
+    }
+
+    private getDefaultAttributes(): IDocumentAttributes {
+        Lumberjack.info("Using default attributes when reading summary.", this.lumberProperties);
+        return {
+            sequenceNumber: 0,
+            minimumSequenceNumber: 0,
+            term: undefined,
+        };
+    }
+
+    private getDefaultScribe(): string {
+        Lumberjack.info("Using default scribe when reading summary.", this.lumberProperties);
+        return "";
+    }
+
+    private getDefaultDeli(): IDeliState {
+        Lumberjack.info("Using default deli state when reading summary.", this.lumberProperties);
+        return {
+            clients: undefined,
+            durableSequenceNumber: 0,
+            logOffset: 0,
+            sequenceNumber: 0,
+            expHash1: "",
+            epoch: 0,
+            term: 1,
+            lastSentMSN: undefined,
+            nackMessages: undefined,
+            successfullyStartedLambdas: [],
+        };
+    }
+
+    private getDefaultMesages(): ISequencedDocumentMessage[] {
+        Lumberjack.info("Using default messages when reading summary.", this.lumberProperties);
+        return [];
     }
 }

@@ -13,7 +13,6 @@ import {
 import {
     IAudience,
     IDeltaManager,
-    ContainerWarning,
     BindState,
     AttachState,
     ILoaderOptions,
@@ -740,11 +739,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      */
     public async waitAttached(): Promise<void> {
         return this.deferredAttached.promise;
-    }
-
-    // @deprecated Warnings are being deprecated
-    public raiseContainerWarning(warning: ContainerWarning): void {
-        this.dataStoreContext.raiseContainerWarning(warning);
     }
 
     /**
