@@ -66,18 +66,23 @@ export class TenantManager {
      * Validates a tenant's API token
      */
     public async validateToken(tenantId: string, token: string, includeDisabledTenant = false): Promise<void> {
-        const tenantKey = await this.getTenantKey(tenantId, includeDisabledTenant);
+        const tenantKeys = await this.getTenantKey(tenantId, includeDisabledTenant);
 
-        return new Promise<void>((resolve, reject) => {
-            jwt.verify(token, tenantKey, (error) => {
-                if (error) {
-                    // When `exp` claim exists in token claims, jsonwebtoken verifies token expiration.
-                    reject(error instanceof jwt.TokenExpiredError
-                        ? new NetworkError(401, "Token expired.")
-                        : new NetworkError(403, "Invalid token."));
-                } else {
-                    resolve();
+        return jwt.verify(token, tenantKeys.key1, (error1) => {
+            if (!error1) {
+                return Promise.resolve();
+            }
+
+            return jwt.verify(token, tenantKeys.key2, (error2) => {
+                if (!error2) {
+                    return Promise.resolve();
                 }
+
+                // When `exp` claim exists in token claims, jsonwebtoken verifies token expiration.
+                return Promise.reject((error1 instanceof jwt.TokenExpiredError
+                    || error2 instanceof jwt.TokenExpiredError)
+                    ? new NetworkError(401, "Token expired.")
+                    : new NetworkError(403, "Invalid token."));
             });
         });
     }
@@ -233,7 +238,7 @@ export class TenantManager {
             Lumberjack.info("Tenant key2 doesn't exist.", { [BaseTelemetryProperties.tenantId]: tenantId });
             return {
                 key1: tenantKey1,
-                key2: "dummy-key",
+                key2: "",
             };
         }
 
@@ -253,7 +258,7 @@ export class TenantManager {
     /**
      * Generates a new key for a tenant
      */
-    public async refreshTenantKey(tenantId: string, keyName: KeyName): Promise<ITenantKeys> {
+    public async refreshTenantKey(tenantId: string, keyName: string): Promise<ITenantKeys> {
         const tenantDocument = await this.getTenantDocument(tenantId, false);
         
         const newTenantKey = this.generateTenantKey();
@@ -264,9 +269,16 @@ export class TenantManager {
             return Promise.reject(new Error("Tenant key encryption failed."));
         }
 
-        const tenantKeys = await this.getUpdatedTenantKeys(tenantDocument.key, tenantDocument.secondaryKey, keyName, newTenantKey, tenantId);
+        const tenantKeys = await this.getUpdatedTenantKeys(
+            tenantDocument.key,
+            tenantDocument.secondaryKey,
+            keyName,
+            newTenantKey,
+            tenantId);
 
-        const updateKey = keyName === KeyName.key2 ? { secondaryKey: encryptedNewTenantKey } : { key: encryptedNewTenantKey };
+        const updateKey = keyName === KeyName.key2
+                            ? { secondaryKey: encryptedNewTenantKey }
+                            : { key: encryptedNewTenantKey };
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
         await collection.update({ _id: tenantId }, updateKey, null);
@@ -277,7 +289,13 @@ export class TenantManager {
     /**
      * Gets updated 2 tenant keys after refresh.
      */
-    private async getUpdatedTenantKeys(key1: string, key2: string, keyName: KeyName, newTenantKey: string, tenantId: string): Promise<ITenantKeys> {
+    private async getUpdatedTenantKeys(
+        key1: string,
+        key2: string,
+        keyName: string,
+        newTenantKey: string,
+        tenantId: string,
+    ):Promise<ITenantKeys> {
         // if key2 is to be refreshed
         if (keyName === KeyName.key2) {
             const decryptedTenantKey1 = this.secretManager.decryptSecret(key1);
