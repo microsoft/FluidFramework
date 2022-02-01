@@ -3,35 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Template } from "@fluid-example/flow-util-lib";
 import { colIndexToName } from "@fluid-example/table-document";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISheetlet, createSheetletProducer } from "@tiny-calc/micro";
 import { BorderRect } from "./borderstyle";
 import * as styles from "./index.css";
 import { TableView } from "./tableview";
-
-const tableTemplate = new Template({
-    tag: "table",
-    props: { className: styles.view, tabIndex: 0, sortable: true },
-    children: [
-        {
-            tag: "caption",
-            children: [{ tag: "span", props: { textContent: "Table" } }],
-        },
-        {
-            tag: "thead",
-            children: [{
-                tag: "tr",
-                ref: "cols",
-            }],
-        },
-        {
-            tag: "tbody",
-            ref: "body",
-        },
-    ],
-});
 
 // eslint-disable-next-line unicorn/no-unsafe-regex
 const numberExp = /^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$/;
@@ -49,7 +26,7 @@ const enum KeyCode {
 export class GridView {
     private get numRows() { return this.matrix.rowCount; }
     private get numCols() { return this.matrix.colCount; }
-    public readonly root = tableTemplate.clone();
+    public readonly root;
 
     private _startRow = 0;
     public get startRow() { return this._startRow; }
@@ -59,8 +36,8 @@ export class GridView {
         this.refreshCells();
     }
 
-    private readonly cols = tableTemplate.get(this.root, "cols");
-    private readonly tbody = tableTemplate.get(this.root, "body");
+    private readonly cols = document.createElement("tr");
+    private readonly tbody = document.createElement("tbody");
     private readonly inputBox = document.createElement("input");
     private tdText?: Node;
     private readonly selection = new BorderRect([
@@ -72,10 +49,29 @@ export class GridView {
 
     private readonly sheetlet: ISheetlet;
 
+    private generateDom() {
+        const root = document.createElement("table");
+        root.classList.add(styles.view);
+        root.tabIndex = 0;
+
+        const caption = document.createElement("caption");
+        const captionSpan = document.createElement("span");
+        captionSpan.textContent = "Table";
+        caption.append(captionSpan);
+
+        const head = document.createElement("thead");
+        head.append(this.cols);
+
+        root.append(caption, head, this.tbody);
+
+        return root;
+    }
+
     constructor(
         private readonly matrix: SharedMatrix,
         private readonly tableView: TableView,
     ) {
+        this.root = this.generateDom();
         this.root.addEventListener("click", this.onGridClick as EventListener);
         this.tbody.addEventListener("pointerdown", this.cellPointerDown as EventListener);
         this.tbody.addEventListener("pointermove", this.cellPointerMove as EventListener);
