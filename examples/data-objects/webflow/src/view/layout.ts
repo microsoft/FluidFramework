@@ -5,13 +5,13 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { hasTagName, isTextNode, Scheduler, TagName } from "@fluid-example/flow-util-lib";
+import { Scheduler } from "@fluid-example/flow-util-lib";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@fluidframework/merge-tree";
 import { SequenceEvent } from "@fluidframework/sequence";
 import { FlowDocument } from "../document";
 import { IFluidHTMLViewFactory } from "../editor";
-import { clamp, Dom, done, emptyObject, getSegmentRange } from "../util";
+import { clamp, Dom, done, emptyObject, getSegmentRange, hasTagName, isTextNode, TagName } from "../util";
 import { extractRef, updateRef } from "../util/localref";
 import { debug } from "./debug";
 import { BootstrapFormatter, Formatter, IFormatterState, RootFormatter } from "./formatter";

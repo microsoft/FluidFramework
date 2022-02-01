@@ -8,6 +8,7 @@ export { Dom } from "./dom";
 export { randomId } from "./random";
 export { getSegmentRange } from "./segment";
 export { areStringsEquivalent } from "./string";
+export { hasTagName, isElementNode, isTextNode, TagName } from "./tagName";
 export { findToken, TokenList } from "./tokenlist";
 
 export const done = Promise.resolve();
