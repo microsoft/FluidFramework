@@ -5,7 +5,6 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { Scheduler } from "@fluid-example/flow-util-lib";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@fluidframework/merge-tree";
 import { SequenceEvent } from "@fluidframework/sequence";
@@ -93,10 +92,23 @@ export class Layout extends EventEmitter {
     private renderPromise = done;
     private renderResolver: () => void;
 
-    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>, scheduler = new Scheduler(), public readonly viewFactoryRegistry: Map<string, IFluidHTMLViewFactory> = new Map(), public readonly scope?: FluidObject) {
+    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>, public readonly viewFactoryRegistry: Map<string, IFluidHTMLViewFactory> = new Map(), public readonly scope?: FluidObject) {
         super();
 
-        this.scheduleRender = scheduler.coalesce(scheduler.onTurnEnd, () => { this.render(); });
+        let scheduled = false;
+        this.scheduleRender = () => {
+            if (scheduled) {
+                return;
+            }
+
+            Promise.resolve().then(() => {
+                scheduled = false;
+                this.render();
+            });
+
+            scheduled = true;
+        }
+
         this.initialCheckpoint = new LayoutCheckpoint([], { parent: this.slot, previous: null });
         this.rootFormatInfo = Object.freeze({ formatter: new BootstrapFormatter(formatter), state: emptyObject });
 

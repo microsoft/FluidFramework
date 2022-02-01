@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Scheduler } from "@fluid-example/flow-util-lib";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { paste } from "../clipboard/paste";
@@ -31,10 +30,22 @@ export class Editor {
     private get doc() { return this.layout.doc; }
 
     constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<RootFormatter<IFormatterState>>, viewFactoryRegistry?: Map<string, IFluidHTMLViewFactory>, scope?: FluidObject) {
-        const scheduler = new Scheduler();
-        this.layout = new Layout(doc, root, formatter, scheduler, viewFactoryRegistry, scope);
+        this.layout = new Layout(doc, root, formatter, viewFactoryRegistry, scope);
         this.caret = new Caret(this.layout);
-        this.caretSync = scheduler.coalesce(scheduler.onTurnEnd, () => { this.caret.sync(); });
+
+        let scheduled = false;
+        this.caretSync = () => {
+            if (scheduled) {
+                return;
+            }
+
+            Promise.resolve().then(() => {
+                scheduled = false;
+                this.caret.sync();
+            });
+
+            scheduled = true;
+        }
         this.layout.on("render", this.caretSync);
 
         root.tabIndex = 0;
