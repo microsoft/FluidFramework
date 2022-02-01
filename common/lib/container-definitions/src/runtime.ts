@@ -7,7 +7,6 @@ import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-defini
 import {
     FluidObject,
     IFluidCodeDetails,
-    IFluidConfiguration,
     IFluidObject,
     IRequest,
     IResponse,
@@ -123,10 +122,6 @@ export interface IRuntime extends IDisposable {
 export interface IContainerContext extends IDisposable {
     readonly existing: boolean | undefined;
     readonly options: ILoaderOptions;
-    /**
-     * @deprecated 0.45 - Configuration is not recommended to be used and will be removed in an upcoming release.
-     */
-    readonly configuration?: IFluidConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly storage: IDocumentStorageService;

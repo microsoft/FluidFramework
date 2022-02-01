@@ -28,6 +28,7 @@ import { createOdspUrl } from "./createOdspUrl";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import { getOdspResolvedUrl, createOdspLogger } from "./odspUtils";
 import { getFileLink } from "./getFileLink";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 /**
  * Properties passed to the code responsible for fetching share link for a file.
@@ -165,7 +166,8 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
                         throw new NonRetryableError(
                             "shareLinkTokenIsNull",
                             "Token callback returned null",
-                            OdspErrorType.fetchTokenError);
+                            OdspErrorType.fetchTokenError,
+                            { driverVersion });
                     }
                     event.end({ fromCache: isTokenFromCache(tokenResponse) });
                     return tokenResponse;

@@ -1840,10 +1840,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         pendingLocalState?: unknown,
     ) {
         assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
-        // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
-        if (this._dirtyContainer) {
-            this.mc.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer" });
-        }
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
@@ -1862,15 +1858,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (message) => this.submitSignal(message),
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,
-            (dirty: boolean) => {
-                this._dirtyContainer = dirty;
-                this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
-            },
+            (dirty: boolean) => this.updateDirtyContainerState(dirty),
             existing,
             pendingLocalState,
         );
 
         this.emit("contextChanged", codeDetails);
+    }
+
+    private updateDirtyContainerState(dirty: boolean) {
+        if (this._dirtyContainer === dirty) {
+            return;
+        }
+        this._dirtyContainer = dirty;
+        this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
     }
 
     private logContainerError(warning: ContainerWarning) {

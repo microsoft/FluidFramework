@@ -204,8 +204,6 @@ export class ConsensusRegisterCollection<T>
         }
     }
 
-    protected registerCore() { }
-
     protected onDisconnect() {}
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
