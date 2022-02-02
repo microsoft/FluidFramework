@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
+import { URL } from "whatwg-url";
 import { assert } from "@fluidframework/common-utils";
 import {
     IRequest,
@@ -72,7 +72,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         const serverSuffix = isLocalHost ? `${server}:3003` : server.substring(4);
 
         let fluidUrl = "fluid://" +
-            `${this.config ? parse(this.config.provider.get("worker:serverUrl")).host : serverSuffix}/` +
+            `${this.config ? new URL(this.config.provider.get("worker:serverUrl")).host : serverSuffix}/` +
             `${encodeURIComponent(tenantId)}/` +
             `${encodeURIComponent(documentId)}`;
 
@@ -134,7 +134,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
     ): Promise<string> {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
-        const parsedUrl = parse(fluidResolvedUrl.url);
+        const parsedUrl = new URL(fluidResolvedUrl.url);
         assert(!!parsedUrl.pathname, 0x0b9 /* "PathName should exist" */);
         const [, tenantId, documentId] = parsedUrl.pathname.split("/");
         assert(!!tenantId, 0x0ba /* "Tenant id should exist" */);
