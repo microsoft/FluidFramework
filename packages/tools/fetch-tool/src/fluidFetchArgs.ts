@@ -4,7 +4,7 @@
  */
 
 import fs from "fs";
-import { URL } from "url";
+import { URL } from "whatwg-url";
 
 export let dumpMessages = false;
 export let dumpMessageStats = false;
