@@ -13,11 +13,10 @@ import {
     StaticStorageDocumentServiceFactory,
 } from "@fluidframework/replay-driver";
 import { 
-    containerRuntimeResolver, 
     compareWithReferenceSnapshot, 
     getNormalizedFileSnapshot, 
     loadContainer ,
-    uploadContainerSummary,
+    uploadSummary,
 } from "@fluid-internal/replay-tool";
 import { SnapshotStorageService } from "./snapshotStorageService";
 
@@ -84,11 +83,8 @@ export async function validateSnapshots(
         container = await loadContainer(
             new StaticStorageDocumentServiceFactory(storage),
             FileStorageDocumentName,
-            undefined,
-            [containerRuntimeResolver],
-            { summarizeProtocolTree: true }, // ILoaderOptions
         );
-        await uploadContainerSummary(container)
+        await uploadSummary(container)
     }
 
     if (errors.length !== 0) {

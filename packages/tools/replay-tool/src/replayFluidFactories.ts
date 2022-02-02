@@ -30,6 +30,7 @@ import {
     SharedString,
     SparseMatrix,
 } from "@fluidframework/sequence";
+import { runtimeRequestHandler } from "./helpers"
 
 /** Simple runtime factory that creates a container runtime */
 export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
@@ -48,7 +49,9 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
             context,
             this.registries,
             buildRuntimeRequestHandler(
-                ...this.requestHandlers),
+                ...this.requestHandlers,
+                runtimeRequestHandler,
+            ),
             this.runtimeOptions,
             undefined, // containerScope
             existing,

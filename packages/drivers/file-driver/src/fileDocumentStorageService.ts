@@ -159,9 +159,6 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
         public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
             const tree = convertSummaryTreeToSnapshotITree(summary);
 
-            // Sort entries for easier diffing
-            this.sortTree(tree);
-
             // Remove tree IDs for easier comparison of snapshots
             delete tree.id;
             removeNullTreeIds(tree);
@@ -171,15 +168,6 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
             const fileSnapshot: IFileSnapshot = { tree, commits: {} };
             await this.onSnapshotHandler(fileSnapshot);
             return "testHandleId";
-        }
-
-        public sortTree(tree: api.ITree) {
-            tree.entries.sort((a, b) => a.path.localeCompare(b.path));
-            tree.entries.map((entry) => {
-                if (entry.type === api.TreeEntry.Tree) {
-                    this.sortTree(entry.value);
-                }
-            });
         }
 
         public async buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree> {

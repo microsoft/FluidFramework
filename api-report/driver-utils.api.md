@@ -4,7 +4,6 @@
 
 ```ts
 
-import * as api from '@fluidframework/protocol-definitions';
 import { DriverErrorType } from '@fluidframework/driver-definitions';
 import { IAuthorizationError } from '@fluidframework/driver-definitions';
 import { ICommittedProposal } from '@fluidframework/protocol-definitions';
@@ -117,7 +116,7 @@ export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolS
 export function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl | undefined>;
 
 // @public
-export function convertSummaryTreeToSnapshotITree(summaryTree: api.ISummaryTree): api.ITree;
+export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): ITree;
 
 // @public (undocumented)
 export function createGenericNetworkError(fluidErrorCode: string, message: string | undefined, canRetry: boolean, retryAfterMs?: number, props?: ITelemetryProperties): ThrottlingError | GenericNetworkError;

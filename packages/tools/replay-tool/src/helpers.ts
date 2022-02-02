@@ -126,21 +126,24 @@ export async function loadContainer(
         gcOptions: { writeDataAtRoot: true },
     };
     const codeLoader = new ReplayCodeLoader(
-        new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries, requestHandlers));
+        new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries, requestHandlers)
+    );
 
-    // Load the Fluid document
+    // Load the Fluid document while forcing summarizeProtocolTree option
     const loader = new Loader({
         urlResolver,
         documentServiceFactory,
         codeLoader,
-        options: loaderOptions ?? {},
+        options: loaderOptions
+            ? { ...loaderOptions, summarizeProtocolTree: true }
+            : { summarizeProtocolTree: true },
         logger,
     });
 
     return loader.resolve({ url: resolved.url });
 }
 
-export async function containerRuntimeResolver(request: IRequest, runtime: IContainerRuntime){
+export async function runtimeRequestHandler(request: IRequest, runtime: IContainerRuntime){
     if (request.url === "/containerRuntime") {
         return { mimeType: "fluid/object", status: 200, value: runtime };
     } else {
@@ -148,13 +151,17 @@ export async function containerRuntimeResolver(request: IRequest, runtime: ICont
     }
 };
 
-export async function uploadContainerSummary(container: IContainer) {
-    const response = await container.request({ url: "/containerRuntime" })
+export async function uploadSummary(container: IContainer) {
+    const response = await container.request({ url: "/containerRuntime" });
     const runtime = response.value as ContainerRuntime;
-    const summaryResult = await runtime.getSummary();
+    const summaryResult = await runtime.summarize({
+        fullTree: true,
+        trackState: false,
+        fullGC: true,
+    });
     return runtime.storage.uploadSummaryWithContext(summaryResult.summary, {
         referenceSequenceNumber: 0,
         proposalHandle: undefined,
         ackHandle: undefined,
-    })
+    });
 }

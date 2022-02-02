@@ -1375,16 +1375,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         throw new Error("Do not call this API, to be removed in the following release.");
     }
 
-    public async getSummary(): Promise<ISummaryTreeWithStats> {
-        return await this.summarize({
-            summaryLogger: this.logger,
-            fullTree: true,
-            trackState: false,
-            runGC: this.garbageCollector.shouldRunGC,
-            fullGC: true,
-        });
-    }
-
     private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats) {
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
         if (this.chunkMap.size > 0) {
@@ -1840,12 +1830,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Returns a summary of the runtime at the current sequence number.
      */
     public async summarize(options: {
-        /** Logger to use for correlated summary events */
-        summaryLogger: ITelemetryLogger,
         /** True to generate the full tree with no handle reuse optimizations; defaults to false */
         fullTree?: boolean,
         /** True to track the state for this summary in the SummarizerNodes; defaults to true */
         trackState?: boolean,
+        /** Logger to use for correlated summary events */
+        summaryLogger?: ITelemetryLogger,
         /** True to run garbage collection before summarizing; defaults to true */
         runGC?: boolean,
         /** True to generate full GC data */
@@ -1855,7 +1845,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }): Promise<ISummaryTreeWithStats> {
         this.verifyNotClosed();
 
-        const { summaryLogger, fullTree = false, trackState = true, runGC = true, runSweep, fullGC } = options;
+        const {
+            fullTree = false,
+            trackState = true,
+            summaryLogger = this.logger,
+            runGC = this.garbageCollector.shouldRunGC,
+            runSweep,
+            fullGC,
+        } = options;
 
         if (runGC) {
             await this.collectGarbage({ logger: summaryLogger, runSweep, fullGC });
@@ -2014,11 +2011,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             let summarizeResult: ISummaryTreeWithStats;
             try {
                 summarizeResult = await this.summarize({
-                    summaryLogger,
                     // If the GC state needs to be reset, we need to regenerate the summary and update the unreferenced
                     // state of all the nodes.
                     fullTree: fullTree || this.garbageCollector.summaryStateNeedsReset,
                     trackState: true,
+                    summaryLogger,
                     runGC: this.garbageCollector.shouldRunGC,
                 });
             } catch (error) {

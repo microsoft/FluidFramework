@@ -127,8 +127,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     // (undocumented)
-    getSummary(): Promise<ISummaryTreeWithStats>;
-    // (undocumented)
     get IContainerRuntime(): this;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
@@ -174,9 +172,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     submitSignal(type: string, content: any): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     summarize(options: {
-        summaryLogger: ITelemetryLogger;
         fullTree?: boolean;
         trackState?: boolean;
+        summaryLogger?: ITelemetryLogger;
         runGC?: boolean;
         fullGC?: boolean;
         runSweep?: boolean;

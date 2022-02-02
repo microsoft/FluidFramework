@@ -32,10 +32,9 @@ import {
 } from "@fluidframework/replay-driver";
 import { 
     compareWithReferenceSnapshot,
-    containerRuntimeResolver,
     getNormalizedFileSnapshot, 
     loadContainer, 
-    uploadContainerSummary,
+    uploadSummary,
 } from "./helpers";
 import { ReplayArgs } from "./replayArgs";
 
@@ -198,8 +197,6 @@ class Document {
             documentServiceFactory,
             FileStorageDocumentName,
             this.docLogger,
-            [containerRuntimeResolver],
-            { summarizeProtocolTree: true }, // ILoaderOptions
         );
 
         this.from = this.container.deltaManager.lastSequenceNumber;
@@ -239,7 +236,7 @@ class Document {
     }
 
     public async summarize() {
-        await uploadContainerSummary(this.container);
+        await uploadSummary(this.container);
     }
 
     public extractContent(): ContainerContent {
