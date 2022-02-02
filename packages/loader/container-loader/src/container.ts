@@ -370,7 +370,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private _storageService: IDocumentStorageService & IDisposable | undefined;
-    private get storageService(): IDocumentStorageService  {
+    private get storageService(): IDocumentStorageService {
         if (this._storageService === undefined) {
             throw new Error("Attempted to access storageService before it was defined");
         }
@@ -647,7 +647,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.lastVisible = performance.now();
                 } else {
                     // settimeout so this will hopefully fire after disconnect event if being hidden caused it
-                    setTimeout(() => this.lastVisible = undefined, 0);
+                    setTimeout(() => { this.lastVisible = undefined }, 0);
                 }
             };
             document.addEventListener("visibilitychange", this.visibilityEventHandler);
@@ -683,7 +683,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         break;
                     default:
                 }
-            }).catch((error) =>  {
+            }).catch((error) => {
                 this.mc.logger.sendErrorEvent({ eventName: "RaiseConnectedEventError" }, error);
             });
         });
@@ -1840,10 +1840,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         pendingLocalState?: unknown,
     ) {
         assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
-        // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
-        if (this._dirtyContainer) {
-            this.mc.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer" });
-        }
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
@@ -1862,15 +1858,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (message) => this.submitSignal(message),
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,
-            (dirty: boolean) => {
-                this._dirtyContainer = dirty;
-                this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
-            },
+            (dirty: boolean) => this.updateDirtyContainerState(dirty),
             existing,
             pendingLocalState,
         );
 
         this.emit("contextChanged", codeDetails);
+    }
+
+    private updateDirtyContainerState(dirty: boolean) {
+        if (this._dirtyContainer === dirty) {
+            return;
+        }
+        this._dirtyContainer = dirty;
+        this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
     }
 
     private logContainerError(warning: ContainerWarning) {

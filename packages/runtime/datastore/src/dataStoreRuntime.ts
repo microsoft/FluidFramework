@@ -882,7 +882,7 @@ export const mixinRequestHandler = (
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ) => class RuntimeWithRequestHandler extends Base {
         public async request(request: IRequest) {
-            const response  = await super.request(request);
+            const response = await super.request(request);
             if (response.status === 404) {
                 return requestHandler(request, this);
             }

@@ -41,7 +41,7 @@ export function create(
     router.post("/tenants/:id/validate", (request, response) => {
         const tenantId = getParam(request.params, "id");
         const includeDisabledTenant = getIncludeDisabledFlag(request);
-        const validP = manager.validateToken(tenantId, request.body.token,  includeDisabledTenant);
+        const validP = manager.validateToken(tenantId, request.body.token, includeDisabledTenant);
         handleResponse(validP, response);
     });
 

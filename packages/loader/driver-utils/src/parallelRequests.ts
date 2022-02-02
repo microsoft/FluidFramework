@@ -9,6 +9,8 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
 import { waitForConnectedState, logNetworkFailure } from "./networkUtils";
+// For now, this package is versioned and released in unison with the specific drivers
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 const MaxFetchDelayInMs = 10000;
 const MissingFetchDelayInMs = 100;
@@ -402,10 +404,10 @@ async function getSingleOpBatch(
                 throw createGenericNetworkError(
                     "failedToRetrieveOpsFromStorage:TooManyRetries",
                     undefined,
-                    false /* canRetry */,
-                    undefined /* retryAfterSeconds */,
+                    { canRetry: false },
                     {
                         retry,
+                        driverVersion,
                         ...props,
                     },
                 );

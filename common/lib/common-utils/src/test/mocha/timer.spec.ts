@@ -228,7 +228,7 @@ describe("Timers", () => {
 
         function startWithThen(ms?: number, handler?: () => void) {
             timer.start(ms, handler).then(
-                (result) => resolveResult = result.timerResult,
+                (result) => { resolveResult = result.timerResult },
                 (error) => assert.fail(error),
             );
         }

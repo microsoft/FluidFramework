@@ -652,7 +652,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
-        const passLogger = context.taggedLogger  ?? new TaggedLoggerAdapter((context as
+        const passLogger = context.taggedLogger ?? new TaggedLoggerAdapter((context as
             OldContainerContextWithLogger).logger);
         const logger = ChildLogger.create(passLogger, undefined, {
             all: {
@@ -874,20 +874,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private get summaryConfiguration() {
-        return  {
+        return {
             // the defaults
             ... DefaultSummaryConfiguration,
             // the server provided values
             ... this.context?.serviceConfiguration?.summary,
             // the runtime configuration overrides
             ... this.runtimeOptions.summaryOptions?.summaryConfigOverrides,
-         };
+        };
     }
 
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
-    private dirtyContainer = false;
+    private dirtyContainer: boolean;
     private emitDirtyDocumentEvent = true;
 
     private summarizerWarning = (warning: ContainerWarning) =>
@@ -1080,6 +1080,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
+
+        const { attachState, pendingLocalState } = this.context;
+        this.dirtyContainer = attachState !== AttachState.Attached
+            || (pendingLocalState as IPendingLocalState)?.pendingStates.length > 0;
+        this.context.updateDirtyContainerState(this.dirtyContainer);
 
         // Map the deprecated generateSummaries flag to disableSummaries.
         if (this.runtimeOptions.summaryOptions.generateSummaries === false) {
@@ -1782,6 +1787,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             assert(this.attachState === AttachState.Attached,
                 0x12e /* "Container Context should already be in attached state" */);
             this.emit("attached");
+        }
+
+        if (attachState === AttachState.Attached && !this.pendingStateManager.hasPendingMessages()) {
+            this.updateDocumentDirtyState(false);
         }
         this.dataStores.setAttachState(attachState);
     }

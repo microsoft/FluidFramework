@@ -191,8 +191,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     // @internal (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // @internal (undocumented)
-    protected registerCore(): void;
-    // @internal (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     set<T = any>(key: string, value: T): this;
     get size(): number;
@@ -226,8 +224,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     protected onDisconnect(): void;
     // @internal (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // @internal (undocumented)
-    protected registerCore(): void;
     // @internal (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     set(key: string, value: any): this;
