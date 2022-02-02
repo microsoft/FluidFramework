@@ -163,11 +163,13 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const bufferMaxEntries = config.get("mongo:bufferMaxEntries") as number | undefined;
         // Database connection for global db if enabled
         let globalDbMongoManager;
+        let globalDb;
         const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
         if (globalDbEnabled) {
             const globalDbMongoUrl = config.get("mongo:globalDbEndpoint") as string;
             const globalDbMongoFactory = new services.MongoDbFactory(globalDbMongoUrl, bufferMaxEntries);
             globalDbMongoManager = new core.MongoManager(globalDbMongoFactory, false);
+            globalDb = await globalDbMongoManager.getDatabase();
         }
 
         // Database connection for operations db
@@ -177,7 +179,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
         // Create the index on the documents collection
-        const db = await operationsDbMongoManager.getDatabase();
+        const operationsDb = await operationsDbMongoManager.getDatabase();
+        const db: core.IDb = globalDbEnabled ? globalDb : operationsDb;
         const documentsCollection = db.collection<core.IDocument>(documentsCollectionName);
         await documentsCollection.createIndex(
             {
@@ -283,7 +286,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             winston);
 
         const databaseManager = new core.MongoDatabaseManager(
+            globalDbEnabled,
             operationsDbMongoManager,
+            globalDbMongoManager,
             nodeCollectionName,
             documentsCollectionName,
             deltasCollectionName,
