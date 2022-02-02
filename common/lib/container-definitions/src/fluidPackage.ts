@@ -48,7 +48,7 @@ export interface IFluidPackage {
          * The name of the of the environment. This should be something like browser, or node
          * and contain the necessary targets for loading this code in that environment.
          */
-        [environment: string]:  undefined | IFluidPackageEnvironment;
+        [environment: string]: undefined | IFluidPackageEnvironment;
     };
     /**
      * General access for extended fields as specific usages will

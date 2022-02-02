@@ -64,7 +64,7 @@ describe("property-common.Chronometer", function() {
                 resolve(expectedResult);
             }, expectedElapsedMilliSec);
 
-            const expectations: Promise<void>  = Chronometer.timePromise(async () => promise)
+            const expectations: Promise<void> = Chronometer.timePromise(async () => promise)
                 .then(function(timedResult) {
                     expect(timedResult.chrono.elapsedMilliSec()).to.be.at.least(expectedElapsedMilliSec - 5);
                     expect(timedResult.chrono.elapsedMilliSec()).to.be.at.most(expectedElapsedMilliSec + 50);

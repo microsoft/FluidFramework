@@ -4,7 +4,6 @@
  */
 
 import {
-    IFluidConfiguration,
     IFluidLoadable,
     IFluidRunnable,
 } from "./fluidLoadable";
@@ -33,10 +32,6 @@ export interface IFluidObject {
      * @deprecated - use `FluidObject<IFluidHandleContext>` instead
      */
     readonly IFluidHandleContext?: IFluidHandleContext;
-    /**
-     * @deprecated - use `FluidObject<IFluidConfiguration>` instead
-     */
-    readonly IFluidConfiguration?: IFluidConfiguration;
     /**
      * @deprecated - use `FluidObject<IFluidHandle>` instead
      */

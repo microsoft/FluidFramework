@@ -31,7 +31,7 @@ export async function timeoutPromise<T = void>(
         timeoutOptions.durationMs !== undefined
         && Number.isFinite(timeoutOptions.durationMs)
         && timeoutOptions.durationMs > 0
-            ?  timeoutOptions.durationMs : defaultTimeoutDurationMs;
+            ? timeoutOptions.durationMs : defaultTimeoutDurationMs;
     // create the timeout error outside the async task, so it's callstack includes
     // the original call site, this makes it easier to debug
     const err = timeoutOptions.reject === false

@@ -57,8 +57,9 @@ export class ConnectionStateHandler {
         private readonly logger: ITelemetryLogger,
     ) {
         this.prevClientLeftTimer = new Timer(
-            // Default is 90 sec for which we are going to wait for its own "leave" message.
-            this.handler.maxClientLeaveWaitTime ?? 90000,
+            // Default is 5 min for which we are going to wait for its own "leave" message. This is same as
+            // the max time on server after which leave op is sent.
+            this.handler.maxClientLeaveWaitTime ?? 300000,
             () => {
                 assert(!this.connected,
                     0x2ac /* "Connected when timeout waiting for leave from previous session fired!" */);
@@ -96,6 +97,15 @@ export class ConnectionStateHandler {
         this.prevClientLeftTimer.clear();
     }
 
+    public containerSaved() {
+        // If we were waiting for moving to Connected state, then only apply for state change. Since the container
+        // is now saved and we don't have any ops to roundtrip, we can clear the timer and apply for connected state.
+        if (this.prevClientLeftTimer.hasTimer) {
+            this.prevClientLeftTimer.clear();
+            this.applyForConnectedState("containerSaved");
+        }
+    }
+
     public receivedAddMemberEvent(clientId: string) {
         // This is the only one that requires the pending client ID
         if (clientId === this.pendingClientId) {
@@ -118,7 +128,7 @@ export class ConnectionStateHandler {
         }
     }
 
-    private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout") {
+    private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout" | "containerSaved") {
         const protocolHandler = this.handler.protocolHandler();
         assert(protocolHandler !== undefined, 0x236 /* "In all cases it should be already installed" */);
         // Move to connected state only if we are in Connecting state, we have seen our join op

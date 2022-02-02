@@ -4,7 +4,6 @@
  */
 export * from "./audience";
 export * from "./browserPackage";
-// eslint-disable-next-line import/no-internal-modules
 export * from "./legacy/chaincode";
 export * from "./deltas";
 export * from "./error";
