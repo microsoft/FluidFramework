@@ -55,7 +55,8 @@
     "css-loader": "^1.0.0",
     "lodash": "^4.17.21",
     "style-loader": "^1.0.0",
-    "url-loader": "^2.1.0"
+    "url-loader": "^2.1.0",
+    "whatwg-url": "^11.0.0"
   },
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": "^0.57.0",
@@ -64,6 +65,7 @@
     "@rushstack/eslint-config": "^2.5.1",
     "@types/async": "^3.2.6",
     "@types/lodash": "^4.14.118",
+    "@types/whatwg-url": "^8.2.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
     "concurrently": "^6.2.0",

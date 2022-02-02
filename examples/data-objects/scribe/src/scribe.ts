@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "events";
-import { resolve } from "url";
+import { URL } from "whatwg-url";
 import {
     IFluidLoadable,
     IFluidRouter,
@@ -49,6 +49,18 @@ let text: string;
 let intervalTime: number;
 let authorCount: number;
 let initialRun: boolean = true;
+
+// This is a replacement implementation of Node's URL.resolve.
+// Taken from https://nodejs.org/api/url.html#urlresolvefrom-to
+function resolve(from: string, to: string): string {
+    const resolvedUrl = new URL(to, new URL(from, "resolve://"));
+    if (resolvedUrl.protocol === "resolve:") {
+        // `from` is a relative URL.
+        const { pathname, search, hash } = resolvedUrl;
+        return pathname + search + hash;
+    }
+    return resolvedUrl.toString();
+}
 
 async function downloadRawText(textUrl: string): Promise<string> {
     const result = await Axios.get<string>(resolve(document.baseURI, textUrl));
