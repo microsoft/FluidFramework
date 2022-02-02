@@ -155,7 +155,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     }
 
     /**
-     * Retrieve Fluid object using the handle get or the older requestFluidObject_UNSAFE call to fetch by ID
+     * Retrieve Fluid object using the handle get
      *
      * @param key - key that object (handle/id) is stored with in the directory
      * @param directory - directory containing the object
@@ -165,30 +165,13 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     public async getFluidObjectFromDirectory<T extends IFluidLoadable>(
         key: string,
         directory: IDirectory,
-        getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IFluidHandle | undefined):
+        getObjectFromDirectory?: (id: string, directory: IDirectory) => IFluidHandle | undefined):
         Promise<T | undefined> {
-        const handleOrId = getObjectFromDirectory ? getObjectFromDirectory(key, directory) : directory.get(key);
-        if (typeof handleOrId === "string") {
-            // For backwards compatibility with older stored IDs
-            // We update the storage with the handle so that this code path is less and less trafficked
-            const fluidObject = await this.requestFluidObject_UNSAFE<T>(handleOrId);
-            if (fluidObject.IFluidLoadable && fluidObject.handle) {
-                directory.set(key, fluidObject.handle);
-            }
-            return fluidObject;
-        } else {
-            const handle = handleOrId?.IFluidHandle;
-            return await (handle ? handle.get() : this.requestFluidObject_UNSAFE(key)) as T;
+        const handleMaybe = getObjectFromDirectory ? getObjectFromDirectory(key, directory) : directory.get(key);
+        const handle = handleMaybe?.IFluidHandle;
+        if (handle) {
+            return await handle.get();
         }
-    }
-
-    /**
-     * @deprecated
-     * Gets the data store of a given id. Will follow the pattern of the container for waiting.
-     * @param id - data store id
-     */
-    protected async requestFluidObject_UNSAFE<T extends FluidObject>(id: string): Promise<T> {
-        return handleFromLegacyUri<T>(`/${id}`, this.context.containerRuntime).get();
     }
 
     /**

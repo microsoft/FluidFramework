@@ -152,7 +152,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     finishInitialization(existing: boolean): Promise<void>;
     // (undocumented)
     static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject<DataObjectTypes>>;
-    getFluidObjectFromDirectory<T extends IFluidLoadable>(key: string, directory: IDirectory, getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IFluidHandle | undefined): Promise<T | undefined>;
+    getFluidObjectFromDirectory<T extends IFluidLoadable>(key: string, directory: IDirectory, getObjectFromDirectory?: (id: string, directory: IDirectory) => IFluidHandle | undefined): Promise<T | undefined>;
     protected getService<T extends FluidObject>(id: string): Promise<T>;
     get handle(): IFluidHandle<this>;
     protected hasInitialized(): Promise<void>;
@@ -174,8 +174,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     protected preInitialize(): Promise<void>;
     protected readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;
     request(req: IRequest): Promise<IResponse>;
-    // @deprecated (undocumented)
-    protected requestFluidObject_UNSAFE<T extends FluidObject>(id: string): Promise<T>;
     protected readonly runtime: IFluidDataStoreRuntime;
 }
 

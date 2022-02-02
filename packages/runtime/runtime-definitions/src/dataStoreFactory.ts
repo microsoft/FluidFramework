@@ -5,14 +5,6 @@
 
 import { IFluidDataStoreContext, IFluidDataStoreChannel } from "./dataStoreContext";
 
-declare module "@fluidframework/core-interfaces" {
-    export interface IFluidObject {
-        /**
-         * @deprecated - use `FluidObject<IFluidDataStoreFactory>` instead
-         */
-        readonly IFluidDataStoreFactory?: IFluidDataStoreFactory;
-    }
-}
 
 export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory = "IFluidDataStoreFactory";
 
