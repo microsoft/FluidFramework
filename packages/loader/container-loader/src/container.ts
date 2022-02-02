@@ -370,7 +370,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private _storageService: IDocumentStorageService & IDisposable | undefined;
-    private get storageService(): IDocumentStorageService  {
+    private get storageService(): IDocumentStorageService {
         if (this._storageService === undefined) {
             throw new Error("Attempted to access storageService before it was defined");
         }
@@ -647,7 +647,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.lastVisible = performance.now();
                 } else {
                     // settimeout so this will hopefully fire after disconnect event if being hidden caused it
-                    setTimeout(() => this.lastVisible = undefined, 0);
+                    setTimeout(() => { this.lastVisible = undefined }, 0);
                 }
             };
             document.addEventListener("visibilitychange", this.visibilityEventHandler);
@@ -683,7 +683,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         break;
                     default:
                 }
-            }).catch((error) =>  {
+            }).catch((error) => {
                 this.mc.logger.sendErrorEvent({ eventName: "RaiseConnectedEventError" }, error);
             });
         });

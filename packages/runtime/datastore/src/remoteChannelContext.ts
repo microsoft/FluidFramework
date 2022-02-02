@@ -61,7 +61,7 @@ export class RemoteChannelContext implements IChannelContext {
         dirtyFn: (address: string) => void,
         addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
         private readonly id: string,
-        baseSnapshot:  ISnapshotTree,
+        baseSnapshot: ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
         extraBlobs: Map<string, ArrayBufferLike> | undefined,
         createSummarizerNode: CreateChildSummarizerNodeFn,

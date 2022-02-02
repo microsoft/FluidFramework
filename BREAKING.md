@@ -14,6 +14,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)
 - [Driver error constructors' signatures have changed](#driver-error-constructors-signatures-have-changed)
 - [IFluidObject removed from IFluidDataStoreContext scope](#IFluidObject-removed-from-IFluidDataStoreContext-scope)
+- [The behavior of containers' isDirty flag has changed](#containers-isdirty-flag-behavior-has-changed)
 
 ### IFluidConfiguration removed
 
@@ -41,6 +42,9 @@ Additionally, the following deprecated fields have been removed from IFluidObjec
 - IFluidDataStoreRegistry
 
 Use [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) instead.
+
+### Containers isDirty flag behavior has changed
+Container is now considered dirty if it's not attached or it is attached but has pending ops. Check https://fluidframework.com/docs/build/containers/#isdirty for further details.
 
 ## 0.56 Breaking changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)

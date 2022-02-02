@@ -429,7 +429,7 @@ export class GarbageCollector implements IGarbageCollector {
         // we only do this once - the very first time we run GC.
         this.initializeBaseStateP = new LazyPromise<void>(async () => {
             const currentTimestampMs = this.getCurrentTimestampMs();
-            const baseState =  await baseSummaryStateP;
+            const baseState = await baseSummaryStateP;
             if (baseState === undefined) {
                 return;
             }

@@ -9,7 +9,7 @@
  * @param  flag - A flag to be checked
  * @returns   True if the flag is set in passed flags, false otherwise.
  */
- const _isFlagSet = (flags: number, flag: number) =>   {
+ const _isFlagSet = (flags: number, flag: number) => {
     // eslint-disable-next-line no-bitwise
     return (flags & flag) === flag;
 };
@@ -35,13 +35,13 @@ export class FlaggedError {
      * @returns True if the quiet flag is set.
      */
     isQuiet(): boolean {
-        return  _isFlagSet(this.flags,FlaggedError.FLAGS.QUIET);
+        return _isFlagSet(this.flags,FlaggedError.FLAGS.QUIET);
     }
 
     /**
      * @returns True if the transient flag is set.
      */
     isTransient(): boolean {
-        return  _isFlagSet(this.flags, FlaggedError.FLAGS.TRANSIENT);
+        return _isFlagSet(this.flags, FlaggedError.FLAGS.TRANSIENT);
     }
 }

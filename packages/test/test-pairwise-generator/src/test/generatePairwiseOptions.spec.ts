@@ -26,7 +26,7 @@ const simpleOptionsMatrix: OptionsMatrix<SimpleOptions> = {
     array:[undefined, [0]],
 };
 
-function  validateSimpleOption(option: SimpleOptions) {
+function validateSimpleOption(option: SimpleOptions) {
     assert("number" in option, `number not defined:${optionsToString(option)}`);
     assert(option.number === undefined || option.number === 7,
          `number not expected value:${optionsToString(option)}`);
@@ -79,7 +79,7 @@ function validateComplexOption(option: ComplexOptions) {
 /**
  * No pruning or optimizations, just calculate and validate all pairs
  */
-function  validatePairsExhaustively<T>(
+function validatePairsExhaustively<T>(
     matrix: OptionsMatrix<T>, values: T[]) {
     const keys = Object.keys(matrix);
     for(const i of keys) {

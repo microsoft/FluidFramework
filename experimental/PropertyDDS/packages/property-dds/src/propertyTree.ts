@@ -200,7 +200,7 @@ export class SharedPropertyTree extends SharedObject {
 
 		// if no override provided dont submit unless metadata are provided
 		if (submitEmptyChange === undefined) {
-			doSubmit =  metadata !== undefined;
+			doSubmit = metadata !== undefined;
 		}
 
 		if (doSubmit || !isEmpty(changes)) {
