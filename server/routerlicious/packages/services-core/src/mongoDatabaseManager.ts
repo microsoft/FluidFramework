@@ -45,10 +45,10 @@ export class MongoDatabaseManager implements IDatabaseManager {
     }
 
     private async getCollection<T>(name: string) {
-        let db = await this.operationsDbMongoManager.getDatabase();
-        if (name === this.documentsCollectionName && this.globalDbEnabled) {
-            db = await this.globalDbMongoManager.getDatabase();
-        }
+        const db = name === this.documentsCollectionName && this.globalDbEnabled ?
+        await this.globalDbMongoManager.getDatabase() :
+        await this.operationsDbMongoManager.getDatabase();
+
         return db.collection<T>(name);
     }
 }
