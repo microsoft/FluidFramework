@@ -30,7 +30,6 @@ module.exports = {
         "project": "./tsconfig.json",
     },
     "plugins": [
-        "no-null",
         "react",
         "unicorn",
     ],
