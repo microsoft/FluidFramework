@@ -103,12 +103,12 @@ function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule:
             new Map([
                 [defaultFactory.type, Promise.resolve(defaultFactory)],
             ]),
-        );
-        const fluidExport: IFluidModule["fluidExport"] & FluidObject<IFluidDataStoreFactory> = {
-            IRuntimeFactory: runtimeFactory,
-            IFluidDataStoreFactory: dataStoreFactory,
+        );           
+        return { 
+            fluidExport: {
+                IRuntimeFactory: runtimeFactory
+            }
         };
-        return { fluidExport};
     }
     return fluidModule;
 }
