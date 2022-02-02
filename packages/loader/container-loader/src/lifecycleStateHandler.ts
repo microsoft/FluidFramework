@@ -35,7 +35,7 @@ export class LifecycleStateHandler {
 
         switch (newState) {
             case "loading":
-                assert(this._state !== "created", 0x2ba /* "Must be in created state before loading" */);
+                assert(this._state === "created", 0x2ba /* "Must be in created state before loading" */);
                 break;
             case "loaded":
                 assert(this._state !== "created",
@@ -48,7 +48,7 @@ export class LifecycleStateHandler {
                 }
                 break;
             case "closed":
-                assert(this._state !== "closing", 0x2bb /* "Must go through closing state before closed" */);
+                assert(this._state === "closing", 0x2bb /* "Must go through closing state before closed" */);
                 break;
             default: break;
         }
