@@ -57,6 +57,16 @@ export interface ITenantCustomData {
     [key: string]: any;
 }
 
+export interface ITenantKeys {
+    key1: string,
+    key2: string,
+}
+
+export enum KeyName {
+    key1 = "key1",
+    key2 = "key2",
+}
+
 export interface ITenant {
     gitManager: IGitManager;
 
