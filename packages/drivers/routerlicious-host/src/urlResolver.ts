@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
+import { URL } from "whatwg-url";
 import { assert, PromiseCache } from "@fluidframework/common-utils";
 import {
     IRequest,
@@ -57,7 +57,7 @@ export class ContainerUrlResolver implements IUrlResolver {
     ): Promise<string> {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
-        const parsedUrl = parse(fluidResolvedUrl.url);
+        const parsedUrl = new URL(fluidResolvedUrl.url);
         // eslint-disable-next-line no-null/no-null
         assert(parsedUrl.pathname !== null, 0x0b7 /* "Pathname should be defined" */);
         const [, tenantId, documentId] = parsedUrl.pathname.split("/");
@@ -66,7 +66,7 @@ export class ContainerUrlResolver implements IUrlResolver {
 
         let url = relativeUrl;
         if (url.startsWith("/")) {
-            url = url.substr(1);
+            url = url.substring(1);
         }
         return `${this.baseUrl}/${encodeURIComponent(
             tenantId)}/${encodeURIComponent(documentId)}${url ? `/${url}` : ``}`;

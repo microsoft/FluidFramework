@@ -32,7 +32,8 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.42.0-0",
     "@fluidframework/driver-definitions": "^0.44.0-0",
-    "axios": "^0.21.2"
+    "axios": "^0.21.2",
+    "whatwg-url": "^11.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
@@ -41,6 +42,7 @@
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^14.18.0",
+    "@types/whatwg-url": "^8.2.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
     "concurrently": "^6.2.0",
