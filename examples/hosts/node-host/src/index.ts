@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as url from "url";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
@@ -13,6 +12,7 @@ import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import * as jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
+import { URL } from "whatwg-url";
 import { NodeCodeLoader } from "./nodeCodeloader";
 import { fetchFluidObject } from "./utils";
 
@@ -62,10 +62,10 @@ export async function start(): Promise<void> {
     // Generating Fluid urls.
     const encodedTenantId = encodeURIComponent(tenantId);
     const encodedDocId = encodeURIComponent(documentId);
-    const documentUrl = `fluid://${url.parse(ordererEndpoint).host}/${encodedTenantId}/${encodedDocId}`;
+    const documentUrl = `fluid://${new URL(ordererEndpoint).host}/${encodedTenantId}/${encodedDocId}`;
     const deltaStorageUrl = `${ordererEndpoint}/deltas/${encodedTenantId}/${encodedDocId}`;
     const storageUrl = `${storageEndpoint}/repos/${encodedTenantId}`;
-    const requestUrl = `http://${url.parse(ordererEndpoint).host}/${encodedTenantId}/${encodedDocId}`;
+    const requestUrl = `http://${new URL(ordererEndpoint).host}/${encodedTenantId}/${encodedDocId}`;
 
     // Crafting IFluidResolvedUrl with urls and access tokens.
     const resolved: IFluidResolvedUrl = {
