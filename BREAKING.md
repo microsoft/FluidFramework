@@ -13,6 +13,7 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 0.57 Breaking changes
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)
 - [Driver error constructors' signatures have changed](#driver-error-constructors-signatures-have-changed)
+- [The behavior of containers' isDirty flag has changed](#containers-isdirty-flag-behavior-has-changed)
 
 ### IFluidConfiguration removed
 
@@ -26,6 +27,9 @@ Same for helper functions that return new error objects.
 
 Additionally, `createGenericNetworkError`'s signature was refactored to combine `canRetry` and `retryAfterMs` into a single
 required parameter `retryInfo`.
+
+### Containers isDirty flag behavior has changed
+Container is now considered dirty if it's not attached or it is attached but has pending ops. Check https://fluidframework.com/docs/build/containers/#isdirty for further details.
 
 ## 0.56 Breaking changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
