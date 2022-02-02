@@ -15,6 +15,8 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Driver error constructors' signatures have changed](#driver-error-constructors-signatures-have-changed)
 - [IFluidObject removed from IFluidDataStoreContext scope](#IFluidObject-removed-from-IFluidDataStoreContext-scope)
 - [The behavior of containers' isDirty flag has changed](#containers-isdirty-flag-behavior-has-changed)
+- [Removed PureDataObject.requestFluidObject_UNSAFE](#Removed-PureDataObject.requestFluidObject_UNSAFE)
+- [Modified PureDataObject.getFluidObjectFromDirectory](#Modified-PureDataObject.getFluidObjectFromDirectory)
 
 ### IFluidConfiguration removed
 
@@ -45,6 +47,12 @@ Use [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) instead.
 
 ### Containers isDirty flag behavior has changed
 Container is now considered dirty if it's not attached or it is attached but has pending ops. Check https://fluidframework.com/docs/build/containers/#isdirty for further details.
+
+### Removed PureDataObject.requestFluidObject_UNSAFE
+The `requestFluidObject_UNSAFE` is removed from the PureDataObject. If you still need to fallback on URIs, use `handleFromLegacyUri`. We are making this change to encourage retreiving shared objects via handles only.
+
+### Modified PureDataObject.getFluidObjectFromDirectory
+Going forward, `getFluidObjectFromDirectory` will not return FluidObject if you have have used to store uri string for a given key. If you still need to fallback on URIs, use `handleFromLegacyUri`. Also, getFluidObjectFromDirectory now expects callback that is only returning `IFluidHandle` or `undefined`. Returnig uri/id (string) is not supported as we want to encourage retreiving shared objects via handles only.
 
 ## 0.56 Breaking changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
