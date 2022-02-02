@@ -93,26 +93,21 @@ export class BlobManager {
         const storageId = this.redirectTable?.get(blobId) ?? blobId;
         assert(this.hasBlob(storageId), 0x11f /* "requesting unknown blobs" */);
 
-        try {
-            return new BlobHandle(
-                `${BlobManager.basePath}/${storageId}`,
-                this.routeContext,
-                async () => this.getStorage().readBlob(storageId),
-            );
-        } catch (error) {
-            this.logger.sendErrorEvent(
-                {
-                    eventName:"storageService_readBlobError",
-                    id: storageId,
-                },
-                error
-            );
-            return new BlobHandle(
-                `${BlobManager.basePath}/${storageId}`,
-                this.routeContext,
-                async () => this.getStorage().readBlob(storageId),
-            );
-        }
+        return new BlobHandle(
+            `${BlobManager.basePath}/${storageId}`,
+            this.routeContext,
+            async () => {
+                this.getStorage().readBlob(storageId).catch((error) => {
+                    this.logger.sendErrorEvent(
+                        {
+                            eventName:"storageService_readBlobError",
+                            id: storageId,
+                        },
+                        error
+                    );
+                })
+            },
+        );
     }
 
     public async createBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
