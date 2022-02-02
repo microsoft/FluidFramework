@@ -8,7 +8,7 @@ import safeStringify from "json-stringify-safe";
 import { AxiosError, AxiosInstance, AxiosRequestConfig, default as Axios } from "axios";
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
-import { createFluidServiceNetworkError, INetworkErrorDetails }  from "./error";
+import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
 
 export abstract class RestWrapper {
     constructor(

@@ -103,14 +103,15 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     ) {
         if(types === undefined) return;
         for(const key of Object.keys(types) as unknown as (keyof TMap)[]) {
-            const provider = this.resolveProvider(key);
-            if(provider !== undefined) {
-                Object.defineProperty(
-                    base,
-                    key,
-                    provider,
-                );
-            }
+            // back-compat: in 0.56 we allow undefined in the types, but we didn't before
+            // this will keep runtime back compat, eventually we should support undefined properties
+            // rather than properties that return promises that resolve to undefined
+            const provider = this.resolveProvider(key) ?? {get:()=>Promise.resolve(undefined)};
+            Object.defineProperty(
+                base,
+                key,
+                provider,
+            );
         }
     }
 

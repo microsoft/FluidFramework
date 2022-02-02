@@ -419,8 +419,6 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
-    protected registerCore(): void;
-    // (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
@@ -566,8 +564,6 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processGCDataCore(serializer: SummarySerializer): void;
-    // (undocumented)
-    protected registerCore(): void;
     // (undocumented)
     removeLocalReference(lref: LocalReference): void;
     // (undocumented)

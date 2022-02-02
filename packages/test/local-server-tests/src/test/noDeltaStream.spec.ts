@@ -153,7 +153,7 @@ describe("No Delta Stream", () => {
         documentServiceFactory.createDocumentService = async (...args) => {
             return createDocServ(...args).then((docService) => {
                 docService.connectToDeltaStream = () => {
-                    throw new DeltaStreamConnectionForbiddenError("asdf");
+                    throw new DeltaStreamConnectionForbiddenError("asdf", { driverVersion: "1.2.3" });
                 };
                 return docService;
             });

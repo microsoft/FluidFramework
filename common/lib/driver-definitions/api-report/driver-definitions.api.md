@@ -36,7 +36,6 @@ export enum DriverErrorType {
     fetchFailure = "fetchFailure",
     fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
     fileOverwrittenInStorage = "fileOverwrittenInStorage",
-    // @deprecated (undocumented)
     genericError = "genericError",
     genericNetworkError = "genericNetworkError",
     incorrectServerResponse = "incorrectServerResponse",
@@ -58,8 +57,6 @@ export enum DriverHeader {
 // @public
 export interface DriverPreCheckInfo {
     codeDetailsHint?: string;
-    // @deprecated (undocumented)
-    containerPath: string;
     criticalBootDomains?: string[];
 }
 
@@ -283,6 +280,7 @@ export enum LoaderCachingPolicy {
     NoCaching = 0,
     Prefetch = 1
 }
+
 
 // (No @packageDocumentation comment for this package)
 

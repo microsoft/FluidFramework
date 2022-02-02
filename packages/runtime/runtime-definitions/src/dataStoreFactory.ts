@@ -6,7 +6,7 @@
 import { IFluidDataStoreContext, IFluidDataStoreChannel } from "./dataStoreContext";
 
 declare module "@fluidframework/core-interfaces" {
-    export interface IFluidObject  {
+    export interface IFluidObject {
         /**
          * @deprecated - use `FluidObject<IFluidDataStoreFactory>` instead
          */

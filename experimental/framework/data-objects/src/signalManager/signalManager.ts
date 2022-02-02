@@ -91,7 +91,7 @@ export interface IRuntimeSignaler {
  * deregistration.
  */
 export class Signaler extends TypedEventEmitter<IErrorEvent> implements ISignaler {
-    private readonly emitter  = new EventEmitter();
+    private readonly emitter = new EventEmitter();
 
     private readonly managerId: string | undefined;
 
