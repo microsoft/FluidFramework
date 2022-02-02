@@ -1,5 +1,20 @@
 # Change Log
 
+## 19.1.0
+
+* build: update package dependencies
+  * Associated pull request: [37639](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/37639)
+  * Commit: [e16dcccefa550e7e0faba66f08b36e28905b6dea](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/e16dcccefa550e7e0faba66f08b36e28905b6dea)
+* cleanup: Remove anchor code
+  * Associated pull request: [37621](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/37621)
+  * Commit: [77821ff9fb51142897b8bb2b5b7582d5aebd564c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/77821ff9fb51142897b8bb2b5b7582d5aebd564c)
+* refactor: BREAKING CHANGE: move some utilities into TreeView
+  * Associated pull request: [37582](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/37582)
+  * Commit: [9ed6a523c2054129508bb1cc285d65bebd5d80df](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/9ed6a523c2054129508bb1cc285d65bebd5d80df)
+* build: update package dependencies (except typescript)
+  * Associated pull request: [37498](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/37498)
+  * Commit: [4d7d9ca8c00a96e1ab87a6db86dfe93d069f34a2](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4d7d9ca8c00a96e1ab87a6db86dfe93d069f34a2)
+
 ## 18.2.2
 
 * fix: correctly sort InversionKeys
