@@ -585,7 +585,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
         this.processMinSequenceNumberChanged(minSeq);
 
-        this.messagesSinceMSNChange.forEach((m) => m.minimumSequenceNumber = minSeq);
+        this.messagesSinceMSNChange.forEach((m) => { m.minimumSequenceNumber = minSeq });
 
         return this.client.summarize(this.runtime, this.handle, serializer, this.messagesSinceMSNChange);
     }

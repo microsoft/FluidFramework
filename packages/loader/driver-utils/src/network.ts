@@ -29,7 +29,7 @@ export function isOnline(): OnlineStatus {
     return OnlineStatus.Unknown;
 }
 
-export type DriverErrorTelemetryProps = ITelemetryProperties & { driverVersion: string  | undefined };
+export type DriverErrorTelemetryProps = ITelemetryProperties & { driverVersion: string | undefined };
 
 /**
  * Generic network error class.
