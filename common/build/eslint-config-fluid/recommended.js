@@ -14,7 +14,7 @@ module.exports = {
         "editorconfig",
     ],
     "rules": {
-        // RECOMMEDED RULES
+        // RECOMMENDED RULES
         "@rushstack/no-new-null": "error",
         "no-empty": "error",
         "no-void": "error",
