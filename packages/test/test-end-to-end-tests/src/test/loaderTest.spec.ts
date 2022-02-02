@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { parse } from "url";
+import { URL } from "whatwg-url";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
@@ -35,8 +35,8 @@ class TestSharedDataObject1 extends DataObject {
     // Used in tests that verify query params work correctly with loader.request
     public async request(request: IRequest): Promise<IResponse> {
         const url = request.url;
-        const parsed = parse(url, true);
-        if (parsed.query.inspect === "1") {
+        const parsed = new URL(url);
+        if (parsed.searchParams.get("inspect") === "1") {
             // returning query params instead of the data object for testing purposes
             return { mimeType: "text/plain", status: 200, value: `${parsed.search}` };
         } else if (parsed?.pathname === "/") {
@@ -66,7 +66,7 @@ class TestSharedDataObject2 extends DataObject {
 
     public async request(request: IRequest): Promise<IResponse> {
         const url = request.url;
-        const parsed = parse(url, true);
+        const parsed = new URL(url);
         if (parsed?.pathname === "/") {
             return { value: this, status: 200, mimeType: "fluid/object" };
         } else {
