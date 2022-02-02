@@ -55,7 +55,5 @@ export class SharedXTree extends SharedObject
         throw new Error("not implemented");
     }
 
-    protected registerCore() { throw new Error("not implemented"); }
-
     protected applyStashedOp() { throw new Error("not implemented"); }
 }

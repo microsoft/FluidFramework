@@ -5,7 +5,7 @@
 
 /* eslint-disable no-bitwise */
 import { strict as assert } from "assert";
-import { Direction, getDeltaX, getDeltaY } from "../direction";
+import { Direction, getDeltaX, getDeltaY } from "../util";
 
 const cases = [
     { name: "none",       direction: Direction.none,                      expectedX:  0,    expectedY:  0 },

@@ -21,6 +21,7 @@ describe("Hardware Stats",  () => {
         quorum: new MockQuorum(),
         logger: mockLogger,
         clientDetails: { capabilities: { interactive: true } },
+        updateDirtyContainerState: (dirty: boolean) => {},
     };
 
     const getDeviceSpecEvents = (): ITelemetryBaseEvent[] =>
@@ -44,6 +45,7 @@ describe("Hardware Stats",  () => {
             quorum: new MockQuorum(),
             logger: mockLogger,
             clientDetails: { capabilities: { interactive: true } },
+            updateDirtyContainerState: (dirty: boolean) => {},
         };
     });
 

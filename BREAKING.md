@@ -10,15 +10,32 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.57 Breaking changes
+- [IFluidConfiguration removed](#IFluidConfiguration-removed)
+- [Driver error constructors' signatures have changed](#driver-error-constructors-signatures-have-changed)
+
+### IFluidConfiguration removed
+
+The `IFluidConfiguration` interface and related properties were deprecated in 0.55, and have now been removed.  This includes the `configuration` member of `IContainerContext` and `ContainerContext`.
+
+### Driver error constructors' signatures have changed
+
+All error classes defined in @fluidframework/driver-utils now require the `props` parameter in their constructors,
+and `props` must include the property `driverVersion: string | undefined` (via type `DriverErrorTelemetryProps`).
+Same for helper functions that return new error objects.
+
+Additionally, `createGenericNetworkError`'s signature was refactored to combine `canRetry` and `retryAfterMs` into a single
+required parameter `retryInfo`.
+
 ## 0.56 Breaking changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
 - [Removed `IOdspResolvedUrl.sharingLinkToRedeem`](#Removed-IOdspResolvedUrl.sharingLinkToRedeem)
 - [Removed url from ICreateBlobResponse](#removed-url-from-ICreateBlobResponse)
-- [`readonly` removed from `IDeltaManager`, `DeltaManager`, and `DeltaManagerProxy`](#readonly-removed-from-IDeltaManager-and-DeltaManager-DeltaManagerProxy)
-- [Synthesize Decoupled from IFluidObject and Deprecations Removed](Synthesize-Decoupled-from-IFluidObject-and-Deprecations-Removed)
+- [`readonly` removed from `IDeltaManager`, `DeltaManager`, and `DeltaManagerProxy`](#readonly-removed-from-IDeltaManager-and-DeltaManager-DeltaManagerProxy)(Synthesize-Decoupled-from-IFluidObject-and-Deprecations-Removed)
 - [codeDetails removed from Container](#codeDetails-removed-from-Container)
 - [wait() methods removed from map and directory](#wait-methods-removed-from-map-and-directory)
 - [Removed containerPath from DriverPreCheckInfo](#removed-containerPath-from-DriverPreCheckInfo)
+- [Removed SharedObject.is](#Removed-SharedObject.is)
 
 ### `MessageType.Save` and code that handled it was removed
 The `Save` operation type was deprecated and has now been removed. This removes `MessageType.Save` from `protocol-definitions`, `save;${string}: ${string}` from `SummarizeReason` in the `container-runtime` package, and `MessageFactory.createSave()` from and `server-test-utils`.
@@ -33,7 +50,7 @@ The unused `url` property of `ICreateBlobResponse` in `@fluidframework/protocol-
 The `readonly` property was deprecated and has now been removed from `IDeltaManager` from `container-definitions`. Additionally, `readonly` has been removed from the implementations in `DeltaManager` and `DeltaManagerProxy` from `container-loader`. To replace its functionality, use `readOnlyInfo.readonly` instead.
 
 ### Synthesize Decoupled from IFluidObject and Deprecations Removed
-DependencyContainer now takes a generic argument, as it is no longer directly couple to IFluidObject. The ideal pattern here would be directly pass the provider or FluidObject interfaces you will register. As a short term solution you could also pass IFluidObject, but IFluidObject is deprecated, so will need to be removed if used here. 
+DependencyContainer now takes a generic argument, as it is no longer directly couple to IFluidObject. The ideal pattern here would be directly pass the provider or FluidObject interfaces you will register. As a short term solution you could also pass IFluidObject, but IFluidObject is deprecated, so will need to be removed if used here.
 Examples:
 ``` typescript
 // the old way
@@ -57,7 +74,7 @@ The following members have been removed from IFluidDependencySynthesizer:
  - registeredTypes - unused and no longer supported. `has` can replace most possible usages
  - register - create new DependencyContainer and add existing as parent
  - unregister - create new DependencyContainer and add existing as parent
- - getProvider - use `has` and `synthesize` to check or get provider respectively 
+ - getProvider - use `has` and `synthesize` to check or get provider respectively
 
  The following types have been removed or changed. These changes should only affect direct usages which should be rare. Existing synthesizer api usage is backwards compatible:
  - FluidObjectKey - removed as IFluidObject is deprecated
@@ -68,7 +85,7 @@ The following members have been removed from IFluidDependencySynthesizer:
  - FluidObjectProvider - Takes FluidObject types rather than keys
  - ProviderEntry - no longer used
  - DependencyContainerRegistry - no longer used
- 
+
 ### codeDetails removed from Container
 
 In release 0.53, the `codeDetails` member was removed from `IContainer`.  It is now also removed from `Container`.  To inspect the code details of a container, instead use the `getSpecifiedCodeDetails()` and `getLoadedCodeDetails()` methods.
@@ -80,6 +97,9 @@ The `wait()` methods on `ISharedMap` and `IDirectory` were deprecated in 0.55 an
 ### Removed containerPath from DriverPreCheckInfo
 The `containerPath` property of `DriverPreCheckInfo` was deprecated and has now been removed. To replace its functionality, use `Loader.request()`.
 
+### Removed `SharedObject.is`
+The `is` method is removed from SharedObject. This was being used to detect SharedObjects stored inside other SharedObjects (and then binding them), which should not be happening anymore. Instead, use handles to SharedObjects.
+
 ## 0.55 Breaking changes
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)
 - [`IChannel.summarize` split into sync and async](#IChannel.summarize-split-into-sync-and-async)
@@ -89,6 +109,7 @@ The `containerPath` property of `DriverPreCheckInfo` was deprecated and has now 
 - [`wait()` methods deprecated on map and directory](#wait-methods-deprecated-on-map-and-directory)
 - [Remove Legacy Data Object and Factories](#Remove-Legacy-Data-Object-and-Factories)
 - [Removed `innerRequestHandler`](#Removed-innerRequestHandler)
+- [Aqueduct and IFluidDependencySynthesizer changes](#Aqueduct-and-IFluidDependencySynthesizer-changes)
 
 ### `container-loader` interfaces return `IQuorumClients` rather than `IQuorum`
 
@@ -186,12 +207,36 @@ If you rely on `request()` access to internal root data stores, you can add `roo
 
 It is not recommended to provide `request()` access to non-root data stores, but if you currently rely on this functionality you can add a custom request handler that calls `runtime.IFluidHandleContext.resolveHandle(request)` just like `innerRequestHandler` used to do.
 
+### Aqueduct and IFluidDependencySynthesizer changes
+The type `DependencyContainerRegistry` is now deprecated and no longer used. In it's place the `DependencyContainer` class should be used instead.
+
+The following classes in Aqueduct have been changed to no longer take DependencyContainerRegistry and to use DependencyContainer instead: `BaseContainerRuntimeFactory`, and `ContainerRuntimeFactoryWithDefaultDataStore`
+
+In both cases, the third parameter to the constructor has been changed from `providerEntries: DependencyContainerRegistry = []` to `dependencyContainer?: IFluidDependencySynthesizer`. If you were previously passing an emptry array, `[]` you should now pass `undefined`. If you were passing in something besides an empty array, you will instead create new DependencyContainer and register your types, and then pass that, rather than the type directly:
+
+``` diff
++const dependencyContainer = new DependencyContainer();
++dependencyContainer.register(IFluidUserInformation,async (dc) => userInfoFactory(dc));
+
+ export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
+     Pond.getFactory(),
+     new Map([
+         Pond.getFactory().registryEntry,
+     ]),
+-    [
+-        {
+-            type: IFluidUserInformation,
+-            provider: async (dc) => userInfoFactory(dc),
+-        },
+-    ]);
++    dependencyContainer);
+```
+
 ## 0.54 Breaking changes
 - [Removed `readAndParseFromBlobs` from `driver-utils`](#Removed-readAndParseFromBlobs-from-driver-utils)
 - [Loader now returns `IContainer` instead of `Container`](#Loader-now-returns-IContainer-instead-of-Container)
 - [`getQuorum()` returns `IQuorumClients` from within the container](#getQuorum-returns-IQuorumClients-from-within-the-container)
 - [`SharedNumberSequence` and `SharedObjectSequence` deprecated](#SharedNumberSequence-and-SharedObjectSequence-deprecated)
-- [Aqueduct and IFluidDependencySynthesizer changes](#Aqueduct-and-IFluidDependencySynthesizer-changes)
 - [`IContainer` interface updated to complete 0.53 changes](#IContainer-interface-updated-to-complete-0.53-changes)
 
 ### Removed `readAndParseFromBlobs` from `driver-utils`
@@ -218,30 +263,6 @@ The `SharedNumberSequence` and `SharedObjectSequence` have been deprecated and a
 
 Additionally, `useSyncedArray()` from `@fluid-experimental/react` has been removed, as it depended on the `SharedObjectArray`.
 
-### Aqueduct and IFluidDependencySynthesizer changes
-The type `DependencyContainerRegistry` is now deprecated and no longer used. In it's place the `DependencyContainer` class should be used instead.
-
-The following classes in Aqueduct have been changed to no longer take DependencyContainerRegistry and to use DependencyContainer instead: `BaseContainerRuntimeFactory`, and `ContainerRuntimeFactoryWithDefaultDataStore`
-
-In both cases, the third parameter to the constructor has been changed from `providerEntries: DependencyContainerRegistry = []` to `dependencyContainer?: IFluidDependencySynthesizer`. If you were previously passing an emptry array, `[]` you should now pass `undefined`. If you were passing in something besides an empty array, you will instead create new DependencyContainer and register your types, and then pass that, rather than the type directly:
-
-``` diff
-+const dependencyContainer = new DependencyContainer();
-+dependencyContainer.register(IFluidUserInformation,async (dc) => userInfoFactory(dc));
-
- export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-     Pond.getFactory(),
-     new Map([
-         Pond.getFactory().registryEntry,
-     ]),
--    [
--        {
--            type: IFluidUserInformation,
--            provider: async (dc) => userInfoFactory(dc),
--        },
--    ]);
-+    dependencyContainer);
-```
 ### `IContainer` interface updated to complete 0.53 changes
 The breaking changes introduced in [`IContainer` interface updated to expose actively used `Container` public APIs](#IContainer-interface-updated-to-expose-actively-used-Container-public-APIs) have now been completed in 0.54. The following additions to the `IContainer` interface are no longer optional but rather mandatory:
 - `connectionState`
