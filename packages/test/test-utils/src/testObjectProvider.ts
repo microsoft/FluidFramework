@@ -107,7 +107,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
             return {
                 get: () => documentId,
                 update: () => { }, // do not update the document ID in odsp test cases
-                reset: () => documentId = createDocumentId(),
+                reset: () => { documentId = createDocumentId() },
             };
         default:
             return {
@@ -117,7 +117,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
                     ensureFluidResolvedUrl(resolvedUrl);
                     documentId = resolvedUrl.id ?? documentId;
                 },
-                reset: () => documentId = createDocumentId(),
+                reset: () => { documentId = createDocumentId() },
             };
     }
 }

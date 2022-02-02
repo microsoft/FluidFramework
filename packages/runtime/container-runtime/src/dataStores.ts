@@ -44,7 +44,7 @@ import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime } from "./containerRuntime";
 import {
     FluidDataStoreContext,
-    RemotedFluidDataStoreContext,
+    RemoteFluidDataStoreContext,
     LocalFluidDataStoreContext,
     createAttributesBlob,
     LocalDetachedFluidDataStoreContext,
@@ -111,7 +111,7 @@ export class DataStores implements IDisposable {
         private readonly runtime: ContainerRuntime,
         private readonly submitAttachFn: (attachContent: any) => void,
         private readonly getCreateChildSummarizerNodeFn:
-            (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
+            (id: string, createParam: CreateChildSummarizerNodeParam) => CreateChildSummarizerNodeFn,
         private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
         getBaseGCDetails: () => Promise<Map<string, IGarbageCollectionDetailsBase>>,
@@ -151,33 +151,41 @@ export class DataStores implements IDisposable {
             }
             // If we have a detached container, then create local data store contexts.
             if (this.runtime.attachState !== AttachState.Detached) {
-                dataStoreContext = new RemotedFluidDataStoreContext(
-                    key,
-                    value,
-                    async () => dataStoreBaseGCDetails(key),
-                    this.runtime,
-                    this.runtime.storage,
-                    this.runtime.scope,
-                    this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
-                    this.writeGCDataAtRoot,
-                );
+                dataStoreContext = new RemoteFluidDataStoreContext({
+                    id: key,
+                    snapshotTree: value,
+                    getBaseGCDetails: async () => dataStoreBaseGCDetails(key),
+                    runtime: this.runtime,
+                    storage: this.runtime.storage,
+                    scope: this.runtime.scope,
+                    createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(
+                        key,
+                        { type: CreateSummarizerNodeSource.FromSummary },
+                    ),
+                    writeGCDataAtRoot: this.writeGCDataAtRoot,
+                    disableIsolatedChannels: this.runtime.disableIsolatedChannels,
+                });
             } else {
                 if (typeof value !== "object") {
                     throw new Error("Snapshot should be there to load from!!");
                 }
                 const snapshotTree = value;
-                dataStoreContext = new LocalFluidDataStoreContext(
-                    key,
-                    undefined,
-                    this.runtime,
-                    this.runtime.storage,
-                    this.runtime.scope,
-                    this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
-                    (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+                dataStoreContext = new LocalFluidDataStoreContext({
+                    id: key,
+                    pkg: undefined,
+                    runtime: this.runtime,
+                    storage: this.runtime.storage,
+                    scope: this.runtime.scope,
+                    createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(
+                        key,
+                        { type: CreateSummarizerNodeSource.FromSummary },
+                    ),
+                    bindChannelFn: (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
                     snapshotTree,
-                    undefined,
-                    this.writeGCDataAtRoot,
-                );
+                    isRootDataStore: undefined,
+                    writeGCDataAtRoot: this.writeGCDataAtRoot,
+                    disableIsolatedChannels: this.runtime.disableIsolatedChannels,
+                });
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
         }
@@ -228,17 +236,17 @@ export class DataStores implements IDisposable {
         }
 
         // Include the type of attach message which is the pkg of the store to be
-        // used by RemotedFluidDataStoreContext in case it is not in the snapshot.
+        // used by RemoteFluidDataStoreContext in case it is not in the snapshot.
         const pkg = [attachMessage.type];
-        const remotedFluidDataStoreContext = new RemotedFluidDataStoreContext(
-            attachMessage.id,
+        const remoteFluidDataStoreContext = new RemoteFluidDataStoreContext({
+            id: attachMessage.id,
             snapshotTree,
             // New data stores begin with empty GC details since GC hasn't run on them yet.
-            async () => { return {}; },
-            this.runtime,
-            new BlobCacheStorageService(this.runtime.storage, flatBlobs),
-            this.runtime.scope,
-            this.getCreateChildSummarizerNodeFn(
+            getBaseGCDetails: async () => { return {}; },
+            runtime: this.runtime,
+            storage: new BlobCacheStorageService(this.runtime.storage, flatBlobs),
+            scope: this.runtime.scope,
+            createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(
                 attachMessage.id,
                 {
                     type: CreateSummarizerNodeSource.FromAttach,
@@ -250,12 +258,14 @@ export class DataStores implements IDisposable {
                             this.runtime.disableIsolatedChannels,
                         )],
                     },
-                }),
-            this.writeGCDataAtRoot,
+                },
+            ),
+            writeGCDataAtRoot: this.writeGCDataAtRoot,
+            disableIsolatedChannels: this.runtime.disableIsolatedChannels,
             pkg,
-        );
+        });
 
-        this.contexts.addBoundOrRemoted(remotedFluidDataStoreContext);
+        this.contexts.addBoundOrRemoted(remoteFluidDataStoreContext);
     }
 
     public processAliasMessage(
@@ -328,35 +338,44 @@ export class DataStores implements IDisposable {
         isRoot: boolean,
         id = uuid()): IFluidDataStoreContextDetached
     {
-        const context = new LocalDetachedFluidDataStoreContext(
+        const context = new LocalDetachedFluidDataStoreContext({
             id,
             pkg,
-            this.runtime,
-            this.runtime.storage,
-            this.runtime.scope,
-            this.getCreateChildSummarizerNodeFn(id, { type: CreateSummarizerNodeSource.Local }),
-            (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
-            isRoot,
-            this.writeGCDataAtRoot,
-        );
+            runtime: this.runtime,
+            storage: this.runtime.storage,
+            scope: this.runtime.scope,
+            createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(
+                id,
+                { type: CreateSummarizerNodeSource.Local },
+            ),
+            bindChannelFn: (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+            snapshotTree: undefined,
+            isRootDataStore: isRoot,
+            writeGCDataAtRoot: this.writeGCDataAtRoot,
+            disableIsolatedChannels: this.runtime.disableIsolatedChannels,
+        });
         this.contexts.addUnbound(context);
         return context;
     }
 
     public _createFluidDataStoreContext(pkg: string[], id: string, isRoot: boolean, props?: any) {
-        const context = new LocalFluidDataStoreContext(
+        const context = new LocalFluidDataStoreContext({
             id,
             pkg,
-            this.runtime,
-            this.runtime.storage,
-            this.runtime.scope,
-            this.getCreateChildSummarizerNodeFn(id, { type: CreateSummarizerNodeSource.Local }),
-            (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
-            undefined,
-            isRoot,
-            this.writeGCDataAtRoot,
-            props,
-        );
+            runtime: this.runtime,
+            storage: this.runtime.storage,
+            scope: this.runtime.scope,
+            createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(
+                id,
+                { type: CreateSummarizerNodeSource.Local },
+            ),
+            bindChannelFn: (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+            snapshotTree: undefined,
+            isRootDataStore: isRoot,
+            writeGCDataAtRoot: this.writeGCDataAtRoot,
+            disableIsolatedChannels: this.runtime.disableIsolatedChannels,
+            createProps: props,
+        });
         this.contexts.addUnbound(context);
         return context;
     }

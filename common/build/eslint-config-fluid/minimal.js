@@ -73,6 +73,7 @@ module.exports = {
                 "code": 120
             }
         ],
+        "no-multi-spaces": ["error", {"ignoreEOLComments": true}],
         "unicorn/better-regex": "error",
         "unicorn/filename-case": [
             "error",
@@ -100,7 +101,6 @@ module.exports = {
         "@typescript-eslint/typedef": "off",
         "func-call-spacing": "off", // Off because it conflicts with typescript-formatter
         "no-empty": "off",
-        "no-return-assign": "off",
         "no-void": "off",
         "require-atomic-updates": "off",
         "dot-notation": "off", // Superseded by @typescript-eslint/dot-notation

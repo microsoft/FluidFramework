@@ -370,7 +370,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private _storageService: IDocumentStorageService & IDisposable | undefined;
-    private get storageService(): IDocumentStorageService  {
+    private get storageService(): IDocumentStorageService {
         if (this._storageService === undefined) {
             throw new Error("Attempted to access storageService before it was defined");
         }
@@ -441,10 +441,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      */
     public forceReadonly(readonly: boolean) {
         this._deltaManager.connectionManager.forceReadonly(readonly);
-    }
-
-    public get id(): string {
-        return this._resolvedUrl?.id ?? "";
     }
 
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -560,7 +556,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 all: {
                     clientType, // Differentiating summarizer container from main container
                     containerId: uuid(),
-                    docId: () => this.id,
+                    docId: () => this._resolvedUrl?.id ?? undefined,
                     containerAttachState: () => this._attachState,
                     containerLifecycleState: () => this._lifecycleState,
                     containerConnectionState: () => ConnectionState[this.connectionState],
@@ -651,7 +647,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.lastVisible = performance.now();
                 } else {
                     // settimeout so this will hopefully fire after disconnect event if being hidden caused it
-                    setTimeout(() => this.lastVisible = undefined, 0);
+                    setTimeout(() => { this.lastVisible = undefined }, 0);
                 }
             };
             document.addEventListener("visibilitychange", this.visibilityEventHandler);
@@ -687,7 +683,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         break;
                     default:
                 }
-            }).catch((error) =>  {
+            }).catch((error) => {
                 this.mc.logger.sendErrorEvent({ eventName: "RaiseConnectedEventError" }, error);
             });
         });
@@ -984,6 +980,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
+     * @deprecated 0.56, will be removed in next release from IContainerContext
      * Raise non-critical error to host. Calling this API will not close container.
      * For critical errors, please call Container.close(error).
      * @param error - an error to raise
@@ -1059,7 +1056,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const message = `Commit @${deltaDetails} ${tagMessage}`;
 
         // Pull in the prior version and snapshot tree to store against
-        const lastVersion = await this.getVersion(this.id);
+        const lastVersion = await this.getVersion(null);
 
         const parents = lastVersion !== undefined ? [lastVersion.id] : [];
 
@@ -1123,7 +1120,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return root;
     }
 
-    private async getVersion(version: string): Promise<IVersion | undefined> {
+    private async getVersion(version: string | null): Promise<IVersion | undefined> {
         const versions = await this.storageService.getVersions(version, 1);
         return versions[0];
     }
@@ -1803,7 +1800,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async fetchSnapshotTree(specifiedVersion: string | undefined):
         Promise<{snapshot?: ISnapshotTree; versionId?: string}>
     {
-        const version = await this.getVersion(specifiedVersion ?? this.id);
+        const version = await this.getVersion(specifiedVersion ?? null);
 
         if (version === undefined && specifiedVersion !== undefined) {
             // We should have a defined version to load from if specified version requested
@@ -1843,10 +1840,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         pendingLocalState?: unknown,
     ) {
         assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
-        // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
-        if (this._dirtyContainer) {
-            this.mc.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer" });
-        }
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
@@ -1865,10 +1858,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (message) => this.submitSignal(message),
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,
-            (dirty: boolean) => {
-                this._dirtyContainer = dirty;
-                this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
-            },
+            (dirty: boolean) => this.updateDirtyContainerState(dirty),
             existing,
             pendingLocalState,
         );
@@ -1876,8 +1866,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.emit("contextChanged", codeDetails);
     }
 
-    // Please avoid calling it directly.
-    // raiseContainerWarning() is the right flow for most cases
+    private updateDirtyContainerState(dirty: boolean) {
+        if (this._dirtyContainer === dirty) {
+            return;
+        }
+        this._dirtyContainer = dirty;
+        this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
+    }
+
     private logContainerError(warning: ContainerWarning) {
         this.mc.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
     }
