@@ -6,7 +6,6 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
-    IFluidConfiguration,
     IRequest,
     IResponse,
     IFluidCodeDetails,
@@ -126,16 +125,6 @@ export class ContainerContext implements IContainerContext {
 
     public get options(): ILoaderOptions {
         return this.container.options;
-    }
-
-    /**
-     * @deprecated 0.55 - Configuration is not recommended to be used and will be removed in an upcoming release.
-     */
-    public get configuration(): IFluidConfiguration {
-        const config: Partial<IFluidConfiguration> = {
-            scopes: this.container.scopes,
-        };
-        return config as IFluidConfiguration;
     }
 
     public get baseSnapshot() {
