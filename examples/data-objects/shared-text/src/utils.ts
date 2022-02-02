@@ -7,6 +7,18 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedMap, IValueChanged } from "@fluidframework/map";
 import { default as axios } from "axios";
 
+// This is a replacement implementation of Node's URL.resolve.
+// Taken from https://nodejs.org/api/url.html#urlresolvefrom-to
+export function resolve(from: string, to: string): string {
+    const resolvedUrl = new URL(to, new URL(from, "resolve://"));
+    if (resolvedUrl.protocol === "resolve:") {
+        // `from` is a relative URL.
+        const { pathname, search, hash } = resolvedUrl;
+        return pathname + search + hash;
+    }
+    return resolvedUrl.toString();
+}
+
 export const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
     const maybeValue = map.get<T>(key);
     if (maybeValue !== undefined) {

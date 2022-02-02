@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import { parse } from "querystring";
-import * as url from "url";
 import registerDebug from "debug";
 import { controls, ui } from "@fluid-example/client-ui-lib";
 import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
@@ -37,7 +36,7 @@ import {
 } from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { IFluidTokenProvider } from "@fluidframework/container-definitions";
-import { downloadRawText, getInsights, mapWait, setTranslation } from "./utils";
+import { downloadRawText, getInsights, mapWait, resolve as urlResolve, setTranslation } from "./utils";
 
 const debug = registerDebug("fluid:shared-text");
 
@@ -200,7 +199,7 @@ export class SharedTextRunner
         // Bindy for insights
         const image = new controls.Image(
             document.createElement("div"),
-            url.resolve(document.baseURI, "/public/images/bindy.svg"));
+            urlResolve(document.baseURI, "/public/images/bindy.svg"));
 
         const containerDiv = document.createElement("div");
         containerDiv.id = "flow-container";
