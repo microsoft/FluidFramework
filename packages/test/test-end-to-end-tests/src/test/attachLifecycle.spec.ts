@@ -41,7 +41,7 @@ const testConfigs =
 
 describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
     before(function (){
-        const provider  = getTestObjectProvider();
+        const provider = getTestObjectProvider();
         switch(provider.driver.type){
             case "local":
             case "tinylicious":
@@ -53,7 +53,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
     for(const testConfig of testConfigs) {
         it(`Validate attach orders: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
             // setup shared states
-            const provider  = getTestObjectProvider();
+            const provider = getTestObjectProvider();
             const timeoutDurationMs = this.timeout() / 2;
             let containerUrl: IResolvedUrl | undefined;
             const oldRegistry: [string | undefined, IChannelFactory][] =
@@ -70,7 +70,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
 
                 const initContainer = await initLoader.createDetachedContainer(provider.defaultCodeDetails);
                 const attachContainer = async ()=>{
-                    const attachP =  initContainer.attach(provider.driver.createCreateNewRequest(provider.documentId))
+                    const attachP = initContainer.attach(provider.driver.createCreateNewRequest(provider.documentId))
                     if(testConfig.containerSaveAfterAttach){
                         await attachP;
                     }

@@ -16,7 +16,7 @@ import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { FluidObjectSymbolProvider } from "@fluidframework/synthesize";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 
-import { DataObject, DataObjectTypes, DataObjectType, IDataObjectProps  } from "../data-objects";
+import { DataObject, DataObjectTypes, DataObjectType, IDataObjectProps } from "../data-objects";
 import { PureDataObjectFactory } from "./pureDataObjectFactory";
 
 /**

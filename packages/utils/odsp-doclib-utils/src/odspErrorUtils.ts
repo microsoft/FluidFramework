@@ -222,7 +222,7 @@ export function enrichOdspError(
         props.responseType = response.type;
         if (response.headers) {
             const headers = getSPOAndGraphRequestIdsFromResponse(response.headers);
-            for (const key of Object.keys(headers))  {
+            for (const key of Object.keys(headers)) {
                 props[key] = headers[key];
             }
             (error as IOdspError).serverEpoch = response.headers.get("x-fluid-epoch") ?? undefined;

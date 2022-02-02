@@ -17,7 +17,6 @@ module.exports = {
         // RECOMMEDED RULES
         "@rushstack/no-new-null": "error",
         "no-empty": "error",
-        "no-return-assign": "error",
         "no-void": "error",
         "require-atomic-updates": "error",
 

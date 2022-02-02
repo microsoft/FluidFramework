@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
-import { neverCancelledSummaryToken } from  "../runWhileConnectedCoordinator";
+import { neverCancelledSummaryToken } from "../runWhileConnectedCoordinator";
 import { RunningSummarizer } from "../runningSummarizer";
 import { ISummarizerOptions } from "../summarizerTypes";
 import { SummaryCollection } from "../summaryCollection";
@@ -935,7 +935,7 @@ describe("Runtime", () => {
                     emitBroadcast(summaryTimestamp);
 
                     let startStatus: "starting" | "started" | "failed" = "starting";
-                    startRunningSummarizer().then(() => startStatus = "started", () => startStatus = "failed");
+                    startRunningSummarizer().then(() => { startStatus = "started" }, () => { startStatus = "failed" });
                     await flushPromises();
                     assert.strictEqual(startStatus, "starting",
                         "RunningSummarizer should still be starting since outstanding summary op");
@@ -1012,7 +1012,7 @@ describe("Runtime", () => {
 
                     let startStatus: "starting" | "started" | "failed" = "starting";
                     startRunningSummarizer({ disableHeuristics: true }).then(
-                        () => startStatus = "started", () => startStatus = "failed");
+                        () => { startStatus = "started" }, () => { startStatus = "failed" });
                     await flushPromises();
                     assert.strictEqual(startStatus, "starting",
                         "RunningSummarizer should still be starting since outstanding summary op");

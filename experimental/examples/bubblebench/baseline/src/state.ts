@@ -28,7 +28,7 @@ export class AppState implements IAppState {
     public get height() { return this._height; }
 
     private makeBubble() {
-        return makeBubble(this.width,  this.height);
+        return makeBubble(this.width, this.height);
     }
 
     public increaseBubbles() {
