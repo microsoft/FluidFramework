@@ -9,6 +9,7 @@ import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ITrace,
 } from "@fluidframework/protocol-definitions";
 import { assert, performance } from "@fluidframework/common-utils";
 
@@ -16,6 +17,8 @@ import { assert, performance } from "@fluidframework/common-utils";
  * We report various latency-related errors when waiting for op roundtrip takes longer than that amout of time.
  */
 export const latencyThreshold = 5000;
+
+const actionName = "inBoundQueuePush";
 
 class OpPerfTelemetry {
     private pongCount: number = 0;
@@ -45,7 +48,7 @@ class OpPerfTelemetry {
         this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
         this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
 
-        this.deltaManager.on("op", (message) => this.afterProcessingOp(message));
+        this.deltaManager.on("op", (message, processingTime) => this.afterProcessingOp(message, processingTime));
 
         this.deltaManager.on("connect", (details, opsBehind) => {
             this.clientId = details.clientId;
@@ -79,6 +82,21 @@ class OpPerfTelemetry {
                     count,
                     duration,
                 });
+            }
+        });
+
+        this.deltaManager.inbound.on("push", (message: ISequencedDocumentMessage) => {
+            if (message.sequenceNumber % 1000 === 0) {
+                const trace: ITrace = {
+                    service: "client",
+                    action: actionName,
+                    timestamp: Date.now(),   
+                };
+                if (message.traces !== undefined) {
+                    message.traces.push(trace);
+                } else {
+                    message.traces = [trace];
+                }
             }
         });
     }
@@ -119,7 +137,7 @@ class OpPerfTelemetry {
         }
     }
 
-    private afterProcessingOp(message: ISequencedDocumentMessage) {
+    private afterProcessingOp(message: ISequencedDocumentMessage, processingTime: number) {
         const sequenceNumber = message.sequenceNumber;
 
         if (sequenceNumber === this.connectionOpSeqNumber) {
@@ -137,6 +155,18 @@ class OpPerfTelemetry {
                 });
             }
             this.opSendTimeForLatencyStatisticsForMsnStatistics = message.timestamp;
+            const traces = message.traces;
+            if (traces !== undefined) {
+                traces.forEach((value: ITrace) => {
+                    if (value.action === actionName) {
+                        this.logger.sendPerformanceEvent({
+                            eventName: "OpInInboundQueueTime",
+                            sequenceNumber,
+                            duration: Date.now() - value.timestamp - processingTime,
+                        });
+                    }
+                });
+            }
         }
 
         if (this.clientId === message.clientId &&
