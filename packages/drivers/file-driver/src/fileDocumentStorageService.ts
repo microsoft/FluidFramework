@@ -76,8 +76,8 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
      * @param versionId - version ID.
      * @param count - Number of versions to be returned.
      */
-    public async getVersions(versionId: string, count: number): Promise<api.IVersion[]> {
-        if (versionId === FileStorageDocumentName) {
+    public async getVersions(versionId: string | null, count: number): Promise<api.IVersion[]> {
+        if (versionId === FileStorageDocumentName || versionId === null) {
             if (this.docTree || this.versionName !== undefined) {
                 return [{ id: "latest", treeId: FileStorageVersionTreeId }];
             }
@@ -143,20 +143,21 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
             return super.readBlob(sha);
         }
 
-        public async getVersions(versionId: string, count: number): Promise<api.IVersion[]> {
+        public async getVersions(versionId: string | null, count: number): Promise<api.IVersion[]> {
             // If we already saved document, that means we are getting here because of snapshot generation.
             // Not returning tree ensures that ContainerRuntime.snapshot() would regenerate subtrees for
             // each unchanged data store.
             // If we want to change that, we would need to capture docId on first call and return this.latestWriterTree
             // when latest is requested.
-            if (this.docId === undefined && versionId !== undefined) {
-                this.docId = versionId;
-            }
-            if (this.latestWriterTree && (this.docId === versionId || versionId === undefined)) {
+            if (this.latestWriterTree && (this.docId === versionId || versionId === null)) {
                 return [{ id: "latest", treeId: FileStorageVersionTreeId }];
             }
 
-            if (this.commitsWriter[versionId] !== undefined) {
+            if (this.docId === undefined && versionId !== null) {
+                this.docId = versionId;
+            }
+
+            if (versionId !== null && this.commitsWriter[versionId] !== undefined) {
                 // PrefetchDocumentStorageService likes to prefetch everything!
                 // Skip, as Container does not really need it.
                 throw new Error("Not supporting commit loading");

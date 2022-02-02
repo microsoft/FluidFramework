@@ -42,7 +42,7 @@ export function createProducer(
             }
         });
     } else {
-        producer =  new KafkaNodeProducer(
+        producer = new KafkaNodeProducer(
             { kafkaHost: kafkaEndPoint },
             clientId,
             topic,

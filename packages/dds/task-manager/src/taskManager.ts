@@ -389,11 +389,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     /**
      * @internal
      */
-    protected registerCore() { }
-
-    /**
-     * @internal
-     */
     protected onDisconnect() {
         this.disconnectWatcher.emit("disconnect");
     }

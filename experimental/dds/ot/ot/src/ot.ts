@@ -86,8 +86,6 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
         this.global = this.local = this.serializer.parse(rawContent);
     }
 
-    protected registerCore() {}
-
     protected onDisconnect() { }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {

@@ -5,7 +5,7 @@
 
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { IDetachedBlobStorage, ILoaderProps, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
+import { ILoaderProps, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails, IRequestHeader } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
@@ -35,7 +35,6 @@ export interface ITestObjectProvider {
     createLoader(
         packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
         loaderProps?: Partial<ILoaderProps>,
-        detachedBlobStorage?: IDetachedBlobStorage,
     ): IHostLoader;
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
     loadContainer(
@@ -48,7 +47,7 @@ export interface ITestObjectProvider {
      * Used to create a test Container. The Loader/ContainerRuntime/DataRuntime might be different versioned.
      * In generateLocalCompatTest(), this Container and its runtime will be arbitrarily-versioned.
      */
-    makeTestLoader(testContainerConfig?: ITestContainerConfig, detachedBlobStorage?: IDetachedBlobStorage): IHostLoader,
+    makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader,
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>,
     /**
@@ -108,7 +107,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
             return {
                 get: () => documentId,
                 update: () => { }, // do not update the document ID in odsp test cases
-                reset: () => documentId = createDocumentId(),
+                reset: () => { documentId = createDocumentId() },
             };
         default:
             return {
@@ -118,7 +117,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
                     ensureFluidResolvedUrl(resolvedUrl);
                     documentId = resolvedUrl.id ?? documentId;
                 },
-                reset: () => documentId = createDocumentId(),
+                reset: () => { documentId = createDocumentId() },
             };
     }
 }
@@ -126,7 +125,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
 /**
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
  */
-export class TestObjectProvider {
+export class TestObjectProvider implements ITestObjectProvider {
     private readonly _loaderContainerTracker = new LoaderContainerTracker();
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _urlResolver: IUrlResolver | undefined;
@@ -200,7 +199,6 @@ export class TestObjectProvider {
     public createLoader(
         packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
         loaderProps?: Partial<ILoaderProps>,
-        detachedBlobStorage?: IDetachedBlobStorage,
     ) {
         const multiSinkLogger = new MultiSinkLogger();
         multiSinkLogger.addLogger(this.logger);
@@ -208,15 +206,12 @@ export class TestObjectProvider {
             multiSinkLogger.addLogger(loaderProps.logger);
         }
 
-        const codeLoader = new LocalCodeLoader(packageEntries);
         const loader = new this.LoaderConstructor({
-            urlResolver: this.urlResolver,
-            documentServiceFactory: this.documentServiceFactory,
-            codeLoader,
+            ... loaderProps,
             logger: multiSinkLogger,
-            configProvider: loaderProps?.configProvider,
-            options: loaderProps?.options,
-            detachedBlobStorage,
+            codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),
+            urlResolver: loaderProps?.urlResolver ?? this.urlResolver,
+            documentServiceFactory: loaderProps?.documentServiceFactory ?? this.documentServiceFactory,
         });
         this._loaderContainerTracker.add(loader);
         return loader;
@@ -262,11 +257,10 @@ export class TestObjectProvider {
      * The version of the loader/containerRuntime/dataRuntime may vary based on compat config of the current run
      * @param testContainerConfig - optional configuring the test Container
      */
-    public makeTestLoader(testContainerConfig?: ITestContainerConfig, detachedBlobStorage?: IDetachedBlobStorage) {
+    public makeTestLoader(testContainerConfig?: ITestContainerConfig) {
         return this.createLoader(
             [[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]],
             testContainerConfig?.loaderProps,
-            detachedBlobStorage,
         );
     }
 

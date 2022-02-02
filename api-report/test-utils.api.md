@@ -12,7 +12,6 @@ import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
-import { IDetachedBlobStorage } from '@fluidframework/container-loader';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
@@ -130,7 +129,7 @@ export interface ITestObjectProvider {
     // (undocumented)
     createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
     // (undocumented)
-    createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>, detachedBlobStorage?: IDetachedBlobStorage): IHostLoader;
+    createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): IHostLoader;
     // (undocumented)
     defaultCodeDetails: IFluidCodeDetails;
     // (undocumented)
@@ -149,7 +148,7 @@ export interface ITestObjectProvider {
     logger: ITelemetryBaseLogger;
     // (undocumented)
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
-    makeTestLoader(testContainerConfig?: ITestContainerConfig, detachedBlobStorage?: IDetachedBlobStorage): IHostLoader;
+    makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader;
     // (undocumented)
     opProcessingController: IOpProcessingController;
     // (undocumented)
@@ -232,12 +231,12 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 }
 
 // @public
-export class TestObjectProvider {
+export class TestObjectProvider implements ITestObjectProvider {
     constructor(LoaderConstructor: typeof Loader, driver: ITestDriver, createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
     // (undocumented)
     readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
-    createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>, detachedBlobStorage?: IDetachedBlobStorage): Loader;
+    createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): Loader;
     // (undocumented)
     get defaultCodeDetails(): IFluidCodeDetails;
     // (undocumented)
@@ -256,7 +255,7 @@ export class TestObjectProvider {
     // (undocumented)
     get logger(): ITelemetryBaseLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
-    makeTestLoader(testContainerConfig?: ITestContainerConfig, detachedBlobStorage?: IDetachedBlobStorage): Loader;
+    makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader;
     // (undocumented)
     get opProcessingController(): IOpProcessingController;
     // (undocumented)

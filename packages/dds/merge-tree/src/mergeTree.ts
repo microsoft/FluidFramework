@@ -2265,7 +2265,7 @@ export class MergeTree {
     }
 
     // Assume called only when pos == len
-    private breakTie(pos: number, node: IMergeNode,  seq: number) {
+    private breakTie(pos: number, node: IMergeNode, seq: number) {
         if (node.isLeaf()) {
             if (pos === 0) {
                 // normalize the seq numbers

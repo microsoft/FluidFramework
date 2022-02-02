@@ -323,7 +323,7 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
     public getTelemetryProperties(): ITelemetryProperties {
         const taggableProps = getValidTelemetryProps(this, this.omitPropsFromLogging);
         // Include non-enumerable props inherited from Error that are not returned by getValidTelemetryProps
-        return  {
+        return {
             ...taggableProps,
             stack: this.stack,
             message: this.message,

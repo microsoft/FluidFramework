@@ -230,7 +230,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
     it("works in detached container", async function() {
         const detachedBlobStorage = new MockDetachedBlobStorage();
-        const loader = provider.makeTestLoader(testContainerConfig, detachedBlobStorage);
+        const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: {detachedBlobStorage}});
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";
@@ -259,7 +259,8 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     });
 
     it("serialize/rehydrate container with blobs", async function() {
-        const loader = provider.makeTestLoader(testContainerConfig, new MockDetachedBlobStorage());
+        const loader = provider.makeTestLoader(
+            {...testContainerConfig, loaderProps: {detachedBlobStorage: new MockDetachedBlobStorage()}});
         const serializeContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";
@@ -278,7 +279,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
     it("redirect table saved in snapshot", async function() {
         const detachedBlobStorage = new MockDetachedBlobStorage();
-        const loader = provider.makeTestLoader(testContainerConfig, detachedBlobStorage);
+        const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: {detachedBlobStorage}});
         const detachedContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";
@@ -309,7 +310,8 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     });
 
     it("serialize/rehydrate then attach", async function() {
-        const loader = provider.makeTestLoader(testContainerConfig, new MockDetachedBlobStorage());
+        const loader = provider.makeTestLoader(
+            {...testContainerConfig, loaderProps: {detachedBlobStorage: new MockDetachedBlobStorage()}});
         const serializeContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";
@@ -336,7 +338,8 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     });
 
     it("serialize/rehydrate multiple times then attach", async function() {
-        const loader = provider.makeTestLoader(testContainerConfig, new MockDetachedBlobStorage());
+        const loader = provider.makeTestLoader(
+            {...testContainerConfig, loaderProps: {detachedBlobStorage: new MockDetachedBlobStorage()}});
         let container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";
@@ -367,7 +370,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
     it("rehydrating without detached blob storage results in error", async function() {
         const detachedBlobStorage = new MockDetachedBlobStorage();
-        const loader = provider.makeTestLoader(testContainerConfig, detachedBlobStorage);
+        const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: {detachedBlobStorage}});
         const serializeContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";

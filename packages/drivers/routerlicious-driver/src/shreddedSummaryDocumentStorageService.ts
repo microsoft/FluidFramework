@@ -72,7 +72,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
         }
     }
 
-    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
+    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
         const id = versionId ? versionId : this.id;
         const commits = await PerformanceEvent.timedExecAsync(
             this.logger,
@@ -81,7 +81,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
                 versionId: id,
                 count,
             },
-            async () =>  this.manager.getCommits(id, count),
+            async () => this.manager.getCommits(id, count),
         );
         return commits.map((commit) => ({
             date: commit.commit.author.date,

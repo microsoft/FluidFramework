@@ -26,6 +26,7 @@ import {
  } from "./odspCache";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 import { ClpCompliantAppHeader } from "./contractsPublic";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" |
     "treesLatest" | "uploadSummary" | "push" | "versions";
@@ -171,8 +172,9 @@ export class EpochTracker implements IPersistedFileCache {
         fetchOptions: RequestInit,
         fetchType: FetchType,
         addInBody: boolean = false,
+        fetchReason?: string,
     ): Promise<IOdspResponse<T>> {
-        const clientCorrelationId = this.formatClientCorrelationId();
+        const clientCorrelationId = this.formatClientCorrelationId(fetchReason);
         // Add epoch in fetch request.
         this.addEpochInRequest(fetchOptions, addInBody, clientCorrelationId);
         let epochFromResponse: string | undefined;
@@ -212,8 +214,9 @@ export class EpochTracker implements IPersistedFileCache {
         fetchOptions: {[index: string]: any},
         fetchType: FetchType,
         addInBody: boolean = false,
+        fetchReason?: string,
     ) {
-        const clientCorrelationId = this.formatClientCorrelationId();
+        const clientCorrelationId = this.formatClientCorrelationId(fetchReason);
         // Add epoch in fetch request.
         this.addEpochInRequest(fetchOptions, addInBody, clientCorrelationId);
         let epochFromResponse: string | undefined;
@@ -293,8 +296,12 @@ export class EpochTracker implements IPersistedFileCache {
         fetchOptions.body = formParams.join("\r\n");
     }
 
-    private formatClientCorrelationId() {
-        return `driverId=${this.driverId}, RequestNumber=${this.networkCallNumber++}`;
+    private formatClientCorrelationId(fetchReason?: string) {
+        const items: string[] = [`driverId=${this.driverId}`, `RequestNumber=${this.networkCallNumber++}`];
+        if (fetchReason !== undefined) {
+            items.push(`fetchReason=${fetchReason}`);
+        }
+        return items.join(", ");
     }
 
     protected validateEpochFromResponse(
@@ -337,7 +344,7 @@ export class EpochTracker implements IPersistedFileCache {
             // If it was categorized as epoch error but the epoch returned in response matches with the client epoch
             // then it was coherency 409, so rethrow it as throttling error so that it can retried. Default throttling
             // time is 1s.
-            throw new ThrottlingError("coherency409", error.message, 1, { [Odsp409Error]: true });
+            throw new ThrottlingError("coherency409", error.message, 1, { [Odsp409Error]: true, driverVersion });
         }
     }
 
@@ -348,7 +355,8 @@ export class EpochTracker implements IPersistedFileCache {
         if (this.fluidEpoch && epochFromResponse && (this.fluidEpoch !== epochFromResponse)) {
             // This is similar in nature to how fluidEpochMismatchError (409) is handled.
             // Difference - client detected mismatch, instead of server detecting it.
-            return new NonRetryableError("epochMismatch", "Epoch mismatch", DriverErrorType.fileOverwrittenInStorage);
+            return new NonRetryableError(
+                "epochMismatch", "Epoch mismatch", DriverErrorType.fileOverwrittenInStorage, { driverVersion });
         }
     }
 
@@ -403,13 +411,14 @@ export class EpochTrackerWithRedemption extends EpochTracker {
         fetchOptions: {[index: string]: any},
         fetchType: FetchType,
         addInBody: boolean = false,
+        fetchReason?: string,
     ): Promise<IOdspResponse<T>> {
         // Optimize the flow if we know that treesLatestDeferral was already completed by the timer we started
         // joinSession call. If we did - there is no reason to repeat the call as it will fail with same error.
         const completed = this.treesLatestDeferral.isCompleted;
 
         try {
-            return await super.fetchAndParseAsJSON<T>(url, fetchOptions, fetchType, addInBody);
+            return await super.fetchAndParseAsJSON<T>(url, fetchOptions, fetchType, addInBody, fetchReason);
         } catch (error) {
             // Only handling here treesLatest. If createFile failed, we should never try to do joinSession.
             // Similar, if getVersions failed, we should not do any further storage calls.
