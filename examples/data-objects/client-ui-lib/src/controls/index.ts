@@ -6,7 +6,6 @@
 export * from "./dockPanel";
 export * from "./flowContainer";
 export * from "./flowView";
-export * from "./image";
 export * from "./layout";
 export * from "./layerPanel";
 // eslint-disable-next-line import/no-internal-modules

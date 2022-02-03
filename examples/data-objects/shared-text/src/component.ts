@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import { parse } from "querystring";
-import * as url from "url";
 import registerDebug from "debug";
 import { controls, ui } from "@fluid-example/client-ui-lib";
 import { SharedCell } from "@fluidframework/cell";
@@ -157,11 +156,6 @@ export class SharedTextRunner
 
         const browserContainerHost = new ui.BrowserContainerHost();
 
-        // Bindy for insights
-        const image = new controls.Image(
-            document.createElement("div"),
-            url.resolve(document.baseURI, "/public/images/bindy.svg"));
-
         const containerDiv = document.createElement("div");
         containerDiv.id = "flow-container";
         containerDiv.style.touchAction = "none";
@@ -172,7 +166,6 @@ export class SharedTextRunner
             this.runtime,
             this.context,
             this.sharedString,
-            image,
         );
         const theFlow = container.flowView;
         browserContainerHost.attach(container, div);

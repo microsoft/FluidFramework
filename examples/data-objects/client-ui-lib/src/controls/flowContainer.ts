@@ -9,7 +9,6 @@ import * as Sequence from "@fluidframework/sequence";
 import * as ui from "../ui";
 import { DockPanel } from "./dockPanel";
 import { FlowView, IOverlayMarker } from "./flowView";
-import { Image } from "./image";
 import { LayerPanel } from "./layerPanel";
 import { IRange } from "./scrollBar";
 import { Title } from "./title";
@@ -27,7 +26,6 @@ export class FlowContainer extends ui.Component {
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly context: IFluidDataStoreContext,
         private readonly sharedString: Sequence.SharedString,
-        private readonly image: Image,
     ) {
         super(element);
 
@@ -85,25 +83,10 @@ export class FlowContainer extends ui.Component {
         // Use the dock panel to layout the viewport - layer panel as the content and then status bar at the bottom
         this.dockPanel.addTop(this.title);
         this.dockPanel.addContent(this.layerPanel);
-
-        // Intelligence image
-        this.image.element.style.visibility = "hidden";
-        this.addChild(this.image);
-        this.element.appendChild(this.image.element);
-    }
-
-    public setTitleVisibility(visible: boolean) {
-        this.title.setVisibility(visible);
     }
 
     protected resizeCore(bounds: ui.Rectangle) {
         bounds.conformElement(this.dockPanel.element);
         this.dockPanel.resize(bounds);
-
-        if (this.image) {
-            const overlayRect = bounds.inner4(0.7, 0.05, 0.2, 0.1);
-            overlayRect.conformElement(this.image.element);
-            this.image.resize(overlayRect);
-        }
     }
 }
