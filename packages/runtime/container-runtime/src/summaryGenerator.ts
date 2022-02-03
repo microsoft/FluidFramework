@@ -245,10 +245,11 @@ export class SummaryGenerator {
 
             // Cumulatively add telemetry properties based on how far generateSummary went.
             const { referenceSequenceNumber: refSequenceNumber } = summaryData;
+            const opsSinceLastSummary = refSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber;
             generateTelemetryProps = {
                 referenceSequenceNumber: refSequenceNumber,
                 opsSinceLastAttempt: refSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
-                opsSinceLastSummary: refSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
+                opsSinceLastSummary,
             };
             if (summaryData.stage !== "base") {
                 generateTelemetryProps = {
@@ -275,6 +276,26 @@ export class SummaryGenerator {
 
             if (summaryData.stage !== "submit") {
                 return fail("submitSummaryFailure", summaryData.error, generateTelemetryProps);
+            }
+
+            /**
+             * With incremental summaries, if the full tree was not summarized, only data stores that changed should
+             * be summarized. A data store is considered changed if either or both of the following is true:
+             * - It has received an op.
+             * - Its reference state changed, i.e., it went from referenced to unreferenced or vice-versa.
+             *
+             * Since an op in a data store can change the reference state of another data store, each op can potentially
+             * result in two data stores being summarized. So, the number of summarized data stores should not exceed
+             * twice the number of ops since last summary.
+             */
+            if (!fullTree
+                && !summaryData.forcedFullTree
+                && summaryData.summaryStats.summarizedDataStoreCount <= 2 * opsSinceLastSummary) {
+                logger.sendErrorEvent({
+                    eventName: "IncrementalSummaryViolation",
+                    summarizedDataStoreCount: summaryData.summaryStats.summarizedDataStoreCount,
+                    opsSinceLastSummary,
+                });
             }
 
             // Log event here on summary success only, as Summarize_cancel duplicates failure logging.
