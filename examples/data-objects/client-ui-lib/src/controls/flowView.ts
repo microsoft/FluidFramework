@@ -7,7 +7,6 @@ import * as SearchMenu from "@fluid-example/search-menu";
 import { performance } from "@fluidframework/common-utils";
 import {
     FluidObject,
-    IFluidHandle,
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -185,18 +184,6 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.createComment();
-        },
-        key: "comment",
-    },
-    {
-        exec: (c, p, f) => {
-            f.showCommentText();
-        },
-        key: "comment text",
-    },
-    {
-        exec: (c, p, f) => {
             f.setColor("red");
         },
         key: "red",
@@ -321,22 +308,6 @@ const commands: IFlowViewCmd[] = [
             f.status.remove("cursor");
         },
         key: "hide cursor location",
-    },
-    {
-        enabled: (f) => !f.modes.showComments,
-        exec: (c, p, f) => {
-            f.modes.showComments = true;
-            f.hostSearchMenu(f.cursor.pos);
-        },
-        key: "show comments",
-    },
-    {
-        enabled: (f) => f.modes.showComments,
-        exec: (c, p, f) => {
-            f.modes.showComments = false;
-            f.hostSearchMenu(f.cursor.pos);
-        },
-        key: "hide comments",
     },
     {
         exec: (c, p, f) => {
@@ -2421,7 +2392,6 @@ interface IListReferenceDoc extends IReferenceDoc {
 }
 
 interface IFlowViewModes {
-    showComments?: boolean;
     showCursorLocation?: boolean;
 }
 
@@ -2447,14 +2417,12 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public wheelTicking = false;
     public topChar = -1;
     public cursor: FlowCursor;
-    public comments: Sequence.IntervalCollection<Sequence.SequenceInterval>;
     public presenceSignal: PresenceSignal;
     public presenceVector: Map<string, ILocalPresenceInfo> = new Map();
     public docRoot: types.ISharedMap;
     public curPG: MergeTree.Marker;
     public modes = {
         randExclusion: false,
-        showComments: true,
         showCursorLocation: true,
     } as IFlowViewModes;
     public lastDocContext: IDocumentContext;
@@ -3600,44 +3568,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.statusMessage("cursor", `Cursor: ${this.cursor.pos} `);
     }
 
-    public showCommentText() {
-        const overlappingComments = this.comments.findOverlappingIntervals(
-            this.cursor.pos,
-            this.cursor.pos + 1);
-
-        if (overlappingComments && (overlappingComments.length >= 1)) {
-            const commentInterval = overlappingComments[0];
-
-            const commentHandle = commentInterval.properties.story as IFluidHandle<Sequence.SharedString>;
-            commentHandle.get().then(
-                (comment) => {
-                    const commentText = comment.getText();
-                    this.statusMessage("comment", `Comment Text: ${commentText}`);
-                    setTimeout(() => {
-                        this.status.remove("comment");
-                    }, (10000));
-                },
-                () => {
-                    console.log(`Failed to fetch ${commentHandle.absolutePath}`);
-                });
-        }
-    }
-
-    public createComment() {
-        const sel = this.cursor.getSelection();
-        if (sel) {
-            const commentStory = Sequence.SharedString.create(this.runtime);
-            commentStory.insertText(0, "a comment...");
-            this.comments.add(
-                sel.start,
-                sel.end,
-                MergeTree.IntervalType.SlideOnRemove,
-                { story: commentStory.handle });
-            this.cursor.clearSelection();
-            this.hostSearchMenu(this.cursor.pos);
-        }
-    }
-
     public async insertComponentNew(prefix: string, chaincode: string, inline = false) {
         const router = await this.context.containerRuntime.createDataStore(chaincode);
         const object: FluidObject<IFluidLoadable> = await requestFluidObject(router, "");
@@ -4053,15 +3983,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public async loadFinished(clockStart = 0) {
-        // Work around a race condition with multiple shared strings trying to create the interval
-        // collections at the same time
-        await Promise.all([
-            this.sharedString.waitIntervalCollection("comments"),
-        ]);
-
-        // For examples of showing the API we do interval adds on the collection with comments.
-        this.comments = this.sharedString.getIntervalCollection("comments");
-
         this.render(0, true);
         if (clockStart > 0) {
             // eslint-disable-next-line max-len
