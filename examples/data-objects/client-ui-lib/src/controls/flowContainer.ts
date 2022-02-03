@@ -12,11 +12,9 @@ import { FlowView, IOverlayMarker } from "./flowView";
 import { Image } from "./image";
 import { LayerPanel } from "./layerPanel";
 import { IRange } from "./scrollBar";
-import { Status } from "./status";
 import { Title } from "./title";
 
 export class FlowContainer extends ui.Component {
-    public status: Status;
     public title: Title;
     public flowView: FlowView;
     private readonly dockPanel: DockPanel;
@@ -46,7 +44,6 @@ export class FlowContainer extends ui.Component {
         // Status bar at the bottom
         const statusDiv = document.createElement("div");
         statusDiv.style.borderTop = "1px solid gray";
-        this.status = new Status(statusDiv);
 
         // FlowView holds the text
         const flowViewDiv = document.createElement("div");
@@ -56,7 +53,6 @@ export class FlowContainer extends ui.Component {
             this.runtime,
             this.context,
             this.sharedString,
-            this.status,
         );
 
         // Layer panel lets us put the canvas on top of the text
@@ -89,7 +85,6 @@ export class FlowContainer extends ui.Component {
         // Use the dock panel to layout the viewport - layer panel as the content and then status bar at the bottom
         this.dockPanel.addTop(this.title);
         this.dockPanel.addContent(this.layerPanel);
-        this.dockPanel.addBottom(this.status);
 
         // Intelligence image
         this.image.element.style.visibility = "hidden";

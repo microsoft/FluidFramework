@@ -26,7 +26,6 @@ import { Cursor, IRange } from "./cursor";
 import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
 import { PresenceSignal } from "./presenceSignal";
-import { Status } from "./status";
 import {
     CursorDirection,
     IViewCursor,
@@ -2369,7 +2368,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     private lastVerticalX = -1;
     private pendingRender = false;
-    private readonly diagCharPort = false;
     private activeSearchBox: SearchMenu.ISearchBox;
     private readonly cmdTree: MergeTree.TST<IFlowViewCmd>;
     private formatRegister: MergeTree.PropertySet;
@@ -2386,7 +2384,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         public readonly runtime: IFluidDataStoreRuntime,
         public readonly context: IFluidDataStoreContext,
         public sharedString: Sequence.SharedString,
-        public status: Status,
     ) {
         super(element);
 
@@ -2407,8 +2404,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
         this.viewportDiv = document.createElement("div");
         this.element.appendChild(this.viewportDiv);
-        this.statusMessage("li", " ");
-        this.statusMessage("si", " ");
 
         this.undoRedoManager = new UndoRedoStackManager();
         const sequenceHandler = new SharedSegmentSequenceUndoRedoHandler(this.undoRedoManager);
@@ -2528,10 +2523,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 localPresenceInfo.cursor.onLine(localPresenceInfo.markXformPos);
             this.presenceQueueRender(localPresenceInfo, sameLine);
         }
-    }
-
-    public statusMessage(key: string, msg: string) {
-        this.status.add(key, msg);
     }
 
     public firstLineDiv() {
@@ -3863,7 +3854,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             }
         }
 
-        const clk = Date.now();
         // TODO: consider using markers for presence info once splice segments during pg render
         this.updatePresencePositions();
         domutils.clearSubtree(this.viewportDiv);
@@ -3871,12 +3861,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const renderOutput = renderTree(this.viewportDiv, this.topChar, this);
         this.viewportStartPos = renderOutput.viewportStartPos;
         this.viewportEndPos = renderOutput.viewportEndPos;
-        this.statusMessage("render", `&nbsp ${Date.now() - clk}ms`);
-
-        if (this.diagCharPort) {
-            this.statusMessage("diagCharPort",
-                `&nbsp sp: (${this.topChar}) ep: ${this.viewportEndPos} cp: ${this.cursor.pos}`);
-        }
 
         this.emit("render", {
             overlayMarkers: renderOutput.overlayMarkers,

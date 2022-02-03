@@ -9,7 +9,6 @@ export * from "./flowView";
 export * from "./image";
 export * from "./layout";
 export * from "./layerPanel";
-export * from "./status";
 // eslint-disable-next-line import/no-internal-modules
 export * from "../text/characterCodes";
 export * from "./keycode";
