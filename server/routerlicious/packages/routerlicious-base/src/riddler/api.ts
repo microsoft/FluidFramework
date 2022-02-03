@@ -104,7 +104,7 @@ export function create(
      */
     router.put("/tenants/:id/key", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const keyName = request.header("keyName") || KeyName.key1;
+        const keyName = request.body.keyName as string;
         const refreshKeyP = manager.refreshTenantKey(tenantId, keyName);
         return handleResponse(refreshKeyP, response);
     });

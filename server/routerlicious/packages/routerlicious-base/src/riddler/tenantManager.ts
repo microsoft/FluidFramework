@@ -259,6 +259,10 @@ export class TenantManager {
      * Generates a new key for a tenant
      */
     public async refreshTenantKey(tenantId: string, keyName: string): Promise<ITenantKeys> {
+        if (keyName !== KeyName.key1 && keyName !== KeyName.key2) {
+            return Promise.reject(new Error("Key name must be either key1 or key2."));
+        }
+
         const tenantDocument = await this.getTenantDocument(tenantId, false);
         
         const newTenantKey = this.generateTenantKey();
@@ -310,7 +314,7 @@ export class TenantManager {
             };
         }
 
-        // below is if key1 is to be refreshed or keyName is undefined
+        // below is if key1 is to be refreshed
         // if key2 doesn't exist, no need to decrypt
         if (!key2) {
             winston.info("Tenant key2 doesn't exist.");
