@@ -10,7 +10,6 @@ import {
     ITenantStorage,
     ITenantOrderer,
     ITenantCustomData,
-    KeyName,
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { getParam } from "@fluidframework/server-services-utils";
