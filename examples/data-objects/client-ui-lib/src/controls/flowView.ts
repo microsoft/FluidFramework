@@ -292,22 +292,6 @@ const commands: IFlowViewCmd[] = [
         key: "table summary",
     },
     {
-        enabled: (f) => !f.modes.showCursorLocation,
-        exec: (c, p, f) => {
-            f.modes.showCursorLocation = true;
-            f.cursorLocation();
-        },
-        key: "show cursor location",
-    },
-    {
-        enabled: (f) => f.modes.showCursorLocation,
-        exec: (c, p, f) => {
-            f.modes.showCursorLocation = false;
-            f.status.remove("cursor");
-        },
-        key: "hide cursor location",
-    },
-    {
         exec: (c, p, f) => {
             f.updatePGInfo(f.cursor.pos - 1);
             Table.createTable(f.cursor.pos, f.sharedString, f.runtime.clientId);
@@ -2119,9 +2103,6 @@ class FlowCursor extends Cursor {
     }
 
     public updateView(flowView: FlowView) {
-        if (flowView.modes.showCursorLocation) {
-            flowView.cursorLocation();
-        }
         if (this.getSelection()) {
             flowView.render(flowView.topChar, true);
         } else {
@@ -2347,10 +2328,6 @@ interface IListReferenceDoc extends IReferenceDoc {
     selectionIndex: number;
 }
 
-interface IFlowViewModes {
-    showCursorLocation?: boolean;
-}
-
 export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost {
     public static docStartPosition = 0;
     public get ISearchMenuHost() { return this; }
@@ -2377,10 +2354,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public presenceVector: Map<string, ILocalPresenceInfo> = new Map();
     public docRoot: types.ISharedMap;
     public curPG: MergeTree.Marker;
-    public modes = {
-        randExclusion: false,
-        showCursorLocation: true,
-    } as IFlowViewModes;
     public lastDocContext: IDocumentContext;
     public focusChild: FlowView;
     public focusMarker: MergeTree.Marker;
@@ -3162,9 +3135,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                             start: this.cursor.pos,
                         };
                     }
-                    if (this.modes.showCursorLocation) {
-                        this.cursorLocation();
-                    }
                     this.sharedString.removeText(toRemove.start, toRemove.end);
                 } else if (((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown)) && (!this.ticking)) {
                     setTimeout(() => {
@@ -3174,17 +3144,11 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     this.ticking = true;
                 } else if (e.keyCode === KeyCode.home) {
                     this.cursor.pos = FlowView.docStartPosition;
-                    if (this.modes.showCursorLocation) {
-                        this.cursorLocation();
-                    }
                     this.render(FlowView.docStartPosition);
                 } else if (e.keyCode === KeyCode.end) {
                     const halfport = Math.floor(this.viewportCharCount() / 2);
                     const topChar = this.sharedString.getLength() - halfport;
                     this.cursor.pos = topChar;
-                    if (this.modes.showCursorLocation) {
-                        this.cursorLocation();
-                    }
                     this.broadcastPresence();
                     this.render(topChar);
                 } else if (e.keyCode === KeyCode.rightArrow) {
@@ -3290,9 +3254,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     }
 
                     this.clearSelection();
-                    if (this.modes.showCursorLocation) {
-                        this.cursorLocation();
-                    }
                 }
             }
         };
@@ -3509,10 +3470,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.sharedString.annotateRange(start, end, { [name]: valueOn });
         }
         this.undoRedoManager.closeCurrentOperation();
-    }
-
-    public cursorLocation() {
-        this.statusMessage("cursor", `Cursor: ${this.cursor.pos} `);
     }
 
     public async insertComponentNew(prefix: string, chaincode: string, inline = false) {
