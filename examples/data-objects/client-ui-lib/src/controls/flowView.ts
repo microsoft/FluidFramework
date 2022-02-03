@@ -3749,34 +3749,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public testWordInfo() {
-        const text = this.sharedString.getText();
-        const nonWhitespace = text.split(/\s+/g);
-        console.log(`non ws count: ${nonWhitespace.length}`);
-        const obj = {};
-        for (const nws of nonWhitespace) {
-            if (!obj[nws]) {
-                obj[nws] = 1;
-            } else {
-                obj[nws]++;
-            }
-        }
-        let count = 0;
-        const uniques = [] as string[];
-        // eslint-disable-next-line no-restricted-syntax
-        for (const key in obj) {
-            // eslint-disable-next-line no-prototype-builtins
-            if (obj.hasOwnProperty(key)) {
-                count++;
-                uniques.push(key);
-            }
-        }
-        console.log(`${count} unique`);
-        const clock = Date.now();
-        domutils.getMultiTextWidth(uniques, "18px Times");
-        console.log(`unique pp cost: ${Date.now() - clock}ms`);
-    }
-
     public preScroll() {
         if (this.lastVerticalX === -1) {
             const rect = this.cursor.rect();
@@ -3882,8 +3854,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.sharedString.on("valueChanged", (delta: types.IValueChanged) => {
             this.queueRender(undefined, true);
         });
-
-        // This.testWordInfo();
     }
 
     public updateTableInfo(changePos: number) {

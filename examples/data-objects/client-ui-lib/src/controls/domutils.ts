@@ -63,19 +63,6 @@ export function getTextWidth(text: string, font: string) {
     return w;
 }
 
-export function getMultiTextWidth(texts: string[], font: string) {
-    // Re-use canvas object for better performance
-    const canvas = cachedCanvas || (cachedCanvas = document.createElement("canvas"));
-    const context = canvas.getContext("2d");
-    context.font = font;
-    let sum = 0;
-    for (const text of texts) {
-        const metrics = context.measureText(text);
-        sum += metrics.width;
-    }
-    return sum;
-}
-
 export function getTextHeight(elm: HTMLDivElement) {
     const computedStyle = getComputedStyle(elm);
     if (computedStyle.lineHeight && (computedStyle.lineHeight.length > 0) &&
