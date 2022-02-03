@@ -8,16 +8,13 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
 import * as ui from "../ui";
 import { DockPanel } from "./dockPanel";
-import { FlowView, IOverlayMarker } from "./flowView";
-import { LayerPanel } from "./layerPanel";
-import { IRange } from "./scrollBar";
+import { FlowView } from "./flowView";
 import { Title } from "./title";
 
 export class FlowContainer extends ui.Component {
     public title: Title;
     public flowView: FlowView;
     private readonly dockPanel: DockPanel;
-    private readonly layerPanel: LayerPanel;
 
     // api.Document should not be used. It should be removed after #2915 is fixed.
     constructor(
@@ -39,10 +36,6 @@ export class FlowContainer extends ui.Component {
         this.title.setTitle(title);
         this.title.setBackgroundColor(title);
 
-        // Status bar at the bottom
-        const statusDiv = document.createElement("div");
-        statusDiv.style.borderTop = "1px solid gray";
-
         // FlowView holds the text
         const flowViewDiv = document.createElement("div");
         flowViewDiv.classList.add("flow-view");
@@ -53,36 +46,12 @@ export class FlowContainer extends ui.Component {
             this.sharedString,
         );
 
-        // Layer panel lets us put the canvas on top of the text
-        const layerPanelDiv = document.createElement("div");
-        layerPanelDiv.id = "layer-panel";
-        this.layerPanel = new LayerPanel(layerPanelDiv);
-
-        // Update the scroll bar
-        this.flowView.on(
-            "render",
-            (renderInfo: {
-                overlayMarkers: IOverlayMarker[];
-                range: IRange;
-                viewportEndPos: number;
-                viewportStartPos: number;
-            }) => {
-                const showScrollBar = renderInfo.range.min !== renderInfo.viewportStartPos ||
-                    renderInfo.range.max !== renderInfo.viewportEndPos;
-                this.layerPanel.showScrollBar(showScrollBar);
-
-                this.layerPanel.scrollBar.setRange(renderInfo.range);
-            });
-
-        // Add flowView to the panel
-        this.layerPanel.addChild(this.flowView);
-
         this.dockPanel = new DockPanel(this.element);
         this.addChild(this.dockPanel);
 
         // Use the dock panel to layout the viewport - layer panel as the content and then status bar at the bottom
         this.dockPanel.addTop(this.title);
-        this.dockPanel.addContent(this.layerPanel);
+        this.dockPanel.addContent(this.flowView);
     }
 
     protected resizeCore(bounds: ui.Rectangle) {
