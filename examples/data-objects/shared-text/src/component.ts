@@ -37,7 +37,7 @@ import {
 } from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { IFluidTokenProvider } from "@fluidframework/container-definitions";
-import { downloadRawText, getInsights, mapWait, setTranslation } from "./utils";
+import { downloadRawText, mapWait } from "./utils";
 
 const debug = registerDebug("fluid:shared-text");
 
@@ -165,17 +165,6 @@ export class SharedTextRunner
         }
         const agentScheduler = agentSchedulerResponse.value as IAgentScheduler;
 
-        const options = parse(window.location.search.substr(1));
-        setTranslation(
-            this.root,
-            this.sharedString.id,
-            options.translationFromLanguage as string,
-            options.translationToLanguage as string,
-            existing)
-            .catch((error) => {
-                console.error("Problem adding translation", error);
-            });
-
         const taskScheduler = new TaskScheduler(
             this.context,
             agentScheduler,
@@ -216,12 +205,6 @@ export class SharedTextRunner
         );
         const theFlow = container.flowView;
         browserContainerHost.attach(container, div);
-
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        getInsights(this.root, this.sharedString.id).then(
-            (insightsMap) => {
-                container.trackInsights(insightsMap);
-            });
 
         if (this.sharedString.getLength() > 0) {
             theFlow.render(0, true);
