@@ -8,12 +8,9 @@ import { parse } from "querystring";
 import * as url from "url";
 import registerDebug from "debug";
 import { controls, ui } from "@fluid-example/client-ui-lib";
-import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
-import { IAgentScheduler } from "@fluidframework/agent-scheduler";
 import { SharedCell } from "@fluidframework/cell";
 import { performance } from "@fluidframework/common-utils";
 import {
-    FluidObject,
     IFluidHandle,
     IFluidLoadable,
     IRequest,
@@ -36,7 +33,6 @@ import {
     create404Response,
 } from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import { IFluidTokenProvider } from "@fluidframework/container-definitions";
 import { downloadRawText, mapWait } from "./utils";
 
 const debug = registerDebug("fluid:shared-text");
@@ -69,7 +65,6 @@ export class SharedTextRunner
     public get IFluidHTMLView() { return this; }
 
     private sharedString: SharedString;
-    private insightsMap: ISharedMap;
     private root: ISharedMap;
     private uiInitialized = false;
     private readonly title: string = "Shared Text";
@@ -158,20 +153,6 @@ export class SharedTextRunner
         debug(`Shared string ready - ${performance.now()}`);
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performance.now()}`);
-
-        const agentSchedulerResponse = await this.context.containerRuntime.request({ url: "/_scheduler" });
-        if (agentSchedulerResponse.status === 404) {
-            throw new Error("Agent scheduler not found");
-        }
-        const agentScheduler = agentSchedulerResponse.value as IAgentScheduler;
-
-        const taskScheduler = new TaskScheduler(
-            this.context,
-            agentScheduler,
-            this.sharedString,
-            this.insightsMap,
-        );
-        taskScheduler.start();
     }
 
     private async initializeUI(div): Promise<void> {
@@ -219,36 +200,6 @@ export class SharedTextRunner
             theFlow.loadFinished(performance.now());
             debug(`${this.runtime.id} fully loaded: ${performance.now()} `);
         });
-    }
-}
-
-class TaskScheduler {
-    constructor(
-        private readonly componentContext: IFluidDataStoreContext,
-        private readonly agentScheduler: IAgentScheduler,
-        private readonly sharedString: SharedString,
-        private readonly insightsMap: ISharedMap,
-    ) {
-
-    }
-
-    public start() {
-        const hostTokens =
-            (this.componentContext.containerRuntime as FluidObject<IFluidTokenProvider>).IFluidTokenProvider;
-        const intelTokens = hostTokens && hostTokens.intelligence
-            ? hostTokens.intelligence.textAnalytics
-            : undefined;
-
-        if (intelTokens?.key?.length > 0) {
-            const intelTaskId = "intel";
-            const textAnalyzer = new TextAnalyzer(this.sharedString, this.insightsMap, intelTokens);
-            this.agentScheduler.pick(intelTaskId, async () => {
-                console.log(`Picked text analyzer`);
-                await textAnalyzer.run();
-            }).catch((err) => { console.error(err); });
-        } else {
-            console.log("No intel key provided.");
-        }
     }
 }
 
