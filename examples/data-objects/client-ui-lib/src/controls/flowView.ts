@@ -1389,7 +1389,7 @@ function gatherOverlayLayer(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IViewportDiv extends HTMLDivElement {
+interface IViewportDiv extends HTMLDivElement {
 }
 
 function closestNorth(lineDivs: ILineDiv[], y: number) {
@@ -1436,7 +1436,7 @@ function closestSouth(lineDivs: ILineDiv[], y: number) {
     return best;
 }
 
-export interface IExcludedRectangle extends ui.Rectangle {
+interface IExcludedRectangle extends ui.Rectangle {
     left: boolean;
     curY: number;
     id?: string;
@@ -1453,7 +1453,7 @@ function makeExcludedRectangle(x: number, y: number, w: number, h: number, id?: 
     return r;
 }
 
-export interface ILineRect {
+interface ILineRect {
     e?: IExcludedRectangle;
     h: number;
     w: number;
@@ -1465,15 +1465,15 @@ function lineIntersectsRect(y: number, rect: IExcludedRectangle) {
     return (y >= rect.y) && (y <= (rect.y + rect.height));
 }
 
-export interface IFlowRefMarker extends MergeTree.Marker {
+interface IFlowRefMarker extends MergeTree.Marker {
     flowView: FlowView;
 }
 
-export interface IListRefMarker extends MergeTree.Marker {
+interface IListRefMarker extends MergeTree.Marker {
     selectionListBox: SearchMenu.ISelectionListBox;
 }
 
-export class Viewport {
+class Viewport {
     // Keep the line divs in order
     public lineDivs: ILineDiv[] = [];
     public visibleRanges: IRange[] = [];
@@ -1802,7 +1802,7 @@ function makeFontInfo(docContext: IDocumentContext): Paragraph.IFontInfo {
     };
 }
 
-export interface IFlowBreakInfo extends Paragraph.IBreakInfo {
+interface IFlowBreakInfo extends Paragraph.IBreakInfo {
     lineY?: number;
     lineX?: number;
     lineWidth?: number;
@@ -1810,7 +1810,7 @@ export interface IFlowBreakInfo extends Paragraph.IBreakInfo {
     movingExclu?: IExcludedRectangle;
 }
 
-export function breakPGIntoLinesFFVP(
+function breakPGIntoLinesFFVP(
     flowView: FlowView,
     itemInfo: Paragraph.IParagraphItemInfo,
     defaultLineHeight: number,
@@ -2425,47 +2425,11 @@ function pointerToElementOffsetWebkit(x: number, y: number): IRangeInfo {
     }
 }
 
-export function pixelToPosition(flowView: FlowView, x: number, y: number) {
-    const elm = document.elementFromPoint(x, y);
-    if (elm.tagName === "SPAN") {
-        let position: number;
-        const span = elm as ISegSpan;
-        const elmOff = pointerToElementOffsetWebkit(x, y);
-        if (elmOff) {
-            let computed = elmOffToSegOff(elmOff, span);
-            if (span.offset) {
-                computed += span.offset;
-            }
-            position = span.segPos + computed;
-        }
-        return position;
-    } else {
-        let targetLineDiv = elm as ILineDiv;
-        if (targetLineDiv.linePos !== undefined) {
-            return flowView.getPosFromPixels(targetLineDiv, x);
-        }
-        do {
-            targetLineDiv = targetLineDiv.previousElementSibling as ILineDiv;
-        } while (targetLineDiv && (targetLineDiv.linePos === undefined));
-        if (targetLineDiv) {
-            return flowView.getPosFromPixels(targetLineDiv, x);
-        }
-    }
-}
-
-export function clearInclusion(elm: HTMLElement, sha: string) {
-    for (const child of elm.childNodes) {
-        if ((child as HTMLElement).classList.contains(sha)) {
-            return elm.removeChild(child);
-        }
-    }
-}
-
 const Nope = -1;
 
 const presenceColors = ["darkgreen", "sienna", "olive", "purple", "lightseagreen"];
 
-export class FlowCursor extends Cursor {
+class FlowCursor extends Cursor {
     public presenceDiv: HTMLDivElement;
     public presenceInfo: ILocalPresenceInfo;
     public presenceInfoUpdated = true;
@@ -2634,10 +2598,10 @@ export class FlowCursor extends Cursor {
     }
 }
 
-export interface IRemotePresenceBase {
+interface IRemotePresenceBase {
     type: string;
 }
-export interface ILocalPresenceInfo {
+interface ILocalPresenceInfo {
     localRef?: MergeTree.LocalReference;
     markLocalRef?: MergeTree.LocalReference;
     xformPos?: number;
@@ -2650,29 +2614,11 @@ export interface ILocalPresenceInfo {
     shouldShowCursor: () => boolean;
 }
 
-export interface IRemotePresenceInfo extends IRemotePresenceBase {
+interface IRemotePresenceInfo extends IRemotePresenceBase {
     type: "selection";
     origPos: number;
     origMark: number;
     refseq: number;
-}
-
-export interface IMovingInclusionInfo {
-    onTheMove: boolean;
-    exclu?: IExcludedRectangle;
-    marker?: MergeTree.Marker;
-    dx?: number;
-    dy?: number;
-    ulPos?: number;
-}
-
-export interface IRemoteDragInfo extends IRemotePresenceBase {
-    type: "drag";
-    exclu: IExcludedRectangle;
-    markerPos: number;
-    onTheMove: boolean;
-    dx: number;
-    dy: number;
 }
 
 interface ISegmentOffset {
