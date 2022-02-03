@@ -7,7 +7,6 @@
 // eslint-disable-next-line import/no-unassigned-import
 import "./publicpath";
 
-import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
@@ -22,7 +21,6 @@ const DefaultComponentName = "text";
 
 class SharedTextContainerRuntimeFactory extends RuntimeFactoryHelper {
     public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
-        await runtime.createRootDataStore(AgentSchedulerFactory.type, "_scheduler");
         await runtime.createRootDataStore(SharedTextDataStoreFactory.type, DefaultComponentName);
     }
 
@@ -34,7 +32,6 @@ class SharedTextContainerRuntimeFactory extends RuntimeFactoryHelper {
             context,
             [
                 [SharedTextDataStoreFactory.type, Promise.resolve(new SharedTextDataStoreFactory())],
-                AgentSchedulerFactory.registryEntry,
             ],
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(DefaultComponentName),

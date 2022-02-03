@@ -7,7 +7,6 @@ import { EventEmitter } from "events";
 import { parse } from "querystring";
 import registerDebug from "debug";
 import { controls, ui } from "@fluid-example/client-ui-lib";
-import { SharedCell } from "@fluidframework/cell";
 import { performance } from "@fluidframework/common-utils";
 import {
     IFluidHandle,
@@ -40,9 +39,7 @@ const rootMapId = "root";
 const textSharedStringId = "text";
 const flowContainerMapId = "flowContainerMap";
 
-export class SharedTextRunner
-    extends EventEmitter
-    implements IFluidHTMLView, IFluidLoadable {
+export class SharedTextRunner extends EventEmitter implements IFluidHTMLView, IFluidLoadable {
     public static async load(
         runtime: FluidDataStoreRuntime,
         context: IFluidDataStoreContext,
@@ -204,7 +201,6 @@ export class SharedTextDataStoreFactory implements IFluidDataStoreFactory {
             new Map([
                 SharedMap.getFactory(),
                 SharedString.getFactory(),
-                SharedCell.getFactory(),
             ].map((factory) => [factory.type, factory])),
             existing,
         );
