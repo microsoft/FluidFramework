@@ -431,13 +431,6 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            f.insertComponentNew("code", "@fluid-example/monaco");
-        },
-        key: "insert new monaco",
-    },
-    {
-        exec: (c, p, f) => {
             (navigator as any).clipboard.readText().then((text) => {
                 // TODO bring back paste support
                 console.log(`Inserting ${text}`);
