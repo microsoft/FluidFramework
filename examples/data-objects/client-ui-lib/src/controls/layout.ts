@@ -20,7 +20,6 @@ export interface IViewLayout extends IProvideViewLayout {
     requestedWidthPercentage?: number;
     canInline?: boolean;
     preferInline?: boolean;
-    preferPersistentElement?: boolean;
 }
 
 /**

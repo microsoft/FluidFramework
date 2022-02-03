@@ -34,10 +34,6 @@ import {
     IViewLayout,
 } from "./layout";
 
-interface IPersistentElement extends HTMLDivElement {
-    component: FluidObject;
-}
-
 function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
     if (marker && marker.properties && marker.properties.crefTest) {
         const crefTest: IReferenceDoc = marker.properties.crefTest;
@@ -391,12 +387,6 @@ const commands: IFlowViewCmd[] = [
             f.insertList();
         },
         key: "insert list",
-    },
-    {
-        exec: (c, p, f) => {
-            f.addChildFlow();
-        },
-        key: "cflow test",
     },
     {
         exec: (c, p, f) => {
@@ -1464,10 +1454,6 @@ function lineIntersectsRect(y: number, rect: IExcludedRectangle) {
     return (y >= rect.y) && (y <= (rect.y + rect.height));
 }
 
-interface IFlowRefMarker extends MergeTree.Marker {
-    flowView: FlowView;
-}
-
 interface IListRefMarker extends MergeTree.Marker {
     selectionListBox: SearchMenu.ISelectionListBox;
 }
@@ -1631,23 +1617,12 @@ class Viewport {
                     }
                     listRefMarker.selectionListBox.showSelectionList(listIrdoc.items);
                     listRefMarker.selectionListBox.setSelectionIndex(selectionIndex);
-                } else if ((irdoc.type.name === "childFlow") && (!flowView.parentFlow)) {
-                    const flowRefMarker = marker as IFlowRefMarker;
-                    let startChar = 0;
-                    let cursorPos = 0;
-                    const prevFlowView = flowRefMarker.flowView;
-                    if (prevFlowView) {
-                        startChar = prevFlowView.viewportStartPos;
-                        cursorPos = prevFlowView.cursor.pos;
-                    }
-                    flowRefMarker.flowView = flowView.renderChildFlow(startChar, cursorPos,
-                        innerDiv, exclu, marker);
                 }
             }
         }
     }
 
-    public horizIntersect(h: number, rect: IExcludedRectangle) {
+    private horizIntersect(h: number, rect: IExcludedRectangle) {
         return lineIntersectsRect(this.lineTop, rect) || (lineIntersectsRect(this.lineTop + h, rect));
     }
 
@@ -1937,11 +1912,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
         return blockDiv;
     }
 
-    function makePersistentElement(left: number, top: number, minWidth: string, minHeight: string) {
-        const blockDiv = makeBlockContentDiv(left, top, minWidth, minHeight);
-        return blockDiv;
-    }
-
     function makeBlockDiv(left: number, top: number, minWidth: string, minHeight: string) {
         const blockDiv = makeBlockContentDiv(left, top, minWidth, minHeight);
         layoutContext.viewport.div.appendChild(blockDiv);
@@ -2130,41 +2100,15 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 }
                 const width = `${Math.round(wpct * parseInt(layoutContext.viewport.div.style.width, 10))}px`;
                 const minHeight = `${Math.round(0.33 * parseInt(layoutContext.viewport.div.style.height, 10))}px`;
-                if (layout && layout.preferPersistentElement) {
-                    const persistentComponent = layoutContext.flowView.getPersistentComponent(newBlock.instance);
-                    let absBlockDiv: HTMLDivElement;
-                    if (!persistentComponent) {
-                        absBlockDiv =
-                            makePersistentElement(0, layoutContext.viewport.getLineTop(), width, minHeight);
-                        layoutContext.flowView.addPersistentComponent(absBlockDiv, newBlock.instance);
-                    } else {
-                        absBlockDiv = persistentComponent.elm;
-                    }
-                    const measureDiv = document.createElement("div");
-                    layoutContext.viewport.div.appendChild(measureDiv);
-                    const bounds = measureDiv.getBoundingClientRect();
-                    layoutContext.viewport.div.removeChild(measureDiv);
-                    absBlockDiv.style.left = "0px";
-                    absBlockDiv.style.top = `${Math.round(bounds.top)}px`;
-                    if ((!layout) || (!layout.variableHeight)) {
-                        absBlockDiv.style.height = minHeight;
-                    }
-                    absBlockDiv.style.width = width;
-                    absBlockDiv.style.display = "block";
-                    newBlock.instance.render(absBlockDiv, { display: "block" });
-                    // Cache this in flow view
-                    ch = absBlockDiv.getBoundingClientRect().height;
-                } else {
-                    const blockDiv = makeBlockDiv(0, layoutContext.viewport.getLineTop(), width, minHeight);
-                    blockDiv.style.width = width;
-                    if ((!layout) || (!layout.variableHeight)) {
-                        blockDiv.style.height = minHeight;
-                    }
-                    newBlock.instance.render(blockDiv, { display: "block" });
-                    // Cache this in FlowView
-                    ch = blockDiv.getBoundingClientRect().height;
-                    console.log(`block height ${ch}`);
+                const blockDiv = makeBlockDiv(0, layoutContext.viewport.getLineTop(), width, minHeight);
+                blockDiv.style.width = width;
+                if ((!layout) || (!layout.variableHeight)) {
+                    blockDiv.style.height = minHeight;
                 }
+                newBlock.instance.render(blockDiv, { display: "block" });
+                // Cache this in FlowView
+                ch = blockDiv.getBoundingClientRect().height;
+                console.log(`block height ${ch}`);
             } else {
                 // Delay load the instance if not available
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -2755,11 +2699,6 @@ interface IFlowViewModes {
     showCursorLocation?: boolean;
 }
 
-class PersistentComponent {
-    constructor(public component: FluidObject, public elm: HTMLDivElement) {
-    }
-}
-
 export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost {
     public static docStartPosition = 0;
     public get ISearchMenuHost() { return this; }
@@ -2785,7 +2724,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public bookmarks: Sequence.IntervalCollection<Sequence.SequenceInterval>;
     public tempBookmarks: Sequence.SequenceInterval[];
     public comments: Sequence.IntervalCollection<Sequence.SequenceInterval>;
-    public persistentComponents: Map<FluidObject, PersistentComponent>;
     public presenceSignal: PresenceSignal;
     public presenceVector: Map<string, ILocalPresenceInfo> = new Map();
     public docRoot: types.ISharedMap;
@@ -2905,81 +2843,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             console.log("Component invalidated layout");
             this.hostSearchMenu(FlowView.docStartPosition);
         });
-    }
-
-    // Remember an element to give to a component; element will be absolutely positioned during render, if needed
-    public addPersistentComponent(elm: HTMLDivElement, component: FluidObject) {
-        if (!this.persistentComponents) {
-            this.persistentComponents = new Map<FluidObject, PersistentComponent>();
-        }
-        (elm as IPersistentElement).component = component;
-        this.persistentComponents.set(component, new PersistentComponent(component, elm));
-    }
-
-    // Add event notification to component of removal
-    public removePersistentComponent(pc: PersistentComponent) {
-        if (this.persistentComponents) {
-            this.persistentComponents.delete(pc.component);
-        }
-    }
-
-    public getPersistentComponent(component: FluidObject) {
-        if (this.persistentComponents) {
-            return this.persistentComponents.get(component);
-        }
-    }
-
-    public hidePersistentComponents() {
-        if (this.persistentComponents) {
-            this.persistentComponents.forEach((pc) => {
-                pc.elm.style.display = "none";
-            });
-        }
-    }
-
-    public renderChildFlow(
-        startChar: number,
-        cursorPos: number,
-        flowElement: HTMLDivElement,
-        flowRect: IExcludedRectangle,
-        marker: MergeTree.Marker) {
-        const childFlow = new FlowView(
-            flowElement,
-            this.runtime,
-            this.context,
-            this.sharedString,
-            this.status,
-            this.options,
-        );
-        childFlow.parentFlow = this;
-        childFlow.setEdit(this.docRoot);
-        childFlow.comments = this.comments;
-        childFlow.presenceSignal = this.presenceSignal;
-        childFlow.presenceVector = this.presenceVector;
-        childFlow.bookmarks = this.bookmarks;
-        childFlow.cursor.pos = cursorPos;
-        const clientRect = new ui.Rectangle(0, 0, flowRect.width, flowRect.height);
-        childFlow.resizeCore(clientRect);
-        childFlow.render(startChar, true);
-        if (this.focusMarker === marker) {
-            this.focusChild = childFlow;
-        }
-        childFlow.childMarker = marker;
-        return childFlow;
-    }
-
-    public addChildFlow() {
-        const rdocType = <IReferenceDocType>{
-            name: "childFlow",
-        };
-        const irdoc = <IReferenceDoc>{
-            referenceDocId: "C",
-            type: rdocType,
-        };
-        const refProps = {
-            [Paragraph.referenceProperty]: irdoc,
-        };
-        this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, refProps);
     }
 
     public createBookmarks(k: number) {
