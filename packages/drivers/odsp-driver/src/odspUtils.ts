@@ -318,7 +318,7 @@ export function toInstrumentedOdspTokenFetcher(
                         errorMessage,
                         OdspErrorType.fetchTokenError,
                         typeof rawCanRetry === "boolean" ? rawCanRetry : false /* canRetry */,
-                        { method: name }));
+                        { method: name, driverVersion: pkgVersion }));
                 throw tokenError;
             }),
             { cancel: "generic" });
