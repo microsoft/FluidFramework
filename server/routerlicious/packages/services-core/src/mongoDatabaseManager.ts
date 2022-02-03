@@ -46,8 +46,8 @@ export class MongoDatabaseManager implements IDatabaseManager {
 
     private async getCollection<T>(name: string) {
         const db = name === this.documentsCollectionName && this.globalDbEnabled ?
-        await this.globalDbMongoManager.getDatabase() :
-        await this.operationsDbMongoManager.getDatabase();
+            await this.globalDbMongoManager.getDatabase() :
+            await this.operationsDbMongoManager.getDatabase();
 
         return db.collection<T>(name);
     }
