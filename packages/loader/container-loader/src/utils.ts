@@ -38,11 +38,7 @@ export function parseUrl(url: string): IParsedUrl | undefined {
         throw new Error("Failed to parse pathname");
     }
 
-    // TODO: this is inelegant... is there a better way?
-    let queryParamCount = 0;
-    parsed.searchParams.forEach(() => queryParamCount++);
-
-    const query = queryParamCount > 0 ? "?" + parsed.searchParams.toString() : "";
+    const query = parsed.search;
     const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
     const match = regex.exec(parsed.pathname);
     return (match?.length === 3)
