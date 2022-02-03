@@ -16,22 +16,6 @@ export function clearSubtree(elm: HTMLElement) {
     }
 }
 
-export function findFirstMatch(root: HTMLElement, match: (elm: HTMLElement) => boolean): HTMLElement {
-    if (match(root)) {
-        return root;
-    } else {
-        let childElement = root.firstElementChild as HTMLElement;
-        while (childElement) {
-            const result = findFirstMatch(childElement, match);
-            if (result) {
-                return result;
-            } else {
-                childElement = childElement.nextElementSibling as HTMLElement;
-            }
-        }
-    }
-}
-
 const textWidthCache = new Map<string, Map<string, number>>();
 const lineHeightCache = new Map<string, number>();
 let cachedCanvas: HTMLCanvasElement;
