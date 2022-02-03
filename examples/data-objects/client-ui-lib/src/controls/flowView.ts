@@ -121,8 +121,6 @@ function altsToItems(alts: Alt[]) {
 export interface IFlowViewCmd extends SearchMenu.ISearchMenuCommand<FlowView> {
 }
 
-let viewOptions: Record<string, any>;
-
 const fontSizeStrings = ["8", "9", "10", "11", "12", "14", "16", "18", "20", "24", "32"];
 const fontSizeTree = new MergeTree.TST<IFlowViewCmd>();
 for (const sizeString of fontSizeStrings) {
@@ -1972,11 +1970,10 @@ function makeSegSpan(
     span.seg = textSegment;
     span.segPos = segpos;
     let textErr = false;
-    const spellOption = "spellchecker";
     if (textSegment.properties) {
         // eslint-disable-next-line no-restricted-syntax
         for (const key in textSegment.properties) {
-            if (key === "textError" && (viewOptions === undefined || viewOptions[spellOption] !== "disabled")) {
+            if (key === "textError") {
                 textErr = true;
                 if (textErrorRun === undefined) {
                     textErrorRun = {
@@ -2459,7 +2456,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         public readonly context: IFluidDataStoreContext,
         public sharedString: Sequence.SharedString,
         public status: Status,
-        public options?: Record<string, any>) {
+    ) {
         super(element);
 
         // Enable element to receive focus (see Example 1):
@@ -2479,13 +2476,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
         this.viewportDiv = document.createElement("div");
         this.element.appendChild(this.viewportDiv);
-        const translationToLanguage = "translationToLanguage";
-        this.targetTranslation = options[translationToLanguage]
-            ? `translation-${options[translationToLanguage]}`
-            : undefined;
-        if (options.translationFromLanguage) {
-            this.srcLanguage = options.translationFromLanguage;
-        }
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
 
@@ -2520,7 +2510,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         });
 
         this.cursor = new FlowCursor(this.viewportDiv);
-        this.setViewOption(this.options);
 
         // HACK: Expose "insertText" via window to Shared Browser Extension
         //       for 2018/Oct demo.
@@ -4034,10 +4023,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 });
             }
         }
-    }
-
-    public setViewOption(options: Record<string, any>) {
-        viewOptions = options;
     }
 
     protected resizeCore(bounds: ui.Rectangle) {

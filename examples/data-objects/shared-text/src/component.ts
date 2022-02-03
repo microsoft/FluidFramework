@@ -213,7 +213,7 @@ export class SharedTextRunner
             this.context,
             this.sharedString,
             image,
-            {});
+        );
         const theFlow = container.flowView;
         browserContainerHost.attach(container, div);
 

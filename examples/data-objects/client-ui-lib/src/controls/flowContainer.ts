@@ -31,7 +31,7 @@ export class FlowContainer extends ui.Component {
         private readonly context: IFluidDataStoreContext,
         private readonly sharedString: Sequence.SharedString,
         private readonly image: Image,
-        private readonly options?: Record<string, any>) {
+    ) {
         super(element);
 
         // TODO the below code is becoming controller like and probably doesn't belong in a constructor. Likely
@@ -58,7 +58,6 @@ export class FlowContainer extends ui.Component {
             this.context,
             this.sharedString,
             this.status,
-            this.options,
         );
 
         // Layer panel lets us put the canvas on top of the text
@@ -81,13 +80,6 @@ export class FlowContainer extends ui.Component {
 
                 this.layerPanel.scrollBar.setRange(renderInfo.range);
             });
-
-        const spellOption = "spellchecker";
-        const spellcheckOn = (this.options === undefined || this.options[spellOption] !== "disabled") ? true : false;
-        this.status.addOption("spellcheck", "spellcheck", spellcheckOn);
-        this.status.on("spellcheck", (value) => {
-            this.initSpellcheck(value);
-        });
 
         // Add flowView to the panel
         this.layerPanel.addChild(this.flowView);
@@ -153,18 +145,5 @@ export class FlowContainer extends ui.Component {
                 }
             }
         }
-    }
-
-    private initSpellcheck(value: boolean) {
-        if (value) {
-            this.flowView.setViewOption({
-                spellchecker: "enabled",
-            });
-        } else {
-            this.flowView.setViewOption({
-                spellchecker: "disabled",
-            });
-        }
-        this.flowView.render();
     }
 }
