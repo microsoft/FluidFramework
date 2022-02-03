@@ -7,9 +7,9 @@
         "rootDir": "./src",
         "outDir": "./dist",
         "composite": true,
-        // "types": [
-        //     "node"
-        // ]
+        "types": [
+            "node"
+        ]
     },
     "include": [
         "src/**/*"
