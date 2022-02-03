@@ -14,7 +14,7 @@ module.exports = {
   // The glob patterns Jest uses to detect test files
   testMatch: ["/**/test/*.spec.tsx"],
 
-   testEnvironment: "jsdom",
+  testEnvironment: "node",
 
   // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
   testPathIgnorePatterns: ['/node_modules/', 'dist'],
