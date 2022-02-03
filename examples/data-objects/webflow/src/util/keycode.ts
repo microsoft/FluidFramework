@@ -3,11 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export const enum Modifier {
-    alt = "Alt",
-    ctrl = "Control",
-}
-
 export const enum KeyCode {
     backspace = "Backspace",        // 8
     tab = "Tab",                    // 9

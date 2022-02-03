@@ -25,7 +25,7 @@ export interface IFluidTokenProvider extends IProvideFluidTokenProvider {
 }
 
 declare module "@fluidframework/core-interfaces" {
-    export interface IFluidObject  {
+    export interface IFluidObject {
         /** @deprecated - use `FluidObject<IRuntimeFactory>` instead */
         readonly IRuntimeFactory?: IRuntimeFactory;
         /** @deprecated - use `FluidObject<IFluidTokenProvider>` instead */

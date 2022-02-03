@@ -9,7 +9,6 @@ import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { EventForwarder } from '@fluidframework/common-utils';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { FluidObjectKey } from '@fluidframework/synthesize';
 import { FluidObjectSymbolProvider } from '@fluidframework/synthesize';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
@@ -140,7 +139,7 @@ export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
     // Warning: (ae-incompatible-release-tags) The symbol "providers" is marked as @public, but its signature references "DataObjectType" which is marked as @internal
     //
     // (undocumented)
-    readonly providers: AsyncFluidObjectProvider<FluidObjectKey<DataObjectType<I, "OptionalProviders">>, FluidObjectKey<object>>;
+    readonly providers: AsyncFluidObjectProvider<DataObjectType<I, "OptionalProviders">>;
     // (undocumented)
     readonly runtime: IFluidDataStoreRuntime;
 }
@@ -166,7 +165,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     finishInitialization(existing: boolean): Promise<void>;
     // (undocumented)
     static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject<DataObjectTypes>>;
-    getFluidObjectFromDirectory<T extends IFluidObject & FluidObject & IFluidLoadable>(key: string, directory: IDirectory, getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IFluidHandle | undefined): Promise<T | undefined>;
+    getFluidObjectFromDirectory<T extends IFluidObject & FluidObject & IFluidLoadable>(key: string, directory: IDirectory, getObjectFromDirectory?: (id: string, directory: IDirectory) => IFluidHandle | undefined): Promise<T | undefined>;
     protected getService<T extends IFluidObject & FluidObject>(id: string): Promise<T>;
     get handle(): IFluidHandle<this>;
     protected hasInitialized(): Promise<void>;
@@ -186,10 +185,8 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     // (undocumented)
     protected initProps?: DataObjectType<I, "InitialState">;
     protected preInitialize(): Promise<void>;
-    protected readonly providers: AsyncFluidObjectProvider<FluidObjectKey<DataObjectType<I, "OptionalProviders">>, FluidObjectKey<object>>;
+    protected readonly providers: AsyncFluidObjectProvider<DataObjectType<I, "OptionalProviders">>;
     request(req: IRequest): Promise<IResponse>;
-    // @deprecated (undocumented)
-    protected requestFluidObject_UNSAFE<T extends IFluidObject>(id: string): Promise<T>;
     protected readonly runtime: IFluidDataStoreRuntime;
 }
 

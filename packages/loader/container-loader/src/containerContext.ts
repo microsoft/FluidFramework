@@ -6,7 +6,6 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
-    IFluidConfiguration,
     IRequest,
     IResponse,
     IFluidCodeDetails,
@@ -34,13 +33,14 @@ import {
     IClientDetails,
     IDocumentMessage,
     IQuorum,
+    IQuorumClients,
     ISequencedDocumentMessage,
     ISignalMessage,
     ISnapshotTree,
-    ITree,
-    MessageType,
     ISummaryTree,
+    ITree,
     IVersion,
+    MessageType,
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
@@ -100,10 +100,6 @@ export class ContainerContext implements IContainerContext {
         return this.taggedLogger;
     }
 
-    public get id(): string {
-        return this.container.id;
-    }
-
     public get clientId(): string | undefined {
         return this.container.clientId;
     }
@@ -132,16 +128,6 @@ export class ContainerContext implements IContainerContext {
         return this.container.options;
     }
 
-    /**
-     * @deprecated 0.55 - Configuration is not recommended to be used and will be removed in an upcoming release.
-     */
-    public get configuration(): IFluidConfiguration {
-        const config: Partial<IFluidConfiguration> = {
-            scopes: this.container.scopes,
-        };
-        return config as IFluidConfiguration;
-    }
-
     public get baseSnapshot() {
         return this._baseSnapshot;
     }
@@ -167,8 +153,7 @@ export class ContainerContext implements IContainerContext {
     public get codeDetails() { return this._codeDetails; }
 
     private readonly _quorum: IQuorum;
-    // Update to return IQuorumClients after 0.45 container definitions are picked up.
-    public get quorum(): IQuorum { return this._quorum; }
+    public get quorum(): IQuorumClients { return this._quorum; }
 
     private readonly _fluidModuleP: Promise<IFluidModuleWithDetails>;
 
@@ -199,6 +184,11 @@ export class ContainerContext implements IContainerContext {
         this.attachListener();
     }
 
+    /**
+     * @deprecated - Temporary migratory API, to be removed when customers no longer need it.  When removed,
+     * ContainerContext should only take an IQuorumClients rather than an IQuorum.  See IContainerContext for more
+     * details.
+     */
     public getSpecifiedCodeDetails(): IFluidCodeDetails | undefined {
         return (this._quorum.get("code") ?? this._quorum.get("code2")) as IFluidCodeDetails | undefined;
     }

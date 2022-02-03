@@ -264,10 +264,6 @@ export class ConsensusOrderedCollection<T = any>
         this.data.loadFrom(content2);
     }
 
-    protected registerCore() {
-        return;
-    }
-
     protected onDisconnect() {
         for (const [, { value, clientId }] of this.jobTracking) {
             if (clientId === this.runtime.clientId) {

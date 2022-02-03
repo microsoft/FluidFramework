@@ -30,7 +30,7 @@ import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/core-interfaces';
 import { IProxyLoaderFactory } from '@fluidframework/container-definitions';
-import { IQuorum } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -66,8 +66,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     closeAndGetPendingLocalState(): string;
     // (undocumented)
     get closed(): boolean;
-    // @deprecated
-    get codeDetails(): IFluidCodeDetails | undefined;
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
@@ -79,10 +77,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
-    // (undocumented)
-    get id(): string;
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     get isDirty(): boolean;
@@ -93,6 +89,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     readonly options: ILoaderOptions;
     // (undocumented)
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
+    // @deprecated (undocumented)
     raiseContainerWarning(warning: ContainerWarning): void;
     // (undocumented)
     get readOnlyInfo(): ReadOnlyInfo;
@@ -117,7 +114,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     subLogger: TelemetryLogger;
     // (undocumented)
     static version: string;
-}
+    }
 
 // @public @deprecated (undocumented)
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {

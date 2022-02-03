@@ -5,7 +5,6 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { ContainerWarning } from '@fluidframework/container-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
@@ -114,8 +113,6 @@ export interface IFluidDataStoreRuntime extends IFluidRouter, IEventProvider<IFl
     readonly objectsRoutingContext: IFluidHandleContext;
     // (undocumented)
     readonly options: ILoaderOptions;
-    // @deprecated
-    raiseContainerWarning(warning: ContainerWarning): void;
     // (undocumented)
     readonly rootRoutingContext: IFluidHandleContext;
     submitSignal(type: string, content: any): void;

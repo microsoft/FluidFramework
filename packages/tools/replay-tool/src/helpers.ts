@@ -117,6 +117,7 @@ export async function loadContainer(
     // ops than "maxOpsSinceLastSummary". So set it to a higher number to suppress those errors and run tests.
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: { disableSummaries: true, maxOpsSinceLastSummary: 100000 },
+        gcOptions: { writeDataAtRoot: true },
     };
     const codeLoader = new ReplayCodeLoader(new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries));
 
