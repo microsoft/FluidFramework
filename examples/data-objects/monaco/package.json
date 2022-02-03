@@ -36,8 +36,8 @@
   },
   "dependencies": {
     "@fluidframework/aqueduct": "^0.57.0",
-    "@fluidframework/container-definitions": "^0.45.0-0",
-    "@fluidframework/core-interfaces": "^0.42.0-0",
+    "@fluidframework/container-definitions": "^0.45.0",
+    "@fluidframework/core-interfaces": "^0.42.0",
     "@fluidframework/merge-tree": "^0.57.0",
     "@fluidframework/runtime-definitions": "^0.57.0",
     "@fluidframework/sequence": "^0.57.0",
