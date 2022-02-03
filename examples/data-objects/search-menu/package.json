@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.25.0",
+    "@fluidframework/eslint-config-fluid": "^0.26.0-0",
     "@rushstack/eslint-config": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
