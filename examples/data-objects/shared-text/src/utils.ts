@@ -32,16 +32,3 @@ export async function downloadRawText(textUrl: string): Promise<string> {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return data.data;
 }
-
-// Wait for the runtime to get fully connected.
-export async function waitForFullConnection(runtime: any): Promise<void> {
-    if (runtime.connected) {
-        return;
-    } else {
-        return new Promise<void>((resolve, reject) => {
-            runtime.once("connected", () => {
-                resolve();
-            });
-        });
-    }
-}
