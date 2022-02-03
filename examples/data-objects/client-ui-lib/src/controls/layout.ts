@@ -48,15 +48,3 @@ export interface IViewCursor extends IProvideViewCursor {
     fwd(): boolean;
     rev(): boolean;
 }
-
-export const IKeyHandlers: keyof IProvideKeyHandlers = "IKeyHandlers";
-
-export interface IProvideKeyHandlers {
-    readonly IKeyHandlers: IKeyHandlers;
-}
-
-// Used when another component will forward keyboard events to this component
-export interface IKeyHandlers extends IProvideKeyHandlers {
-    onKeypress(e: KeyboardEvent): void;
-    onKeydown(e: KeyboardEvent): void;
-}

@@ -2810,7 +2810,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public srcLanguage = "en";
 
     private lastVerticalX = -1;
-    private readonly randWordTimer: any;
     private pendingRender = false;
     private readonly diagCharPort = false;
     private readonly targetTranslation: string;
@@ -3518,8 +3517,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         (this.element as any).onselectstart = preventD;
         let prevX = Nope;
         let prevY = Nope;
-        let downX = Nope;
-        let downY = Nope;
         let freshDown = false;
 
         const moveObjects = (e: MouseEvent, fresh = false) => {
@@ -3561,8 +3558,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.element.focus();
             if (e.button === 0) {
                 freshDown = true;
-                downX = e.clientX;
-                downY = e.clientY;
                 moveObjects(e, true);
                 if (!e.shiftKey) {
                     this.clearSelection();
