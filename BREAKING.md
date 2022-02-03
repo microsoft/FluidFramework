@@ -18,7 +18,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Removed PureDataObject.requestFluidObject_UNSAFE](#Removed-PureDataObject.requestFluidObject_UNSAFE)
 - [Modified PureDataObject.getFluidObjectFromDirectory](#Modified-PureDataObject.getFluidObjectFromDirectory)
 - [Remove IFluidObject from Aqueduct](#Remove-IFluidObject-from-Aqueduct)
-- [Remove IFluidObject from Extensions](#Remove-IFluidObject-from-Extensions)
+- [Remove Unused IFluidObject Augmentations](#Remove-Unused-IFluidObject-Augmentations)
 
 ### IFluidConfiguration removed
 
@@ -69,7 +69,7 @@ This impacts the following public apis:
 
  In general the impact of these changes should be transparent. If you see compile errors related to Fluid object provider types with the above apis, you should transition those usages to [FluidObject](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts#L61) which is the replacement for the deprecated IFluidObject.
 
-### Remove IFluidObject from Extensions
+### Remove Unused IFluidObject Augmentations
 The following deprecated provider properties are no longer exposed off of IFluidObject
  - IFluidMountableView
  - IAgentScheduler
