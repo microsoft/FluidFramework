@@ -2429,7 +2429,7 @@ const Nope = -1;
 const presenceColors = ["darkgreen", "sienna", "olive", "purple", "lightseagreen"];
 
 class FlowCursor extends Cursor {
-    public presenceDiv: HTMLDivElement;
+    private presenceDiv: HTMLDivElement;
     public presenceInfo: ILocalPresenceInfo;
     public presenceInfoUpdated = true;
 
@@ -2486,7 +2486,7 @@ class FlowCursor extends Cursor {
         }
     }
 
-    public setPresenceDivEvents(div: HTMLDivElement) {
+    private setPresenceDivEvents(div: HTMLDivElement) {
         this.presenceDiv.onmouseenter = (e) => {
             div.innerText = (this.presenceInfo.user as IFlowViewUser).name;
         };
@@ -2495,7 +2495,7 @@ class FlowCursor extends Cursor {
         };
     }
 
-    public makePresenceDiv() {
+    private makePresenceDiv() {
         this.presenceDiv = document.createElement("div");
         // TODO callback to go from UID to display information
         this.presenceDiv.innerText = this.getUserDisplayString(this.presenceInfo.user as IFlowViewUser);
