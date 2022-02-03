@@ -92,7 +92,7 @@ describe("Summarizer Client Election", () => {
                 ["a", 2, true],
                 ["s2", 4, false],
                 ["b", 7, true],
-            ], { electedClientId: undefined, electionSequenceNumber: 432 });
+            ], { electedClientId: undefined, electedParentId: undefined, electionSequenceNumber: 432 });
             assertState(undefined, 432, "no elected client at first");
             defaultOp();
             assertState("a", 679, "auto-elect first eligible client");
@@ -105,7 +105,7 @@ describe("Summarizer Client Election", () => {
                 ["a", 2, true],
                 ["s2", 4, false],
                 ["b", 7, true],
-            ], { electedClientId: "x", electionSequenceNumber: 432 });
+            ], { electedClientId: "x", electedParentId: "x", electionSequenceNumber: 432 });
             assertState(undefined, 432, "no elected client at first");
             defaultOp();
             assertState("a", 679, "auto-elect first eligible client");
@@ -118,13 +118,14 @@ describe("Summarizer Client Election", () => {
                 ["a", 2, true],
                 ["s2", 4, false],
                 ["b", 7, true],
-            ], { electedClientId: "s2", electionSequenceNumber: 432 });
+            ], { electedClientId: "s2", electedParentId: "s2", electionSequenceNumber: 432 });
             assertState("b", 432, "auto-elect next eligible client");
         });
 
         it("Should remain unelected with empty quorum", () => {
             currentSequenceNumber = 678;
-            createElection([], { electedClientId: undefined, electionSequenceNumber: 432 });
+            createElection([
+            ], { electedClientId: undefined, electedParentId: undefined, electionSequenceNumber: 432 });
             assertState(undefined, 432, "no elected client at first");
             defaultOp();
             assertState(undefined, 432, "still no client to elect");
@@ -132,12 +133,14 @@ describe("Summarizer Client Election", () => {
 
         it("Should remain unelected with empty quorum and not found client", () => {
             currentSequenceNumber = 678;
-            createElection([], { electedClientId: "x", electionSequenceNumber: 432 });
+            createElection([
+            ], { electedClientId: "x", electedParentId: "x", electionSequenceNumber: 432 });
             assertState(undefined, 432, "no client to elect");
         });
 
         it("Should reelect during add/remove clients", () => {
-            createElection([], { electedClientId: undefined, electionSequenceNumber: 12 });
+            createElection([
+            ], { electedClientId: undefined, electedParentId: undefined, electionSequenceNumber: 12 });
             assertState(undefined, 12, "no clients, should initially be undefined");
 
             // Add non-interactive client, no effect
@@ -165,7 +168,7 @@ describe("Summarizer Client Election", () => {
                 ["a", 2, true],
                 ["s2", 4, false],
                 ["b", 7, true],
-            ], { electedClientId: "b", electionSequenceNumber: 4000 });
+            ], { electedClientId: "b", electedParentId: "b", electionSequenceNumber: 4000 });
             assertState("b", 4000, "elected client based on initial state");
 
             // Should stay the same right up until max ops
@@ -190,7 +193,7 @@ describe("Summarizer Client Election", () => {
                 ["a", 2, true],
                 ["s2", 4, false],
                 ["b", 7, true],
-            ], { electedClientId: "s2", electionSequenceNumber: 4000 });
+            ], { electedClientId: "s2", electedParentId: "s2", electionSequenceNumber: 4000 });
             assertState("b", 4000, "elected based on initial state");
 
             // Should stay the same right up until max ops
@@ -217,7 +220,7 @@ describe("Summarizer Client Election", () => {
                 ["a", 2, true],
                 ["s2", 4, false],
                 ["b", 7, true],
-            ], { electedClientId: "b", electionSequenceNumber: 4000 }, false);
+            ], { electedClientId: "b", electedParentId: "b", electionSequenceNumber: 4000 }, false);
             assertState("b", 4000, "elected client based on initial state");
 
             // Should stay the same right up until max ops

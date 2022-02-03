@@ -8,6 +8,7 @@ import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IClient, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { summarizerClientType } from "./summarizerClientElection";
 
 // helper types for recursive readonly.
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -206,8 +207,10 @@ export interface IOrderedClientElectionEvents extends IEvent {
 export interface ISerializedElection {
     /** Sequence number at the time of the latest election. */
     readonly electionSequenceNumber: number;
-    /** Most recently elected client id. */
+    /** Most recently elected client id. May be interactive client or summarizer client. */
     readonly electedClientId: string | undefined;
+    /** Most recently elected parent client id. */
+    readonly electedParentId: string | undefined;
 }
 
 /** Contract for maintaining a deterministic client election based on eligibility. */
@@ -216,6 +219,8 @@ export interface IOrderedClientElection extends IEventProvider<IOrderedClientEle
     readonly eligibleCount: number;
     /** Currently elected client. */
     readonly electedClient: ITrackedClient | undefined;
+    /** Currently elected parent, may be equal to electedClient */
+    readonly electedParent: ITrackedClient | undefined;
     /** Sequence number of most recent election. */
     readonly electionSequenceNumber: number;
     /** Marks the currently elected client as invalid, and elects the next eligible client. */
@@ -241,6 +246,7 @@ export class OrderedClientElection
     implements IOrderedClientElection {
     private _eligibleCount: number = 0;
     private _electedClient: ILinkedClient | undefined;
+    private _electedParent: ILinkedClient | undefined;
     private _electionSequenceNumber: number;
 
     public get eligibleCount() {
@@ -248,6 +254,9 @@ export class OrderedClientElection
     }
     public get electedClient() {
         return this._electedClient;
+    }
+    public get electedParent() {
+        return this._electedParent;
     }
     public get electionSequenceNumber() {
         return this._electionSequenceNumber;
@@ -262,11 +271,15 @@ export class OrderedClientElection
     ) {
         super();
         let initialClient: ILinkedClient | undefined;
+        let initialParent: ILinkedClient | undefined;
         for (const client of orderedClientCollection.getAllClients()) {
             this.addClient(client, 0);
             if (typeof initialState !== "number") {
                 if (client.clientId === initialState.electedClientId) {
                     initialClient = client;
+                }
+                if (client.clientId === initialState.electedParentId) {
+                    initialParent = client;
                 }
             }
         }
@@ -288,7 +301,7 @@ export class OrderedClientElection
                 });
             } else if (initialClient !== undefined && !isEligibleFn(initialClient)) {
                 // Initially elected client is ineligible, so elect next eligible client.
-                initialClient = this.findFirstEligibleClient(initialClient);
+                initialClient = initialParent = this.findFirstEligibleParent(initialParent);
                 logger.sendErrorEvent({
                     eventName: "InitialElectedClientIneligible",
                     electionSequenceNumber: initialState.electionSequenceNumber,
@@ -296,6 +309,7 @@ export class OrderedClientElection
                     electedClientId: initialClient?.clientId,
                 });
             }
+            this._electedParent = initialParent;
             this._electedClient = initialClient;
             this._electionSequenceNumber = initialState.electionSequenceNumber;
         }
@@ -309,6 +323,9 @@ export class OrderedClientElection
         }
         const prevClient = this._electedClient;
         this._electedClient = client;
+        if (client?.client.details.type !== summarizerClientType) {
+            this._electedParent = client;
+        }
         this.emit("election", client, sequenceNumber, prevClient);
     }
 
@@ -318,9 +335,10 @@ export class OrderedClientElection
      * @param client - client to start checking
      * @returns oldest eligible client starting with passed in client or undefined if none.
      */
-    private findFirstEligibleClient(client: ILinkedClient | undefined): ILinkedClient | undefined {
+    private findFirstEligibleParent(client: ILinkedClient | undefined): ILinkedClient | undefined {
         let candidateClient = client;
-        while (candidateClient !== undefined && !this.isEligibleFn(candidateClient)) {
+        while (candidateClient !== undefined &&
+            (!this.isEligibleFn(candidateClient) || candidateClient.client.details.type === summarizerClientType)) {
             candidateClient = candidateClient.youngerClient;
         }
         return candidateClient;
@@ -334,8 +352,10 @@ export class OrderedClientElection
      */
     private addClient(client: ILinkedClient, sequenceNumber: number): void {
         if (this.isEligibleFn(client)) {
+            const isSummarizerClient = client.client.details.type === summarizerClientType;
             this._eligibleCount++;
-            if (this._electedClient === undefined) {
+            if (this._electedClient === undefined ||
+                (isSummarizerClient && this._electedClient.client.details.type !== summarizerClientType)) {
                 // Automatically elect latest client
                 this.tryElectingClient(client, sequenceNumber);
             }
@@ -353,8 +373,8 @@ export class OrderedClientElection
             this._eligibleCount--;
             if (this._electedClient === client) {
                 // Automatically shift to next oldest client
-                const nextClient = this.findFirstEligibleClient(this._electedClient.youngerClient);
-                this.tryElectingClient(nextClient, sequenceNumber);
+                const nextParent = this.findFirstEligibleParent(this._electedParent?.youngerClient);
+                this.tryElectingClient(nextParent, sequenceNumber);
             }
         }
     }
@@ -364,23 +384,24 @@ export class OrderedClientElection
     }
 
     public incrementElectedClient(sequenceNumber: number): void {
-        const nextClient = this.findFirstEligibleClient(this._electedClient?.youngerClient);
+        const nextClient = this.findFirstEligibleParent(this._electedParent?.youngerClient);
         this.tryElectingClient(nextClient, sequenceNumber);
     }
 
     public resetElectedClient(sequenceNumber: number): void {
-        const firstClient = this.findFirstEligibleClient(this.orderedClientCollection.oldestClient);
+        const firstClient = this.findFirstEligibleParent(this.orderedClientCollection.oldestClient);
         this.tryElectingClient(firstClient, sequenceNumber);
     }
 
     public peekNextElectedClient(): ITrackedClient | undefined {
-        return this.findFirstEligibleClient(this._electedClient?.youngerClient);
+        return this.findFirstEligibleParent(this._electedParent?.youngerClient);
     }
 
     public serialize(): ISerializedElection {
         return {
             electionSequenceNumber: this.electionSequenceNumber,
             electedClientId: this.electedClient?.clientId,
+            electedParentId: this.electedParent?.clientId,
         };
     }
 }

@@ -108,6 +108,7 @@ describe("Summary Manager", () => {
         extends TypedEventEmitter<ISummarizerClientElectionEvents>
         implements ISummarizerClientElection {
         public electedClientId: string | undefined;
+        public get electedParentId() { return this.electedClientId; }
 
         public electClient(clientId: string | undefined) {
             this.electedClientId = clientId;
