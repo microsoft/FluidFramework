@@ -159,7 +159,6 @@ export class GitManager implements IGitManager {
             // eslint-disable-next-line @typescript-eslint/promise-function-async
             .catch((error) => {
                 if (error === 400 || error === 404) {
-                    // eslint-disable-next-line no-null/no-null
                     return null;
                 } else {
                     return Promise.reject(error);
