@@ -31,7 +31,6 @@ import { Status } from "./status";
 import {
     CursorDirection,
     IViewCursor,
-    IKeyHandlers,
     IViewLayout,
 } from "./layout";
 
@@ -58,7 +57,7 @@ interface IFluidViewMarker extends MergeTree.Marker {
     instance?: IFluidHTMLView;
 }
 
-export interface IFlowViewUser extends IUser {
+interface IFlowViewUser extends IUser {
     name: string;
 }
 
@@ -67,7 +66,7 @@ export interface IOverlayMarker {
     position: number;
 }
 
-export interface ILineDiv extends HTMLDivElement {
+interface ILineDiv extends HTMLDivElement {
     linePos?: number;
     lineEnd?: number;
     contentWidth?: number;
@@ -2711,12 +2710,6 @@ function findTile(flowView: FlowView, startPos: number, tileType: string, preced
     return flowView.sharedString.findTile(startPos, tileType, preceding);
 }
 
-export function annotateMarker(flowView: FlowView, props: MergeTree.PropertySet, marker: MergeTree.Marker) {
-    const start = getPosition(flowView, marker);
-    const end = start + marker.cachedLength;
-    flowView.sharedString.annotateRange(start, end, props);
-}
-
 function getPosition(flowView: FlowView, segment: MergeTree.ISegment) {
     return flowView.sharedString.getPosition(segment);
 }
@@ -2727,11 +2720,11 @@ function preventD(e: Event) {
     return false;
 }
 
-export interface IReferenceDocType {
+interface IReferenceDocType {
     name: string;
 }
 
-export interface IRefLayoutSpec {
+interface IRefLayoutSpec {
     inline?: boolean;
     minWidth?: number;
     minHeight?: number;
@@ -2744,25 +2737,25 @@ export interface IRefLayoutSpec {
     dy?: number;
 }
 
-export interface IReferenceDoc {
+interface IReferenceDoc {
     type: IReferenceDocType;
     referenceDocId?: string;
     url: string;
     layout?: IRefLayoutSpec;
 }
 
-export interface IListReferenceDoc extends IReferenceDoc {
+interface IListReferenceDoc extends IReferenceDoc {
     items: SearchMenu.ISearchMenuCommand[];
     selectionIndex: number;
 }
 
-export interface IFlowViewModes {
+interface IFlowViewModes {
     showBookmarks?: boolean;
     showComments?: boolean;
     showCursorLocation?: boolean;
 }
 
-export class PersistentComponent {
+class PersistentComponent {
     constructor(public component: FluidObject, public elm: HTMLDivElement) {
     }
 }
