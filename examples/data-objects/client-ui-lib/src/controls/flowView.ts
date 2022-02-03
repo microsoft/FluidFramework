@@ -185,12 +185,6 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.createBookmarks(5000);
-        },
-        key: "bookmark test: 5000",
-    },
-    {
-        exec: (c, p, f) => {
             f.createComment();
         },
         key: "comment",
@@ -313,27 +307,6 @@ const commands: IFlowViewCmd[] = [
         key: "table summary",
     },
     {
-        exec: (c, p, f) => {
-            f.showAdjacentBookmark();
-        },
-        key: "previous bookmark",
-    },
-    {
-        exec: (c, p, f) => {
-            f.showAdjacentBookmark(false);
-        },
-        key: "next bookmark",
-    },
-    {
-        enabled: (f) => !f.modes.showBookmarks,
-        exec: (c, p, f) => {
-            f.modes.showBookmarks = true;
-            f.tempBookmarks = undefined;
-            f.hostSearchMenu(f.cursor.pos);
-        },
-        key: "show bookmarks",
-    },
-    {
         enabled: (f) => !f.modes.showCursorLocation,
         exec: (c, p, f) => {
             f.modes.showCursorLocation = true;
@@ -348,15 +321,6 @@ const commands: IFlowViewCmd[] = [
             f.status.remove("cursor");
         },
         key: "hide cursor location",
-    },
-    {
-        enabled: (f) => f.modes.showBookmarks,
-        exec: (c, p, f) => {
-            f.modes.showBookmarks = false;
-            f.tempBookmarks = undefined;
-            f.hostSearchMenu(f.cursor.pos);
-        },
-        key: "hide bookmarks",
     },
     {
         enabled: (f) => !f.modes.showComments,
@@ -791,235 +755,6 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView, docContext: IDocume
         }
         flowView.sharedString.walkSegments(renderSegmentIntoLine, lineDiv.linePos, end, lineContext);
         lineDiv.lineEnd = lineEnd;
-        showBookmarks(flowView, lineDiv.linePos,
-            lineEnd, lineDiv.style.font, lineDivHeight, lineDiv.breakIndex, docContext,
-            contentDiv, lineDiv.endPGMarker);
-    }
-}
-
-function buildIntervalBlockStyle(
-    flowView: FlowView,
-    properties: MergeTree.PropertySet,
-    startX: number,
-    endX: number,
-    height: number,
-    leftInBounds: boolean,
-    rightInBounds: boolean,
-    contentDiv: HTMLDivElement) {
-    const bookmarkDiv = document.createElement("div");
-    const bookmarkRect = new ui.Rectangle(startX, 0, endX - startX, height);
-    bookmarkRect.conformElement(bookmarkDiv);
-    contentDiv.appendChild(bookmarkDiv);
-    if (leftInBounds) {
-        bookmarkDiv.style.borderTopLeftRadius = "5px";
-        bookmarkDiv.style.borderLeft = "1px solid gray";
-        bookmarkDiv.style.borderTop = "1px solid gray";
-    }
-    if (rightInBounds) {
-        bookmarkDiv.style.borderBottomRightRadius = "5px";
-        bookmarkDiv.style.borderRight = "1px solid gray";
-        bookmarkDiv.style.borderBottom = "1px solid gray";
-    }
-    bookmarkDiv.style.pointerEvents = "none";
-    bookmarkDiv.style.backgroundColor = "lightgray";
-    bookmarkDiv.style.opacity = "0.3";
-    if (properties) {
-        if (properties.bgColor) {
-            bookmarkDiv.style.backgroundColor = properties.bgColor;
-        } else if (properties.clid) {
-            const clientId: string = properties.clid;
-            const bgColor = flowView.presenceVector.get(clientId).presenceColor;
-            bookmarkDiv.style.backgroundColor = bgColor;
-            bookmarkDiv.style.opacity = "0.08";
-        }
-    }
-    bookmarkDiv.style.zIndex = "2";
-}
-
-function buildIntervalTieStyle(
-    flowView: FlowView,
-    properties: MergeTree.PropertySet,
-    startX: number,
-    endX: number,
-    lineDivHeight: number,
-    leftInBounds: boolean,
-    rightInBounds: boolean,
-    contentDiv: HTMLDivElement) {
-    const bookmarkDiv = document.createElement("div");
-    const bookendDiv1 = document.createElement("div");
-    const bookendDiv2 = document.createElement("div");
-    const tenthHeight = Math.max(1, Math.floor(lineDivHeight / 10));
-    const halfHeight = Math.floor(lineDivHeight >> 1);
-    const bookmarkRect = new ui.Rectangle(startX, halfHeight - tenthHeight,
-        endX - startX, 2 * tenthHeight);
-    bookmarkRect.conformElement(bookmarkDiv);
-    contentDiv.appendChild(bookmarkDiv);
-    new ui.Rectangle(startX, 0, 3, lineDivHeight).conformElement(bookendDiv1);
-    if (leftInBounds) {
-        contentDiv.appendChild(bookendDiv1);
-    }
-    new ui.Rectangle(endX - 3, 0, 3, lineDivHeight).conformElement(bookendDiv2);
-    if (rightInBounds) {
-        contentDiv.appendChild(bookendDiv2);
-    }
-
-    bookmarkDiv.style.pointerEvents = "none";
-    bookmarkDiv.style.backgroundColor = "lightgray";
-    bookendDiv1.style.backgroundColor = "lightgray";
-    bookendDiv2.style.backgroundColor = "lightgray";
-    if (properties && properties.clid) {
-        const clientId: string = properties.clid;
-        const bgColor = flowView.presenceVector.get(clientId).presenceColor;
-        bookmarkDiv.style.backgroundColor = bgColor;
-        bookendDiv1.style.backgroundColor = bgColor;
-        bookendDiv2.style.backgroundColor = bgColor;
-    }
-    bookmarkDiv.style.opacity = "0.5";
-    bookmarkDiv.style.zIndex = "2";
-    bookendDiv1.style.opacity = "0.5";
-    bookendDiv1.style.zIndex = "2";
-    bookendDiv2.style.opacity = "0.5";
-    bookendDiv2.style.zIndex = "2";
-}
-
-function getWidthInLine(
-    endPGMarker: Paragraph.IParagraphMarker,
-    breakIndex: number,
-    defaultFontstr: string,
-    offset: number) {
-    let _offset = offset;
-    let itemIndex = endPGMarker.cache.breaks[breakIndex].startItemIndex;
-    let w = 0;
-    while (_offset > 0) {
-        const item = endPGMarker.itemCache.items[itemIndex];
-        if (!item || (item.type === Paragraph.ParagraphItemType.Marker)) {
-            itemIndex++;
-            break;
-        }
-        const blockItem = <Paragraph.IPGBlock>item;
-        if (blockItem.text.length > _offset) {
-            const fontstr = item.fontstr || defaultFontstr;
-            const subw = domutils.getTextWidth(blockItem.text.substring(0, _offset), fontstr);
-            return Math.floor(w + subw);
-        } else {
-            w += item.width;
-        }
-        _offset -= blockItem.text.length;
-        itemIndex++;
-    }
-    return Math.round(w);
-}
-
-function showBookmark(
-    flowView: FlowView,
-    properties: MergeTree.PropertySet,
-    lineText: string,
-    start: number,
-    end: number,
-    lineStart: number,
-    endPGMarker: Paragraph.IParagraphMarker,
-    computedEnd: number,
-    lineFontstr: string,
-    lineDivHeight: number,
-    lineBreakIndex: number,
-    docContext: IDocumentContext,
-    contentDiv: HTMLDivElement,
-    useTie = false) {
-    let startX: number;
-    let height = lineDivHeight;
-    if (start >= lineStart) {
-        startX = getWidthInLine(endPGMarker, lineBreakIndex, lineFontstr, start - lineStart);
-    } else {
-        startX = 0;
-    }
-    let endX: number;
-    if (end <= computedEnd) {
-        endX = getWidthInLine(endPGMarker, lineBreakIndex, lineFontstr, end - lineStart);
-    } else {
-        if (lineBreakIndex === (endPGMarker.cache.breaks.length - 1)) {
-            height += docContext.pgVspace;
-        }
-        endX = getWidthInLine(endPGMarker, lineBreakIndex, lineFontstr, computedEnd - lineStart);
-    }
-    if (useTie) {
-        buildIntervalTieStyle(flowView, properties, startX, endX, lineDivHeight,
-            start >= lineStart, end <= computedEnd, contentDiv);
-    } else {
-        buildIntervalBlockStyle(flowView, properties, startX, endX, height,
-            start >= lineStart, end <= computedEnd, contentDiv);
-    }
-}
-
-function showBookmarks(
-    flowView: FlowView,
-    lineStart: number,
-    lineEnd: number,
-    lineFontstr: string,
-    lineDivHeight: number,
-    lineBreakIndex: number,
-    docContext: IDocumentContext,
-    contentDiv: HTMLDivElement,
-    endPGMarker: Paragraph.IParagraphMarker) {
-    const sel = flowView.cursor.getSelection();
-    let havePresenceSel = false;
-    for (const localPresenceInfo of flowView.presenceVector.values()) {
-        if (localPresenceInfo && (localPresenceInfo.markXformPos !== localPresenceInfo.xformPos)) {
-            havePresenceSel = true;
-            break;
-        }
-    }
-    if (flowView.bookmarks || flowView.comments || sel || havePresenceSel) {
-        const computedEnd = lineEnd;
-        const bookmarks = flowView.bookmarks.findOverlappingIntervals(lineStart, computedEnd);
-        const comments = flowView.comments.findOverlappingIntervals(lineStart, computedEnd);
-        const lineText = flowView.sharedString.getText(lineStart, computedEnd);
-        if (sel && ((sel.start < lineEnd) && (sel.end > lineStart))) {
-            showBookmark(flowView, undefined, lineText, sel.start, sel.end, lineStart, endPGMarker,
-                computedEnd, lineFontstr, lineDivHeight, lineBreakIndex, docContext, contentDiv);
-        }
-        if (havePresenceSel) {
-            for (const localPresenceInfo of flowView.presenceVector.values()) {
-                if (localPresenceInfo && (localPresenceInfo.markXformPos !== localPresenceInfo.xformPos)) {
-                    const presenceStart = Math.min(localPresenceInfo.markXformPos, localPresenceInfo.xformPos);
-                    const presenceEnd = Math.max(localPresenceInfo.markXformPos, localPresenceInfo.xformPos);
-                    if ((presenceStart < lineEnd) && (presenceEnd > lineStart)) {
-                        showBookmark(flowView, { clid: localPresenceInfo.clientId },
-                            lineText, presenceStart, presenceEnd, lineStart, endPGMarker,
-                            computedEnd, lineFontstr, lineDivHeight, lineBreakIndex, docContext, contentDiv);
-                    }
-                }
-            }
-        }
-        if (flowView.tempBookmarks && (!flowView.modes.showBookmarks)) {
-            for (const b of flowView.tempBookmarks) {
-                if (b.overlapsPos(lineStart, lineEnd)) {
-                    const start = b.start.toPosition();
-                    const end = b.end.toPosition();
-                    showBookmark(flowView, b.properties, lineText, start, end, lineStart,
-                        endPGMarker, computedEnd, lineFontstr, lineDivHeight, lineBreakIndex,
-                        docContext, contentDiv, true);
-                }
-            }
-        }
-        if (bookmarks && flowView.modes.showBookmarks) {
-            for (const b of bookmarks) {
-                const start = b.start.toPosition();
-                const end = b.end.toPosition();
-                showBookmark(flowView, b.properties, lineText, start, end, lineStart,
-                    endPGMarker, computedEnd, lineFontstr, lineDivHeight, lineBreakIndex,
-                    docContext, contentDiv, true);
-            }
-        }
-        if (comments && flowView.modes.showComments) {
-            for (const comment of comments) {
-                const start = comment.start.toPosition();
-                const end = comment.end.toPosition();
-                comment.addProperties({ bgColor: "gold" });
-                showBookmark(flowView, comment.properties, lineText, start, end, lineStart,
-                    endPGMarker, computedEnd, lineFontstr, lineDivHeight, lineBreakIndex,
-                    docContext, contentDiv);
-            }
-        }
     }
 }
 
@@ -2037,14 +1772,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                     viewportStartPos = lineStart;
                 }
                 sharedString.walkSegments(renderSegmentIntoLine, lineStart, lineEnd, lineContext);
-                if (flowView.bookmarks) {
-                    let computedEnd = lineEnd;
-                    if (!computedEnd) {
-                        computedEnd = sharedString.getPosition(endPGMarker);
-                    }
-                    showBookmarks(layoutContext.flowView, lineStart,
-                        computedEnd, lineFontstr, lineDivHeight, breakIndex, docContext, contentDiv, endPGMarker);
-                }
                 span = lineContext.span;
                 if (lineContext.reRenderList) {
                     if (!layoutContext.reRenderList) {
@@ -2694,7 +2421,6 @@ interface IListReferenceDoc extends IReferenceDoc {
 }
 
 interface IFlowViewModes {
-    showBookmarks?: boolean;
     showComments?: boolean;
     showCursorLocation?: boolean;
 }
@@ -2721,8 +2447,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public wheelTicking = false;
     public topChar = -1;
     public cursor: FlowCursor;
-    public bookmarks: Sequence.IntervalCollection<Sequence.SequenceInterval>;
-    public tempBookmarks: Sequence.SequenceInterval[];
     public comments: Sequence.IntervalCollection<Sequence.SequenceInterval>;
     public presenceSignal: PresenceSignal;
     public presenceVector: Map<string, ILocalPresenceInfo> = new Map();
@@ -2730,7 +2454,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public curPG: MergeTree.Marker;
     public modes = {
         randExclusion: false,
-        showBookmarks: true,
         showComments: true,
         showCursorLocation: true,
     } as IFlowViewModes;
@@ -2843,17 +2566,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             console.log("Component invalidated layout");
             this.hostSearchMenu(FlowView.docStartPosition);
         });
-    }
-
-    public createBookmarks(k: number) {
-        const len = this.sharedString.getLength();
-        for (let i = 0; i < k; i++) {
-            const pos1 = Math.floor(Math.random() * (len - 1));
-            const intervalLen = Math.max(1, Math.floor(Math.random() * Math.min(len - pos1, 150)));
-            const props = { clid: this.runtime.clientId };
-            this.bookmarks.add(pos1, pos1 + intervalLen, MergeTree.IntervalType.SlideOnRemove, props);
-        }
-        this.hostSearchMenu(-1);
     }
 
     public updatePresenceCursors() {
@@ -3884,28 +3596,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.undoRedoManager.closeCurrentOperation();
     }
 
-    public showAdjacentBookmark(before = true) {
-        if (this.bookmarks) {
-            let result: Sequence.SequenceInterval;
-            if (before) {
-                result = this.bookmarks.previousInterval(this.cursor.pos);
-            } else {
-                result = this.bookmarks.nextInterval(this.cursor.pos);
-            }
-            if (result) {
-                const s = result.start.toPosition();
-                const e = result.end.toPosition();
-                let descr = "next ";
-                if (before) {
-                    descr = "previous ";
-                }
-                console.log(`${descr} bookmark is [${s},${e})`);
-                this.tempBookmarks = [result];
-                this.hostSearchMenu(this.cursor.pos);
-            }
-        }
-    }
-
     public cursorLocation() {
         this.statusMessage("cursor", `Cursor: ${this.cursor.pos} `);
     }
@@ -4366,11 +4056,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         // Work around a race condition with multiple shared strings trying to create the interval
         // collections at the same time
         await Promise.all([
-            this.sharedString.waitIntervalCollection("bookmarks"),
             this.sharedString.waitIntervalCollection("comments"),
         ]);
-
-        this.bookmarks = this.sharedString.getIntervalCollection("bookmarks");
 
         // For examples of showing the API we do interval adds on the collection with comments.
         this.comments = this.sharedString.getIntervalCollection("comments");
