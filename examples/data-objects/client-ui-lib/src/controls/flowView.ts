@@ -778,7 +778,7 @@ function createSVGRect(r: ui.Rectangle) {
 }
 
 function layoutCell(
-    cellView: ICellView, layoutInfo: ILayoutContext, targetTranslation: string, defer = false,
+    cellView: ICellView, layoutInfo: ILayoutContext,
     leftmost = false, top = false) {
     const cellRect = new ui.Rectangle(0, 0, cellView.specWidth, 0);
     const cellViewportWidth = cellView.specWidth - (2 * layoutInfo.docContext.cellHMargin);
@@ -815,13 +815,13 @@ function layoutCell(
         cellLayoutInfo.stackIndex = layoutInfo.stackIndex + 1;
     }
     if (!cellView.emptyCell) {
-        cellView.renderOutput = renderFlow(cellLayoutInfo, targetTranslation, defer);
+        cellView.renderOutput = renderFlow(cellLayoutInfo);
         if (cellView.additionalCellMarkers) {
             for (const cellMarker of cellView.additionalCellMarkers) {
                 cellLayoutInfo.endMarker = cellMarker.cell.endMarker;
                 const cellPos = getPosition(layoutInfo.flowView, cellMarker);
                 cellLayoutInfo.startPos = cellPos + cellMarker.cachedLength;
-                const auxRenderOutput = renderFlow(cellLayoutInfo, targetTranslation, defer);
+                const auxRenderOutput = renderFlow(cellLayoutInfo);
                 cellView.renderOutput.deferredHeight += auxRenderOutput.deferredHeight;
                 cellView.renderOutput.overlayMarkers =
                     cellView.renderOutput.overlayMarkers.concat(auxRenderOutput.overlayMarkers);
@@ -860,8 +860,7 @@ function renderTable(
     table: Table.ITableMarker,
     docContext: IDocumentContext,
     layoutInfo: ILayoutContext,
-    targetTranslation: string,
-    defer = false) {
+) {
     const flowView = layoutInfo.flowView;
     const sharedString = flowView.sharedString;
     const tablePos = sharedString.getPosition(table);
@@ -908,7 +907,7 @@ function renderTable(
         if (startRow === rowView) {
             foundStartRow = true;
         }
-        const renderRow = (!defer) && (deferredHeight >= layoutInfo.deferUntilHeight) &&
+        const renderRow = (deferredHeight >= layoutInfo.deferUntilHeight) &&
             foundStartRow && (!Table.rowIsMoribund(rowView.rowMarker));
         let rowDiv: IRowDiv;
         if (renderRow) {
@@ -921,8 +920,6 @@ function renderTable(
                 layoutCell(
                     startCell,
                     layoutInfo,
-                    targetTranslation,
-                    defer,
                     startCell === rowView.cells[0],
                     firstRendered);
                 deferredHeight += startCell.renderOutput.deferredHeight;
@@ -940,7 +937,7 @@ function renderTable(
                         noCellAbove = true;
                     }
                 }
-                layoutCell(cell, layoutInfo, targetTranslation, defer,
+                layoutCell(cell, layoutInfo,
                     cell === rowView.cells[0],
                     firstRendered || noCellAbove);
                 cellCount++;
@@ -1033,7 +1030,7 @@ function showTable(pos: number, flowView: FlowView) {
 }
 
 function renderTree(
-    viewportDiv: HTMLDivElement, requestedPosition: number, flowView: FlowView, targetTranslation: string) {
+    viewportDiv: HTMLDivElement, requestedPosition: number, flowView: FlowView) {
     const docContext = buildDocumentContext(viewportDiv);
     flowView.lastDocContext = docContext;
     const outerViewportHeight = parseInt(viewportDiv.style.height, 10);
@@ -1060,7 +1057,7 @@ function renderTree(
             layoutContext.startPos = 0;
         }
     }
-    return renderFlow(layoutContext, targetTranslation);
+    return renderFlow(layoutContext);
 }
 
 function gatherOverlayLayer(
@@ -1591,7 +1588,7 @@ function breakPGIntoLinesFFVP(
     return breaks;
 }
 
-function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, deferWhole = false): IRenderOutput {
+function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
     const flowView = layoutContext.flowView;
     const sharedString = flowView.sharedString;
     // TODO: for stable viewports cache the geometry and the divs
@@ -1636,32 +1633,12 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
         layoutContext.deferUntilHeight = 0;
     }
     let deferredHeight = 0;
-    const deferredPGs = (layoutContext.containingPGMarker !== undefined);
     const paragraphLexer = new Paragraph.ParagraphLexer({
         markerToken: Paragraph.markerToItems,
         textToken: Paragraph.textTokenToItems,
     }, itemsContext);
     itemsContext.paragraphLexer = paragraphLexer;
     textErrorRun = undefined;
-
-    function makeAnnotDiv(x: number, y: number, width: number, fontstr: string) {
-        const annotDiv = document.createElement("div");
-        annotDiv.style.font = fontstr;
-        annotDiv.style.fontStyle = "italic";
-        const rect = new ui.Rectangle(x, y, width, 0);
-        rect.conformElementOpenHeight(annotDiv);
-        layoutContext.viewport.div.appendChild(annotDiv);
-        return annotDiv;
-    }
-
-    function renderPGAnnotation(endPGMarker: Paragraph.IParagraphMarker, indentWidth: number, contentWidth: number) {
-        const annotDiv = makeAnnotDiv(indentWidth, layoutContext.viewport.getLineTop(),
-            contentWidth, docContext.fontstr);
-        const text = endPGMarker.properties[targetTranslation];
-        annotDiv.innerHTML = text;
-        const clientRect = annotDiv.getBoundingClientRect();
-        return clientRect.height;
-    }
 
     function renderPG(
         endPGMarker: Paragraph.IParagraphMarker,
@@ -1716,7 +1693,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             } else {
                 lineEnd = undefined;
             }
-            const lineOK = (!(deferredPGs || deferWhole)) && (layoutContext.deferUntilHeight <= deferredHeight);
+            const lineOK = (layoutContext.deferUntilHeight <= deferredHeight);
             if (lineOK && ((lineEnd === undefined) || (lineEnd > layoutContext.requestedPosition))) {
                 lineDiv = makeLineDiv(new ui.Rectangle(lineX, lineY, lineWidth, lineHeight), lineFontstr);
                 lineDiv.endPGMarker = endPGMarker;
@@ -1846,7 +1823,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
         } else if (asMarker && asMarker.hasRangeLabel("table")) {
             let tableView: Table.Table;
             if (asMarker.removedSeq === undefined) {
-                renderTable(asMarker, docContext, layoutContext, targetTranslation, deferredPGs);
+                renderTable(asMarker, docContext, layoutContext);
                 tableView = (asMarker as Table.ITableMarker).table;
                 deferredHeight += tableView.deferredHeight;
                 layoutContext.viewport.vskip(layoutContext.docContext.tableVspace);
@@ -1892,13 +1869,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             } else {
                 itemsContext.itemInfo = curPGMarker.itemCache;
             }
-            // TODO: always use break VP for excluded regions; go ahead and break each time
-            // TODO: this is particular to pg annotation; need to call different vp idea for
-            //   annotation
-            const contentWidth = layoutContext.viewport.currentLineWidth();
-            // Const breaks = Paragraph.breakPGIntoLinesFF(itemsContext.itemInfo.items, contentWidth);
-            // curPGMarker.cache = { breaks, isUniformWidth: true, uniformLineWidth: contentWidth };
-
             let startOffset = 0;
             if (layoutContext.requestedPosition > currentPos) {
                 startOffset = layoutContext.requestedPosition - currentPos;
@@ -1918,15 +1888,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 viewportEndPos = lineEnd;
                 currentPos = curPGMarkerPos + curPGMarker.cachedLength;
 
-                if (!deferredPGs) {
-                    if (curPGMarker.properties[targetTranslation]) {
-                        // LayoutContext.viewport.vskip(Math.floor(docContext.pgVspace/2));
-                        // TODO: make sure content width is same as pg width (may be different with regions present)
-                        const height = renderPGAnnotation(curPGMarker, Math.floor(indentPct * contentWidth),
-                            Math.floor(contentPct * contentWidth));
-                        layoutContext.viewport.vskip(height);
-                    }
-                }
                 if (currentPos < totalLength) {
                     segoff = getContainingSegment(flowView, currentPos);
                     if (MergeTree.Marker.is(segoff.segment)) {
@@ -1938,9 +1899,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 } else {
                     break;
                 }
-                if (!deferredPGs) {
-                    layoutContext.viewport.vskip(docContext.pgVspace);
-                }
+                layoutContext.viewport.vskip(docContext.pgVspace);
             } else {
                 break;
             }
@@ -2438,7 +2397,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     private lastVerticalX = -1;
     private pendingRender = false;
     private readonly diagCharPort = false;
-    private readonly targetTranslation: string;
     private activeSearchBox: SearchMenu.ISearchBox;
     private readonly cmdTree: MergeTree.TST<IFlowViewCmd>;
     private formatRegister: MergeTree.PropertySet;
@@ -3953,7 +3911,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.updatePresencePositions();
         domutils.clearSubtree(this.viewportDiv);
         // This.viewportDiv.appendChild(this.cursor.editSpan);
-        const renderOutput = renderTree(this.viewportDiv, this.topChar, this, this.targetTranslation);
+        const renderOutput = renderTree(this.viewportDiv, this.topChar, this);
         this.viewportStartPos = renderOutput.viewportStartPos;
         this.viewportEndPos = renderOutput.viewportEndPos;
         this.statusMessage("render", `&nbsp ${Date.now() - clk}ms`);
