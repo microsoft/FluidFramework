@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { URL } from "whatwg-url";
+import { URL } from "iso-url";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
