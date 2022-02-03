@@ -28,7 +28,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.42.0-0",
+    "@fluidframework/core-interfaces": "^0.42.0",
     "@fluidframework/view-interfaces": "^0.57.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
