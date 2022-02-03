@@ -41,7 +41,6 @@
   },
   "dependencies": {
     "@fluid-example/client-ui-lib": "^0.57.0",
-    "@fluid-example/intelligence-runner-agent": "^0.57.0",
     "@fluidframework/agent-scheduler": "^0.57.0",
     "@fluidframework/aqueduct": "^0.57.0",
     "@fluidframework/cell": "^0.57.0",

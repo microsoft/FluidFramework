@@ -38,7 +38,6 @@ import { downloadRawText, mapWait } from "./utils";
 const debug = registerDebug("fluid:shared-text");
 
 const rootMapId = "root";
-const insightsMapId = "insights";
 const textSharedStringId = "text";
 const flowContainerMapId = "flowContainerMap";
 
@@ -107,9 +106,6 @@ export class SharedTextRunner
             this.root = SharedMap.create(this.runtime, rootMapId);
             this.root.bindToContext();
 
-            const insights: ISharedMap = SharedMap.create(this.runtime);
-            this.root.set(insightsMapId, insights.handle);
-
             debug(`Not existing ${this.runtime.id} - ${performance.now()}`);
             const newString = SharedString.create(this.runtime);
 
@@ -131,14 +127,9 @@ export class SharedTextRunner
             }
             this.root.set(textSharedStringId, newString.handle);
 
-            insights.set(newString.id, SharedMap.create(this.runtime).handle);
-
             // The flowContainerMap MUST be set last
-
             const flowContainerMap = SharedMap.create(this.runtime);
             this.root.set(flowContainerMapId, flowContainerMap.handle);
-
-            insights.set(newString.id, SharedMap.create(this.runtime).handle);
         } else {
             this.root = await this.runtime.getChannel(rootMapId) as ISharedMap;
         }
@@ -149,7 +140,6 @@ export class SharedTextRunner
         await mapWait(this.root, flowContainerMapId);
 
         this.sharedString = await this.root.get<IFluidHandle<SharedString>>(textSharedStringId).get();
-        this.insightsMap = await this.root.get<IFluidHandle<ISharedMap>>(insightsMapId).get();
         debug(`Shared string ready - ${performance.now()}`);
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performance.now()}`);
