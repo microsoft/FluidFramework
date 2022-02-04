@@ -2293,9 +2293,8 @@ interface IListReferenceDoc extends IReferenceDoc {
     selectionIndex: number;
 }
 
-export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost {
+export class FlowView extends ui.Component {
     public static docStartPosition = 0;
-    public get ISearchMenuHost() { return this; }
     public timeToImpression: number;
     public timeToLoad: number;
     public timeToEdit: number;
@@ -2907,24 +2906,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 this.hostSearchMenu(this.cursor.pos);
             }
         }
-    }
-
-    public showSearchMenu(
-        cmdTree: MergeTree.TST<SearchMenu.ISearchMenuCommand>,
-        foldCase = true,
-        showAllInitially = false,
-        cmdParser?: (searchString: string, cmd?: SearchMenu.ISearchMenuCommand) => void) {
-        this.activeSearchBox =
-            SearchMenu.searchBoxCreate(this, this.viewportDiv, cmdTree, foldCase, cmdParser);
-        if (showAllInitially) {
-            this.activeSearchBox.showAllItems();
-        }
-        return true;
-    }
-
-    public cancelSearchMenu() {
-        this.activeSearchBox.dismiss();
-        this.activeSearchBox = undefined;
     }
 
     public setEdit(docRoot: types.ISharedMap) {

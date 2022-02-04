@@ -10,21 +10,10 @@ import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
 import * as ui from "./rectangle";
 
-export interface ISearchMenuHost {
-    // TD switch to options structure
-    showSearchMenu(
-        cmdTree: MergeTree.TST<ISearchMenuCommand>,
-        foldCase: boolean,
-        showAllInitially: boolean,
-        cmdParser?: (searchString: string, cmd?: ISearchMenuCommand) => void): boolean;
-    cancelSearchMenu(): void;
-}
-
 export interface ISearchMenuCommand<TContext = any> {
     div?: HTMLDivElement;
     exec?: (cmd: ISearchMenuCommand<TContext>, parameters: string[], context?: TContext) => void;
     enabled?: (context?: TContext) => boolean;
-    iconHTML?: string;
     key: string;
 }
 
@@ -190,12 +179,6 @@ export function selectionListBoxCreate(
         itemSpan.innerText = `  ${item.key}`;
         itemDiv.appendChild(itemSpan);
 
-        if (item.iconHTML) {
-            const icon = document.createElement("span");
-            icon.innerHTML = item.iconHTML;
-            icon.style.marginRight = "2px";
-            itemDiv.insertBefore(icon, itemSpan);
-        }
         return itemDiv;
     }
 
