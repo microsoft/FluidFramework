@@ -43,6 +43,7 @@ import {
 import { defaultCacheExpiryTimeoutMs, EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { FlushResult } from "./odspDocumentDeltaConnection";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 /* eslint-disable max-len */
 
@@ -530,13 +531,15 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 throw new NonRetryableError(
                     "getVersionsReturnedNoResponse",
                     "No response from /versions endpoint",
-                    DriverErrorType.genericNetworkError);
+                    DriverErrorType.genericNetworkError,
+                    { driverVersion });
             }
             if (!Array.isArray(versionsResponse.value)) {
                 throw new NonRetryableError(
                     "getVersionsReturnedNonArrayResponse",
                     "Incorrect response from /versions endpoint",
-                    DriverErrorType.genericNetworkError);
+                    DriverErrorType.genericNetworkError,
+                    { driverVersion });
             }
             return versionsResponse.value.map((version) => {
                 // Parse the date from the message
@@ -715,7 +718,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             throw new NonRetryableError(
                 "noSnapshotUrlProvided",
                 "Method failed because no snapshot url was available",
-                DriverErrorType.genericError);
+                DriverErrorType.genericError,
+                { driverVersion });
         }
     }
 
@@ -724,7 +728,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             throw new NonRetryableError(
                 "noAttachmentPOSTUrlProvided",
                 "Method failed because no attachment POST url was available",
-                DriverErrorType.genericError);
+                DriverErrorType.genericError,
+                { driverVersion });
         }
     }
 
@@ -733,7 +738,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             throw new NonRetryableError(
                 "noAttachmentGETUrlWasProvided",
                 "Method failed because no attachment GET url was available",
-                DriverErrorType.genericError);
+                DriverErrorType.genericError,
+                { driverVersion });
         }
     }
 

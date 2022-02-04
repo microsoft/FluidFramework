@@ -621,11 +621,6 @@ export class SharedMatrix<T = any>
         }
     }
 
-    protected registerCore() {
-        this.rows.startOrUpdateCollaboration(this.runtime.clientId, 0);
-        this.cols.startOrUpdateCollaboration(this.runtime.clientId, 0);
-    }
-
     // Invoked by PermutationVector to notify IMatrixConsumers of row insertion/deletions.
     private readonly onRowDelta = (position: number, removedCount: number, insertedCount: number) => {
         for (const consumer of this.consumers) {

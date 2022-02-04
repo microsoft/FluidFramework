@@ -148,8 +148,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     process(messageArg: ISequencedDocumentMessage, local: boolean): void;
     // (undocumented)
     processSignal(message: ISignalMessage, local: boolean): void;
-    // (undocumented)
-    readonly raiseContainerWarning: (warning: ContainerWarning) => void;
     refreshLatestSummaryAck(proposalHandle: string | undefined, ackHandle: string, summaryRefSeq: number, summaryLogger: ITelemetryLogger): Promise<void>;
     request(request: IRequest): Promise<IResponse>;
     resolveHandle(request: IRequest): Promise<IResponse>;
@@ -176,9 +174,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     submitSignal(type: string, content: any): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     summarize(options: {
-        summaryLogger: ITelemetryLogger;
         fullTree?: boolean;
         trackState?: boolean;
+        summaryLogger?: ITelemetryLogger;
         runGC?: boolean;
         fullGC?: boolean;
         runSweep?: boolean;

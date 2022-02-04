@@ -6,11 +6,17 @@
 import { SharedCell } from "@fluidframework/cell";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { Ink } from "@fluidframework/ink";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import {
+    buildRuntimeRequestHandler,
+    RuntimeRequestHandler,
+} from "@fluidframework/request-handler";
 import {
     FluidDataStoreRegistryEntry,
     IFluidDataStoreContext,
@@ -18,7 +24,7 @@ import {
     IFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { create404Response, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import {
     SharedIntervalCollection,
     SharedNumberSequence,
@@ -27,11 +33,20 @@ import {
     SparseMatrix,
 } from "@fluidframework/sequence";
 
+async function runtimeRequestHandler(request: IRequest, runtime: IContainerRuntime){
+    if (request.url === "/containerRuntime") {
+        return { mimeType: "fluid/object", status: 200, value: runtime };
+    } else {
+        return create404Response(request);
+    }
+};
+
 /** Simple runtime factory that creates a container runtime */
 export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
     constructor(
         private readonly runtimeOptions: IContainerRuntimeOptions,
-        private readonly registries: NamedFluidDataStoreRegistryEntries) {
+        private readonly registries: NamedFluidDataStoreRegistryEntries,
+        private readonly requestHandlers: RuntimeRequestHandler[] = []) {
         super();
     }
 
@@ -42,7 +57,10 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
         return ContainerRuntime.load(
             context,
             this.registries,
-            undefined,
+            buildRuntimeRequestHandler(
+                ...this.requestHandlers,
+                runtimeRequestHandler,
+            ),
             this.runtimeOptions,
             undefined, // containerScope
             existing,

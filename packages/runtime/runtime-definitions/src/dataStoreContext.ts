@@ -5,7 +5,6 @@
 
 import { ITelemetryBaseLogger, IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
-    IFluidObject,
     IFluidRouter,
     IProvideFluidHandleContext,
     IFluidHandle,
@@ -16,7 +15,6 @@ import {
 import {
     IAudience,
     IDeltaManager,
-    ContainerWarning,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -287,7 +285,7 @@ export interface IFluidDataStoreContext extends
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IFluidObject & FluidObject;
+    readonly scope: FluidObject;
 
     /**
      * Returns the current quorum.
@@ -298,12 +296,6 @@ export interface IFluidDataStoreContext extends
      * Returns the current audience.
      */
     getAudience(): IAudience;
-
-    /**
-     * Report error that happened in the data store runtime layer to the container runtime layer
-     * @param err - the error object.
-     */
-    raiseContainerWarning(warning: ContainerWarning): void;
 
     /**
      * Submits the message to be sent to other clients.

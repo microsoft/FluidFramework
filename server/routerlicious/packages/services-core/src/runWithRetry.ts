@@ -35,7 +35,7 @@ export async function runWithRetry<T>(
     let result: T | undefined;
     let retryCount = 0;
     let success = false;
-    do  {
+    do {
         try {
             result = await api();
             success = true;
@@ -108,7 +108,7 @@ export async function runWithRetry<T>(
     let result: T;
     let retryCount = 0;
     let success = false;
-    do  {
+    do {
         try {
             result = await request();
             success = true;
