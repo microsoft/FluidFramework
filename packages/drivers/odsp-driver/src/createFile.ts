@@ -37,6 +37,7 @@ import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import { convertCreateNewSummaryTreeToTreeAndBlobs } from "./createNewUtils";
 import { runWithRetry } from "./retryUtils";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -60,7 +61,7 @@ export async function createNewFluidFile(
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
         throw new NonRetryableError(
-            "createNewInvalidFilename", "Invalid filename", OdspErrorType.invalidFileNameError);
+            "createNewInvalidFilename", "Invalid filename", OdspErrorType.invalidFileNameError, { driverVersion });
     }
 
     let itemId: string;
@@ -155,7 +156,8 @@ export async function createNewEmptyFluidFile(
                     throw new NonRetryableError(
                         "createEmptyFileNoItemId",
                         "ODSP CreateFile call returned no item ID",
-                        DriverErrorType.incorrectServerResponse);
+                        DriverErrorType.incorrectServerResponse,
+                        { driverVersion });
                 }
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
@@ -215,7 +217,8 @@ export async function createNewFluidFileFromSummary(
                     throw new NonRetryableError(
                         "createFileNoItemId",
                         "ODSP CreateFile call returned no item ID",
-                        DriverErrorType.incorrectServerResponse);
+                        DriverErrorType.incorrectServerResponse,
+                        { driverVersion });
                 }
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,

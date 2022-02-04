@@ -137,7 +137,7 @@ export class IFrameOuterHost {
         // them all in one (otherwise there are mysterious runtime errors)
         const combinedProxy = {};
 
-        const outerDocumentServiceProxy =  new DocumentServiceFactoryProxy(
+        const outerDocumentServiceProxy = new DocumentServiceFactoryProxy(
             MultiDocumentServiceFactory.create(this.hostConfig.documentServiceFactory),
             this.hostConfig.options,
         );

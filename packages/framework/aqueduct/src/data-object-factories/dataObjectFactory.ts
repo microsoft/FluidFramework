@@ -16,7 +16,7 @@ import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { FluidObjectSymbolProvider } from "@fluidframework/synthesize";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 
-import { DataObject, DataObjectTypes, DataObjectType, IDataObjectProps  } from "../data-objects";
+import { DataObject, DataObjectTypes, IDataObjectProps } from "../data-objects";
 import { PureDataObjectFactory } from "./pureDataObjectFactory";
 
 /**
@@ -34,7 +34,7 @@ export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectT
         type: string,
         ctor: new (props: IDataObjectProps<I>) => TObj,
         sharedObjects: readonly IChannelFactory[] = [],
-        optionalProviders: FluidObjectSymbolProvider<DataObjectType<I, "OptionalProviders">>,
+        optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
         registryEntries?: NamedFluidDataStoreRegistryEntries,
         runtimeFactory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
     ) {

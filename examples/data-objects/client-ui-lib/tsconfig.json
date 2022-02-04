@@ -4,7 +4,6 @@
         "src/test/**/*"
     ],
     "compilerOptions": {
-        "noUnusedLocals": false,
         "strictNullChecks": false,
         "rootDir": "./src",
         "outDir": "./dist",

@@ -57,7 +57,6 @@ import {
     ProtocolOpHandler,
 } from "@fluidframework/protocol-base";
 import {
-    FileMode,
     IClient,
     IClientConfiguration,
     IClientDetails,
@@ -76,12 +75,9 @@ import {
     ISnapshotTree,
     ISummaryContent,
     ISummaryTree,
-    ITree,
-    ITreeEntry,
     IVersion,
     MessageType,
     SummaryType,
-    TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
     ChildLogger,
@@ -370,7 +366,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private _storageService: IDocumentStorageService & IDisposable | undefined;
-    private get storageService(): IDocumentStorageService  {
+    private get storageService(): IDocumentStorageService {
         if (this._storageService === undefined) {
             throw new Error("Attempted to access storageService before it was defined");
         }
@@ -647,7 +643,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.lastVisible = performance.now();
                 } else {
                     // settimeout so this will hopefully fire after disconnect event if being hidden caused it
-                    setTimeout(() => this.lastVisible = undefined, 0);
+                    setTimeout(() => { this.lastVisible = undefined }, 0);
                 }
             };
             document.addEventListener("visibilitychange", this.visibilityEventHandler);
@@ -683,7 +679,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         break;
                     default:
                 }
-            }).catch((error) =>  {
+            }).catch((error) => {
                 this.mc.logger.sendErrorEvent({ eventName: "RaiseConnectedEventError" }, error);
             });
         });
@@ -900,25 +896,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         );
     }
 
-    public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<void> {
-        // Only snapshot once a code quorum has been established
-        if (!this.protocolHandler.quorum.has("code") && !this.protocolHandler.quorum.has("code2")) {
-            this.mc.logger.sendTelemetryEvent({ eventName: "SkipSnapshot" });
-            return;
-        }
-
-        // Stop inbound message processing while we complete the snapshot
-        try {
-            await this.deltaManager.inbound.pause();
-            await this.snapshotCore(tagMessage, fullTree);
-        } catch (ex) {
-            this.mc.logger.sendErrorEvent({ eventName: "SnapshotExceptionError" }, ex);
-            throw ex;
-        } finally {
-            this.deltaManager.inbound.resume();
-        }
-    }
-
     public setAutoReconnect(reconnect: boolean) {
         if (this.closed) {
             throw new Error("Attempting to setAutoReconnect() a closed Container");
@@ -1038,86 +1015,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         this.close(new GenericError("existingContextDoesNotSatisfyIncomingProposal"));
-    }
-
-    private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
-        // Snapshots base document state and currently running context
-        const root = this.snapshotBase();
-        const dataStoreEntries = await this.context.snapshot(tagMessage, fullTree);
-
-        // And then combine
-        if (dataStoreEntries !== null) {
-            root.entries.push(...dataStoreEntries.entries);
-        }
-
-        // Generate base snapshot message
-        const deltaDetails =
-            `${this._deltaManager.lastSequenceNumber}:${this._deltaManager.minimumSequenceNumber}`;
-        const message = `Commit @${deltaDetails} ${tagMessage}`;
-
-        // Pull in the prior version and snapshot tree to store against
-        const lastVersion = await this.getVersion(null);
-
-        const parents = lastVersion !== undefined ? [lastVersion.id] : [];
-
-        // Write the full snapshot
-        return this.storageService.write(root, parents, message, "");
-    }
-
-    private snapshotBase(): ITree {
-        const entries: ITreeEntry[] = [];
-
-        const quorumSnapshot = this.protocolHandler.quorum.snapshot();
-        entries.push({
-            mode: FileMode.File,
-            path: "quorumMembers",
-            type: TreeEntry.Blob,
-            value: {
-                contents: JSON.stringify(quorumSnapshot.members),
-                encoding: "utf-8",
-            },
-        });
-        entries.push({
-            mode: FileMode.File,
-            path: "quorumProposals",
-            type: TreeEntry.Blob,
-            value: {
-                contents: JSON.stringify(quorumSnapshot.proposals),
-                encoding: "utf-8",
-            },
-        });
-        entries.push({
-            mode: FileMode.File,
-            path: "quorumValues",
-            type: TreeEntry.Blob,
-            value: {
-                contents: JSON.stringify(quorumSnapshot.values),
-                encoding: "utf-8",
-            },
-        });
-
-        // Save attributes for the document
-        const documentAttributes = {
-            minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
-            sequenceNumber: this._deltaManager.lastSequenceNumber,
-            term: this._deltaManager.referenceTerm,
-        };
-        entries.push({
-            mode: FileMode.File,
-            path: ".attributes",
-            type: TreeEntry.Blob,
-            value: {
-                contents: JSON.stringify(documentAttributes),
-                encoding: "utf-8",
-            },
-        });
-
-        // Output the tree
-        const root: ITree = {
-            entries,
-        };
-
-        return root;
     }
 
     private async getVersion(version: string | null): Promise<IVersion | undefined> {
@@ -1840,10 +1737,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         pendingLocalState?: unknown,
     ) {
         assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
-        // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
-        if (this._dirtyContainer) {
-            this.mc.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer" });
-        }
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
@@ -1862,15 +1755,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (message) => this.submitSignal(message),
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,
-            (dirty: boolean) => {
-                this._dirtyContainer = dirty;
-                this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
-            },
+            (dirty: boolean) => this.updateDirtyContainerState(dirty),
             existing,
             pendingLocalState,
         );
 
         this.emit("contextChanged", codeDetails);
+    }
+
+    private updateDirtyContainerState(dirty: boolean) {
+        if (this._dirtyContainer === dirty) {
+            return;
+        }
+        this._dirtyContainer = dirty;
+        this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
     }
 
     private logContainerError(warning: ContainerWarning) {

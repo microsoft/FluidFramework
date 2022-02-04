@@ -52,7 +52,7 @@ export interface IDeltaHandlerStrategy {
 }
 
 declare module "@fluidframework/core-interfaces" {
-    interface IFluidObject  {
+    interface IFluidObject {
         /** @deprecated - use `FluidObject<IDeltaSender>` instead */
         readonly IDeltaSender?: IDeltaSender
      }

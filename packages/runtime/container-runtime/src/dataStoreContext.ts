@@ -750,7 +750,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
         });
     }
 
-    private readonly initialSnapshotDetailsP =  new LazyPromise<ISnapshotDetails>(async () => {
+    private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
         let tree: ISnapshotTree | undefined;
         let isRootDataStore = true;
 
