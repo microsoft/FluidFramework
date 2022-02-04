@@ -337,7 +337,7 @@ export class SummaryGenerator {
             const telemetryProps: Record<string, number> = {
                 ackWaitDuration: ackNackDuration,
                 sequenceNumber: ackNackOp.sequenceNumber,
-                referenceSequenceNumber: ackNackOp.contents.summaryProposal.summarySequenceNumber,
+                summarySequenceNumber: ackNackOp.contents.summaryProposal.summarySequenceNumber,
             };
             if (ackNackOp.type === MessageType.SummaryAck) {
                 this.heuristicData.markLastAttemptAsSuccessful();
