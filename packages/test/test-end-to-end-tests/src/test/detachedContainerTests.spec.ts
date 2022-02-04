@@ -31,7 +31,7 @@ import { MessageType, ISummaryTree } from "@fluidframework/protocol-definitions"
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 
 const detachedContainerRefSeqNumber = 0;
@@ -605,9 +605,11 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         assert.strictEqual(retryTimes, 0, "Should not succeed at first time");
     }).timeout(5000);
 
-    it("Container should be closed on failed attach with non retryable error", async () => {
+    itExpects("Container should be closed on failed attach with non retryable error",
+    [{eventName: "fluid:telemetry:Container:ContainerClose", error: "Test Error"}],
+    async () => {
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
+
         const oldFunc = provider.documentServiceFactory.createContainer;
         provider.documentServiceFactory.createContainer = (a, b, c) => { throw new Error("Test Error"); };
         let failedOnce = false;

@@ -176,7 +176,7 @@ function throwUnexpectedLogErrorException(logger: ErrorTrackingLogger){
     if(results.unexpectedFound.length > 0){
         throw new Error(
             // eslint-disable-next-line max-len
-            `Unexpected Errors in Logs. Use ItErrors to specify expected errors:\n${ JSON.stringify(results.unexpectedFound, undefined, 2)}`);
+            `Unexpected Errors in Logs. Use itExpects to specify expected errors:\n${ JSON.stringify(results.unexpectedFound, undefined, 2)}`);
     }
     if(results.expectedNotFound.length > 0){
         throw new Error(
@@ -184,7 +184,7 @@ function throwUnexpectedLogErrorException(logger: ErrorTrackingLogger){
     }
 }
 
-export function ItErrors(name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc){
+export function itExpects(name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc){
 
     return it(name, async function (){
         const provider: TestObjectProvider | undefined = this.__fluidTestProvider;
@@ -245,7 +245,6 @@ function describeCompat(
                     return provider;
                 });
                 afterEach(function () {
-                    throwUnexpectedLogErrorException(provider.logger);
                     if (resetAfterEach) {
                         provider.reset();
                     }

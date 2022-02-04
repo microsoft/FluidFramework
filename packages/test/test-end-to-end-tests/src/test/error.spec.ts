@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { Container, ILoaderProps, Loader } from "@fluidframework/container-loader";
-import { IDocumentServiceFactory, DriverErrorType } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory} from "@fluidframework/driver-definitions";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import {
@@ -16,7 +16,7 @@ import {
     ITestObjectProvider,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 
 // REVIEW: enable compat testing?
@@ -69,25 +69,21 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
         );
     }
 
-    it("GeneralError Test", async () => {
+    itExpects("GeneralError Test",
+    [
+        {eventName: "fluid:telemetry:Container:ContainerClose", error: "false"},
+        {eventName: "TestException", errorType: ContainerErrorType.genericError}
+    ],
+    async () => {
         const documentServiceFactory = provider.documentServiceFactory;
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         mockFactory.createDocumentService = async (resolvedUrl) => {
             const service = await documentServiceFactory.createDocumentService(resolvedUrl);
-            // eslint-disable-next-line prefer-promise-reject-errors
             service.connectToDeltaStream = async () => Promise.reject(false);
             return service;
         };
+        await loadContainer({ documentServiceFactory: mockFactory });
 
-        try {
-            await loadContainer({ documentServiceFactory: mockFactory });
-            assert.fail("Error expected");
-        } catch (error) {
-            assert(
-                [DriverErrorType.genericNetworkError, ContainerErrorType.genericError].includes(error.errorType),
-                `${error.errorType} should be genericError or genericNetworkError`,
-            );
-        }
     });
 
     function assertCustomPropertySupport(err: any) {

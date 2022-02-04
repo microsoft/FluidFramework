@@ -37,7 +37,7 @@ import {
     ITestDataObject,
     TestDataObjectType,
     describeNoCompat,
-    ItErrors,
+    itExpects,
 } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
@@ -103,7 +103,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             "Client details should be set with interactive as true");
     });
 
-    ItErrors(
+    itExpects(
         "Load container unsuccessfully",
         [
             {eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure"},
@@ -123,7 +123,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             await loadContainer({ documentServiceFactory: mockFactory });
         });
 
-    ItErrors("Load container with error",
+    itExpects("Load container with error",
     [
         {eventName: "fluid:telemetry:DeltaManager:GetDeltas_Exception", error: "expectedFailure"},
         {eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure"},
