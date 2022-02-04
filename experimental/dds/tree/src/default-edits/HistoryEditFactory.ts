@@ -87,6 +87,7 @@ export function revert(changes: readonly Change[], before: Snapshot): Change[] {
 			case ChangeType.Constraint:
 				// TODO:#46759: Support Constraint in reverts
 				fail('Revert currently does not support Constraints');
+			// eslint-disable-next-line no-fallthrough
 			default:
 				fail('Revert does not support the change type.');
 		}
