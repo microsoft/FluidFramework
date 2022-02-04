@@ -27,7 +27,7 @@ import {
     OuterUrlResolver,
 } from "@fluidframework/iframe-driver";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { ISequencedDocumentMessage, ITree, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 export interface IFrameInnerApi {

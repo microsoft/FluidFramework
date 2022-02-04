@@ -64,7 +64,6 @@ import {
     ISummaryConfiguration,
     ISummaryContent,
     ISummaryTree,
-    ITree,
     MessageType,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
