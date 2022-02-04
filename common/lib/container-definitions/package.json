@@ -117,7 +117,6 @@
           "backCompat": false
         },
         "InterfaceDeclaration_IRuntime": {
-          "forwardCompat": false,
           "backCompat": false
         },
         "InterfaceDeclaration_IRuntimeFactory": {
@@ -161,6 +160,9 @@
         },
         "InterfaceDeclaration_IProvideRuntimeFactory": {
           "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IRuntime": {
           "backCompat": false
         },
         "InterfaceDeclaration_IRuntimeFactory": {
@@ -241,6 +243,9 @@
           "backCompat": false,
           "forwardCompat": false
         },
+        "InterfaceDeclaration_IRuntime": {
+          "backCompat": false
+        },
         "InterfaceDeclaration_IRuntimeFactory": {
           "backCompat": false,
           "forwardCompat": false
@@ -286,6 +291,9 @@
         "InterfaceDeclaration_IProvideRuntimeFactory": {
           "backCompat": false,
           "forwardCompat": false
+        },
+        "InterfaceDeclaration_IRuntime": {
+          "backCompat": false
         },
         "InterfaceDeclaration_IRuntimeFactory": {
           "backCompat": false,
@@ -363,6 +371,9 @@
           "backCompat": false,
           "forwardCompat": false
         },
+        "InterfaceDeclaration_IRuntime": {
+          "backCompat": false
+        },
         "InterfaceDeclaration_IRuntimeFactory": {
           "backCompat": false,
           "forwardCompat": false
@@ -419,6 +430,9 @@
           "backCompat": false,
           "forwardCompat": false
         },
+        "InterfaceDeclaration_IRuntime": {
+          "backCompat": false
+        },
         "InterfaceDeclaration_IRuntimeFactory": {
           "backCompat": false,
           "forwardCompat": false
@@ -427,6 +441,29 @@
           "backCompat": false
         },
         "InterfaceDeclaration_IUsageError": {
+          "backCompat": false
+        }
+      },
+      "0.45.0": {
+        "InterfaceDeclaration_ICodeDetailsLoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ICodeLoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IFluidModule": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IFluidModuleWithDetails": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProvideRuntimeFactory": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IRuntime": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IRuntimeFactory": {
           "backCompat": false
         }
       }
