@@ -365,6 +365,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
 
 // @public
 export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
+    readonly forcedFullTree: boolean;
     readonly generateDuration: number;
     // (undocumented)
     readonly stage: "generate";

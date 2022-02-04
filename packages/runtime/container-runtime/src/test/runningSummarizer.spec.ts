@@ -170,6 +170,7 @@ describe("Runtime", () => {
                             },
                             handle: "test-handle",
                             clientSequenceNumber: lastClientSeq,
+                            forcedFullTree: false,
                         } as const;
                     },
                     new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
