@@ -370,7 +370,7 @@ async function fetchSnapshotContentsCoreV1(
         fetchAndParseAsJSONHelper<IOdspSnapshot>(url, fetchOptions));
     const snapshotContents: ISnapshotContents = convertOdspSnapshotToSnapsohtTreeAndBlobs(response.content);
     const finalSnapshotContents: IOdspResponse<ISnapshotContents> = { ...response, content: snapshotContents };
-    return  {
+    return {
         odspSnapshotResponse: finalSnapshotContents,
         requestHeaders: headers,
         requestUrl: url,
@@ -410,7 +410,7 @@ async function fetchSnapshotContentsCoreV2(
     const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
         new ReadBuffer(new Uint8Array(response.content)));
     const finalSnapshotContents: IOdspResponse<ISnapshotContents> = { ...response, content: snapshotContents };
-    return  {
+    return {
         odspSnapshotResponse: finalSnapshotContents,
         requestHeaders: headers,
         requestUrl: fullUrl,

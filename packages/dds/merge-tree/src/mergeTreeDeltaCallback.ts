@@ -17,8 +17,8 @@ export type MergeTreeDeltaOperationType =
 
 // Note: Assigned negative integers to avoid clashing with MergeTreeDeltaType
 export const enum MergeTreeMaintenanceType {
-    APPEND  = -1,
-    SPLIT   = -2,
+    APPEND = -1,
+    SPLIT = -2,
     /**
      * Notification that a segment has been unlinked from the MergeTree.  This occurs during
      * Zamboni when:
@@ -28,7 +28,7 @@ export const enum MergeTreeMaintenanceType {
      *
      *    b) The segment's tracking collection is empty (e.g., not being tracked for undo/redo).
      */
-    UNLINK  = -3,
+    UNLINK = -3,
     /**
      * Notification that a local change has been acknowledged by the server.
      * This means that it has made the round trip to the server and has had a sequence number assigned.

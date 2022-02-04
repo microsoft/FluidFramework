@@ -41,7 +41,7 @@ export function isOnline(): OnlineStatus {
 }
 
 /** Telemetry props with driver-specific required properties */
-export type DriverErrorTelemetryProps = ITelemetryProperties & { driverVersion: string  | undefined };
+export type DriverErrorTelemetryProps = ITelemetryProperties & { driverVersion: string | undefined };
 
 /**
  * Generic network error class.

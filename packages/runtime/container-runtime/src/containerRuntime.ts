@@ -99,7 +99,6 @@ import {
     requestFluidObject,
     responseToException,
     seqFromTree,
-    convertSummaryTreeToITree,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -652,7 +651,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
-        const passLogger = context.taggedLogger  ?? new TaggedLoggerAdapter((context as
+        const passLogger = context.taggedLogger ?? new TaggedLoggerAdapter((context as
             OldContainerContextWithLogger).logger);
         const logger = ChildLogger.create(passLogger, undefined, {
             all: {
@@ -874,20 +873,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private get summaryConfiguration() {
-        return  {
+        return {
             // the defaults
             ... DefaultSummaryConfiguration,
             // the server provided values
             ... this.context?.serviceConfiguration?.summary,
             // the runtime configuration overrides
             ... this.runtimeOptions.summaryOptions?.summaryConfigOverrides,
-         };
+        };
     }
 
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
-    private dirtyContainer = false;
+    private dirtyContainer: boolean;
     private emitDirtyDocumentEvent = true;
 
     private summarizerWarning = (warning: ContainerWarning) =>
@@ -1080,6 +1079,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
+
+        const { attachState, pendingLocalState } = this.context;
+        this.dirtyContainer = attachState !== AttachState.Attached
+            || (pendingLocalState as IPendingLocalState)?.pendingStates.length > 0;
+        this.context.updateDirtyContainerState(this.dirtyContainer);
 
         // Map the deprecated generateSummaries flag to disableSummaries.
         if (this.runtimeOptions.summaryOptions.generateSummaries === false) {
@@ -1373,14 +1377,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @deprecated - Use summarize to get summary of the container runtime.
      */
     public async snapshot(): Promise<ITree> {
-        const summaryResult = await this.summarize({
-            summaryLogger: this.logger,
-            fullTree: true,
-            trackState: false,
-            runGC: this.garbageCollector.shouldRunGC,
-            fullGC: true,
-        });
-        return convertSummaryTreeToITree(summaryResult.summary);
+        throw new Error("Do not call this API, to be removed in the following release.");
     }
 
     private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats) {
@@ -1783,6 +1780,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 0x12e /* "Container Context should already be in attached state" */);
             this.emit("attached");
         }
+
+        if (attachState === AttachState.Attached && !this.pendingStateManager.hasPendingMessages()) {
+            this.updateDocumentDirtyState(false);
+        }
         this.dataStores.setAttachState(attachState);
     }
 
@@ -1838,12 +1839,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Returns a summary of the runtime at the current sequence number.
      */
     public async summarize(options: {
-        /** Logger to use for correlated summary events */
-        summaryLogger: ITelemetryLogger,
         /** True to generate the full tree with no handle reuse optimizations; defaults to false */
         fullTree?: boolean,
         /** True to track the state for this summary in the SummarizerNodes; defaults to true */
         trackState?: boolean,
+        /** Logger to use for correlated summary events */
+        summaryLogger?: ITelemetryLogger,
         /** True to run garbage collection before summarizing; defaults to true */
         runGC?: boolean,
         /** True to generate full GC data */
@@ -1853,7 +1854,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }): Promise<ISummaryTreeWithStats> {
         this.verifyNotClosed();
 
-        const { summaryLogger, fullTree = false, trackState = true, runGC = true, runSweep, fullGC } = options;
+        const {
+            fullTree = false,
+            trackState = true,
+            summaryLogger = this.logger,
+            runGC = this.garbageCollector.shouldRunGC,
+            runSweep,
+            fullGC,
+        } = options;
 
         if (runGC) {
             await this.collectGarbage({ logger: summaryLogger, runSweep, fullGC });
@@ -2012,11 +2020,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             let summarizeResult: ISummaryTreeWithStats;
             try {
                 summarizeResult = await this.summarize({
-                    summaryLogger,
                     // If the GC state needs to be reset, we need to regenerate the summary and update the unreferenced
                     // state of all the nodes.
                     fullTree: fullTree || this.garbageCollector.summaryStateNeedsReset,
                     trackState: true,
+                    summaryLogger,
                     runGC: this.garbageCollector.shouldRunGC,
                 });
             } catch (error) {
@@ -2403,20 +2411,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private async fetchSnapshotFromStorage(
         versionId: string | null, logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
-        return PerformanceEvent.timedExecAsync(logger, event, async (perfEvent) => {
-            const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
-            const trace = Trace.start();
+        return PerformanceEvent.timedExecAsync(
+            logger, event, async (perfEvent: {
+                end: (arg0: {
+                    getVersionDuration?: number | undefined;
+                    getSnapshotDuration?: number | undefined;
+                }) => void; }) => {
+                    const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
+                    const trace = Trace.start();
 
-            const versions = await this.storage.getVersions(versionId, 1);
-            assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
-            stats.getVersionDuration = trace.trace().duration;
+                    const versions = await this.storage.getVersions(versionId, 1);
+                    assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
+                    stats.getVersionDuration = trace.trace().duration;
 
-            const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
-            assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
-            stats.getSnapshotDuration = trace.trace().duration;
+                    const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
+                    assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
+                    stats.getSnapshotDuration = trace.trace().duration;
 
-            perfEvent.end(stats);
-            return maybeSnapshot;
+                    perfEvent.end(stats);
+                    return maybeSnapshot;
         });
     }
 

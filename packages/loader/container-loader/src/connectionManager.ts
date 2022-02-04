@@ -863,7 +863,7 @@ export class ConnectionManager implements IConnectionManager {
         // TODO: we should remove this check when service updates?
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (this._readonlyPermissions) {
-            this.props.closeHandler(createWriteError("writeOnReadOnlyDocument",  { driverVersion: undefined }));
+            this.props.closeHandler(createWriteError("writeOnReadOnlyDocument", { driverVersion: undefined }));
         }
 
         const reconnectInfo = getNackReconnectInfo(message.content);

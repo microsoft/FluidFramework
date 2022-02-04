@@ -40,7 +40,7 @@ export async function renderCheckoutView(div: HTMLDivElement): Promise<string[] 
             div.removeChild(wrapperDiv);
             const paths = getPaths(list);
             params.set("paths", paths.toString());
-            window.history.replaceState({}, "", `?${ params.toString()  }${window.location.hash}`);
+            window.history.replaceState({}, "", `?${ params.toString() }${window.location.hash}`);
             resolve(paths.length > 0 ? paths : undefined);
         };
     });

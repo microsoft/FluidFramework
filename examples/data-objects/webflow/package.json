@@ -70,11 +70,10 @@
   },
   "dependencies": {
     "@fluid-example/example-utils": "^0.57.0",
-    "@fluid-example/flow-util-lib": "^0.57.0",
     "@fluidframework/aqueduct": "^0.57.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/core-interfaces": "^0.42.0-0",
+    "@fluidframework/core-interfaces": "^0.42.0",
     "@fluidframework/data-object-base": "^0.57.0",
     "@fluidframework/map": "^0.57.0",
     "@fluidframework/merge-tree": "^0.57.0",

@@ -24,7 +24,7 @@ import {
 import { LoggingError } from "@fluidframework/telemetry-utils";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
-    private  readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
+    private readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
 
     public get protocolName() { return this.internal.protocolName; }
     public get documentServices() { return this._documentServices; }
@@ -53,7 +53,7 @@ export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFac
 }
 
 export class FaultInjectionDocumentService implements IDocumentService {
-    private  _currentDeltaStream: FaultInjectionDocumentDeltaConnection | undefined;
+    private _currentDeltaStream: FaultInjectionDocumentDeltaConnection | undefined;
 
     constructor(private readonly internal: IDocumentService) {
     }
