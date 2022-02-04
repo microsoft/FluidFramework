@@ -174,12 +174,6 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.makeBlink("pink");
-        },
-        key: "blink-pink",
-    },
-    {
-        exec: (c, p, f) => {
             f.setFont("courier new", "18px");
         },
         key: "Courier font",
@@ -1940,10 +1934,6 @@ function makeSegSpan(
                         }
                     };
                 }
-            } else if (key === "blink") {
-                if (textSegment.properties[key]) {
-                    span.classList.add("blinking");
-                }
             } else {
                 span.style[key] = textSegment.properties[key];
             }
@@ -3344,7 +3334,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public setProps(props: MergeTree.PropertySet, updatePG = true) {
+    public setProps(props: MergeTree.PropertySet) {
         const sel = this.cursor.getSelection();
         this.undoRedoManager.closeCurrentOperation();
         if (sel) {
@@ -3370,11 +3360,7 @@ export class FlowView extends ui.Component {
     }
 
     public setColor(color: string) {
-        this.setProps({ color }, false);
-    }
-
-    public makeBlink(color: string) {
-        this.setProps({ blink: true, color }, false);
+        this.setProps({ color });
     }
 
     public toggleWordOrSelection(name: string, valueOn: string, valueOff: string) {
