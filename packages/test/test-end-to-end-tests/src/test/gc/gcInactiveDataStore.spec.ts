@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { TestDataObject } from "./mockSummarizerClient";
@@ -45,12 +48,26 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let containerRuntime: ContainerRuntime;
     let defaultDataStore: TestDataObject;
+    let mockLogger: MockLogger;
+
+    const createContainer = async (logger: MockLogger) => provider.createContainer(runtimeFactory, { logger });
 
     /** Waits for the given amount of time to be passed. */
     async function waitForTimeout(timeout: number): Promise<void> {
         await new Promise<void>((resolve) => {
             setTimeout(resolve, timeout);
         });
+    }
+
+    /** Validates that none of the inactive events have been logged since the last run. */
+    function validateNoInactiveEvents() {
+        assert(
+            !mockLogger.matchAnyEvent([
+                { eventName: inactiveObjectRevivedEvent },
+                { eventName: inactiveObjectChangedEvent },
+            ]),
+            "inactive object events should not have been logged",
+        );
     }
 
     before(function() {
@@ -63,7 +80,8 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
     });
 
     beforeEach(async () => {
-        const container = await provider.createContainer(runtimeFactory);;
+        mockLogger = new MockLogger();
+        const container = await createContainer(mockLogger) as Container;
         defaultDataStore = await requestFluidObject<TestDataObject>(container, "/");
         containerRuntime = defaultDataStore.containerRuntime;
     });
@@ -83,6 +101,7 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
             trackState: false,
             summaryLogger,
         });
+        validateNoInactiveEvents();
 
         // Mark dataStore1 as unreferenced, summarize and validate that no unreferenced errors were logged.
         defaultDataStore._root.delete("dataStore1");
@@ -93,6 +112,7 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
             trackState: false,
             summaryLogger,
         });
+        validateNoInactiveEvents();
 
         // Wait for 3000 ms which is > the configured maxUnreferencedDurationMs (2000). This will ensure that the
         // unreferenced data store is inactive.
@@ -101,11 +121,22 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
         // Make changes to the inactive data store and validate that we get the inactiveObjectChanged event.
         dataStore1._root.set("key", "value");
         await provider.ensureSynchronized();
+        assert(
+            mockLogger.matchEvents([
+                {
+                    eventName: inactiveObjectChangedEvent,
+                    timeout: deleteTimeoutMs,
+                    id: `/${dataStore1.id}`,
+                },
+            ]),
+            "inactiveObjectChanged event not generated as expected",
+        );
 
         // Make a change again and validate that we don't get another inactiveObjectChanged event as we only log it
         // once per data store per session.
         dataStore1._root.set("key2", "value2");
         await provider.ensureSynchronized();
+        validateNoInactiveEvents();
 
         // Revive the inactive data store and validate that we get the inactiveObjectRevivedEvent event.
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
@@ -116,5 +147,15 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
             trackState: false,
             summaryLogger,
         });
+        assert(
+            mockLogger.matchEvents([
+                {
+                    eventName: inactiveObjectRevivedEvent,
+                    timeout: deleteTimeoutMs,
+                    id: `/${dataStore1.id}`,
+                },
+            ]),
+            "inactiveObjectRevived event not generated as expected",
+        );
     }).timeout(10000);
 });
