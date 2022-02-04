@@ -112,9 +112,6 @@ interface ITextErrorInfo {
     alternates: Alt[];
     color?: string;
 }
-function altsToItems(alts: Alt[]) {
-    return alts.map((v) => ({ key: v.text }));
-}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IFlowViewCmd extends SearchMenu.ISearchMenuCommand<FlowView> {
@@ -1852,7 +1849,6 @@ function makeSegSpan(
                     textErrorRun.end += segText.length;
                 }
                 const textErrorInfo = textSegment.properties[key] as ITextErrorInfo;
-                let slb: SearchMenu.ISelectionListBox;
                 span.textErrorRun = textErrorRun;
                 if (textErrorInfo.color === "paul") {
                     span.style.background = underlinePaulStringURL;
@@ -1862,43 +1858,6 @@ function makeSegSpan(
                     span.style.background = underlinePaulGoldStringURL;
                 } else {
                     span.style.background = underlineStringURL;
-                }
-                if (textErrorInfo.alternates.length > 0) {
-                    span.onmousedown = (e) => {
-                        function cancelIntellisense(ev: MouseEvent) {
-                            if (slb) {
-                                document.body.removeChild(slb.elm);
-                                slb = undefined;
-                            }
-                        }
-                        function acceptIntellisense(ev: MouseEvent) {
-                            cancelIntellisense(ev);
-                            const itemElm = ev.target as HTMLElement;
-                            const text = itemElm.innerText.trim();
-                            context.sharedString.removeText(span.textErrorRun.start, span.textErrorRun.end);
-                            context.sharedString.insertText(span.textErrorRun.start, text);
-                            context.hostSearchMenu(span.textErrorRun.start);
-                        }
-                        function selectItem(ev: MouseEvent) {
-                            const itemElm = ev.target as HTMLElement;
-                            if (slb) {
-                                slb.selectItem(itemElm.innerText);
-                            }
-                        }
-                        console.log(`button ${e.button}`);
-                        if ((e.button === 2) || ((e.button === 0) && (e.ctrlKey))) {
-                            const spanBounds = ui.Rectangle.fromClientRect(span.getBoundingClientRect());
-                            spanBounds.width = Math.floor(window.innerWidth / 4);
-                            slb = SearchMenu.selectionListBoxCreate(spanBounds, document.body, 24, 0, 12);
-                            slb.showSelectionList(altsToItems(textErrorInfo.alternates));
-                            span.onmouseup = cancelIntellisense;
-                            document.body.onmouseup = cancelIntellisense;
-                            slb.elm.onmouseup = acceptIntellisense;
-                            slb.elm.onmousemove = selectItem;
-                        } else if (e.button === 0) {
-                            context.clickSpan(e.clientX, e.clientY, span);
-                        }
-                    };
                 }
             } else {
                 span.style[key] = textSegment.properties[key];
