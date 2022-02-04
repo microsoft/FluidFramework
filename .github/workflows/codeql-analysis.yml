@@ -11,7 +11,7 @@ on:
     branches:
       - main
       - release/*
-      - test/*
+      - test/* # disable after testing
   schedule:
     - cron: '44 21 * * 1'
 
