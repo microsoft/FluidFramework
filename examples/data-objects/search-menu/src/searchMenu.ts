@@ -348,10 +348,11 @@ function inputBoxCreate(
 
 // TODO: make generic in context type
 export function searchBoxCreate(
-    context: any, boundingElm: HTMLElement,
+    context: any,
+    boundingElm: HTMLElement,
     cmdTree: MergeTree.TST<ISearchMenuCommand>,
     foldCase = true,
-    cmdParser?: (searchString: string, cmd?: ISearchMenuCommand) => void): ISearchBox {
+): ISearchBox {
     const container = document.createElement("div");
     const inputElmHeight = 32;
     const itemHeight = 24;
@@ -399,8 +400,6 @@ export function searchBoxCreate(
 
     const getSelectedItem = () => selectionListBox.getSelectedItem();
 
-    const getSearchString = () => inputBox.getText();
-
     function dismiss() {
         boundingElm.removeChild(container);
     }
@@ -415,10 +414,6 @@ export function searchBoxCreate(
         } else if (e.keyCode === KeyCode.downArrow) {
             selectionListBox.nextItem();
         } else if (e.keyCode === KeyCode.esc) {
-            if (cmdParser) {
-                e.preventDefault();
-                cmdParser("");
-            }
         } else {
             textSegKeydown(e);
         }
@@ -428,8 +423,6 @@ export function searchBoxCreate(
         inputBox.keydown(e);
     }
 
-    // TODO: change exec to take parameters if any
-
     function keypress(e: KeyboardEvent) {
         e.preventDefault();
         if (e.charCode === CharacterCodes.cr) {
@@ -438,10 +431,6 @@ export function searchBoxCreate(
             // If the searchbox successfully resolved to a simple command, execute it.
             if (cmd && cmd.exec) {
                 cmd.exec(cmd, [], context);
-            } else {
-                if (cmdParser) {
-                    cmdParser(getSearchString(), cmd);
-                }
             }
             if (onExec) {
                 onExec(cmd);
