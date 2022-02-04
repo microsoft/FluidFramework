@@ -5,6 +5,7 @@
 
 import fs from "fs";
 import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@fluidframework/gitresources";
+import { Uint8ArrayToString } from "@fluidframework/common-utils";
 import { Router } from "express";
 import * as git from "isomorphic-git";
 import nconf from "nconf";
@@ -44,7 +45,7 @@ export async function getBlob(
         url: "",
         sha,
         size: buffer.length,
-        content: buffer.toString("base64"),
+        content: Uint8ArrayToString(buffer, "base64"),
         encoding: "base64",
     };
 
