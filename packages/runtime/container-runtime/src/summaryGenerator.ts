@@ -236,7 +236,7 @@ export class SummaryGenerator {
         let generateTelemetryProps: Record<string, string | number | boolean | undefined> = {};
         try {
             const generateSummaryEvent = PerformanceEvent.start(logger, {
-                eventName: "Summarize_generate",
+                eventName: "Summarize",
                 fullTree,
                 timeSinceLastAttempt: Date.now() - this.heuristicData.lastAttempt.summaryTime,
                 timeSinceLastSummary: Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime,
@@ -284,7 +284,7 @@ export class SummaryGenerator {
             }
 
             // Log event here on summary success only, as Summarize_cancel duplicates failure logging.
-            generateSummaryEvent.reportEvent("", {...generateTelemetryProps});
+            generateSummaryEvent.reportEvent("generate", {...generateTelemetryProps});
             resultsBuilder.summarySubmitted.resolve({ success: true, data: summaryData });
         } catch (error) {
             return fail("submitSummaryFailure", error);
