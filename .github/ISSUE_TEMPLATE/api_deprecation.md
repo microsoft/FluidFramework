@@ -8,6 +8,8 @@ assignees: ''
 ---
 
 ## Deprecated API
+<!-- Describe the API along with its associated classes, interfaces, packages, etc. -->
+
 **Context**
 <!-- An explanation of why this API should be deprecated and ultimately removed -->
 
