@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { memoizeGetter, fail } from '../../Common';
-import { ChangeNode, StableTraitLocation, TraitMap } from '../../generic';
+import { memoizeGetter, fail, setPropertyIfDefined } from '../../Common';
+import { ChangeNode, Payload, StableTraitLocation, TraitMap } from '../../generic';
 import { Definition, NodeId, TraitLabel } from '../../Identifiers';
+import { initialTree } from '../../InitialTree';
 import { RevisionView } from '../../TreeView';
-import { testTrait } from './TestUtilities';
+import { testTraitLabel } from './TestUtilities';
 
 /**
  * An object containing useful properties for analyzing a node within a test context.
@@ -88,8 +89,8 @@ export class SimpleTestTree implements TestTree {
 				[SimpleTestTree.leftTraitLabel]: [this.left],
 				[SimpleTestTree.rightTraitLabel]: [this.right],
 			},
-			traitLabel: testTrait.label,
-			traitLocation: testTrait,
+			traitLabel: testTraitLabel,
+			traitLocation: { label: testTraitLabel, parent: initialTree.identifier },
 			get view() {
 				return memoizeGetter(this, 'view', RevisionView.fromTree(this, expensiveValidation));
 			},
@@ -121,11 +122,7 @@ export class SimpleTestTree implements TestTree {
 	}
 
 	public buildLeaf(): ChangeNode {
-		return {
-			definition: SimpleTestTree.definition,
-			identifier: this.generateId(),
-			traits: {},
-		};
+		return buildLeaf(this.generateId());
 	}
 }
 
@@ -188,4 +185,15 @@ export class RefreshingTestTree<T extends TestTree> implements TestTree {
 	public buildLeaf(): ChangeNode {
 		return this.testTree.buildLeaf();
 	}
+}
+
+/** Create a new node with the given ID and payload */
+export function buildLeaf(id: NodeId, payload?: Payload): ChangeNode {
+	const node: ChangeNode = {
+		definition: SimpleTestTree.definition,
+		identifier: id,
+		traits: {},
+	};
+	setPropertyIfDefined(payload, node, 'payload');
+	return node;
 }

@@ -43,12 +43,12 @@ import {
 	SharedTreeSummaryWriteFormat,
 	StableTraitLocation,
 } from '../../generic';
-import { RevisionView } from '../../TreeView';
+import { RevisionView, TreeView } from '../../TreeView';
 import { EditLog } from '../../EditLog';
 import { IdCompressor } from '../../id-compressor';
 import { createSessionId } from '../../id-compressor/NumericUuid';
 import { reservedIdCount } from '../../generic/GenericSharedTree';
-import { getChangeNodeFromView } from '../../SerializationUtilities';
+import { getChangeNodeFromView, getChangeNodeFromViewNode } from '../../SerializationUtilities';
 import { RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
 
 /** Objects returned by setUpTestSharedTree */
@@ -205,10 +205,13 @@ export const simpleRevisionViewWithValidation = RevisionView.fromTree(simpleTest
  */
 export const initialRevisionViewWithValidation = RevisionView.fromTree(initialTree, true);
 
-export const testTrait: StableTraitLocation = {
-	parent: initialRevisionView.root,
-	label: 'e276f382-fa99-49a1-ae81-42001791c733' as TraitLabel,
-};
+export const testTraitLabel = 'e276f382-fa99-49a1-ae81-42001791c733' as TraitLabel;
+export function testTrait(view: TreeView): StableTraitLocation {
+	return {
+		label: testTraitLabel,
+		parent: view.root,
+	};
+}
 
 /** Sets up and returns an object of components useful for testing SharedTree. */
 export function setUpTestSharedTree(options?: SharedTreeTestingOptions): SharedTreeTestingComponents {
@@ -429,9 +432,9 @@ async function setUpLocalServerTestSharedTreeGeneric<
 /** Sets testTrait to contain `node`. */
 function setTestTree(tree: SharedTree, node: ChangeNode, overrideId?: EditId): EditId {
 	if (overrideId === undefined) {
-		return tree.applyEdit(...setTrait(testTrait, [node])).id;
+		return tree.applyEdit(...setTrait(testTrait(tree.currentView), [node])).id;
 	} else {
-		const changes = setTrait(testTrait, [node]).map((c) => tree.internalizeChange(c));
+		const changes = setTrait(testTrait(tree.currentView), [node]).map((c) => tree.internalizeChange(c));
 		return tree.applyEditInternal({ changes, id: overrideId }).id;
 	}
 }
@@ -473,7 +476,7 @@ export function createStableEdits(numberOfEdits: number): Edit<Change>[] {
 	const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
 
 	// First edit sets the test tree
-	const edit = newEdit(setTrait(testTrait, [simpleTestTree]));
+	const edit = newEdit(setTrait({ label: testTraitLabel, parent: initialTree.identifier }, [simpleTestTree]));
 
 	const nodeId = 'ae6b24eb-6fa8-42cc-abd2-48f250b7798f' as NodeId;
 	const node = makeEmptyNode(nodeId);
@@ -804,4 +807,26 @@ export function refreshTestTree(
 	return new RefreshingTestTree(() => {
 		return setUpTestTree(factory());
 	}, fn);
+}
+
+/**
+ * Applies an arbitrary edit to the given SharedTree which leaves the tree in the same state that it was before the edit.
+ * This is useful for test scenarios that want to apply edits but don't care what they do.
+ */
+export function applyNoop(tree: SharedTree): Edit<ChangeInternal> {
+	return tree.applyEdit(...noopEdit(tree.currentView));
+}
+
+/**
+ * Creates an arbitrary edit which leaves a tree in the same state that it was before the edit.
+ * This is useful for test scenarios that want to create edits but don't care what they do.
+ */
+export function noopEdit(view: TreeView): Change[] {
+	const traitLocation = testTrait(view);
+	const trait = view.getTrait(traitLocation);
+	// Set the test trait to the same thing that it already was
+	return setTrait(
+		traitLocation,
+		trait.map((id) => getChangeNodeFromViewNode(view, id))
+	);
 }

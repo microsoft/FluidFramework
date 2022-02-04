@@ -6,6 +6,7 @@
 import { expect } from 'chai';
 // KLUDGE:#62681: Remove eslint ignore due to unresolved import false positive
 import { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
+import { v4 } from 'uuid';
 import { EditHandle, EditLog } from '../EditLog';
 import { Edit, EditWithoutId, newEdit, SharedTreeSummary } from '../generic';
 import { SharedTree, setTrait, Change, ChangeInternal } from '../default-edits';
@@ -13,8 +14,14 @@ import { assertNotUndefined } from '../Common';
 import { SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import { initialTree } from '../InitialTree';
 import { SharedTreeDiagnosticEvent, SharedTreeSummaryWriteFormat } from '../generic/GenericSharedTree';
-import { EditId } from '../Identifiers';
-import { createStableEdits, makeTestNode, setUpLocalServerTestSharedTree, testTrait } from './utilities/TestUtilities';
+import { EditId, NodeId } from '../Identifiers';
+import {
+	applyNoop,
+	createStableEdits,
+	setUpLocalServerTestSharedTree,
+	testTraitLabel,
+} from './utilities/TestUtilities';
+import { buildLeaf } from './utilities/TestNode';
 
 describe('SharedTree history virtualization', () => {
 	let sharedTree: SharedTree;
@@ -64,7 +71,7 @@ describe('SharedTree history virtualization', () => {
 
 		// Add some edits to create a chunk with.
 		while (expectedEdits.length < (sharedTree.edits as EditLog).editsPerChunk * numberOfChunks + additionalEdits) {
-			expectedEdits.push(sharedTree.applyEdit(...setTrait(testTrait, [makeTestNode()])));
+			expectedEdits.push(applyNoop(sharedTree));
 		}
 
 		// `ensureSynchronized` does not guarantee blob upload
@@ -278,7 +285,9 @@ describe('SharedTree history virtualization', () => {
 
 		// Add some edits to create a chunk with.
 		while (edits.length < numberOfEdits) {
-			const edit = newEdit(setTrait(testTrait, [makeTestNode()]));
+			const edit = newEdit(
+				setTrait({ label: testTraitLabel, parent: initialTree.identifier }, [buildLeaf(v4() as NodeId)])
+			);
 			edits.push({ changes: edit.changes });
 			editIds.push(edit.id);
 		}

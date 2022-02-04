@@ -21,15 +21,13 @@ import { fail } from '../../Common';
 import { SharedTreeOp, SharedTreeOpType } from '../../generic/PersistedTypes';
 import type { EditLog } from '../../EditLog';
 import {
-	left,
-	leftTraitLocation,
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
-	makeEmptyNode,
+	setUpTestTree,
 	SharedTreeTestingComponents,
 	SharedTreeTestingOptions,
-	simpleTestTree,
 } from './TestUtilities';
+import { TestTree } from './TestNode';
 
 type WithApplyStashedOp<T> = T & { applyStashedOp(op: SharedTreeOp): void };
 
@@ -62,21 +60,23 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree>(
 		const documentId = 'documentId';
 
 		describe('applyStashedOp', () => {
-			function makeTree(): WithApplyStashedOp<TSharedTree> {
+			function makeTree(): { tree: WithApplyStashedOp<TSharedTree>; testTree: TestTree } {
 				// Unit testing the contract of applyStashedOp without normal public access point through fluid services
 				// requires access violation (as it is protected on SharedTree).
-				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
-				return tree as unknown as WithApplyStashedOp<TSharedTree>;
+				const { tree } = setUpTestSharedTree();
+				return { tree: tree as WithApplyStashedOp<TSharedTree>, testTree: setUpTestTree(tree) };
 			}
 
 			it('applies edit ops locally', async () => {
-				const tree = makeTree();
+				const { tree, testTree } = makeTree();
 				const editCommittedLog: EditCommittedEventArguments<GenericSharedTree<any, any, any>>[] = [];
 				tree.on(SharedTreeEvent.EditCommitted, (args) => {
 					editCommittedLog.push(args);
 				});
 				const initialEditLogLength = tree.edits.length;
-				const edit = newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(leftTraitLocation)));
+				const edit = newEdit(
+					Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.left.traitLocation))
+				);
 
 				const op = { type: SharedTreeOpType.Edit, edit };
 				tree.applyStashedOp(op);
@@ -89,7 +89,7 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree>(
 			});
 
 			it('applies NoOps without error', () => {
-				const tree = makeTree();
+				const { tree } = makeTree();
 				tree.applyStashedOp({ type: SharedTreeOpType.NoOp });
 			});
 
@@ -100,8 +100,8 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree>(
 			// Setup
 			const { container, tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
 				id: documentId,
-				initialTree: simpleTestTree,
 			});
+			const testTree = setUpTestTree(tree);
 			const { tree: tree2 } = await setUpLocalServerTestSharedTree({ id: documentId, testObjectProvider });
 			const url = (await container.getAbsoluteUrl('/')) ?? fail('Container unable to resolve "/".');
 			await testObjectProvider.ensureSynchronized();
@@ -110,10 +110,10 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree>(
 			const { pendingLocalState, actionReturn: edit } = await withContainerOffline(
 				testObjectProvider,
 				container,
-				() => tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(left)))
+				() => tree.applyEdit(...Insert.create([testTree.buildLeaf()], StablePlace.after(testTree.left)))
 			);
 			await testObjectProvider.ensureSynchronized();
-			const leftTraitAfterOfflineClose = tree2.currentView.getTrait(leftTraitLocation);
+			const leftTraitAfterOfflineClose = tree2.currentView.getTrait(testTree.left.traitLocation);
 			const loader = testObjectProvider.makeTestLoader();
 
 			// Simulate reconnect of user 1; a new container will be created which passes the stashed local state in its
@@ -128,11 +128,11 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree>(
 				1,
 				'Second tree should not receive edits made by first tree after it went offline.'
 			);
-			expect(tree3.currentView.getTrait(leftTraitLocation).length).to.equal(
+			expect(tree3.currentView.getTrait(testTree.left.traitLocation).length).to.equal(
 				2,
 				'Tree which loaded with stashed pending edits should apply them.'
 			);
-			expect(tree2.currentView.getTrait(leftTraitLocation).length).to.equal(
+			expect(tree2.currentView.getTrait(testTree.left.traitLocation).length).to.equal(
 				2,
 				'Tree collaborating with a client that applies stashed pending edits should see them.'
 			);
@@ -145,9 +145,9 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree>(
 			// Setup
 			const { container, tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
 				id: documentId,
-				initialTree: simpleTestTree,
 				writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
 			});
+			const testTree = setUpTestTree(tree);
 			await setUpLocalServerTestSharedTree({
 				id: documentId,
 				testObjectProvider,
@@ -160,7 +160,9 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree>(
 			await testObjectProvider.opProcessingController.pauseProcessing();
 			// Generate enough edits to cause a chunk upload.
 			for (let i = 0; i < (tree.edits as EditLog).editsPerChunk; i++) {
-				tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.atEndOf(leftTraitLocation)));
+				tree.applyEdit(
+					...Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.left.traitLocation))
+				);
 			}
 			// Process all of those messages, sequencing them but without informing the container that they have been sequenced.
 			await testObjectProvider.opProcessingController.processOutgoing(container);

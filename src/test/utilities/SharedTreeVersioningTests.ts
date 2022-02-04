@@ -5,9 +5,9 @@
 
 import { expect } from 'chai';
 import { SharedTreeDiagnosticEvent, SharedTreeSummaryWriteFormat } from '../..';
-import { Insert, setTrait, SharedTree, StablePlace } from '../../default-edits';
+import { SharedTree } from '../../default-edits';
 import { EditLog } from '../../EditLog';
-import { left, makeTestNode, SharedTreeTestingComponents, SharedTreeTestingOptions, testTrait } from './TestUtilities';
+import { applyNoop, SharedTreeTestingComponents, SharedTreeTestingOptions } from './TestUtilities';
 
 /**
  * Runs a test suite for operations on `SharedTree` that depend on correct versioning.
@@ -18,14 +18,14 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree>(
 	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents<TSharedTree>
 ) {
 	describe(title, () => {
-		it('only processes edit ops if they have the same version', () => {
-			const treeOptions = { localMode: false, writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_0_2 };
-			const secondTreeOptions = {
-				id: 'secondTestSharedTree',
-				localMode: false,
-				writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
-			};
+		const treeOptions = { localMode: false, writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_0_2 };
+		const secondTreeOptions = {
+			id: 'secondTestSharedTree',
+			localMode: false,
+			writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
+		};
 
+		it('only processes edit ops if they have the same version', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const { tree: newerTree } = setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions });
 
@@ -33,7 +33,7 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree>(
 			expect(newerTree.edits.length).to.equal(0);
 
 			// Process an edit
-			tree.applyEdit(...setTrait(testTrait, [makeTestNode()]));
+			applyNoop(tree);
 			containerRuntimeFactory.processAllMessages();
 
 			// The newer tree should have ignored the first edit
@@ -42,13 +42,6 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree>(
 		});
 
 		it('throws if an edit op with a newer version is received', () => {
-			const treeOptions = { localMode: false, writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_0_2 };
-			const secondTreeOptions = {
-				id: 'secondTestSharedTree',
-				localMode: false,
-				writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
-			};
-
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const { tree: newerTree } = setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions });
 
@@ -56,23 +49,16 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree>(
 			expect(newerTree.edits.length).to.equal(0);
 
 			// Process an edit and expect it to throw
-			newerTree.applyEdit(...setTrait(testTrait, [makeTestNode()]));
+			applyNoop(newerTree);
 			expect(() => containerRuntimeFactory.processAllMessages()).to.throw(
 				'Newer op version received by a client that has yet to be updated.'
 			);
 		});
 
 		it('ignores duplicate update ops', () => {
-			const treeOptions = { localMode: false, writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_0_2 };
-			const secondTreeOptions = {
-				id: 'secondTestSharedTree',
-				localMode: false,
-				writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
-			};
-
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			// Process an edit
-			tree.applyEdit(...setTrait(testTrait, [makeTestNode()]));
+			applyNoop(tree);
 			containerRuntimeFactory.processAllMessages();
 
 			const summary = tree.saveSummary();
@@ -113,16 +99,6 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree>(
 		});
 
 		it('maintains custom EditLog and LogViewer callbacks when updating', () => {
-			const treeOptions = {
-				localMode: false,
-				writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_0_2,
-			};
-			const secondTreeOptions = {
-				id: 'secondTestSharedTree',
-				localMode: false,
-				writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
-			};
-
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			containerRuntimeFactory.processAllMessages();
 
@@ -147,7 +123,7 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree>(
 
 			const additionalEdits = 5;
 			for (let i = 0; i < additionalEdits; i++) {
-				newerTree.applyEdit(...Insert.create([makeTestNode()], StablePlace.after(left)));
+				applyNoop(newerTree);
 			}
 			newerContainerRuntimeFactory.processAllMessages();
 

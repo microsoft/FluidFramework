@@ -27,6 +27,7 @@ import {
 	initialRevisionViewWithValidation,
 	refreshTestTree,
 	testTrait,
+	testTraitLabel,
 } from './utilities/TestUtilities';
 import { SimpleTestTree } from './utilities/TestNode';
 
@@ -35,7 +36,7 @@ describe('Transaction', () => {
 		it('can be met', () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			transaction.applyChange({
-				toConstrain: StableRange.all(testTrait),
+				toConstrain: StableRange.all(testTrait(transaction.view)),
 				effect: ConstraintEffect.InvalidAndDiscard,
 				type: ChangeTypeInternal.Constraint,
 			});
@@ -82,7 +83,7 @@ describe('Transaction', () => {
 		it('length can be met', () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			transaction.applyChange({
-				toConstrain: StableRange.all(testTrait),
+				toConstrain: StableRange.all(testTrait(transaction.view)),
 				effect: ConstraintEffect.InvalidAndDiscard,
 				type: ChangeTypeInternal.Constraint,
 				length: 0,
@@ -92,7 +93,7 @@ describe('Transaction', () => {
 		it('length can be unmet', () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			const constraint = {
-				toConstrain: StableRange.all(testTrait),
+				toConstrain: StableRange.all(testTrait(transaction.view)),
 				effect: ConstraintEffect.InvalidAndDiscard,
 				type: ChangeTypeInternal.Constraint as ChangeTypeInternal.Constraint,
 				length: 1,
@@ -113,7 +114,7 @@ describe('Transaction', () => {
 		it('parent can be met', () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			transaction.applyChange({
-				toConstrain: StableRange.all(testTrait),
+				toConstrain: StableRange.all(testTrait(transaction.view)),
 				effect: ConstraintEffect.InvalidAndDiscard,
 				type: ChangeTypeInternal.Constraint,
 				parentNode: initialRevisionView.root,
@@ -123,7 +124,7 @@ describe('Transaction', () => {
 		it('parent can be unmet', () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			const constraint = {
-				toConstrain: StableRange.all(testTrait),
+				toConstrain: StableRange.all(testTrait(transaction.view)),
 				effect: ConstraintEffect.InvalidAndDiscard,
 				type: ChangeTypeInternal.Constraint as ChangeTypeInternal.Constraint,
 				parentNode: nonExistentNode,
@@ -144,17 +145,17 @@ describe('Transaction', () => {
 		it('label can be met', () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			transaction.applyChange({
-				toConstrain: StableRange.all(testTrait),
+				toConstrain: StableRange.all(testTrait(transaction.view)),
 				effect: ConstraintEffect.InvalidAndDiscard,
 				type: ChangeTypeInternal.Constraint,
-				label: testTrait.label,
+				label: testTraitLabel,
 			});
 			expect(transaction.status).equals(EditStatus.Applied);
 		});
 		it('label can be unmet', () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			const constraint = {
-				toConstrain: StableRange.all(testTrait),
+				toConstrain: StableRange.all(testTrait(transaction.view)),
 				effect: ConstraintEffect.InvalidAndDiscard,
 				type: ChangeTypeInternal.Constraint as ChangeTypeInternal.Constraint,
 				label: '7969ee2e-5418-43db-929a-4e9a23c5499d' as TraitLabel,
@@ -168,7 +169,7 @@ describe('Transaction', () => {
 				constraint,
 				violation: {
 					kind: Transaction.ConstraintViolationKind.BadLabel,
-					actual: testTrait.label,
+					actual: testTraitLabel,
 				},
 			});
 		});

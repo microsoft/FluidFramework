@@ -37,6 +37,7 @@ import {
 	SharedTreeTestingOptions,
 	setUpTestTree,
 	refreshTestTree,
+	testTraitLabel,
 } from './TestUtilities';
 import { runSharedTreeUndoRedoTestSuite } from './UndoRedoTests';
 import { TestFluidHandle, TestFluidSerializer } from './TestSerializer';
@@ -105,7 +106,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 
 			it('valid without initial tree', () => {
 				const { tree } = setUpTestSharedTree();
-				expect(tree.currentView.getTrait(testTrait)).deep.equals(
+				expect(tree.currentView.getTrait(testTrait(tree.currentView))).deep.equals(
 					[],
 					'Root should exist, and child traits should be valid but empty.'
 				);
@@ -691,7 +692,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 					const parsedTree = treeContent as SharedTreeSummary_0_0_2<Change>;
 
 					expect(parsedTree.currentTree).to.not.be.undefined;
-					const testRoot = assertArrayOfOne(parsedTree.currentTree.traits[testTrait.label]);
+					const testRoot = assertArrayOfOne(parsedTree.currentTree.traits[testTraitLabel]);
 					expect(testRoot).to.not.be.undefined;
 					expect(testRoot.traits.left).to.not.be.undefined;
 					expect(testRoot.traits.right).to.not.be.undefined;

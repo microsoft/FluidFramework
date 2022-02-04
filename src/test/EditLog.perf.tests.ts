@@ -7,7 +7,10 @@ import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { Change, Insert, StablePlace } from '../default-edits';
 import { EditLog } from '../EditLog';
 import { Edit, newEdit } from '../generic';
-import { makeTestNode, testTrait } from './utilities/TestUtilities';
+import { reservedIdCount } from '../generic/GenericSharedTree';
+import { IdCompressor } from '../id-compressor';
+import { createSessionId } from '../id-compressor/NumericUuid';
+import { setUpTestTree } from './utilities/TestUtilities';
 
 describe('EditLog Perf', () => {
 	const insertNumbers = [10, 50, 100, 500, 1000];
@@ -15,8 +18,9 @@ describe('EditLog Perf', () => {
 	insertNumbers.forEach((numberOfInserts) => {
 		const edits: Edit<Change>[] = [];
 
+		const testTree = setUpTestTree(new IdCompressor(createSessionId(), reservedIdCount));
 		for (let i = 0; i < numberOfInserts; i++) {
-			edits.push(newEdit(Insert.create([makeTestNode()], StablePlace.atEndOf(testTrait))));
+			edits.push(newEdit(Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.traitLocation))));
 		}
 
 		benchmark({
