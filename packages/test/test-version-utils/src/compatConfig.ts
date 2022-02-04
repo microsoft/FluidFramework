@@ -244,14 +244,11 @@ function describeCompat(
                     }
                     return provider;
                 });
-                afterEach(function () {
+                afterEach(() => {
                     if (resetAfterEach) {
                         provider.reset();
                     }
                 });
-                after(()=>{
-                    provider.reset();
-                })
             });
         }
     });
