@@ -208,7 +208,7 @@ function initialize(
             console.log(`Error downloading document ${error}`);
         });
     }
-    const maybeFactory: FluidObject<IDocumentFactory> | undefined = context.scope as FluidObject;
+    const maybeFactory: FluidObject<IDocumentFactory> | undefined = context.scope;
     const documentFactory: IDocumentFactory | undefined = maybeFactory?.IDocumentFactory;
     if (documentFactory) {
         createButton.classList.remove("hidden");

@@ -115,6 +115,9 @@ export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolS
 // @public
 export function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl | undefined>;
 
+// @public
+export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): ITree;
+
 // @public (undocumented)
 export function createGenericNetworkError(fluidErrorCode: string, message: string | undefined, retryInfo: {
     canRetry: boolean;
