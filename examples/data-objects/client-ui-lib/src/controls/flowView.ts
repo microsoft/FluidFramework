@@ -1889,7 +1889,7 @@ function makeSegSpan(
                         if ((e.button === 2) || ((e.button === 0) && (e.ctrlKey))) {
                             const spanBounds = ui.Rectangle.fromClientRect(span.getBoundingClientRect());
                             spanBounds.width = Math.floor(window.innerWidth / 4);
-                            slb = SearchMenu.selectionListBoxCreate(spanBounds, true, document.body, 24, 0, 12);
+                            slb = SearchMenu.selectionListBoxCreate(spanBounds, document.body, 24, 0, 12);
                             slb.showSelectionList(altsToItems(textErrorInfo.alternates));
                             span.onmouseup = cancelIntellisense;
                             document.body.onmouseup = cancelIntellisense;

@@ -34,7 +34,6 @@ export interface ISelectionListBox {
 
 export function selectionListBoxCreate(
     shapeRect: ui.Rectangle,
-    popup: boolean,
     container: HTMLElement,
     itemHeight: number,
     offsetY: number,
@@ -103,54 +102,39 @@ export function selectionListBoxCreate(
         container.appendChild(listContainer);
     }
 
-    function nonPopUpdateRectangles() {
-        const trimRect = new ui.Rectangle(shapeRect.x, shapeRect.y,
-            shapeRect.width - 10, shapeRect.height - 10);
-        trimRect.conformElement(listContainer);
-        itemCapacity = Math.floor(trimRect.height / itemHeight);
-
+    function updateRectangles() {
+        const width = shapeRect.width;
+        const height = window.innerHeight / 3;
+        let top: number;
+        let bottom: number;
+        let right: number;
+        listContainer.style.zIndex = "4";
+        if ((shapeRect.x + shapeRect.width) > window.innerWidth) {
+            right = shapeRect.x;
+        }
+        // TODO: use container div instead of window/doc body
+        // TODO: right/left (for now assume go right)
+        if ((height + shapeRect.y + offsetY + shapeRect.height) >= window.innerHeight) {
+            bottom = window.innerHeight - shapeRect.y;
+        } else {
+            top = shapeRect.y + shapeRect.height;
+        }
+        itemCapacity = Math.floor(height / itemHeight);
+        if (top !== undefined) {
+            const listContainerRect = new ui.Rectangle(shapeRect.x, top, width, height);
+            listContainerRect.height = itemCapacity * itemHeight;
+            listContainerRect.conformElementMaxHeight(listContainer);
+        } else {
+            const listContainerRect = new ui.Rectangle(shapeRect.x, 0, width, height);
+            listContainerRect.height = itemCapacity * itemHeight;
+            listContainerRect.conformElementMaxHeightFromBottom(listContainer, bottom);
+        }
+        if (right !== undefined) {
+            listContainer.style.right = `${window.innerWidth - right}px`;
+            listContainer.style.left = "";
+        }
         if (varHeight) {
             listContainer.style.paddingBottom = `${varHeight}px`;
-        }
-    }
-
-    function updateRectangles() {
-        if (!popup) {
-            nonPopUpdateRectangles();
-        } else {
-            const width = shapeRect.width;
-            const height = window.innerHeight / 3;
-            let top: number;
-            let bottom: number;
-            let right: number;
-            listContainer.style.zIndex = "4";
-            if ((shapeRect.x + shapeRect.width) > window.innerWidth) {
-                right = shapeRect.x;
-            }
-            // TODO: use container div instead of window/doc body
-            // TODO: right/left (for now assume go right)
-            if ((height + shapeRect.y + offsetY + shapeRect.height) >= window.innerHeight) {
-                bottom = window.innerHeight - shapeRect.y;
-            } else {
-                top = shapeRect.y + shapeRect.height;
-            }
-            itemCapacity = Math.floor(height / itemHeight);
-            if (top !== undefined) {
-                const listContainerRect = new ui.Rectangle(shapeRect.x, top, width, height);
-                listContainerRect.height = itemCapacity * itemHeight;
-                listContainerRect.conformElementMaxHeight(listContainer);
-            } else {
-                const listContainerRect = new ui.Rectangle(shapeRect.x, 0, width, height);
-                listContainerRect.height = itemCapacity * itemHeight;
-                listContainerRect.conformElementMaxHeightFromBottom(listContainer, bottom);
-            }
-            if (right !== undefined) {
-                listContainer.style.right = `${window.innerWidth - right}px`;
-                listContainer.style.left = "";
-            }
-            if (varHeight) {
-                listContainer.style.paddingBottom = `${varHeight}px`;
-            }
         }
     }
 
@@ -483,7 +467,7 @@ export function searchBoxCreate(
         vertSplit[0].conformElement(inputElm);
         inputElm.style.lineHeight = `${vertSplit[0].height}px`;
         vertSplit[0].height += inputElmBorderSize;
-        selectionListBox = selectionListBoxCreate(vertSplit[0], true, container, itemHeight, offsetY);
+        selectionListBox = selectionListBoxCreate(vertSplit[0], container, itemHeight, offsetY);
     }
 
     function updateText() {
