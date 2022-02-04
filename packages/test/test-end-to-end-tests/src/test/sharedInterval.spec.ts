@@ -621,8 +621,8 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 intervals2.changeProperties(id1, { prop2: "prop2" });
                 assertPropertyChangedArg(deltaArgs2.prop2, null, "Mismatch in property-changed event arg 2");
 
-                await provider.ensureSynchronized(); null, "Mismatch in property-changed event arg 3");
-                // eslint-disable-next-line no-null/no-null
+                await provider.ensureSynchronized();
+                assertPropertyChangedArg(deltaArgs1.prop2, null, "Mismatch in property-changed event arg 3");
                 assertPropertyChangedArg(deltaArgs2.prop1, null, "Mismatch in property-changed event arg 4");
 
                 interval1 = intervals1.getIntervalById(id1);
