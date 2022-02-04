@@ -18,7 +18,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Removed PureDataObject.requestFluidObject_UNSAFE](#Removed-PureDataObject.requestFluidObject_UNSAFE)
 - [Modified PureDataObject.getFluidObjectFromDirectory](#Modified-PureDataObject.getFluidObjectFromDirectory)
 - [Remove IFluidObject from Aqueduct](#Remove-IFluidObject-from-Aqueduct)
-- [Removing snapshot API from container runtime](#Removing-snapshot-api-from-container-runtime)
+- [Removing snapshot API from IRuntime](#Removing-snapshot-api-from-IRuntime)
 
 ### IFluidConfiguration removed
 
@@ -69,8 +69,8 @@ This impacts the following public apis:
 
  In general the impact of these changes should be transparent. If you see compile errors related to Fluid object provider types with the above apis, you should transition those usages to [FluidObject](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts#L61) which is the replacement for the deprecated IFluidObject.
 
-### Removing snapshot API from container runtime
-Snapshot API has been removed from container runtime. Replay tools and snapshot tests are now ussing summarize API.
+### Removing snapshot API from IRuntime
+Snapshot API has been removed from IRuntime. Replay tools and snapshot tests are now using summarize API.
 
 ## 0.56 Breaking changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
