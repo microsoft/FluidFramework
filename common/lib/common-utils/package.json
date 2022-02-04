@@ -132,6 +132,10 @@
         "ClassDeclaration_EventForwarder": {
           "forwardCompat": false,
           "backCompat": false
+        },
+        "RemovedFunctionDeclaration_extractLogSafeErrorProperties": {
+          "forwardCompat": false,
+          "backCompat": false
         }
       }
     }

@@ -10,7 +10,7 @@ import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger";
-import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, IFluidErrorAnnotations, wrapError, wrapErrorAndLog } from "../errorLogging";
+import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, IFluidErrorAnnotations, wrapError, wrapErrorAndLog, extractLogSafeErrorProperties } from "../errorLogging";
 import { IFluidErrorBase } from "../fluidErrorBase";
 import { MockLogger } from "../mockLogger";
 
@@ -318,6 +318,61 @@ describe("Error Logging", () => {
             assert(loggingError.getTelemetryProperties().p1 === 1);
             loggingError.addTelemetryProperties({ p1: "uno" });
             assert(loggingError.getTelemetryProperties().p1 === 1);
+        });
+    });
+    describe("extractLogSafeErrorProperties", () => {
+        function createSampleError(): Error {
+            try {
+                const error = new Error("asdf");
+                error.name = "FooError";
+                throw error;
+            } catch (e) {
+                return e as Error;
+            }
+        }
+
+        it("non-object error yields correct message", () => {
+            assert.strictEqual(extractLogSafeErrorProperties("hello", false /* sanitizeStack */).message, "hello");
+            assert.strictEqual(extractLogSafeErrorProperties(42, false /* sanitizeStack */).message, "42");
+            assert.strictEqual(extractLogSafeErrorProperties(true, false /* sanitizeStack */).message, "true");
+            assert.strictEqual(extractLogSafeErrorProperties(undefined, false /* sanitizeStack */).message, "undefined");
+        });
+        it("object error yields correct message", () => {
+            assert.strictEqual(extractLogSafeErrorProperties({ message: "hello"}, false /* sanitizeStack */).message, "hello");
+            assert.strictEqual(extractLogSafeErrorProperties({ message: 42}, false /* sanitizeStack */).message, "[object Object]");
+            assert.strictEqual(extractLogSafeErrorProperties({ foo: 42}, false /* sanitizeStack */).message, "[object Object]");
+            assert.strictEqual(extractLogSafeErrorProperties([1,2,3], false /* sanitizeStack */).message, "1,2,3");
+            assert.strictEqual(extractLogSafeErrorProperties(null, false /* sanitizeStack */).message, "null");
+        });
+        it("extract errorType", () => {
+            assert.strictEqual(extractLogSafeErrorProperties({ errorType: "hello"}, false /* sanitizeStack */).errorType, "hello");
+            assert.strictEqual(extractLogSafeErrorProperties({ foo: "hello"}, false /* sanitizeStack */).errorType, undefined);
+            assert.strictEqual(extractLogSafeErrorProperties({ errorType: 42}, false /* sanitizeStack */).errorType, undefined);
+            assert.strictEqual(extractLogSafeErrorProperties(42, false /* sanitizeStack */).errorType, undefined);
+        });
+        it("extract stack", () => {
+            const e1 = createSampleError();
+
+            const stack = extractLogSafeErrorProperties(e1, false /* sanitizeStack */).stack;
+            assert(typeof(stack) === "string");
+            assert(stack?.includes("asdf"), "stack is expected to contain the message");
+            assert(stack?.includes("FooError"), "stack is expected to contain the name");
+
+            const sanitizedStack = extractLogSafeErrorProperties(e1, true /* sanitizeStack */).stack;
+            assert(typeof(sanitizedStack) === "string");
+            assert(!stack?.includes("asdf"), "message should have been removed from sanitized stack");
+            assert(stack?.includes("FooError"), "name should still be in the sanitized stack");
+        });
+        it("extract stack non-standard values", () => {
+            // sanitizeStack true
+            assert.strictEqual(extractLogSafeErrorProperties({ stack: "hello"}, true /* sanitizeStack */).stack, "");
+            assert.strictEqual(extractLogSafeErrorProperties({ stack: "hello", name: "name" }, true /* sanitizeStack */).stack, "name");
+            // sanitizeStack false
+            assert.strictEqual(extractLogSafeErrorProperties({ stack: "hello"}, false /* sanitizeStack */).stack, "hello");
+            assert.strictEqual(extractLogSafeErrorProperties({ stack: "hello", name: "name" }, false /* sanitizeStack */).stack, "hello");
+            assert.strictEqual(extractLogSafeErrorProperties({ foo: "hello"}, false /* sanitizeStack */).stack, undefined);
+            assert.strictEqual(extractLogSafeErrorProperties({ stack: 42}, false /* sanitizeStack */).stack, undefined);
+            assert.strictEqual(extractLogSafeErrorProperties(42, false /* sanitizeStack */).stack, undefined);
         });
     });
 });
