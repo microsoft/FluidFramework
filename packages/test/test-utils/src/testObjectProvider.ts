@@ -4,7 +4,7 @@
  */
 
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryGenericEvent, ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { ILoaderProps, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails, IRequestHeader } from "@fluidframework/core-interfaces";
@@ -12,7 +12,7 @@ import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframe
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
-import { ChildLogger, MultiSinkLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, MultiSinkLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { LoaderContainerTracker } from "./loaderContainerTracker";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
@@ -122,6 +122,69 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
     }
 }
 
+export class ErrorTrackingLogger extends TelemetryLogger{
+    constructor(private readonly baseLogger: ITelemetryBaseLogger){
+        super();
+    }
+
+    private readonly expectedEvents: Map<string,ITelemetryGenericEvent[]> = new Map();
+    private readonly unexpectedErrors: ITelemetryBaseEvent[] =[];
+
+    public registerExpectedEvent(... events: ITelemetryGenericEvent[]){
+        for(const event of events){
+            const events = this.expectedEvents.get(event.eventName) ?? [];
+            events.push({...event})
+            this.expectedEvents.set(event.eventName, events);
+        }
+    }
+
+    send(event: ITelemetryBaseEvent): void {
+
+        const expectedEvents = this.expectedEvents.get(event.eventName);
+        if(expectedEvents){
+            for(let i=0;i<expectedEvents.length;i++){
+                let matches = true;
+                const ee = expectedEvents[i];
+                for(const key of Object.keys(ee)){
+                    if(ee[key] !== event[key]){
+                        matches = false;
+                        break;
+                    }
+                }
+                if(matches){
+                    expectedEvents.splice(i,1);
+                    if(expectedEvents.length === 0){
+                        this.expectedEvents.delete(event.eventName);
+                    }
+                    if(event.category === "error"){
+                        event.category = "generic";
+                    }
+                    break;
+                }
+            }
+        }
+        if(event.category === "error"){
+            this.unexpectedErrors.push(event);
+        }
+
+        this.baseLogger.send(event)
+    }
+
+    public results(){
+        const expectedNotFound: ITelemetryGenericEvent[] = [];
+        expectedNotFound.concat(...[... this.expectedEvents.values()]);
+        this.expectedEvents.clear();
+
+        const unexpectedFound =  this.unexpectedErrors.splice(0, this.unexpectedErrors.length);
+
+        return {
+            expectedNotFound,
+            unexpectedFound,
+        }
+    }
+
+}
+
 /**
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
  */
@@ -129,7 +192,7 @@ export class TestObjectProvider implements ITestObjectProvider {
     private readonly _loaderContainerTracker = new LoaderContainerTracker();
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _urlResolver: IUrlResolver | undefined;
-    private _logger: ITelemetryBaseLogger | undefined;
+    private _logger: ErrorTrackingLogger | undefined;
     private readonly _documentIdStrategy: IDocumentIdStrategy;
     // Since documentId doesn't change we can only create/make one container. Call the load functions instead.
     private _documentCreated = false;
@@ -147,9 +210,10 @@ export class TestObjectProvider implements ITestObjectProvider {
         this._documentIdStrategy = getDocumentIdStrategy(driver.type);
     }
 
-    get logger() {
+    get logger(): ErrorTrackingLogger {
         if (this._logger === undefined) {
-            this._logger = ChildLogger.create(getTestLogger?.(), undefined,
+            this._logger = new ErrorTrackingLogger(
+                ChildLogger.create(getTestLogger?.(), undefined,
                 {
                     all: {
                         driverType: this.driver.type,
@@ -157,7 +221,7 @@ export class TestObjectProvider implements ITestObjectProvider {
                         driverTenantName: this.driver.tenantName,
                         driverUserIndex: this.driver.userIndex,
                     },
-                });
+                }));
         }
         return this._logger;
     }

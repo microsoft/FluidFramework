@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { ErrorTrackingLogger, ITestObjectProvider, TestObjectProvider } from "@fluidframework/test-utils";
 import { getVersionedTestObjectProvider } from "./compatUtils";
 import { ensurePackageInstalled } from "./testApi";
 import { pkgVersion } from "./packageVersion";
@@ -17,6 +17,7 @@ import {
     baseVersion,
     reinstall,
 } from "./compatOptions";
+import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 
 /*
  * Generate configuration combinations for a particular compat version
@@ -170,6 +171,37 @@ if (compatKind !== undefined) {
     configList = configList.filter((value) => compatKind!.includes(value.kind));
 }
 
+function throwUnexpectedLogErrorException(logger: ErrorTrackingLogger){
+    const results = logger.results();
+    if(results.unexpectedFound.length > 0){
+        throw new Error(
+            // eslint-disable-next-line max-len
+            `Unexpected Errors in Logs. Use ItErrors to specify expected errors:\n${ JSON.stringify(results.unexpectedFound, undefined, 2)}`);
+    }
+    if(results.expectedNotFound.length > 0){
+        throw new Error(
+            `Expected Errors not found:\n${ JSON.stringify(results.expectedNotFound, undefined, 2)}`);
+    }
+}
+
+export function ItErrors(name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc){
+
+    return it(name, async function (){
+        const provider: TestObjectProvider | undefined = this.__fluidTestProvider;
+        if(provider === undefined){
+            return await test.bind(this)();
+        }
+        provider.logger.registerExpectedEvent(... expectedEvents as any);
+        try{
+            return await test.bind(this)();
+        }catch(error){
+            provider.logger.sendErrorEvent({eventName:"TestException"},error)
+        }
+        throwUnexpectedLogErrorException(provider.logger);
+
+    });
+}
+
 /*
  * Mocha Utils for test to generate the compat variants.
  */
@@ -186,9 +218,9 @@ function describeCompat(
     describe(name, () => {
         for (const config of configs) {
             describe(config.name, () => {
-                let provider: ITestObjectProvider;
+                let provider: TestObjectProvider;
                 let resetAfterEach: boolean;
-                before(async () => {
+                before(async function () {
                     provider = await getVersionedTestObjectProvider(
                         baseVersion,
                         config.loader,
@@ -203,6 +235,7 @@ function describeCompat(
                         config.containerRuntime,
                         config.dataRuntime,
                     );
+                    Object.defineProperty(this,"__fluidTestProvider",{get: ()=>provider});
                 });
                 tests((reset: boolean = true) => {
                     if (reset) {
@@ -211,11 +244,15 @@ function describeCompat(
                     }
                     return provider;
                 });
-                afterEach(() => {
+                afterEach(function () {
+                    throwUnexpectedLogErrorException(provider.logger);
                     if (resetAfterEach) {
                         provider.reset();
                     }
                 });
+                after(()=>{
+                    provider.reset();
+                })
             });
         }
     });
