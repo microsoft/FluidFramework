@@ -1372,14 +1372,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         throw responseToException(create404Response(request), request);
     }
 
-    /**
-     * Notifies this object to take the snapshot of the container.
-     * @deprecated - Use summarize to get summary of the container runtime.
-     */
-    public async snapshot(): Promise<ITree> {
-        throw new Error("Do not call this API, to be removed in the following release.");
-    }
-
     private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats) {
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
         if (this.chunkMap.size > 0) {

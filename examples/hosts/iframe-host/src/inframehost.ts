@@ -77,9 +77,6 @@ class ProxyRuntime implements IRuntime {
     async request(request: IRequest): Promise<IResponse> {
         throw new Error("Method not implemented.");
     }
-    async snapshot(tagMessage: string, fullTree?: boolean | undefined): Promise<ITree | null> {
-        throw new Error("Method not implemented.");
-    }
     async setConnectionState(connected: boolean, clientId?: string) {
     }
     async process(message: ISequencedDocumentMessage, local: boolean, context: any) {
