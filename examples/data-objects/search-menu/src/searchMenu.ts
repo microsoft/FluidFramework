@@ -34,15 +34,9 @@ export interface ISelectionListBox {
     hide(): void;
     prevItem();
     nextItem();
-    removeHighlight(): void;
     showSelectionList(selectionItems: ISearchMenuCommand[], hintSelection?: string): void;
     selectItem(key: string): void;
-    setItemTextPrefix(prefix: string): void;
-    setItemTextSuffix(suffix: string): void;
     items(): ISearchMenuCommand[];
-    getItemTextPrefix(): string;
-    getItemTextSuffix(): string;
-    getSelectedKey(): string;
     getSelectedItem(): ISearchMenuCommand;
     getSelectionIndex(): number;
     setSelectionIndex(indx: number): void;
@@ -61,8 +55,6 @@ export function selectionListBoxCreate(
     let itemCapacity: number;
     let selectionIndex = -1;
     let topSelection = 0;
-    let itemTextPrefix = "";
-    let itemTextSuffix = "";
 
     init();
 
@@ -71,18 +63,6 @@ export function selectionListBoxCreate(
     function setSelectionIndex(indx: number) {
         selectItem(indx);
     }
-
-    function setItemTextPrefix(prefix: string) {
-        itemTextPrefix = prefix;
-    }
-
-    function setItemTextSuffix(suffix: string) {
-        itemTextSuffix = suffix;
-    }
-
-    const getItemTextPrefix = () => itemTextPrefix;
-
-    const getItemTextSuffix = () => itemTextSuffix;
 
     function selectItemByKey(key: string) {
         const _key = key.trim();
@@ -96,12 +76,6 @@ export function selectionListBoxCreate(
                 selectItem(i);
                 break;
             }
-        }
-    }
-
-    function getSelectedKey() {
-        if (selectionIndex >= 0) {
-            return items[selectionIndex].key;
         }
     }
 
@@ -191,14 +165,6 @@ export function selectionListBoxCreate(
         }
     }
 
-    function removeHighlight() {
-        if (selectionIndex >= 0) {
-            if (items[selectionIndex].div) {
-                items[selectionIndex].div.style.backgroundColor = "white";
-            }
-        }
-    }
-
     function selectItem(indx: number) {
         // Then scroll if necessary
         if (indx < topSelection) {
@@ -278,10 +244,7 @@ export function selectionListBoxCreate(
 
     return {
         elm: listContainer,
-        getItemTextPrefix,
-        getItemTextSuffix,
         getSelectedItem,
-        getSelectedKey,
         getSelectionIndex,
         hide: () => {
             listContainer.style.visibility = "hidden";
@@ -290,10 +253,7 @@ export function selectionListBoxCreate(
         keydown,
         nextItem,
         prevItem,
-        removeHighlight,
         selectItem: selectItemByKey,
-        setItemTextPrefix,
-        setItemTextSuffix,
         setSelectionIndex,
         show: () => {
             listContainer.style.visibility = "visible";
@@ -303,22 +263,16 @@ export function selectionListBoxCreate(
 }
 
 export interface ISearchBox {
-    setOnExec(f: (c: ISearchMenuCommand) => void): void;
     showAllItems();
     showSelectionList(selectionItems: ISearchMenuCommand[]);
     dismiss(): void;
     keydown(e: KeyboardEvent): void;
     keypress(e: KeyboardEvent): boolean;
     focus(): void;
-    getSearchString(): string;
-    getSelectedKey(): string;
-    getSelectedItem(): ISearchMenuCommand;
-    updateText();
 }
 
 interface IInputBox {
     elm: HTMLDivElement;
-    setPrefixText(text: string): void;
     setText(text: string): void;
     getText(): string;
     initCursor(y: number);
@@ -410,9 +364,6 @@ function inputBoxCreate(
         span.innerText = text;
     }
 
-    function setPrefixText(text: string) {
-        readOnlySpan.innerText = text;
-    }
 
     const getText = () => span.innerText;
 
@@ -422,7 +373,6 @@ function inputBoxCreate(
         initCursor,
         keydown,
         keypress,
-        setPrefixText,
         setText,
     };
 
@@ -451,10 +401,8 @@ export function searchBoxCreate(
         container.addEventListener("keydown", keydown);
     }
 
-    function showSelectionList(items: ISearchMenuCommand[], prefix = "", suffix = "") {
+    function showSelectionList(items: ISearchMenuCommand[]) {
         if (selectionListBox) {
-            selectionListBox.setItemTextPrefix(prefix);
-            selectionListBox.setItemTextSuffix(suffix);
             selectionListBox.showSelectionList(items);
         }
     }
@@ -470,10 +418,6 @@ export function searchBoxCreate(
         }
     }
 
-    function setOnExec(f: (c: ISearchMenuCommand) => void) {
-        onExec = f;
-    }
-
     function lookup(text: string) {
         let prefix = text;
         if (foldCase) {
@@ -485,8 +429,6 @@ export function searchBoxCreate(
                 .filter((cmd) => (!cmd.enabled) || cmd.enabled(context));
         showSelectionList(items);
     }
-
-    const getSelectedKey = () => selectionListBox.getSelectedKey();
 
     const getSelectedItem = () => selectionListBox.getSelectedItem();
 
@@ -616,14 +558,9 @@ export function searchBoxCreate(
     return {
         dismiss,
         focus: containerFocus,
-        getSearchString,
-        getSelectedItem,
-        getSelectedKey,
         keydown,
         keypress,
-        setOnExec,
         showAllItems,
         showSelectionList,
-        updateText,
     };
 }
