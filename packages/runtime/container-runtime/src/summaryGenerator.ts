@@ -235,6 +235,13 @@ export class SummaryGenerator {
         let summaryData: SubmitSummaryResult | undefined;
         let generateTelemetryProps: Record<string, string | number | boolean | undefined> = {};
         try {
+            const generateSummaryEvent = PerformanceEvent.start(logger, {
+                eventName: "GenerateSummary",
+                fullTree,
+                timeSinceLastAttempt: Date.now() - this.heuristicData.lastAttempt.summaryTime,
+                timeSinceLastSummary: Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime,
+            });
+
             summaryData = await this.submitSummaryCallback({
                 fullTree,
                 refreshLatestAck,
@@ -277,7 +284,7 @@ export class SummaryGenerator {
             }
 
             // Log event here on summary success only, as Summarize_cancel duplicates failure logging.
-            logger.sendTelemetryEvent({ eventName: "GenerateSummary", ...generateTelemetryProps });
+            generateSummaryEvent.end({...generateTelemetryProps});
             resultsBuilder.summarySubmitted.resolve({ success: true, data: summaryData });
         } catch (error) {
             return fail("submitSummaryFailure", error);
@@ -330,7 +337,7 @@ export class SummaryGenerator {
             const telemetryProps: Record<string, number> = {
                 ackWaitDuration: ackNackDuration,
                 sequenceNumber: ackNackOp.sequenceNumber,
-                summarySequenceNumber: ackNackOp.contents.summaryProposal.summarySequenceNumber,
+                referenceSequenceNumber: ackNackOp.contents.summaryProposal.summarySequenceNumber,
             };
             if (ackNackOp.type === MessageType.SummaryAck) {
                 this.heuristicData.markLastAttemptAsSuccessful();

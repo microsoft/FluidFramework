@@ -695,9 +695,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             }
         }
 
-        const id = await PerformanceEvent.timedExecAsync(this.logger,
-            { eventName: "uploadSummaryWithContext" },
-            async () => this.odspSummaryUploadManager.writeSummaryTree(summary, context));
+        const id = await this.odspSummaryUploadManager.writeSummaryTree(summary, context);
         return id;
     }
 
