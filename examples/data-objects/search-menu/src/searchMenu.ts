@@ -234,7 +234,6 @@ export interface ISearchBox {
     dismiss(): void;
     keydown(e: KeyboardEvent): void;
     keypress(e: KeyboardEvent): boolean;
-    focus(): void;
 }
 
 interface IInputBox {
@@ -361,12 +360,6 @@ export function searchBoxCreate(
     let onExec: (c: ISearchMenuCommand) => void;
 
     init();
-
-    function containerFocus() {
-        container.focus();
-        container.addEventListener("keypress", keypress);
-        container.addEventListener("keydown", keydown);
-    }
 
     function showSelectionList(items: ISearchMenuCommand[]) {
         if (selectionListBox) {
@@ -501,7 +494,6 @@ export function searchBoxCreate(
 
     return {
         dismiss,
-        focus: containerFocus,
         keydown,
         keypress,
         showSelectionList,
