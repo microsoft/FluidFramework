@@ -724,12 +724,7 @@ export class ConnectionManager implements IConnectionManager {
 
         this.disconnectFromDeltaStream(disconnectMessage);
 
-        const canRetry = (error === undefined) || canRetryOnError(error);
-
-        // If reconnection is not an option, close the DeltaManager
-        if (!canRetry) {
-            this.props.closeHandler(normalizeError(error, { props: fatalConnectErrorProp }));
-        } else if (this.reconnectMode === ReconnectMode.Never) {
+        if (this.reconnectMode === ReconnectMode.Never) {
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
             // are very misleading, as first initial reaction - some logic is broken.
@@ -739,6 +734,13 @@ export class ConnectionManager implements IConnectionManager {
         // If closed then we can't reconnect
         if (this.closed || this.reconnectMode !== ReconnectMode.Enabled) {
             return;
+        }
+
+        // We will always trigger reconnect, even if canRetry is false.
+        // Any truly fatal error state will result in container close upon attempted reconnect,
+        // which is a preferable to closing abruptly when a live connection fails.
+        if (error !== undefined && !error.canRetry) {
+            this.logger.sendTelemetryEvent({ eventName: "reconnectingDespiteFatalError" }, error);
         }
 
         const delayMs = getRetryDelayFromError(error);
@@ -864,9 +866,16 @@ export class ConnectionManager implements IConnectionManager {
             this.props.closeHandler(createWriteError("writeOnReadOnlyDocument",  { driverVersion: undefined }));
         }
 
+        const reconnectInfo = getNackReconnectInfo(message.content);
+
+        // If the nack indicates we cannot retry, then close the container outright
+        if (!reconnectInfo.canRetry) {
+            this.props.closeHandler(reconnectInfo);
+        }
+
         this.reconnectOnError(
             "write",
-            getNackReconnectInfo(message.content),
+            reconnectInfo,
         );
     };
 
