@@ -7,6 +7,7 @@ import { DetachedSequenceId, NodeId } from '../Identifiers';
 import { assert, fail } from '../Common';
 import { RevisionView, Side, TreeView } from '../TreeView';
 import { BuildNode, TreeNode } from '../generic';
+import { getChangeNodeFromViewNode } from '../SerializationUtilities';
 import {
 	StableRange,
 	StablePlace,
@@ -234,7 +235,10 @@ function createInvertedDetach(
 	const detachedSequenceId = 0 as DetachedSequenceId;
 	return {
 		invertedDetach: [
-			ChangeInternal.build(viewBeforeChange.getChangeNodes(detachedNodeIds), detachedSequenceId),
+			ChangeInternal.build(
+				detachedNodeIds.map((id) => getChangeNodeFromViewNode(viewBeforeChange, id)),
+				detachedSequenceId
+			),
 			ChangeInternal.insert(detachedSequenceId, insertDestination),
 		],
 		detachedNodeIds,

@@ -48,6 +48,7 @@ import { EditLog } from '../../EditLog';
 import { IdCompressor } from '../../id-compressor';
 import { createSessionId } from '../../id-compressor/NumericUuid';
 import { reservedIdCount } from '../../generic/GenericSharedTree';
+import { getChangeNodeFromView } from '../../SerializationUtilities';
 import { RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
 
 /** Objects returned by setUpTestSharedTree */
@@ -716,7 +717,7 @@ export async function createDocumentFiles(document: string, history: Edit<Change
 	}
 
 	await testObjectProvider.ensureSynchronized();
-	fs.writeFileSync(join(directory, 'change-node.json'), JSON.stringify(tree.currentView.getChangeNodeTree()));
+	fs.writeFileSync(join(directory, 'change-node.json'), JSON.stringify(getChangeNodeFromView(tree.currentView)));
 
 	const summary = tree.saveSummary();
 	// Write summaries for each of the write formats supported. Each summary is taken after loading in the summary of the earliest supported write format.

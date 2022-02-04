@@ -8,6 +8,7 @@ import { Definition, NodeId, TraitLabel } from '../Identifiers';
 import { RevisionView } from '../TreeView';
 import { detachRange, insertIntoTrait, StablePlace, StableRange } from '../default-edits';
 import { ChangeNode } from '../generic';
+import { getChangeNodeFromViewNode } from '../SerializationUtilities';
 import { makeEmptyNode, makeTestNode } from './utilities/TestUtilities';
 
 describe('TreeView', () => {
@@ -25,8 +26,9 @@ describe('TreeView', () => {
 			};
 
 			const view = RevisionView.fromTree(node);
-			expect(view.getChangeNode(nodeId).traits.trait[0].identifier).to.equal(testNode.identifier);
-			expect(view.getChangeNode(nodeId).traits.emptyTrait).to.equal(undefined);
+			const changeNode = getChangeNodeFromViewNode(view, nodeId);
+			expect(changeNode.traits.trait[0].identifier).to.equal(testNode.identifier);
+			expect(changeNode.traits.emptyTrait).to.equal(undefined);
 		});
 	});
 

@@ -7,6 +7,7 @@ import { Definition, NodeId } from './Identifiers';
 import { ChangeNode, Payload, TraitMap, TreeNode } from './generic';
 import { TreeView, TreeViewNode } from './TreeView';
 import { fail, memoizeGetter } from './Common';
+import { getChangeNodeFromViewNode } from './SerializationUtilities';
 
 /**
  * A handle to a `TreeNode` that exists within a specific `TreeView`. This type provides a convenient
@@ -60,7 +61,7 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
 	 * Get a `ChangeNode` for the tree view node that this handle references
 	 */
 	public get node(): ChangeNode {
-		return memoizeGetter(this, 'node', this.view.getChangeNodeFromViewNode(this.viewNode, true));
+		return memoizeGetter(this, 'node', getChangeNodeFromViewNode(this.view, this.viewNode.identifier, true));
 	}
 
 	/**
@@ -68,7 +69,7 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
 	 * demanded, i.e. will contain no lazy/virtualized subtrees.
 	 */
 	public demandTree(): ChangeNode {
-		return this.view.getChangeNodeFromViewNode(this.viewNode, false);
+		return getChangeNodeFromViewNode(this.view, this.viewNode.identifier, false);
 	}
 
 	public toString(): string {

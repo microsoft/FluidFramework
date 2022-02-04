@@ -9,6 +9,7 @@ import { assertNotUndefined } from '../Common';
 import { EditLogSummary } from '../EditLog';
 import { RevisionView } from '../TreeView';
 import { readFormatVersion, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
+import { getChangeNodeFromView } from '../SerializationUtilities';
 import { ChangeNode, Edit } from './PersistedTypes';
 
 /**
@@ -103,7 +104,7 @@ export function fullHistorySummarizer<TChange>(
 	}
 
 	return {
-		currentTree: currentView.getChangeNodeTree(),
+		currentTree: getChangeNodeFromView(currentView),
 		sequencedEdits,
 		version: formatVersion,
 	};
@@ -117,7 +118,7 @@ export function fullHistorySummarizer_0_1_1<TChange>(
 	currentView: RevisionView
 ): SharedTreeSummary<TChange> {
 	return {
-		currentTree: currentView.getChangeNodeTree(),
+		currentTree: getChangeNodeFromView(currentView),
 		editHistory: summarizeLog(true),
 		version: readFormatVersion,
 	};

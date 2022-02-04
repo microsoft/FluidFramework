@@ -20,6 +20,7 @@ import {
 import { Side } from '../TreeView';
 import { assert } from '../Common';
 import { initialTree } from '../InitialTree';
+import { getChangeNodeFromViewNode } from '../SerializationUtilities';
 import {
 	deepCompareNodes,
 	initialRevisionView,
@@ -224,7 +225,9 @@ describe('Transaction', () => {
 			transaction.applyChange(ChangeInternal.clearPayload(initialRevisionView.root));
 			expect(transaction.status).equals(EditStatus.Applied);
 			expect({}.hasOwnProperty.call(transaction.view.getViewNode(initialRevisionView.root), 'payload')).false;
-			expect({}.hasOwnProperty.call(transaction.view.getChangeNode(initialRevisionView.root), 'payload')).false;
+			expect(
+				{}.hasOwnProperty.call(getChangeNodeFromViewNode(transaction.view, initialRevisionView.root), 'payload')
+			).false;
 		});
 
 		it('can clear a set payload', () => {
@@ -240,7 +243,9 @@ describe('Transaction', () => {
 			transaction.applyChange(ChangeInternal.clearPayload(initialRevisionView.root));
 			expect(transaction.status).equals(EditStatus.Applied);
 			expect({}.hasOwnProperty.call(transaction.view.getViewNode(initialRevisionView.root), 'payload')).false;
-			expect({}.hasOwnProperty.call(transaction.view.getChangeNode(initialRevisionView.root), 'payload')).false;
+			expect(
+				{}.hasOwnProperty.call(getChangeNodeFromViewNode(transaction.view, initialRevisionView.root), 'payload')
+			).false;
 		});
 	});
 
@@ -438,7 +443,7 @@ describe('Transaction', () => {
 			expect(transaction.status).equals(EditStatus.Applied);
 			expect(transaction.view.hasNode(identifier)).is.true;
 			expect(transaction.view.tryGetParentViewNode(identifier)).is.undefined;
-			expect(transaction.view.getChangeNode(identifier)).deep.equals(newNode);
+			expect(getChangeNodeFromViewNode(transaction.view, identifier)).deep.equals(newNode);
 		});
 		it("can be malformed if detached sequence id doesn't exist", () => {
 			const transaction = Transaction.factory(testTree.view);
@@ -612,7 +617,7 @@ describe('Transaction', () => {
 			expect(transaction.view.getTrait(testTree.right.traitLocation)).deep.equals([]);
 			expect(transaction.view.getTrait(testTree.left.traitLocation)).deep.equals([detachedSubtree.identifier]);
 
-			const insertedSubtree = transaction.view.getChangeNode(detachedSubtree.identifier);
+			const insertedSubtree = getChangeNodeFromViewNode(transaction.view, detachedSubtree.identifier);
 			const traits = insertedSubtree.traits;
 
 			const leftTreeTraits = traits[testTree.left.traitLabel];

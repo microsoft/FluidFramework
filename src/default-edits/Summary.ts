@@ -19,6 +19,7 @@ import {
 	SharedTreeSummaryBase,
 	SharedTreeSummaryWriteFormat,
 } from '../generic';
+import { getChangeNodeFromView } from '../SerializationUtilities';
 import { ChangeInternal, StablePlace } from './PersistedTypes';
 import { setTraitInternal } from './EditUtilities';
 
@@ -47,7 +48,7 @@ export function noHistorySummarizer(
 	currentView: RevisionView,
 	stable = false
 ): SharedTreeSummary_0_0_2<ChangeInternal> {
-	const currentTree = currentView.getChangeNodeTree();
+	const currentTree = getChangeNodeFromView(currentView);
 	const rootId = currentTree.identifier;
 	const changes: ChangeInternal[] = [];
 	// Generate a set of changes to set the root node's children to that of the root in the currentTree
@@ -88,7 +89,7 @@ export function noHistorySummarizer_0_1_1(
 	currentView: RevisionView,
 	stable = false
 ): SharedTreeSummary<ChangeInternal> {
-	const currentTree = currentView.getChangeNodeTree();
+	const currentTree = getChangeNodeFromView(currentView);
 	const rootId = currentTree.identifier;
 	const changes: ChangeInternal[] = [];
 	// Generate a set of changes to set the root node's children to that of the root in the currentTree

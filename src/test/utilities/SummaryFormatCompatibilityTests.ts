@@ -27,6 +27,7 @@ import {
 import { deserialize, getSummaryStatistics, SummaryStatistics } from '../../SummaryBackCompatibility';
 import { EditLog, separateEditAndId } from '../../EditLog';
 import { assertNotUndefined } from '../../Common';
+import { getChangeNodeFromView } from '../../SerializationUtilities';
 import {
 	getDocumentFiles,
 	LocalServerSharedTreeTestingComponents,
@@ -209,14 +210,14 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						expect(JSON.parse(JSON.stringify(newSummary))).to.deep.equals(summary);
 
 						// Ensure the produced change node is the same
-						const newChangeNode = expectedTree.currentView.getChangeNodeTree();
+						const newChangeNode = getChangeNodeFromView(expectedTree.currentView);
 						expect(newChangeNode).to.deep.equal(changeNode);
 					});
 				}
 
 				it('change-node.json matches history.json', async () => {
 					await applyEdits(expectedTree, testObjectProvider, history);
-					expect(changeNode).deep.equals(expectedTree.currentView.getChangeNodeTree());
+					expect(changeNode).deep.equals(getChangeNodeFromView(expectedTree.currentView));
 				});
 
 				for (const [_index, version] of sortedVersions.entries()) {
@@ -267,7 +268,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						const denormalizedHistory: Edit<ChangeInternal>[] = JSON.parse(file);
 						await applyEdits(expectedTree, testObjectProvider, denormalizedHistory);
 
-						expect(changeNode).deep.equals(expectedTree.currentView.getChangeNodeTree());
+						expect(changeNode).deep.equals(getChangeNodeFromView(expectedTree.currentView));
 					});
 				});
 
@@ -304,7 +305,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						// Wait for the ops to to be submitted and processed across the containers.
 						await testObjectProvider.ensureSynchronized();
 
-						const newChangeNode = expectedTree.currentView.getChangeNodeTree();
+						const newChangeNode = getChangeNodeFromView(expectedTree.currentView);
 						expect(newChangeNode).to.deep.equal(changeNode);
 					});
 
@@ -316,7 +317,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 								const denormalizedSummary = deserialize(file, testSerializer);
 								expectedTree.loadSummary(denormalizedSummary);
 
-								const newChangeNode = expectedTree.currentView.getChangeNodeTree();
+								const newChangeNode = getChangeNodeFromView(expectedTree.currentView);
 								expect(newChangeNode).to.deep.equal(changeNode);
 							});
 						});
