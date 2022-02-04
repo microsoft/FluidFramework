@@ -2014,7 +2014,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
             try {
                 summarizeResult = await this.summarize({
-                    summaryLogger,
                     fullTree: fullTree || forcedFullTree,
                     trackState: true,
                     summaryLogger,
