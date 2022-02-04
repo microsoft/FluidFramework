@@ -30,7 +30,6 @@ module.exports = {
         "project": "./tsconfig.json",
     },
     "plugins": [
-        "no-null",
         "react",
         "unicorn",
     ],
@@ -88,7 +87,6 @@ module.exports = {
         "unicorn/no-unsafe-regex": "error",
 
         // DISABLED INTENTIONALLY
-        "@rushstack/no-new-null": "off",
         "@rushstack/typedef-var": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/explicit-member-accessibility": "off",

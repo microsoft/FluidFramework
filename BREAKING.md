@@ -19,6 +19,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Modified PureDataObject.getFluidObjectFromDirectory](#Modified-PureDataObject.getFluidObjectFromDirectory)
 - [Remove IFluidObject from Aqueduct](#Remove-IFluidObject-from-Aqueduct)
 - [Removing snapshot API from IRuntime](#Removing-snapshot-api-from-IRuntime)
+- [Remove Unused IFluidObject Augmentations](#Remove-Unused-IFluidObject-Augmentations)
 
 ### IFluidConfiguration removed
 
@@ -71,6 +72,15 @@ This impacts the following public apis:
 
 ### Removing snapshot API from IRuntime
 Snapshot API has been removed from IRuntime. Replay tools and snapshot tests are now using summarize API.
+
+### Remove Unused IFluidObject Augmentations
+The following deprecated provider properties are no longer exposed off of IFluidObject
+ - IFluidMountableView
+ - IAgentScheduler
+ - IContainerRuntime
+ - ISummarizer
+
+The interfaces that correspond to the above properties continue to exist, and can use directly, or with the IFluidObject replacement [FluidObject](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts#L61)
 
 ## 0.56 Breaking changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)

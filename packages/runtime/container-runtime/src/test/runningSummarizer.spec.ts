@@ -222,8 +222,8 @@ describe("Runtime", () => {
                     await emitNextOp(1);
                     assertRunCounts(1, 0, 0);
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
-                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                        { eventName: "Running:GenerateSummary", summarizeCount: runCount },
+                        { eventName: "Running:SummaryOp", summarizeCount: runCount },
                     ]), "unexpected log sequence");
 
                     // should not run, because our summary hasnt been acked/nacked yet
@@ -234,9 +234,9 @@ describe("Runtime", () => {
                     await emitAck();
                     assertRunCounts(2, 0, 0);
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:Summarize_end", summaryGenTag: (runCount - 1) }, // ack for previous run
-                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
-                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                        { eventName: "Running:Summarize_end", summarizeCount: (runCount - 1) }, // ack for previous run
+                        { eventName: "Running:GenerateSummary", summarizeCount: runCount },
+                        { eventName: "Running:SummaryOp", summarizeCount: runCount },
                     ]), "unexpected log sequence");
 
                     await emitNextOp();
@@ -396,10 +396,10 @@ describe("Runtime", () => {
                     await emitNextOp(1);
                     assertRunCounts(1, 0, 0);
                     const retryProps1 = {
-                        summaryGenTag: 1,
-                        summarizeAttemptsPerPhase: 1,
-                        summarizeTotalAttempts: 1,
-                        summarizeAttemptPhase: 1,
+                        summarizeCount: 1,
+                        summaryAttemptsPerPhase: 1,
+                        summaryAttempts: 1,
+                        summaryAttemptPhase: 1,
                     };
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:GenerateSummary", ...retryProps1 },
@@ -414,10 +414,10 @@ describe("Runtime", () => {
                     await emitNack();
                     assertRunCounts(2, 0, 1, "retry1 should be refreshLatestAck");
                     const retryProps2 = {
-                        summaryGenTag: 1,
-                        summarizeAttemptsPerPhase: 1,
-                        summarizeTotalAttempts: 2,
-                        summarizeAttemptPhase: 2,
+                        summarizeCount: 1,
+                        summaryAttemptsPerPhase: 1,
+                        summaryAttempts: 2,
+                        summaryAttemptPhase: 2,
                     };
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:Summarize_cancel", ...retryProps1, reason: "summaryNack" },
@@ -434,10 +434,10 @@ describe("Runtime", () => {
                     await tickAndFlushPromises(1);
                     assertRunCounts(3, 0, 2, "retry2 should be refreshLatestAck");
                     const retryProps3 = {
-                        summaryGenTag: 1,
-                        summarizeAttemptsPerPhase: 1,
-                        summarizeTotalAttempts: 3,
-                        summarizeAttemptPhase: 3,
+                        summarizeCount: 1,
+                        summaryAttemptsPerPhase: 1,
+                        summaryAttempts: 3,
+                        summaryAttemptPhase: 3,
                     };
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:Summarize_cancel", ...retryProps2, reason: "summaryNack" },
@@ -454,10 +454,10 @@ describe("Runtime", () => {
                     await tickAndFlushPromises(1);
                     assertRunCounts(4, 1, 3, "retry3 should be fullTree and refreshLatestAck");
                     const retryProps4 = {
-                        summaryGenTag: 1,
-                        summarizeAttemptsPerPhase: 1,
-                        summarizeTotalAttempts: 4,
-                        summarizeAttemptPhase: 4,
+                        summarizeCount: 1,
+                        summaryAttemptsPerPhase: 1,
+                        summaryAttempts: 4,
+                        summaryAttemptPhase: 4,
                     };
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:Summarize_cancel", ...retryProps3, reason: "summaryNack" },
@@ -482,10 +482,10 @@ describe("Runtime", () => {
                     await emitNextOp(1);
                     assertRunCounts(1, 0, 0, "normal run");
                     const retryProps1 = {
-                        summaryGenTag: 1,
-                        summarizeAttemptsPerPhase: 1,
-                        summarizeTotalAttempts: 1,
-                        summarizeAttemptPhase: 1,
+                        summarizeCount: 1,
+                        summaryAttemptsPerPhase: 1,
+                        summaryAttempts: 1,
+                        summaryAttemptPhase: 1,
                     };
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:GenerateSummary", ...retryProps1 },
@@ -505,13 +505,13 @@ describe("Runtime", () => {
                     await tickAndFlushPromises(1);
                     assertRunCounts(2, 0, 0, "rerun after retryAfter delay");
                     const retryProps2 = {
-                        summaryGenTag: 1,
-                        summarizeAttemptsPerPhase: 2,
-                        summarizeTotalAttempts: 2,
-                        summarizeAttemptPhase: 1,
+                        summarizeCount: 1,
+                        summaryAttemptsPerPhase: 2,
+                        summaryAttempts: 2,
+                        summaryAttemptPhase: 1,
                     };
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:Summarize_cancel", summaryGenTag: 1, reason: "summaryNack" },
+                        { eventName: "Running:Summarize_cancel", summarizeCount: 1, reason: "summaryNack" },
                         { eventName: "Running:SummarizeAttemptDelay", ...retryProps2 },
                         { eventName: "Running:GenerateSummary", ...retryProps2 },
                         { eventName: "Running:SummaryOp", ...retryProps2 },
@@ -526,10 +526,10 @@ describe("Runtime", () => {
                     await tickAndFlushPromises(1);
                     assertRunCounts(3, 0, 1, "retry again with refreshLatestAck");
                     const retryProps3 = {
-                        summaryGenTag: 1,
-                        summarizeAttemptsPerPhase: 1,
-                        summarizeTotalAttempts: 3,
-                        summarizeAttemptPhase: 2,
+                        summarizeCount: 1,
+                        summaryAttemptsPerPhase: 1,
+                        summaryAttempts: 3,
+                        summaryAttemptPhase: 2,
                     };
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:Summarize_cancel", ...retryProps2, reason: "summaryNack" },
@@ -553,16 +553,16 @@ describe("Runtime", () => {
 
                     assertRunCounts(1, 0, 0, "failed upload");
                     const retryProps1 = {
-                        summaryGenTag: 1,
-                        summarizeAttemptsPerPhase: 1,
-                        summarizeTotalAttempts: 1,
-                        summarizeAttemptPhase: 1,
+                        summarizeCount: 1,
+                        summaryAttemptsPerPhase: 1,
+                        summaryAttempts: 1,
+                        summaryAttemptPhase: 1,
                      };
                     const retryProps2 = {
-                        summaryGenTag: 1,
-                        summarizeAttemptsPerPhase: 2,
-                        summarizeTotalAttempts: 2,
-                        summarizeAttemptPhase: 1,
+                        summarizeCount: 1,
+                        summaryAttemptsPerPhase: 2,
+                        summaryAttempts: 2,
+                        summaryAttemptPhase: 1,
                     };
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:Summarize_cancel", ...retryProps1 },
@@ -609,8 +609,8 @@ describe("Runtime", () => {
                         "summarize op handle should be test-broadcast-handle");
 
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
-                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                        { eventName: "Running:GenerateSummary", summarizeCount: runCount },
+                        { eventName: "Running:SummaryOp", summarizeCount: runCount },
                     ]), "unexpected log sequence");
 
                     // Verify that heuristics are blocked while waiting for ack
@@ -666,8 +666,8 @@ describe("Runtime", () => {
                         "summarize op handle should be test-broadcast-handle");
 
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
-                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                        { eventName: "Running:GenerateSummary", summarizeCount: runCount },
+                        { eventName: "Running:SummaryOp", summarizeCount: runCount },
                     ]), "unexpected log sequence");
 
                     // Verify that heuristics are blocked while waiting for ack
@@ -777,8 +777,8 @@ describe("Runtime", () => {
                         "summarize op handle should be test-broadcast-handle");
 
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
-                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                        { eventName: "Running:GenerateSummary", summarizeCount: runCount },
+                        { eventName: "Running:SummaryOp", summarizeCount: runCount },
                     ]), "unexpected log sequence");
 
                     // Verify that heuristics are blocked while waiting for ack
@@ -958,8 +958,8 @@ describe("Runtime", () => {
                     await emitNextOp(summaryConfig.maxOps + 1);
                     assertRunCounts(1, 0, 0, "Should run summarizer once");
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
-                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                        { eventName: "Running:GenerateSummary", summarizeCount: runCount },
+                        { eventName: "Running:SummaryOp", summarizeCount: runCount },
                     ]), "unexpected log sequence 2");
 
                     assert(!mockLogger.matchEvents([
@@ -969,7 +969,12 @@ describe("Runtime", () => {
                     // Now emit ack
                     await emitAck();
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:Summarize_end", summaryGenTag: runCount, summarizeReason: "maxOps" },
+                        {
+                            eventName: "Running:Summarize_end",
+                            summarizeCount: runCount,
+                            summarizerSuccessfulAttempts: runCount,
+                            summarizeReason: "maxOps"
+                        },
                     ]), "unexpected log sequence 3");
                 });
             });

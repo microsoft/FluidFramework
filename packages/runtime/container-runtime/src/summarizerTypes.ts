@@ -20,14 +20,6 @@ import {
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
 
-declare module "@fluidframework/core-interfaces" {
-    export interface IFluidObject {
-        /** @deprecated - use `FluidObject<ISummarizer>` instead */
-        readonly ISummarizer?: ISummarizer;
-
-     }
-}
-
 /**
  * @deprecated - This will be removed in a later release.
  */
