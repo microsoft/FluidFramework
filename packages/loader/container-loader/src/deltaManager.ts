@@ -942,10 +942,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 function extractLogSafeMessageProperties(message: Partial<ISequencedDocumentMessage>) {
     const safeProps = {
         messageClientId: message.clientId,
-        sequenceNumber: message.sequenceNumber,
-        clientSequenceNumber: message.clientSequenceNumber,
-        referenceSequenceNumber: message.referenceSequenceNumber,
-        minimumSequenceNumber: message.minimumSequenceNumber,
+        messageSequenceNumber: message.sequenceNumber,
+        messageClientSequenceNumber: message.clientSequenceNumber,
+        messageReferenceSequenceNumber: message.referenceSequenceNumber,
+        messageMinimumSequenceNumber: message.minimumSequenceNumber,
         messageTimestamp: message.timestamp,
     };
 
