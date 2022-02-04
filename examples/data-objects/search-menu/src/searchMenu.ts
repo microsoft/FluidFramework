@@ -17,7 +17,7 @@ export interface ISearchMenuCommand<TContext = any> {
     key: string;
 }
 
-export interface ISelectionListBox {
+interface ISelectionListBox {
     elm: HTMLDivElement;
     show(): void;
     hide(): void;
@@ -32,7 +32,7 @@ export interface ISelectionListBox {
     keydown(e: KeyboardEvent): void;
 }
 
-export function selectionListBoxCreate(
+function selectionListBoxCreate(
     shapeRect: ui.Rectangle,
     container: HTMLElement,
     itemHeight: number,
@@ -230,7 +230,6 @@ export function selectionListBoxCreate(
 }
 
 export interface ISearchBox {
-    showAllItems();
     showSelectionList(selectionItems: ISearchMenuCommand[]);
     dismiss(): void;
     keydown(e: KeyboardEvent): void;
@@ -375,17 +374,6 @@ export function searchBoxCreate(
         }
     }
 
-    function showAllItems() {
-        const items = [] as ISearchMenuCommand[];
-        cmdTree.map((k, v) => items.push(v));
-        if (items.length > 0) {
-            showSelectionList(items);
-            if (selectionListBox) {
-                showListContainer(selectionListBox.items().length === 0);
-            }
-        }
-    }
-
     function lookup(text: string) {
         let prefix = text;
         if (foldCase) {
@@ -516,7 +504,6 @@ export function searchBoxCreate(
         focus: containerFocus,
         keydown,
         keypress,
-        showAllItems,
         showSelectionList,
     };
 }
