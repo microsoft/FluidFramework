@@ -1570,7 +1570,6 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
     //       of using 'services' to smuggle context to components.
     const itemsContext = {
         fontInfo: makeFontInfo(layoutContext.docContext),
-        services: layoutContext.flowView.services,
     } as Paragraph.IItemsContext;
     if (layoutContext.deferUntilHeight === undefined) {
         layoutContext.deferUntilHeight = 0;
@@ -2316,9 +2315,6 @@ export class FlowView extends ui.Component {
     public keypressHandler: (e: KeyboardEvent) => void;
     public keydownHandler: (e: KeyboardEvent) => void;
 
-    // TODO: 'services' is being used temporarily to smuggle context down to components.
-    //       Should be replaced w/component-standardized render context, layout context, etc.
-    public services = new Map<string, any>();
     public srcLanguage = "en";
 
     private lastVerticalX = -1;
@@ -2391,19 +2387,6 @@ export class FlowView extends ui.Component {
         });
 
         this.cursor = new FlowCursor(this.viewportDiv);
-
-        // HACK: Expose "insertText" via window to Shared Browser Extension
-        //       for 2018/Oct demo.
-        // eslint-disable-next-line @typescript-eslint/dot-notation
-        window["insertText"] = (text: string) => {
-            this.sharedString.insertText(this.cursor.pos, text);
-        };
-
-        // Expose the ability to invalidate the current layout when a component's width/height changes.
-        this.services.set("invalidateLayout", () => {
-            console.log("Component invalidated layout");
-            this.hostSearchMenu(FlowView.docStartPosition);
-        });
     }
 
     public updatePresenceCursors() {
