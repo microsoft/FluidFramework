@@ -260,12 +260,6 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.insertList();
-        },
-        key: "insert list",
-    },
-    {
-        exec: (c, p, f) => {
             f.insertColumn();
         },
         key: "insert column",
@@ -1098,10 +1092,6 @@ function lineIntersectsRect(y: number, rect: IExcludedRectangle) {
     return (y >= rect.y) && (y <= (rect.y + rect.height));
 }
 
-interface IListRefMarker extends MergeTree.Marker {
-    selectionListBox: SearchMenu.ISelectionListBox;
-}
-
 class Viewport {
     // Keep the line divs in order
     public lineDivs: ILineDiv[] = [];
@@ -1238,29 +1228,6 @@ class Viewport {
                     showVideo.muted = true;
                     showVideo.load();
                     this.inclusions.set(irdoc.referenceDocId, showVideo);
-                } else if (irdoc.type.name === "list") {
-                    const listRefMarker = marker as IListRefMarker;
-                    let selectionIndex = 0;
-                    const prevSelectionBox = listRefMarker.selectionListBox;
-                    if (prevSelectionBox) {
-                        selectionIndex = prevSelectionBox.getSelectionIndex();
-                    }
-                    const shapeRect = new ui.Rectangle(0, 0, exclu.width, exclu.height);
-                    listRefMarker.selectionListBox =
-                        SearchMenu.selectionListBoxCreate(shapeRect, false, innerDiv, 24, 2);
-
-                    // Allow the list box to receive DOM focus and subscribe its 'keydown' handler.
-                    allowDOMEvents(listRefMarker.selectionListBox.elm);
-                    listRefMarker.selectionListBox.elm.addEventListener("keydown",
-                        (e) => listRefMarker.selectionListBox.keydown(e));
-
-                    const listIrdoc =
-                        <IListReferenceDoc>listRefMarker.properties[Paragraph.referenceProperty];
-                    for (const item of listIrdoc.items) {
-                        item.div = undefined;
-                    }
-                    listRefMarker.selectionListBox.showSelectionList(listIrdoc.items);
-                    listRefMarker.selectionListBox.setSelectionIndex(selectionIndex);
                 }
             }
         }
@@ -2275,11 +2242,6 @@ interface IReferenceDoc {
     referenceDocId?: string;
     url: string;
     layout?: IRefLayoutSpec;
-}
-
-interface IListReferenceDoc extends IReferenceDoc {
-    items: SearchMenu.ISearchMenuCommand[];
-    selectionIndex: number;
 }
 
 export class FlowView extends ui.Component {
@@ -3401,22 +3363,6 @@ export class FlowView extends ui.Component {
 
         const markerPos = this.cursor.pos;
         this.sharedString.insertMarker(markerPos, MergeTree.ReferenceType.Simple, props);
-    }
-
-    public insertList() {
-        // eslint-disable-next-line max-len
-        const testList: SearchMenu.ISearchMenuCommand[] = [{ key: "providence" }, { key: "boston" }, { key: "issaquah" }];
-        const irdoc = <IListReferenceDoc>{
-            items: testList,
-            referenceDocId: "L",
-            selectionIndex: 0,
-            type: { name: "list" },
-            url: "",
-        };
-        const refProps = {
-            [Paragraph.referenceProperty]: irdoc,
-        };
-        this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Simple, refProps);
     }
 
     public deleteRow() {
