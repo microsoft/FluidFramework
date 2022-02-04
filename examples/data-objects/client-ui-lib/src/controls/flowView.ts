@@ -122,133 +122,133 @@ export interface IFlowViewCmd extends SearchMenu.ISearchMenuCommand<FlowView> {
 
 const commands: IFlowViewCmd[] = [
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.copyFormat();
         },
         key: "copy format",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.paintFormat();
         },
         key: "paint format",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.toggleBlockquote();
         },
         key: "blockquote",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.toggleBold();
         },
         key: "bold",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.setColor("red");
         },
         key: "red",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.setColor("green");
         },
         key: "green",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.setColor("gold");
         },
         key: "gold",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.setColor("pink");
         },
         key: "pink",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.setFont("courier new", "18px");
         },
         key: "Courier font",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.setFont("tahoma", "18px");
         },
         key: "Tahoma",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.setPGProps({ header: true });
         },
         key: "Heading 2",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.setPGProps({ header: null });
         },
         key: "Normal",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.setFont("georgia", "18px");
         },
         key: "Georgia font",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.setFont("sans-serif", "18px");
         },
         key: "sans font",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.setFont("cursive", "18px");
         },
         key: "cursive font",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.toggleItalic();
         },
         key: "italic",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.setList();
         },
         key: "list ... 1.)",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.setList(1);
         },
         key: "list ... \u2022",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             showCell(f.cursor.pos, f);
         },
         key: "cell info",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             showTable(f.cursor.pos, f);
         },
         key: "table info",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.tableSummary();
         },
         key: "table summary",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.updatePGInfo(f.cursor.pos - 1);
             Table.createTable(f.cursor.pos, f.sharedString, f.runtime.clientId);
             f.hostSearchMenu(f.cursor.pos);
@@ -256,37 +256,37 @@ const commands: IFlowViewCmd[] = [
         key: "table test",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.insertColumn();
         },
         key: "insert column",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.insertRow();
         },
         key: "insert row",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.deleteRow();
         },
         key: "delete row",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.deleteColumn();
         },
         key: "delete column",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             f.toggleUnderline();
         },
         key: "underline",
     },
     {
-        exec: (c, p, f) => {
+        exec: (f) => {
             (navigator as any).clipboard.readText().then((text) => {
                 // TODO bring back paste support
                 console.log(`Inserting ${text}`);
@@ -3532,8 +3532,7 @@ export class FlowView extends ui.Component {
                 break;
             }
             case CharacterCodes.M: {
-                this.activeSearchBox = SearchMenu.searchBoxCreate(this, this.viewportDiv,
-                    this.cmdTree, true);
+                this.activeSearchBox = SearchMenu.searchBoxCreate(this, this.viewportDiv, this.cmdTree);
                 break;
             }
             case CharacterCodes.L:

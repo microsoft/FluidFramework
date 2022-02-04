@@ -12,8 +12,7 @@ import * as ui from "./rectangle";
 
 export interface ISearchMenuCommand<TContext = any> {
     div?: HTMLDivElement;
-    exec?: (cmd: ISearchMenuCommand<TContext>, parameters: string[], context?: TContext) => void;
-    enabled?: (context?: TContext) => boolean;
+    exec?: (context?: TContext) => void;
     key: string;
 }
 
@@ -349,7 +348,6 @@ export function searchBoxCreate(
     context: any,
     boundingElm: HTMLElement,
     cmdTree: MergeTree.TST<ISearchMenuCommand>,
-    foldCase = true,
 ): ISearchBox {
     const container = document.createElement("div");
     const inputElmHeight = 32;
@@ -368,14 +366,10 @@ export function searchBoxCreate(
     }
 
     function lookup(text: string) {
-        let prefix = text;
-        if (foldCase) {
-            prefix = prefix.toLowerCase();
-        }
+        const prefix = text.toLowerCase();
         const items =
             cmdTree.pairsWithPrefix(prefix)
-                .map((res) => res.val)
-                .filter((cmd) => (!cmd.enabled) || cmd.enabled(context));
+                .map((res) => res.val);
         showSelectionList(items);
     }
 
@@ -411,7 +405,7 @@ export function searchBoxCreate(
             cmd = getSelectedItem();
             // If the searchbox successfully resolved to a simple command, execute it.
             if (cmd && cmd.exec) {
-                cmd.exec(cmd, [], context);
+                cmd.exec(context);
             }
             if (onExec) {
                 onExec(cmd);
