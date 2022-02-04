@@ -9,11 +9,6 @@ import { Cursor } from "./cursor";
 import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
 import * as ui from "./rectangle";
-export const ISearchMenuHost: keyof IProvideSearchMenuHost = "ISearchMenuHost";
-
-export interface IProvideSearchMenuHost {
-    readonly ISearchMenuHost: ISearchMenuHost;
-}
 
 export interface ISearchMenuHost {
     // TD switch to options structure
@@ -25,40 +20,12 @@ export interface ISearchMenuHost {
     cancelSearchMenu(): void;
 }
 
-export const ISearchMenuClient: keyof IProvideSearchMenuClient = "ISearchMenuClient";
-
-export interface IProvideSearchMenuClient {
-    readonly ISearchMenuClient: ISearchMenuClient;
-}
-export interface ISearchMenuClient extends IProvideSearchMenuClient {
-    registerSearchMenuHost(host: ISearchMenuHost): void;
-}
-
-export interface ISearchMenuParam<TContext = any> {
-    name: string;
-    suffix?: string;
-    lruValue?: string;
-    values(context: TContext): MergeTree.TST<ISearchMenuCommand>;
-    defaultValue(context: TContext): string;
-}
-
 export interface ISearchMenuCommand<TContext = any> {
     div?: HTMLDivElement;
     exec?: (cmd: ISearchMenuCommand<TContext>, parameters: string[], context?: TContext) => void;
     enabled?: (context?: TContext) => boolean;
     iconHTML?: string;
     key: string;
-    parameters?: ISearchMenuParam<TContext>[];
-}
-
-export function namesToItems(names: string[]): ISearchMenuCommand[] {
-    const items: ISearchMenuCommand[] = new Array(names.length);
-
-    for (let i = 0, len = names.length; i < len; i++) {
-        items[i] = { key: names[i] };
-    }
-
-    return items;
 }
 
 export interface ISelectionListBox {
@@ -349,7 +316,7 @@ export interface ISearchBox {
     updateText();
 }
 
-export interface IInputBox {
+interface IInputBox {
     elm: HTMLDivElement;
     setPrefixText(text: string): void;
     setText(text: string): void;
@@ -359,7 +326,7 @@ export interface IInputBox {
     keypress(e: KeyboardEvent);
 }
 
-export function inputBoxCreate(
+function inputBoxCreate(
     onsubmit: (s: string) => void,
     onchanged: (s: string) => void) {
     const elm = document.createElement("div");
@@ -462,12 +429,6 @@ export function inputBoxCreate(
     return inputBox;
 }
 
-interface IParameterState {
-    paramCmd: ISearchMenuCommand;
-    // Represents parameters already satisfied; length of params is index of current parameter
-    params: string[];
-}
-
 // TODO: make generic in context type
 export function searchBoxCreate(
     context: any, boundingElm: HTMLElement,
@@ -480,7 +441,6 @@ export function searchBoxCreate(
     let inputElm: HTMLElement;
     let inputBox: IInputBox;
     let selectionListBox: ISelectionListBox;
-    let paramState: IParameterState;
     let onExec: (c: ISearchMenuCommand) => void;
 
     init();
@@ -519,25 +479,11 @@ export function searchBoxCreate(
         if (foldCase) {
             prefix = prefix.toLowerCase();
         }
-        if (paramState) {
-            const paramIndex = paramState.params.length;
-            const paramCmd = paramState.paramCmd;
-            const param = paramCmd.parameters[paramIndex];
-            const paramCmdTree = param.values(context);
-            const items = paramCmdTree.pairsWithPrefix(prefix).map((res) => res.val);
-            let suffix = "";
-            for (let i = paramIndex + 1; i < paramCmd.parameters.length; i++) {
-                const ithParam = paramCmd.parameters[i];
-                suffix += ` ${ithParam.name}: ${ithParam.defaultValue(context)}`;
-            }
-            showSelectionList(items, `${paramState.paramCmd.key} `, suffix);
-        } else {
-            const items =
-                cmdTree.pairsWithPrefix(prefix)
-                    .map((res) => res.val)
-                    .filter((cmd) => (!cmd.enabled) || cmd.enabled(context));
-            showSelectionList(items);
-        }
+        const items =
+            cmdTree.pairsWithPrefix(prefix)
+                .map((res) => res.val)
+                .filter((cmd) => (!cmd.enabled) || cmd.enabled(context));
+        showSelectionList(items);
     }
 
     const getSelectedKey = () => selectionListBox.getSelectedKey();
@@ -550,29 +496,6 @@ export function searchBoxCreate(
         boundingElm.removeChild(container);
     }
 
-    // TODO: check param state already shows in parameter
-    function onTAB(shift: boolean) {
-        const cmd = getSelectedItem();
-        if (cmd) {
-            if (paramState) {
-                paramState.params.push(cmd.key);
-                const paramIndex = paramState.params.length;
-                if (paramIndex < paramState.paramCmd.parameters.length) {
-                    const paramName = `${paramState.paramCmd.parameters[paramIndex].name}: `;
-                    inputBox.setPrefixText(paramName);
-                }
-            } else {
-                if (cmd.parameters) {
-                    paramState = { paramCmd: cmd, params: [] };
-                }
-            }
-        } else {
-            if (cmdParser) {
-                cmdParser(getSearchString(), cmd);
-            }
-        }
-    }
-
     function keydown(e: KeyboardEvent) {
         if (e.keyCode === KeyCode.leftArrow) {
             textSegKeydown(e);
@@ -582,9 +505,6 @@ export function searchBoxCreate(
             textSegKeydown(e);
         } else if (e.keyCode === KeyCode.downArrow) {
             selectionListBox.nextItem();
-        } else if (e.keyCode === KeyCode.TAB) {
-            e.preventDefault();
-            onTAB(e.shiftKey);
         } else if (e.keyCode === KeyCode.esc) {
             if (cmdParser) {
                 e.preventDefault();
@@ -605,16 +525,10 @@ export function searchBoxCreate(
         e.preventDefault();
         if (e.charCode === CharacterCodes.cr) {
             let cmd: ISearchMenuCommand;
-            let params = [] as string[];
-            if (paramState) {
-                cmd = paramState.paramCmd;
-                params = paramState.params;
-            } else {
-                cmd = getSelectedItem();
-            }
+            cmd = getSelectedItem();
             // If the searchbox successfully resolved to a simple command, execute it.
             if (cmd && cmd.exec) {
-                cmd.exec(cmd, params, context);
+                cmd.exec(cmd, [], context);
             } else {
                 if (cmdParser) {
                     cmdParser(getSearchString(), cmd);

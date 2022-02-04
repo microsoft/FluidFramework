@@ -120,37 +120,6 @@ function altsToItems(alts: Alt[]) {
 export interface IFlowViewCmd extends SearchMenu.ISearchMenuCommand<FlowView> {
 }
 
-const fontSizeStrings = ["8", "9", "10", "11", "12", "14", "16", "18", "20", "24", "32"];
-const fontSizeTree = new MergeTree.TST<IFlowViewCmd>();
-for (const sizeString of fontSizeStrings) {
-    fontSizeTree.put(sizeString, { key: sizeString });
-}
-const fontSizes = (f: FlowView) => fontSizeTree;
-const defaultFontSize = (f: FlowView) => "18";
-const cssColorStrings = ["AliceBlue", "AntiqueWhite", "Aqua", "Aquamarine", "Azure", "Beige", "Bisque", "Black",
-    "BlanchedAlmond", "Blue", "BlueViolet", "Brown", "BurlyWood", "CadetBlue", "Chartreuse", "Chocolate",
-    "Coral", "CornflowerBlue", "Cornsilk", "Crimson", "Cyan", "DarkBlue", "DarkCyan", "DarkGoldenRod",
-    "DarkGray", "DarkGrey", "DarkGreen", "DarkKhaki", "DarkMagenta", "DarkOliveGreen", "DarkOrange",
-    "DarkOrchid", "DarkRed", "DarkSalmon", "DarkSeaGreen", "DarkSlateBlue", "DarkSlateGray", "DarkSlateGrey",
-    "DarkTurquoise", "DarkViolet", "DeepPink", "DeepSkyBlue", "DimGray", "DimGrey", "DodgerBlue", "FireBrick",
-    "FloralWhite", "ForestGreen", "Fuchsia", "Gainsboro", "GhostWhite", "Gold", "GoldenRod", "Gray", "Grey",
-    "Green", "GreenYellow", "HoneyDew", "HotPink", "IndianRed", "Indigo", "Ivory", "Khaki", "Lavender",
-    "LavenderBlush", "LawnGreen", "LemonChiffon", "LightBlue", "LightCoral", "LightCyan",
-    "LightGoldenRodYellow", "LightGray", "LightGrey", "LightGreen", "LightPink", "LightSalmon",
-    "LightSeaGreen", "LightSkyBlue", "LightSlateGray", "LightSlateGrey", "LightSteelBlue", "LightYellow",
-    "Lime", "LimeGreen", "Linen", "Magenta", "Maroon", "MediumAquaMarine", "MediumBlue",
-    "MediumOrchid", "MediumPurple", "MediumSeaGreen", "MediumSlateBlue", "MediumSpringGreen",
-    "MediumTurquoise", "MediumVioletRed", "MidnightBlue", "MintCream", "MistyRose", "Moccasin", "NavajoWhite",
-    "Navy", "OldLace", "Olive", "OliveDrab", "Orange", "OrangeRed", "Orchid", "PaleGoldenRod", "PaleGreen",
-    "PaleTurquoise", "PaleVioletRed", "PapayaWhip", "PeachPuff", "Peru", "Pink", "Plum", "PowderBlue",
-    "Purple", "RebeccaPurple", "Red", "RosyBrown", "RoyalBlue", "SaddleBrown", "Salmon", "SandyBrown",
-    "SeaGreen", "SeaShell", "Sienna", "Silver", "SkyBlue", "SlateBlue", "SlateGray", "SlateGrey",
-    "Snow", "SpringGreen", "SteelBlue", "Tan", "Teal", "Thistle", "Tomato", "Turquoise", "Violet", "Wheat",
-    "White", "WhiteSmoke", "Yellow", "YellowGreen"];
-// Const cssColorTree = new MergeTree.TST<IFlowViewCmd>();
-for (const cssColor of cssColorStrings) {
-    fontSizeTree.put(cssColor, { key: cssColor });
-}
 // Const cssColors = (f: FlowView) => cssColorTree;
 // const defaultColor = (f: FlowView) => "Black";
 
@@ -220,9 +189,6 @@ const commands: IFlowViewCmd[] = [
             f.setFont("tahoma", "18px");
         },
         key: "Tahoma",
-        parameters: [
-            { name: "size", defaultValue: defaultFontSize, suffix: "px", values: fontSizes },
-        ],
     },
     {
         exec: (c, p, f) => {
