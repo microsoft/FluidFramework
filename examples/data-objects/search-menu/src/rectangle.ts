@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ISize } from "./size";
+interface ISize {
+    width: number;
+
+    height: number;
+}
 
 export class Rectangle {
     public static fromClientRect(cr: ClientRect) {
