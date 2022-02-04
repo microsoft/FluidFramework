@@ -451,9 +451,6 @@
         "InterfaceDeclaration_ICodeLoader": {
           "backCompat": false
         },
-        "InterfaceDeclaration_IContainerContext": {
-          "backCompat": false
-        },
         "InterfaceDeclaration_IFluidModule": {
           "backCompat": false
         },
