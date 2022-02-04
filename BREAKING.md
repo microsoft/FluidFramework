@@ -13,7 +13,13 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 0.57 Breaking changes
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)
 - [Driver error constructors' signatures have changed](#driver-error-constructors-signatures-have-changed)
+- [IFluidObject removed from IFluidDataStoreContext scope](#IFluidObject-removed-from-IFluidDataStoreContext-scope)
 - [The behavior of containers' isDirty flag has changed](#containers-isdirty-flag-behavior-has-changed)
+- [Removed PureDataObject.requestFluidObject_UNSAFE](#Removed-PureDataObject.requestFluidObject_UNSAFE)
+- [Modified PureDataObject.getFluidObjectFromDirectory](#Modified-PureDataObject.getFluidObjectFromDirectory)
+- [Remove IFluidObject from Aqueduct](#Remove-IFluidObject-from-Aqueduct)
+- [Removing snapshot API from IRuntime](#Removing-snapshot-api-from-IRuntime)
+- [Remove Unused IFluidObject Augmentations](#Remove-Unused-IFluidObject-Augmentations)
 
 ### IFluidConfiguration removed
 
@@ -28,8 +34,53 @@ Same for helper functions that return new error objects.
 Additionally, `createGenericNetworkError`'s signature was refactored to combine `canRetry` and `retryAfterMs` into a single
 required parameter `retryInfo`.
 
+### IFluidObject removed from IFluidDataStoreContext scope
+IFluidObject is deprecated and being replaced with [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject). IFluidObject is now removed from IFluidDataStoreContext's scope:
+
+``` diff
+- readonly scope: IFluidObject & FluidObject;
++ readonly scope: FluidObject;
+```
+
+Additionally, the following deprecated fields have been removed from IFluidObject:
+- IFluidDataStoreFactory
+- IFluidDataStoreRegistry
+
+Use [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) instead.
+
 ### Containers isDirty flag behavior has changed
 Container is now considered dirty if it's not attached or it is attached but has pending ops. Check https://fluidframework.com/docs/build/containers/#isdirty for further details.
+
+### Removed PureDataObject.requestFluidObject_UNSAFE
+The `requestFluidObject_UNSAFE` is removed from the PureDataObject. If you still need to fallback on URIs, use `handleFromLegacyUri`. We are making this change to encourage retreiving shared objects via handles only.
+
+### Modified PureDataObject.getFluidObjectFromDirectory
+Going forward, `getFluidObjectFromDirectory` will not return FluidObject if you have have used to store uri string for a given key. If you still need to fallback on URIs, use `handleFromLegacyUri`. Also, getFluidObjectFromDirectory now expects callback that is only returning `IFluidHandle` or `undefined`. Returnig uri/id (string) is not supported as we want to encourage retreiving shared objects via handles only.
+
+### Remove IFluidObject from Aqueduct
+
+[IFluidObject is deprecated](#Deprecate-IFluidObject-and-introduce-FluidObject). In this release we have removed all IFluidObject from the aqueduct package.
+This impacts the following public apis:
+ - getDefaultObjectFromContainer
+ - getObjectWithIdFromContainer
+ - getObjectFromContainer
+ - PureDataObject.getFluidObjectFromDirectory
+ - ContainerServiceRegistryEntries
+ - SingletonContainerServiceFactory.getService
+
+ In general the impact of these changes should be transparent. If you see compile errors related to Fluid object provider types with the above apis, you should transition those usages to [FluidObject](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts#L61) which is the replacement for the deprecated IFluidObject.
+
+### Removing snapshot API from IRuntime
+Snapshot API has been removed from IRuntime. Replay tools and snapshot tests are now using summarize API.
+
+### Remove Unused IFluidObject Augmentations
+The following deprecated provider properties are no longer exposed off of IFluidObject
+ - IFluidMountableView
+ - IAgentScheduler
+ - IContainerRuntime
+ - ISummarizer
+
+The interfaces that correspond to the above properties continue to exist, and can use directly, or with the IFluidObject replacement [FluidObject](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts#L61)
 
 ## 0.56 Breaking changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)

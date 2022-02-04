@@ -153,6 +153,7 @@ export class SummaryGenerator {
         private readonly heuristicData: ISummarizeHeuristicData,
         private readonly submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
         private readonly raiseSummarizingError: (errorCode: string) => void,
+        private readonly successfulSummaryCallback: () => void,
         private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
         private readonly logger: ITelemetryLogger,
     ) {
@@ -251,10 +252,11 @@ export class SummaryGenerator {
 
             // Cumulatively add telemetry properties based on how far generateSummary went.
             const { referenceSequenceNumber: refSequenceNumber } = summaryData;
+            const opsSinceLastSummary = refSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber;
             generateTelemetryProps = {
                 referenceSequenceNumber: refSequenceNumber,
                 opsSinceLastAttempt: refSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
-                opsSinceLastSummary: refSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
+                opsSinceLastSummary,
             };
             if (summaryData.stage !== "base") {
                 generateTelemetryProps = {
@@ -341,6 +343,7 @@ export class SummaryGenerator {
             };
             if (ackNackOp.type === MessageType.SummaryAck) {
                 this.heuristicData.markLastAttemptAsSuccessful();
+                this.successfulSummaryCallback();
                 summarizeEvent.end({ ...telemetryProps, handle: ackNackOp.contents.handle, message: "summaryAck" });
                 resultsBuilder.receivedSummaryAckOrNack.resolve({ success: true, data: {
                     summaryAckOp: ackNackOp,
