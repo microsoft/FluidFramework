@@ -4,6 +4,7 @@
  */
 
 import { IGitManager } from "@fluidframework/server-services-client";
+import { ITenantKeys } from "@fluidframework/server-services-core";
 
 export interface ITenantConfig {
     id: string;
@@ -94,5 +95,5 @@ export interface ITenantManager {
     /**
      * Retrieves the key for the given tenant. This is a privileged op and should be used with care.
      */
-    getKey(tenantId: string): Promise<string>;
+    getKey(tenantId: string): Promise<ITenantKeys>;
 }
