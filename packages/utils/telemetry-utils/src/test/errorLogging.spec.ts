@@ -360,8 +360,8 @@ describe("Error Logging", () => {
 
             const sanitizedStack = extractLogSafeErrorProperties(e1, true /* sanitizeStack */).stack;
             assert(typeof(sanitizedStack) === "string");
-            assert(!stack?.includes("asdf"), "message should have been removed from sanitized stack");
-            assert(stack?.includes("FooError"), "name should still be in the sanitized stack");
+            assert(!sanitizedStack?.includes("asdf"), "message should have been removed from sanitized stack");
+            assert(sanitizedStack?.includes("FooError"), "name should still be in the sanitized stack");
         });
         it("extract stack non-standard values", () => {
             // sanitizeStack true
