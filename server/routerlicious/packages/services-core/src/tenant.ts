@@ -4,7 +4,6 @@
  */
 
 import { IGitManager } from "@fluidframework/server-services-client";
-import { ITenantKeys } from "@fluidframework/server-services-core";
 
 export interface ITenantConfig {
     id: string;
