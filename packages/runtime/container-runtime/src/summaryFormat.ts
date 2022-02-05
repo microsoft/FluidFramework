@@ -139,6 +139,7 @@ export function getMetadataFormatVersion(metadata?: IContainerRuntimeMetadata): 
 export const aliasBlobName = ".aliases";
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
+export const batchBlobName = ".batches";
 export const electedSummarizerBlobName = ".electedSummarizer";
 export const blobsTreeName = ".blobs";
 

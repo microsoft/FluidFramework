@@ -281,6 +281,11 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         this.runtime.deltaManager.inbound.on("op", this.systemOpListener);
 
         this.opListener = (error: any, op: ISequencedDocumentMessage) => runningSummarizer.handleOp(error, op);
+
+        // This can be changed now, as it does not matter when summaries are created - they can be created
+        // in the middle of the batch!
+        // That sad, likely it's beneficial for summaries to be aligned on end of some batch, as in most cases
+        // that will result in smallest summary (smallest amount of state to track by ScheduleManager)
         this.runtime.on("batchEnd", this.opListener);
 
         return runningSummarizer;

@@ -36,7 +36,6 @@ import {
     Trace,
     TypedEventEmitter,
     unreachableCase,
-    performance,
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
@@ -53,7 +52,6 @@ import {
     DataCorruptionError,
     GenericError,
     UsageError,
-    extractSafePropertiesFromMessage,
 } from "@fluidframework/container-utils";
 import {
     IClientDetails,
@@ -107,7 +105,7 @@ import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
-import { ReportOpPerfTelemetry, latencyThreshold } from "./connectionTelemetry";
+import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo } from "./blobManager";
@@ -116,6 +114,7 @@ import {
     aliasBlobName,
     blobsTreeName,
     chunksBlobName,
+    batchBlobName,
     electedSummarizerBlobName,
     extractSummaryMetadataMessage,
     IContainerRuntimeMetadata,
@@ -147,6 +146,13 @@ import {
     IGCStats,
     IUsedStateStats,
 } from "./garbageCollection";
+
+/* eslint-disable max-lines */
+
+interface IScheduleManagerSerialized {
+    sequenceNumber: number,
+    state: [string, {length: number, messages: ISequencedDocumentMessage[]}][],
+}
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -287,6 +293,7 @@ export interface IContainerRuntimeOptions {
 
 type IRuntimeMessageMetadata = undefined | {
     batch?: boolean;
+    batchLength?: number;
 };
 
 /**
@@ -313,10 +320,7 @@ export enum RuntimeMessage {
 }
 
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-    if ((Object.values(RuntimeMessage) as string[]).includes(message.type)) {
-        return true;
-    }
-    return false;
+    return (Object.values(RuntimeMessage) as string[]).includes(message.type);
 }
 
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
@@ -345,14 +349,8 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
  * start processing ops in a batch IF we do not have all ops in the batch.
  */
 class ScheduleManagerCore {
-    private pauseSequenceNumber: number | undefined;
-    private currentBatchClientId: string | undefined;
-    private localPaused = false;
-    private timePaused = 0;
-
     constructor(
-        private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        private readonly logger: ITelemetryLogger,
+        protected readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
     ) {
         // Listen for delta manager sends and add batch metadata to messages
         this.deltaManager.on("prepareSend", (messages: IDocumentMessage[]) => {
@@ -374,153 +372,9 @@ class ScheduleManagerCore {
 
             // Set the batch flag to false on the last message to indicate the end of the send batch
             const lastMessage = messages[messages.length - 1];
-            lastMessage.metadata = { ...lastMessage.metadata, batch: false };
+            firstMessageMetadata.batchLength = messages.length;
+            lastMessage.metadata.batch = false;
         });
-
-        // Listen for updates and peek at the inbound
-        this.deltaManager.inbound.on(
-            "push",
-            (message: ISequencedDocumentMessage) => {
-                this.trackPending(message);
-            });
-
-        // Start with baseline - empty inbound queue.
-        assert(!this.localPaused, 0x293 /* "initial state" */);
-
-        const allPending = this.deltaManager.inbound.toArray();
-        for (const pending of allPending) {
-            this.trackPending(pending);
-        }
-    }
-
-    /**
-     * The only public function in this class - called when we processed an op,
-     * to make decision if op processing should be paused or not afer that.
-     */
-     public afterOpProcessing(sequenceNumber: number) {
-        assert(!this.localPaused, 0x294 /* "can't have op processing paused if we are processing an op" */);
-
-        // If the inbound queue is ever empty, nothing to do!
-        if (this.deltaManager.inbound.length === 0) {
-            assert(this.pauseSequenceNumber === undefined,
-                0x295 /* "there should be no pending batch if we have no ops" */);
-            return;
-        }
-
-        // The queue is
-        // 1. paused only when the next message to be processed is the beginning of a batch. Done in two places:
-        //    - here (processing ops until reaching start of incomplete batch)
-        //    - in trackPending(), when queue was empty and start of batch showed up.
-        // 2. resumed when batch end comes in (in trackPending())
-
-        // do we have incomplete batch to worry about?
-        if (this.pauseSequenceNumber !== undefined) {
-            assert(sequenceNumber < this.pauseSequenceNumber,
-                0x296 /* "we should never start processing incomplete batch!" */);
-            // If the next op is the start of incomplete batch, then we can't process it until it's fully in - pause!
-            if (sequenceNumber + 1 === this.pauseSequenceNumber) {
-                this.pauseQueue();
-            }
-        }
-    }
-
-    private pauseQueue() {
-        assert(!this.localPaused, 0x297 /* "always called from resumed state" */);
-        this.localPaused = true;
-        this.timePaused = performance.now();
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.deltaManager.inbound.pause();
-    }
-
-    private resumeQueue(startBatch: number, endBatch: number) {
-        // Return early if no change in value
-        if (!this.localPaused) {
-            return;
-        }
-
-        this.localPaused = false;
-        const duration = performance.now() - this.timePaused;
-        // Random round number - we want to know when batch waiting paused op processing.
-        if (duration > latencyThreshold) {
-            this.logger.sendErrorEvent({
-                eventName: "MaxBatchWaitTimeExceeded",
-                duration,
-                sequenceNumber: endBatch,
-                length: endBatch - startBatch,
-            });
-        }
-        this.deltaManager.inbound.resume();
-    }
-
-    /**
-     * Called for each incoming op (i.e. inbound "push" notification)
-     */
-    private trackPending(message: ISequencedDocumentMessage) {
-        assert(this.deltaManager.inbound.length !== 0,
-            0x298 /* "we have something in the queue that generates this event" */);
-
-        assert((this.currentBatchClientId === undefined) === (this.pauseSequenceNumber === undefined),
-            0x299 /* "non-synchronized state" */);
-
-        const metadata = message.metadata as IRuntimeMessageMetadata;
-        const batchMetadata = metadata?.batch;
-
-        // Protocol messages are never part of a runtime batch of messages
-        if (!isRuntimeMessage(message)) {
-            // Protocol messages should never show up in the middle of the batch!
-            assert(this.currentBatchClientId === undefined, 0x29a /* "System message in the middle of batch!" */);
-            assert(batchMetadata === undefined, 0x29b /* "system op in a batch?" */);
-            assert(!this.localPaused, 0x29c /* "we should be processing ops when there is no active batch" */);
-            return;
-        }
-
-        if (this.currentBatchClientId === undefined && batchMetadata === undefined) {
-            assert(!this.localPaused, 0x29d /* "we should be processing ops when there is no active batch" */);
-            return;
-        }
-
-        // If the client ID changes then we can move the pause point. If it stayed the same then we need to check.
-        // If batchMetadata is not undefined then if it's true we've begun a new batch - if false we've ended
-        // the previous one
-        if (this.currentBatchClientId !== undefined || batchMetadata === false) {
-            if (this.currentBatchClientId !== message.clientId) {
-                // "Batch not closed, yet message from another client!"
-                throw new DataCorruptionError(
-                    "OpBatchIncomplete",
-                    {
-                        batchClientId: this.currentBatchClientId,
-                        ...extractSafePropertiesFromMessage(message),
-                    });
-            }
-        }
-
-        // The queue is
-        // 1. paused only when the next message to be processed is the beginning of a batch. Done in two places:
-        //    - in afterOpProcessing() - processing ops until reaching start of incomplete batch
-        //    - here (batchMetadata == false below), when queue was empty and start of batch showed up.
-        // 2. resumed when batch end comes in (batchMetadata === true case below)
-
-        if (batchMetadata) {
-            assert(this.currentBatchClientId === undefined, 0x29e /* "there can't be active batch" */);
-            assert(!this.localPaused, 0x29f /* "we should be processing ops when there is no active batch" */);
-            this.pauseSequenceNumber = message.sequenceNumber;
-            this.currentBatchClientId = message.clientId;
-            // Start of the batch
-            // Only pause processing if queue has no other ops!
-            // If there are any other ops in the queue, processing will be stopped when they are processed!
-            if (this.deltaManager.inbound.length === 1) {
-                this.pauseQueue();
-            }
-        } else if (batchMetadata === false) {
-            assert(this.pauseSequenceNumber !== undefined, 0x2a0 /* "batch presence was validated above" */);
-            // Batch is complete, we can process it!
-            this.resumeQueue(this.pauseSequenceNumber, message.sequenceNumber);
-            this.pauseSequenceNumber = undefined;
-            this.currentBatchClientId = undefined;
-        } else {
-            // Continuation of current batch. Do nothing
-            assert(this.currentBatchClientId !== undefined, 0x2a1 /* "logic error" */);
-        }
     }
 }
 
@@ -531,69 +385,110 @@ class ScheduleManagerCore {
  * 2. It creates instance of ScheduleManagerCore that ensures we never start processing ops from batch
  *    unless all ops of the batch are in.
  */
-export class ScheduleManager {
-    private readonly deltaScheduler: DeltaScheduler;
-    private batchClientId: string | undefined;
-    private hitError = false;
 
-    private readonly scheduler: ScheduleManagerCore;
+export class ScheduleManager extends ScheduleManagerCore {
+    private readonly deltaScheduler: DeltaScheduler;
+    private hitError = false;
+    private seqNumber: number;
+
+    private readonly pending: Map<string, {length: number, messages: ISequencedDocumentMessage[]}> = new Map();
 
     constructor(
-        private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly emitter: EventEmitter,
         private readonly logger: ITelemetryLogger,
+        state: IScheduleManagerSerialized | undefined,
+        private readonly processCallback: (message: ISequencedDocumentMessage, local: boolean) => void,
+        private readonly clientIdCallback: () => string | undefined,
     ) {
+        super(deltaManager);
         this.deltaScheduler = new DeltaScheduler(
             this.deltaManager,
             ChildLogger.create(this.logger, "DeltaScheduler"),
         );
-        this.scheduler = new ScheduleManagerCore(deltaManager, logger);
-    }
 
-    public beforeOpProcessing(message: ISequencedDocumentMessage) {
-        if (this.batchClientId !== message.clientId) {
-            assert(this.batchClientId === undefined,
-                0x2a2 /* "Batch is interrupted by other client op. Should be caught by trackPending()" */);
-
-            // This could be the beginning of a new batch or an individual message.
-            this.emitter.emit("batchBegin", message);
-            this.deltaScheduler.batchBegin();
-
-            const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
-            if (batch) {
-                this.batchClientId = message.clientId;
-            } else {
-                this.batchClientId = undefined;
-            }
+        if (state === undefined) {
+            this.seqNumber = 0;
+            this.pending = new Map();
+        } else {
+            this.seqNumber = state.sequenceNumber;
+            this.pending = new Map(state.state);
         }
     }
 
-    public afterOpProcessing(error: any | undefined, message: ISequencedDocumentMessage) {
+    public serialize(): IScheduleManagerSerialized {
+        return {
+            sequenceNumber: this.seqNumber,
+            state: [...this.pending],
+        }
+    }
+
+    public removeClient(clientId: string) {
+        // Client needs to resend whole sequence, we have not ability to "follow" clients across re-connections.
+        // Even if we did, client maybe gone forever.
+        const data = this.pending.get(clientId);
+        if (data !== undefined) {
+            // Can skip some number of sequence numbers...
+            this.seqNumber += data.messages.length;
+            this.pending.delete(clientId);
+        }
+    }
+
+    public process(message: ISequencedDocumentMessage, local: boolean) {
         // If this is no longer true, we need to revisit what we do where we set this.hitError.
         assert(!this.hitError, 0x2a3 /* "container should be closed on any error" */);
 
-        // Let the scheduler know how far we progressed, to decide if op processing
-        // should be paused or not.
-        this.scheduler.afterOpProcessing(message.sequenceNumber);
+        // can we not track local flag and just compute it?
+        assert(local === (message.clientId === this.clientIdCallback()), "local");
 
-        if (error) {
-            // We assume here that loader will close container and stop processing all future ops.
-            // This is implicit dependency. If this flow changes, this code might no longer be correct.
+        const clientId = message.clientId;
+        if (message.metadata?.batch === true) {
+            assert(!this.pending.has(clientId), "");
+            this.pending.set(clientId, {length: message.metadata?.batchLength, messages: [message]});
+        } else if (!this.pending.has(clientId)) {
+            // We assume it's not batched message!
+            assert(message.metadata?.batch === undefined, "");
+            this.release([message]);
+        } else if (message.metadata?.batch === false) {
+            const data = this.pending.get(clientId);
+            assert(data !== undefined, "has data");
+            assert(data.length === data.messages.length + 1, "length does not match");
+            this.pending.delete(clientId);
+            data.messages.push(message);
+            this.release(data.messages);
+        } else {
+            const data = this.pending.get(clientId);
+            assert(data !== undefined, "has data");
+            data.messages.push(message);
+            assert(data.length > data.messages.length, "length does not match");
+        }
+    }
+
+    private release(messages: ISequencedDocumentMessage[]) {
+        let message = messages[0];
+        try {
+            const clientId = this.clientIdCallback();
+            this.deltaScheduler.batchBegin();
+
+            let first = true;
+            for (message of messages) {
+                assert(message.sequenceNumber > this.seqNumber, "seq");
+                this.seqNumber++;
+                message.sequenceNumber = this.seqNumber;
+
+                if (first) {
+                    this.emitter.emit("batchBegin", message);
+                }
+
+                this.processCallback(message, message.clientId === clientId);
+                first = false;
+            }
+            this.emitter.emit("endBegin", messages[messages.length-1]);
+        } catch (error) {
             this.hitError = true;
-            this.batchClientId = undefined;
             this.emitter.emit("batchEnd", error, message);
             this.deltaScheduler.batchEnd();
-            return;
-        }
-
-        const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
-        // If no batchClientId has been set then we're in an individual batch. Else, if we get
-        // batch end metadata, this is end of the current batch.
-        if (this.batchClientId === undefined || batch === false) {
-            this.batchClientId = undefined;
-            this.emitter.emit("batchEnd", undefined, message);
-            this.deltaScheduler.batchEnd();
-            return;
+            throw error;
         }
     }
 }
@@ -706,11 +601,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         };
 
-        const [chunks, metadata, electedSummarizerData, aliases] = await Promise.all([
+        const [chunks, metadata, electedSummarizerData, aliases, batches] = await Promise.all([
             tryFetchBlob<[string, string[]][]>(chunksBlobName),
             tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName),
             tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
             tryFetchBlob<[string, string][]>(aliasBlobName),
+            tryFetchBlob<IScheduleManagerSerialized>(batchBlobName),
         ]);
 
         const loadExisting = existing === true || context.existing === true;
@@ -753,6 +649,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             electedSummarizerData,
             chunks ?? [],
             aliases ?? [],
+            batches,
             {
                 summaryOptions,
                 gcOptions,
@@ -938,6 +835,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         electedSummarizerData: ISerializedElection | undefined,
         chunks: [string, string[]][],
         dataStoreAliasMap: [string, string][],
+        batches: IScheduleManagerSerialized | undefined,
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
         private readonly containerScope: FluidObject,
         public readonly logger: ITelemetryLogger,
@@ -1066,6 +964,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             context.deltaManager,
             this,
             ChildLogger.create(this.logger, "ScheduleManager"),
+            batches,
+            (message, local) => this.processCore(message, local),
+            () => this.clientId,
         );
 
         this.deltaSender = this.deltaManager;
@@ -1076,6 +977,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             context.pendingLocalState as IPendingLocalState);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
+            this.scheduleManager.removeClient(clientId);
             this.clearPartialChunks(clientId);
         });
 
@@ -1404,6 +1306,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const electedSummarizerContent = JSON.stringify(this.summarizerClientElection?.serialize());
             addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
         }
+
+        const content = JSON.stringify(this.scheduleManager.serialize());
+        addBlobToSummary(summaryTree, batchBlobName, content);
+
         const snapshot = this.blobManager.snapshot();
 
         // Some storage (like git) doesn't allow empty tree, so we can omit it.
@@ -1517,57 +1423,50 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return;
         }
 
-        // Do shallow copy of message, as methods below will modify it.
+        // Do shallow copy of message, as this.scheduleManager and this.processCore() will modify it.
         // There might be multiple container instances receiving same message
         // We do not need to make deep copy, as each layer will just replace message.content itself,
         // but would not modify contents details
-        let message = { ...messageArg };
+        const message = { ...messageArg };
 
-        // Surround the actual processing of the operation with messages to the schedule manager indicating
-        // the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
-        // messages once a batch has been fully processed.
-        this.scheduleManager.beforeOpProcessing(message);
+        this.scheduleManager.process(message, local);
+    }
 
-        try {
-            message = unpackRuntimeMessage(message);
+    public processCore(message: ISequencedDocumentMessage, local: boolean) {
+        message = unpackRuntimeMessage(message);
 
-            // Chunk processing must come first given that we will transform the message to the unchunked version
-            // once all pieces are available
-            message = this.processRemoteChunkedMessage(message);
+        // Chunk processing must come first given that we will transform the message to the unchunked version
+        // once all pieces are available
+        message = this.processRemoteChunkedMessage(message);
 
-            // Call the PendingStateManager to process messages.
-            const { localAck, localOpMetadata } = this.pendingStateManager.processMessage(message, local);
+        // Call the PendingStateManager to process messages.
+        const { localAck, localOpMetadata } = this.pendingStateManager.processMessage(message, local);
 
-            // If there are no more pending messages after processing a local message,
-            // the document is no longer dirty.
-            if (!this.pendingStateManager.hasPendingMessages()) {
-                this.updateDocumentDirtyState(false);
-            }
-
-            switch (message.type) {
-                case ContainerMessageType.Attach:
-                    this.dataStores.processAttachMessage(message, local || localAck);
-                    break;
-                case ContainerMessageType.Alias:
-                    this.processAliasMessage(message, localOpMetadata, local);
-                    break;
-                case ContainerMessageType.FluidDataStoreOp:
-                    // if localAck === true, treat this as a local op because it's one we sent on a previous container
-                    this.dataStores.processFluidDataStoreOp(message, local || localAck, localOpMetadata);
-                    break;
-                case ContainerMessageType.BlobAttach:
-                    assert(message?.metadata?.blobId, 0x12a /* "Missing blob id on metadata" */);
-                    this.blobManager.processBlobAttachOp(message.metadata.blobId, local);
-                    break;
-                default:
-            }
-
-            this.emit("op", message);
-            this.scheduleManager.afterOpProcessing(undefined, message);
-        } catch (e) {
-            this.scheduleManager.afterOpProcessing(e, message);
-            throw e;
+        // If there are no more pending messages after processing a local message,
+        // the document is no longer dirty.
+        if (!this.pendingStateManager.hasPendingMessages()) {
+            this.updateDocumentDirtyState(false);
         }
+
+        switch (message.type) {
+            case ContainerMessageType.Attach:
+                this.dataStores.processAttachMessage(message, local || localAck);
+                break;
+            case ContainerMessageType.Alias:
+                this.processAliasMessage(message, localOpMetadata, local);
+                break;
+            case ContainerMessageType.FluidDataStoreOp:
+                // if localAck === true, treat this as a local op because it's one we sent on a previous container
+                this.dataStores.processFluidDataStoreOp(message, local || localAck, localOpMetadata);
+                break;
+            case ContainerMessageType.BlobAttach:
+                assert(message?.metadata?.blobId, 0x12a /* "Missing blob id on metadata" */);
+                this.blobManager.processBlobAttachOp(message.metadata.blobId, local);
+                break;
+            default:
+        }
+
+        this.emit("op", message);
     }
 
     private processAliasMessage(
@@ -2231,7 +2130,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Note: Chunking will increase content beyond maxOpSize because we JSON'ing JSON payload -
             // there will be a lot of escape characters that can make it up to 2x bigger!
             // This is Ok, because DeltaManager.shouldSplit() will have 2 * maxMessageSize limit
-            if (!serializedContent || serializedContent.length <= maxOpSize) {
+            if (serializedContent.length <= maxOpSize) {
                 clientSequenceNumber = this.submitRuntimeMessage(
                     type,
                     content,
@@ -2513,3 +2412,5 @@ const waitForSeq = async (
     };
     deltaManager.on("op", handleOp);
 });
+
+/* eslint-enable max-lines */
