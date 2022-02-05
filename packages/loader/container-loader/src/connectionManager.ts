@@ -310,7 +310,14 @@ export class ConnectionManager implements IConnectionManager {
                 if (this.connection === undefined) {
                     throw new Error("Attempted to submit an outbound message without connection");
                 }
-                this.connection.submit(messages);
+                // We can break messages how we want here!
+                // Likely best solution is to send 16 messages in a row.
+                // That said, if content is always a string (its type is any), then we can estimate size of envelope,
+                // and use size of content to find reasonable batching strategy to include more ops if they are small.
+                // That said, 16 per batch in current system (of each op being very large, i.e. ~500 bytes) is fine.
+                for (const message of messages) {
+                    this.connection.submit([message]);
+                }
             });
 
         this._outbound.on("error", (error) => {

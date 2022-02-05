@@ -147,6 +147,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     process(messageArg: ISequencedDocumentMessage, local: boolean): void;
     // (undocumented)
+    processCore(message: ISequencedDocumentMessage, local: boolean): void;
+    // (undocumented)
     processSignal(message: ISignalMessage, local: boolean): void;
     refreshLatestSummaryAck(proposalHandle: string | undefined, ackHandle: string, summaryRefSeq: number, summaryLogger: ITelemetryLogger): Promise<void>;
     request(request: IRequest): Promise<IResponse>;
@@ -616,14 +618,19 @@ export enum RuntimeMessage {
     Rejoin = "rejoin"
 }
 
+// Warning: (ae-forgotten-export) The symbol "ScheduleManagerCore" needs to be exported by the entry point index.d.ts
+//
 // @public
-export class ScheduleManager {
-    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, logger: ITelemetryLogger);
+export class ScheduleManager extends ScheduleManagerCore {
+    // Warning: (ae-forgotten-export) The symbol "IScheduleManagerSerialized" needs to be exported by the entry point index.d.ts
+    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, logger: ITelemetryLogger, state: IScheduleManagerSerialized | undefined, processCallback: (message: ISequencedDocumentMessage, local: boolean) => void, clientIdCallback: () => string | undefined);
     // (undocumented)
-    afterOpProcessing(error: any | undefined, message: ISequencedDocumentMessage): void;
+    process(message: ISequencedDocumentMessage, local: boolean): void;
     // (undocumented)
-    beforeOpProcessing(message: ISequencedDocumentMessage): void;
-    }
+    removeClient(clientId: string): void;
+    // (undocumented)
+    serialize(): IScheduleManagerSerialized;
+}
 
 // @public
 export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeResult | IUploadSummaryResult | ISubmitSummaryOpResult;

@@ -34,6 +34,7 @@ describe("Container Runtime", () => {
         const docId = "docId";
         let batchBegin: number = 0;
         let batchEnd: number = 0;
+        const clientId: string = "test-client";
 
         const startDeltaManager = async () =>
             new Promise((resolve) => {
@@ -54,11 +55,11 @@ describe("Container Runtime", () => {
             await yieldEventLoop();
         }
 
-        function getMessages(clientId: string, count: number): ISequencedDocumentMessage[] {
+        function getMessages(clientId2: string, count: number): ISequencedDocumentMessage[] {
             const messages: Partial<ISequencedDocumentMessage>[] = [];
             for (let i = 0; i < count; i++) {
                 const message: Partial<ISequencedDocumentMessage> = {
-                    clientId,
+                    clientId: clientId2,
                     minimumSequenceNumber: 0,
                     sequenceNumber: seq++,
                     type: MessageType.Operation,
@@ -71,14 +72,12 @@ describe("Container Runtime", () => {
 
         // Function to process an inbound op. It adds delay to simluate time taken in processing an op.
         function processOp(message: ISequencedDocumentMessage) {
-            scheduleManager.beforeOpProcessing(message);
+            scheduleManager.process(message, message.clientId === clientId);
 
             // Add delay such that each op takes greater than the DeltaScheduler's processing time to process.
             const processingDelay = DeltaScheduler.processingTime + 10;
             const startTime = Date.now();
             while (Date.now() - startTime < processingDelay) { }
-
-            scheduleManager.afterOpProcessing(undefined, message);
         }
 
         beforeEach(async () => {
@@ -109,6 +108,9 @@ describe("Container Runtime", () => {
                 deltaManager,
                 emitter,
                 DebugLogger.create("fluid:testScheduleManager"),
+                undefined,
+                (message, local) => {},
+                () => clientId,
             );
 
             emitter.on("batchBegin", () => {
@@ -145,11 +147,10 @@ describe("Container Runtime", () => {
             // we will send more than one batch ops. This should ensure that the total processing will take more than
             // DeltaScheduler's processing time.
             const count = 2;
-            const clientId: string = "test-client";
 
             const messages: ISequencedDocumentMessage[] = getMessages(clientId, count);
             // Add batch begin and batch end metadata to the messages.
-            messages[0].metadata = { batch: true };
+            messages[0].metadata = { batch: true, batchLength: count };
             messages[count - 1].metadata = { batch: false };
             await emitMessages(messages);
 
@@ -164,7 +165,6 @@ describe("Container Runtime", () => {
             // we will send more than one non-batch ops. This should ensure that we give up the JS turn after each
             // message is processed.
             const count = 2;
-            const clientId: string = "test-client";
             let numberOfTurns = 1;
 
             const messages: ISequencedDocumentMessage[] = getMessages(clientId, count);
@@ -192,11 +192,10 @@ describe("Container Runtime", () => {
             // we will send 1 non-batch op and more that one batch ops. This should ensure that we give up the JS turn
             // after the non-batch op is processed and then process the batch ops together in the next turn.
             const count = 3;
-            const clientId: string = "test-client";
 
             const messages: ISequencedDocumentMessage[] = getMessages(clientId, count);
             // Add batch begin and batch end metadata to the messages.
-            messages[1].metadata = { batch: true };
+            messages[1].metadata = { batch: true, batchLength: count };
             messages[count - 1].metadata = { batch: false };
             await emitMessages(messages);
 
@@ -220,11 +219,10 @@ describe("Container Runtime", () => {
             // we will send more that one batch ops and 1 non-batch op. This should ensure that we give up the JS turn
             // after the batch ops are processed and then process the non-batch op in the next turn.
             const count = 3;
-            const clientId: string = "test-client";
 
             const messages: ISequencedDocumentMessage[] = getMessages(clientId, count);
             // Add batch begin and batch end metadata to the messages.
-            messages[0].metadata = { batch: true };
+            messages[0].metadata = { batch: true, batchLength: count };
             messages[count - 2].metadata = { batch: false };
             await emitMessages(messages);
 

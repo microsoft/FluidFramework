@@ -458,6 +458,7 @@ export class ScheduleManager extends ScheduleManagerCore {
         if (message.metadata?.batch === true) {
             // Start of a batch. There should be no partial batch from this client
             assert(!this.pending.has(clientId), "two batches from same client?");
+            assert(typeof message.metadata?.batchLength === "number", "no batchLength");
             this.pending.set(clientId, {length: message.metadata?.batchLength, messages: [message]});
         } else if (!this.pending.has(clientId)) {
             // No pending batch from this client, and this is not start of a batch.
@@ -504,7 +505,7 @@ export class ScheduleManager extends ScheduleManagerCore {
                 this.processCallback(message, message.clientId === clientId);
                 first = false;
             }
-            this.emitter.emit("endBegin", messages[messages.length-1]);
+            this.emitter.emit("batchEnd", messages[messages.length-1]);
         } catch (error) {
             this.hitError = true;
             this.emitter.emit("batchEnd", error, message);
