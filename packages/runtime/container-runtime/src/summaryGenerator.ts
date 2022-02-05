@@ -245,10 +245,11 @@ export class SummaryGenerator {
 
             // Cumulatively add telemetry properties based on how far generateSummary went.
             const { referenceSequenceNumber: refSequenceNumber } = summaryData;
+            const opsSinceLastSummary = refSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber;
             generateTelemetryProps = {
                 referenceSequenceNumber: refSequenceNumber,
                 opsSinceLastAttempt: refSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
-                opsSinceLastSummary: refSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
+                opsSinceLastSummary,
             };
             if (summaryData.stage !== "base") {
                 generateTelemetryProps = {
