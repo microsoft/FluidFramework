@@ -70,14 +70,17 @@ export class TenantManager {
 
         return jwt.verify(token, tenantKeys.key1, (error1) => {
             if (!error1) {
+                winston.info(`key1 resolve`);
                 return Promise.resolve();
             }
 
             return jwt.verify(token, tenantKeys.key2, (error2) => {
                 if (!error2) {
+                    winston.info(`key2 resolve`);
                     return Promise.resolve();
                 }
 
+                winston.info(`key1 key2 reject`);
                 // When `exp` claim exists in token claims, jsonwebtoken verifies token expiration.
                 return Promise.reject((error1 instanceof jwt.TokenExpiredError
                     || error2 instanceof jwt.TokenExpiredError)
@@ -236,6 +239,7 @@ export class TenantManager {
         if (!encryptedTenantKey2) {
             winston.info("Tenant key2 doesn't exist.");
             Lumberjack.info("Tenant key2 doesn't exist.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            winston.info(`key1: ${tenantKey1}, key2: ""`);
             return {
                 key1: tenantKey1,
                 key2: "",
@@ -249,6 +253,7 @@ export class TenantManager {
             return Promise.reject(new Error("Tenant key2 decryption failed."));
         }
 
+        winston.info(`key1: ${tenantKey1}, key2: ${tenantKey2}`);
         return {
             key1: tenantKey1,
             key2: tenantKey2,
