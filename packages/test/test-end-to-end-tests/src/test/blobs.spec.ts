@@ -14,7 +14,7 @@ import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
 import { v4 as uuid } from "uuid";
 
 const testContainerConfig: ITestContainerConfig = {
@@ -228,7 +228,9 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         }
     });
 
-    it("works in detached container", async function() {
+    itExpects("works in detached container", [
+        {"eventName": "fluid:telemetry:Container:ContainerClose",  "error": "0x202"}
+    ], async function() {
         const detachedBlobStorage = new MockDetachedBlobStorage();
         const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: {detachedBlobStorage}});
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);

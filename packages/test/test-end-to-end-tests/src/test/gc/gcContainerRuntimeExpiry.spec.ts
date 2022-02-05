@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { TestDataObject } from "./mockSummarizerClient";
 
@@ -73,7 +73,12 @@ import { TestDataObject } from "./mockSummarizerClient";
         });
     });
 
-    it("Container should be closed with a ClientSessionExpired error after the gcSessionExpiryTime is up", async () => {
+    itExpects(
+        "Container should be closed with a ClientSessionExpired error after the gcSessionExpiryTime is up",
+        [
+            {"eventName": "fluid:telemetry:Container:ContainerClose","errorType": "clientSessionExpiredError"}
+        ],
+        async () => {
         await provider.ensureSynchronized();
         clock.tick(timeoutMs - 1);
         assert(container1.closed === false, "Container1 should not be closed, it should be 1 tick away from expiring.");
