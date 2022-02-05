@@ -18,6 +18,7 @@ import {
     reinstall,
 } from "./compatOptions";
 import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
+import { Context } from "mocha";
 
 /*
  * Generate configuration combinations for a particular compat version
@@ -171,36 +172,51 @@ if (compatKind !== undefined) {
     configList = configList.filter((value) => compatKind!.includes(value.kind));
 }
 
-function throwUnexpectedLogErrorException(logger: ErrorTrackingLogger){
+function getUnexpectedLogErrorException(logger: ErrorTrackingLogger){
     const results = logger.results();
     if(results.unexpectedFound.length > 0){
-        throw new Error(
+        return new Error(
             // eslint-disable-next-line max-len
             `Unexpected Errors in Logs. Use itExpects to specify expected errors:\n${ JSON.stringify(results.unexpectedFound, undefined, 2)}`);
     }
     if(results.expectedNotFound.length > 0){
-        throw new Error(
+        return new Error(
             `Expected Errors not found:\n${ JSON.stringify(results.expectedNotFound, undefined, 2)}`);
     }
 }
 
-export function itExpects(name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc){
-
-    return it(name, async function (){
-        const provider: TestObjectProvider | undefined = this.__fluidTestProvider;
-        if(provider === undefined){
-            return await test.bind(this)();
-        }
-        provider.logger.registerExpectedEvent(... expectedEvents as any);
-        try{
-            return await test.bind(this)();
-        }catch(error){
-            provider.logger.sendErrorEvent({eventName:"TestException"},error)
-        }
-        throwUnexpectedLogErrorException(provider.logger);
-
-    });
+async function runExpectsTest(this:Context, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc){
+    const provider: TestObjectProvider | undefined = this.__fluidTestProvider;
+    if(provider === undefined){
+        return await test.bind(this)();
+    }
+    provider.logger.registerExpectedEvent(... expectedEvents as any);
+    try{
+        return await test.bind(this)();
+    }catch(error){
+        provider.logger.sendErrorEvent({eventName:"TestException"},error)
+    }
+    const err = getUnexpectedLogErrorException(provider.logger);
+    if(err !== undefined){
+        throw err;
+    }
 }
+
+export const itExpects: {
+    (name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc): Mocha.Test;
+    only: (name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc)=> Mocha.Test;
+}= function(name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc){
+    return it(name, async function (){
+        await runExpectsTest.bind(this)(expectedEvents, test);
+    });
+};
+
+itExpects.only = (function(name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc){
+    return it.only(name, async function (){
+        await runExpectsTest.bind(this)(expectedEvents, test);
+    });
+});
+
 
 /*
  * Mocha Utils for test to generate the compat variants.
@@ -244,7 +260,8 @@ function describeCompat(
                     }
                     return provider;
                 });
-                afterEach(() => {
+                afterEach(function (done:Mocha.Done) {
+                    done(getUnexpectedLogErrorException(provider.logger));
                     if (resetAfterEach) {
                         provider.reset();
                     }
