@@ -102,7 +102,6 @@ export class LocalDocumentService implements api.IDocumentService {
  * @param tenantId - ID of tenant
  * @param documentId - ID of document
  */
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function createLocalDocumentService(
     resolvedUrl: api.IResolvedUrl,
     localDeltaConnectionServer: ILocalDeltaConnectionServer,

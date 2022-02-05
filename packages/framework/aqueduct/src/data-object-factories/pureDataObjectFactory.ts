@@ -28,13 +28,10 @@ import {
     IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 
-import { IEvent } from "@fluidframework/common-definitions";
 import {
     IDataObjectProps,
     PureDataObject,
-    DataObjectType,
     DataObjectTypes,
-    LegacyPureDataObject,
 } from "../data-objects";
 /*
  * Useful interface in places where it's useful to do type erasure for PureDataObject generic
@@ -53,10 +50,10 @@ async function createDataObject<TObj extends PureDataObject,I extends DataObject
     ctor: new (props: IDataObjectProps<I>) => TObj,
     context: IFluidDataStoreContext,
     sharedObjectRegistry: ISharedObjectRegistry,
-    optionalProviders: FluidObjectSymbolProvider<DataObjectType<I, "OptionalProviders">>,
+    optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
     runtimeClassArg: typeof FluidDataStoreRuntime,
     existing: boolean,
-    initProps?: DataObjectType<I, "InitialState">)
+    initProps?: I["InitialState"])
 {
     // base
     let runtimeClass = runtimeClassArg;
@@ -80,9 +77,9 @@ async function createDataObject<TObj extends PureDataObject,I extends DataObject
     // becomes globally available. But it's not full initialization - constructor can't
     // access DDSs or other services of runtime as objects are not fully initialized.
     // In order to use object, we need to go through full initialization by calling finishInitialization().
-    const scope: FluidObject<IFluidDependencySynthesizer> = context.scope;
+    const scope = context.scope as FluidObject<IFluidDependencySynthesizer>;
     const dependencyContainer = new DependencyContainer(scope.IFluidDependencySynthesizer);
-    const providers = dependencyContainer.synthesize<DataObjectType<I, "OptionalProviders">>(optionalProviders, {});
+    const providers = dependencyContainer.synthesize<I["OptionalProviders"]>(optionalProviders, {});
     const instance = new ctor({ runtime, context, providers, initProps });
 
     // if it's a newly created object, we need to wait for it to finish initialization
@@ -119,7 +116,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
         public readonly type: string,
         private readonly ctor: new (props: IDataObjectProps<I>) => TObj,
         sharedObjects: readonly IChannelFactory[],
-        private readonly optionalProviders: FluidObjectSymbolProvider<DataObjectType<I, "OptionalProviders">>,
+        private readonly optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
         registryEntries?: NamedFluidDataStoreRegistryEntries,
         private readonly runtimeClass: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
     ) {
@@ -178,7 +175,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
      */
     public async createChildInstance(
         parentContext: IFluidDataStoreContext,
-        initialState?: DataObjectType<I, "InitialState">,
+        initialState?: I["InitialState"],
     ): Promise<TObj> {
         return this.createNonRootInstanceCore(
             parentContext.containerRuntime,
@@ -198,7 +195,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
      */
     public async createPeerInstance(
         peerContext: IFluidDataStoreContext,
-        initialState?: DataObjectType<I, "InitialState">,
+        initialState?: I["InitialState"],
     ): Promise<TObj> {
         return this.createNonRootInstanceCore(
             peerContext.containerRuntime,
@@ -218,7 +215,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
      */
     public async createInstance(
         runtime: IContainerRuntimeBase,
-        initialState?: DataObjectType<I, "InitialState">,
+        initialState?: I["InitialState"],
     ): Promise<TObj> {
         return this.createNonRootInstanceCore(
             runtime,
@@ -239,7 +236,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     public async createRootInstance(
         rootDataStoreId: string,
         runtime: IContainerRuntime,
-        initialState?: DataObjectType<I, "InitialState">,
+        initialState?: I["InitialState"],
     ): Promise<TObj> {
         const context = runtime.createDetachedRootDataStore([this.type], rootDataStoreId);
         return this.createInstanceCore(context, initialState);
@@ -248,7 +245,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     protected async createNonRootInstanceCore(
         containerRuntime: IContainerRuntimeBase,
         packagePath: Readonly<string[]>,
-        initialState?: DataObjectType<I, "InitialState">,
+        initialState?: I["InitialState"],
     ): Promise<TObj> {
         const context = containerRuntime.createDetachedDataStore(packagePath);
         return this.createInstanceCore(context, initialState);
@@ -256,7 +253,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
 
     protected async createInstanceCore(
         context: IFluidDataStoreContextDetached,
-        initialState?: DataObjectType<I, "InitialState">,
+        initialState?: I["InitialState"],
     ): Promise<TObj> {
         const { instance, runtime } = await createDataObject(
             this.ctor,
@@ -272,19 +269,3 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
         return instance;
     }
 }
-
-/**
- * @deprecated - This type is meant to ease the transition from the old PureDataObjectFactory type to the new.
- * please migrate to PureDataObjectFactory.
- *
- * PureDataObjectFactory is a barebones IFluidDataStoreFactory for use with PureDataObject.
- * Consumers should typically use DataObjectFactory instead unless creating
- * another base data store factory.
- *
- * @typeParam TObj - DataObject (concrete type)
- * @typeParam O - represents a type that will define optional providers that will be injected
- * @typeParam S - the initial state type that the produced data object may take during creation
- * @typeParam E - represents events that will be available in the EventForwarder
- */
- export class LegacyPureDataObjectFactory<TObj extends LegacyPureDataObject<O, S, E>, O, S, E extends IEvent = IEvent>
- extends PureDataObjectFactory<TObj,{OptionalProviders: O, InitialState: S, Events: E}> {}

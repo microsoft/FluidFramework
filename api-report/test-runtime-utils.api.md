@@ -5,12 +5,10 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { ContainerWarning } from '@fluidframework/container-definitions';
 import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions';
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions';
 import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { FluidSerializer } from '@fluidframework/runtime-utils';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -33,6 +31,7 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionSummaryDetails } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
@@ -205,8 +204,6 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     // (undocumented)
     get outbound(): MockDeltaQueue<IDocumentMessage[]>;
     // (undocumented)
-    readonly readonly = false;
-    // (undocumented)
     readOnlyInfo: ReadOnlyInfo;
     // (undocumented)
     get serviceConfiguration(): IClientConfiguration;
@@ -296,6 +293,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     getAudience(): IAudience;
     // (undocumented)
+    getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
+    // (undocumented)
     getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
     // (undocumented)
     getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
@@ -321,8 +320,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     options: ILoaderOptions;
     // (undocumented)
     packagePath: readonly string[];
-    // (undocumented)
-    raiseContainerWarning(warning: ContainerWarning): void;
     // (undocumented)
     scope: FluidObject;
     // (undocumented)
@@ -396,8 +393,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     get IFluidRouter(): this;
     // (undocumented)
-    readonly IFluidSerializer: FluidSerializer;
-    // (undocumented)
     get isAttached(): boolean;
     // (undocumented)
     readonly loader: ILoader;
@@ -418,8 +413,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     processSignal(message: any, local: boolean): void;
     // (undocumented)
     quorum: MockQuorum;
-    // (undocumented)
-    raiseContainerWarning(warning: ContainerWarning): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)

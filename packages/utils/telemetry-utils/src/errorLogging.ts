@@ -260,6 +260,26 @@ function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryPr
 }
 
 /**
+ * Borrowed from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#examples
+ * Avoids runtime errors with circular references.
+ * Not ideal, as will cut values that are not necessarily circular references.
+ * Could be improved by implementing Node's util.inspect() for browser (minus all the coloring code)
+*/
+export const getCircularReplacer = () => {
+    const seen = new WeakSet();
+    return (key: string, value: any): any => {
+        if (typeof value === "object" && value !== null) {
+            if (seen.has(value)) {
+                return "<removed/circular>";
+            }
+            seen.add(value);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return value;
+    };
+};
+
+/**
  * Base class for "trusted" errors we create, whose properties can generally be logged to telemetry safely.
  * All properties set on the object, or passed in (via the constructor or getTelemetryProperties),
  * will be logged in accordance with their tag, if present.
@@ -303,7 +323,7 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
     public getTelemetryProperties(): ITelemetryProperties {
         const taggableProps = getValidTelemetryProps(this, this.omitPropsFromLogging);
         // Include non-enumerable props inherited from Error that are not returned by getValidTelemetryProps
-        return  {
+        return {
             ...taggableProps,
             stack: this.stack,
             message: this.message,

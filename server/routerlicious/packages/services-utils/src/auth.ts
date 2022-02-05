@@ -96,7 +96,6 @@ interface IVerifyTokenOptions {
 /**
  * Verifies the storage token claims and calls riddler to validate the token.
  */
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function verifyStorageToken(
     tenantManager: ITenantManager,
     config: Provider,
@@ -163,7 +162,6 @@ export function verifyStorageToken(
     };
 }
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function getParam(params: Params, key: string) {
     return Array.isArray(params) ? undefined : params[key];
 }

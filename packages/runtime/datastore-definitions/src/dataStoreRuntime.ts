@@ -6,14 +6,12 @@
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandleContext,
-    IFluidSerializer,
     IFluidRouter,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IDeltaManager,
-    ContainerWarning,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -46,11 +44,6 @@ export interface IFluidDataStoreRuntime extends
     Partial<IProvideFluidDataStoreRegistry> {
 
     readonly id: string;
-
-    /**
-     * @deprecated - FluidSerializer is not required as DDSs are the only ones that serialize data.
-     */
-    readonly IFluidSerializer: IFluidSerializer;
 
     readonly IFluidHandleContext: IFluidHandleContext;
 
@@ -119,10 +112,4 @@ export interface IFluidDataStoreRuntime extends
      * Resolves when a local data store is attached.
      */
     waitAttached(): Promise<void>;
-
-    /**
-     * Errors raised by distributed data structures
-     * @deprecated Warnings are being deprecated
-     */
-    raiseContainerWarning(warning: ContainerWarning): void;
 }

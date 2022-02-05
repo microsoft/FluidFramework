@@ -12,7 +12,6 @@ import {
 import {
     IAudience,
     IDeltaManager,
-    ContainerWarning,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -31,6 +30,7 @@ import {
     IContainerRuntimeBase,
     IFluidDataStoreContext,
     IFluidDataStoreRegistry,
+    IGarbageCollectionDetailsBase,
     IGarbageCollectionSummaryDetails,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
@@ -94,10 +94,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
         return;
     }
 
-    public raiseContainerWarning(warning: ContainerWarning): void {
-        throw new Error("Method not implemented.");
-    }
-
     public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
         throw new Error("Method not implemented.");
     }
@@ -130,6 +126,10 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     }
 
     public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
+        throw new Error("Method not implemented.");
+    }
+
+    public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
         throw new Error("Method not implemented.");
     }
 }

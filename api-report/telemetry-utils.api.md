@@ -67,6 +67,9 @@ export function generateErrorWithStack(): Error;
 // @public (undocumented)
 export function generateStack(): string | undefined;
 
+// @public
+export const getCircularReplacer: () => (key: string, value: any) => any;
+
 // @public (undocumented)
 export const hasErrorInstanceId: (x: any) => x is {
     errorInstanceId: string;
@@ -225,7 +228,7 @@ export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLogger, 
 // @public
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
-// @public
+// @public @deprecated (undocumented)
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
     constructor(logger: ITelemetryBaseLogger);
     // (undocumented)

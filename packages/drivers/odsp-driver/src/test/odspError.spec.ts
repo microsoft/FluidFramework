@@ -16,6 +16,7 @@ import { OdspError } from "@fluidframework/odsp-driver-definitions";
 import { IOdspSocketError } from "../contracts";
 import { getWithRetryForTokenRefresh } from "../odspUtils";
 import { errorObjectFromSocketError } from "../odspError";
+import { pkgVersion } from "../packageVersion";
 
 describe("Odsp Error", () => {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -139,7 +140,8 @@ describe("Odsp Error", () => {
                 throw new NonRetryableError(
                     "code",
                     "some message",
-                    DriverErrorType.incorrectServerResponse);
+                    DriverErrorType.incorrectServerResponse,
+                    { driverVersion: pkgVersion });
             }
         });
         assert.equal(res, 1, "did not successfully retried with new token");

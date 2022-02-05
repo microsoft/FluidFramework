@@ -15,7 +15,7 @@ import {
     IClientDetails,
     IDocumentMessage,
     IPendingProposal,
-    IQuorum,
+    IQuorumClients,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
@@ -162,7 +162,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * The collection of write clients which were connected as of the current sequence number.
      * Also contains a map of key-value pairs that must be agreed upon by all clients before being accepted.
      */
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
 
     /**
      * Represents the resolved url to the Container
@@ -178,14 +178,14 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * Get the code details that are currently specified for the container.
      * @returns The current code details if any are specified, undefined if none are specified.
      */
-    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
+    getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
 
     /**
      * Get the code details that were used to load the container.
      * @returns The code details that were used to load the container if it is loaded, undefined if it is not yet
      * loaded.
      */
-    getLoadedCodeDetails?(): IFluidCodeDetails | undefined;
+    getLoadedCodeDetails(): IFluidCodeDetails | undefined;
 
     /**
      * Returns true if the container has been closed, otherwise false
@@ -462,10 +462,9 @@ export interface IProvideLoader {
 }
 
 declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<ILoaderHeader> { }
 
-    export interface IFluidObject  {
+    export interface IFluidObject {
         /**
          * @deprecated - use `FluidObject<ILoader>` instead
          */

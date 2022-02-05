@@ -22,7 +22,17 @@ export interface ISharingLinkHeader {
     [SharingLinkHeader.isSharingLinkToRedeem]: boolean;
 }
 
+export enum ClpCompliantAppHeader {
+    // Can be used in request made to resolver, to tell the resolver that the host app is CLP compliant.
+    // Odsp will not return Classified, labeled, or protected documents if the host app cannot support them.
+    isClpCompliantApp = "X-CLP-Compliant-App",
+}
+
+export interface IClpCompliantAppHeader {
+    [ClpCompliantAppHeader.isClpCompliantApp]: boolean;
+}
+
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IRequestHeader extends Partial<ISharingLinkHeader> { }
+    export interface IRequestHeader extends Partial<ISharingLinkHeader>, Partial<IClpCompliantAppHeader> { }
 }

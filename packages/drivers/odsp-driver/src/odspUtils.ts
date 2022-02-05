@@ -5,7 +5,13 @@
 
 import { ITelemetryProperties, ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definitions";
-import { isOnline, OnlineStatus, RetryableError, NonRetryableError } from "@fluidframework/driver-utils";
+import {
+    isOnline,
+    OnlineStatus,
+    RetryableError,
+    NonRetryableError,
+    NetworkErrorBasic,
+} from "@fluidframework/driver-utils";
 import { assert, performance } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ChildLogger, PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
@@ -28,7 +34,7 @@ import {
     InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { fetch } from "./fetch";
-import { pkgVersion } from "./packageVersion";
+import { pkgVersion as driverVersion } from "./packageVersion";
 import { IOdspSnapshot } from "./contracts";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
@@ -105,7 +111,8 @@ export async function fetchHelper(
             throw new NonRetryableError(
                 "odspFetchErrorNoResponse",
                 "No response from fetch call",
-                DriverErrorType.incorrectServerResponse);
+                DriverErrorType.incorrectServerResponse,
+                { driverVersion });
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
@@ -130,11 +137,13 @@ export async function fetchHelper(
         }
         // This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
         if (error.name === "AbortError") {
-            throw new RetryableError("fetchAbort", "Fetch Timeout (AbortError)", OdspErrorType.fetchTimeout);
+            throw new RetryableError(
+                "fetchAbort", "Fetch Timeout (AbortError)", OdspErrorType.fetchTimeout, { driverVersion });
         }
         // TCP/IP timeout
         if (errorText.indexOf("ETIMEDOUT") !== -1) {
-            throw new RetryableError("fetchETimedout", "Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout);
+            throw new RetryableError(
+                "fetchETimedout", "Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout, { driverVersion });
         }
 
         //
@@ -143,9 +152,11 @@ export async function fetchHelper(
         // It is also non-serializable object due to circular references.
         //
         if (online === OnlineStatus.Offline) {
-            throw new RetryableError("OdspFetchOffline", `Offline: ${errorText}`, DriverErrorType.offlineError);
+            throw new RetryableError(
+                "OdspFetchOffline", `Offline: ${errorText}`, DriverErrorType.offlineError, { driverVersion });
         } else {
-            throw new RetryableError("OdspFetchError", `Fetch error: ${errorText}`, DriverErrorType.fetchFailure);
+            throw new RetryableError(
+                "OdspFetchError", `Fetch error: ${errorText}`, DriverErrorType.fetchFailure, { driverVersion });
         }
     });
 }
@@ -232,7 +243,7 @@ export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
         "OdspDriver",
         { all :
             {
-                driverVersion: pkgVersion,
+                driverVersion,
             },
         });
 
@@ -298,17 +309,21 @@ export function toInstrumentedOdspTokenFetcher(
                         "storageTokenIsNull",
                         `Token is null for ${name} call`,
                         OdspErrorType.fetchTokenError,
-                        { method: name });
+                        { method: name, driverVersion });
                 }
                 return token;
             }, (error) => {
+                // There is an important but unofficial contract here where token providers can set canRetry: true
+                // to hook into the driver's retry logic (e.g. the retry loop when initiating a connection)
+                const rawCanRetry = error?.canRetry;
                 const tokenError = wrapError(
                     error,
-                    (errorMessage) => new NonRetryableError(
+                    (errorMessage) => new NetworkErrorBasic(
                         "tokenFetcherFailed",
                         errorMessage,
                         OdspErrorType.fetchTokenError,
-                        { method: name }));
+                        typeof rawCanRetry === "boolean" ? rawCanRetry : false /* canRetry */,
+                        { method: name, driverVersion }));
                 throw tokenError;
             }),
             { cancel: "generic" });

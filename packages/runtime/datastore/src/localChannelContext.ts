@@ -26,10 +26,12 @@ import {
     createServiceEndpoints,
     IChannelContext,
     summarizeChannel,
+    summarizeChannelAsync,
 } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
 import { ChannelStorageService } from "./channelStorageService";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 
 /**
  * Channel context for a locally created channel
@@ -98,7 +100,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
      */
     public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummarizeResult> {
         assert(this.isLoaded && this.channel !== undefined, 0x18c /* "Channel should be loaded to summarize" */);
-        return summarizeChannel(this.channel, fullTree, trackState);
+        return summarizeChannelAsync(this.channel, fullTree, trackState);
     }
 
     public getAttachSummary(): ISummarizeResult {
@@ -152,6 +154,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
         runtime: IFluidDataStoreRuntime,
         dataStoreContext: IFluidDataStoreContext,
         storageService: IDocumentStorageService,
+        logger: ITelemetryLogger,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
         addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
@@ -175,6 +178,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
                 this.dirtyFn,
                 addedGCOutboundReferenceFn,
                 storageService,
+                logger,
                 clonedSnapshotTree,
                 blobMap,
             );
@@ -268,6 +272,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
         runtime: IFluidDataStoreRuntime,
         dataStoreContext: IFluidDataStoreContext,
         storageService: IDocumentStorageService,
+        logger: ITelemetryLogger,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
         addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
@@ -287,6 +292,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
                 this.dirtyFn,
                 addedGCOutboundReferenceFn,
                 storageService,
+                logger,
             );
         });
         this.dirtyFn = () => { dirtyFn(id); };

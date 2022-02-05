@@ -5,7 +5,6 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { ContainerWarning } from '@fluidframework/container-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
@@ -20,7 +19,6 @@ import { IFluidDataStoreRuntimeEvents } from '@fluidframework/datastore-definiti
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
@@ -87,8 +85,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get IFluidRouter(): this;
     // (undocumented)
-    get IFluidSerializer(): IFluidSerializer;
-    // (undocumented)
     get isAttached(): boolean;
     static load(context: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean): FluidDataStoreRuntime;
     // (undocumented)
@@ -101,8 +97,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
     processSignal(message: IInboundSignalMessage, local: boolean): void;
-    // (undocumented)
-    raiseContainerWarning(warning: ContainerWarning): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)

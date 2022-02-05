@@ -125,7 +125,7 @@ export class NullBlobStorageService implements IDocumentStorageService {
     // (undocumented)
     getSnapshotTree(version?: api_2.IVersion): Promise<api_2.ISnapshotTree | null>;
     // (undocumented)
-    getVersions(versionId: string, count: number): Promise<api_2.IVersion[]>;
+    getVersions(versionId: string | null, count: number): Promise<api_2.IVersion[]>;
     // (undocumented)
     readBlob(blobId: string): Promise<ArrayBufferLike>;
     // (undocumented)

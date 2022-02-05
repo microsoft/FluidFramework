@@ -8,21 +8,17 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import { AppView, IArrayish, IClient } from "@fluid-experimental/bubblebench-common";
+import { IArrayish, IClient } from "@fluid-experimental/bubblebench-common";
 import { SharedTree } from "@fluid-experimental/tree";
-import React from "react";
-import ReactDOM from "react-dom";
 import { TreeObjectProxy } from "./proxy";
 import { AppState } from "./state";
 
 interface IApp { clients: IArrayish<IClient>; }
 
-export class Bubblebench extends DataObject implements IFluidHTMLView {
+export class Bubblebench extends DataObject {
     public static get Name() { return "@fluid-experimental/bubblebench-sharedtree"; }
     private maybeTree?: SharedTree = undefined;
     private maybeAppState?: AppState = undefined;
-    public get IFluidHTMLView() { return this; }
 
     protected async initializingFirstTime() {
         const tree = this.maybeTree = SharedTree.create(this.runtime);
@@ -65,15 +61,11 @@ export class Bubblebench extends DataObject implements IFluidHTMLView {
         }
     }
 
-    public render(div: HTMLElement) {
-        ReactDOM.render(<AppView app={this.appState}></AppView>, div);
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     private get tree() { return this.maybeTree!; }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    private get appState() { return this.maybeAppState!; }
+    public get appState() { return this.maybeAppState!; }
 }
 
 /**

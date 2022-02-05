@@ -17,7 +17,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    ContainerWarning,
     ILoader,
     AttachState,
     ILoaderOptions,
@@ -43,7 +42,7 @@ import {
     IChannelStorageService,
     IChannelServices,
 } from "@fluidframework/datastore-definitions";
-import { FluidSerializer, getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
+import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
 import {
     IFluidDataStoreChannel,
     IGarbageCollectionData,
@@ -392,8 +391,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreRuntime");
     public quorum = new MockQuorum();
 
-    public readonly IFluidSerializer = new FluidSerializer(this.IFluidHandleContext, (handle: IFluidHandle) => {});
-
     public get absolutePath() {
         return `/${this.id}`;
     }
@@ -552,8 +549,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public async requestDataStore(request: IRequest): Promise<IResponse> {
         return null;
     }
-
-    public raiseContainerWarning(warning: ContainerWarning): void { }
 
     public reSubmit(content: any, localOpMetadata: unknown) {
         return;

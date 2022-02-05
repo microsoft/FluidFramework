@@ -93,6 +93,7 @@ export class RunningSummarizer implements IDisposable {
         readonly resultsBuilder: SummarizeResultBuilder;
     } | undefined;
     private summarizeCount = 0;
+    private totalSuccessfulAttempts = 0;
 
     private constructor(
         baseLogger: ITelemetryLogger,
@@ -107,7 +108,14 @@ export class RunningSummarizer implements IDisposable {
         { disableHeuristics = false }: Readonly<Partial<ISummarizerOptions>> = {},
     ) {
         this.logger = ChildLogger.create(
-            baseLogger, "Running", { all: { summaryGenTag: () => this.summarizeCount } });
+            baseLogger, "Running",
+            {
+                all: {
+                    summarizeCount: () => this.summarizeCount,
+                    summarizerSuccessfulAttempts: () => this.totalSuccessfulAttempts,
+                },
+            }
+        );
 
         if (!disableHeuristics) {
             this.heuristicRunner = new SummarizeHeuristicRunner(
@@ -124,7 +132,7 @@ export class RunningSummarizer implements IDisposable {
             maxAckWaitTime,
             () => {
                 this.raiseSummarizingError("summaryAckWaitTimeout");
-                // Note: summaryGenTag (from ChildLogger definition) may be 0,
+                // Note: summarizeCount (from ChildLogger definition) may be 0,
                 // since this code path is hit when RunningSummarizer first starts up,
                 // before this instance has kicked off a new summarize run.
                 this.logger.sendErrorEvent({
@@ -152,6 +160,7 @@ export class RunningSummarizer implements IDisposable {
             this.heuristicData,
             this.submitSummaryCallback,
             this.raiseSummarizingError,
+            () => { this.totalSuccessfulAttempts++ },
             this.summaryWatcher,
             this.logger,
         );
@@ -201,13 +210,8 @@ export class RunningSummarizer implements IDisposable {
         }
         this.heuristicData.lastOpSequenceNumber = sequenceNumber;
 
-        if (this.tryRunEnqueuedSummary()) {
-            // Intentionally do nothing; check for enqueued on-demand summaries
-        } else if (type === MessageType.Save) {
-            // Check for ops requesting summary
-            // Note: as const is only required until TypeScript version 4.3
-            this.trySummarize(`save;${clientId}: ${contents}` as const);
-        } else {
+        // Check for enqueued on-demand summaries; Intentionally do nothing otherwise
+        if (!this.tryRunEnqueuedSummary()) {
             this.heuristicRunner?.run();
         }
     }
@@ -343,27 +347,27 @@ export class RunningSummarizer implements IDisposable {
                 { refreshLatestAck: true, fullTree: true, delaySeconds: 10 * 60 },
             ];
             let overrideDelaySeconds: number | undefined;
-            let totalAttempts = 0;
-            let attemptPerPhase = 0;
+            let summaryAttempts = 0;
+            let summaryAttemptsPerPhase = 0;
 
             let lastResult: { message: string; error: any; } | undefined;
 
-            for (let attemptPhase = 0; attemptPhase < attempts.length;) {
+            for (let summaryAttemptPhase = 0; summaryAttemptPhase < attempts.length;) {
                 if (this.cancellationToken.cancelled) {
                     return;
                 }
 
-                totalAttempts++;
-                attemptPerPhase++;
+                summaryAttempts++;
+                summaryAttemptsPerPhase++;
 
-                const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[attemptPhase];
+                const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[summaryAttemptPhase];
                 const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
 
                 const summarizeProps: ITelemetryProperties = {
                     summarizeReason,
-                    summarizeTotalAttempts: totalAttempts,
-                    summarizeAttemptsPerPhase: attemptPerPhase,
-                    summarizeAttemptPhase: attemptPhase + 1, // make everything 1-based
+                    summaryAttempts,
+                    summaryAttemptsPerPhase,
+                    summaryAttemptPhase: summaryAttemptPhase + 1, // make everything 1-based
                     ...options,
                 };
 
@@ -382,14 +386,15 @@ export class RunningSummarizer implements IDisposable {
                 const result = await resultSummarize.receivedSummaryAckOrNack;
 
                 if (result.success) {
+                    this.totalSuccessfulAttempts++;
                     return;
                 }
                 // Check for retryDelay that can come from summaryNack or upload summary flow.
                 // Retry the same step only once per retryAfter response.
                 overrideDelaySeconds = result.retryAfterSeconds;
-                if (overrideDelaySeconds === undefined || attemptPerPhase > 1) {
-                    attemptPhase++;
-                    attemptPerPhase = 0;
+                if (overrideDelaySeconds === undefined || summaryAttemptsPerPhase > 1) {
+                    summaryAttemptPhase++;
+                    summaryAttemptsPerPhase = 0;
                 }
                 lastResult = result;
             }

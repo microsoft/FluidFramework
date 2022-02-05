@@ -10,6 +10,7 @@ import {
     createGenericNetworkError,
     AuthorizationError,
 } from "@fluidframework/driver-utils";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 export enum R11sErrorType {
     fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
@@ -52,27 +53,29 @@ export function createR11sNetworkError(
     statusCode?: number,
     retryAfterMs?: number,
 ): R11sError {
+    const props = { statusCode, driverVersion };
     switch (statusCode) {
         case undefined:
-            // If a service is temporarily down or a browser resource limit is reached, Axios will throw
+            // If a service is temporarily down or a browser resource limit is reached, RestWrapper will throw
             // a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
-            // error message, "Network Error".
+            // the error message will start with NetworkError as defined in restWrapper.ts
             return new GenericNetworkError(
-                fluidErrorCode, errorMessage, errorMessage === "Network Error", { statusCode });
+                fluidErrorCode, errorMessage, errorMessage.startsWith("NetworkError"), props);
         case 401:
         case 403:
-            return new AuthorizationError(fluidErrorCode, errorMessage, undefined, undefined, { statusCode });
+            return new AuthorizationError(
+                fluidErrorCode, errorMessage, undefined, undefined, props);
         case 404:
-            return new NonRetryableError(
-                fluidErrorCode, errorMessage, R11sErrorType.fileNotFoundOrAccessDeniedError, { statusCode });
+            const errorType = R11sErrorType.fileNotFoundOrAccessDeniedError;
+            return new NonRetryableError(fluidErrorCode, errorMessage, errorType, props);
         case 429:
             return createGenericNetworkError(
-                fluidErrorCode, errorMessage, true, retryAfterMs, { statusCode });
+                fluidErrorCode, errorMessage, { canRetry: true, retryAfterMs }, props);
         case 500:
-            return new GenericNetworkError(fluidErrorCode, errorMessage, true, { statusCode });
+            return new GenericNetworkError(fluidErrorCode, errorMessage, true, props);
         default:
-            return createGenericNetworkError(
-                fluidErrorCode, errorMessage, retryAfterMs !== undefined, retryAfterMs, { statusCode });
+            const retryInfo = { canRetry: retryAfterMs !== undefined, retryAfterMs };
+            return createGenericNetworkError(fluidErrorCode, errorMessage, retryInfo, props);
     }
 }
 

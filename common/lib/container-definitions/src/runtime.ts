@@ -7,7 +7,6 @@ import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-defini
 import {
     FluidObject,
     IFluidCodeDetails,
-    IFluidConfiguration,
     IFluidObject,
     IRequest,
     IResponse,
@@ -16,14 +15,13 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientConfiguration,
     IClientDetails,
-    IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
-    ITree,
     MessageType,
     ISummaryTree,
     IVersion,
     IDocumentMessage,
+    IQuorumClients,
 } from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
@@ -72,11 +70,6 @@ export interface IRuntime extends IDisposable {
     request(request: IRequest): Promise<IResponse>;
 
     /**
-     * Snapshots the runtime
-     */
-    snapshot(tagMessage: string, fullTree?: boolean): Promise<ITree | null>;
-
-    /**
      * Notifies the runtime of a change in the connection state
      */
     setConnectionState(connected: boolean, clientId?: string);
@@ -121,13 +114,8 @@ export interface IRuntime extends IDisposable {
  * and the Container has created a new ContainerContext.
  */
 export interface IContainerContext extends IDisposable {
-    /**
-    * @deprecated This will be removed in a later release. Deprecated in 0.44 of container-definitions
-    */
-    readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: ILoaderOptions;
-    readonly configuration: IFluidConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly storage: IDocumentStorageService;
@@ -137,7 +125,7 @@ export interface IContainerContext extends IDisposable {
     readonly submitSignalFn: (contents: any) => void;
     readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly quorum: IQuorum;
+    readonly quorum: IQuorumClients;
     /**
      * @deprecated This method is provided as a migration tool for customers currently reading the code details
      * from within the Container by directly accessing the Quorum proposals.  The code details should not be accessed
@@ -154,7 +142,7 @@ export interface IContainerContext extends IDisposable {
      * IContainerContext will retain both options, but hosts must now support tags as the loader
      * will soon plumb taggedLogger's events (potentially tagged) to the host's logger.
      */
-    readonly logger: ITelemetryBaseLogger;
+    readonly logger?: ITelemetryBaseLogger;
     // The logger implementation, which would support tagged events, should be provided by the loader.
     readonly taggedLogger?: ITelemetryBaseLogger;
     readonly serviceConfiguration: IClientConfiguration | undefined;
@@ -165,6 +153,9 @@ export interface IContainerContext extends IDisposable {
      */
     readonly scope: IFluidObject & FluidObject;
 
+    /**
+     * @deprecated 0.56, will be removed in the next release
+     */
     raiseContainerWarning(warning: ContainerWarning): void;
 
     /**

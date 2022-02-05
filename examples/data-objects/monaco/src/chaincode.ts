@@ -6,7 +6,6 @@
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
 import { DataObject } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import * as ClientUI from "@fluid-example/client-ui-lib";
 import {
     MergeTreeDeltaType,
     TextSegment,
@@ -55,11 +54,9 @@ const defaultCompilerOptions = {
 /**
  * Component for using the Monaco text editor.
  */
-export class MonacoRunner extends DataObject implements
-    IFluidHTMLView, ClientUI.controls.IViewLayout {
+export class MonacoRunner extends DataObject implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
     public get IFluidLoadable() { return this; }
-    public get IViewLayout() { return this; }
 
     /**
      * The chart probably has a preferred aspect ratio - but it can also fill any bounds
@@ -127,7 +124,10 @@ export class MonacoRunner extends DataObject implements
         // outputDiv.style.width = "50%";
         // hostWrapper.appendChild(outputDiv);
 
-        const textHandle = await this.root.wait<IFluidHandle<SharedString>>("text");
+        const textHandle = this.root.get<IFluidHandle<SharedString>>("text");
+        if (textHandle === undefined) {
+            throw new Error("Text improperly initialized");
+        }
         const text = await textHandle.get();
 
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);

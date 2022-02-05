@@ -5,7 +5,6 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { ContainerWarning } from '@fluidframework/container-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
@@ -16,7 +15,6 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
@@ -31,12 +29,13 @@ export interface IChannel extends IFluidLoadable {
     // (undocumented)
     readonly attributes: IChannelAttributes;
     connect(services: IChannelServices): void;
+    getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     readonly id: string;
     isAttached(): boolean;
     // (undocumented)
     readonly owner?: string;
-    summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 }
 
 // @public
@@ -108,16 +107,12 @@ export interface IFluidDataStoreRuntime extends IFluidRouter, IEventProvider<IFl
     readonly id: string;
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
-    // @deprecated (undocumented)
-    readonly IFluidSerializer: IFluidSerializer;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
     readonly objectsRoutingContext: IFluidHandleContext;
     // (undocumented)
     readonly options: ILoaderOptions;
-    // @deprecated
-    raiseContainerWarning(warning: ContainerWarning): void;
     // (undocumented)
     readonly rootRoutingContext: IFluidHandleContext;
     submitSignal(type: string, content: any): void;

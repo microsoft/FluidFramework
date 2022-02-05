@@ -79,6 +79,7 @@ declare function get_current_EnumDeclaration_ContainerErrorType():
 declare function use_old_EnumDeclaration_ContainerErrorType(
     use: old.ContainerErrorType);
 use_old_EnumDeclaration_ContainerErrorType(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_ContainerErrorType());
 
 /*
@@ -163,6 +164,7 @@ declare function get_old_InterfaceDeclaration_ICodeLoader():
 declare function use_current_InterfaceDeclaration_ICodeLoader(
     use: current.ICodeLoader);
 use_current_InterfaceDeclaration_ICodeLoader(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ICodeLoader());
 
 /*
@@ -602,6 +604,7 @@ declare function get_old_InterfaceDeclaration_IFluidModule():
 declare function use_current_InterfaceDeclaration_IFluidModule(
     use: current.IFluidModule);
 use_current_InterfaceDeclaration_IFluidModule(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidModule());
 
 /*
@@ -687,6 +690,7 @@ declare function get_current_InterfaceDeclaration_IGenericError():
 declare function use_old_InterfaceDeclaration_IGenericError(
     use: old.IGenericError);
 use_old_InterfaceDeclaration_IGenericError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGenericError());
 
 /*
@@ -985,6 +989,7 @@ declare function get_current_InterfaceDeclaration_IRuntime():
 declare function use_old_InterfaceDeclaration_IRuntime(
     use: old.IRuntime);
 use_old_InterfaceDeclaration_IRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IRuntime());
 
 /*
@@ -1083,6 +1088,7 @@ declare function get_current_InterfaceDeclaration_IThrottlingWarning():
 declare function use_old_InterfaceDeclaration_IThrottlingWarning(
     use: old.IThrottlingWarning);
 use_old_InterfaceDeclaration_IThrottlingWarning(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IThrottlingWarning());
 
 /*
@@ -1107,6 +1113,7 @@ declare function get_current_InterfaceDeclaration_IUsageError():
 declare function use_old_InterfaceDeclaration_IUsageError(
     use: old.IUsageError);
 use_old_InterfaceDeclaration_IUsageError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IUsageError());
 
 /*

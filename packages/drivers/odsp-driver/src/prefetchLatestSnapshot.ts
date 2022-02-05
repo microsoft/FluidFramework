@@ -31,6 +31,7 @@ import { IVersionedValueWithEpoch } from "./contracts";
  * @param getStorageToken - function that can provide the storage token for a given site. This is
  *  is also referred to as the "VROOM" token in SPO.
  * @param persistedCache - Cache to store the fetched snapshot.
+ * @param forceAccessTokenViaAuthorizationHeader - whether to force passing given token via authorization header.
  * @param logger - Logger to have telemetry events.
  * @param hostSnapshotFetchOptions - Options to fetch the snapshot if any. Otherwise default will be used.
  * @param enableRedeemFallback - True to have the sharing link redeem fallback in case the Trees Latest/Redeem
@@ -42,6 +43,7 @@ export async function prefetchLatestSnapshot(
     resolvedUrl: IResolvedUrl,
     getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
     persistedCache: IPersistedCache,
+    forceAccessTokenViaAuthorizationHeader: boolean,
     logger: ITelemetryBaseLogger,
     hostSnapshotFetchOptions: ISnapshotOptions | undefined,
     enableRedeemFallback?: boolean,
@@ -84,6 +86,7 @@ export async function prefetchLatestSnapshot(
                     odspResolvedUrl,
                     storageTokenFetcher,
                     hostSnapshotFetchOptions,
+                    forceAccessTokenViaAuthorizationHeader,
                     odspLogger,
                     snapshotDownloader,
                     putInCache,

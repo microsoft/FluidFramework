@@ -23,31 +23,17 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger, loggerToMonitoringContext, MonitoringContext } from "@fluidframework/telemetry-utils";
+import {
+    ChildLogger,
+    getCircularReplacer,
+    loggerToMonitoringContext,
+    MonitoringContext,
+} from "@fluidframework/telemetry-utils";
+// For now, this package is versioned and released in unison with the specific drivers
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 // Local storage key to disable the BatchManager
 const batchManagerDisabledKey = "Fluid.Driver.BaseDocumentDeltaConnection.DisableBatchManager";
-
-// See #8129.
-// Need to move to common-utils (tracked as #8165)
-// Borrowed from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#examples
-// Avoids runtime errors with circular references.
-// Not ideal, as will cut values that are not necessarily circular references.
-// Could be improved by implementing Node's util.inspect() for browser (minus all the coloring code)
-const getCircularReplacer = () => {
-    const seen = new WeakSet();
-    return (key: string, value: any): any => {
-        // eslint-disable-next-line no-null/no-null
-        if (typeof value === "object" && value !== null) {
-            if (seen.has(value)) {
-                return "<removed/circular>";
-            }
-            seen.add(value);
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return value;
-    };
-};
 
 /**
  * Represents a connection to a stream of delta updates
@@ -122,6 +108,7 @@ export class DocumentDeltaConnection
     /**
      * @param socket - websocket to be used
      * @param documentId - ID of the document
+     * @param logger - for reporting telemetry events
      */
     protected constructor(
         protected readonly socket: SocketIOClient.Socket,
@@ -329,7 +316,8 @@ export class DocumentDeltaConnection
     public dispose() {
         this.disposeCore(
             false, // socketProtocolError
-            createGenericNetworkError("clientClosingConnection", undefined, true /* canRetry */));
+            createGenericNetworkError(
+                "clientClosingConnection", undefined, { canRetry: true }, { driverVersion }));
     }
 
     protected disposeCore(socketProtocolError: boolean, err: any) {
@@ -553,7 +541,8 @@ export class DocumentDeltaConnection
         const errorObj = createGenericNetworkError(
             `socketError [${handler}]`,
             message,
-            canRetry,
+            { canRetry },
+            { driverVersion },
         );
 
         return errorObj;

@@ -5,6 +5,8 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ClientSessionExpiredError } from "@fluidframework/container-utils";
 import {
     cloneGCData,
     concatGarbageCollectionStates,
@@ -18,7 +20,7 @@ import {
     gcBlobKey,
     IGarbageCollectionData,
     IGarbageCollectionState,
-    IGarbageCollectionSummaryDetails,
+    IGarbageCollectionDetailsBase,
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -52,12 +54,14 @@ export const gcTreeKey = "gc";
 // They prefix for GC blobs in the GC tree in summary.
 export const gcBlobPrefix = "__gc";
 
-// Local storage key to turn GC on / off.
+// Feature gate key to turn GC on / off.
 const runGCKey = "Fluid.GarbageCollection.RunGC";
-// Local storage key to turn GC test mode on / off.
+// Feature gate key to turn GC test mode on / off.
 const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
-// Local storage key to turn GC sweep on / off.
+// Feature gate key to turn GC sweep on / off.
 const runSweepKey = "Fluid.GarbageCollection.RunSweep";
+// Feature gate key to write GC data at the root of the summary tree.
+const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -77,6 +81,8 @@ export interface IGCStats {
 
 /** Defines the APIs for the runtime object to be passed to the garbage collector. */
 export interface IGarbageCollectionRuntime {
+    /** Before GC runs, called to notify the runtime to update any pending GC state. */
+    updateStateBeforeGC(): Promise<void>;
     /** Returns the garbage collection data of the runtime. */
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     /** After GC has run, called to notify the runtime of routes that are used in it. */
@@ -87,14 +93,16 @@ export interface IGarbageCollectionRuntime {
 export interface IGarbageCollector {
     /** Tells whether GC should run or not. */
     readonly shouldRunGC: boolean;
+    /** The time in ms to expire a session for a client for gc. */
+    readonly sessionExpiryTimeoutMs: number | undefined;
     /**
      * This tracks two things:
      * 1. Whether GC is enabled - If this is 0, GC is disabled. If this is greater than 0, GC is enabled.
      * 2. If GC is enabled, the version of GC used to generate the GC data written in a summary.
      */
     readonly gcSummaryFeatureVersion: number;
-    /** Tells whether the GC version has changed compared to the version in the latest summary. */
-    readonly hasGCVersionChanged: boolean;
+    /** Tells whether the GC state in summary needs to be reset in the next summary. */
+    readonly summaryStateNeedsReset: boolean;
     /** Tells whether GC data should be written to the root of the summary tree. */
     readonly writeDataAtRoot: boolean;
     /** Run garbage collection and update the reference / used state of the system. */
@@ -104,13 +112,14 @@ export interface IGarbageCollector {
     /** Summarizes the GC data and returns it as a summary tree. */
     summarize(): ISummaryTreeWithStats | undefined;
     /** Returns a map of each data store id to its GC details in the base summary. */
-    getDataStoreBaseGCDetails(): Promise<Map<string, IGarbageCollectionSummaryDetails>>;
+    getDataStoreBaseGCDetails(): Promise<Map<string, IGarbageCollectionDetailsBase>>;
     /** Called when the latest summary of the system has been refreshed. */
     latestSummaryStateRefreshed(result: RefreshSummaryResult, readAndParseBlob: ReadAndParseBlob): Promise<void>;
     /** Called when a node is changed. Used to detect and log when an inactive node is changed. */
     nodeChanged(id: string): void;
     /** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
     addedOutboundReference(fromNodeId: string, toNodeId: string): void;
+    dispose(): void;
 }
 
 /**
@@ -174,6 +183,7 @@ export class GarbageCollector implements IGarbageCollector {
         gcOptions: IGCRuntimeOptions,
         deleteUnusedRoutes: (unusedRoutes: string[]) => void,
         getCurrentTimestampMs: () => number,
+        closeFn: (error?: ICriticalContainerError) => void,
         baseSnapshot: ISnapshotTree | undefined,
         readAndParseBlob: ReadAndParseBlob,
         baseLogger: ITelemetryLogger,
@@ -185,6 +195,7 @@ export class GarbageCollector implements IGarbageCollector {
             gcOptions,
             deleteUnusedRoutes,
             getCurrentTimestampMs,
+            closeFn,
             baseSnapshot,
             readAndParseBlob,
             baseLogger,
@@ -199,6 +210,11 @@ export class GarbageCollector implements IGarbageCollector {
     public readonly shouldRunGC: boolean;
 
     /**
+     * The time in ms to expire a session for a client for gc.
+     */
+    public readonly sessionExpiryTimeoutMs: number | undefined;
+
+    /**
      * This tracks two things:
      * 1. Whether GC is enabled - If this is 0, GC is disabled. If this is greater than 0, GC is enabled.
      * 2. If GC is enabled, the version of GC used to generate the GC data written in a summary.
@@ -208,13 +224,16 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Tells whether the GC version has changed compared to the version in the latest summary.
+     * Tells whether the GC state needs to be reset in the next summary. We need to do this if:
+     * 1. GC was enabled and is now disabled. The GC state needs to be removed and everything becomes referenced.
+     * 2. GC was disabled and is now enabled. The GC state needs to be regenerated and added to summary.
+     * 3. The GC version in the latest summary is different from the current GC version. This can happen if:
+     *    3.1. The summary this client loaded with has data from a different GC version.
+     *    3.2. This client's latest summary was updated from a snapshot that has a different GC version.
      */
-    public get hasGCVersionChanged(): boolean {
-        // The current version can differ from the latest summary version in two cases:
-        // 1. The summary this client loaded with has data from a different GC version.
-        // 2. This client's latest summary was updated from a snapshot that has a different GC version.
-        return this.shouldRunGC && this.latestSummaryGCVersion !== this.currentGCVersion;
+    public get summaryStateNeedsReset(): boolean {
+        return this.initialStateNeedsReset ||
+            (this.shouldRunGC && this.latestSummaryGCVersion !== this.currentGCVersion);
     }
 
     /**
@@ -227,15 +246,24 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly mc: MonitoringContext;
 
     /**
-     * Tells whether the GC data should be written to the root of the summary tree. We do this under 2 conditions:
-     * 1. If `writeDataAtRoot` GC option is enabled.
-     * 2. If the base summary has the GC data written at the root. This is to support forward compatibility where when
-     *    we start writing the GC data at root, older versions can detect that and write at root too.
+     * Tells whether the GC data should be written to the root of the summary tree.
      */
     private _writeDataAtRoot: boolean = false;
     public get writeDataAtRoot(): boolean {
         return this._writeDataAtRoot;
-    }
+     }
+
+    /**
+     * Tells whether the initial GC state needs to be reset. This can happen under 2 conditions:
+     * 1. The base snapshot contains GC state but GC is disabled. This will happen the first time GC is disabled after
+     *    it was enabled before. GC state needs to be removed from summary and all nodes should be marked referenced.
+     * 2. The base snapshot does not have GC state but GC is enabled. This will happen the very first time GC runs on
+     *    a document and the first time GC is enabled after is was disabled before.
+     *
+     * Note that the state needs reset only for the very first time summary is generated by this client. After that, the
+     * state will be up-to-date and this flag will be reset.
+    */
+    private initialStateNeedsReset: boolean = false;
 
     // The current GC version that this container is running.
     private readonly currentGCVersion = GCVersion;
@@ -251,11 +279,13 @@ export class GarbageCollector implements IGarbageCollector {
     // Promise when resolved initializes the base state of the nodes from the base summary state.
     private readonly initializeBaseStateP: Promise<void>;
     // The map of data store ids to their GC details in the base summary returned in getDataStoreGCDetails().
-    private readonly dataStoreGCDetailsP: Promise<Map<string, IGarbageCollectionSummaryDetails>>;
+    private readonly dataStoreGCDetailsP: Promise<Map<string, IGarbageCollectionDetailsBase>>;
     // The time after which an unreferenced node can be deleted. Currently, we only set the node's state to expired.
     private readonly deleteTimeoutMs: number;
     // Map of node ids to their unreferenced state tracker.
     private readonly unreferencedNodesState: Map<string, UnreferencedStateTracker> = new Map();
+    // The timeout responsible for closing the container when the session has expired
+    private sessionExpiryTimer?: ReturnType<typeof setTimeout>;
 
     protected constructor(
         private readonly provider: IGarbageCollectionRuntime,
@@ -264,6 +294,7 @@ export class GarbageCollector implements IGarbageCollector {
         private readonly deleteUnusedRoutes: (unusedRoutes: string[]) => void,
         /** Returns the current timestamp to be assigned to nodes that become unreferenced. */
         private readonly getCurrentTimestampMs: () => number,
+        private readonly closeFn: (error?: ICriticalContainerError) => void,
         baseSnapshot: ISnapshotTree | undefined,
         readAndParseBlob: ReadAndParseBlob,
         baseLogger: ITelemetryLogger,
@@ -276,17 +307,29 @@ export class GarbageCollector implements IGarbageCollector {
         this.deleteTimeoutMs = this.gcOptions.deleteTimeoutMs ?? defaultDeleteTimeoutMs;
 
         let prevSummaryGCVersion: number | undefined;
+
         // GC can only be enabled during creation. After that, it can never be enabled again. So, for existing
-        // documents, we get this information from the metadata blob.
+        // documents, we get this information from the metadata blob. Similarly the session timeout should be
+        // consistent across all clients, thus we grab it as well from the metadata blob, and set it once on creation.
         if (existing) {
             prevSummaryGCVersion = getGCVersion(metadata);
             // Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
             // other exsiting documents, GC is enabled.
             this.gcEnabled = prevSummaryGCVersion > 0;
+            this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
         } else {
             // For new documents, GC has to be exlicitly enabled via the gcAllowed flag in GC options.
             this.gcEnabled = gcOptions.gcAllowed === true;
+            this.sessionExpiryTimeoutMs = this.gcOptions.gcTestSessionTimeoutMs;
         }
+
+        // If session expiry is enabled, we need to close the container when the timeout expires
+        if (this.sessionExpiryTimeoutMs !== undefined) {
+            const expiryMs = this.sessionExpiryTimeoutMs;
+            this.sessionExpiryTimer = setTimeout(() => this.closeFn(
+                new ClientSessionExpiredError(`Client session expired.`, expiryMs)), expiryMs);
+        }
+
         // For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
         // latest tracked GC version. For new documents, we will be writing the first summary with the current version.
         this.latestSummaryGCVersion = prevSummaryGCVersion ?? this.currentGCVersion;
@@ -302,14 +345,25 @@ export class GarbageCollector implements IGarbageCollector {
         // Whether GC sweep phase should run or not. If this is false, only GC mark phase is run. Can override with
         // localStorage flag.
         this.shouldRunSweep = this.shouldRunGC &&
-            (this.mc.config.getBoolean(runSweepKey) ?? gcOptions.runSweep === true);
+            (this.mc.config.getBoolean(runSweepKey) ?? gcOptions.runSweep === true)
+            && this.sessionExpiryTimer !== undefined;
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
         this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
 
-        // If `writeDataAtRoot` GC option is true, we should write the GC data into the root of the summary tree. This
-        // GC option is used for testing only. It will be removed once we start writing GC data into root by default.
-        this._writeDataAtRoot = this.gcOptions.writeDataAtRoot === true;
+        /**
+         * Enable resetting initial state once the following issue is resolved:
+         * https://github.com/microsoft/FluidFramework/issues/8878.
+         * Currently, the GC tree is not written at root, so we don't know if the base snapshot contains GC tree or not.
+         */
+        // The GC state needs to be reset if the base snapshot contains GC tree and GC is disabled or it doesn't contain
+        // GC tree and GC is enabled.
+        // const gcTreePresent = baseSnapshot?.trees[gcTreeKey] !== undefined;
+        // this.initialStateNeedsReset = gcTreePresent ? !this.shouldRunGC : this.shouldRunGC;
+
+        // If `writeDataAtRoot` setting is true, write the GC data into the root of the summary tree. We do this so that
+        // the roll out can be staged. Once its rolled out everywhere, we will start writing at root by default.
+        this._writeDataAtRoot = this.mc.config.getBoolean(writeAtRootKey) ?? this.gcOptions.writeDataAtRoot === true;
 
         // Get the GC state from the GC blob in the base snapshot. Use LazyPromise because we only want to do
         // this once since it involves fetching blobs from storage which is expensive.
@@ -321,7 +375,7 @@ export class GarbageCollector implements IGarbageCollector {
             // For newer documents, GC data should be present in the GC tree in the root of the snapshot.
             const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
             if (gcSnapshotTree !== undefined) {
-                // forward-compat - If a newer version has written the GC tree at root, we should also do the same.
+                // If the GC tree is written at root, we should also do the same.
                 this._writeDataAtRoot = true;
                 return getGCStateFromSnapshot(gcSnapshotTree, readAndParseBlob);
             }
@@ -339,7 +393,7 @@ export class GarbageCollector implements IGarbageCollector {
                     continue;
                 }
 
-                const gcSummaryDetails = await readAndParseBlob<IGarbageCollectionSummaryDetails>(blobId);
+                const gcSummaryDetails = await readAndParseBlob<IGarbageCollectionDetailsBase>(blobId);
                 // If there are no nodes for this data store, skip it.
                 if (gcSummaryDetails.gcData?.gcNodes === undefined) {
                     continue;
@@ -375,7 +429,7 @@ export class GarbageCollector implements IGarbageCollector {
         // we only do this once - the very first time we run GC.
         this.initializeBaseStateP = new LazyPromise<void>(async () => {
             const currentTimestampMs = this.getCurrentTimestampMs();
-            const baseState =  await baseSummaryStateP;
+            const baseState = await baseSummaryStateP;
             if (baseState === undefined) {
                 return;
             }
@@ -401,8 +455,8 @@ export class GarbageCollector implements IGarbageCollector {
         });
 
         // Get the GC details for each data store from the GC state in the base summary. This is returned in
-        // getDataStoreBaseGCDetails and is used to initialize each data store's base GC details.
-        this.dataStoreGCDetailsP = new LazyPromise<Map<string, IGarbageCollectionSummaryDetails>>(async () => {
+        // getDataStoreBaseGCDetails and is used to initialize each data store's GC state.
+        this.dataStoreGCDetailsP = new LazyPromise<Map<string, IGarbageCollectionDetailsBase>>(async () => {
             const baseState = await baseSummaryStateP;
             if (baseState === undefined) {
                 return new Map();
@@ -453,11 +507,14 @@ export class GarbageCollector implements IGarbageCollector {
         const {
             logger = this.mc.logger,
             runSweep = this.shouldRunSweep,
-            fullGC = this.gcOptions.runFullGC === true || this.hasGCVersionChanged,
+            fullGC = this.gcOptions.runFullGC === true || this.summaryStateNeedsReset,
         } = options;
 
         return PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
             await this.initializeBaseStateP;
+
+            // Let the runtime update its pending state before GC runs.
+            await this.provider.updateStateBeforeGC();
 
             const gcStats: {
                 deletedNodes?: number,
@@ -530,9 +587,9 @@ export class GarbageCollector implements IGarbageCollector {
 
     /**
      * Returns a map of data store ids to their base GC details generated from the base summary.This is used to
-     * initialize the data stores with their base GC state.
+     * initialize the GC state of data stores.
      */
-    public async getDataStoreBaseGCDetails(): Promise<Map<string, IGarbageCollectionSummaryDetails>> {
+    public async getDataStoreBaseGCDetails(): Promise<Map<string, IGarbageCollectionDetailsBase>> {
         return this.dataStoreGCDetailsP;
     }
 
@@ -544,6 +601,10 @@ export class GarbageCollector implements IGarbageCollector {
         result: RefreshSummaryResult,
         readAndParseBlob: ReadAndParseBlob,
     ): Promise<void> {
+        // After a summary is successfully submitted and ack'd by this client, the GC state should have been reset in
+        // the summary and doesn't need to be reset anymore.
+        this.initialStateNeedsReset = false;
+
         if (!this.shouldRunGC || !result.latestSummaryUpdated) {
             return;
         }
@@ -572,6 +633,13 @@ export class GarbageCollector implements IGarbageCollector {
             this.deleteTimeoutMs,
             nodeId,
         );
+    }
+
+    public dispose(): void {
+        if (this.sessionExpiryTimer !== undefined) {
+            clearTimeout(this.sessionExpiryTimer);
+            this.sessionExpiryTimer = undefined;
+        }
     }
 
     /**
@@ -662,6 +730,9 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
+        // Validate that we have identified all references correctly.
+        this.validateReferenceCorrectness(currentGCData);
+
         /**
          * Generate a super set of the GC data that contains the nodes and edges from last run, plus any new node and
          * edges that have been added since then. To do this, combine the GC data from the last run and the current
@@ -701,6 +772,60 @@ export class GarbageCollector implements IGarbageCollector {
                 this.unreferencedNodesState.delete(nodeId);
             }
         }
+    }
+
+    /**
+     * Validates that all new references are correctly identified and processed. The basic principle for validation is
+     * that we should not have new references in the reference graph (GC data) that have not been notified to the
+     * garbage collector via `referenceAdded`.
+     * We validate that the references in the current reference graph should be a subset of the references in the last
+     * run's reference graph + references since the last run.
+     * @param currentGCData - The GC data (reference graph) from the current GC run.
+     */
+    private validateReferenceCorrectness(currentGCData: IGarbageCollectionData) {
+        assert(this.gcDataFromLastRun !== undefined, 0x2b7
+            /* "Can't validate correctness without GC data from last run" */);
+
+        // Get a list of all the outbound routes (or references) in the current GC data.
+        const currentReferences: string[] = [];
+        for (const [nodeId, outboundRoutes] of Object.entries(currentGCData.gcNodes)) {
+            /**
+             * Remove routes from a child node to its parent which is added implicitly by the runtime. For instance,
+             * each adds its data store as an outbound route to mark it as referenced if the DDS is referenced.
+             * We won't get any explicit notification for these references so they must be removed before validation.
+             */
+            const explicitRoutes = outboundRoutes.filter((route) => !nodeId.startsWith(route));
+            currentReferences.push(...explicitRoutes);
+        }
+
+        // Get a list of outbound routes (or references) from the last run's GC data plus references added since the
+        // last run that were notified via `referenceAdded`.
+        const explicitReferences: string[] = [];
+        for (const [, outboundRoutes] of Object.entries(this.gcDataFromLastRun.gcNodes)) {
+            explicitReferences.push(...outboundRoutes);
+        }
+        this.referencesSinceLastRun.forEach((outboundRoutes: string[]) => {
+            explicitReferences.push(...outboundRoutes);
+        });
+
+        // Validate that the current reference graph doesn't have references that we are not already aware of. If this
+        // happens, it might indicate data corruption since we may delete objects prematurely.
+        currentReferences.forEach((route: string) => {
+            // Validate references for data stores only whose routes are of the format "/dataStoreId". Currently, layers
+            // below data stores don't have GC implemented so there is no guarantee their references will be notified.
+            if (route.split("/").length === 2 && !explicitReferences.includes(route)) {
+                /**
+                 * The following log will be enabled once this issue is resolved:
+                 * https://github.com/microsoft/FluidFramework/issues/8878.
+                 */
+                // We should ideally throw a data corruption error here. However, send an error for now until we have
+                // implemented sweep and have reasonable confidence in the sweep process.
+                // this.mc.logger.sendErrorEvent({
+                //     eventName: "gcUnknownOutboundRoute",
+                //     route,
+                // });
+            }
+        });
     }
 }
 

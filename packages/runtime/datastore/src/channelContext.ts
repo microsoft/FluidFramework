@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannel } from "@fluidframework/datastore-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -55,6 +56,7 @@ export function createServiceEndpoints(
     dirtyFn: () => void,
     addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
     storageService: IDocumentStorageService,
+    logger: ITelemetryLogger,
     tree?: ISnapshotTree,
     extraBlobs?: Map<string, ArrayBufferLike>,
 ) {
@@ -64,7 +66,7 @@ export function createServiceEndpoints(
         (message, localOpMetadata) => submitFn(message, localOpMetadata),
         dirtyFn,
         addedGCOutboundReferenceFn);
-    const objectStorage = new ChannelStorageService(tree, storageService, extraBlobs);
+    const objectStorage = new ChannelStorageService(tree, storageService, logger, extraBlobs);
 
     return {
         deltaConnection,
@@ -77,7 +79,19 @@ export function summarizeChannel(
     fullTree: boolean = false,
     trackState: boolean = false,
 ): ISummaryTreeWithStats {
-    const summarizeResult = channel.summarize(fullTree, trackState);
+    const summarizeResult = channel.getAttachSummary(fullTree, trackState);
+
+    // Add the channel attributes to the returned result.
+    addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
+    return summarizeResult;
+}
+
+export async function summarizeChannelAsync(
+    channel: IChannel,
+    fullTree: boolean = false,
+    trackState: boolean = false,
+): Promise<ISummaryTreeWithStats> {
+    const summarizeResult = await channel.summarize(fullTree, trackState);
 
     // Add the channel attributes to the returned result.
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
