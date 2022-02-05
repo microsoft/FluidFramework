@@ -94,5 +94,5 @@ export interface ITenantManager {
     /**
      * Retrieves the key for the given tenant. This is a privileged op and should be used with care.
      */
-    getKey(tenantId: string): Promise<ITenantKeys>;
+    getKey(tenantId: string): Promise<string>;
 }

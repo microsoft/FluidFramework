@@ -6,7 +6,6 @@
 import { GitManager } from "@fluidframework/server-services-client";
 import {
     ITenant,
-    ITenantKeys,
     ITenantManager,
     ITenantOrderer,
     ITenantStorage,
@@ -78,10 +77,7 @@ export class TestTenantManager implements ITenantManager {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getKey(tenantId: string): Promise<ITenantKeys> {
-        return Promise.resolve({
-            key1: "test",
-            key2: "test2",
-        });
+    public getKey(tenantId: string): Promise<string> {
+        return Promise.resolve("test");
     }
 }
