@@ -6,6 +6,7 @@
 import { GitManager } from "@fluidframework/server-services-client";
 import {
     ITenant,
+    ITenantKeys,
     ITenantManager,
     ITenantOrderer,
     ITenantStorage,
