@@ -50,10 +50,11 @@ export class TenantManager implements core.ITenantManager {
     }
 
     public async getTenant(tenantId: string, documentId: string, includeDisabledTenant = false): Promise<core.ITenant> {
-        const [details, key] = await Promise.all([
+        const [details, tenantKeys] = await Promise.all([
             Axios.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`,
             { params: { includeDisabledTenant }}),
             this.getKey(tenantId, includeDisabledTenant)]);
+        const key = tenantKeys.key1;
 
         const defaultQueryString = {
             token: fromUtf8ToBase64(`${tenantId}`),
@@ -96,7 +97,7 @@ export class TenantManager implements core.ITenantManager {
             { token });
     }
 
-    public async getKey(tenantId: string, includeDisabledTenant = false): Promise<string> {
+    public async getKey(tenantId: string, includeDisabledTenant = false): Promise<core.ITenantKeys> {
         const result = await Axios.get(
             `${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/key`,
             { params: { includeDisabledTenant }});
