@@ -416,6 +416,10 @@ export class ScheduleManager extends ScheduleManagerCore {
         }
     }
 
+    /*
+     * Serialize state of this class for summary
+     * constructor will receive same state when loading from summary
+     */
     public serialize(): IScheduleManagerSerialized {
         return {
             sequenceNumber: this.seqNumber,
@@ -423,6 +427,10 @@ export class ScheduleManager extends ScheduleManagerCore {
         }
     }
 
+    /*
+     * Called when client is removed from quorum
+     * We clear all state tracking about this client, as client will resubmit ops on connection.
+     */
     public removeClient(clientId: string) {
         // Client needs to resend whole sequence, we have not ability to "follow" clients across re-connections.
         // Even if we did, client maybe gone forever.
@@ -434,6 +442,11 @@ export class ScheduleManager extends ScheduleManagerCore {
         }
     }
 
+    /*
+     * An op came in and runtime is asked to process it.
+     * We will examine if this op completes a batch, and if so, will process it.
+     * Otherwise we will keep accumulating ops for incomplete batch.
+     */
     public process(message: ISequencedDocumentMessage, local: boolean) {
         // If this is no longer true, we need to revisit what we do where we set this.hitError.
         assert(!this.hitError, 0x2a3 /* "container should be closed on any error" */);
@@ -443,13 +456,16 @@ export class ScheduleManager extends ScheduleManagerCore {
 
         const clientId = message.clientId;
         if (message.metadata?.batch === true) {
-            assert(!this.pending.has(clientId), "");
+            // Start of a batch. There should be no partial batch from this client
+            assert(!this.pending.has(clientId), "two batches from same client?");
             this.pending.set(clientId, {length: message.metadata?.batchLength, messages: [message]});
         } else if (!this.pending.has(clientId)) {
-            // We assume it's not batched message!
-            assert(message.metadata?.batch === undefined, "");
+            // No pending batch from this client, and this is not start of a batch.
+            // It should be no-batch op
+            assert(message.metadata?.batch === undefined, "End of batch when there is no batch?");
             this.release([message]);
         } else if (message.metadata?.batch === false) {
+            // It's the end of the batch. Process full batch.
             const data = this.pending.get(clientId);
             assert(data !== undefined, "has data");
             assert(data.length === data.messages.length + 1, "length does not match");
@@ -457,13 +473,18 @@ export class ScheduleManager extends ScheduleManagerCore {
             data.messages.push(message);
             this.release(data.messages);
         } else {
+            // The only remaining case - it's an op in the middle of existing batch.
             const data = this.pending.get(clientId);
-            assert(data !== undefined, "has data");
+            assert(data !== undefined, "this was validated above, should never hit");
             data.messages.push(message);
             assert(data.length > data.messages.length, "length does not match");
         }
     }
 
+    /**
+     * Release full batch for processing
+     * @param messages - batch of ops
+     */
     private release(messages: ISequencedDocumentMessage[]) {
         let message = messages[0];
         try {
