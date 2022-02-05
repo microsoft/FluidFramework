@@ -264,7 +264,7 @@ export class TenantManager {
         }
 
         const tenantDocument = await this.getTenantDocument(tenantId, false);
-        
+
         const newTenantKey = this.generateTenantKey();
         const encryptedNewTenantKey = this.secretManager.encryptSecret(newTenantKey);
         if (encryptedNewTenantKey == null) {
