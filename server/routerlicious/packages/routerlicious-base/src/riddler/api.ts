@@ -67,10 +67,10 @@ export function create(
     /**
      * Retrieves the api key for the tenant
      */
-    router.get("/tenants/:id/key", (request, response) => {
+    router.get("/tenants/:id/keys", (request, response) => {
         const tenantId = getParam(request.params, "id");
         const includeDisabledTenant = getIncludeDisabledFlag(request);
-        const tenantP = manager.getTenantKey(tenantId, includeDisabledTenant);
+        const tenantP = manager.getTenantKeys(tenantId, includeDisabledTenant);
         handleResponse(tenantP, response);
     });
 
