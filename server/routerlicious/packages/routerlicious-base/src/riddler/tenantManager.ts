@@ -66,7 +66,7 @@ export class TenantManager {
      * Validates a tenant's API token
      */
     public async validateToken(tenantId: string, token: string, includeDisabledTenant = false): Promise<void> {
-        const tenantKeys = await this.getTenantKey(tenantId, includeDisabledTenant);
+        const tenantKeys = await this.getTenantKeys(tenantId, includeDisabledTenant);
 
         return jwt.verify(token, tenantKeys.key1, (error1) => {
             if (!error1) {
@@ -224,7 +224,7 @@ export class TenantManager {
     /**
      * Retrieves the secret for the given tenant
      */
-    public async getTenantKey(tenantId: string, includeDisabledTenant = false): Promise<ITenantKeys> {
+    public async getTenantKeys(tenantId: string, includeDisabledTenant = false): Promise<ITenantKeys> {
         const tenantDocument = await this.getTenantDocument(tenantId, includeDisabledTenant);
         
         const encryptedTenantKey1 = tenantDocument.key;
