@@ -343,7 +343,9 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await (attachedDataStore._root.get("my blob")).get(), "utf-8"), text);
     });
 
-    it("serialize/rehydrate multiple times then attach", async function() {
+    itExpects("serialize/rehydrate multiple times then attach",[
+        {"eventName": "fluid:telemetry:Container:ContainerClose",  "error": "0x202"}
+    ], async function() {
         const loader = provider.makeTestLoader(
             {...testContainerConfig, loaderProps: {detachedBlobStorage: new MockDetachedBlobStorage()}});
         let container = await loader.createDetachedContainer(provider.defaultCodeDetails);
