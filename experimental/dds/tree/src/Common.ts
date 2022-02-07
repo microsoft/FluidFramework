@@ -172,8 +172,6 @@ export function comparePayloads(a: Payload, b: Payload): boolean {
  * @param containsPII - boolean flag for whether the message passed in contains personally identifying information (PII).
  */
 export function assert(condition: unknown, message?: string, containsPII = false): asserts condition {
-	// Rationale: Assert condition is permitted to be truthy.
-	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	if (!condition) {
 		fail(message, containsPII);
 	}
