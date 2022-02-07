@@ -27,6 +27,10 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
     endpoints: { [name: string]: string };
 }
 
+export interface IContainerPackageInfo {
+    name: string;
+}
+
 export interface IUrlResolver {
 
     // Like DNS should be able to cache resolution requests. Then possibly just have a token provider go and do stuff?
@@ -38,7 +42,7 @@ export interface IUrlResolver {
     getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
-        codeDetails?: IFluidCodeDetails,
+        packageInfoSource?: IFluidCodeDetails | IContainerPackageInfo,
     ): Promise<string>;
 }
 
