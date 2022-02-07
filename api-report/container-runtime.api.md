@@ -168,6 +168,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     submitDataStoreSignal(address: string, type: string, content: any): void;
     submitSignal(type: string, content: any): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
+    // Warning: (ae-forgotten-export) The symbol "IRootSummaryTreeWithStats" needs to be exported by the entry point index.d.ts
     summarize(options: {
         fullTree?: boolean;
         trackState?: boolean;
@@ -175,12 +176,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runGC?: boolean;
         fullGC?: boolean;
         runSweep?: boolean;
-    }): Promise<ISummaryTreeWithStats>;
+    }): Promise<IRootSummaryTreeWithStats>;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     }
@@ -327,7 +328,7 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 export interface IGarbageCollectionRuntime {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     updateStateBeforeGC(): Promise<void>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 }
 
 // @public (undocumented)
@@ -342,21 +343,18 @@ export interface IGCRuntimeOptions {
 
 // @public
 export interface IGCStats {
-    // (undocumented)
-    deletedDataStores: number;
-    // (undocumented)
-    deletedNodes: number;
-    // (undocumented)
-    totalDataStores: number;
-    // (undocumented)
-    totalNodes: number;
+    dataStoreCount: number;
+    nodeCount: number;
+    unrefDataStoreCount: number;
+    unrefNodeCount: number;
+    updatedDataStoreCount: number;
+    updatedNodeCount: number;
 }
 
 // @public
 export interface IGeneratedSummaryStats extends ISummaryStats {
-    // (undocumented)
     readonly dataStoreCount: number;
-    // (undocumented)
+    readonly gcStateUpdatedDataStoreCount?: number;
     readonly summarizedDataStoreCount: number;
 }
 
@@ -577,14 +575,6 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
     // (undocumented)
     readonly stage: "upload";
     readonly uploadDuration: number;
-}
-
-// @public
-export interface IUsedStateStats {
-    // (undocumented)
-    totalNodeCount: number;
-    // (undocumented)
-    unusedNodeCount: number;
 }
 
 // @public

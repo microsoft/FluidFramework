@@ -24,7 +24,6 @@ export {
     gcTreeKey,
     IGarbageCollectionRuntime,
     IGCStats,
-    IUsedStateStats,
 } from "./garbageCollection";
 export {
     IPendingFlush,
