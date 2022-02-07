@@ -136,7 +136,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
      * Snapshots quorum members
      * @returns a deep cloned array of members
      */
-    public snapshotMembers(): IQuorumSnapshot["members"] {
+    private snapshotMembers(): IQuorumSnapshot["members"] {
         return cloneDeep(Array.from(this.members));
     }
 
@@ -144,7 +144,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
      * Snapshots quorum proposals
      * @returns a deep cloned array of proposals
      */
-    public snapshotProposals(): IQuorumSnapshot["proposals"] {
+    private snapshotProposals(): IQuorumSnapshot["proposals"] {
         return Array.from(this.proposals).map(
             ([sequenceNumber, proposal]) => [
                 sequenceNumber,
@@ -156,7 +156,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
      * Snapshots quorum values
      * @returns a deep cloned array of values
      */
-    public snapshotValues(): IQuorumSnapshot["values"] {
+    private snapshotValues(): IQuorumSnapshot["values"] {
         return cloneDeep(Array.from(this.values));
     }
 
