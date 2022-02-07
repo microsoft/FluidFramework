@@ -7,16 +7,21 @@
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
 import { EventEmitter } from 'events';
+import { EventForwarder } from '@fluidframework/common-utils';
 import { FluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
+import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IContainerRuntimeEvents } from '@fluidframework/container-runtime-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
+import { IDeltaManagerEvents } from '@fluidframework/container-definitions';
+import { IDeltaQueue } from '@fluidframework/container-definitions';
+import { IDeltaSender } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
@@ -50,6 +55,7 @@ import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
+import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
@@ -147,7 +153,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     process(messageArg: ISequencedDocumentMessage, local: boolean): void;
     // (undocumented)
-    processCore(message: ISequencedDocumentMessage, local: boolean): void;
+    processCore(message: ISequencedDocumentMessage, beginBatch: boolean, endBatch: boolean): void;
     // (undocumented)
     processSignal(message: ISignalMessage, local: boolean): void;
     refreshLatestSummaryAck(proposalHandle: string | undefined, ackHandle: string, summaryRefSeq: number, summaryLogger: ITelemetryLogger): Promise<void>;
@@ -618,18 +624,56 @@ export enum RuntimeMessage {
     Rejoin = "rejoin"
 }
 
-// Warning: (ae-forgotten-export) The symbol "ScheduleManagerCore" needs to be exported by the entry point index.d.ts
-//
 // @public
-export class ScheduleManager extends ScheduleManagerCore {
+export class ScheduleManager extends EventForwarder<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     // Warning: (ae-forgotten-export) The symbol "IScheduleManagerSerialized" needs to be exported by the entry point index.d.ts
-    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, logger: ITelemetryLogger, state: IScheduleManagerSerialized | undefined, processCallback: (message: ISequencedDocumentMessage, local: boolean) => void, clientIdCallback: () => string | undefined);
+    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, logger: ITelemetryLogger, state: IScheduleManagerSerialized | undefined, processCallback: (message: ISequencedDocumentMessage, beginBatch: boolean, endBatch: boolean) => void);
     // (undocumented)
-    process(message: ISequencedDocumentMessage, local: boolean): void;
+    get active(): boolean;
+    // (undocumented)
+    get clientDetails(): IClientDetails;
+    // (undocumented)
+    close(): void;
+    // (undocumented)
+    dispose(): void;
+    // (undocumented)
+    flush(): void;
+    // (undocumented)
+    get hasCheckpointSequenceNumber(): boolean;
+    // (undocumented)
+    get IDeltaSender(): IDeltaSender;
+    // (undocumented)
+    readonly inbound: IDeltaQueue<ISequencedDocumentMessage>;
+    // (undocumented)
+    readonly inboundSignal: IDeltaQueue<ISignalMessage>;
+    // (undocumented)
+    readonly initialSequenceNumber: number;
+    // (undocumented)
+    get lastKnownSeqNumber(): number;
+    // (undocumented)
+    lastMessage: ISequencedDocumentMessage | undefined;
+    // (undocumented)
+    get lastSequenceNumber(): number;
+    // (undocumented)
+    get maxMessageSize(): number;
+    // (undocumented)
+    get minimumSequenceNumber(): number;
+    // (undocumented)
+    readonly outbound: IDeltaQueue<IDocumentMessage[]>;
+    // (undocumented)
+    process(message: ISequencedDocumentMessage): void;
+    // (undocumented)
+    get readOnlyInfo(): ReadOnlyInfo;
     // (undocumented)
     removeClient(clientId: string): void;
     // (undocumented)
     serialize(): IScheduleManagerSerialized;
+    // (undocumented)
+    get serviceConfiguration(): IClientConfiguration | undefined;
+    // (undocumented)
+    submitSignal(content: any): void;
+    // (undocumented)
+    get version(): string;
 }
 
 // @public

@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { EventEmitter } from "events";
 import { createSandbox } from "sinon";
 import { DebugLogger, MockLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -202,39 +201,36 @@ describe("Runtime", () => {
                 let batchBegin: number = 0;
                 let batchEnd: number = 0;
                 let sequenceNumber: number = 0;
-                let emitter: EventEmitter;
                 let deltaManager: MockDeltaManager;
                 let scheduleManager: ScheduleManager;
                 const clientId: string = "test-client";
 
                 beforeEach(() => {
-                    emitter = new EventEmitter();
                     deltaManager = new MockDeltaManager();
                     deltaManager.inbound.processCallback = (message: ISequencedDocumentMessage) => {
-                        scheduleManager.process(message, message.clientId === clientId);
+                        scheduleManager.process(message);
                     };
                     scheduleManager = new ScheduleManager(
                         deltaManager,
-                        emitter,
                         DebugLogger.create("fluid:testScheduleManager"),
                         undefined,
-                        (message, local) => {},
-                        () => clientId,
+                        (message, beginBatch, endBatch) => {
+                            if (beginBatch) {
+                                // When we receive a "batchBegin" event, we should not have any outstanding
+                                // events, i.e., batchBegin and batchEnd should be equal.
+                                assert.strictEqual(batchBegin, batchEnd,
+                                    "Received batchBegin before previous batchEnd");
+                                batchBegin++;
+                            }
+                            if (endBatch) {
+                                batchEnd++;
+                                // Every "batchEnd" event should correspond to a "batchBegin" event, i.e.,
+                                // batchBegin and batchEnd should be equal.
+                                assert.strictEqual(batchBegin, batchEnd,
+                                    "Received batchEnd without corresponding batchBegin");
+                            }
+                        },
                     );
-
-                    emitter.on("batchBegin", () => {
-                        // When we receive a "batchBegin" event, we should not have any outstanding
-                        // events, i.e., batchBegin and batchEnd should be equal.
-                        assert.strictEqual(batchBegin, batchEnd, "Received batchBegin before previous batchEnd");
-                        batchBegin++;
-                    });
-
-                    emitter.on("batchEnd", () => {
-                        batchEnd++;
-                        // Every "batchEnd" event should correspond to a "batchBegin" event, i.e.,
-                        // batchBegin and batchEnd should be equal.
-                        assert.strictEqual(batchBegin, batchEnd, "Received batchEnd without corresponding batchBegin");
-                    });
                 });
 
                 afterEach(() => {

@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { EventEmitter } from "events";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
     IClient,
@@ -72,7 +71,7 @@ describe("Container Runtime", () => {
 
         // Function to process an inbound op. It adds delay to simluate time taken in processing an op.
         function processOp(message: ISequencedDocumentMessage) {
-            scheduleManager.process(message, message.clientId === clientId);
+            scheduleManager.process(message);
 
             // Add delay such that each op takes greater than the DeltaScheduler's processing time to process.
             const processingDelay = DeltaScheduler.processingTime + 10;
@@ -103,29 +102,26 @@ describe("Container Runtime", () => {
                     props),
             );
 
-            const emitter = new EventEmitter();
             scheduleManager = new ScheduleManager(
                 deltaManager,
-                emitter,
                 DebugLogger.create("fluid:testScheduleManager"),
                 undefined,
-                (message, local) => {},
-                () => clientId,
+                (message, beginBatch, endBatch) => {
+                    if (beginBatch) {
+                        // When we receive a "batchBegin" event, we should not have any outstanding
+                        // events, i.e., batchBegin and batchEnd should be equal.
+                        assert.strictEqual(batchBegin, batchEnd, "Received batchBegin before previous batchEnd");
+                        batchBegin++;
+                    }
+                    if (endBatch) {
+                        batchEnd++;
+                        // Every "batchEnd" event should correspond to a "batchBegin" event, i.e.,
+                        // batchBegin and batchEnd should be equal.
+                        assert.strictEqual(batchBegin, batchEnd,
+                            "Received batchEnd without corresponding batchBegin");
+                    }
+                },
             );
-
-            emitter.on("batchBegin", () => {
-                // When we receive a "batchBegin" event, we should not have any outstanding
-                // events, i.e., batchBegin and batchEnd should be equal.
-                assert.strictEqual(batchBegin, batchEnd, "Received batchBegin before previous batchEnd");
-                batchBegin++;
-            });
-
-            emitter.on("batchEnd", () => {
-                batchEnd++;
-                // Every "batchEnd" event should correspond to a "batchBegin" event, i.e.,
-                // batchBegin and batchEnd should be equal.
-                assert.strictEqual(batchBegin, batchEnd, "Received batchEnd without corresponding batchBegin");
-            });
 
             await deltaManager.attachOpHandler(0, 0, 1, {
                 process(message: ISequencedDocumentMessage) {

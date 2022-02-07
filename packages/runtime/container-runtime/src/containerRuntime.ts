@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { ITelemetryBaseLogger, ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     FluidObject,
@@ -28,6 +27,7 @@ import {
     LoaderHeader,
     IDeltaManagerEvents,
     IDeltaQueue,
+    ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import {
     IContainerRuntime,
@@ -68,6 +68,7 @@ import {
     ITree,
     MessageType,
     SummaryType,
+    IClientConfiguration,
 } from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
@@ -154,7 +155,7 @@ import {
 
 interface IScheduleManagerSerialized {
     sequenceNumber: number,
-    state: [string, {length: number, messages: ISequencedDocumentMessage[]}][],
+    state: [string, {length?: number, messages: ISequencedDocumentMessage[]}][],
 }
 
 export enum ContainerMessageType {
@@ -361,7 +362,7 @@ implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>  {
     private hitError = false;
     private seqNumber: number;
 
-    private readonly pending: Map<string, {length: number, messages: ISequencedDocumentMessage[]}> = new Map();
+    private readonly pending: Map<string, {length?: number, messages: ISequencedDocumentMessage[]}> = new Map();
 
     public readonly inbound: IDeltaQueue<ISequencedDocumentMessage>;
     public readonly outbound: IDeltaQueue<IDocumentMessage[]>;
@@ -371,20 +372,20 @@ implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>  {
     public lastMessage: ISequencedDocumentMessage | undefined = undefined;
     private lastProcessedSeqNumber: number;
 
+    private legacyBatchClientId: string | undefined;
+
     constructor(
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        private readonly emitter: EventEmitter,
         private readonly logger: ITelemetryLogger,
         state: IScheduleManagerSerialized | undefined,
-        private readonly processCallback: (message: ISequencedDocumentMessage, local: boolean) => void,
-        private readonly clientIdCallback: () => string | undefined,
+        private readonly processCallback: (
+            message: ISequencedDocumentMessage,
+            beginBatch: boolean,
+            endBatch: boolean) => void,
     ) {
         super(deltaManager);
-        this.deltaScheduler = new DeltaScheduler(
-            this.deltaManager,
-            ChildLogger.create(this.logger, "DeltaScheduler"),
-        );
 
+        // Setup IDeltaManager interface
         this.inbound = deltaManager.inbound;
         this.outbound = deltaManager.outbound;
         this.inboundSignal = deltaManager.inboundSignal;
@@ -399,6 +400,14 @@ implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>  {
 
         this.initialSequenceNumber = this.seqNumber;
         this.lastProcessedSeqNumber = this.seqNumber;
+
+        // By that time this object needs to be fully setup,
+        // as DeltaScheduler may call into IDeltaManager
+        this.deltaScheduler = new DeltaScheduler(
+            this, // deltaManager
+            ChildLogger.create(this.logger, "DeltaScheduler"),
+        );
+
 
         // Listen for delta manager sends and add batch metadata to messages
         this.deltaManager.on("prepareSend", (messages: IDocumentMessage[]) => {
@@ -457,7 +466,7 @@ implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>  {
         return this.deltaManager.maxMessageSize;
     }
 
-    public get serviceConfiguration() {
+    public get serviceConfiguration(): IClientConfiguration | undefined {
         return this.deltaManager.serviceConfiguration;
     }
 
@@ -465,7 +474,7 @@ implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>  {
         return this.deltaManager.active;
     }
 
-    public get readOnlyInfo() {
+    public get readOnlyInfo(): ReadOnlyInfo {
         return this.deltaManager.readOnlyInfo;
     }
 
@@ -504,6 +513,7 @@ implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>  {
      * We clear all state tracking about this client, as client will resubmit ops on connection.
      */
     public removeClient(clientId: string) {
+        assert(this.legacyBatchClientId !== clientId, ";egacy batches were submitted in one go");
         // Client needs to resend whole sequence, we have not ability to "follow" clients across re-connections.
         // Even if we did, client maybe gone forever.
         const data = this.pending.get(clientId);
@@ -519,12 +529,9 @@ implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>  {
      * We will examine if this op completes a batch, and if so, will process it.
      * Otherwise we will keep accumulating ops for incomplete batch.
      */
-    public process(message: ISequencedDocumentMessage, local: boolean) {
+    public process(message: ISequencedDocumentMessage) {
         // If this is no longer true, we need to revisit what we do where we set this.hitError.
         assert(!this.hitError, 0x2a3 /* "container should be closed on any error" */);
-
-        // can we not track local flag and just compute it?
-        assert(local === (message.clientId === this.clientIdCallback()), "local");
 
         // Keep track of ops that we never saw, like system ops.
         // Advance seq number to stay current
@@ -535,11 +542,19 @@ implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>  {
         this.lastProcessedSeqNumber = message.sequenceNumber;
 
         const clientId = message.clientId;
+
+        assert(this.legacyBatchClientId === undefined || this.legacyBatchClientId === clientId,
+            "legacy batch is broken");
+
         if (message.metadata?.batch === true) {
             // Start of a batch. There should be no partial batch from this client
             assert(!this.pending.has(clientId), "two batches from same client?");
-            assert(typeof message.metadata?.batchLength === "number", "no batchLength");
-            this.pending.set(clientId, {length: message.metadata?.batchLength, messages: [message]});
+            const length = message.metadata?.batchLength;
+            assert(length === undefined || typeof length === "number", "no batchLength");
+            this.pending.set(clientId, {length, messages: [message]});
+            if (length === undefined) {
+                this.legacyBatchClientId = clientId;
+            }
         } else if (!this.pending.has(clientId)) {
             // No pending batch from this client, and this is not start of a batch.
             // It should be no-batch op
@@ -549,16 +564,18 @@ implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>  {
             // It's the end of the batch. Process full batch.
             const data = this.pending.get(clientId);
             assert(data !== undefined, "has data");
-            assert(data.length === data.messages.length + 1, "length does not match");
+            assert(data.length === undefined || data.length === data.messages.length + 1,
+                "length does not match");
             this.pending.delete(clientId);
             data.messages.push(message);
             this.release(data.messages);
+            this.legacyBatchClientId = undefined;
         } else {
             // The only remaining case - it's an op in the middle of existing batch.
             const data = this.pending.get(clientId);
             assert(data !== undefined, "this was validated above, should never hit");
             data.messages.push(message);
-            assert(data.length > data.messages.length, "length does not match");
+            assert(data.length === undefined || data.length > data.messages.length, "length does not match");
         }
     }
 
@@ -567,13 +584,15 @@ implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>  {
      * @param messages - batch of ops
      */
     private release(messages: ISequencedDocumentMessage[]) {
-        let message = messages[0];
         try {
-            const clientId = this.clientIdCallback();
+            // in case exception is thrown or re-entrancy happens
+            // It's reset at the end
+            this.hitError = true;
             this.deltaScheduler.batchBegin();
 
-            let first = true;
-            for (message of messages) {
+            let index = 0;
+            const last = messages.length - 1;
+            for (const message of messages) {
                 assert(message.sequenceNumber > this.seqNumber, "seq");
                 this.seqNumber++;
                 message.sequenceNumber = this.seqNumber;
@@ -581,20 +600,13 @@ implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>  {
                 // MSN should stay in valid range!
                 assert(message.minimumSequenceNumber <= message.sequenceNumber, "msn");
 
-                if (first) {
-                    this.emitter.emit("batchBegin", message);
-                }
-
                 this.lastMessage = message;
-                this.processCallback(message, message.clientId === clientId);
-                first = false;
+                this.processCallback(message, index === 0, index === last);
+                index++;
             }
-            this.emitter.emit("batchEnd", undefined, messages[messages.length-1]);
-        } catch (error) {
-            this.hitError = true;
-            this.emitter.emit("batchEnd", error, message);
+            this.hitError = false;
+        } finally {
             this.deltaScheduler.batchEnd();
-            throw error;
         }
     }
 }
@@ -680,7 +692,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // BlobAggregationStorage is smart enough for double-wrapping to be no-op
             if (context.attachState === AttachState.Attached) {
                 // IContainerContext storage api return type still has undefined in 0.39 package version.
-                // So once we release 0.40 container-defn package we can remove this check.
+                // So once we release 0.40 container-definitions package we can remove this check.
                 assert(context.storage !== undefined, 0x1f4 /* "Attached state should have storage" */);
                 const aggrStorage = BlobAggregationStorage.wrap(
                     context.storage,
@@ -987,11 +999,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
-            this,
             ChildLogger.create(this.logger, "ScheduleManager"),
             batches,
-            (message, local) => this.processCore(message, local),
-            () => this.clientId,
+            (message, beginBatch, endBatch) => this.processCore(message, beginBatch, endBatch),
         );
     
         /**
@@ -1540,10 +1550,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // but would not modify contents details
         const message = { ...messageArg };
 
-        this.scheduleManager.process(message, local);
+        assert(local === (message.clientId === this.clientId), "local");
+        this.scheduleManager.process(message);
     }
 
-    public processCore(message: ISequencedDocumentMessage, local: boolean) {
+    public processCore(message: ISequencedDocumentMessage, beginBatch: boolean, endBatch: boolean) {
+        if (beginBatch) {
+            this.emit("batchBegin", message);
+        }
+
+        const local = message.clientId === this.clientId;
         message = unpackRuntimeMessage(message);
 
         // Chunk processing must come first given that we will transform the message to the unchunked version
@@ -1559,25 +1575,34 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.updateDocumentDirtyState(false);
         }
 
-        switch (message.type) {
-            case ContainerMessageType.Attach:
-                this.dataStores.processAttachMessage(message, local || localAck);
-                break;
-            case ContainerMessageType.Alias:
-                this.processAliasMessage(message, localOpMetadata, local);
-                break;
-            case ContainerMessageType.FluidDataStoreOp:
-                // if localAck === true, treat this as a local op because it's one we sent on a previous container
-                this.dataStores.processFluidDataStoreOp(message, local || localAck, localOpMetadata);
-                break;
-            case ContainerMessageType.BlobAttach:
-                assert(message?.metadata?.blobId, 0x12a /* "Missing blob id on metadata" */);
-                this.blobManager.processBlobAttachOp(message.metadata.blobId, local);
-                break;
-            default:
-        }
+        try {
+            switch (message.type) {
+                case ContainerMessageType.Attach:
+                    this.dataStores.processAttachMessage(message, local || localAck);
+                    break;
+                case ContainerMessageType.Alias:
+                    this.processAliasMessage(message, localOpMetadata, local);
+                    break;
+                case ContainerMessageType.FluidDataStoreOp:
+                    // if localAck === true, treat this as a local op because it's one we sent on a previous container
+                    this.dataStores.processFluidDataStoreOp(message, local || localAck, localOpMetadata);
+                    break;
+                case ContainerMessageType.BlobAttach:
+                    assert(message?.metadata?.blobId, 0x12a /* "Missing blob id on metadata" */);
+                    this.blobManager.processBlobAttachOp(message.metadata.blobId, local);
+                    break;
+                default:
+            }
 
-        this.emit("op", message);
+            this.emit("op", message);
+            if (endBatch) {
+                this.emit("batchEnd", undefined, message);
+            }
+
+        } catch (error) {
+            this.emit("batchEnd", error, message);
+            throw error;
+        }
     }
 
     private processAliasMessage(
