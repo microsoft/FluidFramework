@@ -33,8 +33,7 @@ import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache, InMemoryCache } from "./cache";
 import { RetriableGitManager } from "./retriableGitManager";
 
-// eslint-disable-next-line no-new-func,@typescript-eslint/no-implied-eval
-const isNode = (new Function("try {return this===global;}catch(e){ return false;}"))();
+const isNode = typeof window === "undefined";
 
 /**
  * Document access to underlying storage for routerlicious driver.
