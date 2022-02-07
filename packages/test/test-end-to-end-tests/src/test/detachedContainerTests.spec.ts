@@ -287,7 +287,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         await defPromise.promise;
     });
 
-    it("Fire dataStore attach ops during container attach", async () => {
+    it.skip("Fire dataStore attach ops during container attach", async () => {
         const testDataStoreType = "default";
         const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
@@ -301,13 +301,17 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         const comp2 = await requestFluidObject<ITestFluidObject>(router, "/");
 
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
-            assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
-            assert.strictEqual(contents.contents.id,
-                comp2.context.id, "DataStore id should match");
-            assert.strictEqual(contents.contents.type,
-                testDataStoreType, "DataStore type should match");
-            defPromise.resolve();
+            try{
+                assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
+                assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
+                assert.strictEqual(contents.contents.id,
+                    comp2.context.id, "DataStore id should match");
+                assert.strictEqual(contents.contents.type,
+                    testDataStoreType, "DataStore type should match");
+                defPromise.resolve();
+            }catch(e){
+                defPromise.reject(e);
+            }
             return 0;
         };
 

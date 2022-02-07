@@ -19,6 +19,7 @@ import {
 } from "./compatOptions";
 import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 import { Context } from "mocha";
+import { strict as assert } from "assert";
 
 /*
  * Generate configuration combinations for a particular compat version
@@ -181,17 +182,14 @@ function getUnexpectedLogErrorException(logger: ErrorTrackingLogger){
     }
     if(results.expectedNotFound.length > 0){
         return new Error(
-            `Expected Errors not found:\n${ JSON.stringify(results.expectedNotFound, undefined, 2)}`);
+            `Expected Events not found:\n${ JSON.stringify(results.expectedNotFound, undefined, 2)}`);
     }
 }
 
 function createExpectsTest(expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc){
     return async function (this:Context){
         const provider: TestObjectProvider | undefined = this.__fluidTestProvider;
-        if(provider === undefined){
-            console.log("NO __fluidTestProvider");
-            return await test.bind(this)();
-        }
+        assert(provider !== undefined, "Expected __fluidTestProvider on this");
         try{
             provider.logger.registerExpectedEvent(... expectedEvents);
             await test.bind(this)();
@@ -253,7 +251,6 @@ function describeCompat(
                 });
                 tests((reset: boolean = true) => {
                     if (reset) {
-                        provider.reset();
                         resetAfterEach = true;
                     }
                     return provider;

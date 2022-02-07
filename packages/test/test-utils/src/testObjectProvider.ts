@@ -127,39 +127,27 @@ export class ErrorTrackingLogger extends TelemetryLogger{
         super();
     }
 
-    private readonly expectedEvents: Map<string,ITelemetryGenericEvent[]> = new Map();
+    private readonly expectedEvents: (ITelemetryGenericEvent | undefined)[] = []
     private readonly unexpectedErrors: ITelemetryBaseEvent[] =[];
 
     public registerExpectedEvent(... events: ITelemetryGenericEvent[]){
-        for(const event of events){
-            const events = this.expectedEvents.get(event.eventName) ?? [];
-            events.push({...event})
-            this.expectedEvents.set(event.eventName, events);
-        }
+        this.expectedEvents.push(... events);
     }
 
     send(event: ITelemetryBaseEvent): void {
-
-        const expectedEvents = this.expectedEvents.get(event.eventName);
-        if(expectedEvents){
-            for(let i=0;i<expectedEvents.length;i++){
-                let matches = true;
-                const ee = expectedEvents[i];
-                for(const key of Object.keys(ee)){
-                    if(ee[key] !== event[key]){
-                        matches = false;
-                        break;
-                    }
-                }
-                if(matches){
-                    expectedEvents.splice(i,1);
-                    if(expectedEvents.length === 0){
-                        this.expectedEvents.delete(event.eventName);
-                    }
-                    if(event.category === "error"){
-                        event.category = "generic";
-                    }
+        const ee = this.expectedEvents[0];
+        if(ee?.eventName === event.eventName){
+            let matches = true;
+            for(const key of Object.keys(ee)){
+                if(ee[key] !== event[key]){
+                    matches = false;
                     break;
+                }
+            }
+            if(matches){
+                this.expectedEvents.shift();
+                if(event.category === "error"){
+                    event.category = "generic";
                 }
             }
         }
@@ -171,15 +159,13 @@ export class ErrorTrackingLogger extends TelemetryLogger{
     }
 
     public results(){
-        const expectedNotFound: ITelemetryGenericEvent[] = [];
-        expectedNotFound.concat(...[... this.expectedEvents.values()]);
-        this.expectedEvents.clear();
+        const expectedNotFound = this.expectedEvents.splice(0, this.expectedEvents.length);
 
-        const unexpectedFound =  this.unexpectedErrors.splice(0, this.unexpectedErrors.length);
+        const unexpectedErrors =  this.unexpectedErrors.splice(0, this.unexpectedErrors.length);
 
         return {
             expectedNotFound,
-            unexpectedFound,
+            unexpectedErrors,
         }
     }
 
