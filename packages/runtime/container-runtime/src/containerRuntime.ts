@@ -64,7 +64,6 @@ import {
     ISummaryConfiguration,
     ISummaryContent,
     ISummaryTree,
-    ITree,
     MessageType,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
@@ -1372,14 +1371,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         throw responseToException(create404Response(request), request);
     }
 
-    /**
-     * Notifies this object to take the snapshot of the container.
-     * @deprecated - Use summarize to get summary of the container runtime.
-     */
-    public async snapshot(): Promise<ITree> {
-        throw new Error("Do not call this API, to be removed in the following release.");
-    }
-
     private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats) {
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
         if (this.chunkMap.size > 0) {
@@ -2018,11 +2009,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             const trace = Trace.start();
             let summarizeResult: ISummaryTreeWithStats;
+            // If the GC state needs to be reset, we need to force a full tree summary and update the unreferenced
+            // state of all the nodes.
+            const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
             try {
                 summarizeResult = await this.summarize({
-                    // If the GC state needs to be reset, we need to regenerate the summary and update the unreferenced
-                    // state of all the nodes.
-                    fullTree: fullTree || this.garbageCollector.summaryStateNeedsReset,
+                    fullTree: fullTree || forcedFullTree,
                     trackState: true,
                     summaryLogger,
                     runGC: this.garbageCollector.shouldRunGC,
@@ -2051,6 +2043,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 summaryTree,
                 summaryStats,
                 generateDuration: trace.trace().duration,
+                forcedFullTree,
             } as const;
 
             continueResult = checkContinue();

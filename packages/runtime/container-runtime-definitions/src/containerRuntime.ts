@@ -31,16 +31,6 @@ import {
     IProvideFluidDataStoreRegistry,
  } from "@fluidframework/runtime-definitions";
 
-declare module "@fluidframework/core-interfaces" {
-    export interface IFluidObject {
-        /**
-         * @deprecated - use `FluidObject<IContainerRuntime>` instead
-         */
-        readonly IContainerRuntime?: IContainerRuntime;
-
-     }
-}
-
 /**
  * @deprecated - This will be removed in a later release.
  */

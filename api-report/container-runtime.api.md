@@ -47,7 +47,6 @@ import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { ITree } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
@@ -161,8 +160,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
     setFlushMode(mode: FlushMode): void;
-    // @deprecated
-    snapshot(): Promise<ITree>;
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)
@@ -365,6 +362,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
 
 // @public
 export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
+    readonly forcedFullTree: boolean;
     readonly generateDuration: number;
     // (undocumented)
     readonly stage: "generate";
