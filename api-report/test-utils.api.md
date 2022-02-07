@@ -89,8 +89,8 @@ export class ErrorTrackingLogger extends TelemetryLogger {
     registerExpectedEvent(...events: ITelemetryGenericEvent[]): void;
     // (undocumented)
     results(): {
-        expectedNotFound: ITelemetryGenericEvent[];
-        unexpectedFound: ITelemetryBaseEvent[];
+        expectedNotFound: (ITelemetryGenericEvent | undefined)[];
+        unexpectedErrors: ITelemetryBaseEvent[];
     };
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
