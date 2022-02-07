@@ -44,7 +44,7 @@ export interface ITenantStorage {
         password: string;
     };
 
-    // Summary storage url of the tenant
+    // Summary storage name of the tenant
     summaryStorageName?: string
 }
 
