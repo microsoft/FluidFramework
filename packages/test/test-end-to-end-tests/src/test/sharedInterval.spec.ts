@@ -650,7 +650,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
 
                 intervals1.changeProperties(id1, { prop1: "maybe" });
                 assertPropertyChangedArg(deltaArgs1.prop1, "yes", "Mismatch in property-changed event arg 9");
-        await provider.opProcessingController.processOutgoing();
+                await provider.opProcessingController.processOutgoing();
                 intervals2.changeProperties(id1, { prop1: null });
                 assertPropertyChangedArg(deltaArgs2.prop1, "yes", "Mismatch in property-changed event arg 10");
 
