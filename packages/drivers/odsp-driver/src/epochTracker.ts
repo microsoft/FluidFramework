@@ -183,10 +183,7 @@ export class EpochTracker implements IPersistedFileCache {
         ).then((response) => {
             epochFromResponse = response.headers.get("x-fluid-epoch");
             this.validateEpochFromResponse(epochFromResponse, fetchType);
-            response.telemetryProps = {
-                ...response.telemetryProps,
-                "X-RequestStats": clientCorrelationId,
-            };
+            response.telemetryProps.XRequestStatsHeader = clientCorrelationId;
             return response;
         }).catch(async (error) => {
             // Get the server epoch from error in case we don't have it as if undefined we won't be able
@@ -225,10 +222,7 @@ export class EpochTracker implements IPersistedFileCache {
         ).then((response) => {
             epochFromResponse = response.headers.get("x-fluid-epoch");
             this.validateEpochFromResponse(epochFromResponse, fetchType);
-            response.telemetryProps = {
-                ...response.telemetryProps,
-                "X-RequestStats": clientCorrelationId,
-            };
+            response.telemetryProps.XRequestStatsHeader = clientCorrelationId;
             return response;
         }).catch(async (error) => {
             // Get the server epoch from error in case we don't have it as if undefined we won't be able
