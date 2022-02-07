@@ -2010,12 +2010,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             const trace = Trace.start();
             let summarizeResult: ISummaryTreeWithStats;
+            // If the GC state needs to be reset, we need to force a full tree summary and update the unreferenced
+            // state of all the nodes.
+            const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
             try {
                 summarizeResult = await this.summarize({
                     summaryLogger,
-                    // If the GC state needs to be reset, we need to regenerate the summary and update the unreferenced
-                    // state of all the nodes.
-                    fullTree: fullTree || this.garbageCollector.summaryStateNeedsReset,
+                    fullTree: fullTree || forcedFullTree,
                     trackState: true,
                     runGC: this.garbageCollector.shouldRunGC,
                 });
@@ -2043,6 +2044,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 summaryTree,
                 summaryStats,
                 generateDuration: trace.trace().duration,
+                forcedFullTree,
             } as const;
 
             continueResult = checkContinue();
