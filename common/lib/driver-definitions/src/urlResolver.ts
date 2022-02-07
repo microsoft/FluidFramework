@@ -27,7 +27,13 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
     endpoints: { [name: string]: string };
 }
 
+/**
+ * Container package info handed off to resolver.
+ */
 export interface IContainerPackageInfo {
+    /**
+     * Container package name.
+     */
     name: string;
 }
 

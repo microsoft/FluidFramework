@@ -70,9 +70,8 @@ export interface IAuthorizationError extends IDriverErrorBase {
     readonly tenantId?: string;
 }
 
-// @public (undocumented)
+// @public
 export interface IContainerPackageInfo {
-    // (undocumented)
     name: string;
 }
 
