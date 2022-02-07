@@ -279,7 +279,9 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await rehydratedDataStore._root.get("my blob").get(), "utf-8"), text);
     });
 
-    it("redirect table saved in snapshot", async function() {
+    itExpects("redirect table saved in snapshot",[
+        {"eventName": "fluid:telemetry:Container:ContainerClose","message": "0x202",}
+    ], async function() {
         const detachedBlobStorage = new MockDetachedBlobStorage();
         const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: {detachedBlobStorage}});
         const detachedContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
@@ -311,7 +313,9 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await (attachedDataStore._root.get("my blob")).get(), "utf-8"), text);
     });
 
-    it("serialize/rehydrate then attach", async function() {
+    itExpects("serialize/rehydrate then attach", [
+        {"eventName": "fluid:telemetry:Container:ContainerClose",  "error": "0x202"}
+    ], async function() {
         const loader = provider.makeTestLoader(
             {...testContainerConfig, loaderProps: {detachedBlobStorage: new MockDetachedBlobStorage()}});
         const serializeContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);

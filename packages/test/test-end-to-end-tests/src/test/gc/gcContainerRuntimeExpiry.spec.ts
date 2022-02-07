@@ -86,7 +86,12 @@ import { TestDataObject } from "./mockSummarizerClient";
         assert(container1.closed, "Container1 should be closed, it has should have reached its session expiry timeout");
     });
 
-    it("Containers should have the same expiry time for the same document", async () => {
+    itExpects("Containers should have the same expiry time for the same document",
+    [
+        {"eventName": "fluid:telemetry:Container:ContainerClose","errorType": "clientSessionExpiredError"},
+        {"eventName": "fluid:telemetry:Container:ContainerClose","errorType": "clientSessionExpiredError"},
+        {"eventName": "fluid:telemetry:Container:ContainerClose","errorType": "clientSessionExpiredError"},
+    ],async () => {
         // Container1 should expire in one tick
         clock.tick(timeoutMs - 1);
         // Load the two other containers
