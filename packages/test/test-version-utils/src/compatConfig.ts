@@ -174,10 +174,10 @@ if (compatKind !== undefined) {
 
 function getUnexpectedLogErrorException(logger: ErrorTrackingLogger){
     const results = logger.results();
-    if(results.unexpectedFound.length > 0){
+    if(results.unexpectedErrors.length > 0){
         return new Error(
             // eslint-disable-next-line max-len
-            `Unexpected Errors in Logs. Use itExpects to specify expected errors:\n${ JSON.stringify(results.unexpectedFound, undefined, 2)}`);
+            `Unexpected Errors in Logs. Use itExpects to specify expected errors:\n${ JSON.stringify(results.unexpectedErrors, undefined, 2)}`);
     }
     if(results.expectedNotFound.length > 0){
         return new Error(
@@ -185,37 +185,35 @@ function getUnexpectedLogErrorException(logger: ErrorTrackingLogger){
     }
 }
 
-async function runExpectsTest(this:Context, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc){
-    const provider: TestObjectProvider | undefined = this.__fluidTestProvider;
-    if(provider === undefined){
-        return await test.bind(this)();
-    }
-    provider.logger.registerExpectedEvent(... expectedEvents as any);
-    try{
-        return await test.bind(this)();
-    }catch(error){
-        provider.logger.sendErrorEvent({eventName:"TestException"},error)
-    }
-    const err = getUnexpectedLogErrorException(provider.logger);
-    if(err !== undefined){
-        throw err;
-    }
+function createExpectsTest(expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc){
+    return async function (this:Context){
+        const provider: TestObjectProvider | undefined = this.__fluidTestProvider;
+        if(provider === undefined){
+            console.log("NO __fluidTestProvider");
+            return await test.bind(this)();
+        }
+        try{
+            provider.logger.registerExpectedEvent(... expectedEvents);
+            await test.bind(this)();
+        }catch(error){
+            provider.logger.sendErrorEvent({eventName:"TestException"},error)
+        }
+        const err = getUnexpectedLogErrorException(provider.logger);
+        if(err !== undefined){
+            throw err;
+        }
+    };
 }
 
-export const itExpects: {
-    (name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc): Mocha.Test;
-    only: (name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc)=> Mocha.Test;
-}= function(name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc){
-    return it(name, async function (){
-        await runExpectsTest.bind(this)(expectedEvents, test);
-    });
-};
+export type ExpectsTest = (name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc) => Mocha.Test
 
-itExpects.only = (function(name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc){
-    return it.only(name, async function (){
-        await runExpectsTest.bind(this)(expectedEvents, test);
-    });
-});
+export const itExpects: ExpectsTest & {only: ExpectsTest} =
+    (name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc): Mocha.Test =>
+        it(name, createExpectsTest(expectedEvents, test));
+
+itExpects.only =
+    (name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc) =>
+        it.only(name, createExpectsTest(expectedEvents, test));
 
 
 /*
@@ -303,7 +301,7 @@ export async function mochaGlobalSetup() {
     const installP = Array.from(versions.values()).map(
         async (value) => ensurePackageInstalled(baseVersion, value, reinstall));
 
-    let error: Error | undefined;
+    let error: unknown | undefined;
     for (const p of installP) {
         try {
             await p;
