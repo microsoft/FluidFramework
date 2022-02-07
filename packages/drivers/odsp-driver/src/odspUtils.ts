@@ -52,7 +52,7 @@ export interface ISnapshotContents {
 export interface IOdspResponse<T> {
     content: T;
     headers: Map<string, string>;
-    commonSpoHeaders: ITelemetryProperties;
+    telemetryProps: ITelemetryProperties;
     duration: number,
 }
 
@@ -123,7 +123,7 @@ export async function fetchHelper(
         return {
             content: response,
             headers,
-            commonSpoHeaders: getSPOAndGraphRequestIdsFromResponse(headers),
+            telemetryProps: getSPOAndGraphRequestIdsFromResponse(headers),
             duration: performance.now() - start,
         };
     }, (error) => {
@@ -170,14 +170,14 @@ export async function fetchArray(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<ArrayBuffer>> {
-    const { content, headers, commonSpoHeaders, duration } = await fetchHelper(requestInfo, requestInit);
+    const { content, headers, telemetryProps, duration } = await fetchHelper(requestInfo, requestInit);
 
     const arrayBuffer = await content.arrayBuffer();
-    commonSpoHeaders.bodySize = arrayBuffer.byteLength;
+    telemetryProps.bodySize = arrayBuffer.byteLength;
     return {
         headers,
         content: arrayBuffer,
-        commonSpoHeaders,
+        telemetryProps,
         duration,
     };
 }
@@ -191,7 +191,7 @@ export async function fetchAndParseAsJSONHelper<T>(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<T>> {
-    const { content, headers, commonSpoHeaders, duration } = await fetchHelper(requestInfo, requestInit);
+    const { content, headers, telemetryProps, duration } = await fetchHelper(requestInfo, requestInit);
     let text: string | undefined;
     try {
         text = await content.text();
@@ -209,11 +209,11 @@ export async function fetchAndParseAsJSONHelper<T>(
         );
     }
 
-    commonSpoHeaders.bodySize = text.length;
+    telemetryProps.bodySize = text.length;
     const res = {
         headers,
         content: JSON.parse(text),
-        commonSpoHeaders,
+        telemetryProps,
         duration,
     };
     return res;

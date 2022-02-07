@@ -118,7 +118,7 @@ async function getFileLinkCore(
                     },
                 };
                 const response = await fetchHelper(url, requestInit);
-                additionalProps = response.commonSpoHeaders;
+                additionalProps = response.telemetryProps;
 
                 const sharingInfo = await response.content.json();
                 const directUrl = sharingInfo?.d?.directUrl;
@@ -176,7 +176,7 @@ async function getFileItemLite(
                 );
                 const requestInit = { method: "GET", headers };
                 const response = await fetchHelper(url, requestInit);
-                additionalProps = response.commonSpoHeaders;
+                additionalProps = response.telemetryProps;
 
                 const responseJson = await response.content.json();
                 if (!isFileItemLite(responseJson)) {

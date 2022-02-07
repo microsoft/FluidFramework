@@ -183,8 +183,8 @@ export class EpochTracker implements IPersistedFileCache {
         ).then((response) => {
             epochFromResponse = response.headers.get("x-fluid-epoch");
             this.validateEpochFromResponse(epochFromResponse, fetchType);
-            response.commonSpoHeaders = {
-                ...response.commonSpoHeaders,
+            response.telemetryProps = {
+                ...response.telemetryProps,
                 "X-RequestStats": clientCorrelationId,
             };
             return response;
@@ -225,8 +225,8 @@ export class EpochTracker implements IPersistedFileCache {
         ).then((response) => {
             epochFromResponse = response.headers.get("x-fluid-epoch");
             this.validateEpochFromResponse(epochFromResponse, fetchType);
-            response.commonSpoHeaders = {
-                ...response.commonSpoHeaders,
+            response.telemetryProps = {
+                ...response.telemetryProps,
                 "X-RequestStats": clientCorrelationId,
             };
             return response;
