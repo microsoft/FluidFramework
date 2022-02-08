@@ -543,26 +543,28 @@ use_old_InterfaceDeclaration_INackContent(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
-* "InterfaceDeclaration_IPendingProposal": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IPendingProposal": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IPendingProposal():
     old.IPendingProposal;
-declare function use_current_InterfaceDeclaration_IPendingProposal(
+declare function use_current_RemovedInterfaceDeclaration_IPendingProposal(
+    // @ts-expect-error compatibility expected to be broken
     use: current.IPendingProposal);
-use_current_InterfaceDeclaration_IPendingProposal(
+use_current_RemovedInterfaceDeclaration_IPendingProposal(
     get_old_InterfaceDeclaration_IPendingProposal());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
-* "InterfaceDeclaration_IPendingProposal": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IPendingProposal": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IPendingProposal():
+declare function get_current_RemovedInterfaceDeclaration_IPendingProposal():
+    // @ts-expect-error compatibility expected to be broken
     current.IPendingProposal;
 declare function use_old_InterfaceDeclaration_IPendingProposal(
     use: old.IPendingProposal);
 use_old_InterfaceDeclaration_IPendingProposal(
-    get_current_InterfaceDeclaration_IPendingProposal());
+    get_current_RemovedInterfaceDeclaration_IPendingProposal());
 
 /*
 * Validate forward compat by using old type in place of current type
