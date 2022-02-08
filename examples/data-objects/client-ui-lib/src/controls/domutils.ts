@@ -16,22 +16,6 @@ export function clearSubtree(elm: HTMLElement) {
     }
 }
 
-export function findFirstMatch(root: HTMLElement, match: (elm: HTMLElement) => boolean): HTMLElement {
-    if (match(root)) {
-        return root;
-    } else {
-        let childElement = root.firstElementChild as HTMLElement;
-        while (childElement) {
-            const result = findFirstMatch(childElement, match);
-            if (result) {
-                return result;
-            } else {
-                childElement = childElement.nextElementSibling as HTMLElement;
-            }
-        }
-    }
-}
-
 const textWidthCache = new Map<string, Map<string, number>>();
 const lineHeightCache = new Map<string, number>();
 let cachedCanvas: HTMLCanvasElement;
@@ -77,19 +61,6 @@ export function getTextWidth(text: string, font: string) {
         fontMap.set(text, w);
     }
     return w;
-}
-
-export function getMultiTextWidth(texts: string[], font: string) {
-    // Re-use canvas object for better performance
-    const canvas = cachedCanvas || (cachedCanvas = document.createElement("canvas"));
-    const context = canvas.getContext("2d");
-    context.font = font;
-    let sum = 0;
-    for (const text of texts) {
-        const metrics = context.measureText(text);
-        sum += metrics.width;
-    }
-    return sum;
 }
 
 export function getTextHeight(elm: HTMLDivElement) {

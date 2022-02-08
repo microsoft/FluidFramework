@@ -64,7 +64,6 @@ import {
     ISummaryConfiguration,
     ISummaryContent,
     ISummaryTree,
-    ITree,
     MessageType,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
@@ -99,7 +98,6 @@ import {
     requestFluidObject,
     responseToException,
     seqFromTree,
-    convertSummaryTreeToITree,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -145,7 +143,6 @@ import {
     IGarbageCollectionRuntime,
     IGarbageCollector,
     IGCStats,
-    IUsedStateStats,
 } from "./garbageCollection";
 
 export enum ContainerMessageType {
@@ -287,6 +284,14 @@ export interface IContainerRuntimeOptions {
 
 type IRuntimeMessageMetadata = undefined | {
     batch?: boolean;
+};
+
+/**
+ * The summary tree returned by the root node. It adds state relevant to the root of the tree.
+ */
+export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
+    /** The garbage collection stats if GC ran, undefined otherwise. */
+    gcStats?: IGCStats;
 };
 
 /**
@@ -1373,21 +1378,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         throw responseToException(create404Response(request), request);
     }
 
-    /**
-     * Notifies this object to take the snapshot of the container.
-     * @deprecated - Use summarize to get summary of the container runtime.
-     */
-    public async snapshot(): Promise<ITree> {
-        const summaryResult = await this.summarize({
-            summaryLogger: this.logger,
-            fullTree: true,
-            trackState: false,
-            runGC: this.garbageCollector.shouldRunGC,
-            fullGC: true,
-        });
-        return convertSummaryTreeToITree(summaryResult.summary);
-    }
-
     private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats) {
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
         if (this.chunkMap.size > 0) {
@@ -1847,32 +1837,40 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Returns a summary of the runtime at the current sequence number.
      */
     public async summarize(options: {
-        /** Logger to use for correlated summary events */
-        summaryLogger: ITelemetryLogger,
         /** True to generate the full tree with no handle reuse optimizations; defaults to false */
         fullTree?: boolean,
         /** True to track the state for this summary in the SummarizerNodes; defaults to true */
         trackState?: boolean,
+        /** Logger to use for correlated summary events */
+        summaryLogger?: ITelemetryLogger,
         /** True to run garbage collection before summarizing; defaults to true */
         runGC?: boolean,
         /** True to generate full GC data */
         fullGC?: boolean,
         /** True to run GC sweep phase after the mark phase */
         runSweep?: boolean,
-    }): Promise<ISummaryTreeWithStats> {
+    }): Promise<IRootSummaryTreeWithStats> {
         this.verifyNotClosed();
 
-        const { summaryLogger, fullTree = false, trackState = true, runGC = true, runSweep, fullGC } = options;
+        const {
+            fullTree = false,
+            trackState = true,
+            summaryLogger = this.logger,
+            runGC = this.garbageCollector.shouldRunGC,
+            runSweep,
+            fullGC,
+        } = options;
 
+        let gcStats: IGCStats | undefined;
         if (runGC) {
-            await this.collectGarbage({ logger: summaryLogger, runSweep, fullGC });
+            gcStats = await this.collectGarbage({ logger: summaryLogger, runSweep, fullGC });
         }
 
         const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
         assert(summarizeResult.summary.type === SummaryType.Tree,
             0x12f /* "Container Runtime's summarize should always return a tree" */);
 
-        return summarizeResult as ISummaryTreeWithStats;
+        return { ...summarizeResult, gcStats } as IRootSummaryTreeWithStats;
     }
 
     /**
@@ -1900,9 +1898,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param usedRoutes - The routes that are used in all nodes in this Container.
      * @param gcTimestamp - The time when GC was run that generated these used routes. If any node node becomes
      * unreferenced as part of this GC run, this should be used to update the time when it happens.
-     * @returns the statistics of the used state of the data stores.
      */
-    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats {
+    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         // Update our summarizer node's used routes. Updating used routes in summarizer node before
         // summarizing is required and asserted by the the summarizer node. We are the root and are
         // always referenced, so the used routes is only self-route (empty string).
@@ -2018,14 +2015,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             const trace = Trace.start();
-            let summarizeResult: ISummaryTreeWithStats;
+            let summarizeResult: IRootSummaryTreeWithStats;
+            // If the GC state needs to be reset, we need to force a full tree summary and update the unreferenced
+            // state of all the nodes.
+            const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
             try {
                 summarizeResult = await this.summarize({
-                    summaryLogger,
-                    // If the GC state needs to be reset, we need to regenerate the summary and update the unreferenced
-                    // state of all the nodes.
-                    fullTree: fullTree || this.garbageCollector.summaryStateNeedsReset,
+                    fullTree: fullTree || forcedFullTree,
                     trackState: true,
+                    summaryLogger,
                     runGC: this.garbageCollector.shouldRunGC,
                 });
             } catch (error) {
@@ -2045,6 +2043,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const summaryStats: IGeneratedSummaryStats = {
                 dataStoreCount: this.dataStores.size,
                 summarizedDataStoreCount: this.dataStores.size - handleCount,
+                gcStateUpdatedDataStoreCount: summarizeResult.gcStats?.updatedDataStoreCount,
                 ...partialStats,
             };
             const generateSummaryData = {
@@ -2052,6 +2051,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 summaryTree,
                 summaryStats,
                 generateDuration: trace.trace().duration,
+                forcedFullTree,
             } as const;
 
             continueResult = checkContinue();
@@ -2412,20 +2412,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private async fetchSnapshotFromStorage(
         versionId: string | null, logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
-        return PerformanceEvent.timedExecAsync(logger, event, async (perfEvent) => {
-            const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
-            const trace = Trace.start();
+        return PerformanceEvent.timedExecAsync(
+            logger, event, async (perfEvent: {
+                end: (arg0: {
+                    getVersionDuration?: number | undefined;
+                    getSnapshotDuration?: number | undefined;
+                }) => void; }) => {
+                    const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
+                    const trace = Trace.start();
 
-            const versions = await this.storage.getVersions(versionId, 1);
-            assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
-            stats.getVersionDuration = trace.trace().duration;
+                    const versions = await this.storage.getVersions(versionId, 1);
+                    assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
+                    stats.getVersionDuration = trace.trace().duration;
 
-            const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
-            assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
-            stats.getSnapshotDuration = trace.trace().duration;
+                    const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
+                    assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
+                    stats.getSnapshotDuration = trace.trace().duration;
 
-            perfEvent.end(stats);
-            return maybeSnapshot;
+                    perfEvent.end(stats);
+                    return maybeSnapshot;
         });
     }
 

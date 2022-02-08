@@ -33,6 +33,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
                     tenantId,
                 },
                 reconnection: false,
+                // Default to websocket connection, with long-polling disabled
                 transports: ["websocket"],
                 timeout: timeoutMs,
             });
@@ -46,7 +47,9 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
             versions: protocolVersions,
         };
 
-        const deltaConnection = new R11sDocumentDeltaConnection(socket, id, logger);
+        // TODO: expose to host at factory level
+        const enableLongPollingDowngrades = true;
+        const deltaConnection = new R11sDocumentDeltaConnection(socket, id, logger, enableLongPollingDowngrades);
 
         await deltaConnection.initialize(connectMessage, timeoutMs);
         return deltaConnection;

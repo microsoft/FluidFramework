@@ -5,7 +5,6 @@
 
 import { ITelemetryBaseLogger, IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
-    IFluidObject,
     IFluidRouter,
     IProvideFluidHandleContext,
     IFluidHandle,
@@ -286,7 +285,7 @@ export interface IFluidDataStoreContext extends
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IFluidObject & FluidObject;
+    readonly scope: FluidObject;
 
     /**
      * Returns the current quorum.

@@ -50,7 +50,6 @@ import {
     LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
-import { IUsedStateStats } from "./garbageCollection";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -582,9 +581,8 @@ export class DataStores implements IDisposable {
      * @param usedRoutes - The routes that are used in all data stores in this Container.
      * @param gcTimestamp - The time when GC was run that generated these used routes. If any node node becomes
      * unreferenced as part of this GC run, this should be used to update the time when it happens.
-     * @returns the statistics of the used state of the data stores.
      */
-    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats {
+    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         // Get a map of data store ids to routes used in it.
         const usedDataStoreRoutes = unpackChildNodesUsedRoutes(usedRoutes);
 
@@ -597,13 +595,6 @@ export class DataStores implements IDisposable {
         for (const [contextId, context] of this.contexts) {
             context.updateUsedRoutes(usedDataStoreRoutes.get(contextId) ?? [], gcTimestamp);
         }
-
-        // Return the number of data stores that are unused.
-        const dataStoreCount = this.contexts.size;
-        return {
-            totalNodeCount: dataStoreCount,
-            unusedNodeCount: dataStoreCount - usedDataStoreRoutes.size,
-        };
     }
 
     /**
