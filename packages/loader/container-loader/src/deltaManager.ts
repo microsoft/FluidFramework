@@ -280,7 +280,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             incomingOpHandler:(messages: ISequencedDocumentMessage[], reason: string) =>
                 this.enqueueMessages(messages, reason),
             signalHandler: (message: ISignalMessage) => this._inboundSignal.push(message),
-            reconnectionDelayHandler: (delayMs: number, error: IAnyDriverError) =>
+            reconnectionDelayHandler: (delayMs: number, error: unknown) =>
                 this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
             closeHandler: (error: any) => this.close(error),
             disconnectHandler: (reason: string) => this.disconnectHandler(reason),
@@ -598,7 +598,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
      * @param delayMs - Duration of the delay
      * @param error - error object indicating the throttling
      */
-    public emitDelayInfo(id: string, delayMs: number, error: IAnyDriverError) {
+    public emitDelayInfo(id: string, delayMs: number, error: unknown) {
         const timeNow = Date.now();
         this.throttlingIdSet.add(id);
         if (delayMs > 0 && (timeNow + delayMs > this.timeTillThrottling)) {

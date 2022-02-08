@@ -124,7 +124,7 @@ export interface IConnectionManagerFactoryArgs {
      * Can be called many times while not connected.
      * Situation is considered resolved when connection is established and connectHandler is called.
      */
-    readonly reconnectionDelayHandler: (delayMs: number, error: IAnyDriverError) => void,
+    readonly reconnectionDelayHandler: (delayMs: number, error: unknown) => void,
 
     /**
      * Called by connection manager whwnever critical error happens and container should be closed.
