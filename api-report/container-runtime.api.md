@@ -47,7 +47,6 @@ import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { ITree } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
@@ -148,8 +147,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     process(messageArg: ISequencedDocumentMessage, local: boolean): void;
     // (undocumented)
     processSignal(message: ISignalMessage, local: boolean): void;
-    // (undocumented)
-    readonly raiseContainerWarning: (warning: ContainerWarning) => void;
     refreshLatestSummaryAck(proposalHandle: string | undefined, ackHandle: string, summaryRefSeq: number, summaryLogger: ITelemetryLogger): Promise<void>;
     request(request: IRequest): Promise<IResponse>;
     resolveHandle(request: IRequest): Promise<IResponse>;
@@ -163,8 +160,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
     setFlushMode(mode: FlushMode): void;
-    // @deprecated
-    snapshot(): Promise<ITree>;
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)
@@ -174,9 +169,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     submitSignal(type: string, content: any): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     summarize(options: {
-        summaryLogger: ITelemetryLogger;
         fullTree?: boolean;
         trackState?: boolean;
+        summaryLogger?: ITelemetryLogger;
         runGC?: boolean;
         fullGC?: boolean;
         runSweep?: boolean;
@@ -367,6 +362,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
 
 // @public
 export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
+    readonly forcedFullTree: boolean;
     readonly generateDuration: number;
     // (undocumented)
     readonly stage: "generate";

@@ -29,6 +29,8 @@ import {
     loggerToMonitoringContext,
     MonitoringContext,
 } from "@fluidframework/telemetry-utils";
+// For now, this package is versioned and released in unison with the specific drivers
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 // Local storage key to disable the BatchManager
 const batchManagerDisabledKey = "Fluid.Driver.BaseDocumentDeltaConnection.DisableBatchManager";
@@ -69,6 +71,8 @@ export class DocumentDeltaConnection
 
     private _details: IConnected | undefined;
 
+    private reconnectAttempts: number = 0;
+
     // Listeners only needed while the connection is in progress
     private readonly connectionListeners: Map<string, (...args: any[]) => void> = new Map();
     // Listeners used throughout the lifetime of the DocumentDeltaConnection
@@ -106,11 +110,14 @@ export class DocumentDeltaConnection
     /**
      * @param socket - websocket to be used
      * @param documentId - ID of the document
+     * @param logger - for reporting telemetry events
+     * @param enableLongPollingDowngrades - allow connection to be downgraded to long-polling on websocket failure
      */
     protected constructor(
         protected readonly socket: SocketIOClient.Socket,
         public documentId: string,
         logger: ITelemetryLogger,
+        private readonly enableLongPollingDowngrades: boolean = false,
     ) {
         super();
 
@@ -313,7 +320,8 @@ export class DocumentDeltaConnection
     public dispose() {
         this.disposeCore(
             false, // socketProtocolError
-            createGenericNetworkError("clientClosingConnection", undefined, true /* canRetry */));
+            createGenericNetworkError(
+                "clientClosingConnection", undefined, { canRetry: true }, { driverVersion }));
     }
 
     protected disposeCore(socketProtocolError: boolean, err: any) {
@@ -358,14 +366,44 @@ export class DocumentDeltaConnection
 
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
+                let isWebSocketTransportError = false;
                 try {
                     const description = error?.description;
                     if (description && typeof description === "object") {
+                        if (error.type === "TransportError") {
+                            isWebSocketTransportError = true;
+                        }
                         // That's a WebSocket. Clear it as we can't log it.
                         description.target = undefined;
                     }
                 } catch(_e) {}
+
+                // Handle socket transport downgrading.
+                if (isWebSocketTransportError &&
+                    this.enableLongPollingDowngrades &&
+                    this.socket.io.opts.transports?.[0] !== "polling") {
+                    // Downgrade transports to polling upgrade mechanism.
+                    this.socket.io.opts.transports = ["polling", "websocket"];
+                    // Don't alter reconnection behavior if already enabled.
+                    if (!this.socket.io.reconnection()) {
+                        // Allow single reconnection attempt using polling upgrade mechanism.
+                        this.socket.io.reconnection(true);
+                        this.socket.io.reconnectionAttempts(1);
+                    }
+                }
+
+                // Allow built-in socket.io reconnection handling.
+                if (this.socket.io.reconnection() &&
+                    this.reconnectAttempts < this.socket.io.reconnectionAttempts()) {
+                    // Reconnection is enabled and maximum reconnect attempts have not been reached.
+                    return;
+                }
+
                 fail(true, this.createErrorObject("connectError", error));
+            });
+
+            this.addConnectionListener("reconnect_attempt", () => {
+                this.reconnectAttempts++;
             });
 
             // Listen for timeouts
@@ -537,7 +575,8 @@ export class DocumentDeltaConnection
         const errorObj = createGenericNetworkError(
             `socketError [${handler}]`,
             message,
-            canRetry,
+            { canRetry },
+            { driverVersion },
         );
 
         return errorObj;

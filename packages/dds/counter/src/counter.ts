@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage,  MessageType } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
@@ -142,13 +142,6 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
         const content = await readAndParse<ICounterSnapshotFormat>(storage, snapshotFileName);
 
         this._value = content.value;
-    }
-
-    /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
-     * @internal
-     */
-    protected registerCore() {
     }
 
     /**

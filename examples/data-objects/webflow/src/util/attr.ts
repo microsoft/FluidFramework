@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { areStringsEquivalent } from "@fluid-example/flow-util-lib";
 import { ISegment } from "@fluidframework/merge-tree";
 import { emptyObject } from "./";
+import { areStringsEquivalent } from "./string";
 
 export interface IHTMLAttributes {
     src?: string;
