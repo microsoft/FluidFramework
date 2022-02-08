@@ -20,6 +20,8 @@ import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
+import React from "react";
+import ReactDOM from "react-dom";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
 import { Cursor, IRange } from "./cursor";
@@ -31,6 +33,7 @@ import {
     IViewCursor,
     IViewLayout,
 } from "./layout";
+import { CommandBox } from "./commandBox";
 
 function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
     if (marker && marker.properties && marker.properties.crefTest) {
@@ -2251,6 +2254,9 @@ export class FlowView extends ui.Component {
 
     private readonly undoRedoManager: UndoRedoStackManager;
 
+    private showCommandBox: () => void = () => {};
+    private hideCommandBox: () => void = () => {};
+
     constructor(
         element: HTMLDivElement,
         public readonly runtime: IFluidDataStoreRuntime,
@@ -2308,6 +2314,44 @@ export class FlowView extends ui.Component {
         });
 
         this.cursor = new FlowCursor(this.viewportDiv);
+
+        // Not great construction -- this slack wrapper div lets the command box use the flow-view div above act as
+        // its containing box while remaining out of the way for hit testing, etc.  Once FlowView is also React, it
+        // should be easier to coordinate the layout.
+        const commandBoxDiv = document.createElement("div");
+        commandBoxDiv.classList.add("command-box-wrapper");
+        this.element.appendChild(commandBoxDiv);
+
+        const registerShowListener = (callback: () => void) => {
+            this.showCommandBox = callback;
+        };
+        const registerHideListener = (callback: () => void) => {
+            this.hideCommandBox = callback;
+        };
+        const commandBoxCommands = [
+            {
+                friendlyName: "ALPHA",
+                exec: () => { console.log("ALPHA"); },
+            },
+            {
+                friendlyName: "BETA",
+                exec: () => { console.log("BETA"); },
+            },
+        ];
+
+        const commandBoxElement = React.createElement(
+            CommandBox,
+            {
+                registerShowListener,
+                registerHideListener,
+                commands: commandBoxCommands,
+            },
+        );
+
+        ReactDOM.render(
+            commandBoxElement,
+            commandBoxDiv,
+        );
     }
 
     public updatePresenceCursors() {
@@ -2935,6 +2979,7 @@ export class FlowView extends ui.Component {
             } else if (this.activeSearchBox) {
                 if (e.keyCode === KeyCode.esc) {
                     this.activeSearchBox.dismiss();
+                    this.hideCommandBox();
                     this.activeSearchBox = undefined;
                 } else {
                     this.activeSearchBox.keydown(e);
@@ -3071,6 +3116,7 @@ export class FlowView extends ui.Component {
             } else if (this.activeSearchBox) {
                 if (this.activeSearchBox.keypress(e)) {
                     this.activeSearchBox.dismiss();
+                    this.hideCommandBox();
                     this.activeSearchBox = undefined;
                 }
             } else {
@@ -3533,6 +3579,7 @@ export class FlowView extends ui.Component {
             }
             case CharacterCodes.M: {
                 this.activeSearchBox = searchBoxCreate(this, this.viewportDiv, this.cmdTree);
+                this.showCommandBox();
                 break;
             }
             case CharacterCodes.L:
