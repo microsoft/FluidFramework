@@ -62,7 +62,7 @@ const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 // Feature gate key to write GC data at the root of the summary tree.
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
-// Feature gate key to write GC data at the root of the summary tree.
+// Feature gate key to expire a session after a set period of time.
 const runSessionExpiry = "Fluid.GarbageCollection.RunSessionExpiry";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -324,7 +324,7 @@ export class GarbageCollector implements IGarbageCollector {
             // For new documents, GC has to be exlicitly enabled via the gcAllowed flag in GC options.
             this.gcEnabled = gcOptions.gcAllowed === true;
             // Set the Session Expiry only if the flag is enabled or the test option is set.
-            if (this.mc.config.getBoolean(runSessionExpiry)) {
+            if (this.mc.config.getBoolean(runSessionExpiry) && this.gcEnabled) {
                 this.sessionExpiryTimeoutMs = defaultSessionExpiryMs;
             }
         }
