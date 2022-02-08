@@ -52,7 +52,7 @@ export interface ISnapshotContents {
 export interface IOdspResponse<T> {
     content: T;
     headers: Map<string, string>;
-    telemetryProps: ITelemetryProperties;
+    propsToLog: ITelemetryProperties;
     duration: number,
 }
 
@@ -123,7 +123,7 @@ export async function fetchHelper(
         return {
             content: response,
             headers,
-            telemetryProps: getSPOAndGraphRequestIdsFromResponse(headers),
+            propsToLog: getSPOAndGraphRequestIdsFromResponse(headers),
             duration: performance.now() - start,
         };
     }, (error) => {
@@ -170,14 +170,14 @@ export async function fetchArray(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<ArrayBuffer>> {
-    const { content, headers, telemetryProps, duration } = await fetchHelper(requestInfo, requestInit);
+    const { content, headers, propsToLog, duration } = await fetchHelper(requestInfo, requestInit);
 
     const arrayBuffer = await content.arrayBuffer();
-    telemetryProps.bodySize = arrayBuffer.byteLength;
+    propsToLog.bodySize = arrayBuffer.byteLength;
     return {
         headers,
         content: arrayBuffer,
-        telemetryProps,
+        propsToLog,
         duration,
     };
 }
@@ -191,7 +191,7 @@ export async function fetchAndParseAsJSONHelper<T>(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<T>> {
-    const { content, headers, telemetryProps, duration } = await fetchHelper(requestInfo, requestInit);
+    const { content, headers, propsToLog, duration } = await fetchHelper(requestInfo, requestInit);
     let text: string | undefined;
     try {
         text = await content.text();
@@ -209,11 +209,11 @@ export async function fetchAndParseAsJSONHelper<T>(
         );
     }
 
-    telemetryProps.bodySize = text.length;
+    propsToLog.bodySize = text.length;
     const res = {
         headers,
         content: JSON.parse(text),
-        telemetryProps,
+        propsToLog,
         duration,
     };
     return res;

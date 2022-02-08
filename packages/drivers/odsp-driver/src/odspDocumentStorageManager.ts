@@ -271,7 +271,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     ));
                     event.end({
                         blobId: res.content.id,
-                        ...res.telemetryProps,
+                        ...res.propsToLog,
                     });
                     return res;
                 },
@@ -310,7 +310,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         const res = await this.epochTracker.fetchArray(url, { headers }, "blob");
                         event.end({
                             waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
-                            ...res.telemetryProps,
+                            ...res.propsToLog,
                             attempts: options.refresh ? 2 : 1,
                         });
                         const cacheControl = res.headers.get("cache-control");
@@ -319,7 +319,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                 eventName: "NonCacheableBlob",
                                 cacheControl,
                                 blobId,
-                                ...res.telemetryProps,
+                                ...res.propsToLog,
                             });
                         }
                         return res.content;

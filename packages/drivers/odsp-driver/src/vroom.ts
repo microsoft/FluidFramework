@@ -94,7 +94,7 @@ export async function fetchJoinSession(
 
             // TODO SPO-specific telemetry
             event.end({
-                ...response.telemetryProps,
+                ...response.propsToLog,
                 // pushV2 websocket urls will contain pushf
                 pushv2: socketUrl.includes("pushf"),
                 webSocketHostName,

@@ -173,7 +173,7 @@ describe("Tests for Epoch Tracker", () => {
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
                 {},
                 { "x-fluid-epoch": "epoch1" });
-        assert(response.telemetryProps.XRequestStatsHeader !== undefined, "CorrelationId should be present");
+        assert(response.propsToLog.XRequestStatsHeader !== undefined, "CorrelationId should be present");
     });
 
     it("Epoch error should not occur if response does not contain epoch", async () => {
