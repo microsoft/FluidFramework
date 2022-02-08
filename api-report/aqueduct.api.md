@@ -150,8 +150,8 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     // (undocumented)
     get disposed(): boolean;
     finishInitialization(existing: boolean): Promise<void>;
-    // (undocumented)
-    static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject<DataObjectTypes>>;
+    // @deprecated (undocumented)
+    static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject>;
     getFluidObjectFromDirectory<T extends IFluidLoadable>(key: string, directory: IDirectory, getObjectFromDirectory?: (id: string, directory: IDirectory) => IFluidHandle | undefined): Promise<T | undefined>;
     protected getService<T extends FluidObject>(id: string): Promise<T>;
     get handle(): IFluidHandle<this>;
@@ -192,7 +192,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     get IFluidDataStoreFactory(): this;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined;
-    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<FluidDataStoreRuntime>;
+    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<any>;
     get registryEntry(): NamedFluidDataStoreRegistryEntry;
     // (undocumented)
     readonly type: string;

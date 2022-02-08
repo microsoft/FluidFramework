@@ -414,10 +414,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         if (this.graphAttachState !== AttachState.Detached) {
             return;
         }
-        if(!this.initialized) {
-            // assert(this.initialized, "data store must be initialized before attach to graph");
-            this.logger.sendErrorEvent({eventName:"attachGraphBeforeInitialize"});
-        }
+        assert(this.initialized, "data store must be initialized before attach to graph");
 
         this.graphAttachState = AttachState.Attaching;
         if (this.boundhandles !== undefined) {

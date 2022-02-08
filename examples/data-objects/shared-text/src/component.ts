@@ -9,10 +9,8 @@ import registerDebug from "debug";
 import { controls, ui } from "@fluid-example/client-ui-lib";
 import { performance } from "@fluidframework/common-utils";
 import {
-    FluidObject,
     IFluidHandle,
     IFluidLoadable,
-    IFluidRouter,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -192,12 +190,9 @@ export class SharedTextDataStoreFactory implements IFluidDataStoreFactory {
 
     public async instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean) {
         const runtimeClass = mixinRequestHandler(
-            async (request: IRequest, runtime) => {
-                const router: FluidObject<IFluidRouter> = await runtime.handle.get();
-                if(router.IFluidRouter) {
-                    return router.IFluidRouter.request(request);
-                }
-                return {status:500, value:"NotIFluidRouter", mimeType:"test/plain"};
+            async (request: IRequest) => {
+                const router = await routerP;
+                return router.request(request);
             });
 
         const runtime = new runtimeClass(
@@ -207,8 +202,9 @@ export class SharedTextDataStoreFactory implements IFluidDataStoreFactory {
                 SharedString.getFactory(),
             ].map((factory) => [factory.type, factory])),
             existing,
-            ()=>SharedTextRunner.load(runtime, context, existing),
+            ()=>routerP
         );
+        const routerP = SharedTextRunner.load(runtime, context, existing);
 
         return runtime;
     }
