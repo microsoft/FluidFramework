@@ -31,7 +31,12 @@ export function isOnline(): OnlineStatus {
 
 /**
  * Interface describing errors and warnings raised by any driver code.
- * errorType would be either DriverErrorType or the specific driver's specialized error type enum
+ * Not expected to be implemented by a class or an object literal, but rather used in place of
+ * any or unknown in various function signatures that pass errors around.
+ *
+ * "Any" in the interface name is a nod to the fact that errorType has lost its type constraint.
+ * It will be either DriverErrorType or the specific driver's specialized error type enum,
+ * but we can't reference a specific driver's error type enum in this code.
  */
  export interface IAnyDriverError {
     readonly errorType: string;
@@ -126,7 +131,6 @@ export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
     }
 }
 
-//* Check
 /**
  * Throttling error class - used to communicate all throttling errors
  */
