@@ -106,7 +106,6 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  * (
  *     changed: IDirectoryValueChanged,
  *     local: boolean,
- *     op: ISequencedDocumentMessage | null,
  *     target: IEventThisPlaceHolder,
  * ) => void
  * ```
@@ -114,8 +113,6 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  *   changed.
  *
  * - `local` - Whether the change originated from the this client.
- *
- * - `op` - The op that caused the change in value.
  *
  * - `target` - The ISharedDirectory itself.
  *
@@ -126,11 +123,40 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  * #### Listener signature
  *
  * ```typescript
- * (local: boolean, op: ISequencedDocumentMessage | null, target: IEventThisPlaceHolder) => void
+ * (local: boolean, target: IEventThisPlaceHolder) => void
  * ```
  * - `local` - Whether the clear originated from the this client.
  *
- * - `op` - The op that caused the clear.
+ * - `target` - The ISharedDirectory itself.
+ * 
+ * ### "subDirectoryCreated"
+ *
+ * The subDirectoryCreated event is emitted when a subdirectory is created.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (changed: ISubDirectoryCreated, local: boolean, target: IEventThisPlaceHolder) => void
+ * ```
+ * - `changed` - Information on the key that is added, and the path to the key that changed.
+ *
+ * - `local` - Whether the clear originated from the this client.
+ *
+ * - `target` - The ISharedDirectory itself.
+ * 
+ * * ### "subDirectoryDeleted"
+ *
+ * The subDirectoryDeleted event is emitted when a subdirectory is deleted.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (changed: ISubDirectoryDeleted, local: boolean, target: IEventThisPlaceHolder) => void
+ * ```
+ * - `changed` - Information on the key that is deleted, its previous value and the path to the 
+ * key that is deleted.
+ *
+ * - `local` - Whether the clear originated from the this client.
  *
  * - `target` - The ISharedDirectory itself.
  */
@@ -141,6 +167,16 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
         target: IEventThisPlaceHolder,
     ) => void);
     (event: "clear", listener: (
+        local: boolean,
+        target: IEventThisPlaceHolder,
+    ) => void);
+    (event: "subDirectoryCreated", listener: (
+        changed: ISubDirectoryCreated,
+        local: boolean,
+        target: IEventThisPlaceHolder,
+    ) => void);
+    (event: "subDirectoryDeleted", listener: (
+        changed: ISubDirectoryDeleted,
         local: boolean,
         target: IEventThisPlaceHolder,
     ) => void);
@@ -193,6 +229,41 @@ export interface IDirectoryValueChanged extends IValueChanged {
      * The absolute path to the IDirectory storing the key which changed.
      */
     path: string;
+}
+
+/**
+ *  Event parameter for when a sub directory is created.
+ */
+export interface ISubDirectoryCreated {
+    /**
+     * The key storing the directory which is added.
+     */
+    key: string;
+
+    /**
+     * The path at which the sub directory is added.
+     */
+    path: string;
+}
+
+/**
+ *  Event parameter for when a sub directory is deleted.
+ */
+export interface ISubDirectoryDeleted {
+    /**
+     * The key storing the directory which is deleted.
+     */
+    key: string;
+
+    /**
+     * The path at which the sub directory is deleted.
+     */
+    path: string;
+
+    /**
+     * The sub directory which was stored at the key prior to deletion.
+     */
+    previousValue: IDirectory;
 }
 
 /**
