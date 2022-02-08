@@ -96,7 +96,18 @@ export class BlobManager {
         return new BlobHandle(
             `${BlobManager.basePath}/${storageId}`,
             this.routeContext,
-            async () => this.getStorage().readBlob(storageId),
+            async () => {
+                return this.getStorage().readBlob(storageId).catch((error) => {
+                    this.logger.sendErrorEvent(
+                        {
+                            eventName:"AttachmentReadBlobError",
+                            id: storageId,
+                        },
+                        error,
+                    );
+                    throw error;
+                })
+            },
         );
     }
 
@@ -104,7 +115,7 @@ export class BlobManager {
         if (this.runtime.attachState === AttachState.Attaching) {
             // blob upload is not supported in "Attaching" state
             this.logger.sendTelemetryEvent({ eventName: "CreateBlobWhileAttaching" });
-            await new Promise<void>((res) => this.runtime.once("attached", res));
+            await new Promise<void>((resolve) => this.runtime.once("attached", resolve));
         }
 
         const response = await this.getStorage().createBlob(blob);

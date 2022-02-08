@@ -32,7 +32,7 @@ import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-de
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { RequestParser, createDataStoreFactory } from "@fluidframework/runtime-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { MultiUrlResolver } from "./multiResolver";
 import { deltaConns, getDocumentServiceFactory } from "./multiDocumentServiceFactory";
 import { OdspPersistentCache } from "./odspPersistantCache";
@@ -91,9 +91,10 @@ export type RouteOptions =
     | IOdspRouteOptions;
 
 function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModule): IFluidModule {
-    const fluidExport: Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory> = fluidModule.fluidExport;
-    if (fluidExport.IRuntimeFactory === undefined) {
-        const dataStoreFactory = fluidExport.IFluidDataStoreFactory;
+    const fluidModuleExport: FluidObject<IProvideRuntimeFactory & IFluidDataStoreFactory> =
+        fluidModule.fluidExport;
+    if (fluidModuleExport.IRuntimeFactory === undefined) {
+        const dataStoreFactory = fluidModuleExport.IFluidDataStoreFactory;
 
         const defaultFactory = createDataStoreFactory(packageJson.name, dataStoreFactory);
 
@@ -105,9 +106,8 @@ function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule:
         );
         return {
             fluidExport: {
-                IRuntimeFactory: runtimeFactory,
-                IFluidDataStoreFactory: dataStoreFactory,
-            },
+                IRuntimeFactory: runtimeFactory
+            }
         };
     }
     return fluidModule;
@@ -266,6 +266,7 @@ export async function start(
                 await urlResolver.resolve({ url: documentUrl }),
                 async () => options.odspAccessToken,
                 odspPersistantCache,
+                false /** forceAccessTokenViaAuthorizationHeader */,
                 new BaseTelemetryNullLogger(),
                 undefined,
             );

@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { DataObject, LegacyDataObject } from "./dataObject";
-export { PureDataObject, LegacyPureDataObject } from "./pureDataObject";
-export { DataObjectTypes, DataObjectType, IDataObjectProps } from "./types";
+export { DataObject } from "./dataObject";
+export { PureDataObject } from "./pureDataObject";
+export { DataObjectTypes, IDataObjectProps } from "./types";

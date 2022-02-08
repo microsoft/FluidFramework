@@ -13,7 +13,7 @@
             "optionOverrides":{
                 "odsp":{
                     "loader":{
-                        "summarizeProtocolTree":  [true,false]
+                        "summarizeProtocolTree": [true,false]
                     }
                 }
             }
@@ -57,6 +57,22 @@
             "progressIntervalMs": 15000,
             "numClients": 120,
             "totalSendCount": 10000,
+            "readWriteCycleMs": 30000
+        },
+        "scale": {
+            "opRatePerMin": 60,
+            "progressIntervalMs": 20000,
+            "numClients": 10,
+            "totalSendCount": 70000,
+            "readWriteCycleMs": 30000,
+            "faultInjectionMinMs": 900000,
+            "faultInjectionMaxMs": 1800000
+        },
+        "scale_nofault": {
+            "opRatePerMin": 60,
+            "progressIntervalMs": 20000,
+            "numClients": 10,
+            "totalSendCount": 70000,
             "readWriteCycleMs": 30000
         },
         "blobs": {

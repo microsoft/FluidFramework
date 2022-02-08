@@ -25,7 +25,9 @@ export interface IUndoConsumer {
  * undo redo stack manager
  */
 export class SharedTreeUndoRedoHandler {
-	constructor(private readonly stackManager: IUndoConsumer) {}
+	// False positive
+	// eslint-disable-next-line @typescript-eslint/prefer-readonly
+	constructor(private stackManager: IUndoConsumer) {}
 
 	public attachTree(tree: SharedTree) {
 		tree.on(SharedTreeEvent.EditCommitted, this.treeDeltaHandler);
@@ -55,6 +57,8 @@ export class SharedTreeUndoRedoHandler {
  * Tracks a change on a shared tree and allows reverting it
  */
 export class SharedTreeRevertible implements IRevertible {
+	// False positive
+	// eslint-disable-next-line @typescript-eslint/prefer-readonly
 	constructor(private editId: EditId, private readonly tree: SharedTree) {}
 
 	public revert() {

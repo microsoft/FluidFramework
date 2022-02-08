@@ -4,9 +4,10 @@
  */
 
 import {
+    IContainer,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
-import { Container, Loader } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IDocumentServiceFactory,
@@ -22,7 +23,7 @@ export interface IGetContainerParams {
 
 export async function createContainer(
     params: IGetContainerParams,
-): Promise<Container> {
+): Promise<IContainer> {
     const module = { fluidExport: params.containerRuntimeFactory };
     const codeLoader = { load: async () => module };
 
@@ -43,7 +44,7 @@ export async function createContainer(
 
 export async function getContainer(
     params: IGetContainerParams,
-): Promise<Container> {
+): Promise<IContainer> {
     const module = { fluidExport: params.containerRuntimeFactory };
     const codeLoader = { load: async () => module };
 

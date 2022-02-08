@@ -6,11 +6,9 @@
 
 import { AsyncFluidObjectProvider } from '@fluidframework/synthesize';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
-import { DependencyContainerRegistry } from '@fluidframework/synthesize';
 import { EventForwarder } from '@fluidframework/common-utils';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { FluidObjectKey } from '@fluidframework/synthesize';
 import { FluidObjectSymbolProvider } from '@fluidframework/synthesize';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
@@ -25,10 +23,10 @@ import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definiti
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidDependencySynthesizer } from '@fluidframework/synthesize';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidMountableViewClass } from '@fluidframework/view-interfaces';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
@@ -43,7 +41,7 @@ import { RuntimeRequestHandler } from '@fluidframework/request-handler';
 
 // @public
 export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements IProvideFluidDataStoreRegistry {
-    constructor(registryEntries: NamedFluidDataStoreRegistryEntries, providerEntries?: DependencyContainerRegistry, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions | undefined);
+    constructor(registryEntries: NamedFluidDataStoreRegistryEntries, dependencyContainer?: IFluidDependencySynthesizer | undefined, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions | undefined);
     protected containerHasInitialized(runtime: IContainerRuntime): Promise<void>;
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
@@ -69,7 +67,7 @@ export abstract class BaseContainerService implements IFluidRouter {
 
 // @public
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
-    constructor(defaultFactory: IFluidDataStoreFactory, registryEntries: NamedFluidDataStoreRegistryEntries, providerEntries?: DependencyContainerRegistry, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions);
+    constructor(defaultFactory: IFluidDataStoreFactory, registryEntries: NamedFluidDataStoreRegistryEntries, dependencyContainer?: IFluidDependencySynthesizer, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions);
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
     static readonly defaultDataStoreId = "default";
@@ -80,7 +78,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 // @public (undocumented)
 export type ContainerServiceRegistryEntries = Iterable<[
     string,
-    (runtime: IContainerRuntime) => Promise<IFluidObject & FluidObject>
+    (runtime: IContainerRuntime) => Promise<FluidObject>
 ]>;
 
 // @public
@@ -95,14 +93,8 @@ export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> ex
 
 // @public
 export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
-    // Warning: (ae-incompatible-release-tags) The symbol "__constructor" is marked as @public, but its signature references "DataObjectType" which is marked as @internal
-    constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory[] | undefined, optionalProviders: FluidObjectSymbolProvider<DataObjectType<I, "OptionalProviders">>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime);
+    constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory[] | undefined, optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime);
 }
-
-// Warning: (ae-internal-missing-underscore) The name "DataObjectType" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export type DataObjectType<T extends DataObjectTypes, P extends keyof DataObjectTypes> = T[P] extends Required<DataObjectTypes>[P] ? T[P] : Required<DataObjectTypes>[P];
 
 // @public
 export interface DataObjectTypes {
@@ -121,26 +113,22 @@ export const defaultRouteRequestHandler: (defaultRootId: string) => (request: IR
 export const generateContainerServicesRequestHandler: (serviceRegistry: ContainerServiceRegistryEntries) => RuntimeRequestHandler;
 
 // @public
-export function getDefaultObjectFromContainer<T = IFluidObject & FluidObject>(container: IContainer): Promise<T>;
+export function getDefaultObjectFromContainer<T = FluidObject>(container: IContainer): Promise<T>;
 
 // @public
-export function getObjectFromContainer<T = IFluidObject & FluidObject>(path: string, container: IContainer): Promise<T>;
+export function getObjectFromContainer<T = FluidObject>(path: string, container: IContainer): Promise<T>;
 
 // @public
-export function getObjectWithIdFromContainer<T = IFluidObject & FluidObject>(id: string, container: IContainer): Promise<T>;
+export function getObjectWithIdFromContainer<T = FluidObject>(id: string, container: IContainer): Promise<T>;
 
 // @public (undocumented)
 export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
     // (undocumented)
     readonly context: IFluidDataStoreContext;
-    // Warning: (ae-incompatible-release-tags) The symbol "initProps" is marked as @public, but its signature references "DataObjectType" which is marked as @internal
-    //
     // (undocumented)
-    readonly initProps?: DataObjectType<I, "InitialState">;
-    // Warning: (ae-incompatible-release-tags) The symbol "providers" is marked as @public, but its signature references "DataObjectType" which is marked as @internal
-    //
+    readonly initProps?: I["InitialState"];
     // (undocumented)
-    readonly providers: AsyncFluidObjectProvider<FluidObjectKey<DataObjectType<I, "OptionalProviders">>, FluidObjectKey<object>>;
+    readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;
     // (undocumented)
     readonly runtime: IFluidDataStoreRuntime;
 }
@@ -151,55 +139,21 @@ export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
     createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime): Promise<IFluidRouter>;
 }
 
-// @public @deprecated (undocumented)
-export abstract class LegacyDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent> extends DataObject<{
-    OptionalProviders: O;
-    InitialState: S;
-    Events: E;
-}> {
-}
-
-// @public @deprecated (undocumented)
-export class LegacyDataObjectFactory<TObj extends LegacyDataObject<O, S, E>, O, S, E extends IEvent = IEvent> extends DataObjectFactory<TObj, {
-    OptionalProviders: O;
-    InitialState: S;
-    Events: E;
-}> {
-}
-
-// @public @deprecated (undocumented)
-export abstract class LegacyPureDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent> extends PureDataObject<{
-    OptionalProviders: O;
-    InitialState: S;
-    Events: E;
-}> {
-}
-
-// @public @deprecated (undocumented)
-export class LegacyPureDataObjectFactory<TObj extends LegacyPureDataObject<O, S, E>, O, S, E extends IEvent = IEvent> extends PureDataObjectFactory<TObj, {
-    OptionalProviders: O;
-    InitialState: S;
-    Events: E;
-}> {
-}
-
 // @public
 export const mountableViewRequestHandler: (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse>;
 
-// Warning: (ae-incompatible-release-tags) The symbol "PureDataObject" is marked as @public, but its signature references "DataObjectType" which is marked as @internal
-//
 // @public
-export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends EventForwarder<DataObjectType<I, "Events">> implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IFluidObject {
+export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends EventForwarder<I["Events"] & IEvent> implements IFluidLoadable, IFluidRouter, IProvideFluidHandle {
     constructor(props: IDataObjectProps<I>);
     protected readonly context: IFluidDataStoreContext;
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
     finishInitialization(existing: boolean): Promise<void>;
-    // @deprecated (undocumented)
-    static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject>;
-    getFluidObjectFromDirectory<T extends IFluidObject & FluidObject & IFluidLoadable>(key: string, directory: IDirectory, getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IFluidHandle | undefined): Promise<T | undefined>;
-    protected getService<T extends IFluidObject & FluidObject>(id: string): Promise<T>;
+    // (undocumented)
+    static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject<DataObjectTypes>>;
+    getFluidObjectFromDirectory<T extends IFluidLoadable>(key: string, directory: IDirectory, getObjectFromDirectory?: (id: string, directory: IDirectory) => IFluidHandle | undefined): Promise<T | undefined>;
+    protected getService<T extends FluidObject>(id: string): Promise<T>;
     get handle(): IFluidHandle<this>;
     protected hasInitialized(): Promise<void>;
     // (undocumented)
@@ -213,38 +167,27 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     initializeInternal(existing: boolean): Promise<void>;
     // (undocumented)
     protected initializeP: Promise<void> | undefined;
-    protected initializingFirstTime(props?: DataObjectType<I, "InitialState">): Promise<void>;
+    protected initializingFirstTime(props?: I["InitialState"]): Promise<void>;
     protected initializingFromExisting(): Promise<void>;
     // (undocumented)
-    protected initProps?: DataObjectType<I, "InitialState">;
+    protected initProps?: I["InitialState"];
     protected preInitialize(): Promise<void>;
-    protected readonly providers: AsyncFluidObjectProvider<FluidObjectKey<DataObjectType<I, "OptionalProviders">>, FluidObjectKey<object>>;
+    protected readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;
     request(req: IRequest): Promise<IResponse>;
-    // @deprecated (undocumented)
-    protected requestFluidObject_UNSAFE<T extends IFluidObject>(id: string): Promise<T>;
     protected readonly runtime: IFluidDataStoreRuntime;
 }
 
 // @public
 export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>, IRootDataObjectFactory {
-    // Warning: (ae-incompatible-release-tags) The symbol "__constructor" is marked as @public, but its signature references "DataObjectType" which is marked as @internal
-    constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory[], optionalProviders: FluidObjectSymbolProvider<DataObjectType<I, "OptionalProviders">>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeClass?: typeof FluidDataStoreRuntime);
-    // Warning: (ae-incompatible-release-tags) The symbol "createChildInstance" is marked as @public, but its signature references "DataObjectType" which is marked as @internal
-    createChildInstance(parentContext: IFluidDataStoreContext, initialState?: DataObjectType<I, "InitialState">): Promise<TObj>;
-    // Warning: (ae-incompatible-release-tags) The symbol "createInstance" is marked as @public, but its signature references "DataObjectType" which is marked as @internal
-    createInstance(runtime: IContainerRuntimeBase, initialState?: DataObjectType<I, "InitialState">): Promise<TObj>;
-    // Warning: (ae-incompatible-release-tags) The symbol "createInstanceCore" is marked as @public, but its signature references "DataObjectType" which is marked as @internal
-    //
+    constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory[], optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeClass?: typeof FluidDataStoreRuntime);
+    createChildInstance(parentContext: IFluidDataStoreContext, initialState?: I["InitialState"]): Promise<TObj>;
+    createInstance(runtime: IContainerRuntimeBase, initialState?: I["InitialState"]): Promise<TObj>;
     // (undocumented)
-    protected createInstanceCore(context: IFluidDataStoreContextDetached, initialState?: DataObjectType<I, "InitialState">): Promise<TObj>;
-    // Warning: (ae-incompatible-release-tags) The symbol "createNonRootInstanceCore" is marked as @public, but its signature references "DataObjectType" which is marked as @internal
-    //
+    protected createInstanceCore(context: IFluidDataStoreContextDetached, initialState?: I["InitialState"]): Promise<TObj>;
     // (undocumented)
-    protected createNonRootInstanceCore(containerRuntime: IContainerRuntimeBase, packagePath: Readonly<string[]>, initialState?: DataObjectType<I, "InitialState">): Promise<TObj>;
-    // Warning: (ae-incompatible-release-tags) The symbol "createPeerInstance" is marked as @public, but its signature references "DataObjectType" which is marked as @internal
-    createPeerInstance(peerContext: IFluidDataStoreContext, initialState?: DataObjectType<I, "InitialState">): Promise<TObj>;
-    // Warning: (ae-incompatible-release-tags) The symbol "createRootInstance" is marked as @public, but its signature references "DataObjectType" which is marked as @internal
-    createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime, initialState?: DataObjectType<I, "InitialState">): Promise<TObj>;
+    protected createNonRootInstanceCore(containerRuntime: IContainerRuntimeBase, packagePath: Readonly<string[]>, initialState?: I["InitialState"]): Promise<TObj>;
+    createPeerInstance(peerContext: IFluidDataStoreContext, initialState?: I["InitialState"]): Promise<TObj>;
+    createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime, initialState?: I["InitialState"]): Promise<TObj>;
     // (undocumented)
     get IFluidDataStoreFactory(): this;
     // (undocumented)

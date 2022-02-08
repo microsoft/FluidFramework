@@ -28,6 +28,7 @@ import { createOdspUrl } from "./createOdspUrl";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import { getOdspResolvedUrl, createOdspLogger } from "./odspUtils";
 import { getFileLink } from "./getFileLink";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 /**
  * Properties passed to the code responsible for fetching share link for a file.
@@ -133,9 +134,8 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             // We need to remove the nav param if set by host when setting the sharelink as otherwise the shareLinkId
             // when redeeming the share link during the redeem fallback for trees latest call becomes greater than
             // the eligible length.
-            odspResolvedUrl.sharingLinkToRedeem = this.removeNavParam(request.url);
             odspResolvedUrl.shareLinkInfo = Object.assign(odspResolvedUrl.shareLinkInfo || {},
-                {sharingLinkToRedeem: odspResolvedUrl.sharingLinkToRedeem});
+                {sharingLinkToRedeem: this.removeNavParam(request.url)});
         }
         if (odspResolvedUrl.itemId) {
             // Kick start the sharing link request if we don't have it already as a performance optimization.
@@ -166,7 +166,8 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
                         throw new NonRetryableError(
                             "shareLinkTokenIsNull",
                             "Token callback returned null",
-                            OdspErrorType.fetchTokenError);
+                            OdspErrorType.fetchTokenError,
+                            { driverVersion });
                     }
                     event.end({ fromCache: isTokenFromCache(tokenResponse) });
                     return tokenResponse;

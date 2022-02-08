@@ -10,9 +10,7 @@ import {
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 
-export const gcBlobKey = "gc";
-// A list of runtime blob paths whose contents should be normalized.
-const runtimeBlobsToNormalize = [ gcBlobKey ];
+export const gcBlobPrefix = "__gc";
 
 export interface ISnapshotNormalizerConfig {
     // The paths of blobs whose contents should be normalized.
@@ -76,13 +74,15 @@ function getDeepSortedObject(obj: any): any {
  */
 function getNormalizedBlobContent(blobContent: string, blobName: string): string {
     let content = blobContent;
-    if (blobName === gcBlobKey) {
-        // GC blobs may contain "unrefTimestamp" - The time the corresponding object became unreferenced. This is the
-        // timestamp of the last op processed and can differ between clients depending on when GC was run. It will be
-        // undefined if no ops were processed before running GC. So, remove it for the purposes of comparing snapshots.
-        const gcDetails = JSON.parse(content);
-        delete gcDetails.unrefTimestamp;
-        content = JSON.stringify(gcDetails);
+    if (blobName.startsWith(gcBlobPrefix)) {
+        // GC blobs may contain `unreferencedTimestampMs` for node that became unreferenced. This is the timestamp
+        // of the last op processed or current timestamp and can differ between clients depending on when GC was run.
+        // So, remove it for the purposes of comparing snapshots.
+        const gcState = JSON.parse(content);
+        for (const [, data] of Object.entries(gcState.gcNodes)) {
+            delete (data as any).unreferencedTimestampMs;
+        }
+        content = JSON.stringify(gcState);
     }
 
     // Deep sort the content if it's parseable.
@@ -110,15 +110,15 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
 export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormalizerConfig): ITree {
     // Merge blobs to normalize in the config with runtime blobs to normalize. The contents of these blobs will be
     // parsed and deep sorted.
-    const blobsToNormalize = [ ...runtimeBlobsToNormalize, ...config?.blobsToNormalize ?? [] ];
+    const blobsToNormalize = [ ...config?.blobsToNormalize ?? [] ];
     const normalizedEntries: ITreeEntry[] = [];
 
     for (const entry of snapshot.entries) {
         switch (entry.type) {
             case TreeEntry.Blob: {
                 let contents = entry.value.contents;
-                // If this blob has to be normalized, parse and sort the blob contents first.
-                if (blobsToNormalize.includes(entry.path)) {
+                // If this blob has to be normalized or it's a GC blob, parse and sort the blob contents first.
+                if (blobsToNormalize.includes(entry.path) || entry.path.startsWith(gcBlobPrefix)) {
                     contents = getNormalizedBlobContent(contents, entry.path);
                 }
                 normalizedEntries.push(new BlobTreeEntry(entry.path, contents));

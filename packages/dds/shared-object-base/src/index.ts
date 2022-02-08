@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./serializer";
 export * from "./sharedObject";
 export * from "./summarySerializer";
 export * from "./types";

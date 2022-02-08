@@ -61,15 +61,15 @@ export function configureLogging(configOrPath: nconf.Provider | string) {
         }
     }
 
-    const genevaConfig = config.get("lumberjack");
+    const lumberjackConfig = config.get("lumberjack");
     const engineList =
-        genevaConfig && genevaConfig.engineList ?
-        genevaConfig.engineList as ILumberjackEngine[] :
+        lumberjackConfig && lumberjackConfig.engineList ?
+        lumberjackConfig.engineList as ILumberjackEngine[] :
         [new WinstonLumberjackEngine()];
 
     const schemaValidatorList =
-        genevaConfig && genevaConfig.schemaValidator ?
-        genevaConfig.schemaValidator as ILumberjackSchemaValidator[] :
+        lumberjackConfig && lumberjackConfig.schemaValidator ?
+        lumberjackConfig.schemaValidator as ILumberjackSchemaValidator[] :
         undefined;
 
     Lumberjack.setup(engineList, schemaValidatorList);

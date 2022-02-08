@@ -65,8 +65,8 @@ function parseNameVersion(arg: string | undefined) {
 
     let version: VersionChangeType | undefined;
     if (v !== undefined) {
-        if (v === "minor" || v === "patch") {
-            version = v;
+        if (["major", "minor", "patch"].includes(v)) {
+            version = v as VersionBumpType;
         } else {
             const parsedVersion = semver.parse(v);
             if (!parsedVersion) {

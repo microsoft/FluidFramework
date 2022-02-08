@@ -370,7 +370,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             assert(defaultDataStore.context.storage !== undefined,
                 "Storage should be present in detached data store");
             let success1: boolean | undefined;
-            await defaultDataStore.context.storage.getSnapshotTree(undefined).catch((err) => success1 = false);
+            await defaultDataStore.context.storage.getSnapshotTree(undefined).catch((err) => { success1 = false });
             assert(success1 === false, "Snapshot fetch should not be allowed in detached data store");
 
             const container2: IContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
@@ -383,7 +383,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             assert(defaultDataStore2.context.storage !== undefined,
                 "Storage should be present in rehydrated data store");
             let success2: boolean | undefined;
-            await defaultDataStore2.context.storage.getSnapshotTree(undefined).catch((err) => success2 = false);
+            await defaultDataStore2.context.storage.getSnapshotTree(undefined).catch((err) => { success2 = false });
             assert(success2 === false, "Snapshot fetch should not be allowed in rehydrated data store");
         });
 

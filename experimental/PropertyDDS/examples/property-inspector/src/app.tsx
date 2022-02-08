@@ -50,11 +50,6 @@ async function start(): Promise<void> {
     const propertyTree: IPropertyTree = await getDefaultObjectFromContainer<IPropertyTree>(container);
 
     renderApp(propertyTree.tree, document.getElementById("root")!);
-
-    // Reload the page on any further hash changes, e.g. in case you want to paste in a different document ID.
-    window.addEventListener("hashchange", () => {
-        location.reload();
-    });
 }
 
 start().catch((error) => console.error(error));

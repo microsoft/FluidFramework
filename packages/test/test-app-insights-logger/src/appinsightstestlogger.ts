@@ -41,13 +41,24 @@ export class AppInsightsTestLogger implements ITelemetryBufferedLogger {
 
     send(event: ITelemetryBaseEvent): void {
         event.Event_Time = Date.now();
-        this.telemetryClient.trackEvent({
-            name: event.eventName,
-            tagOverrides: {
-                category: event.category,
-            },
-            properties: event,
-        });
+        if (event.category === "metric") {
+            this.telemetryClient.trackMetric({
+                name: event.eventName,
+                value: event.value as number,
+                tagOverrides: {
+                    category: event.category,
+                },
+                properties: event,
+            });
+        } else {
+            this.telemetryClient.trackEvent({
+                name: event.eventName,
+                tagOverrides: {
+                    category: event.category,
+                },
+                properties: event,
+            });
+        }
     }
 }
 

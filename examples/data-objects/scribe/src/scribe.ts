@@ -29,10 +29,7 @@ import {
     IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
-import {
-    innerRequestHandler,
-    buildRuntimeRequestHandler,
-} from "@fluidframework/request-handler";
+import { buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import Axios from "axios";
@@ -211,7 +208,7 @@ function initialize(
             console.log(`Error downloading document ${error}`);
         });
     }
-    const maybeFactory: FluidObject<IDocumentFactory> | undefined = context.scope as FluidObject;
+    const maybeFactory: FluidObject<IDocumentFactory> | undefined = context.scope;
     const documentFactory: IDocumentFactory | undefined = maybeFactory?.IDocumentFactory;
     if (documentFactory) {
         createButton.classList.remove("hidden");
@@ -472,7 +469,6 @@ class ScribeFactory extends RuntimeFactoryHelper implements IFluidDataStoreFacto
             this.registry,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
-                innerRequestHandler,
             ),
             undefined, // runtimeOptions
             undefined, // containerScope

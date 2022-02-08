@@ -72,13 +72,17 @@ function getNackReconnectInfo(nackContent: INackContent) {
     const canRetry = nackContent.code !== 403;
     const retryAfterMs = nackContent.retryAfter !== undefined ? nackContent.retryAfter * 1000 : undefined;
     return createGenericNetworkError(
-        `nack [${nackContent.code}]`, message, canRetry, retryAfterMs, { statusCode: nackContent.code });
+        `nack [${nackContent.code}]`,
+        message,
+        { canRetry, retryAfterMs },
+        { statusCode: nackContent.code, driverVersion: undefined });
 }
 
 const createReconnectError = (fluidErrorCode: string, err: any) =>
     wrapError(
         err,
-        (errorMessage: string) => new GenericNetworkError(fluidErrorCode, errorMessage, true /* canRetry */),
+        (errorMessage: string) =>
+            new GenericNetworkError(fluidErrorCode, errorMessage, true /* canRetry */, { driverVersion: undefined }),
     );
 
 /**
@@ -167,6 +171,8 @@ export class ConnectionManager implements IConnectionManager {
 
     private _connectionVerboseProps: Record<string, string | number> = {};
 
+    private _connectionProps: ITelemetryProperties = {};
+
     private closed = false;
 
     private readonly _outbound: DeltaQueue<IDocumentMessage[]>;
@@ -228,13 +234,10 @@ export class ConnectionManager implements IConnectionManager {
     */
      public get connectionProps(): ITelemetryProperties {
         if (this.connection !== undefined) {
-            return {
-                connectionMode: this.connectionMode,
-                relayServiceAgent: this.connection.relayServiceAgent,
-                socketDocumentId: this.connection?.claims.documentId,
-            };
+            return this._connectionProps;
         } else {
             return {
+                ...this._connectionProps,
                 // Report how many ops this client sent in last disconnected session
                 sentOps: this.clientSequenceNumber,
             };
@@ -453,7 +456,7 @@ export class ConnectionManager implements IConnectionManager {
             // to keep setupNewSuccessfulConnection happy
             this.pendingConnection = true;
             this.setupNewSuccessfulConnection(connection, "read");
-            assert(!this.pendingConnection, "logic error");
+            assert(!this.pendingConnection, 0x2b3 /* "logic error" */);
             return;
         }
 
@@ -645,9 +648,17 @@ export class ConnectionManager implements IConnectionManager {
             clientId: connection.clientId,
             mode: connection.mode,
         };
+
+        // reset connection props
+        this._connectionProps = {};
+
         if (connection.relayServiceAgent !== undefined) {
             this._connectionVerboseProps.relayServiceAgent = connection.relayServiceAgent;
+            this._connectionProps.relayServiceAgent = connection.relayServiceAgent;
         }
+        this._connectionProps.socketDocumentId = connection.claims.documentId;
+        this._connectionProps.connectionMode = connection.mode;
+
         let last = -1;
         if (initialMessages.length !== 0) {
             this._connectionVerboseProps.connectionInitialOpsFrom = initialMessages[0].sequenceNumber;
@@ -785,7 +796,7 @@ export class ConnectionManager implements IConnectionManager {
     }
 
     public sendMessages(messages: IDocumentMessage[]) {
-        assert(this.connected, "not connected on sending ops!");
+        assert(this.connected, 0x2b4 /* "not connected on sending ops!" */);
 
         // If connection is "read" or implicit "read" (got leave op for "write" connection),
         // then op can't make it through - we will get a nack if op is sent.
@@ -809,7 +820,7 @@ export class ConnectionManager implements IConnectionManager {
             return;
         }
 
-        assert(!this.pendingReconnect, "logic error");
+        assert(!this.pendingReconnect, 0x2b5 /* "logic error" */);
 
         this._outbound.push(messages);
     }
@@ -852,13 +863,13 @@ export class ConnectionManager implements IConnectionManager {
         // TODO: we should remove this check when service updates?
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (this._readonlyPermissions) {
-            this.props.closeHandler(createWriteError("writeOnReadOnlyDocument"));
+            this.props.closeHandler(createWriteError("writeOnReadOnlyDocument", { driverVersion: undefined }));
         }
 
         // check message.content for Back-compat with old service.
         const reconnectInfo = message.content !== undefined
             ? getNackReconnectInfo(message.content) :
-            createGenericNetworkError("nackReasonUnknown", undefined, true);
+            createGenericNetworkError("nackReasonUnknown", undefined, { canRetry: true }, { driverVersion: undefined });
 
         this.reconnectOnError(
             "write",

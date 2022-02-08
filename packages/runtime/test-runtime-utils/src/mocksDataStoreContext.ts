@@ -12,7 +12,6 @@ import {
 import {
     IAudience,
     IDeltaManager,
-    ContainerWarning,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -21,7 +20,7 @@ import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
     IClientDetails,
     IDocumentMessage,
-    IQuorum,
+    IQuorumClients,
     ISequencedDocumentMessage,
     ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
@@ -31,6 +30,7 @@ import {
     IContainerRuntimeBase,
     IFluidDataStoreContext,
     IFluidDataStoreRegistry,
+    IGarbageCollectionDetailsBase,
     IGarbageCollectionSummaryDetails,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
@@ -86,16 +86,12 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
         throw new Error("Method not implemented.");
     }
 
-    public getQuorum(): IQuorum {
+    public getQuorum(): IQuorumClients {
         return;
     }
 
     public getAudience(): IAudience {
         return;
-    }
-
-    public raiseContainerWarning(warning: ContainerWarning): void {
-        throw new Error("Method not implemented.");
     }
 
     public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
@@ -130,6 +126,10 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     }
 
     public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
+        throw new Error("Method not implemented.");
+    }
+
+    public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
         throw new Error("Method not implemented.");
     }
 }

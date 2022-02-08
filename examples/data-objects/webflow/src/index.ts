@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
+
 export { FlowDocument } from "./document";
 export { Editor, IFluidHTMLViewFactory } from "./editor";
+import { WebFlow, WebflowView } from "./host";
 export { htmlFormatter } from "./html/formatters";
 
-import { RuntimeFactory } from "@fluidframework/data-object-base";
-import { WebFlow } from "./host";
+const webFlowViewCallback = (webFlow: WebFlow) => new WebflowView(webFlow.getFlowDocument());
 
-export const fluidExport = new RuntimeFactory(WebFlow.getFactory());
+export const fluidExport = new ContainerViewRuntimeFactory(WebFlow.getFactory(), webFlowViewCallback);

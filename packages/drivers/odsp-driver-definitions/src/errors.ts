@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import  { DriverError } from "@fluidframework/driver-definitions";
+import { DriverError } from "@fluidframework/driver-definitions";
 
 export enum OdspErrorType {
     /**

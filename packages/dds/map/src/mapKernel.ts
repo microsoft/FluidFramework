@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
-import { ValueType } from "@fluidframework/shared-object-base";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ISerializableValue,
@@ -258,30 +258,6 @@ export class MapKernel {
         const localValue = this.data.get(key)!;
 
         return localValue.value as T;
-    }
-
-    /**
-     * {@inheritDoc ISharedMap.wait}
-     */
-    public async wait<T = any>(key: string): Promise<T> {
-        // Return immediately if the value already exists
-        if (this.has(key)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.get<T>(key)!;
-        }
-
-        // Otherwise subscribe to changes
-        return new Promise<T>((resolve) => {
-            const callback = (changed: IValueChanged) => {
-                if (key === changed.key) {
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    resolve(this.get<T>(changed.key)!);
-                    this.eventEmitter.removeListener("valueChanged", callback);
-                }
-            };
-
-            this.eventEmitter.on("valueChanged", callback);
-        });
     }
 
     /**

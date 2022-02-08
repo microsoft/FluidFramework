@@ -3,28 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
-} from "@fluidframework/aqueduct";
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
+import React from "react";
 
-import { DiceRoller, DiceRollerInstantiationFactory } from "./main";
+import { DiceRoller, DiceRollerInstantiationFactory, DiceRollerView } from "./main";
 
 export { DiceRoller, DiceRollerInstantiationFactory } from "./main";
 
+const diceRollerViewCallback = (model: DiceRoller) => React.createElement(DiceRollerView, { model });
+
 /**
- * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultDataStore also enables dynamic loading by
- * providing the fluidExport constant.
- *
- * There are two important things here:
- * 1. Default Fluid object name
- * 2. Map of string to factory for all dependent Fluid objects
- *
- * In this example, we are only registering a single Fluid object, but more complex examples will register multiple
- * Fluid objects.
+ * This does setup for the Container. The ContainerViewRuntimeFactory will instantiate a single Fluid object to use
+ * as our model (using the factory we provide), and the view callback we provide will pair that model with an
+ * appropriate view.
  */
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DiceRollerInstantiationFactory,
-    new Map([
-        [DiceRoller.Name, Promise.resolve(DiceRollerInstantiationFactory)],
-    ]),
-);
+export const fluidExport = new ContainerViewRuntimeFactory(DiceRollerInstantiationFactory, diceRollerViewCallback);

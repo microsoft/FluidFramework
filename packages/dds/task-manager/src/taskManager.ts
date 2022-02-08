@@ -6,22 +6,16 @@
 import { EventEmitter } from "events";
 
 import { assert } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-    TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
+import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { TaskManagerFactory } from "./taskManagerFactory";
 import { ITaskManager, ITaskManagerEvents } from "./interfaces";
 
@@ -269,7 +263,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         }
 
         // This promise works even if we already have an outstanding volunteer op.
-        const lockAcquireP = new Promise<void>((res, rej) => {
+        const lockAcquireP = new Promise<void>((resolve, reject) => {
             const checkIfAcquiredLock = (eventTaskId: string) => {
                 if (eventTaskId !== taskId) {
                     return;
@@ -282,7 +276,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                     this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                     this.abandonWatcher.off("abandon", checkIfAbandoned);
                     this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
-                    res();
+                    resolve();
                 }
             };
 
@@ -294,14 +288,14 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
                 this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
-                rej(new Error(`Abandoned before acquiring lock: ${taskId}`));
+                reject(new Error(`Abandoned before acquiring lock: ${taskId}`));
             };
 
             const rejectOnDisconnect = () => {
                 this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
                 this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
-                rej(new Error(`Disconnected before acquiring lock: ${taskId}`));
+                reject(new Error(`Disconnected before acquiring lock: ${taskId}`));
             };
 
             this.queueWatcher.on("queueChange", checkIfAcquiredLock);
@@ -364,31 +358,15 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     /**
-     * Create a snapshot for the task manager
+     * Create a summary for the task manager
      *
-     * @returns the snapshot of the current state of the task manager
+     * @returns the summary of the current state of the task manager
      * @internal
      */
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         // TODO filter out tasks with no clients, some are still getting in.
         const content = [...this.taskQueues.entries()];
-
-        // And then construct the tree for it
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: snapshotFileName,
-                    type: TreeEntry.Blob,
-                    value: {
-                        contents: JSON.stringify(content),
-                        encoding: "utf-8",
-                    },
-                },
-            ],
-        };
-
-        return tree;
+        return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
     }
 
     /**
@@ -407,11 +385,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * @internal
      */
     protected initializeLocalCore() { }
-
-    /**
-     * @internal
-     */
-    protected registerCore() { }
 
     /**
      * @internal

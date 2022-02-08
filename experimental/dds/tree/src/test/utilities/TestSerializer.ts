@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IFluidSerializer, IRequest, IResponse } from '@fluidframework/core-interfaces';
+import { IFluidHandle, IRequest, IResponse } from '@fluidframework/core-interfaces';
+import { IFluidSerializer } from '@fluidframework/shared-object-base';
 
 export class TestFluidSerializer implements IFluidSerializer {
 	public constructor() {}
@@ -12,7 +13,11 @@ export class TestFluidSerializer implements IFluidSerializer {
 		return this;
 	}
 
-	public replaceHandles(value: any, bind: IFluidHandle): void {
+	public encode(value: any, bind: IFluidHandle): void {
+		throw new Error('Method not implemented.');
+	}
+
+	public decode(input: any): any {
 		throw new Error('Method not implemented.');
 	}
 

@@ -87,7 +87,7 @@ Because both the `getContainer` and `createContainer` methods are async, the `st
 ```js
 async function start() {
   if (location.hash) {
-    await loadExistingDice(location.hash.substring[1])
+    await loadExistingDice(location.hash.substring(1))
   } else {
     const id = await createNewDice();
     location.hash = id;
@@ -117,7 +117,7 @@ diceTemplate.innerHTML = `
   </div>
 `
 function renderDiceRoller(diceMap, elem) {
-    elem.appendChild(template.content.cloneNode(true));
+    elem.appendChild(diceTemplate.content.cloneNode(true));
     const rollButton = elem.querySelector(".roll");
     const dice = elem.querySelector(".dice");
 
@@ -182,8 +182,6 @@ The [full code for this application is available](https://github.com/microsoft/F
 [IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
-[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
-[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedSequence]: {{< relref "sequences.md" >}}
 [SharedString]: {{< relref "string.md" >}}
 

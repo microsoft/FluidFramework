@@ -17,7 +17,6 @@ import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidCodeDetails as IFluidCodeDetails_2 } from '@fluidframework/core-interfaces';
-import { IFluidConfiguration } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidPackage as IFluidPackage_2 } from '@fluidframework/core-interfaces';
 import { IFluidPackageEnvironment as IFluidPackageEnvironment_2 } from '@fluidframework/core-interfaces';
@@ -25,7 +24,7 @@ import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IPendingProposal } from '@fluidframework/protocol-definitions';
 import { IProvideFluidCodeDetailsComparer as IProvideFluidCodeDetailsComparer_2 } from '@fluidframework/core-interfaces';
-import { IQuorum } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -37,7 +36,6 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
-import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 
@@ -70,6 +68,7 @@ export type ConnectionState = ConnectionState.Disconnected | ConnectionState.Con
 
 // @public
 export enum ContainerErrorType {
+    clientSessionExpiredError = "clientSessionExpiredError",
     dataCorruptionError = "dataCorruptionError",
     dataProcessingError = "dataProcessingError",
     genericError = "genericError",
@@ -129,26 +128,24 @@ export interface IConnectionDetails {
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
     attach(request: IRequest): Promise<void>;
     readonly attachState: AttachState;
-    readonly audience?: IAudience;
+    readonly audience: IAudience;
     // @alpha
     readonly clientId?: string | undefined;
     close(error?: ICriticalContainerError): void;
     closeAndGetPendingLocalState(): string;
     readonly closed: boolean;
-    // @deprecated
-    readonly codeDetails?: IFluidCodeDetails_2 | undefined;
-    readonly connected?: boolean;
-    readonly connectionState?: ConnectionState;
+    readonly connected: boolean;
+    readonly connectionState: ConnectionState;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    getLoadedCodeDetails?(): IFluidCodeDetails_2 | undefined;
-    getQuorum(): IQuorum;
-    getSpecifiedCodeDetails?(): IFluidCodeDetails_2 | undefined;
+    getLoadedCodeDetails(): IFluidCodeDetails_2 | undefined;
+    getQuorum(): IQuorumClients;
+    getSpecifiedCodeDetails(): IFluidCodeDetails_2 | undefined;
     readonly isDirty: boolean;
     proposeCodeDetails(codeDetails: IFluidCodeDetails_2): Promise<boolean>;
-    readonly readOnlyInfo?: ReadOnlyInfo;
+    readonly readOnlyInfo: ReadOnlyInfo;
     request(request: IRequest): Promise<IResponse>;
     resolvedUrl: IResolvedUrl | undefined;
     // @alpha
@@ -172,8 +169,6 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly closeFn: (error?: ICriticalContainerError) => void;
     // (undocumented)
-    readonly configuration: IFluidConfiguration;
-    // (undocumented)
     readonly connected: boolean;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -185,18 +180,16 @@ export interface IContainerContext extends IDisposable {
     // @deprecated (undocumented)
     getSpecifiedCodeDetails?(): IFluidCodeDetails_2 | undefined;
     // (undocumented)
-    readonly id: string;
-    // (undocumented)
     readonly loader: ILoader;
     // @deprecated (undocumented)
-    readonly logger: ITelemetryBaseLogger;
+    readonly logger?: ITelemetryBaseLogger;
     // (undocumented)
     readonly options: ILoaderOptions;
     // (undocumented)
     pendingLocalState?: unknown;
     // (undocumented)
-    readonly quorum: IQuorum;
-    // (undocumented)
+    readonly quorum: IQuorumClients;
+    // @deprecated (undocumented)
     raiseContainerWarning(warning: ContainerWarning): void;
     readonly scope: IFluidObject & FluidObject;
     // (undocumented)
@@ -256,6 +249,7 @@ export interface IDeltaHandlerStrategy {
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender, IDisposable {
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
+    // @deprecated (undocumented)
     close(): void;
     readonly hasCheckpointSequenceNumber: boolean;
     readonly inbound: IDeltaQueue<T>;
@@ -267,8 +261,6 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     readonly maxMessageSize: number;
     readonly minimumSequenceNumber: number;
     readonly outbound: IDeltaQueue<U[]>;
-    // @deprecated
-    readonly readonly?: boolean;
     // (undocumented)
     readonly readOnlyInfo: ReadOnlyInfo;
     readonly serviceConfiguration: IClientConfiguration | undefined;
@@ -521,7 +513,6 @@ export interface IRuntime extends IDisposable {
     request(request: IRequest): Promise<IResponse>;
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     setConnectionState(connected: boolean, clientId?: string): any;
-    snapshot(tagMessage: string, fullTree?: boolean): Promise<ITree | null>;
 }
 
 // @public (undocumented)

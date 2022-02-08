@@ -43,11 +43,11 @@ type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: Sha
 // load container, pause, create (local) ops from callback, then optionally send ops before closing container
 const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
     const container = await args.loadTestContainer(testContainerConfig);
-    await new Promise<void>((res) => {
+    await new Promise<void>((resolve) => {
         if ((container as any).connected) {
-            res();
+            resolve();
         } else {
-            container.on("connected", () => res());
+            container.on("connected", () => resolve());
         }
     });
     const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
@@ -115,8 +115,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const container2 = await loader.resolve({ url }, pendingOps);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-        assert.strictEqual(await map1.wait(testKey), testValue);
-        assert.strictEqual(await map2.wait(testKey), testValue);
+        await provider.ensureSynchronized();
+        assert.strictEqual(map1.get(testKey), testValue);
+        assert.strictEqual(map2.get(testKey), testValue);
     });
 
     it("doesn't resend successful op", async function() {
@@ -133,8 +134,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 
         await provider.ensureSynchronized();
-        assert.strictEqual(await map1.wait(testKey), testValue);
-        assert.strictEqual(await map2.wait(testKey), testValue);
+        assert.strictEqual(map1.get(testKey), testValue);
+        assert.strictEqual(map2.get(testKey), testValue);
     });
 
     it("resends a lot of ops", async function() {
@@ -146,10 +147,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const container2 = await loader.resolve({ url }, pendingOps);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-        await Promise.all([...Array(lots).keys()].map(
-            async (i) => assert.strictEqual(await map1.wait(i.toString()), i)));
-        await Promise.all([...Array(lots).keys()].map(
-            async (i) => assert.strictEqual(await map2.wait(i.toString()), i)));
+        await provider.ensureSynchronized();
+        [...Array(lots).keys()].map((i) => assert.strictEqual(map1.get(i.toString()), i));
+        [...Array(lots).keys()].map((i) => assert.strictEqual(map2.get(i.toString()), i));
     });
 
     it("doesn't resend a lot of successful ops", async function() {
@@ -166,13 +166,11 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
         if (!(container2 as any).connected) {
-            await new Promise((res) => container2.on("connected", res));
+            await new Promise((resolve) => container2.on("connected", resolve));
         }
         await provider.ensureSynchronized();
-        await Promise.all([...Array(lots).keys()].map(
-            async (i) => assert.strictEqual(await map1.wait(i.toString()), testValue)));
-        await Promise.all([...Array(lots).keys()].map(
-            async (i) => assert.strictEqual(await map2.wait(i.toString()), testValue)));
+        [...Array(lots).keys()].map((i) => assert.strictEqual(map1.get(i.toString()), testValue));
+        [...Array(lots).keys()].map((i) => assert.strictEqual(map2.get(i.toString()), testValue));
     });
 
     it("resends batched ops", async function() {
@@ -186,10 +184,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const container2 = await loader.resolve({ url }, pendingOps);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-        await Promise.all([...Array(lots).keys()].map(
-            async (i) => assert.strictEqual(await map1.wait(i.toString()), i)));
-        await Promise.all([...Array(lots).keys()].map(
-            async (i) => assert.strictEqual(await map2.wait(i.toString()), i)));
+        await provider.ensureSynchronized();
+        [...Array(lots).keys()].map((i) => assert.strictEqual(map1.get(i.toString()), i));
+        [...Array(lots).keys()].map((i) => assert.strictEqual(map2.get(i.toString()), i));
     });
 
     it("doesn't resend successful batched ops", async function() {
@@ -207,10 +204,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
         await provider.ensureSynchronized();
-        await Promise.all([...Array(lots).keys()].map(
-            async (i) => assert.strictEqual(await map1.wait(i.toString()), testValue)));
-        await Promise.all([...Array(lots).keys()].map(
-            async (i) => assert.strictEqual(await map2.wait(i.toString()), testValue)));
+        [...Array(lots).keys()].map((i) => assert.strictEqual(map1.get(i.toString()), testValue));
+        [...Array(lots).keys()].map((i) => assert.strictEqual(map2.get(i.toString()), testValue));
     });
 
     it("resends chunked op", async function() {
@@ -224,8 +219,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const container2 = await loader.resolve({ url }, pendingOps);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-        assert.strictEqual(await map1.wait(testKey), bigString);
-        assert.strictEqual(await map2.wait(testKey), bigString);
+        await provider.ensureSynchronized();
+        assert.strictEqual(map1.get(testKey), bigString);
+        assert.strictEqual(map2.get(testKey), bigString);
     });
 
     it("doesn't resend successful chunked op", async function() {
@@ -245,10 +241,10 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
         await provider.ensureSynchronized();
-        assert.strictEqual(await map1.wait(testKey), testValue);
-        assert.strictEqual(await map2.wait(testKey), testValue);
-        assert.strictEqual(await map1.wait(testKey2), testValue);
-        assert.strictEqual(await map2.wait(testKey2), testValue);
+        assert.strictEqual(map1.get(testKey), testValue);
+        assert.strictEqual(map2.get(testKey), testValue);
+        assert.strictEqual(map1.get(testKey2), testValue);
+        assert.strictEqual(map2.get(testKey2), testValue);
     });
 
     it("pending map clear resend", async function() {
@@ -263,7 +259,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
         if (!(container2 as any).connected) {
-            await new Promise((res) => container2.on("connected", res));
+            await new Promise((resolve) => container2.on("connected", resolve));
         }
         await provider.ensureSynchronized();
         [...Array(lots).keys()].map(async (i) => assert.strictEqual(map1.get(i.toString()), undefined));
@@ -282,7 +278,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
         if (!(container2 as any).connected) {
-            await new Promise((res) => container2.on("connected", res));
+            await new Promise((resolve) => container2.on("connected", resolve));
         }
         await provider.ensureSynchronized();
         await Promise.all([...Array(lots).keys()].map(
@@ -316,13 +312,14 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
         const container2 = await loader.resolve({ url }, pendingOps);
         if (!(container2 as any).connected) {
-            await new Promise((res) => container2.on("connected", res));
+            await new Promise((resolve) => container2.on("connected", resolve));
         }
 
         // get new datastore from first container
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container1, id);
         const map2 = await requestFluidObject<SharedMap>(dataStore2.runtime, newMapId);
-        assert.strictEqual(await map2.wait(testKey), testValue);
+        await provider.ensureSynchronized();
+        assert.strictEqual(map2.get(testKey), testValue);
     });
 
     it("doesn't resend successful attach op", async function() {
@@ -342,11 +339,11 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         });
 
         const container2 = await loader.resolve({ url }, pendingOps);
-        await new Promise<void>((res) => {
+        await new Promise<void>((resolve) => {
             if ((container2 as any).connected) {
-                res();
+                resolve();
             } else {
-                container2.on("connected", () => res());
+                container2.on("connected", () => resolve());
             }
         });
     });

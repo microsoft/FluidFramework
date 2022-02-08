@@ -20,14 +20,6 @@ import {
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
 
-declare module "@fluidframework/core-interfaces" {
-    export interface IFluidObject {
-        /** @deprecated - use `FluidObject<ISummarizer>` instead */
-        readonly ISummarizer?: ISummarizer;
-
-     }
-}
-
 /**
  * @deprecated - This will be removed in a later release.
  */
@@ -166,6 +158,8 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
     readonly summaryStats: IGeneratedSummaryStats;
     /** Time it took to generate the summary tree and stats. */
     readonly generateDuration: number;
+    /** True if the full tree regeneration with no handle reuse optimizations was forced. */
+    readonly forcedFullTree: boolean;
 }
 
 /** Results of submitSummary after uploading the tree to storage. */
@@ -238,14 +232,6 @@ export interface ISummarizeResults {
     readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult, INackSummaryResult>>;
 }
 
-export type OnDemandSummarizeResult = (ISummarizeResults & {
-    /** Indicates that an already running summarize attempt does not exist. */
-    readonly alreadyRunning?: undefined;
-}) | {
-    /** Resolves when an already running summarize attempt completes. */
-    readonly alreadyRunning: Promise<void>;
-};
-
 export type EnqueueSummarizeResult = (ISummarizeResults & {
     /**
      * Indicates that another summarize attempt is not already enqueued,
@@ -297,6 +283,7 @@ export interface ISummarizerEvents extends IEvent {
 export interface ISummarizer extends
     IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer>{
     stop(reason: SummarizerStopReason): void;
+
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
 
     /**
@@ -308,7 +295,7 @@ export interface ISummarizer extends
      * that resolve as the summarize attempt progresses. They will resolve with success
      * false if a failure is encountered.
      */
-    summarizeOnDemand(options: IOnDemandSummarizeOptions): OnDemandSummarizeResult;
+    summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
     /**
      * Enqueue an attempt to summarize after the specified sequence number.
      * If afterSequenceNumber is provided, the summarize attempt is "enqueued"

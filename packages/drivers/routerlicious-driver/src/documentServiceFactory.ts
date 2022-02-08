@@ -25,6 +25,7 @@ import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath } from "./urlUtils";
 import { InMemoryCache } from "./cache";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -32,7 +33,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     maxConcurrentOrdererRequests: 100,
     aggregateBlobsSmallerThanBytes: undefined,
     enableWholeSummaryUpload: false,
-    enableRestLess: false,
+    enableRestLess: true,
 };
 
 /**
@@ -147,7 +148,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 `Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
 
-        const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
+        const logger2 = ChildLogger.create(logger, "RouterliciousDriver", { all: { driverVersion }});
 
         return new DocumentService(
             fluidResolvedUrl,

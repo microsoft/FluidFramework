@@ -59,12 +59,8 @@ export class StringProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'String' });
+        super(in_params);
     };
-
-
-    get _context() { return 'single'; }
-    get _noDirtyInBase() { return true; }
 
     /**
      * Get the string value
@@ -617,4 +613,18 @@ export class StringProperty extends ValueArrayProperty {
     set value(val) {
         this.setValue.call(this, val);
     }
+
+    /** @inheritdoc */
+    _traverse(in_callback, in_pathFromTraversalStart) {
+        return undefined;
+    }
+
+    /** @inheritdoc */
+    _traverseStaticProperties(in_callback, in_pathFromTraversalStart) {
+        return undefined;
+    }
 }
+
+StringProperty.prototype._typeid = 'String';
+StringProperty.prototype._context = 'single';
+StringProperty.prototype._noDirtyInBase = true;

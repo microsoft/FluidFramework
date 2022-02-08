@@ -42,7 +42,7 @@ async function populate(directory: SharedDirectory, content: object) {
 }
 
 function serialize(directory1: SharedDirectory): string {
-    const summaryTree = directory1.summarize().summary;
+    const summaryTree = directory1.getAttachSummary().summary;
     const summaryObjectKeys = Object.keys(summaryTree.tree);
     assert.strictEqual(summaryObjectKeys.length, 1, "summary tree should only have one blob");
     assert.strictEqual(summaryObjectKeys[0], "header", "summary should have a header blob");
@@ -352,7 +352,7 @@ describe("Directory", () => {
                 nestedDirectory.set("deepKey1", "deepValue1");
                 nestedDirectory.set("long2", logWord2);
 
-                const summarizeResult = directory.summarize();
+                const summarizeResult = directory.getAttachSummary();
                 const summaryTree = summarizeResult.summary;
                 assert.strictEqual(summaryTree.type, SummaryType.Tree, "summary should be a tree");
 
@@ -409,7 +409,7 @@ describe("Directory", () => {
                 const containerRuntimeFactory = new MockContainerRuntimeFactory();
                 const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
                 const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-                const services2 = MockSharedObjectServices.createFromSummary(directory.summarize().summary);
+                const services2 = MockSharedObjectServices.createFromSummary(directory.getAttachSummary().summary);
                 services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
                 const directory2 = new SharedDirectory("directory2", dataStoreRuntime2, DirectoryFactory.Attributes);
@@ -452,7 +452,7 @@ describe("Directory", () => {
                 const containerRuntimeFactory = new MockContainerRuntimeFactory();
                 const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
                 const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-                const services2 = MockSharedObjectServices.createFromSummary(directory.summarize().summary);
+                const services2 = MockSharedObjectServices.createFromSummary(directory.getAttachSummary().summary);
                 services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
                 const directory2 = new SharedDirectory("directory2", dataStoreRuntime2, DirectoryFactory.Attributes);
@@ -584,37 +584,6 @@ describe("Directory", () => {
                 assert.equal(directory2.getWorkingDirectory("bar")?.get("testKey3"), "testValue3");
                 assert.equal(directory2.get("testKey"), "testValue4");
                 assert.equal(directory2.get("testKey2"), undefined);
-            });
-
-            it("Should resolve returned promise for existing keys", async () => {
-                directory1.set("test", "resolved");
-
-                containerRuntimeFactory.processAllMessages();
-
-                // Verify the local SharedDirectory
-                assert.ok(directory1.has("test"));
-                await directory1.wait("test");
-
-                // Verify the remote SharedDirectory
-                assert.ok(directory2.has("test"));
-                await directory2.wait("test");
-            });
-
-            it("Should resolve returned promise once unavailable key is available", async () => {
-                assert.ok(!directory1.has("test"));
-
-                const waitP = directory1.wait("test");
-                const waitP2 = directory2.wait("test");
-
-                directory1.set("test", "resolved");
-
-                containerRuntimeFactory.processAllMessages();
-
-                // Verify the local SharedDirectory
-                await waitP;
-
-                // Verify the remote SharedDirectory
-                await waitP2;
             });
         });
 

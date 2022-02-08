@@ -13,11 +13,11 @@ import {
     unpackRuntimeMessage,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidCodeDetails, IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IFluidHandle, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IEnvelope, FlushMode } from "@fluidframework/runtime-definitions";
+import { IEnvelope, FlushMode, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject, createDataStoreFactory } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { SharedString } from "@fluidframework/sequence";
@@ -72,6 +72,8 @@ describe("Ops on Reconnect", () => {
 
         const defaultFactory = createDataStoreFactory("default", factory);
         const dataObject2Factory = createDataStoreFactory("dataObject2", factory);
+        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+            runtime.IFluidHandleContext.resolveHandle(request);
         const runtimeFactory =
             new ContainerRuntimeFactoryWithDefaultDataStore(
                 defaultFactory,
@@ -79,6 +81,8 @@ describe("Ops on Reconnect", () => {
                     [defaultFactory.type, Promise.resolve(defaultFactory)],
                     [dataObject2Factory.type, Promise.resolve(dataObject2Factory)],
                 ],
+                undefined,
+                [innerRequestHandler],
             );
 
         const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);

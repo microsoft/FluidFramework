@@ -23,31 +23,17 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import {
+    ChildLogger,
+    getCircularReplacer,
+    loggerToMonitoringContext,
+    MonitoringContext,
+} from "@fluidframework/telemetry-utils";
+// For now, this package is versioned and released in unison with the specific drivers
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 // Local storage key to disable the BatchManager
-const batchManagerDisabledKey = "FluidDisableBatchManager";
-
-// See #8129.
-// Need to move to common-utils (tracked as #8165)
-// Borrowed from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#examples
-// Avoids runtime errors with circular references.
-// Not ideal, as will cut values that are not necessarily circular references.
-// Could be improved by implementing Node's util.inspect() for browser (minus all the coloring code)
-const getCircularReplacer = () => {
-    const seen = new WeakSet();
-    return (key: string, value: any): any => {
-        // eslint-disable-next-line no-null/no-null
-        if (typeof value === "object" && value !== null) {
-            if (seen.has(value)) {
-                return "<removed/circular>";
-            }
-            seen.add(value);
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return value;
-    };
-};
+const batchManagerDisabledKey = "Fluid.Driver.BaseDocumentDeltaConnection.DisableBatchManager";
 
 /**
  * Represents a connection to a stream of delta updates
@@ -85,6 +71,8 @@ export class DocumentDeltaConnection
 
     private _details: IConnected | undefined;
 
+    private reconnectAttempts: number = 0;
+
     // Listeners only needed while the connection is in progress
     private readonly connectionListeners: Map<string, (...args: any[]) => void> = new Map();
     // Listeners used throughout the lifetime of the DocumentDeltaConnection
@@ -103,8 +91,14 @@ export class DocumentDeltaConnection
      * After disconnection, we flip this to prevent any stale messages from being emitted.
      */
     protected _disposed: boolean = false;
-    protected readonly logger: ITelemetryLogger;
+    private readonly mc: MonitoringContext;
     protected readonly isBatchManagerDisabled: boolean = false;
+    /**
+     * @deprecated - Implementors should manage their own logger or monitoring context
+     */
+    protected get logger(): ITelemetryLogger {
+        return this.mc.logger;
+    }
 
     public get details(): IConnected {
         if (!this._details) {
@@ -116,15 +110,19 @@ export class DocumentDeltaConnection
     /**
      * @param socket - websocket to be used
      * @param documentId - ID of the document
+     * @param logger - for reporting telemetry events
+     * @param enableLongPollingDowngrades - allow connection to be downgraded to long-polling on websocket failure
      */
     protected constructor(
         protected readonly socket: SocketIOClient.Socket,
         public documentId: string,
         logger: ITelemetryLogger,
+        private readonly enableLongPollingDowngrades: boolean = false,
     ) {
         super();
 
-        this.logger = ChildLogger.create(logger, "DeltaConnection");
+        this.mc = loggerToMonitoringContext(
+            ChildLogger.create(logger, "DeltaConnection"));
 
         this.submitManager = new BatchManager<IDocumentMessage[]>(
             (submitType, work) => this.emitMessages(submitType, work));
@@ -157,7 +155,7 @@ export class DocumentDeltaConnection
             }
         });
 
-        this.isBatchManagerDisabled = DocumentDeltaConnection.disabledBatchManagerFeatureGate;
+        this.isBatchManagerDisabled = this.mc.config.getBoolean(batchManagerDisabledKey) === true;
     }
 
     /**
@@ -288,15 +286,6 @@ export class DocumentDeltaConnection
         }
     }
 
-    private static get disabledBatchManagerFeatureGate() {
-        try {
-            return localStorage !== undefined
-                && typeof localStorage === "object"
-                && localStorage.getItem(batchManagerDisabledKey) === "1";
-        } catch (e) { }
-        return false;
-    }
-
     protected submitCore(type: string, messages: IDocumentMessage[]) {
         if (this.isBatchManagerDisabled) {
             this.emitMessages(type, [messages]);
@@ -331,7 +320,8 @@ export class DocumentDeltaConnection
     public dispose() {
         this.disposeCore(
             false, // socketProtocolError
-            createGenericNetworkError("clientClosingConnection", undefined, true /* canRetry */));
+            createGenericNetworkError(
+                "clientClosingConnection", undefined, { canRetry: true }, { driverVersion }));
     }
 
     protected disposeCore(socketProtocolError: boolean, err: any) {
@@ -376,14 +366,44 @@ export class DocumentDeltaConnection
 
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
+                let isWebSocketTransportError = false;
                 try {
                     const description = error?.description;
                     if (description && typeof description === "object") {
+                        if (error.type === "TransportError") {
+                            isWebSocketTransportError = true;
+                        }
                         // That's a WebSocket. Clear it as we can't log it.
                         description.target = undefined;
                     }
                 } catch(_e) {}
+
+                // Handle socket transport downgrading.
+                if (isWebSocketTransportError &&
+                    this.enableLongPollingDowngrades &&
+                    this.socket.io.opts.transports?.[0] !== "polling") {
+                    // Downgrade transports to polling upgrade mechanism.
+                    this.socket.io.opts.transports = ["polling", "websocket"];
+                    // Don't alter reconnection behavior if already enabled.
+                    if (!this.socket.io.reconnection()) {
+                        // Allow single reconnection attempt using polling upgrade mechanism.
+                        this.socket.io.reconnection(true);
+                        this.socket.io.reconnectionAttempts(1);
+                    }
+                }
+
+                // Allow built-in socket.io reconnection handling.
+                if (this.socket.io.reconnection() &&
+                    this.reconnectAttempts < this.socket.io.reconnectionAttempts()) {
+                    // Reconnection is enabled and maximum reconnect attempts have not been reached.
+                    return;
+                }
+
                 fail(true, this.createErrorObject("connectError", error));
+            });
+
+            this.addConnectionListener("reconnect_attempt", () => {
+                this.reconnectAttempts++;
             });
 
             // Listen for timeouts
@@ -555,7 +575,8 @@ export class DocumentDeltaConnection
         const errorObj = createGenericNetworkError(
             `socketError [${handler}]`,
             message,
-            canRetry,
+            { canRetry },
+            { driverVersion },
         );
 
         return errorObj;
