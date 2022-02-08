@@ -41,7 +41,6 @@ import {
     ConnectionMode,
 } from "@fluidframework/protocol-definitions";
 import {
-    IAnyDriverError,
     NonRetryableError,
 } from "@fluidframework/driver-utils";
 import {
