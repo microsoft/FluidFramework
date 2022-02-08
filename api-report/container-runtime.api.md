@@ -168,7 +168,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     submitDataStoreSignal(address: string, type: string, content: any): void;
     submitSignal(type: string, content: any): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
-    // Warning: (ae-forgotten-export) The symbol "IRootSummaryTreeWithStats" needs to be exported by the entry point index.d.ts
     summarize(options: {
         fullTree?: boolean;
         trackState?: boolean;
@@ -426,6 +425,11 @@ export type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
 export interface IProvideSummarizer {
     // @deprecated (undocumented)
     readonly ISummarizer: ISummarizer;
+}
+
+// @public
+export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
+    gcStats?: IGCStats;
 }
 
 // @public (undocumented)

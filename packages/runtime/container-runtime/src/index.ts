@@ -10,6 +10,7 @@ export {
     IGCRuntimeOptions,
     ISummaryRuntimeOptions,
     IContainerRuntimeOptions,
+    IRootSummaryTreeWithStats,
     isRuntimeMessage,
     RuntimeMessage,
     unpackRuntimeMessage,
