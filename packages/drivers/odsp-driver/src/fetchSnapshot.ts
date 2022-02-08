@@ -201,6 +201,7 @@ async function fetchLatestSnapshotCore(
             eventName: "TreesLatest",
             attempts: tokenFetchOptions.refresh ? 2 : 1,
             shareLinkPresent: odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined,
+            isSummarizer: odspResolvedUrl.summarizer,
             redeemFallbackEnabled: enableRedeemFallback,
         };
         if (snapshotOptions !== undefined) {
