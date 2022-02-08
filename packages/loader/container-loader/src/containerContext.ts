@@ -38,7 +38,6 @@ import {
     ISignalMessage,
     ISnapshotTree,
     ISummaryTree,
-    ITree,
     IVersion,
     MessageType,
 } from "@fluidframework/protocol-definitions";
@@ -202,10 +201,6 @@ export class ContainerContext implements IContainerContext {
         this.runtime.dispose(error);
         this._quorum.dispose();
         this.deltaManager.dispose();
-    }
-
-    public async snapshot(tagMessage: string = "", fullTree: boolean = false): Promise<ITree | null> {
-        return this.runtime.snapshot(tagMessage, fullTree);
     }
 
     public getLoadedFromVersion(): IVersion | undefined {

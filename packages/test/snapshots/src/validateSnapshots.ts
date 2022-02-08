@@ -6,14 +6,18 @@
 import fs from "fs";
 import { assert } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
 import { FileStorageDocumentName } from "@fluidframework/file-driver";
 import { ISequencedDocumentMessage, TreeEntry } from "@fluidframework/protocol-definitions";
 import {
     IFileSnapshot,
     StaticStorageDocumentServiceFactory,
 } from "@fluidframework/replay-driver";
-import { compareWithReferenceSnapshot, getNormalizedFileSnapshot, loadContainer } from "@fluid-internal/replay-tool";
+import { 
+    compareWithReferenceSnapshot, 
+    getNormalizedFileSnapshot, 
+    loadContainer ,
+    uploadSummary,
+} from "@fluid-internal/replay-tool";
 import { SnapshotStorageService } from "./snapshotStorageService";
 
 const metadataBlobName = ".metadata";
@@ -75,11 +79,12 @@ export async function validateSnapshots(
                 reportError,
             );
         const storage = new SnapshotStorageService(JSON.parse(srcContent) as IFileSnapshot, onSnapshotCb);
+       
         container = await loadContainer(
             new StaticStorageDocumentServiceFactory(storage),
             FileStorageDocumentName,
         );
-        await (container as Container).snapshot(file.name, true /* fullTree */);
+        await uploadSummary(container)
     }
 
     if (errors.length !== 0) {
