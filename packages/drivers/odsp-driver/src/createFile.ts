@@ -159,7 +159,7 @@ export async function createNewEmptyFluidFile(
                 }
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
-                    ...fetchResponse.commonSpoHeaders,
+                    ...fetchResponse.propsToLog,
                 });
                 return content.id;
             },
@@ -220,7 +220,7 @@ export async function createNewFluidFileFromSummary(
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                     attempts: options.refresh ? 2 : 1,
-                    ...fetchResponse.commonSpoHeaders,
+                    ...fetchResponse.propsToLog,
                 });
                 return content;
             },
