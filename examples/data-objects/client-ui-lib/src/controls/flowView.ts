@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISearchBox, ISearchMenuCommand, searchBoxCreate } from "@fluid-example/search-menu";
+import { ISearchBox, ISearchMenuCommand } from "@fluid-example/search-menu";
 import { performance } from "@fluidframework/common-utils";
 import {
     FluidObject,
@@ -287,15 +287,6 @@ const commands: IFlowViewCmd[] = [
             f.toggleUnderline();
         },
         key: "underline",
-    },
-    {
-        exec: (f) => {
-            (navigator as any).clipboard.readText().then((text) => {
-                // TODO bring back paste support
-                console.log(`Inserting ${text}`);
-            });
-        },
-        key: "paste component",
     },
 ];
 
@@ -2330,12 +2321,168 @@ export class FlowView extends ui.Component {
         };
         const commandBoxCommands = [
             {
-                friendlyName: "ALPHA",
-                exec: () => { console.log("ALPHA"); },
+                friendlyName: "copy format",
+                exec: () => {
+                    this.copyFormat();
+                },
             },
             {
-                friendlyName: "BETA",
-                exec: () => { console.log("BETA"); },
+                friendlyName: "paint format",
+                exec: () => {
+                    this.paintFormat();
+                },
+            },
+            {
+                friendlyName: "blockquote",
+                exec: () => {
+                    this.toggleBlockquote();
+                },
+            },
+            {
+                friendlyName: "bold",
+                exec: () => {
+                    this.toggleBold();
+                },
+            },
+            {
+                friendlyName: "red",
+                exec: () => {
+                    this.setColor("red");
+                },
+            },
+            {
+                friendlyName: "green",
+                exec: () => {
+                    this.setColor("green");
+                },
+            },
+            {
+                friendlyName: "gold",
+                exec: () => {
+                    this.setColor("gold");
+                },
+            },
+            {
+                friendlyName: "pink",
+                exec: () => {
+                    this.setColor("pink");
+                },
+            },
+            {
+                friendlyName: "Courier font",
+                exec: () => {
+                    this.setFont("courier new", "18px");
+                },
+            },
+            {
+                friendlyName: "Tahoma",
+                exec: () => {
+                    this.setFont("tahoma", "18px");
+                },
+            },
+            {
+                friendlyName: "Heading 2",
+                exec: () => {
+                    this.setPGProps({ header: true });
+                },
+            },
+            {
+                friendlyName: "Normal",
+                exec: () => {
+                    this.setPGProps({ header: null });
+                },
+            },
+            {
+                friendlyName: "Georgia font",
+                exec: () => {
+                    this.setFont("georgia", "18px");
+                },
+            },
+            {
+                friendlyName: "sans font",
+                exec: () => {
+                    this.setFont("sans-serif", "18px");
+                },
+            },
+            {
+                friendlyName: "cursive font",
+                exec: () => {
+                    this.setFont("cursive", "18px");
+                },
+            },
+            {
+                friendlyName: "italic",
+                exec: () => {
+                    this.toggleItalic();
+                },
+            },
+            {
+                friendlyName: "list ... 1.)",
+                exec: () => {
+                    this.setList();
+                },
+            },
+            {
+                friendlyName: "list ... \u2022",
+                exec: () => {
+                    this.setList(1);
+                },
+            },
+            {
+                friendlyName: "cell info",
+                exec: () => {
+                    showCell(this.cursor.pos, this);
+                },
+            },
+            {
+                friendlyName: "table info",
+                exec: () => {
+                    showTable(this.cursor.pos, this);
+                },
+            },
+            {
+                friendlyName: "table summary",
+                exec: () => {
+                    this.tableSummary();
+                },
+            },
+            {
+                friendlyName: "table test",
+                exec: () => {
+                    this.updatePGInfo(this.cursor.pos - 1);
+                    Table.createTable(this.cursor.pos, this.sharedString, this.runtime.clientId);
+                    this.hostSearchMenu(this.cursor.pos);
+                },
+            },
+            {
+                friendlyName: "insert column",
+                exec: () => {
+                    this.insertColumn();
+                },
+            },
+            {
+                friendlyName: "insert row",
+                exec: () => {
+                    this.insertRow();
+                },
+            },
+            {
+                friendlyName: "delete row",
+                exec: () => {
+                    this.deleteRow();
+                },
+            },
+            {
+                friendlyName: "delete column",
+                exec: () => {
+                    this.deleteColumn();
+                },
+            },
+            {
+                friendlyName: "underline",
+                exec: () => {
+                    this.toggleUnderline();
+                },
             },
         ];
 
@@ -3578,7 +3725,7 @@ export class FlowView extends ui.Component {
                 break;
             }
             case CharacterCodes.M: {
-                this.activeSearchBox = searchBoxCreate(this, this.viewportDiv, this.cmdTree);
+                // this.activeSearchBox = searchBoxCreate(this, this.viewportDiv, this.cmdTree);
                 this.showCommandBox();
                 break;
             }

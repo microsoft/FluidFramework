@@ -19,19 +19,56 @@ export interface ICommandBoxProps {
 export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) => {
     const { registerShowListener, registerHideListener, commands } = props;
     const [show, setShow] = React.useState<boolean>(false);
+    const [textFilter, setTextFilter] = React.useState<string>("");
+    const filterRef = React.useRef<HTMLInputElement>(null);
     React.useEffect(() => {
         registerShowListener(() => { setShow(true); });
         registerHideListener(() => { setShow(false); });
-    }, [registerShowListener, registerHideListener]);
-    const commandElements = commands.map((value) => {
-        return <div key={ value.friendlyName } onClick={ value.exec }>{ value.friendlyName }</div>;
+    }, [ registerShowListener, registerHideListener ]);
+
+    React.useEffect(() => {
+        if (filterRef.current !== null) {
+            const inputEl = filterRef.current;
+            const filterCommands = () => {
+                setTextFilter(inputEl.value);
+            };
+            inputEl.addEventListener("input", filterCommands);
+            inputEl.focus();
+            return () => {
+                inputEl.removeEventListener("input", filterCommands);
+            }
+        }
     });
-    console.log(commands);
+
+    const buildCommandElements = () => {
+        if (textFilter === "") {
+            return [];
+        }
+
+        const commandElements = commands
+            .filter((command) => {
+                return command.friendlyName.toLowerCase().startsWith(textFilter.toLowerCase());
+            })
+            .map((command) => {
+                const doClick = () => {
+                    command.exec();
+                    setShow(false);
+                };
+                return <div key={ command.friendlyName } onClick={ doClick }>{ command.friendlyName }</div>;
+            });
+        return commandElements;
+    }
+    const commandElements = buildCommandElements();
 
     if (show) {
         return (
             <div style={{ position: "absolute", width: "100%", height: "100%" }}>
-                { commandElements }
+                <div>
+                    <input type="text" ref={ filterRef } />
+                </div>
+                <div>
+                    { commandElements }
+                </div>
             </div>
         );
     } else {
