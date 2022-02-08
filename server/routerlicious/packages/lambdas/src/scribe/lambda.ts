@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-null/no-null */
+
 import assert from "assert";
 import { inspect } from "util";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";

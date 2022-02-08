@@ -33,6 +33,7 @@ export function createRoomJoinMessage(clientId: string, client: IClient): ISigna
         client,
     };
     return {
+        // eslint-disable-next-line no-null/no-null
         clientId: null,
         content: JSON.stringify({
             type: MessageType.ClientJoin,
@@ -42,6 +43,7 @@ export function createRoomJoinMessage(clientId: string, client: IClient): ISigna
 }
 
 export const createRoomLeaveMessage = (clientId: string): ISignalMessage => ({
+    // eslint-disable-next-line no-null/no-null
     clientId: null,
     content: JSON.stringify({
         type: MessageType.ClientLeave,

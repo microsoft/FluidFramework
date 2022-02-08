@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-null/no-null */
+
 import { isServiceMessageType } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentAugmentedMessage,
