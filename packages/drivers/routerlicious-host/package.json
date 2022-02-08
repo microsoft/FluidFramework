@@ -31,7 +31,7 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/driver-definitions": "^0.44.0",
+    "@fluidframework/driver-definitions": "^0.45.0-0",
     "axios": "^0.21.2"
   },
   "devDependencies": {
