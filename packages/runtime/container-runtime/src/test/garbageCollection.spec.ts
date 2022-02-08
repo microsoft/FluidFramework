@@ -61,7 +61,7 @@ describe("Garbage Collection Tests", () => {
         mockLogger = new MockLogger();
         return GarbageCollector.create(
             gcRuntime,
-            { gcAllowed: true },
+            { gcAllowed: true, deleteTimeoutMs },
             (unusedRoutes: string[]) => {},
             () => Date.now(),
             () => { },
