@@ -71,6 +71,6 @@
     "typescript": "~4.1.3"
   },
   "peerDependencies": {
-    "fluid-framework": "^0.50.0"
+    "fluid-framework": "^0.57.0"
   }
 }
