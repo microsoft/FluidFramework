@@ -62,8 +62,11 @@ const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 // Feature gate key to write GC data at the root of the summary tree.
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
+// Feature gate key to write GC data at the root of the summary tree.
+const runSessionExpiry = "Fluid.GarbageCollection.RunSessionExpiry";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+const defaultSessionExpiryMs = 30 * 24 * 60 * 60 * 1000; //30 days
 
 /** The used state statistics of a node. */
 export interface IUsedStateStats {
@@ -320,14 +323,15 @@ export class GarbageCollector implements IGarbageCollector {
         } else {
             // For new documents, GC has to be exlicitly enabled via the gcAllowed flag in GC options.
             this.gcEnabled = gcOptions.gcAllowed === true;
-            this.sessionExpiryTimeoutMs = this.gcOptions.gcTestSessionTimeoutMs;
+            // Set the Session Expiry only if the flag is enabled or the test option is set.
+            if (this.mc.config.getBoolean(runSessionExpiry)) {
+                this.sessionExpiryTimeoutMs = defaultSessionExpiryMs;
+            }
         }
 
         // If session expiry is enabled, we need to close the container when the timeout expires
         if (this.sessionExpiryTimeoutMs !== undefined) {
-            const expiryMs = this.sessionExpiryTimeoutMs;
-            this.sessionExpiryTimer = setTimeout(() => this.closeFn(
-                new ClientSessionExpiredError(`Client session expired.`, expiryMs)), expiryMs);
+            this.expireAtTime(this.sessionExpiryTimeoutMs);
         }
 
         // For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
@@ -653,6 +657,18 @@ export class GarbageCollector implements IGarbageCollector {
         const outboundRoutes = this.referencesSinceLastRun.get(fromNodeId) ?? [];
         outboundRoutes.push(toNodeId);
         this.referencesSinceLastRun.set(fromNodeId, outboundRoutes);
+    }
+
+    private expireAtTime(expiryMs: number) {
+        // The setTimeout max is 24.8 days before looping occurs.
+        const maxTimeout = 2147483647;
+        if (expiryMs > maxTimeout) {
+            const newExpiryMs = expiryMs - maxTimeout;
+            this.sessionExpiryTimer = setTimeout(() => this.expireAtTime(newExpiryMs), maxTimeout);
+        } else {
+            this.sessionExpiryTimer = setTimeout(() => this.closeFn(
+                new ClientSessionExpiredError(`Client session expired.`, expiryMs)), expiryMs);
+        }
     }
 
     /**
