@@ -9,8 +9,10 @@ import registerDebug from "debug";
 import { controls, ui } from "@fluid-example/client-ui-lib";
 import { performance } from "@fluidframework/common-utils";
 import {
+    FluidObject,
     IFluidHandle,
     IFluidLoadable,
+    IFluidRouter,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -142,8 +144,7 @@ export class SharedTextRunner extends EventEmitter implements IFluidHTMLView, IF
     }
 
     private async initializeUI(div): Promise<void> {
-        /* eslint-disable @typescript-eslint/no-require-imports,
-        import/no-internal-modules, import/no-unassigned-import */
+
         require("bootstrap/dist/css/bootstrap.min.css");
         require("bootstrap/dist/css/bootstrap-theme.min.css");
         require("../stylesheets/map.css");
@@ -191,9 +192,12 @@ export class SharedTextDataStoreFactory implements IFluidDataStoreFactory {
 
     public async instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean) {
         const runtimeClass = mixinRequestHandler(
-            async (request: IRequest) => {
-                const router = await routerP;
-                return router.request(request);
+            async (request: IRequest, runtime) => {
+                const router: FluidObject<IFluidRouter> = await runtime.handle.get();
+                if(router.IFluidRouter) {
+                    return router.IFluidRouter.request(request);
+                }
+                return {status:500, value:"NotIFluidRouter", mimeType:"test/plain"};
             });
 
         const runtime = new runtimeClass(
@@ -203,8 +207,8 @@ export class SharedTextDataStoreFactory implements IFluidDataStoreFactory {
                 SharedString.getFactory(),
             ].map((factory) => [factory.type, factory])),
             existing,
+            ()=>SharedTextRunner.load(runtime, context, existing),
         );
-        const routerP = SharedTextRunner.load(runtime, context, existing);
 
         return runtime;
     }

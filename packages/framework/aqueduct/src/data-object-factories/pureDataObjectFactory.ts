@@ -86,7 +86,6 @@ async function createDataObject<TObj extends PureDataObject,I extends DataObject
             const providers = dependencyContainer.synthesize<I["OptionalProviders"]>(optionalProviders, {});
             const instance = new ctor({ runtime, context, providers, initProps });
 
-
             await instance.finishInitialization(existing);
 
             return instance;
