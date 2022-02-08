@@ -1,5 +1,14 @@
 # Change Log
 
+## 20.1.0
+
+* refactor: remove deprecated helpers from tests
+  * Associated pull request: [37769](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/37769)
+  * Commit: [e0ba836224a20a9e9ca0f36d7b8e0cf2e62cf9bb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/e0ba836224a20a9e9ca0f36d7b8e0cf2e62cf9bb)
+* refactor: BREAKING CHANGE: Move change node utilities
+  * Associated pull request: [37735](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/37735)
+  * Commit: [3c2c0a4dd07c52dce117a57fe9a8611f7dc0857f](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/3c2c0a4dd07c52dce117a57fe9a8611f7dc0857f)
+
 ## 19.1.0
 
 * build: update package dependencies
