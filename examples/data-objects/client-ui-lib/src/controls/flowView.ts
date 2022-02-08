@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as SearchMenu from "@fluid-example/search-menu";
+import { ISearchBox, ISearchMenuCommand, searchBoxCreate } from "@fluid-example/search-menu";
 import { performance } from "@fluidframework/common-utils";
 import {
     FluidObject,
@@ -114,7 +114,7 @@ interface ITextErrorInfo {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IFlowViewCmd extends SearchMenu.ISearchMenuCommand<FlowView> {
+export interface IFlowViewCmd extends ISearchMenuCommand<FlowView> {
 }
 
 // Const cssColors = (f: FlowView) => cssColorTree;
@@ -2240,7 +2240,7 @@ export class FlowView extends ui.Component {
 
     private lastVerticalX = -1;
     private pendingRender = false;
-    private activeSearchBox: SearchMenu.ISearchBox;
+    private activeSearchBox: ISearchBox;
     private readonly cmdTree: MergeTree.TST<IFlowViewCmd>;
     private formatRegister: MergeTree.PropertySet;
 
@@ -3532,7 +3532,7 @@ export class FlowView extends ui.Component {
                 break;
             }
             case CharacterCodes.M: {
-                this.activeSearchBox = SearchMenu.searchBoxCreate(this, this.viewportDiv, this.cmdTree);
+                this.activeSearchBox = searchBoxCreate(this, this.viewportDiv, this.cmdTree);
                 break;
             }
             case CharacterCodes.L:
