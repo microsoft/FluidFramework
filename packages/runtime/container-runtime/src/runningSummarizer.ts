@@ -192,8 +192,7 @@ export class RunningSummarizer implements IDisposable {
         switch (op.type) {
             case MessageType.ClientLeave:
             case MessageType.ClientJoin:
-            case MessageType.Propose:
-            case MessageType.Reject: {
+            case MessageType.Propose: {
                 // Synchronously handle quorum ops like regular ops
                 this.handleOp(undefined, op);
                 return;

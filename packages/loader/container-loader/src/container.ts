@@ -1322,7 +1322,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             proposals,
             values,
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
-            (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber));
+            // Quorum proposal rejection removed, delete when updated protocol-base is integrated.
+            () => {});
 
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
