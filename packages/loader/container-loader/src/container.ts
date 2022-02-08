@@ -63,7 +63,6 @@ import {
     ICommittedProposal,
     IDocumentAttributes,
     IDocumentMessage,
-    IPendingProposal,
     IProcessMessageResult,
     IQuorumClients,
     IQuorumProposals,
@@ -1340,7 +1339,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.connectionStateHandler.receivedRemoveMemberEvent(clientId);
         });
 
-        protocol.quorum.on("addProposal", (proposal: IPendingProposal) => {
+        protocol.quorum.on("addProposal", (proposal: ISequencedProposal) => {
             if (proposal.key === "code" || proposal.key === "code2") {
                 this.emit("codeDetailsProposed", proposal.value, proposal);
             }
