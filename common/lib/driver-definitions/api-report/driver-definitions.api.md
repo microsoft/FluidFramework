@@ -70,6 +70,11 @@ export interface IAuthorizationError extends IDriverErrorBase {
     readonly tenantId?: string;
 }
 
+// @public
+export interface IContainerPackageInfo {
+    name: string;
+}
+
 // @public (undocumented)
 export interface IDeltasFetchResult {
     messages: ISequencedDocumentMessage[];
@@ -262,7 +267,7 @@ export interface IThrottlingWarning extends IDriverErrorBase {
 // @public (undocumented)
 export interface IUrlResolver {
     // (undocumented)
-    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, codeDetails?: IFluidCodeDetails): Promise<string>;
+    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IFluidCodeDetails | IContainerPackageInfo): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
