@@ -296,8 +296,6 @@ export interface IQuorumProposalsEvents extends IErrorEvent {
     (event: "approveProposal", listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => void): any;
     // (undocumented)
     (event: "commitProposal", listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number, commitSequenceNumber: number) => void): any;
-    // (undocumented)
-    (event: "rejectProposal", listener: (sequenceNumber: number, key: string, value: any, rejections: string[]) => void): any;
 }
 
 // @public (undocumented)
