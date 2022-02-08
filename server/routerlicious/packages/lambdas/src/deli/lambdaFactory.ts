@@ -100,7 +100,6 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         // Restore deli state if not present in the cache. Mongodb casts undefined as null so we are checking
         // both to be safe. Empty sring denotes a cache that was cleared due to a service summary or the document
         // was created within a different tenant.
-        // eslint-disable-next-line no-null/no-null
         if (dbObject.deli === undefined || dbObject.deli === null) {
             context.log?.info(`New document. Setting empty deli checkpoint`, { messageMetaData });
             lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
