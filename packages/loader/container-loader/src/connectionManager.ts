@@ -724,6 +724,16 @@ export class ConnectionManager implements IConnectionManager {
 
         this.disconnectFromDeltaStream(disconnectMessage);
 
+        // We will always trigger reconnect, even if canRetry is false.
+        // Any truly fatal error state will result in container close upon attempted reconnect,
+        // which is a preferable to closing abruptly when a live connection fails.
+        if (error !== undefined && !error.canRetry) {
+            this.logger.sendTelemetryEvent({
+                eventName: "reconnectingDespiteFatalError",
+                reconnectMode: this.reconnectMode,
+             }, error);
+        }
+
         if (this.reconnectMode === ReconnectMode.Never) {
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
@@ -734,13 +744,6 @@ export class ConnectionManager implements IConnectionManager {
         // If closed then we can't reconnect
         if (this.closed || this.reconnectMode !== ReconnectMode.Enabled) {
             return;
-        }
-
-        // We will always trigger reconnect, even if canRetry is false.
-        // Any truly fatal error state will result in container close upon attempted reconnect,
-        // which is a preferable to closing abruptly when a live connection fails.
-        if (error !== undefined && !error.canRetry) {
-            this.logger.sendTelemetryEvent({ eventName: "reconnectingDespiteFatalError" }, error);
         }
 
         const delayMs = getRetryDelayFromError(error);
