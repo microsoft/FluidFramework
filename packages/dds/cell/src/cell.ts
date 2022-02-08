@@ -146,10 +146,6 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * {@inheritDoc ISharedCell.set}
      */
     public set(value: Serializable<T>) {
-        if (SharedObject.is(value)) {
-            throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
-        }
-
         // Serialize the value if required.
         const operationValue: ICellValue = {
             value: this.serializer.encode(value, this.handle),
@@ -200,7 +196,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      *
      * @returns the summary of the current state of the cell
      */
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         const content: ICellValue = { value: this.data };
         return createSingleBlobSummary(snapshotFileName, serializer.stringify(content, this.handle));
     }
@@ -219,15 +215,6 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      */
     protected initializeLocalCore() {
         this.data = undefined;
-    }
-
-    /**
-     * Process the cell value on register
-     */
-    protected registerCore() {
-        if (SharedObject.is(this.data)) {
-            this.data.bindToContext();
-        }
     }
 
     /**

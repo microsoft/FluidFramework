@@ -145,7 +145,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         return sharedCollection;
     }
 
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         return createSingleBlobSummary(snapshotFileName, this.intervalMapKernel.serialize(serializer));
     }
 
@@ -167,14 +167,6 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
             this.intervalMapKernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
-        }
-    }
-
-    protected registerCore() {
-        for (const value of this.intervalMapKernel.values()) {
-            if (SharedObject.is(value)) {
-                value.bindToContext();
-            }
         }
     }
 

@@ -7,7 +7,6 @@ import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-defini
 import {
     FluidObject,
     IFluidCodeDetails,
-    IFluidConfiguration,
     IFluidObject,
     IRequest,
     IResponse,
@@ -18,7 +17,6 @@ import {
     IClientDetails,
     ISequencedDocumentMessage,
     ISnapshotTree,
-    ITree,
     MessageType,
     ISummaryTree,
     IVersion,
@@ -72,11 +70,6 @@ export interface IRuntime extends IDisposable {
     request(request: IRequest): Promise<IResponse>;
 
     /**
-     * Snapshots the runtime
-     */
-    snapshot(tagMessage: string, fullTree?: boolean): Promise<ITree | null>;
-
-    /**
      * Notifies the runtime of a change in the connection state
      */
     setConnectionState(connected: boolean, clientId?: string);
@@ -121,16 +114,8 @@ export interface IRuntime extends IDisposable {
  * and the Container has created a new ContainerContext.
  */
 export interface IContainerContext extends IDisposable {
-    /**
-    * @deprecated This will be removed in a later release. Deprecated in 0.44 of container-definitions
-    */
-    readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: ILoaderOptions;
-    /**
-     * @deprecated 0.45 - Configuration is not recommended to be used and will be removed in an upcoming release.
-     */
-    readonly configuration?: IFluidConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly storage: IDocumentStorageService;
@@ -157,7 +142,7 @@ export interface IContainerContext extends IDisposable {
      * IContainerContext will retain both options, but hosts must now support tags as the loader
      * will soon plumb taggedLogger's events (potentially tagged) to the host's logger.
      */
-    readonly logger: ITelemetryBaseLogger;
+    readonly logger?: ITelemetryBaseLogger;
     // The logger implementation, which would support tagged events, should be provided by the loader.
     readonly taggedLogger?: ITelemetryBaseLogger;
     readonly serviceConfiguration: IClientConfiguration | undefined;
@@ -168,6 +153,9 @@ export interface IContainerContext extends IDisposable {
      */
     readonly scope: IFluidObject & FluidObject;
 
+    /**
+     * @deprecated 0.56, will be removed in the next release
+     */
     raiseContainerWarning(warning: ContainerWarning): void;
 
     /**

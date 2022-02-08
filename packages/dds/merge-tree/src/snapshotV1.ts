@@ -8,13 +8,9 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { assert, bufferToString } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import {
-    FileMode,
-    ITree,
-    TreeEntry,
-    ITreeEntry,
-} from "@fluidframework/protocol-definitions";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { UnassignedSequenceNumber } from "./constants";
 import {
     ISegment,
@@ -96,13 +92,13 @@ export class SnapshotV1 {
     }
 
     /**
-     * Emits the snapshot to an ITree. If provided the optional IFluidSerializer will be used when serializing
-     * the summary data rather than JSON.stringify.
+     * Emits the snapshot to an ISummarizeResult. If provided the optional IFluidSerializer will be used when
+     * serializing the summary data rather than JSON.stringify.
      */
     emit(
         serializer: IFluidSerializer,
         bind: IFluidHandle,
-    ): ITree {
+    ): ISummaryTreeWithStats {
         const chunks: MergeTreeChunkV1[] = [];
         this.header.totalSegmentCount = 0;
         this.header.totalLength = 0;
@@ -122,48 +118,32 @@ export class SnapshotV1 {
         const headerChunk = chunks.shift()!;
         headerChunk.headerMetadata = this.header;
         headerChunk.headerMetadata.orderedChunkMetadata = [{ id: SnapshotLegacy.header }];
-        const entries: ITreeEntry[] = chunks.map<ITreeEntry>((chunk, index) => {
+        const blobs: [key: string, content: string][] = [];
+        chunks.forEach((chunk, index) => {
             const id = `${SnapshotLegacy.body}_${index}`;
             this.header.orderedChunkMetadata.push({ id });
-            return {
-                mode: FileMode.File,
-                path: id,
-                type: TreeEntry.Blob,
-                value: {
-                    contents: serializeAsMaxSupportedVersion(
-                        id,
-                        chunk,
-                        this.logger,
-                        this.mergeTree.options,
-                        serializer,
-                        bind),
-                    encoding: "utf-8",
-                },
-            };
+            blobs.push([id, serializeAsMaxSupportedVersion(
+                id,
+                chunk,
+                this.logger,
+                this.mergeTree.options,
+                serializer,
+                bind)]);
         });
 
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: SnapshotLegacy.header,
-                    type: TreeEntry.Blob,
-                    value: {
-                        contents: serializeAsMaxSupportedVersion(
-                            SnapshotLegacy.header,
-                            headerChunk,
-                            this.logger,
-                            this.mergeTree.options,
-                            serializer,
-                            bind),
-                        encoding: "utf-8",
-                    },
-                },
-                ...entries,
-            ],
-        };
+        const builder = new SummaryTreeBuilder();
+        builder.addBlob(SnapshotLegacy.header, serializeAsMaxSupportedVersion(
+            SnapshotLegacy.header,
+            headerChunk,
+            this.logger,
+            this.mergeTree.options,
+            serializer,
+            bind));
+        blobs.forEach((value) => {
+            builder.addBlob(value[0], value[1]);
+        });
 
-        return tree;
+        return builder.getSummaryTree();
     }
 
     extractSync() {

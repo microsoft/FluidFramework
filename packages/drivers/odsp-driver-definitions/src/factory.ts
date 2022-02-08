@@ -56,6 +56,16 @@ export interface ICollabSessionOptions {
      * This name will be used in attribution associated with edits made by such user.
      */
     unauthenticatedUserDisplayName?: string;
+    /**
+     * Value indicating session preference to always pass access token via Authorization header.
+     * Default behavior is to pass access token via query parameter unless overall href string
+     * length exceeds 2048 characters. Using query param is performance optimization which results
+     * in ODSP XHR request being treated as 'simple' request which do not require OPTIONS call to
+     * validate CORS. However, not all ODSP implementations understand this optimization.
+     * For instance, auth layer on Converged stack will fail request with access token passed via
+     * query param.
+     */
+    forceAccessTokenViaAuthorizationHeader?: boolean;
 }
 
 export interface HostStoragePolicy {

@@ -46,7 +46,7 @@ export function renderButtons(propertyTree: IPropertyTree, div: HTMLDivElement) 
     buttons.append(randomButton);
 
     const commitButton = document.createElement("button");
-    commitButton.id  = "commit";
+    commitButton.id = "commit";
     commitButton.style.fontSize = "15px";
     commitButton.textContent = "Commit";
     commitButton.addEventListener("click", () => {

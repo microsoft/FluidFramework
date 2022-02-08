@@ -17,7 +17,7 @@ import { BooleanView } from '../src/PropertyViews/Boolean';
 import { EnumView } from '../src/PropertyViews/Enum';
 import { NumberView } from '../src/PropertyViews/Number';
 import { StringView } from '../src/PropertyViews/String';
-import {  useFakeTimers } from 'sinon';
+import { useFakeTimers } from 'sinon';
 import {
   coordinateSystem3DSchema,
   enumUnoDosTresSchema,

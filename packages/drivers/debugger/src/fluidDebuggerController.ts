@@ -258,7 +258,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public async getVersions(
-        versionId: string,
+        versionId: string | null,
         count: number): Promise<IVersion[]> {
         if (this.storage !== undefined) {
             return this.storage.getVersions(versionId, count);
@@ -344,7 +344,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 }
 
-async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumentDeltaStorageService)  {
+async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumentDeltaStorageService) {
     const stream = deltaStorage.fetchMessages(1, undefined);
     while (true) {
         const result = await stream.read();

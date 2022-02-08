@@ -108,50 +108,54 @@ use_old_InterfaceDeclaration_IFluidCodeDetailsConfig(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
-* "VariableDeclaration_IFluidConfiguration": {"forwardCompat": false}
+* "RemovedVariableDeclaration_IFluidConfiguration": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IFluidConfiguration():
     typeof old.IFluidConfiguration;
-declare function use_current_VariableDeclaration_IFluidConfiguration(
+declare function use_current_RemovedVariableDeclaration_IFluidConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     use: typeof current.IFluidConfiguration);
-use_current_VariableDeclaration_IFluidConfiguration(
+use_current_RemovedVariableDeclaration_IFluidConfiguration(
     get_old_VariableDeclaration_IFluidConfiguration());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
-* "VariableDeclaration_IFluidConfiguration": {"backCompat": false}
+* "RemovedVariableDeclaration_IFluidConfiguration": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_IFluidConfiguration():
+declare function get_current_RemovedVariableDeclaration_IFluidConfiguration():
+    // @ts-expect-error compatibility expected to be broken
     typeof current.IFluidConfiguration;
 declare function use_old_VariableDeclaration_IFluidConfiguration(
     use: typeof old.IFluidConfiguration);
 use_old_VariableDeclaration_IFluidConfiguration(
-    get_current_VariableDeclaration_IFluidConfiguration());
+    get_current_RemovedVariableDeclaration_IFluidConfiguration());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
-* "InterfaceDeclaration_IFluidConfiguration": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IFluidConfiguration": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidConfiguration():
     old.IFluidConfiguration;
-declare function use_current_InterfaceDeclaration_IFluidConfiguration(
+declare function use_current_RemovedInterfaceDeclaration_IFluidConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     use: current.IFluidConfiguration);
-use_current_InterfaceDeclaration_IFluidConfiguration(
+use_current_RemovedInterfaceDeclaration_IFluidConfiguration(
     get_old_InterfaceDeclaration_IFluidConfiguration());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
-* "InterfaceDeclaration_IFluidConfiguration": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IFluidConfiguration": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IFluidConfiguration():
+declare function get_current_RemovedInterfaceDeclaration_IFluidConfiguration():
+    // @ts-expect-error compatibility expected to be broken
     current.IFluidConfiguration;
 declare function use_old_InterfaceDeclaration_IFluidConfiguration(
     use: old.IFluidConfiguration);
 use_old_InterfaceDeclaration_IFluidConfiguration(
-    get_current_InterfaceDeclaration_IFluidConfiguration());
+    get_current_RemovedInterfaceDeclaration_IFluidConfiguration());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -540,26 +544,28 @@ use_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
-* "InterfaceDeclaration_IProvideFluidConfiguration": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IProvideFluidConfiguration": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideFluidConfiguration():
     old.IProvideFluidConfiguration;
-declare function use_current_InterfaceDeclaration_IProvideFluidConfiguration(
+declare function use_current_RemovedInterfaceDeclaration_IProvideFluidConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     use: current.IProvideFluidConfiguration);
-use_current_InterfaceDeclaration_IProvideFluidConfiguration(
+use_current_RemovedInterfaceDeclaration_IProvideFluidConfiguration(
     get_old_InterfaceDeclaration_IProvideFluidConfiguration());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
-* "InterfaceDeclaration_IProvideFluidConfiguration": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IProvideFluidConfiguration": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IProvideFluidConfiguration():
+declare function get_current_RemovedInterfaceDeclaration_IProvideFluidConfiguration():
+    // @ts-expect-error compatibility expected to be broken
     current.IProvideFluidConfiguration;
 declare function use_old_InterfaceDeclaration_IProvideFluidConfiguration(
     use: old.IProvideFluidConfiguration);
 use_old_InterfaceDeclaration_IProvideFluidConfiguration(
-    get_current_InterfaceDeclaration_IProvideFluidConfiguration());
+    get_current_RemovedInterfaceDeclaration_IProvideFluidConfiguration());
 
 /*
 * Validate forward compat by using old type in place of current type

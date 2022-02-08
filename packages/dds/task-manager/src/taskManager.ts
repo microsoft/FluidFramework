@@ -263,7 +263,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         }
 
         // This promise works even if we already have an outstanding volunteer op.
-        const lockAcquireP = new Promise<void>((res, rej) => {
+        const lockAcquireP = new Promise<void>((resolve, reject) => {
             const checkIfAcquiredLock = (eventTaskId: string) => {
                 if (eventTaskId !== taskId) {
                     return;
@@ -276,7 +276,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                     this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                     this.abandonWatcher.off("abandon", checkIfAbandoned);
                     this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
-                    res();
+                    resolve();
                 }
             };
 
@@ -288,14 +288,14 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
                 this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
-                rej(new Error(`Abandoned before acquiring lock: ${taskId}`));
+                reject(new Error(`Abandoned before acquiring lock: ${taskId}`));
             };
 
             const rejectOnDisconnect = () => {
                 this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
                 this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
-                rej(new Error(`Disconnected before acquiring lock: ${taskId}`));
+                reject(new Error(`Disconnected before acquiring lock: ${taskId}`));
             };
 
             this.queueWatcher.on("queueChange", checkIfAcquiredLock);
@@ -363,7 +363,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * @returns the summary of the current state of the task manager
      * @internal
      */
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         // TODO filter out tasks with no clients, some are still getting in.
         const content = [...this.taskQueues.entries()];
         return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
@@ -385,11 +385,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * @internal
      */
     protected initializeLocalCore() { }
-
-    /**
-     * @internal
-     */
-    protected registerCore() { }
 
     /**
      * @internal

@@ -31,16 +31,6 @@ import { ISharedObject, ISharedObjectEvents } from "./types";
  */
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
     extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
-    /**
-     * @param obj - The thing to check if it is a SharedObject
-     * @returns Returns true if the thing is a SharedObject
-     */
-    public static is(obj: any): obj is SharedObjectCore {
-        return obj?.ISharedObject !== undefined;
-    }
-
-    public get ISharedObject() { return this; }
-    public get IChannel() { return this; }
     public get IFluidLoadable() { return this; }
 
     /**
@@ -191,9 +181,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 
         this._isBoundToContext = true;
 
-        // Allow derived classes to perform custom processing prior to registering this object
-        this.registerCore();
-
         this.runtime.bindChannel(this);
     }
 
@@ -251,11 +238,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected initializeLocalCore() {
         return;
     }
-
-    /**
-     * Allows the distributed data type the ability to perform custom processing once an attach has happened.
-     */
-    protected abstract registerCore();
 
     /**
      * Allows the distributive data type the ability to perform custom processing once an attach has happened.
@@ -435,7 +417,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 }
 
 /**
- * SharedObject with simplified, synchronous summarization and GC
+ * SharedObject with simplified, synchronous summarization and GC.
+ * DDS implementations with async and incremental summarization should extend SharedObjectCore directly instead.
  */
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
     extends SharedObjectCore<TEvent> {
@@ -467,7 +450,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param runtime - The IFluidDataStoreRuntime which contains the shared object
      * @param attributes - Attributes of the shared object
      */
-     constructor(
+    constructor(
         id: string,
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes)
@@ -484,14 +467,14 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc (ISharedObject:interface).getAttachSummary}
      */
     public getAttachSummary(fullTree: boolean = false, trackState: boolean = false): ISummaryTreeWithStats {
-        return this.summarizeCore(this.serializer, fullTree);
+        return this.summarizeCore(this.serializer);
     }
 
     /**
      * {@inheritDoc (ISharedObject:interface).summarize}
      */
     public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummaryTreeWithStats> {
-        return this.summarizeCore(this.serializer, fullTree);
+        return this.summarizeCore(this.serializer);
     }
 
     /**
@@ -529,12 +512,12 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // We run the full summarize logic to get the list of outbound routes from this object. This is a little
         // expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
         // See: https://github.com/microsoft/FluidFramework/issues/4547
-        this.summarizeCore(serializer, false);
+        this.summarizeCore(serializer);
     }
 
     /**
      * Gets a form of the object that can be serialized.
      * @returns A tree representing the snapshot of the shared object.
      */
-    protected abstract summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
+    protected abstract summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }

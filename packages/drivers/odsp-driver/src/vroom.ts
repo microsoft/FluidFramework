@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { v4 as uuid } from "uuid";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { InstrumentedStorageTokenFetcher, IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
@@ -13,8 +14,8 @@ import { EpochTracker } from "./epochTracker";
 import { runWithRetry } from "./retryUtils";
 
 interface IJoinSessionBody {
-    requestSocketToken?: boolean;
-    guestDisplayName?: string;
+    requestSocketToken: boolean;
+    guestDisplayName: string;
 }
 
 /**
@@ -54,35 +55,34 @@ export async function fetchJoinSession(
             ...extraProps,
         },
         async (event) => {
-            // TODO Extract the auth header-vs-query logic out
             const siteOrigin = getOrigin(urlParts.siteUrl);
-            let queryParams = `access_token=${token}`;
-            let headers = {};
-            if (queryParams.length > 2048) {
-                queryParams = "";
-                headers = { Authorization: `Bearer ${token}` };
+            const formBoundary = uuid();
+            let postBody = `--${formBoundary}\r\n`;
+            postBody += `Authorization: Bearer ${token}\r\n`;
+            postBody += `X-HTTP-Method-Override: POST\r\n`;
+            postBody += `Content-Type: application/json\r\n`;
+            postBody += `_post: 1\r\n`;
+            // Name should be there when socket token is requested and vice-versa.
+            if (requestSocketToken && guestDisplayName !== undefined) {
+                const body: IJoinSessionBody = {
+                    requestSocketToken: true,
+                    guestDisplayName,
+                };
+                postBody += `\r\n${JSON.stringify(body)}\r\n`;
             }
-            let body: IJoinSessionBody | undefined;
-            if (requestSocketToken || guestDisplayName) {
-                body = {};
-                if (requestSocketToken) {
-                    body.requestSocketToken = true;
-                }
-                if (guestDisplayName) {
-                    body.guestDisplayName = guestDisplayName;
-                }
-                // IMPORTANT: Must set content-type header explicitly to application/json when request has body.
-                // By default, request will use text/plain as content-type and will be rejected by backend.
-                headers["Content-Type"] = "application/json";
-            }
+            postBody += `\r\n--${formBoundary}--`;
+            const headers: {[index: string]: string} = {
+                "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
+            };
 
             const response = await runWithRetry(
                 async () => epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
                     `${getApiRoot(siteOrigin)}/drives/${
                         urlParts.driveId
-                    }/items/${urlParts.itemId}/${path}?${queryParams}`,
-                    { method, headers, body: body ? JSON.stringify(body) : undefined },
+                    }/items/${urlParts.itemId}/${path}?ump=1`,
+                    { method, headers, body: postBody },
                     "joinSession",
+                    true,
                 ),
                 "joinSession",
                 logger,

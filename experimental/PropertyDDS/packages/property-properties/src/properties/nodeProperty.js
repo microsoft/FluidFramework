@@ -23,7 +23,8 @@ export class NodeProperty extends ContainerProperty {
      * @category Other Collections
      */
     constructor(in_params) {
-        super({ typeid: 'NodeProperty', ...in_params });
+        super( in_params );
+        this._dynamicChildren = {};
     };
 
     /**
@@ -37,3 +38,4 @@ export class NodeProperty extends ContainerProperty {
     _validateInsert(in_id, in_property) { };
 
 }
+NodeProperty.prototype._typeid = 'NodeProperty';

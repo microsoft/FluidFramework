@@ -312,7 +312,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
 	 */
-	public summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+	public summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		return createSingleBlobSummary(snapshotFileName, this.saveSerializedSummary({ serializer }));
 	}
 
@@ -510,13 +510,6 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 			const edit = parsedEdit as Edit<TChange>;
 			this.processSequencedEdit(edit, message);
 		}
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
-	 */
-	protected registerCore(): void {
-		// Do nothing
 	}
 
 	/**

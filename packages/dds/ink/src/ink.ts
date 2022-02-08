@@ -185,7 +185,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
      */
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         const blobContent = JSON.stringify(this.inkData.getSerializable());
         return createSingleBlobSummary(snapshotFileName, blobContent);
     }
@@ -212,13 +212,6 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
                 this.executeStylusOperation(operation);
             }
         }
-    }
-
-    /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
-     */
-    protected registerCore(): void {
-        return;
     }
 
     /**

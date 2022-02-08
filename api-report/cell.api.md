@@ -47,9 +47,8 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     protected onDisconnect(): void;
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    protected registerCore(): void;
     set(value: Serializable<T>): void;
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
 
 

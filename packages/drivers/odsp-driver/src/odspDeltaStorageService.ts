@@ -53,9 +53,6 @@ export class OdspDeltaStorageService {
             let postBody = `--${formBoundary}\r\n`;
             postBody += `Authorization: Bearer ${storageToken}\r\n`;
             postBody += `X-HTTP-Method-Override: GET\r\n`;
-            if (fetchReason !== undefined) {
-                postBody += `fetchReason: ${fetchReason}\r\n`;
-            }
 
             postBody += `_post: 1\r\n`;
             postBody += `\r\n--${formBoundary}--`;
@@ -81,6 +78,7 @@ export class OdspDeltaStorageService {
                 },
                 "ops",
                 true,
+                fetchReason,
             );
             clearTimeout(timer);
             const deltaStorageResponse = response.content;

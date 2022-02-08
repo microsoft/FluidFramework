@@ -94,7 +94,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     // (undocumented)
     protected get serializer(): IFluidSerializer;
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
-    protected abstract summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
+    protected abstract summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
 
 // @public
@@ -114,18 +114,12 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     readonly handle: IFluidHandle;
     protected handleDecoded(decodedHandle: IFluidHandle): void;
     // (undocumented)
-    get IChannel(): this;
-    // (undocumented)
     id: string;
     // (undocumented)
     get IFluidLoadable(): this;
     initializeLocal(): void;
     protected initializeLocalCore(): void;
-    // (undocumented)
-    static is(obj: any): obj is SharedObjectCore;
     isAttached(): boolean;
-    // (undocumented)
-    get ISharedObject(): this;
     load(services: IChannelServices): Promise<void>;
     protected abstract loadCore(services: IChannelStorageService): Promise<void>;
     protected readonly logger: ITelemetryLogger;
@@ -133,7 +127,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected onConnect(): void;
     protected abstract onDisconnect(): any;
     protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): any;
-    protected abstract registerCore(): any;
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     protected runtime: IFluidDataStoreRuntime;

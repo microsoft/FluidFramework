@@ -179,7 +179,7 @@ export class ConsensusOrderedCollection<T = any>
         } while (!(await this.acquire(callback)));
     }
 
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         // If we are transitioning from unattached to attached mode,
         // then we are losing all checked out work!
         this.removeClient(idForLocalUnattachedClient);
@@ -262,10 +262,6 @@ export class ConsensusOrderedCollection<T = any>
         const rawContentData = bufferToString(blob2, "utf8");
         const content2 = this.deserializeValue(rawContentData, this.serializer) as T[];
         this.data.loadFrom(content2);
-    }
-
-    protected registerCore() {
-        return;
     }
 
     protected onDisconnect() {

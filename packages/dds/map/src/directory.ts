@@ -5,11 +5,8 @@
 
 import { assert,TypedEventEmitter } from "@fluidframework/common-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { addBlobToTree } from "@fluidframework/protocol-base";
-import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils";
 import {
     ISequencedDocumentMessage,
-    ITree,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -21,6 +18,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer, SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import * as path from "path-browserify";
 import {
     IDirectory,
@@ -205,10 +203,10 @@ export interface IDirectoryNewStorageFormat {
     content: IDirectoryDataObject;
 }
 
-function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): ITree {
+function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): ISummaryTreeWithStats {
     const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
 
-    const tree: ITree = { entries: [] };
+    const builder = new SummaryTreeBuilder();
     let counter = 0;
     const blobs: string[] = [];
 
@@ -242,7 +240,7 @@ function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): I
                 const blobName = `blob${counter}`;
                 counter++;
                 blobs.push(blobName);
-                addBlobToTree(tree, blobName, extraContent);
+                builder.addBlob(blobName, JSON.stringify(extraContent));
             } else {
                 currentSubDirObject.storage[key] = result;
             }
@@ -262,9 +260,9 @@ function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): I
         blobs,
         content,
     };
-    addBlobToTree(tree, snapshotFileName, newFormat);
+    builder.addBlob(snapshotFileName, JSON.stringify(newFormat));
 
-    return tree;
+    return builder.getSummaryTree();
 }
 
 /**
@@ -419,13 +417,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc IDirectory.wait}
-     */
-    public async wait<T = any>(key: string): Promise<T> {
-        return this.root.wait<T>(key);
-    }
-
-    /**
      * {@inheritDoc IDirectory.set}
      */
     public set<T = any>(key: string, value: T): this {
@@ -564,9 +555,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
      * @internal
      */
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
-        const snapshot = serializeDirectory(this.root, serializer);
-        return convertToSummaryTreeWithStats(snapshot, fullTree);
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+        return serializeDirectory(this.root, serializer);
     }
 
     /**
@@ -653,27 +643,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                     );
                     currentSubDir.populateStorage(key, localValue);
                 }
-            }
-        }
-    }
-
-    /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
-     * @internal
-     */
-    protected registerCore(): void {
-        const subdirsToRegisterFrom = new Array<SubDirectory>();
-        subdirsToRegisterFrom.push(this.root);
-
-        for (const currentSubDir of subdirsToRegisterFrom) {
-            for (const value of currentSubDir.values()) {
-                if (SharedObject.is(value)) {
-                    value.bindToContext();
-                }
-            }
-
-            for (const [, subdir] of currentSubDir.subdirectories()) {
-                subdirsToRegisterFrom.push(subdir as SubDirectory);
             }
         }
     }
@@ -899,30 +868,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      */
     public get<T = any>(key: string): T | undefined {
         return this._storage.get(key)?.value as T | undefined;
-    }
-
-    /**
-     * {@inheritDoc IDirectory.wait}
-     */
-    public async wait<T = any>(key: string): Promise<T> {
-        // Return immediately if the value already exists
-        if (this._storage.has(key)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this._storage.get(key)!.value as T;
-        }
-
-        // Otherwise subscribe to changes
-        return new Promise<T>((resolve, reject) => {
-            const callback = (changed: IDirectoryValueChanged) => {
-                if (this.absolutePath === changed.path && key === changed.key) {
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    resolve(this._storage.get(key)!.value as T);
-                    this.directory.removeListener("valueChanged", callback);
-                }
-            };
-
-            this.directory.on("valueChanged", callback);
-        });
     }
 
     /**

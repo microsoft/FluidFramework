@@ -42,13 +42,11 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
     // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
-    protected registerCore(): void;
-    // (undocumented)
     protected release(acquireId: string): void;
     // (undocumented)
     protected releaseCore(acquireId: string): void;
     // (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
 }
 

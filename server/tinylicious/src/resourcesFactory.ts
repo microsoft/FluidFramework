@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
 import { LocalOrdererManager } from "@fluidframework/server-local-server";
 import { DocumentStorage } from "@fluidframework/server-services-shared";
 import { generateToken, Historian } from "@fluidframework/server-services-client";
 import { MongoDatabaseManager, MongoManager, IResourcesFactory } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
-import * as git from "isomorphic-git";
 import { Provider } from "nconf";
 import { Server } from "socket.io";
 
@@ -49,9 +47,6 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
         });
         const pubsub = new PubSubPublisher(io);
         const webServerFactory = new WebServerFactory(io);
-
-        // Initialize isomorphic-git
-        git.plugins.set("fs", fs);
 
         const orderManager = new LocalOrdererManager(
             storage,

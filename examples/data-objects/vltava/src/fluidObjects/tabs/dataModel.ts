@@ -30,7 +30,7 @@ export interface ITabsTypes {
 
 export interface ITabsModel {
     type: string;
-    handleOrId?: IFluidHandle | string;
+    handle?: IFluidHandle;
 }
 
 export interface ITabsDataModel extends EventEmitter {
@@ -50,7 +50,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         private readonly getFluidObjectFromDirectory: <T extends FluidObject & IFluidLoadable>(
             id: string,
             directory: IDirectory,
-            getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IFluidHandle | undefined) =>
+            getObjectFromDirectory?: (id: string, directory: IDirectory) => IFluidHandle | undefined) =>
             Promise<T | undefined>,
     ) {
         super();
@@ -81,15 +81,15 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         const fluidObject = await this.createSubObject(factory);
         this.tabs.set(newKey, {
             type: factory.type,
-            handleOrId: fluidObject.handle,
+            handle: fluidObject.handle,
         });
 
         return newKey;
     }
 
-    private getObjectFromDirectory(id: string, directory: IDirectory): string | IFluidHandle | undefined {
+    private getObjectFromDirectory(id: string, directory: IDirectory): IFluidHandle | undefined {
         const data = directory.get<ITabsModel>(id);
-        return data?.handleOrId;
+        return data?.handle;
     }
 
     public async getFluidObjectTab(id: string): Promise<FluidObject | undefined> {

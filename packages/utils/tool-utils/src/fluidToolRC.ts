@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable unicorn/filename-case */
-
 import fs from "fs";
 import os from "os";
 import path from "path";
@@ -54,7 +52,6 @@ export async function saveRC(rc: IResources) {
     return writeFile(getRCFileName(), Buffer.from(content, "utf8"));
 }
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export async function lockRC() {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return lock(getRCFileName(), {

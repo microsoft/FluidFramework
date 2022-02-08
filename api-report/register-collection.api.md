@@ -35,9 +35,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject<IConsensusRegis
     // (undocumented)
     readVersions(key: string): T[] | undefined;
     // (undocumented)
-    protected registerCore(): void;
-    // (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     write(key: string, value: T): Promise<boolean>;
 }
 

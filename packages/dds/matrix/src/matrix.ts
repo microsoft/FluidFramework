@@ -4,12 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
@@ -24,7 +19,7 @@ import {
     SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { convertToSummaryTreeWithStats, ObjectStoragePartition } from "@fluidframework/runtime-utils";
+import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
     IMatrixProducer,
     IMatrixConsumer,
@@ -37,7 +32,7 @@ import { PermutationVector, PermutationSegment } from "./permutationvector";
 import { SparseArray2D } from "./sparsearray2d";
 import { SharedMatrixFactory } from "./runtime";
 import { Handle, isHandleValid } from "./handletable";
-import { deserializeBlob, serializeBlob } from "./serialization";
+import { deserializeBlob } from "./serialization";
 import { ensureRange } from "./range";
 import { IUndoConsumer } from "./types";
 import { MatrixUndoProvider } from "./undoprovider";
@@ -429,33 +424,16 @@ export class SharedMatrix<T = any>
         }
     }
 
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.Directory,
-                    path: SnapshotPath.rows,
-                    type: TreeEntry.Tree,
-                    value: this.rows.snapshot(this.runtime, this.handle, serializer),
-                },
-                {
-                    mode: FileMode.Directory,
-                    path: SnapshotPath.cols,
-                    type: TreeEntry.Tree,
-                    value: this.cols.snapshot(this.runtime, this.handle, serializer),
-                },
-                serializeBlob(
-                    this.handle,
-                    SnapshotPath.cells,
-                    [
-                        this.cells.snapshot(),
-                        this.pending.snapshot(),
-                    ],
-                    serializer),
-            ],
-        };
-
-        return convertToSummaryTreeWithStats(tree, fullTree);
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+        const builder = new SummaryTreeBuilder();
+        builder.addWithStats(SnapshotPath.rows, this.rows.summarize(this.runtime, this.handle, serializer));
+        builder.addWithStats(SnapshotPath.cols, this.cols.summarize(this.runtime, this.handle, serializer));
+        builder.addBlob(SnapshotPath.cells,
+            serializer.stringify([
+                this.cells.snapshot(),
+                this.pending.snapshot(),
+            ], this.handle));
+        return builder.getSummaryTree();
     }
 
     /**
@@ -641,11 +619,6 @@ export class SharedMatrix<T = any>
                 }
             }
         }
-    }
-
-    protected registerCore() {
-        this.rows.startOrUpdateCollaboration(this.runtime.clientId, 0);
-        this.cols.startOrUpdateCollaboration(this.runtime.clientId, 0);
     }
 
     // Invoked by PermutationVector to notify IMatrixConsumers of row insertion/deletions.

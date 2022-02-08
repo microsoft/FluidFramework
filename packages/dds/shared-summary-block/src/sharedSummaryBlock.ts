@@ -92,7 +92,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
      */
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         const contentsBlob: ISharedSummaryBlockDataSerializable = {};
         this.data.forEach((value, key) => {
             contentsBlob[key] = value;
@@ -109,11 +109,6 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
             this.data.set(key, value);
         }
     }
-
-    /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
-     */
-    protected registerCore() { }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}

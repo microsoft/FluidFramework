@@ -36,8 +36,8 @@ describe("Container Runtime", () => {
         let batchEnd: number = 0;
 
         const startDeltaManager = async () =>
-            new Promise((accept) => {
-                deltaManager.on("connect", accept);
+            new Promise((resolve) => {
+                deltaManager.on("connect", resolve);
                 deltaManager.connect({ reason: "test" });
             });
 

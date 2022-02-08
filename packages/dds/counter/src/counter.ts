@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage,  MessageType } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
@@ -124,7 +124,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * @returns the summary of the current state of the counter
      * @internal
      */
-    protected summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         // Get a serializable form of data
         const content: ICounterSnapshotFormat = {
             value: this.value,
@@ -142,13 +142,6 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
         const content = await readAndParse<ICounterSnapshotFormat>(storage, snapshotFileName);
 
         this._value = content.value;
-    }
-
-    /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
-     * @internal
-     */
-    protected registerCore() {
     }
 
     /**

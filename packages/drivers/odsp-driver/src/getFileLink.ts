@@ -17,6 +17,7 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { fetchHelper, getWithRetryForTokenRefresh } from "./odspUtils";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 // Store cached responses for the lifetime of web session as file link remains the same for given file item
 const fileLinkCache = new Map<string, Promise<string>>();
@@ -84,7 +85,7 @@ async function getFileLinkCore(
     identityType: IdentityType,
     logger: ITelemetryLogger,
 ): Promise<string> {
-    const fileItem = await getFileItemLite(getToken, odspUrlParts, logger);
+    const fileItem = await getFileItemLite(getToken, odspUrlParts, logger, identityType === "Consumer");
 
     // ODC canonical link does not require any additional processing
     if (identityType === "Consumer") {
@@ -104,7 +105,10 @@ async function getFileLinkCore(
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     `${odspUrlParts.siteUrl}/_api/web/GetFileByUrl(@a1)/ListItemAllFields/GetSharingInformation?@a1=${
                         encodeURIComponent(`'${fileItem.webDavUrl}'`)
-                    }`, tokenFromResponse(token));
+                    }`,
+                    tokenFromResponse(token),
+                    false,
+                );
                 const requestInit = {
                     method: "POST",
                     headers: {
@@ -123,7 +127,8 @@ async function getFileLinkCore(
                     throw new NonRetryableError(
                         "getFileLinkCoreMalformedResponse",
                         "Malformed GetSharingInformation response",
-                        DriverErrorType.incorrectServerResponse);
+                        DriverErrorType.incorrectServerResponse,
+                        { driverVersion });
                 }
                 return directUrl;
             });
@@ -152,6 +157,7 @@ async function getFileItemLite(
     getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
     odspUrlParts: IOdspUrlParts,
     logger: ITelemetryLogger,
+    forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<FileItemLite> {
     return PerformanceEvent.timedExecAsync(
         logger,
@@ -166,6 +172,7 @@ async function getFileItemLite(
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     `${siteUrl}/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl`,
                     tokenFromResponse(token),
+                    forceAccessTokenViaAuthorizationHeader,
                 );
                 const requestInit = { method: "GET", headers };
                 const response = await fetchHelper(url, requestInit);
@@ -177,7 +184,8 @@ async function getFileItemLite(
                     throw new NonRetryableError(
                         "getFileItemLiteMalformedResponse",
                         "Malformed getFileItemLite response",
-                        DriverErrorType.incorrectServerResponse);
+                        DriverErrorType.incorrectServerResponse,
+                        { driverVersion });
                 }
                 return responseJson;
             });

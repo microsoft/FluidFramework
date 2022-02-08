@@ -228,7 +228,7 @@ export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLogger, 
 // @public
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
-// @public
+// @public @deprecated (undocumented)
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
     constructor(logger: ITelemetryBaseLogger);
     // (undocumented)

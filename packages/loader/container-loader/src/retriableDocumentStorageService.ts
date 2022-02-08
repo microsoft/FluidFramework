@@ -55,7 +55,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         );
     }
 
-    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
+    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
         return this.runWithRetry(
             async () => this.internalStorageService.getVersions(versionId, count),
             "storage_getVersions",
