@@ -113,9 +113,9 @@ export class GitManager implements IGitManager {
     /**
      * Retrieves the object at the given revision number
      */
-    /* eslint-disable @typescript-eslint/promise-function-async */
+
     public getContent(commit: string, path: string): Promise<resources.IBlob> {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
         return this.historian.getContent(path, commit);
     }
 
@@ -135,7 +135,6 @@ export class GitManager implements IGitManager {
     public createTree(files: api.ITree): Promise<resources.ITree> {
         return this.createTreeCore(files, 0);
     }
-    /* eslint-enable @typescript-eslint/promise-function-async */
 
     public async createCommit(commit: resources.ICreateCommitParams): Promise<resources.ICommit> {
         return this.historian.createCommit(commit);
@@ -156,7 +155,6 @@ export class GitManager implements IGitManager {
     public async getRef(ref: string): Promise<resources.IRef> {
         return this.historian
             .getRef(`heads/${ref}`)
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
             .catch((error) => {
                 if (error === 400 || error === 404) {
                     return null;
@@ -249,7 +247,6 @@ export class GitManager implements IGitManager {
         // Kick off the work to create all the tree values
         const entriesP: Promise<resources.ICreateBlobResponse | resources.ITree>[] = [];
         for (const entry of files.entries) {
-            /* eslint-disable no-case-declarations */
             switch (api.TreeEntry[entry.type]) {
                 case api.TreeEntry.Blob:
                     const entryAsBlob = entry.value as api.IBlob;
@@ -273,7 +270,6 @@ export class GitManager implements IGitManager {
                 default:
                     return Promise.reject(new Error("Unknown entry type"));
             }
-            /* eslint-enable no-case-declarations */
         }
 
         // Wait for them all to resolve
