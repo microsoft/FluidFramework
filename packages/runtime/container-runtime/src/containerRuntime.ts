@@ -1054,7 +1054,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (id: string) => this.summarizerNode.deleteChild(id),
             this.mc.logger,
             async () => this.garbageCollector.getDataStoreBaseGCDetails(),
-            (id: string, packagePath: readonly string[]) => this.garbageCollector.nodeChanged(id, packagePath),
+            (id: string, packagePath?: readonly string[]) => this.garbageCollector.nodeChanged(id, packagePath),
             new Map<string, string>(dataStoreAliasMap),
             this.garbageCollector.writeDataAtRoot,
         );

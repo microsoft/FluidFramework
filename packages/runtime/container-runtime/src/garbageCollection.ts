@@ -119,7 +119,7 @@ export interface IGarbageCollector {
     /** Called when the latest summary of the system has been refreshed. */
     latestSummaryStateRefreshed(result: RefreshSummaryResult, readAndParseBlob: ReadAndParseBlob): Promise<void>;
     /** Called when a node is changed. Used to detect and log when an inactive node is changed. */
-    nodeChanged(id: string, packagePath: readonly string[]): void;
+    nodeChanged(id: string, packagePath?: readonly string[]): void;
     /** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
     addedOutboundReference(fromNodeId: string, toNodeId: string): void;
     dispose(): void;
@@ -163,7 +163,7 @@ class UnreferencedStateTracker {
         currentTimestampMs: number,
         deleteTimeoutMs: number,
         inactiveNodeId: string,
-        packagePath?: readonly string[],
+        pkgPath?: readonly string[],
     ) {
         if (this.inactive && !this.inactiveEventsLogged.has(eventName)) {
             logger.sendErrorEvent({
@@ -171,7 +171,7 @@ class UnreferencedStateTracker {
                 age: currentTimestampMs - this.unreferencedTimestampMs,
                 timeout: deleteTimeoutMs,
                 id: inactiveNodeId,
-                pkg: { value: packagePath ? `/${packagePath.join("/")}`: undefined, tag: TelemetryDataTag.PackageData },
+                pkg: pkgPath ? { value: `/${pkgPath.join("/")}`, tag: TelemetryDataTag.PackageData } : undefined,
             });
             this.inactiveEventsLogged.add(eventName);
         }
@@ -617,8 +617,10 @@ export class GarbageCollector implements IGarbageCollector {
 
     /**
      * Called when a node with the given id is changed. If the node is inactive, log an error.
+     * @param id - The id of the node that changed.
+     * @param packagePath - The package path of the node. This may not be available if the node hasn't been loaded yet.
      */
-    public nodeChanged(id: string, packagePath: readonly string[]) {
+    public nodeChanged(id: string, packagePath?: readonly string[]) {
         // Prefix "/" if needed to make it relative to the root.
         const nodeId = id.startsWith("/") ? id : `/${id}`;
         this.unreferencedNodesState.get(nodeId)?.logIfInactive(
