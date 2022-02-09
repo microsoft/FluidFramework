@@ -63,7 +63,10 @@ const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 // Feature gate key to write GC data at the root of the summary tree.
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 
-const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+const defaultInactivityTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+// Using the max integer value for delete timeout fow now. ~24 days. Update once we finalize the actual timeout for
+// delete and once this issue is resolved - https://github.com/microsoft/FluidFramework/issues/9062.
+const defaultDeleteTimeoutMs = 0x7FFFFFFF;
 
 /** The statistics of the system state after a garbage collection run. */
 export interface IGCStats {
@@ -125,52 +128,81 @@ export interface IGarbageCollector {
 }
 
 /**
- * Helper class that tracks the state of an unreferenced node such as the time it was unreferenced. It also sets
- * the node's state to inactive if it remains unreferenced for a given amount of time (inactiveTimeoutMs).
+ * Helper class that tracks the state of an unreferenced node such as the time it was unreferenced. It also updates
+ * the node's state to inactive / readyToDelete if it remains unreferenced for certain amounts of time.
  */
 class UnreferencedStateTracker {
     private inactive: boolean = false;
+    private readyToDelete = false;
     // Keeps track of all inactive events that are logged. This is used to limit the log generation for each event to 1
     // so that it is not noisy.
     private readonly inactiveEventsLogged: Set<string> = new Set();
-    private readonly timer: Timer | undefined;
+    private readonly inactivityTimer: Timer | undefined;
+    private readonly deleteTimer: Timer | undefined;
 
     constructor(
         public readonly unreferencedTimestampMs: number,
-        inactiveTimeoutMs: number,
+        currentTimestampMs: number,
+        private readonly inactivityTimeoutMs: number,
     ) {
-        // If the timeout has already expired, the node should become inactive immediately. Otherwise, start a timer of
-        // inactiveTimeoutMs after which the node will become inactive.
-        if (inactiveTimeoutMs <= 0) {
+        const unreferencedDurationMs = currentTimestampMs - unreferencedTimestampMs;
+        // If the node has already been unreferenced for more than inactivityTimeoutMs, mark it inactive. Else, start a
+        // timer for the remaining duration.
+        if (unreferencedDurationMs >= inactivityTimeoutMs) {
             this.inactive = true;
         } else {
-            this.timer = new Timer(inactiveTimeoutMs, () => { this.inactive = true; });
-            this.timer.start();
+            this.inactivityTimer = new Timer(
+                inactivityTimeoutMs - unreferencedDurationMs,
+                () => { this.inactive = true; },
+            );
+            this.inactivityTimer.start();
+        }
+
+        // If the node has already been unreferenced for more than defaultDeleteTimeoutMs, mark it readyToDelete. Else,
+        // start a timer for the remaining duration.
+        if (unreferencedDurationMs >= defaultDeleteTimeoutMs) {
+            this.readyToDelete = true;
+        } else {
+            this.deleteTimer = new Timer(
+                defaultDeleteTimeoutMs - unreferencedDurationMs,
+                () => { this.readyToDelete = true; },
+            );
+            this.deleteTimer.start();
         }
     }
 
-    /** Stop tracking this node. Reset the unreferenced timer, if any, and reset inactive state. */
+    /** Stop tracking this node. Reset timers, if any, and reset states. */
     public stopTracking() {
-        this.timer?.clear();
+        this.inactivityTimer?.clear();
+        this.deleteTimer?.clear();
         this.inactive = false;
+        this.readyToDelete = false;
     }
 
-    /** Logs an error with the given properties if the node  is inactive. */
-    public logIfInactive(
+    /** Logs an error with the given properties if the node is inactive or ready to be deleted. */
+    public logIfInactiveOrDeleted(
         logger: ITelemetryLogger,
         eventName: string,
         currentTimestampMs: number,
-        deleteTimeoutMs: number,
-        inactiveNodeId: string,
+        id: string,
     ) {
         if (this.inactive && !this.inactiveEventsLogged.has(eventName)) {
             logger.sendErrorEvent({
                 eventName,
                 age: currentTimestampMs - this.unreferencedTimestampMs,
-                timeout: deleteTimeoutMs,
-                id: inactiveNodeId,
+                timeout: this.inactivityTimeoutMs,
+                id,
             });
             this.inactiveEventsLogged.add(eventName);
+        }
+
+        if (this.readyToDelete) {
+            logger.sendErrorEvent({
+                eventName: `${eventName}_afterDelete`,
+                age: currentTimestampMs - this.unreferencedTimestampMs,
+                timeout: defaultDeleteTimeoutMs,
+                id,
+            });
         }
     }
 }
@@ -282,8 +314,8 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly initializeBaseStateP: Promise<void>;
     // The map of data store ids to their GC details in the base summary returned in getDataStoreGCDetails().
     private readonly dataStoreGCDetailsP: Promise<Map<string, IGarbageCollectionDetailsBase>>;
-    // The time after which an unreferenced node can be deleted. Currently, we only set the node's state to expired.
-    private readonly deleteTimeoutMs: number;
+    // The time after which an unreferenced node is considered inactive.
+    private readonly inactivityTimeoutMs: number;
     // Map of node ids to their unreferenced state tracker.
     private readonly unreferencedNodesState: Map<string, UnreferencedStateTracker> = new Map();
     // The timeout responsible for closing the container when the session has expired
@@ -306,7 +338,7 @@ export class GarbageCollector implements IGarbageCollector {
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(baseLogger, "GarbageCollector"));
 
-        this.deleteTimeoutMs = this.gcOptions.deleteTimeoutMs ?? defaultDeleteTimeoutMs;
+        this.inactivityTimeoutMs = this.gcOptions.inactivityTimeoutMs ?? defaultInactivityTimeoutMs;
 
         let prevSummaryGCVersion: number | undefined;
 
@@ -440,14 +472,12 @@ export class GarbageCollector implements IGarbageCollector {
             for (const [nodeId, nodeData] of Object.entries(baseState.gcNodes)) {
                 const unreferencedTimestampMs = nodeData.unreferencedTimestampMs;
                 if (unreferencedTimestampMs !== undefined) {
-                    // Get how long it has been since the node was unreferenced. Start a timeout for the remaining time
-                    // left for it to be eligible for deletion.
-                    const unreferencedDurationMs = currentTimestampMs - unreferencedTimestampMs;
                     this.unreferencedNodesState.set(
                         nodeId,
                         new UnreferencedStateTracker(
                             unreferencedTimestampMs,
-                            this.deleteTimeoutMs - unreferencedDurationMs,
+                            currentTimestampMs,
+                            this.inactivityTimeoutMs,
                         ),
                     );
                 }
@@ -609,16 +639,15 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Called when a node with the given id is changed. If the node is inactive, log an error.
+     * Called when a node with the given id is changed. If the node is inactive or deleted, log an error.
      */
     public nodeChanged(id: string) {
         // Prefix "/" if needed to make it relative to the root.
         const nodeId = id.startsWith("/") ? id : `/${id}`;
-        this.unreferencedNodesState.get(nodeId)?.logIfInactive(
+        this.unreferencedNodesState.get(nodeId)?.logIfInactiveOrDeleted(
             this.mc.logger,
             "inactiveObjectChanged",
             this.getCurrentTimestampMs(),
-            this.deleteTimeoutMs,
             nodeId,
         );
     }
@@ -678,7 +707,7 @@ export class GarbageCollector implements IGarbageCollector {
                 // Start tracking this node as it became unreferenced in this run.
                 this.unreferencedNodesState.set(
                     nodeId,
-                    new UnreferencedStateTracker(unreferencedTimestampMs, this.deleteTimeoutMs),
+                    new UnreferencedStateTracker(unreferencedTimestampMs, currentTimestampMs, this.inactivityTimeoutMs),
                 );
             }
         }
@@ -687,13 +716,12 @@ export class GarbageCollector implements IGarbageCollector {
         for (const nodeId of gcResult.referencedNodeIds) {
             const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
             if (nodeStateTracker !== undefined) {
-                // If this node has been unreferenced for longer than deleteTimeoutMs and is being referenced,
-                // log an error as this may mean the deleteTimeoutMs is not long enough.
-                nodeStateTracker.logIfInactive(
+                // If this node is inactive or deleted and is being referenced, log an error as this may indicate use
+                // after delete.
+                nodeStateTracker.logIfInactiveOrDeleted(
                     this.mc.logger,
                     "inactiveObjectRevived",
                     currentTimestampMs,
-                    this.deleteTimeoutMs,
                     nodeId,
                 );
                 // Stop tracking so as to clear out any running timers.

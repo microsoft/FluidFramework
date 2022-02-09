@@ -35,8 +35,8 @@ describe("Garbage Collection Tests", () => {
     let clock: SinonFakeTimers;
     let mockLogger: MockLogger;
     let closeCalled = false;
-    // Time after which unreferenced nodes can be deleted.
-    const deleteTimeoutMs = 500;
+    // Time after which unreferenced nodes become inactive.
+    const inactivityTimeoutMs = 500;
 
     // The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
     const defaultGCData: IGarbageCollectionData = { gcNodes: {} };
@@ -63,7 +63,7 @@ describe("Garbage Collection Tests", () => {
         mockLogger = new MockLogger();
         return GarbageCollector.create(
             gcRuntime,
-            { gcAllowed: true, deleteTimeoutMs, gcTestSessionTimeoutMs },
+            { gcAllowed: true, inactivityTimeoutMs, gcTestSessionTimeoutMs },
             (unusedRoutes: string[]) => {},
             () => Date.now(),
             () => { closeCalled = true; },
@@ -149,7 +149,7 @@ describe("Garbage Collection Tests", () => {
             validateNoInactiveEvents();
 
             // Wait for unreferenced timer (if any) to expire.
-            clock.tick(deleteTimeoutMs + 1);
+            clock.tick(inactivityTimeoutMs + 1);
 
             // Change all nodes again.
             changeAllNodes(garbageCollector);
@@ -173,15 +173,15 @@ describe("Garbage Collection Tests", () => {
             validateNoInactiveEvents();
 
             // Wait for unreferenced timer (if any) to expire.
-            clock.tick(deleteTimeoutMs + 1);
+            clock.tick(inactivityTimeoutMs + 1);
 
             // Change all nodes. This should result in an inactiveObjectChanged event for node 2 and node 3 since they
             // are inactive.
             changeAllNodes(garbageCollector);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[2] },
-                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[3] },
+                    { eventName: inactiveObjectChangedEvent, timeout: inactivityTimeoutMs, id: nodes[2] },
+                    { eventName: inactiveObjectChangedEvent, timeout: inactivityTimeoutMs, id: nodes[3] },
                 ]),
                 "inactiveObjectChanged event not generated as expected",
             );
@@ -193,7 +193,7 @@ describe("Garbage Collection Tests", () => {
             await garbageCollector.collectGarbage({ runGC: true });
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectRevivedEvent, timeout: deleteTimeoutMs, id: nodes[3] },
+                    { eventName: inactiveObjectRevivedEvent, timeout: inactivityTimeoutMs, id: nodes[3] },
                 ]),
                 "inactiveObjectRevived event not generated as expected",
             );
@@ -207,14 +207,14 @@ describe("Garbage Collection Tests", () => {
 
             await garbageCollector.collectGarbage({ runGC: true });
 
-            clock.tick(deleteTimeoutMs + 1);
+            clock.tick(inactivityTimeoutMs + 1);
 
             // Change all nodes. This should result in an inactiveObjectChanged event for node 2 and node 3 since they
             // are inactive.
             changeAllNodes(garbageCollector);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[3] },
+                    { eventName: inactiveObjectChangedEvent, timeout: inactivityTimeoutMs, id: nodes[3] },
                 ]),
                 "inactiveObjectChanged event not generated as expected",
             );
@@ -230,7 +230,7 @@ describe("Garbage Collection Tests", () => {
          * for these nodes.
          */
         it("generates events for nodes that are inactive on load", async () => {
-            // Create GC state where node 3's unreferenced time was > deleteTimeoutMs ago.
+            // Create GC state where node 3's unreferenced time was > inactivityTimeoutMs ago.
             // This means this node should become inactive as soon as its data is loaded.
 
             // Create a snapshot tree to be used as the GC snapshot tree.
@@ -249,7 +249,7 @@ describe("Garbage Collection Tests", () => {
             const gcState: IGarbageCollectionState = { gcNodes: {} };
             const node3Data: IGarbageCollectionNodeData = {
                 outboundRoutes: [],
-                unreferencedTimestampMs: Date.now() - (deleteTimeoutMs + 100),
+                unreferencedTimestampMs: Date.now() - (inactivityTimeoutMs + 100),
             };
             gcState.gcNodes[nodes[3]] = node3Data;
 
@@ -271,7 +271,7 @@ describe("Garbage Collection Tests", () => {
             garbageCollector.nodeChanged(nodes[3]);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[3] },
+                    { eventName: inactiveObjectChangedEvent, timeout: inactivityTimeoutMs, id: nodes[3] },
                 ]),
                 "inactiveObjectChanged event not generated as expected",
             );
@@ -281,7 +281,7 @@ describe("Garbage Collection Tests", () => {
             await garbageCollector.collectGarbage({ runGC: true });
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectRevivedEvent, timeout: deleteTimeoutMs, id: nodes[3] },
+                    { eventName: inactiveObjectRevivedEvent, timeout: inactivityTimeoutMs, id: nodes[3] },
                 ]),
                 "inactiveObjectRevived event not generated as expected",
             );
@@ -292,11 +292,11 @@ describe("Garbage Collection Tests", () => {
          * test validates that we generate inactive events for these nodes.
          */
         it("generates events for nodes that are inactive on load - old snapshot format", async () => {
-            // Create GC details for node 3's GC blob whose unreferenced time was > deleteTimeoutMs ago.
+            // Create GC details for node 3's GC blob whose unreferenced time was > inactivityTimeoutMs ago.
             // This means this node should become inactive as soon as its data is loaded.
             const node3GCDetails: IGarbageCollectionDetailsBase = {
                 gcData: { gcNodes: { "/": [] } },
-                unrefTimestamp: Date.now() - (deleteTimeoutMs + 100),
+                unrefTimestamp: Date.now() - (inactivityTimeoutMs + 100),
             };
             const node3Snapshot = getDummySnapshotTree();
             node3Snapshot.blobs[gcBlobKey] = "node3GCDetails";
@@ -323,7 +323,7 @@ describe("Garbage Collection Tests", () => {
             garbageCollector.nodeChanged(nodes[3]);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[3] },
+                    { eventName: inactiveObjectChangedEvent, timeout: inactivityTimeoutMs, id: nodes[3] },
                 ]),
                 "inactiveObjectChanged event not generated as expected",
             );
@@ -333,7 +333,7 @@ describe("Garbage Collection Tests", () => {
             await garbageCollector.collectGarbage({ runGC: true });
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectRevivedEvent, timeout: deleteTimeoutMs, id: nodes[3] },
+                    { eventName: inactiveObjectRevivedEvent, timeout: inactivityTimeoutMs, id: nodes[3] },
                 ]),
                 "inactiveObjectRevived event not generated as expected",
             );
@@ -345,7 +345,7 @@ describe("Garbage Collection Tests", () => {
          */
         it(`generates events for nodes that are inactive on load - multi blob GC data`, async () => {
             const gcBlobMap: Map<string, IGarbageCollectionState> = new Map();
-            const expiredTimestampMs = Date.now() - (deleteTimeoutMs + 100);
+            const expiredTimestampMs = Date.now() - (inactivityTimeoutMs + 100);
 
             // Create three GC states to be added into separate GC blobs. Each GC state has a node whose unreferenced
             // time was > deletedTimeoutMs ago. These three GC blobs are the added to the GC tree in summary.
@@ -392,9 +392,9 @@ describe("Garbage Collection Tests", () => {
             garbageCollector.nodeChanged(nodes[3]);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[1] },
-                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[2] },
-                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[3] },
+                    { eventName: inactiveObjectChangedEvent, timeout: inactivityTimeoutMs, id: nodes[1] },
+                    { eventName: inactiveObjectChangedEvent, timeout: inactivityTimeoutMs, id: nodes[2] },
+                    { eventName: inactiveObjectChangedEvent, timeout: inactivityTimeoutMs, id: nodes[3] },
                 ]),
                 "inactiveObjectChanged event not generated as expected",
             );

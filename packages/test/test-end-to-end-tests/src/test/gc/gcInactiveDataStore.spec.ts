@@ -27,10 +27,10 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
         TestDataObject,
         [],
         []);
-    const deleteTimeoutMs = 2000;
+    const inactivityTimeoutMs = 2000;
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: { disableSummaries: true },
-        gcOptions: { gcAllowed: true, deleteTimeoutMs },
+        gcOptions: { gcAllowed: true, inactivityTimeoutMs },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         dataObjectFactory,
@@ -122,7 +122,7 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
             mockLogger.matchEvents([
                 {
                     eventName: inactiveObjectChangedEvent,
-                    timeout: deleteTimeoutMs,
+                    timeout: inactivityTimeoutMs,
                     id: `/${dataStore1.id}`,
                 },
             ]),
@@ -148,7 +148,7 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
             mockLogger.matchEvents([
                 {
                     eventName: inactiveObjectRevivedEvent,
-                    timeout: deleteTimeoutMs,
+                    timeout: inactivityTimeoutMs,
                     id: `/${dataStore1.id}`,
                 },
             ]),
