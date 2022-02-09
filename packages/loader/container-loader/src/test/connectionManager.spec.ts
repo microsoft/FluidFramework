@@ -16,7 +16,7 @@ import { MockLogger } from "@fluidframework/telemetry-utils";
 import { Deferred } from "@fluidframework/common-utils";
 import { pkgVersion } from "../packageVersion";
 
-describe.only("connectionManager", () => {
+describe("connectionManager", () => {
     it("reconnectOnError", async () => {
         // Arrange
         let nextClientId = 0;
