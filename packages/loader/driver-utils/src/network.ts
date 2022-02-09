@@ -37,11 +37,8 @@ export function isOnline(): OnlineStatus {
  * It will be either DriverErrorType or the specific driver's specialized error type enum,
  * but we can't reference a specific driver's error type enum in this code.
  */
- export interface IAnyDriverError {
+ export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     readonly errorType: string;
-    readonly message: string;
-    canRetry: boolean;
-    online?: string;
 }
 
 /** Telemetry props with driver-specific required properties */
