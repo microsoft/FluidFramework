@@ -54,10 +54,10 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 
     public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
         if (versionId !== this.id && versionId !== null) {
-            // Blobs in this scenario will never have multiple versions, so return blobId as is
+            // Blobs/Trees in this scenario will never have multiple versions, so return versionId as is
             return [{
                 id: versionId,
-                treeId: undefined!,
+                treeId: versionId,
             }];
         }
         // If this is the first versions call for the document, we know we will want the latest summary.
