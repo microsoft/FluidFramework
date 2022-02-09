@@ -69,9 +69,9 @@ describe("connectionManager", () => {
         await waitForConnection(2);
 
         // Assert I
-        assert      (oldDeltaConnection.disposed, "Old connection should be disposed after emitting an error");
+        assert(oldDeltaConnection.disposed, "Old connection should be disposed after emitting an error");
         assert.equal(mockDeltaConnection.clientId, `mock_client_${nextClientId-1}`, "New connection should have expected id");
-        assert      (!closed, "Don't expect closeHandler to be called when connection emits an error");
+        assert(!closed, "Don't expect closeHandler to be called when connection emits an error");
         assert.equal(disconnectCount, 1, "Expected 1 disconnect from emitting an error");
         assert.equal(connectionCount, 2, "Expected 2 connections after the first emitted an error");
 
