@@ -331,7 +331,14 @@ export class GarbageCollector implements IGarbageCollector {
 
         // If session expiry is enabled, we need to close the container when the timeout expires
         if (this.sessionExpiryTimeoutMs !== undefined) {
-            this.expireAtTime(this.sessionExpiryTimeoutMs);
+            const timeoutMs = this.sessionExpiryTimeoutMs;
+            setLongTimeout(timeoutMs, 
+                () => {
+                    this.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs));
+                },
+                (timer) => {
+                    this.sessionExpiryTimer = timer;
+                });
         }
 
         // For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
@@ -659,17 +666,6 @@ export class GarbageCollector implements IGarbageCollector {
         this.referencesSinceLastRun.set(fromNodeId, outboundRoutes);
     }
 
-    private expireAtTime(expiryMs: number) {
-        // The setTimeout max is 24.8 days before looping occurs.
-        const maxTimeout = 2147483647;
-        if (expiryMs > maxTimeout) {
-            const newExpiryMs = expiryMs - maxTimeout;
-            this.sessionExpiryTimer = setTimeout(() => this.expireAtTime(newExpiryMs), maxTimeout);
-        } else {
-            this.sessionExpiryTimer = setTimeout(() => this.closeFn(
-                new ClientSessionExpiredError(`Client session expired.`, expiryMs)), expiryMs);
-        }
-    }
 
     /**
      * Update the latest summary GC version from the metadata blob in the given snapshot.
@@ -870,4 +866,19 @@ async function getGCStateFromSnapshot(
         rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
     }
     return rootGCState;
+}
+
+function setLongTimeout(timeoutMs: number, 
+    timeoutFn: () => void, 
+    setTimerFn: (timer: ReturnType<typeof setTimeout>) => void) {
+    // The setTimeout max is 24.8 days before looping occurs.
+    const maxTimeout = 2147483647;
+    let timer: ReturnType<typeof setTimeout>;
+    if (timeoutMs > maxTimeout) {
+        const newTimeoutMs = timeoutMs - maxTimeout;
+        timer = setTimeout(() => setLongTimeout(newTimeoutMs, timeoutFn, setTimerFn), maxTimeout);
+    } else {
+        timer = setTimeout(() => timeoutFn(), timeoutMs);
+    }
+    setTimerFn(timer);
 }
