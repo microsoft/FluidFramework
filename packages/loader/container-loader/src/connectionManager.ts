@@ -863,8 +863,6 @@ export class ConnectionManager implements IConnectionManager {
     // Always connect in write mode after getting nacked.
     private readonly nackHandler = (documentId: string, messages: INack[]) => {
         const message = messages[0];
-        // TODO: we should remove this check when service updates?
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (this._readonlyPermissions) {
             this.props.closeHandler(createWriteError("writeOnReadOnlyDocument", { driverVersion: undefined }));
             return
