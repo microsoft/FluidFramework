@@ -23,7 +23,7 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
 export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
-    protected constructor(socket: SocketIOClient.Socket, documentId: string, logger: ITelemetryLogger);
+    protected constructor(socket: SocketIOClient.Socket, documentId: string, logger: ITelemetryLogger, enableLongPollingDowngrades?: boolean);
     // (undocumented)
     protected addTrackedListener(event: string, listener: (...args: any[]) => void): void;
     checkpointSequenceNumber: number | undefined;
