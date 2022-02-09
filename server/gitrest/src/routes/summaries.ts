@@ -89,7 +89,7 @@ export class WholeSummaryReadGitManager {
                     id: rawTree.sha,
                     entries: wholeFlatSummaryTreeEntries,
                     // We don't store sequence numbers in git
-                    sequenceNumber: -1,
+                    sequenceNumber: undefined,
                 },
             ],
             blobs: wholeFlatSummaryBlobs,
