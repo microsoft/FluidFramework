@@ -106,7 +106,7 @@ export class OdspSummaryUploadManager {
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                     blobs,
                     size: postBody.length,
-                    sequenceNumber: referenceSequenceNumber,
+                    referenceSequenceNumber,
                 },
                 async () => {
                     const response = await this.epochTracker.fetchAndParseAsJSON<IWriteSummaryResponse>(

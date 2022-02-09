@@ -129,7 +129,13 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
-        const summaryHandle =  this.summaryUploadManager.writeSummaryTree(summary, context.ackHandle ?? "", "channel");
+        const summaryHandle = await PerformanceEvent.timedExecAsync(
+            this.logger,
+            {
+                eventName: "uploadSummaryWithContext",
+            },
+            async () => this.summaryUploadManager.writeSummaryTree(summary, context.ackHandle ?? "", "channel"),
+        );
         return summaryHandle;
     }
 
