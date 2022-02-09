@@ -631,9 +631,9 @@ export class DataStores implements IDisposable {
      * Returns the package path of the data store with the given id, if the data store exists.
      */
     public getDataStorePackagePath(id: string): readonly string[] | undefined {
-        const internalId = this.aliasMap.get(id) ?? id;
-        const context = this.contexts.get(internalId);
-        return context?.packagePath;
+        const context = this.contexts.get(id);
+        assert(context !== undefined, "Data store with given id does not exist");
+        return context.packagePath;
     }
 }
 

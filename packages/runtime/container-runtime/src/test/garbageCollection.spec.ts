@@ -14,7 +14,7 @@ import {
     IGarbageCollectionState,
     IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import {
     GarbageCollector,
     gcBlobPrefix,
@@ -38,7 +38,8 @@ describe("Garbage Collection Tests", () => {
     // Time after which unreferenced nodes can be deleted.
     const deleteTimeoutMs = 500;
     const testPkgPath = [ "testPkg" ];
-    const eventPkg = `/${testPkgPath.join("/")}`;
+    // The package data is tagged in the telemetry event .
+    const eventPkg = { value:`/${testPkgPath.join("/")}`, tag: TelemetryDataTag.PackageData };
 
     // The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
     const defaultGCData: IGarbageCollectionData = { gcNodes: {} };
