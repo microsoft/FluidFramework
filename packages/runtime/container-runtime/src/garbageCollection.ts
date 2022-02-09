@@ -165,7 +165,9 @@ class UnreferencedStateTracker {
         inactiveNodeId: string,
         pkgPath?: readonly string[],
     ) {
-        if (this.inactive && !this.inactiveEventsLogged.has(eventName)) {
+        // We want to log this event at least once with the package path.
+        const uniqueEventId = `${eventName}-${pkgPath ?? ""}`;
+        if (this.inactive && !this.inactiveEventsLogged.has(uniqueEventId)) {
             logger.sendErrorEvent({
                 eventName,
                 age: currentTimestampMs - this.unreferencedTimestampMs,
@@ -173,7 +175,7 @@ class UnreferencedStateTracker {
                 id: inactiveNodeId,
                 pkg: pkgPath ? { value: `/${pkgPath.join("/")}`, tag: TelemetryDataTag.PackageData } : undefined,
             });
-            this.inactiveEventsLogged.add(eventName);
+            this.inactiveEventsLogged.add(uniqueEventId);
         }
     }
 }
