@@ -115,6 +115,9 @@ export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolS
 // @public
 export function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl | undefined>;
 
+// @public
+export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): ITree;
+
 // @public (undocumented)
 export function createGenericNetworkError(fluidErrorCode: string, message: string | undefined, retryInfo: {
     canRetry: boolean;
@@ -163,7 +166,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
 
-// @public (undocumented)
+// @public
 export type DriverErrorTelemetryProps = ITelemetryProperties & {
     driverVersion: string | undefined;
 };
@@ -196,6 +199,18 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 
 // @public (undocumented)
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
+
+// @public
+export interface IAnyDriverError {
+    // (undocumented)
+    canRetry: boolean;
+    // (undocumented)
+    readonly errorType: string;
+    // (undocumented)
+    readonly message: string;
+    // (undocumented)
+    online?: string;
+}
 
 // @public
 export class InsecureUrlResolver implements IUrlResolver {

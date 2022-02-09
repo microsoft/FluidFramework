@@ -3,17 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
-import { buildSnapshotTree } from "@fluidframework/driver-utils";
-import {
-    ICreateBlobResponse,
-    ISummaryHandle,
-    ISummaryTree,
-    ITree,
-    IVersion,
-    TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { buildSnapshotTree, convertSummaryTreeToSnapshotITree } from "@fluidframework/driver-utils";
+import { ISummaryTree, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import {
     FileSnapshotReader,
     IFileSnapshot,
@@ -34,43 +26,17 @@ export class SnapshotStorageService extends FileSnapshotReader implements IDocum
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
-        return Promise.reject(new Error("Invalid operation"));
-    }
-
-    public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
-        return Promise.reject(new Error("Invalid operation"));
-    }
-
-    public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
-        return Promise.reject(new Error("Invalid operation"));
-    }
-
-    public get repositoryUrl(): string {
-        throw new Error("Invalid operation");
-    }
-
-    public async write(
-        tree: ITree,
-        parents: string[],
-        message: string,
-        ref: string,
-    ): Promise<IVersion> {
-        assert(ref === "", "This should only be called to write container snapshot whose ref is empty");
-
+        const iTree = convertSummaryTreeToSnapshotITree(summary);
         // Remove null ids from the tree before calling the callback to notify the new snapshot. This is requried
         // because the saved reference snapshots have the null ids removed.
-        removeNullTreeIds(tree);
+        removeNullTreeIds(iTree);
 
-        this.docTree = buildSnapshotTree(tree.entries, this.blobs);
-        const fileSnapshot: IFileSnapshot = { tree, commits: {} };
-        // Call the callback with the snapshot in `IFileSnapshot` format.
+        this.docTree = buildSnapshotTree(iTree.entries, this.blobs);
+
+        const fileSnapshot: IFileSnapshot = { tree: iTree, commits: {} };
         this.snapshotCb(fileSnapshot);
 
-        return {
-            id: "container",
-            date: new Date().toUTCString(),
-            treeId: FileSnapshotReader.FileStorageVersionTreeId,
-        };
+        return "testHandleId";
     }
 }
 
@@ -83,7 +49,6 @@ function removeNullTreeIds(tree: ITree) {
             removeNullTreeIds(node.value);
         }
     }
-    // eslint-disable-next-line no-null/no-null
     if (tree.id === undefined || tree.id === null) {
         delete tree.id;
     }

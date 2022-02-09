@@ -87,6 +87,7 @@ export function revert(changes: readonly Change[], before: Snapshot): Change[] {
 			case ChangeType.Constraint:
 				// TODO:#46759: Support Constraint in reverts
 				fail('Revert currently does not support Constraints');
+				break;
 			default:
 				fail('Revert does not support the change type.');
 		}
@@ -207,7 +208,6 @@ function createInvertedSetValue(setValue: SetValue, revisionBeforeEdit: Snapshot
 	const oldPayload = revisionBeforeEdit.getSnapshotNode(nodeToModify).payload;
 
 	// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface)
-	// eslint-disable-next-line no-null/no-null
 	if (oldPayload !== null) {
 		return [Change.setPayload(nodeToModify, oldPayload)];
 	}

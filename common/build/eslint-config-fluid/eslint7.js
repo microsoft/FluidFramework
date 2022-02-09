@@ -35,7 +35,6 @@ module.exports = {
     },
     "plugins": [
         "@typescript-eslint",
-        "no-null",
         "react",
         "unicorn",
     ],
@@ -206,9 +205,6 @@ module.exports = {
         ],
         "import/no-unused-modules": "error",
         "import/order": "error",
-
-        // eslint-plugin-no-null
-        "no-null/no-null": "error",
 
         // eslint-plugin-unicorn
         "unicorn/better-regex": "error",
