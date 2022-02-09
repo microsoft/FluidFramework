@@ -41,6 +41,7 @@ export function create(
         const tenantId = getParam(request.params, "id");
         const includeDisabledTenant = getIncludeDisabledFlag(request);
         const validP = manager.validateToken(tenantId, request.body.token, includeDisabledTenant);
+        console.log("token validated");
         handleResponse(validP, response);
     });
 

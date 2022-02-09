@@ -107,7 +107,7 @@ describe("Tests for snapshot fetch headers", () => {
             content,
             duration: 10,
             headers: new Map([["x-fluid-epoch", "epoch1"]]),
-            commonSpoHeaders: {},
+            propsToLog: {},
         };
         const response = {
             odspSnapshotResponse: odspResponse,
