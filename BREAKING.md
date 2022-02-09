@@ -20,6 +20,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove IFluidObject from Aqueduct](#Remove-IFluidObject-from-Aqueduct)
 - [Removing snapshot API from IRuntime](#Removing-snapshot-api-from-IRuntime)
 - [Remove Unused IFluidObject Augmentations](#Remove-Unused-IFluidObject-Augmentations)
+- [Duplicate extractLogSafeErrorProperties removed](#duplicate-extractlogsafeerrorproperties-removed)
 
 ### IFluidConfiguration removed
 
@@ -81,6 +82,11 @@ The following deprecated provider properties are no longer exposed off of IFluid
  - ISummarizer
 
 The interfaces that correspond to the above properties continue to exist, and can use directly, or with the IFluidObject replacement [FluidObject](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts#L61)
+
+### Duplicate extractLogSafeErrorProperties removed
+
+The helper function `extractLogSafeErrorProperties` existed in both telemetry-utils and common-utils packages.
+The copy in common-utils was out of date and unused in this repo, and has now been removed.
 
 ## 0.56 Breaking changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
