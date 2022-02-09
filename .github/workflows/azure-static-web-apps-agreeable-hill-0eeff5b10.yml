@@ -32,7 +32,25 @@ jobs:
           node-version: "14"
           cache: "npm"
           cache-dependency-path: docs/package-lock.json
-
+      - uses: actions/setup-dotnet@v1 # needed to run the SBOM task
+        with:
+          source-url: https://1essharedassets.pkgs.visualstudio.com/_packaging/Packaging/nuget/v3/index.json
+          dotnet-version: 3.1.x
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.AZURE_NUGET_PAT }}
+      - name: Download SBOM tool
+        working-directory: ./docs
+        run: |
+          mkdir -pv sbom
+          nuget install Microsoft.ManifestTool.CrossPlatform -outputdir sbom
+          tree -a .
+      - name: Unzip SBOM tool
+        working-directory: ./docs/sbom
+        run: |
+          cd Microsoft.ManifestTool.CrossPlatform*
+          ls *.nupkg
+          unzip $(ls *.nupkg) -d ../ManifestTool
+          tree -a ..
       - name: Download JSON by SHA
         id: download-sha-json
         continue-on-error: true
@@ -55,17 +73,29 @@ jobs:
 
       # Build here so we can upload an artifact; ASWA will rebuild when it deploys in the step below
       - name: Build site artifact
+        working-directory: ./docs
         run: |
-          cd $GITHUB_WORKSPACE/docs
           npm ci
           npm run build
+      - name: where are we
+        working-directory: ./docs
+        run: pwd
+      - name: env var
+        run: |
+          pwd
+          echo "$GITHUB_WORKSPACE"
+      - name: Generate SBOM
+        working-directory: ./docs
+        run: |
+          pwd
+          dotnet ./sbom/ManifestTool/Content/Microsoft.ManifestTool.dll Generate -pn fluidframework-docs -b ./public -bc ./public -pv $(git rev-parse HEAD)
       - name: Archive site artifact
         uses: actions/upload-artifact@v2
         with:
           name: fluidframework-site
           path: docs/public
 
-      - name: Hugo Build And Deploy
+      - name: ASWA Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v0.0.1-preview
         with:
