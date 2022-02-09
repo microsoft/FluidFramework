@@ -49,7 +49,6 @@ describe("Segment Marshalling", () => {
                 // Ensure that 'fromJSON()' returns undefined for an unrecognized JSON spec.
                 it("returns 'undefined' for unrecognized JSON spec", () => {
                     // Test some potentially problematic values that are not used by any of the defined segment types.
-                    // eslint-disable-next-line no-null/no-null
                     for (const unrecognized of [{}, Symbol(), NaN, undefined, null, true, false]) {
                         assert.strictEqual(undefined, fromJSON(unrecognized));
                     }

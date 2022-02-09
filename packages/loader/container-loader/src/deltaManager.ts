@@ -47,6 +47,7 @@ import {
     ThrottlingWarning,
     CreateProcessingError,
     DataCorruptionError,
+    extractSafePropertiesFromMessage,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 import {
@@ -792,7 +793,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // Watch the minimum sequence number and be ready to update as needed
         if (this.minSequenceNumber > message.minimumSequenceNumber) {
             throw new DataCorruptionError("msnMovesBackwards", {
-                ...extractLogSafeMessageProperties(message),
+                ...extractSafePropertiesFromMessage(message),
                 clientId: this.connectionManager.clientId,
             });
         }
@@ -800,7 +801,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
             throw new DataCorruptionError("nonSequentialSequenceNumber", {
-                ...extractLogSafeMessageProperties(message),
+                ...extractSafePropertiesFromMessage(message),
                 clientId: this.connectionManager.clientId,
             });
         }
@@ -937,18 +938,4 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             this.lastObservedSeqNumber = seq;
         }
     }
-}
-
-// TODO: move this elsewhere and use it more broadly for DataCorruptionError/DataProcessingError
-function extractLogSafeMessageProperties(message: Partial<ISequencedDocumentMessage>) {
-    const safeProps = {
-        messageClientId: message.clientId,
-        sequenceNumber: message.sequenceNumber,
-        clientSequenceNumber: message.clientSequenceNumber,
-        referenceSequenceNumber: message.referenceSequenceNumber,
-        minimumSequenceNumber: message.minimumSequenceNumber,
-        messageTimestamp: message.timestamp,
-    };
-
-    return safeProps;
 }

@@ -130,7 +130,6 @@ describeFullCompat("GC unreferenced flag in downloaded snapshot", (getTestObject
             // Download the snapshot corresponding to the above summary from the server.
             const versions = await documentStorage.getVersions(latestAckedSummary.summaryAck.contents.handle, 1);
             const snapshot = await documentStorage.getSnapshotTree(versions[0]);
-            // eslint-disable-next-line no-null/no-null
             assert(snapshot !== null, "Snapshot could not be downloaded from server");
             const dataStoreTrees = snapshot.trees[channelsTreeName]?.trees ?? snapshot.trees;
             for (const [key, value] of Object.entries(dataStoreTrees)) {

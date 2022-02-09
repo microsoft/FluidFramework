@@ -22,13 +22,29 @@ export enum OnlineStatus {
 // No solution for node.js (other than resolve dns names / ping specific sites)
 // Can also use window.addEventListener("online" / "offline")
 export function isOnline(): OnlineStatus {
-    // eslint-disable-next-line no-null/no-null
     if (typeof navigator === "object" && navigator !== null && typeof navigator.onLine === "boolean") {
         return navigator.onLine ? OnlineStatus.Online : OnlineStatus.Offline;
     }
     return OnlineStatus.Unknown;
 }
 
+/**
+ * Interface describing errors and warnings raised by any driver code.
+ * Not expected to be implemented by a class or an object literal, but rather used in place of
+ * any or unknown in various function signatures that pass errors around.
+ *
+ * "Any" in the interface name is a nod to the fact that errorType has lost its type constraint.
+ * It will be either DriverErrorType or the specific driver's specialized error type enum,
+ * but we can't reference a specific driver's error type enum in this code.
+ */
+ export interface IAnyDriverError {
+    readonly errorType: string;
+    readonly message: string;
+    canRetry: boolean;
+    online?: string;
+}
+
+/** Telemetry props with driver-specific required properties */
 export type DriverErrorTelemetryProps = ITelemetryProperties & { driverVersion: string | undefined };
 
 /**
@@ -114,7 +130,6 @@ export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
     }
 }
 
-//* Check
 /**
  * Throttling error class - used to communicate all throttling errors
  */

@@ -77,7 +77,6 @@ class HTMLViewEmbeddedComponent extends React.Component<IHTMLViewProps> {
     }
 
     public async componentDidMount() {
-        // eslint-disable-next-line no-null/no-null
         if (this.ref.current !== null) {
             this.props.htmlView.render(this.ref.current);
         }
