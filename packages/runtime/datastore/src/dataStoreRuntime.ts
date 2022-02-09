@@ -182,7 +182,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     // channel contexts.
     private readonly channelsBaseGCDetails: LazyPromise<Map<string, IGarbageCollectionDetailsBase>>;
 
-    private readonly innerHandle: IFluidHandle;
+    private readonly innerHandle: IFluidHandle<FluidObject>;
     private initialized: boolean;
 
     public constructor(
@@ -282,7 +282,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.deferredAttached.resolve();
         }
         this.initialized = existing;
-        this.innerHandle = new FluidObjectHandle(
+        this.innerHandle = new FluidObjectHandle<FluidObject>(
             new LazyPromise(async () => {
                 const obj = initializeEntrypoint(this);
                 this.initialized = true;

@@ -211,7 +211,7 @@ export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry 
 // @public (undocumented)
 export interface IFluidDataStoreRuntimeEntrypoint extends IFluidRouter {
     // (undocumented)
-    readonly handle?: IFluidHandle;
+    readonly handle?: IFluidHandle<FluidObject>;
 }
 
 // @public

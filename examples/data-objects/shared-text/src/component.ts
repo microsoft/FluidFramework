@@ -147,8 +147,6 @@ export class SharedTextRunner extends EventEmitter implements IFluidHTMLView, IF
         require("bootstrap/dist/css/bootstrap-theme.min.css");
         require("../stylesheets/map.css");
         require("../stylesheets/style.css");
-        /* eslint-enable @typescript-eslint/no-require-imports,
-        import/no-internal-modules, import/no-unassigned-import */
 
         const browserContainerHost = new ui.BrowserContainerHost();
 

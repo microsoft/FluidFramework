@@ -64,7 +64,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
 }
 
 export interface IFluidDataStoreRuntimeEntrypoint extends IFluidRouter{
-    readonly handle?: IFluidHandle
+    readonly handle?: IFluidHandle<FluidObject>
 }
 
 /**
