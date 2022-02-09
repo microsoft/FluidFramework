@@ -73,6 +73,14 @@ export class TenantManager {
                 return Promise.resolve();
             }
 
+            // if the tenant doesn't have key2, it will be empty string
+            // we should fail token generated with empty string as key
+            if (!tenantKeys.key2) {
+                return Promise.reject(error1 instanceof jwt.TokenExpiredError
+                    ? new NetworkError(401, "Token expired.")
+                    : new NetworkError(403, "Invalid token."));
+            }
+
             return jwt.verify(token, tenantKeys.key2, (error2) => {
                 if (!error2) {
                     return Promise.resolve();
