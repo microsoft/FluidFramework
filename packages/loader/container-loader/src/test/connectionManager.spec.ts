@@ -83,11 +83,10 @@ describe("connectionManager", () => {
         await waitForConnection(3);
 
         // Assert II
-        assert      (oldDeltaConnection.disposed, "Old connection should be disposed after emitting disconnect");
+        assert(oldDeltaConnection.disposed, "Old connection should be disposed after emitting disconnect");
         assert.equal(mockDeltaConnection.clientId, `mock_client_${nextClientId-1}`, "New connection should have expected id");
-        mockLogger.assertMatchAny
-                    ([{ eventName: "reconnectingDespiteFatalError", reconnectMode: "Enabled", error: "fatalDisconnectReason", canRetry: false, }]);
-        assert      (!closed, "Don't expect closeHandler to be called even when connection emits a non-retryable disconnect");
+        mockLogger.assertMatchAny([{ eventName: "reconnectingDespiteFatalError", reconnectMode: "Enabled", error: "fatalDisconnectReason", canRetry: false, }]);
+        assert(!closed, "Don't expect closeHandler to be called even when connection emits a non-retryable disconnect");
         assert.equal(disconnectCount, 2, "Expected 2 disconnects from emitting an error and disconnect");
         assert.equal(connectionCount, 3, "Expected 3 connections after the two disconnects");
 
@@ -97,11 +96,10 @@ describe("connectionManager", () => {
         mockDeltaConnection.emitNack("docId", [nack]);
 
         // Assert III
-        assert      (oldDeltaConnection.disposed, "Old connection should be disposed after emitting nack");
+        assert(oldDeltaConnection.disposed, "Old connection should be disposed after emitting nack");
         assert.equal(mockDeltaConnection.clientId, `mock_client_${nextClientId-1}`, "New connection should have expected id");
-        mockLogger.assertMatchAny
-                    ([{ eventName: "reconnectingDespiteFatalError", reconnectMode: "Enabled", statusCode: 403, canRetry: false, }]);
-        assert      (closed, "closeHandler should be called in response to 403 nack");
+        mockLogger.assertMatchAny([{ eventName: "reconnectingDespiteFatalError", reconnectMode: "Enabled", statusCode: 403, canRetry: false, }]);
+        assert(closed, "closeHandler should be called in response to 403 nack");
         assert.equal(disconnectCount, 3, "Expected 2 disconnects from emitting an error and disconnect");
         assert.equal(connectionCount, 3, "Expected 3 connections after the two disconnects");
 
