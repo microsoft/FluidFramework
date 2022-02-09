@@ -22,8 +22,9 @@ import { TestDataObject } from "./mockSummarizerClient";
  * using that data store results in an error telemetry.
  */
 describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
+    const pkg = "TestDataObject";
     const dataObjectFactory = new DataObjectFactory(
-        "TestDataObject",
+        pkg,
         TestDataObject,
         [],
         []);
@@ -124,6 +125,7 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
                     eventName: inactiveObjectChangedEvent,
                     timeout: deleteTimeoutMs,
                     id: `/${dataStore1.id}`,
+                    pkg: `/${pkg}`,
                 },
             ]),
             "inactiveObjectChanged event not generated as expected",
@@ -150,6 +152,7 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
                     eventName: inactiveObjectRevivedEvent,
                     timeout: deleteTimeoutMs,
                     id: `/${dataStore1.id}`,
+                    pkg: `/${pkg}`,
                 },
             ]),
             "inactiveObjectRevived event not generated as expected",

@@ -1000,6 +1000,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this,
             this.runtimeOptions.gcOptions,
             (unusedRoutes: string[]) => this.dataStores.deleteUnusedRoutes(unusedRoutes),
+            (nodeId: string) => this.dataStores.getDataStorePackagePath(nodeId),
             getCurrentTimestamp,
             this.closeFn,
             context.baseSnapshot,
@@ -1053,7 +1054,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (id: string) => this.summarizerNode.deleteChild(id),
             this.mc.logger,
             async () => this.garbageCollector.getDataStoreBaseGCDetails(),
-            (id: string) => this.garbageCollector.nodeChanged(id),
+            (id: string, packagePath: readonly string[]) => this.garbageCollector.nodeChanged(id, packagePath),
             new Map<string, string>(dataStoreAliasMap),
             this.garbageCollector.writeDataAtRoot,
         );

@@ -33,6 +33,7 @@ import {
     loggerToMonitoringContext,
     MonitoringContext,
     PerformanceEvent,
+    TelemetryDataTag,
  } from "@fluidframework/telemetry-utils";
 
 import { IGCRuntimeOptions } from "./containerRuntime";
@@ -118,7 +119,7 @@ export interface IGarbageCollector {
     /** Called when the latest summary of the system has been refreshed. */
     latestSummaryStateRefreshed(result: RefreshSummaryResult, readAndParseBlob: ReadAndParseBlob): Promise<void>;
     /** Called when a node is changed. Used to detect and log when an inactive node is changed. */
-    nodeChanged(id: string): void;
+    nodeChanged(id: string, packagePath: readonly string[]): void;
     /** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
     addedOutboundReference(fromNodeId: string, toNodeId: string): void;
     dispose(): void;
@@ -162,6 +163,7 @@ class UnreferencedStateTracker {
         currentTimestampMs: number,
         deleteTimeoutMs: number,
         inactiveNodeId: string,
+        packagePath?: readonly string[],
     ) {
         if (this.inactive && !this.inactiveEventsLogged.has(eventName)) {
             logger.sendErrorEvent({
@@ -169,6 +171,7 @@ class UnreferencedStateTracker {
                 age: currentTimestampMs - this.unreferencedTimestampMs,
                 timeout: deleteTimeoutMs,
                 id: inactiveNodeId,
+                pkg: { value: packagePath ? `/${packagePath.join("/")}`: undefined, tag: TelemetryDataTag.PackageData },
             });
             this.inactiveEventsLogged.add(eventName);
         }
@@ -184,6 +187,7 @@ export class GarbageCollector implements IGarbageCollector {
         provider: IGarbageCollectionRuntime,
         gcOptions: IGCRuntimeOptions,
         deleteUnusedRoutes: (unusedRoutes: string[]) => void,
+        getNodePackagePath: (nodeId: string) => readonly string[] | undefined,
         getCurrentTimestampMs: () => number,
         closeFn: (error?: ICriticalContainerError) => void,
         baseSnapshot: ISnapshotTree | undefined,
@@ -196,6 +200,7 @@ export class GarbageCollector implements IGarbageCollector {
             provider,
             gcOptions,
             deleteUnusedRoutes,
+            getNodePackagePath,
             getCurrentTimestampMs,
             closeFn,
             baseSnapshot,
@@ -294,6 +299,8 @@ export class GarbageCollector implements IGarbageCollector {
         private readonly gcOptions: IGCRuntimeOptions,
         /** After GC has run, called to delete objects in the runtime whose routes are unused. */
         private readonly deleteUnusedRoutes: (unusedRoutes: string[]) => void,
+        /** For a given node id, returns its package path. */
+        private readonly getNodePackagePath: (nodeId: string) => readonly string[] | undefined,
         /** Returns the current timestamp to be assigned to nodes that become unreferenced. */
         private readonly getCurrentTimestampMs: () => number,
         private readonly closeFn: (error?: ICriticalContainerError) => void,
@@ -611,7 +618,7 @@ export class GarbageCollector implements IGarbageCollector {
     /**
      * Called when a node with the given id is changed. If the node is inactive, log an error.
      */
-    public nodeChanged(id: string) {
+    public nodeChanged(id: string, packagePath: readonly string[]) {
         // Prefix "/" if needed to make it relative to the root.
         const nodeId = id.startsWith("/") ? id : `/${id}`;
         this.unreferencedNodesState.get(nodeId)?.logIfInactive(
@@ -620,6 +627,7 @@ export class GarbageCollector implements IGarbageCollector {
             this.getCurrentTimestampMs(),
             this.deleteTimeoutMs,
             nodeId,
+            packagePath,
         );
     }
 
@@ -695,6 +703,8 @@ export class GarbageCollector implements IGarbageCollector {
                     currentTimestampMs,
                     this.deleteTimeoutMs,
                     nodeId,
+                    // Get the package path of the data store to which this node belongs.
+                    this.getNodePackagePath(nodeId.split("/")[1]),
                 );
                 // Stop tracking so as to clear out any running timers.
                 nodeStateTracker.stopTracking();

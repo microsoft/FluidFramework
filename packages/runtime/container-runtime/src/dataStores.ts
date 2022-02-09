@@ -114,7 +114,7 @@ export class DataStores implements IDisposable {
         private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
         getBaseGCDetails: () => Promise<Map<string, IGarbageCollectionDetailsBase>>,
-        private readonly dataStoreChanged: (id: string) => void,
+        private readonly dataStoreChanged: (id: string, packagePath: readonly string[]) => void,
         private readonly aliasMap: Map<string, string>,
         private readonly writeGCDataAtRoot: boolean,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
@@ -410,7 +410,7 @@ export class DataStores implements IDisposable {
         context.process(transformed, local, localMessageMetadata);
 
         // Notify that a data store changed. This is used to detect if a deleted data store is being used.
-        this.dataStoreChanged(envelope.address);
+        this.dataStoreChanged(envelope.address, context.packagePath);
     }
 
     public async getDataStore(id: string, wait: boolean): Promise<FluidDataStoreContext> {
@@ -625,6 +625,15 @@ export class DataStores implements IDisposable {
             }
         }
         return outboundRoutes;
+    }
+
+    /**
+     * Returns the package path of the data store with the given id, if the data store exists.
+     */
+    public getDataStorePackagePath(id: string): readonly string[] | undefined {
+        const internalId = this.aliasMap.get(id) ?? id;
+        const context = this.contexts.get(internalId);
+        return context?.packagePath;
     }
 }
 
