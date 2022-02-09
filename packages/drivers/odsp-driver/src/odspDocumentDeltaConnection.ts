@@ -6,9 +6,9 @@
 import { ITelemetryLogger, IEvent } from "@fluidframework/common-definitions";
 import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
-import { DriverError } from "@fluidframework/driver-definitions";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
-import { loggerToMonitoringContext, LoggingError } from "@fluidframework/telemetry-utils";
+import { IAnyDriverError } from "@fluidframework/driver-utils";
+import { IFluidErrorBase, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
     IClient,
     IConnect,
@@ -36,7 +36,7 @@ export interface FlushResult {
 const socketReferenceBufferTime = 2000;
 
 export interface ISocketEvents extends IEvent {
-    (event: "server_disconnect", listener: (error: LoggingError & OdspError) => void);
+    (event: "server_disconnect", listener: (error: IFluidErrorBase & OdspError) => void);
 }
 
 class SocketReference extends TypedEventEmitter<ISocketEvents> {
@@ -126,7 +126,8 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
             // comes in from "disconnect" listener below, before we close socket.
             this.isPendingInitialConnection = false;
 
-            this.emit("server_disconnect", error);
+            // Explicitly cast error to the specified event args type to ensure type compatibility
+            this.emit("server_disconnect", error as IFluidErrorBase & OdspError);
             this.closeSocket();
         });
     }
@@ -284,12 +285,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     /**
      * Error raising for socket.io issues
      */
-    protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
+    protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
         // Note: we suspect the incoming error object is either:
         // - a socketError: add it to the OdspError object for driver to be able to parse it and reason over it.
         // - anything else: let base class handle it
         if (canRetry && Number.isInteger(error?.code) && typeof error?.message === "string") {
-            return errorObjectFromSocketError(error as IOdspSocketError, handler) as DriverError;
+            return errorObjectFromSocketError(error as IOdspSocketError, handler);
         } else {
             return super.createErrorObject(handler, error, canRetry);
         }
@@ -437,7 +438,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         return this.flushDeferred.promise;
     }
 
-    protected serverDisconnectHandler = (error: LoggingError & OdspError) => {
+    protected serverDisconnectHandler = (error: IFluidErrorBase & OdspError) => {
         this.disposeCore(true, error);
     };
 
@@ -567,7 +568,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     /**
      * Disconnect from the websocket
      */
-    protected disconnect(socketProtocolError: boolean, reason: any) {
+    protected disconnect(socketProtocolError: boolean, reason: IAnyDriverError) {
         const socket = this.socketReference;
         assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
         this.socketReference = undefined;

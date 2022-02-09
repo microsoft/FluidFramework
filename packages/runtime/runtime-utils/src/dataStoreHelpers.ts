@@ -27,7 +27,6 @@ interface IResponseException extends Error {
 
 export function exceptionToResponse(err: any): IResponse {
     const status = 500;
-    // eslint-disable-next-line no-null/no-null
     if (err !== null && typeof err === "object" && err.errorFromRequestFluidObject === true) {
         const responseErr: IResponseException = err;
         return {
