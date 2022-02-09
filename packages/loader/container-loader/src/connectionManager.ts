@@ -867,6 +867,7 @@ export class ConnectionManager implements IConnectionManager {
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (this._readonlyPermissions) {
             this.props.closeHandler(createWriteError("writeOnReadOnlyDocument", { driverVersion: undefined }));
+            return
         }
 
         const reconnectInfo = getNackReconnectInfo(message.content);
@@ -874,6 +875,7 @@ export class ConnectionManager implements IConnectionManager {
         // If the nack indicates we cannot retry, then close the container outright
         if (!reconnectInfo.canRetry) {
             this.props.closeHandler(reconnectInfo);
+            return;
         }
 
         this.reconnectOnError(
