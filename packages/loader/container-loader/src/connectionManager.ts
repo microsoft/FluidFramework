@@ -67,12 +67,6 @@ const DefaultChunkSize = 16 * 1024;
 const fatalConnectErrorProp = { fatalConnectError: true };
 
 function getNackReconnectInfo(nackContent: INackContent) {
-    // check message.content for Back-compat with old service.
-    if (nackContent === undefined) {
-        return createGenericNetworkError(
-            "nackReasonUnknown", undefined, { canRetry: true }, { driverVersion: undefined });
-    }
-
     const message = `Nack (${nackContent.type}): ${nackContent.message}`;
     const canRetry = nackContent.code !== 403;
     const retryAfterMs = nackContent.retryAfter !== undefined ? nackContent.retryAfter * 1000 : undefined;

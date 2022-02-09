@@ -54,6 +54,10 @@ export enum OdspErrorType {
  */
 export interface IOdspError extends Omit<IDriverErrorBase, "errorType"> {
     readonly errorType: OdspErrorType;
+    /**
+     * Server epoch indicates when the file was last modified.
+     * Used to detect modifications outside Fluid's services
+     */
     serverEpoch?: string;
 }
 
