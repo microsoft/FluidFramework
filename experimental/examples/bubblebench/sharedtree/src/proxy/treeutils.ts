@@ -26,7 +26,6 @@ export const makeScalar = <T>(value: Serializable<T>): ChangeNode => ({
     payload: value,
 });
 
-/* eslint-disable no-null/no-null */
 
 export function fromJson<T>(value: Serializable<T>): ChangeNode {
     if (typeof value === "object") {
@@ -57,5 +56,3 @@ export function fromJson<T>(value: Serializable<T>): ChangeNode {
         return makeScalar(value);
     }
 }
-
-/* eslint-enable no-null/no-null */

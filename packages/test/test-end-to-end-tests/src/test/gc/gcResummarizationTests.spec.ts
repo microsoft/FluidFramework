@@ -32,12 +32,7 @@ import { loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSumma
  */
 describeNoCompat("GC resummarization state", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    const dataObjectFactory = new DataObjectFactory(
-        "TestDataObject",
-        TestDataObject,
-        [],
-        []);
-
+    const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: { disableSummaries: true },
         gcOptions: { gcAllowed: true },
@@ -98,21 +93,12 @@ describeNoCompat("GC resummarization state", (getTestObjectProvider) => {
     }
 
     /**
-     * Function that asserts the given test result fails. This is because some of the scenarios here currently fail.
-     * These should pass once this issue is fixed - https://github.com/microsoft/FluidFramework/issues/8963.
-     */
-    function assertTestFails(testResult: boolean, message: string) {
-        assert(!testResult, message);
-    }
-
-    /**
      * Submits a summary and validates that the data stores with ids in `changedDataStoreIds` are resummarized. All
      * other data stores are not resummarized and a handle is sent for them in the summary.
      */
     async function validateResummaryState(
         summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
         changedDataStoreIds: string[] = [],
-        testShouldFail: boolean = false,
     ) {
         const summaryResult = await submitAndAckSummary(provider, summarizerClient, logger, false /* fullTree */);
         latestAckedSummary = summaryResult.ackedSummary;
@@ -128,15 +114,7 @@ describeNoCompat("GC resummarization state", (getTestObjectProvider) => {
             if (changedDataStoreIds.includes(id)) {
                 assert(summaryObject.type === SummaryType.Tree, `Data store ${id}'s entry should be a tree`);
             } else {
-                // We resummarize data stores in a new summarizer client even if they did not change due to this bug:
-                // https://github.com/microsoft/FluidFramework/issues/8963. So, tests that validate that scenario
-                // currently fail.
-                if (testShouldFail) {
-                    assertTestFails(
-                        summaryObject.type === SummaryType.Handle, `Data store ${id}'s entry should be a handle`);
-                } else {
-                    assert(summaryObject.type === SummaryType.Handle, `Data store ${id}'s entry should be a handle`);
-                }
+                assert(summaryObject.type === SummaryType.Handle, `Data store ${id}'s entry should be a handle`);
             }
         }
     }
@@ -202,7 +180,7 @@ describeNoCompat("GC resummarization state", (getTestObjectProvider) => {
             const summarizerClient2 = await getNewSummarizer(latestAckedSummary.summaryAck.contents.handle);
 
             // Summarize the new client and validate that all data store entries are handles since none of them changed.
-            await validateResummaryState(summarizerClient2, [], true /* testShouldFail */);
+            await validateResummaryState(summarizerClient2, []);
 
             // Make a change in dataStoreA.
             dataStoreA._root.set("key", "value");
@@ -212,7 +190,7 @@ describeNoCompat("GC resummarization state", (getTestObjectProvider) => {
 
             // Summarize the new client and validate that dataStoreA's entry is a tree and rest of the data store
             // entries are handles.
-            await validateResummaryState(summarizerClient3, [dataStoreA.id], true /* testShouldFail */);
+            await validateResummaryState(summarizerClient3, [dataStoreA.id]);
         });
 
         it("resummarizes data stores whose reference state changed across summarizer clients", async () => {
@@ -243,13 +221,13 @@ describeNoCompat("GC resummarization state", (getTestObjectProvider) => {
 
             // Summarize the new client and validate that both dataStoreA and dataStoreB changed. dataStoreA because it
             // has a new op and dataStoreB because its reference state changed from unreferenced -> referenced.
-            await validateResummaryState(summarizerClient2, [dataStoreA.id, dataStoreB.id], true /* testShouldFail */);
+            await validateResummaryState(summarizerClient2, [dataStoreA.id, dataStoreB.id]);
 
             // Load a new client from the summary generated above.
             const summarizerClient3 = await getNewSummarizer(latestAckedSummary.summaryAck.contents.handle);
 
             // Validate that all data store entries are handles since none of them changed.
-            await validateResummaryState(summarizerClient3, [], true /* testShouldFail */);
+            await validateResummaryState(summarizerClient3, []);
         });
     });
 });

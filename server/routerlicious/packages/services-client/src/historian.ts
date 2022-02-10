@@ -52,7 +52,6 @@ export class Historian implements IHistorian {
         }
     }
 
-    /* eslint-disable @typescript-eslint/promise-function-async */
     public getHeader(sha: string): Promise<any> {
         if (this.historianApi) {
             return this.restWrapper.get(`/headers/${encodeURIComponent(sha)}`, this.getQueryString());
@@ -110,13 +109,11 @@ export class Historian implements IHistorian {
     public updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
         return this.restWrapper.patch(`/git/refs/${ref}`, params, this.getQueryString());
     }
-    /* eslint-enable @typescript-eslint/promise-function-async */
 
     public async deleteRef(ref: string): Promise<void> {
         await this.restWrapper.delete(`/git/refs/${ref}`, this.getQueryString());
     }
 
-    /* eslint-disable @typescript-eslint/promise-function-async */
     public createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
         return this.restWrapper.post(`/git/tags`, tag, this.getQueryString());
     }
@@ -144,7 +141,6 @@ export class Historian implements IHistorian {
     public async getSummary(sha: string): Promise<IWholeFlatSummary> {
         return this.restWrapper.get<IWholeFlatSummary>(`/git/summaries/${sha}`, this.getQueryString());
     }
-    /* eslint-enable @typescript-eslint/promise-function-async */
 
     private async getHeaderDirect(sha: string): Promise<git.IHeader> {
         const tree = await this.getTree(sha, true);
@@ -166,7 +162,7 @@ export class Historian implements IHistorian {
         };
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
+
     private getQueryString(queryString?: {}): Record<string, unknown> {
         if (this.cacheBust) {
             return {

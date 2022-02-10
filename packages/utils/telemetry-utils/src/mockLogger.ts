@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { assert } from "@fluidframework/common-utils";
 import { TelemetryLogger } from "./logger";
 
 /**
@@ -33,6 +34,17 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
         return unmatchedExpectedEventCount === 0;
     }
 
+    /** Asserts that matchEvents is true, and prints the actual/expected output if not */
+    assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]) {
+        const actualEvents = this.events;
+        assert(this.matchEvents(expectedEvents), `
+expected:
+${JSON.stringify(expectedEvents)}
+
+actual:
+${JSON.stringify(actualEvents)}`);
+    }
+
     /**
      * Search events logged since the last time matchEvents was called, looking for any of the given
      * expected events.
@@ -44,6 +56,18 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
     matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean {
         const matchedExpectedEventCount = this.getMatchedEventsCount(expectedEvents);
         return matchedExpectedEventCount > 0;
+    }
+
+    /** Asserts that matchAnyEvent is true, and prints the actual/expected output if not */
+    assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]) {
+        const actualEvents = this.events;
+
+        assert(this.matchAnyEvent(expectedEvents), `
+expected:
+${JSON.stringify(expectedEvents)}
+
+actual:
+${JSON.stringify(actualEvents)}`);
     }
 
     private getMatchedEventsCount(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): number {

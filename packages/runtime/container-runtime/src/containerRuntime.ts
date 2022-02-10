@@ -65,7 +65,6 @@ import {
     ISummaryConfiguration,
     ISummaryContent,
     ISummaryTree,
-    ITree,
     MessageType,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
@@ -145,7 +144,6 @@ import {
     IGarbageCollectionRuntime,
     IGarbageCollector,
     IGCStats,
-    IUsedStateStats,
 } from "./garbageCollection";
 import {
     channelToDataStore,
@@ -299,6 +297,14 @@ export interface IContainerRuntimeOptions {
 
 type IRuntimeMessageMetadata = undefined | {
     batch?: boolean;
+};
+
+/**
+ * The summary tree returned by the root node. It adds state relevant to the root of the tree.
+ */
+export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
+    /** The garbage collection stats if GC ran, undefined otherwise. */
+    gcStats?: IGCStats;
 };
 
 /**
@@ -1393,14 +1399,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         throw responseToException(create404Response(request), request);
     }
 
-    /**
-     * Notifies this object to take the snapshot of the container.
-     * @deprecated - Use summarize to get summary of the container runtime.
-     */
-    public async snapshot(): Promise<ITree> {
-        throw new Error("Do not call this API, to be removed in the following release.");
-    }
-
     private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats) {
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
         if (this.chunkMap.size > 0) {
@@ -1944,7 +1942,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         fullGC?: boolean,
         /** True to run GC sweep phase after the mark phase */
         runSweep?: boolean,
-    }): Promise<ISummaryTreeWithStats> {
+    }): Promise<IRootSummaryTreeWithStats> {
         this.verifyNotClosed();
 
         const {
@@ -1956,15 +1954,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             fullGC,
         } = options;
 
+        let gcStats: IGCStats | undefined;
         if (runGC) {
-            await this.collectGarbage({ logger: summaryLogger, runSweep, fullGC });
+            gcStats = await this.collectGarbage({ logger: summaryLogger, runSweep, fullGC });
         }
 
         const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
         assert(summarizeResult.summary.type === SummaryType.Tree,
             0x12f /* "Container Runtime's summarize should always return a tree" */);
 
-        return summarizeResult as ISummaryTreeWithStats;
+        return { ...summarizeResult, gcStats } as IRootSummaryTreeWithStats;
     }
 
     /**
@@ -1992,9 +1991,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param usedRoutes - The routes that are used in all nodes in this Container.
      * @param gcTimestamp - The time when GC was run that generated these used routes. If any node node becomes
      * unreferenced as part of this GC run, this should be used to update the time when it happens.
-     * @returns the statistics of the used state of the data stores.
      */
-    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats {
+    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         // Update our summarizer node's used routes. Updating used routes in summarizer node before
         // summarizing is required and asserted by the the summarizer node. We are the root and are
         // always referenced, so the used routes is only self-route (empty string).
@@ -2110,12 +2108,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             const trace = Trace.start();
-            let summarizeResult: ISummaryTreeWithStats;
+            let summarizeResult: IRootSummaryTreeWithStats;
+            // If the GC state needs to be reset, we need to force a full tree summary and update the unreferenced
+            // state of all the nodes.
+            const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
             try {
                 summarizeResult = await this.summarize({
-                    // If the GC state needs to be reset, we need to regenerate the summary and update the unreferenced
-                    // state of all the nodes.
-                    fullTree: fullTree || this.garbageCollector.summaryStateNeedsReset,
+                    fullTree: fullTree || forcedFullTree,
                     trackState: true,
                     summaryLogger,
                     runGC: this.garbageCollector.shouldRunGC,
@@ -2137,6 +2136,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const summaryStats: IGeneratedSummaryStats = {
                 dataStoreCount: this.dataStores.size,
                 summarizedDataStoreCount: this.dataStores.size - handleCount,
+                gcStateUpdatedDataStoreCount: summarizeResult.gcStats?.updatedDataStoreCount,
                 ...partialStats,
             };
             const generateSummaryData = {
@@ -2144,6 +2144,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 summaryTree,
                 summaryStats,
                 generateDuration: trace.trace().duration,
+                forcedFullTree,
             } as const;
 
             continueResult = checkContinue();

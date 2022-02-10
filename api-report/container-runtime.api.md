@@ -47,7 +47,6 @@ import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { ITree } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
@@ -161,8 +160,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
     setFlushMode(mode: FlushMode): void;
-    // @deprecated
-    snapshot(): Promise<ITree>;
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)
@@ -180,12 +177,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runGC?: boolean;
         fullGC?: boolean;
         runSweep?: boolean;
-    }): Promise<ISummaryTreeWithStats>;
+    }): Promise<IRootSummaryTreeWithStats>;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     }
@@ -338,7 +335,7 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 export interface IGarbageCollectionRuntime {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     updateStateBeforeGC(): Promise<void>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 }
 
 // @public (undocumented)
@@ -353,26 +350,24 @@ export interface IGCRuntimeOptions {
 
 // @public
 export interface IGCStats {
-    // (undocumented)
-    deletedDataStores: number;
-    // (undocumented)
-    deletedNodes: number;
-    // (undocumented)
-    totalDataStores: number;
-    // (undocumented)
-    totalNodes: number;
+    dataStoreCount: number;
+    nodeCount: number;
+    unrefDataStoreCount: number;
+    unrefNodeCount: number;
+    updatedDataStoreCount: number;
+    updatedNodeCount: number;
 }
 
 // @public
 export interface IGeneratedSummaryStats extends ISummaryStats {
-    // (undocumented)
     readonly dataStoreCount: number;
-    // (undocumented)
+    readonly gcStateUpdatedDataStoreCount?: number;
     readonly summarizedDataStoreCount: number;
 }
 
 // @public
 export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
+    readonly forcedFullTree: boolean;
     readonly generateDuration: number;
     // (undocumented)
     readonly stage: "generate";
@@ -438,6 +433,11 @@ export type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
 export interface IProvideSummarizer {
     // @deprecated (undocumented)
     readonly ISummarizer: ISummarizer;
+}
+
+// @public
+export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
+    gcStats?: IGCStats;
 }
 
 // @public (undocumented)
@@ -587,14 +587,6 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
     // (undocumented)
     readonly stage: "upload";
     readonly uploadDuration: number;
-}
-
-// @public
-export interface IUsedStateStats {
-    // (undocumented)
-    totalNodeCount: number;
-    // (undocumented)
-    unusedNodeCount: number;
 }
 
 // @public

@@ -10,6 +10,7 @@ export {
     IGCRuntimeOptions,
     ISummaryRuntimeOptions,
     IContainerRuntimeOptions,
+    IRootSummaryTreeWithStats,
     isRuntimeMessage,
     RuntimeMessage,
     unpackRuntimeMessage,
@@ -25,7 +26,6 @@ export {
     gcTreeKey,
     IGarbageCollectionRuntime,
     IGCStats,
-    IUsedStateStats,
 } from "./garbageCollection";
 export {
     IPendingFlush,
