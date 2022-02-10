@@ -4,7 +4,6 @@
  */
 
 import { ITelemetryLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
 import { TelemetryLogger } from "./logger";
 
 /**
@@ -35,9 +34,12 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
     }
 
     /** Asserts that matchEvents is true, and prints the actual/expected output if not */
-    assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]) {
+    assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string) {
         const actualEvents = this.events;
-        assert(this.matchEvents(expectedEvents), `
+        if (this.matchEvents(expectedEvents)) {
+            return;
+        }
+        throw new Error(`${message}
 expected:
 ${JSON.stringify(expectedEvents)}
 
@@ -59,10 +61,13 @@ ${JSON.stringify(actualEvents)}`);
     }
 
     /** Asserts that matchAnyEvent is true, and prints the actual/expected output if not */
-    assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]) {
+    assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string) {
         const actualEvents = this.events;
+        if (this.matchAnyEvent(expectedEvents)) {
+            return;
+        }
 
-        assert(this.matchAnyEvent(expectedEvents), `
+        throw new Error(`${message}
 expected:
 ${JSON.stringify(expectedEvents)}
 

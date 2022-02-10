@@ -682,7 +682,7 @@ export class ConnectionManager implements IConnectionManager {
     }
 
     /**
-     * Disconnect the current connection and reconnect.
+     * Disconnect the current connection and reconnect. Closes the container if it fails.
      * @param connection - The connection that wants to reconnect - no-op if it's different from this.connection
      * @param requestedMode - Read or write
      * @param error - Error reconnect information including whether or not to reconnect
@@ -692,11 +692,11 @@ export class ConnectionManager implements IConnectionManager {
         requestedMode: ConnectionMode,
         error: IAnyDriverError,
     ) {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.reconnectOnErrorCore(
+        this.reconnect(
             requestedMode,
             error.message,
-            error);
+            error)
+        .catch(this.props.closeHandler);
     }
 
     /**
@@ -706,7 +706,7 @@ export class ConnectionManager implements IConnectionManager {
      * @param error - Error reconnect information including whether or not to reconnect
      * @returns A promise that resolves when the connection is reestablished or we stop trying
      */
-    private async reconnectOnErrorCore(
+    private async reconnect(
         requestedMode: ConnectionMode,
         disconnectMessage: string,
         error?: IAnyDriverError,
@@ -806,7 +806,7 @@ export class ConnectionManager implements IConnectionManager {
                 this.pendingReconnect = true;
                 Promise.resolve().then(async () => {
                     if (this.pendingReconnect) { // still valid?
-                        await this.reconnectOnErrorCore(
+                        await this.reconnect(
                             "write", // connectionMode
                             "Switch to write", // message
                         );
