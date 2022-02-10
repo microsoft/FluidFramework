@@ -99,11 +99,9 @@ export const CanvasView: React.FC<ICanvasViewProps> = (props: ICanvasViewProps) 
     const { canvas } = props;
     const [inkCanvas, setInkCanvas] = useState<InkCanvas | undefined>(undefined);
     const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
-    // eslint-disable-next-line no-null/no-null
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
-        // eslint-disable-next-line no-null/no-null
         if (canvasRef.current !== null && inkCanvas === undefined) {
             setInkCanvas(new InkCanvas(canvasRef.current, canvas.ink));
         }

@@ -58,7 +58,6 @@ export class ContainerUrlResolver implements IUrlResolver {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
         const parsedUrl = parse(fluidResolvedUrl.url);
-        // eslint-disable-next-line no-null/no-null
         assert(parsedUrl.pathname !== null, 0x0b7 /* "Pathname should be defined" */);
         const [, tenantId, documentId] = parsedUrl.pathname.split("/");
         assert(!!tenantId && !!documentId,

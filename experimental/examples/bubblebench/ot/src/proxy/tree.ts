@@ -64,7 +64,6 @@ const createObjectProxy = (
         const value = target[key];
 
         /* eslint-disable @typescript-eslint/no-unsafe-return */
-        // eslint-disable-next-line no-null/no-null
         return value !== null && typeof value === "object"
             ? getProxy(/* target: */ value, consumer, /* parent: */ receiver, key as string)
             : value;
@@ -125,7 +124,6 @@ const createArrayProxy = (
         const value = target[key];
 
         /* eslint-disable @typescript-eslint/no-unsafe-return */
-        // eslint-disable-next-line no-null/no-null
         return value !== null && typeof value === "object"
             ? getProxy(/* target: */ value, consumer, /* parent: */ receiver, key)
             : value;
