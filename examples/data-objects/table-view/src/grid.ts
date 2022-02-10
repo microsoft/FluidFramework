@@ -361,12 +361,12 @@ export class GridView {
         /* eslint-disable no-fallthrough */
         switch (e.code) {
             case KeyCode.escape: { this.cancelInput(); break; }
-            case KeyCode.arrowUp: { this.moveInputByOffset(e, /* rowOffset: */ -1, /* colOffset */  0); break; }
+            case KeyCode.arrowUp: { this.moveInputByOffset(e, /* rowOffset: */ -1, /* colOffset */ 0); break; }
             case KeyCode.enter: { this.commitInput(); /* fall-through */ }
-            case KeyCode.arrowDown: { this.moveInputByOffset(e, /* rowOffset: */  1, /* colOffset */  0); break; }
-            case KeyCode.arrowLeft: { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */ -1); break; }
+            case KeyCode.arrowDown: { this.moveInputByOffset(e, /* rowOffset: */ 1, /* colOffset */ 0); break; }
+            case KeyCode.arrowLeft: { this.moveInputByOffset(e, /* rowOffset: */ 0, /* colOffset */ -1); break; }
             case KeyCode.tab: { e.preventDefault(); /* fall-through */ }
-            case KeyCode.arrowRight: { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */  1); }
+            case KeyCode.arrowRight: { this.moveInputByOffset(e, /* rowOffset: */ 0, /* colOffset */ 1); }
         }
         /* eslint-enable no-fallthrough */
     };

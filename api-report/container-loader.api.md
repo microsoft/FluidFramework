@@ -107,8 +107,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     setAutoReconnect(reconnect: boolean): void;
     // (undocumented)
-    snapshot(tagMessage: string, fullTree?: boolean): Promise<void>;
-    // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)
     subLogger: TelemetryLogger;

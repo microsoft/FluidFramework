@@ -74,7 +74,7 @@ export class WebCodeLoader implements ICodeLoader {
             throw new Error(`Package ${resolved.resolvedPackage.name} not a Fluid module.`);
         }
 
-        const loadedScriptsP =  this.scriptManager.loadLibrary(
+        const loadedScriptsP = this.scriptManager.loadLibrary(
             resolved.resolvedPackage.fluid.browser.umd);
 
         let fluidModule: IFluidModule | undefined;

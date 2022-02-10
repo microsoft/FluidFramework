@@ -125,7 +125,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
 
         const index = this.getIndex(start);
         if (index < this.handles.length) {
-            this.handles.length =  index;
+            this.handles.length = index;
         }
     }
 

@@ -201,6 +201,7 @@ async function fetchLatestSnapshotCore(
             eventName: "TreesLatest",
             attempts: tokenFetchOptions.refresh ? 2 : 1,
             shareLinkPresent: odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined,
+            isSummarizer: odspResolvedUrl.summarizer,
             redeemFallbackEnabled: enableRedeemFallback,
         };
         if (snapshotOptions !== undefined) {
@@ -317,7 +318,7 @@ async function fetchLatestSnapshotCore(
                     // Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate
                     // if the permission has changed.
                     sltelemetry: response.odspSnapshotResponse.headers.get("x-fluid-sltelemetry"),
-                    ...response.odspSnapshotResponse.commonSpoHeaders,
+                    ...response.odspSnapshotResponse.propsToLog,
                 });
                 return snapshot;
             },
@@ -370,7 +371,7 @@ async function fetchSnapshotContentsCoreV1(
         fetchAndParseAsJSONHelper<IOdspSnapshot>(url, fetchOptions));
     const snapshotContents: ISnapshotContents = convertOdspSnapshotToSnapsohtTreeAndBlobs(response.content);
     const finalSnapshotContents: IOdspResponse<ISnapshotContents> = { ...response, content: snapshotContents };
-    return  {
+    return {
         odspSnapshotResponse: finalSnapshotContents,
         requestHeaders: headers,
         requestUrl: url,
@@ -410,7 +411,7 @@ async function fetchSnapshotContentsCoreV2(
     const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
         new ReadBuffer(new Uint8Array(response.content)));
     const finalSnapshotContents: IOdspResponse<ISnapshotContents> = { ...response, content: snapshotContents };
-    return  {
+    return {
         odspSnapshotResponse: finalSnapshotContents,
         requestHeaders: headers,
         requestUrl: fullUrl,

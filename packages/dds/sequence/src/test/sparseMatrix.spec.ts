@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-null/no-null */
-
 import { strict as assert } from "assert";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {

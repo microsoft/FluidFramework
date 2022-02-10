@@ -17,7 +17,6 @@ import {
     IClientDetails,
     ISequencedDocumentMessage,
     ISnapshotTree,
-    ITree,
     MessageType,
     ISummaryTree,
     IVersion,
@@ -69,11 +68,6 @@ export interface IRuntime extends IDisposable {
      * Executes a request against the runtime
      */
     request(request: IRequest): Promise<IResponse>;
-
-    /**
-     * Snapshots the runtime
-     */
-    snapshot(tagMessage: string, fullTree?: boolean): Promise<ITree | null>;
 
     /**
      * Notifies the runtime of a change in the connection state

@@ -254,26 +254,28 @@ use_old_ClassDeclaration_EventForwarder(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.32.1:
-* "FunctionDeclaration_extractLogSafeErrorProperties": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_extractLogSafeErrorProperties": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_extractLogSafeErrorProperties():
     typeof old.extractLogSafeErrorProperties;
-declare function use_current_FunctionDeclaration_extractLogSafeErrorProperties(
+declare function use_current_RemovedFunctionDeclaration_extractLogSafeErrorProperties(
+    // @ts-expect-error compatibility expected to be broken
     use: typeof current.extractLogSafeErrorProperties);
-use_current_FunctionDeclaration_extractLogSafeErrorProperties(
+use_current_RemovedFunctionDeclaration_extractLogSafeErrorProperties(
     get_old_FunctionDeclaration_extractLogSafeErrorProperties());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.32.1:
-* "FunctionDeclaration_extractLogSafeErrorProperties": {"backCompat": false}
+* "RemovedFunctionDeclaration_extractLogSafeErrorProperties": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_extractLogSafeErrorProperties():
+declare function get_current_RemovedFunctionDeclaration_extractLogSafeErrorProperties():
+    // @ts-expect-error compatibility expected to be broken
     typeof current.extractLogSafeErrorProperties;
 declare function use_old_FunctionDeclaration_extractLogSafeErrorProperties(
     use: typeof old.extractLogSafeErrorProperties);
 use_old_FunctionDeclaration_extractLogSafeErrorProperties(
-    get_current_FunctionDeclaration_extractLogSafeErrorProperties());
+    get_current_RemovedFunctionDeclaration_extractLogSafeErrorProperties());
 
 /*
 * Validate forward compat by using old type in place of current type

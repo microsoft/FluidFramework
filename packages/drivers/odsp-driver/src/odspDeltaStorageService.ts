@@ -94,7 +94,7 @@ export class OdspDeltaStorageService {
                 headers: Object.keys(headers).length !== 0 ? true : undefined,
                 length: messages.length,
                 duration: response.duration, // this duration for single attempt!
-                ...response.commonSpoHeaders,
+                ...response.propsToLog,
                 attempts: options.refresh ? 2 : 1,
                 from,
                 to,

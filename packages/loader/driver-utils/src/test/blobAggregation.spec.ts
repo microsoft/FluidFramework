@@ -35,7 +35,7 @@ export class FlattenedStorageService {
 
     public async readBlob(path: string): Promise<ArrayBufferLike> {
         const id = this.flattenedTree[path];
-        return  this.storage.readBlob(id);
+        return this.storage.readBlob(id);
     }
 }
 

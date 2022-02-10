@@ -46,7 +46,6 @@ export async function createTree(
     repo: string,
     tree: ICreateTreeParams): Promise<ITree> {
     const repository = await repoManager.open(owner, repo);
-    // eslint-disable-next-line no-null/no-null
     const builder = await git.Treebuilder.create(repository, null);
 
     // build up the tree

@@ -15,7 +15,6 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
@@ -170,7 +169,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     // (undocumented)
     readonly options: ILoaderOptions;
     readonly packagePath: readonly string[];
-    readonly scope: IFluidObject & FluidObject;
+    readonly scope: FluidObject;
     setChannelDirty(address: string): void;
     // (undocumented)
     readonly storage: IDocumentStorageService;

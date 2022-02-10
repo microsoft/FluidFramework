@@ -464,7 +464,7 @@ export interface IProvideLoader {
 declare module "@fluidframework/core-interfaces" {
     export interface IRequestHeader extends Partial<ILoaderHeader> { }
 
-    export interface IFluidObject  {
+    export interface IFluidObject {
         /**
          * @deprecated - use `FluidObject<ILoader>` instead
          */

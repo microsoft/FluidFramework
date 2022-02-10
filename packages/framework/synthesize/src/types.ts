@@ -19,7 +19,7 @@ export type FluidObjectSymbolProvider<T> = {
  * the IFluidObject properties as its type mapped to an object that implements
  * the property.
  */
-export type AsyncRequiredFluidObjectProvider<T> =  T extends undefined ? Record<string, never> : {
+export type AsyncRequiredFluidObjectProvider<T> = T extends undefined ? Record<string, never> : {
     [P in keyof T]: Promise<NonNullable<Exclude<T[P], undefined | null>>>
 };
 
