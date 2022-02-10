@@ -278,6 +278,28 @@ export class SummaryGenerator {
                 return fail("submitSummaryFailure", summaryData.error, generateTelemetryProps);
             }
 
+            /**
+             * With incremental summaries, if the full tree was not summarized, only data stores that changed should
+             * be summarized. A data store is considered changed if either or both of the following is true:
+             * - It has received an op.
+             * - Its reference state changed, i.e., it went from referenced to unreferenced or vice-versa.
+             *
+             * In the extreme case, every op can be for a different data store and each op can result in the reference
+             * state change of multiple data stores. So, the total number of data stores that are summarized should not
+             * exceed the number of ops since last summary + number of data store whose reference state changed.
+             */
+            if (!fullTree && !summaryData.forcedFullTree) {
+                const { summarizedDataStoreCount, gcStateUpdatedDataStoreCount = 0 } = summaryData.summaryStats;
+                if (summarizedDataStoreCount > gcStateUpdatedDataStoreCount + opsSinceLastSummary) {
+                    logger.sendErrorEvent({
+                        eventName: "IncrementalSummaryViolation",
+                        summarizedDataStoreCount,
+                        gcStateUpdatedDataStoreCount,
+                        opsSinceLastSummary,
+                    })
+                }
+            }
+
             // Log event here on summary success only, as Summarize_cancel duplicates failure logging.
             logger.sendTelemetryEvent({ eventName: "GenerateSummary", ...generateTelemetryProps });
             resultsBuilder.summarySubmitted.resolve({ success: true, data: summaryData });

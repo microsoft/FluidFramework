@@ -46,7 +46,6 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
     };
     headersToLog.forEach((header) => {
         const headerValue = headers.get(header.headerName);
-        // eslint-disable-next-line no-null/no-null
         if (headerValue !== undefined && headerValue !== null) {
             additionalProps[header.logName] = headerValue;
         }
@@ -96,7 +95,6 @@ export function tryParseErrorResponse(
 export function parseFacetCodes(errorResponse: OdspErrorResponse): string[] {
     const stack: string[] = [];
     let error: OdspErrorResponseInnerError | undefined = errorResponse.error;
-    // eslint-disable-next-line no-null/no-null
     while (typeof error === "object" && error !== null) {
         if (error.code !== undefined) {
             stack.unshift(error.code);
@@ -258,7 +256,6 @@ export function throwOdspNetworkError(
 }
 
 function numberFromHeader(header: string | null): number | undefined {
-    // eslint-disable-next-line no-null/no-null
     if (header === null) {
         return undefined;
     }

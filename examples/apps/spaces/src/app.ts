@@ -33,7 +33,6 @@ async function start() {
 
     // For now we will just reach into the FluidObject to render it
     const contentDiv = document.getElementById("content");
-    // eslint-disable-next-line no-null/no-null
     if (contentDiv !== null) {
         defaultObject.render(contentDiv);
     }
