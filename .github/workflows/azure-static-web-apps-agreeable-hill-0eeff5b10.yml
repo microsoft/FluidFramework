@@ -77,17 +77,9 @@ jobs:
         run: |
           npm ci
           npm run build
-      - name: where are we
-        working-directory: ./docs
-        run: pwd
-      - name: env var
-        run: |
-          pwd
-          echo "$GITHUB_WORKSPACE"
       - name: Generate SBOM
         working-directory: ./docs
         run: |
-          pwd
           dotnet ./sbom/ManifestTool/Content/Microsoft.ManifestTool.dll Generate -pn fluidframework-docs -b ./public -bc ./public -pv $(git rev-parse HEAD)
       - name: Archive site artifact
         uses: actions/upload-artifact@v2
