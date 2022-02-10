@@ -96,7 +96,7 @@ jobs:
           action: 'upload'
           skip_app_build: true # We deploy the files built in previous steps
           app_location: '/docs/public' # Path to files to deploy
-          routes_location: '/docs'
+          config_file_location: '/docs'
           skip_deploy_on_missing_secrets: true
         env: # Add environment variables here
           HUGO_PARAMS_APPINSIGHTKEY: ${{ secrets.APP_INSIGHTS_KEY }}
