@@ -229,7 +229,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     });
 
     itExpects("works in detached container", [
-        {"eventName": "fluid:telemetry:Container:ContainerClose",  "error": "0x202"}
+        {"eventName": "fluid:telemetry:Container:ContainerClose", "error": "0x202"}
     ], async function() {
         const detachedBlobStorage = new MockDetachedBlobStorage();
         const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: {detachedBlobStorage}});
@@ -314,7 +314,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     });
 
     itExpects("serialize/rehydrate then attach", [
-        {"eventName": "fluid:telemetry:Container:ContainerClose",  "error": "0x202"}
+        {"eventName": "fluid:telemetry:Container:ContainerClose", "error": "0x202"}
     ], async function() {
         const loader = provider.makeTestLoader(
             {...testContainerConfig, loaderProps: {detachedBlobStorage: new MockDetachedBlobStorage()}});
@@ -344,7 +344,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     });
 
     itExpects("serialize/rehydrate multiple times then attach",[
-        {"eventName": "fluid:telemetry:Container:ContainerClose",  "error": "0x202"}
+        {"eventName": "fluid:telemetry:Container:ContainerClose", "error": "0x202"}
     ], async function() {
         const loader = provider.makeTestLoader(
             {...testContainerConfig, loaderProps: {detachedBlobStorage: new MockDetachedBlobStorage()}});
