@@ -6,6 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import { UsageError } from "@fluidframework/container-utils";
 import { IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
@@ -67,13 +68,18 @@ class DataStore implements IDataStore {
     private alias: string | undefined;
 
     async trySetAlias(alias: string): Promise<boolean> {
-        assert(this.runtime.attachState === AttachState.Attached, "Trying to alias when not attached!");
+        assert(this.runtime.attachState !== AttachState.Detached, "Trying to alias when not attached!");
         switch (this.aliasState) {
-            // If we're already aliasing, fail the current function call
-            case AliasState.Aliasing: return false;
+            // If we're already aliasing, throw an exception
+            case AliasState.Aliasing: throw new UsageError("The datastore is already in the process of aliasing");
             // If this datastore is already aliased, return true only if this
             // is a repeated call for the same alias
-            case AliasState.Aliased: return this.alias === alias;
+            case AliasState.Aliased:
+                if (this.alias !== alias) {
+                    throw new UsageError("The datastore has already been aliased");
+                }
+
+                return true;
             // There is no current or past alias operation for this datastore,
             // it is safe to continue execution
             case AliasState.None: break;
@@ -91,11 +97,11 @@ class DataStore implements IDataStore {
         return this.ackBasedPromise<boolean>((resolve) => {
             this.runtime.submitDataStoreAliasOp(message, resolve);
         }).then((succeeded) => {
+            // Explicitly Lock-out future attempts of aliasing,
+            // regardless of result
+            this.aliasState = AliasState.Aliased;
             if (succeeded) {
-                this.aliasState = AliasState.Aliased;
                 this.alias = alias;
-            } else {
-                this.aliasState = AliasState.None;
             }
 
             return succeeded;

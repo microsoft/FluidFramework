@@ -20,7 +20,7 @@ import {
     SummaryCollection,
 } from "@fluidframework/container-runtime";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { GenericError } from "@fluidframework/container-utils";
+import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { ConfigTypes, IConfigProviderBase, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
@@ -254,28 +254,36 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 
             const aliasResult1 = await ds1.trySetAlias(alias);
-            const aliasResult2 = await ds1.trySetAlias(alias + alias);
+            let error: Error | undefined;
+            try {
+                await ds1.trySetAlias(alias + alias);
+            } catch (err) {
+                error = err as Error;
+            }
 
+            assert.ok(error instanceof UsageError);
             assert(aliasResult1);
-            assert(!aliasResult2);
-
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
 
-        it("Aliasing a datastore which previously failed to alias will succeed", async () => {
+        it("Aliasing a datastore which previously failed to alias will fail", async () => {
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
             const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
 
             const aliasResult1 = await ds1.trySetAlias(alias);
             const aliasResult2 = await ds2.trySetAlias(alias);
-            const aliasResult3 = await ds2.trySetAlias(alias + alias);
+            let error: Error | undefined;
+            try {
+                await ds2.trySetAlias(alias + alias);
+            } catch (err) {
+                error = err as Error;
+            }
 
             assert(aliasResult1);
             assert(!aliasResult2);
-            assert(aliasResult3);
 
+            assert.ok(error instanceof UsageError);
             assert.ok(await getRootDataStore(dataObject1, alias));
-            assert.ok(await getRootDataStore(dataObject1, alias + alias));
         });
 
         it("Creating a root data store with an existing alias as an id breaks the container", async () => {
