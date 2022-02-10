@@ -52,14 +52,6 @@ export interface IQuorumProposalsEvents extends IErrorEvent {
     (
         event: "approveProposal",
         listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => void);
-    (
-        event: "commitProposal",
-        listener: (
-            sequenceNumber: number,
-            key: string,
-            value: any,
-            approvalSequenceNumber: number,
-            commitSequenceNumber: number) => void);
 }
 
 /**

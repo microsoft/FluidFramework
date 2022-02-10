@@ -46,9 +46,6 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     private isDisposed: boolean = false;
     public get disposed() { return this.isDisposed; }
 
-    // List of commits that have been approved but not yet committed
-    private readonly pendingCommit: Map<string, ICommittedProposal>;
-
     // Locally generated proposals
     private readonly localProposals = new Map<number, Deferred<void>>();
 
@@ -81,8 +78,6 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
                 ] as [number, PendingProposal];
             }));
         this.values = new Map(values);
-        this.pendingCommit = new Map(values
-            .filter((value) => value[1].commitSequenceNumber === -1));
     }
 
     public close() {
@@ -279,18 +274,15 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
 
             const committedProposal: ICommittedProposal = {
                 approvalSequenceNumber: message.sequenceNumber,
+                // No longer used.  We still stamp a -1 for compat with older versions of the quorum.
+                // Can be removed after 0.1035 and higher is ubiquitous.
                 commitSequenceNumber: -1,
                 key: proposal.key,
                 sequenceNumber: proposal.sequenceNumber,
                 value: proposal.value,
             };
 
-            // TODO do we want to notify when a proposal doesn't make it to the commit phase - i.e. because
-            // a new proposal was made before it made it to the committed phase? For now we just will never
-            // emit this message
-
             this.values.set(committedProposal.key, committedProposal);
-            this.pendingCommit.set(committedProposal.key, committedProposal);
 
             // clear the values cache
             this.snapshotCache.values = undefined;
@@ -311,29 +303,6 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
 
             // clear the proposals cache
             this.snapshotCache.proposals = undefined;
-        }
-
-        // Move values to the committed stage and notify
-        if (this.pendingCommit.size > 0) {
-            Array.from(this.pendingCommit.values())
-                .filter((pendingCommit) => pendingCommit.approvalSequenceNumber <= msn)
-                .sort((a, b) => a.sequenceNumber - b.sequenceNumber)
-                .forEach((pendingCommit) => {
-                    pendingCommit.commitSequenceNumber = message.sequenceNumber;
-
-                    // clear the values cache
-                    this.snapshotCache.values = undefined;
-
-                    this.emit(
-                        "commitProposal",
-                        pendingCommit.sequenceNumber,
-                        pendingCommit.key,
-                        pendingCommit.value,
-                        pendingCommit.approvalSequenceNumber,
-                        pendingCommit.commitSequenceNumber);
-
-                    this.pendingCommit.delete(pendingCommit.key);
-                });
         }
 
         return immediateNoOp;
