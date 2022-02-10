@@ -14,6 +14,7 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { TestDataObject } from "./mockSummarizerClient";
+import { mockConfigProvider } from "./mockConfigProivder";
 
 /**
  * Validates this scenario: When a client session expires, that the container throws the ClientSessionExpiry error
@@ -21,7 +22,7 @@ import { TestDataObject } from "./mockSummarizerClient";
  */
  describeNoCompat("GC Session Expiry", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    const timeoutMs = 100;
+    const timeoutMs = 30 * 24 * 60 * 60 * 1000; //30 days
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
         TestDataObject,
@@ -35,7 +36,6 @@ import { TestDataObject } from "./mockSummarizerClient";
         gcOptions: {
             gcAllowed: true,
             gcSessionTimeoutEnabled: true,
-            gcTestSessionTimeoutMs: timeoutMs,
         },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
@@ -48,10 +48,16 @@ import { TestDataObject } from "./mockSummarizerClient";
         runtimeOptions,
     );
 
+    // Enable config provider setting to write GC data at the root.
+    const settings = { "Fluid.GarbageCollection.RunSessionExpiry": "true" };
+    const configProvider = mockConfigProvider(settings);
+
     let container1: IContainer;
-    const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory);
-    const loadContainer = async (): Promise<IContainer> => provider.loadContainer(runtimeFactory);
+    const createContainer = async (): Promise<IContainer> => 
+        provider.createContainer(runtimeFactory, { configProvider });
+    const loadContainer = async (): Promise<IContainer> => provider.loadContainer(runtimeFactory, { configProvider });
     let clock: SinonFakeTimers;
+    let clockEnd: number;
 
     before(() => {
         clock = useFakeTimers();
@@ -71,14 +77,20 @@ import { TestDataObject } from "./mockSummarizerClient";
         container1.on("closed", (error) => {
             assert.strictEqual(error?.errorType, "clientSessionExpiredError");
         });
+        clockEnd = clock.now + timeoutMs;
     });
 
     it("Container should be closed with a ClientSessionExpired error after the gcSessionExpiryTime is up", async () => {
         await provider.ensureSynchronized();
-        clock.tick(timeoutMs - 1);
-        assert(container1.closed === false, "Container1 should not be closed, it should be 1 tick away from expiring.");
         clock.tick(1);
-        assert(container1.closed, "Container1 should be closed, it has should have reached its session expiry timeout");
+        assert(container1.closed === false, "Container should not instantly close.");
+        clock.tick(timeoutMs - 2);
+        assert(container1.closed === false, 
+            `Container1 should not be closed, it should be 1 tick away from expiring. 
+            Current: ${clock.now}, expected: ${clockEnd}`);
+        clock.tick(1);
+        assert(container1.closed, `Container1 should be closed, it has should have reached its session expiry timeout.
+            Current: ${clock.now}, expected: ${clockEnd}`);
     });
 
     it("Containers should have the same expiry time for the same document", async () => {

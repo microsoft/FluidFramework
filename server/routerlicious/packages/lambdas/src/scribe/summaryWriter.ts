@@ -93,7 +93,8 @@ export class SummaryWriter implements ISummaryWriter {
             // two summaries at the same time. In this case the first one wins.
             const existingRef = await requestWithRetry(
                 async () => this.summaryStorage.getRef(encodeURIComponent(this.documentId)),
-                "writeClientSummary_getRef");
+                "writeClientSummary_getRef",
+                getLumberBaseProperties(this.documentId, this.tenantId));
 
             if (content.head) {
                 // In usual case, client always refers to last summaryAck so lastClientSummaryHead should always match.
@@ -133,9 +134,9 @@ export class SummaryWriter implements ISummaryWriter {
             if (!this.enableWholeSummaryUpload) {
                 try {
                     await requestWithRetry(
-                        // eslint-disable-next-line @typescript-eslint/promise-function-async
                         async () => Promise.all(content.parents.map((parentSummary) => this.summaryStorage.getCommit(parentSummary))),
-                        "writeClientSummary_validateParentSummary");
+                        "writeClientSummary_validateParentSummary",
+                        getLumberBaseProperties(this.documentId, this.tenantId));
                 } catch (e) {
                     clientSummaryMetric.error(`One or more parent summaries are invalid`, e);
                     return {
@@ -197,21 +198,26 @@ export class SummaryWriter implements ISummaryWriter {
                         serviceProtocolEntries,
                         checkpoint.protocolState.sequenceNumber,
                         content.details?.includesProtocolTree),
-                    "writeClientSummary_updateWholeSummary");
+                    "writeClientSummary_updateWholeSummary",
+                    getLumberBaseProperties(this.documentId, this.tenantId));
             } else {
                 const [logTailTree, protocolTree, serviceProtocolTree, appSummaryTree] = await Promise.all([
                     requestWithRetry(
                         async () => this.summaryStorage.createTree({ entries: logTailEntries }),
-                        "writeClientSummary_createLogTailTree"),
+                        "writeClientSummary_createLogTailTree",
+                        getLumberBaseProperties(this.documentId, this.tenantId)),
                     requestWithRetry(
                         async () => this.summaryStorage.createTree({ entries: protocolEntries }),
-                        "writeClientSummary_createProtocolTree"),
+                        "writeClientSummary_createProtocolTree",
+                        getLumberBaseProperties(this.documentId, this.tenantId)),
                     requestWithRetry(
                         async () => this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
-                        "writeClientSummary_createServiceProtocolTree"),
+                        "writeClientSummary_createServiceProtocolTree",
+                        getLumberBaseProperties(this.documentId, this.tenantId)),
                     requestWithRetry(
                         async () => this.summaryStorage.getTree(content.handle, false),
-                        "writeClientSummary_getAppSummaryTree"),
+                        "writeClientSummary_getAppSummaryTree",
+                        getLumberBaseProperties(this.documentId, this.tenantId)),
                 ]);
 
                 // Combine the app summary with .protocol
@@ -234,7 +240,8 @@ export class SummaryWriter implements ISummaryWriter {
                 // Finally perform the write to git
                 const gitTree = await requestWithRetry(
                     async () => this.summaryStorage.createGitTree({ tree: newTreeEntries }),
-                    "writeClientSummary_createGitTree");
+                    "writeClientSummary_createGitTree",
+                    getLumberBaseProperties(this.documentId, this.tenantId));
 
                 const commitParams: ICreateCommitParams = {
                     author: {
@@ -249,17 +256,20 @@ export class SummaryWriter implements ISummaryWriter {
 
                 const commit = await requestWithRetry(
                     async () => this.summaryStorage.createCommit(commitParams),
-                    "writeClientSummary_createCommit");
+                    "writeClientSummary_createCommit",
+                    getLumberBaseProperties(this.documentId, this.tenantId));
                 uploadHandle = commit.sha;
 
                 if (existingRef) {
                     await requestWithRetry(
                         async () => this.summaryStorage.upsertRef(this.documentId, uploadHandle),
-                        "writeClientSummary_upsertRef");
+                        "writeClientSummary_upsertRef",
+                        getLumberBaseProperties(this.documentId, this.tenantId));
                 } else {
                     await requestWithRetry(
                         async () => this.summaryStorage.createRef(this.documentId, uploadHandle),
-                        "writeClientSummary_createRef");
+                        "writeClientSummary_createRef",
+                        getLumberBaseProperties(this.documentId, this.tenantId));
                 }
             }
             clientSummaryMetric.success(`Client summary success`);
@@ -318,7 +328,8 @@ export class SummaryWriter implements ISummaryWriter {
         try {
             const existingRef = await requestWithRetry(
                 async () => this.summaryStorage.getRef(encodeURIComponent(this.documentId)),
-                "writeServiceSummary_getRef");
+                "writeServiceSummary_getRef",
+                getLumberBaseProperties(this.documentId, this.tenantId));
 
             // Client assumes at least one app generated summary. To keep compatibility
             // for now, service summary requires at least one prior client generated summary.
@@ -341,7 +352,8 @@ export class SummaryWriter implements ISummaryWriter {
                     currentProtocolHead,
                     op.sequenceNumber + 1,
                     pendingOps),
-                "writeServiceSummary_generateLogtailEntries");
+                "writeServiceSummary_generateLogtailEntries",
+                getLumberBaseProperties(this.documentId, this.tenantId));
 
             // Create service protocol entries combining scribe and deli states.
             const serviceProtocolEntries = generateServiceProtocolEntries(
@@ -355,20 +367,24 @@ export class SummaryWriter implements ISummaryWriter {
                         logTailEntries,
                         serviceProtocolEntries,
                         op.sequenceNumber),
-                    "writeServiceSummary_createWholeServiceSummary");
+                    "writeServiceSummary_createWholeServiceSummary",
+                    getLumberBaseProperties(this.documentId, this.tenantId));
             } else {
                 // Fetch the last commit and summary tree. Create new trees with logTail and serviceProtocol.
                 const lastCommit = await this.summaryStorage.getCommit(existingRef.object.sha);
                 const [logTailTree, serviceProtocolTree, lastSummaryTree] = await Promise.all([
                     requestWithRetry(
                         async () => this.summaryStorage.createTree({ entries: logTailEntries }),
-                        "writeServiceSummary_createLogTailTree"),
+                        "writeServiceSummary_createLogTailTree",
+                        getLumberBaseProperties(this.documentId, this.tenantId)),
                     requestWithRetry(
                         async () => this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
-                        "writeServiceSummary_createServiceProtocolTree"),
+                        "writeServiceSummary_createServiceProtocolTree",
+                        getLumberBaseProperties(this.documentId, this.tenantId)),
                     requestWithRetry(
                         async () => this.summaryStorage.getTree(lastCommit.tree.sha, false),
-                        "writeServiceSummary_getLastSummaryTree"),
+                        "writeServiceSummary_getLastSummaryTree",
+                        getLumberBaseProperties(this.documentId, this.tenantId)),
                 ]);
 
                 // Combine the last summary tree with .logTail and .serviceProtocol
