@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ErrorTrackingLogger, ITestObjectProvider, TestObjectProvider } from "@fluidframework/test-utils";
+import { EventAndErrorTrackingLogger, ITestObjectProvider, TestObjectProvider } from "@fluidframework/test-utils";
 import { getVersionedTestObjectProvider } from "./compatUtils";
 import { ensurePackageInstalled } from "./testApi";
 import { pkgVersion } from "./packageVersion";
@@ -173,12 +173,12 @@ if (compatKind !== undefined) {
     configList = configList.filter((value) => compatKind!.includes(value.kind));
 }
 
-function getUnexpectedLogErrorException(logger: ErrorTrackingLogger){
-    const results = logger.results();
+function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger){
+    const results = logger.reportAndClearTrackedEvents();
     if(results.unexpectedErrors.length > 0){
         return new Error(
-            // eslint-disable-next-line max-len
-            `Unexpected Errors in Logs. Use itExpects to specify expected errors:\n${ JSON.stringify(results.unexpectedErrors, undefined, 2)}`);
+            `Unexpected Errors in Logs. Use itExpects to specify expected errors:\n` +
+            +`${ JSON.stringify(results.unexpectedErrors, undefined, 2)}`);
     }
     if(results.expectedNotFound.length > 0){
         return new Error(
@@ -186,12 +186,12 @@ function getUnexpectedLogErrorException(logger: ErrorTrackingLogger){
     }
 }
 
-function createExpectsTest(expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc){
+function createExpectsTest(orderedExpectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc){
     return async function (this:Context){
         const provider: TestObjectProvider | undefined = this.__fluidTestProvider;
         assert(provider !== undefined, "Expected __fluidTestProvider on this");
         try{
-            provider.logger.registerExpectedEvent(... expectedEvents);
+            provider.logger.registerExpectedEvent(... orderedExpectedEvents);
             await test.bind(this)();
         }catch(error){
             provider.logger.sendErrorEvent({eventName:"TestException"},error)
@@ -205,13 +205,17 @@ function createExpectsTest(expectedEvents: ITelemetryGenericEvent[], test: Mocha
 
 export type ExpectsTest = (name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc) => Mocha.Test
 
-export const itExpects: ExpectsTest & {only: ExpectsTest} =
+export const itExpects: ExpectsTest & Record<"only" |"skip", ExpectsTest> =
     (name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc): Mocha.Test =>
         it(name, createExpectsTest(expectedEvents, test));
 
 itExpects.only =
     (name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc) =>
         it.only(name, createExpectsTest(expectedEvents, test));
+
+itExpects.skip =
+    (name: string, expectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc) =>
+        it.skip(name, createExpectsTest(expectedEvents, test));
 
 
 /*

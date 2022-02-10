@@ -609,9 +609,9 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         assert.strictEqual(retryTimes, 0, "Should not succeed at first time");
     }).timeout(5000);
 
-    itExpects("Container should be closed on failed attach with non retryable error",
-    [{eventName: "fluid:telemetry:Container:ContainerClose", error: "Test Error"}],
-    async () => {
+    itExpects("Container should be closed on failed attach with non retryable error",[
+        {eventName: "fluid:telemetry:Container:ContainerClose", error: "Test Error"}
+    ], async () => {
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const oldFunc = provider.documentServiceFactory.createContainer;

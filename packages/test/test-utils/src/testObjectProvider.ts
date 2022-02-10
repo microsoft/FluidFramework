@@ -122,7 +122,13 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
     }
 }
 
-export class ErrorTrackingLogger extends TelemetryLogger{
+/**
+ * This class tracks events. It allows specifying expected events, which will be looked for in order.
+ * It also tracks all unexpected errors.
+ * At any point you call reportAndClearTrackedEvents which will provide all unexpected errors, and
+ * any expected events that have not occurred.
+ */
+export class EventAndErrorTrackingLogger extends TelemetryLogger{
     constructor(private readonly baseLogger: ITelemetryBaseLogger){
         super();
     }
@@ -130,8 +136,15 @@ export class ErrorTrackingLogger extends TelemetryLogger{
     private readonly expectedEvents: (ITelemetryGenericEvent | undefined)[] = []
     private readonly unexpectedErrors: ITelemetryBaseEvent[] =[];
 
-    public registerExpectedEvent(... events: ITelemetryGenericEvent[]){
-        this.expectedEvents.push(... events);
+    public registerExpectedEvent(... orderedExpectedEvents: ITelemetryGenericEvent[]){
+        if(this.expectedEvents.length !== 0){
+            // we don't have to error here. just no reason not to. given the events must be
+            // ordered it could be tricky to figure out problems around multiple registrations.
+            throw new Error(
+                "Expected events already registered.\n"
+                + "Call reportAndClearTrackedEvents to clear them before registering more")
+        }
+        this.expectedEvents.push(... orderedExpectedEvents);
     }
 
     send(event: ITelemetryBaseEvent): void {
@@ -145,6 +158,11 @@ export class ErrorTrackingLogger extends TelemetryLogger{
                 }
             }
             if(matches){
+                // we found an expected event
+                // so remove it from the list of expected events
+                // and if it is an error, change it to generic
+                // this helps keep our telemetry clear of
+                // expected errors.
                 this.expectedEvents.shift();
                 if(event.category === "error"){
                     event.category = "generic";
@@ -158,7 +176,7 @@ export class ErrorTrackingLogger extends TelemetryLogger{
         this.baseLogger.send(event)
     }
 
-    public results(){
+    public reportAndClearTrackedEvents(){
         const expectedNotFound = this.expectedEvents.splice(0, this.expectedEvents.length);
 
         const unexpectedErrors =  this.unexpectedErrors.splice(0, this.unexpectedErrors.length);
@@ -178,7 +196,7 @@ export class TestObjectProvider implements ITestObjectProvider {
     private readonly _loaderContainerTracker = new LoaderContainerTracker();
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _urlResolver: IUrlResolver | undefined;
-    private _logger: ErrorTrackingLogger | undefined;
+    private _logger: EventAndErrorTrackingLogger | undefined;
     private readonly _documentIdStrategy: IDocumentIdStrategy;
     // Since documentId doesn't change we can only create/make one container. Call the load functions instead.
     private _documentCreated = false;
@@ -196,9 +214,9 @@ export class TestObjectProvider implements ITestObjectProvider {
         this._documentIdStrategy = getDocumentIdStrategy(driver.type);
     }
 
-    get logger(): ErrorTrackingLogger {
+    get logger(): EventAndErrorTrackingLogger {
         if (this._logger === undefined) {
-            this._logger = new ErrorTrackingLogger(
+            this._logger = new EventAndErrorTrackingLogger(
                 ChildLogger.create(getTestLogger?.(), undefined,
                 {
                     all: {

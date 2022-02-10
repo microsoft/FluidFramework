@@ -82,13 +82,13 @@ export enum DataObjectFactoryType {
 // @public (undocumented)
 export const defaultTimeoutDurationMs = 250;
 
-// @public (undocumented)
-export class ErrorTrackingLogger extends TelemetryLogger {
+// @public
+export class EventAndErrorTrackingLogger extends TelemetryLogger {
     constructor(baseLogger: ITelemetryBaseLogger);
     // (undocumented)
-    registerExpectedEvent(...events: ITelemetryGenericEvent[]): void;
+    registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEvent[]): void;
     // (undocumented)
-    results(): {
+    reportAndClearTrackedEvents(): {
         expectedNotFound: (ITelemetryGenericEvent | undefined)[];
         unexpectedErrors: ITelemetryBaseEvent[];
     };
@@ -270,7 +270,7 @@ export class TestObjectProvider implements ITestObjectProvider {
     readonly LoaderConstructor: typeof Loader;
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
-    get logger(): ErrorTrackingLogger;
+    get logger(): EventAndErrorTrackingLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader;
     // (undocumented)
