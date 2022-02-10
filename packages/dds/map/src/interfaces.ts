@@ -164,10 +164,27 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
  * - `local` - Whether the change originated from the this client.
  *
  * - `target` - The IDirectory itself.
+ *
+ * ### "dispose"
+ *
+ * The dispose event is emitted when this sub directory is deleted.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (local: boolean, target: IEventThisPlaceHolder) => void
+ * ```
+ * - `local` - Whether the change originated from the this client.
+ *
+ * - `target` - The IDirectory itself.
  */
 export interface IDirectoryEvents extends IEvent {
     (event: "containedValueChanged", listener: (
         changed: IValueChanged,
+        local: boolean,
+        target: IEventThisPlaceHolder,
+    ) => void);
+    (event: "dispose", listener: (
         local: boolean,
         target: IEventThisPlaceHolder,
     ) => void);
