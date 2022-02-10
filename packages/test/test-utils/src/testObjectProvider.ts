@@ -178,15 +178,12 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger{
 
     public reportAndClearTrackedEvents(){
         const expectedNotFound = this.expectedEvents.splice(0, this.expectedEvents.length);
-
-        const unexpectedErrors =  this.unexpectedErrors.splice(0, this.unexpectedErrors.length);
-
+        const unexpectedErrors = this.unexpectedErrors.splice(0, this.unexpectedErrors.length);
         return {
             expectedNotFound,
             unexpectedErrors,
         }
     }
-
 }
 
 /**
