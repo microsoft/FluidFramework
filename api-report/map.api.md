@@ -50,6 +50,11 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
 }
 
 // @public
+export interface IDirectoryCreated {
+    key: string;
+}
+
+// @public
 export interface IDirectoryDataObject {
     // (undocumented)
     storage?: {
@@ -62,9 +67,19 @@ export interface IDirectoryDataObject {
 }
 
 // @public
+export interface IDirectoryDeleted {
+    key: string;
+    previousValue: IDirectory;
+}
+
+// @public
 export interface IDirectoryEvents extends IEvent {
     // (undocumented)
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    // (undocumented)
+    (event: "containedDirectoryCreated", listener: (changed: IDirectoryCreated, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    // (undocumented)
+    (event: "containedDirectoryDeleted", listener: (changed: IDirectoryDeleted, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
 // @public (undocumented)
@@ -133,16 +148,14 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 }
 
 // @public
-export interface ISubDirectoryCreated {
+export interface ISubDirectoryCreated extends IDirectoryCreated {
     key: string;
     path: string;
 }
 
 // @public
-export interface ISubDirectoryDeleted {
-    key: string;
+export interface ISubDirectoryDeleted extends IDirectoryDeleted {
     path: string;
-    previousValue: IDirectory;
 }
 
 // @public
