@@ -77,8 +77,8 @@ export class TenantManager {
             // we should fail token generated with empty string as key
             if (!tenantKeys.key2) {
                 return Promise.reject(error1 instanceof jwt.TokenExpiredError
-                    ? new NetworkError(401, "Token expired.")
-                    : new NetworkError(403, "Invalid token."));
+                    ? new NetworkError(401, "Token expired validated with key1.")
+                    : new NetworkError(403, "Invalid token validated with key1."));
             }
 
             return jwt.verify(token, tenantKeys.key2, (error2) => {
@@ -89,8 +89,8 @@ export class TenantManager {
                 // When `exp` claim exists in token claims, jsonwebtoken verifies token expiration.
                 return Promise.reject((error1 instanceof jwt.TokenExpiredError
                     || error2 instanceof jwt.TokenExpiredError)
-                    ? new NetworkError(401, "Token expired.")
-                    : new NetworkError(403, "Invalid token."));
+                    ? new NetworkError(401, "Token expired validated with both key1 and key2.")
+                    : new NetworkError(403, "Invalid token validated with both key1 and key2."));
             });
         });
     }
