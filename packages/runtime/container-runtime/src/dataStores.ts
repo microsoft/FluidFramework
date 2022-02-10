@@ -628,9 +628,11 @@ export class DataStores implements IDisposable {
     }
 
     /**
-     * Returns the package path of the node with the given path.
+     * Returns the package path of the node with the given path. This is used by GC to log when an inactive / deleted
+     * node is used.
      */
     public getNodePackagePath(nodePath: string): readonly string[] | undefined {
+        // Currently, only return the data store package path for the node since GC is only interested in data stores.
         const dataStoreId = nodePath.split("/")[1];
         const context = this.contexts.get(dataStoreId);
         assert(context !== undefined, "Data store with given id does not exist");
