@@ -121,7 +121,7 @@ export class TextSegment extends BaseSegment {
     }
 }
 
-interface ITextAccumulator  {
+interface ITextAccumulator {
     textSegment: TextSegment;
     placeholder?: string;
     parallelArrays?: boolean;

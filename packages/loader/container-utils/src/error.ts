@@ -88,7 +88,7 @@ export class UsageError extends LoggingError implements IFluidErrorBase {
 
 /** Error indicating that a client's session has reached its time limit and is closed. */
 export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
-    readonly errorType = "clientSessionExpiredError";
+    readonly errorType = ContainerErrorType.clientSessionExpiredError;
 
     constructor(
         readonly fluidErrorCode: string,

@@ -457,7 +457,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       const rowsData = this.props.checkoutInProgress ? fakeRows : rows;
       this.columns = this.generateColumns(width);
       const getHeader = ({cells, headerIndex}) => {
-        if ( headerIndex === 1)  {
+        if (headerIndex === 1) {
           return cells;
         }
         return (

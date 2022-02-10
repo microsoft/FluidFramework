@@ -70,7 +70,7 @@ export function generatePairwiseOptions<T extends Record<string, any>>(
     const matrixKeys: (keyof T)[] =
         Object.keys(optionsMatrix)
         .filter((k)=>optionsMatrix[k].length > 1 || optionsMatrix[k][0] !== undefined)
-        .sort((a,b)=>optionsMatrix[b].length  - optionsMatrix[a].length);
+        .sort((a,b)=>optionsMatrix[b].length - optionsMatrix[a].length);
 
     if(matrixKeys.length === 0) {
         return [];
@@ -90,7 +90,7 @@ export function generatePairwiseOptions<T extends Record<string, any>>(
         const iKey = matrixKeys[i];
         for(let j = i + 1; j < matrixKeys.length; j++) {
             const jKey = matrixKeys[j];
-            for(const iVal of  optionsMatrix[iKey]) {
+            for(const iVal of optionsMatrix[iKey]) {
                 for(const jVal of optionsMatrix[jKey]) {
                     applyPairToPartial(
                         randEng,

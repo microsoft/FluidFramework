@@ -329,7 +329,7 @@ function addNodeReferences(
     }
     if (node.isLeaf()) {
         const segment = node;
-        if (mergeTree.localNetLength(segment) ?? 0 > 0) {
+        if ((mergeTree.localNetLength(segment) ?? 0) > 0) {
             if (Marker.is(segment)) {
                 const markerId = segment.getId();
                 // Also in insertMarker but need for reload segs case
@@ -988,7 +988,7 @@ function rangeShift(
     offset: number | undefined, end: number | undefined, searchInfo: IMarkerSearchRangeInfo) {
     if (node.isLeaf()) {
         const seg = node;
-        if ((searchInfo.mergeTree.localNetLength(seg) ?? 0 > 0) && Marker.is(seg)) {
+        if (((searchInfo.mergeTree.localNetLength(seg) ?? 0) > 0) && Marker.is(seg)) {
             if (seg.refType &
                 (ReferenceType.NestBegin | ReferenceType.NestEnd)) {
                 applyLeafRangeMarker(seg, searchInfo);
@@ -1543,7 +1543,7 @@ export class MergeTree {
             segEnd: number) => {
             let _segStart = segStart;
             let _segEnd = segEnd;
-            if (this.nodeLength(segment, toSeq, clientId) ?? 0 > 0) {
+            if ((this.nodeLength(segment, toSeq, clientId) ?? 0) > 0) {
                 const position = this.getPosition(segment, toSeq, clientId);
                 if (_segStart < 0) {
                     _segStart = 0;
@@ -2265,7 +2265,7 @@ export class MergeTree {
     }
 
     // Assume called only when pos == len
-    private breakTie(pos: number, node: IMergeNode,  seq: number) {
+    private breakTie(pos: number, node: IMergeNode, seq: number) {
         if (node.isLeaf()) {
             if (pos === 0) {
                 // normalize the seq numbers

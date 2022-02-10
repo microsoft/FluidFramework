@@ -100,11 +100,6 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
             assert.strictEqual(container.getLoadedCodeDetails()?.package, provider.defaultCodeDetails.package,
             "Loaded package should be same as provided");
         }
-        assert.strictEqual(
-            (container as Container).id,
-            "",
-            "Detached container's id should be empty string",
-        );
         assert.strictEqual((container as Container).clientDetails.capabilities.interactive, true,
             "Client details should be set with interactive as true");
     });

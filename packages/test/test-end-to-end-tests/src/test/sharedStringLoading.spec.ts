@@ -24,7 +24,7 @@ import {
 import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat, pkgVersion } from "@fluidframework/test-version-utils";
 
 // REVIEW: enable compat testing?
 describeNoCompat("SharedString", (getTestObjectProvider) => {
@@ -102,7 +102,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                                     "notFound",
                                     "Not Found",
                                     "someErrorType",
-                                    { statusCode: 404 });
+                                    { statusCode: 404, driverVersion: pkgVersion });
                             }
                             return blob;
                         };

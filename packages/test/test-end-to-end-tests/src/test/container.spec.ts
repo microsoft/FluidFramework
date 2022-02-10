@@ -19,6 +19,7 @@ import {
     waitContainerToCatchUp,
 } from "@fluidframework/container-loader";
 import {
+    DriverErrorType,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
 } from "@fluidframework/driver-definitions";
@@ -31,7 +32,7 @@ import {
     ITestObjectProvider,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { ensureFluidResolvedUrl, IAnyDriverError } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     getDataStoreFactory,
@@ -99,7 +100,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 
     it("Load container successfully", async () => {
         const container = await loadContainer();
-        assert.strictEqual(container.id, "containerTest", "Container's id should be set");
         assert.strictEqual(container.clientDetails.capabilities.interactive, true,
             "Client details should be set with interactive as true");
     });
@@ -207,7 +207,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         });
         assert.strictEqual(container.connectionState, ConnectionState.Connecting,
             "Container should be in Connecting state");
-        const err = {
+        const err: IAnyDriverError = {
+            errorType: DriverErrorType.genericError,
             message: "Test error",
             canRetry: false,
         };
