@@ -34,7 +34,6 @@ import { describeFullCompat, itExpects } from "@fluidframework/test-version-util
 import {
     getSnapshotTreeFromSerializedContainer,
     ISnapshotTreeWithBlobContents,
-
 } from "@fluidframework/container-loader/dist/utils";
 
 const detachedContainerRefSeqNumber = 0;
