@@ -275,10 +275,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
 
         for (const proposal of completed) {
             // If it was a local proposal - resolve the promise
-            if (proposal.deferred) {
-                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                proposal.deferred.resolve();
-            }
+            proposal.deferred?.resolve();
 
             const committedProposal: ICommittedProposal = {
                 approvalSequenceNumber: message.sequenceNumber,
