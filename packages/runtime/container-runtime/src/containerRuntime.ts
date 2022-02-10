@@ -1000,7 +1000,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this,
             this.runtimeOptions.gcOptions,
             (unusedRoutes: string[]) => this.dataStores.deleteUnusedRoutes(unusedRoutes),
-            (nodeId: string) => this.dataStores.getDataStorePackagePath(nodeId),
+            (nodePath: string) => this.dataStores.getNodePackagePath(nodePath),
             getCurrentTimestamp,
             this.closeFn,
             context.baseSnapshot,
