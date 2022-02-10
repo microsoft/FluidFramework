@@ -6,7 +6,6 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
-    IFluidConfiguration,
     IRequest,
     IResponse,
     IFluidCodeDetails,
@@ -39,7 +38,6 @@ import {
     ISignalMessage,
     ISnapshotTree,
     ISummaryTree,
-    ITree,
     IVersion,
     MessageType,
 } from "@fluidframework/protocol-definitions";
@@ -129,16 +127,6 @@ export class ContainerContext implements IContainerContext {
         return this.container.options;
     }
 
-    /**
-     * @deprecated 0.55 - Configuration is not recommended to be used and will be removed in an upcoming release.
-     */
-    public get configuration(): IFluidConfiguration {
-        const config: Partial<IFluidConfiguration> = {
-            scopes: this.container.scopes,
-        };
-        return config as IFluidConfiguration;
-    }
-
     public get baseSnapshot() {
         return this._baseSnapshot;
     }
@@ -213,10 +201,6 @@ export class ContainerContext implements IContainerContext {
         this.runtime.dispose(error);
         this._quorum.dispose();
         this.deltaManager.dispose();
-    }
-
-    public async snapshot(tagMessage: string = "", fullTree: boolean = false): Promise<ITree | null> {
-        return this.runtime.snapshot(tagMessage, fullTree);
     }
 
     public getLoadedFromVersion(): IVersion | undefined {

@@ -254,6 +254,9 @@
             "skipFiles": [
                 "<node_internals>/**/*.js"
             ],
+            "outFiles": [
+                "${fileDirname}/../../dist/**/*.js"
+            ],
             "preLaunchTask": "Build Current Tests",
             "internalConsoleOptions": "openOnSessionStart",
         },
@@ -269,10 +272,12 @@
                 "--no-timeouts",
                 "--exit",
                 "../../dist/test/${fileBasenameNoExtension}.js",
+                "../../../dist/test/**/${fileBasenameNoExtension}.js",
             ],
             "cwd": "${fileDirname}",
             "outFiles": [
-                "${fileDirname}/../../dist/**/*.js"
+                "${fileDirname}/../../dist/**/*.js",
+                "${fileDirname}/../../../dist/**/*.js"
             ],
         },
         {

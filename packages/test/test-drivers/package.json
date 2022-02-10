@@ -51,8 +51,8 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/core-interfaces": "^0.42.0-0",
-    "@fluidframework/driver-definitions": "^0.44.0-0",
+    "@fluidframework/core-interfaces": "^0.42.0",
+    "@fluidframework/driver-definitions": "^0.44.0",
     "@fluidframework/driver-utils": "^0.57.0",
     "@fluidframework/local-driver": "^0.57.0",
     "@fluidframework/odsp-doclib-utils": "^0.57.0",
@@ -73,7 +73,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.25.0",
+    "@fluidframework/eslint-config-fluid": "^0.26.0-0",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",

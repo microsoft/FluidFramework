@@ -61,6 +61,7 @@ class OpPerfTelemetry {
             }
         });
         this.deltaManager.on("disconnect", () => {
+            this.opSendTimeForLatencyStatisticsForMsnStatistics = undefined;
             this.clientSequenceNumberForLatencyStatistics = undefined;
             this.connectionOpSeqNumber = undefined;
             this.firstConnection = false;

@@ -26,6 +26,7 @@ import {
  } from "./odspCache";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 import { ClpCompliantAppHeader } from "./contractsPublic";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" |
     "treesLatest" | "uploadSummary" | "push" | "versions";
@@ -182,10 +183,7 @@ export class EpochTracker implements IPersistedFileCache {
         ).then((response) => {
             epochFromResponse = response.headers.get("x-fluid-epoch");
             this.validateEpochFromResponse(epochFromResponse, fetchType);
-            response.commonSpoHeaders = {
-                ...response.commonSpoHeaders,
-                "X-RequestStats": clientCorrelationId,
-            };
+            response.propsToLog.XRequestStatsHeader = clientCorrelationId;
             return response;
         }).catch(async (error) => {
             // Get the server epoch from error in case we don't have it as if undefined we won't be able
@@ -224,10 +222,7 @@ export class EpochTracker implements IPersistedFileCache {
         ).then((response) => {
             epochFromResponse = response.headers.get("x-fluid-epoch");
             this.validateEpochFromResponse(epochFromResponse, fetchType);
-            response.commonSpoHeaders = {
-                ...response.commonSpoHeaders,
-                "X-RequestStats": clientCorrelationId,
-            };
+            response.propsToLog.XRequestStatsHeader = clientCorrelationId;
             return response;
         }).catch(async (error) => {
             // Get the server epoch from error in case we don't have it as if undefined we won't be able
@@ -343,7 +338,7 @@ export class EpochTracker implements IPersistedFileCache {
             // If it was categorized as epoch error but the epoch returned in response matches with the client epoch
             // then it was coherency 409, so rethrow it as throttling error so that it can retried. Default throttling
             // time is 1s.
-            throw new ThrottlingError("coherency409", error.message, 1, { [Odsp409Error]: true });
+            throw new ThrottlingError("coherency409", error.message, 1, { [Odsp409Error]: true, driverVersion });
         }
     }
 
@@ -354,7 +349,8 @@ export class EpochTracker implements IPersistedFileCache {
         if (this.fluidEpoch && epochFromResponse && (this.fluidEpoch !== epochFromResponse)) {
             // This is similar in nature to how fluidEpochMismatchError (409) is handled.
             // Difference - client detected mismatch, instead of server detecting it.
-            return new NonRetryableError("epochMismatch", "Epoch mismatch", DriverErrorType.fileOverwrittenInStorage);
+            return new NonRetryableError(
+                "epochMismatch", "Epoch mismatch", DriverErrorType.fileOverwrittenInStorage, { driverVersion });
         }
     }
 

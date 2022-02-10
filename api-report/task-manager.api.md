@@ -97,8 +97,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
     queued(taskId: string): boolean;
-    // @internal (undocumented)
-    protected registerCore(): void;
     // @internal
     protected reSubmitCore(): void;
     // @internal

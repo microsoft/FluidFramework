@@ -17,7 +17,6 @@ import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidCodeDetails as IFluidCodeDetails_2 } from '@fluidframework/core-interfaces';
-import { IFluidConfiguration } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidPackage as IFluidPackage_2 } from '@fluidframework/core-interfaces';
 import { IFluidPackageEnvironment as IFluidPackageEnvironment_2 } from '@fluidframework/core-interfaces';
@@ -37,7 +36,6 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
-import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 
@@ -170,8 +168,6 @@ export interface IContainerContext extends IDisposable {
     readonly clientId: string | undefined;
     // (undocumented)
     readonly closeFn: (error?: ICriticalContainerError) => void;
-    // @deprecated (undocumented)
-    readonly configuration?: IFluidConfiguration;
     // (undocumented)
     readonly connected: boolean;
     // (undocumented)
@@ -517,7 +513,6 @@ export interface IRuntime extends IDisposable {
     request(request: IRequest): Promise<IResponse>;
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     setConnectionState(connected: boolean, clientId?: string): any;
-    snapshot(tagMessage: string, fullTree?: boolean): Promise<ITree | null>;
 }
 
 // @public (undocumented)

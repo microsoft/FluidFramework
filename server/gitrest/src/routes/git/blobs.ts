@@ -16,7 +16,6 @@ function validateEncoding(encoding: BufferEncoding): boolean {
 }
 
 function validateBlob(blob: string): boolean {
-    // eslint-disable-next-line no-null/no-null
     return blob !== undefined && blob !== null;
 }
 

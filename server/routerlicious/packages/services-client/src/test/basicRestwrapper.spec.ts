@@ -133,7 +133,7 @@ describe("BasicRestWrapper", () => {
             ),
         };
 
-        axiosMockAdapterTooManyRequestsErrorPositiveRetryAfter  = new AxiosMockAdapter(axiosInstance);
+        axiosMockAdapterTooManyRequestsErrorPositiveRetryAfter = new AxiosMockAdapter(axiosInstance);
 
         // For axios mock for testing 429 throttled requests with a valid retryAfter value,
         // first request should return 429 and then a 200 should be returned

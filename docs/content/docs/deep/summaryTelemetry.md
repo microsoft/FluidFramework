@@ -174,7 +174,7 @@ This should not even be possible, but it means that an unhandled error was raise
 
 > Event Prefix: `Summarizer:Running:`
 
-- `summaryGenTag` - the number of summarize attempts this client has made. This can be used to correlate events for individual summary attempts.
+- `summarizeCount` - the number of summarize attempts this client has made. This can be used to correlate events for individual summary attempts.
 
 ### SummaryAckWaitTimeout
 
@@ -214,7 +214,7 @@ This should not be possible, but it indicates an error was thrown in the code th
 
 > Event Prefix: `Summarizer:Running:`
 
-- `summaryGenTag` - the number of summarize attempts this client has made. This can be used to correlate events for individual summary attempts.
+- `summarizeCount` - the number of summarize attempts this client has made. This can be used to correlate events for individual summary attempts.
 
 ### ConcurrentSummarizeAttempt
 

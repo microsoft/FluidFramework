@@ -108,7 +108,7 @@ export function runMergeTreeOperationRunner(
                 minLength,
                 config.operations,
             );
-            const msgs =  messageData.map((md)=>md[0]);
+            const msgs = messageData.map((md)=>md[0]);
             seq = apply(seq, messageData, clients, logger);
             const resultText = logger.validate();
             results.push({
@@ -123,7 +123,7 @@ export function runMergeTreeOperationRunner(
     if(config.resultsFilePostfix !== undefined) {
         const resultsFilePath =
             `${replayResultsPath}/len_${minLength}-clients_${clients.length}-${config.resultsFilePostfix}`;
-        fs.writeFileSync(resultsFilePath, JSON.stringify(results, undefined,  4));
+        fs.writeFileSync(resultsFilePath, JSON.stringify(results, undefined, 4));
     }
 
     return seq;
