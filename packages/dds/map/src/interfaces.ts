@@ -200,10 +200,50 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
  * - `local` - Whether the change originated from the this client.
  *
  * - `target` - The IDirectory itself.
+ * ### "subDirectoryCreated"
+ *
+ * The subDirectoryCreated event is emitted when a subdirectory is created.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (changed: ISubDirectoryCreated, local: boolean, target: IEventThisPlaceHolder) => void
+ * ```
+ * - `changed` - Information on the key that is added, and the path to the key that changed.
+ *
+ * - `local` - Whether the clear originated from the this client.
+ *
+ * - `target` - The ISharedDirectory itself.
+ * 
+ * * ### "subDirectoryDeleted"
+ *
+ * The subDirectoryDeleted event is emitted when a subdirectory is deleted.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (changed: ISubDirectoryDeleted, local: boolean, target: IEventThisPlaceHolder) => void
+ * ```
+ * - `changed` - Information on the key that is deleted, its previous value and the path to the 
+ * key that is deleted.
+ *
+ * - `local` - Whether the clear originated from the this client.
+ *
+ * - `target` - The ISharedDirectory itself.
  */
 export interface IDirectoryEvents extends IEvent {
     (event: "containedValueChanged", listener: (
         changed: IValueChanged,
+        local: boolean,
+        target: IEventThisPlaceHolder,
+    ) => void);
+    (event: "containedDirectoryCreated", listener: (
+        changed: IDirectoryCreated,
+        local: boolean,
+        target: IEventThisPlaceHolder,
+    ) => void);
+    (event: "containedDirectoryDeleted", listener: (
+        changed: IDirectoryDeleted,
         local: boolean,
         target: IEventThisPlaceHolder,
     ) => void);
@@ -232,9 +272,19 @@ export interface IDirectoryValueChanged extends IValueChanged {
 }
 
 /**
+ *  Event parameter for when a directory is created.
+ */
+ export interface IDirectoryCreated {
+    /**
+     * The key storing the directory which is added.
+     */
+    key: string;
+}
+
+/**
  *  Event parameter for when a sub directory is created.
  */
-export interface ISubDirectoryCreated {
+export interface ISubDirectoryCreated extends IDirectoryCreated {
     /**
      * The key storing the directory which is added.
      */
@@ -247,23 +297,28 @@ export interface ISubDirectoryCreated {
 }
 
 /**
- *  Event parameter for when a sub directory is deleted.
+ *  Event parameter for when a directory is deleted.
  */
-export interface ISubDirectoryDeleted {
+ export interface IDirectoryDeleted {
     /**
      * The key storing the directory which is deleted.
      */
     key: string;
 
     /**
-     * The path at which the sub directory is deleted.
-     */
-    path: string;
-
-    /**
      * The sub directory which was stored at the key prior to deletion.
      */
     previousValue: IDirectory;
+}
+
+/**
+ *  Event parameter for when a sub directory is deleted.
+ */
+export interface ISubDirectoryDeleted extends IDirectoryDeleted {
+    /**
+     * The path at which the sub directory is deleted.
+     */
+    path: string;
 }
 
 /**
