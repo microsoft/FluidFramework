@@ -66,7 +66,7 @@ const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 const runSessionExpiry = "Fluid.GarbageCollection.RunSessionExpiry";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
-const defaultSessionExpiryMs = 30 * 24 * 60 * 60 * 1000; //30 days
+const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; //30 days
 
 /** The used state statistics of a node. */
 export interface IUsedStateStats {
@@ -325,7 +325,7 @@ export class GarbageCollector implements IGarbageCollector {
             this.gcEnabled = gcOptions.gcAllowed === true;
             // Set the Session Expiry only if the flag is enabled or the test option is set.
             if (this.mc.config.getBoolean(runSessionExpiry) && this.gcEnabled) {
-                this.sessionExpiryTimeoutMs = defaultSessionExpiryMs;
+                this.sessionExpiryTimeoutMs = defaultSessionExpiryDurationMs;
             }
         }
 
@@ -666,7 +666,6 @@ export class GarbageCollector implements IGarbageCollector {
         this.referencesSinceLastRun.set(fromNodeId, outboundRoutes);
     }
 
-
     /**
      * Update the latest summary GC version from the metadata blob in the given snapshot.
      */
@@ -868,9 +867,17 @@ async function getGCStateFromSnapshot(
     return rootGCState;
 }
 
-function setLongTimeout(timeoutMs: number, 
+/**
+ * setLongTimeout is used for timeouts longer than setTimeout's ~24.8 day max
+ * @param timeoutMs - the total time the timeout needs to last in ms
+ * @param timeoutFn - the function to execute when the timer ends
+ * @param setTimerFn - the function used to update your timer variable
+ */
+function setLongTimeout(
+    timeoutMs: number, 
     timeoutFn: () => void, 
-    setTimerFn: (timer: ReturnType<typeof setTimeout>) => void) {
+    setTimerFn: (timer: ReturnType<typeof setTimeout>) => void,
+) {
     // The setTimeout max is 24.8 days before looping occurs.
     const maxTimeout = 2147483647;
     let timer: ReturnType<typeof setTimeout>;
