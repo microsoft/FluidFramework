@@ -397,6 +397,10 @@ class ScheduleManagerCore {
             this.trackPending(pending);
         }
 
+        // We are intentionally directly listening to the "op" to inspect system ops as well.
+        // If we do not observer system ops, we are likely to hit 0x296 assert when system ops
+        // precedes start of partial batch.
+        // incomplete batch.
         this.deltaManager.on("op", (message) => this.afterOpProcessing(message.sequenceNumber));
     }
 
