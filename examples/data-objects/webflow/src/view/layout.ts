@@ -107,7 +107,7 @@ export class Layout extends EventEmitter {
             }).catch(console.error);
 
             scheduled = true;
-        }
+        };
 
         this.initialCheckpoint = new LayoutCheckpoint([], { parent: this.slot, previous: null });
         this.rootFormatInfo = Object.freeze({ formatter: new BootstrapFormatter(formatter), state: emptyObject });

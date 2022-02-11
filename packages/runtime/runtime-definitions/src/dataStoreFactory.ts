@@ -5,7 +5,6 @@
 
 import { IFluidDataStoreContext, IFluidDataStoreChannel } from "./dataStoreContext";
 
-
 export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory = "IFluidDataStoreFactory";
 
 export interface IProvideFluidDataStoreFactory {

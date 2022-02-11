@@ -59,8 +59,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
         return baseFlushP;
     }
     send(event: ITelemetryBaseEvent): void {
-
-        if(typeof event.testCategoryOverride === "string"){
+        if (typeof event.testCategoryOverride === "string") {
             event.category = event.testCategoryOverride;
         }
 

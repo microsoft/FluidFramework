@@ -22,7 +22,7 @@ import { mockConfigProvider } from "./mockConfigProivder";
  */
  describeNoCompat("GC Session Expiry", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    const timeoutMs = 30 * 24 * 60 * 60 * 1000; //30 days
+    const timeoutMs = 30 * 24 * 60 * 60 * 1000; // 30 days
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
         TestDataObject,
@@ -53,7 +53,7 @@ import { mockConfigProvider } from "./mockConfigProivder";
     const configProvider = mockConfigProvider(settings);
 
     let container1: IContainer;
-    const createContainer = async (): Promise<IContainer> => 
+    const createContainer = async (): Promise<IContainer> =>
         provider.createContainer(runtimeFactory, { configProvider });
     const loadContainer = async (): Promise<IContainer> => provider.loadContainer(runtimeFactory, { configProvider });
     let clock: SinonFakeTimers;
@@ -85,7 +85,7 @@ import { mockConfigProvider } from "./mockConfigProivder";
         clock.tick(1);
         assert(container1.closed === false, "Container should not instantly close.");
         clock.tick(timeoutMs - 2);
-        assert(container1.closed === false, 
+        assert(container1.closed === false,
             `Container1 should not be closed, it should be 1 tick away from expiring. 
             Current: ${clock.now}, expected: ${clockEnd}`);
         clock.tick(1);

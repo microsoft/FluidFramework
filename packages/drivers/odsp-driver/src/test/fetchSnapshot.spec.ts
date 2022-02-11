@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "assert";
+import { stub } from "sinon";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { EpochTracker } from "../epochTracker";
 import { HostStoragePolicyInternal } from "../contracts";
-import { stub } from "sinon";
 import * as fetchSnapshotImport from "../fetchSnapshot";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache";
 import { INewFileInfo, IOdspResponse, ISnapshotContents } from "../odspUtils";
@@ -92,9 +92,9 @@ describe("Tests for snapshot fetch headers", () => {
 
     it("Mds limit check in fetch snapshot", async () => {
         let success = false;
-        async function mockDownloadSnapshot<T>(response: Promise<any>, callback: () => Promise<T>): Promise<T> {
+        async function mockDownloadSnapshot<T>(_response: Promise<any>, callback: () => Promise<T>): Promise<T> {
             const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
-            getDownloadSnapshotStub.returns(response);
+            getDownloadSnapshotStub.returns(_response);
             try {
                 return await callback();
             } finally {
@@ -113,7 +113,7 @@ describe("Tests for snapshot fetch headers", () => {
             odspSnapshotResponse: odspResponse,
             requestHeaders: {},
             requestUrl: siteUrl,
-        }
+        };
         try {
             await mockDownloadSnapshot(
                 Promise.resolve(response),
