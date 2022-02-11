@@ -62,7 +62,7 @@ export class TestClientLogger {
     private ackedLine: string[];
     private localLine: string[];
     // initialize to private instance, so first real edit will create a new line
-    private lastOp: ISequencedDocumentMessage | undefined ={} as ISequencedDocumentMessage;
+    private lastOp: any | undefined ={};
 
     constructor(
         private readonly clients: readonly TestClient[],
@@ -73,9 +73,9 @@ export class TestClientLogger {
             logHeaders.push("op")
             logHeaders.push( `client ${c.longClientId}`);
             const callback = (op: IMergeTreeDeltaOpArgs)=>{
-                if(this.lastOp !== op.sequencedMessage){
+                if(this.lastOp !== op.op){
                     this.addNewLogLine();
-                    this.lastOp = op.sequencedMessage;
+                    this.lastOp = op.op;
                 }
                 const clientLogIndex = i*2
 
