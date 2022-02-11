@@ -15,6 +15,7 @@ import {
 
 import { MapFactory } from "../map";
 import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "../directory";
+import { IDirectory } from "../interfaces";
 
 function createConnectedDirectory(id: string, runtimeFactory: MockContainerRuntimeFactory) {
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -135,6 +136,16 @@ describe("Directory", () => {
                 directory.delete("dwayne");
                 assert.equal(valueChangedExpected, false, "missing valueChangedExpected event");
                 assert.equal(containedValueChangedExpected, false, "missing containedValueChanged event");
+
+                // Test dispose on subdirectory delete
+                let subDirectoryDisposed = false;
+                const subDirectory = directory.createSubDirectory("rock");
+                subDirectory.on("dispose", (value: IDirectory) => {
+                    subDirectoryDisposed = true;
+                    assert.equal(value.isDisposed(), true, "sub directory not deleted");
+                });
+                directory.deleteSubDirectory("rock");
+                assert.equal(subDirectoryDisposed, true, "sub directory not disposed!!");
 
                 // Test clear
                 clearExpected = true;

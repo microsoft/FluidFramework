@@ -1547,8 +1547,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @param op - The message if from a remote delete, or null if from a local delete
      */
     private deleteSubDirectoryCore(subdirName: string, local: boolean) {
+        const previousValue = this.getSubDirectory(subdirName);
         // This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
         // Might want to consider cleaning out the structure more exhaustively though?
-        return this._subdirectories.delete(subdirName);
+        const successfullyRemoved = this._subdirectories.delete(subdirName);
+        previousValue?.dispose();
+        return successfullyRemoved;
     }
 }
