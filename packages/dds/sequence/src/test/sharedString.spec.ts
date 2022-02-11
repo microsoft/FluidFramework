@@ -130,7 +130,6 @@ describe("SharedString", () => {
                 assert.strictEqual(
                     sharedString.getPropertiesAtPosition(i).color, undefined, "Null values allowed in properties");
             }
-
             const updatedProps = { style: null };
             sharedString.annotateRange(6, text.length, updatedProps);
 

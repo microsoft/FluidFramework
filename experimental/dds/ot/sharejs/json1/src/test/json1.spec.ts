@@ -37,7 +37,6 @@ describe("SharedJson1", () => {
 
         beforeEach(() => {
             ot = createLocalOT("OT");
-
             ot.replace([], null, {});
         });
 
@@ -106,7 +105,6 @@ describe("SharedJson1", () => {
                 containerRuntimeFactory = new MockContainerRuntimeFactory();
                 doc1 = createConnectedOT("OT1", containerRuntimeFactory);
                 doc2 = createConnectedOT("OT2", containerRuntimeFactory);
-
                 doc1.replace([], null, []);
                 expect([]);
             });

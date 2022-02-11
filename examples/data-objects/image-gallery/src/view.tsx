@@ -34,7 +34,6 @@ export const ImageGalleryView: React.FC<IImageGalleryViewProps> = (props: IImage
             imageGalleryModel.setIndex(index);
         }
     };
-
     const imageGalleryRef = useRef<ImageGallery>(null);
 
     useEffect(() => {

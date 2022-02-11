@@ -232,7 +232,6 @@ export class SharedMatrix<T = any>
     ) {
         if (this.undo !== undefined) {
             let oldValue = this.cells.getCell(rowHandle, colHandle);
-
             if (oldValue === null) {
                 oldValue = undefined;
             }

@@ -12,7 +12,6 @@ export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErr
     if (error?.online !== undefined) {
         newEvent.online = error.online as string;
     }
-
     if (typeof navigator === "object" && navigator !== null) {
         const nav = navigator as any;
         const connection = nav.connection ?? nav.mozConnection ?? nav.webkitConnection;
