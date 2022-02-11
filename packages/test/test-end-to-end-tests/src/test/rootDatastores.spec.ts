@@ -180,8 +180,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                 {
                     value: "2",
                     tag: TelemetryDataTag.UserData,
-                    aliasResult: AliasResult.Conflict,
                 });
+            assert.equal(error.getTelemetryProperties().aliasResult, AliasResult.Conflict);
             assert.ok(await getRootDataStore(dataObject1, "2"));
         });
 
@@ -204,8 +204,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                 {
                     value: "2",
                     tag: TelemetryDataTag.UserData,
-                    aliasResult: AliasResult.Conflict,
                 });
+            assert.equal(error.getTelemetryProperties().aliasResult, AliasResult.Conflict);
             assert.ok(await getRootDataStore(dataObject1, "2"));
         });
 
