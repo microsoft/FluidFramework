@@ -196,7 +196,9 @@ export class RestGitService {
         const summaryResponse = await this.post<IWholeFlatSummary | IWriteSummaryResponse>(
             `/repos/${this.getRepoPath()}/git/summaries`,
              summaryParams);
+        let summaryTreeId: string = summaryResponse.id;
         if (summaryParams.type === "container" && (summaryResponse as IWholeFlatSummary).trees !== undefined) {
+            summaryTreeId = (summaryResponse as IWholeFlatSummary).trees[0].id;
             // Cache the written summary for future retrieval. If this fails, next summary retrieval
             // will receive an older version, but that is OK. Client will catch up with ops.
             this.setCache<IWholeFlatSummary>(
@@ -206,7 +208,7 @@ export class RestGitService {
             // Delete previous summary from cache so next summary retrieval is forced to go to the service.
             this.deleteFromCache(this.getSummaryCacheKey(summaryParams.type));
         }
-        return { id: summaryResponse.id };
+        return { id: summaryTreeId };
     }
 
     public async deleteSummary(softDelete: boolean): Promise<boolean> {

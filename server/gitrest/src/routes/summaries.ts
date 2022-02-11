@@ -180,12 +180,16 @@ export class WholeSummaryWriteGitManager {
         private readonly upsertRef: (commitSha: string) => Promise<void>,
     ) {}
 
-    public async writeSummary(payload: IWholeSummaryPayload): Promise<string> {
+    public async writeSummary(payload: IWholeSummaryPayload): Promise<IWholeFlatSummary | IWriteSummaryResponse> {
         if (payload.type === "channel") {
-            return this.writeChannelSummary(payload);
+            const summaryTreeHandle = await this.writeChannelSummary(payload);
+            return {
+                id: summaryTreeHandle,
+            };
         }
         if (payload.type === "container") {
-            return this.writeContainerSummary(payload);
+            const wholeFlatSummary = await this.writeContainerSummary(payload);
+            return wholeFlatSummary;
         }
         throw new NetworkError(400, `Unknown Summary Type: ${payload.type}`);
     }
@@ -194,8 +198,17 @@ export class WholeSummaryWriteGitManager {
         return this.writeSummaryTreeCore(payload.entries);
     }
 
-    private async writeContainerSummary(payload: IWholeSummaryPayload): Promise<string> {
-        const treeHandle = await this.writeSummaryTreeCore(payload.entries);
+    private async writeContainerSummary(
+        payload: IWholeSummaryPayload,
+    ): Promise<IWholeFlatSummary> {
+        const wholeFlatSummaryTreeEntries: IWholeFlatSummaryTreeEntry[] = [];
+        const wholeFlatSummaryBlobs: IWholeFlatSummaryBlob[] = [];
+        const treeHandle = await this.writeSummaryTreeCore(
+            payload.entries,
+            "",
+            wholeFlatSummaryTreeEntries,
+            wholeFlatSummaryBlobs,
+        );
         // TODO: is there ever a case where the parent of a container summary is not the commit referenced by the ref?
         const existingRef = await this.readRef();
         let commitParams: ICreateCommitParams
@@ -232,21 +245,64 @@ export class WholeSummaryWriteGitManager {
         } else {
             await this.writeRef(commitSha);
         }
-        return treeHandle;
+        return {
+            id: commitSha,
+            trees: [
+                {
+                    id: treeHandle,
+                    sequenceNumber: payload.sequenceNumber,
+                    entries: wholeFlatSummaryTreeEntries,
+                }
+            ],
+            blobs: wholeFlatSummaryBlobs,
+        };
     }
 
     private async writeSummaryTreeCore(
         wholeSummaryTreeEntries: WholeSummaryTreeEntry[],
+        currentPath: string = "",
+        wholeFlatSummaryTreeEntries?: IWholeFlatSummaryTreeEntry[],
+        wholeFlatSummaryBlobs?: IWholeFlatSummaryBlob[],
     ): Promise<string> {
         const pathToShaMap = await this.getPathToShaMapFromLastSummary();
         const entries: ICreateTreeEntry[] = await Promise.all(wholeSummaryTreeEntries.map(async (entry) => {
             const summaryObject = getSummaryObjectFromWholeSummaryTreeEntry(entry);
-            const pathHandle = await this.writeSummaryTreeObject(entry, summaryObject, pathToShaMap);
+            const type = getGitType(summaryObject);
+            const path = entry.path;
+            const fullPath = currentPath ? `${currentPath}/${entry.path}` : entry.path;
+            const pathHandle = await this.writeSummaryTreeObject(
+                entry,
+                summaryObject,
+                pathToShaMap,
+                fullPath,
+                wholeFlatSummaryTreeEntries,
+                wholeFlatSummaryBlobs,
+            );
+            if (type === "blob") {
+                wholeFlatSummaryTreeEntries?.unshift({
+                    type: "blob",
+                    id: pathHandle,
+                    path: fullPath,
+                });
+                const blob = (entry as IWholeSummaryTreeValueEntry).value as IWholeSummaryBlob;
+                wholeFlatSummaryBlobs?.unshift({
+                    content: blob.content,
+                    encoding: blob.encoding,
+                    id: pathHandle,
+                    // TODO: is this correct?
+                    size: blob.content.length,
+                });
+            } else {
+                wholeFlatSummaryTreeEntries?.unshift({
+                    type: "tree",
+                    path: fullPath,
+                });
+            }
             return {
                 mode: getGitMode(summaryObject),
-                path: entry.path,
+                path,
                 sha: pathHandle,
-                type: getGitType(summaryObject),
+                type,
             };
         }));
 
@@ -260,6 +316,9 @@ export class WholeSummaryWriteGitManager {
         wholeSummaryTreeEntry: WholeSummaryTreeEntry,
         summaryObject: SummaryObject,
         pathToShaMap: Map<string, string>,
+        currentPath: string,
+        wholeFlatSummaryTreeEntries?: IWholeFlatSummaryTreeEntry[],
+        wholeFlatSummaryBlobs?: IWholeFlatSummaryBlob[],
     ): Promise<string> {
         switch(summaryObject.type) {
             case SummaryType.Blob:
@@ -269,6 +328,9 @@ export class WholeSummaryWriteGitManager {
             case SummaryType.Tree:
                 return this.writeSummaryTreeCore(
                     ((wholeSummaryTreeEntry as IWholeSummaryTreeValueEntry).value as IWholeSummaryTree).entries ?? [],
+                    currentPath,
+                    wholeFlatSummaryTreeEntries,
+                    wholeFlatSummaryBlobs,
                 );
             case SummaryType.Handle:
                 // TODO: is there a case where the sha does not exist in the previous summary tree?
@@ -364,7 +426,7 @@ export async function createSummary(
     payload: IWholeSummaryPayload,
     documentId: string,
     externalStorageEnabled: boolean,
-    externalStorageManager: IExternalStorageManager): Promise<IWriteSummaryResponse> {
+    externalStorageManager: IExternalStorageManager): Promise<IWholeFlatSummary | IWriteSummaryResponse> {
     const getLatestVersion = async (): Promise<ISummaryVersion> => {
         const commitDetails = await getCommits(
             repoManager,
@@ -466,8 +528,7 @@ export async function createSummary(
         readRef,
         upsertRef,
     );
-    const summaryHandle = await wholeSummaryWriteGitManager.writeSummary(payload);
-    return { id: summaryHandle };
+    return wholeSummaryWriteGitManager.writeSummary(payload);
 }
 
 export async function deleteSummary(
