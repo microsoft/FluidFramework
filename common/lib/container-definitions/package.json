@@ -465,6 +465,24 @@
         },
         "InterfaceDeclaration_IRuntimeFactory": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IContainer": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IContainerContext": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IHostLoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ILoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProvideLoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProxyLoaderFactory": {
+          "backCompat": false
         }
       }
     }

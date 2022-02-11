@@ -22,6 +22,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove Unused IFluidObject Augmentations](#Remove-Unused-IFluidObject-Augmentations)
 - [Duplicate extractLogSafeErrorProperties removed](#duplicate-extractlogsafeerrorproperties-removed)
 - [Disallowed access to deleted sub directory](#Disallowed-access-to-deleted-sub-directory)
+- [Code proposal rejection removed](#Code-proposal-rejection-removed)
 
 ### IFluidConfiguration removed
 
@@ -91,6 +92,9 @@ The copy in common-utils was out of date and unused in this repo, and has now be
 
 ### Disallowed access to deleted sub directory
 Users will now be disallowed to do operations on a deleted directory. Users can subscribe to `dispose` event to know if a sub directory is deleted.
+
+### Code proposal rejection removed
+Rejection functionality has been removed from Quorum.  As a result, the `"codeDetailsProposed"` event on `IContainer` now provides an `ISequencedProposal` rather than an `IPendingProposal`.
 
 ## 0.56 Breaking changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
