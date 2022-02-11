@@ -5,7 +5,7 @@
 
 import { IDisposable } from "@fluidframework/common-definitions";
 import { assert, Lazy } from "@fluidframework/common-utils";
-import { DataProcessingError } from "@fluidframework/container-utils";
+import { DataCorruptionError } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
@@ -339,8 +339,7 @@ export class PendingStateManager implements IDisposable {
         // The clientSequenceNumber of the incoming message must match that of the pending message.
         if (pendingState.clientSequenceNumber !== message.clientSequenceNumber) {
             // Close the container because this could indicate data corruption.
-            const error = new DataProcessingError(
-                "unexpectedAckReceived",
+            const error = new DataCorruptionError(
                 "unexpectedAckReceived",
                 {
                     clientId: message.clientId,

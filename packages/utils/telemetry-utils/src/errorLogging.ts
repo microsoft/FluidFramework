@@ -76,6 +76,8 @@ function copyProps(target: ITelemetryProperties | LoggingError, source: ITelemet
 export interface IFluidErrorAnnotations {
     /** Telemetry props to log with the error */
     props?: ITelemetryProperties;
+    /**  */
+    externalErrorToFluidError?: (message: string) => IFluidErrorBase;
 }
 
 /** For backwards compatibility with pre-fluidErrorCode valid errors */
@@ -109,14 +111,19 @@ export function normalizeError(
         return error;
     }
 
-    // We have to construct a new Fluid Error, copying safe properties over
     const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
-    const fluidError: IFluidErrorBase = new SimpleFluidError({
-        errorType: "genericError", // Match Container/Driver generic error type
-        fluidErrorCode: "",
-        message,
-        stack,
-    });
+    let fluidError: IFluidErrorBase;
+    if (annotations.externalErrorToFluidError === undefined) {
+        // We have to construct a new Fluid Error, copying safe properties over
+        fluidError = new SimpleFluidError({
+            errorType: "genericError", // Match Container/Driver generic error type
+            fluidErrorCode: "",
+            message,
+            stack,
+        });
+    } else {
+        fluidError = wrapError(error, annotations.externalErrorToFluidError);
+    }
 
     fluidError.addTelemetryProperties({
         ...annotations.props,
@@ -171,7 +178,7 @@ export function generateStack(): string | undefined {
  * @param newErrorFn - callback that will create a new error given the original error's message
  * @returns A new error object "wrapping" the given error
  */
- export function wrapError<T extends IFluidErrorBase>(
+function wrapError<T extends IFluidErrorBase>(
     innerError: unknown,
     newErrorFn: (message: string) => T,
 ): T {
