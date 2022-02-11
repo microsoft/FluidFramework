@@ -20,9 +20,10 @@ import {
     SummaryCollection,
 } from "@fluidframework/container-runtime";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { GenericError } from "@fluidframework/container-utils";
 import { ConfigTypes, IConfigProviderBase, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { AliasResult } from "@fluidframework/container-runtime/dist/dataStore";
+import { Loader } from "@fluidframework/container-loader";
+import { GenericError } from "@fluidframework/container-utils";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -228,22 +229,19 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
         const alias = "alias";
 
-        // it("Assign multiple data stores to the same alias, first write wins, same container - detached",
-        //  async () => {
-        //     const loader = provider.makeTestLoader(testContainerConfig) as Loader;
-        //     const container: IContainer = (await loader.createDetachedContainer(provider.defaultCodeDetails));
-        //     dataObject1 = await requestFluidObject<ITestFluidObject>(container, "/");
-        //     const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
-        //     const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
+        it("Assign multiple data stores to the same alias, first write wins, same container - detached", async () => {
+            const loader = provider.makeTestLoader(testContainerConfig) as Loader;
+            const container: IContainer = (await loader.createDetachedContainer(provider.defaultCodeDetails));
+            const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
+            const ds1 = await runtimeOf(dataObject).createDataStore(packageName);
+            const ds2 = await runtimeOf(dataObject).createDataStore(packageName);
 
-        //     const aliasResult1 = await ds1.trySetAlias(alias);
-        //     const aliasResult2 = await ds2.trySetAlias(alias);
+            const aliasResult1 = await ds1.trySetAlias(alias);
+            const aliasResult2 = await ds2.trySetAlias(alias);
 
-        //     assert.equal(aliasResult1, AliasResult.Success);
-        //     assert.equal(aliasResult2, AliasResult.Conflict);
-
-        //     assert.ok(await getRootDataStore(dataObject1, alias));
-        // });
+            assert.equal(aliasResult1, AliasResult.Success);
+            assert.equal(aliasResult2, AliasResult.Conflict);
+        });
 
         it("Assign multiple data stores to the same alias, first write wins, same container", async () => {
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
