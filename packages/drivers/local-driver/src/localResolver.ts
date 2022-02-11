@@ -69,6 +69,7 @@ export class LocalResolver implements IUrlResolver {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
         const parsedUrl = parse(fluidResolvedUrl.url);
+        // eslint-disable-next-line no-null/no-null
         if (parsedUrl.pathname === null) {
             throw new Error("Url should contain tenant and docId!!");
         }

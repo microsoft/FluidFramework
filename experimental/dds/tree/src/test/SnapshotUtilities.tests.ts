@@ -192,6 +192,7 @@ describe('SnapshotUtilities', () => {
 		it.skip('strange cases', () => {
 			// Top level undefined fails in JSON.parse.
 			// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface.)
+			// eslint-disable-next-line no-null/no-null
 			check(undefined, null, sameAfter);
 		});
 	});

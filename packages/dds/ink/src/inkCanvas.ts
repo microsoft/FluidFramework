@@ -122,6 +122,7 @@ export class InkCanvas {
         this.canvas.addEventListener("pointerup", this.handlePointerUp.bind(this));
 
         const context = this.canvas.getContext("2d");
+        // eslint-disable-next-line no-null/no-null
         if (context === null) {
             throw new Error("InkCanvas requires a canvas with 2d rendering context");
         }

@@ -157,6 +157,7 @@ export class GitManager implements IGitManager {
             .getRef(`heads/${ref}`)
             .catch((error) => {
                 if (error === 400 || error === 404) {
+                    // eslint-disable-next-line no-null/no-null
                     return null;
                 } else {
                     return Promise.reject(error);

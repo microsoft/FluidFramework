@@ -74,6 +74,7 @@ export async function commitToICommit(commit: git.Commit): Promise<resources.ICo
         committer: committerToICommitter(commit.committer(), commit.date()),
         message: commit.message(),
         parents: commit.parents() && commit.parents().length > 0 ?
+            // eslint-disable-next-line no-null/no-null
             commit.parents().map((parent) => oidToCommitHash(parent)) : null,
         sha: commit.id().tostrS(),
         tree: {

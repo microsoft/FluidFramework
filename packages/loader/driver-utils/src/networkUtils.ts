@@ -12,9 +12,12 @@ export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErr
     if (error?.online !== undefined) {
         newEvent.online = error.online as string;
     }
+
+    // eslint-disable-next-line no-null/no-null
     if (typeof navigator === "object" && navigator !== null) {
         const nav = navigator as any;
         const connection = nav.connection ?? nav.mozConnection ?? nav.webkitConnection;
+        // eslint-disable-next-line no-null/no-null
         if (connection !== null && typeof connection === "object") {
             newEvent.connectionType = connection.type;
         }

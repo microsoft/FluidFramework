@@ -331,6 +331,7 @@ export class MapKernel implements IValueTypeCreator {
      */
     public set(key: string, value: any) {
         // Undefined/null keys can't be serialized to JSON in the manner we currently snapshot.
+        // eslint-disable-next-line no-null/no-null
         if (key === undefined || key === null) {
             throw new Error("Undefined and null keys are not supported");
         }
@@ -824,6 +825,7 @@ export class MapKernel implements IValueTypeCreator {
             this.submitMessage(op, undefined /* localOpMetadata */);
 
             const event: IValueChanged = { key, previousValue };
+            // eslint-disable-next-line no-null/no-null
             this.eventEmitter.emit("valueChanged", event, true, null, this.eventEmitter);
         };
 

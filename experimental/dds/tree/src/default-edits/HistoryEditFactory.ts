@@ -208,6 +208,7 @@ function createInvertedSetValue(setValue: SetValue, revisionBeforeEdit: Snapshot
 	const oldPayload = revisionBeforeEdit.getSnapshotNode(nodeToModify).payload;
 
 	// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface)
+	// eslint-disable-next-line no-null/no-null
 	if (oldPayload !== null) {
 		return [Change.setPayload(nodeToModify, oldPayload)];
 	}

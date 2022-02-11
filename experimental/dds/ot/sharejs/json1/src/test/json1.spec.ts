@@ -37,6 +37,8 @@ describe("SharedJson1", () => {
 
         beforeEach(() => {
             ot = createLocalOT("OT");
+
+            // eslint-disable-next-line no-null/no-null
             ot.replace([], null, {});
         });
 
@@ -105,6 +107,8 @@ describe("SharedJson1", () => {
                 containerRuntimeFactory = new MockContainerRuntimeFactory();
                 doc1 = createConnectedOT("OT1", containerRuntimeFactory);
                 doc2 = createConnectedOT("OT2", containerRuntimeFactory);
+
+                // eslint-disable-next-line no-null/no-null
                 doc1.replace([], null, []);
                 expect([]);
             });

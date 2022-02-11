@@ -26,6 +26,8 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (pro
         className,
         style,
     } = props;
+
+    // eslint-disable-next-line no-null/no-null
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const selectionStartRef = useRef<number>(0);
     const selectionEndRef = useRef<number>(0);

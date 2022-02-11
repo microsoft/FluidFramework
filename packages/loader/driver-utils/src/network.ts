@@ -22,6 +22,7 @@ export enum OnlineStatus {
 // No solution for node.js (other than resolve dns names / ping specific sites)
 // Can also use window.addEventListener("online" / "offline")
 export function isOnline(): OnlineStatus {
+    // eslint-disable-next-line no-null/no-null
     if (typeof navigator === "object" && navigator !== null && typeof navigator.onLine === "boolean") {
         return navigator.onLine ? OnlineStatus.Online : OnlineStatus.Offline;
     }
