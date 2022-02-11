@@ -338,6 +338,8 @@ export class DirectoryFactory {
  * @sealed
  */
 export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory {
+    private _dispose = false;
+
     /**
      * Create a new shared directory
      *
@@ -422,6 +424,15 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     public set<T = any>(key: string, value: T): this {
         this.root.set(key, value);
         return this;
+    }
+
+    public dispose(): void {
+        this._dispose = true;
+        this.root.dispose();        
+    }
+
+    public isDisposed(): boolean {
+        return this._dispose;        
     }
 
     /**
@@ -857,9 +868,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         public readonly absolutePath: string,
     ) {
         super();
-        this.on("dispose", (local, target) => {
-            this._dispose = true;
-        });
+    }
+
+    public dispose(): void {
+        this._dispose = true;
+        this.emit("dispose");   
     }
 
     public isDisposed(): boolean {
@@ -1522,13 +1535,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @param op - The message if from a remote delete, or null if from a local delete
      */
     private deleteSubDirectoryCore(subdirName: string, local: boolean) {
-        const previousValue = this.getSubDirectory(subdirName);
         // This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
         // Might want to consider cleaning out the structure more exhaustively though?
-        const successfullyRemoved = this._subdirectories.delete(subdirName);
-        if (previousValue !== undefined) {
-            (previousValue as SubDirectory).emit("dispose", local, previousValue);
-        }
-        return successfullyRemoved;
+        return this._subdirectories.delete(subdirName);
     }
 }
