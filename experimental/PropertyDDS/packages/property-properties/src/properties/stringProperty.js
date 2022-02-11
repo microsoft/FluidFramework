@@ -34,9 +34,16 @@ var NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE = {
 };
 
 var DIRTY_AND_NO_PENDING_SET_TO_PROPERTY_VALUE = {
-    pending: 'setAsLiteral',
-    dirty: undefined,
-    flags: MODIFIED_STATE_FLAGS.DIRTY
+    pending: undefined,
+    dirty: 'setAsLiteral',
+    _flags: MODIFIED_STATE_FLAGS.DIRTY,
+    set flags(flags) {
+        this._flags = flags;
+        console.log('flags was changed!');
+    },
+    get flags() {
+        return this._flags;
+    }
 };
 
 var STRING_PROPERTY_SET_PROPERTY_VALUE_STATE_FLAGS = [
@@ -118,7 +125,8 @@ export class StringProperty extends ValueArrayProperty {
     };
 
     _getDirtyChanges() {
-        if (this._dirty === PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE) {
+        if (this._dirty === PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE ||
+            this._dirty === DIRTY_AND_NO_PENDING_SET_TO_PROPERTY_VALUE) {
             return this.getValue();
         } else if (this._dirty === NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE) {
             return {};
@@ -387,10 +395,17 @@ export class StringProperty extends ValueArrayProperty {
      *     applied. undefined indicates that the changes should be reset
      */
     _setChanges(in_pending, in_dirty) {
-        if ((this._dirty === PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE ||
-            this._dirty === NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE) &&
-            in_pending === null && in_dirty === undefined) {
-            this._dirty = NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE;
+        if (this._dirty === PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE ||
+            this._dirty === NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE ||
+            this._dirty === DIRTY_AND_NO_PENDING_SET_TO_PROPERTY_VALUE) {
+            let newFlags = this._dirty.flags;
+            if (in_pending === undefined) {
+                newFlags &= 0xFFFFFFFF ^ BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE;
+            }
+            if (in_dirty === undefined) {
+                newFlags &= 0xFFFFFFFF ^ BaseProperty.MODIFIED_STATE_FLAGS.DIRTY;
+            }
+            this._dirty = STRING_PROPERTY_SET_PROPERTY_VALUE_STATE_FLAGS[newFlags];
         } else {
             ArrayProperty.prototype._setChanges.call(this, in_pending, in_dirty);
         }
@@ -402,7 +417,8 @@ export class StringProperty extends ValueArrayProperty {
      */
     _setDirtyFlags(in_flags) {
         if (this._dirty === PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE ||
-            this._dirty === NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE) {
+            this._dirty === NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE ||
+            this._dirty === DIRTY_AND_NO_PENDING_SET_TO_PROPERTY_VALUE) {
             this._dirty = STRING_PROPERTY_SET_PROPERTY_VALUE_STATE_FLAGS[in_flags];
             return;
         }
@@ -416,7 +432,8 @@ export class StringProperty extends ValueArrayProperty {
      */
     _getDirtyFlags() {
         if (this._dirty === PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE ||
-            this._dirty === NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE) {
+            this._dirty === NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE ||
+            this._dirty === DIRTY_AND_NO_PENDING_SET_TO_PROPERTY_VALUE) {
             return this._dirty.flags;
         }
 

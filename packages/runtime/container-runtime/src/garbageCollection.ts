@@ -62,8 +62,11 @@ const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 // Feature gate key to write GC data at the root of the summary tree.
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
+// Feature gate key to expire a session after a set period of time.
+const runSessionExpiry = "Fluid.GarbageCollection.RunSessionExpiry";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; //30 days
 
 /** The statistics of the system state after a garbage collection run. */
 export interface IGCStats {
@@ -322,14 +325,22 @@ export class GarbageCollector implements IGarbageCollector {
         } else {
             // For new documents, GC has to be exlicitly enabled via the gcAllowed flag in GC options.
             this.gcEnabled = gcOptions.gcAllowed === true;
-            this.sessionExpiryTimeoutMs = this.gcOptions.gcTestSessionTimeoutMs;
+            // Set the Session Expiry only if the flag is enabled or the test option is set.
+            if (this.mc.config.getBoolean(runSessionExpiry) && this.gcEnabled) {
+                this.sessionExpiryTimeoutMs = defaultSessionExpiryDurationMs;
+            }
         }
 
         // If session expiry is enabled, we need to close the container when the timeout expires
         if (this.sessionExpiryTimeoutMs !== undefined) {
-            const expiryMs = this.sessionExpiryTimeoutMs;
-            this.sessionExpiryTimer = setTimeout(() => this.closeFn(
-                new ClientSessionExpiredError(`Client session expired.`, expiryMs)), expiryMs);
+            const timeoutMs = this.sessionExpiryTimeoutMs;
+            setLongTimeout(timeoutMs, 
+                () => {
+                    this.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs));
+                },
+                (timer) => {
+                    this.sessionExpiryTimer = timer;
+                });
         }
 
         // For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
@@ -894,6 +905,29 @@ async function getGCStateFromSnapshot(
         rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
     }
     return rootGCState;
+}
+
+/**
+ * setLongTimeout is used for timeouts longer than setTimeout's ~24.8 day max
+ * @param timeoutMs - the total time the timeout needs to last in ms
+ * @param timeoutFn - the function to execute when the timer ends
+ * @param setTimerFn - the function used to update your timer variable
+ */
+function setLongTimeout(
+    timeoutMs: number, 
+    timeoutFn: () => void, 
+    setTimerFn: (timer: ReturnType<typeof setTimeout>) => void,
+) {
+    // The setTimeout max is 24.8 days before looping occurs.
+    const maxTimeout = 2147483647;
+    let timer: ReturnType<typeof setTimeout>;
+    if (timeoutMs > maxTimeout) {
+        const newTimeoutMs = timeoutMs - maxTimeout;
+        timer = setTimeout(() => setLongTimeout(newTimeoutMs, timeoutFn, setTimerFn), maxTimeout);
+    } else {
+        timer = setTimeout(() => timeoutFn(), timeoutMs);
+    }
+    setTimerFn(timer);
 }
 
 /**
