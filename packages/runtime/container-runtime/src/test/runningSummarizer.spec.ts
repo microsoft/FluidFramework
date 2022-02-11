@@ -936,7 +936,10 @@ describe("Runtime", () => {
                     emitBroadcast(summaryTimestamp);
 
                     let startStatus: "starting" | "started" | "failed" = "starting";
-                    startRunningSummarizer().then(() => { startStatus = "started" }, () => { startStatus = "failed" });
+                    startRunningSummarizer().then(
+                        () => { startStatus = "started"; },
+                        () => { startStatus = "failed"; },
+                    );
                     await flushPromises();
                     assert.strictEqual(startStatus, "starting",
                         "RunningSummarizer should still be starting since outstanding summary op");
@@ -974,7 +977,7 @@ describe("Runtime", () => {
                             eventName: "Running:Summarize_end",
                             summarizeCount: runCount,
                             summarizerSuccessfulAttempts: runCount,
-                            summarizeReason: "maxOps"
+                            summarizeReason: "maxOps",
                         },
                     ]), "unexpected log sequence 3");
                 });
@@ -1017,8 +1020,11 @@ describe("Runtime", () => {
                     emitBroadcast(summaryTimestamp);
 
                     let startStatus: "starting" | "started" | "failed" = "starting";
-                    startRunningSummarizer({ disableHeuristics: true }).then(
-                        () => { startStatus = "started" }, () => { startStatus = "failed" });
+                    startRunningSummarizer({ disableHeuristics: true })
+                        .then(
+                            () => { startStatus = "started"; },
+                            () => { startStatus = "failed"; },
+                        );
                     await flushPromises();
                     assert.strictEqual(startStatus, "starting",
                         "RunningSummarizer should still be starting since outstanding summary op");

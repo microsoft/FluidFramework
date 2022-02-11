@@ -24,7 +24,7 @@ import {
  * @param summaryTree - summary tree in ISummaryTree format
  */
 export function convertSummaryTreeToSnapshotITree(
-    summaryTree: ISummaryTree
+    summaryTree: ISummaryTree,
 ): ITree {
     const entries: ITreeEntry[] = [];
     const protocolSummary = summaryTree.tree[".protocol"] as ISummaryTree;
@@ -58,8 +58,8 @@ export function convertSummaryTreeToSnapshotITree(
                 entries.push(
                     new TreeTreeEntry(
                         k,
-                        convertSummaryTreeToSnapshotITree(value)
-                    )
+                        convertSummaryTreeToSnapshotITree(value),
+                    ),
                 );
                 break;
             }

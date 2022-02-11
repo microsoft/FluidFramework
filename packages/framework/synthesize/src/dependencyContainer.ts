@@ -104,8 +104,8 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
         base: AsyncRequiredFluidObjectProvider<T>,
         types: Required<FluidObjectSymbolProvider<T>>,
     ) {
-        if(types === undefined) return;
-        for(const key of Object.keys(types) as unknown as (keyof TMap)[]) {
+        if (types === undefined) return;
+        for (const key of Object.keys(types) as unknown as (keyof TMap)[]) {
             const provider = this.resolveProvider(key);
             if(provider === undefined) {
                 throw new Error(`Object attempted to be created without registered required provider ${key}`);
@@ -122,12 +122,12 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
         base: AsyncOptionalFluidObjectProvider<T>,
         types: FluidObjectSymbolProvider<T>,
     ) {
-        if(types === undefined) return;
-        for(const key of Object.keys(types) as unknown as (keyof TMap)[]) {
+        if (types === undefined) return;
+        for (const key of Object.keys(types) as unknown as (keyof TMap)[]) {
             // back-compat: in 0.56 we allow undefined in the types, but we didn't before
             // this will keep runtime back compat, eventually we should support undefined properties
             // rather than properties that return promises that resolve to undefined
-            const provider = this.resolveProvider(key) ?? {get:()=>Promise.resolve(undefined)};
+            const provider = this.resolveProvider(key) ?? { get: async () => undefined };
             Object.defineProperty(
                 base,
                 key,
@@ -140,8 +140,8 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
         // If we have the provider return it
         const provider = this.providers.get(t);
         if (provider === undefined) {
-            for(const parent of this.parents) {
-                const sp = { [t]: t } as FluidObjectSymbolProvider<Pick<TMap, T>>;
+            for (const parent of this.parents) {
+                const sp: FluidObjectSymbolProvider<Pick<TMap, T>> = { [t]: t };
                 const syn = parent.synthesize<Pick<TMap, T>,{}>(
                     sp,
                     {});

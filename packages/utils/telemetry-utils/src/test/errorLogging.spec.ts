@@ -114,7 +114,7 @@ describe("Error Logging", () => {
     describe("TaggedLoggerAdapter", () => {
         const events: ITelemetryBaseEvent[] = [];
         class TestTelemetryLogger extends TelemetryLogger {
-            public events: ITelemetryBaseEvent[]=[];
+            public events: ITelemetryBaseEvent[] = [];
             public send(event: ITelemetryBaseEvent): void {
                 events.push(this.prepareEvent(event));
             }

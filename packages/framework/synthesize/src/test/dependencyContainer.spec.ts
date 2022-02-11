@@ -40,13 +40,13 @@ class MockLoadable implements IFluidLoadable {
 }
 
 class MockFluidRouter implements IFluidRouter {
-    public get IFluidRouter() { return this; };
+    public get IFluidRouter() { return this; }
     public async request() {
         return {
             mimeType: "",
             status: 200,
             value: "",
-        }
+        };
     }
 }
 
@@ -108,7 +108,6 @@ describe("Routerlicious", () => {
                 const mock = new MockLoadable();
                 dc.register(IFluidLoadable, mock);
 
-
                 const s = dc.synthesize<undefined, IProvideFluidLoadable>(undefined, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
@@ -134,7 +133,6 @@ describe("Routerlicious", () => {
                 const factory = () => mock;
                 dc.register(IFluidLoadable, factory);
 
-
                 const s = dc.synthesize<undefined, IProvideFluidLoadable>(undefined, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
@@ -147,7 +145,6 @@ describe("Routerlicious", () => {
                 const mock = new MockLoadable();
                 const factory = async () => mock;
                 dc.register(IFluidLoadable, factory);
-
 
                 const s = dc.synthesize<undefined, IProvideFluidLoadable>(undefined, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
@@ -374,7 +371,6 @@ describe("Routerlicious", () => {
                 const parentDc = new DependencyContainer<FluidObject<IFluidHandle>>();
                 const loadableToHandle: FluidObjectProvider<IProvideFluidHandle> =
                     async (fds: IFluidDependencySynthesizer) => {
-        
                         const loadable = fds.synthesize<undefined, IProvideFluidLoadable>(undefined,{IFluidLoadable});
                         return (await loadable.IFluidLoadable).handle;
                     };
