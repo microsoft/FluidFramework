@@ -296,7 +296,7 @@ export class SummaryGenerator {
                         summarizedDataStoreCount,
                         gcStateUpdatedDataStoreCount,
                         opsSinceLastSummary,
-                    })
+                    });
                 }
             }
 

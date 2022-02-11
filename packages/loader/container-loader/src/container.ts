@@ -643,7 +643,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.lastVisible = performance.now();
                 } else {
                     // settimeout so this will hopefully fire after disconnect event if being hidden caused it
-                    setTimeout(() => { this.lastVisible = undefined }, 0);
+                    setTimeout(() => { this.lastVisible = undefined; }, 0);
                 }
             };
             document.addEventListener("visibilitychange", this.visibilityEventHandler);

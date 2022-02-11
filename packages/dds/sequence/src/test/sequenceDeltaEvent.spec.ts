@@ -17,6 +17,8 @@ import {
 import { TestClient } from "@fluidframework/merge-tree/dist/test/";
 import { SequenceDeltaEvent } from "../sequenceDeltaEvent";
 
+/* eslint-disable no-null/no-null */
+
 interface IExpectedSegmentInfo {
     offset: number;
     numChar: number;
@@ -3091,3 +3093,5 @@ describe("SequenceDeltaEvent", () => {
         });
     });
 });
+
+/* eslint-enable no-null/no-null */

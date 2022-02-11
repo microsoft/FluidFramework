@@ -173,6 +173,7 @@ export function comparePayloads(a: Payload, b: Payload): boolean {
  * @param containsPII - boolean flag for whether the message passed in contains personally identifying information (PII).
  */
 export function assert(condition: unknown, message?: string, containsPII = false): asserts condition {
+	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	if (!condition) {
 		fail(message, containsPII);
 	}
@@ -186,6 +187,7 @@ export function assert(condition: unknown, message?: string, containsPII = false
  */
 export function fail(message: string = defaultFailMessage, containsPII = false): never {
 	if (process.env.NODE_ENV !== 'production') {
+		// eslint-disable-next-line no-debugger
 		debugger;
 		console.error(message);
 	}

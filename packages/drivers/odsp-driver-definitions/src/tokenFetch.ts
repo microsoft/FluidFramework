@@ -67,8 +67,10 @@ export type TokenFetcher<T> = (options: T) => Promise<string | TokenResponse | n
  * @returns Token value
  */
 export const tokenFromResponse = (tokenResponse: string | TokenResponse | null | undefined): string | null =>
+    // eslint-disable-next-line no-null/no-null
     tokenResponse === null || typeof tokenResponse === "string"
         ? tokenResponse
+        // eslint-disable-next-line no-null/no-null
         : tokenResponse === undefined ? null : tokenResponse.token;
 
 /**
@@ -78,6 +80,7 @@ export const tokenFromResponse = (tokenResponse: string | TokenResponse | null |
  * Undefined is returned when we could not determine the source of token.
  */
 export const isTokenFromCache = (tokenResponse: string | TokenResponse | null): boolean | undefined =>
+    // eslint-disable-next-line no-null/no-null
     tokenResponse === null || typeof tokenResponse === "string"
         ? undefined
         : tokenResponse.fromCache;

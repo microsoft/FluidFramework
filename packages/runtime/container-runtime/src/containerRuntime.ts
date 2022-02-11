@@ -292,7 +292,7 @@ type IRuntimeMessageMetadata = undefined | {
 export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
     /** The garbage collection stats if GC ran, undefined otherwise. */
     gcStats?: IGCStats;
-};
+}
 
 /**
  * @deprecated

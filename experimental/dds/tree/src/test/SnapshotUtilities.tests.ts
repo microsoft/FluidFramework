@@ -133,9 +133,12 @@ describe('SnapshotUtilities', () => {
 		it('compares mixed types', () => {
 			check({ 0: 1 }, [1], allUnequal);
 			// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface)
+			// eslint-disable-next-line no-null/no-null
 			check(null, 'null', allUnequal);
+			// eslint-disable-next-line no-null/no-null
 			check(null, 'null', allUnequal);
 			check(1, '1', allUnequal);
+			// eslint-disable-next-line no-null/no-null
 			check(null, 0, allUnequal);
 			check('', 0, allUnequal);
 		});

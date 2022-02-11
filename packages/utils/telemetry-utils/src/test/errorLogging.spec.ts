@@ -175,6 +175,7 @@ describe("Error Logging", () => {
             assert.strictEqual(isTaggedTelemetryPropertyValue(false), false);
             assert.strictEqual(isTaggedTelemetryPropertyValue(undefined), false);
             assert.strictEqual(isTaggedTelemetryPropertyValue(null), false);
+            // eslint-disable-next-line prefer-arrow-callback
             assert.strictEqual(isTaggedTelemetryPropertyValue(function x() { return 54; }), false);
             assert.strictEqual(isTaggedTelemetryPropertyValue(Symbol("okay")), false);
         });

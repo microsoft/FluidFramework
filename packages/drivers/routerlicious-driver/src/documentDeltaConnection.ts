@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
-import { IClient, IConnect } from "@fluidframework/protocol-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { errorObjectFromSocketError, IR11sSocketError } from "./errorUtils";
 import { IAnyDriverError } from "@fluidframework/driver-utils";
+import { IClient, IConnect } from "@fluidframework/protocol-definitions";
+import { errorObjectFromSocketError, IR11sSocketError } from "./errorUtils";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 

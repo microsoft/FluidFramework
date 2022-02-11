@@ -31,6 +31,7 @@ foo(new getter());
 foo(1);
 foo("");
 foo(undefined);
+// eslint-disable-next-line no-null/no-null
 foo(null);
 foo(true);
 foo([]);

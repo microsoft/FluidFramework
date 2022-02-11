@@ -29,7 +29,9 @@ export function convertSummaryTreeToSnapshotITree(
     const entries: ITreeEntry[] = [];
     const protocolSummary = summaryTree.tree[".protocol"] as ISummaryTree;
     const appSummary = summaryTree.tree[".app"] as ISummaryTree;
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const adaptSumaryTree = protocolSummary && appSummary;
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const allSummaryEntries = adaptSumaryTree
         ? [
               ...Object.entries(protocolSummary.tree),
@@ -38,8 +40,8 @@ export function convertSummaryTreeToSnapshotITree(
         : Object.entries(summaryTree.tree);
 
     for (const [key, value] of allSummaryEntries) {
-        const k =
-            adaptSumaryTree && ["attributes"].includes(key) ? `.${key}` : key;
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        const k = adaptSumaryTree && ["attributes"].includes(key) ? `.${key}` : key;
         switch (value.type) {
             case SummaryType.Blob: {
                 let parsedContent: string;
