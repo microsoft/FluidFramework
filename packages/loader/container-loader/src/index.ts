@@ -6,6 +6,7 @@
 export {
     ConnectionState,
     Container,
+    IContainerEvents2, // Temporary until the new event is moved to container-definitions
     IContainerLoadOptions,
     IContainerConfig,
     waitContainerToCatchUp,

@@ -50,8 +50,6 @@ export enum ConnectionState {
     Disconnected = 0
 }
 
-// Warning: (ae-forgotten-export) The symbol "IContainerEvents2" needs to be exported by the entry point index.d.ts
-//
 // @public (undocumented)
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents2> implements IContainer {
     constructor(loader: Loader, config: IContainerConfig);
@@ -129,6 +127,14 @@ export interface IContainerConfig {
     clientDetailsOverride?: IClientDetails;
     // (undocumented)
     resolvedUrl?: IFluidResolvedUrl;
+}
+
+// @public
+export interface IContainerEvents2 extends IContainerEvents {
+    // Warning: (ae-forgotten-export) The symbol "IConnectionArgs" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    (event: "resumeConnection", listener: (connectionArgs: IConnectionArgs) => void): any;
 }
 
 // @public (undocumented)
