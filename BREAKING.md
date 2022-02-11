@@ -21,6 +21,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Removing snapshot API from IRuntime](#Removing-snapshot-api-from-IRuntime)
 - [Remove Unused IFluidObject Augmentations](#Remove-Unused-IFluidObject-Augmentations)
 - [Duplicate extractLogSafeErrorProperties removed](#duplicate-extractlogsafeerrorproperties-removed)
+- [Disallowed access to deleted sub directory](#Disallowed-access-to-deleted-sub-directory)
 
 ### IFluidConfiguration removed
 
@@ -87,6 +88,9 @@ The interfaces that correspond to the above properties continue to exist, and ca
 
 The helper function `extractLogSafeErrorProperties` existed in both telemetry-utils and common-utils packages.
 The copy in common-utils was out of date and unused in this repo, and has now been removed.
+
+### Disallowed access to deleted sub directory
+Users will now be disallowed to do operations on a deleted directory. Users can subscribe to `dispose` event to know if a sub directory is deleted.
 
 ## 0.56 Breaking changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
