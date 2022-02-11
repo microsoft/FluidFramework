@@ -12,19 +12,19 @@ export interface ICommandBoxCommand {
 
 export interface ICommandBoxProps {
     registerShowListener: (callback: () => void) => void;
-    registerHideListener: (callback: () => void) => void;
+    doneHandler: () => void;
     commands: ICommandBoxCommand[];
 }
 
+// hide on enter
 export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) => {
-    const { registerShowListener, registerHideListener, commands } = props;
+    const { registerShowListener, doneHandler, commands } = props;
     const [show, setShow] = React.useState<boolean>(false);
     const [textFilter, setTextFilter] = React.useState<string>("");
     const filterRef = React.useRef<HTMLInputElement>(null);
     React.useEffect(() => {
         registerShowListener(() => { setShow(true); });
-        registerHideListener(() => { setShow(false); });
-    }, [ registerShowListener, registerHideListener ]);
+    }, [ registerShowListener ]);
 
     React.useEffect(() => {
         if (filterRef.current !== null) {
@@ -40,6 +40,29 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
         }
     });
 
+    const dismissCommandBox = () => {
+        setTextFilter("");
+        setShow(false);
+        doneHandler();
+    };
+
+    const keydownHandler = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+            dismissCommandBox();
+        }
+    };
+
+    React.useEffect(() => {
+        if (show) {
+            document.addEventListener("keydown", keydownHandler);
+        } else {
+            document.removeEventListener("keydown", keydownHandler);
+        }
+        return () => {
+            document.removeEventListener("keydown", keydownHandler);
+        };
+    }, [show]);
+
     const buildCommandElements = () => {
         if (textFilter === "") {
             return [];
@@ -50,11 +73,11 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
                 return command.friendlyName.toLowerCase().startsWith(textFilter.toLowerCase());
             })
             .map((command) => {
-                const doClick = () => {
+                const clickCommand = () => {
                     command.exec();
-                    setShow(false);
+                    dismissCommandBox();
                 };
-                return <div key={ command.friendlyName } onClick={ doClick }>{ command.friendlyName }</div>;
+                return <div key={ command.friendlyName } onClick={ clickCommand }>{ command.friendlyName }</div>;
             });
         return commandElements;
     }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISearchBox, ISearchMenuCommand } from "@fluid-example/search-menu";
+import { ISearchMenuCommand } from "@fluid-example/search-menu";
 import { performance } from "@fluidframework/common-utils";
 import {
     FluidObject,
@@ -2234,7 +2234,7 @@ export class FlowView extends ui.Component {
 
     private lastVerticalX = -1;
     private pendingRender = false;
-    private activeSearchBox: ISearchBox;
+    private activeSearchBox: boolean;
     private readonly cmdTree: MergeTree.TST<IFlowViewCmd>;
     private formatRegister: MergeTree.PropertySet;
 
@@ -2246,7 +2246,6 @@ export class FlowView extends ui.Component {
     private readonly undoRedoManager: UndoRedoStackManager;
 
     private showCommandBox: () => void = () => {};
-    private hideCommandBox: () => void = () => {};
 
     constructor(
         element: HTMLDivElement,
@@ -2316,8 +2315,8 @@ export class FlowView extends ui.Component {
         const registerShowListener = (callback: () => void) => {
             this.showCommandBox = callback;
         };
-        const registerHideListener = (callback: () => void) => {
-            this.hideCommandBox = callback;
+        const doneHandler = () => {
+            this.activeSearchBox = false;
         };
         const commandBoxCommands = [
             {
@@ -2490,7 +2489,7 @@ export class FlowView extends ui.Component {
             CommandBox,
             {
                 registerShowListener,
-                registerHideListener,
+                doneHandler,
                 commands: commandBoxCommands,
             },
         );
@@ -3123,15 +3122,7 @@ export class FlowView extends ui.Component {
         const keydownHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {
                 this.focusChild.keydownHandler(e);
-            } else if (this.activeSearchBox) {
-                if (e.keyCode === KeyCode.esc) {
-                    this.activeSearchBox.dismiss();
-                    this.hideCommandBox();
-                    this.activeSearchBox = undefined;
-                } else {
-                    this.activeSearchBox.keydown(e);
-                }
-            } else {
+            } else if (!this.activeSearchBox) {
                 const saveLastVertX = this.lastVerticalX;
                 let specialKey = true;
                 this.lastVerticalX = -1;
@@ -3260,13 +3251,7 @@ export class FlowView extends ui.Component {
         const keypressHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {
                 this.focusChild.keypressHandler(e);
-            } else if (this.activeSearchBox) {
-                if (this.activeSearchBox.keypress(e)) {
-                    this.activeSearchBox.dismiss();
-                    this.hideCommandBox();
-                    this.activeSearchBox = undefined;
-                }
-            } else {
+            } else if (!this.activeSearchBox) {
                 const pos = this.cursor.pos;
                 const code = e.charCode;
                 if (code === CharacterCodes.cr) {
@@ -3725,7 +3710,7 @@ export class FlowView extends ui.Component {
                 break;
             }
             case CharacterCodes.M: {
-                // this.activeSearchBox = searchBoxCreate(this, this.viewportDiv, this.cmdTree);
+                this.activeSearchBox = true;
                 this.showCommandBox();
                 break;
             }
