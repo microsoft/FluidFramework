@@ -100,7 +100,6 @@ Rejection functionality has been removed from Quorum.  As a result, the `"codeDe
 ### Root datastore creation may throw an exception in case of name conflicts
 When creating root datastores using `ContainerRuntime.createRootDataStore` or `ContainerRuntime._createDataStoreWithProps`, in case of a name conflict (when attempting to create a root datastore with a name which already exists in the document), an exception of type `GenericError` may be thrown from the function.
 
-
 ## 0.56 Breaking changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
 - [Removed `IOdspResolvedUrl.sharingLinkToRedeem`](#Removed-IOdspResolvedUrl.sharingLinkToRedeem)
