@@ -54,6 +54,14 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 // @public
 export const agentSchedulerId = "_scheduler";
 
+// @public
+export enum AliasResult {
+    Aliasing = "Aliasing",
+    AlreadyAliased = "AlreadyAliased",
+    Conflict = "Conflict",
+    Success = "Success"
+}
+
 // @public (undocumented)
 export enum ContainerMessageType {
     // (undocumented)
@@ -89,7 +97,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
-    createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
+    createDataStore(pkg: string | string[]): Promise<IDataStore>;
     // (undocumented)
     _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IFluidRouter>;
     // (undocumented)
@@ -162,6 +170,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     setFlushMode(mode: FlushMode): void;
     // (undocumented)
     get storage(): IDocumentStorageService;
+    // (undocumented)
+    submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void;
     // (undocumented)
     submitDataStoreOp(id: string, contents: any, localOpMetadata?: unknown): void;
     // (undocumented)
@@ -315,6 +325,12 @@ export interface IContainerRuntimeOptions {
     loadSequenceNumberVerification?: "close" | "log" | "bypass";
     // (undocumented)
     summaryOptions?: ISummaryRuntimeOptions;
+    useDataStoreAliasing?: boolean;
+}
+
+// @public
+export interface IDataStore extends IFluidRouter {
+    trySetAlias(alias: string): Promise<AliasResult>;
 }
 
 // @public

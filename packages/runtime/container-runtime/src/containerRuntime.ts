@@ -46,6 +46,7 @@ import {
     TaggedLoggerAdapter,
     MonitoringContext,
     loggerToMonitoringContext,
+    TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
@@ -144,6 +145,13 @@ import {
     IGarbageCollector,
     IGCStats,
 } from "./garbageCollection";
+import {
+    AliasResult,
+    channelToDataStore,
+    IDataStore,
+    IDataStoreAliasMessage,
+    isDataStoreAliasMessage,
+} from "./dataStore";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -280,6 +288,12 @@ export interface IContainerRuntimeOptions {
      * 3. "bypass" will skip the check entirely. This is not recommended.
      */
     loadSequenceNumberVerification?: "close" | "log" | "bypass";
+    /**
+     * Should the runtime use data store aliasing for creating root datastores.
+     * In case of aliasing conflicts, the runtime will raise an exception which does
+     * not effect the status of the container.
+     */
+    useDataStoreAliasing?: boolean;
 }
 
 type IRuntimeMessageMetadata = undefined | {
@@ -306,6 +320,7 @@ interface OldContainerContextWithLogger extends IContainerContext {
 
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
+const useDataStoreAliasingKey = "Fluid.ContainerRuntime.UseDataStoreAliasing";
 
 export enum RuntimeMessage {
     FluidDataStoreOp = "component",
@@ -668,6 +683,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryOptions = {},
             gcOptions = {},
             loadSequenceNumberVerification = "close",
+            useDataStoreAliasing = false,
         } = runtimeOptions;
 
         // We pack at data store level only. If isolated channels are disabled,
@@ -761,6 +777,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 summaryOptions,
                 gcOptions,
                 loadSequenceNumberVerification,
+                useDataStoreAliasing,
             },
             containerScope,
             logger,
@@ -858,6 +875,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly summaryCollection: SummaryCollection;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
+    private readonly _aliasingEnabled: boolean;
 
     private _orderSequentiallyCalls: number = 0;
     private _flushMode: FlushMode;
@@ -982,6 +1000,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._flushMode =
             this.mc.config.getBoolean(turnBasedFlushModeKey) ?? false
             ? FlushMode.TurnBased : FlushMode.Immediate;
+
+        this._aliasingEnabled =
+            (this.mc.config.getBoolean(useDataStoreAliasingKey) ?? false) ||
+            (runtimeOptions.useDataStoreAliasing ?? false);
 
         /**
          * Function that return the current server timestamp. This is used by the garbage collector to set the
@@ -1672,14 +1694,68 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    public async createDataStore(pkg: string | string[]): Promise<IFluidRouter> {
-        return this._createDataStore(pkg, false /* isRoot */);
+    public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
+        const internalId = uuid();
+        return channelToDataStore(
+            await this._createDataStore(pkg, false /* isRoot */, internalId),
+            internalId,
+            this,
+            this.dataStores,
+            this.mc.logger);
     }
 
-    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
+    /**
+     * Creates a root datastore directly with a user generated id and attaches it to storage.
+     * It is vulnerable to name collisions and should not be used.
+     *
+     * This method will be removed. See #6465.
+     */
+    private async createRootDataStoreLegacy(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
         const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
         fluidDataStore.bindToContext();
         return fluidDataStore;
+    }
+
+    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
+        return this._aliasingEnabled === true ?
+            this.createAndAliasDataStore(pkg, rootDataStoreId) :
+            this.createRootDataStoreLegacy(pkg, rootDataStoreId);
+    }
+
+    /**
+     * Creates a data store then attempts to alias it.
+     * If aliasing fails, it will raise an exception.
+     *
+     * This method will be removed. See #6465.
+     *
+     * @param pkg - Package name of the data store
+     * @param alias - Alias to be assigned to the data store
+     * @param props - Properties for the data store
+     * @returns - An aliased data store which can can be found / loaded by alias.
+     */
+    private async createAndAliasDataStore(pkg: string | string[], alias: string, props?: any): Promise<IFluidRouter> {
+        const internalId = uuid();
+        const dataStore = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
+        const aliasedDataStore = channelToDataStore(dataStore, internalId, this,this.dataStores, this.mc.logger);
+        const result = await aliasedDataStore.trySetAlias(alias);
+        if (result !== AliasResult.Success) {
+            throw new GenericError(
+                "dataStoreAliasFailure",
+                undefined /* error */,
+                {
+                    alias: {
+                        value: alias,
+                        tag: TelemetryDataTag.UserData,
+                    },
+                    internalId: {
+                        value: internalId,
+                        tag: TelemetryDataTag.PackageData,
+                    },
+                    aliasResult: result,
+                });
+        }
+
+        return aliasedDataStore;
     }
 
     public createDetachedRootDataStore(
@@ -1693,7 +1769,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.dataStores.createDetachedDataStoreCore(pkg, false);
     }
 
-    public async _createDataStoreWithProps(
+    /**
+     * Creates a possibly root datastore directly with a possibly user generated id and attaches it to storage.
+     * It is vulnerable to name collisions if both aforementioned conditions are true, and should not be used.
+     *
+     * This method will be removed. See #6465.
+     */
+    private async _createDataStoreWithPropsLegacy(
         pkg: string | string[],
         props?: any,
         id = uuid(),
@@ -1707,12 +1789,26 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return fluidDataStore;
     }
 
+    public async _createDataStoreWithProps(
+        pkg: string | string[],
+        props?: any,
+        id = uuid(),
+        isRoot = false,
+    ): Promise<IFluidRouter> {
+        return this._aliasingEnabled === true && isRoot ?
+            this.createAndAliasDataStore(pkg, id, props) :
+            this._createDataStoreWithPropsLegacy(pkg, props, id, isRoot);
+    }
+
     private async _createDataStore(
         pkg: string | string[],
         isRoot: boolean,
         id = uuid(),
+        props?: any,
     ): Promise<IFluidDataStoreChannel> {
-        return this.dataStores._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot).realize();
+        return this.dataStores
+            ._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props)
+            .realize();
     }
 
     private canSendOps() {
@@ -2182,6 +2278,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             contents,
         };
         this.submit(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
+    }
+
+    public submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void {
+        const aliasMessage = contents as IDataStoreAliasMessage;
+        if (!isDataStoreAliasMessage(aliasMessage)) {
+            throw new UsageError("malformedDataStoreAliasMessage");
+        }
+
+        this.submit(ContainerMessageType.Alias, contents, localOpMetadata);
     }
 
     public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {

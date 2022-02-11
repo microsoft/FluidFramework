@@ -50,32 +50,9 @@ import {
     LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
+import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 
 type PendingAliasResolve = (success: boolean) => void;
-
-/**
- * Interface for an op to be used for assigning an
- * alias to a datastore
- */
-interface IDataStoreAliasMessage {
-    /** The internal id of the datastore */
-    readonly internalId: string;
-    /** The alias name to be assigned to the datastore */
-    readonly alias: string;
-}
-
-/**
- * Type guard that returns true if the given alias message is actually an instance of
- * a class which implements @see IDataStoreAliasMessage
- * @param maybeDataStoreAliasMessage - message object to be validated
- * @returns True if the @see IDataStoreAliasMessage is fully implemented, false otherwise
- */
-const isDataStoreAliasMessage = (
-    maybeDataStoreAliasMessage: any,
-): maybeDataStoreAliasMessage is IDataStoreAliasMessage => {
-    return typeof maybeDataStoreAliasMessage?.internalId === "string"
-        && typeof maybeDataStoreAliasMessage?.alias === "string";
-};
 
  /**
   * This class encapsulates data store handling. Currently it is only used by the container runtime,
@@ -289,7 +266,7 @@ export class DataStores implements IDisposable {
         }
     }
 
-    private processAliasMessageCore(aliasMessage: IDataStoreAliasMessage): boolean {
+    public processAliasMessageCore(aliasMessage: IDataStoreAliasMessage): boolean {
         if (this.alreadyProcessed(aliasMessage.alias)) {
             return false;
         }

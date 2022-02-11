@@ -18,6 +18,7 @@ export {
     agentSchedulerId,
     ContainerRuntime,
 } from "./containerRuntime";
+export { IDataStore, AliasResult } from "./dataStore";
 export { DeltaScheduler } from "./deltaScheduler";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
 export {
