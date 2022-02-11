@@ -225,7 +225,15 @@ const getCodeProposal =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
-export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
+
+/**
+ * Temporary extension of IContainerEvents, will be removed once IContainerEvents is updated
+ */
+export interface IContainerEvents2 extends IContainerEvents {
+    (event: "resumeConnection", listener: (connectionArgs: IConnectionArgs) => void);
+}
+
+export class Container extends EventEmitterWithErrorHandling<IContainerEvents2> implements IContainer {
     public static version = "^0.1.0";
 
     /**
@@ -1035,6 +1043,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (!this._canReconnect || !this.client.details.capabilities.interactive) {
             args.mode = "write";
         }
+
+        // Notify listeners that we are attempting to resume the delta connection
+        this.emit("resumeConnection", args);
 
         this._deltaManager.connect(args);
     }
