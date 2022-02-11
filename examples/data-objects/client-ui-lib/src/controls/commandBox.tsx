@@ -11,8 +11,17 @@ export interface ICommandBoxCommand {
 }
 
 export interface ICommandBoxProps {
+    /**
+     * FlowView wants to summon the command box, easiest way to stitch together is by plumbing a callback.
+     */
     registerShowListener: (callback: () => void) => void;
+    /**
+     * The CommandBox controls its own dismissal.  Observers can register a callback to learn when it dismisses.
+     */
     dismissCallback: () => void;
+    /**
+     * The library of commands that the CommandBox will present to the user.
+     */
     commands: ICommandBoxCommand[];
 }
 
@@ -21,7 +30,9 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
     const [show, setShow] = React.useState<boolean>(false);
     const [matchingCommands, setMatchingCommands] = React.useState<ICommandBoxCommand[]>([]);
     const [arrowedCommand, setArrowedCommand] = React.useState<number | undefined>(undefined);
+
     const filterRef = React.useRef<HTMLInputElement>(null);
+
     React.useEffect(() => {
         registerShowListener(() => { setShow(true); });
     }, [ registerShowListener ]);
@@ -76,13 +87,19 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
 
     const keypressHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter") {
+            const exactMatchingCommand = filterRef.current !== null
+                ? commands.find(
+                    (command) => filterRef.current.value.toLowerCase() === command.friendlyName.toLowerCase(),
+                )
+                : undefined;
+
             if (arrowedCommand !== undefined) {
                 matchingCommands[arrowedCommand].exec();
                 dismissCommandBox();
-            }/* else if (textbox contents string match a known command) {
-                command.exec();
+            } else if (exactMatchingCommand !== undefined) {
+                exactMatchingCommand.exec();
                 dismissCommandBox();
-            }*/
+            }
         }
     };
 
