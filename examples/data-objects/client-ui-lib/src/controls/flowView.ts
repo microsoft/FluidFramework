@@ -2059,7 +2059,7 @@ export class FlowView extends ui.Component {
 
     private lastVerticalX = -1;
     private pendingRender = false;
-    private activeSearchBox: boolean;
+    private activeCommandBox: boolean;
     private formatRegister: MergeTree.PropertySet;
 
     // A list of Marker segments modified by the most recently processed op.  (Reset on each
@@ -2134,8 +2134,8 @@ export class FlowView extends ui.Component {
         const registerShowListener = (callback: () => void) => {
             this.showCommandBox = callback;
         };
-        const doneHandler = () => {
-            this.activeSearchBox = false;
+        const onCommandBoxDismiss = () => {
+            this.activeCommandBox = false;
         };
         const commandBoxCommands = [
             {
@@ -2308,7 +2308,7 @@ export class FlowView extends ui.Component {
             CommandBox,
             {
                 registerShowListener,
-                doneHandler,
+                dismissCallback: onCommandBoxDismiss,
                 commands: commandBoxCommands,
             },
         );
@@ -2941,7 +2941,7 @@ export class FlowView extends ui.Component {
         const keydownHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {
                 this.focusChild.keydownHandler(e);
-            } else if (!this.activeSearchBox) {
+            } else if (!this.activeCommandBox) {
                 const saveLastVertX = this.lastVerticalX;
                 let specialKey = true;
                 this.lastVerticalX = -1;
@@ -3070,7 +3070,7 @@ export class FlowView extends ui.Component {
         const keypressHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {
                 this.focusChild.keypressHandler(e);
-            } else if (!this.activeSearchBox) {
+            } else if (!this.activeCommandBox) {
                 const pos = this.cursor.pos;
                 const code = e.charCode;
                 if (code === CharacterCodes.cr) {
@@ -3529,7 +3529,7 @@ export class FlowView extends ui.Component {
                 break;
             }
             case CharacterCodes.M: {
-                this.activeSearchBox = true;
+                this.activeCommandBox = true;
                 this.showCommandBox();
                 break;
             }

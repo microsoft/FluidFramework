@@ -12,12 +12,12 @@ export interface ICommandBoxCommand {
 
 export interface ICommandBoxProps {
     registerShowListener: (callback: () => void) => void;
-    doneHandler: () => void;
+    dismissCallback: () => void;
     commands: ICommandBoxCommand[];
 }
 
 export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) => {
-    const { registerShowListener, doneHandler, commands } = props;
+    const { registerShowListener, dismissCallback, commands } = props;
     const [show, setShow] = React.useState<boolean>(false);
     const [textFilter, setTextFilter] = React.useState<string>("");
     const [arrowedCommand, setArrowedCommand] = React.useState<number | undefined>(undefined);
@@ -45,7 +45,7 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
     const dismissCommandBox = () => {
         setTextFilter("");
         setShow(false);
-        doneHandler();
+        dismissCallback();
     };
 
     const getMatchingCommands = () => commands.filter((command) => {
@@ -121,9 +121,15 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
                 <div>
                     <input type="text" ref={ filterRef } onKeyDown={ keydownHandler } onKeyPress={ keypressHandler }/>
                 </div>
-                <div style={{ backgroundColor: "#fff", border: "1px solid #000" }}>
-                    { commandElements }
-                </div>
+                {
+                    commandElements.length > 0
+                    ? (
+                        <div style={{ width: "300px", backgroundColor: "#fff", border: "1px solid #000" }}>
+                            { commandElements }
+                        </div>
+                    )
+                    : <></>
+                }
             </div>
         );
     } else {
