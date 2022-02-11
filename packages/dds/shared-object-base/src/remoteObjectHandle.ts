@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { RuntimeHeaders } from "@fluidframework/container-runtime"
 import {
     IFluidHandle,
     IFluidHandleContext,
@@ -44,7 +45,7 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
     public async get(): Promise<any> {
         if (this.objectP === undefined) {
             // Add `viaHandle` header to distinguish from requests from non-handle paths.
-            const request: IRequest = { url: this.absolutePath, headers: { viaHandle: true } };
+            const request: IRequest = { url: this.absolutePath, headers: { [RuntimeHeaders.viaHandle]: true } };
             this.objectP = this.routeContext.resolveHandle(request)
                 .then<FluidObject>((response) => {
                     if (response.mimeType === "fluid/object") {
