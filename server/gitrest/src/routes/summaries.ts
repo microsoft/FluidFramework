@@ -29,7 +29,6 @@ import {
 } from "@fluidframework/server-services-client";
 import { Router } from "express";
 import { Provider } from "nconf";
-import winston from "winston";
 import { IExternalStorageManager } from "../externalStorageManager";
 import { RepositoryManager } from "../utils";
 import { createBlob, getBlob } from "./git/blobs";
@@ -67,7 +66,6 @@ export class WholeSummaryReadGitManager {
         } else {
             version = { id: sha, treeId: sha };
         }
-        winston.info(`DEBUG:: Getting summary tree`, { version: version.id, tree: version.treeId });
         const rawTree = await this.readTreeRecursive(version.treeId);
         const wholeFlatSummaryTreeEntries: IWholeFlatSummaryTreeEntry[] = [];
         const wholeFlatSummaryBlobPs: Promise<IWholeFlatSummaryBlob>[] = [];
@@ -146,6 +144,11 @@ function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry)
 
 export class WholeSummaryWriteGitManager {
     constructor(
+        // TODO: maybe just convert these params into a single GitManager with a non-REST Historian client behind it
+        /**
+         * Find the sha for latest version of a document and its corresponding summary tree sha.
+         */
+        private readonly getLatestVersion: () => Promise<ISummaryVersion>,
         /**
          * Write blob to storage and return the git sha.
          */
@@ -154,6 +157,10 @@ export class WholeSummaryWriteGitManager {
          * Write tree to storage and return the git sha.
          */
         private readonly writeTree: (tree: ICreateTreeParams) => Promise<string>,
+        /**
+         * Read tree recursively from storage.
+         */
+        private readonly readTreeRecursive: (treeSha: string) => Promise<ITree>,
         /**
          * Write commit to storage and return the git sha.
          */
@@ -189,12 +196,10 @@ export class WholeSummaryWriteGitManager {
 
     private async writeContainerSummary(payload: IWholeSummaryPayload): Promise<string> {
         const treeHandle = await this.writeSummaryTreeCore(payload.entries);
-        // TODO: How does this behave for new docs? Is there ever a case where a doc has a commit but no ref?
         // TODO: is there ever a case where the parent of a container summary is not the commit referenced by the ref?
         const existingRef = await this.readRef();
         let commitParams: ICreateCommitParams
         if (!existingRef && payload.sequenceNumber === 0) {
-            winston.info(`DEBUG:: Creating new document`, { tree: treeHandle });
             // Create new document
             commitParams = {
                 author: {
@@ -207,7 +212,6 @@ export class WholeSummaryWriteGitManager {
                 tree: treeHandle,
             };
         } else {
-            winston.info(`DEBUG:: Updating existing document`, { tree: treeHandle, ref: existingRef?.object.sha });
             // Update existing document
             commitParams = {
                 author: {
@@ -223,7 +227,6 @@ export class WholeSummaryWriteGitManager {
             };
         }
         const commitSha = await this.writeCommit(commitParams);
-        winston.info(`DEBUG:: created commit`, { sha: commitSha });
         if (existingRef) {
             await this.upsertRef(commitSha);
         } else {
@@ -235,9 +238,10 @@ export class WholeSummaryWriteGitManager {
     private async writeSummaryTreeCore(
         wholeSummaryTreeEntries: WholeSummaryTreeEntry[],
     ): Promise<string> {
+        const pathToShaMap = await this.getPathToShaMapFromLastSummary();
         const entries: ICreateTreeEntry[] = await Promise.all(wholeSummaryTreeEntries.map(async (entry) => {
             const summaryObject = getSummaryObjectFromWholeSummaryTreeEntry(entry);
-            const pathHandle = await this.writeSummaryTreeObject(entry, summaryObject);
+            const pathHandle = await this.writeSummaryTreeObject(entry, summaryObject, pathToShaMap);
             return {
                 mode: getGitMode(summaryObject),
                 path: entry.path,
@@ -255,6 +259,7 @@ export class WholeSummaryWriteGitManager {
     private async writeSummaryTreeObject(
         wholeSummaryTreeEntry: WholeSummaryTreeEntry,
         summaryObject: SummaryObject,
+        pathToShaMap: Map<string, string>,
     ): Promise<string> {
         switch(summaryObject.type) {
             case SummaryType.Blob:
@@ -266,8 +271,8 @@ export class WholeSummaryWriteGitManager {
                     ((wholeSummaryTreeEntry as IWholeSummaryTreeValueEntry).value as IWholeSummaryTree).entries ?? [],
                 );
             case SummaryType.Handle:
-                // TODO: this doesn't work. Need to find this path in the previous snapshot tree
-                return (wholeSummaryTreeEntry as IWholeSummaryTreeHandleEntry).id;
+                // TODO: is there a case where the sha does not exist in the previous summary tree?
+                return pathToShaMap.get((wholeSummaryTreeEntry as IWholeSummaryTreeHandleEntry).path);
             default:
                 throw new NetworkError(501, "Not Implemented");
         }
@@ -281,6 +286,27 @@ export class WholeSummaryWriteGitManager {
             },
         );
         return blobSha;
+    }
+
+    /**
+     * Returns a map of Summary tree paths to git shas from the last document summary.
+     * Used for mapping handle paths to git shas.
+     */
+    private async getPathToShaMapFromLastSummary(): Promise<Map<string, string>> {
+        const pathToShaMap = new Map<string, string>();
+        let latestVersion: ISummaryVersion;
+        try {
+            latestVersion = await this.getLatestVersion();
+        } catch (e) {
+            // Latest version call fails if no previous summary (i.e. on new documents)
+            // TODO: be smarter about this rather than catching an expected failure
+            return pathToShaMap;
+        }
+        const flatTree = await this.readTreeRecursive(latestVersion.treeId);
+        for (const entry of flatTree.tree) {
+            pathToShaMap.set(entry.path, entry.sha);
+        }
+        return pathToShaMap;
     }
 }
 
@@ -339,6 +365,20 @@ export async function createSummary(
     documentId: string,
     externalStorageEnabled: boolean,
     externalStorageManager: IExternalStorageManager): Promise<IWriteSummaryResponse> {
+    const getLatestVersion = async (): Promise<ISummaryVersion> => {
+        const commitDetails = await getCommits(
+            repoManager,
+            owner,
+            repo,
+            documentId,
+            1,
+            { config: { enabled: externalStorageEnabled } },
+            externalStorageManager);
+        return {
+            id: commitDetails[0].sha,
+            treeId: commitDetails[0].commit.tree.sha,
+        };
+    };
     const writeBlob = async (blobParams: ICreateBlobParams): Promise<string> => {
         const blobResponse = await createBlob(
             repoManager,
@@ -356,6 +396,14 @@ export async function createSummary(
             treeParams,
         );
         return treeHandle.sha;
+    };
+    const readTreeRecursive = async (treeSha: string): Promise<ITree> => {
+        const rawTree = await getTreeRecursive(
+            repoManager,
+            owner,
+            repo,
+            treeSha);
+        return rawTree;
     };
     const writeCommit = async (commitParams: ICreateCommitParams): Promise<string> => {
         const commit = await createCommit(
@@ -409,8 +457,10 @@ export async function createSummary(
         );
     };
     const wholeSummaryWriteGitManager = new WholeSummaryWriteGitManager(
+        getLatestVersion,
         writeBlob,
         writeTree,
+        readTreeRecursive,
         writeCommit,
         writeRef,
         readRef,

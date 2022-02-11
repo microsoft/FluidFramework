@@ -7,7 +7,6 @@ import { ICreateTreeParams, ITree, ITreeEntry } from "@fluidframework/gitresourc
 import { Router } from "express";
 import nconf from "nconf";
 import git from "nodegit";
-import winston from "winston";
 import * as utils from "../../utils";
 
 /**
@@ -51,13 +50,8 @@ export async function createTree(
 
     // build up the tree
     for (const node of tree.tree) {
-        try {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            builder.insert(node.path, git.Oid.fromString(node.sha), parseInt(node.mode, 8));
-        } catch (e) {
-            winston.info("DEBUG::failed inserting node", { sha: node.sha, path: node.path, mode: node.mode });
-            throw e
-        }
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        builder.insert(node.path, git.Oid.fromString(node.sha), parseInt(node.mode, 8));
     }
 
     const id = await builder.write();
