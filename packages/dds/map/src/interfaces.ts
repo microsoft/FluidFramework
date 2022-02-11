@@ -49,8 +49,8 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     set<T = any>(key: string, value: T): this;
 
     /**
-    * Dispose the directory when it is deleted. 
-    */
+     * Dispose the directory when it is deleted. 
+     */
     dispose(): void;
 
     /**

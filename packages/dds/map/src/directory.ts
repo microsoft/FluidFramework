@@ -870,11 +870,17 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         super();
     }
 
+    /**
+     * {@inheritDoc IDirectory.dispose}
+     */
     public dispose(): void {
         this._dispose = true;
         this.emit("dispose", this);   
     }
 
+    /**
+     * {@inheritDoc IDirectory.isDisposed}
+     */
     public isDisposed(): boolean {
         return this._dispose;
     }
