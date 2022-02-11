@@ -68,7 +68,7 @@ export interface IDirectoryEvents extends IEvent {
     // (undocumented)
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
-    (event: "dispose", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "dispose", listener: (target: IEventThisPlaceHolder) => void): any;
 }
 
 // @public (undocumented)

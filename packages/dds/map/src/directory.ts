@@ -872,7 +872,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
     public dispose(): void {
         this._dispose = true;
-        this.emit("dispose");   
+        this.emit("dispose", this);   
     }
 
     public isDisposed(): boolean {
