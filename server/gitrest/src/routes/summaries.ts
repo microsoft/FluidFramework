@@ -3,11 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IBlob, ICreateBlobParams, ICreateTreeEntry, ICreateTreeParams, ITree } from "@fluidframework/gitresources";
+import {
+    IBlob,
+    ICreateBlobParams,
+    ICreateCommitParams,
+    ICreateTreeEntry,
+    ICreateTreeParams,
+    IRef,
+    ITree,
+} from "@fluidframework/gitresources";
 import { getGitMode, getGitType } from "@fluidframework/protocol-base";
 import { SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
-    IGetRefParamsExternal,
     IWholeFlatSummary,
     IWholeFlatSummaryBlob,
     IWholeFlatSummaryTreeEntry,
@@ -22,13 +29,14 @@ import {
 } from "@fluidframework/server-services-client";
 import { Router } from "express";
 import { Provider } from "nconf";
+import winston from "winston";
 import { IExternalStorageManager } from "../externalStorageManager";
-import { getReadParams, RepositoryManager } from "../utils";
-/* eslint-disable import/no-internal-modules */
+import { RepositoryManager } from "../utils";
 import { createBlob, getBlob } from "./git/blobs";
+import { createCommit } from "./git/commits";
+import { createRef, getRef, patchRef } from "./git/refs";
 import { createTree, getTreeRecursive } from "./git/trees";
 import { getCommits } from "./repository/commits";
-/* eslint-enable import/no-internal-modules */
 import { handleResponse } from "./utils";
 
 interface ISummaryVersion {
@@ -39,7 +47,7 @@ interface ISummaryVersion {
 export class WholeSummaryReadGitManager {
     constructor(
         /**
-         * Find the sha for latest version of a document's summary.
+         * Find the sha for latest version of a document and its corresponding summary tree sha.
          */
         private readonly getLatestVersion: () => Promise<ISummaryVersion>,
         /**
@@ -59,6 +67,7 @@ export class WholeSummaryReadGitManager {
         } else {
             version = { id: sha, treeId: sha };
         }
+        winston.info(`DEBUG:: Getting summary tree`, { version: version.id, tree: version.treeId });
         const rawTree = await this.readTreeRecursive(version.treeId);
         const wholeFlatSummaryTreeEntries: IWholeFlatSummaryTreeEntry[] = [];
         const wholeFlatSummaryBlobPs: Promise<IWholeFlatSummaryBlob>[] = [];
@@ -145,10 +154,82 @@ export class WholeSummaryWriteGitManager {
          * Write tree to storage and return the git sha.
          */
         private readonly writeTree: (tree: ICreateTreeParams) => Promise<string>,
+        /**
+         * Write commit to storage and return the git sha.
+         */
+        private readonly writeCommit: (commit: ICreateCommitParams) => Promise<string>,
+        /**
+         * Write document ref to storage.
+         */
+        private readonly writeRef: (commitSha: string) => Promise<void>,
+        /**
+         * Read document ref from storage.
+         * Return undefined if no ref is found.
+         */
+        private readonly readRef: () => Promise<IRef | undefined>,
+        /**
+         * Upsert document ref in storage.
+         */
+        private readonly upsertRef: (commitSha: string) => Promise<void>,
     ) {}
 
     public async writeSummary(payload: IWholeSummaryPayload): Promise<string> {
+        if (payload.type === "channel") {
+            return this.writeChannelSummary(payload);
+        }
+        if (payload.type === "container") {
+            return this.writeContainerSummary(payload);
+        }
+        throw new NetworkError(400, `Unknown Summary Type: ${payload.type}`);
+    }
+
+    private async writeChannelSummary(payload: IWholeSummaryPayload): Promise<string> {
         return this.writeSummaryTreeCore(payload.entries);
+    }
+
+    private async writeContainerSummary(payload: IWholeSummaryPayload): Promise<string> {
+        const treeHandle = await this.writeSummaryTreeCore(payload.entries);
+        // TODO: How does this behave for new docs? Is there ever a case where a doc has a commit but no ref?
+        // TODO: is there ever a case where the parent of a container summary is not the commit referenced by the ref?
+        const existingRef = await this.readRef();
+        let commitParams: ICreateCommitParams
+        if (!existingRef && payload.sequenceNumber === 0) {
+            winston.info(`DEBUG:: Creating new document`, { tree: treeHandle });
+            // Create new document
+            commitParams = {
+                author: {
+                    date: new Date().toISOString(),
+                    email: "dummy@microsoft.com",
+                    name: "GitRest Service",
+                },
+                message: "New document",
+                parents: [],
+                tree: treeHandle,
+            };
+        } else {
+            winston.info(`DEBUG:: Updating existing document`, { tree: treeHandle, ref: existingRef?.object.sha });
+            // Update existing document
+            commitParams = {
+                author: {
+                    date: new Date().toISOString(),
+                    email: "dummy@microsoft.com",
+                    name: "GitRest Service",
+                },
+                // TODO: How to know if Service/Client Summary?
+                // .app handle embedded=true looks to be an indicator. Is it worth checking?
+                message: `Service/Client Summary @${payload.sequenceNumber}`,
+                parents: existingRef ? [existingRef.object.sha] : [],
+                tree: treeHandle,
+            };
+        }
+        const commitSha = await this.writeCommit(commitParams);
+        winston.info(`DEBUG:: created commit`, { sha: commitSha });
+        if (existingRef) {
+            await this.upsertRef(commitSha);
+        } else {
+            await this.writeRef(commitSha);
+        }
+        return treeHandle;
     }
 
     private async writeSummaryTreeCore(
@@ -185,6 +266,7 @@ export class WholeSummaryWriteGitManager {
                     ((wholeSummaryTreeEntry as IWholeSummaryTreeValueEntry).value as IWholeSummaryTree).entries ?? [],
                 );
             case SummaryType.Handle:
+                // TODO: this doesn't work. Need to find this path in the previous snapshot tree
                 return (wholeSummaryTreeEntry as IWholeSummaryTreeHandleEntry).id;
             default:
                 throw new NetworkError(501, "Not Implemented");
@@ -208,7 +290,7 @@ export async function getSummary(
     repo: string,
     sha: string,
     documentId: string,
-    externalStorageReadParams: IGetRefParamsExternal | undefined,
+    externalStorageEnabled: boolean,
     externalStorageManager: IExternalStorageManager): Promise<IWholeFlatSummary> {
     const getLatestVersion = async (): Promise<ISummaryVersion> => {
         const commitDetails = await getCommits(
@@ -217,7 +299,7 @@ export async function getSummary(
             repo,
             documentId,
             1,
-            externalStorageReadParams,
+            { config: { enabled: externalStorageEnabled } },
             externalStorageManager);
         return {
             id: commitDetails[0].sha,
@@ -253,7 +335,10 @@ export async function createSummary(
     repoManager: RepositoryManager,
     owner: string,
     repo: string,
-    payload: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
+    payload: IWholeSummaryPayload,
+    documentId: string,
+    externalStorageEnabled: boolean,
+    externalStorageManager: IExternalStorageManager): Promise<IWriteSummaryResponse> {
     const writeBlob = async (blobParams: ICreateBlobParams): Promise<string> => {
         const blobResponse = await createBlob(
             repoManager,
@@ -272,9 +357,64 @@ export async function createSummary(
         );
         return treeHandle.sha;
     };
+    const writeCommit = async (commitParams: ICreateCommitParams): Promise<string> => {
+        const commit = await createCommit(
+            repoManager,
+            owner,
+            repo,
+            commitParams,
+        );
+        return commit.sha;
+    };
+    const readRef = async (): Promise<IRef | undefined> => {
+        try {
+            const ref = await getRef(
+                repoManager,
+                owner,
+                repo,
+                `refs/heads/${documentId}`,
+                { config: { enabled: externalStorageEnabled } },
+                externalStorageManager,
+            );
+            return ref;
+        } catch (e) {
+            return undefined;
+        }
+    };
+    const upsertRef = async (commitSha: string): Promise<void> => {
+        await patchRef(
+            repoManager,
+            owner,
+            repo,
+            `refs/heads/${documentId}`,
+            {
+                force: true,
+                sha: commitSha,
+                config: { enabled: externalStorageEnabled },
+            },
+            externalStorageManager,
+        );
+    };
+    const writeRef = async (commitSha: string): Promise<void> => {
+        await createRef(
+            repoManager,
+            owner,
+            repo,
+            {
+                ref: `refs/heads/${documentId}`,
+                sha: commitSha,
+                config: { enabled: externalStorageEnabled },
+            },
+            externalStorageManager,
+        );
+    };
     const wholeSummaryWriteGitManager = new WholeSummaryWriteGitManager(
         writeBlob,
         writeTree,
+        writeCommit,
+        writeRef,
+        readRef,
+        upsertRef,
     );
     const summaryHandle = await wholeSummaryWriteGitManager.writeSummary(payload);
     return { id: summaryHandle };
@@ -313,7 +453,7 @@ export function create(
                 request.params.repo,
                 request.params.sha,
                 documentId,
-                getReadParams(request.query?.config),
+                true, /* externalStorageEnabled - hardcoded to true in services-client/GitManager */
                 externalStorageManager,
             ),
             response,
@@ -324,9 +464,23 @@ export function create(
      * Creates a new summary.
      */
     router.post("/repos/:owner/:repo/git/summaries", (request, response) => {
+        const storageRoutingId: string = request.get("Storage-Routing-Id");
+        const [,documentId] = storageRoutingId.split(":");
+        if (!documentId) {
+            handleResponse(Promise.reject(new NetworkError(400, "Invalid Storage-Routing-Id header")), response);
+            return;
+        }
         const wholeSummaryPayload: IWholeSummaryPayload = request.body;
         handleResponse(
-            createSummary(repoManager, request.params.owner, request.params.repo, wholeSummaryPayload),
+            createSummary(
+                repoManager,
+                request.params.owner,
+                request.params.repo,
+                wholeSummaryPayload,
+                documentId,
+                true, /* externalStorageEnabled - hardcoded to true in services-client/GitManager */
+                externalStorageManager,
+            ),
             response,
             201,
         );

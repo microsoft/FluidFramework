@@ -7,6 +7,7 @@ import { ICreateTreeParams, ITree, ITreeEntry } from "@fluidframework/gitresourc
 import { Router } from "express";
 import nconf from "nconf";
 import git from "nodegit";
+import winston from "winston";
 import * as utils from "../../utils";
 
 /**
@@ -50,8 +51,13 @@ export async function createTree(
 
     // build up the tree
     for (const node of tree.tree) {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        builder.insert(node.path, git.Oid.fromString(node.sha), parseInt(node.mode, 8));
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            builder.insert(node.path, git.Oid.fromString(node.sha), parseInt(node.mode, 8));
+        } catch (e) {
+            winston.info("DEBUG::failed inserting node", { sha: node.sha, path: node.path, mode: node.mode });
+            throw e
+        }
     }
 
     const id = await builder.write();
@@ -93,7 +99,7 @@ export async function getTreeRecursive(
 export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): Router {
     const router: Router = Router();
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
+
     router.post("/repos/:owner/:repo/git/trees", (request, response, next) => {
         const blobP = createTree(
             repoManager,
@@ -109,7 +115,7 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
             });
     });
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
+
     router.get("/repos/:owner/:repo/git/trees/:sha", (request, response, next) => {
         const blobP = request.query.recursive === "1"
             ? getTreeRecursive(repoManager, request.params.owner, request.params.repo, request.params.sha)

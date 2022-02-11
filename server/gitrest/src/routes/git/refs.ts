@@ -35,7 +35,7 @@ async function getRefs(repoManager: utils.RepositoryManager, owner: string, repo
     return refsP.map((ref) => refToIRef(ref));
 }
 
-async function getRef(
+export async function getRef(
     repoManager: utils.RepositoryManager,
     owner: string,
     repo: string,
@@ -68,7 +68,7 @@ async function getRef(
     }
 }
 
-async function createRef(
+export async function createRef(
     repoManager: utils.RepositoryManager,
     owner: string,
     repo: string,
@@ -104,7 +104,7 @@ async function deleteRef(
     return code === 0 ? Promise.resolve() : Promise.reject(code);
 }
 
-async function patchRef(
+export async function patchRef(
     repoManager: utils.RepositoryManager,
     owner: string,
     repo: string,
