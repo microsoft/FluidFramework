@@ -22,7 +22,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove Unused IFluidObject Augmentations](#Remove-Unused-IFluidObject-Augmentations)
 - [Duplicate extractLogSafeErrorProperties removed](#duplicate-extractlogsafeerrorproperties-removed)
 - [Code proposal rejection removed](#Code-proposal-rejection-removed)
-- [ContainerRuntime.createDataStore return type changed](#ContainerRuntime.createDataStore-return-type-changed)
+- [ContainerRuntime.createDataStore return type changed](#Containerruntimecreatedatastore-return-type-changed)
 - [Root datastore creation may throw an exception in case of name conflicts](#Root-datastore-creation-may-throw-an-exception-in-case-of-name-conflicts)
 
 ### IFluidConfiguration removed
