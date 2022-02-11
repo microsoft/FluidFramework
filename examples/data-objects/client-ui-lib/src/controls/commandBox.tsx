@@ -42,18 +42,17 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
         }
     });
 
+    const matchingCommands = commands.filter((command) => {
+        return command.friendlyName.toLowerCase().startsWith(textFilter.toLowerCase());
+    });
+
     const dismissCommandBox = () => {
         setTextFilter("");
         setShow(false);
         dismissCallback();
     };
 
-    const getMatchingCommands = () => commands.filter((command) => {
-        return command.friendlyName.toLowerCase().startsWith(textFilter.toLowerCase());
-    });
-
     const keydownHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        const matchingCommands = getMatchingCommands();
         if (e.key === "Escape") {
             dismissCommandBox();
         } else if (e.key === "ArrowDown") {
@@ -80,7 +79,7 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
     const keypressHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter") {
             if (arrowedCommand !== undefined) {
-                getMatchingCommands()[arrowedCommand].exec();
+                matchingCommands[arrowedCommand].exec();
                 dismissCommandBox();
             }/* else if (textbox contents string match a known command) {
                 command.exec();
@@ -94,7 +93,7 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
             return [];
         }
 
-        const commandElements = getMatchingCommands().map((command, index) => {
+        const commandElements = matchingCommands.map((command, index) => {
                 const clickCommand = () => {
                     command.exec();
                     dismissCommandBox();
