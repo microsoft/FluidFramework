@@ -5,6 +5,7 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
+import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
@@ -49,8 +50,10 @@ export enum ConnectionState {
     Disconnected = 0
 }
 
+// Warning: (ae-forgotten-export) The symbol "IContainerEvents2" needs to be exported by the entry point index.d.ts
+//
 // @public (undocumented)
-export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
+export class Container extends EventEmitterWithErrorHandling<IContainerEvents2> implements IContainer {
     constructor(loader: Loader, config: IContainerConfig);
     // (undocumented)
     attach(request: IRequest): Promise<void>;

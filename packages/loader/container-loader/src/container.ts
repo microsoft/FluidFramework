@@ -1044,8 +1044,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents2> 
             args.mode = "write";
         }
 
-        // Notify listeners that we are attempting to resume the delta connection
-        this.emit("resumeConnection", args);
+        if (this.connectionState === ConnectionState.Disconnected) {
+            // Notify listeners that we are attempting to resume the delta connection
+            // This codepath may be hit multiple times before connecting, so consumers
+            // are responsible to dedupe these events in that case.
+            this.emit("resumeConnection", args);
+        }
 
         this._deltaManager.connect(args);
     }
