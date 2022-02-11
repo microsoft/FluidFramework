@@ -81,18 +81,18 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     /**
      * @deprecated - Needed for back compat
      */
-    private getProvider(provider: string & keyof TMap){
-        if(this.has(provider)){
-            if(this.providers.has(provider)){
+    private getProvider(provider: string & keyof TMap) {
+        if(this.has(provider)) {
+            if(this.providers.has(provider)) {
                 return this.providers.get(provider);
             }
-            for(const parent of this.parents){
-                if(parent instanceof DependencyContainer){
+            for(const parent of this.parents) {
+                if(parent instanceof DependencyContainer) {
                     return parent.getProvider(provider);
                 }else{
                     // eslint-disable-next-line @typescript-eslint/dot-notation
                     const maybeGetProvider = parent["getProvider"];
-                    if(typeof maybeGetProvider === "function"){
+                    if(typeof maybeGetProvider === "function") {
                         return maybeGetProvider(provider);
                     }
                 }
@@ -104,7 +104,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
         base: AsyncRequiredFluidObjectProvider<T>,
         types: Required<FluidObjectSymbolProvider<T>>,
     ) {
-        if (types === undefined) return;
+        if (types === undefined) { return; }
         for (const key of Object.keys(types) as unknown as (keyof TMap)[]) {
             const provider = this.resolveProvider(key);
             if(provider === undefined) {
@@ -122,7 +122,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
         base: AsyncOptionalFluidObjectProvider<T>,
         types: FluidObjectSymbolProvider<T>,
     ) {
-        if (types === undefined) return;
+        if (types === undefined) { return; }
         for (const key of Object.keys(types) as unknown as (keyof TMap)[]) {
             // back-compat: in 0.56 we allow undefined in the types, but we didn't before
             // this will keep runtime back compat, eventually we should support undefined properties
@@ -141,7 +141,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
         const provider = this.providers.get(t);
         if (provider === undefined) {
             for (const parent of this.parents) {
-                const sp: FluidObjectSymbolProvider<Pick<TMap, T>> = { [t]: t };
+                const sp = { [t]: t } as FluidObjectSymbolProvider<Pick<TMap, T>>;
                 const syn = parent.synthesize<Pick<TMap, T>,{}>(
                     sp,
                     {});

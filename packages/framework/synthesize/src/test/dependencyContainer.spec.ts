@@ -352,7 +352,6 @@ describe("Routerlicious", () => {
                     "Manager has IFluidLoadable & IFluidRouter");
             });
 
-
             it(`Child has Parent modules`, async () => {
                 const parentDc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 const loadableMock = new MockLoadable();

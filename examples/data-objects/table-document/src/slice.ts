@@ -110,7 +110,7 @@ export class TableSlice extends DataObject<{InitialState: ITableSliceConfig}> im
 
         this.root.set(ConfigKey.docId, initialState.docId);
         this.root.set(ConfigKey.name, initialState.name);
-        this.maybeDoc = 
+        this.maybeDoc =
             await handleFromLegacyUri<TableDocument>(`/${initialState.docId}`, this.context.containerRuntime).get();
         this.root.set(initialState.docId, this.maybeDoc.handle);
         await this.ensureDoc();
