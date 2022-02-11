@@ -426,11 +426,17 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         return this;
     }
 
+    /**
+     * {@inheritDoc IDirectory.dispose}
+     */
     public dispose(): void {
         this._dispose = true;
         this.root.dispose();        
     }
 
+    /**
+     * {@inheritDoc IDirectory.isDisposed}
+     */
     public isDisposed(): boolean {
         return this._dispose;        
     }

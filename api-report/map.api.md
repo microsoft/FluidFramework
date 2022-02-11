@@ -175,7 +175,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     createSubDirectory(subdirName: string): IDirectory;
     delete(key: string): boolean;
     deleteSubDirectory(subdirName: string): boolean;
-    // (undocumented)
     dispose(): void;
     entries(): IterableIterator<[string, any]>;
     forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void;
@@ -185,7 +184,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
     has(key: string): boolean;
     hasSubDirectory(subdirName: string): boolean;
-    // (undocumented)
     isDisposed(): boolean;
     keys(): IterableIterator<string>;
     // @internal (undocumented)
