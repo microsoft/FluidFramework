@@ -266,7 +266,7 @@ export class DataStores implements IDisposable {
         }
     }
 
-    private processAliasMessageCore(aliasMessage: IDataStoreAliasMessage): boolean {
+    public processAliasMessageCore(aliasMessage: IDataStoreAliasMessage): boolean {
         if (this.alreadyProcessed(aliasMessage.alias)) {
             return false;
         }

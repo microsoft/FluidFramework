@@ -20,8 +20,9 @@ import {
     SummaryCollection,
 } from "@fluidframework/container-runtime";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { GenericError, UsageError } from "@fluidframework/container-utils";
+import { GenericError } from "@fluidframework/container-utils";
 import { ConfigTypes, IConfigProviderBase, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { AliasResult } from "@fluidframework/container-runtime/dist/dataStore";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -178,6 +179,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                 {
                     value: "2",
                     tag: TelemetryDataTag.UserData,
+                    aliasResult: AliasResult.Conflict,
                 });
             assert.ok(await getRootDataStore(dataObject1, "2"));
         });
@@ -201,6 +203,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                 {
                     value: "2",
                     tag: TelemetryDataTag.UserData,
+                    aliasResult: AliasResult.Conflict,
                 });
             assert.ok(await getRootDataStore(dataObject1, "2"));
         });
@@ -225,6 +228,23 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
         const alias = "alias";
 
+        // it("Assign multiple data stores to the same alias, first write wins, same container - detached",
+        //  async () => {
+        //     const loader = provider.makeTestLoader(testContainerConfig) as Loader;
+        //     const container: IContainer = (await loader.createDetachedContainer(provider.defaultCodeDetails));
+        //     dataObject1 = await requestFluidObject<ITestFluidObject>(container, "/");
+        //     const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
+        //     const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
+
+        //     const aliasResult1 = await ds1.trySetAlias(alias);
+        //     const aliasResult2 = await ds2.trySetAlias(alias);
+
+        //     assert.equal(aliasResult1, AliasResult.Success);
+        //     assert.equal(aliasResult2, AliasResult.Conflict);
+
+        //     assert.ok(await getRootDataStore(dataObject1, alias));
+        // });
+
         it("Assign multiple data stores to the same alias, first write wins, same container", async () => {
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
             const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
@@ -232,8 +252,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const aliasResult1 = await ds1.trySetAlias(alias);
             const aliasResult2 = await ds2.trySetAlias(alias);
 
-            assert(aliasResult1);
-            assert(!aliasResult2);
+            assert.equal(aliasResult1, AliasResult.Success);
+            assert.equal(aliasResult2, AliasResult.Conflict);
 
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
@@ -244,8 +264,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const aliasResult1 = await ds1.trySetAlias(alias);
             const aliasResult2 = await ds1.trySetAlias(alias);
 
-            assert(aliasResult1);
-            assert(aliasResult2);
+            assert.equal(aliasResult1, AliasResult.Success);
+            assert.equal(aliasResult2, AliasResult.Success);
 
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
@@ -254,15 +274,11 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 
             const aliasResult1 = await ds1.trySetAlias(alias);
-            let error: Error | undefined;
-            try {
-                await ds1.trySetAlias(alias + alias);
-            } catch (err) {
-                error = err as Error;
-            }
+            const aliasResult2 = await ds1.trySetAlias(alias + alias);
 
-            assert.ok(error instanceof UsageError);
-            assert(aliasResult1);
+            assert.equal(aliasResult1, AliasResult.Success);
+            assert.equal(aliasResult2, AliasResult.AlreadyAliased);
+
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
 
@@ -272,24 +288,20 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
             const aliasResult1 = await ds1.trySetAlias(alias);
             const aliasResult2 = await ds2.trySetAlias(alias);
-            let error: Error | undefined;
-            try {
-                await ds2.trySetAlias(alias + alias);
-            } catch (err) {
-                error = err as Error;
-            }
+            const aliasResult3 = await ds2.trySetAlias(alias + alias);
 
-            assert(aliasResult1);
-            assert(!aliasResult2);
 
-            assert.ok(error instanceof UsageError);
+            assert.equal(aliasResult1, AliasResult.Success);
+            assert.equal(aliasResult2, AliasResult.Conflict);
+            assert.equal(aliasResult3, AliasResult.AlreadyAliased);
+
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
 
         it("Creating a root data store with an existing alias as an id breaks the container", async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
-            assert(await ds1.trySetAlias(alias));
+            assert.equal(await ds1.trySetAlias(alias), AliasResult.Success);
 
             await provider.ensureSynchronized();
             await createRootDataStore(dataObject2, alias);
@@ -324,8 +336,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const aliasResult1 = await ds1.trySetAlias(alias);
             const aliasResult2 = await ds2.trySetAlias(alias);
 
-            assert(aliasResult1);
-            assert(!aliasResult2);
+            assert.equal(aliasResult1, AliasResult.Success);
+            assert.equal(aliasResult2, AliasResult.Conflict);
 
             await provider.ensureSynchronized();
 
@@ -339,7 +351,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             await createRootDataStore(dataObject1, alias);
             const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
             const aliasResult2 = await ds2.trySetAlias(alias);
-            assert(!aliasResult2);
+            assert.equal(aliasResult2, AliasResult.Conflict);
 
             assert.ok(await getRootDataStore(dataObject2, alias));
         });
@@ -366,8 +378,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const aliasResult1 = await ds1.trySetAlias(alias);
             const aliasResult2 = await ds2.trySetAlias(alias);
 
-            assert(aliasResult1);
-            assert(!aliasResult2);
+            assert.equal(aliasResult1, AliasResult.Success);
+            assert.equal(aliasResult2, AliasResult.Conflict);
 
             await provider.ensureSynchronized();
             const version = await waitForSummary(provider, container1, sc);
@@ -382,7 +394,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const ds3 = await runtimeOf(dataObject3).createDataStore(packageName);
             const aliasResult3 = await ds3.trySetAlias(alias);
 
-            assert(!aliasResult3);
+            assert.equal(aliasResult3, AliasResult.Conflict);
             assert.ok(await getRootDataStore(dataObject3, alias));
         });
     });

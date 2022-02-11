@@ -146,6 +146,7 @@ import {
     IGCStats,
 } from "./garbageCollection";
 import {
+    AliasResult,
     channelToDataStore,
     IDataStore,
     IDataStoreAliasMessage,
@@ -1699,6 +1700,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             await this._createDataStore(pkg, false /* isRoot */, internalId),
             internalId,
             this,
+            this.dataStores,
             this.mc.logger);
     }
 
@@ -1715,7 +1717,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
-        return this._aliasingEnabled === true && this.attachState !== AttachState.Detached ?
+        return this._aliasingEnabled === true ?
             this.createAndAliasDataStore(pkg, rootDataStoreId) :
             this.createRootDataStoreLegacy(pkg, rootDataStoreId);
     }
@@ -1734,11 +1736,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private async createAndAliasDataStore(pkg: string | string[], alias: string, props?: any): Promise<IFluidRouter> {
         const internalId = uuid();
         const dataStore = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
-        const aliasedDataStore = channelToDataStore(dataStore, internalId, this, this.mc.logger);
+        const aliasedDataStore = channelToDataStore(dataStore, internalId, this,this.dataStores, this.mc.logger);
         const result = await aliasedDataStore.trySetAlias(alias);
-        if (!result) {
+        if (result !== AliasResult.Success) {
             throw new GenericError(
-                "dataStoreAliasConflict",
+                "dataStoreAliasFailure",
                 undefined /* error */,
                 {
                     alias: {
@@ -1749,6 +1751,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         value: internalId,
                         tag: TelemetryDataTag.PackageData,
                     },
+                    aliasResult: result,
                 });
         }
 
@@ -1792,7 +1795,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         id = uuid(),
         isRoot = false,
     ): Promise<IFluidRouter> {
-        return this._aliasingEnabled === true && isRoot && this.attachState !== AttachState.Detached ?
+        return this._aliasingEnabled === true && isRoot ?
             this.createAndAliasDataStore(pkg, id, props) :
             this._createDataStoreWithPropsLegacy(pkg, props, id, isRoot);
     }

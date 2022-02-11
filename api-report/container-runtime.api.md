@@ -54,6 +54,14 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 // @public
 export const agentSchedulerId = "_scheduler";
 
+// @public
+export enum AliasResult {
+    Aliasing = "Aliasing",
+    AlreadyAliased = "AlreadyAliased",
+    Conflict = "Conflict",
+    Success = "Success"
+}
+
 // @public (undocumented)
 export enum ContainerMessageType {
     // (undocumented)
@@ -322,7 +330,7 @@ export interface IContainerRuntimeOptions {
 
 // @public
 export interface IDataStore extends IFluidRouter {
-    trySetAlias(alias: string): Promise<boolean>;
+    trySetAlias(alias: string): Promise<AliasResult>;
 }
 
 // @public
