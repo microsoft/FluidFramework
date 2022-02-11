@@ -103,7 +103,7 @@ export function mergeAppAndProtocolTree(appSummaryTree: ITree_2, protocolTree: I
 
 // @public
 export class ProtocolOpHandler {
-    constructor(minimumSequenceNumber: number, sequenceNumber: number, term: number | undefined, members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number, sendReject: (sequenceNumber: number) => void);
+    constructor(minimumSequenceNumber: number, sequenceNumber: number, term: number | undefined, members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number);
     // (undocumented)
     close(): void;
     getProtocolState(): IScribeProtocolState;
@@ -121,7 +121,7 @@ export class ProtocolOpHandler {
 
 // @public
 export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
-    constructor(members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number, sendReject: (sequenceNumber: number) => void);
+    constructor(members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number);
     addMember(clientId: string, details: ISequencedClient): void;
     addProposal(key: string, value: any, sequenceNumber: number, local: boolean, clientSequenceNumber: number): void;
     // (undocumented)
@@ -136,16 +136,12 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     getMembers(): Map<string, ISequencedClient>;
     has(key: string): boolean;
     propose(key: string, value: any): Promise<void>;
-    rejectProposal(clientId: string, sequenceNumber: number): void;
     removeMember(clientId: string): void;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     snapshot(): IQuorumSnapshot;
-    snapshotMembers(): IQuorumSnapshot["members"];
-    snapshotProposals(): IQuorumSnapshot["proposals"];
-    snapshotValues(): IQuorumSnapshot["values"];
     updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean;
-    }
+}
 
 // @public
 export class TreeTreeEntry {
@@ -159,7 +155,6 @@ export class TreeTreeEntry {
     // (undocumented)
     readonly value: ITree;
 }
-
 
 // (No @packageDocumentation comment for this package)
 
