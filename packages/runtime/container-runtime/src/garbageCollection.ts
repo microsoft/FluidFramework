@@ -66,7 +66,7 @@ const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 const runSessionExpiry = "Fluid.GarbageCollection.RunSessionExpiry";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
-const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; //30 days
+const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 /** The statistics of the system state after a garbage collection run. */
 export interface IGCStats {
@@ -334,7 +334,7 @@ export class GarbageCollector implements IGarbageCollector {
         // If session expiry is enabled, we need to close the container when the timeout expires
         if (this.sessionExpiryTimeoutMs !== undefined) {
             const timeoutMs = this.sessionExpiryTimeoutMs;
-            setLongTimeout(timeoutMs, 
+            setLongTimeout(timeoutMs,
                 () => {
                     this.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs));
                 },
@@ -916,8 +916,8 @@ async function getGCStateFromSnapshot(
  * @param setTimerFn - the function used to update your timer variable
  */
 function setLongTimeout(
-    timeoutMs: number, 
-    timeoutFn: () => void, 
+    timeoutMs: number,
+    timeoutFn: () => void,
     setTimerFn: (timer: ReturnType<typeof setTimeout>) => void,
 ) {
     // The setTimeout max is 24.8 days before looping occurs.

@@ -360,4 +360,4 @@ describe("SparseMatrix", () => {
     });
 });
 
-/* eslint-eisable no-null/no-null */
+/* eslint-enable no-null/no-null */
