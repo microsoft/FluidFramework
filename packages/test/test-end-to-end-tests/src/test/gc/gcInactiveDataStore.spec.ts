@@ -28,7 +28,7 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
         TestDataObject,
         [],
         []);
-    const deleteTimeoutMs = 2000;
+    const deleteTimeoutMs = 100;
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: { disableSummaries: true },
         gcOptions: { gcAllowed: true, deleteTimeoutMs },
@@ -45,18 +45,17 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
     const summaryLogger = new TelemetryNullLogger();
     const inactiveObjectRevivedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObjectRevived";
     const inactiveObjectChangedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObjectChanged";
+    const inactiveObjectLoadedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObjectLoaded";
 
     let provider: ITestObjectProvider;
-    let containerRuntime: ContainerRuntime;
+    let summarizerRuntime: ContainerRuntime;
     let defaultDataStore: TestDataObject;
     let mockLogger: MockLogger;
 
-    const createContainer = async (logger: MockLogger) => provider.createContainer(runtimeFactory, { logger });
-
-    /** Waits for the given amount of time to be passed. */
-    async function waitForTimeout(timeout: number): Promise<void> {
+    /** Waits for the delete timeout to expire. */
+    async function waitForDeleteTimeout(): Promise<void> {
         await new Promise<void>((resolve) => {
-            setTimeout(resolve, timeout);
+            setTimeout(resolve, deleteTimeoutMs + 10);
         });
     }
 
@@ -66,9 +65,20 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
             !mockLogger.matchAnyEvent([
                 { eventName: inactiveObjectRevivedEvent },
                 { eventName: inactiveObjectChangedEvent },
+                { eventName: inactiveObjectLoadedEvent },
             ]),
             "inactive object events should not have been logged",
         );
+    }
+
+    async function summarize() {
+        await provider.ensureSynchronized();
+        return summarizerRuntime.summarize({
+            runGC: true,
+            fullTree: true,
+            trackState: false,
+            summaryLogger,
+        });
     }
 
     before(function() {
@@ -82,39 +92,29 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
 
     beforeEach(async () => {
         mockLogger = new MockLogger();
-        const container = await createContainer(mockLogger) as Container;
+        const container = await provider.createContainer(runtimeFactory) as Container;
         defaultDataStore = await requestFluidObject<TestDataObject>(container, "/");
-        containerRuntime = defaultDataStore.containerRuntime;
+
+        await provider.ensureSynchronized();
+        const summarizerContainer = await provider.loadContainer(runtimeFactory, { logger: mockLogger }) as Container;
+        summarizerRuntime = (await requestFluidObject<TestDataObject>(summarizerContainer, "/")).containerRuntime;
     });
 
     it("can generate events when unreferenced data store is accessed after it's inactive", async () => {
-        const dataStore1 = await dataObjectFactory.createInstance(containerRuntime);
+        const dataStore1 = await dataObjectFactory.createInstance(defaultDataStore.containerRuntime);
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
 
         // Summarize with dataStore1 as referenced and validate that no unreferneced errors were logged.
-        await provider.ensureSynchronized();
-        await containerRuntime.summarize({
-            runGC: true,
-            fullTree: true,
-            trackState: false,
-            summaryLogger,
-        });
+        await summarize();
         validateNoInactiveEvents();
 
         // Mark dataStore1 as unreferenced, summarize and validate that no unreferenced errors were logged.
         defaultDataStore._root.delete("dataStore1");
-        await provider.ensureSynchronized();
-        await containerRuntime.summarize({
-            runGC: true,
-            fullTree: true,
-            trackState: false,
-            summaryLogger,
-        });
+        await summarize();
         validateNoInactiveEvents();
 
-        // Wait for 3000 ms which is > the configured maxUnreferencedDurationMs (2000). This will ensure that the
-        // unreferenced data store is inactive.
-        await waitForTimeout(3000);
+        // Wait for delete timeout. This will ensure that the unreferenced data store is inactive.
+        await waitForDeleteTimeout();
 
         // Make changes to the inactive data store and validate that we get the inactiveObjectChanged event.
         dataStore1._root.set("key", "value");
@@ -131,6 +131,18 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
             "inactiveObjectChanged event not generated as expected",
         );
 
+        await summarizerRuntime.resolveHandle({ url: `/${dataStore1.id}` });
+        assert(
+            mockLogger.matchEvents([
+                {
+                    eventName: inactiveObjectLoadedEvent,
+                    timeout: deleteTimeoutMs,
+                    id: `/${dataStore1.id}`,
+                },
+            ]),
+            "inactiveObjectLoaded event not generated as expected",
+        );
+
         // Make a change again and validate that we don't get another inactiveObjectChanged event as we only log it
         // once per data store per session.
         dataStore1._root.set("key2", "value2");
@@ -140,12 +152,6 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
         // Revive the inactive data store and validate that we get the inactiveObjectRevivedEvent event.
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
         await provider.ensureSynchronized();
-        await containerRuntime.summarize({
-            runGC: true,
-            fullTree: true,
-            trackState: false,
-            summaryLogger,
-        });
         assert(
             mockLogger.matchEvents([
                 {
@@ -157,5 +163,5 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
             ]),
             "inactiveObjectRevived event not generated as expected",
         );
-    }).timeout(10000);
+    });
 });

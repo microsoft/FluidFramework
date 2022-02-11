@@ -1054,6 +1054,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.mc.logger,
             async () => this.garbageCollector.getDataStoreBaseGCDetails(),
             (id: string, packagePath?: readonly string[]) => this.garbageCollector.nodeChanged(id, packagePath),
+            (dataStorePath: string, packagePath?: readonly string[]) =>
+                this.garbageCollector.nodeUpdated(dataStorePath, "Changed", packagePath),
             new Map<string, string>(dataStoreAliasMap),
             this.garbageCollector.writeDataAtRoot,
         );
@@ -1328,6 +1330,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 const dataStore = request.headers?.externalRequest && this.garbageCollector.shouldRunGC
                     ? await this.getDataStoreIfInitiallyReferenced(id, wait)
                     : await this.getDataStore(id, wait);
+
                 const subRequest = requestParser.createSubRequest(1);
                 // We always expect createSubRequest to include a leading slash, but asserting here to protect against
                 // unintentionally modifying the url if that changes.
@@ -1354,28 +1357,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.baseSummaryMessage,
             sessionExpiryTimeoutMs: this.garbageCollector.sessionExpiryTimeoutMs,
         };
-    }
-
-    /**
-     * Retrieves the runtime for a data store if it's referenced as per the initially summary that it is loaded with.
-     * This is a workaround to handle scenarios where a data store shared with an external app is deleted and marked
-     * as unreferenced by GC.
-     * @param id - Id supplied during creating the data store.
-     * @param wait - True if you want to wait for it.
-     * @returns the data store runtime if the data store exists and is initially referenced; undefined otherwise.
-     */
-    private async getDataStoreIfInitiallyReferenced(id: string, wait = true): Promise<IFluidRouter> {
-        const dataStoreContext = await this.dataStores.getDataStore(id, wait);
-        // The data store is referenced if used routes in the initial summary has a route to self.
-        // Older documents may not have used routes in the summary. They are considered referenced.
-        const usedRoutes = (await dataStoreContext.getBaseGCDetails()).usedRoutes;
-        if (usedRoutes === undefined || usedRoutes.includes("") || usedRoutes.includes("/")) {
-            return dataStoreContext.realize();
-        }
-
-        // The data store is unreferenced. Throw a 404 response exception.
-        const request = { url: id };
-        throw responseToException(create404Response(request), request);
     }
 
     private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats) {
@@ -1591,8 +1572,33 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return context.realize();
     }
 
-    protected async getDataStore(id: string, wait = true): Promise<IFluidRouter> {
-        return (await this.dataStores.getDataStore(id, wait)).realize();
+    protected async getDataStore(id: string, wait = true, viaHandle?: boolean): Promise<IFluidRouter> {
+        const dataStoreContext = await this.dataStores.getDataStore(id, wait);
+        // Let the garbage collector know that a data store was requested / loaded.
+        this.garbageCollector.nodeUpdated(`/${id}`, "Loaded", viaHandle);
+        return dataStoreContext.realize();
+    }
+
+    /**
+     * Retrieves the runtime for a data store if it's referenced as per the initially summary that it is loaded with.
+     * This is a workaround to handle scenarios where a data store shared with an external app is deleted and marked
+     * as unreferenced by GC.
+     * @param id - Id supplied during creating the data store.
+     * @param wait - True if you want to wait for it.
+     * @returns the data store runtime if the data store exists and is initially referenced; undefined otherwise.
+     */
+    private async getDataStoreIfInitiallyReferenced(id: string, wait = true): Promise<IFluidRouter> {
+        const dataStoreContext = await this.dataStores.getDataStore(id, wait);
+        // The data store is referenced if used routes in the initial summary has a route to self.
+        // Older documents may not have used routes in the summary. They are considered referenced.
+        const usedRoutes = (await dataStoreContext.getBaseGCDetails()).usedRoutes;
+        if (usedRoutes === undefined || usedRoutes.includes("") || usedRoutes.includes("/")) {
+            return dataStoreContext.realize();
+        }
+
+        // The data store is unreferenced. Throw a 404 response exception.
+        const request = { url: id };
+        throw responseToException(create404Response(request), request);
     }
 
     public setFlushMode(mode: FlushMode): void {
