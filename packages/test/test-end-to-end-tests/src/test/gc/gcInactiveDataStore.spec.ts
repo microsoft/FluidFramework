@@ -43,9 +43,9 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
         runtimeOptions,
     );
     const summaryLogger = new TelemetryNullLogger();
-    const inactiveObjectRevivedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObjectRevived";
-    const inactiveObjectChangedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObjectChanged";
-    const inactiveObjectLoadedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObjectLoaded";
+    const revivedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObject_Revived";
+    const changedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObject_Changed";
+    const loadedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObject_Loaded";
 
     let provider: ITestObjectProvider;
     let summarizerRuntime: ContainerRuntime;
@@ -63,9 +63,9 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
     function validateNoInactiveEvents() {
         assert(
             !mockLogger.matchAnyEvent([
-                { eventName: inactiveObjectRevivedEvent },
-                { eventName: inactiveObjectChangedEvent },
-                { eventName: inactiveObjectLoadedEvent },
+                { eventName: revivedEvent },
+                { eventName: changedEvent },
+                { eventName: loadedEvent },
             ]),
             "inactive object events should not have been logged",
         );
@@ -122,7 +122,7 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
         assert(
             mockLogger.matchEvents([
                 {
-                    eventName: inactiveObjectChangedEvent,
+                    eventName: changedEvent,
                     timeout: deleteTimeoutMs,
                     id: `/${dataStore1.id}`,
                     pkg: { value: `/${pkg}`, tag: TelemetryDataTag.PackageData },
@@ -135,7 +135,7 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
         assert(
             mockLogger.matchEvents([
                 {
-                    eventName: inactiveObjectLoadedEvent,
+                    eventName: loadedEvent,
                     timeout: deleteTimeoutMs,
                     id: `/${dataStore1.id}`,
                 },
@@ -149,13 +149,13 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
         validateNoInactiveEvents();
 
-        // Revive the inactive data store and validate that we get the inactiveObjectRevivedEvent event.
+        // Revive the inactive data store and validate that we get the revivedEvent event.
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
         await provider.ensureSynchronized();
         assert(
             mockLogger.matchEvents([
                 {
-                    eventName: inactiveObjectRevivedEvent,
+                    eventName: revivedEvent,
                     timeout: deleteTimeoutMs,
                     id: `/${dataStore1.id}`,
                     pkg: { value: `/${pkg}`, tag: TelemetryDataTag.PackageData },

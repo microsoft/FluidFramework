@@ -89,17 +89,17 @@ describe("Garbage Collection Tests", () => {
     });
 
     describe("Inactive events", () => {
-        const inactiveObjectRevivedEvent = "GarbageCollector:inactiveObjectRevived";
-        const inactiveObjectChangedEvent = "GarbageCollector:inactiveObjectChanged";
-        const inactiveObjectLoadedEvent = "GarbageCollector:inactiveObjectLoaded";
+        const revivedEvent = "GarbageCollector:inactiveObject_Revived";
+        const changedEvent = "GarbageCollector:inactiveObject_Changed";
+        const loadedEvent = "GarbageCollector:inactiveObject_Loaded";
 
         // Validates that no inactive event has been fired.
         function validateNoInactiveEvents() {
             assert(
                 !mockLogger.matchAnyEvent([
-                    { eventName: inactiveObjectRevivedEvent },
-                    { eventName: inactiveObjectChangedEvent },
-                    { eventName: inactiveObjectLoadedEvent },
+                    { eventName: revivedEvent },
+                    { eventName: changedEvent },
+                    { eventName: loadedEvent },
                 ]),
                 "inactive object events should not have been logged",
             );
@@ -174,19 +174,19 @@ describe("Garbage Collection Tests", () => {
             updateAllNodes(garbageCollector);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[2], pkg: eventPkg },
-                    { eventName: inactiveObjectLoadedEvent, timeout: deleteTimeoutMs, id: nodes[2], pkg: eventPkg },
-                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
-                    { eventName: inactiveObjectLoadedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
+                    { eventName: changedEvent, timeout: deleteTimeoutMs, id: nodes[2], pkg: eventPkg },
+                    { eventName: loadedEvent, timeout: deleteTimeoutMs, id: nodes[2], pkg: eventPkg },
+                    { eventName: changedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
+                    { eventName: loadedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
                 ]),
                 "inactive events not generated as expected",
             );
 
-            // Add reference from node 1 to node 3 and validate that we get inactiveObjectRevivedEvent event.
+            // Add reference from node 1 to node 3 and validate that we get revivedEvent event.
             garbageCollector.addedOutboundReference(nodes[1], nodes[3]);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectRevivedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
+                    { eventName: revivedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
                 ]),
                 "inactive event not generated as expected",
             );
@@ -207,8 +207,8 @@ describe("Garbage Collection Tests", () => {
             updateAllNodes(garbageCollector);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
-                    { eventName: inactiveObjectLoadedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
+                    { eventName: changedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
+                    { eventName: loadedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
                 ]),
                 "inactive events not generated as expected",
             );
@@ -266,17 +266,17 @@ describe("Garbage Collection Tests", () => {
             garbageCollector.nodeUpdated(nodes[3], "Loaded", testPkgPath);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
-                    { eventName: inactiveObjectLoadedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
+                    { eventName: changedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
+                    { eventName: loadedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
                 ]),
                 "inactive events not generated as expected",
             );
 
-            // Add reference from node 2 to node 3 and validate that we get inactiveObjectRevivedEvent event.
+            // Add reference from node 2 to node 3 and validate that we get revivedEvent event.
             garbageCollector.addedOutboundReference(nodes[2], nodes[3]);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectRevivedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
+                    { eventName: revivedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
                 ]),
                 "inactive event not generated as expected",
             );
@@ -319,17 +319,17 @@ describe("Garbage Collection Tests", () => {
             garbageCollector.nodeUpdated(nodes[3], "Loaded", testPkgPath);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
-                    { eventName: inactiveObjectLoadedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
+                    { eventName: changedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
+                    { eventName: loadedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
                 ]),
                 "inactive event not generated as expected",
             );
 
-            // Add reference from node 2 to node 3 and validate that we get inactiveObjectRevivedEvent event.
+            // Add reference from node 2 to node 3 and validate that we get revivedEvent event.
             garbageCollector.addedOutboundReference(nodes[2], nodes[3]);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectRevivedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
+                    { eventName: revivedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
                 ]),
                 "inactive event not generated as expected",
             );
@@ -388,9 +388,9 @@ describe("Garbage Collection Tests", () => {
             garbageCollector.nodeUpdated(nodes[3], "Loaded", testPkgPath);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[1], pkg: eventPkg },
-                    { eventName: inactiveObjectChangedEvent, timeout: deleteTimeoutMs, id: nodes[2], pkg: eventPkg },
-                    { eventName: inactiveObjectLoadedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
+                    { eventName: changedEvent, timeout: deleteTimeoutMs, id: nodes[1], pkg: eventPkg },
+                    { eventName: changedEvent, timeout: deleteTimeoutMs, id: nodes[2], pkg: eventPkg },
+                    { eventName: loadedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
                 ]),
                 "inactiveObjectChanged event not generated as expected",
             );
