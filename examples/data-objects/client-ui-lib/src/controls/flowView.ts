@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ISearchMenuCommand } from "@fluid-example/search-menu";
 import { performance } from "@fluidframework/common-utils";
 import {
     FluidObject,
@@ -115,180 +114,6 @@ interface ITextErrorInfo {
     alternates: Alt[];
     color?: string;
 }
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IFlowViewCmd extends ISearchMenuCommand<FlowView> {
-}
-
-// Const cssColors = (f: FlowView) => cssColorTree;
-// const defaultColor = (f: FlowView) => "Black";
-
-const commands: IFlowViewCmd[] = [
-    {
-        exec: (f) => {
-            f.copyFormat();
-        },
-        key: "copy format",
-    },
-    {
-        exec: (f) => {
-            f.paintFormat();
-        },
-        key: "paint format",
-    },
-    {
-        exec: (f) => {
-            f.toggleBlockquote();
-        },
-        key: "blockquote",
-    },
-    {
-        exec: (f) => {
-            f.toggleBold();
-        },
-        key: "bold",
-    },
-    {
-        exec: (f) => {
-            f.setColor("red");
-        },
-        key: "red",
-    },
-    {
-        exec: (f) => {
-            f.setColor("green");
-        },
-        key: "green",
-    },
-    {
-        exec: (f) => {
-            f.setColor("gold");
-        },
-        key: "gold",
-    },
-    {
-        exec: (f) => {
-            f.setColor("pink");
-        },
-        key: "pink",
-    },
-    {
-        exec: (f) => {
-            f.setFont("courier new", "18px");
-        },
-        key: "Courier font",
-    },
-    {
-        exec: (f) => {
-            f.setFont("tahoma", "18px");
-        },
-        key: "Tahoma",
-    },
-    {
-        exec: (f) => {
-            f.setPGProps({ header: true });
-        },
-        key: "Heading 2",
-    },
-    {
-        exec: (f) => {
-            f.setPGProps({ header: null });
-        },
-        key: "Normal",
-    },
-    {
-        exec: (f) => {
-            f.setFont("georgia", "18px");
-        },
-        key: "Georgia font",
-    },
-    {
-        exec: (f) => {
-            f.setFont("sans-serif", "18px");
-        },
-        key: "sans font",
-    },
-    {
-        exec: (f) => {
-            f.setFont("cursive", "18px");
-        },
-        key: "cursive font",
-    },
-    {
-        exec: (f) => {
-            f.toggleItalic();
-        },
-        key: "italic",
-    },
-    {
-        exec: (f) => {
-            f.setList();
-        },
-        key: "list ... 1.)",
-    },
-    {
-        exec: (f) => {
-            f.setList(1);
-        },
-        key: "list ... \u2022",
-    },
-    {
-        exec: (f) => {
-            showCell(f.cursor.pos, f);
-        },
-        key: "cell info",
-    },
-    {
-        exec: (f) => {
-            showTable(f.cursor.pos, f);
-        },
-        key: "table info",
-    },
-    {
-        exec: (f) => {
-            f.tableSummary();
-        },
-        key: "table summary",
-    },
-    {
-        exec: (f) => {
-            f.updatePGInfo(f.cursor.pos - 1);
-            Table.createTable(f.cursor.pos, f.sharedString, f.runtime.clientId);
-            f.hostSearchMenu(f.cursor.pos);
-        },
-        key: "table test",
-    },
-    {
-        exec: (f) => {
-            f.insertColumn();
-        },
-        key: "insert column",
-    },
-    {
-        exec: (f) => {
-            f.insertRow();
-        },
-        key: "insert row",
-    },
-    {
-        exec: (f) => {
-            f.deleteRow();
-        },
-        key: "delete row",
-    },
-    {
-        exec: (f) => {
-            f.deleteColumn();
-        },
-        key: "delete column",
-    },
-    {
-        exec: (f) => {
-            f.toggleUnderline();
-        },
-        key: "underline",
-    },
-];
 
 function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
     if ((elmOff.elm !== span) && (elmOff.elm.parentElement !== span)) {
@@ -2235,7 +2060,6 @@ export class FlowView extends ui.Component {
     private lastVerticalX = -1;
     private pendingRender = false;
     private activeSearchBox: boolean;
-    private readonly cmdTree: MergeTree.TST<IFlowViewCmd>;
     private formatRegister: MergeTree.PropertySet;
 
     // A list of Marker segments modified by the most recently processed op.  (Reset on each
@@ -2264,11 +2088,6 @@ export class FlowView extends ui.Component {
 
         // Clip children of FlowView to the bounds of the FlowView's root div.
         this.element.style.overflow = "hidden";
-
-        this.cmdTree = new MergeTree.TST<IFlowViewCmd>();
-        for (const command of commands) {
-            this.cmdTree.put(command.key.toLowerCase(), command);
-        }
 
         this.viewportDiv = document.createElement("div");
         this.element.appendChild(this.viewportDiv);

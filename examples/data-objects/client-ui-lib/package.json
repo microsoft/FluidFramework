@@ -49,7 +49,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluid-example/search-menu": "^0.57.0",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.46.0-0",
     "@fluidframework/core-interfaces": "^0.42.0",
