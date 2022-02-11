@@ -34,9 +34,7 @@ export function fromJson<T>(value: Serializable<T>): ChangeNode {
                 definition: NodeKind.array as Definition,
                 traits: { items: value.map(fromJson) },
             };
-        // eslint-disable-next-line no-null/no-null
         } else if (value === null) {
-            // eslint-disable-next-line no-null/no-null
             return makeScalar(null);
         } else {
             const traits: PropertyDescriptorMap = {};

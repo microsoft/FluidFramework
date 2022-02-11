@@ -114,7 +114,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                     const props = {};
                     for (const key of Object.keys(r.propertyDeltas)) {
                         props[key] =
-                            // eslint-disable-next-line no-null/no-null
                             r.segment.properties[key] === undefined ? null : r.segment.properties[key];
                     }
                     if (lastAnnotate && lastAnnotate.pos2 === r.position &&

@@ -27,7 +27,6 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
         if (this.prefetchEnabled) {
             // We don't care if the prefetch succeeds
             void p.then((tree: ISnapshotTree | null | undefined) => {
-                // eslint-disable-next-line no-null/no-null
                 if (tree === null || tree === undefined) { return; }
                 this.prefetchTree(tree);
             });
@@ -75,13 +74,11 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
         for (const blobKey of Object.keys(tree.blobs)) {
             const blob = tree.blobs[blobKey];
             if (blobKey.startsWith(".") || blobKey === "header" || blobKey.startsWith("quorum")) {
-                // eslint-disable-next-line no-null/no-null
                 if (blob !== null) {
                     // We don't care if the prefetch succeeds
                     void this.cachedRead(blob);
                 }
             } else if (!blobKey.startsWith("deltas")) {
-                // eslint-disable-next-line no-null/no-null
                 if (blob !== null) {
                     secondary.push(blob);
                 }

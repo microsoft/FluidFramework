@@ -14,8 +14,6 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SparseMatrix, SparseMatrixFactory, SparseMatrixItem } from "../sparsematrix";
 
-/* eslint-disable no-null/no-null */
-
 describe("SparseMatrix", () => {
     const extract = (matrix: SparseMatrix, numCols: number) => {
         const rows: SparseMatrixItem[][] = [];
@@ -359,5 +357,3 @@ describe("SparseMatrix", () => {
         });
     });
 });
-
-/* eslint-enable no-null/no-null */

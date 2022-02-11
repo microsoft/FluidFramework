@@ -9,7 +9,6 @@ import git from "nodegit";
 import * as testUtils from "./utils";
 
 async function mockTree(repository: git.Repository, entries: number) {
-    // eslint-disable-next-line no-null/no-null
     const builder = await git.Treebuilder.create(repository, null);
 
     const oid = git.Oid.fromString("b45ef6fec89518d314f546fd6c3025367b721684");

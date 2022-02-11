@@ -10,7 +10,6 @@ export class Dom {
     public static removeAllChildren(parent: Node) {
         let firstChild: ChildNode | null;
 
-        // eslint-disable-next-line no-null/no-null
         while ((firstChild = parent.firstChild) !== null) {
             firstChild.remove();
         }
