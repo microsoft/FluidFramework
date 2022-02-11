@@ -19,7 +19,7 @@ export interface ICommandBoxProps {
 export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) => {
     const { registerShowListener, dismissCallback, commands } = props;
     const [show, setShow] = React.useState<boolean>(false);
-    const [textFilter, setTextFilter] = React.useState<string>("");
+    const [matchingCommands, setMatchingCommands] = React.useState<ICommandBoxCommand[]>([]);
     const [arrowedCommand, setArrowedCommand] = React.useState<number | undefined>(undefined);
     const filterRef = React.useRef<HTMLInputElement>(null);
     React.useEffect(() => {
@@ -32,7 +32,9 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
             const filterCommands = () => {
                 // todo: actually compare match of filtered commands and only reset if different
                 setArrowedCommand(undefined);
-                setTextFilter(inputEl.value);
+                setMatchingCommands(commands.filter((command) => {
+                    return command.friendlyName.toLowerCase().startsWith(inputEl.value.toLowerCase());
+                }));
             };
             inputEl.addEventListener("input", filterCommands);
             inputEl.focus();
@@ -42,12 +44,8 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
         }
     });
 
-    const matchingCommands = commands.filter((command) => {
-        return command.friendlyName.toLowerCase().startsWith(textFilter.toLowerCase());
-    });
-
     const dismissCommandBox = () => {
-        setTextFilter("");
+        setMatchingCommands([]);
         setShow(false);
         dismissCallback();
     };
@@ -88,31 +86,22 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
         }
     };
 
-    const buildCommandElements = () => {
-        if (textFilter === "") {
-            return [];
+    const commandElements = matchingCommands.map((command, index) => {
+        const clickCommand = () => {
+            command.exec();
+            dismissCommandBox();
+        };
+
+        if (index === arrowedCommand) {
+            return (
+                <div key={ command.friendlyName } onClick={ clickCommand } style={{ backgroundColor: "#ccc" }}>
+                    { command.friendlyName }
+                </div>
+            );
+        } else {
+            return <div key={ command.friendlyName } onClick={ clickCommand }>{ command.friendlyName }</div>;
         }
-
-        const commandElements = matchingCommands.map((command, index) => {
-                const clickCommand = () => {
-                    command.exec();
-                    dismissCommandBox();
-                };
-
-                if (index === arrowedCommand) {
-                    return (
-                        <div key={ command.friendlyName } onClick={ clickCommand } style={{ backgroundColor: "#ccc" }}>
-                            { command.friendlyName }
-                        </div>
-                    );
-                } else {
-                    return <div key={ command.friendlyName } onClick={ clickCommand }>{ command.friendlyName }</div>;
-                }
-            });
-
-        return commandElements;
-    }
-    const commandElements = buildCommandElements();
+    });
 
     if (show) {
         return (
