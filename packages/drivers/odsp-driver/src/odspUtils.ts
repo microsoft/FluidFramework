@@ -319,7 +319,7 @@ export function toInstrumentedOdspTokenFetcher(
                 const error = normalizeError(originalError, {
                     externalErrorToFluidError: (errorMessage) => new NetworkErrorBasic(
                         "tokenFetcherFailed",
-                        errorMessage,
+                        `tokenFetcher failed: [${errorMessage}]`,
                         OdspErrorType.fetchTokenError,
                         typeof rawCanRetry === "boolean" ? rawCanRetry : false /* canRetry */,
                         { method: name, driverVersion },

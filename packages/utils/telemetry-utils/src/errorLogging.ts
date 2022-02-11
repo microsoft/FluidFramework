@@ -124,6 +124,11 @@ export function normalizeError(
     } else {
         fluidError = wrapError(error, annotations.externalErrorToFluidError);
     }
+    //* Consider:: Do we want to stick error as innerError on SimpleFluidError or via externalErrorToFluidError?
+    //* Need an interface for adding unsafe props like in wrapError branch...
+    //* Real question is, is munging messages together (see other file in this commit) ok or better
+    //* to have more complex code that splits into well-defined fields?  Leaning towards simpler code and requiring
+    //* callers to augment however they want.  e.g. could use flags.
 
     fluidError.addTelemetryProperties({
         ...annotations.props,
