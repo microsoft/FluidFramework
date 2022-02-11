@@ -111,6 +111,8 @@ class DataStore implements IDataStore {
             alias,
         };
 
+        this.fluidDataStoreChannel.bindToContext();
+
         if (this.runtime.attachState === AttachState.Detached) {
             const localResult = this.datastores.processAliasMessageCore(message);
             // Explicitly Lock-out future attempts of aliasing,
@@ -118,8 +120,6 @@ class DataStore implements IDataStore {
             this.aliasState = AliasState.Aliased;
             return localResult ? AliasResult.Success : AliasResult.Conflict;
         }
-
-        this.fluidDataStoreChannel.bindToContext();
 
         const aliased = await this.ackBasedPromise<boolean>((resolve) => {
             this.runtime.submitDataStoreAliasOp(message, resolve);

@@ -21,6 +21,8 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Removing snapshot API from IRuntime](#Removing-snapshot-api-from-IRuntime)
 - [Remove Unused IFluidObject Augmentations](#Remove-Unused-IFluidObject-Augmentations)
 - [Duplicate extractLogSafeErrorProperties removed](#duplicate-extractlogsafeerrorproperties-removed)
+- [ContainerRuntime.createDataStore return type changed](#ContainerRuntime.createDataStore-return-type-changed)
+- [Root datastore creation may throw an exception in case of name conflicts](#Root-datastore-creation-may-throw-an-exception-in-case-of-name-conflicts)
 
 ### IFluidConfiguration removed
 
@@ -87,6 +89,14 @@ The interfaces that correspond to the above properties continue to exist, and ca
 
 The helper function `extractLogSafeErrorProperties` existed in both telemetry-utils and common-utils packages.
 The copy in common-utils was out of date and unused in this repo, and has now been removed.
+
+### ContainerRuntime.createDataStore return type changed
+
+`ContainerRuntime.createDataStore` will now return an an `IDataStore` instead of an `IFluidRouter`. This change does not break the interface contract, as the former inherits the latter, however the concrete object will be a `DataStore` instance, which does not inherit `IFluidDataStoreChannel` as before.
+
+### Root datastore creation may throw an exception in case of name conflicts
+
+When creating root datastores using `ContainerRuntime.createRootDataStore` or `ContainerRuntime._createDataStoreWithProps`, in case of a name conflict (when attempting to create a root datastore with a name which already exists in the document), an exception of type `GenericError` may be thrown from the function.
 
 ## 0.56 Breaking changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)

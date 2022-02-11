@@ -232,6 +232,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         it("Assign multiple data stores to the same alias, first write wins, same container - detached", async () => {
             const loader = provider.makeTestLoader(testContainerConfig) as Loader;
             const container: IContainer = (await loader.createDetachedContainer(provider.defaultCodeDetails));
+            const request = provider.driver.createCreateNewRequest(provider.documentId);
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
             const ds1 = await runtimeOf(dataObject).createDataStore(packageName);
             const ds2 = await runtimeOf(dataObject).createDataStore(packageName);
@@ -241,6 +242,15 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
             assert.equal(aliasResult1, AliasResult.Success);
             assert.equal(aliasResult2, AliasResult.Conflict);
+
+            assert.ok(await getRootDataStore(dataObject, alias));
+
+            await container.attach(request);
+            await provider.ensureSynchronized();
+
+            const ds3 = await runtimeOf(dataObject).createDataStore(packageName);
+            const aliasResult3 = await ds3.trySetAlias(alias);
+            assert.equal(aliasResult3, AliasResult.Conflict);
         });
 
         it("Assign multiple data stores to the same alias, first write wins, same container", async () => {

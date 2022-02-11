@@ -1716,7 +1716,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
-        return this._aliasingEnabled === true && this.attachState !== AttachState.Detached?
+        return this._aliasingEnabled === true ?
             this.createAndAliasDataStore(pkg, rootDataStoreId) :
             this.createRootDataStoreLegacy(pkg, rootDataStoreId);
     }
@@ -1794,7 +1794,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         id = uuid(),
         isRoot = false,
     ): Promise<IFluidRouter> {
-        return this._aliasingEnabled === true && isRoot && this.attachState !== AttachState.Detached?
+        return this._aliasingEnabled === true && isRoot ?
             this.createAndAliasDataStore(pkg, id, props) :
             this._createDataStoreWithPropsLegacy(pkg, props, id, isRoot);
     }
