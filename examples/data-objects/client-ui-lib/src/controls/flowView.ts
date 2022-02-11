@@ -23,16 +23,16 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
+import { CommandBox } from "./commandBox";
 import { Cursor, IRange } from "./cursor";
 import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
-import { PresenceSignal } from "./presenceSignal";
 import {
     CursorDirection,
     IViewCursor,
     IViewLayout,
 } from "./layout";
-import { CommandBox } from "./commandBox";
+import { PresenceSignal } from "./presenceSignal";
 
 function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
     if (marker && marker.properties && marker.properties.crefTest) {
