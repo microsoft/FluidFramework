@@ -306,7 +306,7 @@ type IRuntimeMessageMetadata = undefined | {
 export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
     /** The garbage collection stats if GC ran, undefined otherwise. */
     gcStats?: IGCStats;
-};
+}
 
 /**
  * @deprecated
@@ -316,7 +316,7 @@ export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
  */
 interface OldContainerContextWithLogger extends IContainerContext {
     logger: ITelemetryBaseLogger;
-};
+}
 
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
@@ -912,7 +912,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private dirtyContainer: boolean;
     private emitDirtyDocumentEvent = true;
 
-    private summarizerWarning = (warning: ContainerWarning) =>
+    private readonly summarizerWarning = (warning: ContainerWarning) =>
         this.mc.logger.sendTelemetryEvent({ eventName: "summarizerWarning" }, warning);
     /**
      * Summarizer is responsible for coordinating when to send generate and send summaries.

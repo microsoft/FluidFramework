@@ -326,7 +326,7 @@ class Float64DataArray extends BaseDataArray {
  * @param size - The initial size with which to allocate the array.
  */
 class UniversalDataArray extends BaseDataArray {
-    constructor(bufferConstructor: any, size: number)
+    constructor(bufferConstructor: any, size: number);
     constructor(size: number);
     constructor(a?, b?) {
         if (b === undefined) {

@@ -101,7 +101,7 @@ export class GridView {
             });
 
             scheduled = true;
-        }
+        };
 
         const invalidateCells = (rowStart: number, colStart: number, rowCount: number, colCount: number) => {
             for (let row = rowStart; row < rowStart + rowCount; row++) {
@@ -367,6 +367,7 @@ export class GridView {
             case KeyCode.arrowLeft: { this.moveInputByOffset(e, /* rowOffset: */ 0, /* colOffset */ -1); break; }
             case KeyCode.tab: { e.preventDefault(); /* fall-through */ }
             case KeyCode.arrowRight: { this.moveInputByOffset(e, /* rowOffset: */ 0, /* colOffset */ 1); }
+            default: break;
         }
         /* eslint-enable no-fallthrough */
     };

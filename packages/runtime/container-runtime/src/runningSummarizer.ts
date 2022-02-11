@@ -114,7 +114,7 @@ export class RunningSummarizer implements IDisposable {
                     summarizeCount: () => this.summarizeCount,
                     summarizerSuccessfulAttempts: () => this.totalSuccessfulAttempts,
                 },
-            }
+            },
         );
 
         if (!disableHeuristics) {
@@ -160,7 +160,7 @@ export class RunningSummarizer implements IDisposable {
             this.heuristicData,
             this.submitSummaryCallback,
             this.raiseSummarizingError,
-            () => { this.totalSuccessfulAttempts++ },
+            () => { this.totalSuccessfulAttempts++; },
             this.summaryWatcher,
             this.logger,
         );
