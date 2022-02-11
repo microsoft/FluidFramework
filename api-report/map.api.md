@@ -41,10 +41,12 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     readonly absolutePath: string;
     createSubDirectory(subdirName: string): IDirectory;
     deleteSubDirectory(subdirName: string): boolean;
+    dispose(): void;
     get<T = any>(key: string): T | undefined;
     getSubDirectory(subdirName: string): IDirectory | undefined;
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
     hasSubDirectory(subdirName: string): boolean;
+    isDisposed(): boolean;
     set<T = any>(key: string, value: T): this;
     subdirectories(): IterableIterator<[string, IDirectory]>;
 }
@@ -173,6 +175,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     createSubDirectory(subdirName: string): IDirectory;
     delete(key: string): boolean;
     deleteSubDirectory(subdirName: string): boolean;
+    // (undocumented)
+    dispose(): void;
     entries(): IterableIterator<[string, any]>;
     forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void;
     get<T = any>(key: string): T | undefined;
@@ -181,6 +185,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
     has(key: string): boolean;
     hasSubDirectory(subdirName: string): boolean;
+    // (undocumented)
+    isDisposed(): boolean;
     keys(): IterableIterator<string>;
     // @internal (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
