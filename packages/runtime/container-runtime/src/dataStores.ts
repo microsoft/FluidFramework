@@ -612,7 +612,7 @@ export class DataStores implements IDisposable {
         // Currently, only return the data store package path for the node since GC is only interested in data stores.
         const dataStoreId = nodePath.split("/")[1];
         const context = this.contexts.get(dataStoreId);
-        assert(context !== undefined, "Data store with given id does not exist");
+        assert(context !== undefined, 0x2b9 /* "Data store with given id does not exist" */);
         return context.isLoaded ? context.packagePath : undefined;
     }
 }
