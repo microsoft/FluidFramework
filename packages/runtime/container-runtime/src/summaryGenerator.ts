@@ -197,7 +197,7 @@ export class SummaryGenerator {
 
         const timeSinceLastAttempt = Date.now() - this.heuristicData.lastAttempt.summaryTime;
         const timeSinceLastSummary = Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime;
-        let generateTelemetryProps: Record<string, string | number | boolean | undefined> = {
+        let summarizeTelemetryProps: Record<string, string | number | boolean | undefined> = {
             fullTree,
             timeSinceLastAttempt,
             timeSinceLastSummary,
@@ -206,7 +206,7 @@ export class SummaryGenerator {
         const summarizeEvent = PerformanceEvent.start(logger, {
             eventName: "Summarize",
             refreshLatestAck,
-            ...generateTelemetryProps,
+            ...summarizeTelemetryProps,
         });
 
         // Helper functions to report failures and return.
@@ -246,7 +246,7 @@ export class SummaryGenerator {
         try {
             const generateSummaryEvent = PerformanceEvent.start(logger, {
                 eventName: "Summarize",
-                ...generateTelemetryProps,
+                ...summarizeTelemetryProps,
             });
 
             summaryData = await this.submitSummaryCallback({
@@ -260,29 +260,29 @@ export class SummaryGenerator {
             const referenceSequenceNumber = summaryData.referenceSequenceNumber;
             const opsSinceLastSummary =
                 referenceSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber;
-            generateTelemetryProps = {
-                ...generateTelemetryProps,
+            summarizeTelemetryProps = {
+                ...summarizeTelemetryProps,
                 referenceSequenceNumber,
                 opsSinceLastAttempt: referenceSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
                 opsSinceLastSummary,
             };
             if (summaryData.stage !== "base") {
-                generateTelemetryProps = {
-                    ...generateTelemetryProps,
+                summarizeTelemetryProps = {
+                    ...summarizeTelemetryProps,
                     ...summaryData.summaryStats,
                     generateDuration: summaryData.generateDuration,
                 };
 
                 if (summaryData.stage !== "generate") {
-                    generateTelemetryProps = {
-                        ...generateTelemetryProps,
+                    summarizeTelemetryProps = {
+                        ...summarizeTelemetryProps,
                         handle: summaryData.handle,
                         uploadDuration: summaryData.uploadDuration,
                     };
 
                     if (summaryData.stage !== "upload") {
-                        generateTelemetryProps = {
-                            ...generateTelemetryProps,
+                        summarizeTelemetryProps = {
+                            ...summarizeTelemetryProps,
                             clientSequenceNumber: summaryData.clientSequenceNumber,
                         };
                     }
@@ -290,7 +290,7 @@ export class SummaryGenerator {
             }
 
             if (summaryData.stage !== "submit") {
-                return fail("submitSummaryFailure", summaryData.error, generateTelemetryProps);
+                return fail("submitSummaryFailure", summaryData.error, summarizeTelemetryProps);
             }
 
             /**
@@ -316,7 +316,7 @@ export class SummaryGenerator {
             }
 
             // Log event here on summary success only, as Summarize_cancel duplicates failure logging.
-            generateSummaryEvent.reportEvent("generate", {...generateTelemetryProps});
+            generateSummaryEvent.reportEvent("generate", {...summarizeTelemetryProps});
             resultsBuilder.summarySubmitted.resolve({ success: true, data: summaryData });
         } catch (error) {
             return fail("submitSummaryFailure", error);
@@ -368,21 +368,18 @@ export class SummaryGenerator {
             // Update for success/failure
             const ackNackDuration = Date.now() - this.heuristicData.lastAttempt.summaryTime;
 
-            // removing 2 irrelevant properties during generate
-            delete generateTelemetryProps.generateDuration;
-            delete generateTelemetryProps.uploadDuration;
             // adding new properties
-            generateTelemetryProps = {
+            summarizeTelemetryProps = {
                 ackWaitDuration: ackNackDuration,
                 ackNackSequenceNumber: ackNackOp.sequenceNumber,
                 summarySequenceNumber: ackNackOp.contents.summaryProposal.summarySequenceNumber,
-                ...generateTelemetryProps,
+                ...summarizeTelemetryProps,
             };
             if (ackNackOp.type === MessageType.SummaryAck) {
                 this.heuristicData.markLastAttemptAsSuccessful();
                 this.successfulSummaryCallback();
                 summarizeEvent.end({
-                    ...generateTelemetryProps,
+                    ...summarizeTelemetryProps,
                     handle: ackNackOp.contents.handle,
                     message: "summaryAck",
                 });
@@ -399,14 +396,14 @@ export class SummaryGenerator {
 
                 const error = new LoggingError(`summaryNack: ${message}`, { retryAfterSeconds });
                 logger.sendErrorEvent(
-                    { eventName: "SummaryNack", ...generateTelemetryProps, retryAfterSeconds }, error);
+                    { eventName: "SummaryNack", ...summarizeTelemetryProps, retryAfterSeconds }, error);
 
                 assert(getRetryDelaySecondsFromError(error) === retryAfterSeconds, 0x25f /* "retryAfterSeconds" */);
                 // This will only set resultsBuilder.receivedSummaryAckOrNack, as other promises are already set.
                 return fail(
                     "summaryNack",
                     error,
-                    { ...generateTelemetryProps, nackRetryAfter: retryAfterSeconds },
+                    { ...summarizeTelemetryProps, nackRetryAfter: retryAfterSeconds },
                     { summaryNackOp: ackNackOp, ackNackDuration },
                 );
             }
