@@ -36,13 +36,13 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
 
     /** Asserts that matchEvents is true, and prints the actual/expected output if not */
     assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]) {
-        const actualEvents = this.events;
-        assert(this.matchEvents(expectedEvents), `
-expected:
-${JSON.stringify(expectedEvents)}
+        // const actualEvents = this.events;
+        assert(this.matchEvents(expectedEvents), 0x2ba /* `
+            expected:
+            ${JSON.stringify(expectedEvents)}
 
-actual:
-${JSON.stringify(actualEvents)}`);
+            actual:
+            ${JSON.stringify(actualEvents)}` */);
     }
 
     /**
@@ -60,14 +60,14 @@ ${JSON.stringify(actualEvents)}`);
 
     /** Asserts that matchAnyEvent is true, and prints the actual/expected output if not */
     assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]) {
-        const actualEvents = this.events;
+        // const actualEvents = this.events;
 
-        assert(this.matchAnyEvent(expectedEvents), `
-expected:
-${JSON.stringify(expectedEvents)}
+        assert(this.matchAnyEvent(expectedEvents), 0x2bb /* `
+            expected:
+            ${JSON.stringify(expectedEvents)}
 
-actual:
-${JSON.stringify(actualEvents)}`);
+            actual:
+            ${JSON.stringify(actualEvents)}` */);
     }
 
     private getMatchedEventsCount(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): number {
