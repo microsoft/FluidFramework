@@ -223,8 +223,8 @@ describe("Runtime", () => {
                     await emitNextOp(1);
                     assertRunCounts(1, 0, 0);
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary", summarizeCount: runCount },
-                        { eventName: "Running:SummaryOp", summarizeCount: runCount },
+                        { eventName: "Running:Summarize_generate", summarizeCount: runCount },
+                        { eventName: "Running:Summarize_Op", summarizeCount: runCount },
                     ]), "unexpected log sequence");
 
                     // should not run, because our summary hasnt been acked/nacked yet
@@ -236,8 +236,8 @@ describe("Runtime", () => {
                     assertRunCounts(2, 0, 0);
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:Summarize_end", summarizeCount: (runCount - 1) }, // ack for previous run
-                        { eventName: "Running:GenerateSummary", summarizeCount: runCount },
-                        { eventName: "Running:SummaryOp", summarizeCount: runCount },
+                        { eventName: "Running:Summarize_generate", summarizeCount: runCount },
+                        { eventName: "Running:Summarize_Op", summarizeCount: runCount },
                     ]), "unexpected log sequence");
 
                     await emitNextOp();
@@ -403,8 +403,8 @@ describe("Runtime", () => {
                         summaryAttemptPhase: 1,
                     };
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary", ...retryProps1 },
-                        { eventName: "Running:SummaryOp", ...retryProps1 },
+                        { eventName: "Running:Summarize_generate", ...retryProps1 },
+                        { eventName: "Running:Summarize_Op", ...retryProps1 },
                     ]), "unexpected log sequence");
 
                     // should not run, because our summary hasn't been acked/nacked yet
@@ -422,8 +422,8 @@ describe("Runtime", () => {
                     };
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:Summarize_cancel", ...retryProps1, reason: "summaryNack" },
-                        { eventName: "Running:GenerateSummary", ...retryProps2 },
-                        { eventName: "Running:SummaryOp", ...retryProps2 },
+                        { eventName: "Running:Summarize_generate", ...retryProps2 },
+                        { eventName: "Running:Summarize_Op", ...retryProps2 },
                     ]), "unexpected log sequence");
 
                     // Should not run, because of 2 min delay
@@ -442,8 +442,8 @@ describe("Runtime", () => {
                     };
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:Summarize_cancel", ...retryProps2, reason: "summaryNack" },
-                        { eventName: "Running:GenerateSummary", ...retryProps3 },
-                        { eventName: "Running:SummaryOp", ...retryProps3 },
+                        { eventName: "Running:Summarize_generate", ...retryProps3 },
+                        { eventName: "Running:Summarize_Op", ...retryProps3 },
                     ]), "unexpected log sequence");
 
                     // Should not run, because of 10 min delay
@@ -462,8 +462,8 @@ describe("Runtime", () => {
                     };
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:Summarize_cancel", ...retryProps3, reason: "summaryNack" },
-                        { eventName: "Running:GenerateSummary", ...retryProps4 },
-                        { eventName: "Running:SummaryOp", ...retryProps4 },
+                        { eventName: "Running:Summarize_generate", ...retryProps4 },
+                        { eventName: "Running:Summarize_Op", ...retryProps4 },
                     ]), "unexpected log sequence");
 
                     // Should stop after final nack
@@ -489,8 +489,8 @@ describe("Runtime", () => {
                         summaryAttemptPhase: 1,
                     };
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary", ...retryProps1 },
-                        { eventName: "Running:SummaryOp", ...retryProps1 },
+                        { eventName: "Running:Summarize_generate", ...retryProps1 },
+                        { eventName: "Running:Summarize_Op", ...retryProps1 },
                     ]), "unexpected log sequence");
 
                     // should not run, because our summary hasn't been acked/nacked yet
@@ -514,8 +514,8 @@ describe("Runtime", () => {
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:Summarize_cancel", summarizeCount: 1, reason: "summaryNack" },
                         { eventName: "Running:SummarizeAttemptDelay", ...retryProps2 },
-                        { eventName: "Running:GenerateSummary", ...retryProps2 },
-                        { eventName: "Running:SummaryOp", ...retryProps2 },
+                        { eventName: "Running:Summarize_generate", ...retryProps2 },
+                        { eventName: "Running:Summarize_Op", ...retryProps2 },
                     ]), "unexpected log sequence");
 
                     // should not run, because of specified 30 sec delay
@@ -535,8 +535,8 @@ describe("Runtime", () => {
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:Summarize_cancel", ...retryProps2, reason: "summaryNack" },
                         { eventName: "Running:SummarizeAttemptDelay", ...retryProps3 },
-                        { eventName: "Running:GenerateSummary", ...retryProps3 },
-                        { eventName: "Running:SummaryOp", ...retryProps3 },
+                        { eventName: "Running:Summarize_generate", ...retryProps3 },
+                        { eventName: "Running:Summarize_Op", ...retryProps3 },
                     ]), "unexpected log sequence");
                 });
 
@@ -575,8 +575,8 @@ describe("Runtime", () => {
                     assertRunCounts(2, 0, 0, "normal run");
 
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary", ...retryProps2 },
-                        { eventName: "Running:SummaryOp", ...retryProps2 },
+                        { eventName: "Running:Summarize_generate", ...retryProps2 },
+                        { eventName: "Running:Summarize_Op", ...retryProps2 },
                     ]), "unexpected log sequence");
                 });
             });
@@ -610,8 +610,8 @@ describe("Runtime", () => {
                         "summarize op handle should be test-broadcast-handle");
 
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary", summarizeCount: runCount },
-                        { eventName: "Running:SummaryOp", summarizeCount: runCount },
+                        { eventName: "Running:Summarize_generate", summarizeCount: runCount },
+                        { eventName: "Running:Summarize_Op", summarizeCount: runCount },
                     ]), "unexpected log sequence");
 
                     // Verify that heuristics are blocked while waiting for ack
@@ -667,8 +667,8 @@ describe("Runtime", () => {
                         "summarize op handle should be test-broadcast-handle");
 
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary", summarizeCount: runCount },
-                        { eventName: "Running:SummaryOp", summarizeCount: runCount },
+                        { eventName: "Running:Summarize_generate", summarizeCount: runCount },
+                        { eventName: "Running:Summarize_Op", summarizeCount: runCount },
                     ]), "unexpected log sequence");
 
                     // Verify that heuristics are blocked while waiting for ack
@@ -778,8 +778,8 @@ describe("Runtime", () => {
                         "summarize op handle should be test-broadcast-handle");
 
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary", summarizeCount: runCount },
-                        { eventName: "Running:SummaryOp", summarizeCount: runCount },
+                        { eventName: "Running:Summarize_generate", summarizeCount: runCount },
+                        { eventName: "Running:Summarize_Op", summarizeCount: runCount },
                     ]), "unexpected log sequence");
 
                     // Verify that heuristics are blocked while waiting for ack
@@ -962,8 +962,8 @@ describe("Runtime", () => {
                     await emitNextOp(summaryConfig.maxOps + 1);
                     assertRunCounts(1, 0, 0, "Should run summarizer once");
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary", summarizeCount: runCount },
-                        { eventName: "Running:SummaryOp", summarizeCount: runCount },
+                        { eventName: "Running:Summarize_generate", summarizeCount: runCount },
+                        { eventName: "Running:Summarize_Op", summarizeCount: runCount },
                     ]), "unexpected log sequence 2");
 
                     assert(!mockLogger.matchEvents([
