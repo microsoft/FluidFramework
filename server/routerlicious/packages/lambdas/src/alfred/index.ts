@@ -160,7 +160,7 @@ export function configureWebSocketServices(
     isTokenExpiryEnabled: boolean = false,
     connectThrottler?: core.IThrottler,
     submitOpThrottler?: core.IThrottler,
-    usageEmitter?: core:IUsageEmitter) {
+    usageEmitter?: core.IUsageEmitter) {
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, core.IOrdererConnection>();
@@ -528,7 +528,7 @@ export function configureWebSocketServices(
                 );
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 connection.disconnect();
-                usageEmitter.emit({type: MeterType.ClientConnectivityMinutes, value: 15, tenantId: connection.tenantId, documentId: connection.documentId});
+                usageEmitter.emit({type: core.MeterType.ClientConnectivityMinutes, value: 15, tenantId: connection.tenantId, documentId: connection.documentId});
             }
             // Send notification messages for all client IDs in the room map
             const removeP: Promise<void>[] = [];
