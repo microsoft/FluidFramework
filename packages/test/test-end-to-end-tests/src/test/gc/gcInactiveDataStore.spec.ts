@@ -12,7 +12,7 @@ import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { TestDataObject } from "./mockSummarizerClient";
@@ -22,8 +22,9 @@ import { TestDataObject } from "./mockSummarizerClient";
  * using that data store results in an error telemetry.
  */
 describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
+    const pkg = "TestDataObject";
     const dataObjectFactory = new DataObjectFactory(
-        "TestDataObject",
+        pkg,
         TestDataObject,
         [],
         []);
@@ -124,6 +125,7 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
                     eventName: inactiveObjectChangedEvent,
                     timeout: deleteTimeoutMs,
                     id: `/${dataStore1.id}`,
+                    pkg: { value: `/${pkg}`, tag: TelemetryDataTag.PackageData },
                 },
             ]),
             "inactiveObjectChanged event not generated as expected",
@@ -150,6 +152,7 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
                     eventName: inactiveObjectRevivedEvent,
                     timeout: deleteTimeoutMs,
                     id: `/${dataStore1.id}`,
+                    pkg: { value: `/${pkg}`, tag: TelemetryDataTag.PackageData },
                 },
             ]),
             "inactiveObjectRevived event not generated as expected",

@@ -396,6 +396,11 @@ class ScheduleManagerCore {
         for (const pending of allPending) {
             this.trackPending(pending);
         }
+
+        // We are intentionally directly listening to the "op" to inspect system ops as well.
+        // If we do not observe system ops, we are likely to hit 0x296 assert when system ops
+        // precedes start of incomplete batch.
+        this.deltaManager.on("op", (message) => this.afterOpProcessing(message.sequenceNumber));
     }
 
     /**
@@ -541,8 +546,6 @@ export class ScheduleManager {
     private batchClientId: string | undefined;
     private hitError = false;
 
-    private readonly scheduler: ScheduleManagerCore;
-
     constructor(
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly emitter: EventEmitter,
@@ -552,7 +555,7 @@ export class ScheduleManager {
             this.deltaManager,
             ChildLogger.create(this.logger, "DeltaScheduler"),
         );
-        this.scheduler = new ScheduleManagerCore(deltaManager, logger);
+        void new ScheduleManagerCore(deltaManager, logger);
     }
 
     public beforeOpProcessing(message: ISequencedDocumentMessage) {
@@ -576,10 +579,6 @@ export class ScheduleManager {
     public afterOpProcessing(error: any | undefined, message: ISequencedDocumentMessage) {
         // If this is no longer true, we need to revisit what we do where we set this.hitError.
         assert(!this.hitError, 0x2a3 /* "container should be closed on any error" */);
-
-        // Let the scheduler know how far we progressed, to decide if op processing
-        // should be paused or not.
-        this.scheduler.afterOpProcessing(message.sequenceNumber);
 
         if (error) {
             // We assume here that loader will close container and stop processing all future ops.
@@ -1000,6 +999,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this,
             this.runtimeOptions.gcOptions,
             (unusedRoutes: string[]) => this.dataStores.deleteUnusedRoutes(unusedRoutes),
+            (nodePath: string) => this.dataStores.getNodePackagePath(nodePath),
             getCurrentTimestamp,
             this.closeFn,
             context.baseSnapshot,
@@ -1053,7 +1053,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (id: string) => this.summarizerNode.deleteChild(id),
             this.mc.logger,
             async () => this.garbageCollector.getDataStoreBaseGCDetails(),
-            (id: string) => this.garbageCollector.nodeChanged(id),
+            (id: string, packagePath?: readonly string[]) => this.garbageCollector.nodeChanged(id, packagePath),
             new Map<string, string>(dataStoreAliasMap),
             this.garbageCollector.writeDataAtRoot,
         );
