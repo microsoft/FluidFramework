@@ -57,7 +57,7 @@ interface IFlowViewUser extends IUser {
     name: string;
 }
 
-export interface IOverlayMarker {
+interface IOverlayMarker {
     id: string;
     position: number;
 }
@@ -445,7 +445,7 @@ function decorateLineDiv(lineDiv: ILineDiv, lineFontstr: string, lineDivHeight: 
     lineDiv.appendChild(symbolDiv);
 }
 
-function reRenderLine(lineDiv: ILineDiv, flowView: FlowView, docContext: IDocumentContext) {
+function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
     if (lineDiv) {
         const outerViewportBounds = ui.Rectangle.fromClientRect(flowView.viewportDiv.getBoundingClientRect());
         const lineDivBounds = lineDiv.getBoundingClientRect();
@@ -749,7 +749,7 @@ function renderTable(
     }
     if (layoutInfo.reRenderList) {
         for (const lineDiv of layoutInfo.reRenderList) {
-            reRenderLine(lineDiv, flowView, docContext);
+            reRenderLine(lineDiv, flowView);
         }
         layoutInfo.reRenderList = undefined;
     }
@@ -1807,11 +1807,11 @@ class FlowCursor extends Cursor {
         } else {
             const lineDiv = this.lineDiv();
             if (lineDiv && (lineDiv.linePos <= this.pos) && (lineDiv.lineEnd > this.pos)) {
-                reRenderLine(lineDiv, flowView, flowView.lastDocContext);
+                reRenderLine(lineDiv, flowView);
             } else {
                 const foundLineDiv = findLineDiv(this.pos, flowView, true);
                 if (foundLineDiv) {
-                    reRenderLine(foundLineDiv, flowView, flowView.lastDocContext);
+                    reRenderLine(foundLineDiv, flowView);
                 } else {
                     flowView.render(flowView.topChar, true);
                 }
@@ -2025,20 +2025,12 @@ interface IReferenceDoc {
 export class FlowView extends ui.Component {
     public static docStartPosition = 0;
     public timeToImpression: number;
-    public timeToLoad: number;
     public timeToEdit: number;
-    public timeToCollab: number;
-    public prevTopSegment: MergeTree.TextSegment;
     public viewportStartPos: number;
     public viewportEndPos: number;
-    public cursorSpan: HTMLSpanElement;
     public childCursor: IViewCursor;
     public viewportDiv: HTMLDivElement;
     public viewportRect: ui.Rectangle;
-    public historyWidget: HTMLDivElement;
-    public historyBubble: HTMLDivElement;
-    public historyVersion: HTMLSpanElement;
-    public savedClient: MergeTree.Client;
     public ticking = false;
     public wheelTicking = false;
     public topChar = -1;
@@ -2049,8 +2041,6 @@ export class FlowView extends ui.Component {
     public curPG: MergeTree.Marker;
     public lastDocContext: IDocumentContext;
     public focusChild: FlowView;
-    public focusMarker: MergeTree.Marker;
-    public childMarker: MergeTree.Marker;
     public parentFlow: FlowView;
     public keypressHandler: (e: KeyboardEvent) => void;
     public keydownHandler: (e: KeyboardEvent) => void;
@@ -2319,7 +2309,7 @@ export class FlowView extends ui.Component {
         );
     }
 
-    public updatePresenceCursors() {
+    private updatePresenceCursors() {
         for (const presenceInfo of this.presenceVector.values()) {
             if (presenceInfo && presenceInfo.cursor) {
                 presenceInfo.cursor.refresh();
@@ -2327,7 +2317,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public addPresenceSignal(presenceSignal: PresenceSignal) {
+    private addPresenceSignal(presenceSignal: PresenceSignal) {
         presenceSignal.on("message", (message: IInboundSignalMessage, local: boolean) => {
             this.remotePresenceUpdate(message, local);
         });
@@ -2345,7 +2335,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public updatePresencePosition(localPresenceInfo: ILocalPresenceInfo) {
+    private updatePresencePosition(localPresenceInfo: ILocalPresenceInfo) {
         if (localPresenceInfo) {
             localPresenceInfo.xformPos = getLocalRefPos(this, localPresenceInfo.localRef);
             if (localPresenceInfo.markLocalRef) {
@@ -2356,13 +2346,13 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public updatePresencePositions() {
+    private updatePresencePositions() {
         for (const presenceInfo of this.presenceVector.values()) {
             this.updatePresencePosition(presenceInfo);
         }
     }
 
-    public updatePresenceVector(localPresenceInfo: ILocalPresenceInfo) {
+    private updatePresenceVector(localPresenceInfo: ILocalPresenceInfo) {
         this.updatePresencePosition(localPresenceInfo);
         const presentPresence = this.presenceVector[localPresenceInfo.clientId];
         let tempXformPos = -1;
@@ -2405,7 +2395,7 @@ export class FlowView extends ui.Component {
      * Returns the (x, y) coordinate of the given position relative to the FlowView's coordinate system or null
      * if the position is not visible.
      */
-    public getPositionLocation(position: number): ui.IPoint {
+    private getPositionLocation(position: number): ui.IPoint {
         const lineDiv = findLineDiv(position, this, true);
         if (!lineDiv) {
             return null;
@@ -2463,7 +2453,7 @@ export class FlowView extends ui.Component {
         return position;
     }
 
-    public checkRow(lineDiv: ILineDiv, fn: (lineDiv: ILineDiv) => ILineDiv, rev?: boolean) {
+    private checkRow(lineDiv: ILineDiv, fn: (lineDiv: ILineDiv) => ILineDiv, rev?: boolean) {
         let _lineDiv = lineDiv;
         let rowDiv = _lineDiv as IRowDiv;
         let oldRowDiv: IRowDiv;
@@ -2518,7 +2508,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public clickSpan(x: number, y: number, elm: HTMLSpanElement) {
+    private clickSpan(x: number, y: number, elm: HTMLSpanElement) {
         const span = elm as ISegSpan;
         const elmOff = pointerToElementOffsetWebkit(x, y);
         if (elmOff) {
@@ -2540,15 +2530,13 @@ export class FlowView extends ui.Component {
             this.cursor.updateView(this);
             if (this.parentFlow) {
                 this.parentFlow.focusChild = this;
-                this.parentFlow.focusMarker = this.childMarker;
             }
             this.focusChild = undefined;
-            this.focusMarker = undefined;
             return true;
         }
     }
 
-    public getSegSpan(span: ISegSpan): ISegSpan {
+    private getSegSpan(span: ISegSpan): ISegSpan {
         let _span = span;
         while (_span.tagName === "SPAN") {
             if (_span.segPos) {
@@ -2559,7 +2547,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public getPosFromPixels(targetLineDiv: ILineDiv, x: number) {
+    private getPosFromPixels(targetLineDiv: ILineDiv, x: number) {
         let position: number;
 
         if (targetLineDiv && (targetLineDiv.linePos !== undefined)) {
@@ -2613,7 +2601,7 @@ export class FlowView extends ui.Component {
     }
 
     // TODO: handle symbol div
-    public setCursorPosFromPixels(targetLineDiv: ILineDiv, x: number) {
+    private setCursorPosFromPixels(targetLineDiv: ILineDiv, x: number) {
         const position = this.getPosFromPixels(targetLineDiv, x);
         if (position !== undefined) {
             this.cursor.enable();
@@ -2628,7 +2616,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public getCanonicalX() {
+    private getCanonicalX() {
         const rect = this.cursor.rect();
         let x: number;
         if (this.lastVerticalX >= 0) {
@@ -2640,7 +2628,7 @@ export class FlowView extends ui.Component {
         return x;
     }
 
-    public cursorRev(skipFirstRev = false) {
+    private cursorRev(skipFirstRev = false) {
         if (this.cursor.pos > FlowView.docStartPosition) {
             if (!skipFirstRev) {
                 this.cursor.pos--;
@@ -2674,7 +2662,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public cursorFwd() {
+    private cursorFwd() {
         if (this.cursor.pos < (this.sharedString.getLength() - 1)) {
             this.cursor.pos++;
 
@@ -2719,7 +2707,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public verticalMove(lineCount: number) {
+    private verticalMove(lineCount: number) {
         const up = lineCount < 0;
         const lineDiv = this.cursor.lineDiv();
         let targetLineDiv = lineDiv;
@@ -2796,11 +2784,11 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public viewportCharCount() {
+    private viewportCharCount() {
         return this.viewportEndPos - this.viewportStartPos;
     }
 
-    public clearSelection(render = true) {
+    private clearSelection(render = true) {
         // TODO: only rerender line if selection on one line
         if (this.cursor.getSelection()) {
             this.cursor.clearSelection();
@@ -3094,7 +3082,7 @@ export class FlowView extends ui.Component {
         this.keydownHandler = keydownHandler;
     }
 
-    public viewTileProps() {
+    private viewTileProps() {
         let searchPos = this.cursor.pos;
         if (this.cursor.pos === this.cursor.lineDiv().lineEnd) {
             searchPos--;
@@ -3114,7 +3102,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public setList(listKind = 0) {
+    private setList(listKind = 0) {
         this.undoRedoManager.closeCurrentOperation();
         const searchPos = this.cursor.pos;
         const tileInfo = findTile(this, searchPos, "pg", false);
@@ -3154,7 +3142,7 @@ export class FlowView extends ui.Component {
         this.undoRedoManager.closeCurrentOperation();
     }
 
-    public tryMoveCell(pos: number, shift = false) {
+    private tryMoveCell(pos: number, shift = false) {
         const cursorContext =
             this.sharedString.getStackContext(pos, ["table", "cell", "row"]);
         if (cursorContext.table && (!cursorContext.table.empty())) {
@@ -3190,7 +3178,7 @@ export class FlowView extends ui.Component {
     }
 
     // TODO: tab stops in non-list, non-table paragraphs
-    public onTAB(shift = false) {
+    private onTAB(shift = false) {
         const searchPos = this.cursor.pos;
         const tileInfo = findTile(this, searchPos, "pg", false);
         if (tileInfo) {
@@ -3201,7 +3189,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public toggleBlockquote() {
+    private toggleBlockquote() {
         const tileInfo = findTile(this, this.cursor.pos, "pg", false);
         if (tileInfo) {
             const tile = tileInfo.tile;
@@ -3216,26 +3204,26 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public toggleBold() {
+    private toggleBold() {
         this.toggleWordOrSelection("fontWeight", "bold", null);
     }
 
-    public toggleItalic() {
+    private toggleItalic() {
         this.toggleWordOrSelection("fontStyle", "italic", "normal");
     }
 
-    public toggleUnderline() {
+    private toggleUnderline() {
         this.toggleWordOrSelection("textDecoration", "underline", null);
     }
 
-    public copyFormat() {
+    private copyFormat() {
         const segoff = getContainingSegment(this, this.cursor.pos);
         if (segoff.segment && MergeTree.TextSegment.is((segoff.segment))) {
             this.formatRegister = MergeTree.extend(MergeTree.createMap(), segoff.segment.properties);
         }
     }
 
-    public setProps(props: MergeTree.PropertySet) {
+    private setProps(props: MergeTree.PropertySet) {
         const sel = this.cursor.getSelection();
         this.undoRedoManager.closeCurrentOperation();
         if (sel) {
@@ -3250,21 +3238,21 @@ export class FlowView extends ui.Component {
         this.undoRedoManager.closeCurrentOperation();
     }
 
-    public paintFormat() {
+    private paintFormat() {
         if (this.formatRegister) {
             this.setProps(this.formatRegister);
         }
     }
 
-    public setFont(family: string, size = "18px") {
+    private setFont(family: string, size = "18px") {
         this.setProps({ fontFamily: family, fontSize: size });
     }
 
-    public setColor(color: string) {
+    private setColor(color: string) {
         this.setProps({ color });
     }
 
-    public toggleWordOrSelection(name: string, valueOn: string, valueOff: string) {
+    private toggleWordOrSelection(name: string, valueOn: string, valueOff: string) {
         const sel = this.cursor.getSelection();
         if (sel) {
             this.clearSelection(false);
@@ -3277,7 +3265,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public toggleRange(name: string, valueOn: string, valueOff: string, start: number, end: number) {
+    private toggleRange(name: string, valueOn: string, valueOff: string, start: number, end: number) {
         let someSet = false;
         const findPropSet = (segment: MergeTree.ISegment) => {
             if (MergeTree.TextSegment.is(segment)) {
@@ -3321,7 +3309,7 @@ export class FlowView extends ui.Component {
         this.sharedString.insertMarker(markerPos, MergeTree.ReferenceType.Simple, props);
     }
 
-    public deleteRow() {
+    private deleteRow() {
         const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
@@ -3347,7 +3335,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public deleteColumn() {
+    private deleteColumn() {
         const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
@@ -3362,7 +3350,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public insertRow() {
+    private insertRow() {
         const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
@@ -3380,7 +3368,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public tableSummary() {
+    private tableSummary() {
         const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
@@ -3392,98 +3380,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public randomCell(table: Table.Table) {
-        let cellCount = 0;
-        for (const row of table.rows) {
-            if (!Table.rowIsMoribund(row.rowMarker)) {
-                for (const cell of row.cells) {
-                    if (!Table.cellIsMoribund(cell.marker)) {
-                        cellCount++;
-                    }
-                }
-            }
-        }
-        if (cellCount > 0) {
-            const randIndex = Math.round(Math.random() * cellCount);
-            cellCount = 0;
-            for (const row of table.rows) {
-                if (!Table.rowIsMoribund(row.rowMarker)) {
-                    for (const cell of row.cells) {
-                        if (!Table.cellIsMoribund(cell.marker)) {
-                            if (cellCount === randIndex) {
-                                return cell;
-                            }
-                            cellCount++;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    public crazyTable(k: number) {
-        let count = 0;
-        let rowCount = 0;
-        let columnCount = 0;
-        const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
-        if (stack.table && (!stack.table.empty())) {
-            const tableMarker = stack.table.top() as Table.ITableMarker;
-            const randomTableOp = () => {
-                count++;
-                if (!tableMarker.table) {
-                    const tableMarkerPos = getPosition(this, tableMarker);
-                    Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
-                }
-                const randCell = this.randomCell(tableMarker.table);
-                if (randCell) {
-                    const pos = getPosition(this, randCell.marker);
-                    this.cursor.pos = pos;
-                    this.cursor.updateView(this);
-                    let hit = false;
-                    if (rowCount < 8) {
-                        const chance = Math.round(Math.random() * 10);
-                        if (chance >= 5) {
-                            this.insertRow();
-                            rowCount++;
-                            hit = true;
-                        }
-                    }
-                    if ((columnCount < 8) && (!hit)) {
-                        const chance = Math.round(Math.random() * 10);
-                        if (chance >= 5) {
-                            this.insertColumn();
-                            columnCount++;
-                            hit = true;
-                        }
-                    }
-                    if ((rowCount > 4) && (!hit)) {
-                        const chance = Math.round(Math.random() * 10);
-                        if (chance >= 5) {
-                            this.deleteRow();
-                            rowCount--;
-                            hit = true;
-                        }
-                    }
-                    if ((columnCount > 4) && (!hit)) {
-                        const chance = Math.round(Math.random() * 10);
-                        if (chance >= 5) {
-                            this.deleteColumn();
-                            columnCount--;
-                            hit = true;
-                        }
-                    }
-                } else {
-                    return;
-                }
-                if (count < k) {
-                    setTimeout(randomTableOp, 200);
-                }
-            };
-            setTimeout(randomTableOp, 200);
-        }
-    }
-
-    public insertColumn() {
+    private insertColumn() {
         const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
@@ -3502,7 +3399,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public setPGProps(props: MergeTree.PropertySet) {
+    private setPGProps(props: MergeTree.PropertySet) {
         const tileInfo = findTile(this, this.cursor.pos, "pg", false);
         if (tileInfo) {
             const pgMarker = tileInfo.tile as Paragraph.IParagraphMarker;
@@ -3512,13 +3409,13 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public selectAll() {
+    private selectAll() {
         this.cursor.clearSelection();
         this.cursor.mark = 0;
         this.cursor.pos = this.sharedString.getLength();
     }
 
-    public keyCmd(charCode: number, shift = false) {
+    private keyCmd(charCode: number, shift = false) {
         switch (charCode) {
             case CharacterCodes.A:
                 this.selectAll();
@@ -3567,14 +3464,14 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public preScroll() {
+    private preScroll() {
         if (this.lastVerticalX === -1) {
             const rect = this.cursor.rect();
             this.lastVerticalX = rect.left;
         }
     }
 
-    public apresScroll(up: boolean) {
+    private apresScroll(up: boolean) {
         if ((this.cursor.pos < this.viewportStartPos) ||
             (this.cursor.pos >= this.viewportEndPos)) {
             const x = this.getCanonicalX();
@@ -3588,7 +3485,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public scroll(up: boolean, one = false) {
+    private scroll(up: boolean, one = false) {
         let scrollTo = this.topChar;
         if (one) {
             if (up) {
@@ -3674,7 +3571,7 @@ export class FlowView extends ui.Component {
         });
     }
 
-    public updateTableInfo(changePos: number) {
+    private updateTableInfo(changePos: number) {
         const stack = this.sharedString.getStackContext(changePos, ["table"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
@@ -3682,7 +3579,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public updatePGInfo(changePos: number) {
+    private updatePGInfo(changePos: number) {
         const tileInfo = findTile(this, changePos, "pg", false);
         if (tileInfo) {
             const tile = tileInfo.tile as Paragraph.IParagraphMarker;
@@ -3919,7 +3816,7 @@ export class FlowView extends ui.Component {
                     this.render(this.topChar, true);
                 });
             } else {
-                reRenderLine(localPresenceInfo.cursor.lineDiv(), this, this.lastDocContext);
+                reRenderLine(localPresenceInfo.cursor.lineDiv(), this);
             }
         }
     }
