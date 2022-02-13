@@ -11,6 +11,7 @@ import {
     ISequencedOperationMessage,
     runWithRetry,
 } from "@fluidframework/server-services-core";
+import { getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import { ICheckpointManager } from "./interfaces";
 
 /**
@@ -52,7 +53,7 @@ export class CheckpointManager implements ICheckpointManager {
                 "writeCheckpointScribe",
                 3 /* maxRetries */,
                 1000 /* retryAfterMs */,
-                this.context.log,
+                getLumberBaseProperties(this.documentId, this.tenantId),
                 (error) => error.code === 11000 /* shouldIgnoreError */);
         }
 

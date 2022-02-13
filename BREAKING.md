@@ -21,6 +21,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Removing snapshot API from IRuntime](#Removing-snapshot-api-from-IRuntime)
 - [Remove Unused IFluidObject Augmentations](#Remove-Unused-IFluidObject-Augmentations)
 - [Duplicate extractLogSafeErrorProperties removed](#duplicate-extractlogsafeerrorproperties-removed)
+- [Code proposal rejection removed](#Code-proposal-rejection-removed)
 
 ### IFluidConfiguration removed
 
@@ -87,6 +88,9 @@ The interfaces that correspond to the above properties continue to exist, and ca
 
 The helper function `extractLogSafeErrorProperties` existed in both telemetry-utils and common-utils packages.
 The copy in common-utils was out of date and unused in this repo, and has now been removed.
+
+### Code proposal rejection removed
+Rejection functionality has been removed from Quorum.  As a result, the `"codeDetailsProposed"` event on `IContainer` now provides an `ISequencedProposal` rather than an `IPendingProposal`.
 
 ## 0.56 Breaking changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
