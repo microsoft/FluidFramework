@@ -13,6 +13,7 @@ import {
     IRunner,
     ITenantManager,
     IThrottler,
+    IUsageEmitter,
     IWebServer,
     IWebServerFactory,
     MongoManager,
@@ -69,6 +70,8 @@ export class AlfredRunner implements IRunner {
 
         const httpServer = this.server.httpServer;
 
+        const usageEmitter = this.config.get("usageEmitter") as IUsageEmitter;
+
         const maxNumberOfClientsPerDocument = this.config.get("alfred:maxNumberOfClientsPerDocument");
         const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
         const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
@@ -85,7 +88,8 @@ export class AlfredRunner implements IRunner {
             maxTokenLifetimeSec,
             isTokenExpiryEnabled,
             this.socketConnectThrottler,
-            this.socketSubmitOpThrottler);
+            this.socketSubmitOpThrottler,
+            usageEmitter);
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);
