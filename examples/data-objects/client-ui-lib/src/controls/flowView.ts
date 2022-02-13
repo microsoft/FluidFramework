@@ -910,15 +910,13 @@ function lineIntersectsRect(y: number, rect: IExcludedRectangle) {
 
 class Viewport {
     // Keep the line divs in order
-    public lineDivs: ILineDiv[] = [];
-    public visibleRanges: IRange[] = [];
-    public currentLineStart = -1;
+    private lineDivs: ILineDiv[] = [];
     private lineTop = 0;
     private excludedRects = <IExcludedRectangle[]>[];
     private lineX = 0;
     private readonly inclusions: Map<string, HTMLVideoElement> = new Map<string, HTMLVideoElement>();
 
-    constructor(public maxHeight: number, public div: IViewportDiv, private width: number) {
+    constructor(private maxHeight: number, public div: IViewportDiv, private width: number) {
     }
 
     // Remove inclusions that are not in the excluded rect list
@@ -936,7 +934,7 @@ class Viewport {
         }
     }
 
-    public viewHasInclusion(sha: string): HTMLDivElement {
+    private viewHasInclusion(sha: string): HTMLDivElement {
         for (let i = 0; i < this.div.children.length; i++) {
             const child = this.div.children.item(i);
             if ((child.classList).contains(sha)) {
@@ -1153,10 +1151,6 @@ class Viewport {
 
     public remainingHeight() {
         return this.maxHeight - this.lineTop;
-    }
-
-    public setWidth(w: number) {
-        this.width = w;
     }
 }
 
