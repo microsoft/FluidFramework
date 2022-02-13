@@ -210,6 +210,7 @@ export class Transaction extends GenericTransaction<Change> {
 			assert(node !== undefined && !isDetachedSequenceId(node));
 			const traits = new Map<TraitLabel, readonly NodeId[]>();
 
+			// eslint-disable-next-line no-restricted-syntax
 			for (const key in node.traits) {
 				if (Object.prototype.hasOwnProperty.call(node.traits, key)) {
 					const children = node.traits[key];

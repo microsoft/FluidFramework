@@ -114,7 +114,7 @@ export class RunningSummarizer implements IDisposable {
                     summarizeCount: () => this.summarizeCount,
                     summarizerSuccessfulAttempts: () => this.totalSuccessfulAttempts,
                 },
-            }
+            },
         );
 
         if (!disableHeuristics) {
@@ -160,7 +160,7 @@ export class RunningSummarizer implements IDisposable {
             this.heuristicData,
             this.submitSummaryCallback,
             this.raiseSummarizingError,
-            () => { this.totalSuccessfulAttempts++ },
+            () => { this.totalSuccessfulAttempts++; },
             this.summaryWatcher,
             this.logger,
         );
@@ -192,8 +192,7 @@ export class RunningSummarizer implements IDisposable {
         switch (op.type) {
             case MessageType.ClientLeave:
             case MessageType.ClientJoin:
-            case MessageType.Propose:
-            case MessageType.Reject: {
+            case MessageType.Propose: {
                 // Synchronously handle quorum ops like regular ops
                 this.handleOp(undefined, op);
                 return;

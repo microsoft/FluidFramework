@@ -18,7 +18,6 @@ export const initializeProtocol = (
     protocolState.proposals,
     protocolState.values,
     () => -1,
-    () => { return; },
 );
 
 // eslint-disable-next-line @typescript-eslint/promise-function-async
