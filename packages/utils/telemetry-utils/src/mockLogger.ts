@@ -4,7 +4,6 @@
  */
 
 import { ITelemetryLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
 import { TelemetryLogger } from "./logger";
 
 /**
@@ -35,14 +34,16 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
     }
 
     /** Asserts that matchEvents is true, and prints the actual/expected output if not */
-    assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]) {
-        // const actualEvents = this.events;
-        assert(this.matchEvents(expectedEvents), 0x2ba /* `
-            expected:
-            ${JSON.stringify(expectedEvents)}
+    assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string) {
+        const actualEvents = this.events;
+        if (!this.matchEvents(expectedEvents)) {
+            throw new Error(`${message}
+expected:
+${JSON.stringify(expectedEvents)}
 
-            actual:
-            ${JSON.stringify(actualEvents)}` */);
+actual:
+${JSON.stringify(actualEvents)}`);
+        }
     }
 
     /**
@@ -59,15 +60,16 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
     }
 
     /** Asserts that matchAnyEvent is true, and prints the actual/expected output if not */
-    assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]) {
-        // const actualEvents = this.events;
+    assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string) {
+        const actualEvents = this.events;
+        if (!this.matchAnyEvent(expectedEvents)) {
+            throw new Error(`${message}
+expected:
+${JSON.stringify(expectedEvents)}
 
-        assert(this.matchAnyEvent(expectedEvents), 0x2bb /* `
-            expected:
-            ${JSON.stringify(expectedEvents)}
-
-            actual:
-            ${JSON.stringify(actualEvents)}` */);
+actual:
+${JSON.stringify(actualEvents)}`);
+            }
     }
 
     private getMatchedEventsCount(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): number {
