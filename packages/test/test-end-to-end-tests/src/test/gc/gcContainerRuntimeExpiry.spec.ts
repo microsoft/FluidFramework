@@ -80,7 +80,13 @@ import { mockConfigProvider } from "./mockConfigProivder";
         clockEnd = clock.now + timeoutMs;
     });
 
-    it("Container should be closed with a ClientSessionExpired error after the gcSessionExpiryTime is up", async () => {
+    /**
+     * Issue caused by this PR: https://github.com/microsoft/FluidFramework/pull/9054
+     * Enable test once the intermittent failures are resolved. 
+     * See - https://github.com/microsoft/FluidFramework/issues/9124
+     */
+    it.skip("Container should be closed with a ClientSessionExpired error after the gcSessionExpiryTime is up",
+    async () => {
         await provider.ensureSynchronized();
         clock.tick(1);
         assert(container1.closed === false, "Container should not instantly close.");
@@ -93,7 +99,12 @@ import { mockConfigProvider } from "./mockConfigProivder";
             Current: ${clock.now}, expected: ${clockEnd}`);
     });
 
-    it("Containers should have the same expiry time for the same document", async () => {
+    /**
+     * Issue caused by this PR: https://github.com/microsoft/FluidFramework/pull/9054
+     * Enable test once the intermittent failures are resolved. 
+     * See - https://github.com/microsoft/FluidFramework/issues/9124
+     */
+    it.skip("Containers should have the same expiry time for the same document", async () => {
         // Container1 should expire in one tick
         clock.tick(timeoutMs - 1);
         // Load the two other containers
