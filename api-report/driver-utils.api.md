@@ -201,9 +201,15 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
 
 // @public
-export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
+export interface IAnyDriverError {
+    // (undocumented)
+    canRetry: boolean;
     // (undocumented)
     readonly errorType: string;
+    // (undocumented)
+    readonly message: string;
+    // (undocumented)
+    online?: string;
 }
 
 // @public
