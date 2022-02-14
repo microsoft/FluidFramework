@@ -95,7 +95,7 @@ export async function fetchSnapshotWithRedeem(
     // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
     if(sharingLinkToRedeem) {
-        odspResolvedUrl.shareLinkInfo = {...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem}
+        odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
     }
 
     return fetchLatestSnapshotCore(
@@ -119,8 +119,8 @@ export async function fetchSnapshotWithRedeem(
                 { ...odspResolvedUrl,
                     shareLinkInfo: {
                         ...odspResolvedUrl.shareLinkInfo,
-                        sharingLinkToRedeem: undefined
-                    }
+                        sharingLinkToRedeem: undefined,
+                    },
                 };
 
             return fetchLatestSnapshotCore(
@@ -482,7 +482,7 @@ export async function downloadSnapshot(
     // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
     if(sharingLinkToRedeem) {
-        odspResolvedUrl.shareLinkInfo = {...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem}
+        odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
     }
 
     if (fetchBinarySnapshotFormat) {

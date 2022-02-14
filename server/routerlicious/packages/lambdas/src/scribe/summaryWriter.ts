@@ -134,7 +134,7 @@ export class SummaryWriter implements ISummaryWriter {
             if (!this.enableWholeSummaryUpload) {
                 try {
                     await requestWithRetry(
-                        async () => Promise.all(content.parents.map((parentSummary) => this.summaryStorage.getCommit(parentSummary))),
+                        async () => Promise.all(content.parents.map(async (parentSummary) => this.summaryStorage.getCommit(parentSummary))),
                         "writeClientSummary_validateParentSummary",
                         getLumberBaseProperties(this.documentId, this.tenantId));
                 } catch (e) {

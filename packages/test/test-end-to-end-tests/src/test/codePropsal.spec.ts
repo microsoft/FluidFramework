@@ -182,38 +182,6 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
         }
     });
 
-    it("Code Proposal Rejection", async () => {
-        for (let i = 0; i < containers.length; i++) {
-            containers[i].once("contextChanged", () => {
-                throw Error(`context should not change for containers[${i}]`);
-            });
-        }
-
-        const proposal: IFluidCodeDetails = { package: packageV2 };
-        containers[1].on("codeDetailsProposed", (c, p) => {
-            assert.deepStrictEqual(
-                c,
-                proposal,
-                "codeDetails2 should have been proposed");
-            p.reject();
-        });
-
-        const res = await Promise.all([
-            containers[0].proposeCodeDetails(proposal),
-            provider.ensureSynchronized(),
-        ]);
-
-        assert.strictEqual(res[0], false, "Code proposal should be rejected");
-
-        for (let i = 0; i < containers.length; i++) {
-            assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
-            assert.deepStrictEqual(
-                containers[i].getSpecifiedCodeDetails?.(),
-                { package: packageV1 },
-                `containers[${i}] code details should not update`);
-        }
-    });
-
     it("Code Proposal With Compatible Existing", async () => {
         for (let i = 0; i < containers.length; i++) {
             containers[i].once("contextChanged", () => {

@@ -106,8 +106,8 @@ function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule:
         );
         return {
             fluidExport: {
-                IRuntimeFactory: runtimeFactory
-            }
+                IRuntimeFactory: runtimeFactory,
+            },
         };
     }
     return fluidModule;

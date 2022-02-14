@@ -28,7 +28,7 @@ export async function getRefs(
     authorization: string,
 ): Promise<IRef[]> {
     const branches = await git.listBranches({
-        fs: fs,
+        fs,
         dir: utils.getGitDir(store, tenantId),
     });
 
@@ -42,7 +42,7 @@ export async function getRef(
     ref: string,
 ): Promise<IRef> {
     const resolved = await git.resolveRef({
-        fs: fs,
+        fs,
         dir: utils.getGitDir(store, tenantId),
         ref,
     });
@@ -57,7 +57,7 @@ export async function createRef(
     params: ICreateRefParams,
 ): Promise<IRef> {
     await git.writeRef({
-        fs: fs,
+        fs,
         dir: utils.getGitDir(store, tenantId),
         ref: params.ref,
         value: params.sha,
@@ -81,7 +81,7 @@ export async function updateRef(
 
     // There is no updateRef in iso-git so we instead delete/write
     await git.writeRef({
-        fs: fs,
+        fs,
         dir,
         force: true,
         ref: rebasedRef,

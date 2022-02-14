@@ -15,7 +15,6 @@ describe("Loader", () => {
                 [],
                 [],
                 (key, value) => 0,
-                (value) => { return; },
             );
         });
 

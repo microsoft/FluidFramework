@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { ICaretBounds, ICaretEvent, CaretEventType, Caret } from "./caret";
+export { ICaretBounds, ICaretEvent, CaretEventType, caretEnter, caretLeave } from "./caret";
 export { ICommand } from "./command";
 export { Direction, getDeltaX, getDeltaY, getTabDirection, TabDirection } from "./direction";
 export { Dom } from "./dom";

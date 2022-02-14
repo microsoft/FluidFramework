@@ -425,7 +425,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         this.pushCallCounter++;
         const nonce = `${this.requestOpsNoncePrefix}${this.pushCallCounter}`;
         // There should be only one flush ops in flight, kicked out by upload summary workflow
-        // That said, it could timeout, and request could be repeated, so theoretically we can
+        // That said, it could timeout and request could be repeated, so theoretically we can
         // get overlapping requests, but it should be very rare
         if (this.flushDeferred !== undefined) {
             this.logger.sendErrorEvent({ eventName: "FlushOpsTooMany" });

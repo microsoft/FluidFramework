@@ -64,6 +64,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 
         const blobOpP = new Promise<void>((resolve, reject) => container.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
             }
         }));
@@ -102,6 +103,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 
         const attachOpP = new Promise<void>((resolve, reject) => container1.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
             }
         }));
