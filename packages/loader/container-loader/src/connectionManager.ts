@@ -8,22 +8,31 @@ import {
     ITelemetryLogger,
     ITelemetryProperties,
 } from "@fluidframework/common-definitions";
+import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IDeltaQueue,
     ReadOnlyInfo,
     IConnectionDetails,
     ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
-    TelemetryLogger,
-    normalizeError,
-} from "@fluidframework/telemetry-utils";
+    GenericError,
+} from "@fluidframework/container-utils";
 import {
     IDocumentService,
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
 } from "@fluidframework/driver-definitions";
+import {
+    canRetryOnError,
+    createWriteError,
+    createGenericNetworkError,
+    getRetryDelayFromError,
+    IAnyDriverError,
+    logNetworkFailure,
+    waitForConnectedState,
+    DeltaStreamConnectionForbiddenError,
+} from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
     IClient,
@@ -41,24 +50,15 @@ import {
     ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
 import {
-    canRetryOnError,
-    createWriteError,
-    createGenericNetworkError,
-    getRetryDelayFromError,
-    IAnyDriverError,
-    logNetworkFailure,
-    waitForConnectedState,
-    DeltaStreamConnectionForbiddenError,
-} from "@fluidframework/driver-utils";
-import {
-    GenericError,
-} from "@fluidframework/container-utils";
-import { DeltaQueue } from "./deltaQueue";
+    TelemetryLogger,
+    normalizeError,
+} from "@fluidframework/telemetry-utils";
 import {
     ReconnectMode,
     IConnectionManager,
     IConnectionManagerFactoryArgs,
 } from "./contracts";
+import { DeltaQueue } from "./deltaQueue";
 
 const MaxReconnectDelayInMs = 8000;
 const InitialReconnectDelayInMs = 1000;

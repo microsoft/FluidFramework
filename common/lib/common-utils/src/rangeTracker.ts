@@ -59,8 +59,8 @@ export class RangeTracker {
         return this.lastSecondary;
     }
 
-    constructor(primary: IRangeTrackerSnapshot)
-    constructor(primary: number, secondary: number)
+    constructor(primary: IRangeTrackerSnapshot);
+    constructor(primary: number, secondary: number);
     constructor(primary: IRangeTrackerSnapshot | number, secondary?: number) {
         if (typeof primary === "number") {
             this.ranges = [{ length: 0, primary, secondary }];

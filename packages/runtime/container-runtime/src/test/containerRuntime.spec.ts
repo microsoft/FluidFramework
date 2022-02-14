@@ -6,16 +6,16 @@
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { createSandbox } from "sinon";
-import { DebugLogger, MockLogger } from "@fluidframework/telemetry-utils";
+import { AttachState, IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
+import { GenericError } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { AttachState, IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions";
+import { DebugLogger, MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
 import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { GenericError } from "@fluidframework/container-utils";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
@@ -123,7 +123,6 @@ describe("Runtime", () => {
                 });
             }));
 
-
         describe("Dirty flag", () => {
             const sandbox = createSandbox();
             const createMockContext =
@@ -212,6 +211,7 @@ describe("Runtime", () => {
                     deltaManager.inbound.processCallback = (message: ISequencedDocumentMessage) => {
                         scheduleManager.beforeOpProcessing(message);
                         scheduleManager.afterOpProcessing(undefined, message);
+                        deltaManager.emit("op", message);
                     };
                     scheduleManager = new ScheduleManager(
                         deltaManager,

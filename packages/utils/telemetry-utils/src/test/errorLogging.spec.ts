@@ -114,7 +114,7 @@ describe("Error Logging", () => {
     describe("TaggedLoggerAdapter", () => {
         const events: ITelemetryBaseEvent[] = [];
         class TestTelemetryLogger extends TelemetryLogger {
-            public events: ITelemetryBaseEvent[]=[];
+            public events: ITelemetryBaseEvent[] = [];
             public send(event: ITelemetryBaseEvent): void {
                 events.push(this.prepareEvent(event));
             }
@@ -175,6 +175,7 @@ describe("Error Logging", () => {
             assert.strictEqual(isTaggedTelemetryPropertyValue(false), false);
             assert.strictEqual(isTaggedTelemetryPropertyValue(undefined), false);
             assert.strictEqual(isTaggedTelemetryPropertyValue(null), false);
+            // eslint-disable-next-line prefer-arrow-callback
             assert.strictEqual(isTaggedTelemetryPropertyValue(function x() { return 54; }), false);
             assert.strictEqual(isTaggedTelemetryPropertyValue(Symbol("okay")), false);
         });
