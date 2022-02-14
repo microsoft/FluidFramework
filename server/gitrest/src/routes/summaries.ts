@@ -334,6 +334,9 @@ export class WholeSummaryWriteGitManager {
                 );
             case SummaryType.Handle:
                 // TODO: is there a case where the sha does not exist in the previous summary tree?
+                // TODO: check how often this is happening... get is returning undefined...
+                // maybe need to check entry.id (first part of path) to find parent tree?
+                // Would necessitate pathToSha map implementation to be more complicated maybe
                 return pathToShaMap.get((wholeSummaryTreeEntry as IWholeSummaryTreeHandleEntry).path);
             default:
                 throw new NetworkError(501, "Not Implemented");
@@ -364,6 +367,7 @@ export class WholeSummaryWriteGitManager {
             // TODO: be smarter about this rather than catching an expected failure
             return pathToShaMap;
         }
+        // TODO
         const flatTree = await this.readTreeRecursive(latestVersion.treeId);
         for (const entry of flatTree.tree) {
             pathToShaMap.set(entry.path, entry.sha);
