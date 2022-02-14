@@ -248,7 +248,7 @@ describe('IdCompressor Perf', () => {
 				stableToCompress = compressor.decompress(idAdded);
 			},
 			benchmarkFn: () => {
-				compressor.compress(stableToCompress);
+				compressor.recompress(stableToCompress);
 			},
 		});
 	});

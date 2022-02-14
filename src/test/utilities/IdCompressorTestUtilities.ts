@@ -394,7 +394,7 @@ export class IdCompressorTestNetwork {
 				} else {
 					expect(uuidASessionSpace).to.equal(stableIdFromNumericUuid(idDataA.sessionNumericUuid, idIndex));
 				}
-				expect(compressorA.compress(uuidASessionSpace)).to.equal(sessionSpaceIdA);
+				expect(compressorA.recompress(uuidASessionSpace)).to.equal(sessionSpaceIdA);
 				uuids.add(uuidASessionSpace);
 				const opSpaceIdA = compressorA.normalizeToOpSpace(sessionSpaceIdA);
 				if (isLocalId(opSpaceIdA)) {
