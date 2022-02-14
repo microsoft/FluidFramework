@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DriverError, IDriverErrorBase } from "@fluidframework/driver-definitions";
+import { DriverError } from "@fluidframework/driver-definitions";
 
 export enum OdspErrorType {
     /**
@@ -52,12 +52,11 @@ export enum OdspErrorType {
  * Base interface for all errors and warnings
  * Superset of IDriverErrorBase, but with Odsp-specific errorType
  */
-export interface IOdspError extends Omit<IDriverErrorBase, "errorType"> {
+export interface IOdspError {
     readonly errorType: OdspErrorType;
-    /**
-     * Server epoch indicates when the file was last modified.
-     * Used to detect modifications outside Fluid's services
-     */
+    readonly message: string;
+    canRetry: boolean;
+    online?: string;
     serverEpoch?: string;
 }
 
