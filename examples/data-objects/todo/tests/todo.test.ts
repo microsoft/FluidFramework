@@ -18,7 +18,7 @@ describe("ToDo", () => {
 
                 return "";
             }, index),
-            (actualValue) => actualValue,
+            (actualValue) => actualValue.length !== 0,
             "not propagated" /* defaultValue */);
 
     beforeAll(async () => {

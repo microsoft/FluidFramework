@@ -9,16 +9,18 @@ const retry = async <T>(
     callback: () => Promise<T>,
     defaultValue: T,
     maxTries: number,
-    currentTry: number,
     backOffMs: number,
 ): Promise<T> => {
-    if (currentTry >= maxTries) {
-        return Promise.resolve(defaultValue);
+    for (let currentTry = 1; currentTry <= maxTries; currentTry++) {
+        try {
+            const result = await callback();
+            return result;
+        } catch (error) {
+            await delay(currentTry * backOffMs);
+        }
     }
 
-    await delay(currentTry * backOffMs);
-    return callback()
-        .catch(async (e) => retry(callback, defaultValue, maxTries, currentTry + 1, backOffMs));
+    return Promise.resolve(defaultValue);
 }
 
 /**
@@ -45,4 +47,4 @@ export const retryWithEventualValue = async <T>(
     }
 
     throw Error("Not ready");
-}, defaultValue, maxTries, 0, backOffMs);
+}, defaultValue, maxTries, backOffMs);
