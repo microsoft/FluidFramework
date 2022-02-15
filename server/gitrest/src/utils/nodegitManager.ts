@@ -162,7 +162,6 @@ export class NodegitRepositoryManager implements IRepositoryManager {
     }
 
     public async createTree(params: resources.ICreateTreeParams): Promise<resources.ITree> {
-        // eslint-disable-next-line no-null/no-null
         const builder = await nodegit.Treebuilder.create(this.repo, null);
 
         // build up the tree
@@ -184,10 +183,8 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         }
 
         const signature = nodegit.Signature.create(commit.author.name, commit.author.email, Math.floor(date), 0);
-        // eslint-disable-next-line no-null/no-null
         const parents = commit.parents && commit.parents.length > 0 ? commit.parents : null;
         const commitOid = await this.repo.createCommit(
-            // eslint-disable-next-line no-null/no-null
             null,
             signature,
             signature,
@@ -357,8 +354,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
 
             if (!await exists(directory)) {
                 winston.info(`Repo does not exist ${directory}`);
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject(`Repo does not exist ${directory}`);
+                throw new NetworkError(404, `Repo does not exist ${directory}`);
             }
 
             this.repositoryPCache[repoPath] = nodegit.Repository.open(directory);

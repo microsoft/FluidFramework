@@ -20,15 +20,9 @@ import lorem from "lorem-ipsum";
 import * as moniker from "moniker";
 import request from "supertest";
 import * as app from "../app";
-/* eslint-disable import/no-internal-modules */
-import { createBlob as createBlobInternal } from "../routes/git/blobs";
-import { createCommit as createCommitInternal } from "../routes/git/commits";
-import { createTree as createTreeInternal } from "../routes/git/trees";
-import { getCommits } from "../routes/repository/commits";
-/* eslint-enable import/no-internal-modules */
 import { ExternalStorageManager } from "../externalStorageManager";
-import * as utils from "../utils";
 import * as testUtils from "./utils";
+import { NodegitRepositoryManagerFactory } from "../utils";
 
 // TODO: (issue logged): replace email & name
 const commitEmail = "kurtb@microsoft.com";
@@ -423,7 +417,11 @@ describe("GitRest", () => {
                 const MaxParagraphs = 200;
 
                 await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
-                const manager = new utils.RepositoryManager(testUtils.defaultProvider.get("storageDir"));
+                const repoManagerFactory = new NodegitRepositoryManagerFactory(
+                    testUtils.defaultProvider.get("storageDir"),
+                    new testUtils.MockExternalStorageManager(),
+                );
+                const repoManager = await repoManagerFactory.open(testOwnerName, testRepoName);
 
                 let lastCommit;
 
@@ -438,7 +436,7 @@ describe("GitRest", () => {
                             }),
                             encoding: "utf-8",
                         };
-                        blobsP.push(createBlobInternal(manager, testOwnerName, testRepoName, param));
+                        blobsP.push(repoManager.createBlob(param));
                     }
 
                     const blobs = await Promise.all(blobsP);
@@ -454,18 +452,14 @@ describe("GitRest", () => {
                         tree: files,
                     };
 
-                    const tree = await createTreeInternal(manager, testOwnerName, testRepoName, createTreeParams);
+                    const tree = await repoManager.createTree(createTreeParams);
 
                     const parents: string[] = [];
                     if (lastCommit) {
-                        const commits = await getCommits(
-                            manager,
-                            testOwnerName,
-                            testRepoName,
+                        const commits = await repoManager.getCommits(
                             lastCommit,
                             1,
-                            testReadParams,
-                            externalStorageManager);
+                            testReadParams.config);
                         const parentCommit = commits[0];
                         assert.ok(parentCommit.commit);
                         parents.push(parentCommit.sha);
@@ -481,7 +475,7 @@ describe("GitRest", () => {
                         parents,
                         tree: tree.sha,
                     };
-                    const commit = await createCommitInternal(manager, testOwnerName, testRepoName, commitParams);
+                    const commit = await repoManager.createCommit(commitParams);
 
                     lastCommit = commit.sha;
                 }

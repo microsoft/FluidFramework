@@ -17,7 +17,6 @@ import { IExternalWriterConfig } from "./definitions";
  * Validates blob content exists
  */
 export function validateBlobContent(content: string): boolean {
-    // eslint-disable-next-line no-null/no-null
     return content !== undefined && content !== null;
 }
 

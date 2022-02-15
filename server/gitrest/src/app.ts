@@ -5,13 +5,9 @@
 
 import { json, urlencoded } from "body-parser";
 import cors from "cors";
-// eslint-disable-next-line import/no-duplicates
-import express from "express";
-// eslint-disable-next-line @typescript-eslint/no-duplicate-imports, import/no-duplicates
-import { Express } from "express";
+import express, { Express } from "express";
 import morgan from "morgan";
 import nconf from "nconf";
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 import split = require("split");
 import * as winston from "winston";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
