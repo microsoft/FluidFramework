@@ -352,7 +352,8 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
 
             if (!await exists(directory)) {
                 winston.info(`Repo does not exist ${directory}`);
-                throw new NetworkError(404, `Repo does not exist ${directory}`);
+                // services-client/getOrCreateRepository depends on a 400 response code
+                throw new NetworkError(400, `Repo does not exist ${directory}`);
             }
 
             this.repositoryPCache[repoPath] = nodegit.Repository.open(directory);

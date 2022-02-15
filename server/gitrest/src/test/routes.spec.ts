@@ -168,10 +168,10 @@ describe("GitRest", () => {
                         .expect(200);
                 });
 
-                it("Returns 404 for an unknown repo", async () => {
+                it("Returns 400 for an unknown repo", async () => {
                     return supertest
                         .get(`/repos/${testOwnerName}/${testRepoName}`)
-                        .expect(404);
+                        .expect(400);
                 });
 
                 it("Rejects invalid repo names", async () => {
