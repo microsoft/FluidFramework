@@ -71,11 +71,15 @@ export class OrdererManager implements core.IOrdererManager {
             getLumberBaseProperties(documentId, tenantId),
         );
 
-        switch (ordererType) {
-            case "kafka":
-                return this.kafkaFactory.create(tenantId, documentId);
-            default:
-                return this.localOrderManager.get(tenantId, documentId);
+        try {
+            switch (ordererType) {
+                case "kafka":
+                    return this.kafkaFactory.create(tenantId, documentId);
+                default:
+                    return this.localOrderManager.get(tenantId, documentId);
+            }
+        } catch(error) {
+            Lumberjack.error(`Error while creating kafka order`, getLumberBaseProperties(documentId, tenantId), error);
         }
     }
 }
