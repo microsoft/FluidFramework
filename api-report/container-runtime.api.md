@@ -124,8 +124,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
     getAudience(): IAudience;
-    // (undocumented)
-    protected getDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     getPendingLocalState(): IPendingLocalState | undefined;
@@ -605,6 +603,13 @@ export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 // @public (undocumented)
 export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
+
+// @public
+export enum RuntimeHeaders {
+    externalRequest = "externalRequest",
+    viaHandle = "viaHandle",
+    wait = "wait"
+}
 
 // @public (undocumented)
 export enum RuntimeMessage {

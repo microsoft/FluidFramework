@@ -70,27 +70,27 @@ export class TenantManager {
 
         return jwt.verify(token, tenantKeys.key1, (error1) => {
             if (!error1) {
-                return Promise.resolve();
+                return;
             }
 
             // if the tenant doesn't have key2, it will be empty string
             // we should fail token generated with empty string as key
             if (!tenantKeys.key2) {
-                return Promise.reject(error1 instanceof jwt.TokenExpiredError
+                throw error1 instanceof jwt.TokenExpiredError
                     ? new NetworkError(401, "Token expired validated with key1.")
-                    : new NetworkError(403, "Invalid token validated with key1."));
+                    : new NetworkError(403, "Invalid token validated with key1.");
             }
 
-            return jwt.verify(token, tenantKeys.key2, (error2) => {
+            jwt.verify(token, tenantKeys.key2, (error2) => {
                 if (!error2) {
-                    return Promise.resolve();
+                    return;
                 }
 
                 // When `exp` claim exists in token claims, jsonwebtoken verifies token expiration.
-                return Promise.reject((error1 instanceof jwt.TokenExpiredError
+                throw (error1 instanceof jwt.TokenExpiredError
                     || error2 instanceof jwt.TokenExpiredError)
                     ? new NetworkError(401, "Token expired validated with both key1 and key2.")
-                    : new NetworkError(403, "Invalid token validated with both key1 and key2."));
+                    : new NetworkError(403, "Invalid token validated with both key1 and key2.");
             });
         });
     }
@@ -231,7 +231,7 @@ export class TenantManager {
      */
     public async getTenantKeys(tenantId: string, includeDisabledTenant = false): Promise<ITenantKeys> {
         const tenantDocument = await this.getTenantDocument(tenantId, includeDisabledTenant);
-        
+
         const encryptedTenantKey1 = tenantDocument.key;
         const tenantKey1 = this.secretManager.decryptSecret(encryptedTenantKey1);
         if (tenantKey1 == null) {
@@ -307,7 +307,7 @@ export class TenantManager {
         keyName: string,
         newTenantKey: string,
         tenantId: string,
-    ):Promise<ITenantKeys> {
+    ): Promise<ITenantKeys> {
         // if key2 is to be refreshed
         if (keyName === KeyName.key2) {
             const decryptedTenantKey1 = this.secretManager.decryptSecret(key1);
@@ -438,7 +438,6 @@ export class TenantManager {
 
     private decryptAccessInfo(encryptedAccessInfo: string): any {
         const accessInfo = JSON.parse(this.secretManager.decryptSecret(encryptedAccessInfo));
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return accessInfo;
     }
 }

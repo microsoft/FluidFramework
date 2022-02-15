@@ -20,7 +20,7 @@ export async function createBlob(
     const buffer = Buffer.from(body.content, body.encoding);
 
     const sha = await git.writeBlob({
-        fs: fs,
+        fs,
         dir: utils.getGitDir(store, tenantId),
         blob: buffer,
     });
@@ -38,7 +38,7 @@ export async function getBlob(
     sha: string,
     useCache: boolean,
 ): Promise<IBlob> {
-    const gitObj = await git.readBlob({ fs: fs, dir: utils.getGitDir(store, tenantId), oid: sha });
+    const gitObj = await git.readBlob({ fs, dir: utils.getGitDir(store, tenantId), oid: sha });
     const buffer = gitObj.blob as Buffer;
 
     const result: IBlob = {

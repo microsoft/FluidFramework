@@ -171,8 +171,8 @@ export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemet
 // @public
 export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
     constructor();
-    assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): void;
-    assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): void;
+    assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string): void;
+    assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string): void;
     // (undocumented)
     events: ITelemetryBaseEvent[];
     matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean;

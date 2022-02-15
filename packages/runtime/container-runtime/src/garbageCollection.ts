@@ -6,7 +6,8 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { ClientSessionExpiredError } from "@fluidframework/container-utils";
+import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
+import { IRequestHeader } from "@fluidframework/core-interfaces";
 import {
     cloneGCData,
     concatGarbageCollectionStates,
@@ -35,6 +36,7 @@ import {
     PerformanceEvent,
     TelemetryDataTag,
  } from "@fluidframework/telemetry-utils";
+import { RuntimeHeaders } from ".";
 
 import { IGCRuntimeOptions } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
@@ -91,6 +93,8 @@ interface IUnreferencedEvent {
     id: string;
     age: number;
     timeout: number;
+    externalRequest?: boolean;
+    viaHandle?: boolean;
 };
 
 /** Defines the APIs for the runtime object to be passed to the garbage collector. */
@@ -129,10 +133,15 @@ export interface IGarbageCollector {
     getDataStoreBaseGCDetails(): Promise<Map<string, IGarbageCollectionDetailsBase>>;
     /** Called when the latest summary of the system has been refreshed. */
     latestSummaryStateRefreshed(result: RefreshSummaryResult, readAndParseBlob: ReadAndParseBlob): Promise<void>;
-    /** Called when a node is changed. Used to detect and log when an inactive node is changed. */
-    nodeChanged(id: string, packagePath?: readonly string[]): void;
+    /** Called when a node is updated. Used to detect and log when an inactive node is changed or loaded. */
+    nodeUpdated(
+        nodePath: string,
+        reason: "Loaded" | "Changed",
+        packagePath?: readonly string[],
+        requestHeaders?: IRequestHeader,
+    ): void;
     /** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
-    addedOutboundReference(fromNodeId: string, toNodeId: string): void;
+    addedOutboundReference(fromNodePath: string, toNodePath: string): void;
     dispose(): void;
 }
 
@@ -502,6 +511,24 @@ export class GarbageCollector implements IGarbageCollector {
             }
             return dataStoreGCDetailsMap;
         });
+
+        // Initialize the base state. The base GC data is used to detect and log when inactive / deleted objects are
+        // used in the container.
+        if (this.shouldRunGC) {
+            this.initializeBaseStateP.catch((error) => {
+                throw new DataProcessingError(
+                    error?.message,
+                    "FailedToInitializeGC",
+                    {
+                        gcEnabled: this.gcEnabled,
+                        runSweep: this.shouldRunSweep,
+                        writeAtRoot: this._writeDataAtRoot,
+                        testMode: this.testMode,
+                        sessionExpiry: this.sessionExpiryTimeoutMs,
+                    },
+                );
+            });
+        }
     }
 
     /**
@@ -623,18 +650,53 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Called when a node with the given id is changed. If the node is inactive, log an error.
-     * @param id - The id of the node that changed.
+     * Called when a node with the given id is updated. If the node is inactive, log an error.
+     * @param nodePath - The id of the node that changed.
+     * @param reason - Whether the node was loaded or changed.
      * @param packagePath - The package path of the node. This may not be available if the node hasn't been loaded yet.
+     * @param requestHeaders - If the node was loaded via request path, the headers in the request.
      */
-    public nodeChanged(id: string, packagePath?: readonly string[]) {
-        // Prefix "/" if needed to make it relative to the root.
-        const nodeId = id.startsWith("/") ? id : `/${id}`;
+    public nodeUpdated(
+        nodePath: string,
+        reason: "Loaded" | "Changed",
+        packagePath?: readonly string[],
+        requestHeaders?: IRequestHeader,
+    ) {
+        if (!this.shouldRunGC) {
+            return;
+        }
+
         this.logIfInactive(
-            "inactiveObjectChanged",
-            nodeId,
+            reason,
+            nodePath,
             this.getCurrentTimestampMs(),
             packagePath,
+            requestHeaders,
+        );
+    }
+
+    /**
+     * Called when an outbound reference is added to a node. This is used to identify all nodes that have been
+     * referenced between summaries so that their unreferenced timestamp can be reset.
+     *
+     * @param fromNodePath - The node from which the reference is added.
+     * @param toNodePath - The node to which the reference is added.
+     */
+    public addedOutboundReference(fromNodePath: string, toNodePath: string) {
+        if (!this.shouldRunGC) {
+            return;
+        }
+
+        const outboundRoutes = this.referencesSinceLastRun.get(fromNodePath) ?? [];
+        outboundRoutes.push(toNodePath);
+        this.referencesSinceLastRun.set(fromNodePath, outboundRoutes);
+
+        // If the node that got referenced is inactive, log an event as that may indicate use-after-delete.
+        this.logIfInactive(
+            "Revived",
+            toNodePath,
+            this.getCurrentTimestampMs(),
+            this.getNodePackagePath(toNodePath),
         );
     }
 
@@ -643,19 +705,6 @@ export class GarbageCollector implements IGarbageCollector {
             clearTimeout(this.sessionExpiryTimer);
             this.sessionExpiryTimer = undefined;
         }
-    }
-
-    /**
-     * Called when an outbound reference is added to a node. This is used to identify all nodes that have been
-     * referenced between summaries so that their unreferenced timestamp can be reset.
-     *
-     * @param fromNodeId - The node from which the reference is added.
-     * @param toNodeId - The node to which the reference is added.
-     */
-    public addedOutboundReference(fromNodeId: string, toNodeId: string) {
-        const outboundRoutes = this.referencesSinceLastRun.get(fromNodeId) ?? [];
-        outboundRoutes.push(toNodeId);
-        this.referencesSinceLastRun.set(fromNodeId, outboundRoutes);
     }
 
     /**
@@ -702,15 +751,6 @@ export class GarbageCollector implements IGarbageCollector {
         for (const nodeId of gcResult.referencedNodeIds) {
             const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
             if (nodeStateTracker !== undefined) {
-                // If this node has been unreferenced for longer than deleteTimeoutMs and is being referenced,
-                // log an error as this may mean the deleteTimeoutMs is not long enough.
-                this.logIfInactive(
-                    "inactiveObjectRevived",
-                    nodeId,
-                    currentTimestampMs,
-                    // Get the package path of the data store to which this node belongs.
-                    this.getNodePackagePath(nodeId),
-                );
                 // Stop tracking so as to clear out any running timers.
                 nodeStateTracker.stopTracking();
                 // Delete the node as we don't need to track it any more.
@@ -902,7 +942,14 @@ export class GarbageCollector implements IGarbageCollector {
      * Logs an event if a node is inactive and is used. If the package data for the node exists, log immediately. Else,
      * queue it and it will be logged the next time GC runs as the package data should be available then.
      */
-    private logIfInactive(eventName: string, nodeId: string, timestampMs: number, packagePath?: readonly string[]) {
+    private logIfInactive(
+        eventSuffix: "Changed" | "Loaded" | "Revived",
+        nodeId: string,
+        timestampMs: number,
+        packagePath?: readonly string[],
+        requestHeaders?: IRequestHeader,
+    ) {
+        const eventName = `inactiveObject_${eventSuffix}`;
         // We log a particular event for a given node only once so that it is not too noisy.
         const uniqueEventId = `${nodeId}-${eventName}`;
         const nodeState = this.unreferencedNodesState.get(nodeId);
@@ -913,6 +960,8 @@ export class GarbageCollector implements IGarbageCollector {
                 id: nodeId,
                 age: timestampMs - nodeState.unreferencedTimestampMs,
                 timeout: this.deleteTimeoutMs,
+                externalRequest: requestHeaders?.[RuntimeHeaders.externalRequest],
+                viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
             };
             if (packagePath !== undefined) {
                 this.mc.logger.sendErrorEvent({

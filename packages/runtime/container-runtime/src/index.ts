@@ -17,6 +17,7 @@ export {
     ScheduleManager,
     agentSchedulerId,
     ContainerRuntime,
+    RuntimeHeaders,
 } from "./containerRuntime";
 export { IDataStore, AliasResult } from "./dataStore";
 export { DeltaScheduler } from "./deltaScheduler";
