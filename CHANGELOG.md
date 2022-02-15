@@ -1,5 +1,11 @@
 # Change Log
 
+## 20.5.0
+
+* feat: clarify compression API in IdCompressor
+  * Associated pull request: [38029](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38029)
+  * Commit: [988bb16337a86ad5842eaeddd3adb942cf3f4e06](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/988bb16337a86ad5842eaeddd3adb942cf3f4e06)
+
 ## 20.1.0
 
 * refactor: remove deprecated helpers from tests
