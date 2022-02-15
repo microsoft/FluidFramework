@@ -4,8 +4,8 @@
  */
 
 import { IsoBuffer } from '@fluidframework/common-utils';
-import { GenericSharedTree, OrderedEditSet } from '..';
-import { EditHandle, EditLog } from '../EditLog';
+import { GenericSharedTree } from '../generic';
+import { OrderedEditSet, EditHandle, EditLog } from '../EditLog';
 import { EditWithoutId } from './PersistedTypes';
 
 /**

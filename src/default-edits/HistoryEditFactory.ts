@@ -18,8 +18,7 @@ import {
 	InsertInternal,
 } from './PersistedTypes';
 import { Transaction } from './Transaction';
-import { isDetachedSequenceId } from './EditUtilities';
-import { RangeValidationResultKind, validateStableRange } from '.';
+import { isDetachedSequenceId, RangeValidationResultKind, validateStableRange } from './EditUtilities';
 
 /**
  * Given a sequence of changes, produces an inverse sequence of changes, i.e. the minimal changes required to revert the given changes

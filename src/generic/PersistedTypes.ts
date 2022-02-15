@@ -10,7 +10,7 @@
 // persisted types (as documented below) is followed.
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../Identifiers';
-import { SharedTreeSummaryWriteFormat } from '.';
+import { SharedTreeSummaryWriteFormat } from './GenericSharedTree';
 
 /**
  * Types for Edits in Fluid Ops and Fluid summaries.
