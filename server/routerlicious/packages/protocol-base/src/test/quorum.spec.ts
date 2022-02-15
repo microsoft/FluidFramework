@@ -219,17 +219,23 @@ describe("Quorum", () => {
             quorum.addMember(client1Info.clientId, client1Info.details);
             assert.strictEqual(addCount, 1, "Failed to event for add");
             assert.strictEqual(quorum.getMembers().size, 1, "Should have 1 member after add");
+            assert.strictEqual(quorum.getMember(client1Info.clientId), client1Info.details, "Expecting client 1");
+            assert.strictEqual(quorum.getMember(client2Info.clientId), undefined, "Not expecting client 2");
 
             expectedAdd = client2Info;
             quorum.addMember(client2Info.clientId, client2Info.details);
             assert.strictEqual(addCount, 2, "Failed to event for add");
             assert.strictEqual(quorum.getMembers().size, 2, "Should have 2 members after second add");
+            assert.strictEqual(quorum.getMember(client1Info.clientId), client1Info.details, "Expecting client 1");
+            assert.strictEqual(quorum.getMember(client2Info.clientId), client2Info.details, "Expecting client 2");
 
             expectedAdd = unexpected;
             expectedRemove = client1Info;
             quorum.removeMember(client1Info.clientId);
             assert.strictEqual(removeCount, 1, "Failed to event for remove");
             assert.strictEqual(quorum.getMembers().size, 1, "Should have 1 member after remove");
+            assert.strictEqual(quorum.getMember(client1Info.clientId), undefined, "Not expecting client 1");
+            assert.strictEqual(quorum.getMember(client2Info.clientId), client2Info.details, "Expecting client 2");
         });
     });
 });
