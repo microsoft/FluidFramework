@@ -190,7 +190,7 @@ function createExpectsTest(orderedExpectedEvents: ITelemetryGenericEvent[], test
                 throw error;
             }
         }
-        const err = getUnexpectedLogErrorException(provider.logger, "Use itExpects to specify expected errors");
+        const err = getUnexpectedLogErrorException(provider.logger, "Use itExpects to specify expected errors. ");
         if(err !== undefined){
             throw err;
         }
@@ -259,7 +259,7 @@ function describeCompat(
                     return provider;
                 });
                 afterEach(function (done:Mocha.Done) {
-                    done(getUnexpectedLogErrorException(provider.logger, "Use itExpects to specify expected errors"));
+                    done(getUnexpectedLogErrorException(provider.logger, "Use itExpects to specify expected errors. "));
                     if (resetAfterEach) {
                         provider.reset();
                     }

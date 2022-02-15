@@ -400,11 +400,10 @@ export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogg
     const results = logger.reportAndClearTrackedEvents();
     if(results.unexpectedErrors.length > 0){
         return new Error(
-            `${errorPrefix}Unexpected Errors in Logs:\n` +
-            +`${ JSON.stringify(results.unexpectedErrors, undefined, 2)}`);
+            `${errorPrefix}Unexpected Errors in Logs:\n${JSON.stringify(results.unexpectedErrors, undefined, 2)}`);
     }
     if(results.expectedNotFound.length > 0){
         return new Error(
-            `${errorPrefix}Expected Events not found:\n${ JSON.stringify(results.expectedNotFound, undefined, 2)}`);
+            `${errorPrefix}Expected Events not found:\n${JSON.stringify(results.expectedNotFound, undefined, 2)}`);
     }
 }
