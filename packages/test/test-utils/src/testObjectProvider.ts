@@ -376,6 +376,10 @@ export class TestObjectProvider implements ITestObjectProvider {
         this._documentServiceFactory = undefined;
         this._urlResolver = undefined;
         this._documentIdStrategy.reset();
+        const logError = getUnexpectedLogErrorException(this._logger);
+        if(logError) {
+            throw logError
+        };
         this._logger = undefined;
         this._documentCreated = false;
     }
@@ -386,5 +390,21 @@ export class TestObjectProvider implements ITestObjectProvider {
 
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
         this._documentIdStrategy.update(resolvedUrl);
+    }
+}
+
+export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, errorPrefix?: string){
+    if(logger === undefined){
+        return;
+    }
+    const results = logger.reportAndClearTrackedEvents();
+    if(results.unexpectedErrors.length > 0){
+        return new Error(
+            `${errorPrefix}Unexpected Errors in Logs:\n` +
+            +`${ JSON.stringify(results.unexpectedErrors, undefined, 2)}`);
+    }
+    if(results.expectedNotFound.length > 0){
+        return new Error(
+            `${errorPrefix}Expected Events not found:\n${ JSON.stringify(results.expectedNotFound, undefined, 2)}`);
     }
 }
