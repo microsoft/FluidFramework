@@ -7,6 +7,7 @@ import { ICreateTreeParams } from "@fluidframework/gitresources";
 import { Router } from "express";
 import nconf from "nconf";
 import { IRepositoryManagerFactory } from "../../utils";
+import { handleResponse } from "../utils";
 
 export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
     const router: Router = Router();
@@ -17,13 +18,8 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
             request.params.repo,
         );
         const resultP = repoManager.createTree(request.body as ICreateTreeParams);
-        return resultP.then(
-            (tree) => {
-                response.status(201).json(tree);
-            },
-            (error) => {
-                response.status(400).json(error);
-            });
+
+        handleResponse(resultP, response, 201);
     });
 
     router.get("/repos/:owner/:repo/git/trees/:sha", async (request, response, next) => {
@@ -32,13 +28,8 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
             request.params.repo,
         );
         const resultP = repoManager.getTree(request.params.sha, request.query.recursive === "1");
-        return resultP.then(
-            (tree) => {
-                response.status(200).json(tree);
-            },
-            (error) => {
-                response.status(400).json(error);
-            });
+
+        handleResponse(resultP, response);
     });
 
     return router;

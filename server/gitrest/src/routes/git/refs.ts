@@ -6,19 +6,10 @@
 import {
     ICreateRefParamsExternal,
     IPatchRefParamsExternal } from "@fluidframework/server-services-client";
-import { Response, Router } from "express";
+import { Router } from "express";
 import nconf from "nconf";
 import { getExternalWriterParams, IRepositoryManagerFactory } from "../../utils";
-
-function handleResponse(resultP: Promise<any>, response: Response, successCode: number = 200) {
-    resultP.then(
-        (blob) => {
-            response.status(successCode).json(blob);
-        },
-        (error) => {
-            response.status(400).json(error);
-        });
-}
+import { handleResponse } from "../utils";
 
 /**
  * Simple method to convert from a path id to the git reference ID

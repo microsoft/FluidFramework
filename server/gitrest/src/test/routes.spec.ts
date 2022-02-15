@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import {
     ICreateBlobParams,
     ICreateBlobResponse,
@@ -168,10 +168,10 @@ describe("GitRest", () => {
                         .expect(200);
                 });
 
-                it("Returns 400 for an unknown repo", async () => {
+                it("Returns 404 for an unknown repo", async () => {
                     return supertest
                         .get(`/repos/${testOwnerName}/${testRepoName}`)
-                        .expect(400);
+                        .expect(404);
                 });
 
                 it("Rejects invalid repo names", async () => {
@@ -194,13 +194,13 @@ describe("GitRest", () => {
                 it("Can create and retrieve a blob", async () => {
                     await createRepo(supertest, testOwnerName, testRepoName);
                     const result = await createBlob(supertest, testOwnerName, testRepoName, testBlob);
-                    assert.equal(result.body.sha, "b45ef6fec89518d314f546fd6c3025367b721684");
+                    assert.strictEqual(result.body.sha, "b45ef6fec89518d314f546fd6c3025367b721684");
 
                     return supertest
                         .get(`/repos/${testOwnerName}/${testRepoName}/git/blobs/${result.body.sha}`)
                         .expect(200)
                         .expect((getResult) => {
-                            assert.equal(getResult.body.sha, result.body.sha);
+                            assert.strictEqual(getResult.body.sha, result.body.sha);
                         });
                 });
 
@@ -216,13 +216,13 @@ describe("GitRest", () => {
                     await createRepo(supertest, testOwnerName, testRepoName);
                     await createBlob(supertest, testOwnerName, testRepoName, testBlob);
                     const tree = await createTree(supertest, testOwnerName, testRepoName, testTree);
-                    assert.equal(tree.body.sha, "bf4db183cbd07f48546a5dde098b4510745d79a1");
+                    assert.strictEqual(tree.body.sha, "bf4db183cbd07f48546a5dde098b4510745d79a1");
 
                     return supertest
                         .get(`/repos/${testOwnerName}/${testRepoName}/git/trees/${tree.body.sha}`)
                         .expect(200)
                         .expect((getResult) => {
-                            assert.equal(getResult.body.sha, tree.body.sha);
+                            assert.strictEqual(getResult.body.sha, tree.body.sha);
                         });
                 });
 
@@ -278,13 +278,13 @@ describe("GitRest", () => {
                     await createBlob(supertest, testOwnerName, testRepoName, testBlob);
                     await createTree(supertest, testOwnerName, testRepoName, testTree);
                     const commit = await createCommit(supertest, testOwnerName, testRepoName, testCommit);
-                    assert.equal(commit.body.sha, "cf0b592907d683143b28edd64d274ca70f68998e");
+                    assert.strictEqual(commit.body.sha, "cf0b592907d683143b28edd64d274ca70f68998e");
 
                     return supertest
                         .get(`/repos/${testOwnerName}/${testRepoName}/git/commits/${commit.body.sha}`)
                         .expect(200)
                         .expect((getResult) => {
-                            assert.equal(getResult.body.sha, commit.body.sha);
+                            assert.strictEqual(getResult.body.sha, commit.body.sha);
                         });
                 });
             });
@@ -296,13 +296,13 @@ describe("GitRest", () => {
                     await createTree(supertest, testOwnerName, testRepoName, testTree);
                     await createCommit(supertest, testOwnerName, testRepoName, testCommit);
                     const ref = await createRef(supertest, testOwnerName, testRepoName, testRef);
-                    assert.equal(ref.body.ref, testRef.ref);
+                    assert.strictEqual(ref.body.ref, testRef.ref);
 
                     return supertest
                         .get(`/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}`)
                         .expect(200)
                         .expect((getResult) => {
-                            assert.equal(getResult.body.ref, ref.body.ref);
+                            assert.strictEqual(getResult.body.ref, ref.body.ref);
                         });
                 });
 
@@ -312,8 +312,8 @@ describe("GitRest", () => {
                         .get(`/repos/${testOwnerName}/${testRepoName}/git/refs`)
                         .expect(200)
                         .expect((getResult) => {
-                            assert.equal(getResult.body.length, 1);
-                            assert.equal(getResult.body[0].ref, testRef.ref);
+                            assert.strictEqual(getResult.body.length, 1);
+                            assert.strictEqual(getResult.body[0].ref, testRef.ref);
                         });
                 });
 
@@ -399,13 +399,13 @@ describe("GitRest", () => {
                         .set("Content-Type", "application/json")
                         .send(tagParams)
                         .expect(201);
-                    assert.equal(tag.body.sha, "a8588b3913aa692c3642697d6f136cec470dd82c");
+                    assert.strictEqual(tag.body.sha, "a8588b3913aa692c3642697d6f136cec470dd82c");
 
                     return supertest
                         .get(`/repos/${testOwnerName}/${testRepoName}/git/tags/${tag.body.sha}`)
                         .expect(200)
                         .expect((result) => {
-                            assert.equal(result.body.sha, tag.body.sha);
+                            assert.strictEqual(result.body.sha, tag.body.sha);
                         });
                 });
             });
@@ -419,7 +419,7 @@ describe("GitRest", () => {
                 await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
                 const repoManagerFactory = new NodegitRepositoryManagerFactory(
                     testUtils.defaultProvider.get("storageDir"),
-                    new testUtils.MockExternalStorageManager(),
+                    externalStorageManager,
                 );
                 const repoManager = await repoManagerFactory.open(testOwnerName, testRepoName);
 
@@ -513,7 +513,7 @@ describe("GitRest", () => {
                         .get(`/repos/${testOwnerName}/${testRepoName}/commits?sha=main`)
                         .expect(200)
                         .expect((result) => {
-                            assert.equal(result.body.length, 1);
+                            assert.strictEqual(result.body.length, 1);
                         });
                 });
             });
@@ -547,12 +547,18 @@ describe("GitRest", () => {
             describe("Git", () => {
                 describe("Blobs", () => {
                     it("Should have correlation id when creating a blob", async () => {
+                        await initBaseRepo(
+                            supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                        );
                         await assertCorrelationId(
                             `/${testOwnerName}/repos`,
                             "post",
                         );
                     });
                     it("Should have correlation id when getting a blob", async () => {
+                        await initBaseRepo(
+                            supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                        );
                         await assertCorrelationId(
                             `/repos/${testOwnerName}/${testRepoName}/git/blobs/${testTree.tree[0].sha}`,
                         );
@@ -561,12 +567,18 @@ describe("GitRest", () => {
 
                 describe("Commits", () => {
                     it("Should have correlation id when creating a commit", async () => {
+                        await initBaseRepo(
+                            supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                        );
                         await assertCorrelationId(
                             `/repos/${testOwnerName}/${testRepoName}/git/commits`,
                             "post",
                         );
                     });
                     it("Should have correlation id when getting a commit", async () => {
+                        await initBaseRepo(
+                            supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                        );
                         await assertCorrelationId(
                             `/repos/${testOwnerName}/${testRepoName}/git/commits/${testTree.tree[0].sha}`,
                         );
@@ -575,28 +587,43 @@ describe("GitRest", () => {
 
                 describe("Refs", () => {
                     it("GET /repos/:owner/:repo/git/refs", async () => {
+                        await initBaseRepo(
+                            supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                        );
                         await assertCorrelationId(
                             `/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}`,
                         );
                     });
                     it("GET /repos/:owner/:repo/git/refs/*", async () => {
+                        await initBaseRepo(
+                            supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                        );
                         await assertCorrelationId(
                             `/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}/*`,
                         );
                     });
                     it("POST /repos/:owner/:repo/git/refs", async () => {
+                        await initBaseRepo(
+                            supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                        );
                         await assertCorrelationId(
                             `/repos/${testOwnerName}/${testRepoName}/git/refs`,
                             "post",
                         );
                     });
                     it("PATCH /repos/:owner/:repo/git/refs/*", async () => {
+                        await initBaseRepo(
+                            supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                        );
                         await assertCorrelationId(
                             `/repos/${testOwnerName}/${testRepoName}/git/refs/heads/patch`,
                             "patch",
                         );
                     });
                     it("DELETE /repos/:owner/:repo/git/refs/*", async () => {
+                        await initBaseRepo(
+                            supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                        );
                         await assertCorrelationId(
                             `/repos/${testOwnerName}/${testRepoName}/git/${testRefWriteDisabled.ref}`,
                             "delete",
@@ -606,9 +633,15 @@ describe("GitRest", () => {
 
                 describe("Repos", () => {
                     it("Should have correlation id when creating a repo", async () => {
+                        await initBaseRepo(
+                            supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                        );
                         await assertCorrelationId(`/repos/${testOwnerName}/repos`, "post");
                     });
                     it("Should have correlation id when getting a repo", async () => {
+                        await initBaseRepo(
+                            supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                        );
                         await assertCorrelationId(
                             `/repos/${testOwnerName}/${testRepoName}`,
                         );
@@ -617,12 +650,18 @@ describe("GitRest", () => {
 
                 describe("Tags", () => {
                     it("Should have correlation id when creating a tag", async () => {
+                        await initBaseRepo(
+                            supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                        );
                         await assertCorrelationId(
                             `/repos/${testOwnerName}/${testRepoName}/git/tags`,
                             "post",
                         );
                     });
                     it("Should have correlation id when getting a tag", async () => {
+                        await initBaseRepo(
+                            supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                        );
                         await assertCorrelationId(
                             `/repos/${testOwnerName}/${testRepoName}/git/tags/${testTree.tree[0].sha}`,
                         );
@@ -631,11 +670,17 @@ describe("GitRest", () => {
 
                 describe("Trees", () => {
                     it("Should have correlation id when creating a tree", async () => {
+                        await initBaseRepo(
+                            supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                        );
                         await assertCorrelationId(
                             `/repos/${testOwnerName}/${testRepoName}/git/trees`, "post",
                         );
                     });
                     it("Should have correlation id when getting a tree", async () => {
+                        await initBaseRepo(
+                            supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                        );
                         await assertCorrelationId(
                             `/repos/${testOwnerName}/${testRepoName}/git/trees/${testTree.tree[0].sha}`,
                         );
@@ -646,6 +691,9 @@ describe("GitRest", () => {
             describe("Repository", () => {
                 describe("Commits", () => {
                     it("Should have correlation id when listing recent commits", async () => {
+                        await initBaseRepo(
+                            supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                        );
                         await assertCorrelationId(
                             `/repos/${testOwnerName}/${testRepoName}/commits?sha=main`,
                         );
@@ -654,6 +702,9 @@ describe("GitRest", () => {
 
                 describe("Content", () => {
                     it("Should have correlation id when retrieving a stored object", async () => {
+                        await initBaseRepo(
+                            supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                        );
                         const fullRepoPath = `${testOwnerName}/${testRepoName}`;
                         await assertCorrelationId(
                             `/repos/${fullRepoPath}/contents/${testTree.tree[0].path}?ref=${testRef.sha}`,

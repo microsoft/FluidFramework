@@ -7,6 +7,7 @@ import { ICreateTagParams } from "@fluidframework/gitresources";
 import { Router } from "express";
 import nconf from "nconf";
 import { IRepositoryManagerFactory } from "../../utils";
+import { handleResponse } from "../utils";
 
 export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
     const router: Router = Router();
@@ -20,13 +21,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         );
         const resultP = repoManager.createTag(request.body as ICreateTagParams);
 
-        return resultP.then(
-            (blob) => {
-                response.status(201).json(blob);
-            },
-            (error) => {
-                response.status(400).json(error);
-            });
+        handleResponse(resultP, response, 201);
     });
 
     router.get("/repos/:owner/:repo/git/tags/*", async (request, response, next) => {
@@ -35,13 +30,8 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
             request.params.repo,
         );
         const resultP = repoManager.getTag(request.params[0]);
-        return resultP.then(
-            (blob) => {
-                response.status(200).json(blob);
-            },
-            (error) => {
-                response.status(400).json(error);
-            });
+
+        handleResponse(resultP, response);
     });
 
     return router;

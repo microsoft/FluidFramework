@@ -6,6 +6,7 @@
 import { Router } from "express";
 import nconf from "nconf";
 import { getExternalWriterParams, IRepositoryManagerFactory } from "../../utils";
+import { handleResponse } from "../utils";
 
 export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
     const router: Router = Router();
@@ -26,13 +27,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
             Number(request.query.count as string),
             getExternalWriterParams(request.query?.config as string),
         );
-        return resultP.then(
-            (result) => {
-                response.status(200).json(result);
-            },
-            (error) => {
-                response.status(400).json(error);
-            });
+        handleResponse(resultP, response);
     });
 
     return router;

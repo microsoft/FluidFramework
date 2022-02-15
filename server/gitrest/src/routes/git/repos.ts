@@ -7,6 +7,7 @@ import { ICreateRepoParams } from "@fluidframework/gitresources";
 import { Router } from "express";
 import nconf from "nconf";
 import { IRepositoryManagerFactory } from "../../utils";
+import { handleResponse } from "../utils";
 
 export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
     const router: Router = Router();
@@ -24,13 +25,8 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
             request.params.owner,
             createParams.name,
         );
-        repoManagerP.then(
-            (repository) => {
-                return response.status(201).json();
-            },
-            (error) => {
-                return response.status(400).json();
-            });
+
+        handleResponse(repoManagerP.then(() => undefined), response, 201);
     });
 
     /**
@@ -41,13 +37,8 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
             request.params.owner,
             request.params.repo,
         );
-        repoManagerP.then(
-            (repository) => {
-                return response.status(200).json({ name: request.params.repo });
-            },
-            (error) => {
-                return response.status(400).end();
-            });
+
+        handleResponse(repoManagerP.then(() => ({ name: request.params.repo })), response);
     });
 
     return router;

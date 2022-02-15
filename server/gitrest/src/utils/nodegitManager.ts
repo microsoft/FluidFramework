@@ -6,7 +6,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as util from "util";
-import * as nodegit from "nodegit";
+import nodegit from "nodegit";
 import winston from "winston";
 import safeStringify from "json-stringify-safe";
 import type * as resources from "@fluidframework/gitresources";
@@ -166,10 +166,8 @@ export class NodegitRepositoryManager implements IRepositoryManager {
 
         // build up the tree
         for (const node of params.tree) {
-            builder.insert(node.path, nodegit.Oid.fromString(node.sha), parseInt(node.mode, 8))
-                .catch((err) => {
-                    winston.error(`Failed to insert node in tree. Mode: ${node.mode}`);
-                });
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            builder.insert(node.path, nodegit.Oid.fromString(node.sha), parseInt(node.mode, 8));
         }
 
         const id = await builder.write();
@@ -375,7 +373,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
         const repoPath = `${owner}/${name}`;
 
         if (parsedName.dir !== "" || parsedOwner.dir !== "") {
-            throw new Error(`Invalid repo name ${repoPath}`);
+            throw new NetworkError(400, `Invalid repo name ${repoPath}`);
         }
 
         return repoPath;
