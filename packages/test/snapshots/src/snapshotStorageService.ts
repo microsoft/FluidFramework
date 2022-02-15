@@ -49,7 +49,6 @@ function removeNullTreeIds(tree: ITree) {
             removeNullTreeIds(node.value);
         }
     }
-    // eslint-disable-next-line no-null/no-null
     if (tree.id === undefined || tree.id === null) {
         delete tree.id;
     }

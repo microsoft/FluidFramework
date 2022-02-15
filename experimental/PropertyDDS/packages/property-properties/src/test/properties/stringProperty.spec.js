@@ -176,6 +176,23 @@ describe('StringProperty', function () {
             expect(testString.getValue()).to.equal('ABBAAAA');
         });
 
+        it('Should report dirtiness correctly when introducing a modification in certain order', function () {
+            testString = PropertyFactory.create('String');
+            let newValue = "test";
+            const node = PropertyFactory.create('NodeProperty');
+            node.insert('stringProp', testString);
+            // Ignore insert changeset
+            node.cleanDirty();
+            node.applyChangeSet(JSON.parse(`{"modify":{"String":{"stringProp":{"value":"${newValue}","oldValue": ""}}}}`));
+            node.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
+            node.cleanDirty();
+            let oldValue = newValue;
+            newValue = "test1";
+            node.applyChangeSet(JSON.parse(`{"modify":{"String":{"stringProp":{"value":"${newValue}","oldValue": "${oldValue}"}}}}`));
+            node.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
+            expect(Object.keys(node._serialize(true, false, 2))).to.have.length(1);
+        });
+
         it('.insertRange should also accept an array with a single string', function () {
             var testString = PropertyFactory.create('String');
             testString.setValue('AAAAA');

@@ -161,8 +161,8 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
 export class FaultInjectionError extends LoggingError {
     constructor(
         message: string,
-        public readonly canRetry: boolean | undefined) {
-            super(message, {testCategoryOverride: "generic"});
+        public readonly canRetry: boolean | undefined,
+    ) {
+        super(message, {testCategoryOverride: "generic"});
     }
-
 }

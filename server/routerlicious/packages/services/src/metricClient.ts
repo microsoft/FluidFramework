@@ -41,9 +41,10 @@ class TelegrafClient implements IMetricClient {
         return row;
     }
 
-    private writeToTelegraf(series: string, row: any): Promise<void> {
+    private async writeToTelegraf(series: string, row: any): Promise<void> {
         const Measurement = telegraf.Measurement;
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.telegrafClient.sendMeasurement(new Measurement(
             series,
             {},

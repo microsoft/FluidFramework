@@ -52,10 +52,10 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
 
     public async getVersions(
         versionId: string | null,
-        count: number): Promise<IVersion[]> {
-
+        count: number,
+    ): Promise<IVersion[]> {
         if (this.docId === undefined || this.docId === versionId || versionId === null) {
-            if (versionId !== null){
+            if (versionId !== null) {
                 this.docId = versionId;
             }
             return [{ id: "latest", treeId: "" }];
@@ -108,7 +108,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
 
     public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
         if (this.docId === undefined || this.docId === versionId || versionId === null) {
-            if (versionId !== null){
+            if (versionId !== null) {
                 this.docId = versionId;
             }
             return [{ id: "latest", treeId: "" }];
