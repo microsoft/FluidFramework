@@ -90,8 +90,7 @@ describe("Quorum", () => {
             assert.equal(evented, false, "Should not have evented yet 2");
 
             acceptanceState = "just right";
-            
-            // Create a fake message that would update the msn.
+
             // This message accepts the proposal since the msn is higher than the sequence number of the proposal.
             const immediateNoOp2 = quorum.updateMinimumSequenceNumber(justRightMessage);
             assert.equal(immediateNoOp2, true, "Should no-op if proposal was completed");
@@ -107,6 +106,71 @@ describe("Quorum", () => {
 
             await assert.doesNotReject(proposalP);
         });
-    });
 
+        it("Remote proposal", async () => {
+            let evented = false;
+
+            const proposalKey = "hello";
+            const proposalValue = "world";
+            const proposalSequenceNumber = 53;
+            const tooEarlyMessage = {
+                minimumSequenceNumber: 37,
+                sequenceNumber: 73,
+            } as ISequencedDocumentMessage;
+            const justRightMessage = {
+                minimumSequenceNumber: 64,
+                sequenceNumber: 79,
+            } as ISequencedDocumentMessage;
+
+            // Observe eventing.  We expect a single event, with the correct values, to fire at the right time.
+            quorum.on(
+                "approveProposal",
+                (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => {
+                    assert.equal(evented, false, "Double event");
+                    evented = true;
+                    assert.equal(
+                        sequenceNumber,
+                        proposalSequenceNumber,
+                        "Unexpected proposal sequenceNumber",
+                    );
+                    assert.equal(
+                        key,
+                        proposalKey,
+                        "Unexpected proposal key",
+                    );
+                    assert.equal(
+                        value,
+                        proposalValue,
+                        "Unexpected proposal value",
+                    );
+                    assert.equal(
+                        approvalSequenceNumber,
+                        justRightMessage.sequenceNumber,
+                        "Approved on wrong sequence number",
+                    );
+                },
+            );
+
+            // Client sequence number shouldn't matter for remote proposals.
+            quorum.addProposal(proposalKey, proposalValue, proposalSequenceNumber, false, -5);
+
+            // This message does nothing since the msn is higher than the sequence number of the proposal.
+            const immediateNoOp1 = quorum.updateMinimumSequenceNumber(tooEarlyMessage);
+            assert.equal(immediateNoOp1, false, "Should not no-op if no proposal was completed");
+            assert.equal(evented, false, "Should not have evented yet 1");
+
+            // Wait to see if any async stuff is waiting (shouldn't be).
+            await Promise.resolve().then(() => {});
+
+            assert.equal(evented, false, "Should not have evented yet 2");
+
+            // This message accepts the proposal since the msn is higher than the sequence number of the proposal.
+            const immediateNoOp2 = quorum.updateMinimumSequenceNumber(justRightMessage);
+            assert.equal(immediateNoOp2, true, "Should no-op if proposal was completed");
+            assert.equal(evented, true, "Should have evented");
+
+            // Wait to see if any async stuff is waiting (shouldn't be).
+            await Promise.resolve().then(() => {});
+        });
+    });
 });
