@@ -12,10 +12,10 @@ import {
     IFileSnapshot,
     StaticStorageDocumentServiceFactory,
 } from "@fluidframework/replay-driver";
-import { 
-    compareWithReferenceSnapshot, 
-    getNormalizedFileSnapshot, 
-    loadContainer ,
+import {
+    compareWithReferenceSnapshot,
+    getNormalizedFileSnapshot,
+    loadContainer,
     uploadSummary,
 } from "@fluid-internal/replay-tool";
 import { SnapshotStorageService } from "./snapshotStorageService";
@@ -79,12 +79,12 @@ export async function validateSnapshots(
                 reportError,
             );
         const storage = new SnapshotStorageService(JSON.parse(srcContent) as IFileSnapshot, onSnapshotCb);
-       
+
         container = await loadContainer(
             new StaticStorageDocumentServiceFactory(storage),
             FileStorageDocumentName,
         );
-        await uploadSummary(container)
+        await uploadSummary(container);
     }
 
     if (errors.length !== 0) {

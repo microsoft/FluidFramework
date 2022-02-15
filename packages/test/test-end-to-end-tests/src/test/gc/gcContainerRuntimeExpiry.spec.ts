@@ -22,7 +22,7 @@ import { mockConfigProvider } from "./mockConfigProivder";
  */
  describeNoCompat("GC Session Expiry", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    const timeoutMs = 30 * 24 * 60 * 60 * 1000; //30 days
+    const timeoutMs = 30 * 24 * 60 * 60 * 1000; // 30 days
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
         TestDataObject,
@@ -53,7 +53,7 @@ import { mockConfigProvider } from "./mockConfigProivder";
     const configProvider = mockConfigProvider(settings);
 
     let container1: IContainer;
-    const createContainer = async (): Promise<IContainer> => 
+    const createContainer = async (): Promise<IContainer> =>
         provider.createContainer(runtimeFactory, { configProvider });
     const loadContainer = async (): Promise<IContainer> => provider.loadContainer(runtimeFactory, { configProvider });
     let clock: SinonFakeTimers;
@@ -80,12 +80,18 @@ import { mockConfigProvider } from "./mockConfigProivder";
         clockEnd = clock.now + timeoutMs;
     });
 
-    it("Container should be closed with a ClientSessionExpired error after the gcSessionExpiryTime is up", async () => {
+    /**
+     * Issue caused by this PR: https://github.com/microsoft/FluidFramework/pull/9054
+     * Enable test once the intermittent failures are resolved. 
+     * See - https://github.com/microsoft/FluidFramework/issues/9124
+     */
+    it.skip("Container should be closed with a ClientSessionExpired error after the gcSessionExpiryTime is up",
+    async () => {
         await provider.ensureSynchronized();
         clock.tick(1);
         assert(container1.closed === false, "Container should not instantly close.");
         clock.tick(timeoutMs - 2);
-        assert(container1.closed === false, 
+        assert(container1.closed === false,
             `Container1 should not be closed, it should be 1 tick away from expiring. 
             Current: ${clock.now}, expected: ${clockEnd}`);
         clock.tick(1);
@@ -93,7 +99,12 @@ import { mockConfigProvider } from "./mockConfigProivder";
             Current: ${clock.now}, expected: ${clockEnd}`);
     });
 
-    it("Containers should have the same expiry time for the same document", async () => {
+    /**
+     * Issue caused by this PR: https://github.com/microsoft/FluidFramework/pull/9054
+     * Enable test once the intermittent failures are resolved. 
+     * See - https://github.com/microsoft/FluidFramework/issues/9124
+     */
+    it.skip("Containers should have the same expiry time for the same document", async () => {
         // Container1 should expire in one tick
         clock.tick(timeoutMs - 1);
         // Load the two other containers

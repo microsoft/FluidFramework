@@ -25,7 +25,7 @@ export interface IUndoConsumer {
  * undo redo stack manager
  */
 export class SharedTreeUndoRedoHandler {
-	constructor(private stackManager: IUndoConsumer) {}
+	constructor(private readonly stackManager: IUndoConsumer) {}
 
 	public attachTree(tree: SharedTree) {
 		tree.on(SharedTreeEvent.EditCommitted, this.treeDeltaHandler);

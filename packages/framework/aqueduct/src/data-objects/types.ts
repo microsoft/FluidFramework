@@ -29,7 +29,6 @@ export interface DataObjectTypes {
     Events?: IEvent;
 }
 
-
 export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
     readonly runtime: IFluidDataStoreRuntime;
     readonly context: IFluidDataStoreContext;
