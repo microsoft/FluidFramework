@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { TestDataObject } from "./mockSummarizerClient";
 import { mockConfigProvider } from "./mockConfigProivder";
@@ -82,29 +82,33 @@ import { mockConfigProvider } from "./mockConfigProivder";
 
     /**
      * Issue caused by this PR: https://github.com/microsoft/FluidFramework/pull/9054
-     * Enable test once the intermittent failures are resolved. 
+     * Enable test once the intermittent failures are resolved.
      * See - https://github.com/microsoft/FluidFramework/issues/9124
      */
-    it.skip("Container should be closed with a ClientSessionExpired error after the gcSessionExpiryTime is up",
+    itExpects.skip(
+        "Container should be closed with a ClientSessionExpired error after the gcSessionExpiryTime is up",
+        [
+            {"eventName": "fluid:telemetry:Container:ContainerClose","errorType": "clientSessionExpiredError"}
+        ],
     async () => {
         await provider.ensureSynchronized();
         clock.tick(1);
         assert(container1.closed === false, "Container should not instantly close.");
         clock.tick(timeoutMs - 2);
         assert(container1.closed === false,
-            `Container1 should not be closed, it should be 1 tick away from expiring. 
+            `Container1 should not be closed, it should be 1 tick away from expiring.
             Current: ${clock.now}, expected: ${clockEnd}`);
         clock.tick(1);
         assert(container1.closed, `Container1 should be closed, it has should have reached its session expiry timeout.
             Current: ${clock.now}, expected: ${clockEnd}`);
     });
 
-    /**
-     * Issue caused by this PR: https://github.com/microsoft/FluidFramework/pull/9054
-     * Enable test once the intermittent failures are resolved. 
-     * See - https://github.com/microsoft/FluidFramework/issues/9124
-     */
-    it.skip("Containers should have the same expiry time for the same document", async () => {
+    itExpects.skip("Containers should have the same expiry time for the same document",
+    [
+        {"eventName": "fluid:telemetry:Container:ContainerClose","errorType": "clientSessionExpiredError"},
+        {"eventName": "fluid:telemetry:Container:ContainerClose","errorType": "clientSessionExpiredError"},
+        {"eventName": "fluid:telemetry:Container:ContainerClose","errorType": "clientSessionExpiredError"},
+    ],async () => {
         // Container1 should expire in one tick
         clock.tick(timeoutMs - 1);
         // Load the two other containers

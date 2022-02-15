@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { EventAndErrorTrackingLogger, ITestObjectProvider, TestObjectProvider } from "@fluidframework/test-utils";
 import { getVersionedTestObjectProvider } from "./compatUtils";
 import { ensurePackageInstalled } from "./testApi";
 import { pkgVersion } from "./packageVersion";
@@ -17,6 +17,9 @@ import {
     baseVersion,
     reinstall,
 } from "./compatOptions";
+import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
+import { Context } from "mocha";
+import { strict as assert } from "assert";
 
 /*
  * Generate configuration combinations for a particular compat version
@@ -170,6 +173,62 @@ if (compatKind !== undefined) {
     configList = configList.filter((value) => compatKind!.includes(value.kind));
 }
 
+function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger){
+    const results = logger.reportAndClearTrackedEvents();
+    if(results.unexpectedErrors.length > 0){
+        return new Error(
+            `Unexpected Errors in Logs. Use itExpects to specify expected errors:\n` +
+            +`${ JSON.stringify(results.unexpectedErrors, undefined, 2)}`);
+    }
+    if(results.expectedNotFound.length > 0){
+        return new Error(
+            `Expected Events not found:\n${ JSON.stringify(results.expectedNotFound, undefined, 2)}`);
+    }
+}
+
+function createExpectsTest(orderedExpectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc){
+    return async function (this:Context){
+        const provider: TestObjectProvider | undefined = this.__fluidTestProvider;
+        assert(provider !== undefined, "Expected __fluidTestProvider on this");
+        try{
+            provider.logger.registerExpectedEvent(... orderedExpectedEvents);
+            await test.bind(this)();
+        }catch(error){
+            // only use TestException if the event is provided.
+            // it must be last, as the events are ordered, so all other events must come first
+            if(orderedExpectedEvents[orderedExpectedEvents.length -1]?.eventName === "TestException"){
+                provider.logger.sendErrorEvent({eventName:"TestException"},error)
+            }else{
+                throw error;
+            }
+        }
+        const err = getUnexpectedLogErrorException(provider.logger);
+        if(err !== undefined){
+            throw err;
+        }
+    };
+}
+
+export type ExpectsTest =
+    (name: string, orderedExpectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc) => Mocha.Test
+
+/**
+ * Similar to mocha's it function, but allow specifying expected events.
+ * That must occur during the execution of the test.
+ */
+export const itExpects: ExpectsTest & Record<"only" |"skip", ExpectsTest> =
+    (name: string, orderedExpectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc): Mocha.Test =>
+        it(name, createExpectsTest(orderedExpectedEvents, test));
+
+itExpects.only =
+    (name: string, orderedExpectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc) =>
+        it.only(name, createExpectsTest(orderedExpectedEvents, test));
+
+itExpects.skip =
+    (name: string, orderedExpectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc) =>
+        it.skip(name, createExpectsTest(orderedExpectedEvents, test));
+
+
 /*
  * Mocha Utils for test to generate the compat variants.
  */
@@ -186,9 +245,9 @@ function describeCompat(
     describe(name, () => {
         for (const config of configs) {
             describe(config.name, () => {
-                let provider: ITestObjectProvider;
+                let provider: TestObjectProvider;
                 let resetAfterEach: boolean;
-                before(async () => {
+                before(async function () {
                     provider = await getVersionedTestObjectProvider(
                         baseVersion,
                         config.loader,
@@ -203,15 +262,16 @@ function describeCompat(
                         config.containerRuntime,
                         config.dataRuntime,
                     );
+                    Object.defineProperty(this,"__fluidTestProvider",{get: ()=>provider});
                 });
                 tests((reset: boolean = true) => {
                     if (reset) {
-                        provider.reset();
                         resetAfterEach = true;
                     }
                     return provider;
                 });
-                afterEach(() => {
+                afterEach(function (done:Mocha.Done) {
+                    done(getUnexpectedLogErrorException(provider.logger));
                     if (resetAfterEach) {
                         provider.reset();
                     }
@@ -253,7 +313,7 @@ export async function mochaGlobalSetup() {
     const installP = Array.from(versions.values()).map(
         async (value) => ensurePackageInstalled(baseVersion, value, reinstall));
 
-    let error: Error | undefined;
+    let error: unknown | undefined;
     for (const p of installP) {
         try {
             await p;
