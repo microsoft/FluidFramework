@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { strict as assert } from "assert";
 import { Quorum } from "../quorum";
 
@@ -186,7 +186,50 @@ describe("Quorum", () => {
 
     describe("Members", () => {
         it("Add/remove members", () => {
+            // Casting details because the contents don't really matter for this test.
+            const client1Info = {
+                clientId: "client1",
+                details: "details1" as any as ISequencedClient,
+            };
+            const client2Info = {
+                clientId: "client2",
+                details: "details2" as any as ISequencedClient,
+            }
+            const unexpected = {
+                clientId: "unexpectedId",
+                details: "unexpectedDetails" as any as ISequencedClient,
+            }
+            let expectedAdd = unexpected;
+            let expectedRemove = unexpected;
+            let addCount = 0;
+            let removeCount = 0;
+            quorum.on("addMember", (clientId: string, details: ISequencedClient) => {
+                assert.strictEqual(clientId, expectedAdd.clientId, "Unexpected client id added");
+                assert.strictEqual(details, expectedAdd.details, "Unexpected client details added");
+                addCount++;
+            });
+            quorum.on("removeMember", (clientId: string) => {
+                assert.strictEqual(clientId, expectedRemove.clientId);
+                removeCount++;
+            });
+
             assert.strictEqual(quorum.getMembers().size, 0, "Should have no members to start");
+
+            expectedAdd = client1Info;
+            quorum.addMember(client1Info.clientId, client1Info.details);
+            assert.strictEqual(addCount, 1, "Failed to event for add");
+            assert.strictEqual(quorum.getMembers().size, 1, "Should have 1 member after add");
+
+            expectedAdd = client2Info;
+            quorum.addMember(client2Info.clientId, client2Info.details);
+            assert.strictEqual(addCount, 2, "Failed to event for add");
+            assert.strictEqual(quorum.getMembers().size, 2, "Should have 2 members after second add");
+
+            expectedAdd = unexpected;
+            expectedRemove = client1Info;
+            quorum.removeMember(client1Info.clientId);
+            assert.strictEqual(removeCount, 1, "Failed to event for remove");
+            assert.strictEqual(quorum.getMembers().size, 1, "Should have 1 member after remove");
         });
     });
 });
