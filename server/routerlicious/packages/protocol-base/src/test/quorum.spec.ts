@@ -42,24 +42,24 @@ describe("Quorum", () => {
             quorum.on(
                 "approveProposal",
                 (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => {
-                    assert.equal(evented, false, "Double event");
+                    assert.strictEqual(evented, false, "Double event");
                     evented = true;
-                    assert.equal(
+                    assert.strictEqual(
                         sequenceNumber,
                         proposalSequenceNumber,
                         "Unexpected proposal sequenceNumber",
                     );
-                    assert.equal(
+                    assert.strictEqual(
                         key,
                         proposalKey,
                         "Unexpected proposal key",
                     );
-                    assert.equal(
+                    assert.strictEqual(
                         value,
                         proposalValue,
                         "Unexpected proposal value",
                     );
-                    assert.equal(
+                    assert.strictEqual(
                         approvalSequenceNumber,
                         justRightMessage.sequenceNumber,
                         "Approved on wrong sequence number",
@@ -72,29 +72,34 @@ describe("Quorum", () => {
             const proposalP = quorum.propose(proposalKey, proposalValue)
                 .then(() => {
                     resolved = true;
-                    assert.equal(acceptanceState, "just right", ".propose() promise resolved at wrong time");
+                    assert.strictEqual(acceptanceState, "just right", ".propose() promise resolved at wrong time");
                 });
 
+            assert.strictEqual(quorum.get(proposalKey), undefined, "Should not have the proposal value yet 1");
             // Client sequence number will be 1 for this first proposal.
             // The info must match the proposal we sent above.
             quorum.addProposal(proposalKey, proposalValue, proposalSequenceNumber, true, 1);
+            assert.strictEqual(quorum.get(proposalKey), undefined, "Should not have the proposal value yet 2");
 
             // This message does nothing since the msn is higher than the sequence number of the proposal.
             const immediateNoOp1 = quorum.updateMinimumSequenceNumber(tooEarlyMessage);
-            assert.equal(immediateNoOp1, false, "Should not no-op if no proposal was completed");
-            assert.equal(evented, false, "Should not have evented yet 1");
+            assert.strictEqual(immediateNoOp1, false, "Should not no-op if no proposal was completed");
+            assert.strictEqual(evented, false, "Should not have evented yet 1");
+            assert.strictEqual(quorum.get(proposalKey), undefined, "Should not have the proposal value yet 3");
 
             // Wait to see if the proposal promise resolved.
             await Promise.resolve().then(() => {});
 
-            assert.equal(evented, false, "Should not have evented yet 2");
+            assert.strictEqual(evented, false, "Should not have evented yet 2");
+            assert.strictEqual(quorum.get(proposalKey), undefined, "Should not have the proposal value yet 4");
 
             acceptanceState = "just right";
 
             // This message accepts the proposal since the msn is higher than the sequence number of the proposal.
             const immediateNoOp2 = quorum.updateMinimumSequenceNumber(justRightMessage);
-            assert.equal(immediateNoOp2, true, "Should no-op if proposal was completed");
-            assert.equal(evented, true, "Should have evented");
+            assert.strictEqual(immediateNoOp2, true, "Should no-op if proposal was completed");
+            assert.strictEqual(evented, true, "Should have evented");
+            assert.strictEqual(quorum.get(proposalKey), proposalValue, "Should have the proposal value");
 
             // Wait to see if the proposal promise resolved.
             await Promise.resolve().then(() => {});
@@ -126,24 +131,24 @@ describe("Quorum", () => {
             quorum.on(
                 "approveProposal",
                 (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => {
-                    assert.equal(evented, false, "Double event");
+                    assert.strictEqual(evented, false, "Double event");
                     evented = true;
-                    assert.equal(
+                    assert.strictEqual(
                         sequenceNumber,
                         proposalSequenceNumber,
                         "Unexpected proposal sequenceNumber",
                     );
-                    assert.equal(
+                    assert.strictEqual(
                         key,
                         proposalKey,
                         "Unexpected proposal key",
                     );
-                    assert.equal(
+                    assert.strictEqual(
                         value,
                         proposalValue,
                         "Unexpected proposal value",
                     );
-                    assert.equal(
+                    assert.strictEqual(
                         approvalSequenceNumber,
                         justRightMessage.sequenceNumber,
                         "Approved on wrong sequence number",
@@ -154,23 +159,34 @@ describe("Quorum", () => {
             // Client sequence number shouldn't matter for remote proposals.
             quorum.addProposal(proposalKey, proposalValue, proposalSequenceNumber, false, -5);
 
+            assert.strictEqual(quorum.get(proposalKey), undefined, "Should not have the proposal value yet 1");
+
             // This message does nothing since the msn is higher than the sequence number of the proposal.
             const immediateNoOp1 = quorum.updateMinimumSequenceNumber(tooEarlyMessage);
-            assert.equal(immediateNoOp1, false, "Should not no-op if no proposal was completed");
-            assert.equal(evented, false, "Should not have evented yet 1");
+            assert.strictEqual(immediateNoOp1, false, "Should not no-op if no proposal was completed");
+            assert.strictEqual(evented, false, "Should not have evented yet 1");
+            assert.strictEqual(quorum.get(proposalKey), undefined, "Should not have the proposal value yet 2");
 
             // Wait to see if any async stuff is waiting (shouldn't be).
             await Promise.resolve().then(() => {});
 
-            assert.equal(evented, false, "Should not have evented yet 2");
+            assert.strictEqual(evented, false, "Should not have evented yet 2");
+            assert.strictEqual(quorum.get(proposalKey), undefined, "Should not have the proposal value yet 3");
 
             // This message accepts the proposal since the msn is higher than the sequence number of the proposal.
             const immediateNoOp2 = quorum.updateMinimumSequenceNumber(justRightMessage);
-            assert.equal(immediateNoOp2, true, "Should no-op if proposal was completed");
-            assert.equal(evented, true, "Should have evented");
+            assert.strictEqual(immediateNoOp2, true, "Should no-op if proposal was completed");
+            assert.strictEqual(evented, true, "Should have evented");
+            assert.strictEqual(quorum.get(proposalKey), proposalValue, "Should have the proposal value");
 
             // Wait to see if any async stuff is waiting (shouldn't be).
             await Promise.resolve().then(() => {});
+        });
+    });
+
+    describe("Members", () => {
+        it("Add/remove members", () => {
+            assert.strictEqual(quorum.getMembers().size, 0, "Should have no members to start");
         });
     });
 });
