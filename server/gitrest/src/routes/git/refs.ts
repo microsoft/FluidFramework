@@ -27,66 +27,55 @@ export function create(
     // https://developer.github.com/v3/git/refs/
 
     router.get("/repos/:owner/:repo/git/refs", async (request, response, next) => {
-        const repoManager = await repoManagerFactory.open(
+        const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        );
-        const resultP = repoManager.getRefs();
+        ).then((repoManager) => repoManager.getRefs());
         handleResponse(resultP, response);
     });
 
     router.get("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
-        const repoManager = await repoManagerFactory.open(
+        const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        );
-        const resultP = repoManager.getRef(
+        ).then((repoManager) => repoManager.getRef(
             getRefId(request.params[0]),
             getExternalWriterParams(request.query?.config as string),
-        );
+        ));
         handleResponse(resultP, response);
     });
 
     router.post("/repos/:owner/:repo/git/refs", async (request, response, next) => {
-        const repoManager = await repoManagerFactory.open(
+        const createRefParams = request.body as ICreateRefParamsExternal;
+        const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        );
-        const createRefParams = request.body as ICreateRefParamsExternal;
-        const resultP = repoManager.createRef(
+        ).then((repoManager) => repoManager.createRef(
             createRefParams,
             createRefParams.config,
-        );
+        ));
         handleResponse(resultP, response, 201);
     });
 
     router.patch("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
-        const repoManager = await repoManagerFactory.open(
+        const patchRefParams = request.body as IPatchRefParamsExternal;
+        const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        );
-        const patchRefParams = request.body as IPatchRefParamsExternal;
-        const resultP = repoManager.patchRef(
+        ).then((repoManager) => repoManager.patchRef(
             getRefId(request.params[0]),
             patchRefParams,
             patchRefParams.config,
-        );
+        ));
         handleResponse(resultP, response);
     });
 
     router.delete("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
-        const repoManager = await repoManagerFactory.open(
+        const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        );
-        const resultP = repoManager.deleteRef(getRefId(request.params[0]));
-        resultP.then(
-            () => {
-                response.status(204).end();
-            },
-            (error) => {
-                response.status(400).json(error);
-            });
+        ).then((repoManager) => repoManager.deleteRef(getRefId(request.params[0])));
+        handleResponse(resultP, response, 204);
     });
     return router;
 }

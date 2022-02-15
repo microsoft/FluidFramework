@@ -208,35 +208,28 @@ export function create(
             handleResponse(Promise.reject(new NetworkError(400, "Invalid Storage-Routing-Id header")), response);
             return;
         }
-        const repoManager = await repoManagerFactory.open(
+        const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        );
-        handleResponse(
-            getSummary(
-                repoManager,
-                request.params.sha,
-                documentId,
-                getExternalWriterParams(request.query?.config as string),
-            ),
-            response,
-        );
+        ).then((repoManager) => getSummary(
+            repoManager,
+            request.params.sha,
+            documentId,
+            getExternalWriterParams(request.query?.config as string),
+        ));
+        handleResponse(resultP, response);
     });
 
     /**
      * Creates a new summary.
      */
     router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
-        const repoManager = await repoManagerFactory.open(
+        const wholeSummaryPayload: IWholeSummaryPayload = request.body;
+        const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        );
-        const wholeSummaryPayload: IWholeSummaryPayload = request.body;
-        handleResponse(
-            createSummary(repoManager, wholeSummaryPayload),
-            response,
-            201,
-        );
+        ).then((repoManager) => createSummary(repoManager, wholeSummaryPayload));
+        handleResponse(resultP, response, 201);
     });
 
     /**
@@ -244,15 +237,12 @@ export function create(
      * If header Soft-Delete="true", only flags summary as deleted.
      */
     router.delete("/repos/:owner/:repo/git/summaries/:sha", async (request, response) => {
-        const repoManager = await repoManagerFactory.open(
+        const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
+        const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        );
-        const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
-        handleResponse(
-            deleteSummary(repoManager, softDelete),
-            response,
-        );
+        ).then((repoManager) => deleteSummary(repoManager, softDelete));
+        handleResponse(resultP, response, 204);
     });
 
     return router;

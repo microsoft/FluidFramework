@@ -13,21 +13,19 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
     const router: Router = Router();
 
     router.post("/repos/:owner/:repo/git/trees", async (request, response, next) => {
-        const repoManager = await repoManagerFactory.open(
+        const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        );
-        const resultP = repoManager.createTree(request.body as ICreateTreeParams);
+        ).then((repoManager) => repoManager.createTree(request.body as ICreateTreeParams));
 
         handleResponse(resultP, response, 201);
     });
 
     router.get("/repos/:owner/:repo/git/trees/:sha", async (request, response, next) => {
-        const repoManager = await repoManagerFactory.open(
+        const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        );
-        const resultP = repoManager.getTree(request.params.sha, request.query.recursive === "1");
+        ).then((repoManager) => repoManager.getTree(request.params.sha, request.query.recursive === "1"));
 
         handleResponse(resultP, response);
     });

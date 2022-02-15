@@ -18,15 +18,14 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
     // since
     // until
     router.get("/repos/:owner/:repo/commits", async (request, response, next) => {
-        const repoManager = await repoManagerFactory.open(
+        const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        );
-        const resultP = repoManager.getCommits(
+        ).then((repoManager) => repoManager.getCommits(
             request.query.sha as string,
             Number(request.query.count as string),
             getExternalWriterParams(request.query?.config as string),
-        );
+        ));
         handleResponse(resultP, response);
     });
 

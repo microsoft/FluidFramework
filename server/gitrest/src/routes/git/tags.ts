@@ -15,21 +15,19 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
     // https://developer.github.com/v3/git/tags/
 
     router.post("/repos/:owner/:repo/git/tags", async (request, response, next) => {
-        const repoManager = await repoManagerFactory.open(
+        const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        );
-        const resultP = repoManager.createTag(request.body as ICreateTagParams);
+        ).then((repoManager) => repoManager.createTag(request.body as ICreateTagParams));
 
         handleResponse(resultP, response, 201);
     });
 
     router.get("/repos/:owner/:repo/git/tags/*", async (request, response, next) => {
-        const repoManager = await repoManagerFactory.open(
+        const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        );
-        const resultP = repoManager.getTag(request.params[0]);
+        ).then((repoManager) => repoManager.getTag(request.params[0]));
 
         handleResponse(resultP, response);
     });

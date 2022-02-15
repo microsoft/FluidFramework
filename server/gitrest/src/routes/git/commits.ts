@@ -15,21 +15,19 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
     // * https://developer.github.com/v3/git/commits/
 
     router.post("/repos/:owner/:repo/git/commits", async (request, response, next) => {
-        const repoManager = await repoManagerFactory.open(
+        const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        );
-        const resultP = repoManager.createCommit(request.body as ICreateCommitParams);
+        ).then((repoManager) => repoManager.createCommit(request.body as ICreateCommitParams));
 
         handleResponse(resultP, response, 201);
     });
 
     router.get("/repos/:owner/:repo/git/commits/:sha", async (request, response, next) => {
-        const repoManager = await repoManagerFactory.open(
+        const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        );
-        const resultP = repoManager.getCommit(request.params.sha);
+        ).then((repoManager) => repoManager.getCommit(request.params.sha));
 
         handleResponse(resultP, response);
     });

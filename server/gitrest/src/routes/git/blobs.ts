@@ -13,13 +13,12 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
     const router: Router = Router();
 
     router.post("/repos/:owner/:repo/git/blobs", async (request, response, next) => {
-        const repoManager = await repoManagerFactory.open(
+        const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        );
-        const resultP = repoManager.createBlob(
+        ).then((repoManager) => repoManager.createBlob(
             request.body as ICreateBlobParams,
-        );
+        ));
 
         handleResponse(resultP, response, 201);
     });
@@ -28,13 +27,12 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
      * Retrieves the given blob from the repository
      */
     router.get("/repos/:owner/:repo/git/blobs/:sha", async (request, response, next) => {
-        const repoManager = await repoManagerFactory.open(
+        const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        );
-        const resultP = repoManager.getBlob(
+        ).then((repoManager) => repoManager.getBlob(
             request.params.sha,
-        );
+        ));
 
         handleResponse(resultP, response);
     });
