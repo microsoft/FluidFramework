@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/driver-definitions": "^0.44.0",
+    "@fluidframework/driver-definitions": "^0.45.0-0",
     "@fluidframework/driver-utils": "^0.58.0",
     "@fluidframework/protocol-definitions": "^0.1026.0",
     "@fluidframework/routerlicious-driver": "^0.58.0",

@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/driver-definitions": "^0.44.0",
+    "@fluidframework/driver-definitions": "^0.45.0-0",
     "@fluidframework/odsp-driver": "^0.58.0",
     "@fluidframework/odsp-driver-definitions": "^0.58.0"
   },

@@ -30,7 +30,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/driver-definitions": "^0.44.0"
+    "@fluidframework/driver-definitions": "^0.45.0-0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

@@ -49,7 +49,7 @@
     "@fluidframework/data-object-base": "^0.58.0",
     "@fluidframework/datastore": "^0.58.0",
     "@fluidframework/datastore-definitions": "^0.58.0",
-    "@fluidframework/driver-definitions": "^0.44.0",
+    "@fluidframework/driver-definitions": "^0.45.0-0",
     "@fluidframework/driver-utils": "^0.58.0",
     "@fluidframework/map": "^0.58.0",
     "@fluidframework/merge-tree": "^0.58.0",
