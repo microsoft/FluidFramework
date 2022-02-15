@@ -14,7 +14,7 @@ import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
 import { v4 as uuid } from "uuid";
 
 const testContainerConfig: ITestContainerConfig = {
@@ -64,6 +64,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 
         const blobOpP = new Promise<void>((resolve, reject) => container.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
             }
         }));
@@ -102,6 +103,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 
         const attachOpP = new Promise<void>((resolve, reject) => container1.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
             }
         }));
@@ -228,9 +230,11 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         }
     });
 
-    it("works in detached container", async function() {
+    itExpects("works in detached container", [
+        {"eventName": "fluid:telemetry:Container:ContainerClose", "error": "0x202"}
+    ], async function() {
         const detachedBlobStorage = new MockDetachedBlobStorage();
-        const loader = provider.makeTestLoader(testContainerConfig, detachedBlobStorage);
+        const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: {detachedBlobStorage}});
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";
@@ -259,7 +263,8 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     });
 
     it("serialize/rehydrate container with blobs", async function() {
-        const loader = provider.makeTestLoader(testContainerConfig, new MockDetachedBlobStorage());
+        const loader = provider.makeTestLoader(
+            {...testContainerConfig, loaderProps: {detachedBlobStorage: new MockDetachedBlobStorage()}});
         const serializeContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";
@@ -276,9 +281,11 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await rehydratedDataStore._root.get("my blob").get(), "utf-8"), text);
     });
 
-    it("redirect table saved in snapshot", async function() {
+    itExpects("redirect table saved in snapshot",[
+        {"eventName": "fluid:telemetry:Container:ContainerClose","message": "0x202",}
+    ], async function() {
         const detachedBlobStorage = new MockDetachedBlobStorage();
-        const loader = provider.makeTestLoader(testContainerConfig, detachedBlobStorage);
+        const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: {detachedBlobStorage}});
         const detachedContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";
@@ -308,8 +315,11 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await (attachedDataStore._root.get("my blob")).get(), "utf-8"), text);
     });
 
-    it("serialize/rehydrate then attach", async function() {
-        const loader = provider.makeTestLoader(testContainerConfig, new MockDetachedBlobStorage());
+    itExpects("serialize/rehydrate then attach", [
+        {"eventName": "fluid:telemetry:Container:ContainerClose", "error": "0x202"}
+    ], async function() {
+        const loader = provider.makeTestLoader(
+            {...testContainerConfig, loaderProps: {detachedBlobStorage: new MockDetachedBlobStorage()}});
         const serializeContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";
@@ -335,8 +345,11 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await (attachedDataStore._root.get("my blob")).get(), "utf-8"), text);
     });
 
-    it("serialize/rehydrate multiple times then attach", async function() {
-        const loader = provider.makeTestLoader(testContainerConfig, new MockDetachedBlobStorage());
+    itExpects("serialize/rehydrate multiple times then attach",[
+        {"eventName": "fluid:telemetry:Container:ContainerClose", "error": "0x202"}
+    ], async function() {
+        const loader = provider.makeTestLoader(
+            {...testContainerConfig, loaderProps: {detachedBlobStorage: new MockDetachedBlobStorage()}});
         let container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";
@@ -367,7 +380,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
     it("rehydrating without detached blob storage results in error", async function() {
         const detachedBlobStorage = new MockDetachedBlobStorage();
-        const loader = provider.makeTestLoader(testContainerConfig, detachedBlobStorage);
+        const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: {detachedBlobStorage}});
         const serializeContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";

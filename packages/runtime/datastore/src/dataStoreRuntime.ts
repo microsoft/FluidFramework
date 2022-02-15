@@ -13,7 +13,6 @@ import {
 import {
     IAudience,
     IDeltaManager,
-    ContainerWarning,
     BindState,
     AttachState,
     ILoaderOptions,
@@ -218,6 +217,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         this,
                         this.dataStoreContext,
                         this.dataStoreContext.storage,
+                        this.logger,
                         (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
                         (address: string) => this.setChannelDirty(address),
                         (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
@@ -344,6 +344,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this,
             this.dataStoreContext,
             this.dataStoreContext.storage,
+            this.logger,
             (content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
             (address: string) => this.setChannelDirty(address),
             (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
@@ -742,11 +743,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this.deferredAttached.promise;
     }
 
-    // @deprecated Warnings are being deprecated
-    public raiseContainerWarning(warning: ContainerWarning): void {
-        this.dataStoreContext.raiseContainerWarning(warning);
-    }
-
     /**
      * Attach channel should only be called after the data store has been attached
      */
@@ -888,7 +884,7 @@ export const mixinRequestHandler = (
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ) => class RuntimeWithRequestHandler extends Base {
         public async request(request: IRequest) {
-            const response  = await super.request(request);
+            const response = await super.request(request);
             if (response.status === 404) {
                 return requestHandler(request, this);
             }

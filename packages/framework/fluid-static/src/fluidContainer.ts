@@ -79,17 +79,20 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 
      /**
      * A container is considered **dirty** if it has local changes that have not yet been acknowledged by the service.
-     * acknowledged by the service. Closing the container while `isDirty === true` will result in the loss of these
-     * local changes. You should always check the `isDirty` flag before closing the container or navigating away
-     * from the page.
+     * You should always check the `isDirty` flag before closing the container or navigating away from the page.
+     * Closing the container while `isDirty === true` may result in the loss of operations that have not yet been
+     * acknowledged by the service.
      *
      * A container is considered dirty in the following cases:
      *
-     * 1. The container has local changes that have not yet been acknowledged by the service. These unacknowledged
-     * changes will be lost if the container is closed.
+     * 1. The container has been created in the detached state, and either it has not been attached yet or it is
+     * in the process of being attached (container is in `attaching` state). If container is closed prior to being
+     * attached, host may never know if the file was created or not.
      *
-     * 1. There is no network connection while making changes to the container. These changes cannot be
-     * acknowledged by the service until the network connection is restored.
+     * 2. The container was attached, but it has local changes that have not yet been saved to service endpoint.
+     * This occurs as part of normal op flow where pending operation (changes) are awaiting acknowledgement from the
+     * service. In some cases this can be due to lack of network connection. If the network connection is down,
+     * it needs to be restored for the pending changes to be acknowledged.
      */
      readonly isDirty: boolean;
 

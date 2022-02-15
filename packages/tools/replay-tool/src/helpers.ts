@@ -6,14 +6,15 @@
 import { strict } from "assert";
 import fs from "fs";
 import { IContainer } from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { ILoaderOptions, Loader } from "@fluidframework/container-loader";
+import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { IFileSnapshot } from "@fluidframework/replay-driver";
+import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
 import { ReplayDataStoreFactory, ReplayRuntimeFactory } from "./replayFluidFactories";
@@ -72,6 +73,8 @@ export async function loadContainer(
     documentServiceFactory: IDocumentServiceFactory,
     documentName: string,
     logger?: TelemetryLogger,
+    requestHandlers?: RuntimeRequestHandler[],
+    loaderOptions?: ILoaderOptions,
 ): Promise<IContainer> {
     const resolved: IFluidResolvedUrl = {
         endpoints: {
@@ -117,17 +120,37 @@ export async function loadContainer(
     // ops than "maxOpsSinceLastSummary". So set it to a higher number to suppress those errors and run tests.
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: { disableSummaries: true, maxOpsSinceLastSummary: 100000 },
+        gcOptions: { writeDataAtRoot: true },
     };
-    const codeLoader = new ReplayCodeLoader(new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries));
+    const codeLoader = new ReplayCodeLoader(
+        new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries, requestHandlers),
+    );
 
-    // Load the Fluid document
+    // Load the Fluid document while forcing summarizeProtocolTree option
     const loader = new Loader({
         urlResolver,
         documentServiceFactory,
         codeLoader,
-        options: {},
+        options: loaderOptions
+            ? { ...loaderOptions, summarizeProtocolTree: true }
+            : { summarizeProtocolTree: true },
         logger,
     });
 
     return loader.resolve({ url: resolved.url });
+}
+
+export async function uploadSummary(container: IContainer) {
+    const response = await container.request({ url: "/containerRuntime" });
+    const runtime = response.value as ContainerRuntime;
+    const summaryResult = await runtime.summarize({
+        fullTree: true,
+        trackState: false,
+        fullGC: true,
+    });
+    return runtime.storage.uploadSummaryWithContext(summaryResult.summary, {
+        referenceSequenceNumber: 0,
+        proposalHandle: undefined,
+        ackHandle: undefined,
+    });
 }

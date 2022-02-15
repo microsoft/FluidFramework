@@ -10,6 +10,7 @@ import { Deferred } from '@fluidframework/common-utils';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IConnected } from '@fluidframework/protocol-definitions';
+import { IContainerPackageInfo } from '@fluidframework/driver-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions';
 import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions';
@@ -139,7 +140,7 @@ export class InnerUrlResolver implements IUrlResolver {
     // (undocumented)
     static create(outerPort: MessagePort): Promise<InnerUrlResolver>;
     // (undocumented)
-    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, codeDetails?: IFluidCodeDetails): Promise<string>;
+    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo | IFluidCodeDetails): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
@@ -161,7 +162,7 @@ export interface IUrlResolverProxy {
     // (undocumented)
     connected(): Promise<void>;
     // (undocumented)
-    getAbsoluteUrl(resolvedUrlFn: () => Promise<IResolvedUrl>, relativeUrl: string, codeDetailsFn: () => Promise<IFluidCodeDetails | undefined>): Promise<string>;
+    getAbsoluteUrl(resolvedUrlFn: () => Promise<IResolvedUrl>, relativeUrl: string, packageInfoFn: () => Promise<IContainerPackageInfo | IFluidCodeDetails | undefined>): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<() => Promise<IResolvedUrl | undefined>>;
 }
@@ -177,7 +178,7 @@ export class OuterUrlResolver {
     // (undocumented)
     createProxy(): IUrlResolverProxy;
     // (undocumented)
-    getAbsoluteUrl(resolvedUrlFn: () => Promise<IResolvedUrl>, relativeUrl: string, codeDetailsFn: () => Promise<IFluidCodeDetails | undefined>): Promise<string>;
+    getAbsoluteUrl(resolvedUrlFn: () => Promise<IResolvedUrl>, relativeUrl: string, packageInfoFn: () => Promise<IContainerPackageInfo | IFluidCodeDetails | undefined>): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<() => Promise<IResolvedUrl | undefined>>;
     }

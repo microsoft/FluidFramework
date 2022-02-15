@@ -15,7 +15,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { channelsTreeName, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { TestDataObject } from "./mockSummarizerClient";
 
 /**
@@ -79,7 +79,7 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
          */
         function validateDataStoreInSummary(summary: ISummaryTree, dataStoreId: string, referenced: boolean) {
             let dataStoreTree: ISummaryTree | undefined;
-            const channelsTree = (summary.tree[".channels"] as ISummaryTree)?.tree ?? summary.tree;
+            const channelsTree = (summary.tree[channelsTreeName] as ISummaryTree).tree;
             for (const [ id, summaryObject ] of Object.entries(channelsTree)) {
                 if (id === dataStoreId) {
                     assert(
@@ -166,55 +166,37 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
         it("marks non-root data stores as referenced / unreferenced correctly", async () => {
             const dataStore = await dataObjectFactory.createInstance(containerRuntime);
             // Add data store's handle in root component and verify its marked as referenced.
-            {
-                defaultDataStore._root.set("nonRootDS", dataStore.handle);
-                await validateDataStoreReferenceState(dataStore.id, true /* referenced */);
-            }
+            defaultDataStore._root.set("nonRootDS", dataStore.handle);
+            await validateDataStoreReferenceState(dataStore.id, true /* referenced */);
 
             // Remove its handle and verify its marked as unreferenced.
-            {
-                defaultDataStore._root.delete("nonRootDS");
-                await validateDataStoreReferenceState(dataStore.id, false /* referenced */);
-            }
+            defaultDataStore._root.delete("nonRootDS");
+            await validateDataStoreReferenceState(dataStore.id, false /* referenced */);
 
             // Add data store's handle back in root component. If deleteUnreferencedContent is true, the data store
             // should get deleted and should remain unreferenced. Otherwise, it should be referenced back.
-            {
-                defaultDataStore._root.set("nonRootDS", dataStore.handle);
-                await validateDataStoreReferenceState(
-                    dataStore.id, deleteUnreferencedContent ? false : true /* referenced */);
-            }
+            defaultDataStore._root.set("nonRootDS", dataStore.handle);
+            await validateDataStoreReferenceState(
+                dataStore.id, deleteUnreferencedContent ? false : true /* referenced */);
         });
 
         it("marks non-root data stores with handle in unreferenced data stores as unreferenced", async () => {
             // Create a non-root data store - dataStore1.
             const dataStore1 = await dataObjectFactory.createInstance(containerRuntime);
             // Add dataStore1's handle in root component and verify its marked as referenced.
-            {
-                defaultDataStore._root.set("nonRootDS1", dataStore1.handle);
-                await validateDataStoreReferenceState(dataStore1.id, true /* referenced */);
-            }
-
-            // Remove dataStore1's handle and verify its marked as unreferenced.
-            {
-                defaultDataStore._root.delete("nonRootDS1");
-                await validateDataStoreReferenceState(dataStore1.id, false /* referenced */);
-            }
+            defaultDataStore._root.set("nonRootDS1", dataStore1.handle);
+            await validateDataStoreReferenceState(dataStore1.id, true /* referenced */);
 
             // Create another non-root data store - dataStore2.
             const dataStore2 = await dataObjectFactory.createInstance(containerRuntime);
-            // Add dataStore2's handle in root component and verify its marked as referenced.
-            {
-                defaultDataStore._root.set("nonRootDS2", dataStore2.handle);
-                await validateDataStoreReferenceState(dataStore2.id, true /* referenced */);
-            }
+            // Add dataStore2's handle in dataStore1 and verify its marked as referenced.
+            dataStore1._root.set("nonRootDS2", dataStore2.handle);
+            await validateDataStoreReferenceState(dataStore2.id, true /* referenced */);
 
-            // Remove dataStore2's handle from root component and add to dataStore1 (which is unreferenced).
-            {
-                defaultDataStore._root.delete("nonRootDS2");
-                dataStore1._root.set("nonRootDS2", dataStore2.handle);
-                await validateDataStoreReferenceState(dataStore2.id, false /* referenced */);
-            }
+            // Remove dataStore1's handle. This should mark dataStore1 as unreferenced which in turn should mark
+            // dataStore2 as unreferenced.
+            defaultDataStore._root.delete("nonRootDS1");
+            await validateDataStoreReferenceState(dataStore2.id, false /* referenced */);
         });
     };
 

@@ -21,9 +21,10 @@ import {
     INack,
     NackErrorType,
 } from "@fluidframework/protocol-definitions";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
-    private  readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
+    private readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
 
     public get protocolName() { return this.internal.protocolName; }
     public get documentServices() { return this._documentServices; }
@@ -52,7 +53,7 @@ export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFac
 }
 
 export class FaultInjectionDocumentService implements IDocumentService {
-    private  _currentDeltaStream: FaultInjectionDocumentDeltaConnection | undefined;
+    private _currentDeltaStream: FaultInjectionDocumentDeltaConnection | undefined;
 
     constructor(private readonly internal: IDocumentService) {
     }
@@ -157,10 +158,11 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
     }
 }
 
-export class FaultInjectionError extends Error {
+export class FaultInjectionError extends LoggingError {
     constructor(
         message: string,
-        public readonly canRetry: boolean | undefined) {
-            super(message);
+        public readonly canRetry: boolean | undefined,
+    ) {
+        super(message, {testCategoryOverride: "generic"});
     }
 }

@@ -14,9 +14,9 @@ import {
 import {
     IClientDetails,
     IDocumentMessage,
-    IPendingProposal,
     IQuorumClients,
     ISequencedDocumentMessage,
+    ISequencedProposal,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
@@ -114,7 +114,7 @@ export interface ICodeAllowList {
 export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
     (event: "connected", listener: (clientId: string) => void);
-    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
+    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: ISequencedProposal) => void);
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
     (event: "disconnected" | "attached", listener: () => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
@@ -465,7 +465,7 @@ declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<ILoaderHeader> { }
 
-    export interface IFluidObject  {
+    export interface IFluidObject {
         /**
          * @deprecated - use `FluidObject<ILoader>` instead
          */

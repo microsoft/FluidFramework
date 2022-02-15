@@ -5,20 +5,21 @@
 
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
-import { DebugLogger, MockLogger } from "@fluidframework/telemetry-utils";
+import { createSandbox } from "sinon";
+import { AttachState, IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
+import { GenericError } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions";
+import { DebugLogger, MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
 import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { GenericError } from "@fluidframework/container-utils";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
-        describe("ContainerRuntime", () =>
+        describe("orderSequentially", () =>
             [FlushMode.TurnBased, FlushMode.Immediate].forEach((flushMode: FlushMode) => {
                 describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
                     let containerRuntime: ContainerRuntime;
@@ -34,6 +35,7 @@ describe("Runtime", () => {
                                     containerErrors.push(error);
                                 }
                             },
+                            updateDirtyContainerState: (dirty: boolean) => {},
                         };
                     });
 
@@ -121,6 +123,78 @@ describe("Runtime", () => {
                 });
             }));
 
+        describe("Dirty flag", () => {
+            const sandbox = createSandbox();
+            const createMockContext =
+                (attachState: AttachState, addPendingMsg: boolean): Partial<IContainerContext> => {
+                const pendingMessage = {
+                    type: "message",
+                    content: {},
+                };
+
+                return {
+                    deltaManager: new MockDeltaManager(),
+                    quorum: new MockQuorum(),
+                    logger: new MockLogger(),
+                    clientDetails: { capabilities: { interactive: true } },
+                    updateDirtyContainerState: (dirty: boolean) => {},
+                    attachState,
+                    pendingLocalState: addPendingMsg ? {pendingStates: [pendingMessage]} : undefined,
+                };
+            };
+
+            it("should NOT be set to dirty if context is attached with no pending ops", async () => {
+                const mockContext = createMockContext(AttachState.Attached, false);
+                const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
+                await ContainerRuntime.load(
+                    mockContext as IContainerContext,
+                    [],
+                    undefined,
+                    {},
+                );
+                assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
+                assert.deepStrictEqual(updateDirtyStateStub.args, [[false]]);
+            });
+
+            it("should be set to dirty if context is attached with pending ops", async () => {
+                const mockContext = createMockContext(AttachState.Attached, true);
+                const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
+                await ContainerRuntime.load(
+                    mockContext as IContainerContext,
+                    [],
+                    undefined,
+                    {},
+                );
+                assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
+                assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
+            });
+
+            it("should be set to dirty if context is attaching", async () => {
+                const mockContext = createMockContext(AttachState.Attaching, false);
+                const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
+                await ContainerRuntime.load(
+                    mockContext as IContainerContext,
+                    [],
+                    undefined,
+                    {},
+                );
+                assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
+                assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
+            });
+
+            it("should be set to dirty if context is detached", async () => {
+                const mockContext = createMockContext(AttachState.Detached, false);
+                const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
+                await ContainerRuntime.load(
+                    mockContext as IContainerContext,
+                    [],
+                    undefined,
+                    {},
+                );
+                assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
+                assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
+            });
+        });
 
         describe("ScheduleManager", () => {
             describe("Batch processing events", () => {
@@ -137,6 +211,7 @@ describe("Runtime", () => {
                     deltaManager.inbound.processCallback = (message: ISequencedDocumentMessage) => {
                         scheduleManager.beforeOpProcessing(message);
                         scheduleManager.afterOpProcessing(undefined, message);
+                        deltaManager.emit("op", message);
                     };
                     scheduleManager = new ScheduleManager(
                         deltaManager,

@@ -64,12 +64,3 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IEventProvider<
      */
     pickedTasks(): string[];
 }
-
-declare module "@fluidframework/core-interfaces" {
-    export interface IFluidObject{
-        /**
-         * @deprecated - use `FluidObject<IAgentScheduler>` instead
-         */
-        readonly IAgentScheduler?: IAgentScheduler;
-    }
-}

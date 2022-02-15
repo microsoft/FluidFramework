@@ -171,6 +171,8 @@ export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemet
 // @public
 export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
     constructor();
+    assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string): void;
+    assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string): void;
     // (undocumented)
     events: ITelemetryBaseEvent[];
     matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean;
@@ -228,7 +230,7 @@ export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLogger, 
 // @public
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
-// @public
+// @public @deprecated (undocumented)
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
     constructor(logger: ITelemetryBaseLogger);
     // (undocumented)

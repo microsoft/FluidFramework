@@ -39,7 +39,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/build-tools": "^0.2.49276",
-    "@fluidframework/eslint-config-fluid": "^0.25.0",
+    "@fluidframework/eslint-config-fluid": "^0.26.0-0",
     "@fluidframework/protocol-definitions-0.1024.0": "npm:@fluidframework/protocol-definitions@0.1024.0",
     "@fluidframework/protocol-definitions-0.1025.1": "npm:@fluidframework/protocol-definitions@0.1025.1",
     "@fluidframework/protocol-definitions-0.1026.0": "npm:@fluidframework/protocol-definitions@0.1026.0",
@@ -84,6 +84,13 @@
         },
         "EnumDeclaration_MessageType": {
           "forwardCompat": false
+        },
+        "InterfaceDeclaration_ICreateBlobResponse": {
+          "backCompat": false
+        },
+        "RemovedInterfaceDeclaration_IPendingProposal": {
+          "backCompat": false,
+          "forwardCompat": false
         }
       },
       "0.1025.1": {
@@ -95,6 +102,16 @@
         },
         "EnumDeclaration_MessageType": {
           "forwardCompat": false
+        },
+        "InterfaceDeclaration_ICreateBlobResponse": {
+          "backCompat": false
+        },
+        "RemovedInterfaceDeclaration_IPendingProposal": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IQuorumProposals": {
+          "backCompat": false
         }
       },
       "0.1026.0": {
@@ -103,6 +120,16 @@
         },
         "EnumDeclaration_MessageType": {
           "forwardCompat": false
+        },
+        "InterfaceDeclaration_ICreateBlobResponse": {
+          "backCompat": false
+        },
+        "RemovedInterfaceDeclaration_IPendingProposal": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IQuorumProposals": {
+          "backCompat": false
         }
       }
     }

@@ -19,7 +19,7 @@ describe("createResponseError", () => {
     it("request / response / error handling ", () => {
         const request = { url: "/foo/bar?something"};
         const response = createResponseError(401, "some value", request);
-        const value  = "some value: /foo/bar";
+        const value = "some value: /foo/bar";
         assert.strict.equal(response.status, 401, "status code");
         assert.strict.equal(response.value, value, "value");
         const stack = response.stack;

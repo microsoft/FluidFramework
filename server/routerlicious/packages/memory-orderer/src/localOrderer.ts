@@ -240,7 +240,7 @@ export class LocalOrderer implements IOrderer {
             this.scriptoriumContext,
             async (lambdaSetup, context) => {
                 const deltasCollection = await lambdaSetup.deltaCollectionP();
-                return new ScriptoriumLambda(deltasCollection, context);
+                return new ScriptoriumLambda(deltasCollection, context, this.tenantId, this.documentId);
             });
 
         this.broadcasterLambda = new LocalLambdaController(
@@ -331,7 +331,7 @@ export class LocalOrderer implements IOrderer {
             lastState.proposals,
             lastState.values,
             () => -1,
-            () => { return; });
+        );
 
         const summaryWriter = new SummaryWriter(
             this.tenantId,
@@ -339,7 +339,7 @@ export class LocalOrderer implements IOrderer {
             this.gitManager,
             scribeMessagesCollection,
             false);
-        const summaryReader = new SummaryReader(this.documentId, this.gitManager, false);
+        const summaryReader = new SummaryReader(this.tenantId, this.documentId, this.gitManager, false);
         const checkpointManager = new CheckpointManager(
             context,
             this.tenantId,

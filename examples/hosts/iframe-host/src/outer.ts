@@ -98,12 +98,6 @@ async function loadOuterLogDiv(
 ): Promise<void> {
     const logDiv = document.getElementById(logDivId) as HTMLDivElement;
 
-    const quorum = container.getQuorum();
-    if (!quorum.has("code")) {
-        // we'll never propose the code, so wait for them to do it
-        await new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
-    }
-
     const log =
         (emitter: { on(event: string, listener: (...args: any[]) => void) }, name: string, ...events: string[]) => {
             events.forEach((event) =>
@@ -113,7 +107,8 @@ async function loadOuterLogDiv(
                 }));
         };
 
-    quorum.getMembers().forEach((client) => logDiv.innerHTML += `Quorum: client: ${JSON.stringify(client)}<br/>`);
+    const quorum = container.getQuorum();
+    quorum.getMembers().forEach((client) => { logDiv.innerHTML += `Quorum: client: ${JSON.stringify(client)}<br/>`; });
     log(quorum, "Quorum", "error", "addMember", "removeMember");
     log(container, "Container", "error", "connected", "disconnected");
 }

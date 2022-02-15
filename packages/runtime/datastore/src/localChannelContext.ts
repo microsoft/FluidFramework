@@ -5,6 +5,7 @@
 
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -153,6 +154,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
         runtime: IFluidDataStoreRuntime,
         dataStoreContext: IFluidDataStoreContext,
         storageService: IDocumentStorageService,
+        logger: ITelemetryLogger,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
         addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
@@ -176,6 +178,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
                 this.dirtyFn,
                 addedGCOutboundReferenceFn,
                 storageService,
+                logger,
                 clonedSnapshotTree,
                 blobMap,
             );
@@ -269,6 +272,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
         runtime: IFluidDataStoreRuntime,
         dataStoreContext: IFluidDataStoreContext,
         storageService: IDocumentStorageService,
+        logger: ITelemetryLogger,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
         addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
@@ -288,6 +292,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
                 this.dirtyFn,
                 addedGCOutboundReferenceFn,
                 storageService,
+                logger,
             );
         });
         this.dirtyFn = () => { dirtyFn(id); };

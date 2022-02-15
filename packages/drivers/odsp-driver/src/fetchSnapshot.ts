@@ -95,7 +95,7 @@ export async function fetchSnapshotWithRedeem(
     // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
     if(sharingLinkToRedeem) {
-        odspResolvedUrl.shareLinkInfo = {...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem}
+        odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
     }
 
     return fetchLatestSnapshotCore(
@@ -119,8 +119,8 @@ export async function fetchSnapshotWithRedeem(
                 { ...odspResolvedUrl,
                     shareLinkInfo: {
                         ...odspResolvedUrl.shareLinkInfo,
-                        sharingLinkToRedeem: undefined
-                    }
+                        sharingLinkToRedeem: undefined,
+                    },
                 };
 
             return fetchLatestSnapshotCore(
@@ -201,6 +201,7 @@ async function fetchLatestSnapshotCore(
             eventName: "TreesLatest",
             attempts: tokenFetchOptions.refresh ? 2 : 1,
             shareLinkPresent: odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined,
+            isSummarizer: odspResolvedUrl.summarizer,
             redeemFallbackEnabled: enableRedeemFallback,
         };
         if (snapshotOptions !== undefined) {
@@ -317,7 +318,7 @@ async function fetchLatestSnapshotCore(
                     // Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate
                     // if the permission has changed.
                     sltelemetry: response.odspSnapshotResponse.headers.get("x-fluid-sltelemetry"),
-                    ...response.odspSnapshotResponse.commonSpoHeaders,
+                    ...response.odspSnapshotResponse.propsToLog,
                 });
                 return snapshot;
             },
@@ -370,7 +371,7 @@ async function fetchSnapshotContentsCoreV1(
         fetchAndParseAsJSONHelper<IOdspSnapshot>(url, fetchOptions));
     const snapshotContents: ISnapshotContents = convertOdspSnapshotToSnapsohtTreeAndBlobs(response.content);
     const finalSnapshotContents: IOdspResponse<ISnapshotContents> = { ...response, content: snapshotContents };
-    return  {
+    return {
         odspSnapshotResponse: finalSnapshotContents,
         requestHeaders: headers,
         requestUrl: url,
@@ -410,7 +411,7 @@ async function fetchSnapshotContentsCoreV2(
     const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
         new ReadBuffer(new Uint8Array(response.content)));
     const finalSnapshotContents: IOdspResponse<ISnapshotContents> = { ...response, content: snapshotContents };
-    return  {
+    return {
         odspSnapshotResponse: finalSnapshotContents,
         requestHeaders: headers,
         requestUrl: fullUrl,
@@ -481,7 +482,7 @@ export async function downloadSnapshot(
     // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
     if(sharingLinkToRedeem) {
-        odspResolvedUrl.shareLinkInfo = {...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem}
+        odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
     }
 
     if (fetchBinarySnapshotFormat) {

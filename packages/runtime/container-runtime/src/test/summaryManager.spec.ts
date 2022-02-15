@@ -25,7 +25,7 @@ import { ISummarizerClientElection, ISummarizerClientElectionEvents } from "../s
 
 describe("Summary Manager", () => {
     let clock: sinon.SinonFakeTimers;
-    before(() => clock = sinon.useFakeTimers());
+    before(() => { clock = sinon.useFakeTimers(); });
     after(() => clock.restore());
     const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
     const thisClientId = "this";

@@ -7,9 +7,8 @@ import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
-    DriverError,
 } from "@fluidframework/driver-definitions";
-import { createGenericNetworkError } from "@fluidframework/driver-utils";
+import { createGenericNetworkError, IAnyDriverError } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
     IClientConfiguration,
@@ -29,6 +28,8 @@ import {
     loggerToMonitoringContext,
     MonitoringContext,
 } from "@fluidframework/telemetry-utils";
+// For now, this package is versioned and released in unison with the specific drivers
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 /**
  * Represents a connection to a stream of delta updates
@@ -63,6 +64,8 @@ export class DocumentDeltaConnection
     private socketConnectionTimeout: ReturnType<typeof setTimeout> | undefined;
 
     private _details: IConnected | undefined;
+
+    private reconnectAttempts: number = 0;
 
     // Listeners only needed while the connection is in progress
     private readonly connectionListeners: Map<string, (...args: any[]) => void> = new Map();
@@ -100,11 +103,14 @@ export class DocumentDeltaConnection
     /**
      * @param socket - websocket to be used
      * @param documentId - ID of the document
+     * @param logger - for reporting telemetry events
+     * @param enableLongPollingDowngrades - allow connection to be downgraded to long-polling on websocket failure
      */
     protected constructor(
         protected readonly socket: SocketIOClient.Socket,
         public documentId: string,
         logger: ITelemetryLogger,
+        private readonly enableLongPollingDowngrades: boolean = false,
     ) {
         super();
 
@@ -298,10 +304,11 @@ export class DocumentDeltaConnection
     public dispose() {
         this.disposeCore(
             false, // socketProtocolError
-            createGenericNetworkError("clientClosingConnection", undefined, true /* canRetry */));
+            createGenericNetworkError(
+                "clientClosingConnection", undefined, { canRetry: true }, { driverVersion }));
     }
 
-    protected disposeCore(socketProtocolError: boolean, err: any) {
+    protected disposeCore(socketProtocolError: boolean, err: IAnyDriverError) {
         // Can't check this.disposed here, as we get here on socket closure,
         // so _disposed & socket.connected might be not in sync while processing
         // "dispose" event.
@@ -326,7 +333,7 @@ export class DocumentDeltaConnection
      *  (not on Fluid protocol level)
      * @param reason - reason for disconnect
      */
-    protected disconnect(socketProtocolError: boolean, reason: any) {
+    protected disconnect(socketProtocolError: boolean, reason: IAnyDriverError) {
         this.socket.disconnect();
     }
 
@@ -336,21 +343,51 @@ export class DocumentDeltaConnection
         this.earlyOpHandlerAttached = true;
 
         this._details = await new Promise<IConnected>((resolve, reject) => {
-            const fail = (socketProtocolError: boolean, err: DriverError) => {
+            const fail = (socketProtocolError: boolean, err: IAnyDriverError) => {
                 this.disposeCore(socketProtocolError, err);
                 reject(err);
             };
 
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
+                let isWebSocketTransportError = false;
                 try {
                     const description = error?.description;
                     if (description && typeof description === "object") {
+                        if (error.type === "TransportError") {
+                            isWebSocketTransportError = true;
+                        }
                         // That's a WebSocket. Clear it as we can't log it.
                         description.target = undefined;
                     }
                 } catch(_e) {}
+
+                // Handle socket transport downgrading.
+                if (isWebSocketTransportError &&
+                    this.enableLongPollingDowngrades &&
+                    this.socket.io.opts.transports?.[0] !== "polling") {
+                    // Downgrade transports to polling upgrade mechanism.
+                    this.socket.io.opts.transports = ["polling", "websocket"];
+                    // Don't alter reconnection behavior if already enabled.
+                    if (!this.socket.io.reconnection()) {
+                        // Allow single reconnection attempt using polling upgrade mechanism.
+                        this.socket.io.reconnection(true);
+                        this.socket.io.reconnectionAttempts(1);
+                    }
+                }
+
+                // Allow built-in socket.io reconnection handling.
+                if (this.socket.io.reconnection() &&
+                    this.reconnectAttempts < this.socket.io.reconnectionAttempts()) {
+                    // Reconnection is enabled and maximum reconnect attempts have not been reached.
+                    return;
+                }
+
                 fail(true, this.createErrorObject("connectError", error));
+            });
+
+            this.addConnectionListener("reconnect_attempt", () => {
+                this.reconnectAttempts++;
             });
 
             // Listen for timeouts
@@ -500,7 +537,7 @@ export class DocumentDeltaConnection
     /**
      * Error raising for socket.io issues
      */
-    protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
+    protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
         // Note: we suspect the incoming error object is either:
         // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
         // - an Error object thrown by socket.io engine. Be careful with not recording PII!
@@ -522,7 +559,8 @@ export class DocumentDeltaConnection
         const errorObj = createGenericNetworkError(
             `socketError [${handler}]`,
             message,
-            canRetry,
+            { canRetry },
+            { driverVersion },
         );
 
         return errorObj;
