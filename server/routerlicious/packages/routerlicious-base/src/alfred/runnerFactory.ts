@@ -49,25 +49,29 @@ export class OrdererManager implements core.IOrdererManager {
     }
 
     public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
-        // const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+        let ordererType = "kafka";
+        if(this.ordererUrl.includes("localhost")) {
+            const tenant = await this.tenantManager.getTenant(tenantId, documentId);
 
-        // const messageMetaData = { documentId, tenantId };
-        // winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
-        // Lumberjack.info(
-        //     `tenant orderer: ${JSON.stringify(tenant.orderer)}`,
-        //     getLumberBaseProperties(documentId, tenantId),
-        // );
+            const messageMetaData = { documentId, tenantId };
+            winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
+            Lumberjack.info(
+                `tenant orderer: ${JSON.stringify(tenant.orderer)}`,
+                getLumberBaseProperties(documentId, tenantId),
+            );
 
-        // if (tenant.orderer.url !== this.ordererUrl) {
-        //     return Promise.reject(new Error("Invalid ordering service endpoint"));
-        // }
+            if (tenant.orderer.url !== this.ordererUrl) {
+                return Promise.reject(new Error("Invalid ordering service endpoint"));
+            }
+            ordererType = tenant.orderer.type;
+        }
 
-        // switch (tenant.orderer.type) {
-        //     case "kafka":
+        switch (ordererType) {
+            case "kafka":
                 return this.kafkaFactory.create(tenantId, documentId);
-        //     default:
-        //         return this.localOrderManager.get(tenantId, documentId);
-        // }
+            default:
+                return this.localOrderManager.get(tenantId, documentId);
+        }
     }
 }
 
