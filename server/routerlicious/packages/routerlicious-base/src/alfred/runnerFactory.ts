@@ -66,6 +66,11 @@ export class OrdererManager implements core.IOrdererManager {
             ordererType = tenant.orderer.type;
         }
 
+        Lumberjack.info(
+            `tenant orderer type =: ${ordererType}`,
+            getLumberBaseProperties(documentId, tenantId),
+        );
+
         switch (ordererType) {
             case "kafka":
                 return this.kafkaFactory.create(tenantId, documentId);
