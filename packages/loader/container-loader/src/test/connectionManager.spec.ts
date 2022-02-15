@@ -72,7 +72,7 @@ describe("connectionManager", () => {
         connectionManager.connect();
         const connection = await waitForConnection();
 
-        // Monkey path connection to be undefined to trigger assert in reconnectOnError
+        // Monkey patch connection to be undefined to trigger assert in reconnectOnError
         (connectionManager as any).connection = undefined;
 
         // Act
@@ -130,9 +130,8 @@ describe("connectionManager", () => {
         connection.emitNack("docId", [nack]);
 
         // Assert III
-        assert(!oldConnection.disposed, "connection shouldn't be disposed since mock closeHandler doesn't do it - don't expect it here after fatal nack");
-        assert.equal(connection, oldConnection, "Should not have gotten a new connection after fatal nack");
-        mockLogger.assertMatch([], "Expected no logs sent, specifically not reconnectingDespiteFatalError event");
         assert(closed, "closeHandler should be called in response to 403 nack");
+        assert(!oldConnection.disposed, "connection shouldn't be disposed since mock closeHandler doesn't do it - don't expect it here after fatal nack");
+        mockLogger.assertMatch([], "Expected no logs sent, specifically not reconnectingDespiteFatalError event");
     });
 });
