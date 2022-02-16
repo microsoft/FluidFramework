@@ -76,8 +76,6 @@ function copyProps(target: ITelemetryProperties | LoggingError, source: ITelemet
 export interface IFluidErrorAnnotations {
     /** Telemetry props to log with the error */
     props?: ITelemetryProperties;
-    /**  */
-    externalErrorToFluidError?: (message: string) => IFluidErrorBase;
 }
 
 /** For backwards compatibility with pre-fluidErrorCode valid errors */
@@ -111,24 +109,14 @@ export function normalizeError(
         return error;
     }
 
+    // We have to construct a new Fluid Error, copying safe properties over
     const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
-    let fluidError: IFluidErrorBase;
-    if (annotations.externalErrorToFluidError === undefined) {
-        // We have to construct a new Fluid Error, copying safe properties over
-        fluidError = new SimpleFluidError({
-            errorType: "genericError", // Match Container/Driver generic error type
-            fluidErrorCode: "",
-            message,
-            stack,
-        });
-    } else {
-        fluidError = wrapError(error, annotations.externalErrorToFluidError);
-    }
-    //* Consider:: Do we want to stick error as innerError on SimpleFluidError or via externalErrorToFluidError?
-    //* Need an interface for adding unsafe props like in wrapError branch...
-    //* Real question is, is munging messages together (see other file in this commit) ok or better
-    //* to have more complex code that splits into well-defined fields?  Leaning towards simpler code and requiring
-    //* callers to augment however they want.  e.g. could use flags.
+    const fluidError: IFluidErrorBase = new SimpleFluidError({
+        errorType: "genericError", // Match Container/Driver generic error type
+        fluidErrorCode: "",
+        message,
+        stack,
+    });
 
     fluidError.addTelemetryProperties({
         ...annotations.props,
@@ -140,6 +128,22 @@ export function normalizeError(
         fluidError.addTelemetryProperties({ typeofError: typeof(error) });
     }
     return fluidError;
+}
+
+export function normalizeCustom(
+    originalError: unknown,
+    externalErrorToFluidError: (message: string) => IFluidErrorBase,
+    annotations: IFluidErrorAnnotations = {},
+): IFluidErrorBase {
+    const error = normalizeError(originalError, annotations);
+
+    //
+    if (error.errorType === "genericError") {
+        const newError = wrapError(error, externalErrorToFluidError);
+        newError.addTelemetryProperties(error.getTelemetryProperties());
+    }
+
+    return error;
 }
 
 let stackPopulatedOnCreation: boolean | undefined;
@@ -183,7 +187,7 @@ export function generateStack(): string | undefined {
  * @param newErrorFn - callback that will create a new error given the original error's message
  * @returns A new error object "wrapping" the given error
  */
-function wrapError<T extends IFluidErrorBase>(
+export function wrapError<T extends IFluidErrorBase>(
     innerError: unknown,
     newErrorFn: (message: string) => T,
 ): T {
