@@ -34,7 +34,6 @@ import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "./m
 
 const reservedIntervalIdKey = "intervalId";
 
-
 export enum IntervalType {
     Simple = 0x0,
     Nest = 0x1,
@@ -421,7 +420,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         private readonly label: string,
         private readonly helpers: IIntervalHelpers<TInterval>) {
         this.endIntervalTree =
-
             new RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
     }
 

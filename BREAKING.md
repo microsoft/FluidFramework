@@ -14,7 +14,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Move IntervalType from merge-tree to sequence package](#Move-IntervalType-from merge-tree-to-sequence-package)
 
 ### Move IntervalType from merge-tree to sequence package
-Move the type from the merge-tree package where it isn't used to the sequence where it is used
+Move the type from the merge-tree package where it isn't used to the sequence package where it is used
 ``` diff
 - import { IntervalType } from "@fluidframework/merge-tree";
 + import { IntervalType } from "@fluidframework/sequence";

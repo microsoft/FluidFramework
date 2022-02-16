@@ -78,7 +78,6 @@ export class TestClient extends Client {
         specToSeg: (spec: IJSONSegment) => ISegment): Promise<TestClient> {
         const client2 = new TestClient(undefined, specToSeg);
         const { catchupOpsP } = await client2.load(
-
             {
                 logger: client2.logger,
                 clientId: newLongClientId,
@@ -258,7 +257,6 @@ export class TestClient extends Client {
         let chunk = "";
         while (start < this.getLength()) {
             chunk = this.getText(start, start + TestClient.searchChunkSize);
-
 
             const result = chunk.match(target);
             if (result !== null) {
