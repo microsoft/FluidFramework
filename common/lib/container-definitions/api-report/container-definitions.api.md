@@ -181,8 +181,6 @@ export interface IContainerContext extends IDisposable {
     getSpecifiedCodeDetails?(): IFluidCodeDetails_2 | undefined;
     // (undocumented)
     readonly loader: ILoader;
-    // @deprecated (undocumented)
-    readonly logger?: ITelemetryBaseLogger;
     // (undocumented)
     readonly options: ILoaderOptions;
     // (undocumented)

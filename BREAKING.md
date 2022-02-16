@@ -10,6 +10,18 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.58 Breaking changes
+- [Remove raiseContainerWarning property](#Remove-raiseContainerWarning-property)
+- [Remove logger property from IContainerContext](#Remove-logger-property-from-IContainerContext)
+
+### Remove raiseContainerWarning property
+
+`raiseContainerWarning` property is removed from the following interfaces in release 0.56: `IContainerRuntime`, `IFluidDataStoreRuntime`, `IFluidDataStoreContext`, `IContainerRuntime`, `IFluidDataStoreRuntime`. It was deprecated in `IContainerContext` and it usage would be completely removed. The advised migration step for partners is to generate their own telemetry/logging events.
+
+### Remove logger property from IContainerContext
+
+The `logger` property from `IContainerContext` is removed. The alternative is to use `taggedLogger` if possible. Loggers passed to `ContainerContext` will need to support tagged events.
+
 ## 0.57 Breaking changes
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)
 - [Driver error constructors' signatures have changed](#driver-error-constructors-signatures-have-changed)
