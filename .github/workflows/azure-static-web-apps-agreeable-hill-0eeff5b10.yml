@@ -9,10 +9,10 @@ on:
     types: [opened, synchronize, reopened, closed]
     branches:
     - main
-    - "docs/next"
+    - 'docs/next'
     paths:
-    - "docs/**"
-    - ".github/workflows/azure-static-web-apps-agreeable-hill-0eeff5b10.yml"
+    - 'docs/**'
+    - '.github/workflows/azure-static-web-apps-agreeable-hill-0eeff5b10.yml'
 
 jobs:
   build_and_deploy_job:
@@ -29,10 +29,28 @@ jobs:
           submodules: false
       - uses: actions/setup-node@v2
         with:
-          node-version: "14"
-          cache: "npm"
+          node-version: '14'
+          cache: 'npm'
           cache-dependency-path: docs/package-lock.json
-
+      - uses: actions/setup-dotnet@v1 # needed to run the SBOM task
+        with:
+          source-url: https://1essharedassets.pkgs.visualstudio.com/_packaging/Packaging/nuget/v3/index.json
+          dotnet-version: 3.1.x
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.AZURE_NUGET_PAT }}
+      - name: Download SBOM tool
+        working-directory: ./docs
+        run: |
+          mkdir -pv sbom
+          nuget install Microsoft.ManifestTool.CrossPlatform -outputdir sbom
+          tree -a .
+      - name: Unzip SBOM tool
+        working-directory: ./docs/sbom
+        run: |
+          cd Microsoft.ManifestTool.CrossPlatform*
+          ls *.nupkg
+          unzip $(ls *.nupkg) -d ../ManifestTool
+          tree -a ..
       - name: Download JSON by SHA
         id: download-sha-json
         continue-on-error: true
@@ -40,7 +58,7 @@ jobs:
         with:
           file-url: https://fluidframework.blob.core.windows.net/api-extractor-json/${{ github.sha }}.tar.gz
           file-name: api-extractor.tar.gz
-      - name: "Download latest JSON (only if previous step fails)"
+      - name: 'Download latest JSON (only if previous step fails)'
         id: download-latest-json
         if: steps.download-sha-json.outcome != 'success'
         uses: carlosperate/download-file-action@v1.0.3
@@ -53,36 +71,33 @@ jobs:
           mkdir -pv $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/
           tar -C $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/ -zxvf api-extractor.tar.gz
 
-      # Build here so we can upload an artifact; ASWA will rebuild when it deploys in the step below
-      - name: Build site artifact
+      - name: Build site
+        working-directory: ./docs
         run: |
-          cd $GITHUB_WORKSPACE/docs
           npm ci
           npm run build
+      - name: Generate SBOM
+        working-directory: ./docs
+        run: |
+          dotnet ./sbom/ManifestTool/Content/Microsoft.ManifestTool.dll Generate -pn fluidframework-docs -b ./public -bc ./public -pv $(git rev-parse HEAD)
       - name: Archive site artifact
         uses: actions/upload-artifact@v2
         with:
           name: fluidframework-site
           path: docs/public
 
-      - name: Hugo Build And Deploy
-        id: builddeploy
-        uses: Azure/static-web-apps-deploy@v0.0.1-preview
+      - name: Deploy to Azure
+        id: deploy
+        uses: Azure/static-web-apps-deploy@v1
         with:
+          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AGREEABLE_HILL_0EEFF5B10 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
-          action: "upload"
-          app_build_command: |
-            # npm install is run automatically
-            npm run build
-          ###### Repository/Build Configurations - These values can be configured to match you app requirements. ######
-          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "/docs" # App source code path
-          # api_location: "api" # Api source code path - optional
-          app_artifact_location: "public" # Built app content directory - optional
-          routes_location: "/docs"
+          action: 'upload'
+          skip_app_build: true # We deploy the files built in previous steps
+          app_location: '/docs/public' # Path to files to deploy
+          config_file_location: '/docs'
           skip_deploy_on_missing_secrets: true
-          ###### End of Repository/Build Configurations ######
         env: # Add environment variables here
           HUGO_PARAMS_APPINSIGHTKEY: ${{ secrets.APP_INSIGHTS_KEY }}
 
@@ -93,8 +108,8 @@ jobs:
     steps:
       - name: Close Pull Request
         id: closepullrequest
-        uses: Azure/static-web-apps-deploy@v0.0.1-preview
+        uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AGREEABLE_HILL_0EEFF5B10 }}
-          action: "close"
+          action: 'close'
           skip_deploy_on_missing_secrets: true

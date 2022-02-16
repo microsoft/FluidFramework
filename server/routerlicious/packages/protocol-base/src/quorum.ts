@@ -9,7 +9,6 @@ import cloneDeep from "lodash/cloneDeep";
 import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ICommittedProposal,
-    IPendingProposal,
     IQuorum,
     IQuorumEvents,
     ISequencedClient,
@@ -21,39 +20,12 @@ import {
  * Appends a deferred and rejection count to a sequenced proposal. For locally generated promises this allows us to
  * attach a Deferred which we will resolve once the proposal is either accepted or rejected.
  */
-class PendingProposal implements IPendingProposal, ISequencedProposal {
-    public readonly rejections: Set<string>;
-    private canReject = true;
-
+class PendingProposal implements ISequencedProposal {
     constructor(
-        private readonly sendReject: (sequenceNumber: number) => void,
         public sequenceNumber: number,
         public key: string,
         public value: any,
-        rejections: string[],
         public deferred?: Deferred<void>) {
-        this.rejections = new Set(rejections);
-    }
-
-    public reject() {
-        if (!this.canReject) {
-            throw new Error("Can no longer reject this proposal");
-        }
-
-        this.sendReject(this.sequenceNumber);
-    }
-
-    public get rejectionDisabled() {
-        return !this.canReject;
-    }
-
-    public disableRejection() {
-        this.canReject = false;
-    }
-
-    public addRejection(clientId: string) {
-        assert(!this.rejections.has(clientId), 0x1cd /* `!this.rejections.has(${clientId})` */);
-        this.rejections.add(clientId);
     }
 }
 
@@ -74,9 +46,6 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     private isDisposed: boolean = false;
     public get disposed() { return this.isDisposed; }
 
-    // List of commits that have been approved but not yet committed
-    private readonly pendingCommit: Map<string, ICommittedProposal>;
-
     // Locally generated proposals
     private readonly localProposals = new Map<number, Deferred<void>>();
 
@@ -93,25 +62,22 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, ICommittedProposal][],
         private readonly sendProposal: (key: string, value: any) => number,
-        private readonly sendReject: (sequenceNumber: number) => void) {
+    ) {
         super();
 
         this.members = new Map(members);
         this.proposals = new Map(
-            proposals.map(([, proposal, rejections]) => {
+            proposals.map(([, proposal]) => {
                 return [
                     proposal.sequenceNumber,
                     new PendingProposal(
-                        this.sendReject,
                         proposal.sequenceNumber,
                         proposal.key,
                         proposal.value,
-                        rejections),
+                    ),
                 ] as [number, PendingProposal];
             }));
         this.values = new Map(values);
-        this.pendingCommit = new Map(values
-            .filter((value) => value[1].commitSequenceNumber === -1));
     }
 
     public close() {
@@ -136,7 +102,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
      * Snapshots quorum members
      * @returns a deep cloned array of members
      */
-    public snapshotMembers(): IQuorumSnapshot["members"] {
+    private snapshotMembers(): IQuorumSnapshot["members"] {
         return cloneDeep(Array.from(this.members));
     }
 
@@ -144,19 +110,21 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
      * Snapshots quorum proposals
      * @returns a deep cloned array of proposals
      */
-    public snapshotProposals(): IQuorumSnapshot["proposals"] {
+    private snapshotProposals(): IQuorumSnapshot["proposals"] {
         return Array.from(this.proposals).map(
             ([sequenceNumber, proposal]) => [
                 sequenceNumber,
                 { sequenceNumber, key: proposal.key, value: proposal.value },
-                Array.from(proposal.rejections)] as [number, ISequencedProposal, string[]]);
+                [], // rejections, which has been removed
+            ],
+        );
     }
 
     /**
      * Snapshots quorum values
      * @returns a deep cloned array of values
      */
-    public snapshotValues(): IQuorumSnapshot["values"] {
+    private snapshotValues(): IQuorumSnapshot["values"] {
         return cloneDeep(Array.from(this.values));
     }
 
@@ -234,7 +202,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
         const clientSequenceNumber = this.sendProposal(key, value);
         if (clientSequenceNumber < 0) {
             this.emit("error", { eventName: "ProposalInDisconnectedState", key });
-            return Promise.reject(new Error("Can't proposal in disconnected state"));
+            throw new Error("Can't proposal in disconnected state");
         }
 
         const deferred = new Deferred<void>();
@@ -257,19 +225,17 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
             0x1d1 /* `!${local} || this.localProposals.has(${clientSequenceNumber})` */);
 
         const proposal = new PendingProposal(
-            this.sendReject,
             sequenceNumber,
             key,
             value,
-            [],
-            local ? this.localProposals.get(clientSequenceNumber) : undefined);
+            local ? this.localProposals.get(clientSequenceNumber) : undefined,
+        );
         this.proposals.set(sequenceNumber, proposal);
 
         // Emit the event - which will also provide clients an opportunity to reject the proposal. We require
         // clients to make a rejection decision at the time of receiving the proposal and so disable rejecting it
         // after we have emitted the event.
         this.emit("addProposal", proposal);
-        proposal.disableRejection();
 
         if (local) {
             this.localProposals.delete(clientSequenceNumber);
@@ -277,27 +243,6 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
 
         // clear the proposal cache
         this.snapshotCache.proposals = undefined;
-    }
-
-    /**
-     * Rejects the given proposal
-     */
-    public rejectProposal(clientId: string, sequenceNumber: number) {
-        // Proposals require unanimous approval so any rejection results in a rejection of the proposal. For error
-        // detection we will keep a rejected proposal in the pending list until the MSN advances so that we can
-        // track the total number of rejections.
-        assert(this.proposals.has(sequenceNumber), 0x1d2 /* `this.proposals.has(${sequenceNumber})` */);
-
-        const proposal = this.proposals.get(sequenceNumber);
-        if (proposal !== undefined) {
-            proposal.addRejection(clientId);
-        }
-
-        // clear the proposal cache
-        this.snapshotCache.proposals = undefined;
-
-        // We will emit approval and rejection messages once the MSN advances past the sequence number of the
-        // proposal. This will allow us to convey all clients who rejected the proposal.
     }
 
     /**
@@ -324,82 +269,40 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
         completed.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
 
         for (const proposal of completed) {
-            const approved = proposal.rejections.size === 0;
-
             // If it was a local proposal - resolve the promise
-            if (proposal.deferred) {
-                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                approved
-                    ? proposal.deferred.resolve()
-                    : proposal.deferred.reject(`Rejected by ${Array.from(proposal.rejections)}`);
-            }
+            proposal.deferred?.resolve();
 
-            if (approved) {
-                const committedProposal: ICommittedProposal = {
-                    approvalSequenceNumber: message.sequenceNumber,
-                    commitSequenceNumber: -1,
-                    key: proposal.key,
-                    sequenceNumber: proposal.sequenceNumber,
-                    value: proposal.value,
-                };
+            const committedProposal: ICommittedProposal = {
+                approvalSequenceNumber: message.sequenceNumber,
+                // No longer used.  We still stamp a -1 for compat with older versions of the quorum.
+                // Can be removed after 0.1035 and higher is ubiquitous.
+                commitSequenceNumber: -1,
+                key: proposal.key,
+                sequenceNumber: proposal.sequenceNumber,
+                value: proposal.value,
+            };
 
-                // TODO do we want to notify when a proposal doesn't make it to the commit phase - i.e. because
-                // a new proposal was made before it made it to the committed phase? For now we just will never
-                // emit this message
+            this.values.set(committedProposal.key, committedProposal);
 
-                this.values.set(committedProposal.key, committedProposal);
-                this.pendingCommit.set(committedProposal.key, committedProposal);
+            // clear the values cache
+            this.snapshotCache.values = undefined;
 
-                // clear the values cache
-                this.snapshotCache.values = undefined;
+            // Send no-op on approval to expedite commit
+            // accept means that all clients have seen the proposal and nobody has rejected it
+            // commit means that all clients have seen that the proposal was accepted by everyone
+            immediateNoOp = true;
 
-                // Send no-op on approval to expedite commit
-                // accept means that all clients have seen the proposal and nobody has rejected it
-                // commit means that all clients have seen that the proposal was accepted by everyone
-                immediateNoOp = true;
-
-                this.emit(
-                    "approveProposal",
-                    committedProposal.sequenceNumber,
-                    committedProposal.key,
-                    committedProposal.value,
-                    committedProposal.approvalSequenceNumber);
-            } else {
-                this.emit(
-                    "rejectProposal",
-                    proposal.sequenceNumber,
-                    proposal.key,
-                    proposal.value,
-                    Array.from(proposal.rejections));
-            }
+            this.emit(
+                "approveProposal",
+                committedProposal.sequenceNumber,
+                committedProposal.key,
+                committedProposal.value,
+                committedProposal.approvalSequenceNumber);
 
             this.proposals.delete(proposal.sequenceNumber);
 
             // clear the proposals cache
             this.snapshotCache.proposals = undefined;
-        }
-
-        // Move values to the committed stage and notify
-        if (this.pendingCommit.size > 0) {
-            Array.from(this.pendingCommit.values())
-                .filter((pendingCommit) => pendingCommit.approvalSequenceNumber <= msn)
-                .sort((a, b) => a.sequenceNumber - b.sequenceNumber)
-                .forEach((pendingCommit) => {
-                    pendingCommit.commitSequenceNumber = message.sequenceNumber;
-
-                    // clear the values cache
-                    this.snapshotCache.values = undefined;
-
-                    this.emit(
-                        "commitProposal",
-                        pendingCommit.sequenceNumber,
-                        pendingCommit.key,
-                        pendingCommit.value,
-                        pendingCommit.approvalSequenceNumber,
-                        pendingCommit.commitSequenceNumber);
-
-                    this.pendingCommit.delete(pendingCommit.key);
-                });
         }
 
         return immediateNoOp;

@@ -18,6 +18,7 @@ export function handleResponse<T>(
             response.status(successStatus).json(result);
         })
         .catch((error) => {
+            // TODO remove before merging
             if (error) {
                 winston.error({
                     status: error.status,

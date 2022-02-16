@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import {
-    IGenericError,
     IPendingLocalState,
     ContainerErrorType,
     LoaderHeader,
@@ -39,6 +38,7 @@ import {
     ITestDataObject,
     TestDataObjectType,
     describeNoCompat,
+    itExpects,
 } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
@@ -104,9 +104,13 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             "Client details should be set with interactive as true");
     });
 
-    it("Load container unsuccessfully", async () => {
-        let success: boolean = true;
-        try {
+    itExpects(
+        "Load container unsuccessfully",
+        [
+            {eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure"},
+            {eventName: "TestException", error: "expectedFailure", errorType: ContainerErrorType.genericError},
+        ],
+        async () => {
             const documentServiceFactory = provider.documentServiceFactory;
             const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
             // Issue typescript-eslint/typescript-eslint #1256
@@ -118,38 +122,27 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             };
 
             await loadContainer({ documentServiceFactory: mockFactory });
-            assert.fail("Error expected");
-        } catch (error) {
-            assert.strictEqual(error.errorType, ContainerErrorType.genericError, "Error should be a general error");
-            const genericError = error as IGenericError;
-            assert.equal(genericError.message, "expectedFailure", "Expected the injected error message");
-            success = false;
-        }
-        assert.strictEqual(success, false);
-    });
+        });
 
-    it("Load container with error", async () => {
-        let success: boolean = true;
-        try {
-            const documentServiceFactory = provider.documentServiceFactory;
-            const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
+    itExpects("Load container with error",
+    [
+        {eventName: "fluid:telemetry:DeltaManager:GetDeltas_Exception", error: "expectedFailure"},
+        {eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure"},
+        {eventName: "TestException", error: "expectedFailure", errorType: ContainerErrorType.genericError},
+    ],
+    async () => {
+        const documentServiceFactory = provider.documentServiceFactory;
+        const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
+        // Issue typescript-eslint/typescript-eslint #1256
+        mockFactory.createDocumentService = async (resolvedUrl) => {
+            const service = await documentServiceFactory.createDocumentService(resolvedUrl);
             // Issue typescript-eslint/typescript-eslint #1256
-            mockFactory.createDocumentService = async (resolvedUrl) => {
-                const service = await documentServiceFactory.createDocumentService(resolvedUrl);
-                // Issue typescript-eslint/typescript-eslint #1256
-                service.connectToDeltaStorage = async () => Promise.reject(new Error("expectedFailure"));
-                return service;
-            };
-            const container2 = await loadContainer({ documentServiceFactory: mockFactory });
-            await waitContainerToCatchUp(container2);
-            assert.fail("Error expected");
-        } catch (error) {
-            assert.strictEqual(error.errorType, ContainerErrorType.genericError, "Error should be a general error");
-            const genericError = error as IGenericError;
-            assert.equal(genericError.message, "expectedFailure", "Expected the injected error message");
-            success = false;
-        }
-        assert.strictEqual(success, false);
+            service.connectToDeltaStorage = async () => Promise.reject(new Error("expectedFailure"));
+            return service;
+        };
+        const container2 = await loadContainer({ documentServiceFactory: mockFactory });
+        await waitContainerToCatchUp(container2);
+
     });
 
     it("Raise disconnected event", async () => {

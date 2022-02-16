@@ -5,13 +5,13 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import {logIfFalse} from "../utils";
+import { logIfFalse } from "../utils";
 
 class TestLogger implements ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent): void {
         this.events.push(event);
     }
-    public readonly events: ITelemetryBaseEvent[]=[];
+    public readonly events: ITelemetryBaseEvent[] = [];
 }
 
 describe("logIfFalse", () => {

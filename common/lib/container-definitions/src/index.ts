@@ -4,7 +4,7 @@
  */
 export * from "./audience";
 export * from "./browserPackage";
-export * from "./legacy/chaincode";
+export * from "./legacy";
 export * from "./deltas";
 export * from "./error";
 export * from "./loader";
