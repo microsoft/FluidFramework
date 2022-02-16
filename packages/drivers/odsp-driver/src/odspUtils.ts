@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/driver-utils";
 import { assert, performance } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { ChildLogger, normalizeError, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ChildLogger, PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
 import {
     fetchIncorrectResponse,
     throwOdspNetworkError,
@@ -312,21 +312,19 @@ export function toInstrumentedOdspTokenFetcher(
                         { method: name, driverVersion });
                 }
                 return token;
-            }, (originalError) => {
+            }, (error) => {
                 // There is an important but unofficial contract here where token providers can set canRetry: true
                 // to hook into the driver's retry logic (e.g. the retry loop when initiating a connection)
-                const rawCanRetry = originalError?.canRetry;
-                const error = normalizeError(originalError, {
-                    externalErrorToFluidError: (errorMessage) => new NetworkErrorBasic(
+                const rawCanRetry = error?.canRetry;
+                const tokenError = wrapError(
+                    error,
+                    (errorMessage) => new NetworkErrorBasic(
                         "tokenFetcherFailed",
-                        `tokenFetcher failed: [${errorMessage}]`,
+                        errorMessage,
                         OdspErrorType.fetchTokenError,
                         typeof rawCanRetry === "boolean" ? rawCanRetry : false /* canRetry */,
-                        { method: name, driverVersion },
-                    )},
-                );
-
-                throw error;
+                        { method: name, driverVersion }));
+                throw tokenError;
             }),
             { cancel: "generic" });
     };
