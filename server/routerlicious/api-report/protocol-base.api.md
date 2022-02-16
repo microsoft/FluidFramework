@@ -11,7 +11,11 @@ import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { ICreateTreeEntry } from '@fluidframework/gitresources';
 import { IProcessMessageResult } from '@fluidframework/protocol-definitions';
 import { IQuorum } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
+import { IQuorumClientsEvents } from '@fluidframework/protocol-definitions';
 import { IQuorumEvents } from '@fluidframework/protocol-definitions';
+import { IQuorumProposals } from '@fluidframework/protocol-definitions';
+import { IQuorumProposalsEvents } from '@fluidframework/protocol-definitions';
 import { ISequencedClient } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedProposal } from '@fluidframework/protocol-definitions';
@@ -137,6 +141,42 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     has(key: string): boolean;
     propose(key: string, value: any): Promise<void>;
     removeMember(clientId: string): void;
+    // (undocumented)
+    setConnectionState(connected: boolean, clientId?: string): void;
+    snapshot(): IQuorumSnapshot;
+    updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean;
+}
+
+// @public (undocumented)
+export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> implements IQuorumClients {
+    constructor(members: [string, ISequencedClient][]);
+    addMember(clientId: string, details: ISequencedClient): void;
+    // (undocumented)
+    close(): void;
+    // (undocumented)
+    dispose(): void;
+    // (undocumented)
+    get disposed(): boolean;
+    getMember(clientId: string): ISequencedClient | undefined;
+    getMembers(): Map<string, ISequencedClient>;
+    removeMember(clientId: string): void;
+    snapshot(): IQuorumSnapshot;
+}
+
+// @public (undocumented)
+export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> implements IQuorumProposals {
+    constructor(proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number);
+    addProposal(key: string, value: any, sequenceNumber: number, local: boolean, clientSequenceNumber: number): void;
+    // (undocumented)
+    close(): void;
+    // (undocumented)
+    dispose(): void;
+    // (undocumented)
+    get disposed(): boolean;
+    get(key: string): any;
+    getApprovalData(key: string): ICommittedProposal | undefined;
+    has(key: string): boolean;
+    propose(key: string, value: any): Promise<void>;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     snapshot(): IQuorumSnapshot;
