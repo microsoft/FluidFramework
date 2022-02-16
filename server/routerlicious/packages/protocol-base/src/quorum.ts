@@ -50,38 +50,24 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
      * Depending on the op being processed, some or none of those properties may change.
      * Each property will be cached and the cache for each property will be cleared when an op causes a change.
      */
-    private readonly snapshotCache: Partial<IQuorumSnapshot> = {};
+    private snapshotCache: IQuorumSnapshot["members"] | undefined = undefined;
 
     constructor(
-        members: [string, ISequencedClient][],
+        members: IQuorumSnapshot["members"],
     ) {
         super();
 
         this.members = new Map(members);
     }
 
-    public close() {
-        this.removeAllListeners();
-    }
-
     /**
-     * Snapshots the entire quorum
-     * @returns a quorum snapshot
+     * Snapshots the clients in the Quorum
+     * @returns a snapshot of the clients in the quorum
      */
-    public snapshot(): IQuorumSnapshot {
-        this.snapshotCache.members ??= this.snapshotMembers();
+    public snapshot(): IQuorumSnapshot["members"] | undefined {
+        this.snapshotCache ??= cloneDeep(Array.from(this.members));
 
-        return {
-            ...this.snapshotCache as IQuorumSnapshot,
-        };
-    }
-
-    /**
-     * Snapshots quorum members
-     * @returns a deep cloned array of members
-     */
-    private snapshotMembers(): IQuorumSnapshot["members"] {
-        return cloneDeep(Array.from(this.members));
+        return this.snapshotCache;
     }
 
     /**
@@ -92,8 +78,8 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
         this.members.set(clientId, details);
         this.emit("addMember", clientId, details);
 
-        // clear the members cache
-        this.snapshotCache.members = undefined;
+        // clear the cache
+        this.snapshotCache = undefined;
     }
 
     /**
@@ -104,8 +90,8 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
         this.members.delete(clientId);
         this.emit("removeMember", clientId);
 
-        // clear the members cache
-        this.snapshotCache.members = undefined;
+        // clear the cache
+        this.snapshotCache = undefined;
     }
 
     /**
@@ -164,10 +150,6 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
                 ] as [number, PendingProposal];
             }));
         this.values = new Map(values);
-    }
-
-    public close() {
-        this.removeAllListeners();
     }
 
     /**

@@ -149,10 +149,8 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
 
 // @public (undocumented)
 export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> implements IQuorumClients {
-    constructor(members: [string, ISequencedClient][]);
+    constructor(members: IQuorumSnapshot["members"]);
     addMember(clientId: string, details: ISequencedClient): void;
-    // (undocumented)
-    close(): void;
     // (undocumented)
     dispose(): void;
     // (undocumented)
@@ -160,15 +158,13 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
     getMember(clientId: string): ISequencedClient | undefined;
     getMembers(): Map<string, ISequencedClient>;
     removeMember(clientId: string): void;
-    snapshot(): IQuorumSnapshot;
+    snapshot(): IQuorumSnapshot["members"] | undefined;
 }
 
 // @public (undocumented)
 export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> implements IQuorumProposals {
     constructor(proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number);
     addProposal(key: string, value: any, sequenceNumber: number, local: boolean, clientSequenceNumber: number): void;
-    // (undocumented)
-    close(): void;
     // (undocumented)
     dispose(): void;
     // (undocumented)
