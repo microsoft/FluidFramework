@@ -703,7 +703,11 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                 process: (msg: ISequencedDocumentMessage, op: IDirectoryClearOperation, local, localOpMetadata) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (subdir) {
-                        subdir.processClearMessage(op, local, localOpMetadata);
+                        if(subdir.clientIds.includes(msg.clientId)
+                        || (subdir.sequenceNumber !== -1
+                            && msg.referenceSequenceNumber <= subdir.sequenceNumber)){
+                            subdir.processClearMessage(op, local, localOpMetadata);
+                        }
                     }
                 },
                 submit: (op: IDirectoryClearOperation, localOpMetadata: unknown) => {
@@ -721,7 +725,11 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                 process: (msg: ISequencedDocumentMessage, op: IDirectoryDeleteOperation, local, localOpMetadata) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (subdir) {
-                        subdir.processDeleteMessage(op, local, localOpMetadata);
+                        if(subdir.clientIds.includes(msg.clientId)
+                        || (subdir.sequenceNumber !== -1
+                            && msg.referenceSequenceNumber <= subdir.sequenceNumber)){
+                            subdir.processDeleteMessage(op, local, localOpMetadata);
+                        }
                     }
                 },
                 submit: (op: IDirectoryDeleteOperation, localOpMetadata: unknown) => {
@@ -782,9 +790,16 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             {
                 process: (msg: ISequencedDocumentMessage,
                     op: IDirectoryDeleteSubDirectoryOperation, local, localOpMetadata) => {
-                    const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-                    if (parentSubdir) {
-                        parentSubdir.processDeleteSubDirectoryMessage(msg, op, local, localOpMetadata);
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
+                    if (subdir) {
+                        if(subdir.clientIds.includes(msg.clientId)
+                        || (subdir.sequenceNumber !== -1
+                            && msg.referenceSequenceNumber <= subdir.sequenceNumber)){
+                                const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
+                                if (parentSubdir) {
+                                    parentSubdir.processDeleteSubDirectoryMessage(msg, op, local, localOpMetadata);
+                                }
+                        }
                     }
                 },
                 submit: (op: IDirectoryDeleteSubDirectoryOperation, localOpMetadata: unknown) => {
