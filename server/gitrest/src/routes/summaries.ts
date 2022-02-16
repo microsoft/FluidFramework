@@ -289,19 +289,26 @@ export class WholeSummaryWriteGitManager {
         if (!entry.id) {
             throw new NetworkError(400, `Empty summary tree handle`);
         }
+        if (entry.id.split("/").length === 1) {
+            // The entry id is already a sha, so just return it
+            return entry.id;
+        }
+
         const cachedSha = this.entryHandleToObjectShaCache.get(entry.id);
         if (cachedSha) {
             return cachedSha;
         }
 
+        // The entry id is in the format { id: `<parent commit sha>/<tree path>`, path: `<tree path>` }
         const parentHandle = entry.id.split("/")[0];
-        const parentTree = await this.repoManager.getTree(parentHandle, true /* recursive */);
+        const parentCommit = await this.repoManager.getCommit(parentHandle);
+        const parentTree = await this.repoManager.getTree(parentCommit.tree.sha, true /* recursive */);
         for (const treeEntry of parentTree.tree) {
-            this.entryHandleToObjectShaCache.set(treeEntry.path, treeEntry.sha);
+            this.entryHandleToObjectShaCache.set(`${parentHandle}/${treeEntry.path}`, treeEntry.sha);
         }
         const sha = this.entryHandleToObjectShaCache.get(entry.id);
         if (!sha) {
-            throw new NetworkError(404, "Summary tree handle object not found");
+            throw new NetworkError(404, `Summary tree handle object not found: id: ${entry.id}, path: ${entry.path}`);
         }
         return sha;
     }
