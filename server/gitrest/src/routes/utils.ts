@@ -18,15 +18,6 @@ export function handleResponse<T>(
             response.status(successStatus).json(result);
         })
         .catch((error) => {
-            // TODO remove before merging
-            if (error) {
-                winston.error({
-                    status: error.status,
-                    code: error.code,
-                    error,
-                    message: error.message,
-                    stack: error.stack });
-            }
             if (error && error.code && error.code < 600 && error.code >= 400 && error.message !== undefined) {
                 response.status((error as NetworkError).code).json((error as NetworkError).message);
             } else {
