@@ -1415,10 +1415,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const dir = this._subdirectories.get(op.subdirName)!;
             if(dir.sequenceNumber === -1){
+                // only set the seq on the first message, could be more
                 dir.sequenceNumber = msg.sequenceNumber
-                if(!dir.clientIds.includes(msg.clientId)){
-                    dir.clientIds.push(msg.clientId)
-                }
+            }
+            // the client created the dir, at or after the dirs seq, so list its client id as a creator.
+            if(!dir.clientIds.includes(msg.clientId)
+                && dir.sequenceNumber <= msg.sequenceNumber){
+                dir.clientIds.push(msg.clientId)
             }
             return false;
         }
