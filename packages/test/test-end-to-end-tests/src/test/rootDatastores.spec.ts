@@ -246,8 +246,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject, alias));
 
             await container.attach(request);
-            await provider.ensureSynchronized();
-
             const ds3 = await runtimeOf(dataObject).createDataStore(packageName);
             const aliasResult3 = await ds3.trySetAlias(alias);
             assert.equal(aliasResult3, AliasResult.Conflict);
@@ -325,15 +323,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         it("Receiving a bad alias message breaks the container", async () => {
             const dataCorruption = anyDataCorruption([container1]);
             await corruptedAliasOp(runtimeOf(dataObject1), alias);
-            assert(await dataCorruption);
-        });
-
-        it("Creating a root datastore using a previously used alias breaks the container", async () => {
-            const dataCorruption = anyDataCorruption([container1, container2]);
-            const ds = await runtimeOf(dataObject1).createDataStore(packageName);
-            await ds.trySetAlias(alias);
-
-            await createRootDataStore(dataObject2, alias);
             assert(await dataCorruption);
         });
 
