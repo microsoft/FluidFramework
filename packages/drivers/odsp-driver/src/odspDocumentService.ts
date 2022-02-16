@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { delay, performance } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     loggerToMonitoringContext,
@@ -52,7 +52,7 @@ import { pkgVersion as driverVersion } from "./packageVersion";
  */
 export class OdspDocumentService implements IDocumentService {
     private _policies: IDocumentServicePolicies;
-
+    private isJoinSessionPeriodicallyRefreshing = false;
     /**
      * @param resolvedUrl - resolved url identifying document that will be managed by returned service instance.
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
@@ -237,26 +237,7 @@ export class OdspDocumentService implements IDocumentService {
                 ? Promise.resolve(null)
                 : this.getWebsocketToken!(options);
 
-            const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession, options).catch((e) => {
-                const likelyFacetCodes = e as IFacetCodes;
-                if (Array.isArray(likelyFacetCodes.facetCodes)) {
-                    for (const code of likelyFacetCodes.facetCodes) {
-                        switch (code) {
-                            case "sessionForbiddenOnPreservedFiles":
-                            case "sessionForbiddenOnModerationEnabledLibrary":
-                            case "sessionForbiddenOnRequireCheckout":
-                                // This document can only be opened in storage-only mode.
-                                // DeltaManager will recognize this error
-                                // and load without a delta stream connection.
-                                this._policies = {...this._policies,storageOnly: true};
-                                throw new DeltaStreamConnectionForbiddenError(code, { driverVersion });
-                            default:
-                                continue;
-                        }
-                    }
-                }
-                throw e;
-            });
+            const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession, options, false);
 
             const [websocketEndpoint, websocketToken, io] =
                 await Promise.all([
@@ -264,6 +245,12 @@ export class OdspDocumentService implements IDocumentService {
                     websocketTokenPromise,
                     this.socketIoClientFactory(),
                 ]);
+
+            // Start refreshing join session periodically. 
+            if (!this.isJoinSessionPeriodicallyRefreshing) {
+                this.refreshSessionPeriodically(requestWebsocketTokenFromJoinSession, websocketEndpoint);
+                this.isJoinSessionPeriodicallyRefreshing = true;
+            }
 
             const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken || null);
             if (finalWebsocketToken === null) {
@@ -304,9 +291,63 @@ export class OdspDocumentService implements IDocumentService {
         });
     }
 
+    private async refreshSessionPeriodically(
+        requestWebsocketTokenFromJoinSession: boolean,
+        response: ISocketStorageDiscovery,
+    ) {
+        for (;;) {
+            let refreshSessionDurationSeconds = response.refreshSessionDurationSeconds;
+            if (refreshSessionDurationSeconds !== undefined) {
+                // 30 seconds is buffer time to refresh the session.
+                let retryAfter = (refreshSessionDurationSeconds * 1000) - 30000;
+                // If retryAfter is negative, try immediately.
+                if (retryAfter < 0) {
+                    retryAfter = 0;
+                }
+                await delay(retryAfter).then(async () => {
+                    await getWithRetryForTokenRefresh(async (options) => {
+                        response = await this.joinSession(requestWebsocketTokenFromJoinSession, options, true);
+                    }).catch((error) => {
+                        this.isJoinSessionPeriodicallyRefreshing = false;
+                    });
+                });
+            } else {
+                break;
+            }
+        }
+    }
+
     private async joinSession(
         requestSocketToken: boolean,
         options: TokenFetchOptionsEx,
+        bypassCache: boolean,
+    ) {
+        return this.joinSessionCore(requestSocketToken, options, bypassCache).catch((e) => {
+            const likelyFacetCodes = e as IFacetCodes;
+            if (Array.isArray(likelyFacetCodes.facetCodes)) {
+                for (const code of likelyFacetCodes.facetCodes) {
+                    switch (code) {
+                        case "sessionForbiddenOnPreservedFiles":
+                        case "sessionForbiddenOnModerationEnabledLibrary":
+                        case "sessionForbiddenOnRequireCheckout":
+                            // This document can only be opened in storage-only mode.
+                            // DeltaManager will recognize this error
+                            // and load without a delta stream connection.
+                            this._policies = {...this._policies,storageOnly: true};
+                            throw new DeltaStreamConnectionForbiddenError(code, { driverVersion });
+                        default:
+                            continue;
+                    }
+                }
+            }
+            throw e;
+        });
+    }
+
+    private async joinSessionCore(
+        requestSocketToken: boolean,
+        options: TokenFetchOptionsEx,
+        bypassCache: boolean,
     ): Promise<ISocketStorageDiscovery> {
         const executeFetch = async () =>
             fetchJoinSession(
@@ -321,6 +362,10 @@ export class OdspDocumentService implements IDocumentService {
                 this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
             );
 
+        if (bypassCache) {
+            // Remove the cached response and store the fresh one so as to extend the validity on spo.
+            this.cache.sessionJoinCache.remove(this.joinSessionKey);
+        }
         // Note: The sessionCache is configured with a sliding expiry of 1 hour,
         // so if we've fetched the join session within the last hour we won't run executeFetch again now.
         return this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
