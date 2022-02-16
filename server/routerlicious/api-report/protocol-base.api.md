@@ -163,7 +163,7 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
 
 // @public (undocumented)
 export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> implements IQuorumProposals {
-    constructor(proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number);
+    constructor(proposals: IQuorumSnapshot["proposals"], values: IQuorumSnapshot["values"], sendProposal: (key: string, value: any) => number);
     addProposal(key: string, value: any, sequenceNumber: number, local: boolean, clientSequenceNumber: number): void;
     // (undocumented)
     dispose(): void;

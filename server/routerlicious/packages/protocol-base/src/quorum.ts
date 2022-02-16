@@ -132,8 +132,8 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
     private readonly snapshotCache: Partial<IQuorumSnapshot> = {};
 
     constructor(
-        proposals: [number, ISequencedProposal, string[]][],
-        values: [string, ICommittedProposal][],
+        proposals: IQuorumSnapshot["proposals"],
+        values: IQuorumSnapshot["values"],
         private readonly sendProposal: (key: string, value: any) => number,
     ) {
         super();
