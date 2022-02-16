@@ -106,7 +106,7 @@ export class BlobManager {
                         error,
                     );
                     throw error;
-                })
+                });
             },
         );
     }

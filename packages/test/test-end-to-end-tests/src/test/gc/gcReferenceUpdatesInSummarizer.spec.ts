@@ -11,7 +11,12 @@ import {
 } from "@fluidframework/aqueduct";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IAckedSummary, IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
+import {
+    IAckedSummary,
+    IContainerRuntimeOptions,
+    RuntimeHeaders,
+    SummaryCollection,
+} from "@fluidframework/container-runtime";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
@@ -155,7 +160,7 @@ describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider)
             const dataStore2 = await factory.createInstance(mainDataStore._context.containerRuntime);
 
             // The request to use to load dataStore2.
-            const request: IRequest = { url: dataStore2.id, headers: { externalRequest: true } };
+            const request: IRequest = { url: dataStore2.id, headers: { [RuntimeHeaders.externalRequest]: true } };
 
             // Add the handle of dataStore2 to the matrix to mark it as referenced.
             {
@@ -193,7 +198,7 @@ describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider)
             const dataStore2 = await factory.createInstance(mainDataStore._context.containerRuntime);
 
             // The request to use to load dataStore2.
-            const request: IRequest = { url: dataStore2.id, headers: { externalRequest: true } };
+            const request: IRequest = { url: dataStore2.id, headers: { [RuntimeHeaders.externalRequest]: true } };
 
             // Add and then remove the handle of dataStore2 to the matrix to mark it as unreferenced.
             {
@@ -256,7 +261,7 @@ describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider)
             const dataStore2 = await factory.createInstance(mainDataStore._context.containerRuntime);
 
             // The request to use to load dataStore2.
-            const request: IRequest = { url: dataStore2.id, headers: { externalRequest: true } };
+            const request: IRequest = { url: dataStore2.id, headers: { [RuntimeHeaders.externalRequest]: true } };
 
             // Add the handle of dataStore2 to the shared string to mark it as referenced.
             {

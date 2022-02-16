@@ -7,12 +7,11 @@ import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { FlowDocument } from "../document";
 import { Editor } from "../editor";
 import { htmlFormatter } from "../html/formatters";
-
+import { ICommand, KeyCode, TagName } from "../util";
 import { IFormatterState, RootFormatter } from "../view/formatter";
 import { debug } from "./debug";
 import * as styles from "./index.css";
 import { SearchMenuView } from "./searchmenu";
-import { ICommand, KeyCode, TagName } from "../util";
 
 export class WebflowView implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
@@ -20,8 +19,8 @@ export class WebflowView implements IFluidHTMLView {
     private searchMenu?: SearchMenuView;
     private previouslyFocused?: HTMLOrSVGElement;
     private root: Element;
-    private slotElement = document.createElement("p");
-    private searchElement = document.createElement("div");
+    private readonly slotElement = document.createElement("p");
+    private readonly searchElement = document.createElement("div");
 
     constructor(private readonly docP: Promise<FlowDocument>) { }
 

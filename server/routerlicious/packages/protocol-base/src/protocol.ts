@@ -56,14 +56,14 @@ export class ProtocolOpHandler {
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, ICommittedProposal][],
         sendProposal: (key: string, value: any) => number,
-        sendReject: (sequenceNumber: number) => void) {
+    ) {
         this.term = term ?? 1;
         this.quorum = new Quorum(
             members,
             proposals,
             values,
             sendProposal,
-            sendReject);
+        );
     }
 
     public close() {
@@ -115,9 +115,7 @@ export class ProtocolOpHandler {
                 break;
 
             case MessageType.Reject:
-                const sequenceNumber = message.contents as number;
-                this.quorum.rejectProposal(message.clientId, sequenceNumber);
-                break;
+                throw new Error("Quorum rejection is removed.");
 
             default:
         }

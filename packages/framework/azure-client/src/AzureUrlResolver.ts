@@ -80,19 +80,16 @@ function decodeAzureUrl(urlString: string): {
     const ordererUrl = url.origin;
     const searchParams = url.searchParams;
     const storageUrl = searchParams.get("storage");
-    // eslint-disable-next-line no-null/no-null
     if (storageUrl === null) {
         throw new Error("Azure URL did not contain a storage URL");
     }
     const tenantId = searchParams.get("tenantId");
-    // eslint-disable-next-line no-null/no-null
     if (tenantId === null) {
         throw new Error("Azure URL did not contain a tenant ID");
     }
     const storageUrlDecoded = decodeURIComponent(storageUrl);
     const tenantIdDecoded = decodeURIComponent(tenantId);
     const containerId = searchParams.get("containerId");
-    // eslint-disable-next-line no-null/no-null
     const containerIdDecoded = containerId !== null ? decodeURIComponent(containerId) : undefined;
     return {
         ordererUrl,

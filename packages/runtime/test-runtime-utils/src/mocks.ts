@@ -262,7 +262,6 @@ export class MockQuorum implements IQuorum, EventEmitter {
         }
         this.map.set(key, value);
         this.eventEmitter.emit("approveProposal", 0, key, value);
-        this.eventEmitter.emit("commitProposal", 0, key, value);
     }
 
     has(key: string): boolean {
@@ -314,7 +313,6 @@ export class MockQuorum implements IQuorum, EventEmitter {
             case "removeMember":
             case "addProposal":
             case "approveProposal":
-            case "commitProposal":
                 this.eventEmitter.on(event, listener);
                 this.eventEmitter.emit("afterOn", event);
                 return this;

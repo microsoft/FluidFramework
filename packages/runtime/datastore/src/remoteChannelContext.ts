@@ -90,7 +90,6 @@ export class RemoteChannelContext implements IChannelContext {
             async () => getBaseGCDetails(),
         );
 
-
         this.thresholdOpsCounter = new ThresholdCounter(
             RemoteChannelContext.pendingOpsCountThreshold,
             this.subLogger,

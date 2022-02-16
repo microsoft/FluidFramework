@@ -30,10 +30,10 @@ import {
     FileSnapshotReader,
     IFileSnapshot,
 } from "@fluidframework/replay-driver";
-import { 
+import {
     compareWithReferenceSnapshot,
-    getNormalizedFileSnapshot, 
-    loadContainer, 
+    getNormalizedFileSnapshot,
+    loadContainer,
     uploadSummary,
 } from "./helpers";
 import { ReplayArgs } from "./replayArgs";
@@ -346,6 +346,13 @@ export class ReplayTool {
             }
             return false;
         }
+
+        // GC will consider unreferenced node in old documents to be inactive. When such nodes receive ops or are
+        // loaded, GC will log an error. Ignore those errors since we don't care about them when replaying old docs.
+        if (event.eventName.includes("GarbageCollector:inactiveObject_")) {
+            return false;
+        }
+
         return this.shouldReportError(errorString);
     }
 
@@ -601,6 +608,7 @@ export class ReplayTool {
 
         const startOp = op - this.args.overlappingContainers * this.args.snapFreq;
         while (this.documentsWindow.length > 0
+            // eslint-disable-next-line no-unmodified-loop-condition
             && (final || this.documentsWindow[0].fromOp <= startOp)) {
             const doc = this.documentsWindow.shift();
             assert(doc.fromOp === startOp || final,
