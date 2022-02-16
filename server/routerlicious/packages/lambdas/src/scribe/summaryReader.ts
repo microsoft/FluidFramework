@@ -39,8 +39,8 @@ export class SummaryReader implements ISummaryReader {
 
         if (this.enableWholeSummaryUpload) {
             try {
-                const commitDetails = await this.summaryStorage.getCommits(this.documentId, 1);
-                const wholeFlatSummary = await this.summaryStorage.getSummary(commitDetails[0].commit.tree.sha);
+                const existingRef = await this.summaryStorage.getRef(encodeURIComponent(this.documentId));
+                const wholeFlatSummary = await this.summaryStorage.getSummary(existingRef.object.sha);
                 const normalizedSummary = convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary);
 
                 // Obtain IDs of specific fields from the downloaded summary

@@ -44,7 +44,8 @@ export class WholeSummaryReadGitManager {
         if (sha === "latest") {
             version = await this.getLatestVersion();
         } else {
-            version = { id: sha, treeId: sha };
+            const commit = await this.repoManager.getCommit(sha);
+            version = { id: commit.sha, treeId: commit.tree.sha };
         }
         const rawTree = await this.repoManager.getTree(version.treeId, true /* recursive */);
         const wholeFlatSummaryTreeEntries: IWholeFlatSummaryTreeEntry[] = [];

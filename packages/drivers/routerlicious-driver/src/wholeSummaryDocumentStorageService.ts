@@ -57,7 +57,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
             // Blobs/Trees in this scenario will never have multiple versions, so return versionId as is
             return [{
                 id: versionId,
-                treeId: versionId,
+                treeId: undefined!,
             }];
         }
         // If this is the first versions call for the document, we know we will want the latest summary.
@@ -100,7 +100,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
             requestVersion = versions[0];
         }
 
-        return (await this.fetchAndCacheSnapshotTree(requestVersion.treeId)).snapshotTree;
+        return (await this.fetchAndCacheSnapshotTree(requestVersion.id)).snapshotTree;
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
