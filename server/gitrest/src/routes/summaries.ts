@@ -135,6 +135,8 @@ function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry)
 }
 
 export class WholeSummaryWriteGitManager {
+    private readonly entryHandleToObjectShaCache: Map<string, string> = new Map();
+
     constructor(
         private readonly documentId: string,
         private readonly repoManager: IRepositoryManager,
@@ -166,7 +168,6 @@ export class WholeSummaryWriteGitManager {
             payload.entries,
             "",
         );
-        // TODO: is there ever a case where the parent of a container summary is not the commit referenced by the ref?
         const existingRef = await this.repoManager.getRef(
             `refs/heads/${this.documentId}`,
             { enabled: this.externalStorageEnabled },
@@ -218,9 +219,9 @@ export class WholeSummaryWriteGitManager {
                 { enabled: this.externalStorageEnabled },
             );
         }
+        // TODO: precompute latest summary and return, or cache locally
         return {
             id: commit.sha,
-            // TODO: retrieve latest summary and return
         };
     }
 
@@ -228,7 +229,6 @@ export class WholeSummaryWriteGitManager {
         wholeSummaryTreeEntries: WholeSummaryTreeEntry[],
         currentPath: string = "",
     ): Promise<string> {
-        const pathToShaMap = await this.getPathToShaMapFromLastSummary();
         const entries: ICreateTreeEntry[] = await Promise.all(wholeSummaryTreeEntries.map(async (entry) => {
             const summaryObject = getSummaryObjectFromWholeSummaryTreeEntry(entry);
             const type = getGitType(summaryObject);
@@ -237,7 +237,6 @@ export class WholeSummaryWriteGitManager {
             const pathHandle = await this.writeSummaryTreeObject(
                 entry,
                 summaryObject,
-                pathToShaMap,
                 fullPath,
             );
             return {
@@ -257,7 +256,6 @@ export class WholeSummaryWriteGitManager {
     private async writeSummaryTreeObject(
         wholeSummaryTreeEntry: WholeSummaryTreeEntry,
         summaryObject: SummaryObject,
-        pathToShaMap: Map<string, string>,
         currentPath: string,
     ): Promise<string> {
         switch(summaryObject.type) {
@@ -271,11 +269,7 @@ export class WholeSummaryWriteGitManager {
                     currentPath,
                 );
             case SummaryType.Handle:
-                // TODO: is there a case where the sha does not exist in the previous summary tree?
-                // TODO: check how often this is happening... get is returning undefined...
-                // maybe need to check entry.id (first part of path) to find parent tree?
-                // Would necessitate pathToSha map implementation to be more complicated maybe
-                return pathToShaMap.get((wholeSummaryTreeEntry as IWholeSummaryTreeHandleEntry).path);
+                return this.getShaFromTreeHandleEntry(wholeSummaryTreeEntry as IWholeSummaryTreeHandleEntry);
             default:
                 throw new NetworkError(501, "Not Implemented");
         }
@@ -291,38 +285,25 @@ export class WholeSummaryWriteGitManager {
         return blobResponse.sha;
     }
 
-    /**
-     * Returns a map of Summary tree paths to git shas from the last document summary.
-     * Used for mapping handle paths to git shas.
-     */
-    private async getPathToShaMapFromLastSummary(): Promise<Map<string, string>> {
-        const pathToShaMap = new Map<string, string>();
-        let latestVersion: ISummaryVersion;
-        try {
-            latestVersion = await this.getLatestVersion();
-        } catch (e) {
-            // Latest version call fails if no previous summary (i.e. on new documents)
-            // TODO: be smarter about this rather than catching an expected failure
-            return pathToShaMap;
+    private async getShaFromTreeHandleEntry(entry: IWholeSummaryTreeHandleEntry): Promise<string> {
+        if (!entry.id) {
+            throw new NetworkError(400, `Empty summary tree handle`);
         }
-        // TODO
-        const flatTree = await this.repoManager.getTree(latestVersion.treeId, true /* recursive */);
-        for (const entry of flatTree.tree) {
-            pathToShaMap.set(entry.path, entry.sha);
+        const cachedSha = this.entryHandleToObjectShaCache.get(entry.id);
+        if (cachedSha) {
+            return cachedSha;
         }
-        return pathToShaMap;
-    }
 
-    private async getLatestVersion(): Promise<ISummaryVersion> {
-        const commitDetails = await this.repoManager.getCommits(
-            this.documentId,
-            1,
-            { enabled: this.externalStorageEnabled },
-        );
-        return {
-            id: commitDetails[0].sha,
-            treeId: commitDetails[0].commit.tree.sha,
-        };
+        const parentHandle = entry.id.split("/")[0];
+        const parentTree = await this.repoManager.getTree(parentHandle, true /* recursive */);
+        for (const treeEntry of parentTree.tree) {
+            this.entryHandleToObjectShaCache.set(treeEntry.path, treeEntry.sha);
+        }
+        const sha = this.entryHandleToObjectShaCache.get(entry.id);
+        if (!sha) {
+            throw new NetworkError(404, "Summary tree handle object not found");
+        }
+        return sha;
     }
 }
 
@@ -384,7 +365,7 @@ export function create(
             repoManager,
             request.params.sha,
             documentId,
-            getExternalWriterParams(request.query?.config as string).enabled,
+            getExternalWriterParams(request.query?.config as string | undefined)?.enabled ?? false,
         ));
         handleResponse(resultP, response);
     });
@@ -407,7 +388,7 @@ export function create(
             repoManager,
             wholeSummaryPayload,
             documentId,
-            getExternalWriterParams(request.query?.config as string).enabled,
+            getExternalWriterParams(request.query?.config as string | undefined)?.enabled ?? false,
         ));
         handleResponse(resultP, response, 201);
     });
