@@ -206,7 +206,7 @@ export class TestClient extends Client {
     public insertMarkerRemote(
         pos: number,
         markerDef: IMarkerDef,
-        props: PropertySet,
+    props: PropertySet,
         seq: number,
         refSeq: number,
         longClientId: string,
