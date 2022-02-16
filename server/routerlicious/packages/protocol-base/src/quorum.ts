@@ -51,7 +51,7 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
      * Depending on the op being processed, some or none of those properties may change.
      * Each property will be cached and the cache for each property will be cleared when an op causes a change.
      */
-    private snapshotCache: IQuorumSnapshot["members"] | undefined = undefined;
+    private snapshotCache: IQuorumSnapshot["members"] | undefined;
 
     constructor(
         members: IQuorumSnapshot["members"],
@@ -59,6 +59,7 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
         super();
 
         this.members = new Map(members);
+        this.snapshotCache = members;
     }
 
     /**
@@ -110,7 +111,6 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
     }
 
     public dispose(): void {
-        throw new Error("Not implemented.");
         this.isDisposed = true;
     }
 }
@@ -130,7 +130,8 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
      * Depending on the op being processed, some or none of those properties may change.
      * Each property will be cached and the cache for each property will be cleared when an op causes a change.
      */
-    private readonly snapshotCache: Partial<IQuorumSnapshot> = {};
+    private proposalsSnapshotCache: IQuorumSnapshot["proposals"] | undefined;
+    private valuesSnapshotCache: IQuorumSnapshot["values"] | undefined;
 
     constructor(
         proposals: IQuorumSnapshot["proposals"],
@@ -151,6 +152,8 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
                 ] as [number, PendingProposal];
             }));
         this.values = new Map(values);
+        this.proposalsSnapshotCache = proposals;
+        this.valuesSnapshotCache = values;
     }
 
     /**
@@ -158,7 +161,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
      * @returns a deep cloned array of proposals
      */
     public snapshotProposals(): IQuorumSnapshot["proposals"] {
-        this.snapshotCache.proposals ??= Array.from(this.proposals).map(
+        this.proposalsSnapshotCache ??= Array.from(this.proposals).map(
             ([sequenceNumber, proposal]) => [
                 sequenceNumber,
                 { sequenceNumber, key: proposal.key, value: proposal.value },
@@ -166,7 +169,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
             ],
         );
 
-        return this.snapshotCache.proposals;
+        return this.proposalsSnapshotCache;
     }
 
     /**
@@ -174,9 +177,9 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
      * @returns a deep cloned array of values
      */
     public snapshotValues(): IQuorumSnapshot["values"] {
-        this.snapshotCache.values ??= cloneDeep(Array.from(this.values));
+        this.valuesSnapshotCache ??= cloneDeep(Array.from(this.values));
 
-        return this.snapshotCache.values;
+        return this.valuesSnapshotCache;
     }
 
     /**
@@ -255,7 +258,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
         }
 
         // clear the proposal cache
-        this.snapshotCache.proposals = undefined;
+        this.proposalsSnapshotCache = undefined;
     }
 
     /**
@@ -298,7 +301,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
             this.values.set(committedProposal.key, committedProposal);
 
             // clear the values cache
-            this.snapshotCache.values = undefined;
+            this.valuesSnapshotCache = undefined;
 
             // Send no-op on approval to expedite commit
             // accept means that all clients have seen the proposal and nobody has rejected it
@@ -315,13 +318,13 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
             this.proposals.delete(proposal.sequenceNumber);
 
             // clear the proposals cache
-            this.snapshotCache.proposals = undefined;
+            this.proposalsSnapshotCache = undefined;
         }
 
         return immediateNoOp;
     }
 
-    public setConnectionState(connected: boolean, clientId?: string) {
+    public setConnectionState(connected: boolean) {
         if (!connected) {
             this.localProposals.forEach((deferral) => {
                 deferral.reject(new Error("Client got disconnected"));
@@ -331,7 +334,10 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
     }
 
     public dispose(): void {
-        throw new Error("Not implemented.");
+        this.localProposals.forEach((deferral) => {
+            deferral.reject(new Error("QuorumProposals was disposed"));
+        });
+        this.localProposals.clear();
         this.isDisposed = true;
     }
 }
@@ -473,7 +479,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
-        this.quorumProposals.setConnectionState(connected, clientId);
+        this.quorumProposals.setConnectionState(connected);
     }
 
     public dispose(): void {

@@ -174,7 +174,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
     has(key: string): boolean;
     propose(key: string, value: any): Promise<void>;
     // (undocumented)
-    setConnectionState(connected: boolean, clientId?: string): void;
+    setConnectionState(connected: boolean): void;
     snapshotProposals(): IQuorumSnapshot["proposals"];
     snapshotValues(): IQuorumSnapshot["values"];
     updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean;
