@@ -103,6 +103,8 @@ describe("Quorum", () => {
 
             // Wait to see if the proposal promise resolved.
             await Promise.resolve().then(() => {});
+            // Due to the composition of Quorum -> QuorumClients, we require one more microtask deferral to resolve.
+            await Promise.resolve().then(() => {});
 
             // Acceptance should have happened before the above await resolves.
             acceptanceState = "too late";

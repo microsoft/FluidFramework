@@ -158,7 +158,7 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
     getMember(clientId: string): ISequencedClient | undefined;
     getMembers(): Map<string, ISequencedClient>;
     removeMember(clientId: string): void;
-    snapshot(): IQuorumSnapshot["members"] | undefined;
+    snapshot(): IQuorumSnapshot["members"];
 }
 
 // @public (undocumented)
@@ -175,7 +175,8 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
     propose(key: string, value: any): Promise<void>;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
-    snapshot(): IQuorumSnapshot;
+    snapshotProposals(): IQuorumSnapshot["proposals"];
+    snapshotValues(): IQuorumSnapshot["values"];
     updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean;
 }
 

@@ -9,6 +9,7 @@ import cloneDeep from "lodash/cloneDeep";
 import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ICommittedProposal,
+    IPendingProposal,
     IQuorum,
     IQuorumClients,
     IQuorumClientsEvents,
@@ -64,7 +65,7 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
      * Snapshots the clients in the Quorum
      * @returns a snapshot of the clients in the quorum
      */
-    public snapshot(): IQuorumSnapshot["members"] | undefined {
+    public snapshot(): IQuorumSnapshot["members"] {
         this.snapshotCache ??= cloneDeep(Array.from(this.members));
 
         return this.snapshotCache;
@@ -153,38 +154,29 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
     }
 
     /**
-     * Snapshots the entire quorum
-     * @returns a quorum snapshot
-     */
-    public snapshot(): IQuorumSnapshot {
-        this.snapshotCache.proposals ??= this.snapshotProposals();
-        this.snapshotCache.values ??= this.snapshotValues();
-
-        return {
-            ...this.snapshotCache as IQuorumSnapshot,
-        };
-    }
-
-    /**
      * Snapshots quorum proposals
      * @returns a deep cloned array of proposals
      */
-    private snapshotProposals(): IQuorumSnapshot["proposals"] {
-        return Array.from(this.proposals).map(
+    public snapshotProposals(): IQuorumSnapshot["proposals"] {
+        this.snapshotCache.proposals ??= Array.from(this.proposals).map(
             ([sequenceNumber, proposal]) => [
                 sequenceNumber,
                 { sequenceNumber, key: proposal.key, value: proposal.value },
                 [], // rejections, which has been removed
             ],
         );
+
+        return this.snapshotCache.proposals;
     }
 
     /**
      * Snapshots quorum values
      * @returns a deep cloned array of values
      */
-    private snapshotValues(): IQuorumSnapshot["values"] {
-        return cloneDeep(Array.from(this.values));
+    public snapshotValues(): IQuorumSnapshot["values"] {
+        this.snapshotCache.values ??= cloneDeep(Array.from(this.values));
+
+        return this.snapshotCache.values;
     }
 
     /**
@@ -350,27 +342,15 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
  */
 export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
     private readonly quorumClients: QuorumClients;
-    private readonly proposals: Map<number, PendingProposal>;
-    private readonly values: Map<string, ICommittedProposal>;
+    private readonly quorumProposals: QuorumProposals;
     private isDisposed: boolean = false;
     public get disposed() { return this.isDisposed; }
-
-    // Locally generated proposals
-    private readonly localProposals = new Map<number, Deferred<void>>();
-
-    /**
-     * Cached snapshot state
-     * The quorum consists of 3 properties: members, values, and proposals.
-     * Depending on the op being processed, some or none of those properties may change.
-     * Each property will be cached and the cache for each property will be cleared when an op causes a change.
-     */
-    private readonly snapshotCache: Partial<IQuorumSnapshot> = {};
 
     constructor(
         members: IQuorumSnapshot["members"],
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, ICommittedProposal][],
-        private readonly sendProposal: (key: string, value: any) => number,
+        sendProposal: (key: string, value: any) => number,
     ) {
         super();
 
@@ -382,18 +362,16 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
             this.emit("removeMember", clientId);
         });
 
-        this.proposals = new Map(
-            proposals.map(([, proposal]) => {
-                return [
-                    proposal.sequenceNumber,
-                    new PendingProposal(
-                        proposal.sequenceNumber,
-                        proposal.key,
-                        proposal.value,
-                    ),
-                ] as [number, PendingProposal];
-            }));
-        this.values = new Map(values);
+        this.quorumProposals = new QuorumProposals(proposals, values, sendProposal);
+        this.quorumProposals.on("addProposal", (proposal: IPendingProposal) => {
+            this.emit("addProposal", proposal);
+        });
+        this.quorumProposals.on(
+            "approveProposal",
+            (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => {
+                this.emit("approveProposal", sequenceNumber, key, value, approvalSequenceNumber);
+            },
+        );
     }
 
     public close() {
@@ -405,61 +383,32 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
      * @returns a quorum snapshot
      */
     public snapshot(): IQuorumSnapshot {
-        this.snapshotCache.members = this.quorumClients.snapshot();
-        this.snapshotCache.proposals ??= this.snapshotProposals();
-        this.snapshotCache.values ??= this.snapshotValues();
-
         return {
-            ...this.snapshotCache as IQuorumSnapshot,
+            members: this.quorumClients.snapshot(),
+            proposals: this.quorumProposals.snapshotProposals(),
+            values: this.quorumProposals.snapshotValues(),
         };
-    }
-
-    /**
-     * Snapshots quorum proposals
-     * @returns a deep cloned array of proposals
-     */
-    private snapshotProposals(): IQuorumSnapshot["proposals"] {
-        return Array.from(this.proposals).map(
-            ([sequenceNumber, proposal]) => [
-                sequenceNumber,
-                { sequenceNumber, key: proposal.key, value: proposal.value },
-                [], // rejections, which has been removed
-            ],
-        );
-    }
-
-    /**
-     * Snapshots quorum values
-     * @returns a deep cloned array of values
-     */
-    private snapshotValues(): IQuorumSnapshot["values"] {
-        return cloneDeep(Array.from(this.values));
     }
 
     /**
      * Returns whether the quorum has achieved a consensus for the given key.
      */
     public has(key: string): boolean {
-        return this.values.has(key);
+        return this.quorumProposals.has(key);
     }
 
     /**
      * Returns the consensus value for the given key
      */
     public get(key: string): any {
-        const keyMap = this.values.get(key);
-        if (keyMap !== undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return keyMap.value;
-        }
+        return this.quorumProposals.get(key);
     }
 
     /**
      * Returns additional data about the approved consensus value
      */
     public getApprovalData(key: string): ICommittedProposal | undefined {
-        const proposal = this.values.get(key);
-        return proposal ? cloneDeep(proposal) : undefined;
+        return this.quorumProposals.getApprovalData(key);
     }
 
     /**
@@ -497,15 +446,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
      * nack/disconnect. The correct answer for this should become more clear as we build scenarios on top of the loader.
      */
     public async propose(key: string, value: any): Promise<void> {
-        const clientSequenceNumber = this.sendProposal(key, value);
-        if (clientSequenceNumber < 0) {
-            this.emit("error", { eventName: "ProposalInDisconnectedState", key });
-            throw new Error("Can't proposal in disconnected state");
-        }
-
-        const deferred = new Deferred<void>();
-        this.localProposals.set(clientSequenceNumber, deferred);
-        return deferred.promise;
+        return this.quorumProposals.propose(key, value);
     }
 
     /**
@@ -516,31 +457,9 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
         value: any,
         sequenceNumber: number,
         local: boolean,
-        clientSequenceNumber: number) {
-        assert(!this.proposals.has(sequenceNumber), 0x1d0 /* `!this.proposals.has(${sequenceNumber})` */);
-        assert(
-            !local || this.localProposals.has(clientSequenceNumber),
-            0x1d1 /* `!${local} || this.localProposals.has(${clientSequenceNumber})` */);
-
-        const proposal = new PendingProposal(
-            sequenceNumber,
-            key,
-            value,
-            local ? this.localProposals.get(clientSequenceNumber) : undefined,
-        );
-        this.proposals.set(sequenceNumber, proposal);
-
-        // Emit the event - which will also provide clients an opportunity to reject the proposal. We require
-        // clients to make a rejection decision at the time of receiving the proposal and so disable rejecting it
-        // after we have emitted the event.
-        this.emit("addProposal", proposal);
-
-        if (local) {
-            this.localProposals.delete(clientSequenceNumber);
-        }
-
-        // clear the proposal cache
-        this.snapshotCache.proposals = undefined;
+        clientSequenceNumber: number,
+    ) {
+        return this.quorumProposals.addProposal(key, value, sequenceNumber, local, clientSequenceNumber);
     }
 
     /**
@@ -550,69 +469,11 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
      * Returns true if immediate no-op is required.
      */
     public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean {
-        let immediateNoOp = false;
-
-        const msn = message.minimumSequenceNumber;
-
-        // Accept proposals and reject proposals whose sequenceNumber is <= the minimumSequenceNumber
-
-        // Return a sorted list of approved proposals. We sort so that we apply them in their sequence number order
-        // TODO this can be optimized if necessary to avoid the linear search+sort
-        const completed: PendingProposal[] = [];
-        for (const [sequenceNumber, proposal] of this.proposals) {
-            if (sequenceNumber <= msn) {
-                completed.push(proposal);
-            }
-        }
-        completed.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-
-        for (const proposal of completed) {
-            // If it was a local proposal - resolve the promise
-            proposal.deferred?.resolve();
-
-            const committedProposal: ICommittedProposal = {
-                approvalSequenceNumber: message.sequenceNumber,
-                // No longer used.  We still stamp a -1 for compat with older versions of the quorum.
-                // Can be removed after 0.1035 and higher is ubiquitous.
-                commitSequenceNumber: -1,
-                key: proposal.key,
-                sequenceNumber: proposal.sequenceNumber,
-                value: proposal.value,
-            };
-
-            this.values.set(committedProposal.key, committedProposal);
-
-            // clear the values cache
-            this.snapshotCache.values = undefined;
-
-            // Send no-op on approval to expedite commit
-            // accept means that all clients have seen the proposal and nobody has rejected it
-            // commit means that all clients have seen that the proposal was accepted by everyone
-            immediateNoOp = true;
-
-            this.emit(
-                "approveProposal",
-                committedProposal.sequenceNumber,
-                committedProposal.key,
-                committedProposal.value,
-                committedProposal.approvalSequenceNumber);
-
-            this.proposals.delete(proposal.sequenceNumber);
-
-            // clear the proposals cache
-            this.snapshotCache.proposals = undefined;
-        }
-
-        return immediateNoOp;
+        return this.quorumProposals.updateMinimumSequenceNumber(message);
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
-        if (!connected) {
-            this.localProposals.forEach((deferral) => {
-                deferral.reject(new Error("Client got disconnected"));
-            });
-            this.localProposals.clear();
-        }
+        this.quorumProposals.setConnectionState(connected, clientId);
     }
 
     public dispose(): void {
