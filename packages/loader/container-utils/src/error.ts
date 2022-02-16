@@ -14,7 +14,7 @@ import {
     IFluidErrorBase,
     normalizeError,
     wrapErrorAndLog,
-    normalizeCustom,
+    wrapError,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -130,22 +130,24 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
         dataProcessingCodepath: string,
         sequencedMessage?: ISequencedDocumentMessage,
     ): IFluidErrorBase {
-        const error = normalizeCustom(
-            originalError,
-            ()=>true,
-            (errMsg: string) => new DataProcessingError(errMsg),
-            { props: {
-                dataProcessingError: 1,
-                dataProcessingCodepath,
-            }},
-        );
+        const props = {
+            dataProcessingError: 1,
+            dataProcessingCodepath,
+            ...(sequencedMessage === undefined ? undefined : extractSafePropertiesFromMessage(sequencedMessage))
+        };
 
-        if (sequencedMessage !== undefined) {
-            error.addTelemetryProperties(extractSafePropertiesFromMessage(sequencedMessage));
+        const normalizedError = normalizeError(originalError, { props });
+
+        // Check for errors that originated externally to our code and were then normalized.  Wrap it.
+        if (normalizedError.errorType === ContainerErrorType.genericError &&
+            normalizedError.getTelemetryProperties().untrustedOrigin === 1
+        ) {
+            const error = wrapError(normalizedError, (message: string) => new DataProcessingError(message));
+            error.addTelemetryProperties(normalizedError.getTelemetryProperties());
+            return error;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return error;
+        return normalizedError;
     }
 }
 

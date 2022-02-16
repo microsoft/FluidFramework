@@ -130,22 +130,6 @@ export function normalizeError(
     return fluidError;
 }
 
-export function normalizeCustom(
-    originalError: unknown,
-    externalErrorToFluidError: (message: string) => IFluidErrorBase,
-    annotations: IFluidErrorAnnotations = {},
-): IFluidErrorBase {
-    const error = normalizeError(originalError, annotations);
-
-    //
-    if (error.errorType === "genericError") {
-        const newError = wrapError(error, externalErrorToFluidError);
-        newError.addTelemetryProperties(error.getTelemetryProperties());
-    }
-
-    return error;
-}
-
 let stackPopulatedOnCreation: boolean | undefined;
 
 /**
