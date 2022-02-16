@@ -99,8 +99,6 @@ export interface IConfigProviderBase {
 
 // @public
 export interface IFluidErrorAnnotations {
-    // (undocumented)
-    externalErrorToFluidError?: (message: string) => IFluidErrorBase;
     props?: ITelemetryProperties;
 }
 
@@ -199,9 +197,6 @@ export class MultiSinkLogger extends TelemetryLogger {
     protected loggers: ITelemetryBaseLogger[];
     send(event: ITelemetryBaseEvent): void;
 }
-
-// @public (undocumented)
-export function normalizeCustom(originalError: unknown, filter: (fluidError: IFluidErrorBase) => boolean, externalErrorToFluidError: (message: string) => IFluidErrorBase, annotations?: IFluidErrorAnnotations): IFluidErrorBase;
 
 // @public
 export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;

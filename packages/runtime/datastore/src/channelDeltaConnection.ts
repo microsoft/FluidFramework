@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
-import { CreateProcessingError } from "@fluidframework/container-utils";
+import { DataProcessingError } from "@fluidframework/container-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 export class ChannelDeltaConnection implements IDeltaConnection {
@@ -43,7 +43,8 @@ export class ChannelDeltaConnection implements IDeltaConnection {
             // catches as data processing error whether or not they come from async pending queues
             this.handler.process(message, local, localOpMetadata);
         } catch (error) {
-            throw CreateProcessingError(error, "channelDeltaConnectionFailedToProcessMessage", message);
+            throw DataProcessingError.wrapIfUnrecognized(
+                error, "channelDeltaConnectionFailedToProcessMessage", message);
         }
     }
 

@@ -118,6 +118,18 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
         super(errorMessage);
     }
 
+    static create(
+        errorMessage: string,
+        dataProcessingCodepath: string,
+        sequencedMessage?: ISequencedDocumentMessage,
+        props: ITelemetryProperties = {},
+    ) {
+        return DataProcessingError.wrapIfUnrecognized(
+            new LoggingError(errorMessage, props),
+            dataProcessingCodepath,
+            sequencedMessage);
+    }
+
     /**
      * Conditionally coerce the throwable input into a DataProcessingError.
      * @param originalError - Throwable input to be converted.
@@ -162,8 +174,3 @@ export const extractSafePropertiesFromMessage = (message: ISequencedDocumentMess
     messageMinimumSequenceNumber: message.minimumSequenceNumber,
     messageTimestamp: message.timestamp,
 });
-
-/**
- * Conditionally coerce the throwable input into a DataProcessingError.
- */
- export const CreateProcessingError = DataProcessingError.wrapIfUnrecognized;
