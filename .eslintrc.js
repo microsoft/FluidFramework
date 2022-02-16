@@ -36,6 +36,9 @@ module.exports = {
 		'no-shadow': 'off',
 		'prefer-arrow/prefer-arrow-functions': 'off',
 		'no-redeclare': 'off', // Persisted type factories need to be classes to pass the typescript version of this rule
+
+		'import/no-cycle': 'warn', // TODO:#72204: Promote to error
+		'import/no-self-import': 'error',
 	},
 	overrides: [
 		{
