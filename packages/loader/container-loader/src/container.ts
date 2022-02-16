@@ -811,6 +811,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.context.notifyAttaching();
                 }
 
+                const abortController = new AbortController();
                 // Actually go and create the resolved document
                 const createNewResolvedUrl = await this.urlResolver.resolve(request);
                 ensureFluidResolvedUrl(createNewResolvedUrl);
@@ -823,7 +824,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         ),
                         "containerAttach",
                         this.mc.logger,
-                        {}, // progress
+                        {
+                            cancel: abortController.signal,
+                        }, // progress
                     );
                 }
                 const resolvedUrl = this.service.resolvedUrl;
