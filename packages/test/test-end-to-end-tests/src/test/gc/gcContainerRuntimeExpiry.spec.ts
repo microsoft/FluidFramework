@@ -80,12 +80,7 @@ import { mockConfigProvider } from "./mockConfigProivder";
         clockEnd = clock.now + timeoutMs;
     });
 
-    /**
-     * Issue caused by this PR: https://github.com/microsoft/FluidFramework/pull/9054
-     * Enable test once the intermittent failures are resolved.
-     * See - https://github.com/microsoft/FluidFramework/issues/9124
-     */
-    itExpects.skip(
+    itExpects(
         "Container should be closed with a ClientSessionExpired error after the gcSessionExpiryTime is up",
         [
             {"eventName": "fluid:telemetry:Container:ContainerClose","errorType": "clientSessionExpiredError"}
@@ -101,9 +96,9 @@ import { mockConfigProvider } from "./mockConfigProivder";
         clock.tick(1);
         assert(container1.closed, `Container1 should be closed, it has should have reached its session expiry timeout.
             Current: ${clock.now}, expected: ${clockEnd}`);
-    });
+    }).timeout(10000);
 
-    itExpects.skip("Containers should have the same expiry time for the same document",
+    itExpects("Containers should have the same expiry time for the same document",
     [
         {"eventName": "fluid:telemetry:Container:ContainerClose","errorType": "clientSessionExpiredError"},
         {"eventName": "fluid:telemetry:Container:ContainerClose","errorType": "clientSessionExpiredError"},
@@ -131,5 +126,5 @@ import { mockConfigProvider } from "./mockConfigProivder";
         clock.tick(1);
         assert(container2.closed, "Container2 should be closed as it has reached its expiry.");
         assert(container3.closed, "Container3 should be closed as it has reached its expiry.");
-    });
+    }).timeout(10000);
 });
