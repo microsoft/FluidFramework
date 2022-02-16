@@ -125,7 +125,7 @@ export class ProtocolOpHandler {
 
 // @public
 export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
-    constructor(members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number);
+    constructor(members: IQuorumSnapshot["members"], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number);
     addMember(clientId: string, details: ISequencedClient): void;
     addProposal(key: string, value: any, sequenceNumber: number, local: boolean, clientSequenceNumber: number): void;
     // (undocumented)

@@ -349,7 +349,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
  * they have agreed upon and any pending proposals.
  */
 export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
-    private readonly members: Map<string, ISequencedClient>;
+    private readonly quorumClients: QuorumClients;
     private readonly proposals: Map<number, PendingProposal>;
     private readonly values: Map<string, ICommittedProposal>;
     private isDisposed: boolean = false;
@@ -367,14 +367,21 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     private readonly snapshotCache: Partial<IQuorumSnapshot> = {};
 
     constructor(
-        members: [string, ISequencedClient][],
+        members: IQuorumSnapshot["members"],
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, ICommittedProposal][],
         private readonly sendProposal: (key: string, value: any) => number,
     ) {
         super();
 
-        this.members = new Map(members);
+        this.quorumClients = new QuorumClients(members);
+        this.quorumClients.on("addMember", (clientId: string, details: ISequencedClient) => {
+            this.emit("addMember", clientId, details);
+        });
+        this.quorumClients.on("removeMember", (clientId: string) => {
+            this.emit("removeMember", clientId);
+        });
+
         this.proposals = new Map(
             proposals.map(([, proposal]) => {
                 return [
@@ -398,21 +405,13 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
      * @returns a quorum snapshot
      */
     public snapshot(): IQuorumSnapshot {
-        this.snapshotCache.members ??= this.snapshotMembers();
+        this.snapshotCache.members = this.quorumClients.snapshot();
         this.snapshotCache.proposals ??= this.snapshotProposals();
         this.snapshotCache.values ??= this.snapshotValues();
 
         return {
             ...this.snapshotCache as IQuorumSnapshot,
         };
-    }
-
-    /**
-     * Snapshots quorum members
-     * @returns a deep cloned array of members
-     */
-    private snapshotMembers(): IQuorumSnapshot["members"] {
-        return cloneDeep(Array.from(this.members));
     }
 
     /**
@@ -467,38 +466,28 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
      * Adds a new client to the quorum
      */
     public addMember(clientId: string, details: ISequencedClient) {
-        assert(!this.members.has(clientId), 0x1ce /* `!this.members.has(${clientId})` */);
-        this.members.set(clientId, details);
-        this.emit("addMember", clientId, details);
-
-        // clear the members cache
-        this.snapshotCache.members = undefined;
+        this.quorumClients.addMember(clientId, details);
     }
 
     /**
      * Removes a client from the quorum
      */
     public removeMember(clientId: string) {
-        assert(this.members.has(clientId), 0x1cf /* `this.members.has(${clientId})` */);
-        this.members.delete(clientId);
-        this.emit("removeMember", clientId);
-
-        // clear the members cache
-        this.snapshotCache.members = undefined;
+        this.quorumClients.removeMember(clientId);
     }
 
     /**
      * Retrieves all the members in the quorum
      */
     public getMembers(): Map<string, ISequencedClient> {
-        return new Map(this.members);
+        return this.quorumClients.getMembers();
     }
 
     /**
      * Retrieves a specific member of the quorum
      */
     public getMember(clientId: string): ISequencedClient | undefined {
-        return this.members.get(clientId);
+        return this.quorumClients.getMember(clientId);
     }
 
     /**
