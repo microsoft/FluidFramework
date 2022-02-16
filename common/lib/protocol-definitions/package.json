@@ -68,6 +68,7 @@
           "forwardCompat": false
         },
         "InterfaceDeclaration_IQuorum": {
+          "backCompat": false,
           "forwardCompat": false
         },
         "InterfaceDeclaration_ITree": {
@@ -110,6 +111,9 @@
           "backCompat": false,
           "forwardCompat": false
         },
+        "InterfaceDeclaration_IQuorum": {
+          "backCompat": false
+        },
         "InterfaceDeclaration_IQuorumProposals": {
           "backCompat": false
         }
@@ -127,6 +131,9 @@
         "RemovedInterfaceDeclaration_IPendingProposal": {
           "backCompat": false,
           "forwardCompat": false
+        },
+        "InterfaceDeclaration_IQuorum": {
+          "backCompat": false
         },
         "InterfaceDeclaration_IQuorumProposals": {
           "backCompat": false
