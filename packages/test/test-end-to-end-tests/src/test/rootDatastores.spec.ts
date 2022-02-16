@@ -85,6 +85,11 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             resolve(error?.errorType === ContainerErrorType.dataCorruptionError);
         }))));
 
+    const allDataCorruption = async (containers: IContainer[]) => Promise.all(
+        containers.map(async (c) => new Promise<boolean>((resolve) => c.once("closed", (error) => {
+            resolve(error?.errorType === ContainerErrorType.dataCorruptionError);
+        })))).then((all)=>!all.includes(false));
+
     const runtimeOf = (dataObject: ITestFluidObject): ContainerRuntime =>
         dataObject.context.containerRuntime as ContainerRuntime;
 
@@ -338,7 +343,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             {eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage"},
             {eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage"},
         ], async () => {
-            const dataCorruption = anyDataCorruption([container1]);
+            const dataCorruption = allDataCorruption([container1, container2]);
             await corruptedAliasOp(runtimeOf(dataObject1), alias);
             assert(await dataCorruption);
         });
