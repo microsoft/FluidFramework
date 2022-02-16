@@ -24,7 +24,7 @@ export class ClientSessionExpiredError extends LoggingError implements IFluidErr
     readonly fluidErrorCode: string;
 }
 
-// @public (undocumented)
+// @public
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
     constructor(fluidErrorCode: string, props: ITelemetryProperties);
     // (undocumented)
@@ -35,11 +35,10 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
     readonly fluidErrorCode: string;
 }
 
-// @public (undocumented)
+// @public
 export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
     // (undocumented)
     readonly canRetry = false;
-    // (undocumented)
     static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryProperties): IFluidErrorBase;
     // (undocumented)
     readonly errorType = ContainerErrorType.dataProcessingError;

@@ -97,6 +97,10 @@ export class ClientSessionExpiredError extends LoggingError implements IFluidErr
     }
 }
 
+/**
+ * DataCorruptionError indicates that we encountered definitive evidence that the data at rest
+ * backing this container is corrupted, and this container would never be expected to load properly again
+ */
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
     readonly errorType = ContainerErrorType.dataCorruptionError;
     readonly canRetry = false;
@@ -109,6 +113,12 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
     }
 }
 
+/**
+ * DataProcessingError indicates we hit a fatal error while processing incoming data from the Fluid Service.
+ * The error will often originate in the dataStore or DDS implementation that is responding to incoming changes.
+ * This differs from DataCorruptionError in that this may be a transient error that will not repro in another
+ * client or session.
+ */
 export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
     readonly errorType = ContainerErrorType.dataProcessingError;
     readonly fluidErrorCode = "";
@@ -118,6 +128,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
         super(errorMessage);
     }
 
+    /** Create a new DataProcessingError detected and raised with the FF code */
     static create(
         errorMessage: string,
         dataProcessingCodepath: string,
@@ -131,9 +142,12 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     }
 
     /**
-     * Conditionally coerce the throwable input into a DataProcessingError.
-     * @param originalError - Throwable input to be converted.
-     * @param dataProcessingCodepath - which codepath failed while processing data.
+     * Wrap the given error in a DataProcessingError, unless the error is already of a known type.
+     * We wrap conditionally since known error types represent well-understood failure modes, and ideally
+     * one day we will move away from throwing these errors but rather we'll return them.
+     * But an unrecognized error needs to be classified as DataProcessingError.
+     * @param originalError - error to be converted
+     * @param dataProcessingCodepath - which codepath failed while processing data
      * @param sequencedMessage - Sequenced message to include info about via telemetry props
      * @returns Either a new DataProcessingError, or (if wrapping is deemed unnecessary) the given error
      */
@@ -150,16 +164,18 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 
         const normalizedError = normalizeError(originalError, { props });
 
-        // Check for errors that originated externally to our code and were then normalized.
+        // Check for errors that originated externally to our code before being normalized.
         if (normalizedError.errorType === ContainerErrorType.genericError &&
             normalizedError.getTelemetryProperties().untrustedOrigin === 1
         ) {
-            // Create a new DataProcessingError via wrapError
-            const error = wrapError(normalizedError, (message: string) => new DataProcessingError(message));
+            // Create a new DataProcessingError using wrapError
+            const dataProcessingError =
+                wrapError(normalizedError, (message: string) => new DataProcessingError(message));
 
-            // Copy over the props above and any others added to this error since being normalized
-            error.addTelemetryProperties(normalizedError.getTelemetryProperties());
-            return error;
+            // Copy over the props above and any others added to this error since first being normalized
+            dataProcessingError.addTelemetryProperties(normalizedError.getTelemetryProperties());
+
+            return dataProcessingError;
         }
 
         return normalizedError;
