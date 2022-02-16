@@ -20,7 +20,6 @@ import {
 	CheckoutEvent,
 	Change,
 	Transaction,
-	ChangeInternal,
 } from '../index';
 import { TestTree } from './utilities/TestNode';
 import { setUpTestSharedTree, SharedTreeTestingOptions, setUpTestTree } from './utilities/TestUtilities';
@@ -28,14 +27,14 @@ import { setUpTestSharedTree, SharedTreeTestingOptions, setUpTestTree } from './
 /**
  * Checkout test suite
  */
-export function checkoutTests(
+export function checkoutTests<TChangeInternal>(
 	checkoutName: string,
-	checkoutFactory: (tree: SharedTree) => Promise<Checkout<Change, ChangeInternal, Transaction.Failure>>,
+	checkoutFactory: (tree: SharedTree) => Promise<Checkout<Change, TChangeInternal, Transaction.Failure>>,
 	additionalTests?: () => void
 ): Mocha.Suite {
 	async function setUpTestCheckout(
 		options: SharedTreeTestingOptions = { localMode: true, noFailOnError: true }
-	): Promise<{ checkout: Checkout<Change, ChangeInternal, Transaction.Failure>; tree: SharedTree }> {
+	): Promise<{ checkout: Checkout<Change, TChangeInternal, Transaction.Failure>; tree: SharedTree }> {
 		const { tree } = setUpTestSharedTree(options);
 		return { checkout: await checkoutFactory(tree), tree };
 	}
@@ -48,7 +47,7 @@ export function checkoutTests(
 	 */
 	async function countViewChange(
 		action: (
-			checkout: Checkout<Change, ChangeInternal, Transaction.Failure>,
+			checkout: Checkout<Change, TChangeInternal, Transaction.Failure>,
 			simpleTestTree: TestTree,
 			data: { changeCount: number }
 		) => void | Promise<void>,
@@ -77,7 +76,7 @@ export function checkoutTests(
 	}
 
 	async function setUpTestTreeCheckout(): Promise<{
-		checkout: Checkout<Change, ChangeInternal, Transaction.Failure>;
+		checkout: Checkout<Change, TChangeInternal, Transaction.Failure>;
 		sharedTree: SharedTree;
 		testTree: TestTree;
 	}> {
