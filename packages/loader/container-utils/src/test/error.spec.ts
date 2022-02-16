@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { isILoggingError, LoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { DataProcessingError, GenericError } from "../error";
+import { DataCorruptionError, DataProcessingError, GenericError } from "../error";
 
 // NOTE about this (temporary) alias:
 // CreateContainerError has been removed, with most call sites now using normalizeError.
@@ -96,6 +96,17 @@ describe("Errors", () => {
             assert.deepEqual(error2.message, err.message, "Message text should not be lost!!");
         });
     });
+    describe("DataProcessingError.create", () => {
+        it("Should yield a DataProcessingError", () => {
+            const dpe = DataProcessingError.create("Some message", "someCodepath");
+            assert(dpe instanceof DataProcessingError);
+            assert(dpe.errorType === ContainerErrorType.dataProcessingError);
+            assert(dpe.fluidErrorCode === "");
+            assert(dpe.getTelemetryProperties().dataProcessingError === 1);
+            assert(dpe.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
+            assert(dpe.getTelemetryProperties().untrustedOrigin === 1);
+        });
+    });
     describe("DataProcessingError coercion via DataProcessingError.wrapIfUnrecognized", () => {
         it("Should preserve the stack", () => {
             const originalError = new Error();
@@ -104,13 +115,14 @@ describe("Errors", () => {
             assert((testError as any).stack === originalError.stack);
         });
         it("Should skip coercion for valid Fluid Error", () => {
-            const originalError = normalizeError("boo");
+            const originalError = new DataCorruptionError("someErrorCode", {});
             const coercedError = DataProcessingError.wrapIfUnrecognized(originalError, "someCodepath", undefined);
 
             assert(coercedError as any === originalError);
-            assert(coercedError.errorType === "genericError");
-            assert(coercedError.fluidErrorCode === "");
+            assert(coercedError.errorType === ContainerErrorType.dataCorruptionError);
+            assert(coercedError.fluidErrorCode === "someErrorCode");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
+            assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
         });
         it("Should skip coercion for LoggingError with errorType", () => {
             const originalError = new LoggingError(
@@ -125,6 +137,18 @@ describe("Errors", () => {
             assert(coercedError.fluidErrorCode === "<error predates fluidErrorCode>");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
+        });
+        it("Should coerce normalized external error", () => {
+            const originalError = normalizeError("boo");
+            const coercedError = DataProcessingError.wrapIfUnrecognized(originalError, "someCodepath", undefined);
+
+            assert(coercedError as any !== originalError);
+            assert(coercedError instanceof DataProcessingError);
+            assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
+            assert(coercedError.fluidErrorCode === "");
+            assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
+            assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
+            assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
         });
         it("Should coerce non-LoggingError object with errorType", () => {
             const originalError = {
