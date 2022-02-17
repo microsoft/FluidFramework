@@ -421,6 +421,11 @@ export function configureWebSocketServices(
                     connectMetric.success(`Connect document successful`);
                 },
                 (error) => {
+                    Lumberjack.error(
+                        `Error in connect doc; input=${JSON.stringify(connectionMessage)}`,
+                        getLumberBaseProperties(connectionMessage.id,
+                            connectionMessage.tenantId),
+                    );
                     socket.emit("connect_document_error", error);
                     connectMetric.error(`Connect document failed`, error);
                 });
