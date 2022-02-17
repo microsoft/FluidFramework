@@ -16,7 +16,6 @@ import {
 import { buildHierarchy } from "@fluidframework/protocol-base";
 import {
     ICreateBlobResponse,
-    ISnapshotTree,
     ISnapshotTreeEx,
     ISummaryHandle,
     ISummaryTree,
@@ -32,6 +31,7 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache, InMemoryCache } from "./cache";
 import { RetriableGitManager } from "./retriableGitManager";
+import { ISnapshotTreeVersion } from "./definitions";
 
 const isNode = typeof window === "undefined";
 
@@ -45,7 +45,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
     // empty strings as values.
     protected readonly blobsShaCache = new Map<string, string>();
     private readonly blobCache: ICache<ArrayBufferLike> | undefined;
-    private readonly snapshotTreeCache: ICache<ISnapshotTreeEx> | undefined;
+    private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion> | undefined;
     private readonly summaryUploadManager: ISummaryUploadManager;
 
     public get repositoryUrl(): string {
@@ -59,7 +59,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
         public readonly policies: IDocumentStorageServicePolicies = {},
         driverPolicies?: IRouterliciousDriverPolicies,
         blobCache?: ICache<ArrayBufferLike>,
-        snapshotTreeCache?: ICache<ISnapshotTree>) {
+        snapshotTreeCache?: ICache<ISnapshotTreeVersion>) {
         this.summaryUploadManager = new SummaryTreeUploadManager(
                 new RetriableGitManager(manager, logger),
                 this.blobsShaCache,
@@ -67,7 +67,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
             );
         if (driverPolicies?.enableRestLess === true || isNode) {
             this.blobCache = blobCache ?? new InMemoryCache();
-            this.snapshotTreeCache = (snapshotTreeCache ?? new InMemoryCache()) as ICache<ISnapshotTreeEx>;
+            this.snapshotTreeCache = snapshotTreeCache ?? new InMemoryCache();
         }
     }
 
@@ -102,7 +102,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 
         const cachedSnapshotTree = await this.snapshotTreeCache?.get(requestVersion.treeId);
         if (cachedSnapshotTree) {
-            return cachedSnapshotTree;
+            return cachedSnapshotTree.snapshotTree as ISnapshotTreeEx;
         }
 
         const rawTree = await PerformanceEvent.timedExecAsync(
@@ -120,7 +120,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
             },
         );
         const tree = buildHierarchy(rawTree, this.blobsShaCache, true);
-        await this.snapshotTreeCache?.put(tree.id, tree);
+        await this.snapshotTreeCache?.put(tree.id, { id: requestVersion.id, snapshotTree: tree });
         return tree;
     }
 
