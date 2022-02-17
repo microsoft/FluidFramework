@@ -15,7 +15,11 @@ import {
     ISecretManager,
 } from "@fluidframework/server-services-core";
 import { NetworkError } from "@fluidframework/server-services-client";
-import { BaseTelemetryProperties, getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+    BaseTelemetryProperties,
+    getLumberBaseProperties,
+    Lumberjack
+} from "@fluidframework/server-services-telemetry";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 import * as winston from "winston";
