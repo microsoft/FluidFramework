@@ -21,7 +21,6 @@ export interface IProvideFluidDependencySynthesizer {
  * and required types.
  */
 export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynthesizer {
- 
     /**
      * synthesize takes optional and required types and returns an object that will fulfill the
      * defined types based off objects that has been previously registered.

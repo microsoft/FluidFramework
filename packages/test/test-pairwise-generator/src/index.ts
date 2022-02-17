@@ -17,7 +17,7 @@ export type OptionsMatrix<T extends Record<string, any>> =
 export const booleanCases: readonly (boolean)[] = [true, false];
 export const numberCases: readonly (number | undefined)[] = [undefined];
 
-type PartialWithKeyCount<T extends Record<string, any>>= (Partial<T> & {__partialKeyCount?: number});
+type PartialWithKeyCount<T extends Record<string, any>> = (Partial<T> & {__partialKeyCount?: number});
 
 function applyPairToPartial<T extends Record<string, any>>(
     randEng: random.Engine,

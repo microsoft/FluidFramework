@@ -166,7 +166,7 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
             this.latestWriterTree = buildSnapshotTree(tree.entries, this.blobsWriter);
 
             const fileSnapshot: IFileSnapshot = { tree, commits: {} };
-            await this.onSnapshotHandler(fileSnapshot);
+            this.onSnapshotHandler(fileSnapshot);
             return "testHandleId";
         }
 

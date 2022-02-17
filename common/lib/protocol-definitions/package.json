@@ -68,6 +68,7 @@
           "forwardCompat": false
         },
         "InterfaceDeclaration_IQuorum": {
+          "backCompat": false,
           "forwardCompat": false
         },
         "InterfaceDeclaration_ITree": {
@@ -87,6 +88,10 @@
         },
         "InterfaceDeclaration_ICreateBlobResponse": {
           "backCompat": false
+        },
+        "RemovedInterfaceDeclaration_IPendingProposal": {
+          "backCompat": false,
+          "forwardCompat": false
         }
       },
       "0.1025.1": {
@@ -101,6 +106,16 @@
         },
         "InterfaceDeclaration_ICreateBlobResponse": {
           "backCompat": false
+        },
+        "RemovedInterfaceDeclaration_IPendingProposal": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IQuorum": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IQuorumProposals": {
+          "backCompat": false
         }
       },
       "0.1026.0": {
@@ -111,6 +126,16 @@
           "forwardCompat": false
         },
         "InterfaceDeclaration_ICreateBlobResponse": {
+          "backCompat": false
+        },
+        "RemovedInterfaceDeclaration_IPendingProposal": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IQuorum": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IQuorumProposals": {
           "backCompat": false
         }
       }

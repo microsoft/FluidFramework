@@ -146,7 +146,7 @@ describe("Data Store Context Tests", () => {
                         isRootDataStore: false,
                         writeGCDataAtRoot: true,
                         disableIsolatedChannels: false,
-                    }
+                    },
                 );
 
                 await localDataStoreContext.realize()

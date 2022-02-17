@@ -123,7 +123,7 @@ export async function loadContainer(
         gcOptions: { writeDataAtRoot: true },
     };
     const codeLoader = new ReplayCodeLoader(
-        new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries, requestHandlers)
+        new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries, requestHandlers),
     );
 
     // Load the Fluid document while forcing summarizeProtocolTree option

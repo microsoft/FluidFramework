@@ -33,7 +33,7 @@ export async function createCommit(
     };
 
     const sha = await git.writeCommit({
-        fs: fs,
+        fs,
         dir: utils.getGitDir(store, tenantId),
         commit: commitObject,
     });
@@ -56,7 +56,7 @@ export async function getCommit(
     sha: string,
     useCache: boolean,
 ): Promise<ICommit> {
-    const commit = await git.readCommit({ fs: fs, dir: utils.getGitDir(store, tenantId), oid: sha });
+    const commit = await git.readCommit({ fs, dir: utils.getGitDir(store, tenantId), oid: sha });
     const description = commit.commit;
 
     return {

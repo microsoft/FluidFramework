@@ -5,6 +5,7 @@
 
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -31,7 +32,6 @@ import {
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
 import { ChannelStorageService } from "./channelStorageService";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 
 /**
  * Channel context for a locally created channel
