@@ -19,6 +19,8 @@ There are a few steps you can take to write a good change note and avoid needing
 - [codeDetails removed from Container](#codeDetails-removed-from-Container)
 - [wait() methods removed from map and directory](#wait-methods-removed-from-map-and-directory)
 - [Removed containerPath from DriverPreCheckInfo](#removed-containerPath-from-DriverPreCheckInfo)
+- [Removed SharedObject.is](#Removed-SharedObject.is)
+- [Removed IContainerContext.id](#Removed-IContainerContext.id-and-ContainerContext.id)
 
 ### `MessageType.Save` and code that handled it was removed
 The `Save` operation type was deprecated and has now been removed. This removes `MessageType.Save` from `protocol-definitions`, `save;${string}: ${string}` from `SummarizeReason` in the `container-runtime` package, and `MessageFactory.createSave()` from and `server-test-utils`.
@@ -33,7 +35,7 @@ The unused `url` property of `ICreateBlobResponse` in `@fluidframework/protocol-
 The `readonly` property was deprecated and has now been removed from `IDeltaManager` from `container-definitions`. Additionally, `readonly` has been removed from the implementations in `DeltaManager` and `DeltaManagerProxy` from `container-loader`. To replace its functionality, use `readOnlyInfo.readonly` instead.
 
 ### Synthesize Decoupled from IFluidObject and Deprecations Removed
-DependencyContainer now takes a generic argument, as it is no longer directly couple to IFluidObject. The ideal pattern here would be directly pass the provider or FluidObject interfaces you will register. As a short term solution you could also pass IFluidObject, but IFluidObject is deprecated, so will need to be removed if used here. 
+DependencyContainer now takes a generic argument, as it is no longer directly couple to IFluidObject. The ideal pattern here would be directly pass the provider or FluidObject interfaces you will register. As a short term solution you could also pass IFluidObject, but IFluidObject is deprecated, so will need to be removed if used here.
 Examples:
 ``` typescript
 // the old way
@@ -57,7 +59,7 @@ The following members have been removed from IFluidDependencySynthesizer:
  - registeredTypes - unused and no longer supported. `has` can replace most possible usages
  - register - create new DependencyContainer and add existing as parent
  - unregister - create new DependencyContainer and add existing as parent
- - getProvider - use `has` and `synthesize` to check or get provider respectively 
+ - getProvider - use `has` and `synthesize` to check or get provider respectively
 
  The following types have been removed or changed. These changes should only affect direct usages which should be rare. Existing synthesizer api usage is backwards compatible:
  - FluidObjectKey - removed as IFluidObject is deprecated
@@ -68,7 +70,7 @@ The following members have been removed from IFluidDependencySynthesizer:
  - FluidObjectProvider - Takes FluidObject types rather than keys
  - ProviderEntry - no longer used
  - DependencyContainerRegistry - no longer used
- 
+
 ### codeDetails removed from Container
 
 In release 0.53, the `codeDetails` member was removed from `IContainer`.  It is now also removed from `Container`.  To inspect the code details of a container, instead use the `getSpecifiedCodeDetails()` and `getLoadedCodeDetails()` methods.
@@ -79,6 +81,13 @@ The `wait()` methods on `ISharedMap` and `IDirectory` were deprecated in 0.55 an
 
 ### Removed containerPath from DriverPreCheckInfo
 The `containerPath` property of `DriverPreCheckInfo` was deprecated and has now been removed. To replace its functionality, use `Loader.request()`.
+
+### Removed `SharedObject.is`
+The `is` method is removed from SharedObject. This was being used to detect SharedObjects stored inside other SharedObjects (and then binding them), which should not be happening anymore. Instead, use handles to SharedObjects.
+
+### Removed IContainerContext.id and ContainerContext.id
+The `id` property of IContainerContext was deprecated and now removed. The `id` property of ContainerContext was deprecated and now removed. id should not be exposed at
+runtime level anymore. Instead, get from container's resolvedURL if necessary.
 
 ## 0.55 Breaking changes
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)
