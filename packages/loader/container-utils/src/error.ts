@@ -136,13 +136,14 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
         props: ITelemetryProperties = {},
     ) {
         return DataProcessingError.wrapIfUnrecognized(
-            new LoggingError(errorMessage, props),
+            new LoggingError(errorMessage, props), // This will be considered an "unrecognized" error
             dataProcessingCodepath,
             sequencedMessage);
     }
 
     /**
      * Wrap the given error in a DataProcessingError, unless the error is already of a known type.
+     * In either case, the error will have some relevant properties added for telemetry
      * We wrap conditionally since known error types represent well-understood failure modes, and ideally
      * one day we will move away from throwing these errors but rather we'll return them.
      * But an unrecognized error needs to be classified as DataProcessingError.
