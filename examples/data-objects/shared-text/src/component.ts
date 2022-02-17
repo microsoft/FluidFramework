@@ -33,6 +33,11 @@ import {
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { downloadRawText, mapWait } from "./utils";
 
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/css/bootstrap-theme.min.css";
+import "../stylesheets/map.css";
+import "../stylesheets/style.css";
+
 const debug = registerDebug("fluid:shared-text");
 
 const rootMapId = "root";
@@ -142,15 +147,6 @@ export class SharedTextRunner extends EventEmitter implements IFluidHTMLView, IF
     }
 
     private async initializeUI(div): Promise<void> {
-        /* eslint-disable @typescript-eslint/no-require-imports,
-        import/no-internal-modules, import/no-unassigned-import */
-        require("bootstrap/dist/css/bootstrap.min.css");
-        require("bootstrap/dist/css/bootstrap-theme.min.css");
-        require("../stylesheets/map.css");
-        require("../stylesheets/style.css");
-        /* eslint-enable @typescript-eslint/no-require-imports,
-        import/no-internal-modules, import/no-unassigned-import */
-
         const browserContainerHost = new ui.BrowserContainerHost();
 
         const containerDiv = document.createElement("div");

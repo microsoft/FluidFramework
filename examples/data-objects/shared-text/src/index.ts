@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// set the base path for all dynamic imports first
-// eslint-disable-next-line import/no-unassigned-import
-import "./publicpath";
-
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
