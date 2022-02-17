@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { MockLogger, sessionStorageConfigProvider, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import {
+    defaultSessionExpiryDurationMs,
     GarbageCollector,
     gcBlobPrefix,
     gcTreeKey,
@@ -92,11 +93,16 @@ describe("Garbage Collection Tests", () => {
         clock.restore();
     });
 
-    describe("Session expiry is called", () => {
+    describe("Session expiry", () => {
+        const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
         beforeEach(() => {
             closeCalled = false;
         });
-        it("Session expiry is called with existing timeout", async () => {
+        afterEach(() => {
+            sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
+        });
+
+        it("Session expires for an existing container", async () => {
             const metadata: IContainerRuntimeMetadata = 
                 { summaryFormatVersion: 1, message: undefined, sessionExpiryTimeoutMs: 1 }
             createGarbageCollector(undefined, undefined, metadata);
@@ -104,15 +110,12 @@ describe("Garbage Collection Tests", () => {
             assert(closeCalled, "Close should have been called.");
         });
 
-        it("Session expiry is called", async () => {
+        it("Session expires for a new container", async () => {
             const settings = { "Fluid.GarbageCollection.RunSessionExpiry": "true" };
-            const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
             sessionStorageConfigProvider.value.getRawConfig = (name) => settings[name];
             createGarbageCollector();
-            const expectedTimeoutMs = 30 * 24 * 60 * 60 * 1000; //clock tick 30 days
-            clock.tick(expectedTimeoutMs); 
+            clock.tick(defaultSessionExpiryDurationMs); 
             assert(closeCalled, "Close should have been called.");
-            sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
         });
     });
 
